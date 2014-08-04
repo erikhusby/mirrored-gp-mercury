@@ -24,6 +24,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBeanContext;
 
 import javax.inject.Inject;
+import javax.servlet.RequestDispatcher;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -73,26 +74,16 @@ public class ConfigurableListActionBean extends CoreActionBean {
 
         List<?> entityList;
         try {
-            // TODO jmt handle Longs
-/*
-            Barcoded barcoded = (Barcoded) Class.forName(pagination.getResultEntity()).newInstance();
-            switch (barcoded.getBarcodeDataType()) {
-            case NUMERIC:
-                List<Long> ids = new ArrayList<>(selectedIds.size());
-                for (String id : selectedIds) {
-                    ids.add(Long.parseLong(id));
-                }
-                entityList = paginationDao.getByIds(pagination, ids);
-                break;
-            case ALPHANUMERIC:
-*/
-                entityList = paginationDao.getByIds(pagination, selectedIds);
-/*
-                break;
-            }
-*/
+
+            List<?> typeSafeIds = new ArrayList<>();
+
+            typeSafeIds = paginationDao.convertStringIdsToEntityType(pagination, selectedIds);
+
+            entityList = paginationDao.getByIds(pagination, typeSafeIds);
+
         } catch (Exception e) {
             log.error("Search failed: ", e);
+            getContext().getRequest().setAttribute(RequestDispatcher.ERROR_EXCEPTION, e);
             getContext().getValidationErrors().addGlobalError(new SimpleError(
                     "Search encountered an unexpected problem. Please email bsp-support."));
             return new ForwardResolution("/error.jsp");
@@ -107,7 +98,7 @@ public class ConfigurableListActionBean extends CoreActionBean {
             if (entityName.equals("LabVessel")) {
                 configurableList.addListener(new BspSampleSearchAddRowsListener(bspSampleSearchService));
             }
-            configurableList.addRows(entityList);
+            configurableList.addRows(entityList, buildSearchContext());
             ConfigurableList.ResultList resultList = configurableList.getResultList();
             return streamResultList(resultList);
         }
@@ -151,6 +142,17 @@ public class ConfigurableListActionBean extends CoreActionBean {
     }
 
     /**
+     *  BSP user lookup required in column eval expression
+     *  Use context to avoid need to test in container
+     */
+    private Map<String, Object> buildSearchContext(){
+        Map<String, Object> evalContext = new HashMap<>();
+        evalContext.put("bspUserList", bspUserList );
+
+        return evalContext;
+    }
+
+    /**
      * Creates a spreadsheet and an associated StreamingResolution from a list of entities and a user-selected
      * list of columns.
      *
@@ -165,11 +167,8 @@ public class ConfigurableListActionBean extends CoreActionBean {
     public Resolution createConfigurableDownload(List<?> entityList, String downloadColumnSetName,
             CoreActionBeanContext context, String entityName, String entityId) {
 
-        Map<String, Object> evalContext = new HashMap<>();
-        evalContext.put("bspUserList", bspUserList );
-
         ConfigurableList configurableListUtils = configurableListFactory.create(entityList, downloadColumnSetName,
-                entityName, ColumnEntity.getByName(entityName), evalContext );
+                entityName, ColumnEntity.getByName(entityName), buildSearchContext() );
 
         Object[][] data = configurableListUtils.getResultList().getAsArray();
         return StreamCreatedSpreadsheetUtil.streamSpreadsheet(data, SPREADSHEET_FILENAME);

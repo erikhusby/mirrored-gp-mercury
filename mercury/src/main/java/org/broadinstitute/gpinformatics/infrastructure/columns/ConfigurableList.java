@@ -827,7 +827,24 @@ public class ConfigurableList {
          */
         public Object[][] getAsArray() {
 
-            Object rowObjects[][] = new Object[getResultRows().size() + 2][getHeaders().size()];
+            // Calculate how many rows and columns required using nested tables
+            int rows, cols;
+            // Default for no nested tables
+            rows = getResultRows().size() + 2;
+            cols = getHeaders().size();
+
+            // Some rows have 1 or more nested tables, some don't.
+            // Adjust array size as required
+            for (ConfigurableList.ResultRow resultRow : getResultRows()) {
+                int nestCols;
+                for( ResultList nestedTable: resultRow.getNestedTables().values() ){
+                    rows += nestedTable.getResultRows().size() + 1;
+                    nestCols = nestedTable.getHeaders().size() + 1;
+                    if( nestCols > cols ) cols = nestCols;
+                }
+            }
+
+            Object rowObjects[][] = new Object[rows][cols];
 
             // Set the first (name) and second (units, metadata) headers.
             int columnNumber;
@@ -849,11 +866,50 @@ public class ConfigurableList {
                     rowObjects[rowNumber][columnNumber] = comparable;
                     columnNumber++;
                 }
-
                 rowNumber++;
+
+                // Nested tables
+                columnNumber = 0;
+                for( Map.Entry<String,ResultList> nestedTable : resultRow.getNestedTables().entrySet() ) {
+                    rowObjects[rowNumber][columnNumber] = nestedTable.getKey();
+                    columnNumber++;
+                    rowNumber++;
+                    rowNumber = appendNestedRows(rowNumber, 1, nestedTable.getValue(), rowObjects);
+                }
+
+            }
+            return rowObjects;
+        }
+
+        /**
+         * Append nested table rows to 2 dimensional Excel output data array
+         * (Assume no deeper than 1 layer)
+         * @param rowIndex
+         * @param startColumn
+         * @param resultList
+         * @param rowObjects
+         * @return
+         */
+        private int appendNestedRows( int rowIndex, int startColumn, ResultList resultList, Object rowObjects[][] ){
+
+            int col = startColumn;
+
+            for( Header header : resultList.getHeaders() ) {
+                rowObjects[rowIndex][col] = header.getViewHeader();
+                col++;
+            }
+            rowIndex++;
+
+            for ( ConfigurableList.ResultRow resultRow : resultList.resultRows ) {
+                col = startColumn;
+                for (String val : resultRow.getRenderableCells()) {
+                    rowObjects[rowIndex][col] = val;
+                    col++;
+                }
+                rowIndex++;
             }
 
-            return rowObjects;
+            return rowIndex;
         }
 
         public List<ResultRow> getResultRows() {

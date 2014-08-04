@@ -207,4 +207,38 @@ public class PaginationDao extends GenericDao {
         List<T> entityList = buildCriteria(pagination, idList).list();
         return reorderList(pagination, idList, entityList);
     }
+
+    /**
+     * Web page collects selected IDs as strings, convert to required type for criteria.
+     * Assumes an entity list exists in pagination from which to determine type, if not, return input list.
+     * @param pagination Entity data
+     * @param idList List of String IDs
+     */
+    public List<?> convertStringIdsToEntityType(Pagination pagination, List<String> idList) {
+
+        List<Object> typeSafeIds = new ArrayList<>();
+
+        if( pagination.getIdList().size() == 0 ) {
+            // Avoid NullPointerException
+            return idList;
+        }
+
+        String type = pagination.getIdList().get(0).getClass().getName();
+        if( type.equals("java.lang.String") ) {
+            // Return string list as supplied
+            return idList;
+        } else if ( type.equals("java.lang.Long")) {
+            for( String val : idList ) {
+                typeSafeIds.add( new Long(val) );
+            }
+            return typeSafeIds;
+        } else {
+            // No other ID types supported as of 08/04/2014
+            return idList;
+        }
+
+    }
+
+
+
 }

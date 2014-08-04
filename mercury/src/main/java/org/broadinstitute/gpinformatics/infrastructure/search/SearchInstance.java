@@ -504,8 +504,7 @@ public class SearchInstance implements Serializable {
          */
         @Override
         public List<? extends ColumnTabulation> getNestedEntityColumns() {
-            throw new UnsupportedOperationException(
-                    "Method getNestedEntityColumns not implemented in SearchInstance.SearchValue");
+            return getSearchTerm().getNestedEntityColumns();
         }
 
         @Override
@@ -516,8 +515,7 @@ public class SearchInstance implements Serializable {
 
         @Override
         public Boolean isNestedParent() {
-            throw new UnsupportedOperationException(
-                    "Method isNestedParent not implemented in SearchInstance.SearchValue");
+            return getSearchTerm().isNestedParent();
         }
 
         @Override
@@ -541,8 +539,7 @@ public class SearchInstance implements Serializable {
         }
 
         public Collection<?> evalNestedTableExpression(Object entity, Map<String, Object> context) {
-            throw new UnsupportedOperationException(
-                    "Method evalNestedTableExpression not implemented in SearchInstance.SearchValue");
+            return getSearchTerm().evalNestedTableExpression(entity, context);
         }
 
         @Override
