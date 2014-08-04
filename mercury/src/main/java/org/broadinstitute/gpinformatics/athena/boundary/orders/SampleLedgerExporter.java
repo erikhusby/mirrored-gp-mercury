@@ -140,8 +140,9 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
         getWriter().setColumnWidth(VALUE_WIDTH);
     }
 
-    private void writeLegacyPriceItemProductHeader(PriceItem priceItem, byte[] rgbColor) {
-        getWriter().writeCell(BillingTrackerHeader.getPriceItemNameHeader(priceItem), getWrappedHeaderStyle(rgbColor));
+    private void writeHistoricalPriceItemProductHeader(PriceItem priceItem, byte[] rgbColor) {
+        getWriter().writeCell(BillingTrackerHeader.getHistoricalPriceItemNameHeader(priceItem),
+                getWrappedHeaderStyle(rgbColor));
         getWriter().setColumnWidth(VALUE_WIDTH);
     }
 
@@ -187,21 +188,21 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
                 addOnPriceItems.addAll(getPriceItems(addOn, priceItemDao, priceListCache));
             }
 
-            // legacy price items
-            SortedSet<PriceItem> legacyPriceItems = new TreeSet<>();
+            // historical price items
+            SortedSet<PriceItem> historicalPriceItems = new TreeSet<>();
             for (ProductOrder productOrder : productOrders) {
                 for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
                     for (LedgerEntry ledgerEntry : productOrderSample.getLedgerItems()) {
                         PriceItem priceItem = ledgerEntry.getPriceItem();
                         if (!sortedPriceItems.contains(priceItem) && !addOnPriceItems
                                 .contains(priceItem)) {
-                            legacyPriceItems.add(priceItem);
+                            historicalPriceItems.add(priceItem);
                         }
                     }
                 }
             }
 
-            writeHeaders(currentProduct, sortedPriceItems, sortedAddOns, legacyPriceItems);
+            writeHeaders(currentProduct, sortedPriceItems, sortedAddOns, historicalPriceItems);
 
             // Freeze the first row to make it persistent when scrolling.
             getWriter().createFreezePane(0, 1);
@@ -214,8 +215,8 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
                 Map<String, WorkCompleteMessage> workCompleteMessageBySample =
                         getWorkCompleteMessageBySample(productOrder);
                 for (ProductOrderSample sample : productOrder.getSamples()) {
-                    writeRow(sortedPriceItems, sortedAddOns, legacyPriceItems, sample, sortOrder++,
-                            workCompleteMessageBySample, sampleRowData.get(currentProduct).get(dataIndex));
+                    writeRow(sortedPriceItems, sortedAddOns, historicalPriceItems, sample, sortOrder++,
+                            workCompleteMessageBySample, sampleRowData.get(currentProduct).get(dataIndex++));
                 }
             }
         }
@@ -258,7 +259,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
     }
 
     private void writeRow(List<PriceItem> sortedPriceItems, List<Product> sortedAddOns,
-                          Collection<PriceItem> legacyPriceItems, ProductOrderSample sample,
+                          Collection<PriceItem> historicalPriceItems, ProductOrderSample sample,
                           int sortOrder, Map<String, WorkCompleteMessage> workCompleteMessageBySample,
                           SampleLedgerRow sampleData) {
         getWriter().nextRow();
@@ -365,8 +366,8 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
         Map<PriceItem, ProductOrderSample.LedgerQuantities> billCounts = sample.getLedgerQuantities();
 
         // write out for the price item columns.
-        for (PriceItem priceItem : legacyPriceItems) {
-            writeCountForLegacyPriceItem(billCounts, priceItem);
+        for (PriceItem priceItem : historicalPriceItems) {
+            writeCountForHistoricalPriceItem(billCounts, priceItem);
         }
 
         for (PriceItem item : sortedPriceItems) {
@@ -425,11 +426,11 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
     };
 
     private void writeHeaders(Product currentProduct, List<PriceItem> sortedPriceItems, List<Product> sortedAddOns,
-                              Collection<PriceItem> legacyPriceItems) {
+                              Collection<PriceItem> historicalPriceItems) {
         int colorIndex = 0;
 
-        for (PriceItem priceItem : legacyPriceItems) {
-            writeLegacyPriceItemProductHeader(priceItem, PRICE_ITEM_COLORS[colorIndex++ % PRICE_ITEM_COLORS.length]);
+        for (PriceItem priceItem : historicalPriceItems) {
+            writeHistoricalPriceItemProductHeader(priceItem, new byte[]{(byte) 204, (byte) 204, (byte) 204});
         }
 
         for (PriceItem priceItem : sortedPriceItems) {
@@ -481,14 +482,15 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
         }
     }
 
-    private void writeCountForLegacyPriceItem(Map<PriceItem, ProductOrderSample.LedgerQuantities> billCounts, PriceItem item) {
+    private void writeCountForHistoricalPriceItem(Map<PriceItem, ProductOrderSample.LedgerQuantities> billCounts,
+                                                  PriceItem item) {
         ProductOrderSample.LedgerQuantities quantities = billCounts.get(item);
         if (quantities != null) {
             // If the entry for billed is 0, then don't highlight it, but show a light yellow for anything with values.
             if (quantities.getBilled() == 0.0) {
                 getWriter().writeCell(quantities.getBilled());
             } else {
-                getWriter().writeCell(quantities.getBilled(), getBilledAmountStyle());
+                getWriter().writeHistoricalBilledAmount(quantities.getBilled());
             }
         } else {
             // Write nothing for billed.

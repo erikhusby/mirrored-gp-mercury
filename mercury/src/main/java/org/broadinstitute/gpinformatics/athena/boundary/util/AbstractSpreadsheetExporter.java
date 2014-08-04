@@ -120,7 +120,7 @@ public abstract class AbstractSpreadsheetExporter<T extends AbstractSpreadsheetE
         return workbook;
     }
 
-    protected CellStyle buildHeaderStyle(Workbook wb, IndexedColors indexedColors) {
+    public static CellStyle buildHeaderStyle(Workbook wb, IndexedColors indexedColors) {
         CellStyle style = wb.createCellStyle();
         style.setFillForegroundColor(indexedColors.getIndex());
         style.setFillPattern(CellStyle.SOLID_FOREGROUND);
@@ -313,6 +313,10 @@ public abstract class AbstractSpreadsheetExporter<T extends AbstractSpreadsheetE
             while (cells.hasNext()) {
                 cells.next().setCellStyle(style);
             }
+        }
+
+        public Workbook getWorkbook() {
+            return workbook;
         }
 
         public void setWorkbook(Workbook workbook) {

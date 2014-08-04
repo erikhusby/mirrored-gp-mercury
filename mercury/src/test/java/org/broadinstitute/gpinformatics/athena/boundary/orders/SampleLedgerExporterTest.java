@@ -31,9 +31,11 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -92,10 +94,18 @@ public class SampleLedgerExporterTest {
         productOrderSample.setDeliveryStatus(ProductOrderSample.DeliveryStatus.DELIVERED);
 
         /*
+         * Create a second product order sample.
+         */
+        Map<BSPSampleSearchColumn, String> bspData2 = new HashMap<>();
+        bspData2.put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "Sample2");
+        BSPSampleDTO bspSampleDTO2 = new BSPSampleDTO(bspData2);
+        ProductOrderSample productOrderSample2 = new ProductOrderSample("SM-5678", bspSampleDTO2);
+
+        /*
          * Create a product order with a JIRA ticket (submitted) and requested lane count (generally for seq-only PDOs).
          */
         ProductOrder productOrder = new ProductOrder(1L, "SampleLedgerExporterFactoryTest",
-                Collections.singletonList(productOrderSample), "Quote-1", product,
+                Arrays.asList(productOrderSample, productOrderSample2), "Quote-1", product,
                 researchProject);
         productOrder.setJiraTicketKey("PDO-123");
         productOrder.setLaneCount(8);
@@ -104,11 +114,11 @@ public class SampleLedgerExporterTest {
          * Add some billing ledger info for the product's primary price item and another price item that could have been
          * associated with the product at some point in the past but no longer is.
          */
-        PriceItem legacyPriceItem = new PriceItem("Quote-2", "Crush", "Test", "Test Legacy Price Item");
-        productOrderSample.addLedgerItem(new Date(1L), legacyPriceItem, 1);
-        LedgerEntry legacyLedgerEntry = productOrderSample.getLedgerItems().iterator().next();
-        new BillingSession(1L, Collections.singleton(legacyLedgerEntry));
-        legacyLedgerEntry.setBillingMessage(BillingSession.SUCCESS);
+        PriceItem historicalPriceItem = new PriceItem("Quote-2", "Crush", "Test", "Test Historical Price Item");
+        productOrderSample.addLedgerItem(new Date(1L), historicalPriceItem, 1);
+        LedgerEntry historicalLedgerEntry = productOrderSample.getLedgerItems().iterator().next();
+        new BillingSession(1L, Collections.singleton(historicalLedgerEntry));
+        historicalLedgerEntry.setBillingMessage(BillingSession.SUCCESS);
         productOrderSample.addAutoLedgerItem(new Date(1L), priceItem, 2, new Date(2L));
 
         /*
@@ -137,7 +147,7 @@ public class SampleLedgerExporterTest {
                     .writeHeaderCell(header.getText(), header == BillingTrackerHeader.TABLEAU_LINK);
         }
         headerOrder.verify(mockWriter)
-                .writeCell(eq(BillingTrackerHeader.getPriceItemNameHeader(legacyPriceItem)), any(CellStyle.class));
+                .writeCell(eq(BillingTrackerHeader.getHistoricalPriceItemNameHeader(historicalPriceItem)), any(CellStyle.class));
         headerOrder.verify(mockWriter)
                 .writeCell(eq(BillingTrackerHeader.getPriceItemNameHeader(priceItem)), any(CellStyle.class));
         headerOrder.verify(mockWriter).writeCell(eq(BillingTrackerHeader.getPriceItemPartNumberHeader(product)),
@@ -168,8 +178,17 @@ public class SampleLedgerExporterTest {
         dataOrder.verify(mockWriter).writeCellLink(anyString(), anyString());
         dataOrder.verify(mockWriter).writeCell("Quote-1");
         dataOrder.verify(mockWriter).writeCell(1);
-        dataOrder.verify(mockWriter).writeCell(eq(1.0), any(CellStyle.class));
+        dataOrder.verify(mockWriter).writeHistoricalBilledAmount(1.0);
         dataOrder.verify(mockWriter).writeCell(0.0);
         dataOrder.verify(mockWriter).writeCell(eq(2.0), any(CellStyle.class));
+
+        /*
+         * Verify that the samples are all written out in the correct order.
+         */
+        InOrder sampleOrder = inOrder(mockWriter);
+        sampleOrder.verify(mockWriter).writeCell("SM-1234");
+        sampleOrder.verify(mockWriter).writeCell("Sample1");
+        sampleOrder.verify(mockWriter).writeCell("SM-5678");
+        sampleOrder.verify(mockWriter).writeCell("Sample2");
     }
 }

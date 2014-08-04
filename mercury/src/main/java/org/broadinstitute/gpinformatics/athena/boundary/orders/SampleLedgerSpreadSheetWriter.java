@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
+import org.apache.poi.ss.usermodel.IndexedColors;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
 
 /**
@@ -24,5 +25,10 @@ public class SampleLedgerSpreadSheetWriter extends AbstractSpreadsheetExporter.S
         }
         // Increase the row height to make room for long headers that wrap to multiple lines.
         setRowHeight((short) (getCurrentSheet().getDefaultRowHeight() * 4));
+    }
+
+    void writeHistoricalBilledAmount(double amount) {
+        writeCell(amount, AbstractSpreadsheetExporter
+                .buildHeaderStyle(getWorkbook(), IndexedColors.GREY_25_PERCENT));
     }
 }
