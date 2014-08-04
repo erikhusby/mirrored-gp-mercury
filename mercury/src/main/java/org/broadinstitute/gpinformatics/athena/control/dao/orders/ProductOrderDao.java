@@ -74,7 +74,8 @@ public class ProductOrderDao extends GenericDao {
         RESEARCH_PROJECT,
         SAMPLES,
         RISK_ITEMS,
-        LEDGER_ITEMS
+        LEDGER_ITEMS,
+        PRODUCT_ORDER_KIT
     }
 
     private static class ProductOrderDaoCallback implements GenericDaoCallback<ProductOrder> {
@@ -117,6 +118,10 @@ public class ProductOrderDao extends GenericDao {
 
             if (fetchSpecs.contains(FetchSpec.RESEARCH_PROJECT)) {
                 productOrder.fetch(ProductOrder_.researchProject);
+            }
+
+            if (fetchSpecs.contains(FetchSpec.PRODUCT_ORDER_KIT)) {
+                productOrder.fetch(ProductOrder_.productOrderKit, JoinType.LEFT);
             }
         }
     }

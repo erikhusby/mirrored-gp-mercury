@@ -79,6 +79,13 @@ public class ProductOrderResource {
     // ID for species: Human is 1 in the database
     private static final long HUMAN = 1;
 
+    private static final ProductOrderDao.FetchSpec[] INCLUDE_SAMPLES_FETCH_SPECS =
+            new ProductOrderDao.FetchSpec[]{ProductOrderDao.FetchSpec.SAMPLES, ProductOrderDao.FetchSpec.RISK_ITEMS,
+                    ProductOrderDao.FetchSpec.PRODUCT_ORDER_KIT};
+
+    // Include product order kit so getting the work request ID doesn't invoke a lazy load.
+    private static final ProductOrderDao.FetchSpec DEFAULT_FETCH_SPECS = ProductOrderDao.FetchSpec.PRODUCT_ORDER_KIT;
+
     @Inject
     private ProductOrderDao productOrderDao;
 
@@ -369,8 +376,8 @@ public class ProductOrderResource {
         if (!StringUtils.isEmpty(productOrderIds)) {
             List<String> businessKeyList = Arrays.asList(productOrderIds.split(","));
             orders = includeSamples ?
-                    productOrderDao.findListByBusinessKeys(businessKeyList, ProductOrderDao.FetchSpec.SAMPLES) :
-                    productOrderDao.findListByBusinessKeys(businessKeyList);
+                    productOrderDao.findListByBusinessKeys(businessKeyList, INCLUDE_SAMPLES_FETCH_SPECS) :
+                    productOrderDao.findListByBusinessKeys(businessKeyList, DEFAULT_FETCH_SPECS);
         } else if (sampleIds != null) {
             // There isn't currently a fetchspec version of findBySampleBarcodes so this will take the singleton select
             // hit.
@@ -380,8 +387,8 @@ public class ProductOrderResource {
             orders = productOrderDao.findModifiedAfter(modifiedAfter);
         } else {
             orders = includeSamples ?
-                    productOrderDao.findAll(ProductOrderDao.FetchSpec.SAMPLES) :
-                    productOrderDao.findAll();
+                    productOrderDao.findAll(INCLUDE_SAMPLES_FETCH_SPECS) :
+                    productOrderDao.findAll(DEFAULT_FETCH_SPECS);
         }
 
         // Filter draft orders.

@@ -122,9 +122,11 @@ public class ProductOrderData {
 
         numberOfSamples = productOrder.getSampleCount();
 
-        for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
-            if (productOrderSample.getRiskItems().isEmpty()) {
-                riskNotCalculatedCount++;
+        if (includeSamples) {
+            for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
+                if (productOrderSample.getRiskItems().isEmpty()) {
+                    riskNotCalculatedCount++;
+                }
             }
         }
     }
