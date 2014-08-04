@@ -107,7 +107,7 @@ public enum BillingTrackerHeader implements ColumnHeader {
      * @return the header text
      */
     public static String getHistoricalPriceItemNameHeader(PriceItem priceItem) {
-        return priceItem.getName() + " (Historical)\n" + BILLED;
+        return priceItem.getName() + "\n" + BILLED + " (Historical)";
     }
 
     /**
