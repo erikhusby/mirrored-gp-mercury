@@ -73,6 +73,13 @@ public class ConfigurableListActionBean extends CoreActionBean {
                 .getAttribute(ConfigurableSearchActionBean.PAGINATION_PREFIX + sessionKey);
 
         List<?> entityList;
+
+        if( selectedIds == null || selectedIds.size() == 0 ) {
+            addGlobalValidationError("You must select one or more rows to download.");
+            return new ForwardResolution("/error.jsp");
+        }
+
+
         try {
 
             List<?> typeSafeIds = new ArrayList<>();
@@ -133,9 +140,10 @@ public class ConfigurableListActionBean extends CoreActionBean {
         }
 
         // Get each page and add it to the configurable list
+        Map<String, Object> context = buildSearchContext();
         for (int i = 0; i < pagination.getNumberPages(); i++) {
             List resultsPage = paginationDao.getPage(pagination, i);
-            configurableList.addRows(resultsPage);
+            configurableList.addRows(resultsPage, context);
             paginationDao.clear();
         }
         return streamResultList(configurableList.getResultList());
