@@ -32,6 +32,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequenci
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.IndexedPlateFactory;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
@@ -42,6 +43,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
@@ -148,7 +150,10 @@ public class BettaLimsMessageResourceTest extends Arquillian {
     private BucketEjb bucketEjb;
 
     @Inject
-    JiraService jiraService;
+    private JiraService jiraService;
+
+    @Inject
+    private WorkflowValidator workflowValidator;
 
     private final SimpleDateFormat testPrefixDateFormat = new SimpleDateFormat("MMddHHmmss");
 
@@ -280,6 +285,14 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                 mapBarcodeToTube, bettaLimsMessageFactory, Workflow.AGILENT_EXOME_EXPRESS, bettaLimsMessageResource,
                 reagentDesignDao, barcodedTubeDao,
                 ImportFromSquidTest.TEST_MERCURY_URL, BaseEventTest.NUM_POSITIONS_IN_RACK);
+
+        StaticPlate staticPlate = staticPlateDao.findByBarcode(
+                hybridSelectionJaxbBuilder.getGsWash1Jaxb().getPlate().getBarcode());
+        List<WorkflowValidator.WorkflowValidationError> validationErrors = workflowValidator.validateWorkflow(
+                Collections.<LabVessel>singleton(staticPlate), "EndRepair");
+        String renderTemplate = workflowValidator.renderTemplate(Collections.<LabVessel>singleton(staticPlate),
+                hybridSelectionJaxbBuilder.getGsWash1Jaxb(), validationErrors);
+        Assert.assertTrue(renderTemplate.contains("has failed validation"));
 
         QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
                 Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchBarcodes()),
