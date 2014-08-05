@@ -11,17 +11,22 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
-import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
 
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 public class SubmissionDto {
+    public static final FastDateFormat DATE_FORMAT =
+            FastDateFormat.getDateTimeInstance(FastDateFormat.MEDIUM, FastDateFormat.SHORT);
     private Collection<ProductOrder> productOrders;
-    private Date dateCompleted;
+    private final Collection<SubmissionStatusDetailBean> statusDetailBean;
 
     public BassDTO getBassDTO() {
         return bassDTO;
@@ -35,10 +40,12 @@ public class SubmissionDto {
     private final Aggregation aggregation;
     private double contamination = 0;
 
-    public SubmissionDto(BassDTO bassDTO, Aggregation aggregation, Collection<ProductOrder> productOrders) {
+    public SubmissionDto(BassDTO bassDTO, Aggregation aggregation, Collection<ProductOrder> productOrders,
+                         Collection<SubmissionStatusDetailBean> statusDetailBean) {
         this.bassDTO = bassDTO;
         this.aggregation = aggregation;
         this.productOrders = productOrders;
+        this.statusDetailBean = statusDetailBean;
     }
 
 
@@ -81,6 +88,7 @@ public class SubmissionDto {
     public String getContaminationString() {
         return aggregation.getContaminationString();
     }
+
     public Double getContamination() {
         return aggregation.getAggregationContam().getPctContamination();
     }
@@ -108,5 +116,25 @@ public class SubmissionDto {
 
     public String getFilePath() {
         return bassDTO.getPath();
+    }
+
+    public String getSubmittedStatus() {
+        Set<String> stati = new HashSet<>();
+        for (SubmissionStatusDetailBean submissionStatusDetailBean : statusDetailBean) {
+            String status = String.format("%s: %s", submissionStatusDetailBean.getUuid(),
+                    submissionStatusDetailBean.getStatus());
+            stati.add(status);
+        }
+        return stati.toString();
+    }
+
+    public String getStatusDate() {
+        Set<String> stati = new HashSet<>();
+        for (SubmissionStatusDetailBean submissionStatusDetailBean : statusDetailBean) {
+            String statusDate = DATE_FORMAT.format(submissionStatusDetailBean.getLastStatusUpdate());
+            String statusDateString = String.format("%s: %s", submissionStatusDetailBean.getUuid(), statusDate);
+            stati.add(statusDateString);
+        }
+        return stati.toString();
     }
 }

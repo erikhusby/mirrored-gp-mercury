@@ -35,8 +35,9 @@ public class SubmissionTrackerTest {
         ResearchProject testProject = ResearchProjectTestFactory.createTestResearchProject();
 
         tracker.setResearchProject(testProject);
-
+        testProject.addSubmissionTracker(tracker);
         Assert.assertEquals(tracker.getResearchProject(), testProject);
+        Assert.assertTrue(testProject.getSubmissionTrackers().contains(tracker));
 
         Assert.assertTrue(testProject.getSubmissionTrackers().contains(tracker));
 

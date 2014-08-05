@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -15,7 +16,14 @@ import java.util.List;
 @XmlRootElement()
 public class SubmissionStatusResultBean implements Serializable {
     private static final long serialVersionUID = 9068748107416910212L;
-    private List<SubmissionStatusDetailBean> submissionStatuses;
+    private List<SubmissionStatusDetailBean> submissionStatuses=new ArrayList<>();
+
+    public SubmissionStatusResultBean() {
+    }
+
+    public SubmissionStatusResultBean(SubmissionStatusDetailBean ... submissions) {
+        submissionStatuses.addAll(submissionStatuses);
+    }
 
     public List<SubmissionStatusDetailBean> getSubmissionStatuses ()
     {

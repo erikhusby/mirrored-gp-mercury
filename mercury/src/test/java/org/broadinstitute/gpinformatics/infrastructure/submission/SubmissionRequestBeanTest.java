@@ -143,9 +143,9 @@ public class SubmissionRequestBeanTest {
         bioProject2 = new BioProject("BlahBlah");
         bioProject3 = new BioProject("BlahBlahBlah");
         bioSampleBean1 = new SubmissionBioSampleBean("S_2507","/some/funky/file.bam",
-        new SubmissionContactBean("Jeff", "Gentry", "jgentry@broadinstitute.org","617-555-9292","homer", "A"));
-        contact2 = new SubmissionContactBean("Jeffrey", "G", "jgentry2@broadinstitute.org", "617-555-5555",
-                "homer", "A");
+        new SubmissionContactBean("Jeff", "A", "Gentry", "jgentry@broadinstitute.org","617-555-9292","homer"));
+        contact2 = new SubmissionContactBean("Jeffrey", "A", "G", "jgentry2@broadinstitute.org", "617-555-5555",
+                "homer");
         bioSampleBean2 = new SubmissionBioSampleBean("S_2651","/some/funky/file2.bam",
                 contact2);
         bioSampleBean3 = new SubmissionBioSampleBean("BlahBlahBlah","/some/funky/file2.bam",

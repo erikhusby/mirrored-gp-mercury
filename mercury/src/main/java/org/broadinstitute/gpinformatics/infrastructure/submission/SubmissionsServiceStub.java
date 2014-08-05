@@ -3,38 +3,53 @@ package org.broadinstitute.gpinformatics.infrastructure.submission;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProjects;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 
 import javax.enterprise.inject.Alternative;
-import java.util.Arrays;
-import java.util.List;
+import java.text.ParseException;
+import java.util.Collection;
+import java.util.Date;
 import java.util.Random;
 
 @Stub
 @Alternative
 public class SubmissionsServiceStub implements SubmissionsService {
     public static final String TEST_PROJECT_NAME = "Primary submission";
+    public static final String STUB_UPDATE_DATE = "Dec 17, 2001 9:30 AM";
 
-    private static final int HTTP_STATUS_CODE_OK = 200;
-
-    private String githubBaseUri;
-
-
-    @Override
-    public SubmissionStatusResultBean getSubmissionStatus(String... uuids) {
-        SubmissionStatusDetailBean detail1 =
-                new SubmissionStatusDetailBean("d835cc7-cd63-4cc6-9621-868155618745", "Submitted");
-        SubmissionStatusDetailBean detail2 =
-                new SubmissionStatusDetailBean("d835cc7-cd63-4cc6-9621-868155618745", "Failure",
-                        "And error was returned from NCBI");
-
-        SubmissionStatusResultBean results = new SubmissionStatusResultBean();
-        results.setSubmissionStatuses(Arrays.asList(detail1, detail2));
-
-        return results;
+    private Date getDateOfLastUpdate() {
+        Date dateLastUpdate = null;
+        try {
+            dateLastUpdate = DateUtils.parseDate(SubmissionDto.DATE_FORMAT.getPattern(), STUB_UPDATE_DATE);
+        } catch (ParseException e) {
+            throw new NullPointerException("Cannot parse " + STUB_UPDATE_DATE + " with " + SubmissionDto.DATE_FORMAT.getPattern());
+        }
+        return dateLastUpdate;
     }
 
     @Override
-    public List<BioProject> getAllBioProjects() {
+    public Collection<SubmissionStatusDetailBean> getSubmissionStatus(String... uuids) {
+        SubmissionStatusResultBean results = new SubmissionStatusResultBean();
+
+        for (String uuid : uuids) {
+            SubmissionStatusDetailBean detail =
+                    new SubmissionStatusDetailBean(uuid, SubmissionStatusDetailBean.Status.SUBMITTED.getDescription(),
+                            getDateOfLastUpdate());
+            results.getSubmissionStatuses().add(detail);
+        }
+        for (String uuid : uuids) {
+            SubmissionStatusDetailBean detail =
+                    new SubmissionStatusDetailBean(uuid, SubmissionStatusDetailBean.Status.FAILURE.getDescription(),
+                            getDateOfLastUpdate(), "And error was returned from NCBI");
+            results.getSubmissionStatuses().add(detail);
+        }
+
+
+        return results.getSubmissionStatuses();
+    }
+
+    @Override
+    public Collection<BioProject> getAllBioProjects() {
         BioProjects bioProjects = new BioProjects(
                 new BioProject(generateTestName("PRJ"), generateTestName("phs"), TEST_PROJECT_NAME),
                 new BioProject(generateTestName("PRJ"), generateTestName("phs"), TEST_PROJECT_NAME),
@@ -47,22 +62,23 @@ public class SubmissionsServiceStub implements SubmissionsService {
     }
 
     @Override
-    public SubmissionStatusResultBean postSubmissions(SubmissionRequestBean submissions) {
-        SubmissionStatusDetailBean detail1 =
-                new SubmissionStatusDetailBean("d835cc7-cd63-4cc6-9621-868155618745", "Submitted");
-        SubmissionStatusDetailBean detail2 =
-                new SubmissionStatusDetailBean("d835cc7-cd63-4cc6-9621-868155618745", "Failure",
-                        "And error was returned from NCBI");
-
+    public Collection<SubmissionStatusDetailBean> postSubmissions(SubmissionRequestBean submission) {
         SubmissionStatusResultBean results = new SubmissionStatusResultBean();
-        results.setSubmissionStatuses(Arrays.asList(detail1, detail2));
 
-        return results;
+        for (SubmissionBean submissionBean : submission.getSubmissions()) {
+            String uuid = submissionBean.getUuid();
+            SubmissionStatusDetailBean detail =
+                    new SubmissionStatusDetailBean(uuid, SubmissionStatusDetailBean.Status.SUBMITTED.getDescription(),
+                            getDateOfLastUpdate());
+            results.getSubmissionStatuses().add(detail);
+            detail = new SubmissionStatusDetailBean(uuid, SubmissionStatusDetailBean.Status.FAILURE.getDescription(),
+                    getDateOfLastUpdate(), uuid + " failed");
+            results.getSubmissionStatuses().add(detail);
+        }
+        return results.getSubmissionStatuses();
     }
 
     private static String generateTestName(String prefix) {
         return String.format("%s%d", prefix, new Random().nextInt(9999));
     }
-
-
 }

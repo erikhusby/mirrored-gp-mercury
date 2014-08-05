@@ -5,6 +5,7 @@ import com.sun.jersey.api.json.JSONJAXBContext;
 import com.sun.jersey.api.json.JSONMarshaller;
 import com.sun.jersey.api.json.JSONUnmarshaller;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -32,14 +33,14 @@ public class SubmissionStatusResultBeanTest {
     private SubmissionStatusDetailBean detail3;
     private SubmissionStatusDetailBean detail4;
     private SubmissionStatusDetailBean detail5;
-
+    private Date submissionUpdateDate;
     @BeforeMethod
     public void setUp() throws Exception {
-
+    submissionUpdateDate = DateUtils.parseISO8601Date("2014-07-30T11:35:58Z");
         testUUID1 = "d835cc7-cd63-4cc6-9621-868155618745";
-        detail1 = new SubmissionStatusDetailBean(testUUID1,"Submitted");
+        detail1 = new SubmissionStatusDetailBean(testUUID1,"Submitted", submissionUpdateDate);
         testUUID2 = "d835cc7-cd63-4cc6-9621-868155618746";
-        detail2 = new SubmissionStatusDetailBean(testUUID2,"Failure", "And error was returned from NCBI");
+        detail2 = new SubmissionStatusDetailBean(testUUID2,"Failure", submissionUpdateDate, "And error was returned from NCBI");
 
         testJson = "{\n"
                           + "  \"submissionStatuses\": [\n"
@@ -81,20 +82,20 @@ public class SubmissionStatusResultBeanTest {
                           + "  ]\n"
                           + "}";
         results = new SubmissionStatusResultBean();
-        detail11 = new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618745", "ReadyForSubmission");
+        detail11 = new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618745", "ReadyForSubmission",submissionUpdateDate);
         statusUpdate = new GregorianCalendar();
         statusUpdate.set(Calendar.MILLISECOND, 0);
 
         statusUpdate.set(2014, Calendar.JULY, 30, 11, 35, 58);
         detail11.setLastStatusUpdate(statusUpdate.getTime());
 
-        detail21 = new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618746", "ReadyForSubmission");
-        detail3 = new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618749", "Failure",
+        detail21 = new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618746", "ReadyForSubmission", submissionUpdateDate);
+        detail3 = new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618749", "Failure", submissionUpdateDate,
                 "No bioproject found matching submitted accession BlahBlahBlah",
                 "No biosample found matching submitted id BlahBlahBlah");
-        detail4 = new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618748", "Failure",
+        detail4 = new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618748", "Failure", submissionUpdateDate,
                 "No biosample found matching submitted id BlahBlahBlah");
-        detail5 = new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618747", "Failure",
+        detail5 = new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618747", "Failure", submissionUpdateDate,
                 "No bioproject found matching submitted accession BlahBlah");
 
         detail21.setLastStatusUpdate(statusUpdate.getTime());
@@ -110,7 +111,7 @@ public class SubmissionStatusResultBeanTest {
         SubmissionStatusResultBean results = new SubmissionStatusResultBean();
 
 
-        Assert.assertNull(results.getSubmissionStatuses());
+        Assert.assertTrue(results.getSubmissionStatuses().isEmpty());
 
         results.setSubmissionStatuses(Arrays.asList(detail1, detail2));
 

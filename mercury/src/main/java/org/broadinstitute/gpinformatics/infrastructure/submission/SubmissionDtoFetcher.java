@@ -11,11 +11,14 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
+import org.apache.commons.collections4.Factory;
+import org.apache.commons.collections4.map.LazyMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
@@ -41,6 +44,7 @@ public class SubmissionDtoFetcher {
     private AggregationMetricsFetcher aggregationMetricsFetcher;
     private BassSearchService bassSearchService;
     private BSPSampleDataFetcher bspSampleDataFetcher;
+    private SubmissionsService submissionsService = new SubmissionsServiceStub();
 
     public SubmissionDtoFetcher() {
     }
@@ -94,6 +98,31 @@ public class SubmissionDtoFetcher {
                 sampleNameToPdos.get(pdoSampleName).add(productOrderSample.getProductOrder());
             }
         }
+
+
+        List<String> sampleUuids=new ArrayList<>();
+        /** SubmissionTracker uses sampleName for accessionIdentifier
+         @see: org/broadinstitute/gpinformatics/athena/boundary/projects/ ResearchProjectEjb.java:243 **/
+        for (SubmissionTracker submissionTracker : researchProject.getSubmissionTrackers()) {
+            sampleUuids.add(submissionTracker.getAccessionIdentifier());
+        }
+
+        Map<String, List<SubmissionStatusDetailBean>> sampleSubmissionMap =
+                LazyMap.lazyMap(new HashMap<String, List<SubmissionStatusDetailBean>>(), new Factory<List<SubmissionStatusDetailBean>>() {
+                    @Override
+                    public List<SubmissionStatusDetailBean> create() {
+                        return new ArrayList<>();
+                    }
+                }
+        );
+
+        Collection<SubmissionStatusDetailBean> submissionStatus =
+                submissionsService.getSubmissionStatus(sampleUuids.toArray(new String[sampleUuids.size()]));
+        for (SubmissionStatusDetailBean submissionStatusDetailBean : submissionStatus) {
+            sampleSubmissionMap.get(submissionStatusDetailBean.getUuid()).add(submissionStatusDetailBean);
+        }
+
+
         log.debug(String.format("Fetching bassDTOs for %s", researchProject.getBusinessKey()));
         List<BassDTO> bassDTOs = bassSearchService.runSearch(researchProject.getBusinessKey());
         log.debug(String.format("Fetched %d bassDTOs", bassDTOs.size()));
@@ -116,9 +145,10 @@ public class SubmissionDtoFetcher {
         for (Map.Entry<String, Set<ProductOrder>> sampleListMap : sampleNameToPdos.entrySet()) {
             String collaboratorSampleId = sampleListMap.getKey();
             Aggregation aggregation = aggregationMap.get(collaboratorSampleId);
+            List<SubmissionStatusDetailBean> statusDetailBean = sampleSubmissionMap.get(collaboratorSampleId);
             BassDTO bassDTO = bassDTOMap.get(collaboratorSampleId);
             if (bassDTO != null && aggregation != null) {
-                results.add(new SubmissionDto(bassDTO, aggregation, sampleListMap.getValue()));
+                results.add(new SubmissionDto(bassDTO, aggregation, sampleListMap.getValue(), statusDetailBean));
             }
         }
 

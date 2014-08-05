@@ -63,11 +63,10 @@ public class SubmissionTracker {
     protected SubmissionTracker() {
     }
 
-    public SubmissionTracker(String testAccessionID, String testFileName, String testVersion) {
-
-        this.accessionIdentifier = testAccessionID;
-        this.fileName = testFileName;
-        this.version = testVersion;
+    public SubmissionTracker(String accessionIdentifier, String fileName, String version) {
+        this.accessionIdentifier = accessionIdentifier;
+        this.fileName = fileName;
+        this.version = version;
     }
 
     /**
@@ -79,6 +78,8 @@ public class SubmissionTracker {
     public String createSubmissionIdentifier() {
         return (submissionTrackerId != null) ? (MERCURY_SUBMISSION_ID_PREFIX + submissionTrackerId) : null;
     }
+
+
 
     public String getAccessionIdentifier() {
         return accessionIdentifier;

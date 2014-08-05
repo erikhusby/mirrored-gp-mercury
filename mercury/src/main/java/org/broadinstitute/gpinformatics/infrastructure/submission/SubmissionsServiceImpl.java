@@ -14,6 +14,7 @@ import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +41,7 @@ public class SubmissionsServiceImpl implements SubmissionsService {
      * @return
      */
     @Override
-    public SubmissionStatusResultBean getSubmissionStatus(@Nonnull String... submissionIdentifiers) {
+    public Collection<SubmissionStatusDetailBean> getSubmissionStatus(@Nonnull String... submissionIdentifiers) {
 
         Map<String, List<String>> submissionParameters = new HashMap<>();
 
@@ -49,7 +50,8 @@ public class SubmissionsServiceImpl implements SubmissionsService {
         ClientResponse response =
                 JerseyUtils.getWebResource(submissionsConfig.getWSUrl(SubmissionConfig.SUBMISSIONS_STATUS_URI), MediaType.APPLICATION_JSON_TYPE,
                         submissionParameters).accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
-        return response.getEntity(SubmissionStatusResultBean.class);
+        SubmissionStatusResultBean submissionStatusResultBean = response.getEntity(SubmissionStatusResultBean.class);
+        return submissionStatusResultBean.getSubmissionStatuses();
     }
 
     /**
@@ -57,7 +59,7 @@ public class SubmissionsServiceImpl implements SubmissionsService {
      * @return
      */
     @Override
-    public List<BioProject> getAllBioProjects() {
+    public Collection<BioProject> getAllBioProjects() {
         BioProjects bioProjects;
         ClientResponse response =
                 JerseyUtils.getWebResource(submissionsConfig.getWSUrl(SubmissionConfig.LIST_BIOPROJECTS_ACTION), MediaType.APPLICATION_JSON_TYPE)
@@ -72,7 +74,7 @@ public class SubmissionsServiceImpl implements SubmissionsService {
      * @return
      */
     @Override
-    public SubmissionStatusResultBean postSubmissions(SubmissionRequestBean submissions) {
+    public Collection<SubmissionStatusDetailBean> postSubmissions(SubmissionRequestBean submissions) {
 
         ClientResponse response =
                 JerseyUtils.getWebResource(submissionsConfig.getWSUrl(SubmissionConfig.SUBMIT_ACTION),
@@ -84,6 +86,6 @@ public class SubmissionsServiceImpl implements SubmissionsService {
             throw new InformaticsServiceException(response.getEntity(String.class));
         }
 
-        return response.getEntity(SubmissionStatusResultBean.class);
+        return response.getEntity(SubmissionStatusResultBean.class).getSubmissionStatuses();
     }
 }

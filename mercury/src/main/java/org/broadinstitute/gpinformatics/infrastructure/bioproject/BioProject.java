@@ -15,6 +15,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 
+import javax.xml.bind.annotation.XmlElement;
 import java.io.Serializable;
 public class BioProject implements Serializable {
     private static final long serialVersionUID = 2014072901l;
@@ -43,6 +44,7 @@ public class BioProject implements Serializable {
         this.accession = accession;
     }
 
+    @XmlElement(required = false)
     public String getAlias() {
         return alias;
     }
@@ -51,6 +53,7 @@ public class BioProject implements Serializable {
         this.alias = alias;
     }
 
+    @XmlElement(required = false)
     public String getProjectName() {
         return projectName;
     }

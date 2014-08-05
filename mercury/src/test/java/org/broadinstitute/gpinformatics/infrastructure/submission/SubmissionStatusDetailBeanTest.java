@@ -1,9 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import java.util.Arrays;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class SubmissionStatusDetailBeanTest {
@@ -18,7 +19,7 @@ public class SubmissionStatusDetailBeanTest {
 
         Assert.assertNull(testStatus.getUuid());
         Assert.assertNull(testStatus.getStatus());
-        Assert.assertNull(testStatus.getErrors());
+        Assert.assertTrue(testStatus.getErrors().isEmpty());
 
         testStatus.setUuid(testUuid);
 
@@ -29,12 +30,12 @@ public class SubmissionStatusDetailBeanTest {
         Assert.assertEquals(testStatus.getStatus(),
                 SubmissionStatusDetailBean.Status.IN_TRANSIT.getDescription());
 
-        testStatus.setErrors(testError1, testError2);
+        testStatus.setErrors(Arrays.asList(testError1, testError2));
 
         Assert.assertNotNull(testStatus.getErrors());
 
-        Assert.assertEquals(2, testStatus.getErrors().length);
-        Assert.assertTrue(ArrayUtils.contains(testStatus.getErrors(), testError1));
-        Assert.assertTrue(ArrayUtils.contains(testStatus.getErrors(), testError2));
+        Assert.assertEquals(2, testStatus.getErrors().size());
+        Assert.assertTrue(testStatus.getErrors().contains(testError1));
+        Assert.assertTrue(testStatus.getErrors().contains(testError2));
     }
 }

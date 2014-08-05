@@ -5,9 +5,11 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 
 import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 /**
  * TODO scottmat fill in javadoc!!!
@@ -17,20 +19,18 @@ public class SubmissionStatusDetailBean implements Serializable {
     private static final long serialVersionUID = 6352810343445206054L;
     private String uuid;
     private Status status;
-    private String[] errors;
+    private List<String> errors=new ArrayList<>();
     private Date lastStatusUpdate;
 
     public SubmissionStatusDetailBean() {
     }
 
-    public SubmissionStatusDetailBean(String uuid, String status) {
-        this.uuid = uuid;
-        setStatus(status);
-    }
 
-    public SubmissionStatusDetailBean(String uuid, String status, String... errors) {
-        this(uuid, status);
-        setErrors(errors);
+    public SubmissionStatusDetailBean(String uuid, String status, Date lastStatusUpdate, String... errors) {
+        this.uuid = uuid;
+        this.lastStatusUpdate = lastStatusUpdate;
+        setStatus(status);
+        setErrors(Arrays.asList(errors));
     }
 
     public String getUuid ()
@@ -50,15 +50,15 @@ public class SubmissionStatusDetailBean implements Serializable {
 
     @XmlElement
     public void setStatus(String status) {
-        this.status = Status.fromDescription( status);
+        this.status = Status.fromDescription(status);
     }
 
-    public String[] getErrors() {
+    public List<String> getErrors() {
         return errors;
     }
 
     @XmlElement
-    public void setErrors(String... errors) {
+    public void setErrors(List<String> errors) {
         this.errors = errors;
     }
 

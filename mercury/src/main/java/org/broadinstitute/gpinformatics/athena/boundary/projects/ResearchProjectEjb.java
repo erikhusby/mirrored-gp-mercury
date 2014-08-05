@@ -40,7 +40,7 @@ import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBioS
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionContactBean;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRequestBean;
-import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionStatusResultBean;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionStatusDetailBean;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsService;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -230,14 +230,16 @@ public class ResearchProjectEjb {
     /**
      * When called, this method will post to the submission service the samples and their related information
      * that have been selected to be submitted.
-     * @param researchProjectBusinessKey    Unique key of the Research Project under which the
-     * @param selectedBioProject            BioProject to be associated with all submissions
-     * @param submissionDtos                Collection of submissionDTOs selected to be submitted
+     *
+     * @param researchProjectBusinessKey Unique key of the Research Project under which the
+     * @param selectedBioProject         BioProject to be associated with all submissions
+     * @param submissionDtos             Collection of submissionDTOs selected to be submitted
+     *
      * @return the results from the post to the submission service
      */
-    public SubmissionStatusResultBean processSubmissions(@Nonnull String researchProjectBusinessKey,
-                                                         @Nonnull BioProject selectedBioProject,
-                                                         @Nonnull List<SubmissionDto> submissionDtos) {
+    public Collection<SubmissionStatusDetailBean> processSubmissions(@Nonnull String researchProjectBusinessKey,
+                                                                     @Nonnull BioProject selectedBioProject,
+                                                                     @Nonnull List<SubmissionDto> submissionDtos) {
 
         if(submissionDtos.isEmpty()) {
             throw new InformaticsServiceException("At least one selection is needed to post submissions");
@@ -285,9 +287,7 @@ public class ResearchProjectEjb {
             e.printStackTrace();
         }
 
-        SubmissionStatusResultBean submissionResults = submissionsService.postSubmissions(requestBean);
-
-
+        Collection<SubmissionStatusDetailBean> submissionResults = submissionsService.postSubmissions(requestBean);
         return submissionResults;
     }
 

@@ -135,8 +135,8 @@
                 <td>${submissionSample.lanesInAggregation}</td>
                 <td><%--blacklisted lanes--%></td>
                 <td><%--submitted version--%></td>
-                <td><%--current status--%></td>
-                <td><fmt:formatDate value="${submissionSample.dateCompleted}"/></td>
+                <td>${submissionSample.submittedStatus}</td>
+                <td><fmt:formatDate value="${submissionSample.statusDate}"/></td>
 
                     <%--<c:if test="${submissionSample.la == 0}">--%>
                     <%--<td colspan="11" style="text-align: center;">--%>

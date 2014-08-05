@@ -11,9 +11,7 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.bioproject;
 
-import com.sun.jersey.api.json.JSONConfiguration;
-import com.sun.jersey.api.json.JSONJAXBContext;
-import com.sun.jersey.api.json.JSONMarshaller;
+import org.broadinstitute.gpinformatics.infrastructure.common.MercuryStringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -31,18 +29,22 @@ public class BioProjectResultBeanTest {
                           + "]\n"
                           + "}";
 
-
-        JSONJAXBContext context = new JSONJAXBContext(JSONConfiguration.natural().humanReadableFormatting(true).build(),
-                BioProjects.class);
-        JSONMarshaller marshaller = context.createJSONMarshaller();
-
-        StringWriter writer = new StringWriter();
+        BioProjects bioProjecrsDeSerialized = MercuryStringUtils.deSerializeJsonBean(testJson, BioProjects.class);
         BioProjects bioProjects = new BioProjects(
                 new BioProject("PRJNA185967", "phs000569", "Primary submission"),
                 new BioProject("PRJNA186400", "phs000584", "Primary submission")
         );
 
-        marshaller.marshallToJSON(bioProjects, writer);
+        Assert.assertEquals(bioProjects, bioProjecrsDeSerialized);
+    }
+    public void testBioProjectsUnmarshallNullFields() throws JAXBException {
+
+        String testJson = "{\"bioprojects\": [{\"accession\":\"PRJNA185967\"},{\"accession\":\"PRJNA186400\"}]}";
+
+        BioProjects bioProjects = new BioProjects(new BioProject("PRJNA185967"), new BioProject("PRJNA186400"));
+
+        StringWriter writer = MercuryStringUtils.serializeJsonBean(bioProjects);
+
         Assert.assertEquals(writer.toString().replaceAll("\\s+", ""), testJson.replaceAll("\\s+", ""));
     }
 }

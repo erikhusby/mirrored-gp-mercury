@@ -1,16 +1,11 @@
-
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 
 import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlTransient;
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
 
 public class SubmissionContactBean implements Serializable {
 
@@ -31,8 +26,8 @@ public class SubmissionContactBean implements Serializable {
         this.email = email;
     }
 
-    public SubmissionContactBean(String firstName, String lastName, String email, String phone, String lab,
-                                 String middleName) {
+    public SubmissionContactBean(String firstName, String middleName, String lastName, String email, String phone,
+                                 String lab) {
         this(firstName,lastName,email);
         this.phone = phone;
         this.lab = lab;
