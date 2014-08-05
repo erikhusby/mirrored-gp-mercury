@@ -21,6 +21,8 @@ import java.util.List;
 
 @Test(enabled = true, groups = TestGroups.DATABASE_FREE)
 public class AuditReaderDbFreeTest {
+
+    // Exceptions to the Entity classes having Long entityId annotated with @Id.
     private final Collection<Class> unauditableClasses = new ArrayList<Class>() {{
         // todo make a Long primary key on JiraTicket and remove this special case.
         add(JiraTicket.class);
@@ -31,29 +33,9 @@ public class AuditReaderDbFreeTest {
 
     @Test
     public void areAllEntitiesAuditable() throws Exception {
-        String[] packagesToScan = new String[] {
-                "org.broadinstitute.gpinformatics.athena.entity",
-                "org.broadinstitute.gpinformatics.mercury.entity"
-        };
-        Collection<Class> classesFromPkg = new ArrayList<>();
-        for (String packageToScan : packagesToScan) {
-            classesFromPkg.addAll(getClasses(packageToScan));
-        }
-
-        Collection<String> failingClasses = new ArrayList<>();
-        Collection<String> entityClassnames = new ArrayList<>();
-
-        // Finds the persistence classes by searching for SingularAttribute fields.
-        // From this generated class, strip off the trailing '_' and that's the entity class.
-        for (Class cls : classesFromPkg) {
-            if (CollectionUtils.isNotEmpty(ReflectionUtil.getFieldsOfType(cls, SingularAttribute.class))) {
-                int idx = cls.getCanonicalName().lastIndexOf("_");
-                if (idx < cls.getCanonicalName().length() - 1) {
-                    throw new RuntimeException("Unexpected generated class name: " + cls.getCanonicalName());
-                }
-                entityClassnames.add(cls.getCanonicalName().substring(0, idx));
-            }
-        }
+        List<String> failingClasses = new ArrayList<>();
+        List<Class> classesFromPkg = ReflectionUtil.getMercuryAthenaClasses();
+        List<String> entityClassnames = ReflectionUtil.getEntityClassnames(classesFromPkg);
         Assert.assertTrue(entityClassnames.size() > 0);
 
         for (Class cls : classesFromPkg) {
@@ -74,42 +56,4 @@ public class AuditReaderDbFreeTest {
         }
     }
 
-    /**
-     * Scans all classes accessible from the context class loader which belong to the given package and subpackages.
-     */
-    private Collection<Class> getClasses(String packageName) throws ClassNotFoundException, IOException {
-        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        Assert.assertNotNull(classLoader);
-        String path = packageName.replace('.', '/');
-        Enumeration<URL> resources = classLoader.getResources(path);
-        Collection<File> dirs = new ArrayList<>();
-        while (resources.hasMoreElements()) {
-            URL resource = resources.nextElement();
-            dirs.add(new File(resource.getFile()));
-        }
-        Collection<Class> classes = new ArrayList<>();
-        for (File directory : dirs) {
-            classes.addAll(recurseDirectories(directory, packageName));
-        }
-        return classes;
-    }
-
-    /** Returns all classes in the directory hierarchy. */
-    private static List<Class> recurseDirectories(File directory, String packageName) throws ClassNotFoundException {
-        List<Class> classes = new ArrayList<>();
-        if (directory.exists()) {
-            for (File file : directory.listFiles()) {
-                if (file.isDirectory()) {
-                    Assert.assertTrue(!file.getName().contains("."),
-                            "Unexpected class resource name contains '.': " + file.getName());
-                    classes.addAll(recurseDirectories(file, packageName + "." + file.getName()));
-                } else if (file.getName().endsWith(".class")) {
-                    int idx = file.getName().lastIndexOf(".class");
-                    String classname = packageName + '.' + file.getName().substring(0, idx);
-                    classes.add(Class.forName(classname));
-                }
-            }
-        }
-        return classes;
-    }
 }
