@@ -354,7 +354,7 @@ public class ProductActionBean extends CoreActionBean {
         return new StreamingResolution("application/pdf") {
             @Override
             public void stream(final HttpServletResponse response) {
-                Collections.sort(productDownloadList, Product.BY_FAMILY_THEN_PART_NUMBER);
+                Collections.sort(productDownloadList, Product.BY_FAMILY_THEN_PRODUCT_NAME);
                 try {
                     setAttachment(true);
                     ProductPdfFactory.toPdf(response.getOutputStream(),
