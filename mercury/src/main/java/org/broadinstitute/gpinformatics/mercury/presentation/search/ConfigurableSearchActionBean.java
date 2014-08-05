@@ -23,6 +23,7 @@ import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.athena.entity.preference.SearchInstanceList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
@@ -199,6 +200,9 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
     @Inject
     private SearchInstanceEjb searchInstanceEjb;
 
+    @Inject
+    private BSPUserList bspUserList;
+
     /**
      * Called when the user first visits the page, this method fetches preferences.
      *
@@ -368,6 +372,8 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
         } else {
             searchInstance.establishRelationships(configurableSearchDef);
 
+            buildSearchContext();
+
             try {
                 ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(
                         searchInstance, configurableSearchDef, columnSetName, sortColumnIndex, dbSortPath,
@@ -393,6 +399,9 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
         getPreferences();
         searchInstance = (SearchInstance) getContext().getRequest().getSession().getAttribute(
                 SEARCH_INSTANCE_PREFIX + sessionKey);
+
+        buildSearchContext();
+
         configurableResultList = configurableListFactory.getSubsequentResultsPage(searchInstance, pageNumber,  getEntityName() ,
                 (PaginationDao.Pagination) getContext().getRequest().getSession().getAttribute(
                         PAGINATION_PREFIX + sessionKey));
@@ -419,6 +428,19 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
     public Resolution saveNewSearch() {
         persistSearch(true);
         return new ForwardResolution("/search/configurable_search.jsp");
+    }
+
+    /**
+     *  BSP user lookup required in column eval expression
+     *  Use context to avoid need to test in container
+     */
+    private void buildSearchContext(){
+        if( searchInstance.getEvalContext() == null ) {
+            Map<String, Object> evalContext = new HashMap<>();
+            searchInstance.setEvalContext(evalContext);
+        }
+
+        searchInstance.getEvalContext().put(SearchDefinitionFactory.CONTEXT_KEY_BSP_USER_LIST, bspUserList );
     }
 
     /**
