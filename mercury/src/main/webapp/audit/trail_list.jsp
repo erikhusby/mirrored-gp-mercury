@@ -128,11 +128,11 @@
                             ${auditTrail.username}
                     </td>
                     <td class="columnEntities">
-                        <c:forEach items="${auditTrail.entityTypeNames}" var="auditTrailEntityClassName">
+                        <c:forEach items="${auditTrail.entityTypeNames}" var="item">
                             <stripes:link beanclass="${actionBean.class.name}" event="viewEntitiesAtRev">
                                 <stripes:param name="revId" value="${auditTrail.revId}"/>
-                                <stripes:param name="entityClassname" value="${auditTrailEntityClassName}"/>
-                                ${auditTrailEntityClassName}
+                                <stripes:param name="entityClassname" value="${item}"/>
+                                ${item}
                             </stripes:link>
                             &nbsp;
                         </c:forEach>
