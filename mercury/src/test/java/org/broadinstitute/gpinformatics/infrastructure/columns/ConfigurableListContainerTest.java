@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearch
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -43,7 +44,7 @@ public class ConfigurableListContainerTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
-    @Test
+    @Test(groups= TestGroups.STANDARD)
     public void testTrackingSheet() {
         List<ColumnTabulation> columnTabulations = new ArrayList<>();
         LabBatch labBatch = labBatchDao.findByBusinessKey("LCSET-5102");
@@ -93,7 +94,7 @@ public class ConfigurableListContainerTest extends Arquillian {
      */
     private Map<String, Object> buildSearchContext(){
         Map<String, Object> evalContext = new HashMap<>();
-        evalContext.put("bspUserList", bspUserList );
+        evalContext.put(SearchDefinitionFactory.CONTEXT_KEY_BSP_USER_LIST, bspUserList );
 
         return evalContext;
     }

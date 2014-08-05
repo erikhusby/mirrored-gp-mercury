@@ -29,6 +29,11 @@ public class SearchDefinitionFactory {
 
     private Map<String, ConfigurableSearchDefinition> mapNameToDef = new HashMap<>();
 
+    public static final String CONTEXT_KEY_BSP_USER_LIST = "bspUserList";
+    public static final String CONTEXT_KEY_COLUMN_SET_TYPE = "columnSetType";
+    public static final String CONTEXT_KEY_SEARCH_VALUE = "searchValue";
+    public static final String CONTEXT_KEY_SEARCH_STRING = "searchString";
+
     public ConfigurableSearchDefinition getForEntity(String entity) {
         if (mapNameToDef.isEmpty()) {
             ConfigurableSearchDefinition configurableSearchDefinition = buildLabVesselSearchDef();
@@ -483,7 +488,7 @@ public class SearchDefinitionFactory {
 
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
-                BSPUserList bspUserList = (BSPUserList)context.get("bspUserList");
+                BSPUserList bspUserList = (BSPUserList)context.get(CONTEXT_KEY_BSP_USER_LIST);
                 LabEvent labEvent = (LabEvent) entity;
                 Long userId = labEvent.getEventOperator();
                 BspUser bspUser = bspUserList.getById(userId);
@@ -523,7 +528,7 @@ public class SearchDefinitionFactory {
         searchTerm.setValueConversionExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
-                return Enum.valueOf(LabEventType.class, (String) context.get("searchString"));
+                return Enum.valueOf(LabEventType.class, (String) context.get(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_STRING));
             }
         });
         searchTerms.add(searchTerm);

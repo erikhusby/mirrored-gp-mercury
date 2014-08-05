@@ -18,15 +18,7 @@ public enum ColumnEntity {
         public String getId(Object entity) {
             return ((LabEvent) entity).getLabEventId().toString();
         }
-    })
-//    ,
-//    REAGENT("Reagent", "Reagent", new IdGetter() {
-//        @Override
-//        public String getId(Object entity) {
-//            return ((Reagent) entity).getReagentId().toString();
-//        }
-//    })
-    ;
+    });
 
     private IdGetter idGetter;
     private String entityName, displayName;

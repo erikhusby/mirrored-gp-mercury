@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.columns;
 
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
@@ -21,7 +22,7 @@ import java.util.Map;
 
 public class ConfigurableListDbFreeTest {
 
-    @Test
+    @Test(groups= TestGroups.DATABASE_FREE)
     public void testSimplest() {
         ConfigurableSearchDefinition configurableSearchDefinition =
                 new SearchDefinitionFactory().buildLabVesselSearchDef();
@@ -33,6 +34,7 @@ public class ConfigurableListDbFreeTest {
 
         List<LabVessel> entityList = new ArrayList<>();
         entityList.add(tube1);
+        // Context not required - BSP user lookup not required
         configurableList.addRows(entityList);
 
         ConfigurableList.ResultList resultList = configurableList.getResultList();
@@ -42,7 +44,7 @@ public class ConfigurableListDbFreeTest {
         Assert.assertEquals(sortableCells.get(0), tube1.getLabel());
     }
 
-    @Test
+    @Test(groups= TestGroups.DATABASE_FREE)
     public void testReagents() {
         ConfigurableSearchDefinition configurableSearchDefinition =
                 new SearchDefinitionFactory().buildLabEventSearchDef();
@@ -55,8 +57,7 @@ public class ConfigurableListDbFreeTest {
         List<LabEvent> entityList = new ArrayList<>();
         LabEvent event1 = new LabEvent(LabEventType.A_BASE, new Date(), "SPIDERMAN", 1l, 101l, "Bravo");
 
-        // Have to set PK via reflection!  \
-        // TODO jms removed ID logic
+        // Have to set PK via reflection!
         injectFakeID ( event1.getClass(), event1, "labEventId",  new Long(666) );
 
         // Expiration date for all reagents
@@ -75,6 +76,7 @@ public class ConfigurableListDbFreeTest {
 
 
         entityList.add(event1);
+        // Context not required - BSP user lookup not required
         configurableList.addRows(entityList);
 
         // Verify parent row

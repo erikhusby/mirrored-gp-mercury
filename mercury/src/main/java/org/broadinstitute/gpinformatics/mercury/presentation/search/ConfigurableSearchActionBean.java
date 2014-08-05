@@ -440,7 +440,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
             searchInstance.setEvalContext(evalContext);
         }
 
-        searchInstance.getEvalContext().put("bspUserList", bspUserList );
+        searchInstance.getEvalContext().put(SearchDefinitionFactory.CONTEXT_KEY_BSP_USER_LIST, bspUserList );
     }
 
     /**

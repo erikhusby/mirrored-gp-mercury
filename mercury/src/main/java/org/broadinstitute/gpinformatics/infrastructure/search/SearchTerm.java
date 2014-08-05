@@ -210,6 +210,11 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     private Evaluator<Object> addRowsListenerHelper;
 
     /**
+     * Flag this term as a parent to a nested table
+     */
+    private Boolean isNestedParent = Boolean.FALSE;
+
+    /**
      * Evaluate the expression that returns constrained values, e.g. list of phenotypes
      *
      * @param context any additional entities referred to by the expression
@@ -245,8 +250,6 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     public void setRequired(Boolean required) {
         this.required = required;
     }
-
-    private Boolean isNestedParent = Boolean.FALSE;
 
     public Boolean isNewDetachedCriteria() {
         return newDetachedCriteria;
@@ -289,10 +292,14 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     }
 
     @Override
-    public Boolean isNestedParent( ){ return  isNestedParent; }
+    public Boolean isNestedParent( ){
+        return  isNestedParent;
+    }
 
     @Override
-    public void setIsNestedParent(Boolean isNestedParent) { this.isNestedParent = isNestedParent; }
+    public void setIsNestedParent(Boolean isNestedParent) {
+        this.isNestedParent = isNestedParent;
+    }
 
     @Override
     public List<? extends ColumnTabulation> getNestedEntityColumns() {
@@ -301,7 +308,9 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
     @Override
     public void addNestedEntityColumn(ColumnTabulation nestedEntityColumn) {
-        if( nestedEntityColumns == null ) nestedEntityColumns = new ArrayList<>();
+        if( nestedEntityColumns == null ) {
+            nestedEntityColumns = new ArrayList<>();
+        }
         nestedEntityColumns.add(nestedEntityColumn);
     }
 

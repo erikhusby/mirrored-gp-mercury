@@ -215,7 +215,7 @@ public class ConfigurableListFactory {
             listNameListString = (PreferenceDefinitionListNameListString) preference.getPreferenceDefinition();
             if (listNameListString != null) {
                 Map<String, Object> context = new HashMap<>();
-                context.put("columnSetType", columnSetType);
+                context.put(SearchDefinitionFactory.CONTEXT_KEY_COLUMN_SET_TYPE, columnSetType);
                 context.put("bspDomainUser", bspDomainUser);
                 context.put("group", group);
                 for (PreferenceDefinitionNameListString nameListString : listNameListString.getListNamedList()) {
