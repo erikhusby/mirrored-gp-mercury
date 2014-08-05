@@ -25,7 +25,7 @@
         $j(document).ready(function () {
             var oTable = $j('#submissionSamples').dataTable({
                 "aaSorting": [
-                        [1, asc]
+                        [1, 'asc']
                 ],
                 "aoColumns": [
                     {"bSortable": false},               //Checkbox
@@ -64,14 +64,14 @@
         </div>
     </div>
 
-    <table class="simple" id="submissionSamples" style="table-layout: fixed;">
+    <table class="table simple" id="submissionSamples" style="table-layout: fixed;">
         <thead>
         <tr>
             <!-- add data type to big list -->
             <!-- only show latest single file -->
             <th width="20">
-                <input id="submissionSelections" for="submissionCount" type="checkbox" class="checkAll"/>
-                <span id="submissionCount" class="checkedCount"></span>
+                <input id="submissionSelections" for="count" type="checkbox" class="checkAll"/>
+                <span id="count" class="checkedCount"></span>
             </th>
             <th width="100">Sample</th>
             <%--<th width="100">BioSample</th>--%>
@@ -79,16 +79,16 @@
             <th width="180">PDOs</th>
             <th width="100">Aggregation Project</th>
             <th width="80">File Type</th>
-            <th width="20">Version</th>
+            <th width="50">Version</th>
             <th width="80">Quality Metric</th>
-            <th width="20">Contamination</th>
-            <th width="20">Fingerprint</th>
+            <th width="90">Contamination</th>
+            <th width="80">Fingerprint</th>
             <!-- add # lanes, # lanes blacklisted, notes -->
-            <th width="20">Lanes in Aggregation</th>
-            <th width="20">Blacklisted Lanes</th>
-            <th width="20">Submitted Version</th>
-            <th width="20">Current Status</th>
-            <th width="20">Status Date</th>
+            <th width="80">Lanes in Aggregation</th>
+            <th width="70">Blacklisted Lanes</th>
+            <th width="70">Submitted Version</th>
+            <th width="50">Current Status</th>
+            <th width="40">Status Date</th>
 
         </tr>
         </thead>
@@ -136,7 +136,7 @@
                 <td><%--blacklisted lanes--%></td>
                 <td><%--submitted version--%></td>
                 <td>${submissionSample.submittedStatus}</td>
-                <td><fmt:formatDate value="${submissionSample.statusDate}"/></td>
+                <td>${submissionSample.statusDate}</td>
 
                     <%--<c:if test="${submissionSample.la == 0}">--%>
                     <%--<td colspan="11" style="text-align: center;">--%>

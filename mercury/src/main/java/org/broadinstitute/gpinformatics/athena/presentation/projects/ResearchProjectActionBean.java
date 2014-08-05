@@ -76,6 +76,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     public static final String ACTIONBEAN_URL_BINDING = "/projects/project.action";
     public static final String RESEARCH_PROJECT_PARAMETER = "researchProject";
+    public static final String RESEARCH_PROJECT_TAB_PARAMETER ="rpSelectedTab";
+    public static final String RESEARCH_PROJECT_DEFAULT_TAB = "1";
+    public static final String RESEARCH_PROJECT_SUBMISSIONS_TAB = "2";
 
     private static final String PROJECT = "Research Project";
     public static final String CREATE_PROJECT = CoreActionBean.CREATE + PROJECT;
@@ -218,6 +221,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private CollaborationData collaborationData;
 
     private boolean validCollaborationPortal;
+
+    private String rpSelectedTab;
 
     @Inject
     private BioProjectList bioProjectList;
@@ -459,6 +464,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
+
         return new ForwardResolution(PROJECT_VIEW_PAGE);
     }
 
@@ -826,10 +832,16 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
         BioProject selectedProject = bioProjectTokenInput.getTokenObject();
 
-        researchProjectEjb.processSubmissions(researchProject, new BioProject(selectedProject.getAccession()), selectedSubmissions);
+        try {
+            researchProjectEjb.processSubmissions(researchProject, new BioProject(selectedProject.getAccession()),
+                    selectedSubmissions);
+        } catch (InformaticsServiceException e) {
+            addGlobalValidationError(e.getMessage());
+        }
 
-        return new RedirectResolution(ResearchProjectActionBean.class, PROJECT_SUBMISSIONS_PAGE)
-                .addParameter(RESEARCH_PROJECT_PARAMETER, researchProject);
+        return new ForwardResolution(VIEW_ACTION)
+                .addParameter(RESEARCH_PROJECT_PARAMETER, researchProject)
+                .addParameter(RESEARCH_PROJECT_TAB_PARAMETER, RESEARCH_PROJECT_SUBMISSIONS_TAB);
     }
 
     // Complete Data getters are for the prepopulates on the create.jsp
@@ -1080,5 +1092,13 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     public List<String> getSelectedSubmissionSamples() {
         return selectedSubmissionSamples;
+    }
+
+    public String getRpSelectedTab() {
+        return rpSelectedTab;
+    }
+
+    public void setRpSelectedTab(String rpSelectedTab) {
+        this.rpSelectedTab = rpSelectedTab;
     }
 }

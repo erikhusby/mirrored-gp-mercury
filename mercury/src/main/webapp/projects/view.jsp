@@ -45,6 +45,13 @@
                 });
 
                 setupDialogs();
+
+                var selectedTabValue = '${actionBean.rpSelectedTab}';
+
+                if(selectedTabValue !== "") {
+                    $j("#tabs").tabs("load",'${actionBean.rpSelectedTab}');
+                    $j("#tabs").tabs("option","active",eval(${actionBean.rpSelectedTab}-1));
+                }
             });
 
             function showBeginCollaboration() {
@@ -518,7 +525,8 @@
             <ul>
                 <li><a href="#ordersTab">Orders</a></li>
                 <li><stripes:link beanclass="${actionBean.class.name}" event="viewSubmissions">Submission Requests
-                        <stripes:param name="researchProject" value="${actionBean.researchProject}"/>
+                        <stripes:param name="researchProject" value="${actionBean.researchProject}" />
+                        <stripes:param name="rpSelectedTab" value="<%= ResearchProjectActionBean.RESEARCH_PROJECT_SUBMISSIONS_TAB%>" />
                     </stripes:link></li>
             </ul>
 
