@@ -129,7 +129,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private Long selectedCollaborator;
     private String specifiedCollaborator;
     private String collaborationMessage;
-    private String quoteId;
+    private String collaborationQuoteId;
 
     @ValidateNestedProperties({
             @Validate(field = "title", label = "Project", required = true, maxlength = 4000, on = {SAVE_ACTION}),
@@ -309,7 +309,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
         if (editResearchProject.getCohortIds().length > 1) {
             addGlobalValidationError(
-                    "A collaboration requires only one cohort to be defined on the research project");
+                    "Cannot create a collaboration for this research project because it has more than one cohort associated with it");
         }
 
         if ((specifiedCollaborator == null) && (selectedCollaborator == null)) {
@@ -320,7 +320,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
             addGlobalValidationError("''{2}'' is not a valid email address.", specifiedCollaborator);
         }
 
-        validateQuoteId(quoteId);
+        validateQuoteId(collaborationQuoteId);
     }
 
     public Map<String, Long> getResearchProjectCounts() {
@@ -449,7 +449,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public Resolution beginCollaboration() throws Exception {
         try {
             collaborationService.beginCollaboration(editResearchProject, selectedCollaborator, specifiedCollaborator,
-                    quoteId, collaborationMessage);
+                    collaborationQuoteId, collaborationMessage);
             addMessage("Collaboration created successfully");
         } catch (Exception e) {
             addGlobalValidationError("Could not begin the Collaboration: {2}", e.getMessage());
@@ -890,12 +890,12 @@ public class ResearchProjectActionBean extends CoreActionBean {
         this.regulatoryInfoAlias = regulatoryInfoAlias;
     }
 
-    public String getQuoteId() {
-        return quoteId;
+    public String getCollaborationQuoteId() {
+        return collaborationQuoteId;
     }
 
-    public void setQuoteId(String quoteId) {
-        this.quoteId = quoteId;
+    public void setCollaborationQuoteId(String collaborationQuoteId) {
+        this.collaborationQuoteId = collaborationQuoteId;
     }
 
     /**

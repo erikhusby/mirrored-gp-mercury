@@ -34,7 +34,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.ALTERNATIVES)
 public class BatchToJiraTest extends Arquillian {
 
     @Inject
@@ -52,7 +52,7 @@ public class BatchToJiraTest extends Arquillian {
     @Inject
     private UserTransaction transaction;
 
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @BeforeMethod(groups = TestGroups.ALTERNATIVES)
     public void setUp() throws Exception {
         if (transaction == null) {
             return;
@@ -60,7 +60,7 @@ public class BatchToJiraTest extends Arquillian {
         transaction.begin();
     }
 
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @AfterMethod(groups = TestGroups.ALTERNATIVES)
     public void tearDown() throws Exception {
         // Skip if no injections, since we're not running in container.
         if (transaction == null) {

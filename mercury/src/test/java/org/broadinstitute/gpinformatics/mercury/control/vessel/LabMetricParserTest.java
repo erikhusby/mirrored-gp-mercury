@@ -31,7 +31,7 @@ import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Date;
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.STUBBY)
 public class LabMetricParserTest extends ContainerTest {
 
     @Inject
@@ -70,7 +70,7 @@ public class LabMetricParserTest extends ContainerTest {
 
     private static final String GOOD_QUANT_UPLOAD_FILE = "quant_upload_good.xlsx";
 
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @BeforeMethod(groups = TestGroups.STUBBY)
     public void setUp() throws Exception {
         // Skip if no injections, meaning we're not running in container.
         if (vesselDao == null) {
@@ -86,7 +86,7 @@ public class LabMetricParserTest extends ContainerTest {
         vesselDao.clear();
     }
 
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @AfterMethod(groups = TestGroups.STUBBY)
     public void tearDown() throws Exception {
         // Skip if no injections, meaning we're not running in container.
         if (vesselDao == null) {
@@ -95,7 +95,7 @@ public class LabMetricParserTest extends ContainerTest {
         utx.rollback();
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.STUBBY)
     public void testQuantParser() throws InvalidFormatException, IOException, ValidationException {
 
         InputStream testSpreadSheetInputStream =

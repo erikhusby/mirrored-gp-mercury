@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STUBBY;
 
 
 public class BSPPlatingTest  {
@@ -34,7 +35,7 @@ public class BSPPlatingTest  {
      *
      * @throws Exception any errors
      */
-    @Test(groups = {EXTERNAL_INTEGRATION}, enabled = false)
+    @Test(groups = {STUBBY}, enabled = false)
     public void testIssueBSPPlating() throws Exception {
         platingService = new BSPPlatingRequestServiceImpl();
 

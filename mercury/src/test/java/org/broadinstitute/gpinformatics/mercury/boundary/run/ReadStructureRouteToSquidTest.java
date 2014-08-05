@@ -27,7 +27,7 @@ public class ReadStructureRouteToSquidTest extends Arquillian {
                 org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST);
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.ALTERNATIVES)
     public void testSquidReadStructureRouting() {
         ReadStructureRequest readStructureRequest = new ReadStructureRequest();
         // this run barcode should be present in various squid databases (dev, test, prod)
@@ -36,7 +36,7 @@ public class ReadStructureRouteToSquidTest extends Arquillian {
         solexaRunResource.storeRunReadStructure(readStructureRequest);
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.ALTERNATIVES)
     public void testSquidReadStructureStorageFailure() {
         ReadStructureRequest readStructureRequest = new ReadStructureRequest();
         // this run barcode should be present in various squid databases (dev, test, prod)

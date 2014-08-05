@@ -100,6 +100,17 @@ public enum BillingTrackerHeader implements ColumnHeader {
     }
 
     /**
+     * Generates a header string for the price item name, which includes the "Billed" column header. Used when creating
+     * the billing tracker download.
+     *
+     * @param priceItem    the price item to get the name from
+     * @return the header text
+     */
+    public static String getHistoricalPriceItemNameHeader(PriceItem priceItem) {
+        return priceItem.getName() + "\n" + BILLED + " (Historical)";
+    }
+
+    /**
      * Generates a header string for the product part number, which includes the "Update Quantity To" column header.
      * Used when creating the billing tracker download.
      *

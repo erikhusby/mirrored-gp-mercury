@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServic
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResourceTest;
 import org.broadinstitute.gpinformatics.mercury.boundary.rapsheet.ReworkEjbTest;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.IlluminaRunResourceLiveTest;
@@ -51,13 +52,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumMap;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
-import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 
 /**
  * Test run registration web service
  */
-@Test(groups = EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.STUBBY)
 public class SolexaRunRestResourceTest extends Arquillian {
 
     @Inject
@@ -111,11 +110,10 @@ public class SolexaRunRestResourceTest extends Arquillian {
          * local server
          *
          */
-        return DeploymentBuilder
-                .buildMercuryWarWithAlternatives(TEST, BSPSampleSearchServiceStub.class);
+        return DeploymentBuilder.buildMercuryWar();
     }
 
-    @BeforeMethod(groups = EXTERNAL_INTEGRATION)
+    @BeforeMethod(groups = TestGroups.STUBBY)
     public void setUp() throws Exception {
         runBarcode = "RunBarcode" + System.currentTimeMillis();
 
@@ -206,7 +204,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
         result = runFile.mkdirs();
     }
 
-    @AfterMethod(groups = EXTERNAL_INTEGRATION)
+    @AfterMethod(groups = TestGroups.STUBBY)
     public void tearDown() throws Exception {
         if (flowcellDao == null) {
             return;
@@ -216,7 +214,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
         productOrderDao.persist(exexOrder);
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = false)
+    @Test(groups = TestGroups.STUBBY, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = false)
     public void testCreateRun() {
 
         Assert.assertTrue(result);
@@ -244,7 +242,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
 
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = false)
+    @Test(groups = TestGroups.STUBBY, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = false)
     public void testCreate2500Run() {
 
         Assert.assertTrue(result);
@@ -272,7 +270,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
 
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION,
+    @Test(groups = TestGroups.STUBBY,
           dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = false)
     @RunAsClient
     public void testReadStructureOverHttp(@ArquillianResource URL baseUrl) {
@@ -306,7 +304,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
 
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = true)
+    @Test(groups = TestGroups.STUBBY, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = true)
     @RunAsClient
     public void testMercuryLanes(@ArquillianResource URL baseUrl) {
         String wsUrl = baseUrl.toExternalForm() + "rest/solexarun/storeRunReadStructure";

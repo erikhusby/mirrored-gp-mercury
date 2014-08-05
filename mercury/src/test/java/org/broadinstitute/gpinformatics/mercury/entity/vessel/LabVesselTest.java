@@ -43,11 +43,11 @@ public class LabVesselTest {
                 "Bravo");
 
         labEvent.getCherryPickTransfers().add(new CherryPickTransfer(
-                sourceTubeFormation.getContainerRole(), VesselPosition.A01,
-                targetTubeFormation.getContainerRole(), VesselPosition.A01, labEvent));
+                sourceTubeFormation.getContainerRole(), VesselPosition.A01, null,
+                targetTubeFormation.getContainerRole(), VesselPosition.A01, null, labEvent));
         labEvent.getCherryPickTransfers().add(new CherryPickTransfer(
-                sourceTubeFormation.getContainerRole(), VesselPosition.A02,
-                targetTubeFormation.getContainerRole(), VesselPosition.A02, labEvent));
+                sourceTubeFormation.getContainerRole(), VesselPosition.A02, null,
+                targetTubeFormation.getContainerRole(), VesselPosition.A02, null, labEvent));
 
         LabVesselFactory labVesselFactory = new LabVesselFactory();
         labVesselFactory.setBspUserList(new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
@@ -94,11 +94,11 @@ public class LabVesselTest {
                 "Bravo");
 
         labEvent.getCherryPickTransfers().add(new CherryPickTransfer(
-                sourceTubeFormation.getContainerRole(), VesselPosition._8_2,
-                targetTubeFormation.getContainerRole(), VesselPosition.A31, labEvent));
+                sourceTubeFormation.getContainerRole(), VesselPosition._8_2, null,
+                targetTubeFormation.getContainerRole(), VesselPosition.A31, null, labEvent));
         labEvent.getCherryPickTransfers().add(new CherryPickTransfer(
-                sourceTubeFormation.getContainerRole(), VesselPosition._8_3,
-                targetTubeFormation.getContainerRole(), VesselPosition.A32, labEvent));
+                sourceTubeFormation.getContainerRole(), VesselPosition._8_3, null,
+                targetTubeFormation.getContainerRole(), VesselPosition.A32, null, labEvent));
 
         LabVesselFactory labVesselFactory = new LabVesselFactory();
         labVesselFactory.setBspUserList(new BSPUserList(BSPManagerFactoryProducer.stubInstance()));

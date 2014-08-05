@@ -9,6 +9,7 @@ import javax.inject.Inject;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STUBBY;
 
 /**
  * Test creation of plates
@@ -17,7 +18,7 @@ public class IndexedPlateFactoryTest extends ContainerTest {
     @Inject
     private IndexedPlateFactory indexedPlateFactory;
 
-    @Test(enabled = false, groups = EXTERNAL_INTEGRATION)
+    @Test(enabled = false, groups = STUBBY)
     public void testParseFile() {
 
         // Not sure about the following

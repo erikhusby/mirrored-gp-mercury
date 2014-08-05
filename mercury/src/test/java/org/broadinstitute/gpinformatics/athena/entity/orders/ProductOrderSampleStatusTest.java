@@ -18,7 +18,7 @@ import javax.transaction.UserTransaction;
 import java.util.Arrays;
 import java.util.List;
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.STUBBY)
 public class ProductOrderSampleStatusTest extends ContainerTest {
 
     @Inject
@@ -43,7 +43,7 @@ public class ProductOrderSampleStatusTest extends ContainerTest {
 
     private static final int NUM_TEST_SAMPLES = 20;
 
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @BeforeMethod(groups = TestGroups.STUBBY)
     public void setUp() throws Exception {
         // Skip if no injections, meaning we're not running in container
         if (utx == null) {
@@ -66,7 +66,7 @@ public class ProductOrderSampleStatusTest extends ContainerTest {
         productOrderDao.clear();
     }
 
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @AfterMethod(groups = TestGroups.STUBBY)
     public void tearDown() throws Exception {
         // Skip if no injections, meaning we're not running in container
         if (utx == null) {

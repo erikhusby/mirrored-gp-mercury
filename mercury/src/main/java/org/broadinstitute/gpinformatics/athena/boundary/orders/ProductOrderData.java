@@ -48,6 +48,7 @@ public class ProductOrderData {
     private String requisitionName;
     private String productOrderKey;
     private String workRequestId;
+    private int riskNotCalculatedCount;
 
     // These are required input arguments for creating a work request in BSP.
     private int numberOfSamples;
@@ -118,7 +119,16 @@ public class ProductOrderData {
             // includeSamples = false.  Is the JAXB behavior with an empty List undesirable?
             samples = null;
         }
-        numberOfSamples = productOrder.getSamples().size();
+
+        numberOfSamples = productOrder.getSampleCount();
+
+        if (includeSamples) {
+            for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
+                if (productOrderSample.getRiskItems().isEmpty()) {
+                    riskNotCalculatedCount++;
+                }
+            }
+        }
     }
 
     private static List<String> getSampleList(List<ProductOrderSample> productOrderSamples) {
@@ -266,7 +276,6 @@ public class ProductOrderData {
         this.requisitionName = requisitionName;
     }
 
-
     public String getProductOrderKey() {
         return productOrderKey;
     }
@@ -364,5 +373,13 @@ public class ProductOrderData {
 
     public void setMaterialType(String materialType) {
         this.materialType = materialType;
+    }
+
+    public int getRiskNotCalculatedCount() {
+        return riskNotCalculatedCount;
+    }
+
+    public void setRiskNotCalculatedCount(int riskNotCalculatedCount) {
+        this.riskNotCalculatedCount = riskNotCalculatedCount;
     }
 }

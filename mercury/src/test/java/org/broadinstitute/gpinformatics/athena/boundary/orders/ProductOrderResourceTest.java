@@ -21,7 +21,7 @@ import java.util.Date;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.AUTO_BUILD;
-import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STANDARD;
 
 public class ProductOrderResourceTest extends RestServiceContainerTest {
 
@@ -43,7 +43,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
         return "productOrders";
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = false)
+    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = false)
     @RunAsClient
     public void testFetchLibraryDetailsByTubeBarcode(@ArquillianResource URL baseUrl) {
         Date testDate = new Date();
@@ -61,7 +61,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
         resource.post(data);
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
+    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
     @RunAsClient
     public void testFetchAtRiskPDOSamplesAllAtRisk(@ArquillianResource URL baseUrl) {
         PDOSamples pdoSamples = getAtRiskSamples();
@@ -99,7 +99,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
                 "web service call used by squid to update the risk categorized samples field in LCSET tickets.");
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
+    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
     @RunAsClient
     public void testFetchAtRiskPDOSamplesNoneAtRisk(@ArquillianResource URL baseUrl) {
         PDOSamples pdoSamples = getNonRiskPDOSamples();
@@ -113,7 +113,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
         Assert.assertTrue(returnedPdoSamples.getErrors().isEmpty());
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFindByIds(@ArquillianResource URL baseUrl) {
         ProductOrders orders = makeWebResource(baseUrl, "pdo/" + VALID_PDO_ID)

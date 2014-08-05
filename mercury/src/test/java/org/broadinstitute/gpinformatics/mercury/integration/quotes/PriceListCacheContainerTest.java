@@ -12,7 +12,7 @@ import java.util.Collection;
 public class PriceListCacheContainerTest {
     private PriceListCache priceListCache=new PriceListCache(PMBQuoteServiceProducer.testInstance());
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.STANDARD)
     public void testSanity() {
 
         Assert.assertNotNull(priceListCache);

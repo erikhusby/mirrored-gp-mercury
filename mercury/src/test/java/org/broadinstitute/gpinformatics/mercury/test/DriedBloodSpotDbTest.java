@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * Tests Dried Blood Spot messaging, including persistence
  */
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.STUBBY)
 public class DriedBloodSpotDbTest extends ContainerTest {
 
     private final SimpleDateFormat timestampFormat = new SimpleDateFormat("MMddHHmmss");

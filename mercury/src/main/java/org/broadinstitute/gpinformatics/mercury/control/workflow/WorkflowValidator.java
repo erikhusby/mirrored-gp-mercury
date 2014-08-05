@@ -185,21 +185,28 @@ public class WorkflowValidator {
         List<WorkflowValidationError> validationErrors = validateWorkflow(labVessels, stationEventType.getEventType());
 
         if (!validationErrors.isEmpty()) {
-            Map<String, Object> rootMap = new HashMap<>();
-            String linkToPlastic = appConfig.getUrl() + VesselSearchActionBean.ACTIONBEAN_URL_BINDING + "?" +
-                                   VesselSearchActionBean.VESSEL_SEARCH + "=&searchKey=" + labVessels.iterator().next()
-                                                                                                     .getLabel();
-            rootMap.put("linkToPlastic", linkToPlastic);
-            rootMap.put("stationEvent", stationEventType);
-            rootMap.put("bspUser", bspUserList.getByUsername(stationEventType.getOperator()));
-            rootMap.put("validationErrors", validationErrors);
-            StringWriter stringWriter = new StringWriter();
-            templateEngine.processTemplate("WorkflowValidation.ftl", rootMap, stringWriter);
+            String body = renderTemplate(labVessels, stationEventType, validationErrors);
             emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
-                                      "Workflow validation failure for " +
-                                      stationEventType.getEventType(),
-                                      stringWriter.toString());
+                    "Workflow validation failure for " + stationEventType.getEventType(), body);
         }
+    }
+
+    /**
+     * Uses a template to render validation errors into an HTML email body.
+     */
+    public String renderTemplate(Collection<LabVessel> labVessels, StationEventType stationEventType,
+            List<WorkflowValidationError> validationErrors) {
+        Map<String, Object> rootMap = new HashMap<>();
+        String linkToPlastic = appConfig.getUrl() + VesselSearchActionBean.ACTIONBEAN_URL_BINDING + "?" +
+                               VesselSearchActionBean.VESSEL_SEARCH + "=&searchKey=" + labVessels.iterator().next()
+                                                                                                 .getLabel();
+        rootMap.put("linkToPlastic", linkToPlastic);
+        rootMap.put("stationEvent", stationEventType);
+        rootMap.put("bspUser", bspUserList.getByUsername(stationEventType.getOperator()));
+        rootMap.put("validationErrors", validationErrors);
+        StringWriter stringWriter = new StringWriter();
+        templateEngine.processTemplate("WorkflowValidation.ftl", rootMap, stringWriter);
+        return stringWriter.toString();
     }
 
     /**
@@ -232,8 +239,7 @@ public class WorkflowValidator {
                         if (!errors.isEmpty()) {
                             ProductOrder productOrder = null;
                             if (sampleInstance.getSingleBucketEntry() != null) {
-                                productOrder = productOrderDao.findByBusinessKey(
-                                        sampleInstance.getSingleBucketEntry().getProductOrder().getBusinessKey());
+                                productOrder = sampleInstance.getSingleBucketEntry().getProductOrder();
                             }
                             //if this is a rework and we are at the first step of the process it was reworked from ignore the error
                             boolean ignoreErrors = false;

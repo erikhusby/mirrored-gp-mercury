@@ -64,7 +64,7 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(AUTO_BUILD);
     }
 
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @BeforeMethod(groups = TestGroups.STANDARD)
     public void setUp() throws Exception {
         // Skip if no injections, since we're not running in container.
         if (utx == null) {
@@ -74,7 +74,7 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
         utx.begin();
     }
 
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @AfterMethod(groups = TestGroups.STANDARD)
     public void tearDown() throws Exception {
         // Skip if no injections, since we're not running in container.
         if (utx == null) {
@@ -92,7 +92,7 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
      * <p/>
      * This test is only checking to see if the queue is present on the server at the specified port and host name.
      */
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.STANDARD)
     public void testSendMessage() throws Exception {
         sendMessage();
     }
@@ -103,7 +103,7 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
      * This test doesn't actually connect to the JMS queue.  The test hands the message directly
      * to the MDB handler method.
      */
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.STANDARD)
     public void testOnMessage() throws Exception {
         deliverMessage();
         List<WorkCompleteMessage> messages = workCompleteMessageDao.getNewMessages();
@@ -127,7 +127,7 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
     }
 
     // TODO: expand to test creating ledger entries from message
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+    @Test(groups = TestGroups.STANDARD, enabled = false)
     public void testOnMessageReadBack() throws Exception {
         deliverMessage();
         AutomatedBiller automatedBiller =

@@ -12,7 +12,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -103,8 +103,8 @@ public class JiraCommentUtil {
     public void postUpdate(String message, Collection<LabVessel> vessels) {
         Set<JiraTicket> tickets = new HashSet<>();
         for (LabVessel vessel : vessels) {
-            for (SampleInstance sampleInstance : vessel.getSampleInstances()) {
-                LabBatch batch = sampleInstance.getLabBatch();
+            for (SampleInstanceV2 sampleInstance : vessel.getSampleInstancesV2()) {
+                LabBatch batch = sampleInstance.getSingleBatch();
                 if (batch != null && batch.getJiraTicket() != null) {
                     tickets.add(batch.getJiraTicket());
                 }

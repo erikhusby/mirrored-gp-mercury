@@ -58,7 +58,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
  * @author epolk
  */
 
-@Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION, singleThreaded = true)
+@Test(enabled = true, groups = TestGroups.ALTERNATIVES, singleThreaded = true)
 public class ExtractTransformTest extends Arquillian {
     private static final Log logger = LogFactory.getLog(ExtractTransform.class);
     private String datafileDir;
@@ -105,18 +105,18 @@ public class ExtractTransformTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWarWithAlternatives(DEV, "dev", SessionContextUtilityKeepScope.class);
     }
 
-    @BeforeClass(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @BeforeClass(groups = TestGroups.ALTERNATIVES)
     public void beforeClass() throws Exception {
         datafileDir = System.getProperty("java.io.tmpdir");
     }
 
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @BeforeMethod(groups = TestGroups.ALTERNATIVES)
     public void beforeMethod() throws Exception {
         ExtractTransform.setDatafileDir(datafileDir);
         EtlTestUtilities.deleteEtlFiles(datafileDir);
     }
 
-    @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = true, groups = TestGroups.ALTERNATIVES)
     public void testEtl() throws Exception {
         final BarcodedTube labVessel = new BarcodedTube(barcode);
         final String datFileEnding = "_lab_vessel.dat";
@@ -222,7 +222,7 @@ public class ExtractTransformTest extends Arquillian {
         return new Long[]{(Long)obj[0], (Long)obj[1], (Long)obj[2]};
     }
 
-    @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = true, groups = TestGroups.ALTERNATIVES)
     public void testUndeletedRiskOnDevDb() throws Exception {
         Long[] ids = getRiskJoin(false);
         if (ids == null || ids.length < 3) {
@@ -254,7 +254,7 @@ public class ExtractTransformTest extends Arquillian {
         Assert.assertTrue(searchEtlFile(datafileDir, datFileEnding, "F", pdoSampleId));
     }
 
-    @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = true, groups = TestGroups.ALTERNATIVES)
     public void testDeletedRiskOnDevDb() throws Exception {
         Long[] ids = getRiskJoin(true);
         if (ids == null || ids.length < 3) {
@@ -278,7 +278,7 @@ public class ExtractTransformTest extends Arquillian {
     }
 
 
-    @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = true, groups = TestGroups.ALTERNATIVES)
     public void testUndeletedLedgerOnDevDb() throws Exception {
         Long[] ids = getLedgerJoin(false);
         if (ids == null || ids.length < 3) {
@@ -312,7 +312,7 @@ public class ExtractTransformTest extends Arquillian {
         Assert.assertTrue(searchEtlFile(datafileDir, datFileEnding, "F", pdoSampleId));
     }
 
-    @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = true, groups = TestGroups.ALTERNATIVES)
     public void testDeletedLedgerOnDevDb() throws Exception {
         Long[] ids = getLedgerJoin(true);
         if (ids == null || ids.length < 3 || ids[0] == null) {
@@ -335,7 +335,7 @@ public class ExtractTransformTest extends Arquillian {
         Assert.assertTrue(searchEtlFile(datafileDir, datFileEnding, "T", pdoSampleId));
     }
 
-    @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = true, groups = TestGroups.ALTERNATIVES)
     public void testBackfill() throws Exception {
         for (Class backfillClass : backfillClasses) {
             Response response = extractTransform.backfillEtl(backfillClass.getName(), 1, 1);

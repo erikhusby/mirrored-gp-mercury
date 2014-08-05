@@ -57,7 +57,7 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+@Test(groups = TestGroups.ALTERNATIVES, enabled = true)
 public class BillingEjbPartialSuccessTest extends Arquillian {
 
     @Inject
@@ -274,7 +274,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
      * persisted.</li>
      * </ul>
      */
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+    @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
       public void testPositive() {
 
         cycleFails = false;
@@ -321,7 +321,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         }
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+    @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
     public void testMultipleFailure() {
 
         String[] sampleNameList = {"SM-2342", "SM-9291", "SM-2349", "SM-9944", "SM-4444", "SM-4441", "SM-1112",
@@ -368,7 +368,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
                    quoteImportItems.size(), is(equalTo(0)));
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+    @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
     public void testNoForcedFailures() {
 
         log.debug("Running no forced failures threaded");
@@ -393,7 +393,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         List<QuoteImportItem> quoteImportItems = billingSession.getUnBilledQuoteImportItems(priceListCache);
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+    @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
     public void testBillingAdaptorLog() {
         BillingAdaptor adaptor = new BillingAdaptor();
         PriceItem priceItem = new PriceItem("quoteServerId", "myPlatform", "myCategory", "importItemName");
