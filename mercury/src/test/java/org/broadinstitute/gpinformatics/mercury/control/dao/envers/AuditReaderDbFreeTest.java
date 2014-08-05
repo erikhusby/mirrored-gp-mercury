@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.envers;
 
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
@@ -9,14 +8,9 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.persistence.Id;
-import javax.persistence.metamodel.SingularAttribute;
-import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Field;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Enumeration;
 import java.util.List;
 
 @Test(enabled = true, groups = TestGroups.DATABASE_FREE)

@@ -1,10 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.envers;
 
-import org.apache.commons.collections4.IterableSortedMap;
-import org.apache.commons.collections4.OrderedMapIterator;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
-import org.jetbrains.annotations.NotNull;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -13,19 +8,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedMap;
 
 public class AuditedRevDto {
     private final Long revId;
     private final Date revDate;
     private final String username;
-    private final Set<String> entityTypeNames;
+    private final List<String> entityTypeNames;
 
     public AuditedRevDto(Long revId, Date revDate, String username, Set<String> entityClassNames) {
         this.revId = revId;
         this.revDate = revDate;
         this.username = username;
-        this.entityTypeNames = entityClassNames;
+        this.entityTypeNames = new ArrayList<>(entityClassNames);
     }
 
     public Long getRevId() {
@@ -40,7 +34,7 @@ public class AuditedRevDto {
         return username;
     }
 
-    public Set<String> getEntityTypeNames() {
+    public List<String> getEntityTypeNames() {
         return entityTypeNames;
     }
 

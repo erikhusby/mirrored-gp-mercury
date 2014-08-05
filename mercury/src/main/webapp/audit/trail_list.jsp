@@ -3,7 +3,7 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.audit.AuditTrailActionBean" />
 
-<stripes:layout-render name="/layout.jsp" pageTitle="List Audit Trails" sectionTitle="List Audit Trails" showCreate="true">
+<stripes:layout-render name="/layout.jsp" pageTitle="Audit Trail Search" sectionTitle="Audit Trail Search" showCreate="true">
 
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
@@ -37,10 +37,10 @@
 
         <stripes:form beanclass="${actionBean.class.name}" id="searchForm">
             <div class="search-horizontal">
-
+                <p>Enter search criteria:</p>
                 <div class="control-group">
                     <stripes:label for="dateRangeDiv" class="control-label">
-                        Date of Change
+                        Date range
                     </stripes:label>
                     <div class="controls">
                         <div id="dateRangeDiv"
@@ -52,47 +52,54 @@
                 </div>
 
                 <div class="control-group">
-                    <stripes:label for="timeStartDiv" class="control-label">
-                        Time of Change
-                    </stripes:label>
                     <div class="controls">
-                        <stripes:text id="timeStartDiv" name="searchStartTime" class="search-input" style="width:250px"/>
+                        <div>
+                            <stripes:label for="timeStartDiv" class="control-label">
+                                Start Date Time
+                            </stripes:label>
+                            <stripes:text id="timeStartDiv" name="searchStartTime" class="search-input" style="width:50px"/>
+                        </div>
                         &nbsp;
-                        <stripes:text id="timeEndDiv" name="searchEndTime" class="search-input" style="width:250px"/>
+                        <div>
+                            <stripes:label for="timeStartDiv" class="control-label">
+                                End Date Time
+                            </stripes:label>
+                            <stripes:text id="timeEndDiv" name="searchEndTime" class="search-input" style="width:50px"/>
+                        </div>
                     </div>
                 </div>
 
                 <div class="control-group">
-                    <stripes:label for="searchUsername" class="control-label">
-                        User Responsible for the Change
+                    <stripes:label for="search_username" class="control-label">
+                        Username
                     </stripes:label>
                     <div class="controls">
-                        <stripes:select id="searchUsername" name="searchUsername" class="search-input" style="width:250px">
+                        <stripes:select id="search_username" name="searchUsername" class="search-input" style="width:250px">
                             <stripes:option label="Any User" value="Any User"/>
-                            <stripes:options-collection collection="${actionBean.usernames}"/>
+                            <stripes:options-collection collection="${actionBean.auditUsernames}"/>
                         </stripes:select>
                     </div>
                 </div>
 
                 <div class="control-group">
                     <stripes:label for="searchEntityDisplayName" class="control-label">
-                        Type of Entity Changed
+                        Type of Entity
                     </stripes:label>
                     <div class="controls">
                         <stripes:select id="searchEntityDisplayName" name="searchEntityDisplayName" class="search-input" style="width:250px">
-                            <stripes:option label="entityType" value="Any Type"/>
+                            <stripes:option label="Any Type" value="Any Type"/>
                             <stripes:options-collection collection="${actionBean.entityDisplayNames}"/>
                         </stripes:select>
                     </div>
                 </div>
 
-            </div>
-
-            <div class="control-group">
-                <div class="control-label">&#160;</div>
-                <div class="controls actionButtons">
-                    <stripes:submit name="listAuditTrails" value="Search" style="margin-right: 10px;margin-top:10px;" class="btn btn-mini"/>
+                <div class="control-group">
+                    <div class="control-label">&#160;</div>
+                    <div class="controls actionButtons">
+                        <stripes:submit name="listAuditTrails" value="Search" style="margin-right: 10px;margin-top:10px;" class="btn btn-mini"/>
+                    </div>
                 </div>
+
             </div>
 
         </stripes:form>
@@ -102,7 +109,6 @@
         <table class="table simple" id="auditTrailTable">
             <thead>
             <tr>
-                <th>Name</th>
                 <th class="columnRevId">Rev Id</th>
                 <th class="columnRevDate">Rev Date</th>
                 <th class="columnUser">User</th>
@@ -122,11 +128,11 @@
                             ${auditTrail.username}
                     </td>
                     <td class="columnEntities">
-                        <c:forEach items="${auditTrail.entityClassNameDtos}" var="auditTrailEntityClassNameDto">
+                        <c:forEach items="${auditTrail.entityTypeNames}" var="auditTrailEntityClassName">
                             <stripes:link beanclass="${actionBean.class.name}" event="viewEntitiesAtRev">
                                 <stripes:param name="revId" value="${auditTrail.revId}"/>
-                                <stripes:param name="entityClassname" value="${auditTrailEntityClassNameDto.entityClassname}"/>
-                                ${auditTrailEntityClassNameDto.entityDisplayName}
+                                <stripes:param name="entityClassname" value="${auditTrailEntityClassName}"/>
+                                ${auditTrailEntityClassName}
                             </stripes:link>
                             &nbsp;
                         </c:forEach>
