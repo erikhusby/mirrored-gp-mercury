@@ -24,7 +24,7 @@ public class ProductOrderSampleContainerTest extends ContainerTest {
     @Inject
     private ProductOrderDao pdoDao;
 
-
+    @Test(enabled = false)
     public void testOrderSampleConstruction() {
         ProductOrderSample testSample = new ProductOrderSample("SM-1P3XN");
         Assert.assertTrue(testSample.isInBspFormat());
