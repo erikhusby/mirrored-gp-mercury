@@ -82,8 +82,9 @@ public class SubmissionsServiceImpl implements SubmissionsService {
                            .post(ClientResponse.class);
 
         if(response.getStatus() != Response.Status.OK.getStatusCode()) {
-            log.error("Error received while posting submissions: " +response.getEntity(String.class));
-            throw new InformaticsServiceException(response.getEntity(String.class));
+            String errorResponse = response.getEntity(String.class);
+            log.error("Error received while posting submissions: " + errorResponse);
+            throw new InformaticsServiceException(errorResponse);
         }
 
         return response.getEntity(SubmissionStatusResultBean.class).getSubmissionStatuses();

@@ -839,7 +839,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
             addGlobalValidationError(e.getMessage());
         }
 
-        return new ForwardResolution(VIEW_ACTION)
+        return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION)
                 .addParameter(RESEARCH_PROJECT_PARAMETER, researchProject)
                 .addParameter(RESEARCH_PROJECT_TAB_PARAMETER, RESEARCH_PROJECT_SUBMISSIONS_TAB);
     }

@@ -50,7 +50,7 @@
 
                 if(selectedTabValue !== "") {
                     $j("#tabs").tabs("load",'${actionBean.rpSelectedTab}');
-                    $j("#tabs").tabs("option","active",eval(${actionBean.rpSelectedTab}-1));
+                    $j("#tabs").tabs({active: eval('${actionBean.rpSelectedTab}')});
                 }
             });
 

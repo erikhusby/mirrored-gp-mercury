@@ -46,7 +46,7 @@
                     {"bSortable": false}                //Status Date
                 ]
             });
-
+            $j('.shiftCheckbox').enableCheckboxRangeSelection();
         })
     </script>
 </head>
@@ -70,23 +70,23 @@
             <!-- add data type to big list -->
             <!-- only show latest single file -->
             <th width="20">
-                <input id="submissionSelections" for="count" type="checkbox" class="checkAll"/>
+                <input for="count" type="checkbox" class="checkAll"/>
                 <span id="count" class="checkedCount"></span>
             </th>
-            <th width="100">Sample</th>
+            <th width="80">Sample</th>
             <%--<th width="100">BioSample</th>--%>
-            <th width="75">Data Type</th>
-            <th width="180">PDOs</th>
-            <th width="100">Aggregation Project</th>
-            <th width="80">File Type</th>
-            <th width="50">Version</th>
-            <th width="80">Quality Metric</th>
-            <th width="90">Contamination</th>
-            <th width="80">Fingerprint</th>
+            <th width="65">Data Type</th>
+            <th width="200">PDOs</th>
+            <th width="70">Aggregation Project</th>
+            <th width="50">File Type</th>
+            <th width="30">Version</th>
+            <th width="40">Quality Metric</th>
+            <th width="75">Contamination</th>
+            <th width="70">Fingerprint</th>
             <!-- add # lanes, # lanes blacklisted, notes -->
-            <th width="80">Lanes in Aggregation</th>
-            <th width="70">Blacklisted Lanes</th>
-            <th width="70">Submitted Version</th>
+            <th width="70">Lanes in Aggregation</th>
+            <th width="60">Blacklisted Lanes</th>
+            <th width="60">Submitted Version</th>
             <th width="50">Current Status</th>
             <th width="40">Status Date</th>
 
@@ -114,12 +114,10 @@
                     <table class="simple" style="table-layout: fixed;">
                         <c:forEach items="${submissionSample.productOrders}" var="pdo">
                             <tr>
-                                <td width="100">${pdo.businessKey}</td>
-                                <td style="max-width: 100px;
-                                                    min-width: 100px;
-                                                    overflow: hidden;
-                                                    text-overflow: ellipsis;
-                                                    white-space: nowrap;"
+                                <td width="60">${pdo.businessKey}</td>
+                                <td style="max-width: 140px; min-width: 100px; overflow: hidden;
+                                text-overflow: ellipsis; white-space: nowrap;"
+                                    class="ellipsis"
                                     title="${pdo.product.productName}">
                                         ${pdo.product.productName}</td>
                             </tr>
