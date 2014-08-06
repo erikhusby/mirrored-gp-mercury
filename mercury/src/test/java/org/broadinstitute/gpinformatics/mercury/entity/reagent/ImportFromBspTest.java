@@ -25,6 +25,7 @@ import java.util.List;
 /**
  * In preparation for testing Mercury by sending it BettaLIMS production messages, import data from BSP.
  */
+@Test(groups = TestGroups.STUBBY)
 public class ImportFromBspTest extends ContainerTest {
 
     //    @PersistenceContext(unitName = "gap_pu")

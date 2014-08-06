@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
 import com.sun.jersey.api.client.ClientResponse;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
@@ -11,6 +12,7 @@ import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 
+@Test(groups = TestGroups.DATABASE_FREE)
 public class QuoteServiceTest {
 
     private Quote quote;

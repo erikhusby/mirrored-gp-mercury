@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
-import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnectorStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
@@ -17,6 +16,7 @@ import javax.ws.rs.core.Response;
  * Test that confirms the default
  * routing of read structure data to squid
  */
+@Test(groups = TestGroups.ALTERNATIVES)
 public class ReadStructureRouteToSquidTest extends Arquillian {
 
     @Inject SolexaRunResource solexaRunResource;

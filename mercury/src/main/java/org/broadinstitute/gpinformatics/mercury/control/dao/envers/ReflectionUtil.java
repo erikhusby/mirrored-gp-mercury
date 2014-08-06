@@ -1,10 +1,18 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.envers;
 
+import org.apache.commons.collections4.CollectionUtils;
+
 import javax.persistence.Id;
+import javax.persistence.metamodel.SingularAttribute;
+import java.io.File;
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Enumeration;
+import java.util.List;
 
 public class ReflectionUtil {
 
@@ -65,4 +73,86 @@ public class ReflectionUtil {
         }
         return fields;
     }
+
+    public static List<Class> getMercuryAthenaClasses() {
+        String[] packagesToScan = new String[] {
+                "org.broadinstitute.gpinformatics.athena.entity",
+                "org.broadinstitute.gpinformatics.mercury.entity"
+        };
+        List<Class> classesFromPkg = new ArrayList<>();
+        for (String packageToScan : packagesToScan) {
+            classesFromPkg.addAll(getClasses(packageToScan));
+        }
+        return classesFromPkg;
+    }
+
+    public static List<String> getEntityClassnames(List<Class> classesToScan) {
+        List<String> entityClassnames = new ArrayList<>();
+
+        // Finds the persistence classes by searching for SingularAttribute fields.
+        // That class is generated, but strip off the trailing '_' and that's the entity class.
+        for (Class cls : classesToScan) {
+            if (CollectionUtils.isNotEmpty(ReflectionUtil.getFieldsOfType(cls, SingularAttribute.class))) {
+                int idx = cls.getCanonicalName().lastIndexOf("_");
+                if (idx < cls.getCanonicalName().length() - 1) {
+                    throw new RuntimeException("Unexpected generated class name: " + cls.getCanonicalName());
+                }
+                entityClassnames.add(cls.getCanonicalName().substring(0, idx));
+            }
+        }
+        return entityClassnames;
+    }
+
+    /**
+     * Scans all classes accessible from the context class loader which belong to the given package and subpackages.
+     */
+    private static Collection<Class> getClasses(String packageName) {
+        Collection<Class> classes = new ArrayList<>();
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        String path = packageName.replace('.', '/');
+        Collection<File> dirs = new ArrayList<>();
+        try {
+            Enumeration<URL> resources = classLoader.getResources(path);
+            while (resources.hasMoreElements()) {
+                URL resource = resources.nextElement();
+                dirs.add(new File(resource.getFile()));
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Cannot load " + path, e);
+        }
+
+        for (File directory : dirs) {
+            try {
+                classes.addAll(recurseDirectories(directory, packageName));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return classes;
+    }
+
+    /** Returns all classes in the directory hierarchy. */
+    private static List<Class> recurseDirectories(File directory, String packageName) {
+        List<Class> classes = new ArrayList<>();
+        if (directory.exists()) {
+            for (File file : directory.listFiles()) {
+                if (file.isDirectory()) {
+                    if (!file.getName().contains(".")) {
+                        classes.addAll(recurseDirectories(file, packageName + "." + file.getName()));
+                    }
+                } else if (file.getName().endsWith(".class")) {
+                    int idx = file.getName().lastIndexOf(".class");
+                    String classname = packageName + '.' + file.getName().substring(0, idx);
+                    try {
+                        classes.add(Class.forName(classname));
+                    } catch (ClassNotFoundException e) {
+                        throw new RuntimeException("Unknown class '" + classname + "' : " + e);
+                    }
+                }
+            }
+        }
+        return classes;
+    }
+
+
 }

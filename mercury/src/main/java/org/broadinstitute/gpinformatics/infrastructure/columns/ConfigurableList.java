@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.columns;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.athena.entity.preference.ColumnSetsPreference;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 
 import javax.annotation.Nonnull;
@@ -10,6 +11,7 @@ import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.text.Format;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -102,8 +104,6 @@ public class ConfigurableList {
      *
      * @param columnSetName which preference to use
      * @param columnSetType type of column set
-     * @param bspDomainUser to retrieve preferences, and evaluate visibility expression
-     * @param group         to retrieve preferences, and evaluate visibility expression
      * @param columnSets    holds column sets
      * @return list of column names
      */
@@ -112,7 +112,7 @@ public class ConfigurableList {
             ColumnSetsPreference columnSets) {
 
         Map<String, Object> context = new HashMap<>();
-        context.put("columnSetType", columnSetType);
+        context.put(SearchDefinitionFactory.CONTEXT_KEY_COLUMN_SET_TYPE, columnSetType);
 /*
         context.put("bspDomainUser", bspDomainUser);
         context.put("group", group);
@@ -168,7 +168,6 @@ public class ConfigurableList {
      * @param columnTabulations The tabulations used.
      * @param sortColumnIndex The column to sort.
      * @param sortDirection Ascending or descending.
-     * @param admin Is this admin?
      * @param columnEntity The field id.
      * @param multiValueDelimiter The text to use as the delimiter between values in a multi-valued field.
      * @param multiValueAddTrailingDelimiter Whether to include a trailing delimiter in multi-valued fields.
@@ -180,7 +179,10 @@ public class ConfigurableList {
         this.multiValueDelimiter = multiValueDelimiter;
         this.multiValueAddTrailingDelimiter = multiValueAddTrailingDelimiter;
         for (ColumnTabulation columnTabulation : columnTabulations) {
-            headerGroupMap.put(columnTabulation.getName(), new HeaderGroup(columnTabulation.getName()));
+            // Ignore header logic on nested table ColumnTabulation
+            if( !columnTabulation.isNestedParent() ) {
+                headerGroupMap.put(columnTabulation.getName(), new HeaderGroup(columnTabulation.getName()));
+            }
         }
         this.sortColumnIndex = sortColumnIndex;
         this.sortDirection = sortDirection;
@@ -202,11 +204,10 @@ public class ConfigurableList {
      *
      * @param columnTabulations The tabulations used.
      * @param sortColumnIndexes The columns to sort by.
-     * @param admin Is this admin?
      * @param columnEntity The field id.
      */
     public ConfigurableList(List<ColumnTabulation> columnTabulations, List<SortColumn> sortColumnIndexes,
-            /*Boolean admin, */ @Nonnull ColumnEntity columnEntity) {
+            @Nonnull ColumnEntity columnEntity) {
 
         this(columnTabulations, null, null, /*admin, */columnEntity);
         if (sortColumnIndexes != null && !sortColumnIndexes.isEmpty()) {
@@ -416,6 +417,11 @@ public class ConfigurableList {
 
         private final List<Cell> cells = new ArrayList<>();
 
+        /**
+         * Hold the entity list for a nested table at the row level (required when building ResultList)
+         */
+        private final Map<ColumnTabulation, Collection<?>> nestedTableEntities = new LinkedHashMap<>();
+
         Row(String id) {
             this.id = id;
         }
@@ -431,16 +437,37 @@ public class ConfigurableList {
         List<Cell> getCells() {
             return cells;
         }
+
+        /**
+         * Access nested tables when building ResultList
+         * @return All nested tables for this row
+         */
+        Map<ColumnTabulation, Collection<?>> getNestedTableEntities() {
+            return nestedTableEntities;
+        }
     }
 
     /**
      * Adds rows to a list, by evaluating column definition expressions.
+     * Supplies an empty context but some eval expressions require context objects (e.g. BSP user list)
      *
      * @param entityList list of objects, where each object is likely to be the root of a
      *                   graph that is navigated by column definition expressions.
      */
+    @Deprecated
     public void addRows(List<?> entityList) {
         Map<String, Object> context = new HashMap<>();
+        addRows(entityList, context);
+    }
+
+    /**
+     * Enhanced addRows to provide ability to supply context objects
+     * @param entityList list of objects, where each object is likely to be the root of a
+     *                   graph that is navigated by column definition expressions.
+     * @param context Any required context objects (e.g.as required in eval expressions
+     */
+    public void addRows(List<?> entityList, @Nonnull Map<String, Object> context ) {
+
 //        context.put("isAdmin", isAdmin);
 
         for (AddRowsListener addRowsListener : addRowsListeners) {
@@ -451,13 +478,23 @@ public class ConfigurableList {
             Row row = new Row(columnEntity.getIdGetter().getId(entity));
             rows.add(row);
             for (ColumnTabulation columnTabulation : nonPluginTabulations) {
-                recurseColumns(context, entity, row, columnTabulation, columnTabulation.getName());
+                if( !columnTabulation.isNestedParent() ) {
+                    recurseColumns(context, entity, row, columnTabulation, columnTabulation.getName());
+                } else {
+                    Collection<?> nestedEntities = columnTabulation.evalNestedTableExpression(entity, context);
+                    if( nestedEntities != null && nestedEntities.size() > 0 ) {
+                        row.getNestedTableEntities().put(columnTabulation, nestedEntities);
+                    }
+                }
             }
         }
 
         try {
             // Call the plugins, and add their data to the accumulated rows.
             for (ColumnTabulation columnTabulation : pluginTabulations) {
+                // Plugins not supported for nested tables
+                if( columnTabulation.isNestedParent() ) continue;
+
                 ListPlugin listPlugin = (ListPlugin) Class.forName(columnTabulation.getPluginClass()).getConstructor().
                         newInstance();
                 List<Row> pluginRows = listPlugin.getData(entityList, headerGroupMap.get(columnTabulation.getName()));
@@ -582,6 +619,35 @@ public class ConfigurableList {
     }
 
     /**
+     * Build a simple non-sortable ResultList to use as a nested table
+     * @param columnTabulation Descriptor for nested table and all child columns
+     * @param nestedEntityList Collection of entities in nested table
+     * @param context Objects which may be required in evaluation
+     * @return Simple nested table data set for use in UI
+     */
+    private ResultList buildNestedTable(ColumnTabulation columnTabulation, Collection<?> nestedEntityList, Map<String, Object> context) {
+        List<ResultRow> rows = new ArrayList<>();
+        List<Header> headers = new ArrayList<>();
+        List<Comparable<?>> emptySortableCells = new ArrayList<>();
+
+        for( ColumnTabulation nestedColumnTabulation : columnTabulation.getNestedEntityColumns() ) {
+            String nestedName = nestedColumnTabulation.getName();
+            headers.add(new Header(nestedName, nestedName, null, null));
+        }
+
+        for( Object entity : nestedEntityList ) {
+            List<String> cells = new ArrayList<>();
+            for( ColumnTabulation nestedColumnTabulation : columnTabulation.getNestedEntityColumns() ) {
+                cells.add(nestedColumnTabulation.evalPlainTextExpression( entity, context ).toString());
+            }
+            ResultRow row = new ResultRow( emptySortableCells, cells, null );
+            rows.add(row);
+        }
+
+        return new ResultList(rows, headers, 0, "ASC" );
+    }
+
+    /**
      * Converts from Rows of compact Cells to a sparse matrix with empty cells to align
      * each cell with its associated header.
      *
@@ -628,6 +694,14 @@ public class ConfigurableList {
                 renderableCells.add(null);
             }
             ResultRow resultRow = new ResultRow(sortableCells, renderableCells, row.getId());
+
+            // Build nested tables
+            for( Map.Entry<ColumnTabulation, Collection<?>> entry : row.getNestedTableEntities().entrySet() ){
+                //TODO jms Deal with context (store as member variable?)
+                ResultList nestedTable = buildNestedTable(entry.getKey(), entry.getValue(), new HashMap<String, Object>());
+                resultRow.addNestedTable( entry.getKey().getName() , nestedTable );
+            }
+
             resultRows.add(resultRow);
         }
 
@@ -666,7 +740,7 @@ public class ConfigurableList {
         for (ResultRow row : resultList.getResultRows()) {
             if (rowNum % 500 == 0) {
                 for (Header header : resultList.getHeaders()) {
-                    printWriter.println("<th>" + header.getViewHeader() + "</td>");
+                    printWriter.println("<th>" + header.getViewHeader() + "</th>");
                 }
             }
             printWriter.println("<tr>");
@@ -754,7 +828,24 @@ public class ConfigurableList {
          */
         public Object[][] getAsArray() {
 
-            Object rowObjects[][] = new Object[getResultRows().size() + 2][getHeaders().size()];
+            // Calculate how many rows and columns required using nested tables
+            int rows, cols;
+            // Default for no nested tables
+            rows = getResultRows().size() + 2;
+            cols = getHeaders().size();
+
+            // Some rows have 1 or more nested tables, some don't.
+            // Adjust array size as required
+            for (ConfigurableList.ResultRow resultRow : getResultRows()) {
+                int nestCols;
+                for( ResultList nestedTable: resultRow.getNestedTables().values() ){
+                    rows += nestedTable.getResultRows().size() + 1;
+                    nestCols = nestedTable.getHeaders().size() + 1;
+                    if( nestCols > cols ) cols = nestCols;
+                }
+            }
+
+            Object rowObjects[][] = new Object[rows][cols];
 
             // Set the first (name) and second (units, metadata) headers.
             int columnNumber;
@@ -776,11 +867,50 @@ public class ConfigurableList {
                     rowObjects[rowNumber][columnNumber] = comparable;
                     columnNumber++;
                 }
-
                 rowNumber++;
+
+                // Nested tables
+                columnNumber = 0;
+                for( Map.Entry<String,ResultList> nestedTable : resultRow.getNestedTables().entrySet() ) {
+                    rowObjects[rowNumber][columnNumber] = nestedTable.getKey();
+                    columnNumber++;
+                    rowNumber++;
+                    rowNumber = appendNestedRows(rowNumber, 1, nestedTable.getValue(), rowObjects);
+                }
+
+            }
+            return rowObjects;
+        }
+
+        /**
+         * Append nested table rows to 2 dimensional Excel output data array
+         * (Assume no deeper than 1 layer)
+         * @param rowIndex
+         * @param startColumn
+         * @param resultList
+         * @param rowObjects
+         * @return
+         */
+        private int appendNestedRows( int rowIndex, int startColumn, ResultList resultList, Object rowObjects[][] ){
+
+            int col = startColumn;
+
+            for( Header header : resultList.getHeaders() ) {
+                rowObjects[rowIndex][col] = header.getViewHeader();
+                col++;
+            }
+            rowIndex++;
+
+            for ( ConfigurableList.ResultRow resultRow : resultList.resultRows ) {
+                col = startColumn;
+                for (String val : resultRow.getRenderableCells()) {
+                    rowObjects[rowIndex][col] = val;
+                    col++;
+                }
+                rowIndex++;
             }
 
-            return rowObjects;
+            return rowIndex;
         }
 
         public List<ResultRow> getResultRows() {
@@ -839,6 +969,11 @@ public class ConfigurableList {
          */
         private String checked;
 
+        /**
+         * Each row may have a nested table
+         */
+        private Map<String, ResultList> nestedTables = new HashMap<>();
+
         ResultRow(List<Comparable<?>> sortableCells, List<String> renderableCells, String resultId) {
             this.sortableCells = sortableCells;
             this.renderableCells = renderableCells;
@@ -882,6 +1017,23 @@ public class ConfigurableList {
                     sortableCells.set(index, theValue);
                 }
             }
+        }
+
+        /**
+         * Any nested tables associated with this row, key is name of parent search term
+         * @return Nested table collection for UI
+         */
+        public Map<String, ResultList> getNestedTables(){
+            return nestedTables;
+        }
+
+        /**
+         * Add a nested table to collection for this row
+         * @param name Title of nested table
+         * @param nestedTable Nested table ResultList data
+         */
+        public void addNestedTable(String name, ResultList nestedTable) {
+            nestedTables.put(name, nestedTable);
         }
     }
 

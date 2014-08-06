@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
@@ -43,6 +44,7 @@ import static org.hamcrest.Matchers.instanceOf;
  *
  * @author breilly
  */
+@Test(groups = TestGroups.DATABASE_FREE)
 public class LimsQueriesTest {
 
     private StaticPlateDao staticPlateDao;

@@ -31,6 +31,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
  * This "test" is an example of how to fixup some data.  Each fix method includes the JIRA ticket ID.
  * Set @Test(enabled=false) after running once.
  */
+@Test(groups = TestGroups.FIXUP)
 public class ProductOrderSampleKitFixupTest extends Arquillian {
 
     @Inject
@@ -46,7 +47,7 @@ public class ProductOrderSampleKitFixupTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
     // GPLIM-2427
-    @Test(enabled=false, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled=false)
     public void backPopulateKitRequestIsExomeExpress(){
         List<ProductOrderKit> nullExomeExpress = productOrderKitDao.findList(ProductOrderKit.class, ProductOrderKit_.exomeExpress, null);
         for (ProductOrderKit pdoKit : nullExomeExpress) {

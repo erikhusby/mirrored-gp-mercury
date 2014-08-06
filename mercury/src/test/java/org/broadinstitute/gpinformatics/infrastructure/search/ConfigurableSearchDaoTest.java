@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.Criteria;
 import org.testng.Assert;
@@ -14,6 +15,7 @@ import java.util.List;
 /**
  * Test searches.
  */
+@Test(groups = TestGroups.STANDARD)
 public class ConfigurableSearchDaoTest extends ContainerTest {
 
     @Inject

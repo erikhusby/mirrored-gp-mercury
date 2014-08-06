@@ -6,6 +6,7 @@ import org.testng.annotations.Test;
 
 import java.util.Date;
 
+@Test(groups = TestGroups.DATABASE_FREE)
 public class ChangeEventTest {
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testDatePerson() throws Exception {

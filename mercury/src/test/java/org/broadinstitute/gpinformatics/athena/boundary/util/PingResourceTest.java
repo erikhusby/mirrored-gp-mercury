@@ -13,6 +13,7 @@ import java.util.List;
 /**
  *
  */
+@Test(groups = TestGroups.STUBBY)
 public class PingResourceTest extends ContainerTest {
 
     @Inject

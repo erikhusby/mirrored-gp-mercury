@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.zims;
 
 
 import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.apache.thrift.TException;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
@@ -12,6 +13,7 @@ import org.testng.annotations.Test;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 
+@Test(groups = TestGroups.DATABASE_FREE)
 public class IlluminaRunResourceBadThriftTest {
 
     private IlluminaRunResource runLaneResource;

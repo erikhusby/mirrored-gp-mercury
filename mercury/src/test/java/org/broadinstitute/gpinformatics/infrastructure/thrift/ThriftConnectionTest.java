@@ -13,6 +13,7 @@ import static org.hamcrest.Matchers.greaterThan;
 /**
  * @author breilly
  */
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class ThriftConnectionTest {
 
     private ThriftConnection connection;

@@ -24,6 +24,7 @@ import static org.hamcrest.Matchers.hasItem;
 /**
  * @author breilly
  */
+@Test(groups = TestGroups.DATABASE_FREE)
 public class LimsQueryResourceResponseFactoryTest {
 
     // 2012/03/15 13:23

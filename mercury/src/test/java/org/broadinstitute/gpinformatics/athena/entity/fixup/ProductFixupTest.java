@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.fixup;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -24,6 +25,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
  *         Date: 12/20/12
  *         Time: 4:29 PM
  */
+@Test(groups = TestGroups.FIXUP)
 public class ProductFixupTest extends Arquillian {
 
     @Inject
