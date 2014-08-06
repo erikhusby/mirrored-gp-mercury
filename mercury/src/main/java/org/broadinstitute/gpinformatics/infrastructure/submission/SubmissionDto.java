@@ -19,14 +19,22 @@ import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDet
 
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
 
 public class SubmissionDto {
     public static final FastDateFormat DATE_FORMAT =
             FastDateFormat.getDateTimeInstance(FastDateFormat.MEDIUM, FastDateFormat.SHORT);
     private Collection<ProductOrder> productOrders;
-    private final Collection<SubmissionStatusDetailBean> statusDetailBean;
+    private final SubmissionStatusDetailBean statusDetailBean;
+    private final BassDTO bassDTO;
+    private final Aggregation aggregation;
+
+    public SubmissionDto(BassDTO bassDTO, Aggregation aggregation, Collection<ProductOrder> productOrders,
+                         SubmissionStatusDetailBean statusDetailBean) {
+        this.bassDTO = bassDTO;
+        this.aggregation = aggregation;
+        this.productOrders = productOrders;
+        this.statusDetailBean = statusDetailBean;
+    }
 
     public BassDTO getBassDTO() {
         return bassDTO;
@@ -35,19 +43,6 @@ public class SubmissionDto {
     public Aggregation getAggregation() {
         return aggregation;
     }
-
-    private final BassDTO bassDTO;
-    private final Aggregation aggregation;
-    private double contamination = 0;
-
-    public SubmissionDto(BassDTO bassDTO, Aggregation aggregation, Collection<ProductOrder> productOrders,
-                         Collection<SubmissionStatusDetailBean> statusDetailBean) {
-        this.bassDTO = bassDTO;
-        this.aggregation = aggregation;
-        this.productOrders = productOrders;
-        this.statusDetailBean = statusDetailBean;
-    }
-
 
     public String getSampleName() {
         return bassDTO.getSample();
@@ -118,23 +113,15 @@ public class SubmissionDto {
         return bassDTO.getPath();
     }
 
+    public int getSubmittedVersion() {
+        return bassDTO.getVersion();
+    }
+
     public String getSubmittedStatus() {
-        Set<String> stati = new HashSet<>();
-        for (SubmissionStatusDetailBean submissionStatusDetailBean : statusDetailBean) {
-            String status = String.format("%s: %s", submissionStatusDetailBean.getUuid(),
-                    submissionStatusDetailBean.getStatus());
-            stati.add(status);
-        }
-        return stati.toString();
+        return statusDetailBean.getStatus();
     }
 
     public String getStatusDate() {
-        Set<String> stati = new HashSet<>();
-        for (SubmissionStatusDetailBean submissionStatusDetailBean : statusDetailBean) {
-            String statusDate = DATE_FORMAT.format(submissionStatusDetailBean.getLastStatusUpdate());
-            String statusDateString = String.format("%s: %s", submissionStatusDetailBean.getUuid(), statusDate);
-            stati.add(statusDateString);
-        }
-        return stati.toString();
+        return DATE_FORMAT.format(statusDetailBean.getLastStatusUpdate());
     }
 }

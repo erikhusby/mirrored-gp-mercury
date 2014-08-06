@@ -15,12 +15,37 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
-import sun.awt.X11.XBaseWindow;
 
 import javax.annotation.Nonnull;
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.PostLoad;
+import javax.persistence.PrePersist;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Research Projects hold all the information about a research project
@@ -141,6 +166,22 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
             orphanRemoval = true)
     private List<SubmissionTracker> submissionTrackers = new ArrayList<>();
+// todo: we can cache the submissiontrackers in a static map
+    public SubmissionTracker getSubmissionTracker(SubmissionTuple tuple){
+        Set<SubmissionTracker> foundSubmissionTrackers = new HashSet<>();
+        for (SubmissionTracker submissionTracker : getSubmissionTrackers()) {
+            if (submissionTracker.getTuple().equals(tuple)) {
+                if (!foundSubmissionTrackers.add(submissionTracker)) {
+                    throw new RuntimeException("More then one result found");
+                }
+            }
+        }
+
+        if (foundSubmissionTrackers.size() == 0) {
+            return null;
+        }
+        return foundSubmissionTrackers.iterator().next();
+    }
 
     /**
      * no arg constructor.

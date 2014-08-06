@@ -14,6 +14,7 @@ package org.broadinstitute.gpinformatics.infrastructure.submission;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTrackerTest;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDtoTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassSearchService;
@@ -22,8 +23,8 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.AggregationMetricsFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.AggregationTestFactory;
-import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
@@ -60,6 +61,7 @@ public class SubmissionDtoFetcherTest {
         ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(0);
         productOrder.addSample(new ProductOrderSample(TEST_SAMPLE));
         researchProject.addProductOrder(productOrder);
+        researchProject.addSubmissionTracker(new SubmissionTrackerTest.SubmissionTrackerStub(COLLABORATOR_SAMPLE_ID, "bambam.bam", "1"));
         Aggregation aggregation =
                 AggregationTestFactory.buildAggregation(RESEARCH_PROJECT_ID, COLLABORATOR_SAMPLE_ID, contamination,
                         fingerprintLod, DATA_TYPE, QUALITY_METRIC, null,null);
@@ -98,4 +100,5 @@ public class SubmissionDtoFetcherTest {
             assertThat(submissionDto.getDateCompleted(), Matchers.nullValue());
         }
     }
+
 }

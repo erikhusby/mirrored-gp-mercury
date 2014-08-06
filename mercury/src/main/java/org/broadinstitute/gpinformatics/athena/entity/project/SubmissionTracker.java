@@ -13,6 +13,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import java.beans.Transient;
 
 /**
  * Represents the association between a submitted sample and its' submission identifier.  This will aid the system
@@ -107,5 +108,11 @@ public class SubmissionTracker {
 
     public void setResearchProject(ResearchProject researchProject) {
         this.researchProject = researchProject;
+    }
+
+    // todo: should be in interface?
+    @Transient
+    public SubmissionTuple getTuple() {
+        return new SubmissionTuple(accessionIdentifier, fileName, version);
     }
 }

@@ -27,7 +27,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -97,7 +96,7 @@ public class ResearchProjectEjbTest extends ContainerTest {
 
         Aggregation testAggregation1 = new Aggregation("",TEST_SAMPLE_1, TEST_VERSION_1);
 
-        Collection<SubmissionStatusDetailBean> statusDetailBean=new ArrayList<>();
+        SubmissionStatusDetailBean statusDetailBean=null;
 
         SubmissionDto submissionDto1 = new SubmissionDto(new BassDTO(bassInfo1), testAggregation1,
                 Collections.<ProductOrder>emptyList(), statusDetailBean);

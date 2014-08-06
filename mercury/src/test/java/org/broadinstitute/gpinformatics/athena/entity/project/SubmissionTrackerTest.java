@@ -43,7 +43,6 @@ public class SubmissionTrackerTest {
 
     }
 
-
     public static class SubmissionTrackerStub extends SubmissionTracker {
         protected SubmissionTrackerStub() {
             super();

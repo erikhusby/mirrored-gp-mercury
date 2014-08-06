@@ -11,8 +11,6 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
-import org.apache.commons.collections4.Factory;
-import org.apache.commons.collections4.map.LazyMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -99,27 +97,19 @@ public class SubmissionDtoFetcher {
             }
         }
 
-
-        List<String> sampleUuids=new ArrayList<>();
+        List<String> submissionIds = new ArrayList<>();
         /** SubmissionTracker uses sampleName for accessionIdentifier
          @see: org/broadinstitute/gpinformatics/athena/boundary/projects/ ResearchProjectEjb.java:243 **/
         for (SubmissionTracker submissionTracker : researchProject.getSubmissionTrackers()) {
-            sampleUuids.add(submissionTracker.getAccessionIdentifier());
+            submissionIds.add(submissionTracker.createSubmissionIdentifier());
         }
 
-        Map<String, List<SubmissionStatusDetailBean>> sampleSubmissionMap =
-                LazyMap.lazyMap(new HashMap<String, List<SubmissionStatusDetailBean>>(), new Factory<List<SubmissionStatusDetailBean>>() {
-                    @Override
-                    public List<SubmissionStatusDetailBean> create() {
-                        return new ArrayList<>();
-                    }
-                }
-        );
+        Map<String, SubmissionStatusDetailBean> sampleSubmissionMap = new HashMap<>();
 
         Collection<SubmissionStatusDetailBean> submissionStatus =
-                submissionsService.getSubmissionStatus(sampleUuids.toArray(new String[sampleUuids.size()]));
+                submissionsService.getSubmissionStatus(submissionIds.toArray(new String[submissionIds.size()]));
         for (SubmissionStatusDetailBean submissionStatusDetailBean : submissionStatus) {
-            sampleSubmissionMap.get(submissionStatusDetailBean.getUuid()).add(submissionStatusDetailBean);
+            sampleSubmissionMap.put(submissionStatusDetailBean.getUuid(), submissionStatusDetailBean);
         }
 
 
@@ -133,24 +123,22 @@ public class SubmissionDtoFetcher {
 
         Map<String, Aggregation> aggregationMap = new HashMap<>();
         for (BassDTO bassDTO : bassDTOMap.values()) {
+            String sampleName = bassDTO.getSample();
             log.debug(String.format("Fetching Metrics aggregations for project: %s, sample: %s, version: %d",
-                    researchProject.getBusinessKey(), bassDTO.getSample(), bassDTO.getVersion()));
-            Aggregation aggregation = aggregationMetricsFetcher.fetch(bassDTO.getProject(), bassDTO.getSample(),
+                    researchProject.getBusinessKey(), sampleName, bassDTO.getVersion()));
+            Aggregation aggregation = aggregationMetricsFetcher.fetch(bassDTO.getProject(), sampleName,
                     bassDTO.getVersion());
             if (aggregation != null) {
                 aggregationMap.put(aggregation.getSample(), aggregation);
+
+                SubmissionStatusDetailBean status = sampleSubmissionMap
+                        .get(researchProject.getSubmissionTracker(bassDTO.getTuple()).createSubmissionIdentifier());
+                SubmissionDto submissionDto =
+                        new SubmissionDto(bassDTO, aggregation, sampleNameToPdos.get(sampleName), status);
+                results.add(submissionDto);
             }
         }
 
-        for (Map.Entry<String, Set<ProductOrder>> sampleListMap : sampleNameToPdos.entrySet()) {
-            String collaboratorSampleId = sampleListMap.getKey();
-            Aggregation aggregation = aggregationMap.get(collaboratorSampleId);
-            List<SubmissionStatusDetailBean> statusDetailBean = sampleSubmissionMap.get(collaboratorSampleId);
-            BassDTO bassDTO = bassDTOMap.get(collaboratorSampleId);
-            if (bassDTO != null && aggregation != null) {
-                results.add(new SubmissionDto(bassDTO, aggregation, sampleListMap.getValue(), statusDetailBean));
-            }
-        }
 
         return results;
     }

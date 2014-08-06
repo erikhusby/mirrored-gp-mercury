@@ -24,7 +24,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -49,7 +48,7 @@ public class SubmissionDtoTest {
     private Aggregation aggregation;
     private BassDTO bassDto;
     private List<ProductOrder> productOrders = new ArrayList<>();
-    private Collection<SubmissionStatusDetailBean> submissionStatuses;
+    private SubmissionStatusDetailBean submissionStatus;
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -59,18 +58,11 @@ public class SubmissionDtoTest {
         productOrders.add(ProductOrderTestFactory.createDummyProductOrder("PDO-1234"));
         productOrders.add(ProductOrderTestFactory.createDummyProductOrder("PDO-5678"));
         SubmissionsService submissionsService = new SubmissionsServiceStub();
-        submissionStatuses = submissionsService.getSubmissionStatus(SUBMISSION_UUID);
-        for (SubmissionStatusDetailBean status : submissionStatuses) {
-            for (ProductOrder productOrder : productOrders) {
-                // something, something.
-            }
-
-        }
-
+        submissionStatus = submissionsService.getSubmissionStatus(SUBMISSION_UUID).iterator().next();
     }
 
     public void testDtoForSampleWithConstructor() {
-        SubmissionDto submissionDTO = new SubmissionDto(bassDto, aggregation, productOrders, submissionStatuses);
+        SubmissionDto submissionDTO = new SubmissionDto(bassDto, aggregation, productOrders, submissionStatus);
         assertThat(submissionDTO.getAggregation(), is(Matchers.notNullValue()));
         assertThat(submissionDTO.getBassDTO(), is(Matchers.notNullValue()));
 
@@ -89,10 +81,10 @@ public class SubmissionDtoTest {
 //        assertThat(submissionDTO.getBlacklistedLanes(), blacklistedLanes);
 //        assertThat(submissionDTO.getSubmittedVersion(), submittedVersion);
         assertThat(submissionDTO.getResearchProject(), Matchers.equalTo(RESEARCH_PROJECT));
-        assertThat(submissionDTO.getSubmittedStatus(), Matchers.equalTo(String.format("[%s: Failure, %s: Submitted]",
+        assertThat(submissionDTO.getSubmittedStatus(), Matchers.equalTo(String.format(
+                SubmissionStatusDetailBean.Status.SUBMITTED.getDescription(),
                 SUBMISSION_UUID, SUBMISSION_UUID)));
-        assertThat(submissionDTO.getStatusDate(), Matchers.equalTo(
-                String.format("[%s: %s]", SUBMISSION_UUID, SubmissionsServiceStub.STUB_UPDATE_DATE)));
+        assertThat(submissionDTO.getStatusDate(), Matchers.equalTo(SubmissionsServiceStub.STUB_UPDATE_DATE));
 
     }
 
