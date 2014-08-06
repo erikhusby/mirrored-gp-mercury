@@ -1,8 +1,11 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.work.WorkCompleteMessageDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
@@ -10,25 +13,30 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.tableau.TableauConfig;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 /**
- * A factory class for creating SampleLedgerExporter instances for a list of ProductOrders. Allows callers to not need
- * to be aware of SampleLedgerExporter's dependencies.
+ * A factory class for creating {@link SampleLedgerExporter} instances for a list of ProductOrders. Allows callers to
+ * not need to be aware of SampleLedgerExporter's dependencies.
+ * <p>
+ * This factory is also gradually gaining the responsibility for gathering the data from entities and other sources,
+ * thereby eliminating dependencies from SampleLedgerExporter and allowing it to be tested more easily. Eventually, this
+ * factory will simply provide SampleLedgerExporter with a list of {@link SampleLedgerRow}s containing the data to
+ * write to the spreadsheet.
  */
 public class SampleLedgerExporterFactory {
 
     private final PriceItemDao priceItemDao;
-
     private final BSPUserList bspUserList;
-
     private final PriceListCache priceListCache;
-
     private final WorkCompleteMessageDao workCompleteMessageDao;
-
     private final BSPSampleDataFetcher sampleDataFetcher;
     private final AppConfig appConfig;
     private final TableauConfig tableauConfig;
+    private SampleLedgerSpreadSheetWriter spreadSheetWriter;
 
     @Inject
     public SampleLedgerExporterFactory(
@@ -38,7 +46,8 @@ public class SampleLedgerExporterFactory {
             WorkCompleteMessageDao workCompleteMessageDao,
             BSPSampleDataFetcher sampleDataFetcher,
             AppConfig appConfig,
-            TableauConfig tableauConfig) {
+            TableauConfig tableauConfig,
+            SampleLedgerSpreadSheetWriter spreadSheetWriter) {
         this.priceItemDao = priceItemDao;
         this.bspUserList = bspUserList;
         this.priceListCache = priceListCache;
@@ -46,6 +55,7 @@ public class SampleLedgerExporterFactory {
         this.sampleDataFetcher = sampleDataFetcher;
         this.appConfig = appConfig;
         this.tableauConfig = tableauConfig;
+        this.spreadSheetWriter = spreadSheetWriter;
     }
 
     /**
@@ -55,7 +65,59 @@ public class SampleLedgerExporterFactory {
      * @return a new exporter
      */
     public SampleLedgerExporter makeExporter(List<ProductOrder> productOrders) {
-        return new SampleLedgerExporter(priceItemDao, bspUserList, priceListCache, productOrders,
-                workCompleteMessageDao, sampleDataFetcher, appConfig, tableauConfig);
+        SortedMap<Product, List<SampleLedgerRow>> sampleRowDataByProduct = new TreeMap<>();
+        for (ProductOrder productOrder : productOrders) {
+            Product product = productOrder.getProduct();
+            List<SampleLedgerRow> sampleRowDataForProduct = sampleRowDataByProduct.get(product);
+            if (sampleRowDataForProduct == null) {
+                sampleRowDataForProduct = new ArrayList<>();
+                sampleRowDataByProduct.put(product, sampleRowDataForProduct);
+            }
+            sampleRowDataForProduct.addAll(gatherSampleRowData(productOrder));
+        }
+        return new SampleLedgerExporter(priceItemDao, priceListCache, productOrders, workCompleteMessageDao,
+                sampleDataFetcher, appConfig, tableauConfig, spreadSheetWriter, sampleRowDataByProduct);
+    }
+
+    /**
+     * Gathers the data for the samples in the given product order.
+     *
+     * @param productOrder    the product order to gather sample data for
+     * @return a list of row data
+     */
+    public List<SampleLedgerRow> gatherSampleRowData(ProductOrder productOrder) {
+        ArrayList<SampleLedgerRow> sampleRowData = new ArrayList<>();
+        for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
+            SampleLedgerRow row = new SampleLedgerRow();
+
+            row.setSampleId(productOrderSample.getSampleKey());
+            row.setCollaboratorSampleId(productOrderSample.getBspSampleDTO().getCollaboratorsSampleName());
+            row.setMaterialType(productOrderSample.getBspSampleDTO().getMaterialType());
+            row.setRiskText(productOrderSample.getRiskString());
+            row.setDeliveryStatus(productOrderSample.getDeliveryStatus().getDisplayName());
+            row.setProductName(productOrderSample.getProductOrder().getProduct().getProductName());
+            row.setProductOrderKey(productOrderSample.getProductOrder().getBusinessKey());
+            row.setProductOrderTitle(productOrderSample.getProductOrder().getTitle());
+            row.setProjectManagerName(getBspFullName(productOrderSample.getProductOrder().getCreatedBy()));
+            row.setNumberOfLanes(productOrderSample.getProductOrder().getLaneCount());
+            row.setAutoLedgerDate(productOrderSample.getLatestAutoLedgerTimestamp());
+            row.setWorkCompleteDate(productOrderSample.getWorkCompleteDate());
+
+            sampleRowData.add(row);
+        }
+        return sampleRowData;
+    }
+
+    private String getBspFullName(long id) {
+        if (bspUserList == null) {
+            return "User id " + id;
+        }
+
+        BspUser user = bspUserList.getById(id);
+        if (user == null) {
+            return "User id " + id;
+        }
+
+        return user.getFullName();
     }
 }

@@ -1,10 +1,12 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -17,6 +19,7 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -33,12 +36,15 @@ public class ConfigurableListContainerTest extends Arquillian {
     @Inject
     private LabBatchDao labBatchDao;
 
+    @Inject
+    private BSPUserList bspUserList;
+
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
-    @Test
+    @Test(groups= TestGroups.STANDARD)
     public void testTrackingSheet() {
         List<ColumnTabulation> columnTabulations = new ArrayList<>();
         LabBatch labBatch = labBatchDao.findByBusinessKey("LCSET-5102");
@@ -59,7 +65,8 @@ public class ConfigurableListContainerTest extends Arquillian {
         ConfigurableList configurableList = new ConfigurableList(columnTabulations, 1, "ASC", ColumnEntity.LAB_VESSEL);
         configurableList.addListener(new BspSampleSearchAddRowsListener(bspSampleSearchService));
 
-        configurableList.addRows(labVessels);
+        Map<String, Object> context = buildSearchContext();
+        configurableList.addRows(labVessels, context);
 
         ConfigurableList.ResultList resultList = configurableList.getResultList();
 
@@ -79,5 +86,16 @@ public class ConfigurableListContainerTest extends Arquillian {
         Assert.assertTrue( columnIndex < headers.size(), "Column header 'Imported Sample ID' not found in results" );
         Assert.assertEquals(resultRow.getRenderableCells().get(columnIndex), "SM-5KWVC");
 
+    }
+
+    /**
+     *  BSP user lookup required in column eval expression
+     *  Use context to avoid need to test in container
+     */
+    private Map<String, Object> buildSearchContext(){
+        Map<String, Object> evalContext = new HashMap<>();
+        evalContext.put(SearchDefinitionFactory.CONTEXT_KEY_BSP_USER_LIST, bspUserList );
+
+        return evalContext;
     }
 }

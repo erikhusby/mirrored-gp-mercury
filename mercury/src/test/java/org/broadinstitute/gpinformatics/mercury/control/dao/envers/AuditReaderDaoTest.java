@@ -1,12 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.envers;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.infrastructure.common.SessionContextUtilityKeepScope;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
-import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -15,9 +12,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.SQLQuery;
 import org.hibernate.envers.RevisionType;
 import org.hibernate.type.LongType;
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.testng.Arquillian;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -27,8 +21,7 @@ import javax.transaction.UserTransaction;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import java.util.Map;
 
 /**
  * Container test of AuditReaderDao.
@@ -130,7 +123,7 @@ public class AuditReaderDaoTest extends ContainerTest {
         Long tubeModifiedRevId = null;
         Long tubeDeletedRevId = null;
 
-        List<EnversAudit> auditEntities = auditReaderDao.fetchDataChanges(revIds, BarcodedTube.class);
+        List<EnversAudit> auditEntities = auditReaderDao.fetchEnversAudits(revIds, BarcodedTube.class);
         for (EnversAudit<BarcodedTube> enversAudit : auditEntities) {
             BarcodedTube auditedTube = enversAudit.getEntity();
             Long revId = enversAudit.getRevInfo().getRevInfoId();
@@ -165,6 +158,25 @@ public class AuditReaderDaoTest extends ContainerTest {
                 auditReaderDao.getPreviousVersion(persistedTube, BarcodedTube.class, tubeDeletedRevId);
         Assert.assertEquals(modifiedTube.getTubeType(), BarcodedTube.BarcodedTubeType.Cryovial2018);
 
+
+        // Test getting at the revs another way.
+        List<AuditedRevDto> auditedRevs = auditReaderDao.fetchAuditedRevs(revIds);
+        Assert.assertTrue(auditedRevs.size() >= 4);
+        Assert.assertTrue(auditedRevs.size() <= revIds.size());
+        Map<Long, List<AuditedRevDto>> map = AuditedRevDto.mappedByRevId(auditedRevs);
+        Assert.assertTrue(map.keySet().contains(tubeCreatedRevId));
+        Assert.assertTrue(map.keySet().contains(tubeModifiedRevId));
+        Assert.assertTrue(map.keySet().contains(tubeDeletedRevId));
+        Assert.assertTrue(map.get(tubeModifiedRevId).size() == 1);
+        Assert.assertTrue(map.get(tubeModifiedRevId).get(0).getEntityTypeNames().contains(
+                BarcodedTube.class.getCanonicalName()));
+    }
+
+    @Test(groups = TestGroups.STANDARD)
+    public void testUsernames() {
+        List<String> list = auditReaderDao.getAllAuditUsername();
+        Assert.assertTrue(CollectionUtils.isNotEmpty(list));
+        Assert.assertTrue(list.contains("jane"));
     }
 
     /**

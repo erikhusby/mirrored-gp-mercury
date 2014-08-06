@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -39,7 +40,32 @@ public interface ColumnTabulation {
      * @param context name / value pairs of other variables used in the expression.
      * @return results, which could be a list.
      */
-    public Object evalViewHeaderExpression(Object entity, Map<String, Object> context);
+    Object evalViewHeaderExpression(Object entity, Map<String, Object> context);
+
+    /**
+     * Utility method to eliminate ambiguity of using evalPlainTextExpression
+     *   to access nested table collection.
+     *
+     * @param entity  root of object graph that expression navigates.
+     * @param context name / value pairs of other variables used in the expression.
+     * @return results, which must be a collection
+     */
+    public Collection<?> evalNestedTableExpression(Object entity, Map<String, Object> context);
+
+    /**
+     * Access nested entity ColumnTabulation objects associated with this ColumnTabulation
+     */
+    public List<? extends ColumnTabulation> getNestedEntityColumns();
+
+    public void addNestedEntityColumn(ColumnTabulation columnTabulation);
+
+    public void setIsNestedParent( Boolean isNestedParent );
+
+    public Boolean isNestedParent( );
+
+    //public ColumnEntity getNestedEntityType();
+
+    //public void setNestedEntityType( ColumnEntity nestedEntityType );
 
     /**
      * returns the results of evaluating the expression for the first row of the

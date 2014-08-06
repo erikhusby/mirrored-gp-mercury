@@ -20,6 +20,7 @@ import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -166,7 +167,7 @@ public class SearchInstance implements Serializable {
             }
             if (!evaluatedConstrainedValues) {
                 Map<String, Object> context = new HashMap<>();
-                context.put("searchValue", this);
+                context.put(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_VALUE, this);
                 context.putAll(getSearchInstance().getEvalContext());
                 constrainedValues = searchTerm.evalConstrainedValues(context);
 
@@ -186,7 +187,7 @@ public class SearchInstance implements Serializable {
                     constrainedValuesSizeLimit = 1000;
                 } else {
                     Map<String, Object> context = new HashMap<>();
-                    context.put("searchValue", this);
+                    context.put(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_VALUE, this);
                     constrainedValuesSizeLimit = searchTerm.getConstrainedValuesSizeLimitExpression().evaluate(
                             null, context);
                 }
@@ -217,7 +218,7 @@ public class SearchInstance implements Serializable {
                     searchTerm.getCriteriaPaths().get(0).getPropertyNameExpression();
             if (propertyNameExpression != null) {
                 Map<String, Object> context = new HashMap<>();
-                context.put("searchValue", this);
+                context.put(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_VALUE, this);
                 propertyName = propertyNameExpression.evaluate(null, context);
             }
 
@@ -235,7 +236,7 @@ public class SearchInstance implements Serializable {
             }
             if (dataType == null) {
                 Map<String, Object> context = new HashMap<>();
-                context.put("searchValue", this);
+                context.put(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_VALUE, this);
                 dataType = searchTerm.getTypeExpression().evaluate(null, context);
             }
             return dataType;
@@ -341,8 +342,8 @@ public class SearchInstance implements Serializable {
                     if (searchTerm.getValueConversionExpression() != null) {
                         Map<String, Object> localContext = new HashMap<>();
                         localContext.putAll(searchInstance.getEvalContext());
-                        localContext.put("searchValue", this);
-                        localContext.put("searchString", value);
+                        localContext.put(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_VALUE, this);
+                        localContext.put(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_STRING, value);
                         propertyValues.add(searchTerm.getValueConversionExpression().evaluate(null, localContext));
                     } else {
                         if (getDataType().equals("String")) {
@@ -371,7 +372,7 @@ public class SearchInstance implements Serializable {
         public Object evalDisplayExpression(Object root) {
             // Evaluate the display value expression for the search term.
             Map<String, Object> context = new HashMap<>();
-            context.put("searchValue", this);
+            context.put(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_VALUE, this);
             try {
                 return getSearchTerm().getDisplayExpression().evaluate(root, context);
             } catch (Exception e) {
@@ -386,7 +387,7 @@ public class SearchInstance implements Serializable {
                 return getSearchTerm().getName();
             } else {
                 Map<String, Object> context = new HashMap<>();
-                context.put("searchValue", this);
+                context.put(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_VALUE, this);
                 return getSearchTerm().getViewHeader().evaluate(root, context);
             }
         }
@@ -498,6 +499,35 @@ public class SearchInstance implements Serializable {
             return evalHeaderExpression(entity);
         }
 
+        /* ***********************************************
+         * None of the nested table logic applies to SearchValue
+         */
+        @Override
+        public List<? extends ColumnTabulation> getNestedEntityColumns() {
+            return getSearchTerm().getNestedEntityColumns();
+        }
+
+        @Override
+        public void addNestedEntityColumn(ColumnTabulation x) {
+            throw new UnsupportedOperationException(
+                    "Method addNestedEntityColumn not implemented in SearchInstance.SearchValue");
+        }
+
+        @Override
+        public Boolean isNestedParent() {
+            return getSearchTerm().isNestedParent();
+        }
+
+        @Override
+        public void setIsNestedParent(Boolean x) {
+            throw new UnsupportedOperationException(
+                    "Method setIsNestedParent not implemented in SearchInstance.SearchValue");
+        }
+        /* ***********************************************
+         * End of the nested table logic
+         */
+
+
         @Override
         public Object evalDownloadHeader1Expression(Object entity, Map<String, Object> context) {
             return evalHeaderExpression(entity);
@@ -506,6 +536,10 @@ public class SearchInstance implements Serializable {
         @Override
         public Object evalDownloadHeader2Expression(Object entity, Map<String, Object> context) {
             return null;
+        }
+
+        public Collection<?> evalNestedTableExpression(Object entity, Map<String, Object> context) {
+            return getSearchTerm().evalNestedTableExpression(entity, context);
         }
 
         @Override

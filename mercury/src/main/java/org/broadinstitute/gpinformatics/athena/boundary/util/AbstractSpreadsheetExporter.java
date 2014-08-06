@@ -21,8 +21,10 @@ import java.util.Iterator;
 
 /**
  * Wrapper for all exporters so that the writer and exporter can share some members.
+ *
+ * @param <T>
  */
-public abstract class AbstractSpreadsheetExporter {
+public abstract class AbstractSpreadsheetExporter<T extends AbstractSpreadsheetExporter.SpreadSheetWriter> {
 
     public static final Format DATE_FORMAT = FastDateFormat.getInstance("yyyy-MM-dd-HH:mm:ss");
 
@@ -39,12 +41,19 @@ public abstract class AbstractSpreadsheetExporter {
     private final CellStyle percentageStyle;
     private final CellStyle hyperlinkStyle;
 
-    private final SpreadSheetWriter writer = new SpreadSheetWriter();
+    private final T writer;
 
-    public AbstractSpreadsheetExporter() {
+    @SuppressWarnings("unchecked")
+    protected AbstractSpreadsheetExporter() {
+        this((T) new SpreadSheetWriter());
+    }
+
+    protected AbstractSpreadsheetExporter(T writer) {
+        this.writer = writer;
         // SXSSFWorkbook is used to support very large spreadsheets.  SXSSF writes 100 rows at a time to a
         // temporary file, which is then copied into the output stream when all spreadsheet data has been written.
         workbook = new SXSSFWorkbook();
+        writer.setWorkbook(workbook);
         fixedHeaderStyle = buildHeaderStyle(workbook, IndexedColors.LIGHT_CORNFLOWER_BLUE);
         billedAmountsHeaderStyle = buildHeaderStyle(workbook, IndexedColors.LIGHT_YELLOW);
         billedAmountStyle = buildHeaderStyle(workbook, IndexedColors.TAN);
@@ -57,7 +66,7 @@ public abstract class AbstractSpreadsheetExporter {
         hyperlinkStyle = buildHyperlinkStyle(workbook);
     }
 
-    protected SpreadSheetWriter getWriter() {
+    protected T getWriter() {
         return writer;
     }
 
@@ -74,14 +83,6 @@ public abstract class AbstractSpreadsheetExporter {
     protected CellStyle getWrappedHeaderStyle(byte[] rgbColor) {
         CellStyle style = buildWrappedHeaderStyle();
         ((XSSFCellStyle) style).setFillForegroundColor(new XSSFColor(rgbColor));
-        return style;
-    }
-
-    protected CellStyle getWrappedHeaderStyle(byte[] rgbColor, boolean vertical) {
-        CellStyle style = getWrappedHeaderStyle(rgbColor);
-        if (vertical) {
-            style.setRotation((short) 90);
-        }
         return style;
     }
 
@@ -119,7 +120,7 @@ public abstract class AbstractSpreadsheetExporter {
         return workbook;
     }
 
-    protected CellStyle buildHeaderStyle(Workbook wb, IndexedColors indexedColors) {
+    public static CellStyle buildHeaderStyle(Workbook wb, IndexedColors indexedColors) {
         CellStyle style = wb.createCellStyle();
         style.setFillForegroundColor(indexedColors.getIndex());
         style.setFillPattern(CellStyle.SOLID_FOREGROUND);
@@ -139,7 +140,7 @@ public abstract class AbstractSpreadsheetExporter {
         return style;
     }
 
-    protected CellStyle buildPreambleStyle(Workbook wb) {
+    protected static CellStyle buildPreambleStyle(Workbook wb) {
         CellStyle style = wb.createCellStyle();
         Font headerFont = wb.createFont();
         headerFont.setBoldweight(Font.BOLDWEIGHT_BOLD);
@@ -180,7 +181,7 @@ public abstract class AbstractSpreadsheetExporter {
         return style;
     }
 
-    private CellStyle buildHyperlinkStyle(Workbook workbook) {
+    private static CellStyle buildHyperlinkStyle(Workbook workbook) {
         CellStyle style = workbook.createCellStyle();
         Font font = workbook.createFont();
         font.setColor(IndexedColors.BLUE.getIndex());
@@ -189,7 +190,17 @@ public abstract class AbstractSpreadsheetExporter {
         return style;
     }
 
-    public class SpreadSheetWriter {
+    /**
+     * An abstraction over the POI API providing convenience methods and more of a streaming interface so that the
+     * caller can avoid having to constantly manually advance to the next cell.
+     * <p>
+     * This class can be extended to provide further convenience methods specific to a particular type of spreadsheet
+     * being written.
+     */
+    public static class SpreadSheetWriter {
+        private Workbook workbook;
+        private CellStyle preambleStyle;
+        private CellStyle hyperlinkStyle;
         private Row currentRow;
         private Cell currentCell;
         private int rowNum;
@@ -292,7 +303,7 @@ public abstract class AbstractSpreadsheetExporter {
             Hyperlink link = workbook.getCreationHelper().createHyperlink(Hyperlink.LINK_URL);
             link.setAddress(url);
             currentCell.setHyperlink(link);
-            currentCell.setCellStyle(getHyperlinkStyle());
+            currentCell.setCellStyle(hyperlinkStyle);
         }
 
         public void setRowStyle(CellStyle style) {
@@ -302,6 +313,56 @@ public abstract class AbstractSpreadsheetExporter {
             while (cells.hasNext()) {
                 cells.next().setCellStyle(style);
             }
+        }
+
+        public Workbook getWorkbook() {
+            return workbook;
+        }
+
+        public void setWorkbook(Workbook workbook) {
+            this.workbook = workbook;
+            preambleStyle = buildPreambleStyle(workbook);
+            hyperlinkStyle = buildHyperlinkStyle(workbook);
+        }
+
+        protected CellStyle buildHeaderStyle(IndexedColors indexedColors) {
+            CellStyle style = workbook.createCellStyle();
+            style.setFillForegroundColor(indexedColors.getIndex());
+            style.setFillPattern(CellStyle.SOLID_FOREGROUND);
+            style.setAlignment(CellStyle.ALIGN_CENTER);
+            Font headerFont = workbook.createFont();
+            headerFont.setBoldweight(Font.BOLDWEIGHT_BOLD);
+            style.setFont(headerFont);
+            return style;
+        }
+
+        /**
+         * Builds a cell style for a header with text wrapping.
+         */
+        protected CellStyle buildWrappedHeaderStyle() {
+            CellStyle style = buildHeaderStyle(IndexedColors.WHITE);
+            style.setWrapText(true);
+            return style;
+        }
+
+        /**
+         * Creates a cell style for a header with text wrapping and the given background color.
+         *
+         * @param rgbColor    the background color for the style
+         * @return the cell style
+         */
+        protected CellStyle getWrappedHeaderStyle(byte[] rgbColor) {
+            CellStyle style = buildWrappedHeaderStyle();
+            ((XSSFCellStyle) style).setFillForegroundColor(new XSSFColor(rgbColor));
+            return style;
+        }
+
+        protected CellStyle getWrappedHeaderStyle(byte[] rgbColor, boolean vertical) {
+            CellStyle style = getWrappedHeaderStyle(rgbColor);
+            if (vertical) {
+                style.setRotation((short) 90);
+            }
+            return style;
         }
     }
 }

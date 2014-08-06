@@ -38,28 +38,29 @@ public class ProductTestFactory {
     }
 
 
-    public static Product createStandardExomeSequencing(String familyName, String partNumber) {
+    public static Product createStandardExomeSequencing(String familyName, String productName) {
         Product product = null;
-        partNumber = partNumber==null?"P-EX-0006": partNumber;
-        familyName = familyName==null?"Exome": familyName;
-                try {
-                    product = new Product("Standard Exome Sequencing v3", new ProductFamily(familyName),
-                            "The Standard Exome includes sample plating, library preparation, hybrid capture, sequencing (76bp paired reads), sample identification QC check, and data storage. This product utilizes Broad dual-barcoded library construction followed by the Illumina Rapid Capture Exome enrichment kit with 38Mb target territory (29Mb baited). Our hybrid selection libraries typically meet or exceed 80% of targets at 20x and a mean target coverage >80x. We have the ability to process up to 368 samples per week handled in batches of 92. Processing times vary and depend on current demand. For additional capacity please contact genomics@broadinstitute.org",
-                            partNumber,
-                            DateUtils.parseDate("06/01/2013"), new Date(), 12345678, 123456, 100, 96,
-                            "*Funding and compliance requirements must be in place - this includes a valid IRB or letter of non-engagement where needed \n"
-                            + "*Minimum Sample data including - Collaborator Participant ID, Collaborator Sample ID, Gender",
-                            "Data delivery will include a de-multiplexed, aggregated Picard BAM file which will be accessed via the BASS file server system or FTP for non-Broad users. Data storage for 5 years is provided.",
-                            true, Workflow.WHOLE_GENOME, false, null);
-                    product.addRiskCriteria(
-                            new RiskCriterion(RiskCriterion.RiskCriteriaType.CONCENTRATION, Operator.LESS_THAN, "2"));
-                    product.addRiskCriteria(new RiskCriterion(RiskCriterion.RiskCriteriaType.FFPE, Operator.IS, null));
-                    product.addRiskCriteria(new RiskCriterion(RiskCriterion.RiskCriteriaType.WGA, Operator.IS, null));
-                    product.addRiskCriteria(new RiskCriterion(RiskCriterion.RiskCriteriaType.PICO_AGE, Operator.IS, "true"));
-                    product.addRiskCriteria(
-                            new RiskCriterion(RiskCriterion.RiskCriteriaType.TOTAL_DNA, Operator.LESS_THAN, ".250"));
-                } catch (ParseException e) {
+        productName = productName == null ? "Standard Exome Sequencing v3" : productName;
+        familyName = familyName == null ? "Exome" : familyName;
+        try {
+            product = new Product(productName, new ProductFamily(familyName),
+                    "The Standard Exome includes sample plating, library preparation, hybrid capture, sequencing (76bp paired reads), sample identification QC check, and data storage. This product utilizes Broad dual-barcoded library construction followed by the Illumina Rapid Capture Exome enrichment kit with 38Mb target territory (29Mb baited). Our hybrid selection libraries typically meet or exceed 80% of targets at 20x and a mean target coverage >80x. We have the ability to process up to 368 samples per week handled in batches of 92. Processing times vary and depend on current demand. For additional capacity please contact genomics@broadinstitute.org",
+                    "P-EX-0006",
+                    DateUtils.parseDate("06/01/2013"), new Date(), 12345678, 123456, 100, 96,
+                    "*Funding and compliance requirements must be in place - this includes a valid IRB or letter of non-engagement where needed \n"
+                    + "*Minimum Sample data including - Collaborator Participant ID, Collaborator Sample ID, Gender",
+                    "Data delivery will include a de-multiplexed, aggregated Picard BAM file which will be accessed via the BASS file server system or FTP for non-Broad users. Data storage for 5 years is provided.",
+                    true, Workflow.WHOLE_GENOME, false, null);
+            product.addRiskCriteria(
+                    new RiskCriterion(RiskCriterion.RiskCriteriaType.CONCENTRATION, Operator.LESS_THAN, "2"));
+            product.addRiskCriteria(new RiskCriterion(RiskCriterion.RiskCriteriaType.FFPE, Operator.IS, null));
+            product.addRiskCriteria(new RiskCriterion(RiskCriterion.RiskCriteriaType.WGA, Operator.IS, null));
+            product.addRiskCriteria(new RiskCriterion(RiskCriterion.RiskCriteriaType.PICO_AGE, Operator.IS, "true"));
+            product.addRiskCriteria(
+                    new RiskCriterion(RiskCriterion.RiskCriteriaType.TOTAL_DNA, Operator.LESS_THAN, ".250"));
+        } catch (ParseException e) {
 
-                }
-                return product;    }
+        }
+        return product;
+    }
 }

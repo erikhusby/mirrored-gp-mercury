@@ -114,7 +114,7 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
         List<SearchTerm> requiredSearchTerms = new ArrayList<>();
         for (List<SearchTerm> searchTermList : mapGroupSearchTerms.values()) {
             for (SearchTerm searchTerm : searchTermList) {
-                if (searchTerm.getRequired() != null && searchTerm.getRequired()) {
+                if (searchTerm.getRequired() != null && searchTerm.getRequired() && !searchTerm.isNestedParent() ) {
                     requiredSearchTerms.add(searchTerm);
                 }
             }
