@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.bucket.fixup;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -17,6 +18,7 @@ import java.util.Collection;
 /**
  * @author breilly
  */
+@Test(groups = TestGroups.FIXUP)
 public class RemoveActiveBucketEntriesFixupTest extends Arquillian {
 
     @Inject

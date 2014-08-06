@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceStub;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.MockThriftService;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftFileAccessor;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
@@ -34,6 +35,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DA
  * loads a pre-serialized thrift run from local disk, converts it
  * to {@link ZimsIlluminaRun}, and does some basic assertions.
  */
+@Test(groups = TestGroups.DATABASE_FREE)
 public class DbFreeIlluminaRunResourceTest {
 
 

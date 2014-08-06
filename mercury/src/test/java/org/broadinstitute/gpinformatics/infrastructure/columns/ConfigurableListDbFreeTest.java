@@ -20,6 +20,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+@Test(groups = TestGroups.DATABASE_FREE)
 public class ConfigurableListDbFreeTest {
 
     @Test(groups= TestGroups.DATABASE_FREE)

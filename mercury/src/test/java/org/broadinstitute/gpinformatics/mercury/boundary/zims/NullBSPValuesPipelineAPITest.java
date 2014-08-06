@@ -16,6 +16,7 @@ import javax.inject.Inject;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
 
+@Test(groups = TestGroups.ALTERNATIVES)
 public class NullBSPValuesPipelineAPITest extends Arquillian {
 
     @Inject

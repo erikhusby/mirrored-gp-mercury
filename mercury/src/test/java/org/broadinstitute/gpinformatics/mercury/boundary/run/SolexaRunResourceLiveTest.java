@@ -4,6 +4,7 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.IlluminaRunResourceLiveTest;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchDbTest;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
@@ -25,12 +26,12 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
-import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STANDARD;
 
 /**
  * Test SolexaRunResource with no stubs.
  */
+@Test(groups = TestGroups.STANDARD)
 public class SolexaRunResourceLiveTest extends Arquillian {
 
     @Deployment

@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
@@ -99,6 +100,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.AL
  * Test the web service
  */
 @SuppressWarnings("OverlyCoupledClass")
+@Test(groups = TestGroups.ALTERNATIVES)
 public class BettaLimsMessageResourceTest extends Arquillian {
 
     @Inject

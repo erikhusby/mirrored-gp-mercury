@@ -28,6 +28,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 /**
  * Test configurable list against database and BSP
  */
+@Test(groups = TestGroups.STANDARD)
 public class ConfigurableListContainerTest extends Arquillian {
 
     @Inject

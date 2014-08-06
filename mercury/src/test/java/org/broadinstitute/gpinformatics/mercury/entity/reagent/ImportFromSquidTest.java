@@ -42,6 +42,7 @@ import java.util.Map;
  * <p/>
  * As of January 2013, the test takes about 35 minutes to run.
  */
+@Test(groups = TestGroups.STANDARD)
 public class ImportFromSquidTest extends Arquillian {
 
     public static final String TEST_MERCURY_URL = "http://localhost:8080/Mercury";
@@ -84,7 +85,7 @@ public class ImportFromSquidTest extends Arquillian {
     /**
      * Import index schemes from Squid.
      */
-    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = false, groups = TestGroups.STANDARD)
     public void testImportIndexingSchemes() {
         // Get schemes and sequences from Squid.
         Query nativeQuery = entityManager.createNativeQuery("SELECT " +
@@ -150,7 +151,7 @@ public class ImportFromSquidTest extends Arquillian {
     /**
      * Import index plates from Squid.  This takes about 15 minutes.
      */
-    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION, dependsOnMethods = {"testImportIndexingSchemes"})
+    @Test(enabled = false, groups = TestGroups.STANDARD, dependsOnMethods = {"testImportIndexingSchemes"})
     public void testImportIndexPlates() {
         // Get plates, wells and molecular indexes from Squid.
         Query nativeQuery = entityManager.createNativeQuery(
@@ -233,7 +234,7 @@ public class ImportFromSquidTest extends Arquillian {
     /**
      * Import bait tubes from Squid.
      */
-    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = false, groups = TestGroups.STANDARD)
     public void testCreateBaits() {
         // todo jmt for a bait to show up in this query, it must have been transferred to a plate at least once.
         // Without this restriction, the number of tubes goes from ~40 to ~70,000
@@ -320,7 +321,7 @@ public class ImportFromSquidTest extends Arquillian {
     /**
      * Import Custom Amplicon Tubes from Squid.
      */
-    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = false, groups = TestGroups.STANDARD)
     public void testCreateCats() {
         // todo jmt for a CAT to show up in this query, it must have been transferred to a plate at least once.
         // Without this restriction, the number of tubes rises from 122 to ~14,000
@@ -387,7 +388,7 @@ public class ImportFromSquidTest extends Arquillian {
     /**
      * For demos, import quants from Squid.
      */
-    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = false, groups = TestGroups.STANDARD)
     public void testImportQuants() {
         Query nativeQuery = entityManager.createNativeQuery(
                 "SELECT " +

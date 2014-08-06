@@ -12,6 +12,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 /**
  * Start a server that deploys the EJB
  */
+@Test(groups = TestGroups.STANDARD)
 public class TransferEntityGrapherTest extends Arquillian {
 
     @Deployment

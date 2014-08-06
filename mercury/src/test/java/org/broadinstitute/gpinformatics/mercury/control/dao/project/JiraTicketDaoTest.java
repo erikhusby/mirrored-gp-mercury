@@ -13,12 +13,12 @@ import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.util.UUID;
 
-import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STUBBY;
 
 /**
  * Test persist and fetch
  */
+@Test(groups = TestGroups.STUBBY)
 public class JiraTicketDaoTest extends ContainerTest{
 
     @Inject

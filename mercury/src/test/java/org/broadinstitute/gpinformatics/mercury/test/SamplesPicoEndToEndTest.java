@@ -51,6 +51,7 @@ import java.util.Set;
 /**
  * Test BSP Pico messaging
  */
+@Test(groups = TestGroups.DATABASE_FREE)
 public class SamplesPicoEndToEndTest {
 
     @Test(groups = TestGroups.DATABASE_FREE)
@@ -125,7 +126,7 @@ public class SamplesPicoEndToEndTest {
         // datamart?
     }
 
-    public static void printLabEvents(List<LabEventBean> labEventBeans) {
+    static void printLabEvents(List<LabEventBean> labEventBeans) {
         Set<String> barcodes = new HashSet<>();
         for (LabEventBean labEventBean : labEventBeans) {
             System.out.println(labEventBean.getEventType() + " " + labEventBean.getEventDate());
@@ -288,7 +289,7 @@ public class SamplesPicoEndToEndTest {
         }
     }
 
-    public static void printVessel(LabVesselBean labVesselBean) {
+    private static void printVessel(LabVesselBean labVesselBean) {
         StaticPlate.PlateType plateType = StaticPlate.PlateType.getByAutomationName(labVesselBean.getType());
         VesselGeometry vesselGeometry;
         if (plateType == null) {

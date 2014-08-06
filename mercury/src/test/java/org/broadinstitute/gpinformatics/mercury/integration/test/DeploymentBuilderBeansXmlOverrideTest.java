@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.integration.test;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.integration.test.beans.AlternativeSimpleServiceImpl;
 import org.broadinstitute.gpinformatics.mercury.integration.test.beans.SimpleService;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -14,6 +15,7 @@ import javax.inject.Inject;
 /**
  * @author breilly
  */
+@Test(groups = TestGroups.ALTERNATIVES, enabled = false)
 public class DeploymentBuilderBeansXmlOverrideTest extends Arquillian {
 
     @Inject

@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
@@ -25,6 +26,7 @@ import java.util.Map;
 /**
  * Test Message Driven Bean
  */
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class BettaLimsMessageBeanTest {
 
     @Test(enabled = false)
