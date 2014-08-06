@@ -15,7 +15,7 @@ import javax.inject.Inject;
 /**
  * @author breilly
  */
-@Test(groups = TestGroups.ALTERNATIVES, enabled = false)
+@Test(groups = TestGroups.ALTERNATIVES)
 public class DeploymentBuilderBeansXmlOverrideTest extends Arquillian {
 
     @Inject
@@ -26,7 +26,7 @@ public class DeploymentBuilderBeansXmlOverrideTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWarWithAlternatives(AlternativeSimpleServiceImpl.class);
     }
 
-    @Test
+    @Test(enabled = false)
     public void testInjection() {
         Assert.assertEquals(service.getName(), "AlternativeSimpleServiceImpl");
     }
