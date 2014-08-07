@@ -12,11 +12,14 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Wrapper around {@link BSPSampleSearchService} that
@@ -87,23 +90,41 @@ public class BSPSampleDataFetcher extends BSPJerseyClient {
      *
      * @param sampleNames The sample names, which can be short barcodes such as SM-4FHTK,
      *                    or bare ids such as 4FHTK.
+     * @param bspSampleSearchColumns Array of columns to return from BSP. The SAMPLE_ID column is always returned
+     *                               no matter what values is provided for bspSampleSearchColumns as it is the key
+     *                               to the map returned.
      *
      * @return Mapping of sample id to its bsp data
      */
-    public Map<String, BSPSampleDTO> fetchSamplesFromBSP(@Nonnull Collection<String> sampleNames) {
+    public Map<String, BSPSampleDTO> fetchSamplesFromBSP(@Nonnull Collection<String> sampleNames,
+                                                         BSPSampleSearchColumn ... bspSampleSearchColumns) {
         if (sampleNames.isEmpty()) {
             return Collections.emptyMap();
         }
 
+        Set<BSPSampleSearchColumn> searchColumns = new HashSet<>(Arrays.asList(bspSampleSearchColumns));
+        searchColumns.add(BSPSampleSearchColumn.SAMPLE_ID);
         Map<String, BSPSampleDTO> sampleNameToDTO = new HashMap<>();
-        List<Map<BSPSampleSearchColumn, String>> results =
-                service.runSampleSearch(sampleNames, BSPSampleSearchColumn.PDO_SEARCH_COLUMNS);
+        List<Map<BSPSampleSearchColumn, String>> results = service.runSampleSearch(sampleNames,
+                searchColumns.toArray(new BSPSampleSearchColumn[searchColumns.size()]));
         for (Map<BSPSampleSearchColumn, String> result : results) {
             BSPSampleDTO bspDTO = new BSPSampleDTO(result);
             sampleNameToDTO.put(bspDTO.getSampleId(), bspDTO);
         }
 
         return sampleNameToDTO;
+    }
+
+    /**
+     * Fetch the data from bsp for multiple samples.
+     *
+     * @param sampleNames The sample names, which can be short barcodes such as SM-4FHTK,
+     *                    or bare ids such as 4FHTK.
+     *
+     * @return Mapping of sample id to its bsp data
+     */
+    public Map<String, BSPSampleDTO> fetchSamplesFromBSP(@Nonnull Collection<String> sampleNames) {
+        return fetchSamplesFromBSP(sampleNames, BSPSampleSearchColumn.PDO_SEARCH_COLUMNS);
     }
 
     /**
