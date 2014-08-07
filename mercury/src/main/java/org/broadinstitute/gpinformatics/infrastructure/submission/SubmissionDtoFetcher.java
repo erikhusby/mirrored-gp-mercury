@@ -109,6 +109,9 @@ public class SubmissionDtoFetcher {
         log.debug(String.format("Fetched %d bassDTOs", bassDTOs.size()));
         Map<String, BassDTO> bassDTOMap = new HashMap<>();
         for (BassDTO bassDTO : bassDTOs) {
+            if(bassDTOMap.containsKey(bassDTO.getSample())) {
+                log.debug("The bassDTO Map already contains an index for: " + bassDTO.getSample());
+            }
             bassDTOMap.put(bassDTO.getSample(), bassDTO);
         }
         return bassDTOMap;
