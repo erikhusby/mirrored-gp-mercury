@@ -11,7 +11,6 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -49,15 +48,15 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
 
-@Test(groups = TestGroups.DATABASE_FREE)
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class SubmissionDtoFetcherTest {
-
+    SubmissionsService submissionService = new SubmissionsServiceStub();
     public static final String TEST_SAMPLE = "SM-35BDA";
     public static final String COLLABORATOR_SAMPLE_ID = "BOT2365_T";
     public static final String RESEARCH_PROJECT_ID = "RP-YOMAMA";
     private static final String DATA_TYPE = "Exome";
-    private static final Double QUALITY_METRIC = 1.2;
 
+    private static final Double QUALITY_METRIC = 1.2;
     public void testFetch() throws Exception {
         double contamination = 2.2d;
         LevelOfDetection fingerprintLod = new LevelOfDetection(-45d, -13d);
@@ -95,7 +94,7 @@ public class SubmissionDtoFetcherTest {
         Mockito.when(bspSampleDataFetcher.getBspConfig()).thenReturn(testBspConfig);
 
         SubmissionDtoFetcher submissionDtoFetcher =
-                new SubmissionDtoFetcher(aggregationMetricsFetcher, bassSearchService, bspSampleDataFetcher);
+                new SubmissionDtoFetcher(aggregationMetricsFetcher, bassSearchService, bspSampleDataFetcher, submissionService);
         List<SubmissionDto> submissionDtoList = submissionDtoFetcher.fetch(researchProject);
 
         assertThat(submissionDtoList, is(not(empty())));

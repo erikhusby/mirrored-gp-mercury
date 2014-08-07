@@ -45,17 +45,19 @@ public class SubmissionDtoFetcher {
     private AggregationMetricsFetcher aggregationMetricsFetcher;
     private BassSearchService bassSearchService;
     private BSPSampleDataFetcher bspSampleDataFetcher;
-    private SubmissionsService submissionsService = new SubmissionsServiceStub();
+    private SubmissionsService submissionsService;
 
     public SubmissionDtoFetcher() {
     }
 
     @Inject
     public SubmissionDtoFetcher(AggregationMetricsFetcher aggregationMetricsFetcher,
-                                BassSearchService bassSearchService, BSPSampleDataFetcher bspSampleDataFetcher) {
+                                BassSearchService bassSearchService, BSPSampleDataFetcher bspSampleDataFetcher,
+                                SubmissionsService submissionsService) {
         this.aggregationMetricsFetcher = aggregationMetricsFetcher;
         this.bassSearchService = bassSearchService;
         this.bspSampleDataFetcher = bspSampleDataFetcher;
+        this.submissionsService = submissionsService;
     }
 
     private void updateBulkBspSampleInfo(Collection<ProductOrderSample> samples) {
