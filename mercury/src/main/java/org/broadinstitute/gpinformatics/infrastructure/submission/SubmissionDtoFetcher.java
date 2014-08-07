@@ -143,15 +143,19 @@ public class SubmissionDtoFetcher {
                                                Map<String, Set<ProductOrder>> sampleNameToPdos,
                                                Map<String, SubmissionStatusDetailBean> sampleSubmissionMap,
                                                Map<String, BassDTO> bassDTOMap,
-                                               Map<String, Aggregation> aggregationMap, ResearchProject researchProject) {
+                                               Map<String, Aggregation> aggregationMap,
+                                               ResearchProject researchProject) {
         for (Map.Entry<String, Set<ProductOrder>> sampleListMap : sampleNameToPdos.entrySet()) {
             String collaboratorSampleId = sampleListMap.getKey();
-            Aggregation aggregation = aggregationMap.get(collaboratorSampleId);
-            BassDTO bassDTO = bassDTOMap.get(collaboratorSampleId);
-            SubmissionStatusDetailBean statusDetailBean =
-                    sampleSubmissionMap.get(researchProject.getSubmissionTracker(bassDTO.getTuple())
-                                                           .createSubmissionIdentifier());
-            if (bassDTO != null && aggregation != null) {
+            if (aggregationMap.containsKey(collaboratorSampleId) && bassDTOMap.containsKey(collaboratorSampleId)) {
+                Aggregation aggregation = aggregationMap.get(collaboratorSampleId);
+                BassDTO bassDTO = bassDTOMap.get(collaboratorSampleId);
+                SubmissionTracker submissionTracker = researchProject.getSubmissionTracker(bassDTO.getTuple());
+                SubmissionStatusDetailBean statusDetailBean = null;
+                if (submissionTracker != null) {
+                    statusDetailBean = sampleSubmissionMap.get(submissionTracker
+                            .createSubmissionIdentifier());
+                }
                 results.add(new SubmissionDto(bassDTO, aggregation, sampleListMap.getValue(), statusDetailBean));
             }
         }
@@ -169,7 +173,7 @@ public class SubmissionDtoFetcher {
     }
 
     public List<String> collectSubmissionIdentifiers(ResearchProject researchProject) {
-        List<String> submissionIds=new ArrayList<>();
+        List<String> submissionIds = new ArrayList<>();
         /** SubmissionTracker uses sampleName for accessionIdentifier
          @see: org/broadinstitute/gpinformatics/athena/boundary/projects/ ResearchProjectEjb.java:243 **/
         for (SubmissionTracker submissionTracker : researchProject.getSubmissionTrackers()) {

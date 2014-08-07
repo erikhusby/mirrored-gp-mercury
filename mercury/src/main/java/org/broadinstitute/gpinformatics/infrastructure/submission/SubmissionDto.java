@@ -11,12 +11,14 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
+import com.sun.istack.Nullable;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
 
+import javax.annotation.Nonnull;
 import java.util.Collection;
 import java.util.Date;
 
@@ -28,8 +30,8 @@ public class SubmissionDto {
     private final BassDTO bassDTO;
     private final Aggregation aggregation;
 
-    public SubmissionDto(BassDTO bassDTO, Aggregation aggregation, Collection<ProductOrder> productOrders,
-                         SubmissionStatusDetailBean statusDetailBean) {
+    public SubmissionDto(@Nonnull BassDTO bassDTO, Aggregation aggregation, @Nonnull Collection<ProductOrder> productOrders,
+                         @Nullable SubmissionStatusDetailBean statusDetailBean) {
         this.bassDTO = bassDTO;
         this.aggregation = aggregation;
         this.productOrders = productOrders;
@@ -118,10 +120,18 @@ public class SubmissionDto {
     }
 
     public String getSubmittedStatus() {
-        return statusDetailBean.getStatus();
+        String status = "";
+        if (statusDetailBean != null) {
+            status = statusDetailBean.getStatus();
+        }
+        return status;
     }
 
     public String getStatusDate() {
-        return DATE_FORMAT.format(statusDetailBean.getLastStatusUpdate());
+        String format = "";
+        if(statusDetailBean != null) {
+            format = DATE_FORMAT.format(statusDetailBean.getLastStatusUpdate());
+        }
+        return format;
     }
 }
