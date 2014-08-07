@@ -139,7 +139,6 @@ public class ProductOrderResource {
      *
      * @return the reference for the newly created {@link ProductOrder}
      */
-
     @POST
     @Path("createWithKitRequest")
     @Produces(MediaType.APPLICATION_XML)
@@ -150,16 +149,18 @@ public class ProductOrderResource {
         // This will create a product order and place it, so a JIRA ticket is created.
         ProductOrder productOrder = createProductOrder(productOrderData);
 
+
         ResearchProject researchProject =
                 researchProjectDao.findByBusinessKey(productOrderData.getResearchProjectId());
-        SampleKitWorkRequest.MoleculeType moleculeType = productOrderData.getMoleculeType();
 
-        MaterialInfoDto materialInfoDto = createMaterialInfoDTO(productOrderData.getMaterialInfo(), moleculeType);
-
-        ProductOrderKitDetail kitDetail =
-                createKitDetail(productOrderData.getNumberOfSamples(), moleculeType, materialInfoDto);
-
-        productOrder.setProductOrderKit(createProductOrderKit(researchProject, kitDetail, productOrder));
+        // Get the collection id from the research project so that we can get the site id.
+        SampleCollection sampleCollection = getFirstCollection(researchProject);
+        Site site = getSiteId(sampleCollection.getCollectionId());
+        if (site != null) {
+            boolean isExomeExpress = productOrder.getProduct().isExomeExpress();
+            productOrder.setProductOrderKit(createOrderKit(isExomeExpress,
+                    productOrderData.getKitDetailData(), sampleCollection, site));
+        }
 
         // Send the kit information to BSP and assign the work request id.
         MessageCollection messageCollection = new MessageCollection();
@@ -173,20 +174,22 @@ public class ProductOrderResource {
         return new ProductOrderData(productOrder);
     }
 
-    private ProductOrderKit createProductOrderKit(
-            ResearchProject researchProject, ProductOrderKitDetail kitDetail, ProductOrder productOrder)
-            throws ApplicationValidationException {
-        // Get the collection id from the research project so that we can get the site id.
-        SampleCollection sampleCollection = getFirstCollection(researchProject);
-        Site site = getSiteId(sampleCollection.getCollectionId());
-        if (site == null) {
-            return null;
-        }
+    public ProductOrderKit createOrderKit(boolean isExomeExpress, List<ProductOrderKitDetailData> kitDetailsData,
+                                          SampleCollection sampleCollection, Site site) {
 
-        return new ProductOrderKit(sampleCollection, site, kitDetail, productOrder.getProduct().isExomeExpress());
+        List<ProductOrderKitDetail> kitDetails = new ArrayList<>();
+        for (ProductOrderKitDetailData kitDetailData : kitDetailsData) {
+            SampleKitWorkRequest.MoleculeType moleculeType = kitDetailData.getMoleculeType();
+
+            MaterialInfoDto materialInfoDto = createMaterialInfoDTO(kitDetailData.getMaterialInfo(), moleculeType);
+
+            kitDetails.add(createKitDetail(kitDetailData.getNumberOfSamples(), moleculeType, materialInfoDto));
+
+        }
+        return new ProductOrderKit(sampleCollection, site, kitDetails, isExomeExpress);
     }
 
-    private static ProductOrderKitDetail createKitDetail(long numberOfSamples, SampleKitWorkRequest.MoleculeType moleculeType,
+    private ProductOrderKitDetail createKitDetail(long numberOfSamples, SampleKitWorkRequest.MoleculeType moleculeType,
                                                   MaterialInfoDto materialInfoDto) {
         ProductOrderKitDetail kitDetail =
                 new ProductOrderKitDetail(numberOfSamples, KitType.DNA_MATRIX, HUMAN, materialInfoDto);
@@ -201,7 +204,7 @@ public class ProductOrderResource {
         return kitDetail;
     }
 
-    private static MaterialInfoDto createMaterialInfoDTO(MaterialInfo materialInfo,
+    private MaterialInfoDto createMaterialInfoDTO(MaterialInfo materialInfo,
                                                   SampleKitWorkRequest.MoleculeType moleculeType) {
         MaterialInfoDto materialInfoDto;
         if (moleculeType == SampleKitWorkRequest.MoleculeType.DNA) {
