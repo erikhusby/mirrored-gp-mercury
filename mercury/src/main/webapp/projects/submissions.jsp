@@ -132,7 +132,7 @@
                 <td>${submissionSample.fingerprintLOD.displayString()}</td>
                 <td>${submissionSample.lanesInAggregation}</td>
                 <td><%--blacklisted lanes--%></td>
-                <td><%--submitted version--%></td>
+                <td>${submissionSample.version}</td>
                 <td title="${submissionSample.submittedErrors}">${submissionSample.submittedStatus}</td>
                 <td>${submissionSample.statusDate}</td>
 
