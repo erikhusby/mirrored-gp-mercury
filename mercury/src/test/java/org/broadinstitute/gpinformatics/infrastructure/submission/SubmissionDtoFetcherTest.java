@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -18,9 +19,11 @@ import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTrackerT
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDtoTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassSearchService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.AggregationMetricsFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.AggregationTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
@@ -33,6 +36,8 @@ import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,14 +67,14 @@ public class SubmissionDtoFetcherTest {
         productOrder.addSample(new ProductOrderSample(TEST_SAMPLE));
         researchProject.addProductOrder(productOrder);
         researchProject.addSubmissionTracker(new SubmissionTrackerTest.SubmissionTrackerStub(COLLABORATOR_SAMPLE_ID, "bambam.bam", "1"));
-        Aggregation aggregation =
-                AggregationTestFactory.buildAggregation(RESEARCH_PROJECT_ID, COLLABORATOR_SAMPLE_ID, contamination,
-                        fingerprintLod, DATA_TYPE, QUALITY_METRIC, null,null);
+        List<Aggregation> aggregation =
+                Collections.singletonList(AggregationTestFactory.buildAggregation(RESEARCH_PROJECT_ID, COLLABORATOR_SAMPLE_ID, contamination,
+                        fingerprintLod, DATA_TYPE, QUALITY_METRIC, null,null));
         BassDTO bassResults = BassDtoTestFactory.buildBassResults(RESEARCH_PROJECT_ID, COLLABORATOR_SAMPLE_ID);
 
         AggregationMetricsFetcher aggregationMetricsFetcher = Mockito.mock(AggregationMetricsFetcher.class);
-        Mockito.when(aggregationMetricsFetcher.fetch(Mockito.anyString(), Mockito.anyString(), Mockito.anyInt()))
-                .thenReturn(aggregation);
+        Mockito.when(aggregationMetricsFetcher.fetch(Mockito.anyListOf(String.class), Mockito.anyListOf(String.class),
+                Mockito.anyListOf(Integer.class))).thenReturn(aggregation);
 
         BassSearchService bassSearchService = Mockito.mock(BassSearchService.class);
         Mockito.when(bassSearchService.runSearch(Mockito.anyString())).thenReturn(Arrays.asList(bassResults));
@@ -82,8 +87,12 @@ public class SubmissionDtoFetcherTest {
         BSPSampleDataFetcher bspSampleDataFetcher = Mockito.mock(BSPSampleDataFetcher.class);
         bspSampleDTOMap.put(TEST_SAMPLE, new BSPSampleDTO(dataMap));
 
-        Mockito.when(bspSampleDataFetcher.fetchSamplesFromBSP(Mockito.anyCollectionOf(String.class)))
+        Mockito.when(bspSampleDataFetcher.fetchSamplesFromBSP(
+                (Collection<String>) Mockito.anyCollectionOf(String.class)))
                 .thenReturn(bspSampleDTOMap);
+
+        BSPConfig testBspConfig = new BSPConfig(Deployment.STUBBY);
+        Mockito.when(bspSampleDataFetcher.getBspConfig()).thenReturn(testBspConfig);
 
         SubmissionDtoFetcher submissionDtoFetcher =
                 new SubmissionDtoFetcher(aggregationMetricsFetcher, bassSearchService, bspSampleDataFetcher);
@@ -100,5 +109,4 @@ public class SubmissionDtoFetcherTest {
             assertThat(submissionDto.getDateCompleted(), Matchers.nullValue());
         }
     }
-
 }

@@ -142,6 +142,7 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     private String irbNotes;
 
     @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+    @BatchSize(size = 100)
     private List<ProductOrder> productOrders = new ArrayList<>();
     /**
      * True if access to this Project's data should be restricted based on user.
