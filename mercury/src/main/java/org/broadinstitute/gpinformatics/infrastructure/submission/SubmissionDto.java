@@ -20,7 +20,9 @@ import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDet
 
 import javax.annotation.Nonnull;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 public class SubmissionDto {
     public static final FastDateFormat DATE_FORMAT =
@@ -36,6 +38,10 @@ public class SubmissionDto {
         this.aggregation = aggregation;
         this.productOrders = productOrders;
         this.statusDetailBean = statusDetailBean;
+    }
+
+    public String getUuid() {
+        return statusDetailBean.getUuid();
     }
 
     public BassDTO getBassDTO() {
@@ -119,6 +125,12 @@ public class SubmissionDto {
         return bassDTO.getVersion();
     }
 
+    public List<String> getSubmittedErrors() {
+        if (statusDetailBean != null) {
+            return statusDetailBean.getErrors();
+        }
+        return Collections.emptyList();
+    }
     public String getSubmittedStatus() {
         String status = "";
         if (statusDetailBean != null) {
