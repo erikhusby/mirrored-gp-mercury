@@ -11,6 +11,9 @@
 
 package org.broadinstitute.gpinformatics.athena.boundary.projects;
 
+import clover.com.google.common.base.Function;
+import clover.com.google.common.collect.Maps;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -23,6 +26,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectFunding;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
 import org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean;
+import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -46,6 +50,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceExcep
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -175,7 +180,8 @@ public class ResearchProjectEjb {
 
         String piNames = buildProjectPiJiraString(researchProject);
         if (!StringUtils.isBlank(piNames)) {
-            researchProjectUpdateFields.add(new ResearchProjectUpdateField(RequiredSubmissionFields.BROAD_PIS, piNames));
+            researchProjectUpdateFields.add(new ResearchProjectUpdateField(RequiredSubmissionFields.BROAD_PIS,
+                    piNames));
         }
 
         String[] customFieldNames = new String[researchProjectUpdateFields.size()];
@@ -239,9 +245,10 @@ public class ResearchProjectEjb {
      */
     public Collection<SubmissionStatusDetailBean> processSubmissions(@Nonnull String researchProjectBusinessKey,
                                                                      @Nonnull BioProject selectedBioProject,
-                                                                     @Nonnull List<SubmissionDto> submissionDtos) {
+                                                                     @Nonnull List<SubmissionDto> submissionDtos)
+            throws ValidationException {
 
-        if(submissionDtos.isEmpty()) {
+        if (submissionDtos.isEmpty()) {
             throw new InformaticsServiceException("At least one selection is needed to post submissions");
         }
 
@@ -249,7 +256,7 @@ public class ResearchProjectEjb {
 
         Map<SubmissionTracker, SubmissionDto> submissionDtoMap = new HashMap<>();
 
-        for(SubmissionDto submissionDto:submissionDtos) {
+        for (SubmissionDto submissionDto : submissionDtos) {
             SubmissionTracker tracker =
                     new SubmissionTracker(submissionDto.getSampleName(), submissionDto.getFilePath(),
                             String.valueOf(submissionDto.getVersion()));
@@ -261,7 +268,7 @@ public class ResearchProjectEjb {
 
         List<SubmissionBean> submissionBeans = new ArrayList<>();
 
-        for(Map.Entry<SubmissionTracker, SubmissionDto> dtoByTracker:submissionDtoMap.entrySet()) {
+        for (Map.Entry<SubmissionTracker, SubmissionDto> dtoByTracker : submissionDtoMap.entrySet()) {
 
             BioProject submitBioProject = new BioProject();
             submitBioProject.setAccession(selectedBioProject.getAccession());
@@ -271,12 +278,11 @@ public class ResearchProjectEjb {
                             dtoByTracker.getValue().getFilePath());
             bioSampleBean.setContact(new SubmissionContactBean(userBean.getBspUser().getFirstName(),
                     userBean.getBspUser().getLastName(), userBean.getBspUser().getEmail()
-//                    ,"617-714-8460", "homer", "G"
             ));
 
             SubmissionBean submissionBean =
                     new SubmissionBean(dtoByTracker.getKey().createSubmissionIdentifier(),
-                            userBean.getBspUser().getUsername(),submitBioProject,bioSampleBean);
+                            userBean.getBspUser().getUsername(), submitBioProject, bioSampleBean);
             submissionBeans.add(submissionBean);
         }
 
@@ -288,6 +294,28 @@ public class ResearchProjectEjb {
         }
 
         Collection<SubmissionStatusDetailBean> submissionResults = submissionsService.postSubmissions(requestBean);
+
+        Map<String, SubmissionTracker> submissionIdentifierToTracker = Maps.uniqueIndex(submissionProject.getSubmissionTrackers(), new Function<SubmissionTracker, String>() {
+            @Override
+            public String apply(@Nullable SubmissionTracker submissionTracker) {
+                return submissionTracker.createSubmissionIdentifier();
+            }
+        });
+        List<String> errorMessages = new ArrayList<>();
+
+        for (SubmissionStatusDetailBean status : submissionResults) {
+            if (CollectionUtils.isNotEmpty(status.getErrors())) {
+                for(String errorMessage:status.getErrors()) {
+                    errorMessages.add(String.format("%s: %s", submissionIdentifierToTracker.get(status.getUuid()).getSubmittedSampleName(),errorMessage));
+                }
+            }
+        }
+
+        if(CollectionUtils.isNotEmpty(errorMessages)) {
+            throw new ValidationException(
+                    "There were some errors during submission.  ", errorMessages);
+        }
+
         return submissionResults;
     }
 

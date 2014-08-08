@@ -141,7 +141,7 @@ public class SubmissionDto {
 
     public String getStatusDate() {
         String format = "";
-        if(statusDetailBean != null) {
+        if(statusDetailBean != null && statusDetailBean.getLastStatusUpdate() != null) {
             format = DATE_FORMAT.format(statusDetailBean.getLastStatusUpdate());
         }
         return format;

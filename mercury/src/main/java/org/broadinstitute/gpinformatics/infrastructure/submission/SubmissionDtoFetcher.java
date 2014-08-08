@@ -13,6 +13,7 @@ package org.broadinstitute.gpinformatics.infrastructure.submission;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Maps;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -112,7 +113,7 @@ public class SubmissionDtoFetcher {
         log.debug(String.format("Fetched %d bassDTOs", bassDTOs.size()));
         Map<String, BassDTO> bassDTOMap = new HashMap<>();
         for (BassDTO bassDTO : bassDTOs) {
-            if(bassDTOMap.containsKey(bassDTO.getSample())) {
+            if (bassDTOMap.containsKey(bassDTO.getSample())) {
                 log.debug("The bassDTO Map already contains an index for: " + bassDTO.getSample());
             }
             bassDTOMap.put(bassDTO.getSample(), bassDTO);
@@ -170,10 +171,12 @@ public class SubmissionDtoFetcher {
     public Map<String, SubmissionStatusDetailBean> buildSampleToSubmissionMap(List<String> submissionIds) {
         Map<String, SubmissionStatusDetailBean> sampleSubmissionMap = new HashMap<>();
 
-        Collection<SubmissionStatusDetailBean> submissionStatus =
-                submissionsService.getSubmissionStatus(submissionIds.toArray(new String[submissionIds.size()]));
-        for (SubmissionStatusDetailBean submissionStatusDetailBean : submissionStatus) {
-            sampleSubmissionMap.put(submissionStatusDetailBean.getUuid(), submissionStatusDetailBean);
+        if (CollectionUtils.isNotEmpty(submissionIds)) {
+            Collection<SubmissionStatusDetailBean> submissionStatus =
+                    submissionsService.getSubmissionStatus(submissionIds.toArray(new String[submissionIds.size()]));
+            for (SubmissionStatusDetailBean submissionStatusDetailBean : submissionStatus) {
+                sampleSubmissionMap.put(submissionStatusDetailBean.getUuid(), submissionStatusDetailBean);
+            }
         }
         return sampleSubmissionMap;
     }

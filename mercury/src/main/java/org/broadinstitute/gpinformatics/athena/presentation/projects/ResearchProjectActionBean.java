@@ -14,6 +14,7 @@ import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidateNestedProperties;
 import net.sourceforge.stripes.validation.ValidationErrors;
 import net.sourceforge.stripes.validation.ValidationMethod;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -37,6 +38,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Cohor
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.FundingTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
+import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProjectList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
@@ -47,6 +49,7 @@ import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientService;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDtoFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionStatusDetailBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -63,8 +66,6 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
-import java.util.NavigableMap;
-import java.util.TreeMap;
 
 /**
  * This class is for research projects action bean / web page.
@@ -76,7 +77,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     public static final String ACTIONBEAN_URL_BINDING = "/projects/project.action";
     public static final String RESEARCH_PROJECT_PARAMETER = "researchProject";
-    public static final String RESEARCH_PROJECT_TAB_PARAMETER ="rpSelectedTab";
+    public static final String RESEARCH_PROJECT_TAB_PARAMETER = "rpSelectedTab";
     public static final String RESEARCH_PROJECT_DEFAULT_TAB = "1";
     public static final String RESEARCH_PROJECT_SUBMISSIONS_TAB = "2";
 
@@ -178,7 +179,6 @@ public class ResearchProjectActionBean extends CoreActionBean {
      */
     private Map<String, Long> projectOrderCounts;
 
-    @Validate(on = POST_SUBMISSIONS_ACTION, required = true)
     private List<String> selectedSubmissionSamples;
 
     @ValidateNestedProperties(
@@ -818,27 +818,44 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     /**
      * Handles a users request to submit samples to the submissions serverice
+     *
      * @return
      */
     @HandlesEvent(POST_SUBMISSIONS_ACTION)
     public Resolution postSubmissions() {
+        boolean errors = false;
 
-        List<SubmissionDto> selectedSubmissions = new ArrayList<>();
-        for(SubmissionDto dto:submissionSamples) {
-            if(selectedSubmissionSamples.contains(dto.getSampleName())) {
-                selectedSubmissions.add(dto);
-            }
+        rpSelectedTab = RESEARCH_PROJECT_SUBMISSIONS_TAB;
+
+        if (CollectionUtils.isEmpty(selectedSubmissionSamples)) {
+            addGlobalValidationError("You must select at least one sample in order to post for submission.");
+            errors = true;
         }
-
         BioProject selectedProject = bioProjectTokenInput.getTokenObject();
 
-        try {
-            researchProjectEjb.processSubmissions(researchProject, new BioProject(selectedProject.getAccession()),
-                    selectedSubmissions);
-        } catch (InformaticsServiceException e) {
-            addGlobalValidationError(e.getMessage());
+        if (selectedProject == null) {
+            addGlobalValidationError("You must select a bio project in order to post for submissions");
+            errors = true;
         }
+        if (!errors) {
 
+            List<SubmissionDto> selectedSubmissions = new ArrayList<>();
+            for (SubmissionDto dto : submissionSamples) {
+                if (selectedSubmissionSamples.contains(dto.getSampleName())) {
+                    selectedSubmissions.add(dto);
+                }
+            }
+
+            try {
+                Collection<SubmissionStatusDetailBean> submissionStatuses =
+                        researchProjectEjb.processSubmissions(researchProject,
+                                new BioProject(selectedProject.getAccession()), selectedSubmissions);
+                addMessage("The selected samples for submission have been successfully posted to NCBI.  See the " +
+                           "Submission Requests tab for further details");
+            } catch (InformaticsServiceException | ValidationException e) {
+                addGlobalValidationError(e.getMessage());
+            }
+        }
         return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION)
                 .addParameter(RESEARCH_PROJECT_PARAMETER, researchProject)
                 .addParameter(RESEARCH_PROJECT_TAB_PARAMETER, RESEARCH_PROJECT_SUBMISSIONS_TAB);

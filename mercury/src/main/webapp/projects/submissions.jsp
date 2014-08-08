@@ -15,8 +15,19 @@
                         tokenLimit: 1,
                         resultsFormatter: formatInput
                     }
-            )
+            );
 
+            $j('.submissionStatusClass').popover({ trigger:"hover", html:true });
+//            $j('#postSubmissionBtn').prop('disabled', true);
+//
+//            $j('.shiftCheckbox').change(function (e) {
+//                var len = $j("#general-content input[class='shiftCheckbox']:checked").length;
+//                if(len>0) {
+//                    $j('#postSubmissionBtn').prop('disabled', false);
+//                } else {
+//                    $j('#postSubmissionBtn').prop('disabled', true);
+//                }
+//            });
         });
         function formatInput(item) {
                         var extraCount = (item.extraCount == undefined) ? "" : item.extraCount;
@@ -133,7 +144,7 @@
                 <td>${submissionSample.lanesInAggregation}</td>
                 <td><%--blacklisted lanes--%></td>
                 <td>${submissionSample.version}</td>
-                <td title="${submissionSample.submittedErrors}">${submissionSample.submittedStatus}</td>
+                <td ><span data-content="${submissionSample.submittedErrors}" data-placement="bottom" class ="submissionStatusClass">${submissionSample.submittedStatus}</span></td>
                 <td>${submissionSample.statusDate}</td>
 
                     <%--<c:if test="${submissionSample.la == 0}">--%>
@@ -147,7 +158,7 @@
     </table>
     <div class="span1">
         <stripes:submit name="<%=ResearchProjectActionBean.POST_SUBMISSIONS_ACTION%>" value="Post Selected Submissions"
-                        class="btn btn-primary"/>
+                        class="btn btn-primary" id="postSubmissionBtn"/>
     </div>
 
     <%--<button>Submit these files</button>--%>
