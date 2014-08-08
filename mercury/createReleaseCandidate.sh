@@ -4,6 +4,7 @@
 #
 # Usage: Release.sh
 #
+unuse Java-1.6-Prodinfo
 unuse Maven-2.2
 use Maven-3.1
 use Java-1.7
