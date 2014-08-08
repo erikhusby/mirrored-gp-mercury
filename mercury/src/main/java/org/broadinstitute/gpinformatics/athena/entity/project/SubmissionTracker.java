@@ -39,8 +39,8 @@ public class SubmissionTracker {
      * Represents the name of the sample that has been submitted.  This field name may be changed based on the outcome
      * of discussions on what data to specifically send.
      */
-    @Column(name = "ACCESSION_IDENTIFIER")
-    private String accessionIdentifier;
+    @Column(name = "SUBMITTED_SAMPLE_NAME")
+    private String submittedSampleName;
 
     /**
      * File name and path for the data file being submitted
@@ -64,8 +64,8 @@ public class SubmissionTracker {
     protected SubmissionTracker() {
     }
 
-    public SubmissionTracker(String accessionIdentifier, String fileName, String version) {
-        this.accessionIdentifier = accessionIdentifier;
+    public SubmissionTracker(String submittedSampleName, String fileName, String version) {
+        this.submittedSampleName = submittedSampleName;
         this.fileName = fileName;
         this.version = version;
     }
@@ -82,8 +82,8 @@ public class SubmissionTracker {
 
 
 
-    public String getAccessionIdentifier() {
-        return accessionIdentifier;
+    public String getSubmittedSampleName() {
+        return submittedSampleName;
     }
 
     public String getFileName() {
@@ -113,6 +113,6 @@ public class SubmissionTracker {
     // todo: should be in interface?
     @Transient
     public SubmissionTuple getTuple() {
-        return new SubmissionTuple(accessionIdentifier, fileName, version);
+        return new SubmissionTuple(submittedSampleName, fileName, version);
     }
 }

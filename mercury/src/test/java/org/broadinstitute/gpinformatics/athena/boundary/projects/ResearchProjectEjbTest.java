@@ -119,7 +119,7 @@ public class ResearchProjectEjbTest extends ContainerTest {
 
         Assert.assertTrue(CollectionUtils.isNotEmpty(updatedRP.getSubmissionTrackers()));
         for(SubmissionTracker tracker:updatedRP.getSubmissionTrackers()) {
-            Assert.assertTrue(Arrays.asList(TEST_SAMPLE_1, TEST_SAMPLE_2).contains(tracker.getAccessionIdentifier()));
+            Assert.assertTrue(Arrays.asList(TEST_SAMPLE_1, TEST_SAMPLE_2).contains(tracker.getSubmittedSampleName()));
         }
 
     }

@@ -19,7 +19,7 @@ public class SubmissionTrackerTest {
 
         Assert.assertNotNull(tracker);
 
-        Assert.assertEquals(tracker.getAccessionIdentifier(), testAccessionID);
+        Assert.assertEquals(tracker.getSubmittedSampleName(), testAccessionID);
         Assert.assertEquals(tracker.getFileName(), testFileName);
 
         Assert.assertEquals(tracker.getVersion() , testVersion);

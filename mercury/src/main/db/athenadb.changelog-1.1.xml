@@ -1135,4 +1135,25 @@
                                  referencedTableName="REV_INFO" referencedTableSchemaName="MERCURY"
                                  referencedColumnNames="REV_INFO_ID"/>
     </changeSet>
+
+    <changeSet id="GPLIM-2895-change-sample-column-name" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists columnName="SUBMITTED_SAMPLE_NAME" schemaName="athena" tableName="SUBMISSION_TRACKER"/>
+            </not>
+        </preConditions>
+        <renameColumn tableName="SUBMISSION_TRACKER" oldColumnName="ACCESSION_IDENTIFIER"
+                      newColumnName="SUBMITTED_SAMPLE_NAME" schemaName="athena" columnDataType="varchar2(255 char)"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-2895-change-sample-column-name-aud" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists columnName="SUBMITTED_SAMPLE_NAME" schemaName="athena" tableName="SUBMISSION_TRACKER_AUD"/>
+            </not>
+        </preConditions>
+        <renameColumn tableName="SUBMISSION_TRACKER_AUD" oldColumnName="ACCESSION_IDENTIFIER"
+                      newColumnName="SUBMITTED_SAMPLE_NAME" schemaName="athena" columnDataType="varchar2(255 char)"/>
+    </changeSet>
+
 </databaseChangeLog>
