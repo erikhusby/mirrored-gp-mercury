@@ -268,6 +268,25 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
         return workCompleteMessageBySample;
     }
 
+    /**
+     * Write a row of data for a single sample.
+     *
+     * Currently, the data comes from many different places. In order to improve testability, the data is in the
+     * process of being consolidated into a {@link SampleLedgerRow} object, which will make test setup easier.
+     *
+     * Testing this method is a little difficult. Ideally, its inputs would be simple to make it straightforward to test
+     * different scenarios by verifying interactions with the writer. Another idea is to move the responsibility into
+     * {@link SampleLedgerRow}. See Phil Shapiro's code review
+     * <a href="https://crucible.broadinstitute.org/cru/GPI-748#c32936">comment</a>.
+     *
+     * @param sortedPriceItems               primary and alternative price items that apply to the product ordered
+     * @param sortedAddOns                   add-on products to provided price item columns for
+     * @param historicalPriceItems           price items that have ledger entries for this sample but are not primary, alternative, or add-on price items
+     * @param sample                         the product order sample for the row
+     * @param sortOrder                      the value for the sort order column, for re-sorting the tracker before uploading
+     * @param workCompleteMessageBySample    any work complete messages for the product order, by sample
+     * @param sampleData                     simple bean of sample data to be written
+     */
     private void writeRow(List<PriceItem> sortedPriceItems, List<Product> sortedAddOns,
                           Collection<PriceItem> historicalPriceItems, ProductOrderSample sample,
                           int sortOrder, Map<String, WorkCompleteMessage> workCompleteMessageBySample,
