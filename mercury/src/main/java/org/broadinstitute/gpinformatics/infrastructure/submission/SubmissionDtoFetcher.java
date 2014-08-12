@@ -160,8 +160,7 @@ public class SubmissionDtoFetcher {
                 SubmissionTracker submissionTracker = researchProject.getSubmissionTracker(bassDTO.getTuple());
                 SubmissionStatusDetailBean statusDetailBean = null;
                 if (submissionTracker != null) {
-                    statusDetailBean = sampleSubmissionMap.get(submissionTracker
-                            .createSubmissionIdentifier());
+                    statusDetailBean = sampleSubmissionMap.get(submissionTracker.createSubmissionIdentifier());
                 }
                 results.add(new SubmissionDto(bassDTO, aggregation, sampleListMap.getValue(), statusDetailBean));
             }

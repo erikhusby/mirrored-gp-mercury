@@ -12,8 +12,16 @@
                        businessKeyValue="${actionBean.editResearchProject.businessKey}">
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
+            function getParameterByName(name) {
+                name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+                var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+                    results = regex.exec(location.search);
+                return results == null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+            }
+
             $j(document).ready(function () {
                 $j( "#tabs" ).tabs({
+                active: getParameterByName("rpSelectedTab"),
                     beforeLoad: function(event, ui) {
                         if (ui.panel.children('form').length == 0) {
                             if (ui.panel.children('p.loading').length == 0) {

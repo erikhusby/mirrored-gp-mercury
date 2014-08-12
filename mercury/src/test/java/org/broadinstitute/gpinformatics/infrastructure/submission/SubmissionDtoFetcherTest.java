@@ -35,7 +35,6 @@ import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -50,11 +49,12 @@ import static org.hamcrest.Matchers.empty;
 
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class SubmissionDtoFetcherTest {
-    SubmissionsService submissionService = new SubmissionsServiceStub();
-    public static final String TEST_SAMPLE = "SM-35BDA";
-    public static final String COLLABORATOR_SAMPLE_ID = "BOT2365_T";
-    public static final String RESEARCH_PROJECT_ID = "RP-YOMAMA";
+    private SubmissionsService submissionService = new SubmissionsServiceStub();
+    private static final String TEST_SAMPLE = "SM-35BDA";
+    private static final String COLLABORATOR_SAMPLE_ID = "BOT2365_T";
+    private static final String RESEARCH_PROJECT_ID = "RP-YOMAMA";
     private static final String DATA_TYPE = "Exome";
+    private static final String NCBI_ERROR = "And error was returned from NCBI";
 
     private static final Double QUALITY_METRIC = 1.2;
     public void testFetch() throws Exception {
@@ -65,10 +65,11 @@ public class SubmissionDtoFetcherTest {
         ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(0);
         productOrder.addSample(new ProductOrderSample(TEST_SAMPLE));
         researchProject.addProductOrder(productOrder);
-        researchProject.addSubmissionTracker(new SubmissionTrackerTest.SubmissionTrackerStub(COLLABORATOR_SAMPLE_ID, "bambam.bam", "1"));
+        researchProject.addSubmissionTracker(new SubmissionTrackerTest.SubmissionTrackerStub(1234L, COLLABORATOR_SAMPLE_ID, "bambam.bam", "1"));
         List<Aggregation> aggregation =
-                Collections.singletonList(AggregationTestFactory.buildAggregation(RESEARCH_PROJECT_ID, COLLABORATOR_SAMPLE_ID, contamination,
-                        fingerprintLod, DATA_TYPE, QUALITY_METRIC, null,null));
+                Collections.singletonList(AggregationTestFactory
+                        .buildAggregation(RESEARCH_PROJECT_ID, COLLABORATOR_SAMPLE_ID, contamination,
+                                fingerprintLod, DATA_TYPE, QUALITY_METRIC, null, null));
         BassDTO bassResults = BassDtoTestFactory.buildBassResults(RESEARCH_PROJECT_ID, COLLABORATOR_SAMPLE_ID);
 
         AggregationMetricsFetcher aggregationMetricsFetcher = Mockito.mock(AggregationMetricsFetcher.class);
@@ -86,9 +87,7 @@ public class SubmissionDtoFetcherTest {
         BSPSampleDataFetcher bspSampleDataFetcher = Mockito.mock(BSPSampleDataFetcher.class);
         bspSampleDTOMap.put(TEST_SAMPLE, new BSPSampleDTO(dataMap));
 
-        Mockito.when(bspSampleDataFetcher.fetchSamplesFromBSP(
-                (Collection<String>) Mockito.anyCollectionOf(String.class)))
-                .thenReturn(bspSampleDTOMap);
+        Mockito.when(bspSampleDataFetcher.fetchSamplesFromBSP(Mockito.anyCollectionOf(String.class), Mockito.any(BSPSampleSearchColumn.class))).thenReturn( bspSampleDTOMap);
 
         BSPConfig testBspConfig = new BSPConfig(Deployment.STUBBY);
         Mockito.when(bspSampleDataFetcher.getBspConfig()).thenReturn(testBspConfig);
@@ -105,7 +104,10 @@ public class SubmissionDtoFetcherTest {
             assertThat(submissionDto.getFingerprintLOD(), equalTo(fingerprintLod));
             assertThat(submissionDto.getProductOrders(), containsInAnyOrder(productOrder));
             assertThat(submissionDto.getLanesInAggregation(), Matchers.equalTo(2));
-            assertThat(submissionDto.getDateCompleted(), Matchers.nullValue());
+            assertThat(submissionDto.getSubmittedStatus(),
+                    Matchers.equalTo(SubmissionStatusDetailBean.Status.FAILURE.getDescription()));
+            assertThat(submissionDto.getStatusDate(), Matchers.notNullValue());
+            assertThat(submissionDto.getSubmittedErrors(), Matchers.contains(NCBI_ERROR));
         }
     }
 }

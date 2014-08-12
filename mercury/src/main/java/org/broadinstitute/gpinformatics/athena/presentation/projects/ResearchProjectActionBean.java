@@ -64,6 +64,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -78,8 +79,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public static final String ACTIONBEAN_URL_BINDING = "/projects/project.action";
     public static final String RESEARCH_PROJECT_PARAMETER = "researchProject";
     public static final String RESEARCH_PROJECT_TAB_PARAMETER = "rpSelectedTab";
-    public static final String RESEARCH_PROJECT_DEFAULT_TAB = "1";
-    public static final String RESEARCH_PROJECT_SUBMISSIONS_TAB = "2";
+    public static final String RESEARCH_PROJECT_DEFAULT_TAB = "0";
+    public static final String RESEARCH_PROJECT_SUBMISSIONS_TAB = "1";
 
     private static final String PROJECT = "Research Project";
     public static final String CREATE_PROJECT = CoreActionBean.CREATE + PROJECT;
@@ -180,6 +181,16 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private Map<String, Long> projectOrderCounts;
 
     private List<String> selectedSubmissionSamples;
+
+    public Map<String, String> getBioSamples() {
+        return bioSamples;
+    }
+
+    public void setBioSamples(Map<String, String> bioSamples) {
+        this.bioSamples = bioSamples;
+    }
+
+    private Map<String, String> bioSamples=new HashMap<>();
 
     @ValidateNestedProperties(
             @Validate(field = "listOfKeys", label = "Project Managers", required = true, on = {SAVE_ACTION})
@@ -841,8 +852,13 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
             List<SubmissionDto> selectedSubmissions = new ArrayList<>();
             for (SubmissionDto dto : submissionSamples) {
-                if (selectedSubmissionSamples.contains(dto.getSampleName())) {
-                    selectedSubmissions.add(dto);
+                String collaboratorSampleId = dto.getSampleName();
+                if (selectedSubmissionSamples.contains(collaboratorSampleId)) {
+                    String bioSampleAccessionId=bioSamples.get(collaboratorSampleId);
+                    if (bioSampleAccessionId != null) {
+                        dto.setBioSample(bioSampleAccessionId);
+                        selectedSubmissions.add(dto);
+                    }
                 }
             }
 

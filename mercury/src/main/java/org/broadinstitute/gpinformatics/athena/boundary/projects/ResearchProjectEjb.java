@@ -258,7 +258,7 @@ public class ResearchProjectEjb {
 
         for (SubmissionDto submissionDto : submissionDtos) {
             SubmissionTracker tracker =
-                    new SubmissionTracker(submissionDto.getSampleName(), submissionDto.getFilePath(),
+                    new SubmissionTracker(submissionDto.getBioSample(), submissionDto.getFilePath(),
                             String.valueOf(submissionDto.getVersion()));
             submissionProject.addSubmissionTracker(tracker);
             submissionDtoMap.put(tracker, submissionDto);
@@ -274,7 +274,7 @@ public class ResearchProjectEjb {
             submitBioProject.setAccession(selectedBioProject.getAccession());
 
             SubmissionBioSampleBean bioSampleBean =
-                    new SubmissionBioSampleBean(dtoByTracker.getValue().getSampleName(),
+                    new SubmissionBioSampleBean(dtoByTracker.getValue().getBioSample(),
                             dtoByTracker.getValue().getFilePath());
             bioSampleBean.setContact(new SubmissionContactBean(userBean.getBspUser().getFirstName(),
                     userBean.getBspUser().getLastName(), userBean.getBspUser().getEmail()

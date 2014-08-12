@@ -31,6 +31,7 @@ public class SubmissionDto {
     private final SubmissionStatusDetailBean statusDetailBean;
     private final BassDTO bassDTO;
     private final Aggregation aggregation;
+    private String bioSample;
 
     public SubmissionDto(@Nonnull BassDTO bassDTO, Aggregation aggregation, @Nonnull Collection<ProductOrder> productOrders,
                          @Nullable SubmissionStatusDetailBean statusDetailBean) {
@@ -56,8 +57,12 @@ public class SubmissionDto {
         return bassDTO.getSample();
     }
 
+    public void setBioSample(String bioSample) {
+        this.bioSample=bioSample;
+    }
+
     public String getBioSample() {
-        return null;
+        return bioSample;
     }
 
     public String getDataType() {

@@ -48,8 +48,12 @@ public class SubmissionTrackerTest {
             super();
         }
 
-        public SubmissionTrackerStub(String testAccessionID, String testFileName, String testVersion) {
-            super(testAccessionID, testFileName, testVersion);
+        public SubmissionTrackerStub(String submittedSampleName, String fileName, String version) {
+            super(submittedSampleName, fileName, version);
+        }
+
+        public SubmissionTrackerStub(Long submissionTrackerId, String testAccessionID, String testFileName, String testVersion) {
+            super(submissionTrackerId, testAccessionID, testFileName, testVersion);
         }
 
         @Override

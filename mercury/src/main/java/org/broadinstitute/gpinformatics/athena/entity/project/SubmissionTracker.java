@@ -64,10 +64,15 @@ public class SubmissionTracker {
     protected SubmissionTracker() {
     }
 
-    public SubmissionTracker(String submittedSampleName, String fileName, String version) {
+    SubmissionTracker(Long submissionTrackerId, String submittedSampleName, String fileName, String version) {
+        this.submissionTrackerId = submissionTrackerId;
         this.submittedSampleName = submittedSampleName;
         this.fileName = fileName;
         this.version = version;
+    }
+
+    public SubmissionTracker(String submittedSampleName, String fileName, String version) {
+       this(null, submittedSampleName, fileName, version);
     }
 
     /**

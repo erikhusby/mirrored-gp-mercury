@@ -240,6 +240,10 @@ public class BassDTO {
         return getValue(BassResultColumn.sample);
     }
 
+    public void setSample(String sample) {
+            columnToValue.put(BassResultColumn.sample, sample);
+    }
+
     public String getMd5() {
         return getValue(BassResultColumn.md5);
     }

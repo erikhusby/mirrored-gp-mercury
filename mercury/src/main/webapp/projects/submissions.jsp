@@ -41,7 +41,7 @@
                 "aoColumns": [
                     {"bSortable": false},               //Checkbox
                     {"bSortable": true},                //Sample
-//                    {"bSortable": false},               //Biosample
+                    {"bSortable": false},                //BioSample
                     {"bSortable": false},               //Data Type
                     {"bSortable": false},               //PDOs
                     {"bSortable": false},               //Aggregation Project
@@ -58,6 +58,7 @@
                 ]
             });
             $j('.shiftCheckbox').enableCheckboxRangeSelection();
+            $j(".tooltip").popover();
         })
     </script>
 </head>
@@ -85,6 +86,7 @@
                 <span id="count" class="checkedCount"></span>
             </th>
             <th width="80">Sample</th>
+            <th width="80">BioSample</th>
             <%--<th width="100">BioSample</th>--%>
             <th width="65">Data Type</th>
             <th width="200">PDOs</th>
@@ -118,6 +120,7 @@
                 </td>
 
                 <td>${submissionSample.sampleName}</td>
+                <td><stripes:text name="bioSamples[${submissionSample.sampleName}]" size="4"/></td>
                 <%--<td>&lt;%&ndash;bio-sample&ndash;%&gt;</td>--%>
                 <td>${submissionSample.dataType}</td>
                 <td style="padding: 5px;
@@ -144,7 +147,7 @@
                 <td>${submissionSample.lanesInAggregation}</td>
                 <td><%--blacklisted lanes--%></td>
                 <td>${submissionSample.version}</td>
-                <td ><span data-content="${submissionSample.submittedErrors}" data-placement="bottom" class ="submissionStatusClass">${submissionSample.submittedStatus}</span></td>
+                <td><span class="tooltip" title="${fn:join(submissionSample.submittedErrors, "<br/>")}" rel="popover" data-trigger="hover" data-placement="left" data-html="true" >${submissionSample.submittedStatus}</span></td>
                 <td>${submissionSample.statusDate}</td>
 
                     <%--<c:if test="${submissionSample.la == 0}">--%>
