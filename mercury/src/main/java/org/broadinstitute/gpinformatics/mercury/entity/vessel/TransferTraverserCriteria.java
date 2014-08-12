@@ -658,4 +658,41 @@ public interface TransferTraverserCriteria {
             return vesselsForLabEventType;
         }
     }
+
+    /**
+     * Capture chain of events following a lab vessel
+     */
+    public class LabEventDescendantCriteria implements TransferTraverserCriteria {
+
+        private int hopCount = -1;
+
+        private final Set<LabEvent> labEvents = new LinkedHashSet<>();
+
+        @Override
+        public TraversalControl evaluateVesselPreOrder(Context context) {
+            if (context.getEvent() != null) {
+                // Avoid possibility of infinite looping on a circular relationship
+                if (!labEvents.add(context.getEvent())) {
+                    return TraversalControl.StopTraversing;
+                }
+                if (context.getHopCount() > hopCount) {
+                    hopCount = context.getHopCount();
+                }
+            }
+            return TraversalControl.ContinueTraversing;
+        }
+
+        @Override
+        public void evaluateVesselInOrder(Context context) {
+        }
+
+        @Override
+        public void evaluateVesselPostOrder(Context context) {
+        }
+
+        public Set<LabEvent> getAllEvents() {
+            return labEvents;
+        }
+
+    }
 }
