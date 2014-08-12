@@ -1,14 +1,15 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.envers;
 
 import com.sun.xml.ws.developer.Stateful;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.datawh.ExtractTransform;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo_;
-import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.hibernate.envers.AuditReader;
 import org.hibernate.envers.AuditReaderFactory;
 import org.hibernate.envers.RevisionType;
@@ -25,9 +26,11 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
+import java.text.Format;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -56,6 +59,9 @@ public class AuditReaderDao extends GenericDao {
     /** Indicates the change type. */
     public static final int AUDIT_READER_TYPE_IDX = 2;
 
+    public static final String IS_ANY_USER = "IS_ANY_USER";
+    public static final String IS_NULL_USER = "IS_NULL_USER";
+
     /**
      * Finds the audit info ids for data changes that happened in the given interval.
      *
@@ -67,7 +73,7 @@ public class AuditReaderDao extends GenericDao {
      * @throws IllegalArgumentException if params are not whole second values.
      */
     public SortedMap<Long, Date> fetchAuditIds(long startTimeSec, long endTimeSec) {
-        return fetchAuditIds(startTimeSec, endTimeSec, null);
+        return fetchAuditIds(startTimeSec, endTimeSec, IS_ANY_USER);
     }
 
     /**
@@ -78,7 +84,8 @@ public class AuditReaderDao extends GenericDao {
      * Audit revDate has 10 mSec resolution but JPA on our RevInfo table empirically only
      * permits comparing revDate with a param that has whole second resolution.
      * @param endTimeSec  End of interval, in seconds.
-     * @param username    Name of the user making the change.
+     * @param username    Name of the user making the change, or IS_ANY_USER for any user,
+     *                    or IS_NULL_USER to find revs where user is null.
      * @return Map of rev info id and the rev's timestamp.
      * @throws IllegalArgumentException if params are not whole second values.
      */
@@ -95,10 +102,15 @@ public class AuditReaderDao extends GenericDao {
 
         // Includes the start of interval but excludes the end of interval.
         Predicate predicate;
-        if (StringUtils.isBlank(username)) {
+        if (IS_ANY_USER.equals(username)) {
             predicate = criteriaBuilder.and(
                     criteriaBuilder.greaterThanOrEqualTo(root.get(RevInfo_.revDate), startDate),
                     criteriaBuilder.lessThan(root.get(RevInfo_.revDate), endDate));
+        } else if (IS_NULL_USER.equals(username) || StringUtils.isNotBlank(username)) {
+            predicate = criteriaBuilder.and(
+                    criteriaBuilder.greaterThanOrEqualTo(root.get(RevInfo_.revDate), startDate),
+                    criteriaBuilder.lessThan(root.get(RevInfo_.revDate), endDate),
+                    criteriaBuilder.isNull(root.get(RevInfo_.username)));
         } else {
             predicate = criteriaBuilder.and(
                     criteriaBuilder.greaterThanOrEqualTo(root.get(RevInfo_.revDate), startDate),
@@ -203,27 +215,71 @@ public class AuditReaderDao extends GenericDao {
         return classnames;
     }
 
-    public <T> T getPreviousVersion(T entity, Class cls, long revId) {
-        // JiraTicket does not have a Long primary key.
-        if (cls.equals(JiraTicket.class)) {
-            return null;
+    /**
+     * Returns a version of the entity at the given revision id, or null
+     * if entity doesn't have a Long primary key, or entity not found at that version.
+     */
+    public <T> T getEntityAtVersion(Long entityId, Class cls, long revId) {
+        if (entityId != null) {
+            return (T) getAuditReader().find(cls, entityId, revId);
         }
+        return null;
+    }
 
-        Long entityId = ReflectionUtil.getEntityId(entity, cls);
+    /**
+     * Returns the revId of a version of the entity immediately prior to the
+     * version at the given revision id.
+     * Returns null if entity can't be found, or doesn't have a Long primary key.
+     */
+    public Long getPreviousVersionRevId(Long entityId, Class cls, long revId) {
+        Long previousVersionRevId = null;
+        if (entityId != null) {
+            final Date revDate = fetchRevDate(revId);
+            if (revDate != null) {
+                List<Object[]> list = getAuditReader().createQuery()
+                        .forRevisionsOfEntity(cls, false, true)
+                        .add(AuditEntity.id().eq(entityId))
+                        .add(AuditEntity.revisionProperty("revDate").le(revDate))
+                        .getResultList();
 
-        AuditReader reader = getAuditReader();
-        Number previousRevId = (Number) reader.createQuery()
-                .forRevisionsOfEntity(entity.getClass(), false, true)
-                .addProjection(AuditEntity.revisionNumber().max())
-                .add(AuditEntity.id().eq(entityId))
-                .add(AuditEntity.revisionNumber().lt(revId))
-                .getSingleResult();
+                // Reverse order the transactions (newest one first).  Mercury does not always
+                // have increasing values of revId with successive transaction commits, so use
+                // revDate as primary and revId as secondary.
+                Collections.sort(list, new Comparator<Object[]>() {
+                    @Override
+                    public int compare(Object[] o1, Object[] o2) {
+                        RevInfo revInfo1 = (RevInfo)o1[AuditReaderDao.AUDIT_READER_REV_INFO_IDX];
+                        RevInfo revInfo2 = (RevInfo)o2[AuditReaderDao.AUDIT_READER_REV_INFO_IDX];
+                        if (revInfo1.getRevDate().equals(revInfo2.getRevDate())) {
+                            return revInfo2.getRevInfoId().compareTo(revInfo1.getRevInfoId());
+                        } else {
+                            return revInfo2.getRevDate().compareTo(revInfo1.getRevDate());
+                        }
+                    }
+                });
 
-        if (previousRevId != null) {
-            return (T) reader.find(entity.getClass(), entityId, previousRevId);
-        } else {
-            return null;
+                // The query included the revDate in the search endpoint, but it's not really a
+                // point, it's a time interval, albeit very small.  It's conceivable that within that
+                // interval the revId transaction might be found before or after other transactions.
+                // Code will skip over the revId transaction and any transactions that come after it.
+                // For this the revId must be used to do the ordering, imperfect as it may be.
+                // The previous rev will then be the top of the remaining ordered list.
+
+                for (Object[] item : list) {
+                    RevInfo revInfo = (RevInfo)item[AuditReaderDao.AUDIT_READER_REV_INFO_IDX];
+                    if (revInfo.getRevDate().before(revDate) || revInfo.getRevInfoId() < revId) {
+                        previousVersionRevId = revInfo.getRevInfoId();
+                        break;
+                    }
+                }
+            }
         }
+        return previousVersionRevId;
+    }
+
+    private Date fetchRevDate(Long revId) {
+        RevInfo revInfo = getEntityManager().find(RevInfo.class, revId);
+        return (revInfo != null) ? revInfo.getRevDate() : null;
     }
 
     /** Returns sorted list of all usernames found in REV_INFO. */

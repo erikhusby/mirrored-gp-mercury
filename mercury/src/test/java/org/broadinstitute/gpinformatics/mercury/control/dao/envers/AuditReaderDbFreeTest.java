@@ -34,11 +34,7 @@ public class AuditReaderDbFreeTest {
 
         for (Class cls : classesFromPkg) {
             if (entityClassnames.contains(cls.getCanonicalName()) && !unauditableClasses.contains(cls)) {
-                Field field = ReflectionUtil.getFieldHavingAnnotation(cls, Id.class);
-                if (field == null) {
-                    field = ReflectionUtil.getEntityIdField(cls);
-                }
-                if (field == null) {
+                if (ReflectionUtil.getEntityIdField(cls) == null) {
                     failingClasses.add(cls.getName());
                 }
             }

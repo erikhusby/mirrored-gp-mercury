@@ -35,9 +35,12 @@
 
     <stripes:layout-component name="content">
 
+        <stripes:label for="searchForm" class="form-label">
+            Enter search criteria:
+        </stripes:label>
         <stripes:form beanclass="${actionBean.class.name}" id="searchForm">
+            <input type="hidden" name="_sourcePage" value="<%request.getServletPath();%>"/>
             <div class="search-horizontal">
-                <p>Enter search criteria:</p>
                 <div class="control-group">
                     <stripes:label for="dateRangeDiv" class="control-label">
                         Date range
@@ -52,30 +55,12 @@
                 </div>
 
                 <div class="control-group">
-                    <div class="controls">
-                        <div>
-                            <stripes:label for="timeStartDiv" class="control-label">
-                                Start Date Time
-                            </stripes:label>
-                            <stripes:text id="timeStartDiv" name="searchStartTime" class="search-input" style="width:50px"/>
-                        </div>
-                        &nbsp;
-                        <div>
-                            <stripes:label for="timeStartDiv" class="control-label">
-                                End Date Time
-                            </stripes:label>
-                            <stripes:text id="timeEndDiv" name="searchEndTime" class="search-input" style="width:50px"/>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="control-group">
                     <stripes:label for="search_username" class="control-label">
                         Username
                     </stripes:label>
                     <div class="controls">
                         <stripes:select id="search_username" name="searchUsername" class="search-input" style="width:250px">
-                            <stripes:option label="Any User" value="Any User"/>
+                            <stripes:option label="Any User" value="${actionBean.anyUser}"/>
                             <stripes:options-collection collection="${actionBean.auditUsernames}"/>
                         </stripes:select>
                     </div>
@@ -87,7 +72,7 @@
                     </stripes:label>
                     <div class="controls">
                         <stripes:select id="searchEntityDisplayName" name="searchEntityDisplayName" class="search-input" style="width:250px">
-                            <stripes:option label="Any Type" value="Any Type"/>
+                            <stripes:option label="Any Type" value="${actionBean.anyEntity}"/>
                             <stripes:options-collection collection="${actionBean.entityDisplayNames}"/>
                         </stripes:select>
                     </div>
@@ -129,9 +114,9 @@
                     </td>
                     <td class="columnEntities">
                         <c:forEach items="${auditTrail.entityTypeNames}" var="item">
-                            <stripes:link beanclass="${actionBean.class.name}" event="viewEntitiesAtRev">
+                            <stripes:link href="${actionBean.auditTrailEntryActionBean}" event="viewAuditTrailEntries">
                                 <stripes:param name="revId" value="${auditTrail.revId}"/>
-                                <stripes:param name="entityClassname" value="${item}"/>
+                                <stripes:param name="displayClassname" value="${item}"/>
                                 ${item}
                             </stripes:link>
                             &nbsp;
