@@ -13,9 +13,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
@@ -53,13 +50,13 @@ public class IndexedPlateFactory {
         private final String prettyName;
         private final IndexedPlateParser indexedPlateParser;
 
-        TechnologiesAndParsers(final String name, IndexedPlateParser indexedPlateParser) {
-            this.prettyName = name;
+        TechnologiesAndParsers(String name, IndexedPlateParser indexedPlateParser) {
+            prettyName = name;
             this.indexedPlateParser = indexedPlateParser;
         }
 
         public String getPrettyName() {
-            return this.prettyName;
+            return prettyName;
         }
 
         public IndexedPlateParser getIndexedPlateParser() {
@@ -67,13 +64,9 @@ public class IndexedPlateFactory {
         }
     }
 
-    public Map<String, StaticPlate> parseAndPersist(File file, TechnologiesAndParsers technologiesAndParsers) {
-        Map<String, StaticPlate> platesByBarcode = null;
-        try {
-            platesByBarcode = parseStream(new FileInputStream(file), technologiesAndParsers);
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        }
+    public Map<String, StaticPlate> parseAndPersist(TechnologiesAndParsers technologiesAndParsers,
+            InputStream inputStream) {
+        Map<String, StaticPlate> platesByBarcode = parseStream(inputStream, technologiesAndParsers);
         for (StaticPlate staticPlate : platesByBarcode.values()) {
             if (staticPlateDao.findByBarcode(staticPlate.getLabel()) != null) {
                 throw new RuntimeException("Plate already exists: " + staticPlate.getLabel());
@@ -87,8 +80,8 @@ public class IndexedPlateFactory {
 
     public Map<String, StaticPlate> parseStream(InputStream inputStream,
                                                 TechnologiesAndParsers technologiesAndParsers) {
-        final IndexedPlateParser parser = technologiesAndParsers.getIndexedPlateParser();
-        final List<PlateWellIndexAssociation> associations;
+        IndexedPlateParser parser = technologiesAndParsers.getIndexedPlateParser();
+        List<PlateWellIndexAssociation> associations;
         try {
             associations = parser.parseInputStream(inputStream);
         } finally {
@@ -97,24 +90,19 @@ public class IndexedPlateFactory {
             } catch (IOException ignored) {
             }
         }
-        Map<String, StaticPlate> platesByBarcode = uploadIndexedPlates(associations);
-//                setSuccessText("Uploaded " + associations.size() + " rows from " + file.getName());
-
-        return platesByBarcode;
+        return uploadIndexedPlates(associations);
     }
 
-    public Map<String, StaticPlate> uploadIndexedPlates(final List<PlateWellIndexAssociation> plateWellIndexes
-/*, final String technology*/) {
-        final Map<String, StaticPlate> platesByBarcode = new HashMap<>();
-        final Set<PlateWell> previousWells = new HashSet<>();
+    public Map<String, StaticPlate> uploadIndexedPlates(List<PlateWellIndexAssociation> plateWellIndexes) {
+        Map<String, StaticPlate> platesByBarcode = new HashMap<>();
+        Set<PlateWell> previousWells = new HashSet<>();
 
-
-        for (final PlateWellIndexAssociation plateWellIndex : plateWellIndexes) {
-            final StaticPlate plate = this.createOrGetPlate(
+        for (PlateWellIndexAssociation plateWellIndex : plateWellIndexes) {
+            StaticPlate plate = createOrGetPlate(
                     plateWellIndex,
                     platesByBarcode);
             VesselPosition vesselPosition = VesselPosition.getByName(plateWellIndex.getWellName());
-            final PlateWell plateWell = new PlateWell(plate, vesselPosition);
+            PlateWell plateWell = new PlateWell(plate, vesselPosition);
             if (previousWells.contains(plateWell)) {
                 throw new RuntimeException(
                         "Plate " + plate.getLabel() + " and well " + plateWellIndex.getWellName() +
@@ -122,9 +110,8 @@ public class IndexedPlateFactory {
             }
             previousWells.add(plateWell);
 
-            final MolecularIndexingScheme indexingScheme =
-                    this.indexingSchemeFactory
-                            .findOrCreateIndexingScheme(Arrays.asList(plateWellIndex.getPositionPairs()));
+            MolecularIndexingScheme indexingScheme = indexingSchemeFactory.findOrCreateIndexingScheme(
+                    Arrays.asList(plateWellIndex.getPositionPairs()));
             plateWell.addReagent(new MolecularIndexReagent(indexingScheme));
 
             plate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
@@ -135,9 +122,10 @@ public class IndexedPlateFactory {
     }
 
 
-    private StaticPlate createOrGetPlate(final PlateWellIndexAssociation plateWellIndex,
-                                         final Map<String, StaticPlate> platesByBarcode) {
-        final String formattedBarcode = StringUtils.leftPad(plateWellIndex.getPlateBarcode(), BARCODE_LENGTH, '0');
+    private StaticPlate createOrGetPlate(PlateWellIndexAssociation plateWellIndex,
+            Map<String, StaticPlate> platesByBarcode) {
+
+        String formattedBarcode = StringUtils.leftPad(plateWellIndex.getPlateBarcode(), BARCODE_LENGTH, '0');
         StaticPlate plate = platesByBarcode.get(formattedBarcode);
         if (plate == null) {
             plate = new StaticPlate(formattedBarcode, StaticPlate.PlateType.IndexedAdapterPlate96);

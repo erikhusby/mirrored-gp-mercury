@@ -17,26 +17,18 @@ import java.util.List;
  */
 public class IndexedPlateParserIDTSpreadsheetFormat implements IndexedPlateParser {
 
-//	private enum Columns {
-//		BROAD_BARCODE(3, "Broad Barcode");
-//
-//		final int columnIndex;
-//		final String columnName;
-//
-//		Columns(final int index, final String name) {
-//			this.columnIndex = index;
-//			this.columnName = name;
-//		}
-//	}
+    private final DataFormatter dataFormatter = new DataFormatter();
+
+    private final String technology = MolecularIndexingScheme.IndexPosition.ILLUMINA_P7.getTechnology();
 
     abstract class ColumnParser {
         public abstract int getColumnIndex();
         public abstract String getColumnName();
 
-        public String getString(final Row row) {
-            final Cell cell = row.getCell(this.getColumnIndex());
+        public String getString(Row row) {
+            Cell cell = row.getCell(getColumnIndex());
             if (cell == null) {
-                throw new RuntimeException(this.getColumnName() + " is empty in row " + row.getRowNum());
+                throw new RuntimeException(getColumnName() + " is empty in row " + row.getRowNum());
             }
 
             switch (cell.getCellType()) {
@@ -91,10 +83,10 @@ public class IndexedPlateParserIDTSpreadsheetFormat implements IndexedPlateParse
         }
 
         @Override
-        public String getString(final Row row) {
-            final Cell cell = row.getCell(this.getColumnIndex());
+        public String getString(Row row) {
+            Cell cell = row.getCell(getColumnIndex());
             if (cell == null) {
-                throw new RuntimeException(this.getColumnName() + " is empty in row " + row.getRowNum());
+                throw new RuntimeException(getColumnName() + " is empty in row " + row.getRowNum());
             }
 
             // The barcode may be formatted with leading zeros, so we want the formatted value
@@ -114,18 +106,6 @@ public class IndexedPlateParserIDTSpreadsheetFormat implements IndexedPlateParse
         }
     };
 
-    private final ColumnParser antisenseSequenceNameColumnParser = new ColumnParser() {
-        @Override
-        public int getColumnIndex() {
-            return 10;
-        }
-
-        @Override
-        public String getColumnName() {
-            return "Antisense Seq Name";
-        }
-    };
-
     private final ColumnParser antisenseSequenceColumnParser = new ColumnParser() {
         @Override
         public int getColumnIndex() {
@@ -138,76 +118,71 @@ public class IndexedPlateParserIDTSpreadsheetFormat implements IndexedPlateParse
         }
 
         @Override
-        public String getString(final Row row) {
-            final Cell cell = row.getCell(this.getColumnIndex());
+        public String getString(Row row) {
+            Cell cell = row.getCell(getColumnIndex());
             if (cell == null) {
-                throw new RuntimeException(this.getColumnName() + " is empty in row " + row.getRowNum());
+                throw new RuntimeException(getColumnName() + " is empty in row " + row.getRowNum());
             }
             return cell.getStringCellValue().substring(39, 39 + 8);
         }
     };
 
     List<ColumnParser> getColumnParsers() {
-        final List<ColumnParser> parsers = new ArrayList<>(5);
-        parsers.add(this.antisenseSequenceColumnParser);
-        parsers.add(this.antisenseSequenceNameColumnParser);
-        parsers.add(this.broadBarcodeColumnParser);
-        parsers.add(this.wellPositionColumnParser);
+        List<ColumnParser> parsers = new ArrayList<>(5);
+        parsers.add(antisenseSequenceColumnParser);
+        parsers.add(broadBarcodeColumnParser);
+        parsers.add(wellPositionColumnParser);
         return parsers;
     }
 
-    final DataFormatter dataFormatter = new DataFormatter();
-
-    final String technology = MolecularIndexingScheme.IndexPosition.ILLUMINA_P7.getTechnology();
-
     @Override
-    public List<PlateWellIndexAssociation> parseInputStream(final InputStream inputStream) {
-        final Sheet sheet;
+    public List<PlateWellIndexAssociation> parseInputStream(InputStream inputStream) {
+        Sheet sheet;
         try {
             sheet = WorkbookFactory.create(inputStream).getSheetAt(0);
-        } catch (final Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException("Could not open the uploaded sheet: " + e.getMessage(), e);
         }
 
-        this.validateWorksheet(sheet);
+        validateWorksheet(sheet);
 
-        final List<PlateWellIndexAssociation> plateIndexes = new ArrayList<>();
+        List<PlateWellIndexAssociation> plateIndexes = new ArrayList<>();
 
-        final int lastRowNum = sheet.getLastRowNum();
+        int lastRowNum = sheet.getLastRowNum();
         int i = 1;
         try {
             for ( ; i <= lastRowNum; i++) {
-                final Row row = sheet.getRow(i);
-                final String plateBarcode = this.broadBarcodeColumnParser.getString(row);
-                final String wellName = this.wellPositionColumnParser.getString(row);
-                final String molecularIndex = this.antisenseSequenceColumnParser.getString(row);
+                Row row = sheet.getRow(i);
+                String plateBarcode = broadBarcodeColumnParser.getString(row);
+                String wellName = wellPositionColumnParser.getString(row);
+                String molecularIndex = antisenseSequenceColumnParser.getString(row);
 
-                final PlateWellIndexAssociation association =
+                PlateWellIndexAssociation association =
                         new PlateWellIndexAssociation(plateBarcode, wellName, technology);
                 association.addIndex(
-                        MolecularIndexingScheme.getDefaultPositionHint(this.technology),
+                        MolecularIndexingScheme.getDefaultPositionHint(technology),
                         molecularIndex);
 
                 plateIndexes.add(association);
             }
 
-        } catch (final Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException("Could not parse row " + (i + 1) + ": " + e.getMessage(), e);
         }
 
         return plateIndexes;
     }
 
-    void validateWorksheet(final Sheet sheet) {
-        final Row headerRow = sheet.getRow(0);
+    void validateWorksheet(Sheet sheet) {
+        Row headerRow = sheet.getRow(0);
         if (headerRow == null) {
             throw new RuntimeException("The spreadsheet is empty.");
         }
 
-        for (final ColumnParser parser : this.getColumnParsers()) {
+        for (ColumnParser parser : getColumnParsers()) {
             // Verify that the headers are in the correct column and contain
             // the correct text, else the indexes will be invalid
-            final String headerString = headerRow.getCell(parser.getColumnIndex()).getStringCellValue();
+            String headerString = headerRow.getCell(parser.getColumnIndex()).getStringCellValue();
             if (headerString == null) {
                 throw new RuntimeException("There's no header text in column " + parser.getColumnIndex());
             }
@@ -219,5 +194,9 @@ public class IndexedPlateParserIDTSpreadsheetFormat implements IndexedPlateParse
                                 ", but found " + headerString);
             }
         }
+    }
+
+    String getTechnology() {
+        return technology;
     }
 }

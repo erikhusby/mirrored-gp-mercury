@@ -183,6 +183,11 @@
             </param-name>
             <param-value>StripesResources</param-value>
         </init-param>
+        <init-param>
+            <!-- need 20M for plates of molecular indexes -->
+            <param-name>FileUpload.MaximumPostSize</param-name>
+            <param-value>20mb</param-value>
+        </init-param>
     </filter>
 
     <filter-mapping>
