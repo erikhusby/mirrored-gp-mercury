@@ -43,6 +43,7 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.matches;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -62,6 +63,7 @@ public class SampleLedgerExporterTest {
         user.setFirstName("Test");
         user.setLastName("Dummy");
         when(mockBspUserList.getById(1)).thenReturn(user);
+        when(mockBspUserList.getUserFullName(1L)).thenReturn(user.getFullName());
 
         /*
          * Configure a product family that will both output number of lanes (a seq-only product behavior) and display
@@ -127,8 +129,9 @@ public class SampleLedgerExporterTest {
          */
         SampleLedgerSpreadSheetWriter mockWriter = Mockito.mock(SampleLedgerSpreadSheetWriter.class);
 
+        WorkCompleteMessageDao mockWorkCompleteMessageDao = Mockito.mock(WorkCompleteMessageDao.class);
         SampleLedgerExporterFactory factory = new SampleLedgerExporterFactory(null, mockBspUserList,
-                new PriceListCache(new ArrayList<QuotePriceItem>()), Mockito.mock(WorkCompleteMessageDao.class),
+                new PriceListCache(new ArrayList<QuotePriceItem>()), mockWorkCompleteMessageDao,
                 Mockito.mock(BSPSampleDataFetcher.class), new AppConfig(Deployment.DEV),
                 new TableauConfig(Deployment.DEV), mockWriter);
         SampleLedgerExporter exporter = factory.makeExporter(Collections.singletonList(productOrder));
@@ -190,5 +193,15 @@ public class SampleLedgerExporterTest {
         sampleOrder.verify(mockWriter).writeCell("Sample1");
         sampleOrder.verify(mockWriter).writeCell("SM-5678");
         sampleOrder.verify(mockWriter).writeCell("Sample2");
+
+        /*
+         * Verify that the right number of rows were written.
+         */
+        verify(mockWriter, times(3)).nextRow();
+
+        /*
+         * Verify that the WorkCompleteMessageDao isn't called excessively (default for verify() is times(1)).
+         */
+        verify(mockWorkCompleteMessageDao).findByPDO("PDO-123");
     }
 }

@@ -43,11 +43,6 @@ public abstract class AbstractSpreadsheetExporter<T extends AbstractSpreadsheetE
 
     private final T writer;
 
-    @SuppressWarnings("unchecked")
-    protected AbstractSpreadsheetExporter() {
-        this((T) new SpreadSheetWriter());
-    }
-
     protected AbstractSpreadsheetExporter(T writer) {
         this.writer = writer;
         // SXSSFWorkbook is used to support very large spreadsheets.  SXSSF writes 100 rows at a time to a

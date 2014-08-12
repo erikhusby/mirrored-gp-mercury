@@ -1,122 +1,127 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+
 import java.util.Date;
 
 /**
  * Simple bean representing a row of data for the billing tracker.
  * <p>
- * The eventual goal of this bean is to hold all of the data needed by {@link SampleLedgerExporter} to write a row to the
- * spreadsheet. Doing so eliminates dependencies from SampleLedgerExporter, thereby making it easier to test. The
+ * The eventual goal of this bean is to hold all of the data needed by {@link SampleLedgerExporter} to write a row to
+ * the spreadsheet. Doing so eliminates dependencies from SampleLedgerExporter, thereby making it easier to test. The
  * responsibility for gathering the data is gradually being migrated to {@link SampleLedgerExporterFactory}.
  */
 public class SampleLedgerRow {
 
-    private String sampleId;
-    private String collaboratorSampleId;
-    private String materialType;
-    private String riskText;
-    private String deliveryStatus;
-    private String productName;
-    private String productOrderKey;
-    private String productOrderTitle;
-    private String projectManagerName;
-    private Integer numberOfLanes;
-    private Date autoLedgerDate;
-    private Date workCompleteDate;
+    /**
+     * This is a temporary property to be removed once all of the individual pieces of data have their own properties.
+     * Having this here avoids having to iterate across two parallel collections in {@link SampleLedgerExporter}.
+     */
+    private final ProductOrderSample productOrderSample;
+
+    private final String sampleId;
+    private final String collaboratorSampleId;
+    private final String materialType;
+    private final String riskText;
+    private final String deliveryStatus;
+    private final String productName;
+    private final String productOrderKey;
+    private final String productOrderTitle;
+    private final String projectManagerName;
+    private final Integer numberOfLanes;
+    private final Date autoLedgerDate;
+    private final Date workCompleteDate;
+
+    public SampleLedgerRow(ProductOrderSample productOrderSample, String projectManagerName) {
+
+        /*
+         * Temporarily retain a reference to the productOrderSample until all of the individual pieces of data have
+         * their own properties on SampleLedgerRow.
+         */
+        this.productOrderSample = productOrderSample;
+
+        sampleId = productOrderSample.getSampleKey();
+        collaboratorSampleId = productOrderSample.getBspSampleDTO().getCollaboratorsSampleName();
+        materialType = productOrderSample.getBspSampleDTO().getMaterialType();
+        riskText = productOrderSample.getRiskString();
+        deliveryStatus = productOrderSample.getDeliveryStatus().getDisplayName();
+        productName = productOrderSample.getProductOrder().getProduct().getProductName();
+        productOrderKey = productOrderSample.getProductOrder().getBusinessKey();
+        productOrderTitle = productOrderSample.getProductOrder().getTitle();
+        this.projectManagerName = projectManagerName;
+        numberOfLanes = productOrderSample.getProductOrder().getLaneCount();
+        autoLedgerDate = productOrderSample.getLatestAutoLedgerTimestamp();
+        workCompleteDate = productOrderSample.getWorkCompleteDate();
+    }
+
+    public SampleLedgerRow(ProductOrderSample productOrderSample, String sampleId, String collaboratorSampleId,
+                           String materialType, String riskText, String deliveryStatus, String productName,
+                           String productOrderKey, String productOrderTitle, String projectManagerName,
+                           Integer numberOfLanes, Date autoLedgerDate, Date workCompleteDate) {
+        this.productOrderSample = productOrderSample;
+        this.sampleId = sampleId;
+        this.collaboratorSampleId = collaboratorSampleId;
+        this.materialType = materialType;
+        this.riskText = riskText;
+        this.deliveryStatus = deliveryStatus;
+        this.productName = productName;
+        this.productOrderKey = productOrderKey;
+        this.productOrderTitle = productOrderTitle;
+        this.projectManagerName = projectManagerName;
+        this.numberOfLanes = numberOfLanes;
+        this.autoLedgerDate = autoLedgerDate;
+        this.workCompleteDate = workCompleteDate;
+    }
+
+    public ProductOrderSample getProductOrderSample() {
+        return productOrderSample;
+    }
 
     public String getSampleId() {
         return sampleId;
-    }
-
-    public void setSampleId(String sampleId) {
-        this.sampleId = sampleId;
     }
 
     public String getCollaboratorSampleId() {
         return collaboratorSampleId;
     }
 
-    public void setCollaboratorSampleId(String collaboratorSampleId) {
-        this.collaboratorSampleId = collaboratorSampleId;
-    }
-
     public String getMaterialType() {
         return materialType;
-    }
-
-    public void setMaterialType(String materialType) {
-        this.materialType = materialType;
     }
 
     public String getRiskText() {
         return riskText;
     }
 
-    public void setRiskText(String riskText) {
-        this.riskText = riskText;
-    }
-
     public String getDeliveryStatus() {
         return deliveryStatus;
-    }
-
-    public void setDeliveryStatus(String deliveryStatus) {
-        this.deliveryStatus = deliveryStatus;
     }
 
     public String getProductName() {
         return productName;
     }
 
-    public void setProductName(String productName) {
-        this.productName = productName;
-    }
-
     public String getProductOrderKey() {
         return productOrderKey;
-    }
-
-    public void setProductOrderKey(String productOrderKey) {
-        this.productOrderKey = productOrderKey;
     }
 
     public String getProductOrderTitle() {
         return productOrderTitle;
     }
 
-    public void setProductOrderTitle(String productOrderTitle) {
-        this.productOrderTitle = productOrderTitle;
-    }
-
     public String getProjectManagerName() {
         return projectManagerName;
-    }
-
-    public void setProjectManagerName(String projectManagerName) {
-        this.projectManagerName = projectManagerName;
     }
 
     public Integer getNumberOfLanes() {
         return numberOfLanes;
     }
 
-    public void setNumberOfLanes(Integer numberOfLanes) {
-        this.numberOfLanes = numberOfLanes;
-    }
-
     public Date getAutoLedgerDate() {
         return autoLedgerDate;
     }
 
-    public void setAutoLedgerDate(Date autoLedgerDate) {
-        this.autoLedgerDate = autoLedgerDate;
-    }
-
     public Date getWorkCompleteDate() {
         return workCompleteDate;
-    }
-
-    public void setWorkCompleteDate(Date workCompleteDate) {
-        this.workCompleteDate = workCompleteDate;
     }
 }
