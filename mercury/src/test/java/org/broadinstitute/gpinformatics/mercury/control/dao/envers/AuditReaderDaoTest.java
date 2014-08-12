@@ -148,16 +148,19 @@ public class AuditReaderDaoTest extends ContainerTest {
         Assert.assertNotNull(tubeModifiedRevId);
         Assert.assertNotNull(tubeDeletedRevId);
 
-        BarcodedTube preCreationTube =
-                auditReaderDao.getPreviousVersion(persistedTube, BarcodedTube.class, tubeCreatedRevId);
-        Assert.assertNull(preCreationTube);
+        Long entityId = persistedTube.getLabVesselId();
 
-        BarcodedTube createdTube =
-                auditReaderDao.getPreviousVersion(persistedTube, BarcodedTube.class, tubeModifiedRevId);
+        Long prevId = auditReaderDao.getPreviousVersionRevId(entityId, BarcodedTube.class, tubeCreatedRevId);
+        Assert.assertNull(prevId);
+
+        prevId = auditReaderDao.getPreviousVersionRevId(entityId, BarcodedTube.class, tubeModifiedRevId);
+        Assert.assertEquals(prevId, tubeCreatedRevId);
+        BarcodedTube createdTube = auditReaderDao.getEntityAtVersion(entityId, BarcodedTube.class, prevId);
         Assert.assertEquals(createdTube.getTubeType(), BarcodedTube.BarcodedTubeType.MatrixTube);
 
-        BarcodedTube modifiedTube =
-                auditReaderDao.getPreviousVersion(persistedTube, BarcodedTube.class, tubeDeletedRevId);
+        prevId = auditReaderDao.getPreviousVersionRevId(entityId, BarcodedTube.class, tubeDeletedRevId);
+        Assert.assertEquals(prevId, tubeModifiedRevId);
+        BarcodedTube modifiedTube = auditReaderDao.getEntityAtVersion(entityId, BarcodedTube.class, prevId);
         Assert.assertEquals(modifiedTube.getTubeType(), BarcodedTube.BarcodedTubeType.Cryovial2018);
 
 
@@ -195,6 +198,7 @@ public class AuditReaderDaoTest extends ContainerTest {
             utx.begin();
             transactionToBracket.run();
             utx.commit();
+            Thread.yield();
         } catch (Exception e) {
             Assert.fail("Caught exception ", e);
         }
