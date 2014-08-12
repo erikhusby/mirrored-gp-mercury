@@ -17,6 +17,7 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
@@ -31,6 +32,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -148,7 +150,14 @@ public class LabEvent {
      * instrument, entry into a bucket
      */
     @ManyToOne(cascade = {CascadeType.PERSIST}, fetch = FetchType.LAZY)
+    @JoinColumn(name = "IN_PLACE_LAB_VESSEL")
     private LabVessel inPlaceLabVessel;
+
+    /**
+     * Required for configurable search nested criteria
+     */
+    @Column(name = "IN_PLACE_LAB_VESSEL", insertable = false, updatable = false)
+    private Long inPlaceLabVesselId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "LAB_EVENT_TYPE")

@@ -11,13 +11,20 @@ import org.broadinstitute.gpinformatics.infrastructure.search.PaginationDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
+import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.hibernate.Criteria;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Creates ConfigurableList instances.
@@ -36,12 +43,15 @@ public class ConfigurableListFactory {
     @Inject
     private BSPSampleSearchService bspSampleSearchService;
 
+    @Inject
+    private LabEventDao labEventDao;
+
     /**
      * Create a ConfigurableList instance.
      *
      * @param entityList  Entities for which to display data
      * @param downloadColumnSetName Name of the column set to display
-     * @param entityName Name of the entity
+     * @param entityName Name of the entity  TODO jms Use ColumnEntity
      * @param entityId ID of the entity
      *
      * @return ConfigurableList instance
@@ -308,8 +318,7 @@ public class ConfigurableListFactory {
             searchInstance.setColumnSetColumnNameList(columnNameList);
         }
 
-        // To improve performance, add join fetches for search values that have the
-        // "display" checkbox set
+        // To improve performance, add join fetches for search values that have the "display" checkbox set
         List<SearchInstance.SearchValue> displaySearchValues = searchInstance.findDisplaySearchValues();
         List<String> joinFetchPaths = new ArrayList<>();
         for (SearchInstance.SearchValue displaySearchValue : displaySearchValues) {
@@ -328,6 +337,25 @@ public class ConfigurableListFactory {
 
         PaginationDao.Pagination pagination = new PaginationDao.Pagination(configurableSearchDef.getPageSize());
         configurableSearchDao.startPagination(pagination, criteria);
+
+
+        /* Traverse IDs for lab events and obtain parents and ancestors
+         * Intercepts the LabEvent ID list and injects descendant LabEvents
+         * TODO jms Move this elsewhere along with BSPSampleSearchService  */
+        if (entityName.equals("LabEvent")) {
+            /* Only traverse descendant events if LCSET is in search criteria (or all events?) */
+            boolean doTraversal = false;
+            for( SearchInstance.SearchValue searchValue : searchInstance.getSearchValues() ) {
+                if( searchValue.getSearchTerm().getName().equals("LCSET")){
+                    doTraversal = true;
+                    break;
+                }
+            }
+            if( doTraversal ) {
+                getDescendantVesselLabEvents( (List<Long>) pagination.getIdList() );
+            }
+        }
+
         pagination.setJoinFetchPaths(joinFetchPaths);
         List<?> entityList = paginationDao.getPage(pagination, 0);
 
@@ -385,4 +413,40 @@ public class ConfigurableListFactory {
 
         return configurableList.getResultList();
     }
+
+    /**
+     * Accumulates lab events for a given LabVessel
+     */
+    private void getDescendantVesselLabEvents( List<Long> idList ) {
+
+        Set<Long> labEventIds = new LinkedHashSet<>();
+
+        for( Long startingEventID : idList  ) {
+
+            LabEvent startingEvent = configurableSearchDao.findSingle(LabEvent.class, LabEvent_.labEventId, startingEventID);
+
+            labEventIds.add(startingEventID);
+
+            // First events found have in place lab vessels
+            LabVessel vessel = startingEvent.getInPlaceLabVessel();
+
+            // Recurse down through vessel-event layers
+            if( vessel != null ) {
+                TransferTraverserCriteria.LabEventDescendantCriteria eventTraversalCriteria =
+                        new TransferTraverserCriteria.LabEventDescendantCriteria();
+                vessel.evaluateCriteria(eventTraversalCriteria
+                        , TransferTraverserCriteria.TraversalDirection.Descendants );
+                for( LabEvent descendant : eventTraversalCriteria.getAllEvents() ) {
+                    labEventIds.add(descendant.getLabEventId());
+                }
+            }
+        }
+
+        // Replace entire original list contents
+        idList.clear();
+        for( Long eventId : labEventIds  ) {
+            idList.add(eventId);
+        }
+    }
+
 }

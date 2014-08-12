@@ -13,10 +13,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,6 +35,7 @@ public class SearchDefinitionFactory {
     public static final String CONTEXT_KEY_COLUMN_SET_TYPE = "columnSetType";
     public static final String CONTEXT_KEY_SEARCH_VALUE = "searchValue";
     public static final String CONTEXT_KEY_SEARCH_STRING = "searchString";
+    public static final String CONTEXT_KEY_BSP_SAMPLE_SEARCH = "BSPSampleSearchService";
 
     public ConfigurableSearchDefinition getForEntity(String entity) {
         if (mapNameToDef.isEmpty()) {
@@ -410,9 +413,18 @@ public class SearchDefinitionFactory {
         searchTerms = buildLabEventReagents();
         mapGroupSearchTerms.put("Nested Data", searchTerms);
 
+        searchTerms = buildLabEventBatch();
+        mapGroupSearchTerms.put("Lab Batch", searchTerms);
+
         List<ConfigurableSearchDefinition.CriteriaProjection> criteriaProjections = new ArrayList<>();
-//        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("bucketEntries", "labVesselId",
-//                "labVessel", BucketEntry.class.getName()));
+
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("inPlaceLabEvents", "inPlaceLabVesselId",
+                "inPlaceLabEvents", LabVessel.class.getName()));
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("bucketEntries", "labVesselId",
+                "labVessel", BucketEntry.class.getName()));
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection( "labBatch", "bucketEntries",
+                "bucketEntry", LabBatch.class.getName()));
+
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
                 "LabEvent", LabEvent.class.getName(), "labEventId", 100, criteriaProjections, mapGroupSearchTerms);
         mapNameToDef.put(configurableSearchDefinition.getName(), configurableSearchDefinition);
@@ -588,6 +600,42 @@ public class SearchDefinitionFactory {
             }
         });
         parentSearchTerm.addNestedEntityColumn(searchTerm);
+
+        return searchTerms;
+    }
+
+    private List<SearchTerm> buildLabEventBatch() {
+        List<SearchTerm> searchTerms = new ArrayList<>();
+
+        SearchTerm searchTerm = new SearchTerm();
+        searchTerm.setName("LCSET");
+        List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
+        SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
+
+        criteriaPath.setCriteria(Arrays.asList(/* LabEvent*/ "inPlaceLabEvents", /* LabVessel */ "bucketEntries", /* BucketEntry */ "labBatch" /* LabBatch */));
+        criteriaPath.setPropertyName("batchName");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                String lcset = "";
+                LabEvent labEvent = (LabEvent) entity;
+                LabVessel labVessel = labEvent.getInPlaceLabVessel();
+                // Columns are nullable
+                if (labVessel != null) {
+                    Set<BucketEntry> bucketEntries = labVessel.getBucketEntries();
+                    if (bucketEntries != null) {
+                        Iterator<BucketEntry> iterator = bucketEntries.iterator();
+                        BucketEntry bucketEntry = iterator.next();
+                        LabBatch batch = bucketEntry.getLabBatch();
+                        lcset = batch.getBatchName();
+                    }
+                }
+                return lcset;
+            }
+        });
+        searchTerms.add(searchTerm);
 
         return searchTerms;
     }

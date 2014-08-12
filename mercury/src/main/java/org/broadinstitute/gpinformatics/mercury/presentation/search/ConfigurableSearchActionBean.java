@@ -431,7 +431,8 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
     }
 
     /**
-     *  BSP user lookup required in column eval expression
+     *  Add components needed for search functionality
+     *    BSP user lookup required in user name column eval expression
      *  Use context to avoid need to test in container
      */
     private void buildSearchContext(){
@@ -441,6 +442,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
         }
 
         searchInstance.getEvalContext().put(SearchDefinitionFactory.CONTEXT_KEY_BSP_USER_LIST, bspUserList );
+        searchInstance.getEvalContext().put(SearchDefinitionFactory.CONTEXT_KEY_BSP_SAMPLE_SEARCH, bspSampleSearchService );
     }
 
     /**
