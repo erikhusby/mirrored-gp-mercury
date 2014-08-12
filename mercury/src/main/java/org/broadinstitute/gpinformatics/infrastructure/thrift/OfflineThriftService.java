@@ -72,6 +72,11 @@ public class OfflineThriftService implements ThriftService {
     }
 
     @Override
+    public double fetchQpcrForTubeAndType(String tubeBarcode, String qpcrType) {
+        return 0;
+    }
+
+    @Override
     public double fetchQuantForTube(String tubeBarcode, String quantType) {
         return 0;
     }
