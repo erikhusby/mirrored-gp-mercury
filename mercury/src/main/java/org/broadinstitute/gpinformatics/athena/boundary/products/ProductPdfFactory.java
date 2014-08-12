@@ -17,8 +17,13 @@ import com.lowagie.text.DocumentException;
 import com.lowagie.text.Element;
 import com.lowagie.text.Font;
 import com.lowagie.text.ListItem;
+import com.lowagie.text.PageSize;
 import com.lowagie.text.Paragraph;
+import com.lowagie.text.Phrase;
+import com.lowagie.text.Rectangle;
 import com.lowagie.text.pdf.BaseFont;
+import com.lowagie.text.pdf.ColumnText;
+import com.lowagie.text.pdf.PdfPageEventHelper;
 import com.lowagie.text.pdf.PdfWriter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
@@ -32,6 +37,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -68,7 +74,17 @@ public class ProductPdfFactory {
      */
     public static void toPdf(OutputStream outputStream, Product... products) throws IOException, DocumentException {
         Document document = new Document();
+        document.setPageSize(PageSize.LETTER);
+        document.setMargins(36, 36, 36, 48);
+
         PdfWriter writer = PdfWriter.getInstance(document, outputStream);
+        PdfHeaderFooter headerFooterEvent = new PdfHeaderFooter();
+
+        Rectangle rect = new Rectangle(36, 54, 559, 788);
+        rect.enableBorderSide(Rectangle.TOP);
+        rect.setBorderColor(new java.awt.Color(0, 0, 0, 0));
+        writer.setBoxSize("art", rect);
+        writer.setPageEvent(headerFooterEvent);
         writer.setPdfVersion(PdfWriter.VERSION_1_7);
         document.open();
 
@@ -85,14 +101,14 @@ public class ProductPdfFactory {
             document.add(new Paragraph(PART_NUMBER + ": " + product.getPartNumber(), regularFont()));
             document.add(new Paragraph(PRODUCT_FAMILY + ": " + productFamily, regularFont()));
             document.add(
-                    new Paragraph(AVAILABILITY + ": " + dateFormat.format(product.getAvailabilityDate()), regularFont()));
+                    new Paragraph(AVAILABILITY + ": " + dateFormat.format(product.getAvailabilityDate()),
+                            regularFont()));
             addParagraphWithHeader(document, DESCRIPTION, product.getDescription());
             addParagraphWithHeader(document, DELIVERABLES, product.getDeliverables());
             addParagraphWithHeader(document, INPUT_REQUIREMENTS, product.getInputRequirements());
             document.add(Chunk.NEWLINE);
         }
         document.addCreationDate();
-
         document.close();
     }
 
@@ -151,5 +167,23 @@ public class ProductPdfFactory {
 
     static Font boldFont() throws IOException, DocumentException {
         return new Font(baseFont(), 11, Font.BOLD);
+    }
+
+    static class PdfHeaderFooter extends PdfPageEventHelper {
+        private static final String formattedDate = FastDateFormat.getInstance("MM/dd/yyyy").format(new Date());
+
+        @Override
+        public void onEndPage(PdfWriter writer, Document document) {
+            Rectangle rect = writer.getBoxSize("art");
+            float textHorizontalPosition = (rect.getLeft() + rect.getRight()) / 2;
+            float textVerticalPosition = rect.getBottom() - 18;
+            try {
+                ColumnText.showTextAligned(writer.getDirectContent(), Element.ALIGN_CENTER, new Phrase(
+                        String.format("Genomics Platform Product Descriptions - Downloaded on %s", formattedDate),
+                        regularFont()), textHorizontalPosition, textVerticalPosition, 0);
+            } catch (DocumentException | IOException e) {
+                log.error("Could not create footer for document.");
+            }
+        }
     }
 }
