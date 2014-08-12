@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.reagent;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -12,6 +13,7 @@ import java.util.List;
 /**
  * Test the parser
  */
+@Test(groups = TestGroups.STUBBY)
 public class MolecularIndexingSchemeParserTest extends ContainerTest {
 
     @Inject
