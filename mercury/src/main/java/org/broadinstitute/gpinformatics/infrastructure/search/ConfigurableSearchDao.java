@@ -14,6 +14,8 @@ import org.hibernate.criterion.Subqueries;
 import org.hibernate.ejb.HibernateEntityManager;
 import org.hibernate.sql.JoinFragment;
 
+import javax.ejb.Stateful;
+import javax.enterprise.context.RequestScoped;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
@@ -33,6 +35,8 @@ import java.util.Map;
  * dao.getPage(1,...<br/>
  * ...
  */
+@Stateful
+@RequestScoped
 public class ConfigurableSearchDao extends GenericDao {
     /**
      * The maximum allowed length for all {@code IN} queries in a single SQL statement.
@@ -44,6 +48,7 @@ public class ConfigurableSearchDao extends GenericDao {
      */
     public static final int IN_QUERY_TOTAL_SIZE = 32768;
 
+    // todo jmt this should probably be supplied as a parameter, not stored as a field.
     private ConfigurableSearchDefinition configurableSearchDefinition;
 
     /**

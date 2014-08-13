@@ -22,6 +22,8 @@ import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.ejb.HibernateEntityManager;
 
+import javax.ejb.Stateful;
+import javax.enterprise.context.RequestScoped;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -36,6 +38,8 @@ import java.util.Map;
  * the entity out of the criteria, to get a list of IDs. The page method then retrieves
  * entities for a subset of the list of IDs.
  */
+@Stateful
+@RequestScoped
 public class PaginationDao extends GenericDao {
     /**
      * Holds the current location in a pagination sequence, intended to be placed in HTTP
