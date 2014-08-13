@@ -82,10 +82,7 @@ public class ConfigurableListActionBean extends CoreActionBean {
 
         try {
 
-            List<?> typeSafeIds = new ArrayList<>();
-
-            typeSafeIds = paginationDao.convertStringIdsToEntityType(pagination, selectedIds);
-
+            List<?> typeSafeIds = paginationDao.convertStringIdsToEntityType(pagination, selectedIds);
             entityList = paginationDao.getByIds(pagination, typeSafeIds);
 
         } catch (Exception e) {

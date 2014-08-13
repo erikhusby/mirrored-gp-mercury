@@ -839,7 +839,7 @@ public class ConfigurableList {
             for (ConfigurableList.ResultRow resultRow : getResultRows()) {
                 int nestCols;
                 for( ResultList nestedTable: resultRow.getNestedTables().values() ){
-                    rows += nestedTable.getResultRows().size() + 1;
+                    rows += nestedTable.getResultRows().size() + 2;
                     nestCols = nestedTable.getHeaders().size() + 1;
                     if( nestCols > cols ) cols = nestCols;
                 }
@@ -870,10 +870,8 @@ public class ConfigurableList {
                 rowNumber++;
 
                 // Nested tables
-                columnNumber = 0;
                 for( Map.Entry<String,ResultList> nestedTable : resultRow.getNestedTables().entrySet() ) {
-                    rowObjects[rowNumber][columnNumber] = nestedTable.getKey();
-                    columnNumber++;
+                    rowObjects[rowNumber][1] = nestedTable.getKey();
                     rowNumber++;
                     rowNumber = appendNestedRows(rowNumber, 1, nestedTable.getValue(), rowObjects);
                 }

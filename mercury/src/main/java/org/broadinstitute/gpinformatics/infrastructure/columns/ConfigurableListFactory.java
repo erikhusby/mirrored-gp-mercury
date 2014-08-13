@@ -13,7 +13,6 @@ import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.hibernate.Criteria;
@@ -21,7 +20,6 @@ import org.hibernate.Criteria;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -335,25 +333,32 @@ public class ConfigurableListFactory {
         }
         columnTabulations.addAll(searchInstance.findTopLevelColumnTabulations());
 
-        PaginationDao.Pagination pagination = new PaginationDao.Pagination(configurableSearchDef.getPageSize());
-        configurableSearchDao.startPagination(pagination, criteria);
-
-
         /* Traverse IDs for lab events and obtain parents and ancestors
          * Intercepts the LabEvent ID list and injects descendant LabEvents
          * TODO jms Move this elsewhere along with BSPSampleSearchService  */
+
+        boolean doEventTraversal = false;
         if (entityName.equals("LabEvent")) {
             /* Only traverse descendant events if LCSET is in search criteria (or all events?) */
-            boolean doTraversal = false;
+
             for( SearchInstance.SearchValue searchValue : searchInstance.getSearchValues() ) {
                 if( searchValue.getSearchTerm().getName().equals("LCSET")){
-                    doTraversal = true;
+                    doEventTraversal = true;
                     break;
                 }
             }
-            if( doTraversal ) {
-                getDescendantVesselLabEvents( (List<Long>) pagination.getIdList() );
-            }
+        }
+
+        PaginationDao.Pagination pagination = new PaginationDao.Pagination( configurableSearchDef.getPageSize() );
+
+        if( doEventTraversal ) {
+            // Flag pagination to do an initial full entity fetch then replace entities with IDs
+            configurableSearchDao.startPagination(pagination, criteria, true);
+            List<?> idList = getDescendantVesselLabEvents( pagination.getIdList() );
+            pagination.setIdList(idList);
+        } else {
+            // Legacy pagination - initially fetches only ID values
+            configurableSearchDao.startPagination(pagination, criteria, false);
         }
 
         pagination.setJoinFetchPaths(joinFetchPaths);
@@ -416,37 +421,31 @@ public class ConfigurableListFactory {
 
     /**
      * Accumulates lab events for a given LabVessel
+     * LabEventDescendantCriteria sorts them by date and disambiguator
      */
-    private void getDescendantVesselLabEvents( List<Long> idList ) {
-
-        Set<Long> labEventIds = new LinkedHashSet<>();
-
-        for( Long startingEventID : idList  ) {
-
-            LabEvent startingEvent = configurableSearchDao.findSingle(LabEvent.class, LabEvent_.labEventId, startingEventID);
-
-            labEventIds.add(startingEventID);
-
+    private List<?> getDescendantVesselLabEvents( List<?> labEventList ) {
+        Set<LabEvent> sortedSet;
+        List<Long> idList = new ArrayList<>();
+        TransferTraverserCriteria.LabEventDescendantCriteria eventTraversalCriteria =
+                new TransferTraverserCriteria.LabEventDescendantCriteria();
+        for( LabEvent startingEvent : (List<LabEvent>) labEventList ) {
+            // Add each starting event so it gets date sorted with descendants
+            eventTraversalCriteria.getAllEvents().add(startingEvent);
             // First events found have in place lab vessels
             LabVessel vessel = startingEvent.getInPlaceLabVessel();
-
             // Recurse down through vessel-event layers
             if( vessel != null ) {
-                TransferTraverserCriteria.LabEventDescendantCriteria eventTraversalCriteria =
-                        new TransferTraverserCriteria.LabEventDescendantCriteria();
                 vessel.evaluateCriteria(eventTraversalCriteria
                         , TransferTraverserCriteria.TraversalDirection.Descendants );
-                for( LabEvent descendant : eventTraversalCriteria.getAllEvents() ) {
-                    labEventIds.add(descendant.getLabEventId());
-                }
             }
         }
-
+        sortedSet = eventTraversalCriteria.getAllEvents();
         // Replace entire original list contents
-        idList.clear();
-        for( Long eventId : labEventIds  ) {
-            idList.add(eventId);
+        for( LabEvent event : sortedSet ) {
+            idList.add( event.getLabEventId() );
         }
+
+        return idList;
     }
 
 }

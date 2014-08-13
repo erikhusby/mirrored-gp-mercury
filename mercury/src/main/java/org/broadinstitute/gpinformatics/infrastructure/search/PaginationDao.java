@@ -109,13 +109,14 @@ public class PaginationDao extends GenericDao {
      * @param criteria   criteria for which results are to be paginated
      * @param pagination holds pagination state
      */
-    public void startPagination(Criteria criteria, Pagination pagination) {
+    public void startPagination(Criteria criteria, Pagination pagination, boolean doInitialFetchFullEntity) {
         // Always append entity ID to order, because other less-specific orders may not
         // yield reproducible results.
 
         criteria.addOrder(Order.asc(pagination.getResultEntityId()));
-
-        criteria.setProjection(Projections.property(pagination.getResultEntityId()));
+        if( !doInitialFetchFullEntity ) {
+            criteria.setProjection(Projections.property(pagination.getResultEntityId()));
+        }
         //noinspection unchecked
         pagination.setIdList(criteria.list());
     }

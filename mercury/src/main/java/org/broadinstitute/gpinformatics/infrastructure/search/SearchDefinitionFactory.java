@@ -619,20 +619,28 @@ public class SearchDefinitionFactory {
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
-                String lcset = "";
                 LabEvent labEvent = (LabEvent) entity;
-                LabVessel labVessel = labEvent.getInPlaceLabVessel();
-                // Columns are nullable
-                if (labVessel != null) {
-                    Set<BucketEntry> bucketEntries = labVessel.getBucketEntries();
-                    if (bucketEntries != null) {
-                        Iterator<BucketEntry> iterator = bucketEntries.iterator();
-                        BucketEntry bucketEntry = iterator.next();
-                        LabBatch batch = bucketEntry.getLabBatch();
-                        lcset = batch.getBatchName();
+
+                List<String> lcSetNames = new ArrayList<>();
+                for (LabBatch labBatch : labEvent.getComputedLcSets()) {
+                    lcSetNames.add(labBatch.getBatchName());
+                }
+
+                if( lcSetNames.isEmpty() ) {
+                    LabVessel labVessel = labEvent.getInPlaceLabVessel();
+                    // Test req'd, DB columns are nullable
+                    if (labVessel != null) {
+                        Set<BucketEntry> bucketEntries = labVessel.getBucketEntries();
+                        if (bucketEntries != null) {
+                            Iterator<BucketEntry> iterator = bucketEntries.iterator();
+                            BucketEntry bucketEntry = iterator.next();
+                            LabBatch batch = bucketEntry.getLabBatch();
+                            lcSetNames.add( batch.getBatchName() );
+                        }
                     }
                 }
-                return lcset;
+
+                return lcSetNames;
             }
         });
         searchTerms.add(searchTerm);
