@@ -38,7 +38,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 /**
  * A Test to backpopulate a column which ought to be not null.
  */
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.FIXUP)
 public class LabBatchFixUpTest extends Arquillian {
 
     @Inject
