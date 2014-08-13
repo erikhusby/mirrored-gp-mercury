@@ -134,7 +134,7 @@ public class AuditReaderDao extends GenericDao {
      * @param revIds
      * @return a list of AuditedRevDtos sorted by revId.
      */
-    public List<AuditedRevDto> fetchAuditedRevs(Collection<Long> revIds) {
+    public List<AuditedRevDto> fetchAuditedRevs(Set<Long> revIds) {
         List<AuditedRevDto> auditedRevDtos = new ArrayList<>();
 
         for (Long revId : revIds) {
@@ -154,7 +154,7 @@ public class AuditReaderDao extends GenericDao {
      * @param entityClassName the class name of the entity.
      * @return list of EnversAudit objects.
      */
-    public List<EnversAudit> fetchEnversAudits(Collection<Long> revIds, Class entityClassName) {
+    public List<EnversAudit> fetchEnversAudits(Set<Long> revIds, Class entityClassName) {
         List<EnversAudit> enversAudits = new ArrayList<>();
         // Does the AuditReader query and converts each object array into EnversAudit.
         for (Object[] enversTriple : fetchEnversAudits(revIds, entityClassName, true)) {

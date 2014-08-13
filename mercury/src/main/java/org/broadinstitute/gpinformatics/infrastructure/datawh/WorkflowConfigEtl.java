@@ -61,7 +61,7 @@ public class WorkflowConfigEtl extends GenericEntityEtl<WorkflowConfig, Object> 
 
     // Ignores revIds param and does an etl of workflow config if the current version has changed since last etl.
     @Override
-    public int doEtl(Collection<Long> revIds, String etlDateStr) {
+    public int doEtl(Set<Long> revIds, String etlDateStr) {
         // Does nothing if no change in WorkflowConfig, indicated by the hash.
         HashMatchResult res = hashesMatch();
         if (res.isMatch) {
