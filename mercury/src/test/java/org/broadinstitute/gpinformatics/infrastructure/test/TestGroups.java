@@ -10,7 +10,8 @@ public class TestGroups {
     public static final String DATABASE_FREE = "DatabaseFree";
 
     /**
-     *  This means the test group requires a container and external resources to run properly.
+     *  This means the test group requires external resources, but does not require a container
+     *  (IE, calls web services) to run properly.
      */
     public static final String EXTERNAL_INTEGRATION = "ExternalIntegration";
 
