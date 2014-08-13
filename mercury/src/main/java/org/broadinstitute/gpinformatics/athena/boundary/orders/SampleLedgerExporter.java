@@ -61,6 +61,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
     private final AppConfig appConfig;
     private final TableauConfig tableauConfig;
     private final Map<Product, List<SampleLedgerRow>> sampleRowData;
+    private final Map<ProductOrder, Map<String, WorkCompleteMessage>> workCompleteMessageCache = new HashMap<>();
 
     public SampleLedgerExporter(
             PriceItemDao priceItemDao,
@@ -183,24 +184,9 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
             List<Product> sortedAddOns = new ArrayList<>(currentProduct.getAddOns());
             Collections.sort(sortedAddOns);
 
-            Set<PriceItem> addOnPriceItems = new HashSet<>();
-            for (Product addOn : sortedAddOns) {
-                addOnPriceItems.addAll(getPriceItems(addOn, priceItemDao, priceListCache));
-            }
-
             // historical price items
-            SortedSet<PriceItem> historicalPriceItems = new TreeSet<>();
-            for (ProductOrder productOrder : productOrders) {
-                for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
-                    for (LedgerEntry ledgerEntry : productOrderSample.getLedgerItems()) {
-                        PriceItem priceItem = ledgerEntry.getPriceItem();
-                        if (!sortedPriceItems.contains(priceItem) && !addOnPriceItems
-                                .contains(priceItem)) {
-                            historicalPriceItems.add(priceItem);
-                        }
-                    }
-                }
-            }
+            SortedSet<PriceItem> historicalPriceItems =
+                    getHistoricalPriceItems(productOrders, sortedPriceItems, sortedAddOns);
 
             writeHeaders(currentProduct, sortedPriceItems, sortedAddOns, historicalPriceItems);
 
@@ -209,55 +195,98 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
 
             // Write content.
             int sortOrder = 1;
-            int dataIndex = 0;
-            for (ProductOrder productOrder : productOrders) {
+            List<SampleLedgerRow> sampleLedgerRows = sampleRowData.get(currentProduct);
+            for (SampleLedgerRow sampleLedgerRow : sampleLedgerRows) {
+                ProductOrder productOrder = sampleLedgerRow.getProductOrderSample().getProductOrder();
                 productOrder.loadBspData();
-                Map<String, WorkCompleteMessage> workCompleteMessageBySample =
-                        getWorkCompleteMessageBySample(productOrder);
-                for (ProductOrderSample sample : productOrder.getSamples()) {
-                    writeRow(sortedPriceItems, sortedAddOns, historicalPriceItems, sample, sortOrder++,
-                            workCompleteMessageBySample, sampleRowData.get(currentProduct).get(dataIndex++));
-                }
+                writeRow(sortedPriceItems, sortedAddOns, historicalPriceItems, sampleLedgerRow.getProductOrderSample(),
+                        sortOrder++, getWorkCompleteMessageBySample(productOrder), sampleLedgerRow);
             }
         }
 
         getWorkbook().write(out);
     }
 
-    private Map<String, WorkCompleteMessage> getWorkCompleteMessageBySample(ProductOrder productOrder) {
-        List<WorkCompleteMessage> workCompleteMessages = workCompleteMessageDao.findByPDO(
-                productOrder.getBusinessKey());
+    private SortedSet<PriceItem> getHistoricalPriceItems(List<ProductOrder> productOrders, List<PriceItem> priceItems,
+                                                         List<Product> addOns) {
+        Set<PriceItem> addOnPriceItems = new HashSet<>();
+        for (Product addOn : addOns) {
+            addOnPriceItems.addAll(getPriceItems(addOn, priceItemDao, priceListCache));
+        }
 
-        List<String> aliquotIds = new ArrayList<>();
-        for (WorkCompleteMessage workCompleteMessage : workCompleteMessages) {
-            String aliquotId = workCompleteMessage.getAliquotId();
-            if (BSPLSIDUtil.isBspLsid(aliquotId)) {
-                aliquotId = BSPLSIDUtil.lsidToBareId(aliquotId);
-                aliquotIds.add(aliquotId);
+        SortedSet<PriceItem> historicalPriceItems = new TreeSet<>();
+        for (ProductOrder productOrder : productOrders) {
+            for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
+                for (LedgerEntry ledgerEntry : productOrderSample.getLedgerItems()) {
+                    PriceItem priceItem = ledgerEntry.getPriceItem();
+                    if (!priceItems.contains(priceItem) && !addOnPriceItems
+                            .contains(priceItem)) {
+                        historicalPriceItems.add(priceItem);
+                    }
+                }
             }
         }
-        Map<String, String> stockIdByAliquotId = sampleDataFetcher.getStockIdByAliquotId(aliquotIds);
+        return historicalPriceItems;
+    }
 
-        Map<String, WorkCompleteMessage> workCompleteMessageBySample = new HashMap<>();
-        for (WorkCompleteMessage workCompleteMessage : workCompleteMessages) {
-            String aliquotId = workCompleteMessage.getAliquotId();
-            if (BSPLSIDUtil.isBspLsid(aliquotId)) {
-                aliquotId = "SM-" + BSPLSIDUtil.lsidToBareId(aliquotId);
-                String stockId = stockIdByAliquotId.get(aliquotId);
-                if (stockId != null) {
-                    workCompleteMessageBySample.put(stockId, workCompleteMessage);
-                } else {
-                    /*
-                     * This isn't necessarily a useful thing to do, but it may work in some cases. While it may not be
-                     * tremendously useful, it's better than doing nothing or throwing an exception.
-                     */
-                    workCompleteMessageBySample.put(aliquotId, workCompleteMessage);
+    private Map<String, WorkCompleteMessage> getWorkCompleteMessageBySample(ProductOrder productOrder) {
+        Map<String, WorkCompleteMessage> workCompleteMessageBySample = workCompleteMessageCache.get(productOrder);
+        if (workCompleteMessageBySample == null) {
+            workCompleteMessageBySample = new HashMap<>();
+            workCompleteMessageCache.put(productOrder, workCompleteMessageBySample);
+
+            List<WorkCompleteMessage> workCompleteMessages = workCompleteMessageDao.findByPDO(
+                    productOrder.getBusinessKey());
+
+            List<String> aliquotIds = new ArrayList<>();
+            for (WorkCompleteMessage workCompleteMessage : workCompleteMessages) {
+                String aliquotId = workCompleteMessage.getAliquotId();
+                if (BSPLSIDUtil.isBspLsid(aliquotId)) {
+                    aliquotId = BSPLSIDUtil.lsidToBareId(aliquotId);
+                    aliquotIds.add(aliquotId);
+                }
+            }
+            Map<String, String> stockIdByAliquotId = sampleDataFetcher.getStockIdByAliquotId(aliquotIds);
+
+            for (WorkCompleteMessage workCompleteMessage : workCompleteMessages) {
+                String aliquotId = workCompleteMessage.getAliquotId();
+                if (BSPLSIDUtil.isBspLsid(aliquotId)) {
+                    aliquotId = "SM-" + BSPLSIDUtil.lsidToBareId(aliquotId);
+                    String stockId = stockIdByAliquotId.get(aliquotId);
+                    if (stockId != null) {
+                        workCompleteMessageBySample.put(stockId, workCompleteMessage);
+                    } else {
+                        /*
+                         * This isn't necessarily a useful thing to do, but it may work in some cases. While it may not
+                         * be tremendously useful, it's better than doing nothing or throwing an exception.
+                         */
+                        workCompleteMessageBySample.put(aliquotId, workCompleteMessage);
+                    }
                 }
             }
         }
         return workCompleteMessageBySample;
     }
 
+    /**
+     * Write a row of data for a single sample.
+     *
+     * Currently, the data comes from many different places. In order to improve testability, the data is in the
+     * process of being consolidated into a {@link SampleLedgerRow} object, which will make test setup easier.
+     *
+     * Testing this method is a little difficult. Ideally, its inputs would be simple to make it straightforward to test
+     * different scenarios by verifying interactions with the writer. Another idea is to move the responsibility into
+     * {@link SampleLedgerRow}. See Phil Shapiro's code review
+     * <a href="https://crucible.broadinstitute.org/cru/GPI-748#c32936">comment</a>.
+     *
+     * @param sortedPriceItems               primary and alternative price items that apply to the product ordered
+     * @param sortedAddOns                   add-on products to provided price item columns for
+     * @param historicalPriceItems           price items that have ledger entries for this sample but are not primary, alternative, or add-on price items
+     * @param sample                         the product order sample for the row
+     * @param sortOrder                      the value for the sort order column, for re-sorting the tracker before uploading
+     * @param workCompleteMessageBySample    any work complete messages for the product order, by sample
+     * @param sampleData                     simple bean of sample data to be written
+     */
     private void writeRow(List<PriceItem> sortedPriceItems, List<Product> sortedAddOns,
                           Collection<PriceItem> historicalPriceItems, ProductOrderSample sample,
                           int sortOrder, Map<String, WorkCompleteMessage> workCompleteMessageBySample,
