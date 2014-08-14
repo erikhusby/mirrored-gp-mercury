@@ -199,7 +199,8 @@ public class AuditTrailEntryActionBean extends CoreActionBean {
     private void generateAuditedEntity() {
         // Gets entity from Envers.
         Object entity = auditReaderDao.getEntityAtVersion(entityId, entityClass, revId);
-        List<EntityField> fields = (entity != null) ? ReflectionUtil.formatFields(entity, entityClass) : null;
+        List<EntityField> fields = (entity != null) ?
+                ReflectionUtil.formatFields(entity, entityClass) : null;
         auditEntity = new AuditEntity(revId, displayClassname, entityId, fields);
     }
 

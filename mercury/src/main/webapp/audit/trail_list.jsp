@@ -3,7 +3,7 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.audit.AuditTrailActionBean" />
 
-<stripes:layout-render name="/layout.jsp" pageTitle="Audit Trail Search" sectionTitle="Audit Trail Search" showCreate="true">
+<stripes:layout-render name="/layout.jsp" pageTitle="Audit Trail Search" sectionTitle="Audit Trail Search" showCreate="false">
 
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
