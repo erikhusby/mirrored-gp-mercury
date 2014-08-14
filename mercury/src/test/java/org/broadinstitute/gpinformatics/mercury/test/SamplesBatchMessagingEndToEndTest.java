@@ -28,6 +28,7 @@ import java.util.List;
 /**
  * Test the messages sent by BSP during receipt, extraction, pico, normalization and plating.
  */
+@Test(groups = TestGroups.STUBBY)
 public class SamplesBatchMessagingEndToEndTest extends ContainerTest {
 
     private final SimpleDateFormat timestampFormat = new SimpleDateFormat("MMddHHmmss");

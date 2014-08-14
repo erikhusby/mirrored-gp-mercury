@@ -1,9 +1,14 @@
-#!/bin/bash -v
+#!/bin/bash -l
 #
 # Perform a Production release of Mercury
 #
 # Usage: Release.sh
 #
+unuse Java-1.6-Prodinfo
+unuse Maven-2.2
+use Maven-3.1
+use Java-1.7
+
 #set -o verbose
 if [ -d "release" ] ; then
     rm -rf release
@@ -37,8 +42,10 @@ EOF
 # Make the RC Branch a remote tracking branch
 git checkout  --track -b $RCBRANCH
 mvn versions:set -DnewVersion=$RCVERSION
+mvn -f rest-pom.xml versions:set -DnewVersion=$RCVERSION
 mvn versions:resolve-ranges
-git commit -m "REL-714 Setting RC version to $RCVERSION" pom.xml
+mvn -f rest-pom.xml versions:resolve-ranges
+git commit -m "REL-714 Setting RC version to $RCVERSION" -a
 # Create the RCBUILD floating tag (but get rid of previous version first)
 git push origin :RCBUILD
 git tag -a -m "Current RC " --force RCBUILD $RCBRANCH
@@ -48,9 +55,10 @@ git push origin --tags
 # Switch back to the master and update the pom
 git checkout master
 mvn versions:set -DnewVersion=$NEXTVERSION
+mvn -f rest-pom.xml versions:set -DnewVewrsion=$NEXTVERSION
 # Commit the master
 # push the master
-git commit -m "REL-714 Setting master version to $NEXTVERSION" pom.xml
+git commit -m "REL-714 Setting master version to $NEXTVERSION" -a 
 git fetch origin +master
 git push origin master
 

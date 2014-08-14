@@ -16,7 +16,7 @@ import java.util.List;
  * A future version of this class will probably support both export and import, since there will be some common
  * code & data structures.
  */
-public class QuoteWorkItemsExporter extends AbstractSpreadsheetExporter {
+public class QuoteWorkItemsExporter extends AbstractSpreadsheetExporter<AbstractSpreadsheetExporter.SpreadSheetWriter> {
 
     private final List<QuoteImportItem> quoteItems;
     private final BillingSession billingSession;

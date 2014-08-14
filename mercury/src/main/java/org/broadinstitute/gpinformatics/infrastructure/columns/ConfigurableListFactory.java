@@ -16,8 +16,8 @@ import org.hibernate.Criteria;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Creates ConfigurableList instances.
@@ -49,11 +49,12 @@ public class ConfigurableListFactory {
     public ConfigurableList create(@Nonnull List<?> entityList,
             @Nonnull String downloadColumnSetName,
             @Nonnull String entityName,
-            @Nonnull ColumnEntity entityId) {
+            @Nonnull ColumnEntity entityId,
+            @Nonnull Map<String, Object> evalContext) {
 
         List<ColumnTabulation> columnTabulations = buildColumnSetTabulations(downloadColumnSetName, entityName);
         ConfigurableList configurableList = new ConfigurableList(columnTabulations, 0, "ASC", entityId);
-        configurableList.addRows(entityList);
+        configurableList.addRows(entityList, evalContext);
         return configurableList;
     }
 
@@ -214,7 +215,7 @@ public class ConfigurableListFactory {
             listNameListString = (PreferenceDefinitionListNameListString) preference.getPreferenceDefinition();
             if (listNameListString != null) {
                 Map<String, Object> context = new HashMap<>();
-                context.put("columnSetType", columnSetType);
+                context.put(SearchDefinitionFactory.CONTEXT_KEY_COLUMN_SET_TYPE, columnSetType);
                 context.put("bspDomainUser", bspDomainUser);
                 context.put("group", group);
                 for (PreferenceDefinitionNameListString nameListString : listNameListString.getListNamedList()) {
@@ -277,7 +278,6 @@ public class ConfigurableListFactory {
             Integer sortColumnIndex, String dbSortPath,
             String sortDirection,
             String entityName) {
-        searchInstance.setEvalContext(new HashMap<String, Object>());
 
         Criteria criteria = configurableSearchDao.buildCriteria(configurableSearchDef, searchInstance, dbSortPath,
                 sortDirection);
@@ -339,7 +339,7 @@ public class ConfigurableListFactory {
         if (entityName.equals("LabVessel")) {
             configurableList.addListener(new BspSampleSearchAddRowsListener(bspSampleSearchService));
         }
-        configurableList.addRows(entityList);
+        configurableList.addRows( entityList, searchInstance.getEvalContext() );
         ConfigurableList.ResultList resultList = configurableList.getResultList();
 
         return new FirstPageResults(resultList, pagination);
@@ -381,7 +381,7 @@ public class ConfigurableListFactory {
         if (entityName.equals("LabVessel")) {
             configurableList.addListener(new BspSampleSearchAddRowsListener(bspSampleSearchService));
         }
-        configurableList.addRows(entityList);
+        configurableList.addRows( entityList,searchInstance.getEvalContext() );
 
         return configurableList.getResultList();
     }

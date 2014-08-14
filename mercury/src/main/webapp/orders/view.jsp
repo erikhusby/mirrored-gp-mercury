@@ -26,13 +26,11 @@ $j(document).ready(function () {
     });
 
     // Initializes the previously chosen sample kit detail info in the sample kit display section
-    <c:if test="${actionBean.editOrder.isSampleInitiation()}">
     <c:forEach items="${actionBean.editOrder.productOrderKit.kitOrderDetails}" var="kitDetail">
     showKitDetail('${kitDetail.numberOfSamples}', '${kitDetail.kitType.displayName}',
             '${kitDetail.organismName}', '${kitDetail.bspMaterialName}',
             '${kitDetail.getPostReceivedOptionsAsString("<br/>")}');
     </c:forEach>
-    </c:if>
 
     // if there are no sample kit details, just show one empty detail section
     if (kitDefinitionIndex == 0) {
@@ -961,7 +959,7 @@ function formatInput(item) {
 </div>
 </div>
 
-<c:if test="${actionBean.editOrder.isSampleInitiation()}">
+<c:if test="${actionBean.editOrder.sampleInitiation || !actionBean.editOrder.productOrderKit.kitOrderDetails.isEmpty()}">
     <div class="form-horizontal span5">
         <fieldset>
             <legend>

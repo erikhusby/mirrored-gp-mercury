@@ -154,6 +154,38 @@
                 <td>${cell}</td>
             </c:forEach>
         </tr>
+
+        <%-- *** Start nested table *** --%>
+        <c:if test="${not empty resultRow.nestedTables}">
+            <c:forEach items="${resultRow.nestedTables.keySet()}" var="tableName">
+                <c:set var="nestedTable" value="${resultRow.nestedTables[tableName]}"/>
+                <tr ${status.index%2==0 ? "class=\"even\"" : "class=\"odd\""}>
+                    <td>&nbsp;</td>
+                    <td style="padding-left: 6px;" colspan="${nestedTable.headers.size()}">
+                        <table class="table simple dataTable">
+                            <tr>
+                                <th colspan="${nestedTable.headers.size()}">${tableName}</th>
+                            </tr>
+                            <tr>
+                                <c:forEach items="${nestedTable.headers}" var="nestedHeader">
+                                    <th>${nestedHeader.viewHeader}</th>
+                                </c:forEach>
+                            </tr>
+                            <c:forEach items="${nestedTable.resultRows}" var="nestRow">
+                                <tr>
+                                <c:forEach items="${nestRow.renderableCells}" var="nestCell">
+                                    <td>${nestCell}</td>
+                                </c:forEach>
+                                </tr>
+                            </c:forEach>
+                         </table>
+                     </td>
+                </tr>
+            </c:forEach>
+
+        </c:if>
+        <%-- *** End nested table *** --%>
+
         <c:if test="${(status.index + 1)%500 == 0}">
             </tbody>
 </table>

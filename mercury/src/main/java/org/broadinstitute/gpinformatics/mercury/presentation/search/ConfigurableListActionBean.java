@@ -8,6 +8,7 @@ import net.sourceforge.stripes.validation.SimpleError;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.BspSampleSearchAddRowsListener;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
@@ -23,11 +24,14 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBeanContext;
 
 import javax.inject.Inject;
+import javax.servlet.RequestDispatcher;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * For actions invoked by configurableList.jsp
@@ -55,6 +59,9 @@ public class ConfigurableListActionBean extends CoreActionBean {
     @Inject
     private BSPSampleSearchService bspSampleSearchService;
 
+    @Inject
+    private BSPUserList bspUserList;
+
     /**
      * Stream an Excel spreadsheet, from a list of IDs
      *
@@ -66,27 +73,24 @@ public class ConfigurableListActionBean extends CoreActionBean {
                 .getAttribute(ConfigurableSearchActionBean.PAGINATION_PREFIX + sessionKey);
 
         List<?> entityList;
+
+        if( selectedIds == null || selectedIds.size() == 0 ) {
+            addGlobalValidationError("You must select one or more rows to download.");
+            return new ForwardResolution("/error.jsp");
+        }
+
+
         try {
-            // TODO jmt handle Longs
-/*
-            Barcoded barcoded = (Barcoded) Class.forName(pagination.getResultEntity()).newInstance();
-            switch (barcoded.getBarcodeDataType()) {
-            case NUMERIC:
-                List<Long> ids = new ArrayList<>(selectedIds.size());
-                for (String id : selectedIds) {
-                    ids.add(Long.parseLong(id));
-                }
-                entityList = paginationDao.getByIds(pagination, ids);
-                break;
-            case ALPHANUMERIC:
-*/
-                entityList = paginationDao.getByIds(pagination, selectedIds);
-/*
-                break;
-            }
-*/
+
+            List<?> typeSafeIds = new ArrayList<>();
+
+            typeSafeIds = paginationDao.convertStringIdsToEntityType(pagination, selectedIds);
+
+            entityList = paginationDao.getByIds(pagination, typeSafeIds);
+
         } catch (Exception e) {
             log.error("Search failed: ", e);
+            getContext().getRequest().setAttribute(RequestDispatcher.ERROR_EXCEPTION, e);
             getContext().getValidationErrors().addGlobalError(new SimpleError(
                     "Search encountered an unexpected problem. Please email bsp-support."));
             return new ForwardResolution("/error.jsp");
@@ -101,7 +105,7 @@ public class ConfigurableListActionBean extends CoreActionBean {
             if (entityName.equals("LabVessel")) {
                 configurableList.addListener(new BspSampleSearchAddRowsListener(bspSampleSearchService));
             }
-            configurableList.addRows(entityList);
+            configurableList.addRows(entityList, buildSearchContext());
             ConfigurableList.ResultList resultList = configurableList.getResultList();
             return streamResultList(resultList);
         }
@@ -136,12 +140,24 @@ public class ConfigurableListActionBean extends CoreActionBean {
         }
 
         // Get each page and add it to the configurable list
+        Map<String, Object> context = buildSearchContext();
         for (int i = 0; i < pagination.getNumberPages(); i++) {
             List resultsPage = paginationDao.getPage(pagination, i);
-            configurableList.addRows(resultsPage);
+            configurableList.addRows(resultsPage, context);
             paginationDao.clear();
         }
         return streamResultList(configurableList.getResultList());
+    }
+
+    /**
+     *  BSP user lookup required in column eval expression
+     *  Use context to avoid need to test in container
+     */
+    private Map<String, Object> buildSearchContext(){
+        Map<String, Object> evalContext = new HashMap<>();
+        evalContext.put(SearchDefinitionFactory.CONTEXT_KEY_BSP_USER_LIST, bspUserList );
+
+        return evalContext;
     }
 
     /**
@@ -158,8 +174,9 @@ public class ConfigurableListActionBean extends CoreActionBean {
      */
     public Resolution createConfigurableDownload(List<?> entityList, String downloadColumnSetName,
             CoreActionBeanContext context, String entityName, String entityId) {
+
         ConfigurableList configurableListUtils = configurableListFactory.create(entityList, downloadColumnSetName,
-                entityName, ColumnEntity.getByName(entityName));
+                entityName, ColumnEntity.getByName(entityName), buildSearchContext() );
 
         Object[][] data = configurableListUtils.getResultList().getAsArray();
         return StreamCreatedSpreadsheetUtil.streamSpreadsheet(data, SPREADSHEET_FILENAME);

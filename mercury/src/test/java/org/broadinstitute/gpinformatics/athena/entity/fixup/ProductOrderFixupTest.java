@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -42,12 +43,12 @@ import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 
 /**
  * This "test" is an example of how to fixup some data.  Each fix method includes the JIRA ticket ID.
  * Set @Test(enabled=false) after running once.
  */
+@Test(groups = TestGroups.FIXUP)
 public class ProductOrderFixupTest extends Arquillian {
 
     @Inject

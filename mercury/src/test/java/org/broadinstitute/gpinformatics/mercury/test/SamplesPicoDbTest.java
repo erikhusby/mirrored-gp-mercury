@@ -26,6 +26,7 @@ import java.util.List;
 /**
  * A database test of the Samples Pico process
  */
+@Test(groups = TestGroups.STUBBY)
 public class SamplesPicoDbTest extends ContainerTest {
 
     private final SimpleDateFormat timestampFormat = new SimpleDateFormat("MMddHHmmss");

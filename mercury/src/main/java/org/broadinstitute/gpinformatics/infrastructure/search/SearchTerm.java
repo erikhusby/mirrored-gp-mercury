@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -25,7 +26,11 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
     private static final long serialVersionUID = -7452519036319121392L;
 
-    // JAXB doesn't like interfaces (even if the referring class is XmlTransient), so we have to use a transient class.
+    /**
+     * Attached to a search term display expression
+     * Generates the value to be displayed
+     * @param <T>
+     */
     public abstract static class Evaluator <T> {
         public abstract T evaluate(Object entity, Map<String, Object> context);
     }
@@ -98,6 +103,13 @@ public class SearchTerm implements Serializable, ColumnTabulation {
      * True if this term is required in every SearchInstance
      */
     private Boolean required;
+
+    /**
+     * Expression to access the parent entity's collection of child entities
+     *     to include in a nested table presentation
+     */
+    private List<ColumnTabulation> nestedEntityColumns;
+
 
     /**
      * True if this term requires a new detached criteria (because it has the same
@@ -198,6 +210,11 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     private Evaluator<Object> addRowsListenerHelper;
 
     /**
+     * Flag this term as a parent to a nested table
+     */
+    private Boolean isNestedParent = Boolean.FALSE;
+
+    /**
      * Evaluate the expression that returns constrained values, e.g. list of phenotypes
      *
      * @param context any additional entities referred to by the expression
@@ -272,6 +289,29 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
     public void setDisplayExpression(Evaluator<Object> displayExpression) {
         this.displayExpression = displayExpression;
+    }
+
+    @Override
+    public Boolean isNestedParent( ){
+        return  isNestedParent;
+    }
+
+    @Override
+    public void setIsNestedParent(Boolean isNestedParent) {
+        this.isNestedParent = isNestedParent;
+    }
+
+    @Override
+    public List<? extends ColumnTabulation> getNestedEntityColumns() {
+        return nestedEntityColumns;
+    }
+
+    @Override
+    public void addNestedEntityColumn(ColumnTabulation nestedEntityColumn) {
+        if( nestedEntityColumns == null ) {
+            nestedEntityColumns = new ArrayList<>();
+        }
+        nestedEntityColumns.add(nestedEntityColumn);
     }
 
     public Evaluator<Object> getViewHeader() {
@@ -401,6 +441,18 @@ public class SearchTerm implements Serializable, ColumnTabulation {
             return getName();
         }
         return getViewHeader().evaluate(entity, context);
+    }
+
+    /**
+     * Get the collection of entities associated with parent row
+     * Convenience method to eliminate ambiguity of calling evalPlainTextExpression
+     * @param entity  root of object graph that expression navigates.
+     * @param context name / value pairs of other variables used in the expression.
+     * @return Nested table entity collection
+     */
+    @Override
+    public Collection<?> evalNestedTableExpression(Object entity, Map<String, Object> context) {
+        return (Collection<?>) getDisplayExpression().evaluate(entity, context);
     }
 
     @Override

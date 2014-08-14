@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.BSPExportsSer
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.IsExported;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEventTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
@@ -104,6 +105,7 @@ import static org.mockito.Mockito.when;
  * can configure mock DAOs to return the various test entities without also setting the expectation that each test will
  * fetch every test entity.
  */
+@Test(groups = TestGroups.DATABASE_FREE)
 public class SystemRouterTest extends BaseEventTest {
 
     private static final String MERCURY_TUBE_1 = "mercuryTube1";

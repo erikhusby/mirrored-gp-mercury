@@ -4,6 +4,7 @@ import com.sun.jersey.api.client.WebResource;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
@@ -23,6 +24,7 @@ import java.util.List;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.AUTO_BUILD;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STANDARD;
 
+@Test(groups = TestGroups.STANDARD)
 public class ProductOrderResourceTest extends RestServiceContainerTest {
 
     private static final String PDO_SAMPLE_STATUS = "pdoSampleStatus";

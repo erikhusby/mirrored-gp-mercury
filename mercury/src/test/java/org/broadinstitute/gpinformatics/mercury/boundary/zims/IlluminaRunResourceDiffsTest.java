@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.zims;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ImportFromSquidTest;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
@@ -22,6 +23,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EX
 /**
  * A test to compare IlluminaRunResource output from different deployments, e.g. to verify a change.
  */
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class IlluminaRunResourceDiffsTest extends Arquillian {
 
     @Inject

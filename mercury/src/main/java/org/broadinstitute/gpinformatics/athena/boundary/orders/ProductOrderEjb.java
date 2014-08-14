@@ -973,7 +973,7 @@ public class ProductOrderEjb {
             if (editOrder.isSampleInitiation()) {
                 throw new InformaticsServiceException("Kit Work Requests require at least one kit definition");
             }
-
+        } else {
             try {
                 submitSampleKitRequest(editOrder, messageCollection);
             } catch (Exception e) {

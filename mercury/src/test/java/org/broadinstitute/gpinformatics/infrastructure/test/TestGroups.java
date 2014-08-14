@@ -24,6 +24,9 @@ public class TestGroups {
     /** Uses CDI alternatives, can't be combined into a suite */
     public static final String ALTERNATIVES = "Alternatives";
 
+    /** "Test" used only to perform a fixup on production data. */
+    public static final String FIXUP = "Fixup";
+
     /**
      * This means ... ?
      */

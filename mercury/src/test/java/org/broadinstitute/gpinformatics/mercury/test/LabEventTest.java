@@ -124,6 +124,7 @@ import java.util.TreeSet;
  * Test messaging
  */
 @SuppressWarnings({"FeatureEnvy", "OverlyCoupledClass", "OverlyCoupledMethod", "OverlyLongMethod"})
+@Test(groups = TestGroups.DATABASE_FREE)
 public class LabEventTest extends BaseEventTest {
     /**
      * Physical type for a 2-lane flowcell
@@ -139,21 +140,6 @@ public class LabEventTest extends BaseEventTest {
     public static final String FCT_TICKET = "FCT-1";
 
     private final TemplateEngine templateEngine = new TemplateEngine();
-
-    /**
-     * Controls are referenced in the routing logic
-     */
-    private static final List<Control> controlList = new ArrayList<>();
-    private static final List<String> controlCollaboratorIdList = new ArrayList<>();
-
-    static {
-        controlList.add(new Control("NA12878", Control.ControlType.POSITIVE));
-        controlList.add(new Control("WATER_CONTROL", Control.ControlType.NEGATIVE));
-
-        for (Control control : controlList) {
-            controlCollaboratorIdList.add(control.getCollaboratorSampleId());
-        }
-    }
 
     /**
      * Used in test verification, accumulates the events in a chain of transfers
@@ -1132,41 +1118,6 @@ public class LabEventTest extends BaseEventTest {
 //        Controller.stopCPURecording();
     }
 
-    private ZimsIlluminaRunFactory constructZimsIlluminaRunFactory(final ProductOrder productOrder) {
-        ProductOrderDao productOrderDao = Mockito.mock(ProductOrderDao.class);
-        Mockito.when(productOrderDao.findByBusinessKey(Mockito.anyString())).thenReturn(productOrder);
-        return new ZimsIlluminaRunFactory(
-                new BSPSampleDataFetcher() {
-                    @Override
-                    public Map<String, BSPSampleDTO> fetchSamplesFromBSP(@Nonnull Collection<String> sampleNames) {
-                        Map<String, BSPSampleDTO> mapSampleIdToDto = new HashMap<>();
-                        Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>() {{
-                            put(BSPSampleSearchColumn.PRIMARY_DISEASE, "Cancer");
-                            put(BSPSampleSearchColumn.LSID, "org.broad:SM-1234");
-                            put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA Genomic");
-                            put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "4321");
-                            put(BSPSampleSearchColumn.SPECIES, "Homo Sapiens");
-                            put(BSPSampleSearchColumn.PARTICIPANT_ID, "PT-1234");
-                        }};
-                        for (String sampleName : sampleNames) {
-                            Map<BSPSampleSearchColumn, String> dataMapCopy = new HashMap<>(dataMap);
-                            dataMapCopy.put(BSPSampleSearchColumn.SAMPLE_ID, sampleName);
-                            mapSampleIdToDto.put(sampleName, new BSPSampleDTO(dataMapCopy));
-                        }
-                        return mapSampleIdToDto;
-                    }
-                },
-                new ControlDao() {
-                    @Override
-                    public List<Control> findAllActive() {
-                        return controlList;
-                    }
-                },
-                new SequencingTemplateFactory(),
-                productOrderDao
-        );
-    }
-
     /**
      * Build object graph for Whole Genome Shotgun messages, verify chain of events.
      */
@@ -1572,45 +1523,6 @@ public class LabEventTest extends BaseEventTest {
                     (TubeFormation) fluidigmHarvestingToRackEntity.getTargetLabVessels().iterator().next();
             Assert.assertEquals(harvestRack.getSampleInstances().size(), mapBarcodeToTube.size(),
                                 "Wrong number of sample instances");
-        }
-    }
-
-    public static void validateWorkflow(String nextEventTypeName, Collection<? extends LabVessel> tubes) {
-        List<LabVessel> labVessels = new ArrayList<>(tubes);
-        validateWorkflow(nextEventTypeName, labVessels);
-    }
-
-    public static void validateWorkflow(String nextEventTypeName, LabVessel labVessel) {
-        validateWorkflow(nextEventTypeName, Collections.singletonList(labVessel));
-    }
-
-    public static void validateWorkflow(String nextEventTypeName, List<LabVessel> labVessels) {
-        SystemRouter systemRouter = new SystemRouter(null, null, new WorkflowLoader(), null, null);
-        SystemRouter.System system = systemRouter.routeForVessels(labVessels,
-                                                                  controlCollaboratorIdList, mapSampleNameToDto,
-                                                                  SystemRouter.Intent.ROUTE);
-        Assert.assertEquals(system, expectedRouting);
-
-        WorkflowValidator workflowValidator = new WorkflowValidator();
-        ProductOrderDao mockProductOrderDao = Mockito.mock(ProductOrderDao.class);
-        Mockito.when(mockProductOrderDao.findByBusinessKey(Mockito.anyString())).then(new Answer<Object>() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-
-                Object[] arguments = invocationOnMock.getArguments();
-
-                return ProductOrderTestFactory.createDummyProductOrder((String) arguments[0]);
-            }
-        });
-
-        workflowValidator.setProductOrderDao(mockProductOrderDao);
-        List<WorkflowValidator.WorkflowValidationError> workflowValidationErrors =
-                workflowValidator.validateWorkflow(labVessels, nextEventTypeName);
-        if (!workflowValidationErrors.isEmpty()) {
-            WorkflowValidator.WorkflowValidationError workflowValidationError = workflowValidationErrors.get(0);
-            ProductWorkflowDefVersion.ValidationError validationError = workflowValidationError.getErrors().get(0);
-            Assert.fail(validationError.getMessage() + " expected " + validationError.getExpectedEventNames() +
-                        " actual " + validationError.getActualEventNames());
         }
     }
 

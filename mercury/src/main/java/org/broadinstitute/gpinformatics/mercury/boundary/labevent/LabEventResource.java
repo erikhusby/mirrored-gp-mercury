@@ -232,7 +232,7 @@ public class LabEventResource {
                 transferBean.setSourceSection(sectionTransfer.getSourceSection().getSectionName());
 
                 String targetBarcode = getLabel(sectionTransfer.getAncillaryTargetVessel(),
-                        sectionTransfer.getSourceVesselContainer());
+                        sectionTransfer.getTargetVesselContainer());
                 transferBean.setTargetBarcode(targetBarcode);
                 mapTubeFormationLabelToRackLabel.put(
                         sectionTransfer.getTargetVesselContainer().getEmbedder().getLabel(),

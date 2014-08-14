@@ -45,6 +45,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+@Test(groups = TestGroups.ALTERNATIVES)
 public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
 
     private static final Log logger = LogFactory.getLog(ConcurrentProductOrderDoubleCreateTest.class);

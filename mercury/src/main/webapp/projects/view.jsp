@@ -191,7 +191,7 @@
                     <div class="control-group">
                         <stripes:label style="width:80px" class="control-label" for="collaborationQuoteIdId">Quote *</stripes:label>
                         <div class="controls" style="margin-left:90px">
-                            <stripes:text id="collaborationQuoteIdId" name="quote" class="defaultText" title="Enter the Quote ID"/>
+                            <stripes:text id="collaborationQuoteIdId" name="collaborationQuoteId" class="defaultText" title="Enter the Quote ID"/>
                         </div>
                     </div>
 

@@ -14,6 +14,7 @@ import java.util.Map;
  * Modified from Mercury
  */
 
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class QuotesCacheTest {
 
     Quote quote1 = new Quote("DNA32", new QuoteFunding(new FundingLevel("100", new Funding(Funding.FUNDS_RESERVATION, "Magical Infinite Grant", "Magical Infinite Grant"))), ApprovalStatus.FUNDED);

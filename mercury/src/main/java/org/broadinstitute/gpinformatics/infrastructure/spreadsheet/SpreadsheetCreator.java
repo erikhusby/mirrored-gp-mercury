@@ -178,5 +178,8 @@ public class SpreadsheetCreator {
             }
         }
         sheet.createRow(rowNum);
+        for (int cellNum = 1; cellNum <= rows[rowNum-1].length; cellNum++) {
+            sheet.autoSizeColumn(cellNum);
+        }
     }
 }

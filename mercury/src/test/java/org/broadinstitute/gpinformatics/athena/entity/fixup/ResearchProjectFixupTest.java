@@ -25,6 +25,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
  * This "test" is an example of how to fixup some data.  Each fix method includes the JIRA ticket ID.
  * Set @Test(enabled=false) after running once.
  */
+@Test(groups = TestGroups.FIXUP)
 public class ResearchProjectFixupTest extends Arquillian {
     @Inject
     private ResearchProjectEjb researchProjectEjb;
@@ -46,7 +47,7 @@ public class ResearchProjectFixupTest extends Arquillian {
      *
      * @throws Exception Any problems that might occur get thrown
      */
-    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = false)
     public void fixupGpLim1927() throws Exception {
         List<ResearchProject> rpListToPersist = new ArrayList<>();
         List<ResearchProject> rpList = rpDao.findAllResearchProjects();
@@ -74,7 +75,7 @@ public class ResearchProjectFixupTest extends Arquillian {
     /**
      * For each Project missing a JIRA ticket poke the service to create & associate one
      */
-    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = false)
     public void fixupGpLim95() throws IOException {
         List<ResearchProject> rpList = rpDao.findAllResearchProjects();
         List<ResearchProject> rpListToPersist = new ArrayList<>();
@@ -121,12 +122,12 @@ public class ResearchProjectFixupTest extends Arquillian {
         throw new RuntimeException("No " + newOwnerUsername + " Found!");
     }
 
-    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = false)
     public void reassignRPUser() {
         changeProjectOwner("stevens", "RP-28", "RP-30", "RP-80", "RP-81");
     }
 
-    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = false)
     public void reassignRPUserGPLIM_1156() {
         changeProjectOwner("namrata", "RP-57");
     }

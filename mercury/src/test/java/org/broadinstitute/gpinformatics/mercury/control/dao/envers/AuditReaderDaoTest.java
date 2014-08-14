@@ -1,24 +1,22 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.envers;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.infrastructure.common.SessionContextUtilityKeepScope;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
-import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.SQLQuery;
 import org.hibernate.envers.RevisionType;
 import org.hibernate.type.LongType;
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.testng.Arquillian;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -26,9 +24,12 @@ import javax.persistence.Query;
 import javax.transaction.UserTransaction;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
-
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.SortedSet;
 
 /**
  * Container test of AuditReaderDao.
@@ -53,7 +54,7 @@ public class AuditReaderDaoTest extends ContainerTest {
     public void testGetModifiedEntityTypes() throws Exception {
         final long now = System.currentTimeMillis();
         final LabVessel labVessel = new BarcodedTube("A" + now);
-        Pair<Long, Long> revPair = revsBracketingTransaction(new Runnable() {
+        Collection<Long> revIds = revsBracketingTransaction(new Runnable() {
             @Override
             public void run() {
                 labVesselDao.persist(labVessel);
@@ -62,7 +63,7 @@ public class AuditReaderDaoTest extends ContainerTest {
         });
 
         boolean found = false;
-        for (long revId = revPair.getLeft(); revId <= revPair.getRight(); ++revId) {
+        for (Long revId : revIds) {
             Collection<String> names = auditReaderDao.getClassnamesModifiedAtRevision(revId);
             for (String name : names) {
                 if (name.contains(BarcodedTube.class.getCanonicalName())) {
@@ -78,20 +79,15 @@ public class AuditReaderDaoTest extends ContainerTest {
         final long now = System.currentTimeMillis();
         final String barcode = "A" + now;
 
-        Long startRevId;
-        Long endRevId;
-        Pair<Long, Long> revPair;
-
         // Create, modify, delete the tube given by barcode.
-        revPair = revsBracketingTransaction(new Runnable() {
+        Long startRevId = revsBracketingTransaction(new Runnable() {
             @Override
             public void run() {
                 LabVessel labVessel = new BarcodedTube(barcode, BarcodedTube.BarcodedTubeType.MatrixTube);
                 labVesselDao.persist(labVessel);
                 labVesselDao.flush();
             }
-        });
-        startRevId = revPair.getLeft();
+        }).first();
 
         // Gets the new tube's entity id.
         BarcodedTube persistedTube = barcodedTubeDao.findByBarcode(barcode);
@@ -107,15 +103,14 @@ public class AuditReaderDaoTest extends ContainerTest {
             }
         });
 
-        revPair = revsBracketingTransaction(new Runnable() {
+        Long endRevId = revsBracketingTransaction(new Runnable() {
             @Override
             public void run() {
                 BarcodedTube tube = barcodedTubeDao.findByBarcode(barcode);
                 barcodedTubeDao.remove(tube);
                 barcodedTubeDao.flush();
             }
-        });
-        endRevId = revPair.getRight();
+        }).last();
 
         // List of all values from start to end. Should have at least the above transactions.
         List<Long> revIds = new ArrayList<>();
@@ -130,7 +125,7 @@ public class AuditReaderDaoTest extends ContainerTest {
         Long tubeModifiedRevId = null;
         Long tubeDeletedRevId = null;
 
-        List<EnversAudit> auditEntities = auditReaderDao.fetchDataChanges(revIds, BarcodedTube.class);
+        List<EnversAudit> auditEntities = auditReaderDao.fetchEnversAudits(revIds, BarcodedTube.class);
         for (EnversAudit<BarcodedTube> enversAudit : auditEntities) {
             BarcodedTube auditedTube = enversAudit.getEntity();
             Long revId = enversAudit.getRevInfo().getRevInfoId();
@@ -153,40 +148,61 @@ public class AuditReaderDaoTest extends ContainerTest {
         Assert.assertNotNull(tubeModifiedRevId);
         Assert.assertNotNull(tubeDeletedRevId);
 
-        BarcodedTube preCreationTube =
-                auditReaderDao.getPreviousVersion(persistedTube, BarcodedTube.class, tubeCreatedRevId);
-        Assert.assertNull(preCreationTube);
+        Long entityId = persistedTube.getLabVesselId();
 
-        BarcodedTube createdTube =
-                auditReaderDao.getPreviousVersion(persistedTube, BarcodedTube.class, tubeModifiedRevId);
+        Long prevId = auditReaderDao.getPreviousVersionRevId(entityId, BarcodedTube.class, tubeCreatedRevId);
+        Assert.assertNull(prevId);
+
+        prevId = auditReaderDao.getPreviousVersionRevId(entityId, BarcodedTube.class, tubeModifiedRevId);
+        Assert.assertEquals(prevId, tubeCreatedRevId);
+        BarcodedTube createdTube = auditReaderDao.getEntityAtVersion(entityId, BarcodedTube.class, prevId);
         Assert.assertEquals(createdTube.getTubeType(), BarcodedTube.BarcodedTubeType.MatrixTube);
 
-        BarcodedTube modifiedTube =
-                auditReaderDao.getPreviousVersion(persistedTube, BarcodedTube.class, tubeDeletedRevId);
+        prevId = auditReaderDao.getPreviousVersionRevId(entityId, BarcodedTube.class, tubeDeletedRevId);
+        Assert.assertEquals(prevId, tubeModifiedRevId);
+        BarcodedTube modifiedTube = auditReaderDao.getEntityAtVersion(entityId, BarcodedTube.class, prevId);
         Assert.assertEquals(modifiedTube.getTubeType(), BarcodedTube.BarcodedTubeType.Cryovial2018);
 
+
+        // Test getting at the revs another way.
+        List<AuditedRevDto> auditedRevs = auditReaderDao.fetchAuditedRevs(revIds);
+        Assert.assertTrue(auditedRevs.size() >= 4);
+        Assert.assertTrue(auditedRevs.size() <= revIds.size());
+        Map<Long, List<AuditedRevDto>> map = AuditedRevDto.mappedByRevId(auditedRevs);
+        Assert.assertTrue(map.keySet().contains(tubeCreatedRevId));
+        Assert.assertTrue(map.keySet().contains(tubeModifiedRevId));
+        Assert.assertTrue(map.keySet().contains(tubeDeletedRevId));
+        Assert.assertTrue(map.get(tubeModifiedRevId).size() == 1);
+        Assert.assertTrue(map.get(tubeModifiedRevId).get(0).getEntityTypeNames().contains(
+                BarcodedTube.class.getCanonicalName()));
+    }
+
+    @Test(groups = TestGroups.STANDARD)
+    public void testUsernames() {
+        List<String> list = auditReaderDao.getAllAuditUsername();
+        Assert.assertTrue(CollectionUtils.isNotEmpty(list));
+        Assert.assertTrue(list.contains("jane"));
     }
 
     /**
-     * Returns the revInfoId before and after running the transactionToBracket.
+     * Returns the revInfoId after running the transactionToBracket.
+     *
      * May include more revs than just what's in transactionToBracket, depending on what else
      * the Mercury app is doing.
+     *
+     * RevInfo.revInfoId is non-monotonic so must use RevInfo revDate.
      */
-    private Pair<Long, Long> revsBracketingTransaction(Runnable transactionToBracket) throws Exception {
-        // Gets the current revId before the transaction is run.
-        String queryString = "select max(rev_info_id) max_id from rev_info";
-        Query query = auditReaderDao.getEntityManager().createNativeQuery(queryString);
-        query.unwrap(SQLQuery.class).addScalar("max_id", LongType.INSTANCE);
-        Long startRevId = (Long)query.getSingleResult();
-        Assert.assertTrue(startRevId != null && startRevId > 1L);
-
-        utx.begin();
-        transactionToBracket.run();
-        utx.commit();
-
-        // Gets the now current revId after the transaction.
-        Long endRevId = (Long)query.getSingleResult();
-        Assert.assertTrue(endRevId > startRevId);
-        return new ImmutablePair(startRevId, endRevId);
+    private SortedSet<Long> revsBracketingTransaction(Runnable transactionToBracket) {
+        long startTimeSec = System.currentTimeMillis() / 1000;
+        try {
+            utx.begin();
+            transactionToBracket.run();
+            utx.commit();
+            Thread.yield();
+        } catch (Exception e) {
+            Assert.fail("Caught exception ", e);
+        }
+        long endTimeSec = System.currentTimeMillis() / 1000 + 1;
+        return (SortedSet<Long>) auditReaderDao.fetchAuditIds(startTimeSec, endTimeSec).keySet();
     }
 }
