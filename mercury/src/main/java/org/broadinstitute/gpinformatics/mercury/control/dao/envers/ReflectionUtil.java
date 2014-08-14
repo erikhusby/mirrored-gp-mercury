@@ -94,14 +94,15 @@ public class ReflectionUtil {
     }
 
     // Returns the fields that get persisted for the given entity class.
+    // Fields on any superclasses are handled by caller, not here.
     private static List<Field> getPersistedFieldsForClass(Class persistedClass) {
         if (!mercuryAthenaEntityClassnameToClass.values().contains(persistedClass)) {
             return Collections.emptyList();
         }
         List<Field> persistedFields = mapClassToPersistedFields.get(persistedClass);
+        // Caches the fields after they are looked up the first time.
         if (persistedFields == null) {
             persistedFields = new ArrayList<>();
-            mapClassToPersistedFields.put(persistedClass, persistedFields);
             // Goes to the generated jpa model class (classname ending with an "_") and
             // collects the field names, then finds the fields on the persistedClass that
             // have the same name.
@@ -116,9 +117,12 @@ public class ReflectionUtil {
                 try {
                     persistedFields.add(persistedClass.getDeclaredField(jpaField.getName()));
                 } catch (NoSuchFieldException e) {
-                    throw new RuntimeException("Cannot find field '" + jpaField.getName() + "'");
+                    logger.warning(persistedClass.getSimpleName() + "_ has field " + jpaField.getName() +
+                                   " but " + persistedClass.getSimpleName() +
+                                   " does not.  Audit trail cannot display it.");
                 }
             }
+            mapClassToPersistedFields.put(persistedClass, persistedFields);
         }
         return persistedFields;
     }
@@ -139,23 +143,20 @@ public class ReflectionUtil {
      * Also returns null if the @Id field is not a Long.
      */
     public static Long getEntityId(Object entity, Class aClass) {
-        Field field = getEntityIdField(aClass);
-        if (field != null) {
-            if (field.getType().getCanonicalName().equals(Long.class.getCanonicalName())) {
+        Long id = null;
+        if (entity != null) {
+            Field field = getEntityIdField(aClass);
+            if (field != null && field.getType().getCanonicalName().equals(Long.class.getCanonicalName())) {
                 try {
                     field.setAccessible(true);
-                    Long id = (Long)field.get(entity);
-                    return id;
+                    id = (Long)field.get(entity);
                 } catch (IllegalAccessException e) {
                     throw new RuntimeException("Reflection cannot access field " + field.getName() +
                                                " on class " + aClass.getCanonicalName());
                 }
-            } else {
-                return null;
             }
-        } else {
-            throw new RuntimeException("Cannot find @Id annotation on class " + aClass.getCanonicalName());
         }
+        return id;
     }
 
     /**
@@ -172,57 +173,88 @@ public class ReflectionUtil {
                     field.setAccessible(true);
                     Type fieldType = field.getGenericType();
                     Object fieldObj = field.get(entity);
-
+                    // When field is a collection, makes classname for the collection content type.
+                    ParameterizedType parameterizedType = null;
+                    String[] parameterClassnames = null;
+                    if (fieldType instanceof ParameterizedType) {
+                        parameterizedType = (ParameterizedType)fieldType;
+                        parameterClassnames = new String[parameterizedType.getActualTypeArguments().length];
+                        for (int i = 0; i < parameterClassnames.length; ++i) {
+                            Type type = parameterizedType.getActualTypeArguments()[i];
+                            parameterClassnames[i] = type.toString().replaceFirst("^class ", "");
+                        }
+                    }
                     // Each field is either a collection or a single value.
                     // Collections consist of:
                     //   - Set or List of either entity references or single values
                     //   - Map of (enum or entity or basic type) -> (entity or collection of entity)
                     // Single values are one of these since anything else would not be persisted.
-                    //   - mercury/athena entity
-                    //   - number
-                    //   - date
-                    //   - string
-                    //   - boolean
-                    //   - enum
+                    //   - mercury/athena entity reference
+                    //   - number, date, string, boolean, enum
 
-                    // Looks for collections first.
-                    if (fieldType instanceof ParameterizedType && fieldObj instanceof Iterable) {
-                        Class fieldItemClass;
-                        if (fieldObj instanceof Map) {
-                            String classname = ((ParameterizedType)fieldType).getActualTypeArguments()[0].toString();
-                            // todo Implement a collection of pairs
-                            logger.warning("Map type is not yet implemented; substituting a set of key values (" + classname + ")");
-                            fieldObj = ((Map) fieldObj).keySet();
-                            fieldItemClass = String.class;
-                        } else {
-                            String classname = ((ParameterizedType)fieldType).getActualTypeArguments()[0].toString()
-                                    .replaceFirst("class ", "");
-                            fieldItemClass = mercuryAthenaEntityClassnameToClass.get(classname);
-                        }
-
+                    if (fieldObj instanceof Map) {
                         List<EntityField> fieldList = new ArrayList<>();
+                        for (Map.Entry item : (Set<Map.Entry>)((Map) fieldObj).entrySet()) {
+                            fieldList.add(new EntityField(field.getName(), getNonEntityValue(item.toString()),
+                                    null, null));
+                        }
+                        Collections.sort(fieldList, EntityField.BY_VALUE);
+                        list.add(new EntityField(field.getName(), null, null, fieldList));
+                    } else if (fieldObj instanceof Iterable) {
+                        // Makes an EntityField for each item instance and puts them in fieldList.
+                        List<EntityField> fieldList = new ArrayList<>();
+                        Class fieldItemClass = getMercuryAthenaEntityClass(parameterClassnames[0]);
                         for (Object fieldListItem : (Iterable)fieldObj) {
-                            fieldList.add(makeListItem(field, fieldListItem, fieldItemClass));
+                            fieldList.add(makeEntityField(field.getName(), fieldItemClass, fieldListItem));
                         }
                         Collections.sort(fieldList, EntityField.BY_VALUE);
                         list.add(new EntityField(field.getName(), null, null, fieldList));
                     } else {
-                        Class fieldClass = getMercuryAthenaEntityClass(fieldType.toString());
-                        if (fieldClass != null) {
-                            list.add(makeEntityReference(field, fieldObj, fieldClass));
-                        } else {
-                            list.add(new EntityField(field.getName(), getNonEntityValue(fieldObj), null, null));
-                        }
+                        // Object is not a collection, so make either an entity reference, or a plain value.
+                        Class fieldClass = getMercuryAthenaEntityClass(
+                                fieldType.toString().replaceFirst("^class ", "").replaceFirst("\\<.*", ""));
+
+                        list.add(makeEntityField(field.getName(), fieldClass, fieldObj));
                     }
                 } catch (IllegalAccessException e) {
                     throw new RuntimeException("Reflection cannot access field " + field.getName() +
                                                " on class " + entityClass.getCanonicalName());
                 }
             }
+
+            // Puts the entityId field first, followed by other fields sorted by name.
+            String entityIdFieldName = getEntityIdField(entityClass).getName();
+            EntityField entityIdField = null;
+            for (EntityField entityField : list) {
+                if (entityField.getFieldName().equals(entityIdFieldName)) {
+                    entityIdField = entityField;
+                    break;
+                }
+            }
+            list.remove(entityIdField);
+            Collections.sort(list, EntityField.BY_NAME);
+            list.add(0, entityIdField);
         }
-        Collections.sort(list, EntityField.BY_NAME);
         return list;
     }
+
+    private static EntityField makeEntityField(String fieldName, Class fieldClass, Object fieldObj) {
+        if (fieldClass != null && fieldObj != null) {
+            // If the fieldOjb is a known entity class subtype, use it.
+            Class subtypeClass = getMercuryAthenaEntityClass(
+                    fieldObj.toString().split("@")[0].replaceFirst("^class ", ""));
+            if (subtypeClass != null) {
+                fieldClass = subtypeClass;
+            }
+            fieldObj = OrmUtil.proxySafeCast(fieldObj, fieldClass);
+            Long longId = getEntityId(fieldObj, fieldClass);
+            String entityId = (longId != null) ? String.valueOf(longId) : NULL_REPRESTATION;
+            return new EntityField(fieldName, entityId, fieldClass.getCanonicalName(), null);
+        } else {
+            return new EntityField(fieldName, getNonEntityValue(fieldObj), null, null);
+        }
+    }
+
 
     /** Returns the entity id field (annotated @Id in entity class) from class and superclasses, or null if none. */
     public static Field getEntityIdField(Class aClass) {
@@ -250,25 +282,6 @@ public class ReflectionUtil {
             }
         }
         return fields;
-    }
-
-    // Handles a list item which can be a reference or a basic type.
-    private static EntityField makeListItem(Field field, Object listItemEntity, Class listItemClass)
-            throws IllegalAccessException {
-
-        EntityField entityField = makeEntityReference(field, listItemEntity, listItemClass);
-        if (entityField == null) {
-            entityField = new EntityField(field.getName(), getNonEntityValue(listItemEntity), null, null);
-        }
-        return entityField;
-    }
-
-    private static EntityField makeEntityReference(Field field, Object entity, Class entityClass) {
-        if (mercuryAthenaEntityClassnameToClass.containsValue(entityClass)) {
-            String value = entity == null ? NULL_REPRESTATION : String.valueOf(getEntityId(entity, entityClass));
-            return new EntityField(field.getName(), value, entityClass.getCanonicalName(), null);
-        }
-        return null;
     }
 
     // Gets the value of string, number, date, boolean, or enum.

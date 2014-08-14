@@ -5,19 +5,13 @@
 
 <stripes:layout-render name="/layout.jsp" pageTitle="Audited Entity" sectionTitle="Audited Entity" showCreate="false">
 
-    <stripes:layout-component name="extraHead">
-        <script type="text/javascript">
-            $j(document).ready(function () {
-
-            });
-        </script>
-    </stripes:layout-component>
-
+    <stripes:layout-component name="extraHead"/>
 
     <stripes:layout-component name="content">
         <p>${actionBean.displayClassname} at revision ${actionBean.revId}</p>
         <c:if test="${actionBean.auditEntity != null}">
             <c:set var="auditEntity" value="${actionBean.auditEntity}"/>
+            <c:set var="auditEntryType" value=""/>
 
             <table class="table simple">
                 <thead>
@@ -34,6 +28,8 @@
                 </tbody>
             </table>
         </c:if>
-
+        <c:if test="${actionBean.auditEntity == null}">
+            <p>Entity is null.</p>
+        </c:if>
     </stripes:layout-component>
 </stripes:layout-render>
