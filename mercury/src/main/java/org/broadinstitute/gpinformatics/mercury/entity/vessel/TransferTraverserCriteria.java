@@ -10,7 +10,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStarting
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -668,13 +667,16 @@ public interface TransferTraverserCriteria {
 
         private int hopCount = -1;
 
-        private final Set<LabEvent> labEvents = new TreeSet<LabEvent>( LabEvent.BY_EVENT_DATE );
+        private final Set<LabEvent> labEvents = new TreeSet<LabEvent>( LabEvent.BY_EVENT_DATE_LOC );
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
             if (context.getEvent() != null) {
-                // Not sure if/how to avoid possibility of infinite looping on a circular relationship
-                labEvents.add(context.getEvent());
+                if(!labEvents.add(context.getEvent())) {
+                    // Not sure if/how to avoid possibility of infinite looping on a circular relationship
+                    // This prunes off descendant events
+//                    return TraversalControl.StopTraversing;
+                }
                 if (context.getHopCount() > hopCount) {
                     hopCount = context.getHopCount();
                 }

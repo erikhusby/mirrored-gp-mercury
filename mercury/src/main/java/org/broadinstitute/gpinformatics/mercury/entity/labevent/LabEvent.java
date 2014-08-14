@@ -32,7 +32,6 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -87,6 +86,20 @@ public class LabEvent {
             int dateComparison = o1.getEventDate().compareTo(o2.getEventDate());
             if (dateComparison == 0) {
                 return o1.getDisambiguator().compareTo(o2.getDisambiguator());
+            }
+            return dateComparison;
+        }
+    };
+
+    public static final Comparator<LabEvent> BY_EVENT_DATE_LOC = new Comparator<LabEvent>() {
+        @Override
+        public int compare(LabEvent o1, LabEvent o2) {
+            int dateComparison = o1.getEventDate().compareTo(o2.getEventDate());
+            if (dateComparison == 0) {
+                dateComparison = o1.getEventLocation().compareTo(o2.getEventLocation());
+            }
+            if (dateComparison == 0) {
+                dateComparison = o1.getDisambiguator().compareTo(o2.getDisambiguator());
             }
             return dateComparison;
         }
@@ -472,5 +485,18 @@ todo jmt adder methods
             }
         }
         return null;
+    }
+
+    /**
+     * Mimic unique constraint
+     * @param o
+     * @return
+     */
+    @Override
+    public boolean equals( Object o ) {
+        if( !( o instanceof LabEvent ) ) {
+            return false;
+        }
+        return BY_EVENT_DATE_LOC.compare( this, (LabEvent) o) == 0;
     }
 }

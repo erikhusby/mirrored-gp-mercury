@@ -648,12 +648,21 @@ public class ConfigurableList {
     }
 
     /**
+     * Default is to re-sort results
+     * @return
+     */
+    public ResultList getResultList() {
+        return getResultList( true );
+    }
+
+    /**
      * Converts from Rows of compact Cells to a sparse matrix with empty cells to align
      * each cell with its associated header.
      *
      * @return data structure intended to be easy to render to HTML or spreadsheet.
+     * Re-sorting not done for spreadsheet downloads
      */
-    public ResultList getResultList() {
+    public ResultList getResultList(  boolean doSort ) {
 
         List<Header> headers = getHeaders();
         List<ResultRow> resultRows = new ArrayList<>();
@@ -706,9 +715,9 @@ public class ConfigurableList {
         }
 
         // In-memory sort if only one page.
-        if (sortColumnIndexes != null) {
+        if (doSort && sortColumnIndexes != null) {
             Collections.sort(resultRows, new ResultRowComparator(sortColumnIndexes));
-        } else if (sortColumnIndex != null) {
+        } else if (doSort && sortColumnIndex != null) {
             Collections.sort(resultRows, new ResultRowComparator(sortColumnIndex, sortDirection));
         }
         return new ResultList(resultRows, headers, sortColumnIndex, sortDirection);

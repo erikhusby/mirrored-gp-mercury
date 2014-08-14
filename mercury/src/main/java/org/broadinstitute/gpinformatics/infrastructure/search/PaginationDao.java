@@ -90,17 +90,15 @@ public class PaginationDao extends GenericDao {
             return resultEntity;
         }
 
-        public void setResultEntity(String resultEntity) {
+        public void setResultEntity(String resultEntity, String resultEntityId) {
             this.resultEntity = resultEntity;
+            this.resultEntityId = resultEntityId;
         }
 
         public String getResultEntityId() {
             return resultEntityId;
         }
 
-        public void setResultEntityId(String resultEntityId) {
-            this.resultEntityId = resultEntityId;
-        }
     }
 
     /**

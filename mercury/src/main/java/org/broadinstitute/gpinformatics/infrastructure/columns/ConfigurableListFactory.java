@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.hibernate.Criteria;
+import org.hibernate.criterion.Order;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -353,8 +354,9 @@ public class ConfigurableListFactory {
 
         if( doEventTraversal ) {
             // Flag pagination to do an initial full entity fetch then replace entities with IDs
-            configurableSearchDao.startPagination(pagination, criteria, true);
-            List<?> idList = getDescendantVesselLabEvents( pagination.getIdList() );
+            pagination.setResultEntity(configurableSearchDef.getResultEntity(), configurableSearchDef.getResultEntityId());
+            criteria.addOrder(Order.asc(pagination.getResultEntityId()));
+            List<?> idList = getDescendantVesselLabEvents( criteria.list() );
             pagination.setIdList(idList);
         } else {
             // Legacy pagination - initially fetches only ID values

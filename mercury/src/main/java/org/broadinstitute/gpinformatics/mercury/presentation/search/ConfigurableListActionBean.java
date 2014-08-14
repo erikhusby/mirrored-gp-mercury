@@ -103,7 +103,7 @@ public class ConfigurableListActionBean extends CoreActionBean {
                 configurableList.addListener(new BspSampleSearchAddRowsListener(bspSampleSearchService));
             }
             configurableList.addRows(entityList, buildSearchContext());
-            ConfigurableList.ResultList resultList = configurableList.getResultList();
+            ConfigurableList.ResultList resultList = configurableList.getResultList(false);
             return streamResultList(resultList);
         }
 
@@ -143,7 +143,7 @@ public class ConfigurableListActionBean extends CoreActionBean {
             configurableList.addRows(resultsPage, context);
             paginationDao.clear();
         }
-        return streamResultList(configurableList.getResultList());
+        return streamResultList(configurableList.getResultList(false));
     }
 
     /**
@@ -175,7 +175,7 @@ public class ConfigurableListActionBean extends CoreActionBean {
         ConfigurableList configurableListUtils = configurableListFactory.create(entityList, downloadColumnSetName,
                 entityName, ColumnEntity.getByName(entityName), buildSearchContext() );
 
-        Object[][] data = configurableListUtils.getResultList().getAsArray();
+        Object[][] data = configurableListUtils.getResultList(false).getAsArray();
         return StreamCreatedSpreadsheetUtil.streamSpreadsheet(data, SPREADSHEET_FILENAME);
     }
 
