@@ -11,12 +11,10 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.mockito.Mockito;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -35,29 +33,30 @@ public class SampleLedgerExporterFactoryTest {
 
     public static final String TEST_PRODUCT_NAME = "Test Product";
     public static final String TEST_PRODUCT_ORDER_TITLE = "SampleLedgerExporterFactoryTest";
+    public static final long PRODUCT_ORDER_CREATOR_ID = 1;
+    public static final long RESEARCH_PROJECT_CREATOR_ID = 2;
 
     private ProductOrder productOrder;
     private SampleLedgerExporterFactory factory;
-    private BspUser user;
+    private BspUser productOrderCreator;
 
     @BeforeMethod
     public void setUp() throws Exception {
         BSPUserList mockBspUserList = Mockito.mock(BSPUserList.class);
-        user = new BspUser();
-        user.setFirstName("Test");
-        user.setLastName("Dummy");
-        when(mockBspUserList.getById(1L)).thenReturn(user);
-        when(mockBspUserList.getUserFullName(1L)).thenReturn(user.getFullName());
+        productOrderCreator = new BspUser();
+        productOrderCreator.setFirstName("Test");
+        productOrderCreator.setLastName("Dummy");
+        when(mockBspUserList.getById(PRODUCT_ORDER_CREATOR_ID)).thenReturn(productOrderCreator);
+        when(mockBspUserList.getUserFullName(PRODUCT_ORDER_CREATOR_ID)).thenReturn(productOrderCreator.getFullName());
 
-        Product product =
-                new Product(TEST_PRODUCT_NAME, null, null, null, null, null, null, null, null, null, null, null, true,
-                        Workflow.NONE, false, null);
+        Product product = new Product(Product.TOP_LEVEL_PRODUCT);
+        product.setProductName(TEST_PRODUCT_NAME);
 
-        ResearchProject researchProject = new ResearchProject(1L, "Test Project", "Test", true);
+        ResearchProject researchProject =
+                new ResearchProject(RESEARCH_PROJECT_CREATOR_ID, "Test Project", "Test", true);
 
-        productOrder =
-                new ProductOrder(1L, TEST_PRODUCT_ORDER_TITLE, new ArrayList<ProductOrderSample>(), "QUOTE-1", product,
-                        researchProject);
+        productOrder = new ProductOrder(PRODUCT_ORDER_CREATOR_ID, TEST_PRODUCT_ORDER_TITLE,
+                Collections.<ProductOrderSample>emptyList(), "QUOTE-1", product, researchProject);
         factory = new SampleLedgerExporterFactory(null, mockBspUserList, null, null, null, null, null, null);
     }
 
@@ -159,7 +158,7 @@ public class SampleLedgerExporterFactoryTest {
         productOrder.addSample(new ProductOrderSample("SM-1234", new BSPSampleDTO()));
 
         List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
-        assertThat(data.get(0).getProjectManagerName(), equalTo(user.getFullName()));
+        assertThat(data.get(0).getProjectManagerName(), equalTo(productOrderCreator.getFullName()));
     }
 
     public void gatherNumberOfLanes() {
@@ -173,8 +172,8 @@ public class SampleLedgerExporterFactoryTest {
     public void gatherAutoLedgerDate() {
         ProductOrderSample sample = new ProductOrderSample("SM-1234", new BSPSampleDTO());
         productOrder.addSample(sample);
-        Date workCompleteDate = new Date(1L);
-        Date autoLedgerDate = new Date(2L);
+        Date workCompleteDate = new Date(1);
+        Date autoLedgerDate = new Date(2);
         sample.addAutoLedgerItem(workCompleteDate, new PriceItem("Quote-1", "Crush", "Test", "Test Price Item"), 1,
                 autoLedgerDate);
 
@@ -185,8 +184,8 @@ public class SampleLedgerExporterFactoryTest {
     public void gatherWorkCompleteDate() {
         ProductOrderSample sample = new ProductOrderSample("SM-1234", new BSPSampleDTO());
         productOrder.addSample(sample);
-        Date workCompleteDate = new Date(1L);
-        Date autoLedgerDate = new Date(2L);
+        Date workCompleteDate = new Date(1);
+        Date autoLedgerDate = new Date(2);
         sample.addAutoLedgerItem(workCompleteDate, new PriceItem("Quote-1", "Crush", "Test", "Test Price Item"), 1,
                 autoLedgerDate);
 

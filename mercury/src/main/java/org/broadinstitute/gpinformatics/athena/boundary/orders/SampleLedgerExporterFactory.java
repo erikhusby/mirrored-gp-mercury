@@ -35,7 +35,7 @@ public class SampleLedgerExporterFactory {
     private final BSPSampleDataFetcher sampleDataFetcher;
     private final AppConfig appConfig;
     private final TableauConfig tableauConfig;
-    private SampleLedgerSpreadSheetWriter spreadSheetWriter;
+    private final SampleLedgerSpreadSheetWriter spreadSheetWriter;
 
     @Inject
     public SampleLedgerExporterFactory(
