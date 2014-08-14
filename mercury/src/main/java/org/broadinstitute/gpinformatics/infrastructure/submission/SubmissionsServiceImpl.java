@@ -28,6 +28,7 @@ public class SubmissionsServiceImpl implements SubmissionsService {
     private static final Log log = LogFactory.getLog(SubmissionsServiceImpl.class);
 
     private final SubmissionConfig submissionsConfig;
+    public static final String ACCESSION_PARAMETER = "accession";
 
     @Inject
     public SubmissionsServiceImpl(SubmissionConfig submissionsConfig) {
@@ -88,5 +89,22 @@ public class SubmissionsServiceImpl implements SubmissionsService {
         }
 
         return response.getEntity(SubmissionStatusResultBean.class).getSubmissionStatuses();
+    }
+
+    @Override
+    public Collection<String> getSubmissionSamples(BioProject bioProject) {
+        Map<String, List<String>> parameterMap = new HashMap<>();
+        parameterMap.put(ACCESSION_PARAMETER, Arrays.asList(bioProject.getAccession()));
+        ClientResponse response =
+                JerseyUtils.getWebResource(submissionsConfig.getWSUrl(SubmissionConfig.SUBMISSION_SAMPLES_ACTION),
+                        MediaType.APPLICATION_JSON_TYPE, parameterMap).get(ClientResponse.class);
+
+        if(response.getStatus() != Response.Status.OK.getStatusCode()) {
+            String errorResponse = response.getEntity(String.class);
+            log.error("Error received while posting submissions: " + errorResponse);
+            throw new InformaticsServiceException(errorResponse);
+        }
+
+        return response.getEntity(SubmissionSampleResultBean.class).getSubmittedSampleIds();
     }
 }

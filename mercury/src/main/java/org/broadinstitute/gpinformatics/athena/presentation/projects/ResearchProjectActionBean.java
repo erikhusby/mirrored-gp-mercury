@@ -852,13 +852,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
             List<SubmissionDto> selectedSubmissions = new ArrayList<>();
             for (SubmissionDto dto : submissionSamples) {
-                String collaboratorSampleId = dto.getSampleName();
-                if (selectedSubmissionSamples.contains(collaboratorSampleId)) {
-                    String bioSampleAccessionId=bioSamples.get(collaboratorSampleId);
-                    if (bioSampleAccessionId != null) {
-                        dto.setBioSample(bioSampleAccessionId);
-                        selectedSubmissions.add(dto);
-                    }
+                if (selectedSubmissionSamples.contains(dto.getSampleName())) {
+                    selectedSubmissions.add(dto);
                 }
             }
 

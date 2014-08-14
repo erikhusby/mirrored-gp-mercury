@@ -60,8 +60,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Stateful
 @RequestScoped
@@ -258,12 +260,12 @@ public class ResearchProjectEjb {
 
         for (SubmissionDto submissionDto : submissionDtos) {
             SubmissionTracker tracker =
-                    new SubmissionTracker(submissionDto.getBioSample(), submissionDto.getFilePath(),
+                    new SubmissionTracker(submissionDto.getSampleName(), submissionDto.getFilePath(),
                             String.valueOf(submissionDto.getVersion()));
             submissionProject.addSubmissionTracker(tracker);
             submissionDtoMap.put(tracker, submissionDto);
         }
-
+        validateSubmissionSamples(selectedBioProject, submissionDtos);
         researchProjectDao.persist(submissionProject);
 
         List<SubmissionBean> submissionBeans = new ArrayList<>();
@@ -274,7 +276,7 @@ public class ResearchProjectEjb {
             submitBioProject.setAccession(selectedBioProject.getAccession());
 
             SubmissionBioSampleBean bioSampleBean =
-                    new SubmissionBioSampleBean(dtoByTracker.getValue().getBioSample(),
+                    new SubmissionBioSampleBean(dtoByTracker.getValue().getSampleName(),
                             dtoByTracker.getValue().getFilePath());
             bioSampleBean.setContact(new SubmissionContactBean(userBean.getBspUser().getFirstName(),
                     userBean.getBspUser().getLastName(), userBean.getBspUser().getEmail()
@@ -317,6 +319,29 @@ public class ResearchProjectEjb {
         }
 
         return submissionResults;
+    }
+
+    void validateSubmissionSamples(BioProject bioProject, Collection<SubmissionDto> submissionDtos)
+            throws ValidationException {
+        try {
+            Collection<String> submissionSamples = submissionsService.getSubmissionSamples(bioProject);
+            Set<String> invalidSamples = new HashSet<>();
+
+            for (SubmissionDto submissionDto : submissionDtos) {
+                if (! submissionSamples.contains(submissionDto.getSampleName())) {
+                    invalidSamples.add(submissionDto.getSampleName());
+                }
+            }
+
+            if (!invalidSamples.isEmpty()) {
+                throw new ValidationException(
+                        String.format(
+                                "Some sample(s) have not been pre-accessioned and are not available for submission: %s",
+                                invalidSamples));
+            }
+        } catch (InformaticsServiceException e) {
+            throw new ValidationException(e.getMessage());
+        }
     }
 
     /**

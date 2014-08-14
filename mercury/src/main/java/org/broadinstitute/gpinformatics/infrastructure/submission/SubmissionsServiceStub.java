@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtil
 
 import javax.enterprise.inject.Alternative;
 import java.text.ParseException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Random;
@@ -76,6 +77,13 @@ public class SubmissionsServiceStub implements SubmissionsService {
             results.getSubmissionStatuses().add(detail);
         }
         return results.getSubmissionStatuses();
+    }
+
+    @Override
+    public Collection<String> getSubmissionSamples(BioProject bioProject) {
+        return Arrays.asList(
+                generateTestName("csid_"), generateTestName("csid_"), generateTestName("csid_"),
+                generateTestName("csid_"), generateTestName("csid_"), generateTestName("csid_"));
     }
 
     private static String generateTestName(String prefix) {

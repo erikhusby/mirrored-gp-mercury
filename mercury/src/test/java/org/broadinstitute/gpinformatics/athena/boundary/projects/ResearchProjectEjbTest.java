@@ -15,11 +15,13 @@ import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregatio
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionStatusDetailBean;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsService;
-import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsServiceStub;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -28,17 +30,22 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
-public class ResearchProjectEjbTest extends ContainerTest {
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
-    private static final String TEST_SAMPLE_1 = "NA1278";
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+public class ResearchProjectEjbTest extends Arquillian {
+    @Deployment
+    public static WebArchive buildMercuryWar() {
+        return DeploymentBuilder.buildMercuryWar(DEV);
+    }
+
+    private static final String TEST_SAMPLE_1 = "4377315018_E";
     private static final int TEST_VERSION_1 = 1;
-    private static final String TEST_SAMPLE_2 = "HG02922";
+    private static final String TEST_SAMPLE_2 = "4304714212_K";
     private ResearchProjectEjb researchProjectEjb;
     @Inject
     private ResearchProjectDao researchProjectDao;
@@ -56,27 +63,19 @@ public class ResearchProjectEjbTest extends ContainerTest {
 
     @BeforeMethod
     public void setUp() throws Exception {
-
         if(researchProjectDao == null) {
             return;
         }
-
     }
 
-    @Override
     @AfterMethod
     public void tearDown() throws Exception {
-
         if(researchProjectDao == null) {
             return;
         }
-
     }
 
     public void testPostingSubmissions() throws Exception {
-        SubmissionsService submissionsServiceStub = new SubmissionsServiceStub();
-        Collection<SubmissionStatusDetailBean> submissionStatus = submissionsServiceStub.getSubmissionStatus("1324");
-
         UserBean mockUserBean = Mockito.mock(UserBean.class);
         Mockito.when(mockUserBean.getBspUser()).thenReturn(new BSPUserList.QADudeUser("PM", 2423L));
 
@@ -90,7 +89,7 @@ public class ResearchProjectEjbTest extends ContainerTest {
         researchProjectDao.flush();
 
         Map<BassDTO.BassResultColumn, String> bassInfo1 = new HashMap<>();
-        bassInfo1.put(BassDTO.BassResultColumn.file_name, "/your/path/testFile1.bam");
+        bassInfo1.put(BassDTO.BassResultColumn.path, "/your/path/testFile1.bam");
         bassInfo1.put(BassDTO.BassResultColumn.version, String.valueOf(TEST_VERSION_1));
         bassInfo1.put(BassDTO.BassResultColumn.sample, TEST_SAMPLE_1);
 
@@ -102,7 +101,7 @@ public class ResearchProjectEjbTest extends ContainerTest {
                 Collections.<ProductOrder>emptyList(), statusDetailBean);
 
         Map<BassDTO.BassResultColumn, String> bassInfo2 = new HashMap<>();
-        bassInfo2.put(BassDTO.BassResultColumn.file_name, "/your/path/testFile2.bam");
+        bassInfo2.put(BassDTO.BassResultColumn.path, "/your/path/testFile2.bam");
         bassInfo2.put(BassDTO.BassResultColumn.version, String.valueOf(TEST_VERSION_1));
         bassInfo2.put(BassDTO.BassResultColumn.sample, TEST_SAMPLE_2);
 
@@ -111,7 +110,7 @@ public class ResearchProjectEjbTest extends ContainerTest {
         SubmissionDto submissionDto2 = new SubmissionDto(new BassDTO(bassInfo2), testAggregation2,
                 Collections.<ProductOrder>emptyList(), statusDetailBean);
 
-        BioProject selectedBioProject = new BioProject("Something");
+        BioProject selectedBioProject = new BioProject("PRJNA75723");
         researchProjectEjb.processSubmissions(testRP.getBusinessKey(), selectedBioProject,
                 Arrays.asList(submissionDto1, submissionDto2));
 

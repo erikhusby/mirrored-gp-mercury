@@ -4,6 +4,12 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"/>
 <head>
+    <style type="text/css">
+    .submission-status-tooltip {
+        border-bottom: 1px dotted #000;
+        text-decoration: none;
+    }
+    </style>
     <script type="text/javascript">
         $j(document).ready(function () {
             $j("#bioProject").tokenInput(
@@ -17,17 +23,6 @@
                     }
             );
 
-            $j('.submissionStatusClass').popover({ trigger:"hover", html:true });
-//            $j('#postSubmissionBtn').prop('disabled', true);
-//
-//            $j('.shiftCheckbox').change(function (e) {
-//                var len = $j("#general-content input[class='shiftCheckbox']:checked").length;
-//                if(len>0) {
-//                    $j('#postSubmissionBtn').prop('disabled', false);
-//                } else {
-//                    $j('#postSubmissionBtn').prop('disabled', true);
-//                }
-//            });
         });
         function formatInput(item) {
                         var extraCount = (item.extraCount == undefined) ? "" : item.extraCount;
@@ -41,7 +36,7 @@
                 "aoColumns": [
                     {"bSortable": false},               //Checkbox
                     {"bSortable": true},                //Sample
-                    {"bSortable": false},                //BioSample
+//                    {"bSortable": false},                //BioSample
                     {"bSortable": false},               //Data Type
                     {"bSortable": false},               //PDOs
                     {"bSortable": false},               //Aggregation Project
@@ -58,7 +53,12 @@
                 ]
             });
             $j('.shiftCheckbox').enableCheckboxRangeSelection();
-            $j(".tooltip").popover();
+            $j(".submission-status-tooltip").popover({
+                trigger: "hover",
+                html: "true",
+                "data-container": "body",
+                "data-toggle": "popover"
+            });
         })
     </script>
 </head>
@@ -86,7 +86,7 @@
                 <span id="count" class="checkedCount"></span>
             </th>
             <th width="80">Sample</th>
-            <th width="80">BioSample</th>
+            <%--<th width="80">BioSample</th>--%>
             <%--<th width="100">BioSample</th>--%>
             <th width="65">Data Type</th>
             <th width="200">PDOs</th>
@@ -120,7 +120,7 @@
                 </td>
 
                 <td>${submissionSample.sampleName}</td>
-                <td><stripes:text name="bioSamples[${submissionSample.sampleName}]" size="4"/></td>
+                <%--<td><stripes:text name="bioSamples[${submissionSample.sampleName}]" size="4"/></td>--%>
                 <%--<td>&lt;%&ndash;bio-sample&ndash;%&gt;</td>--%>
                 <td>${submissionSample.dataType}</td>
                 <td style="padding: 5px;
@@ -147,14 +147,17 @@
                 <td>${submissionSample.lanesInAggregation}</td>
                 <td><%--blacklisted lanes--%></td>
                 <td>${submissionSample.version}</td>
-                <td><span class="tooltip" title="${fn:join(submissionSample.submittedErrors, "<br/>")}" rel="popover" data-trigger="hover" data-placement="left" data-html="true" >${submissionSample.submittedStatus}</span></td>
+                <td>
+                        <c:choose><c:when test="${fn:length(submissionSample.submittedErrorsArray)>0}">
+                        <span class="submission-status-tooltip popover-dismiss"
+                              title="${ submissionSample.submittedStatus}"
+                              data-content="${fn:join(submissionSample.submittedErrorsArray, "<br/>")}">
+                          ${submissionSample.submittedStatus}
+                        </span>
+                        </c:when>
+                        <c:otherwise>${submissionSample.submittedStatus}</c:otherwise></c:choose>
+                </td>
                 <td>${submissionSample.statusDate}</td>
-
-                    <%--<c:if test="${submissionSample.la == 0}">--%>
-                    <%--<td colspan="11" style="text-align: center;">--%>
-                    <%--no files available--%>
-                    <%--</td>--%>
-                    <%--</c:if>--%>
             </tr>
         </c:forEach>
         </tbody>

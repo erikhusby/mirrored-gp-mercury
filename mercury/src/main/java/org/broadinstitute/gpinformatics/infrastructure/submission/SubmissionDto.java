@@ -31,7 +31,6 @@ public class SubmissionDto {
     private final SubmissionStatusDetailBean statusDetailBean;
     private final BassDTO bassDTO;
     private final Aggregation aggregation;
-    private String bioSample;
 
     public SubmissionDto(@Nonnull BassDTO bassDTO, Aggregation aggregation, @Nonnull Collection<ProductOrder> productOrders,
                          @Nullable SubmissionStatusDetailBean statusDetailBean) {
@@ -55,14 +54,6 @@ public class SubmissionDto {
 
     public String getSampleName() {
         return bassDTO.getSample();
-    }
-
-    public void setBioSample(String bioSample) {
-        this.bioSample=bioSample;
-    }
-
-    public String getBioSample() {
-        return bioSample;
     }
 
     public String getDataType() {
@@ -136,6 +127,12 @@ public class SubmissionDto {
         }
         return Collections.emptyList();
     }
+
+    public String[] getSubmittedErrorsArray() {
+        List<String> errors = getSubmittedErrors();
+        return errors.toArray(new String[errors.size()]);
+    }
+
     public String getSubmittedStatus() {
         String status = "";
         if (statusDetailBean != null) {

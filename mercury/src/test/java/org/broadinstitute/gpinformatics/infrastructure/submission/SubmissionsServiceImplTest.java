@@ -23,7 +23,9 @@ import java.util.Collection;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.emptyCollectionOf;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasItemInArray;
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
@@ -37,6 +39,16 @@ public class SubmissionsServiceImplTest {
     public void testGetAllBioProjects() throws Exception {
         Collection<BioProject> allBioProjects = submissionsService.getAllBioProjects();
         assertThat(allBioProjects, is(not(Matchers.emptyCollectionOf(BioProject.class))));
+    }
+
+    public void testGetSubmissionSamples() throws Exception {
+        BioProject bioProject = new BioProject("PRJNA75723");
+        String[] expectedSampleNames = {"4304714212_K", "4377315018_E", "4304714040_C"};
+
+        Collection<String> submissionSamples = submissionsService.getSubmissionSamples(bioProject);
+        int minimuimExpectedSizeOfResult = 300;
+        assertThat(submissionSamples.size(), greaterThan(minimuimExpectedSizeOfResult));
+        assertThat(submissionSamples, hasItems(expectedSampleNames));
     }
 
     @Test(enabled = false)
