@@ -131,8 +131,7 @@ public class AuditTrailActionBean extends CoreActionBean {
         if (entityDisplayNames.size() == 0) {
             displayToCanonicalClassnames.clear();
             canonicalToDisplayClassnames.clear();
-            for (Class cls : ReflectionUtil.getMercuryAthenaEntityClasses()) {
-                String classname = cls.getCanonicalName();
+            for (String classname : ReflectionUtil.getMercuryAthenaEntityClassnames()) {
                 // Makes display names from the ending of canonical classname, but disambiguates
                 // it if necessary by including more of the canonical classname.
                 for (int idx = classname.lastIndexOf('.'); idx >= 0; idx = classname.lastIndexOf('.', idx)) {

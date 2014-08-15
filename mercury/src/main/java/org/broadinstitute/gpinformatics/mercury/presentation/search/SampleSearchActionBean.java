@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -73,7 +74,7 @@ public class SampleSearchActionBean extends SearchActionBean {
                 for (MercurySample sample : samples) {
                     sampleNames.add(sample.getSampleKey());
                 }
-                sampleDTOMap.putAll(bspSampleDataFetcher.fetchSamplesFromBSP(sampleNames));
+                sampleDTOMap.putAll(bspSampleDataFetcher.fetchSamplesFromBSP((Collection<String>) sampleNames));
                 for (MercurySample sample : samples) {
                     mercurySampleToVessels.put(sample, allVessels);
                     BSPSampleDTO bspSampleDTO = sampleDTOMap.get(sample.getSampleKey());

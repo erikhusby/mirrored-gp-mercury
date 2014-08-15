@@ -54,4 +54,16 @@ public class BSPSampleDataFetcherTest {
             assertTrue(sampleDTO.isSampleReceived());
         }
     }
+
+    public void testFetchSingleColumn()  {
+        BSPSampleDataFetcher fetcher = new BSPSampleDataFetcher(sampleSearchService);
+        String sampleName = "SM-1T7HE";
+        Map<String, BSPSampleDTO> bspSampleDTO = fetcher.fetchSamplesFromBSP(Arrays.asList(sampleName),
+                BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID);
+        Assert.assertEquals(bspSampleDTO.keySet().size(), 1);
+        BSPSampleDTO bspSample = bspSampleDTO.get(sampleName);
+        Assert.assertEquals(bspSample.getColumnToValue().size(), 2);
+        Assert.assertNotNull(bspSample.getCollaboratorsSampleName());
+        Assert.assertNotNull(bspSample.getSampleId());
+    }
 }

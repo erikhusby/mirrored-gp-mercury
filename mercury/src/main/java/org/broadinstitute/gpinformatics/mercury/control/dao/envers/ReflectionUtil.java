@@ -1,7 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.envers;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 
 import javax.persistence.Id;
 import javax.persistence.metamodel.SingularAttribute;
@@ -12,26 +14,36 @@ import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.net.URL;
+import java.text.Format;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 
 public class ReflectionUtil {
+    private static final Logger logger = Logger.getLogger(ReflectionUtil.class.getName());
+    public static final Format DATE_FORMAT = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss");
+    public static final String NULL_REPRESTATION = "null";
     private static final List<Class> mercuryAthenaClasses = new ArrayList<>();
-    private static final List<Class> mercuryAthenaEntityClasses = new ArrayList<>();
+    private static final Map<String, Class> mercuryAthenaEntityClassnameToClass = new HashMap<>();
+    private static final Map<Class, List<Field>> mapClassToPersistedFields = new HashMap<>();
+    private static final Map<String, Class> generatedEntityClassnameToClass = new HashMap<>();
 
-    private static void setupClasses() {
+    static {
         if (mercuryAthenaClasses.size() == 0) {
             // Collects all the classes in the athena.entity and mercury.entity packages.
             String[] packagesToScan = new String[] {
                     "org.broadinstitute.gpinformatics.athena.entity",
                     "org.broadinstitute.gpinformatics.mercury.entity"
             };
+
             for (String packageToScan : packagesToScan) {
                 mercuryAthenaClasses.addAll(getClasses(packageToScan));
             }
@@ -39,18 +51,20 @@ public class ReflectionUtil {
             // Finds the persistence classes.  First finds then generated classes by searching for ones having
             // SingularAttribute fields.  The persisted entity class has the same name but without the trailing '_'
             List<String> classnames = new ArrayList<>();
-            for (Class cls : mercuryAthenaClasses) {
-                if (CollectionUtils.isNotEmpty(ReflectionUtil.getFieldsOfType(cls, SingularAttribute.class))) {
-                    int idx = cls.getCanonicalName().lastIndexOf("_");
-                    if (idx < cls.getCanonicalName().length() - 1) {
-                        throw new RuntimeException("Unexpected generated class name: " + cls.getCanonicalName());
+            for (Class aClass : mercuryAthenaClasses) {
+                if (CollectionUtils.isNotEmpty(getFieldsOfType(aClass, SingularAttribute.class))) {
+                    int idx = aClass.getCanonicalName().lastIndexOf("_");
+                    if (idx < aClass.getCanonicalName().length() - 1) {
+                        throw new RuntimeException("Unexpected generated class name: " + aClass.getCanonicalName());
                     }
-                    classnames.add(cls.getCanonicalName().substring(0, idx));
+                    generatedEntityClassnameToClass.put(aClass.getCanonicalName(), aClass);
+                    classnames.add(aClass.getCanonicalName().substring(0, idx));
                 }
             }
-            for (Class cls : mercuryAthenaClasses) {
-                if (classnames.contains(cls.getCanonicalName())) {
-                    mercuryAthenaEntityClasses.add(cls);
+
+            for (Class aClass : mercuryAthenaClasses) {
+                if (classnames.contains(aClass.getCanonicalName())) {
+                    mercuryAthenaEntityClassnameToClass.put(aClass.getCanonicalName(), aClass);
                 }
             }
         }
@@ -58,26 +72,74 @@ public class ReflectionUtil {
 
     /** Returns all classes found in mercury.entity and athena.entity packages. */
     public static List<Class> getMercuryAthenaClasses() {
-        setupClasses();
         return mercuryAthenaClasses;
     }
 
-    /** Returns all entity classes found in mercury.entity and athena.entity packages. */
-    public static List<Class> getMercuryAthenaEntityClasses() {
-        setupClasses();
-        return mercuryAthenaEntityClasses;
+    /** Returns the mercury/athena entity canonical classnames. */
+    public static Collection<String> getMercuryAthenaEntityClassnames() {
+        return mercuryAthenaEntityClassnameToClass.keySet();
+    }
+
+    /** Returns the entity class by canonical classname. */
+    public static Class getMercuryAthenaEntityClass(String canonicalClassname) {
+        return mercuryAthenaEntityClassnameToClass.get(canonicalClassname);
+    }
+
+    /** Returns the JPA generated entity classes. */
+    public static Map<String, Class> getGeneratedEntityClassnameToClass() {
+        return generatedEntityClassnameToClass;
     }
 
     /** Finds the classes from the given list that are persisted by Mercury. */
     public static List<String> getEntityClassnames(List<Class> classesToScan) {
-        setupClasses();
         List<Class> classes = new ArrayList<>(classesToScan);
-        classes.retainAll(mercuryAthenaEntityClasses);
+        classes.retainAll(mercuryAthenaEntityClassnameToClass.values());
         List<String> entityClassnames = new ArrayList<>();
-        for (Class cls : classes) {
-            entityClassnames.add(cls.getCanonicalName());
+        for (Class aClass : classes) {
+            entityClassnames.add(aClass.getCanonicalName());
         }
         return entityClassnames;
+    }
+
+    // Returns the fields that get persisted for the given entity class.
+    // Fields on any superclasses are handled by caller, not here.
+    public static List<Field> getPersistedFieldsForClass(Class persistedClass) {
+        if (!mercuryAthenaEntityClassnameToClass.values().contains(persistedClass)) {
+            return Collections.emptyList();
+        }
+        List<Field> persistedFields = mapClassToPersistedFields.get(persistedClass);
+        // Caches the fields after they are looked up the first time.
+        if (persistedFields == null) {
+            persistedFields = new ArrayList<>();
+            // Goes to the generated jpa model class (classname ending with an "_") and
+            // collects the field names, then finds the fields on the persistedClass that
+            // have the same name.
+            Class generatedClass = generatedEntityClassnameToClass.get(persistedClass.getCanonicalName() + "_");
+            if (generatedClass == null) {
+                throw new RuntimeException("Cannot find jpa generated class '" +
+                                           persistedClass.getCanonicalName() + "_'");
+            }
+            for (Field jpaField : generatedClass.getDeclaredFields()) {
+                try {
+                    persistedFields.add(persistedClass.getDeclaredField(jpaField.getName()));
+                } catch (NoSuchFieldException e) {
+                    throw new RuntimeException("Missing field " + jpaField.getName() +
+                                               " on class " + persistedClass.getSimpleName(), e);
+                }
+            }
+            mapClassToPersistedFields.put(persistedClass, persistedFields);
+        }
+        return persistedFields;
+    }
+
+    private static Set<Field> getPersistedFields(Class aClass) {
+        if (aClass == null) {
+            return new HashSet<>();
+        } else {
+            Set<Field> fields = getPersistedFields(aClass.getSuperclass());
+            fields.addAll(getPersistedFieldsForClass(aClass));
+            return fields;
+        }
     }
 
     /**
@@ -85,76 +147,126 @@ public class ReflectionUtil {
      * Returns null if there is no @Id on the class or superclasses.
      * Also returns null if the @Id field is not a Long.
      */
-    public static Long getEntityId(Object entity, Class cls) {
-        Field field = getEntityIdField(cls);
-        if (field != null) {
-            if (field.getType().getCanonicalName().equals(Long.class.getCanonicalName())) {
+    public static Long getEntityId(Object entity, Class aClass) {
+        Long id = null;
+        if (entity != null) {
+            Field field = getEntityIdField(aClass);
+            if (field != null && field.getType().getCanonicalName().equals(Long.class.getCanonicalName())) {
                 try {
                     field.setAccessible(true);
-                    return (Long)field.get(entity);
+                    id = (Long)field.get(entity);
                 } catch (IllegalAccessException e) {
                     throw new RuntimeException("Reflection cannot access field " + field.getName() +
-                                               " on class " + cls.getCanonicalName());
+                                               " on class " + aClass.getCanonicalName());
                 }
-            } else {
-                return null;
             }
-        } else {
-            throw new RuntimeException("Cannot find @Id annotation on class " + cls.getCanonicalName());
         }
+        return id;
     }
 
     /**
      * Returns a sorted list of EntityField suitable for generic display of a mercury/athena persisted object.
+     * Only the persisted fields will be included.
      */
     public static List<EntityField> formatFields(Object entity, Class entityClass) {
-        setupClasses();
         List<EntityField> list = new ArrayList<>();
-        if (mercuryAthenaEntityClasses.contains(entityClass) && OrmUtil.proxySafeIsInstance(entity, entityClass)) {
-            for (Field field : getFields(entityClass)) {
+        if (mercuryAthenaEntityClassnameToClass.containsValue(entityClass) &&
+            OrmUtil.proxySafeIsInstance(entity, entityClass)) {
+
+            for (Field field : getPersistedFields(entityClass)) {
                 try {
                     field.setAccessible(true);
                     Type fieldType = field.getGenericType();
-                    Class fieldClass = fieldType.getClass();
                     Object fieldObj = field.get(entity);
+                    // When field is a collection, makes classname for the collection content type.
+                    ParameterizedType parameterizedType = null;
+                    String[] parameterClassnames = null;
+                    if (fieldType instanceof ParameterizedType) {
+                        parameterizedType = (ParameterizedType)fieldType;
+                        parameterClassnames = new String[parameterizedType.getActualTypeArguments().length];
+                        for (int i = 0; i < parameterClassnames.length; ++i) {
+                            Type type = parameterizedType.getActualTypeArguments()[i];
+                            parameterClassnames[i] = type.toString().replaceFirst("^class ", "");
+                        }
+                    }
+                    // Each field is either a collection or a single value.
+                    // Collections consist of:
+                    //   - Set or List of either entity references or single values
+                    //   - Map of (enum or entity or basic type) -> (entity or collection of entity)
+                    // Single values are one of these since anything else would not be persisted.
+                    //   - mercury/athena entity reference
+                    //   - number, date, string, boolean, enum
 
-                    // Checks if the field is some type of collection.
-                    if (fieldType instanceof ParameterizedType && fieldObj instanceof Iterable) {
-                        Class fieldItemClass = ((ParameterizedType)fieldType).getActualTypeArguments()[0].getClass();
+                    if (fieldObj instanceof Map) {
                         List<EntityField> fieldList = new ArrayList<>();
+                        // For now just make a list of each Map.Entry as a plain string.
+                        for (Map.Entry item : (Set<Map.Entry>)((Map) fieldObj).entrySet()) {
+                            fieldList.add(new EntityField(field.getName(), getNonEntityValue(item.toString()),
+                                    null, null));
+                        }
+                        Collections.sort(fieldList, EntityField.BY_VALUE);
+                        list.add(new EntityField(field.getName(), null, null, fieldList));
+                    } else if (fieldObj instanceof Iterable) {
+                        // Makes an EntityField for each item instance and puts them in fieldList.
+                        List<EntityField> fieldList = new ArrayList<>();
+                        Class fieldItemClass = getMercuryAthenaEntityClass(parameterClassnames[0]);
                         for (Object fieldListItem : (Iterable)fieldObj) {
-                            fieldList.add(makeListItem(field, fieldListItem, fieldItemClass));
+                            fieldList.add(makeEntityField(field.getName(), fieldItemClass, fieldListItem));
                         }
                         Collections.sort(fieldList, EntityField.BY_VALUE);
                         list.add(new EntityField(field.getName(), null, null, fieldList));
                     } else {
-                        EntityField entityField = makeEntityReference(field, entity, entityClass);
-                        if (entityField == null) {
-                            // Makes a basic value or reference.
-                            entityField = new EntityField(field.getName(), makeStringValue(field, entity), null, null);
-                        }
-                        list.add(entityField);
+                        // Object is not a collection, so make either an entity reference, or a plain value.
+                        Class fieldClass = getMercuryAthenaEntityClass(
+                                fieldType.toString().replaceFirst("^class ", "").replaceFirst("\\<.*", ""));
+                        list.add(makeEntityField(field.getName(), fieldClass, fieldObj));
                     }
                 } catch (IllegalAccessException e) {
                     throw new RuntimeException("Reflection cannot access field " + field.getName() +
                                                " on class " + entityClass.getCanonicalName());
                 }
             }
+
+            // Puts the entityId field first, followed by other fields sorted by name.
+            // Also makes the entityId be an entity reference, not just a Long.
+            String entityIdFieldName = getEntityIdField(entityClass).getName();
+            EntityField entityIdField = null;
+            for (EntityField entityField : list) {
+                if (entityField.getFieldName().equals(entityIdFieldName)) {
+                    entityIdField = entityField;
+                    entityField.setCanonicalClassname(entityClass.getCanonicalName());
+                    break;
+                }
+            }
+            list.remove(entityIdField);
+            Collections.sort(list, EntityField.BY_NAME);
+            list.add(0, entityIdField);
         }
-        Collections.sort(list, EntityField.BY_NAME);
         return list;
     }
 
-    /** Returns all fields for the class and superclasses. */
-    public static Collection<Field> getFields(Class cls) {
-        Set<Field> fields = new HashSet<>();
-        getFields(fields, cls);
-        return fields;
+    private static EntityField makeEntityField(String fieldName, Class fieldClass, Object fieldObj) {
+        if (fieldClass != null && fieldObj != null) {
+            // If the fieldObj is a known entity class subtype, use it.  The subtype classname is
+            // gotten from the object's toString(), before the '@'.
+            Class subtypeClass = getMercuryAthenaEntityClass(
+                    fieldObj.toString().split("@")[0].replaceFirst("^class ", ""));
+            if (subtypeClass != null) {
+                fieldClass = subtypeClass;
+            }
+            fieldObj = OrmUtil.proxySafeCast(fieldObj, fieldClass);
+            Long longId = getEntityId(fieldObj, fieldClass);
+            String entityId = (longId != null) ? String.valueOf(longId) : NULL_REPRESTATION;
+            return new EntityField(fieldName, entityId, fieldClass.getCanonicalName(), null);
+        } else {
+            return new EntityField(fieldName, getNonEntityValue(fieldObj), null, null);
+        }
     }
 
+
     /** Returns the entity id field (annotated @Id in entity class) from class and superclasses, or null if none. */
-    public static Field getEntityIdField(Class cls) {
-        return getFieldHavingAnnotation(getFields(cls), Id.class);
+    public static Field getEntityIdField(Class aClass) {
+        return getFieldHavingAnnotation(getPersistedFields(aClass), Id.class);
     }
 
     /** Returns the Field having the specified annotation, or null if not found. */
@@ -180,64 +292,17 @@ public class ReflectionUtil {
         return fields;
     }
 
-    // Handles a list item which can be a reference or a basic type.
-    private static EntityField makeListItem(Field field, Object entity, Class entityClass)
-            throws IllegalAccessException {
-
-        EntityField entityField = makeEntityReference(field, entity, entityClass);
-        if (entityField == null) {
-            entityField = new EntityField(field.getName(), makeStringValue(field, entity), null, null);
+    // Gets the value of string, number, date, boolean, or enum.
+    private static String getNonEntityValue(Object nonEntityObj) {
+        if (nonEntityObj == null) {
+            return NULL_REPRESTATION;
         }
-        return entityField;
-    }
-
-    private static EntityField makeEntityReference(Field field, Object entity, Class entityClass) {
-        setupClasses();
-        if (mercuryAthenaEntityClasses.contains(entityClass)) {
-            Long entityId = getEntityId(entity, entityClass);
-            String value = String.valueOf(entityId);
-            return new EntityField(field.getName(), value, entityClass.getCanonicalName(), null);
-        }
-        return null;
-    }
-
-    private static String makeStringValue(Field field, Object entity) throws IllegalAccessException {
-        Type type = field.getGenericType();
-        Class cls = type.getClass();
-        if (cls.equals(Boolean.class)) {
-            return String.valueOf(field.getBoolean(entity));
-        }
-        if (cls.equals(Byte.class)) {
-            return String.valueOf(field.getByte(entity));
-        }
-        if (cls.equals(Character.class)) {
-            return String.valueOf(field.getChar(entity));
-        }
-        if (cls.equals(Double.class)) {
-            return String.valueOf(field.getDouble(entity));
-        }
-        if (cls.equals(Float.class)) {
-            return String.valueOf(field.getFloat(entity));
-        }
-        if (cls.equals(Integer.class)) {
-            return String.valueOf(field.getInt(entity));
-        }
-        if (cls.equals(Long.class)) {
-            return String.valueOf(field.getLong(entity));
-        }
-        if (cls.equals(Short.class)) {
-            return String.valueOf(field.getShort(entity));
-        }
-        if (field.isEnumConstant()) {
-            return String.valueOf(field.getInt(entity)); //xxx todo lookup ParameterizedType?
-        }
-        return field.get(entity).toString();
-    }
-
-    private static void getFields(Collection<Field> fields, Class cls) {
-        if (cls != null) {
-            fields.addAll(Arrays.asList(cls.getDeclaredFields()));
-            getFields(fields, cls.getSuperclass());
+        if (nonEntityObj instanceof Date) {
+            return DATE_FORMAT.format(nonEntityObj);
+        } else if (nonEntityObj instanceof Enum) {
+            return ((Enum)nonEntityObj).name();
+        } else {
+            return nonEntityObj.toString();
         }
     }
 
@@ -247,6 +312,7 @@ public class ReflectionUtil {
     private static Collection<Class> getClasses(String packageName) {
         Collection<Class> classes = new ArrayList<>();
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+
         String path = packageName.replace('.', '/');
         Collection<File> dirs = new ArrayList<>();
         try {
@@ -261,7 +327,7 @@ public class ReflectionUtil {
 
         for (File directory : dirs) {
             try {
-                classes.addAll(recurseDirectories(directory, packageName));
+                classes.addAll(recurseDirectories(directory, packageName, classLoader));
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -270,24 +336,27 @@ public class ReflectionUtil {
     }
 
     /** Returns all classes in the directory hierarchy. */
-    private static List<Class> recurseDirectories(File directory, String packageName) {
+    private static List<Class> recurseDirectories(File directory, String packageName, ClassLoader classLoader) {
         List<Class> classes = new ArrayList<>();
         if (directory.exists()) {
             for (File file : directory.listFiles()) {
                 if (file.isDirectory()) {
                     if (!file.getName().contains(".")) {
-                        classes.addAll(recurseDirectories(file, packageName + "." + file.getName()));
+                        classes.addAll(recurseDirectories(file, packageName + "." + file.getName(), classLoader));
                     }
                 } else if (file.getName().endsWith(".class")) {
                     int idx = file.getName().lastIndexOf(".class");
                     String classname = packageName + '.' + file.getName().substring(0, idx);
                     try {
-                        classes.add(Class.forName(classname));
+                        classes.add(classLoader.loadClass(classname));
                     } catch (ClassNotFoundException e) {
                         throw new RuntimeException("Unknown class '" + classname + "' : " + e);
                     }
                 }
             }
+        } else {
+            throw new RuntimeException("Cannot find directory " + directory.getAbsolutePath() +
+                                       ", required for loading classes from " + packageName);
         }
         return classes;
     }

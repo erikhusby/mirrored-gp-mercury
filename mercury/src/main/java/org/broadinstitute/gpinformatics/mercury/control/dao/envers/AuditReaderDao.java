@@ -1,9 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.envers;
 
 import com.sun.xml.ws.developer.Stateful;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.datawh.ExtractTransform;
@@ -26,12 +24,12 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
-import java.text.Format;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedMap;
@@ -227,12 +225,22 @@ public class AuditReaderDao extends GenericDao {
     }
 
     /**
-     * Returns the revId of a version of the entity immediately prior to the
-     * version at the given revision id.
+     * Returns the revId of a version of the entity immediately prior to the version at the given revision id.
      * Returns null if entity can't be found, or doesn't have a Long primary key.
      */
     public Long getPreviousVersionRevId(Long entityId, Class cls, long revId) {
-        Long previousVersionRevId = null;
+        // The previous rev will then be the top of the ordered list.
+        List<Long> list = getPreviousVersionRevIds(entityId, cls, revId);
+        return (list != null) ? list.get(0) : null;
+    }
+
+
+    /**
+     * Returns all revIds of a version of an entity prior to the version at the given revision id.
+     * Returns null if entity can't be found, or doesn't have a Long primary key.
+     */
+    public List<Long> getPreviousVersionRevIds(Long entityId, Class cls, long revId) {
+        List<Long> previousVersionRevIds = new ArrayList<>();
         if (entityId != null) {
             final Date revDate = fetchRevDate(revId);
             if (revDate != null) {
@@ -261,20 +269,19 @@ public class AuditReaderDao extends GenericDao {
                 // The query included the revDate in the search endpoint, but it's not really a
                 // point, it's a time interval, albeit very small.  It's conceivable that within that
                 // interval the revId transaction might be found before or after other transactions.
-                // Code will skip over the revId transaction and any transactions that come after it.
-                // For this the revId must be used to do the ordering, imperfect as it may be.
-                // The previous rev will then be the top of the remaining ordered list.
+                //
+                // Skips over the given revId and revIds from any transactions that come after it.
+                // Since it's in one time quantum, the revId was used for the ordering, imperfect as it may be.
 
-                for (Object[] item : list) {
-                    RevInfo revInfo = (RevInfo)item[AuditReaderDao.AUDIT_READER_REV_INFO_IDX];
+                for (Iterator<Object[]> iter = list.iterator(); iter.hasNext(); ) {
+                    RevInfo revInfo = (RevInfo)iter.next()[AuditReaderDao.AUDIT_READER_REV_INFO_IDX];
                     if (revInfo.getRevDate().before(revDate) || revInfo.getRevInfoId() < revId) {
-                        previousVersionRevId = revInfo.getRevInfoId();
-                        break;
+                        previousVersionRevIds.add(revInfo.getRevInfoId());
                     }
                 }
             }
         }
-        return previousVersionRevId;
+        return previousVersionRevIds;
     }
 
     private Date fetchRevDate(Long revId) {

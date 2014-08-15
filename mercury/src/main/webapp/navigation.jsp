@@ -172,6 +172,9 @@
                             <li><stripes:link
                                     beanclass="org.broadinstitute.gpinformatics.mercury.presentation.admin.PublicMessageAdminActionBean"
                                     event="view">Manage Public Message</stripes:link></li>
+                            <li><stripes:link
+                                    beanclass="org.broadinstitute.gpinformatics.mercury.presentation.audit.AuditTrailActionBean"
+                                    event="view">View Audit Trail</stripes:link></li>
                         </security:authorizeBlock>
                     </ul>
                 </li>

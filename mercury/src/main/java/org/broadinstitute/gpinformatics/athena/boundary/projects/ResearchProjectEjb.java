@@ -11,7 +11,12 @@
 
 package org.broadinstitute.gpinformatics.athena.boundary.projects;
 
+import clover.com.google.common.base.Function;
+import clover.com.google.common.collect.Maps;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.UpdateField;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
@@ -19,9 +24,13 @@ import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ProjectPerson;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectFunding;
+import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
 import org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean;
+import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.common.MercuryStringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
@@ -30,18 +39,31 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.IssueFieldsResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBean;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBioSampleBean;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionContactBean;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRequestBean;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionStatusDetailBean;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsService;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Stateful
 @RequestScoped
@@ -49,28 +71,34 @@ import java.util.Map;
  * This class is responsible for interactions between Jira and Research Projects
  */
 public class ResearchProjectEjb {
+
+    private static final Log log = LogFactory.getLog(ResearchProjectEjb.class);
+
     private final JiraService jiraService;
     private final UserBean userBean;
     private final BSPUserList userList;
     private final BSPCohortList cohortList;
     private final AppConfig appConfig;
     private final ResearchProjectDao researchProjectDao;
+    private final SubmissionsService submissionsService;
 
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
     public ResearchProjectEjb() {
-        this(null, null, null, null, null, null);
+        this(null, null, null, null, null, null, null);
     }
 
     @Inject
     public ResearchProjectEjb(JiraService jiraService, UserBean userBean, BSPUserList userList,
-                              BSPCohortList cohortList, AppConfig appConfig, ResearchProjectDao researchProjectDao) {
+                              BSPCohortList cohortList, AppConfig appConfig, ResearchProjectDao researchProjectDao,
+                              SubmissionsService submissionsService) {
         this.jiraService = jiraService;
         this.userBean = userBean;
         this.userList = userList;
         this.cohortList = cohortList;
         this.appConfig = appConfig;
         this.researchProjectDao = researchProjectDao;
+        this.submissionsService = submissionsService;
     }
 
     /**
@@ -154,7 +182,8 @@ public class ResearchProjectEjb {
 
         String piNames = buildProjectPiJiraString(researchProject);
         if (!StringUtils.isBlank(piNames)) {
-            researchProjectUpdateFields.add(new ResearchProjectUpdateField(RequiredSubmissionFields.BROAD_PIS, piNames));
+            researchProjectUpdateFields.add(new ResearchProjectUpdateField(RequiredSubmissionFields.BROAD_PIS,
+                    piNames));
         }
 
         String[] customFieldNames = new String[researchProjectUpdateFields.size()];
@@ -204,6 +233,115 @@ public class ResearchProjectEjb {
             }
         }
         return StringUtils.join(piNameList, '\n');
+    }
+
+    /**
+     * When called, this method will post to the submission service the samples and their related information
+     * that have been selected to be submitted.
+     *
+     * @param researchProjectBusinessKey Unique key of the Research Project under which the
+     * @param selectedBioProject         BioProject to be associated with all submissions
+     * @param submissionDtos             Collection of submissionDTOs selected to be submitted
+     *
+     * @return the results from the post to the submission service
+     */
+    public Collection<SubmissionStatusDetailBean> processSubmissions(@Nonnull String researchProjectBusinessKey,
+                                                                     @Nonnull BioProject selectedBioProject,
+                                                                     @Nonnull List<SubmissionDto> submissionDtos)
+            throws ValidationException {
+
+        if (submissionDtos.isEmpty()) {
+            throw new InformaticsServiceException("At least one selection is needed to post submissions");
+        }
+
+        ResearchProject submissionProject = researchProjectDao.findByBusinessKey(researchProjectBusinessKey);
+
+        Map<SubmissionTracker, SubmissionDto> submissionDtoMap = new HashMap<>();
+
+        for (SubmissionDto submissionDto : submissionDtos) {
+            SubmissionTracker tracker =
+                    new SubmissionTracker(submissionDto.getSampleName(), submissionDto.getFilePath(),
+                            String.valueOf(submissionDto.getVersion()));
+            submissionProject.addSubmissionTracker(tracker);
+            submissionDtoMap.put(tracker, submissionDto);
+        }
+        validateSubmissionSamples(selectedBioProject, submissionDtos);
+        researchProjectDao.persist(submissionProject);
+
+        List<SubmissionBean> submissionBeans = new ArrayList<>();
+
+        for (Map.Entry<SubmissionTracker, SubmissionDto> dtoByTracker : submissionDtoMap.entrySet()) {
+
+            BioProject submitBioProject = new BioProject();
+            submitBioProject.setAccession(selectedBioProject.getAccession());
+
+            SubmissionBioSampleBean bioSampleBean =
+                    new SubmissionBioSampleBean(dtoByTracker.getValue().getSampleName(),
+                            dtoByTracker.getValue().getFilePath());
+            bioSampleBean.setContact(new SubmissionContactBean(userBean.getBspUser().getFirstName(),
+                    userBean.getBspUser().getLastName(), userBean.getBspUser().getEmail()
+            ));
+
+            SubmissionBean submissionBean =
+                    new SubmissionBean(dtoByTracker.getKey().createSubmissionIdentifier(),
+                            userBean.getBspUser().getUsername(), submitBioProject, bioSampleBean);
+            submissionBeans.add(submissionBean);
+        }
+
+        SubmissionRequestBean requestBean = new SubmissionRequestBean(submissionBeans);
+        try {
+            log.debug(MercuryStringUtils.serializeJsonBean(requestBean).toString());
+        } catch (JAXBException e) {
+            e.printStackTrace();
+        }
+
+        Collection<SubmissionStatusDetailBean> submissionResults = submissionsService.postSubmissions(requestBean);
+
+        Map<String, SubmissionTracker> submissionIdentifierToTracker = Maps.uniqueIndex(submissionProject.getSubmissionTrackers(), new Function<SubmissionTracker, String>() {
+            @Override
+            public String apply(@Nullable SubmissionTracker submissionTracker) {
+                return submissionTracker.createSubmissionIdentifier();
+            }
+        });
+        List<String> errorMessages = new ArrayList<>();
+
+        for (SubmissionStatusDetailBean status : submissionResults) {
+            if (CollectionUtils.isNotEmpty(status.getErrors())) {
+                for(String errorMessage:status.getErrors()) {
+                    errorMessages.add(String.format("%s: %s", submissionIdentifierToTracker.get(status.getUuid()).getSubmittedSampleName(),errorMessage));
+                }
+            }
+        }
+
+        if(CollectionUtils.isNotEmpty(errorMessages)) {
+            throw new ValidationException(
+                    "There were some errors during submission.  ", errorMessages);
+        }
+
+        return submissionResults;
+    }
+
+    void validateSubmissionSamples(BioProject bioProject, Collection<SubmissionDto> submissionDtos)
+            throws ValidationException {
+        try {
+            Collection<String> submissionSamples = submissionsService.getSubmissionSamples(bioProject);
+            Set<String> invalidSamples = new HashSet<>();
+
+            for (SubmissionDto submissionDto : submissionDtos) {
+                if (! submissionSamples.contains(submissionDto.getSampleName())) {
+                    invalidSamples.add(submissionDto.getSampleName());
+                }
+            }
+
+            if (!invalidSamples.isEmpty()) {
+                throw new ValidationException(
+                        String.format(
+                                "Some sample(s) have not been pre-accessioned and are not available for submission: %s",
+                                invalidSamples));
+            }
+        } catch (InformaticsServiceException e) {
+            throw new ValidationException(e.getMessage());
+        }
     }
 
     /**
