@@ -600,8 +600,9 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         Assert.assertEquals(zimsIlluminaRun.getLanes().size(), 8, "Wrong number of lanes");
     }
 
-    public static void sendMessage(BettaLIMSMessage bettaLIMSMessage, BettaLimsMessageResource bettalimsMessageResource,
+    public static String sendMessage(BettaLIMSMessage bettaLIMSMessage, BettaLimsMessageResource bettalimsMessageResource,
             String testMercuryUrl) {
+        String response = null;
         if (true) {
             // In JVM
             bettalimsMessageResource.processMessage(bettaLIMSMessage);
@@ -609,7 +610,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
 
         if (false) {
             // JAX-RS
-            String response = Client.create().resource(testMercuryUrl + "/rest/bettalimsmessage")
+            response = Client.create().resource(testMercuryUrl + "/rest/bettalimsmessage")
                     .type(MediaType.APPLICATION_XML_TYPE)
                     .accept(MediaType.APPLICATION_XML)
                     .entity(bettaLIMSMessage)
@@ -626,6 +627,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                 throw new RuntimeException(e);
             }
         }
+        return response;
     }
 
     /**

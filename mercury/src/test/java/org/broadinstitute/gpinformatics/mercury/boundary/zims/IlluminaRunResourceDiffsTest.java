@@ -18,12 +18,11 @@ import java.net.URL;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 
 /**
  * A test to compare IlluminaRunResource output from different deployments, e.g. to verify a change.
  */
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.STANDARD)
 public class IlluminaRunResourceDiffsTest extends Arquillian {
 
     @Inject
@@ -34,7 +33,7 @@ public class IlluminaRunResourceDiffsTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION, enabled = false)
+    @Test(groups = TestGroups.STANDARD, enabled = false)
     public void testCompareAll() {
         List<IlluminaSequencingRun> illuminaSequencingRuns = illuminaSequencingRunDao.findAll(
                 IlluminaSequencingRun.class);
@@ -47,7 +46,7 @@ public class IlluminaRunResourceDiffsTest extends Arquillian {
         }
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION, enabled = false)
+    @Test(groups = TestGroups.STANDARD, enabled = false)
     public void testCompareOne() {
         IlluminaSequencingRun illuminaSequencingRun = illuminaSequencingRunDao.findByRunName(
                 "140122_SL-HBV_0297_AFCH79B6ADXX");

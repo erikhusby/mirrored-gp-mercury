@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.FIXUP)
 public class BucketEntryFixupTest extends Arquillian {
 
     @Inject
@@ -63,7 +63,7 @@ public class BucketEntryFixupTest extends Arquillian {
                 org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD, "prod");
     }
 
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @BeforeMethod(groups = TestGroups.FIXUP)
     public void setUp() throws Exception {
         if (utx == null) {
             return;
@@ -71,7 +71,7 @@ public class BucketEntryFixupTest extends Arquillian {
         utx.begin();
     }
 
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @AfterMethod(groups = TestGroups.FIXUP)
     public void tearDown() throws Exception {
         // Skip if no injections, since we're not running in container.
         if (utx == null) {
@@ -82,7 +82,7 @@ public class BucketEntryFixupTest extends Arquillian {
     }
 
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+    @Test(groups = TestGroups.FIXUP, enabled = false)
     public void archiveReworkEntries() throws Exception {
 
         Bucket fixupBucket = bucketDao.findByName("Pico/Plating Bucket");
@@ -93,7 +93,7 @@ public class BucketEntryFixupTest extends Arquillian {
         }
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+    @Test(groups = TestGroups.FIXUP, enabled = false)
     public void remove0150385070FromShearingBucketForGPLIM1932() {
         Bucket bucket = bucketDao.findByName("Shearing Bucket");
         LabVessel vessel = labVesselDao.findByIdentifier("0150385070");
@@ -102,7 +102,7 @@ public class BucketEntryFixupTest extends Arquillian {
         bucket.removeEntry(bucketEntry);
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+    @Test(groups = TestGroups.FIXUP, enabled = false)
     public void remove0155694973FromPoolingBucketGPLIM2503() {
         Bucket bucket = bucketDao.findByName("Pooling Bucket");
         LabVessel vessel = labVesselDao.findByIdentifier("0155694973");
@@ -111,7 +111,7 @@ public class BucketEntryFixupTest extends Arquillian {
         bucket.removeEntry(bucketEntry);
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+    @Test(groups = TestGroups.FIXUP, enabled = false)
     public void remove0155694973FromPicoPlatingBucketGPLIM2503() {
         Bucket bucket = bucketDao.findByName("Pico/Plating Bucket");
         LabVessel vessel = labVesselDao.findByIdentifier("0155694973");
@@ -120,7 +120,7 @@ public class BucketEntryFixupTest extends Arquillian {
         bucket.removeEntry(bucketEntry);
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+    @Test(groups = TestGroups.FIXUP, enabled = false)
     public void remove0159876899FromPicoPlatingBucketGPLIM2503() {
         Bucket bucket = bucketDao.findByName("Pico/Plating Bucket");
         LabVessel vessel = labVesselDao.findByIdentifier("0159876899");
@@ -129,7 +129,7 @@ public class BucketEntryFixupTest extends Arquillian {
         bucket.removeEntry(bucketEntry);
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+    @Test(groups = TestGroups.FIXUP, enabled = false)
     public void setProductOrderReferxences() throws Exception {
 
         List<BucketEntry> bucketEntriesToFix =

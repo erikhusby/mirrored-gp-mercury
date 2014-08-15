@@ -34,7 +34,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.STANDARD)
 public class SubmissionDtoFetcherIntegrationTest extends Arquillian {
     @Deployment
     public static WebArchive buildMercuryWar() {
