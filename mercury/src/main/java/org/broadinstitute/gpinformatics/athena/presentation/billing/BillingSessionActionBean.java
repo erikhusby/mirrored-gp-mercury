@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.presentation.billing;
 
+import net.sourceforge.stripes.action.ActionBeanContext;
 import net.sourceforge.stripes.action.After;
 import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
@@ -304,13 +305,7 @@ public class BillingSessionActionBean extends CoreActionBean {
     }
 
     private QuoteServerParameters getQuoteServerParametersFromQuoteSourceLink() {
-        String billingSessionFromQuoteServer = getContext().getRequest().getParameter(BILLING_SESSION_FROM_QUOTE_SERVER_URL_PARAMETER);
-        String workIdFromQuoteServer = getContext().getRequest().getParameter(WORK_ITEM_FROM_QUOTE_SERVER_URL_PARAMETER);
-        QuoteServerParameters params = null;
-        if (billingSessionFromQuoteServer != null) {
-            params = new QuoteServerParameters(billingSessionFromQuoteServer,workIdFromQuoteServer);
-        }
-        return params;
+        return QuoteServerParameters.createFromQuoteSourceLink(getContext());
     }
 
     @SuppressWarnings("UnusedDeclaration")
@@ -344,20 +339,25 @@ public class BillingSessionActionBean extends CoreActionBean {
             this.workId = workId;
         }
 
-        public String getBillingSession() {
-            return billingSession;
+        private static QuoteServerParameters createFromQuoteSourceLink(ActionBeanContext context) {
+            String billingSessionFromQuoteServer = context.getRequest().getParameter(BILLING_SESSION_FROM_QUOTE_SERVER_URL_PARAMETER);
+            String workIdFromQuoteServer = context.getRequest().getParameter(WORK_ITEM_FROM_QUOTE_SERVER_URL_PARAMETER);
+            QuoteServerParameters params = null;
+            if (billingSessionFromQuoteServer != null) {
+                params = new QuoteServerParameters(billingSessionFromQuoteServer,workIdFromQuoteServer);
+            }
+            return params;
         }
 
-        public String getWorkId() {
-            return workId;
+        private RedirectResolution redirectFromQuoteServer() {
+            return new RedirectResolution(BillingSessionActionBean.class, VIEW_ACTION)
+                    .addParameter(SESSION_KEY_PARAMETER_NAME, billingSession)
+                    .addParameter(WORK_ITEM_FROM_QUOTE_SERVER_URL_PARAMETER, workId);
         }
     }
 
     private RedirectResolution redirectFromQuoteServer() {
-        QuoteServerParameters params = getQuoteServerParametersFromQuoteSourceLink();
-        return new RedirectResolution(BillingSessionActionBean.class, VIEW_ACTION)
-                .addParameter(SESSION_KEY_PARAMETER_NAME, params.getBillingSession())
-                .addParameter(WORK_ITEM_FROM_QUOTE_SERVER_URL_PARAMETER, params.getWorkId());
+        return getQuoteServerParametersFromQuoteSourceLink().redirectFromQuoteServer();
     }
 
     private boolean isPageBeingLoadedFromQuoteServerSourceLink() {
