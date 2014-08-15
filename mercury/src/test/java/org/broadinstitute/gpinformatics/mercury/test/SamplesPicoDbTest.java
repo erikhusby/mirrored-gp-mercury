@@ -95,9 +95,9 @@ public class SamplesPicoDbTest extends ContainerTest {
      * @param client      jersey
      * @param messageList list of messages to send
      */
-    public static void sendMessages(URL baseUrl, Client client, List<BettaLIMSMessage> messageList) {
+    public static String sendMessages(URL baseUrl, Client client, List<BettaLIMSMessage> messageList) {
+        String response = null;
         for (BettaLIMSMessage bettaLIMSMessage : messageList) {
-            String response;
             response = client.resource(baseUrl.toExternalForm() + "rest/bettalimsmessage")
                     .type(MediaType.APPLICATION_XML_TYPE)
                     .accept(MediaType.APPLICATION_XML)
@@ -105,5 +105,6 @@ public class SamplesPicoDbTest extends ContainerTest {
                     .post(String.class);
             System.out.println(response);
         }
+        return response;
     }
 }

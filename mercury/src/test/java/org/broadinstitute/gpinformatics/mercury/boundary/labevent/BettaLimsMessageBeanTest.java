@@ -40,7 +40,8 @@ public class BettaLimsMessageBeanTest {
         sendJmsMessage(message, "broad.queue.mercury.bettalims.dev");
     }
 
-    public static void sendJmsMessage(String message, String queueName) {
+    // Have to return something other than void, otherwise TestNG will think it's a test.
+    public static boolean sendJmsMessage(String message, String queueName) {
         Connection connection = null;
         Session session = null;
         try {
@@ -69,6 +70,7 @@ public class BettaLimsMessageBeanTest {
             System.out.println("Sent message: " + textMessage.hashCode() + " : " + Thread.currentThread().getName());
             producer.send(textMessage);
 
+            return true;
         } catch (JMSException e) {
             throw new RuntimeException(e);
         } finally {
