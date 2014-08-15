@@ -34,7 +34,7 @@
                         [1, 'asc']
                 ],
                 "aoColumns": [
-                    {"bSortable": false},               //Checkbox
+//                    {"bSortable": false},               //Checkbox
                     {"bSortable": true},                //Sample
 //                    {"bSortable": false},                //BioSample
                     {"bSortable": false},               //Data Type
@@ -81,10 +81,10 @@
         <tr>
             <!-- add data type to big list -->
             <!-- only show latest single file -->
-            <th width="20">
-                <input for="count" type="checkbox" class="checkAll"/>
-                <span id="count" class="checkedCount"></span>
-            </th>
+            <%--<th width="20">--%>
+                <%--<input for="count" type="checkbox" class="checkAll"/>--%>
+                <%--<span id="count" class="checkedCount"></span>--%>
+            <%--</th>--%>
             <th width="80">Sample</th>
             <%--<th width="80">BioSample</th>--%>
             <%--<th width="100">BioSample</th>--%>
@@ -114,10 +114,10 @@
 
         <c:forEach items="${actionBean.submissionSamples}" var="submissionSample">
             <tr>
-                <td>
-                    <stripes:checkbox name="selectedSubmissionSamples" class="shiftCheckbox"
-                                      value="${submissionSample.sampleName}" />
-                </td>
+                <%--<td>--%>
+                    <%--<stripes:checkbox name="selectedSubmissionSamples" class="shiftCheckbox"--%>
+                                      <%--value="${submissionSample.sampleName}" />--%>
+                <%--</td>--%>
 
                 <td>${submissionSample.sampleName}</td>
                 <%--<td><stripes:text name="bioSamples[${submissionSample.sampleName}]" size="4"/></td>--%>
@@ -162,10 +162,10 @@
         </c:forEach>
         </tbody>
     </table>
-    <div class="span1">
-        <stripes:submit name="<%=ResearchProjectActionBean.POST_SUBMISSIONS_ACTION%>" value="Post Selected Submissions"
-                        class="btn btn-primary" id="postSubmissionBtn"/>
-    </div>
+    <%--<div class="span1">--%>
+        <%--<stripes:submit name="<%=ResearchProjectActionBean.POST_SUBMISSIONS_ACTION%>" value="Post Selected Submissions"--%>
+                        <%--class="btn btn-primary" id="postSubmissionBtn"/>--%>
+    <%--</div>--%>
 
     <%--<button>Submit these files</button>--%>
 </stripes:form>
