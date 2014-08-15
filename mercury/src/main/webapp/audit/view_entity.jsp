@@ -9,10 +9,10 @@
 
     <stripes:layout-component name="content">
         <p>${actionBean.displayClassname} at revision ${actionBean.revId}</p>
-        <c:if test="${actionBean.auditEntity != null}">
-            <c:set var="auditEntity" value="${actionBean.auditEntity}"/>
-            <c:set var="auditEntryType" value=""/>
 
+        <c:set var="auditEntity" value="${actionBean.auditEntity}"/>
+
+        <c:if test="${auditEntity.fields != null}">
             <table class="table simple">
                 <thead>
                 <tr>
@@ -28,8 +28,10 @@
                 </tbody>
             </table>
         </c:if>
-        <c:if test="${actionBean.auditEntity == null}">
+
+        <c:if test="${auditEntity.fields == null}">
             <p>Entity is null.</p>
         </c:if>
+
     </stripes:layout-component>
 </stripes:layout-render>
