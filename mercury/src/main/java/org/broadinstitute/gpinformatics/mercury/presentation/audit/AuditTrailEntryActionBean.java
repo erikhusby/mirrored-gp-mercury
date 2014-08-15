@@ -126,36 +126,47 @@ public class AuditTrailEntryActionBean extends CoreActionBean {
             // Generates a pair of AuditEntity that represent the difference between the two entity versions.
             // RevId, entityId, and the differences are the only fields in the result.
 
-            List<EntityField> prevFields = (prevEntity != null) ?
+            List<EntityField> prevFields = (enversAudit.getRevType() != RevisionType.ADD) ?
                     ReflectionUtil.formatFields(prevEntity, entityClass) : null;
-            AuditEntity prev = new AuditEntity(prevEntityRevId, displayClassname, instanceEntityId, prevFields);
 
             List<EntityField> curFields = (enversAudit.getRevType() != RevisionType.DEL) ?
                     ReflectionUtil.formatFields(instanceEntity, entityClass) : null;
+
+            List<String> fieldNames = getFieldDiffs(prevFields, curFields);
+
+            AuditEntity prev = new AuditEntity(prevEntityRevId, displayClassname, instanceEntityId, prevFields);
             AuditEntity cur = new AuditEntity(revId, displayClassname, instanceEntityId, curFields);
 
-            auditTrailEntries.add(new AuditTrailEntry(fieldNames(prevFields, curFields), prev, cur));
+            auditTrailEntries.add(new AuditTrailEntry(fieldNames, prev, cur));
         }
     }
 
-    // Returns a list of field names for each different field.
-    private List<String> fieldNames(List<EntityField> prevFields, List<EntityField> curFields) {
+    // Finds fields that are different from previous entity.  If same, removes the field from
+    // both prev and cur lists.  Always keeps the entity id.
+    // Returns a list of field names that are in the prevFields and/or curFields
+    private List<String> getFieldDiffs(List<EntityField> prevFields, List<EntityField> curFields) {
         List<String> names = new ArrayList<>();
         if (prevFields != null && curFields != null) {
-            for (int i = 0; i < prevFields.size(); ++i) {
-                if (!matchFields(prevFields.get(i), curFields.get(i))) {
-                    names.add(prevFields.get(i).getFieldName());
+            // Uses reverse iteration so that List.remove(index) works.
+            // Assumes that entity id is in the first field; it isn't tested so that it's always present.
+            for (int i = prevFields.size() - 1; i > 0; --i) {
+                if (matchFields(prevFields.get(i), curFields.get(i))) {
+                    prevFields.remove(i);
+                    curFields.remove(i);
                 }
+            }
+            for (EntityField entityField : prevFields) {
+                names.add(entityField.getFieldName());
             }
         }
         if (prevFields != null && curFields == null) {
-            for (int i = 0; i < prevFields.size(); ++i) {
-                names.add(prevFields.get(i).getFieldName());
+            for (EntityField entityField : prevFields) {
+                names.add(entityField.getFieldName());
             }
         }
         if (prevFields == null && curFields != null) {
-            for (int i = 0; i < curFields.size(); ++i) {
-                names.add(curFields.get(i).getFieldName());
+            for (EntityField entityField : curFields) {
+                names.add(entityField.getFieldName());
             }
         }
         return names;
@@ -163,16 +174,13 @@ public class AuditTrailEntryActionBean extends CoreActionBean {
 
     private boolean matchFields(EntityField f1, EntityField f2) {
         if (f1.getFieldName() != f2.getFieldName()) {
-            throw new RuntimeException("Versioned field name " + f1.getFieldName() +
-                                       " doesn't match other versioned field name " + f2.getFieldName());
+            throw new RuntimeException("Found field " + f2.getFieldName() + " instead of field " + f1.getFieldName() +
+                                       " in version " + revId + " of class " + displayClassname);
         }
-        if (f1.getValue() != f2.getValue()) {
+        if (f1.getValue() == null && f2.getValue() != null || f1.getValue() != null && f2.getValue() == null) {
             return false;
         }
-        if (f1.getCanonicalClassname() != null && !f1.getCanonicalClassname().equals(f2.getCanonicalClassname())) {
-            return false;
-        }
-        if (f1.getCanonicalClassname() == null && f2.getCanonicalClassname() != null) {
+        if (f1.getValue() != null && !f1.getValue().equals(f2.getValue())) {
             return false;
         }
         String valueList1 = (f1.getValueList() != null) ? StringUtils.join(f1.getValueList(), ",") : "";

@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.control.dao.envers;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 
 import javax.persistence.Id;
 import javax.persistence.metamodel.SingularAttribute;
@@ -28,11 +29,12 @@ import java.util.logging.Logger;
 
 public class ReflectionUtil {
     private static final Logger logger = Logger.getLogger(ReflectionUtil.class.getName());
-    private static final Format DATE_FORMAT = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss");
-    private static final String NULL_REPRESTATION = "null";
+    public static final Format DATE_FORMAT = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss");
+    public static final String NULL_REPRESTATION = "null";
     private static final List<Class> mercuryAthenaClasses = new ArrayList<>();
     private static final Map<String, Class> mercuryAthenaEntityClassnameToClass = new HashMap<>();
     private static final Map<Class, List<Field>> mapClassToPersistedFields = new HashMap<>();
+    private static final Map<String, Class> generatedEntityClassnameToClass = new HashMap<>();
 
     static {
         if (mercuryAthenaClasses.size() == 0) {
@@ -55,6 +57,7 @@ public class ReflectionUtil {
                     if (idx < aClass.getCanonicalName().length() - 1) {
                         throw new RuntimeException("Unexpected generated class name: " + aClass.getCanonicalName());
                     }
+                    generatedEntityClassnameToClass.put(aClass.getCanonicalName(), aClass);
                     classnames.add(aClass.getCanonicalName().substring(0, idx));
                 }
             }
@@ -82,6 +85,11 @@ public class ReflectionUtil {
         return mercuryAthenaEntityClassnameToClass.get(canonicalClassname);
     }
 
+    /** Returns the JPA generated entity classes. */
+    public static Map<String, Class> getGeneratedEntityClassnameToClass() {
+        return generatedEntityClassnameToClass;
+    }
+
     /** Finds the classes from the given list that are persisted by Mercury. */
     public static List<String> getEntityClassnames(List<Class> classesToScan) {
         List<Class> classes = new ArrayList<>(classesToScan);
@@ -95,7 +103,7 @@ public class ReflectionUtil {
 
     // Returns the fields that get persisted for the given entity class.
     // Fields on any superclasses are handled by caller, not here.
-    private static List<Field> getPersistedFieldsForClass(Class persistedClass) {
+    public static List<Field> getPersistedFieldsForClass(Class persistedClass) {
         if (!mercuryAthenaEntityClassnameToClass.values().contains(persistedClass)) {
             return Collections.emptyList();
         }
@@ -106,20 +114,17 @@ public class ReflectionUtil {
             // Goes to the generated jpa model class (classname ending with an "_") and
             // collects the field names, then finds the fields on the persistedClass that
             // have the same name.
-            String jpaClassname = persistedClass.getCanonicalName() + "_";
-            Class jpaClass;
-            try {
-                jpaClass = Class.forName(jpaClassname);
-            } catch (ClassNotFoundException e) {
-                throw new RuntimeException("Cannot find jpa model class '" + jpaClassname + "'");
+            Class generatedClass = generatedEntityClassnameToClass.get(persistedClass.getCanonicalName() + "_");
+            if (generatedClass == null) {
+                throw new RuntimeException("Cannot find jpa generated class '" +
+                                           persistedClass.getCanonicalName() + "_'");
             }
-            for (Field jpaField : jpaClass.getDeclaredFields()) {
+            for (Field jpaField : generatedClass.getDeclaredFields()) {
                 try {
                     persistedFields.add(persistedClass.getDeclaredField(jpaField.getName()));
                 } catch (NoSuchFieldException e) {
-                    logger.warning(persistedClass.getSimpleName() + "_ has field " + jpaField.getName() +
-                                   " but " + persistedClass.getSimpleName() +
-                                   " does not.  Audit trail cannot display it.");
+                    throw new RuntimeException("Missing field " + jpaField.getName() +
+                                               " on class " + persistedClass.getSimpleName(), e);
                 }
             }
             mapClassToPersistedFields.put(persistedClass, persistedFields);
@@ -194,6 +199,7 @@ public class ReflectionUtil {
 
                     if (fieldObj instanceof Map) {
                         List<EntityField> fieldList = new ArrayList<>();
+                        // For now just make a list of each Map.Entry as a plain string.
                         for (Map.Entry item : (Set<Map.Entry>)((Map) fieldObj).entrySet()) {
                             fieldList.add(new EntityField(field.getName(), getNonEntityValue(item.toString()),
                                     null, null));
@@ -213,7 +219,6 @@ public class ReflectionUtil {
                         // Object is not a collection, so make either an entity reference, or a plain value.
                         Class fieldClass = getMercuryAthenaEntityClass(
                                 fieldType.toString().replaceFirst("^class ", "").replaceFirst("\\<.*", ""));
-
                         list.add(makeEntityField(field.getName(), fieldClass, fieldObj));
                     }
                 } catch (IllegalAccessException e) {
@@ -223,11 +228,13 @@ public class ReflectionUtil {
             }
 
             // Puts the entityId field first, followed by other fields sorted by name.
+            // Also makes the entityId be an entity reference, not just a Long.
             String entityIdFieldName = getEntityIdField(entityClass).getName();
             EntityField entityIdField = null;
             for (EntityField entityField : list) {
                 if (entityField.getFieldName().equals(entityIdFieldName)) {
                     entityIdField = entityField;
+                    entityField.setCanonicalClassname(entityClass.getCanonicalName());
                     break;
                 }
             }
@@ -240,7 +247,8 @@ public class ReflectionUtil {
 
     private static EntityField makeEntityField(String fieldName, Class fieldClass, Object fieldObj) {
         if (fieldClass != null && fieldObj != null) {
-            // If the fieldOjb is a known entity class subtype, use it.
+            // If the fieldObj is a known entity class subtype, use it.  The subtype classname is
+            // gotten from the object's toString(), before the '@'.
             Class subtypeClass = getMercuryAthenaEntityClass(
                     fieldObj.toString().split("@")[0].replaceFirst("^class ", ""));
             if (subtypeClass != null) {
