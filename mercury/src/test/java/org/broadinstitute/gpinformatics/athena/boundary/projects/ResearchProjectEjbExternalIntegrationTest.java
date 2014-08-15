@@ -30,7 +30,8 @@ import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.startsWith;
 
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class ResearchProjectEjbExternalIntegrationTest {
@@ -59,11 +60,13 @@ public class ResearchProjectEjbExternalIntegrationTest {
             researchProjectEjb
                     .validateSubmissionSamples(bioProjectWithResults, getTestDataWithSamples(fakeSampleNames));
         } catch (ValidationException e) {
-            String expectedValidationMessage =
-                    String.format(
-                            "Some sample(s) have not been pre-accessioned and are not available for submission: [%s, %s, %s]",
-                            fakeSampleNames);
-            assertThat(e.getMessage().replaceAll("\\n+", ""), equalTo(expectedValidationMessage));
+            String expectedValidationMessage = "Some sample(s) have not been pre-accessioned and are not available for submission: ";
+            assertThat(e.getMessage(), startsWith(expectedValidationMessage));
+
+            for (String fakeSampleName : fakeSampleNames) {
+                assertThat(e.getMessage(), containsString(fakeSampleName));
+            }
+
         }
     }
 
