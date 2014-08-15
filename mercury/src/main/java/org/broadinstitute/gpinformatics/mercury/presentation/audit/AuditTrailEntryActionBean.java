@@ -29,9 +29,13 @@ public class AuditTrailEntryActionBean extends CoreActionBean {
 
     @Validate(required = true, minvalue = 1)
     private long revId;
-    @Validate(required = true)
+
+    @Validate(required = true, on = {AuditTrailActionBean.VIEW_AUDIT_TRAIL_ENTRIES})
     private String displayClassname;
+
+    @Validate(required = true, on = {AuditTrailActionBean.VIEW_ENTITY})
     private String canonicalClassname;
+
     private Class entityClass;
 
     /** auditTrailEntries list is only used with the audit trail entry page. */
@@ -40,7 +44,7 @@ public class AuditTrailEntryActionBean extends CoreActionBean {
     /** Entity id and auditEntity are only used with the audited entity page. */
     @Validate(required = true, minvalue = 1, on = {AuditTrailActionBean.VIEW_ENTITY})
     private long entityId;
-    @Validate(required = true, on = {AuditTrailActionBean.VIEW_ENTITY})
+
     private AuditEntity auditEntity;
 
     public long getRevId() {
@@ -58,13 +62,20 @@ public class AuditTrailEntryActionBean extends CoreActionBean {
     public void setDisplayClassname(String displayClassname) {
         this.displayClassname = displayClassname;
         if (StringUtils.isNotBlank(displayClassname)) {
-            canonicalClassname = AuditTrailActionBean.getDisplayToCanonicalClassname(displayClassname);
-            if (StringUtils.isNotBlank(canonicalClassname)) {
-                try {
-                    entityClass = getClass().getClassLoader().loadClass(canonicalClassname);
-                } catch (Exception e) {
-                    entityClass = null;
-                }
+            setCanonicalClassname(AuditTrailActionBean.getDisplayToCanonicalClassname(displayClassname));
+        }
+    }
+
+    public void setCanonicalClassname(String canonicalClassname) {
+        this.canonicalClassname = canonicalClassname;
+        if (StringUtils.isNotBlank(canonicalClassname)) {
+            if (StringUtils.isBlank(displayClassname)) {
+                displayClassname = AuditTrailActionBean.getCanonicalToDisplayClassname(canonicalClassname);
+            }
+            try {
+                entityClass = getClass().getClassLoader().loadClass(canonicalClassname);
+            } catch (Exception e) {
+                entityClass = null;
             }
         }
     }
@@ -79,6 +90,10 @@ public class AuditTrailEntryActionBean extends CoreActionBean {
 
     public void setEntityId(long entityId) {
         this.entityId = entityId;
+    }
+
+    public AuditEntity getAuditEntity() {
+        return auditEntity;
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -101,31 +116,26 @@ public class AuditTrailEntryActionBean extends CoreActionBean {
         // For each instance of entity type modified at this revId, generate a previous and current AuditEntity pair
         // showing the differences.
         for (EnversAudit enversAudit : auditReaderDao.fetchEnversAudits(Collections.singleton(revId), entityClass)) {
-            generateAuditTrailEntry(enversAudit);
+            Object instanceEntity = enversAudit.getEntity();
+            Long instanceEntityId = ReflectionUtil.getEntityId(instanceEntity, entityClass);
+            // Previous entity revId will be null for an entity addition.
+            Long prevEntityRevId = auditReaderDao.getPreviousVersionRevId(instanceEntityId, entityClass, revId);
+            Object prevEntity = (prevEntityRevId != null) ?
+                    auditReaderDao.getEntityAtVersion(instanceEntityId, entityClass, prevEntityRevId) : null;
+
+            // Generates a pair of AuditEntity that represent the difference between the two entity versions.
+            // RevId, entityId, and the differences are the only fields in the result.
+
+            List<EntityField> prevFields = (prevEntity != null) ?
+                    ReflectionUtil.formatFields(prevEntity, entityClass) : null;
+            AuditEntity prev = new AuditEntity(prevEntityRevId, displayClassname, instanceEntityId, prevFields);
+
+            List<EntityField> curFields = (enversAudit.getRevType() != RevisionType.DEL) ?
+                    ReflectionUtil.formatFields(instanceEntity, entityClass) : null;
+            AuditEntity cur = new AuditEntity(revId, displayClassname, instanceEntityId, curFields);
+
+            auditTrailEntries.add(new AuditTrailEntry(fieldNames(prevFields, curFields), prev, cur));
         }
-    }
-
-    private void generateAuditTrailEntry(EnversAudit enversAudit) {
-        Object currentEntity = enversAudit.getEntity();
-        // There are multiple entityIds processed for this page, so don't use the class variable.
-        Long entryEntityId = ReflectionUtil.getEntityId(currentEntity, entityClass);
-        // Previous entity revId will be null for an entity addition.
-        Long prevEntityRevId = auditReaderDao.getPreviousVersionRevId(entryEntityId, entityClass, revId);
-        Object prevEntity = (prevEntityRevId != null) ?
-                auditReaderDao.getEntityAtVersion(entryEntityId, entityClass, prevEntityRevId) : null;
-
-        // Generates a pair of AuditEntity that represent the difference between the two entity versions.
-        // RevId, entityId, and the differences are the only fields in the result.
-
-        List<EntityField> prevFields = (prevEntity != null) ?
-                ReflectionUtil.formatFields(prevEntity, entityClass) : null;
-        AuditEntity prev = new AuditEntity(prevEntityRevId, displayClassname, entryEntityId, prevFields);
-
-        List<EntityField> curFields = (enversAudit.getRevType() != RevisionType.DEL) ?
-                ReflectionUtil.formatFields(currentEntity, entityClass) : null;
-        AuditEntity cur = new AuditEntity(revId, displayClassname, entryEntityId, curFields);
-
-        auditTrailEntries.add(new AuditTrailEntry(fieldNames(prevFields, curFields), prev, cur));
     }
 
     // Returns a list of field names for each different field.
@@ -159,10 +169,10 @@ public class AuditTrailEntryActionBean extends CoreActionBean {
         if (f1.getValue() != f2.getValue()) {
             return false;
         }
-        if (f1.getReferenceClassname() != null && !f1.getReferenceClassname().equals(f2.getReferenceClassname())) {
+        if (f1.getCanonicalClassname() != null && !f1.getCanonicalClassname().equals(f2.getCanonicalClassname())) {
             return false;
         }
-        if (f1.getReferenceClassname() == null && f2.getReferenceClassname() != null) {
+        if (f1.getCanonicalClassname() == null && f2.getCanonicalClassname() != null) {
             return false;
         }
         String valueList1 = (f1.getValueList() != null) ? StringUtils.join(f1.getValueList(), ",") : "";
@@ -199,7 +209,8 @@ public class AuditTrailEntryActionBean extends CoreActionBean {
     private void generateAuditedEntity() {
         // Gets entity from Envers.
         Object entity = auditReaderDao.getEntityAtVersion(entityId, entityClass, revId);
-        List<EntityField> fields = (entity != null) ? ReflectionUtil.formatFields(entity, entityClass) : null;
+        List<EntityField> fields = (entity != null) ?
+                ReflectionUtil.formatFields(entity, entityClass) : null;
         auditEntity = new AuditEntity(revId, displayClassname, entityId, fields);
     }
 

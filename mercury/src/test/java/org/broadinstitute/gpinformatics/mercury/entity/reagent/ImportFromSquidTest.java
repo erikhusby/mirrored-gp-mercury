@@ -78,6 +78,7 @@ public class ImportFromSquidTest extends Arquillian {
 
     @Deployment
     public static WebArchive buildMercuryWar() {
+        // change dataSourceEnvironment parameter to "prod" when importing from production.
         return DeploymentBuilder.buildMercuryWar(
                 org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV, "dev");
     }
@@ -88,18 +89,19 @@ public class ImportFromSquidTest extends Arquillian {
     @Test(enabled = false, groups = TestGroups.STANDARD)
     public void testImportIndexingSchemes() {
         // Get schemes and sequences from Squid.
-        Query nativeQuery = entityManager.createNativeQuery("SELECT " +
-                                                            "     mis.NAME, " +
-                                                            "     mip.position_hint, " +
-                                                            "     mi.SEQUENCE " +
-                                                            "FROM " +
-                                                            "     molecular_indexing_scheme mis " +
-                                                            "     INNER JOIN molecular_index_position mip " +
-                                                            "          ON   mip.scheme_id = mis.ID " +
-                                                            "     INNER JOIN molecular_index mi " +
-                                                            "          ON   mi.ID = mip.index_id " +
-                                                            "ORDER BY " +
-                                                            "     mis.NAME ");
+        Query nativeQuery = entityManager.createNativeQuery(
+                "SELECT " +
+                "     mis.NAME, " +
+                "     mip.position_hint, " +
+                "     mi.SEQUENCE " +
+                "FROM " +
+                "     molecular_indexing_scheme mis " +
+                "     INNER JOIN molecular_index_position mip " +
+                "          ON   mip.scheme_id = mis.ID " +
+                "     INNER JOIN molecular_index mi " +
+                "          ON   mi.ID = mip.index_id " +
+                "ORDER BY " +
+                "     mis.NAME ");
         List<?> resultList = nativeQuery.getResultList();
 
         // Get schemes from Mercury, to avoid creating duplicates.

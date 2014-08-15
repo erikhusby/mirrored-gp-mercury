@@ -253,6 +253,21 @@ public class LiveThriftService implements ThriftService {
     }
 
     @Override
+    public double fetchQpcrForTubeAndType(final String tubeBarcode, final String qpcrType) {
+        return thriftConnection.call(new ThriftConnection.Call<Double>() {
+            @Override
+            public Double call(LIMQueries.Client client) {
+                try {
+                    return client.fetchQpcrForTubeAndType(tubeBarcode, qpcrType);
+                } catch (TException e) {
+                    log.error("Thrift error. Probably couldn't find tube '" + tubeBarcode + "': " + e.getMessage(), e);
+                    throw new RuntimeException("Tube or QPCR not found for barcode: " + tubeBarcode, e);
+                }
+            }
+        });
+    }
+
+    @Override
     public double fetchQuantForTube(final String tubeBarcode, final String quantType) {
         return thriftConnection.call(new ThriftConnection.Call<Double>() {
             @Override

@@ -1,9 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.envers;
 
 import com.sun.xml.ws.developer.Stateful;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.datawh.ExtractTransform;
@@ -26,7 +24,6 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
-import java.text.Format;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -134,7 +131,7 @@ public class AuditReaderDao extends GenericDao {
      * @param revIds
      * @return a list of AuditedRevDtos sorted by revId.
      */
-    public List<AuditedRevDto> fetchAuditedRevs(Collection<Long> revIds) {
+    public List<AuditedRevDto> fetchAuditedRevs(Set<Long> revIds) {
         List<AuditedRevDto> auditedRevDtos = new ArrayList<>();
 
         for (Long revId : revIds) {
@@ -154,7 +151,7 @@ public class AuditReaderDao extends GenericDao {
      * @param entityClassName the class name of the entity.
      * @return list of EnversAudit objects.
      */
-    public List<EnversAudit> fetchEnversAudits(Collection<Long> revIds, Class entityClassName) {
+    public List<EnversAudit> fetchEnversAudits(Set<Long> revIds, Class entityClassName) {
         List<EnversAudit> enversAudits = new ArrayList<>();
         // Does the AuditReader query and converts each object array into EnversAudit.
         for (Object[] enversTriple : fetchEnversAudits(revIds, entityClassName, true)) {

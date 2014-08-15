@@ -207,6 +207,15 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
+    public void fetchQpcrForTubeAndType(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "fetchQpcrForTubeAndType").queryParam("tubeBarcode", "1037346690").
+                queryParam("qpcrType", "Denatured Library");
+        String result = get(resource);
+        assertThat(result, equalTo("38.87261345"));
+    }
+
+    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
     public void testFetchQpcrForTubeNotFound(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "fetchQpcrForTube").queryParam("tubeBarcode", "invalid_tube");
         UniformInterfaceException caught = getWithError(resource);

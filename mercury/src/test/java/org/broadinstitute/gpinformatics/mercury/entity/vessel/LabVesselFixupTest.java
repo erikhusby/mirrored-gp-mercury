@@ -429,6 +429,14 @@ public class LabVesselFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
+    public void fixupGplim2926() {
+        BarcodedTube barcodedTube = barcodedTubeDao.findByBarcode("0116404348");
+        LabMetric labMetric = barcodedTube.getMetrics().iterator().next();
+        labMetric.setValue(new BigDecimal("25.35"));
+        barcodedTubeDao.flush();
+    }
+
+    @Test(enabled = false)
     public void fixupGplim2367Part2() {
         BarcodedTube barcodedTube = barcodedTubeDao.findByBarcode("0156349661");
         boolean found = false;

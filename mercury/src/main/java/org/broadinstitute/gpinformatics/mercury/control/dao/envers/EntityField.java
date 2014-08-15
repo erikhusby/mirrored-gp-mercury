@@ -9,16 +9,15 @@ public class EntityField {
     private String fieldName;
     // Value is the number, text, formatted date, or entityId in case this is a reference.
     private String value;
-    // If this field is a reference, referenceClassname is non-null classname (the short version).
-    private String referenceClassname;
+    // Non-null if this field is a reference.
+    private String canonicalClassname;
     // Instead of a single value or reference, display a list when valueList is non-null.
     private List<EntityField> valueList;
 
-    public EntityField(@Nonnull String fieldName, String value, String referenceClassname,
-                       List<EntityField> valueList) {
+    public EntityField(@Nonnull String fieldName, String value, String canonicalClassname, List<EntityField> valueList) {
         this.fieldName = fieldName;
         this.value = value;
-        this.referenceClassname = referenceClassname;
+        this.canonicalClassname = canonicalClassname;
         this.valueList = valueList;
     }
 
@@ -38,12 +37,12 @@ public class EntityField {
         this.value = value;
     }
 
-    public String getReferenceClassname() {
-        return referenceClassname;
+    public String getCanonicalClassname() {
+        return canonicalClassname;
     }
 
-    public void setReferenceClassname(String referenceClassname) {
-        this.referenceClassname = referenceClassname;
+    public void setCanonicalClassname(String canonicalClassname) {
+        this.canonicalClassname = canonicalClassname;
     }
 
     public List<EntityField> getValueList() {

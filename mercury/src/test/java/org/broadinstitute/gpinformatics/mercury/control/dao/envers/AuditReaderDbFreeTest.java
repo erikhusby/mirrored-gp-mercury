@@ -7,8 +7,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import javax.persistence.Id;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
