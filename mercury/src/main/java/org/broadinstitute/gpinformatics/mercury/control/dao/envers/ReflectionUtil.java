@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 
 import javax.persistence.Id;
+import javax.persistence.metamodel.SetAttribute;
 import javax.persistence.metamodel.SingularAttribute;
 import java.io.File;
 import java.io.IOException;
@@ -52,7 +53,8 @@ public class ReflectionUtil {
             // SingularAttribute fields.  The persisted entity class has the same name but without the trailing '_'
             List<String> classnames = new ArrayList<>();
             for (Class aClass : mercuryAthenaClasses) {
-                if (CollectionUtils.isNotEmpty(getFieldsOfType(aClass, SingularAttribute.class))) {
+                if (CollectionUtils.isNotEmpty(getFieldsOfType(aClass, SingularAttribute.class)) ||
+                    CollectionUtils.isNotEmpty(getFieldsOfType(aClass, SetAttribute.class))) {
                     int idx = aClass.getCanonicalName().lastIndexOf("_");
                     if (idx < aClass.getCanonicalName().length() - 1) {
                         throw new RuntimeException("Unexpected generated class name: " + aClass.getCanonicalName());
@@ -170,96 +172,109 @@ public class ReflectionUtil {
      */
     public static List<EntityField> formatFields(Object entity, Class entityClass) {
         List<EntityField> list = new ArrayList<>();
-        if (mercuryAthenaEntityClassnameToClass.containsValue(entityClass) &&
-            OrmUtil.proxySafeIsInstance(entity, entityClass)) {
+        if (!OrmUtil.proxySafeIsInstance(entity, entityClass)) {
+            throw new RuntimeException("Cannot cast object as " + entityClass.getCanonicalName());
+        }
 
-            for (Field field : getPersistedFields(entityClass)) {
-                try {
-                    field.setAccessible(true);
-                    Type fieldType = field.getGenericType();
-                    Object fieldObj = field.get(entity);
-                    // When field is a collection, makes classname for the collection content type.
-                    ParameterizedType parameterizedType = null;
-                    String[] parameterClassnames = null;
-                    if (fieldType instanceof ParameterizedType) {
-                        parameterizedType = (ParameterizedType)fieldType;
-                        parameterClassnames = new String[parameterizedType.getActualTypeArguments().length];
-                        for (int i = 0; i < parameterClassnames.length; ++i) {
-                            Type type = parameterizedType.getActualTypeArguments()[i];
-                            parameterClassnames[i] = type.toString().replaceFirst("^class ", "");
-                        }
+        for (Field field : getPersistedFields(entityClass)) {
+            try {
+                field.setAccessible(true);
+                Type fieldType = field.getGenericType();
+                Object fieldObj = field.get(entity);
+                // When field is a collection, makes classname for the collection content type.
+                ParameterizedType parameterizedType = null;
+                String[] parameterClassnames = null;
+                if (fieldType instanceof ParameterizedType) {
+                    parameterizedType = (ParameterizedType)fieldType;
+                    parameterClassnames = new String[parameterizedType.getActualTypeArguments().length];
+                    for (int i = 0; i < parameterClassnames.length; ++i) {
+                        Type type = parameterizedType.getActualTypeArguments()[i];
+                        parameterClassnames[i] = type.toString().replaceFirst("^class ", "");
                     }
-                    // Each field is either a collection or a single value.
-                    // Collections consist of:
-                    //   - Set or List of either entity references or single values
-                    //   - Map of (enum or entity or basic type) -> (entity or collection of entity)
-                    // Single values are one of these since anything else would not be persisted.
-                    //   - mercury/athena entity reference
-                    //   - number, date, string, boolean, enum
-
-                    if (fieldObj instanceof Map) {
-                        List<EntityField> fieldList = new ArrayList<>();
-                        // For now just make a list of each Map.Entry as a plain string.
-                        for (Map.Entry item : (Set<Map.Entry>)((Map) fieldObj).entrySet()) {
-                            fieldList.add(new EntityField(field.getName(), getNonEntityValue(item.toString()),
-                                    null, null));
-                        }
-                        Collections.sort(fieldList, EntityField.BY_VALUE);
-                        list.add(new EntityField(field.getName(), null, null, fieldList));
-                    } else if (fieldObj instanceof Iterable) {
-                        // Makes an EntityField for each item instance and puts them in fieldList.
-                        List<EntityField> fieldList = new ArrayList<>();
-                        Class fieldItemClass = getMercuryAthenaEntityClass(parameterClassnames[0]);
-                        for (Object fieldListItem : (Iterable)fieldObj) {
-                            fieldList.add(makeEntityField(field.getName(), fieldItemClass, fieldListItem));
-                        }
-                        Collections.sort(fieldList, EntityField.BY_VALUE);
-                        list.add(new EntityField(field.getName(), null, null, fieldList));
-                    } else {
-                        // Object is not a collection, so make either an entity reference, or a plain value.
-                        Class fieldClass = getMercuryAthenaEntityClass(
-                                fieldType.toString().replaceFirst("^class ", "").replaceFirst("\\<.*", ""));
-                        list.add(makeEntityField(field.getName(), fieldClass, fieldObj));
-                    }
-                } catch (IllegalAccessException e) {
-                    throw new RuntimeException("Reflection cannot access field " + field.getName() +
-                                               " on class " + entityClass.getCanonicalName());
                 }
-            }
+                // Each field is either a collection or a single value.
+                // Collections consist of:
+                //   - Set or List of either entity references or single values
+                //   - Map of (enum or entity or basic type) -> (entity or collection of entity)
+                // Single values are one of these since anything else would not be persisted.
+                //   - mercury/athena entity reference
+                //   - number, date, string, boolean, enum
 
-            // Puts the entityId field first, followed by other fields sorted by name.
-            // Also makes the entityId be an entity reference, not just a Long.
-            String entityIdFieldName = getEntityIdField(entityClass).getName();
-            EntityField entityIdField = null;
+                if (fieldObj instanceof Map) {
+                    List<EntityField> fieldList = new ArrayList<>();
+                    // For now just make a list of each Map.Entry as a plain string.
+                    for (Map.Entry item : (Set<Map.Entry>)((Map) fieldObj).entrySet()) {
+                        fieldList.add(new EntityField(field.getName(), getNonEntityValue(item.toString()),
+                                null, null));
+                    }
+                    Collections.sort(fieldList, EntityField.BY_VALUE);
+                    list.add(new EntityField(field.getName(), null, null, fieldList));
+                } else if (fieldObj instanceof Iterable) {
+                    // Makes an EntityField for each item instance and puts them in fieldList.
+                    List<EntityField> fieldList = new ArrayList<>();
+                    Class fieldItemClass = getMercuryAthenaEntityClass(parameterClassnames[0]);
+                    for (Object fieldListItem : (Iterable)fieldObj) {
+                        fieldList.addAll(makeEntityField(field.getName(), fieldItemClass, fieldListItem));
+                    }
+                    Collections.sort(fieldList, EntityField.BY_VALUE);
+                    list.add(new EntityField(field.getName(), null, null, fieldList));
+                } else {
+                    // Object is not a collection, so make either an entity reference, or a plain value.
+                    String classname = fieldType.toString().replaceFirst("^class ", "");
+                    if (classname.contains("<")) {
+                        classname = classname.substring(0, classname.indexOf('<'));
+                    }
+                    Class fieldClass = getMercuryAthenaEntityClass(classname);
+                    list.addAll(makeEntityField(field.getName(), fieldClass, fieldObj));
+                }
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException("Reflection cannot access field " + field.getName() +
+                                           " on class " + entityClass.getCanonicalName());
+            }
+        }
+
+        // Puts the entityId field first, followed by other fields sorted by name.
+        // Also makes the entityId be an entity reference, not just a Long.
+        EntityField entityIdEntityField = null;
+        Field entityIdField = getEntityIdField(entityClass);
+        if (entityIdField != null) {
             for (EntityField entityField : list) {
-                if (entityField.getFieldName().equals(entityIdFieldName)) {
-                    entityIdField = entityField;
+                if (entityField.getFieldName().equals(entityIdField.getName())) {
+                    entityIdEntityField = entityField;
                     entityField.setCanonicalClassname(entityClass.getCanonicalName());
                     break;
                 }
             }
-            list.remove(entityIdField);
-            Collections.sort(list, EntityField.BY_NAME);
-            list.add(0, entityIdField);
+        }
+        list.remove(entityIdEntityField);
+        Collections.sort(list, EntityField.BY_NAME);
+        if (entityIdEntityField != null) {
+            list.add(0, entityIdEntityField);
         }
         return list;
     }
 
-    private static EntityField makeEntityField(String fieldName, Class fieldClass, Object fieldObj) {
+    private static List<EntityField> makeEntityField(String fieldName, Class fieldClass, Object fieldObj) {
         if (fieldClass != null && fieldObj != null) {
-            // If the fieldObj is a known entity class subtype, use it.  The subtype classname is
-            // gotten from the object's toString(), before the '@'.
-            Class subtypeClass = getMercuryAthenaEntityClass(
-                    fieldObj.toString().split("@")[0].replaceFirst("^class ", ""));
-            if (subtypeClass != null) {
-                fieldClass = subtypeClass;
+            // Special case the embedded VesselContainer.  Put its persistent fields in the returned list.
+            if (fieldClass.getCanonicalName().equals(VesselContainer.class.getCanonicalName())) {
+                return formatFields(fieldObj, fieldClass);
+            } else {
+                // If the fieldObj is a known entity class subtype, use it.  The subtype classname is
+                // gotten from the object's toString(), before the '@'.
+                Class subtypeClass = getMercuryAthenaEntityClass(
+                        fieldObj.toString().split("@")[0].replaceFirst("^class ", ""));
+                if (subtypeClass != null) {
+                    fieldClass = subtypeClass;
+                }
+                fieldObj = OrmUtil.proxySafeCast(fieldObj, fieldClass);
+                Long longId = getEntityId(fieldObj, fieldClass);
+                String entityId = (longId != null) ? String.valueOf(longId) : NULL_REPRESTATION;
+                return Collections.singletonList(
+                        new EntityField(fieldName, entityId, fieldClass.getCanonicalName(), null));
             }
-            fieldObj = OrmUtil.proxySafeCast(fieldObj, fieldClass);
-            Long longId = getEntityId(fieldObj, fieldClass);
-            String entityId = (longId != null) ? String.valueOf(longId) : NULL_REPRESTATION;
-            return new EntityField(fieldName, entityId, fieldClass.getCanonicalName(), null);
         } else {
-            return new EntityField(fieldName, getNonEntityValue(fieldObj), null, null);
+            return Collections.singletonList(new EntityField(fieldName, getNonEntityValue(fieldObj), null, null));
         }
     }
 
