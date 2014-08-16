@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.metrics;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation_;
@@ -16,6 +18,7 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -25,6 +28,9 @@ import java.util.List;
  */
 @Stateful
 public class AggregationMetricsFetcher {
+
+    private static final Log log = LogFactory.getLog(AggregationMetricsFetcher.class);
+
     public static final String SAMPLE_COLUMN = "sample";
     public static final String PROJECT_COLUMN = "project";
     public static final String VERSION_COLUMN = "version";
@@ -32,41 +38,63 @@ public class AggregationMetricsFetcher {
     @PersistenceContext(unitName = "metrics_pu", type = PersistenceContextType.EXTENDED)
     private EntityManager entityManager;
 
-    public Aggregation fetch(String project, String sample, int version) {
+    public List<Aggregation> fetch(List<String> projects, List<String> samples, List<Integer> versions) {
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         CriteriaQuery<Aggregation> criteriaQuery = criteriaBuilder.createQuery(Aggregation.class);
 
         Root<Aggregation> root = criteriaQuery.from(Aggregation.class);
 
-        List<Predicate> predicates = new ArrayList<>();
-        predicates.add(criteriaBuilder.equal(root.get(Aggregation_.project), project));
-        if (sample != null) {
-            predicates.add(criteriaBuilder.equal(root.get(Aggregation_.sample), sample));
-        }
-        predicates.add(criteriaBuilder.equal(root.get(Aggregation_.version), version));
+        List<Predicate> predicateOfOrs = new ArrayList<>();
+        Iterator<String> projectIterator = projects.iterator();
+        Iterator<String> sampleIterator = samples.iterator();
+        Iterator<Integer> versionIterator = versions.iterator();
+        while (projectIterator.hasNext() && sampleIterator.hasNext() && versionIterator.hasNext()) {
+            String project = projectIterator.next();
+            String sample = sampleIterator.next();
+            Integer version = versionIterator.next();
+            List<Predicate> predicate = new ArrayList<>();
+
+            predicate.add(criteriaBuilder.equal(root.get(Aggregation_.project), project));
+            if (sample != null) {
+                predicate.add(criteriaBuilder.equal(root.get(Aggregation_.sample), sample));
+            }
+            predicate.add(criteriaBuilder.equal(root.get(Aggregation_.version), version));
 
         /*
          * Look for the row where LIBRARY is NULL because otherwise there would be multiple results. Kathleen Tibbetts
          * said that this is the way to narrow it down to one.
          */
-        predicates.add(criteriaBuilder.isNull(root.get("library")));
 
-        criteriaQuery.where(predicates.toArray(new Predicate[predicates.size()]));
+//            predicate.add(criteriaBuilder.isNull(root.get("library")));
+
+            predicateOfOrs.add(criteriaBuilder.and(predicate.toArray(new Predicate[predicate.size()])));
+        }
+
+        criteriaQuery.where(criteriaBuilder.or(predicateOfOrs.toArray(new Predicate[predicateOfOrs.size()])),
+                criteriaBuilder.isNull(root.get("library")));
 
         TypedQuery<Aggregation> query = entityManager.createQuery(criteriaQuery);
-        Aggregation aggregation;
+        List<Aggregation> aggregations = new ArrayList<>();
         try {
-            aggregation = query.getSingleResult();
-            TypedQuery<LevelOfDetection> lodQuery =
-                    entityManager.createNamedQuery(LevelOfDetection.LOD_QUERY_NAME, LevelOfDetection.class)
-                            .setParameter(SAMPLE_COLUMN, aggregation.getSample())
-                            .setParameter(PROJECT_COLUMN, aggregation.getProject())
-                            .setParameter(VERSION_COLUMN, aggregation.getVersion());
-            aggregation.setLevelOfDetection(lodQuery.getSingleResult());
+            aggregations = query.getResultList();
         } catch (NoResultException e) {
-            aggregation = null;
+            log.info("Unable to retrieve aggregations based on given criteria");
         }
-        return aggregation;
+        for(Aggregation aggregation:aggregations) {
+            try {
+                TypedQuery<LevelOfDetection> lodQuery =
+                        entityManager.createNamedQuery(LevelOfDetection.LOD_QUERY_NAME, LevelOfDetection.class)
+                                .setParameter(SAMPLE_COLUMN, aggregation.getSample())
+                                .setParameter(PROJECT_COLUMN, aggregation.getProject())
+                                .setParameter(VERSION_COLUMN, aggregation.getVersion());
+                aggregation.setLevelOfDetection(lodQuery.getSingleResult());
+            } catch (NoResultException e) {
+                log.info(String.format("Unable to retrieve LOD info for Aggregation based on : " +
+                                       "Project %s, Sample %s, Version %d", aggregation.getProject(),
+                        aggregation.getSample(), aggregation.getVersion()));
+            }
+        }
+        return aggregations;
     }
 
 }

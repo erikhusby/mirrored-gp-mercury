@@ -12,8 +12,16 @@
                        businessKeyValue="${actionBean.editResearchProject.businessKey}">
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
+            function getParameterByName(name) {
+                name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+                var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+                    results = regex.exec(location.search);
+                return results == null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+            }
+
             $j(document).ready(function () {
                 $j( "#tabs" ).tabs({
+                active: getParameterByName("rpSelectedTab"),
                     beforeLoad: function(event, ui) {
                         if (ui.panel.children('form').length == 0) {
                             if (ui.panel.children('p.loading').length == 0) {
@@ -45,6 +53,13 @@
                 });
 
                 setupDialogs();
+
+                var selectedTabValue = '${actionBean.rpSelectedTab}';
+
+                if(selectedTabValue !== "") {
+                    $j("#tabs").tabs("load",'${actionBean.rpSelectedTab}');
+                    $j("#tabs").tabs({active: eval('${actionBean.rpSelectedTab}')});
+                }
             });
 
             function showBeginCollaboration() {
@@ -518,7 +533,8 @@
             <ul>
                 <li><a href="#ordersTab">Orders</a></li>
                 <li><stripes:link beanclass="${actionBean.class.name}" event="viewSubmissions">Submission Requests
-                        <stripes:param name="researchProject" value="${actionBean.researchProject}"/>
+                        <stripes:param name="researchProject" value="${actionBean.researchProject}" />
+                        <stripes:param name="rpSelectedTab" value="<%= ResearchProjectActionBean.RESEARCH_PROJECT_SUBMISSIONS_TAB%>" />
                     </stripes:link></li>
             </ul>
 

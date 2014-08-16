@@ -94,6 +94,12 @@ public class Aggregation {
         this.levelOfDetection = levelOfDetection;
     }
 
+    public Aggregation(String project, String sample, Integer version) {
+        this.project = project;
+        this.sample = sample;
+        this.version = version;
+    }
+
     public Double getQualityMetric(String dataType) {
         switch (dataType) {
         case BassDTO.DATA_TYPE_EXOME:

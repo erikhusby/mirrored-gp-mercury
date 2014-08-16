@@ -1,57 +1,107 @@
+<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"/>
+<head>
+    <style type="text/css">
+    .submission-status-tooltip {
+        border-bottom: 1px dotted #000;
+        text-decoration: none;
+    }
+    </style>
+    <script type="text/javascript">
+        $j(document).ready(function () {
+            $j("#bioProject").tokenInput(
+                    "${ctxpath}/projects/project.action?bioProjectAutocomplete=", {
+                        hintText: "Type a BioProject Name",
+                        prePopulate: ${actionBean.ensureStringResult(actionBean.bioProjectTokenInput.completeData)},
+                        tokenDelimiter: "${actionBean.bioProjectTokenInput.separator}",
+                        preventDuplicates: true,
+                        tokenLimit: 1,
+                        resultsFormatter: formatInput
+                    }
+            );
+
+        });
+        function formatInput(item) {
+                        var extraCount = (item.extraCount == undefined) ? "" : item.extraCount;
+                        return "<li>" + item.dropdownItem + extraCount + '</li>';
+                    }
+        $j(document).ready(function () {
+            var oTable = $j('#submissionSamples').dataTable({
+                "aaSorting": [
+                        [1, 'asc']
+                ],
+                "aoColumns": [
+//                    {"bSortable": false},               //Checkbox
+                    {"bSortable": true},                //Sample
+//                    {"bSortable": false},                //BioSample
+                    {"bSortable": false},               //Data Type
+                    {"bSortable": false},               //PDOs
+                    {"bSortable": false},               //Aggregation Project
+                    {"bSortable": false},               //File Type
+                    {"bSortable": false},               //Version
+                    {"bSortable": false},               //QualityMetric
+                    {"bSortable": false},               //Contamination
+                    {"bSortable": false},               //Fingerprint
+                    {"bSortable": false},               //Lanes in Aggregation
+                    {"bSortable": false},               //Blacklisted Lanes
+                    {"bSortable": false},               //Submitted Version
+                    {"bSortable": false},               //Current Status
+                    {"bSortable": false}                //Status Date
+                ]
+            });
+            $j('.shiftCheckbox').enableCheckboxRangeSelection();
+            $j(".submission-status-tooltip").popover({
+                trigger: "hover",
+                html: "true",
+                "data-container": "body",
+                "data-toggle": "popover"
+            });
+        })
+    </script>
+</head>
+
 
 <stripes:form beanclass="${actionBean.class.name}">
-    <%--<ul>--%>
-    <%--<li>--%>
-    <%--<input type="checkbox">Select latest bam for each sample if coverage > <stripes:text class="defaultText" name="coverage" maxlength="250"/>--%>
-    <%--</li>--%>
-    <%--<li>--%>
-    <%--<input type="checkbox">Select latest bam for each sample if contamination < <stripes:text class="defaultText" name="contamination" maxlength="250"/>--%>
-    <%--</li>--%>
-    <%--<li>--%>
-    <%--<input type="checkbox">Require fingerpint match--%>
-    <%--</li>--%>
+    <stripes:hidden name="submitString"/>
+    <stripes:hidden name="researchProject" value="${actionBean.editResearchProject.jiraTicketKey}"/>
 
-    <%--</ul>--%>
+    <div class="control-group">
+        <stripes:label for="bioProject" class="control-label">Choose a BioProject</stripes:label>
 
-    <%--<table>--%>
-    <%--<tr>--%>
-    <%--<td title="Choose the BioProject to which all samples will be submitted">BioProject:</td>--%>
-    <%--<td>--%>
-    <%--<stripes:select name="selectedBioProject" onchange="guessBioSamplesForBioProject(this.value)">--%>
-    <%--<stripes:option  label="Choose a BioProject" value=""/>--%>
-    <%--<stripes:options-collection collection="${actionBean.editResearchProject.bioProjects}"--%>
-    <%--value="name" label="name"/>--%>
-    <%--</stripes:select>--%>
-    <%--</td>--%>
-    <%--</tr>--%>
-    <%--</table>--%>
+        <div class="controls">
+            <stripes:text id="bioProject" name="bioProjectTokenInput.listOfKeys"/>
+        </div>
+    </div>
 
-    <table class="simple" id="submissionSamples" style="table-layout: fixed;">
+    <table class="table simple" id="submissionSamples" style="table-layout: fixed;">
         <thead>
         <tr>
             <!-- add data type to big list -->
             <!-- only show latest single file -->
-            <%--<th width="20">Choose</th>--%>
-            <th width="100">Sample</th>
-            <th width="100">BioSample</th>
-            <th width="75">Data Type</th>
-            <th width="180">PDOs</th>
-            <th width="100">Aggregation Project</th>
-            <th width="80">File Type</th>
-            <th width="20">Version</th>
-            <th width="80">Quality Metric</th>
-            <th width="20">Contamination</th>
-            <th width="20">Fingerprint</th>
+            <%--<th width="20">--%>
+                <%--<input for="count" type="checkbox" class="checkAll"/>--%>
+                <%--<span id="count" class="checkedCount"></span>--%>
+            <%--</th>--%>
+            <th width="80">Sample</th>
+            <%--<th width="80">BioSample</th>--%>
+            <%--<th width="100">BioSample</th>--%>
+            <th width="65">Data Type</th>
+            <th width="200">PDOs</th>
+            <th width="70">Aggregation Project</th>
+            <th width="50">File Type</th>
+            <th width="30">Version</th>
+            <th width="40">Quality Metric</th>
+            <th width="75">Contamination</th>
+            <th width="70">Fingerprint</th>
             <!-- add # lanes, # lanes blacklisted, notes -->
-            <th width="20">Lanes in Aggregation</th>
-            <th width="20">Blacklisted Lanes</th>
-            <th width="20">Submitted Version</th>
-            <th width="20">Current Status</th>
-            <th width="20">Status Date</th>
+            <th width="70">Lanes in Aggregation</th>
+            <th width="60">Blacklisted Lanes</th>
+            <th width="60">Submitted Version</th>
+            <th width="50">Current Status</th>
+            <th width="40">Status Date</th>
 
         </tr>
         </thead>
@@ -64,29 +114,26 @@
 
         <c:forEach items="${actionBean.submissionSamples}" var="submissionSample">
             <tr>
-                <%--<td class="fileCheckbox" style="vertical-align: middle; text-align: left;"--%>
-                <%--data-contamination="${submissionSample.contamination}"--%>
-                <%--data-coverage="${submissionSample.submissionFile.metrics.qualityMetricValue}">--%>
-                <%--<stripes:checkbox title="${submissionSample.submissionFile.label}" class="shiftCheckbox"--%>
-                <%--name="selectedFiles"--%>
-                <%--value="${submissionSample.submissionFile.label}"/>--%>
+                <%--<td>--%>
+                    <%--<stripes:checkbox name="selectedSubmissionSamples" class="shiftCheckbox"--%>
+                                      <%--value="${submissionSample.sampleName}" />--%>
                 <%--</td>--%>
+
                 <td>${submissionSample.sampleName}</td>
-                <td><%--bio-sample--%></td>
+                <%--<td><stripes:text name="bioSamples[${submissionSample.sampleName}]" size="4"/></td>--%>
+                <%--<td>&lt;%&ndash;bio-sample&ndash;%&gt;</td>--%>
                 <td>${submissionSample.dataType}</td>
                 <td style="padding: 5px;
                                                text-align: center;">
                     <table class="simple" style="table-layout: fixed;">
                         <c:forEach items="${submissionSample.productOrders}" var="pdo">
                             <tr>
-                                <td width="100">${pdo.businessKey}</td>
-                                <td style="max-width: 100px;
-                                                    min-width: 100px;
-                                                    overflow: hidden;
-                                                    text-overflow: ellipsis;
-                                                    white-space: nowrap;"
+                                <td width="60">${pdo.businessKey}</td>
+                                <td style="max-width: 140px; min-width: 100px; overflow: hidden;
+                                text-overflow: ellipsis; white-space: nowrap;"
+                                    class="ellipsis"
                                     title="${pdo.product.productName}">
-                                    ${pdo.product.productName}</td>
+                                        ${pdo.product.productName}</td>
                             </tr>
                         </c:forEach>
                     </table>
@@ -99,18 +146,26 @@
                 <td>${submissionSample.fingerprintLOD.displayString()}</td>
                 <td>${submissionSample.lanesInAggregation}</td>
                 <td><%--blacklisted lanes--%></td>
-                <td><%--submitted version--%></td>
-                <td><%--current status--%></td>
-                <td><fmt:formatDate value="${submissionSample.dateCompleted}"/></td>
-
-                <%--<c:if test="${submissionSample.la == 0}">--%>
-                <%--<td colspan="11" style="text-align: center;">--%>
-                <%--no files available--%>
-                <%--</td>--%>
-                <%--</c:if>--%>
+                <td>${submissionSample.version}</td>
+                <td>
+                        <c:choose><c:when test="${fn:length(submissionSample.submittedErrorsArray)>0}">
+                        <span class="submission-status-tooltip popover-dismiss"
+                              title="${ submissionSample.submittedStatus}"
+                              data-content="${fn:join(submissionSample.submittedErrorsArray, "<br/>")}">
+                          ${submissionSample.submittedStatus}
+                        </span>
+                        </c:when>
+                        <c:otherwise>${submissionSample.submittedStatus}</c:otherwise></c:choose>
+                </td>
+                <td>${submissionSample.statusDate}</td>
             </tr>
         </c:forEach>
         </tbody>
     </table>
+    <%--<div class="span1">--%>
+        <%--<stripes:submit name="<%=ResearchProjectActionBean.POST_SUBMISSIONS_ACTION%>" value="Post Selected Submissions"--%>
+                        <%--class="btn btn-primary" id="postSubmissionBtn"/>--%>
+    <%--</div>--%>
+
     <%--<button>Submit these files</button>--%>
 </stripes:form>
