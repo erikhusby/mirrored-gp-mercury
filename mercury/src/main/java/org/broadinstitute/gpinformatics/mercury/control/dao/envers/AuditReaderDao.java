@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.envers;
 
 import com.sun.xml.ws.developer.Stateful;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -231,7 +232,7 @@ public class AuditReaderDao extends GenericDao {
     public Long getPreviousVersionRevId(Long entityId, Class cls, long revId) {
         // The previous rev will then be the top of the ordered list.
         List<Long> list = getPreviousVersionRevIds(entityId, cls, revId);
-        return (list != null) ? list.get(0) : null;
+        return CollectionUtils.isNotEmpty(list) ? list.get(0) : null;
     }
 
 
