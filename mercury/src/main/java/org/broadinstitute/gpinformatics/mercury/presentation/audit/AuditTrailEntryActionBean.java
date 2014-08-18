@@ -147,10 +147,13 @@ public class AuditTrailEntryActionBean extends CoreActionBean {
     private List<String> getFieldDiffs(List<EntityField> prevFields, List<EntityField> curFields) {
         List<String> names = new ArrayList<>();
         if (prevFields != null && curFields != null) {
+            // Since EntityFields were obtained from one audit table they will always have the same
+            // column names, and should have been sorted by name, except for entity id which should
+            // be in the first field.  Entity id is always equal but we want it to be present in the
+            // list of fields, so it is excluded from being tested.
             // Uses reverse iteration so that List.remove(index) works.
-            // Assumes that entity id is in the first field; it isn't tested so that it's always present.
             for (int i = prevFields.size() - 1; i > 0; --i) {
-                if (matchFields(prevFields.get(i), curFields.get(i))) {
+                if (equals(prevFields.get(i), curFields.get(i))) {
                     prevFields.remove(i);
                     curFields.remove(i);
                 }
@@ -172,22 +175,34 @@ public class AuditTrailEntryActionBean extends CoreActionBean {
         return names;
     }
 
-    private boolean matchFields(EntityField f1, EntityField f2) {
+    // Returns true if the two EntityFields have identical content.
+    private boolean equals(EntityField f1, EntityField f2) {
         if (f1.getFieldName() != f2.getFieldName()) {
             throw new RuntimeException("Found field " + f2.getFieldName() + " instead of field " + f1.getFieldName() +
                                        " in version " + revId + " of class " + displayClassname);
         }
+        // Tests the single reference/value.
         if (f1.getValue() == null && f2.getValue() != null || f1.getValue() != null && f2.getValue() == null) {
             return false;
         }
         if (f1.getValue() != null && !f1.getValue().equals(f2.getValue())) {
             return false;
         }
-        String valueList1 = (f1.getValueList() != null) ? StringUtils.join(f1.getValueList(), ",") : "";
-        String valueList2 = (f2.getValueList() != null) ? StringUtils.join(f2.getValueList(), ",") : "";
+        // Tests the list.  It is expected to be already sorted.
+        String valueList1 = (f1.getEntityFieldList() != null) ? StringUtils.join(f1.getEntityFieldList(), ",") : "";
+        String valueList2 = (f2.getEntityFieldList() != null) ? StringUtils.join(f2.getEntityFieldList(), ",") : "";
         if (!valueList1.equals(valueList2)) {
             return false;
         }
+        // Tests the map.  It is expected to be already sorted.
+        String valueMap1 = (f1.getEntityFieldMap() != null) ?
+                StringUtils.join(f1.getEntityFieldMap().entrySet(), ",") : "";
+        String valueMap2 = (f2.getEntityFieldMap() != null) ?
+                StringUtils.join(f2.getEntityFieldMap().entrySet(), ",") : "";
+        if (!valueMap1.equals(valueMap2)) {
+            return false;
+        }
+
         return true;
     }
 
@@ -217,8 +232,7 @@ public class AuditTrailEntryActionBean extends CoreActionBean {
     private void generateAuditedEntity() {
         // Gets entity from Envers.
         Object entity = auditReaderDao.getEntityAtVersion(entityId, entityClass, revId);
-        List<EntityField> fields = (entity != null) ?
-                ReflectionUtil.formatFields(entity, entityClass) : null;
+        List<EntityField> fields = (entity != null) ? ReflectionUtil.formatFields(entity, entityClass) : null;
         auditEntity = new AuditEntity(revId, displayClassname, entityId, fields);
     }
 

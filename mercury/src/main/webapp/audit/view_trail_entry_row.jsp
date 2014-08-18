@@ -1,48 +1,46 @@
-<%-- This jsp gets inserted as a subroutine for view_trail_entry.jsp and view_entity.jsp --%>
+<%--
+This jsp gets inserted as a subroutine for view_trail_entry.jsp and view_entity.jsp.
+It displays a single value/reference, a list of them, or a map of them.
 
+@param auditEntity  contains the fields and revId
+@param actionBean   is the target of the link
+--%>
 
 <c:if test="${auditEntity.fields != null}">
     <c:forEach items="${auditEntity.fields}" var="field">
         <td>
             <c:choose>
-                <c:when test="${field.valueList != null}">
-                    <%-- Puts the space-delimited list of values or references in one table cell. --%>
-                    <c:forEach items="${field.valueList}" var="fieldItem">
-                        <c:choose>
-                            <c:when test="${fieldItem.canonicalClassname != null && fieldItem.value != null}">
-                                <%-- displays the link to another entity --%>
-                                <stripes:link beanclass="${actionBean.class.name}" event="viewEntity">
-                                    <stripes:param name="revId" value="${auditEntity.revId}"/>
-                                    <stripes:param name="canonicalClassname" value="${fieldItem.canonicalClassname}"/>
-                                    <stripes:param name="entityId" value="${fieldItem.value}"/>
-                                    ${fieldItem.value}
-                                </stripes:link>
-                            </c:when>
-                            <c:otherwise>
-                                ${fieldItem.value}
-                            </c:otherwise>
-                        </c:choose>
-                        &MediumSpace;
+
+                <%-- Displays the map as a space-delimited list of pairs, all in one table cell. --%>
+                <c:when test="${field.entityFieldMap != null}">
+                    <c:forEach items="${field.entityFieldMap}" var="mapItem">
+                        <c:set var="fieldItem" value="${mapItem.value}"/>
+                        ${mapItem.key}&MediumSpace;=&MediumSpace;
+                        <%@ include file="link_or_value.jsp" %>
+                        <br/>
                     </c:forEach>
-                    <c:if test="${fn:length(field.valueList) == 0}">
+                    <c:if test="${fn:length(field.entityFieldMap) == 0}">
                         null
                     </c:if>
                 </c:when>
-                <c:when test="${field.canonicalClassname != null && field.value != null}">
-                    <%-- displays the link to another entity --%>
-                    <stripes:link beanclass="${actionBean.class.name}" event="viewEntity">
-                        <stripes:param name="revId" value="${auditEntity.revId}"/>
-                        <stripes:param name="canonicalClassname" value="${field.canonicalClassname}"/>
-                        <stripes:param name="entityId" value="${field.value}"/>
-                        ${field.value}
-                    </stripes:link>
+
+                <%-- Displays the list as space-delimited references/values, all in one table cell. --%>
+                <c:when test="${field.entityFieldList != null}">
+                    <c:forEach items="${field.entityFieldList}" var="fieldItem">
+                        <%@ include file="link_or_value.jsp" %>
+                        &MediumSpace;
+                    </c:forEach>
+                    <c:if test="${fn:length(field.entityFieldList) == 0}">
+                        null
+                    </c:if>
                 </c:when>
-                <c:when test="field.value == null">
-                    null
-                </c:when>
+
+                <%-- Displays the single space-delimited reference/value in one table cell. --%>
                 <c:otherwise>
-                    ${field.value}
+                    <c:set var="fieldItem" value="${field}"/>
+                    <%@ include file="link_or_value.jsp" %>
                 </c:otherwise>
+
             </c:choose>
         </td>
     </c:forEach>
