@@ -28,7 +28,7 @@ public class SubmissionStatusDetailBeanTest {
         testStatus.setStatus("InTransit");
 
         Assert.assertEquals(testStatus.getStatus(),
-                SubmissionStatusDetailBean.Status.IN_TRANSIT.getDescription());
+                SubmissionStatusDetailBean.Status.IN_TRANSIT.getLabel());
 
         testStatus.setErrors(Arrays.asList(testError1, testError2));
 

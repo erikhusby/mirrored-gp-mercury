@@ -105,7 +105,7 @@ public class AuditReaderDao extends GenericDao {
             predicate = criteriaBuilder.and(
                     criteriaBuilder.greaterThanOrEqualTo(root.get(RevInfo_.revDate), startDate),
                     criteriaBuilder.lessThan(root.get(RevInfo_.revDate), endDate));
-        } else if (IS_NULL_USER.equals(username) || StringUtils.isNotBlank(username)) {
+        } else if (IS_NULL_USER.equals(username) || StringUtils.isBlank(username)) {
             predicate = criteriaBuilder.and(
                     criteriaBuilder.greaterThanOrEqualTo(root.get(RevInfo_.revDate), startDate),
                     criteriaBuilder.lessThan(root.get(RevInfo_.revDate), endDate),

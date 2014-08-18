@@ -539,16 +539,13 @@
             </ul>
 
             <div id="ordersTab">
-        <div class="tableBar" style="clear:both;">
-            <h4 style="display:inline">Orders</h4>
 
-            <stripes:link title="Create product with research project ${actionBean.editResearchProject.title}"
+            <stripes:link title="Create product order with research project ${actionBean.editResearchProject.title}"
                           beanclass="<%=ProductOrderActionBean.class.getName()%>" event="create" class="pull-right">
                 <stripes:param name="researchProjectKey" value="${actionBean.editResearchProject.businessKey}"/>
                 <i class="icon-plus"></i>
                 Add New Product Order
             </stripes:link>
-        </div>
 
         <table id="orderList" class="table simple">
             <thead>

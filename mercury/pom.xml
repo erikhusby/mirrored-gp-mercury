@@ -209,6 +209,10 @@
 
         <umlgraph.path>must be specified</umlgraph.path>
 
+        <!-- Default location of the .keystore for tests -->
+        <keystoreFile>../JBossConfig/src/main/resources/keystore/.keystore</keystoreFile>
+        <keystorePassword>changeit</keystorePassword>
+
     </properties>
 
     <profiles>
@@ -2221,6 +2225,12 @@
                     <groups>${tests.groups}</groups>
                     <excludedGroups>${tests.excludedGroups}</excludedGroups>
                     <!--<forkMode>never</forkMode>-->
+                    <systemPropertyVariables>
+                        <javax.net.ssl.keyStore>${keystoreFile}</javax.net.ssl.keyStore>
+                        <javax.net.ssl.keyStorePassword>${keystorePassword}</javax.net.ssl.keyStorePassword>
+                        <javax.net.ssl.trustStore>${keystoreFile}</javax.net.ssl.trustStore>
+                        <javax.net.ssl.trustStorePassword>${keystorePassword}</javax.net.ssl.trustStorePassword>
+                    </systemPropertyVariables>
                     <properties>
                         <property>
                             <name>listener</name>

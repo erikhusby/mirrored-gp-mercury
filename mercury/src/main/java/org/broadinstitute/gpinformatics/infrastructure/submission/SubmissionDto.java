@@ -15,6 +15,7 @@ import com.sun.istack.Nullable;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
 
@@ -32,7 +33,8 @@ public class SubmissionDto {
     private final BassDTO bassDTO;
     private final Aggregation aggregation;
 
-    public SubmissionDto(@Nonnull BassDTO bassDTO, Aggregation aggregation, @Nonnull Collection<ProductOrder> productOrders,
+    public SubmissionDto(@Nonnull BassDTO bassDTO, Aggregation aggregation,
+                         @Nonnull Collection<ProductOrder> productOrders,
                          @Nullable SubmissionStatusDetailBean statusDetailBean) {
         this.bassDTO = bassDTO;
         this.aggregation = aggregation;
@@ -143,9 +145,17 @@ public class SubmissionDto {
 
     public String getStatusDate() {
         String format = "";
-        if(statusDetailBean != null && statusDetailBean.getLastStatusUpdate() != null) {
+        if (statusDetailBean != null && statusDetailBean.getLastStatusUpdate() != null) {
             format = DATE_FORMAT.format(statusDetailBean.getLastStatusUpdate());
         }
         return format;
+    }
+
+    public String getBioProject() {
+        String bioproject = "";
+        if (statusDetailBean != null && statusDetailBean.getBioproject() != null) {
+            bioproject = statusDetailBean.getBioproject().getAccession();
+        }
+        return bioproject;
     }
 }
