@@ -43,6 +43,7 @@
                     }
         $j(document).ready(function () {
             var oTable = $j('#submissionSamples').dataTable({
+                "oTableTools": ttExportDefines,
                 "aaSorting": [
                         [1, 'asc']
                 ],
