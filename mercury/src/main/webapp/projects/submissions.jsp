@@ -130,7 +130,7 @@
             <tr>
                 <td>
                     <stripes:checkbox name="selectedSubmissionSamples" class="shiftCheckbox"
-                                      value="${submissionSample.sampleName}" />
+                                      value="${submissionSample.sampleName}" disabled="${not empty submissionSample.submittedStatus ? 'disabled' : ''}" />
                 </td>
 
                 <td>${submissionSample.sampleName}</td>
