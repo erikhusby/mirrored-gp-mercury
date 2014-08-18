@@ -30,6 +30,7 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.search.OptionValueDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.PaginationDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
@@ -203,6 +204,9 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
     @Inject
     private BSPUserList bspUserList;
 
+    @Inject
+    private OptionValueDao optionValueDao;
+
     /**
      * Called when the user first visits the page, this method fetches preferences.
      *
@@ -213,7 +217,6 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
     public Resolution queryPage() {
         getPreferences();
         searchInstance = new SearchInstance();
-        initEvalContext(searchInstance, getContext());
         searchInstance.addRequired(configurableSearchDef);
         return new ForwardResolution("/search/configurable_search.jsp");
     }
@@ -261,7 +264,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
                 break;
             }
         }
-        initEvalContext(searchInstance, getContext());
+        buildSearchContext();
         searchInstance.establishRelationships(configurableSearchDef);
         searchInstance.postLoad();
         return new ForwardResolution("/search/configurable_search.jsp");
@@ -275,7 +278,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
     public Resolution addTopLevelTerm() {
         configurableSearchDef = new SearchDefinitionFactory().getForEntity( getEntityName() );
         searchInstance = new SearchInstance();
-        initEvalContext(searchInstance, getContext());
+        buildSearchContext();
         searchInstance.addTopLevelTerm(searchTermName, configurableSearchDef);
 
         searchValueList = searchInstance.getSearchValues();
@@ -291,7 +294,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
     public Resolution addTopLevelTermWithValue() {
         configurableSearchDef = new SearchDefinitionFactory().getForEntity( getEntityName() );
         searchInstance = new SearchInstance();
-        initEvalContext(searchInstance, getContext());
+        buildSearchContext();
         SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm(searchTermName, configurableSearchDef);
 
         searchValue.setOperator(SearchInstance.Operator.EQUALS);
@@ -311,24 +314,10 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
      */
     public Resolution addChildTerm() {
         configurableSearchDef = new SearchDefinitionFactory().getForEntity( getEntityName() );
-        initEvalContext(searchInstance, getContext());
+        buildSearchContext();
         searchInstance.establishRelationships(configurableSearchDef);
         searchValueList = recurseToLeaf(searchInstance.getSearchValues());
         return new ForwardResolution("/search/search_term_fragment.jsp");
-    }
-
-    /**
-     * Initialize the evaluation context with objects associated with the current user
-     *
-     * @param searchInstance       where to set the evaluation context
-     * @param bspActionBeanContext web application context
-     */
-    private static void initEvalContext(SearchInstance searchInstance, CoreActionBeanContext bspActionBeanContext) {
-        Map<String, Object> evalContext = new HashMap<>();
-//        evalContext.put("contextGroup", bspActionBeanContext.getGroup());
-//        evalContext.put("contextSampleCollection", bspActionBeanContext.getSampleCollection());
-//        evalContext.put("contextBspDomainUser", bspActionBeanContext.getUserProfile());
-        searchInstance.setEvalContext(evalContext);
     }
 
     /**
@@ -443,6 +432,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
 
         searchInstance.getEvalContext().put(SearchDefinitionFactory.CONTEXT_KEY_BSP_USER_LIST, bspUserList );
         searchInstance.getEvalContext().put(SearchDefinitionFactory.CONTEXT_KEY_BSP_SAMPLE_SEARCH, bspSampleSearchService );
+        searchInstance.getEvalContext().put(SearchDefinitionFactory.OPTION_VALUE_DAO, optionValueDao);
     }
 
     /**
@@ -469,7 +459,6 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
                 preferenceType, searchName, preferenceMap);
         addMessages(messageCollection);
         getPreferences();
-        initEvalContext(searchInstance, getContext());
         searchInstance.establishRelationships(configurableSearchDef);
 
         // Tried to do the UI a favor and select the new search but fails to do so

@@ -6,18 +6,25 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.BspSampleSearchAddRowsListener;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +43,7 @@ public class SearchDefinitionFactory {
     public static final String CONTEXT_KEY_SEARCH_VALUE = "searchValue";
     public static final String CONTEXT_KEY_SEARCH_STRING = "searchString";
     public static final String CONTEXT_KEY_BSP_SAMPLE_SEARCH = "BSPSampleSearchService";
+    public static final String OPTION_VALUE_DAO = "OptionValueDao";
 
     public ConfigurableSearchDefinition getForEntity(String entity) {
         if (mapNameToDef.isEmpty()) {
@@ -122,8 +130,11 @@ public class SearchDefinitionFactory {
         List<SearchTerm> searchTerms = buildLabEventIds();
         mapGroupSearchTerms.put("IDs", searchTerms);
 
-        searchTerms = buildLabEventReagents();
+        searchTerms = buildLabEventReagentNestedTable();
         mapGroupSearchTerms.put("Nested Data", searchTerms);
+
+        searchTerms = buildLabEventReagents();
+        mapGroupSearchTerms.put("Reagents", searchTerms);
 
         searchTerms = buildLabEventBatch();
         mapGroupSearchTerms.put("Lab Batch", searchTerms);
@@ -139,6 +150,14 @@ public class SearchDefinitionFactory {
                 "labVessel", BucketEntry.class.getName()));
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection( "labBatch", "bucketEntries",
                 "bucketEntry", LabBatch.class.getName()));
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection( "productOrderId", "bucketEntries",
+                "bucketEntry", LabBatch.class.getName()));
+
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("reagent", "labEventId",
+                "reagents", LabEvent.class.getName()));
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("reagents", "reagents",
+                "reagentId", Reagent.class.getName()));
+
 
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
                 "LabEvent", LabEvent.class.getName(), "labEventId", 100, criteriaProjections, mapGroupSearchTerms);
@@ -489,6 +508,13 @@ public class SearchDefinitionFactory {
                 return labEvent.getEventLocation();
             }
         });
+        searchTerm.setValuesExpression(new SearchTerm.Evaluator<List<ConstrainedValue>>() {
+            @Override
+            public List<ConstrainedValue> evaluate(Object entity, Map<String, Object> context) {
+                OptionValueDao optionValueDao = (OptionValueDao) context.get( SearchDefinitionFactory.OPTION_VALUE_DAO);
+                return optionValueDao.getLabEventLocationOptionList();
+            }
+        });
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -514,6 +540,24 @@ public class SearchDefinitionFactory {
                 return bspUser.getFullName();
             }
         });
+// Too many users, select list doesn't display after 100 elements found
+//        searchTerm.setValuesExpression(new SearchTerm.Evaluator<List<ConstrainedValue>>() {
+//            @Override
+//            public List<ConstrainedValue> evaluate(Object entity, Map<String, Object> context) {
+//                List<ConstrainedValue> constrainedValues = new ArrayList<>();
+//                BSPUserList bspUserList = (BSPUserList)context.get(CONTEXT_KEY_BSP_USER_LIST);
+//                for (Map.Entry<Long,BspUser> userEntry : bspUserList.getUsers().entrySet()) {
+//                    constrainedValues.add(new ConstrainedValue(userEntry.getKey().toString(), userEntry.getValue().getFullName()));
+//                }
+//                return constrainedValues;
+//            }
+//        });
+//        searchTerm.setValueConversionExpression(new SearchTerm.Evaluator<Object>() {
+//            @Override
+//            public Object evaluate(Object entity, Map<String, Object> context) {
+//                return Long.valueOf( (String) context.get(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_STRING));
+//            }
+//        });
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -548,15 +592,42 @@ public class SearchDefinitionFactory {
         });
         searchTerms.add(searchTerm);
 
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Program Name");
+        criteriaPaths = new ArrayList<>();
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setPropertyName("programName");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            //private BSPUserList bspUserList = ServiceAccessUtility.getBean(BSPUserList.class);
+
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                LabEvent labEvent = (LabEvent) entity;
+                String programName = labEvent.getProgramName();
+                return (programName == null ? "" : programName);
+
+            }
+        });
+        searchTerm.setValuesExpression(new SearchTerm.Evaluator<List<ConstrainedValue>>() {
+            @Override
+            public List<ConstrainedValue> evaluate(Object entity, Map<String, Object> context) {
+                OptionValueDao optionValueDao = (OptionValueDao) context.get(SearchDefinitionFactory.OPTION_VALUE_DAO);
+                return optionValueDao.getLabEventProgramNameList();
+            }
+        });
+        searchTerms.add(searchTerm);
+
         return searchTerms;
     }
 
 
     /**
-     * Top down of nested query for reagents
+     * Top down of reagent nested table
      * @return List of search terms/column definitions for lab event reagent
      */
-    private List<SearchTerm> buildLabEventReagents() {
+    private List<SearchTerm> buildLabEventReagentNestedTable() {
         List<SearchTerm> searchTerms = new ArrayList<>();
 
         SearchTerm parentSearchTerm = new SearchTerm();
@@ -573,6 +644,11 @@ public class SearchDefinitionFactory {
 
         SearchTerm searchTerm = new SearchTerm();
         searchTerm.setName("Reagent Type");
+        List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
+        SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setPropertyName("name");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
@@ -584,6 +660,11 @@ public class SearchDefinitionFactory {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Reagent Lot");
+        criteriaPaths = new ArrayList<>();
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setPropertyName("lot");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
@@ -595,6 +676,11 @@ public class SearchDefinitionFactory {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Reagent Expiration");
+        criteriaPaths = new ArrayList<>();
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setPropertyName("expiration");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
@@ -607,13 +693,118 @@ public class SearchDefinitionFactory {
         return searchTerms;
     }
 
+    /**
+     * Searchable reagent fields
+     * @return List of search terms/column definitions for lab event reagent
+     */
+    private List<SearchTerm> buildLabEventReagents() {
+        List<SearchTerm> searchTerms = new ArrayList<>();
+
+        SearchTerm searchTerm = new SearchTerm();
+        searchTerm.setName("Reagent Type");
+        searchTerm.setDisplayExpression( new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                LabEvent labEvent = (LabEvent)entity;
+                List<String> reagents = new ArrayList<>();
+                for (Reagent reagent : labEvent.getReagents()) {
+                    reagents.add(reagent.getName());
+                }
+                return reagents;
+            }
+        });
+        List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
+        SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList( "reagent", "reagents" ));
+        criteriaPath.setPropertyName("name");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Reagent Lot");
+        criteriaPaths = new ArrayList<>();
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("reagent", "reagents"));
+        criteriaPath.setPropertyName("lot");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerm.setDisplayExpression( new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                LabEvent labEvent = (LabEvent)entity;
+                List<String> reagents = new ArrayList<>();
+                for (Reagent reagent : labEvent.getReagents()) {
+                    reagents.add(reagent.getLot());
+                }
+                return reagents;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Reagent Expiration");
+        criteriaPaths = new ArrayList<>();
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("reagent", "reagents"));
+        criteriaPath.setPropertyName("expiration");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerm.setDisplayExpression( new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                LabEvent labEvent = (LabEvent)entity;
+                List<Date> reagents = new ArrayList<>();
+                for (Reagent reagent : labEvent.getReagents()) {
+                    reagents.add(reagent.getExpiration());
+                }
+                return reagents;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        return searchTerms;
+    }
+
     private List<SearchTerm> buildLabEventBatch() {
         List<SearchTerm> searchTerms = new ArrayList<>();
 
         SearchTerm searchTerm = new SearchTerm();
-        searchTerm.setName("LCSET");
+        searchTerm.setName("PDO");
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
         SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList(/* LabEvent*/ "inPlaceLabEvents", /* LabVessel */ "bucketEntries", /* BucketEntry */ "productOrder" /* ProductOrder */));
+        criteriaPath.setPropertyName("jiraTicketKey");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                LabEvent labEvent = (LabEvent) entity;
+                labEvent.getProgramName();
+                Set<String> productNames = new HashSet<String>();
+                LabVessel labVessel = labEvent.getInPlaceLabVessel();
+
+                // Test req'd, DB columns are nullable
+                if (labVessel != null) {
+                    Set<BucketEntry> bucketEntries = labVessel.getBucketEntries();
+                    if ( bucketEntries != null && !bucketEntries.isEmpty() ) {
+                        Iterator<BucketEntry> iterator = bucketEntries.iterator();
+                        BucketEntry bucketEntry = iterator.next();
+                        productNames.add( bucketEntry.getProductOrder().getJiraTicketKey() );
+                    }
+                }
+
+                return new ArrayList( productNames);
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("LCSET");
+        criteriaPaths = new ArrayList<>();
+        criteriaPath = new SearchTerm.CriteriaPath();
 
         criteriaPath.setCriteria(Arrays.asList(/* LabEvent*/ "inPlaceLabEvents", /* LabVessel */ "bucketEntries", /* BucketEntry */ "labBatch" /* LabBatch */));
         criteriaPath.setPropertyName("batchName");
@@ -623,8 +814,8 @@ public class SearchDefinitionFactory {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
                 LabEvent labEvent = (LabEvent) entity;
-
                 List<String> lcSetNames = new ArrayList<>();
+
                 for (LabBatch labBatch : labEvent.getComputedLcSets()) {
                     lcSetNames.add(labBatch.getBatchName());
                 }
@@ -659,13 +850,13 @@ public class SearchDefinitionFactory {
         List<SearchTerm> searchTerms = new ArrayList<>();
 
         SearchTerm searchTerm = new SearchTerm();
-        searchTerm.setName("Lab Vessel Type");
+        searchTerm.setName("Source Lab Vessel Type");
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
                 List<String> results = new ArrayList<>();
                 LabEvent labEvent = (LabEvent) entity;
-                for (LabVessel vessel : labEvent.getAllLabVessels()) {
+                for (LabVessel vessel : labEvent.getSourceLabVessels()) {
                     results.add(vessel.getType().getName());
                 }
                 return results;
@@ -674,28 +865,47 @@ public class SearchDefinitionFactory {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
-        searchTerm.setName("Well Position");
+        searchTerm.setName("Target Lab Vessel Type");
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
                 List<String> results = new ArrayList<>();
                 LabEvent labEvent = (LabEvent) entity;
-                for (LabVessel vessel : labEvent.getAllLabVessels()) {
-                    Set<VesselContainer<?>> containers = vessel.getContainers();
-                    VesselContainer<?> container = null;
-                    if (containers.size() > 1) {
-                        for (VesselContainer<?> vesselContainer : containers) {
-                            // todo jmt this comparison is not safe
-                            if (vesselContainer.getEmbedder().getCreatedOn().getTime() / 1000L ==
-                                labEvent.getEventDate().getTime() / 1000L) {
-                                container = vesselContainer;
-                            }
-                        }
-                    } else if (!containers.isEmpty()) {
-                        container = containers.iterator().next();
+                for (LabVessel vessel : labEvent.getTargetLabVessels()) {
+                    results.add(vessel.getType().getName());
+                }
+                return results;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Source Barcode");
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                List<String> results = new ArrayList<>();
+                LabEvent labEvent = (LabEvent) entity;
+                boolean hasAncillaryVessels = false;
+                // Section transfer is only one with source ancillary vessels
+                for (SectionTransfer xfer : labEvent.getSectionTransfers()) {
+                    if( xfer.getAncillarySourceVessel() != null ) {
+                        results.add(xfer.getAncillarySourceVessel().getLabel());
+                        // Cheap enough...
+                        hasAncillaryVessels = true;
                     }
-                    if (container != null) {
-                        results.add(container.getPositionOfVessel(vessel).toString());
+                }
+
+                if(!hasAncillaryVessels){
+                    for (LabVessel vessel : labEvent.getSourceLabVessels()) {
+                        if( vessel instanceof TubeFormation) {
+                            TubeFormation tubes = (TubeFormation) vessel;
+                            for ( RackOfTubes rack : tubes.getRacksOfTubes()) {
+                                results.add(rack.getLabel());
+                            }
+                        } else {
+                            results.add(vessel.getLabel());
+                        }
                     }
                 }
                 return results;
@@ -704,14 +914,40 @@ public class SearchDefinitionFactory {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
-        searchTerm.setName("Barcode");
+        searchTerm.setName("Target Barcode");
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
                 List<String> results = new ArrayList<>();
                 LabEvent labEvent = (LabEvent) entity;
-                for (LabVessel vessel : labEvent.getAllLabVessels()) {
-                    results.add(vessel.getLabel());
+                boolean hasAncillaryVessels = false;
+                // Section, Vessel to Section, and Cherry Pick transfers all may have target ancillary vessels
+                for (SectionTransfer xfer : labEvent.getSectionTransfers()) {
+                    if( xfer.getAncillaryTargetVessel() != null ) {
+                        results.add(xfer.getAncillaryTargetVessel().getLabel());
+                        // Cheap enough...
+                        hasAncillaryVessels = true;
+                    }
+                }
+                for (VesselToSectionTransfer xfer : labEvent.getVesselToSectionTransfers()) {
+                    if( xfer.getAncillaryTargetVessel() != null ) {
+                        results.add(xfer.getAncillaryTargetVessel().getLabel());
+                        // Cheap enough...
+                        hasAncillaryVessels = true;
+                    };
+                }
+                for (CherryPickTransfer xfer : labEvent.getCherryPickTransfers()) {
+                    if( xfer.getAncillaryTargetVessel() != null ) {
+                        results.add(xfer.getAncillaryTargetVessel().getLabel());
+                        // Cheap enough...
+                        hasAncillaryVessels = true;
+                    }
+                }
+
+                if(!hasAncillaryVessels){
+                    for (LabVessel vessel : labEvent.getTargetLabVessels()) {
+                        results.add(vessel.getLabel());
+                    }
                 }
                 return results;
             }
