@@ -14,6 +14,7 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.bsp.client.workrequest.kit.KitTypeAllowanceSpecification;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ApplicationValidationException;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
@@ -26,6 +27,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.entity.work.MessageDataValue;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPGroupCollectionList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
@@ -58,7 +60,9 @@ import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -121,6 +125,9 @@ public class ProductOrderResource {
 
     @Inject
     private BSPGroupCollectionList bspGroupCollectionList;
+
+    @Inject
+    private BillingEjb billingEjb;
 
     /**
      * Should be used only by test code
@@ -349,7 +356,23 @@ public class ProductOrderResource {
         try {
             // Add the samples.
             productOrderEjb.addSamples(bspUser, pdoKey, samplesToAdd, MessageReporter.UNUSED);
-        } catch (ProductOrderEjb.NoSuchPDOException | IOException | NoJiraTransitionException | BucketException e) {
+
+            // If the PDO is not a sample initiation PDO, but DOES have a sample initiation add on, then add a ledger
+            // entry for this product order and sample.
+            if (!order.isSampleInitiation() && (order.hasSampleInitiationAddOn())) {
+
+                // Since we may check on product orders one at a time per sample, this will keep us from
+                // doing two queries every time within the following loop.
+                Map<String, Boolean> orderLockoutCache = new HashMap<>();
+
+                // Go through each sample and bill it without any data to accompany it.
+                for (ProductOrderSample sample : samplesToAdd) {
+                    billingEjb.autoBillSample(
+                            pdoKey, sample.getAliquotId(), new Date(), Collections.<String, MessageDataValue>emptyMap(),
+                            orderLockoutCache);
+                }
+            }
+        } catch (Exception e) {
             throw new ApplicationValidationException("Could not add samples due to error: " + e);
         }
 

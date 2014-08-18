@@ -25,12 +25,17 @@ $j(document).ready(function () {
         success: showSummary
     });
 
-    // Initializes the previously chosen sample kit detail info in the sample kit display section
-    <c:forEach items="${actionBean.editOrder.productOrderKit.kitOrderDetails}" var="kitDetail">
-    showKitDetail('${kitDetail.numberOfSamples}', '${kitDetail.kitType.displayName}',
-            '${kitDetail.organismName}', '${kitDetail.bspMaterialName}',
-            '${kitDetail.getPostReceivedOptionsAsString("<br/>")}');
-    </c:forEach>
+    // Only show the fill kit detail information for sample initiation PDOs. With the collaboration portal, there
+    // can be kit definitions but since that is all automated, we do not want to show that. It is fairly irrelevant
+    // after the work request happens. Adding a work request id field to the UI when there is a work request with
+    // a non-sample initiation PDO.
+    <c:if test="${actionBean.editOrder.isSampleInitiation()}">
+        <c:forEach items="${actionBean.editOrder.productOrderKit.kitOrderDetails}" var="kitDetail">
+            showKitDetail('${kitDetail.numberOfSamples}', '${kitDetail.kitType.displayName}',
+                    '${kitDetail.organismName}', '${kitDetail.bspMaterialName}',
+                    '${kitDetail.getPostReceivedOptionsAsString("<br/>")}');
+        </c:forEach>
+    </c:if>
 
     // if there are no sample kit details, just show one empty detail section
     if (kitDefinitionIndex == 0) {
@@ -759,6 +764,21 @@ function formatInput(item) {
     </div>
 </div>
 
+<!-- If there is a work request AND this is NOT an initiation PDO (since those show the request differently), show
+     the request as an external link. -->
+<c:if test="${actionBean.editOrder.productOrderKit.workRequestId &&
+              not actionBean.editOrder.isSampleInitiation()}">
+    <div class="view-control-group control-group">
+        <label class="control-label label-form">Work Request</label>
+
+        <div class="controls">
+            <div class="form-value">
+                <a href="${actionBean.workRequestUrl}" class="external" target="BSP">
+                    ${actionBean.editOrder.productOrderKit.workRequestId}</a>
+            </div>
+        </div>
+    </div>
+</c:if>
 
 <div class="view-control-group control-group">
     <label class="control-label label-form">Order Status</label>

@@ -1565,6 +1565,20 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return irbRequiredStartDate;
     }
 
+    /**
+     * Go through every add on and report if any of them are sample initiation products.
+     *
+     * @return true if there is even one initiation product, false otherwise.
+     */
+    public boolean hasSampleInitiationAddOn() {
+        for (ProductOrderAddOn addOn : addOns) {
+            if (addOn.getAddOn().isSampleInitiationProduct()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     /**
      * If a reason is specified for why you can skip a quote it is OK to do.
