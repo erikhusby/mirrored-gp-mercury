@@ -86,7 +86,7 @@ public class SubmissionsServiceImplTest {
         Collection<SubmissionStatusDetailBean> submissionStatus = submissionsService.getSubmissionStatus(testUUID);
         assertThat(submissionStatus.size(), is(1));
         for (SubmissionStatusDetailBean submissionStatusDetailBean : submissionStatus) {
-            assertThat(submissionStatusDetailBean.getStatus(), is(SubmissionStatusDetailBean.Status.READY_FOR_SUBMISSION.getDescription()));
+            assertThat(submissionStatusDetailBean.getStatus(), is(SubmissionStatusDetailBean.Status.READY_FOR_SUBMISSION.getLabel()));
             assertThat(submissionStatusDetailBean.getErrors(), emptyCollectionOf(String.class));
             assertThat(DateUtils.convertDateTimeToString(submissionStatusDetailBean.getLastStatusUpdate()), notNullValue());
         }

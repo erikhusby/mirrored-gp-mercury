@@ -45,12 +45,12 @@ public class SubmissionStatusDetailBean implements Serializable {
     }
 
     public String getStatus() {
-        return (status != null)?status.getDescription():null;
+        return (status != null)?status.getLabel():null;
     }
 
     @XmlElement
     public void setStatus(String status) {
-        this.status = Status.fromDescription(status);
+        this.status = Status.fromKey(status);
     }
 
     public List<String> getErrors() {
@@ -99,25 +99,31 @@ public class SubmissionStatusDetailBean implements Serializable {
      * TODO scottmat fill in javadoc!!!
      */
     public static enum Status {
-        IN_TRANSIT("InTransit"),
-        SUBMITTED("Submitted"),
-        FAILURE("Failure"),
-        READY_FOR_SUBMISSION("ReadyForSubmission"),
-        PROCESSING("Processing");
+        IN_TRANSIT("InTransit", "In Transit"),
+        SUBMITTED("Submitted", "Submitted"),
+        FAILURE("Failure", "Failure"),
+        READY_FOR_SUBMISSION("ReadyForSubmission", "Ready For Submission"),
+        PROCESSING("Processing", "Processing");
 
-        Status(String description) {
-            this.description = description;
+        Status(String key, String label) {
+            this.key = key;
+            this.label = label;
         }
 
-        private String description;
+        private String key;
+        private String label;
 
-        public String getDescription() {
-            return description;
+        public String getKey() {
+            return key;
         }
 
-        public static Status fromDescription(String status) {
+        public String getLabel() {
+            return label;
+        }
+
+        public static Status fromKey(String status) {
             for(Status testValue:values()) {
-                if(testValue.getDescription().equals(status)) {
+                if(testValue.getKey().equals(status)) {
                     return testValue;
                 }
             }

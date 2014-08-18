@@ -82,7 +82,7 @@ public class SubmissionDtoTest {
 //        assertThat(submissionDTO.getSubmittedVersion(), submittedVersion);
         assertThat(submissionDTO.getResearchProject(), Matchers.equalTo(RESEARCH_PROJECT));
         assertThat(submissionDTO.getSubmittedStatus(), Matchers.equalTo(String.format(
-                SubmissionStatusDetailBean.Status.SUBMITTED.getDescription(),
+                SubmissionStatusDetailBean.Status.SUBMITTED.getKey(),
                 SUBMISSION_UUID, SUBMISSION_UUID)));
         assertThat(submissionDTO.getStatusDate(), Matchers.equalTo(SubmissionsServiceStub.STUB_UPDATE_DATE));
 

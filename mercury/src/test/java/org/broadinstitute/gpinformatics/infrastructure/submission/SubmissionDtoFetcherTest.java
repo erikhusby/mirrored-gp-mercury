@@ -105,7 +105,7 @@ public class SubmissionDtoFetcherTest {
             assertThat(submissionDto.getProductOrders(), containsInAnyOrder(productOrder));
             assertThat(submissionDto.getLanesInAggregation(), Matchers.equalTo(2));
             assertThat(submissionDto.getSubmittedStatus(),
-                    Matchers.equalTo(SubmissionStatusDetailBean.Status.FAILURE.getDescription()));
+                    Matchers.equalTo(SubmissionStatusDetailBean.Status.FAILURE.getKey()));
             assertThat(submissionDto.getStatusDate(), Matchers.notNullValue());
             assertThat(submissionDto.getSubmittedErrors(), Matchers.contains(NCBI_ERROR));
         }
