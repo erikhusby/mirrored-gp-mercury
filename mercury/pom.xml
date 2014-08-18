@@ -209,6 +209,10 @@
 
         <umlgraph.path>must be specified</umlgraph.path>
 
+        <!-- Default location of the .keystore for tests -->
+        <keystoreFile>../JBossConfig/src/main/resources/keystore/.keystore</keystoreFile>
+        <keystorePassword>changeit</keystorePassword>
+
     </properties>
 
     <profiles>
