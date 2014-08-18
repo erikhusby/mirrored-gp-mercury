@@ -24,8 +24,7 @@
 
         <c:forEach items="${actionBean.auditTrailEntries}" var="auditTrailEntry">
             <c:set var="auditEntryType"
-                   value='${(auditTrailEntry.previousEntity.fields == null) ?
-                    "(Created)":(auditTrailEntry.entity.fields == null ? "(Deleted)" : "(Modified)")}'/>
+                   value='${(auditTrailEntry.previousEntity.fields == null) ? "(Created)" : (auditTrailEntry.entity.fields == null ? "(Deleted)" : "(Modified)")}'/>
 
             <p/>
             <table class="table simple">
@@ -39,23 +38,23 @@
                 </thead>
                 <tbody>
 
-                <!-- The previous entity is shown if not null -->
+                <%-- The previous entity is shown if not null --%>
                 <c:set var="auditEntity" value="${auditTrailEntry.previousEntity}"/>
                 <c:if test="${auditEntity.fields != null}">
                     <tr>
-                        <!-- The revId column -->
+                        <%-- The revId column --%>
                         <td>${auditEntity.revId}</td>
-                        <!-- The entity columns -->
+                        <%-- The entity columns --%>
                         <%@ include file="view_trail_entry_row.jsp" %>
                     </tr>
                 </c:if>
 
-                <!-- The changed entity is always shown -->
+                <%-- The changed entity is always shown --%>
                 <c:set var="auditEntity" value="${auditTrailEntry.entity}"/>
                 <tr>
-                    <!-- The revId along with the type of change. -->
+                    <%-- The revId along with the type of change. --%>
                     <td>${auditEntity.revId} ${auditEntryType}</td>
-                    <!-- The entity columns.  A deleted entity may only have the entity id field. -->
+                    <%-- The entity columns.  A deleted entity may only have the entity id field. --%>
                     <%@ include file="view_trail_entry_row.jsp" %>
                 </tr>
 

@@ -1,46 +1,42 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.envers;
 
-import com.lowagie.text.pdf.Barcode;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.entity.notice.UserRemarks;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.presentation.audit.AuditEntity;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 @Test(enabled = true, groups = TestGroups.DATABASE_FREE)
 public class AuditReaderDbFreeTest {
 
-    // Exceptions to the Entity classes having Long entityId annotated with @Id.
+    // Exceptions to the Entity classes.
     private final Collection<Class> unauditableClasses = new ArrayList<Class>() {{
-        // todo make a Long primary key on JiraTicket and remove this special case.
-        add(JiraTicket.class);
-        // VesselContainer is embeddable.
-        add(VesselContainer.class);
+        add(JiraTicket.class);   // todo make a Long primary key and remove this special case.
+        add(UserRemarks.class);
     }};
 
 
     @Test
     public void areAllEntitiesAuditable() throws Exception {
         List<String> failingClasses = new ArrayList<>();
-        List<Class> classesFromPkg = ReflectionUtil.getMercuryAthenaClasses();
+        List<Class> classesFromPkg = new ArrayList<>(ReflectionUtil.getMercuryAthenaClasses());
+        classesFromPkg.removeAll(ReflectionUtil.getEmbeddableEntities());
+        classesFromPkg.removeAll(unauditableClasses);
+
         List<String> entityClassnames = ReflectionUtil.getEntityClassnames(classesFromPkg);
         Assert.assertTrue(entityClassnames.size() > 0);
 
         for (Class cls : classesFromPkg) {
-            if (entityClassnames.contains(cls.getCanonicalName()) && !unauditableClasses.contains(cls)) {
+            if (entityClassnames.contains(cls.getCanonicalName())) {
                 if (ReflectionUtil.getEntityIdField(cls) == null) {
                     failingClasses.add(cls.getName());
                 }
@@ -57,13 +53,17 @@ public class AuditReaderDbFreeTest {
     // audit trail, are fields that are accessible on the Hibernate persisted class (i.e. the entity class).
     @Test
     public void persistentFieldsMissingFromEntity() throws Exception {
-        List<Class> classesFromPkg = ReflectionUtil.getMercuryAthenaClasses();
+        List<Class> classesFromPkg = new ArrayList<>(ReflectionUtil.getMercuryAthenaClasses());
+        classesFromPkg.removeAll(unauditableClasses);
+
         List<String> entityClassnames = ReflectionUtil.getEntityClassnames(classesFromPkg);
         Assert.assertTrue(entityClassnames.size() > 0);
         for (String classname : entityClassnames) {
             List<Field> fields =
                     ReflectionUtil.getPersistedFieldsForClass(ReflectionUtil.getMercuryAthenaEntityClass(classname));
-            Assert.assertTrue(CollectionUtils.isNotEmpty(fields), "Missing fields on class " + classname);
+            if (CollectionUtils.isNotEmpty(fields)) {
+                Assert.assertTrue(CollectionUtils.isNotEmpty(fields), "Missing fields on class " + classname);
+            }
         }
     }
 
@@ -78,9 +78,9 @@ public class AuditReaderDbFreeTest {
         List<EntityField> entityFields = ReflectionUtil.formatFields(barcodedTube, barcodedTube.getClass());
         Assert.assertTrue(CollectionUtils.isNotEmpty(entityFields));
 
-        // entityId should be first in the list
+        // entityId should be first in the list, but since value is null the canonicalClassname is null too.
         Assert.assertEquals(entityFields.get(0).getFieldName(), "labVesselId");
-        Assert.assertEquals(entityFields.get(0).getCanonicalClassname(), BarcodedTube.class.getCanonicalName());
+        Assert.assertNull(entityFields.get(0).getCanonicalClassname());
 
         boolean[] found = new boolean[]{false, false, false};
         for (EntityField entityField : entityFields) {
@@ -93,17 +93,18 @@ public class AuditReaderDbFreeTest {
                 found[1] = true;
                 Assert.assertNull(entityField.getValue());
                 // Verifies the value list.
-                Assert.assertNull(entityField.getCanonicalClassname());
-                Assert.assertEquals(entityField.getValueList().size(), 2);
-                EntityField sampleEntityField = entityField.getValueList().get(0);
-                Assert.assertEquals(sampleEntityField.getCanonicalClassname(), MercurySample.class.getCanonicalName());
+               Assert.assertNull(entityField.getCanonicalClassname());
+                Assert.assertEquals(entityField.getEntityFieldList().size(), 2);
+                EntityField sampleEntityField = entityField.getEntityFieldList().get(0);
+                // null here because the entityId value is null.
+                Assert.assertNull(sampleEntityField.getCanonicalClassname());
                 // This value is for mercurySample entityId, which is null until object gets persisted.
                 Assert.assertEquals(sampleEntityField.getValue(), ReflectionUtil.NULL_REPRESTATION);
             }
             if (entityField.getFieldName().equals("label")) {
                 found[2] = true;
                 Assert.assertEquals(entityField.getValue(), barcode);
-                Assert.assertNull(entityField.getValueList());
+                Assert.assertNull(entityField.getEntityFieldList());
                 Assert.assertNull(entityField.getCanonicalClassname());
             }
         }
