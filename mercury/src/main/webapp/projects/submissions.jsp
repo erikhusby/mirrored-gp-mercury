@@ -59,7 +59,7 @@
                     {"bSortable": false},               //Contamination
                     {"bSortable": false},               //Fingerprint
                     {"bSortable": false},               //Lanes in Aggregation
-//                    {"bSortable": false},               //Blacklisted Lanes
+                    {"bSortable": false},               //Blacklisted Lanes
                     {"bSortable": false},               //Submitted Version
                     {"bSortable": false},               //Current Status
                     {"bSortable": false}                //Status Date
@@ -111,7 +111,7 @@
             <th class="columnFingerprint">Fingerprint</th>
             <!-- add # lanes, # lanes blacklisted, notes -->
             <th class="columnLanesInAggregation">Lanes in Agg.</th>
-            <%--<th width="60">Blacklisted Lanes</th>--%>
+            <th width="60">Bio Project</th>
             <th class="columnSubmittedVersion">Submitted Version</th>
             <th class="columnSubmissionStatus">Current Status</th>
             <th class="columnSubmissionStatusDate">Status Date</th>
@@ -158,7 +158,7 @@
                 <td>${submissionSample.contaminationString}</td>
                 <td>${submissionSample.fingerprintLOD.displayString()}</td>
                 <td>${submissionSample.lanesInAggregation}</td>
-                <%--<td>&lt;%&ndash;blacklisted lanes&ndash;%&gt;</td>--%>
+                <td>${submissionSample.bioProject}</td>
                 <td>${submissionSample.version}</td>
                 <td>
                         <c:choose><c:when test="${fn:length(submissionSample.submittedErrorsArray)>0}">
