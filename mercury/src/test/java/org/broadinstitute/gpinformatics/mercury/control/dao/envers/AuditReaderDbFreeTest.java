@@ -2,11 +2,19 @@ package org.broadinstitute.gpinformatics.mercury.control.dao.envers;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup_;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.UserRemarks;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer_;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -29,6 +37,14 @@ public class AuditReaderDbFreeTest {
     public void areAllEntitiesAuditable() throws Exception {
         List<String> failingClasses = new ArrayList<>();
         List<Class> entityClasses = new ArrayList<>(ReflectionUtil.getMercuryAthenaEntityClasses());
+
+        Assert.assertTrue(CollectionUtils.isNotEmpty(entityClasses));
+        Assert.assertTrue(entityClasses.contains(LabEvent.class));
+        Assert.assertTrue(entityClasses.contains(VesselContainer.class));
+        Assert.assertTrue(entityClasses.contains(Product.class));
+        // Should not contain the gap metric db entity classes.
+        Assert.assertFalse(entityClasses.contains(AggregationReadGroup.class));
+
         entityClasses.removeAll(ReflectionUtil.getEmbeddableEntities());
         entityClasses.removeAll(unauditableClasses);
         Assert.assertTrue(entityClasses.size() > 0);
@@ -106,4 +122,5 @@ public class AuditReaderDbFreeTest {
             Assert.assertTrue(test);
         }
     }
+
 }

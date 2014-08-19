@@ -1,16 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.envers;
 
-import oracle.net.aso.s;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.scannotation.AnnotationDB;
-import org.scannotation.ClasspathUrlFinder;
-import org.scannotation.WarUrlFinder;
 
 import javax.persistence.Embeddable;
 import javax.persistence.Id;
 import javax.persistence.metamodel.StaticMetamodel;
+import java.io.File;
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
@@ -21,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -28,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class ReflectionUtil {
@@ -39,38 +38,25 @@ public class ReflectionUtil {
     private static final Map<String, Class> entityClassnameToGeneratedClass = new HashMap<>();
     private static final List<Class> embeddableEntities = new ArrayList<>();
 
-    private static final String[] auditedEntityPackages = new String[] {
-            "org.broadinstitute.gpinformatics.athena.entity",
-            "org.broadinstitute.gpinformatics.mercury.entity"
-    };
-
     static {
-        // Finds all the classes that will have Mercury audit data, and their associated JPA generated classes.
+        // Finds all the classes that will have Mercury audit data, their associated JPA generated classes,
+        // and the @Embeddable entities.
         if (mercuryAthenaEntityClassnameToClass.size() == 0) {
             try {
-                ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-                URL resource = ClasspathUrlFinder.findClassBase(LabEvent.class);
-                AnnotationDB db = new AnnotationDB();
-                db.setScanClassAnnotations(true);
-                db.setScanFieldAnnotations(false);
-                db.setScanMethodAnnotations(false);
-                db.setScanParameterAnnotations(false);
-                db.scanArchives(resource);
-
-                // The JPA generated classes have a StaticMetamodel annotation that contains the
-                // persisted entity classname.
-                for (String classname : db.getAnnotationIndex().get(StaticMetamodel.class.getName())) {
-                    // Restricts search to athena and mercury entity packages since audit
-                    // data is only obtained from the Mercury/Athena database.
-                    if (isInAuditedEntityPackage(classname)) {
-                        Class aClass = classLoader.loadClass(classname);
+                for (String packageName : new String[] {
+                        // Restricts search to athena and mercury entity packages since audit
+                        // data is only obtained from the Mercury/Athena database.
+                        "org.broadinstitute.gpinformatics.athena.entity",
+                        "org.broadinstitute.gpinformatics.mercury.entity"
+                }) {
+                    for (Class aClass : getClasses(packageName)) {
+                        // The JPA generated classes have a StaticMetamodel annotation that contains the
+                        // persisted entity classname.
                         StaticMetamodel  annotation  = (StaticMetamodel) aClass.getAnnotation(StaticMetamodel.class);
                         if (annotation != null) {
                             Class entityClass = annotation.value();
                             mercuryAthenaEntityClassnameToClass.put(entityClass.getCanonicalName(), entityClass);
                             entityClassnameToGeneratedClass.put(entityClass.getCanonicalName(), aClass);
-
-                            // Also keeps track of the @Embeddable entities.
                             if (entityClass.getAnnotation(Embeddable.class) != null) {
                                 embeddableEntities.add(entityClass);
                             }
@@ -78,19 +64,10 @@ public class ReflectionUtil {
                     }
                 }
             } catch (Exception e) {
-                logger.severe("Failed to load entity classes: " + e);
+                logger.log(Level.SEVERE, "Failed to load entity classes. ", e);
             }
         }
         logger.info("Found " + mercuryAthenaEntityClassnameToClass.size() + " audited entity classes.");
-    }
-
-    private static boolean isInAuditedEntityPackage(String classname) {
-        for (String pkg : auditedEntityPackages) {
-            if (classname.startsWith(pkg)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /** Returns all entity classes found in mercury.entity and athena.entity packages. */
@@ -312,6 +289,64 @@ public class ReflectionUtil {
         } else {
             return nonEntityObj.toString();
         }
+    }
+
+    /**
+     * Scans all classes accessible from the context class loader which belong to the given package and subpackages.
+     */
+    private static Collection<Class> getClasses(String packageName) {
+        Collection<Class> classes = new ArrayList<>();
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+
+        String path = packageName.replace('.', '/');
+        Collection<File> dirs = new ArrayList<>();
+        try {
+            Enumeration<URL> resources = classLoader.getResources(path);
+            while (resources.hasMoreElements()) {
+                URL resource = resources.nextElement();
+                dirs.add(new File(resource.getFile()));
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Cannot load " + path, e);
+        }
+
+        for (File directory : dirs) {
+            try {
+                classes.addAll(recurseDirectories(directory, packageName, classLoader));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return classes;
+    }
+
+    /** Returns all classes in the directory hierarchy. */
+    private static List<Class> recurseDirectories(File directory, String packageName, ClassLoader classLoader)
+            throws Exception {
+
+        if (!directory.exists()) {
+            org.jboss.vfs.VirtualFile vFile = org.jboss.vfs.VFS.getChild(directory.getPath());
+            File directory2 = vFile.getPhysicalFile();
+            if (!directory2.exists()) {
+                throw new Exception("Cannot find directory " + directory.getAbsolutePath() +
+                                    " nor directory " + directory2.getAbsolutePath());
+            }
+            directory = directory2;
+        }
+
+        List<Class> classes = new ArrayList<>();
+        for (File file : directory.listFiles()) {
+            if (file.isDirectory()) {
+                if (!file.getName().contains(".")) {
+                    classes.addAll(recurseDirectories(file, packageName + "." + file.getName(), classLoader));
+                }
+            } else if (file.getName().endsWith(".class")) {
+                int idx = file.getName().lastIndexOf(".class");
+                String classname = packageName + '.' + file.getName().substring(0, idx);
+                classes.add(classLoader.loadClass(classname));
+            }
+        }
+        return classes;
     }
 
 }

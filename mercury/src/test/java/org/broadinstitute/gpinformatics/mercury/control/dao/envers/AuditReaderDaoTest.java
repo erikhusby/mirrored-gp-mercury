@@ -195,19 +195,15 @@ public class AuditReaderDaoTest extends ContainerTest {
         Assert.assertTrue(list.contains("jane"));
     }
 
-    @Test(groups = TestGroups.STANDARD, enabled = false)
+    @Test(groups = TestGroups.STANDARD)
     public void testPackages() {
         Collection<Class> classes = ReflectionUtil.getMercuryAthenaEntityClasses();
         Assert.assertTrue(CollectionUtils.isNotEmpty(classes));
         Assert.assertTrue(classes.contains(LabEvent.class));
-        Assert.assertTrue(classes.contains(LabEvent_.class));
         Assert.assertTrue(classes.contains(VesselContainer.class));
-        Assert.assertTrue(classes.contains(VesselContainer_.class));
         Assert.assertTrue(classes.contains(Product.class));
-        Assert.assertTrue(classes.contains(Product_.class));
         // Should not contain the gap metric db entity classes.
         Assert.assertFalse(classes.contains(AggregationReadGroup.class));
-        Assert.assertFalse(classes.contains(AggregationReadGroup_.class));
     }
 
 
