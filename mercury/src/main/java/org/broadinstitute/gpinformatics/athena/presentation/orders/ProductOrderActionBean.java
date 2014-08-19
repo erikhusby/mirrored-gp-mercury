@@ -2243,4 +2243,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void setRegulatoryInfoDao(RegulatoryInfoDao regulatoryInfoDao) {
         this.regulatoryInfoDao = regulatoryInfoDao;
     }
+
+    public boolean isCollaborationKitRequest() {
+        return !StringUtils.isBlank(editOrder.getProductOrderKit().getWorkRequestId()) && !editOrder.isSampleInitiation();
+    }
 }
