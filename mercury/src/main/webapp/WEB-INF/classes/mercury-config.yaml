@@ -234,8 +234,8 @@ submission:
       port:     33333
 
     PROD:
-      host:     somesite.broadinstitute.org
-      port:     443
+      host:     seqsubmission01.broadinstitute.org
+      port:     8080
 
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
 mercury:
