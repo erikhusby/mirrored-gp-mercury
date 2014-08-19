@@ -22,21 +22,20 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.samples.MaterialTypeDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.work.WorkCompleteMessageDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.athena.entity.work.MessageDataValue;
+import org.broadinstitute.gpinformatics.athena.entity.work.WorkCompleteMessage;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPGroupCollectionList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
-import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
@@ -48,25 +47,9 @@ import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Restful webservice to list and create product orders.
@@ -128,6 +111,9 @@ public class ProductOrderResource {
 
     @Inject
     private BillingEjb billingEjb;
+
+    @Inject
+    private WorkCompleteMessageDao workCompleteMessageDao;
 
     /**
      * Should be used only by test code
@@ -343,8 +329,9 @@ public class ProductOrderResource {
                     "User: " + addSamplesToPdoBean.getUsername() + " is not found in Mercury");
         }
 
+        Date currentDate = new Date();
         List<LabVessel> vessels = labVesselFactory.buildLabVessels(
-                addSamplesToPdoBean.parentVesselBeans, bspUser.getUsername(), new Date(), LabEventType.SAMPLE_PACKAGE);
+                addSamplesToPdoBean.parentVesselBeans, bspUser.getUsername(), currentDate, LabEventType.SAMPLE_PACKAGE);
         labVesselDao.persistAll(vessels);
 
         // Get all the sample ids
@@ -357,19 +344,15 @@ public class ProductOrderResource {
             // Add the samples.
             productOrderEjb.addSamples(bspUser, pdoKey, samplesToAdd, MessageReporter.UNUSED);
 
-            // If the PDO is not a sample initiation PDO, but DOES have a sample initiation add on, then add a ledger
-            // entry for this product order and sample.
+            // If the PDO is not a sample initiation PDO, but DOES have a sample initiation add on, then add a new
+            // auto-billing message so that the billing will happen at the appropriate lock out time.
             if (!order.isSampleInitiation() && (order.hasSampleInitiationAddOn())) {
-
-                // Since we may check on product orders one at a time per sample, this will keep us from
-                // doing two queries every time within the following loop.
-                Map<String, Boolean> orderLockoutCache = new HashMap<>();
-
-                // Go through each sample and bill it without any data to accompany it.
-                for (ProductOrderSample sample : samplesToAdd) {
-                    billingEjb.autoBillSample(
-                            pdoKey, sample.getAliquotId(), new Date(), Collections.<String, MessageDataValue>emptyMap(),
-                            orderLockoutCache);
+                for (ProductOrderSample sample: samplesToAdd) {
+                    // Sample Initiation products do not have any 'risk' so there does not have to be any message data.
+                    Map<String, Object> dataMap = Collections.emptyMap();
+                    WorkCompleteMessage workComplete =
+                            new WorkCompleteMessage(pdoKey, sample.getAliquotId(), currentDate, dataMap);
+                    workCompleteMessageDao.persist(workComplete);
                 }
             }
         } catch (Exception e) {
