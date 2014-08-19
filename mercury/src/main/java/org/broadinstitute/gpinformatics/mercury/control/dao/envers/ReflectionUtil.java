@@ -63,7 +63,6 @@ public class ReflectionUtil {
                     // Restricts search to athena and mercury entity packages since audit
                     // data is only obtained from the Mercury/Athena database.
                     if (isInAuditedEntityPackage(classname)) {
-                        System.out.println(classname);
                         Class aClass = classLoader.loadClass(classname);
                         StaticMetamodel  annotation  = (StaticMetamodel) aClass.getAnnotation(StaticMetamodel.class);
                         if (annotation != null) {
