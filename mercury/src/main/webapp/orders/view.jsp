@@ -30,11 +30,11 @@ $j(document).ready(function () {
     // after the work request happens. Adding a work request id field to the UI when there is a work request with
     // a non-sample initiation PDO.
     <c:if test="${actionBean.editOrder.isSampleInitiation()}">
-    <c:forEach items="${actionBean.editOrder.productOrderKit.kitOrderDetails}" var="kitDetail">
-    showKitDetail('${kitDetail.numberOfSamples}', '${kitDetail.kitType.displayName}',
-            '${kitDetail.organismName}', '${kitDetail.bspMaterialName}',
-            '${kitDetail.getPostReceivedOptionsAsString("<br/>")}');
-    </c:forEach>
+        <c:forEach items="${actionBean.editOrder.productOrderKit.kitOrderDetails}" var="kitDetail">
+            showKitDetail('${kitDetail.numberOfSamples}', '${kitDetail.kitType.displayName}',
+                    '${kitDetail.organismName}', '${kitDetail.bspMaterialName}',
+                    '${kitDetail.getPostReceivedOptionsAsString("<br/>")}');
+        </c:forEach>
     </c:if>
 
     // if there are no sample kit details, just show one empty detail section
@@ -774,7 +774,7 @@ function formatInput(item) {
         <div class="controls">
             <div class="form-value">
                 <a href="${actionBean.workRequestUrl}" class="external" target="BSP">
-                        ${actionBean.editOrder.productOrderKit.workRequestId}</a>
+                    ${actionBean.editOrder.productOrderKit.workRequestId}</a>
             </div>
         </div>
     </div>
