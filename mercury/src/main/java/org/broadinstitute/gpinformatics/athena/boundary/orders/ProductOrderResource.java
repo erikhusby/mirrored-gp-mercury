@@ -363,9 +363,10 @@ public class ProductOrderResource {
             if (!order.isSampleInitiation() && (order.hasSampleInitiationAddOn())) {
                 for (ProductOrderSample sample: samplesToAdd) {
                     // Sample Initiation products do not have any 'risk' so there does not have to be any message data.
+                    // The sample's business key IS the aliquot Id since that is the sample on the order.
                     Map<String, Object> dataMap = Collections.emptyMap();
                     WorkCompleteMessage workComplete =
-                            new WorkCompleteMessage(pdoKey, sample.getAliquotId(), currentDate, dataMap);
+                            new WorkCompleteMessage(pdoKey, sample.getBusinessKey(), currentDate, dataMap);
                     workCompleteMessageDao.persist(workComplete);
                 }
             }
