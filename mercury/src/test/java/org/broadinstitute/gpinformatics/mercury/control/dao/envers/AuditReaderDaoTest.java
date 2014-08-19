@@ -1,12 +1,20 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.envers;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup_;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer_;
 import org.hibernate.envers.RevisionType;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -186,6 +194,22 @@ public class AuditReaderDaoTest extends ContainerTest {
         Assert.assertTrue(CollectionUtils.isNotEmpty(list));
         Assert.assertTrue(list.contains("jane"));
     }
+
+    @Test(groups = TestGroups.STANDARD, enabled = "false")
+    public void testPackages() {
+        Collection<Class> classes = ReflectionUtil.getMercuryAthenaEntityClasses();
+        Assert.assertTrue(CollectionUtils.isNotEmpty(classes));
+        Assert.assertTrue(classes.contains(LabEvent.class));
+        Assert.assertTrue(classes.contains(LabEvent_.class));
+        Assert.assertTrue(classes.contains(VesselContainer.class));
+        Assert.assertTrue(classes.contains(VesselContainer_.class));
+        Assert.assertTrue(classes.contains(Product.class));
+        Assert.assertTrue(classes.contains(Product_.class));
+        // Should not contain the gap metric db entity classes.
+        Assert.assertFalse(classes.contains(AggregationReadGroup.class));
+        Assert.assertFalse(classes.contains(AggregationReadGroup_.class));
+    }
+
 
     /**
      * Returns all of the revInfoId that were created while running the transaction.

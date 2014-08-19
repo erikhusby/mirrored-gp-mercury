@@ -28,18 +28,14 @@ public class AuditReaderDbFreeTest {
     @Test
     public void areAllEntitiesAuditable() throws Exception {
         List<String> failingClasses = new ArrayList<>();
-        List<Class> classesFromPkg = new ArrayList<>(ReflectionUtil.getMercuryAthenaClasses());
-        classesFromPkg.removeAll(ReflectionUtil.getEmbeddableEntities());
-        classesFromPkg.removeAll(unauditableClasses);
+        List<Class> entityClasses = new ArrayList<>(ReflectionUtil.getMercuryAthenaEntityClasses());
+        entityClasses.removeAll(ReflectionUtil.getEmbeddableEntities());
+        entityClasses.removeAll(unauditableClasses);
+        Assert.assertTrue(entityClasses.size() > 0);
 
-        List<String> entityClassnames = ReflectionUtil.getEntityClassnames(classesFromPkg);
-        Assert.assertTrue(entityClassnames.size() > 0);
-
-        for (Class cls : classesFromPkg) {
-            if (entityClassnames.contains(cls.getCanonicalName())) {
-                if (ReflectionUtil.getEntityIdField(cls) == null) {
-                    failingClasses.add(cls.getName());
-                }
+        for (Class cls : entityClasses) {
+            if (ReflectionUtil.getEntityIdField(cls) == null) {
+                failingClasses.add(cls.getName());
             }
         }
 
@@ -53,16 +49,14 @@ public class AuditReaderDbFreeTest {
     // audit trail, are fields that are accessible on the Hibernate persisted class (i.e. the entity class).
     @Test
     public void persistentFieldsMissingFromEntity() throws Exception {
-        List<Class> classesFromPkg = new ArrayList<>(ReflectionUtil.getMercuryAthenaClasses());
-        classesFromPkg.removeAll(unauditableClasses);
+        List<Class> entityClasses = new ArrayList<>(ReflectionUtil.getMercuryAthenaEntityClasses());
+        entityClasses.removeAll(unauditableClasses);
+        Assert.assertTrue(entityClasses.size() > 0);
 
-        List<String> entityClassnames = ReflectionUtil.getEntityClassnames(classesFromPkg);
-        Assert.assertTrue(entityClassnames.size() > 0);
-        for (String classname : entityClassnames) {
-            List<Field> fields =
-                    ReflectionUtil.getPersistedFieldsForClass(ReflectionUtil.getMercuryAthenaEntityClass(classname));
+        for (Class aClass : entityClasses) {
+            List<Field> fields = ReflectionUtil.getPersistedFieldsForClass(aClass);
             if (CollectionUtils.isNotEmpty(fields)) {
-                Assert.assertTrue(CollectionUtils.isNotEmpty(fields), "Missing fields on class " + classname);
+                Assert.assertTrue(CollectionUtils.isNotEmpty(fields), "Missing fields on class " + aClass.getName());
             }
         }
     }
