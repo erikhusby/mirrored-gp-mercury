@@ -29,12 +29,12 @@ $j(document).ready(function () {
     // can be kit definitions but since that is all automated, we do not want to show that. It is fairly irrelevant
     // after the work request happens. Adding a work request id field to the UI when there is a work request with
     // a non-sample initiation PDO.
-    <c:if test="${actionBean.editOrder.isSampleInitiation()}">
-    <c:forEach items="${actionBean.editOrder.productOrderKit.kitOrderDetails}" var="kitDetail">
-    showKitDetail('${kitDetail.numberOfSamples}', '${kitDetail.kitType.displayName}',
-            '${kitDetail.organismName}', '${kitDetail.bspMaterialName}',
-            '${kitDetail.getPostReceivedOptionsAsString("<br/>")}');
-    </c:forEach>
+    <c:if test="${actionBean.editOrder.sampleInitiation}">
+        <c:forEach items="${actionBean.editOrder.productOrderKit.kitOrderDetails}" var="kitDetail">
+            showKitDetail('${kitDetail.numberOfSamples}', '${kitDetail.kitType.displayName}',
+                    '${kitDetail.organismName}', '${kitDetail.bspMaterialName}',
+                    '${kitDetail.getPostReceivedOptionsAsString("<br/>")}');
+        </c:forEach>
     </c:if>
 
     // if there are no sample kit details, just show one empty detail section
@@ -764,17 +764,15 @@ function formatInput(item) {
     </div>
 </div>
 
-<!-- If there is a work request AND this is NOT an initiation PDO (since those show the request differently), show
-     the request as an external link. -->
-<c:if test="${actionBean.editOrder.productOrderKit.workRequestId &&
-              not actionBean.editOrder.isSampleInitiation()}">
+<!-- If this order has a work request created by the collaboration portal, then display the work request as a link. -->
+<c:if test="${actionBean.collaborationKitRequest}">
     <div class="view-control-group control-group">
         <label class="control-label label-form">Work Request</label>
 
         <div class="controls">
             <div class="form-value">
                 <a href="${actionBean.workRequestUrl}" class="external" target="BSP">
-                        ${actionBean.editOrder.productOrderKit.workRequestId}</a>
+                    ${actionBean.editOrder.productOrderKit.workRequestId}</a>
             </div>
         </div>
     </div>
@@ -979,7 +977,7 @@ function formatInput(item) {
 </div>
 </div>
 
-<c:if test="${actionBean.editOrder.sampleInitiation || !actionBean.editOrder.productOrderKit.kitOrderDetails.isEmpty()}">
+<c:if test="${actionBean.editOrder.sampleInitiation}">
     <div class="form-horizontal span5">
         <fieldset>
             <legend>
