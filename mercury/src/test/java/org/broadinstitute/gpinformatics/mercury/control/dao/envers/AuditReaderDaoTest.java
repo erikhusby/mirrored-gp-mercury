@@ -195,7 +195,7 @@ public class AuditReaderDaoTest extends ContainerTest {
         Assert.assertTrue(list.contains("jane"));
     }
 
-    @Test(groups = TestGroups.STANDARD, enabled = "false")
+    @Test(groups = TestGroups.STANDARD, enabled = false)
     public void testPackages() {
         Collection<Class> classes = ReflectionUtil.getMercuryAthenaEntityClasses();
         Assert.assertTrue(CollectionUtils.isNotEmpty(classes));
