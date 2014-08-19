@@ -5,18 +5,20 @@
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"/>
 <head>
     <style type="text/css">
-        .columnCheckbox { width: 2em; }
-        .columnDataType { width: 3em; }
-        .columnAggregationProject { width: 3em; }
-        .columnFileType { width: 2em; }
-        .columnVersion { width: 3em; }
-        .columnQualityMetric { width: 4em; }
-        .columnContamination { width: 4em; }
-        .columnFingerprint { width: 5em; }
-        .columnLanesInAggregation { width: 4em; }
-        .columnSubmittedVersion { width: 4em; }
-        .columnSubmissionStatus { width: 5em; }
-        .columnSubmissionStatusDate { width: 5em; }
+        .columnCheckbox { width: 3em; }
+        .columnDataType { width: 4em; }
+        .columnPDOs { width: 12em; }
+        .columnAggregationProject { width: 5em; }
+        .columnFileType { width: 5em; }
+        .columnVersion { width: 6em; }
+        .columnQualityMetric { width: 5em; }
+        .columnContamination { width: 5em; }
+        .columnFingerprint { width: 6em; }
+        .columnLanesInAggregation { width: 5em; }
+        .columnBioProject { width: 6em; }
+        .columnSubmittedVersion { width: 6em; }
+        .columnSubmissionStatus { width: 6em; }
+        .columnSubmissionStatusDate { width: 6em; }
 
         .submission-status-tooltip {
             border-bottom: 1px dotted #000;
@@ -103,7 +105,7 @@
             <%--<th width="80">BioSample</th>--%>
             <%--<th width="100">BioSample</th>--%>
             <th class="columnDataType">Data Type</th>
-            <th>PDOs</th>
+            <th class="columnPDOs">PDOs</th>
             <th class="columnAggregationProject">Agg. Project</th>
             <th class="columnFileType">File Type</th>
             <th class="columnVersion">Version</th>
@@ -112,7 +114,7 @@
             <th class="columnFingerprint">Fingerprint</th>
             <!-- add # lanes, # lanes blacklisted, notes -->
             <th class="columnLanesInAggregation">Lanes in Agg.</th>
-            <th width="60">Bio Project</th>
+            <th class="columnBioProject">Bio Project</th>
             <th class="columnSubmittedVersion">Submitted Version</th>
             <th class="columnSubmissionStatus">Current Status</th>
             <th class="columnSubmissionStatusDate">Status Date</th>
