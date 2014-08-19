@@ -7,11 +7,15 @@
 unuse Java-1.6-Prodinfo
 unuse Maven-2.2
 unuse Git-2.0
-use Git-1.8
+
 use Maven-3.1
 use Java-1.7
+use Git-1.8
+which mvn
+which java
+which git
 
-#set -o verbose
+set -o verbose
 if [ -d "release" ] ; then
     rm -rf release
 fi
