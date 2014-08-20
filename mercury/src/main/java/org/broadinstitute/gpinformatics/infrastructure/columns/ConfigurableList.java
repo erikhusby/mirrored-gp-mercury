@@ -8,7 +8,6 @@ import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInsta
 
 import javax.annotation.Nonnull;
 import java.io.PrintWriter;
-import java.lang.reflect.InvocationTargetException;
 import java.text.Format;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -420,7 +419,7 @@ public class ConfigurableList {
         /**
          * Hold the entity list for a nested table at the row level (required when building ResultList)
          */
-        private final Map<ColumnTabulation, Collection<?>> nestedTableEntities = new LinkedHashMap<>();
+        private final Map<ColumnTabulation, ResultList> nestedTableEntities = new LinkedHashMap<>();
 
         Row(String id) {
             this.id = id;
@@ -442,7 +441,7 @@ public class ConfigurableList {
          * Access nested tables when building ResultList
          * @return All nested tables for this row
          */
-        Map<ColumnTabulation, Collection<?>> getNestedTableEntities() {
+        Map<ColumnTabulation, ResultList> getNestedTableEntities() {
             return nestedTableEntities;
         }
     }
@@ -468,8 +467,6 @@ public class ConfigurableList {
      */
     public void addRows(List<?> entityList, @Nonnull Map<String, Object> context ) {
 
-//        context.put("isAdmin", isAdmin);
-
         for (AddRowsListener addRowsListener : addRowsListeners) {
             addRowsListener.addRows(entityList, context, nonPluginTabulations);
         }
@@ -482,8 +479,25 @@ public class ConfigurableList {
                     recurseColumns(context, entity, row, columnTabulation, columnTabulation.getName());
                 } else {
                     Collection<?> nestedEntities = columnTabulation.evalNestedTableExpression(entity, context);
+                    // Build final nested ResultList here...
                     if( nestedEntities != null && nestedEntities.size() > 0 ) {
-                        row.getNestedTableEntities().put(columnTabulation, nestedEntities);
+                        ResultList nestedResultList = buildNestedTable(columnTabulation, nestedEntities, context);
+                        row.getNestedTableEntities().put(columnTabulation, nestedResultList);
+                    }
+                }
+            }
+            // Plugins for nested table processing handled on a row-by-row basis
+            for (ColumnTabulation columnTabulation : pluginTabulations) {
+                if( columnTabulation.isNestedParent() ) {
+                    ListPlugin listPlugin = null;
+                    try {
+                        listPlugin = (ListPlugin) columnTabulation.getPluginClass().newInstance();
+                        ResultList nestedResultList = listPlugin.getNestedTableData(entity, columnTabulation, context);
+                        if( nestedResultList != null ) {
+                            row.getNestedTableEntities().put(columnTabulation, nestedResultList);
+                        }
+                    } catch (InstantiationException | IllegalAccessException e) {
+                        throw new RuntimeException(e);
                     }
                 }
             }
@@ -492,27 +506,25 @@ public class ConfigurableList {
         try {
             // Call the plugins, and add their data to the accumulated rows.
             for (ColumnTabulation columnTabulation : pluginTabulations) {
-                // Plugins not supported for nested tables
-                if( columnTabulation.isNestedParent() ) continue;
-
-                ListPlugin listPlugin = (ListPlugin) Class.forName(columnTabulation.getPluginClass()).getConstructor().
-                        newInstance();
-                List<Row> pluginRows = listPlugin.getData(entityList, headerGroupMap.get(columnTabulation.getName()));
-                int rowIndex = pageStartingRow;
-                for (Row row : pluginRows) {
-                    // TODO jmt rows might be empty, if columns are all plugins
-                    Row existingRow = rows.get(rowIndex);
-                    for (Cell cell : row.getCells()) {
-                        existingRow.addCell(cell);
+                ListPlugin listPlugin = (ListPlugin) columnTabulation.getPluginClass().newInstance();
+                // Legacy plugin process from BSP
+                if( !columnTabulation.isNestedParent() ) {
+                    List<Row> pluginRows =
+                            listPlugin.getData(entityList, headerGroupMap.get(columnTabulation.getName()));
+                    int rowIndex = pageStartingRow;
+                    for (Row row : pluginRows) {
+                        // TODO jmt rows might be empty, if columns are all plugins
+                        Row existingRow = rows.get(rowIndex);
+                        for (Cell cell : row.getCells()) {
+                            existingRow.addCell(cell);
+                        }
+                        rowIndex++;
                     }
-
-                    rowIndex++;
                 }
             }
 
             pageStartingRow = rows.size();
-        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException | NoSuchMethodException |
-                InvocationTargetException e) {
+        } catch (InstantiationException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
     }
@@ -704,11 +716,9 @@ public class ConfigurableList {
             }
             ResultRow resultRow = new ResultRow(sortableCells, renderableCells, row.getId());
 
-            // Build nested tables
-            for( Map.Entry<ColumnTabulation, Collection<?>> entry : row.getNestedTableEntities().entrySet() ){
-                //TODO jms Deal with context (store as member variable?)
-                ResultList nestedTable = buildNestedTable(entry.getKey(), entry.getValue(), new HashMap<String, Object>());
-                resultRow.addNestedTable( entry.getKey().getName() , nestedTable );
+            // Append nested tables to result row
+            for( Map.Entry<ColumnTabulation, ResultList> entry : row.getNestedTableEntities().entrySet() ){
+                resultRow.addNestedTable( entry.getKey().getName() , entry.getValue() );
             }
 
             resultRows.add(resultRow);

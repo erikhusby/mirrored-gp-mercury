@@ -63,10 +63,6 @@ public interface ColumnTabulation {
 
     public Boolean isNestedParent( );
 
-    //public ColumnEntity getNestedEntityType();
-
-    //public void setNestedEntityType( ColumnEntity nestedEntityType );
-
     /**
      * returns the results of evaluating the expression for the first row of the
      * spreadsheet column header.
@@ -90,7 +86,9 @@ public interface ColumnTabulation {
     /**
      * @return the name of the plugin class that returns data for this pseudo-column
      */
-    public String getPluginClass();
+    public Class getPluginClass();
+
+    public void setPluginClass( Class pluginClass );
 
     /**
      * For re-sorting of results

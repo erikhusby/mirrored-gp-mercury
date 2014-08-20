@@ -543,8 +543,18 @@ public class SearchInstance implements Serializable {
         }
 
         @Override
-        public String getPluginClass() {
-            return null;
+        public Class getPluginClass() {
+            if( getSearchTerm() != null ) {
+                return getSearchTerm().getPluginClass();
+            } else {
+                return null;
+            }
+        }
+        @Override
+        public void setPluginClass( Class pluginClass){
+            if( getSearchTerm() != null ) {
+                getSearchTerm().setPluginClass(pluginClass);
+            }
         }
 
         @Override

@@ -4,13 +4,14 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.BspSampleSearchAddRowsListener;
+import org.broadinstitute.gpinformatics.infrastructure.columns.EventVesselSourcePositionPlugin;
+import org.broadinstitute.gpinformatics.infrastructure.columns.EventVesselTargetPositionPlugin;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -22,10 +23,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -56,7 +59,7 @@ public class SearchDefinitionFactory {
     }
 
     public ConfigurableSearchDefinition buildLabVesselSearchDef() {
-        Map<String, List<SearchTerm>> mapGroupSearchTerms = new HashMap<>();
+        Map<String, List<SearchTerm>> mapGroupSearchTerms = new LinkedHashMap<>();
 
         List<SearchTerm> searchTerms = buildLabVesselIds();
         mapGroupSearchTerms.put("IDs", searchTerms);
@@ -125,22 +128,22 @@ public class SearchDefinitionFactory {
     }
 
     public ConfigurableSearchDefinition buildLabEventSearchDef() {
-        Map<String, List<SearchTerm>> mapGroupSearchTerms = new HashMap<>();
+        Map<String, List<SearchTerm>> mapGroupSearchTerms = new LinkedHashMap<>();
 
-        List<SearchTerm> searchTerms = buildLabEventIds();
+        List<SearchTerm> searchTerms = buildLabEventBatch();
+        mapGroupSearchTerms.put("Lab Batch", searchTerms);
+
+        searchTerms = buildLabEventIds();
         mapGroupSearchTerms.put("IDs", searchTerms);
 
-        searchTerms = buildLabEventReagentNestedTable();
-        mapGroupSearchTerms.put("Nested Data", searchTerms);
+        searchTerms = buildLabEventVessel();
+        mapGroupSearchTerms.put("Lab Vessel", searchTerms);
 
         searchTerms = buildLabEventReagents();
         mapGroupSearchTerms.put("Reagents", searchTerms);
 
-        searchTerms = buildLabEventBatch();
-        mapGroupSearchTerms.put("Lab Batch", searchTerms);
-
-        searchTerms = buildLabEventVessel();
-        mapGroupSearchTerms.put("Lab Vessel", searchTerms);
+        searchTerms = buildLabEventNestedTables();
+        mapGroupSearchTerms.put("Nested Data", searchTerms);
 
         List<ConfigurableSearchDefinition.CriteriaProjection> criteriaProjections = new ArrayList<>();
 
@@ -540,24 +543,11 @@ public class SearchDefinitionFactory {
                 return bspUser.getFullName();
             }
         });
-// Too many users, select list doesn't display after 100 elements found
-//        searchTerm.setValuesExpression(new SearchTerm.Evaluator<List<ConstrainedValue>>() {
-//            @Override
-//            public List<ConstrainedValue> evaluate(Object entity, Map<String, Object> context) {
-//                List<ConstrainedValue> constrainedValues = new ArrayList<>();
-//                BSPUserList bspUserList = (BSPUserList)context.get(CONTEXT_KEY_BSP_USER_LIST);
-//                for (Map.Entry<Long,BspUser> userEntry : bspUserList.getUsers().entrySet()) {
-//                    constrainedValues.add(new ConstrainedValue(userEntry.getKey().toString(), userEntry.getValue().getFullName()));
-//                }
-//                return constrainedValues;
-//            }
-//        });
-//        searchTerm.setValueConversionExpression(new SearchTerm.Evaluator<Object>() {
-//            @Override
-//            public Object evaluate(Object entity, Map<String, Object> context) {
-//                return Long.valueOf( (String) context.get(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_STRING));
-//            }
-//        });
+        // Too many users, select list doesn't display after 100 elements found
+        // searchTerm.setValuesExpression(new SearchTerm.Evaluator<List<ConstrainedValue>>() {
+        // ...
+        // searchTerm.setValueConversionExpression(new SearchTerm.Evaluator<Object>() {
+        // ...
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -581,6 +571,7 @@ public class SearchDefinitionFactory {
                 for (LabEventType labEventType : LabEventType.values()) {
                     constrainedValues.add(new ConstrainedValue(labEventType.toString(), labEventType.getName()));
                 }
+                Collections.sort(constrainedValues);
                 return constrainedValues;
             }
         });
@@ -627,7 +618,7 @@ public class SearchDefinitionFactory {
      * Top down of reagent nested table
      * @return List of search terms/column definitions for lab event reagent
      */
-    private List<SearchTerm> buildLabEventReagentNestedTable() {
+    private List<SearchTerm> buildLabEventNestedTables() {
         List<SearchTerm> searchTerms = new ArrayList<>();
 
         SearchTerm parentSearchTerm = new SearchTerm();
@@ -689,6 +680,33 @@ public class SearchDefinitionFactory {
             }
         });
         parentSearchTerm.addNestedEntityColumn(searchTerm);
+
+        parentSearchTerm = new SearchTerm();
+        parentSearchTerm.setName("Source Layout");
+        parentSearchTerm.setIsNestedParent(Boolean.TRUE);
+        parentSearchTerm.setPluginClass(EventVesselSourcePositionPlugin.class);
+        parentSearchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                LabEvent labEvent = (LabEvent) entity;
+                return labEvent.getReagents();
+            }
+        });
+        searchTerms.add(parentSearchTerm);
+
+        parentSearchTerm = new SearchTerm();
+        parentSearchTerm.setName("Target Layout");
+        parentSearchTerm.setIsNestedParent(Boolean.TRUE);
+        parentSearchTerm.setPluginClass(EventVesselTargetPositionPlugin.class);
+        parentSearchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                LabEvent labEvent = (LabEvent) entity;
+                return labEvent.getReagents();
+            }
+        });
+        searchTerms.add(parentSearchTerm);
+
 
         return searchTerms;
     }
@@ -843,7 +861,6 @@ public class SearchDefinitionFactory {
     }
 
     /**
-     * TODO: Implement row listener to capture labEvent.getAllLabVessels() for each event
      * @return
      */
     private List<SearchTerm> buildLabEventVessel() {
@@ -854,27 +871,7 @@ public class SearchDefinitionFactory {
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
-                List<String> results = new ArrayList<>();
-                LabEvent labEvent = (LabEvent) entity;
-                for (LabVessel vessel : labEvent.getSourceLabVessels()) {
-                    results.add(vessel.getType().getName());
-                }
-                return results;
-            }
-        });
-        searchTerms.add(searchTerm);
-
-        searchTerm = new SearchTerm();
-        searchTerm.setName("Target Lab Vessel Type");
-        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public Object evaluate(Object entity, Map<String, Object> context) {
-                List<String> results = new ArrayList<>();
-                LabEvent labEvent = (LabEvent) entity;
-                for (LabVessel vessel : labEvent.getTargetLabVessels()) {
-                    results.add(vessel.getType().getName());
-                }
-                return results;
+                return findEventSourceContainerType((LabEvent) entity);
             }
         });
         searchTerms.add(searchTerm);
@@ -886,29 +883,29 @@ public class SearchDefinitionFactory {
             public Object evaluate(Object entity, Map<String, Object> context) {
                 List<String> results = new ArrayList<>();
                 LabEvent labEvent = (LabEvent) entity;
-                boolean hasAncillaryVessels = false;
-                // Section transfer is only one with source ancillary vessels
-                for (SectionTransfer xfer : labEvent.getSectionTransfers()) {
-                    if( xfer.getAncillarySourceVessel() != null ) {
-                        results.add(xfer.getAncillarySourceVessel().getLabel());
-                        // Cheap enough...
-                        hasAncillaryVessels = true;
+
+                for (LabVessel vessel : labEvent.getSourceLabVessels()) {
+                    if( vessel instanceof TubeFormation) {
+                        TubeFormation tubes = (TubeFormation) vessel;
+                        for ( RackOfTubes rack : tubes.getRacksOfTubes()) {
+                            results.add(rack.getLabel());
+                        }
+                    } else {
+                        results.add(vessel.getLabel());
                     }
                 }
 
-                if(!hasAncillaryVessels){
-                    for (LabVessel vessel : labEvent.getSourceLabVessels()) {
-                        if( vessel instanceof TubeFormation) {
-                            TubeFormation tubes = (TubeFormation) vessel;
-                            for ( RackOfTubes rack : tubes.getRacksOfTubes()) {
-                                results.add(rack.getLabel());
-                            }
-                        } else {
-                            results.add(vessel.getLabel());
-                        }
-                    }
-                }
                 return results;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Target Lab Vessel Type");
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                return findEventTargetContainerType( (LabEvent) entity );
             }
         });
         searchTerms.add(searchTerm);
@@ -920,35 +917,18 @@ public class SearchDefinitionFactory {
             public Object evaluate(Object entity, Map<String, Object> context) {
                 List<String> results = new ArrayList<>();
                 LabEvent labEvent = (LabEvent) entity;
-                boolean hasAncillaryVessels = false;
-                // Section, Vessel to Section, and Cherry Pick transfers all may have target ancillary vessels
-                for (SectionTransfer xfer : labEvent.getSectionTransfers()) {
-                    if( xfer.getAncillaryTargetVessel() != null ) {
-                        results.add(xfer.getAncillaryTargetVessel().getLabel());
-                        // Cheap enough...
-                        hasAncillaryVessels = true;
-                    }
-                }
-                for (VesselToSectionTransfer xfer : labEvent.getVesselToSectionTransfers()) {
-                    if( xfer.getAncillaryTargetVessel() != null ) {
-                        results.add(xfer.getAncillaryTargetVessel().getLabel());
-                        // Cheap enough...
-                        hasAncillaryVessels = true;
-                    };
-                }
-                for (CherryPickTransfer xfer : labEvent.getCherryPickTransfers()) {
-                    if( xfer.getAncillaryTargetVessel() != null ) {
-                        results.add(xfer.getAncillaryTargetVessel().getLabel());
-                        // Cheap enough...
-                        hasAncillaryVessels = true;
-                    }
-                }
 
-                if(!hasAncillaryVessels){
-                    for (LabVessel vessel : labEvent.getTargetLabVessels()) {
+                for (LabVessel vessel : labEvent.getTargetLabVessels()) {
+                    if( vessel instanceof TubeFormation) {
+                        TubeFormation tubes = (TubeFormation) vessel;
+                        for ( RackOfTubes rack : tubes.getRacksOfTubes()) {
+                            results.add(rack.getLabel());
+                        }
+                    } else {
                         results.add(vessel.getLabel());
                     }
                 }
+
                 return results;
             }
         });
@@ -956,4 +936,77 @@ public class SearchDefinitionFactory {
 
         return searchTerms;
     }
+
+
+    /**
+     * Find the source vessel type name associated with an event, container name if a container
+     */
+    private String findEventSourceContainerType( LabEvent labEvent ) {
+        String vesselTypeName = "";
+
+        LabVessel vessel = labEvent.getInPlaceLabVessel();
+
+        if( vessel == null ){
+            for (LabVessel srcVessel : labEvent.getSourceLabVessels()) {
+                if( srcVessel.getContainerRole() != null ) {
+                    vessel = srcVessel.getContainerRole().getEmbedder();
+                } else {
+                    vessel = srcVessel;
+                }
+                break;
+            }
+        }
+
+        if( vessel != null ) {
+            vesselTypeName = findVesselType( vessel );
+        }
+
+        return vesselTypeName;
+    }
+
+    /**
+     * Find the target vessel type name associated with an event, container name if a container
+     */
+    private String findEventTargetContainerType( LabEvent labEvent ) {
+        String vesselTypeName = "";
+
+        LabVessel vessel = labEvent.getInPlaceLabVessel();
+
+        if( vessel == null ){
+            for (LabVessel srcVessel : labEvent.getTargetLabVessels()) {
+                if( srcVessel.getContainerRole() != null ) {
+                    vessel = srcVessel.getContainerRole().getEmbedder();
+                } else {
+                    vessel = srcVessel;
+                }
+                break;
+            }
+        }
+
+        if( vessel != null ) {
+            vesselTypeName = findVesselType( vessel );
+        }
+
+        return vesselTypeName;
+    }
+
+    private String findVesselType( LabVessel vessel ) {
+        String vesselTypeName;
+        switch( vessel.getType() ) {
+        case STATIC_PLATE:
+            StaticPlate plate = OrmUtil.proxySafeCast(vessel, StaticPlate.class );
+            vesselTypeName = plate.getPlateType().getAutomationName();
+            break;
+        case TUBE_FORMATION:
+        case RACK_OF_TUBES:
+            TubeFormation tube = OrmUtil.proxySafeCast(vessel, TubeFormation.class );
+            vesselTypeName = tube.getRackType().getDisplayName();
+            break;
+        default:
+            // Not sure of others for in-place vessels
+            vesselTypeName = vessel.getType().getName();
+        }
+        return vesselTypeName;
+    }
+
 }

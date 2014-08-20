@@ -110,6 +110,7 @@ public class SearchTerm implements Serializable, ColumnTabulation {
      */
     private List<ColumnTabulation> nestedEntityColumns;
 
+    private Class pluginClass;
 
     /**
      * True if this term requires a new detached criteria (because it has the same
@@ -466,8 +467,12 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     }
 
     @Override
-    public String getPluginClass() {
-        return null;
+    public Class getPluginClass() {
+        return pluginClass;
+    }
+    @Override
+    public void setPluginClass(Class pluginClass) {
+        this.pluginClass = pluginClass;
     }
 
     @Override
