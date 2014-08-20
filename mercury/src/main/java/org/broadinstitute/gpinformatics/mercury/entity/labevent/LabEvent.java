@@ -487,16 +487,4 @@ todo jmt adder methods
         return null;
     }
 
-    /**
-     * Mimic unique constraint
-     * @param o
-     * @return
-     */
-    @Override
-    public boolean equals( Object o ) {
-        if( !( o instanceof LabEvent ) ) {
-            return false;
-        }
-        return BY_EVENT_DATE_LOC.compare( this, (LabEvent) o) == 0;
-    }
 }
