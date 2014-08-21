@@ -2,7 +2,12 @@ package org.broadinstitute.gpinformatics.mercury.control.sample;
 
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ChildVesselBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
 
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -12,9 +17,16 @@ import java.util.Map;
 public class SampleVesselProcessor extends TableProcessor {
 
     private List<String> headers;
+    private final LabVesselFactory labVesselFactory;
+    private final String userName;
 
-    public SampleVesselProcessor(String sheetName) {
+    private final List<ParentVesselBean> parentVesselBeans = new ArrayList<>();
+    private List<ChildVesselBean> childVesselBeans = new ArrayList<>();
+
+    public SampleVesselProcessor(String sheetName, LabVesselFactory labVesselFactory, String userName) {
         super(sheetName);
+        this.labVesselFactory = labVesselFactory;
+        this.userName = userName;
     }
 
     @Override
@@ -31,6 +43,12 @@ public class SampleVesselProcessor extends TableProcessor {
     public void processRowDetails(Map<String, String> dataRow, int dataRowIndex) {
         String sampleId = dataRow.get(Headers.SAMPLE_ID.getText());
         String tubeBarcode = dataRow.get(Headers.MANUFACTURER_TUBE_BARCODE.getText());
+        String containerBarcode = dataRow.get(Headers.CONTAINER_BARCODE.getText());
+        String position = dataRow.get(Headers.POSITION.getText());
+        if (parentVesselBeans.isEmpty()) {
+            parentVesselBeans.add(new ParentVesselBean(containerBarcode, null, "matrix", childVesselBeans));
+        }
+        childVesselBeans.add(new ChildVesselBean(tubeBarcode, sampleId, "tube", position));
     }
 
     @Override
@@ -40,12 +58,15 @@ public class SampleVesselProcessor extends TableProcessor {
 
     @Override
     public void close() {
-        ;
+        labVesselFactory.buildLabVessels(parentVesselBeans, userName, new Date(), null);
     }
 
     private enum Headers implements ColumnHeader {
         SAMPLE_ID("Sample ID", 0, REQUIRED_HEADER, REQUIRED_VALUE),
-        MANUFACTURER_TUBE_BARCODE("Manufacturer Tube Barcode", 1, REQUIRED_HEADER, REQUIRED_VALUE);
+        MANUFACTURER_TUBE_BARCODE("Manufacturer Tube Barcode", 1, REQUIRED_HEADER, REQUIRED_VALUE),
+        CONTAINER_BARCODE("Container", 1, REQUIRED_HEADER, REQUIRED_VALUE),
+        POSITION("Position", 1, REQUIRED_HEADER, REQUIRED_VALUE),
+        ;
 
         private final String text;
         private final int index;
@@ -95,5 +116,9 @@ public class SampleVesselProcessor extends TableProcessor {
         public boolean isStringColumn() {
             return isString;
         }
+    }
+
+    public List<ParentVesselBean> getParentVesselBeans() {
+        return parentVesselBeans;
     }
 }
