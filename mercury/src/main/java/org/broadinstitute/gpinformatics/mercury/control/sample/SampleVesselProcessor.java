@@ -5,6 +5,8 @@ import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ChildVesselBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -58,7 +60,10 @@ public class SampleVesselProcessor extends TableProcessor {
 
     @Override
     public void close() {
-        labVesselFactory.buildLabVessels(parentVesselBeans, userName, new Date(), null);
+        List<LabVessel> labVessels = labVesselFactory.buildLabVessels(parentVesselBeans, userName, new Date(), null);
+        for (LabVessel labVessel : labVessels) {
+            labVessel.getMercurySamples().iterator().next().setMetadataSource(MercurySample.MetadataSource.MERCURY);
+        }
     }
 
     private enum Headers implements ColumnHeader {
