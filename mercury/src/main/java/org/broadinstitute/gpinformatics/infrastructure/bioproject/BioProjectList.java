@@ -47,8 +47,8 @@ public class BioProjectList extends AbstractCache implements Serializable {
         try {
             bioProjects = submissionsService.getAllBioProjects();
         }
-        catch(Throwable t) {
-            log.error("Failed to get bioprojects",t);
+        catch(Exception e) {
+            log.error("Failed to get bioprojects",e);
         }
 
         for (BioProject bioProject : bioProjects) {
