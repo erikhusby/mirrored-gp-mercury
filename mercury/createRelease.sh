@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -l
 #
 # Perform a Production release of Mercury
 #
