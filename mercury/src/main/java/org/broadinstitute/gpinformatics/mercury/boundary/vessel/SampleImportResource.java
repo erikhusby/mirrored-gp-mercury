@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
@@ -100,7 +101,7 @@ public class SampleImportResource {
         List<ParentVesselBean> parentVesselBeans = sampleImportBean.getParentVesselBeans();
 
         List<LabVessel> labVessels = labVesselFactory.buildLabVessels(parentVesselBeans, sampleImportBean.getUserName(),
-                sampleImportBean.getExportDate(), LabEventType.SAMPLE_IMPORT);
+                sampleImportBean.getExportDate(), LabEventType.SAMPLE_IMPORT, MercurySample.MetadataSource.BSP);
 
         LabBatch labBatch = labBatchDao.findByName(sampleImportBean.getSourceSystemExportId());
         if (labBatch != null) {

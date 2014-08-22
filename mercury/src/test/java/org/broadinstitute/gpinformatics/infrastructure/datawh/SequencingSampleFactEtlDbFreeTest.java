@@ -190,7 +190,8 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         EasyMock.expect(researchProject.getResearchProjectId()).andReturn(researchProjectId).anyTimes();
 
         String sampleKey = "SM-0123";
-        EasyMock.expect(sampleInstance.getStartingSample()).andReturn(new MercurySample(sampleKey)).anyTimes();
+        EasyMock.expect(sampleInstance.getStartingSample()).andReturn(new MercurySample(sampleKey,
+                MercurySample.MetadataSource.BSP)).anyTimes();
         EasyMock.expect(sampleInstance.getReagents()).andReturn(reagents).anyTimes();
 
         EasyMock.replay(mocks);
@@ -231,7 +232,8 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         EasyMock.expect(researchProject.getResearchProjectId()).andReturn(researchProjectId);
 
         String sampleKey = "SM-1234";
-        EasyMock.expect(sampleInstance.getStartingSample()).andReturn(new MercurySample(sampleKey)).anyTimes();
+        EasyMock.expect(sampleInstance.getStartingSample()).andReturn(new MercurySample(sampleKey,
+                MercurySample.MetadataSource.BSP)).anyTimes();
         EasyMock.expect(sampleInstance.getReagents()).andReturn(reagents).anyTimes();
 
         EasyMock.replay(mocks);
@@ -274,7 +276,8 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         EasyMock.expect(researchProject.getResearchProjectId()).andReturn(researchProjectId);
 
         String sampleKey = "SM-2345";
-        EasyMock.expect(sampleInstance.getStartingSample()).andReturn(new MercurySample(sampleKey)).anyTimes();
+        EasyMock.expect(sampleInstance.getStartingSample()).andReturn(new MercurySample(sampleKey,
+                MercurySample.MetadataSource.BSP)).anyTimes();
         EasyMock.expect(sampleInstance.getReagents()).andReturn(reagents).anyTimes();
 
         EasyMock.replay(mocks);
@@ -315,10 +318,12 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         EasyMock.expect(researchProject.getResearchProjectId()).andReturn(researchProjectId).anyTimes();
 
         String sampleKey = "SM-3456";
-        EasyMock.expect(sampleInstance.getStartingSample()).andReturn(new MercurySample(sampleKey)).anyTimes();
+        EasyMock.expect(sampleInstance.getStartingSample()).andReturn(new MercurySample(sampleKey,
+                MercurySample.MetadataSource.BSP)).anyTimes();
         EasyMock.expect(sampleInstance.getReagents()).andReturn(reagents).anyTimes();
 
-        EasyMock.expect(sampleInstance2.getStartingSample()).andReturn(new MercurySample(sampleKey)).anyTimes();
+        EasyMock.expect(sampleInstance2.getStartingSample()).andReturn(new MercurySample(sampleKey,
+                MercurySample.MetadataSource.BSP)).anyTimes();
         EasyMock.expect(sampleInstance2.getReagents()).andReturn(reagents).anyTimes();
 
         EasyMock.replay(mocks);

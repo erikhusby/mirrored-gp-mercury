@@ -75,7 +75,7 @@ public class LimsQueriesTest {
         String barcode = "1234";
         BarcodedTube barcodedTube = new BarcodedTube(barcode);
         String sampleKey = "SM-1234";
-        barcodedTube.addSample(new MercurySample(sampleKey));
+        barcodedTube.addSample(new MercurySample(sampleKey, MercurySample.MetadataSource.BSP));
         mapBarcodeToVessel.put(barcode, barcodedTube);
         List<LibraryDataType> libraryDataTypes = limsQueries.fetchLibraryDetailsByTubeBarcode(mapBarcodeToVessel);
         assertThat(libraryDataTypes.size(), equalTo(1));

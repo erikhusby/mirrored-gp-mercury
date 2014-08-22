@@ -68,7 +68,8 @@ public class LabVesselTest {
         List<LabVessel> labVessels = labVesselFactory.buildLabVesselDaoFree(
                 mapBarcodeToVessel, new HashMap<String, List<MercurySample>>(),
                 new HashMap<String, Set<ProductOrderSample>>(), "jowalsh",
-                new Date(), Collections.singletonList(parentVesselBean), LabEventType.SAMPLE_IMPORT);
+                new Date(), Collections.singletonList(parentVesselBean), LabEventType.SAMPLE_IMPORT,
+                MercurySample.MetadataSource.BSP);
         Map<LabEvent, Set<LabVessel>> vesselsForLabEventType = sourceTube1.findVesselsForLabEventType(
                 LabEventType.SAMPLE_IMPORT);
         Assert.assertEquals(vesselsForLabEventType.size(), 1);
@@ -120,7 +121,8 @@ public class LabVesselTest {
         List<LabVessel> labVessels = labVesselFactory.buildLabVesselDaoFree(
                 mapBarcodeToVessel, new HashMap<String, List<MercurySample>>(),
                 new HashMap<String, Set<ProductOrderSample>>(), "jowalsh",
-                new Date(), Collections.singletonList(parentVesselBean), LabEventType.SAMPLE_IMPORT);
+                new Date(), Collections.singletonList(parentVesselBean), LabEventType.SAMPLE_IMPORT,
+                MercurySample.MetadataSource.BSP);
 
         BarcodedTube tube1 = (BarcodedTube)labVessels.get(0);
         Assert.assertEquals(tube1.getTubeType(), BarcodedTube.BarcodedTubeType.VacutainerBloodTubeEDTA_3);

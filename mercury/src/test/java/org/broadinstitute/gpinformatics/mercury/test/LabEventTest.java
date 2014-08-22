@@ -8,7 +8,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
@@ -21,7 +20,6 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransfe
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.boundary.graph.Graph;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferEntityGrapher;
@@ -31,15 +29,12 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
 import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -57,7 +52,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -69,7 +63,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
@@ -96,14 +89,12 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumMap;
@@ -1210,7 +1201,7 @@ public class LabEventTest extends BaseEventTest {
 
             String bspStock = "SM-" + rackPosition;
             BarcodedTube bspAliquot = new BarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(bspStock));
+            bspAliquot.addSample(new MercurySample(bspStock, MercurySample.MetadataSource.BSP));
             mapBarcodeToTube.put(barcode, bspAliquot);
         }
 
@@ -1261,7 +1252,7 @@ public class LabEventTest extends BaseEventTest {
         for (ProductOrderSample poSample : productOrder.getSamples()) {
             String barcode = "R" + rackPosition;
             BarcodedTube bspAliquot = new BarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(poSample.getName()));
+            bspAliquot.addSample(new MercurySample(poSample.getName(), MercurySample.MetadataSource.BSP));
 
             if (rackPosition >= 94) {
                 mapBarcodeToTube2.put(barcode, bspAliquot);
@@ -1329,7 +1320,7 @@ public class LabEventTest extends BaseEventTest {
 
             String bspStock = "SM-" + rackPosition;
             BarcodedTube bspAliquot = new BarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(bspStock));
+            bspAliquot.addSample(new MercurySample(bspStock, MercurySample.MetadataSource.BSP));
             mapBarcodeToTube.put(barcode, bspAliquot);
         }
 

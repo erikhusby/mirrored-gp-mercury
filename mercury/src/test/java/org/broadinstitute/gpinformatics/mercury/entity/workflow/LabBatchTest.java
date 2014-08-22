@@ -73,7 +73,7 @@ public class LabBatchTest {
             String bspStock = vesselSampleList.get(sampleIndex - 1);
             productOrderSamples.add(new ProductOrderSample(bspStock));
             BarcodedTube bspAliquot = new BarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(bspStock));
+            bspAliquot.addSample(new MercurySample(bspStock, MercurySample.MetadataSource.BSP));
             mapBarcodeToTube.put(barcode, bspAliquot);
         }
 

@@ -221,7 +221,7 @@ public class BaseEventTest {
         for (ProductOrderSample poSample : productOrder.getSamples()) {
             String barcode = tubeBarcodePrefix + rackPosition;
             BarcodedTube bspAliquot = new BarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(poSample.getName()));
+            bspAliquot.addSample(new MercurySample(poSample.getName(), MercurySample.MetadataSource.BSP));
             mapBarcodeToTube.put(barcode, bspAliquot);
             Map<BSPSampleSearchColumn, String> dataMap = new HashMap<>();
             dataMap.put(BSPSampleSearchColumn.SAMPLE_ID, poSample.getName());

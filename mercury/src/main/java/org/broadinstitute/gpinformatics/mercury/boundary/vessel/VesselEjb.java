@@ -73,7 +73,7 @@ public class VesselEjb {
                 Sets.difference(sampleNamesToAssociate, previouslyRegisteredSampleNames);
 
         for (String sampleName : sampleNamesToRegister) {
-            mercurySampleDao.persist(new MercurySample(sampleName));
+            mercurySampleDao.persist(new MercurySample(sampleName, MercurySample.MetadataSource.BSP));
         }
         // Explicit flush required as Mercury runs in FlushModeType.COMMIT and we want to see the results of any
         // persists done in the loop above reflected in the query below.

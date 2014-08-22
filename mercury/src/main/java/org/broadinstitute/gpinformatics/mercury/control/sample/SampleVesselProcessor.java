@@ -24,6 +24,7 @@ public class SampleVesselProcessor extends TableProcessor {
 
     private final List<ParentVesselBean> parentVesselBeans = new ArrayList<>();
     private List<ChildVesselBean> childVesselBeans = new ArrayList<>();
+    private List<LabVessel> labVessels;
 
     public SampleVesselProcessor(String sheetName, LabVesselFactory labVesselFactory, String userName) {
         super(sheetName);
@@ -60,10 +61,8 @@ public class SampleVesselProcessor extends TableProcessor {
 
     @Override
     public void close() {
-        List<LabVessel> labVessels = labVesselFactory.buildLabVessels(parentVesselBeans, userName, new Date(), null);
-        for (LabVessel labVessel : labVessels) {
-            labVessel.getMercurySamples().iterator().next().setMetadataSource(MercurySample.MetadataSource.MERCURY);
-        }
+        labVessels = labVesselFactory.buildLabVessels(parentVesselBeans, userName, new Date(), null,
+                MercurySample.MetadataSource.MERCURY);
     }
 
     private enum Headers implements ColumnHeader {
@@ -123,7 +122,11 @@ public class SampleVesselProcessor extends TableProcessor {
         }
     }
 
-    public List<ParentVesselBean> getParentVesselBeans() {
+    List<ParentVesselBean> getParentVesselBeans() {
         return parentVesselBeans;
+    }
+
+    List<LabVessel> getLabVessels() {
+        return labVessels;
     }
 }

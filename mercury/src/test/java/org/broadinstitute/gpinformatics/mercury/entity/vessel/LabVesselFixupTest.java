@@ -169,11 +169,11 @@ public class LabVesselFixupTest extends Arquillian {
         Map<VesselPosition, BarcodedTube> mapPositionToTube = new EnumMap<>(VesselPosition.class);
 
         BarcodedTube barcodedTube = new BarcodedTube("0114382737");
-        barcodedTube.addSample(new MercurySample("SM-2AY8L"));
+        barcodedTube.addSample(new MercurySample("SM-2AY8L", MercurySample.MetadataSource.BSP));
         mapPositionToTube.put(VesselPosition.A01, barcodedTube);
 
         BarcodedTube barcodedTube1 = new BarcodedTube("SM-22GXJ");
-        barcodedTube.addSample(new MercurySample("SM-22GXJ"));
+        barcodedTube.addSample(new MercurySample("SM-22GXJ", MercurySample.MetadataSource.BSP));
         mapPositionToTube.put(VesselPosition.A02, barcodedTube1);
 
         TubeFormation tubeFormation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
@@ -183,7 +183,7 @@ public class LabVesselFixupTest extends Arquillian {
 
         mapPositionToTube.clear();
         BarcodedTube barcodedTube2 = new BarcodedTube("SM-29FPE");
-        barcodedTube2.addSample(new MercurySample("SM-29FPE"));
+        barcodedTube2.addSample(new MercurySample("SM-29FPE", MercurySample.MetadataSource.BSP));
         mapPositionToTube.put(VesselPosition.A01, barcodedTube2);
 
         tubeFormation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);

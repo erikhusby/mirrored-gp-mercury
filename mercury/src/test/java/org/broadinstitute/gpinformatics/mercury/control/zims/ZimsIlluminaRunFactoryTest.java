@@ -175,7 +175,8 @@ public class ZimsIlluminaRunFactoryTest {
             String sourceTubeBarcode = "testTube" + sampleIdx;
             BarcodedTube testTube = new BarcodedTube(sourceTubeBarcode);
 
-            MercurySample mercurySample = new MercurySample(testSampleIds.get(sampleIdx));
+            MercurySample mercurySample = new MercurySample(testSampleIds.get(sampleIdx),
+                    MercurySample.MetadataSource.BSP);
             testTube.addSample(mercurySample);
 
             BucketEntry bucketEntry =

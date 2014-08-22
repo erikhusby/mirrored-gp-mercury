@@ -431,7 +431,7 @@ public class BucketEjb {
                 StringUtils.isNotBlank(bspDto.getBarcodeForLabVessel())) {
                 if (bspDto.isSampleReceived()) {
                     vessels.addAll(labVesselFactory.buildInitialLabVessels(sampleName, bspDto.getBarcodeForLabVessel(),
-                                                                           username, new Date()));
+                            username, new Date(), MercurySample.MetadataSource.BSP));
                 }
             } else {
                 cannotAddToBucket.add(sampleName);

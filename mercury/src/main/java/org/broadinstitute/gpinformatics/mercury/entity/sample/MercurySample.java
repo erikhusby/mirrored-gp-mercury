@@ -63,10 +63,6 @@ public class MercurySample extends AbstractSample {
     protected MercurySample() {
     }
 
-    public MercurySample(String sampleKey) {
-        this.sampleKey = sampleKey;
-    }
-
     public MercurySample(String sampleKey, MetadataSource metadataSource) {
         this.sampleKey = sampleKey;
         this.metadataSource = metadataSource;
@@ -103,14 +99,7 @@ public class MercurySample extends AbstractSample {
     }
 
     public MetadataSource getMetadataSource() {
-        if (metadataSource == null) {
-            return MetadataSource.BSP;
-        }
         return metadataSource;
-    }
-
-    public void setMetadataSource(MetadataSource metadataSource) {
-        this.metadataSource = metadataSource;
     }
 
     @Override

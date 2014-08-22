@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
@@ -125,9 +126,9 @@ public class SampleReceiptResource {
         List<ParentVesselBean> parentVesselBeans = sampleReceiptBean.getParentVesselBeans();
 
         // todo jmt the SAMPLE_RECEIPT event seems to be used by this web service and by a BettaLIMS message.
-        List<LabVessel> labVessels =
-                labVesselFactory.buildLabVessels(parentVesselBeans, sampleReceiptBean.getReceivingUserName(),
-                        sampleReceiptBean.getReceiptDate(), LabEventType.SAMPLE_RECEIPT);
+        List<LabVessel> labVessels = labVesselFactory.buildLabVessels(parentVesselBeans,
+                sampleReceiptBean.getReceivingUserName(), sampleReceiptBean.getReceiptDate(),
+                LabEventType.SAMPLE_RECEIPT, MercurySample.MetadataSource.BSP);
 
         // If the kit has already been partially registered, append a timestamp to make a unique batch name.
         Format simpleDateFormat = FastDateFormat.getInstance("yyyyMMddHHmmssSSSS");

@@ -93,7 +93,8 @@ public class GetSampleInstancesTest {
         int i = 1;
         for (ProductOrderSample productOrderSample : sampleInitProductOrder.getSamples()) {
             BarcodedTube tube = new BarcodedTube("R" + i);
-            MercurySample mercurySample = new MercurySample(productOrderSample.getSampleKey());
+            MercurySample mercurySample = new MercurySample(productOrderSample.getSampleKey(),
+                    MercurySample.MetadataSource.BSP);
             mercurySample.addProductOrderSample(productOrderSample);
             tube.addSample(mercurySample);
             receivedVessels.add(tube);
@@ -126,15 +127,15 @@ public class GetSampleInstancesTest {
 
         Map<VesselPosition, BarcodedTube> mapPositionToExtractTube = new EnumMap<>(VesselPosition.class);
         BarcodedTube tube1 = new BarcodedTube("X1");
-        tube1.addSample(new MercurySample("SM-X1"));
+        tube1.addSample(new MercurySample("SM-X1", MercurySample.MetadataSource.BSP));
         mapPositionToExtractTube.put(VesselPosition.A01, tube1);
 
         BarcodedTube tube2 = new BarcodedTube("X2");
-        tube2.addSample(new MercurySample("SM-X2"));
+        tube2.addSample(new MercurySample("SM-X2", MercurySample.MetadataSource.BSP));
         mapPositionToExtractTube.put(VesselPosition.A02, tube2);
 
         BarcodedTube tube3 = new BarcodedTube("X3");
-        tube3.addSample(new MercurySample("SM-X3"));
+        tube3.addSample(new MercurySample("SM-X3", MercurySample.MetadataSource.BSP));
         mapPositionToExtractTube.put(VesselPosition.A03, tube3);
 
         TubeFormation targetTubeFormation = new TubeFormation(mapPositionToExtractTube, RackOfTubes.RackType.Matrix96);
@@ -267,7 +268,7 @@ public class GetSampleInstancesTest {
         mapPositionToExtractTubeControl.put(position2, tube2);
 
         BarcodedTube controlTube = new BarcodedTube("CONTROL" + lcsetNum);
-        controlTube.addSample(new MercurySample("SM-C" + lcsetNum));
+        controlTube.addSample(new MercurySample("SM-C" + lcsetNum, MercurySample.MetadataSource.BSP));
         mapPositionToExtractTubeControl.put(position3, controlTube);
 
         // Import
@@ -395,7 +396,8 @@ public class GetSampleInstancesTest {
         int i = 0;
         for (ProductOrderSample productOrderSample : sampleInitProductOrder.getSamples()) {
             BarcodedTube barcodedTube = new BarcodedTube("tube1." + i, BarcodedTube.BarcodedTubeType.MatrixTube);
-            productOrderSample.setMercurySample(new MercurySample(productOrderSample.getSampleKey()));
+            productOrderSample.setMercurySample(new MercurySample(productOrderSample.getSampleKey(),
+                    MercurySample.MetadataSource.BSP));
             barcodedTube.getMercurySamples().add(productOrderSample.getMercurySample());
             mapPositionToTube.put(SBSSection.ALL96.getWells().get(i), barcodedTube);
             starterVessels1.add(barcodedTube);
