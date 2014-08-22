@@ -70,7 +70,7 @@ public class ProductOrderDao extends GenericDao {
 
     /**
      * Use this to specify which tables should be fetched (joined) with ProductOrder when it's loaded from the
-     * database. Using can have a major performance benefit when retrieving many PDOs that will in turn need
+     * database. Using it can have a major performance benefit when retrieving many PDOs that will in turn need
      * a related table loaded.
      */
     public enum FetchSpec {
