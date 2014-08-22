@@ -5,6 +5,7 @@ import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.athena.entity.preference.ColumnSetsPreference;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
+import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.SpreadsheetCreator;
 
 import javax.annotation.Nonnull;
 import java.io.PrintWriter;
@@ -871,10 +872,10 @@ public class ConfigurableList {
             boolean headerRow2Present = false;
             for (columnNumber = 0; columnNumber < getHeaders().size(); columnNumber++) {
                 ConfigurableList.Header header = getHeaders().get(columnNumber);
-                rowObjects[0][columnNumber] = header.getDownloadHeader1();
+                rowObjects[0][columnNumber] = new SpreadsheetCreator.ExcelHeader(header.getDownloadHeader1());
                 String header2Name = header.getDownloadHeader2();
                 if (header2Name != null && header2Name.length() > 0) {
-                    rowObjects[1][columnNumber] = header2Name;
+                    rowObjects[1][columnNumber] = new SpreadsheetCreator.ExcelHeader(header2Name);
                     headerRow2Present = true;
                 }
             }
@@ -882,15 +883,15 @@ public class ConfigurableList {
             int rowNumber = headerRow2Present ? 2 : 1;
             for (ConfigurableList.ResultRow resultRow : getResultRows()) {
                 columnNumber = 0;
-                for (Comparable<?> comparable : resultRow.getSortableCells()) {
-                    rowObjects[rowNumber][columnNumber] = comparable;
+                for (String value : resultRow.getRenderableCells()) {
+                    rowObjects[rowNumber][columnNumber] = value;
                     columnNumber++;
                 }
                 rowNumber++;
 
                 // Nested tables
                 for( Map.Entry<String,ResultList> nestedTable : resultRow.getNestedTables().entrySet() ) {
-                    rowObjects[rowNumber][1] = nestedTable.getKey();
+                    rowObjects[rowNumber][1] = new SpreadsheetCreator.ExcelHeader(nestedTable.getKey());
                     rowNumber++;
                     rowNumber = appendNestedRows(rowNumber, 1, nestedTable.getValue(), rowObjects);
                 }
@@ -913,7 +914,7 @@ public class ConfigurableList {
             int col = startColumn;
 
             for( Header header : resultList.getHeaders() ) {
-                rowObjects[rowIndex][col] = header.getViewHeader();
+                rowObjects[rowIndex][col] = new SpreadsheetCreator.ExcelHeader(header.getViewHeader());
                 col++;
             }
             rowIndex++;
@@ -946,19 +947,6 @@ public class ConfigurableList {
             return resultSortDirection;
         }
 
-/*
-        public List<String> getSampleIds(int index) {
-            List<String> resultIds = new ArrayList<> ();
-            for (ConfigurableList.ResultRow resultRow : getResultRows()) {
-                try {
-                    resultIds.add(Sample.extractId(resultRow.getSortableCells().get(index).toString()));
-                } catch (LSIDIdConversionException | MPGException e) {
-                    // Should be able to extract the ids from the sample ids in the results, otherwise, get what we get
-                }
-            }
-            return resultIds;
-        }
-*/
     }
 
     /**
@@ -1156,15 +1144,6 @@ public class ConfigurableList {
         }
     }
 
-
-    /**
-     * Add the data from this instance as a sheet with the specified name to the workbook.
-     */
-/*
-    public void createSampleInfoSheet(@Nonnull String sheetName, @Nonnull Workbook workbook) {
-        SpreadsheetCreator.createSheet(sheetName, getResultList().getAsArray(), workbook);
-    }
-*/
 
     /**
      * This takes a formatted value and escapes the substrings pushed into the formatted value in all places it was

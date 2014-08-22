@@ -432,7 +432,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
 
         searchInstance.getEvalContext().put(SearchDefinitionFactory.CONTEXT_KEY_BSP_USER_LIST, bspUserList );
         searchInstance.getEvalContext().put(SearchDefinitionFactory.CONTEXT_KEY_BSP_SAMPLE_SEARCH, bspSampleSearchService );
-        searchInstance.getEvalContext().put(SearchDefinitionFactory.OPTION_VALUE_DAO, optionValueDao);
+        searchInstance.getEvalContext().put(SearchDefinitionFactory.CONTEXT_KEY_OPTION_VALUE_DAO, optionValueDao);
     }
 
     /**

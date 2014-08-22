@@ -26,12 +26,12 @@ public class LabEventTraversalTest extends ContainerTest {
         SearchInstance searchInstance = new SearchInstance();
         SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("LCSET", configurableSearchDefinition);
         searchValue.setOperator(SearchInstance.Operator.EQUALS);
-        searchValue.setValues(Collections.singletonList("LCSET-5914"));
+        searchValue.setValues(Collections.singletonList("LCSET-5102"));
 
         searchValue = searchInstance.addTopLevelTerm("EventDate", configurableSearchDefinition);
         searchValue.setOperator(SearchInstance.Operator.BETWEEN);
         ArrayList<String> dateVals = new ArrayList<>();
-        dateVals.add("07/08/2014"); dateVals.add("07/09/2014");
+        dateVals.add("11/20/2013"); dateVals.add("11/21/2013");
         searchValue.setValues(dateVals);
 
         searchInstance.getPredefinedViewColumns().add("LabEventId");
@@ -40,7 +40,7 @@ public class LabEventTraversalTest extends ContainerTest {
                 configurableListFactory.getFirstResultsPage(
                         searchInstance, configurableSearchDefinition, null, 1, null, "ASC", "LabEvent" );
 
-        Assert.assertEquals(firstPageResults.getPagination().getIdList().size(), 188);
+        Assert.assertEquals(firstPageResults.getPagination().getIdList().size(), 98);
 
     }
 

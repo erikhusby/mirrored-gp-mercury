@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import java.util.ArrayList;
@@ -46,7 +47,7 @@ public class SearchDefinitionFactory {
     public static final String CONTEXT_KEY_SEARCH_VALUE = "searchValue";
     public static final String CONTEXT_KEY_SEARCH_STRING = "searchString";
     public static final String CONTEXT_KEY_BSP_SAMPLE_SEARCH = "BSPSampleSearchService";
-    public static final String OPTION_VALUE_DAO = "OptionValueDao";
+    public static final String CONTEXT_KEY_OPTION_VALUE_DAO = "OptionValueDao";
 
     public ConfigurableSearchDefinition getForEntity(String entity) {
         if (mapNameToDef.isEmpty()) {
@@ -240,10 +241,15 @@ public class SearchDefinitionFactory {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
                 LabVessel labVessel = (LabVessel) entity;
-                MercurySample mercurySample = labVessel.getMercurySamples().iterator().next();
-                BspSampleSearchAddRowsListener bspColumns = (BspSampleSearchAddRowsListener) context.get(
-                        BspSampleSearchAddRowsListener.BSP_LISTENER);
-                return bspColumns.getColumn(mercurySample.getSampleKey(), bspSampleSearchColumn);
+                Set<MercurySample> mercurySamples = labVessel.getMercurySamples();
+                if( !mercurySamples.isEmpty() ) {
+                    MercurySample mercurySample = mercurySamples.iterator().next();
+                    BspSampleSearchAddRowsListener bspColumns = (BspSampleSearchAddRowsListener) context.get(
+                            BspSampleSearchAddRowsListener.BSP_LISTENER);
+                    return bspColumns.getColumn(mercurySample.getSampleKey(), bspSampleSearchColumn);
+                } else {
+                    return "";
+                }
             }
         });
         searchTerm.setAddRowsListenerHelper(new SearchTerm.Evaluator<Object>() {
@@ -381,7 +387,10 @@ public class SearchDefinitionFactory {
                         LabEventType.SAMPLE_IMPORT);
                 for (Map.Entry<LabEvent, Set<LabVessel>> eventVesselEntry : mapEventToVessels.entrySet()) {
                     for (LabVessel vessel : eventVesselEntry.getValue()) {
-                        results.add(vessel.getMercurySamples().iterator().next().getSampleKey());
+                        Set<MercurySample> mercurySamples = vessel.getMercurySamples();
+                        if( !mercurySamples.isEmpty() ) {
+                            results.add(mercurySamples.iterator().next().getSampleKey());
+                        }
                     }
                 }
                 return results;
@@ -438,8 +447,14 @@ public class SearchDefinitionFactory {
                 labEventType);
         for (Map.Entry<LabEvent, Set<LabVessel>> eventVesselEntry : mapEventToVessels.entrySet()) {
             for (LabVessel vessel : eventVesselEntry.getValue()) {
-                SectionTransfer sectionTransfer = eventVesselEntry.getKey().getSectionTransfers().iterator().next();
-                results.add(sectionTransfer.getTargetVesselContainer().getPositionOfVessel(vessel).toString());
+                Set<SectionTransfer> sectionTransfers = eventVesselEntry.getKey().getSectionTransfers();
+                if( !sectionTransfers.isEmpty() ) {
+                    VesselContainer container = sectionTransfers.iterator().next().getTargetVesselContainer();
+                    if( container != null ) {
+                        VesselPosition position = container.getPositionOfVessel(vessel);
+                        results.add(position==null?"":position.toString());
+                    }
+                }
             }
         }
         return results;
@@ -514,7 +529,7 @@ public class SearchDefinitionFactory {
         searchTerm.setValuesExpression(new SearchTerm.Evaluator<List<ConstrainedValue>>() {
             @Override
             public List<ConstrainedValue> evaluate(Object entity, Map<String, Object> context) {
-                OptionValueDao optionValueDao = (OptionValueDao) context.get( SearchDefinitionFactory.OPTION_VALUE_DAO);
+                OptionValueDao optionValueDao = (OptionValueDao) context.get( CONTEXT_KEY_OPTION_VALUE_DAO);
                 return optionValueDao.getLabEventLocationOptionList();
             }
         });
@@ -528,8 +543,6 @@ public class SearchDefinitionFactory {
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
-            //private BSPUserList bspUserList = ServiceAccessUtility.getBean(BSPUserList.class);
-
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
                 BSPUserList bspUserList = (BSPUserList)context.get(CONTEXT_KEY_BSP_USER_LIST);
@@ -537,17 +550,26 @@ public class SearchDefinitionFactory {
                 Long userId = labEvent.getEventOperator();
                 BspUser bspUser = bspUserList.getById(userId);
                 if (bspUser == null) {
-                    return "(Unknown user: " + userId + ")";
+                    return "Unknown user - ID: " + userId;
                 }
 
                 return bspUser.getFullName();
             }
         });
-        // Too many users, select list doesn't display after 100 elements found
-        // searchTerm.setValuesExpression(new SearchTerm.Evaluator<List<ConstrainedValue>>() {
-        // ...
-        // searchTerm.setValueConversionExpression(new SearchTerm.Evaluator<Object>() {
-        // ...
+        searchTerm.setValuesExpression(new SearchTerm.Evaluator<List<ConstrainedValue>>() {
+            // Pick actual users out of lab events
+            @Override
+            public List<ConstrainedValue> evaluate(Object entity, Map<String, Object> context) {
+                OptionValueDao optionValueDao = (OptionValueDao) context.get(CONTEXT_KEY_OPTION_VALUE_DAO);
+                return optionValueDao.getLabEventUserNameList();
+            }
+        });
+        searchTerm.setValueConversionExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                return Long.valueOf( (String) context.get(CONTEXT_KEY_SEARCH_STRING));
+            }
+        });
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -578,7 +600,7 @@ public class SearchDefinitionFactory {
         searchTerm.setValueConversionExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
-                return Enum.valueOf(LabEventType.class, (String) context.get(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_STRING));
+                return Enum.valueOf(LabEventType.class, (String) context.get(CONTEXT_KEY_SEARCH_STRING));
             }
         });
         searchTerms.add(searchTerm);
@@ -604,7 +626,7 @@ public class SearchDefinitionFactory {
         searchTerm.setValuesExpression(new SearchTerm.Evaluator<List<ConstrainedValue>>() {
             @Override
             public List<ConstrainedValue> evaluate(Object entity, Map<String, Object> context) {
-                OptionValueDao optionValueDao = (OptionValueDao) context.get(SearchDefinitionFactory.OPTION_VALUE_DAO);
+                OptionValueDao optionValueDao = (OptionValueDao) context.get(CONTEXT_KEY_OPTION_VALUE_DAO);
                 return optionValueDao.getLabEventProgramNameList();
             }
         });
