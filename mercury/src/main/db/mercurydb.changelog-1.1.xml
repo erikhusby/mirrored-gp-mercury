@@ -817,4 +817,38 @@
         <createSequence sequenceName="SEQ_METADATA" schemaName="mercury" startValue="1" incrementBy="50"/>
     </changeSet>
 
+    <changeSet author="mcovarr" id="GPLIM-2885-4">
+        <createTable tableName="mercury_sample_metadata" schemaName="mercury">
+            <column name="sample_key" type="varchar2(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="metadata_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="mercury_sample_metadata" columnNames="sample_key, metadata_id"/>
+        <createIndex tableName="mercury_sample_metadata" indexName="ix_mercsmpl_metadata_smpl_key">
+            <column name="sample_key"/>
+        </createIndex>
+        <!-- There cannot be a foreign key constraint to MERCURY_SAMPLE.SAMPLE_KEY as that is neither a key nor unique. -->
+        <addForeignKeyConstraint constraintName="FK_MERCURY_SAMPLE_METADATA_ID"
+                                 baseTableSchemaName="mercury" baseTableName="mercury_sample_metadata" baseColumnNames="metadata_id"
+                                 referencedTableSchemaName="mercury" referencedTableName="metadata" referencedColumnNames="id"/>
+    </changeSet>
+
+    <changeSet author="mcovarr" id="GPLIM-2885-5">
+        <createTable tableName="mercury_sample_metadata_aud" schemaName="mercury">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sample_key" type="varchar2(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="metadata_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="mercury_sample_metadata_aud" columnNames="sample_key, metadata_id, rev"/>
+    </changeSet>
+
 </databaseChangeLog>
