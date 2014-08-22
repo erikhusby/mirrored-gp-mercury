@@ -181,7 +181,7 @@ public class ProductOrderResource {
         return new ProductOrderData(productOrder);
     }
 
-    public ProductOrderKit createOrderKit(boolean isExomeExpress, List<ProductOrderKitDetailData> kitDetailsData,
+    private ProductOrderKit createOrderKit(boolean isExomeExpress, List<ProductOrderKitDetailData> kitDetailsData,
                                           SampleCollection sampleCollection, Site site) {
 
         List<ProductOrderKitDetail> kitDetails = new ArrayList<>();
@@ -191,7 +191,6 @@ public class ProductOrderResource {
             MaterialInfoDto materialInfoDto = createMaterialInfoDTO(kitDetailData.getMaterialInfo(), moleculeType);
 
             kitDetails.add(createKitDetail(kitDetailData.getNumberOfSamples(), moleculeType, materialInfoDto));
-
         }
         return new ProductOrderKit(sampleCollection, site, kitDetails, isExomeExpress);
     }
