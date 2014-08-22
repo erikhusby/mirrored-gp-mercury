@@ -780,4 +780,41 @@
                 referencedTableSchemaName="mercury" referencedTableName="lab_Vessel" referencedColumnNames="lab_vessel_id"/>
     </changeSet>
 
+    <changeSet author="mcovarr" id="GPLIM-2885-1">
+        <createTable tableName="metadata" schemaName="mercury">
+            <column name="id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="key" type="varchar2(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="value" type="varchar2(255)">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="metadata" columnNames="id"/>
+    </changeSet>
+
+    <changeSet author="mcovarr" id="GPLIM-2885-2">
+        <createTable tableName="metadata_aud" schemaName="mercury">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="key" type="varchar2(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="value" type="varchar2(255)">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="metadata_aud" columnNames="id, rev"/>
+    </changeSet>
+
+    <changeSet author="mcovarr" id="GPLIM-2885-3">
+        <createSequence sequenceName="SEQ_METADATA" schemaName="mercury" startValue="1" incrementBy="50"/>
+    </changeSet>
+
 </databaseChangeLog>
