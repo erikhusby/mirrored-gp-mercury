@@ -25,7 +25,7 @@ public class UploadSampleTubesTest {
                 "testdata/SampleVessel.xlsx");
         Assert.assertNotNull(testSpreadSheetInputStream);
         try {
-            SampleVesselProcessor sampleVesselProcessor = new SampleVesselProcessor("Test", null, "thompson");
+            SampleVesselProcessor sampleVesselProcessor = new SampleVesselProcessor("Test", null, null, "thompson");
             PoiSpreadsheetParser parser = new PoiSpreadsheetParser(Collections.<String, TableProcessor>emptyMap());
 
             parser.processRows(WorkbookFactory.create(testSpreadSheetInputStream).getSheetAt(0), sampleVesselProcessor);

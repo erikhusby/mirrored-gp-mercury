@@ -4,9 +4,12 @@ import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ChildVesselBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -20,15 +23,18 @@ public class SampleVesselProcessor extends TableProcessor {
 
     private List<String> headers;
     private final LabVesselFactory labVesselFactory;
+    private final LabVesselDao labVesselDao;
     private final String userName;
 
     private final List<ParentVesselBean> parentVesselBeans = new ArrayList<>();
     private List<ChildVesselBean> childVesselBeans = new ArrayList<>();
     private List<LabVessel> labVessels;
 
-    public SampleVesselProcessor(String sheetName, LabVesselFactory labVesselFactory, String userName) {
+    public SampleVesselProcessor(String sheetName, LabVesselFactory labVesselFactory, LabVesselDao labVesselDao,
+            String userName) {
         super(sheetName);
         this.labVesselFactory = labVesselFactory;
+        this.labVesselDao = labVesselDao;
         this.userName = userName;
     }
 
@@ -49,9 +55,11 @@ public class SampleVesselProcessor extends TableProcessor {
         String containerBarcode = dataRow.get(Headers.CONTAINER_BARCODE.getText());
         String position = dataRow.get(Headers.POSITION.getText());
         if (parentVesselBeans.isEmpty()) {
-            parentVesselBeans.add(new ParentVesselBean(containerBarcode, null, "matrix", childVesselBeans));
+            parentVesselBeans.add(new ParentVesselBean(containerBarcode, null,
+                    RackOfTubes.RackType.Matrix96.getDisplayName(), childVesselBeans));
         }
-        childVesselBeans.add(new ChildVesselBean(tubeBarcode, sampleId, "tube", position));
+        childVesselBeans.add(new ChildVesselBean(tubeBarcode, sampleId,
+                BarcodedTube.BarcodedTubeType.MatrixTube.getDisplayName(), position));
     }
 
     @Override
@@ -61,8 +69,10 @@ public class SampleVesselProcessor extends TableProcessor {
 
     @Override
     public void close() {
+        // todo jmt validate that tubes and samples don't exist already?
         labVessels = labVesselFactory.buildLabVessels(parentVesselBeans, userName, new Date(), null,
                 MercurySample.MetadataSource.MERCURY);
+        labVesselDao.persistAll(labVessels);
     }
 
     private enum Headers implements ColumnHeader {
@@ -126,7 +136,7 @@ public class SampleVesselProcessor extends TableProcessor {
         return parentVesselBeans;
     }
 
-    List<LabVessel> getLabVessels() {
+    public List<LabVessel> getLabVessels() {
         return labVessels;
     }
 }
