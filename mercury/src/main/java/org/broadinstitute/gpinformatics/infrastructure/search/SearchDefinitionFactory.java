@@ -488,6 +488,12 @@ public class SearchDefinitionFactory {
                 return labEvent.getLabEventId();
             }
         });
+        searchTerm.setTypeExpression(new SearchTerm.Evaluator<String>() {
+            @Override
+            public String evaluate(Object entity, Map<String, Object> context) {
+                return "Long";
+            }
+        });
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
