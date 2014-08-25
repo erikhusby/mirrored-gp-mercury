@@ -782,7 +782,7 @@
 
     <changeSet author="mcovarr" id="GPLIM-2885-1">
         <createTable tableName="metadata" schemaName="mercury">
-            <column name="id" type="number(19,0)">
+            <column name="metadata_id" type="number(19,0)">
                 <constraints nullable="false"/>
             </column>
             <column name="key" type="varchar2(255)">
@@ -792,7 +792,7 @@
                 <constraints nullable="true"/>
             </column>
         </createTable>
-        <addPrimaryKey schemaName="mercury" tableName="metadata" columnNames="id"/>
+        <addPrimaryKey schemaName="mercury" tableName="metadata" columnNames="metadata_id"/>
     </changeSet>
 
     <changeSet author="mcovarr" id="GPLIM-2885-2">
@@ -800,7 +800,7 @@
             <column name="rev" type="number(19,0)">
                 <constraints nullable="false"/>
             </column>
-            <column name="id" type="number(19,0)">
+            <column name="metadata_id" type="number(19,0)">
                 <constraints nullable="false"/>
             </column>
             <column name="key" type="varchar2(255)">
@@ -810,7 +810,7 @@
                 <constraints nullable="true"/>
             </column>
         </createTable>
-        <addPrimaryKey schemaName="mercury" tableName="metadata_aud" columnNames="id, rev"/>
+        <addPrimaryKey schemaName="mercury" tableName="metadata_aud" columnNames="metadata_id, rev"/>
     </changeSet>
 
     <changeSet author="mcovarr" id="GPLIM-2885-3">
@@ -833,7 +833,7 @@
         <!-- There cannot be a foreign key constraint to MERCURY_SAMPLE.SAMPLE_KEY as that is neither a key nor unique. -->
         <addForeignKeyConstraint constraintName="FK_MERCURY_SAMPLE_METADATA_ID"
                                  baseTableSchemaName="mercury" baseTableName="mercury_sample_metadata" baseColumnNames="metadata_id"
-                                 referencedTableSchemaName="mercury" referencedTableName="metadata" referencedColumnNames="id"/>
+                                 referencedTableSchemaName="mercury" referencedTableName="metadata" referencedColumnNames="metadata_id"/>
     </changeSet>
 
     <changeSet author="mcovarr" id="GPLIM-2885-5">
@@ -841,14 +841,129 @@
             <column name="rev" type="number(19,0)">
                 <constraints nullable="false"/>
             </column>
-            <column name="sample_key" type="varchar2(255)">
+            <column name="sample_key" type="varchar2(255)"/>
+            <column name="metadata_id" type="number(19,0)"/>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="mercury_sample_metadata_aud" columnNames="sample_key, metadata_id, rev"/>
+    </changeSet>
+
+    <changeSet author="mcovarr" id="GPLIM-2885-6">
+        <createTable tableName="manifest_session" schemaName="mercury">
+            <column name="manifest_session_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="session_prefix" type="varchar2(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="varchar(30)">
+                <constraints nullable="false" />
+            </column>
+            <column name="created_by" type="numeric(15, 0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="modified_by" type="numeric(15, 0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_date" type="timestamp(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="modified_date" type="timestamp(6)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="manifest_session" columnNames="manifest_session_id" />
+    </changeSet>
+
+    <changeSet author="mcovarr" id="GPLIM-2885-7">
+        <createTable tableName="manifest_session_aud" schemaName="mercury">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="manifest_session_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="session_prefix" type="varchar2(255)"/>
+            <column name="status" type="varchar(30)"/>
+            <column name="created_by" type="numeric(15, 0)"/>
+            <column name="modified_by" type="numeric(15, 0)"/>
+            <column name="created_date" type="timestamp(6)"/>
+            <column name="modified_date" type="timestamp(6)"/>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="manifest_session_aud" columnNames="rev, manifest_session_id" />
+    </changeSet>
+
+    <changeSet author="mcovarr" id="GPLIM-2885-8">
+        <createSequence sequenceName="SEQ_MANIFEST_SESSION" schemaName="mercury" startValue="1" incrementBy="50"/>
+    </changeSet>
+
+    <changeSet author="mcovarr" id="GPLIM-2885-9">
+        <createTable tableName="manifest_record" schemaName="mercury">
+            <column name="manifest_record_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="manifest_session_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="varchar2(30)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="errorStatus" type="varchar2(30)"/>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="manifest_record" columnNames="manifest_record_id" />
+        <addForeignKeyConstraint constraintName="FK_MANREC_MANSESSION_ID"
+                                 baseTableSchemaName="mercury" baseTableName="manifest_record" baseColumnNames="manifest_session_id"
+                                 referencedTableSchemaName="mercury" referencedTableName="manifest_session" referencedColumnNames="manifest_session_id"/>
+    </changeSet>
+
+    <changeSet author="mcovarr" id="GPLIM-2885-10">
+        <createTable tableName="manifest_record_aud" schemaName="mercury">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="manifest_record_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="manifest_session_id" type="number(19,0)"/>
+            <column name="status" type="varchar2(30)"/>
+            <column name="errorStatus" type="varchar2(30)"/>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="manifest_record_aud" columnNames="rev, manifest_record_id" />
+    </changeSet>
+
+    <changeSet author="mcovarr" id="GPLIM-2885-11">
+        <createSequence sequenceName="SEQ_MANIFEST_RECORD" schemaName="mercury" startValue="1" incrementBy="50"/>
+    </changeSet>
+
+    <changeSet author="mcovarr" id="GPLIM-2885-12">
+        <createTable tableName="manifest_record_metadata" schemaName="mercury">
+            <column name="manifest_record_id" type="number(19,0)">
                 <constraints nullable="false"/>
             </column>
             <column name="metadata_id" type="number(19,0)">
                 <constraints nullable="false"/>
             </column>
         </createTable>
-        <addPrimaryKey schemaName="mercury" tableName="mercury_sample_metadata_aud" columnNames="sample_key, metadata_id, rev"/>
+        <addPrimaryKey schemaName="mercury" tableName="manifest_record_metadata" columnNames="manifest_record_id, metadata_id"/>
+        <createIndex tableName="manifest_record_metadata" indexName="ix_manifest_record_metadata">
+            <column name="manifest_record_id"/>
+        </createIndex>
+        <addForeignKeyConstraint constraintName="FK_MANREC_METADATA_MANREC_ID"
+                                 baseTableSchemaName="mercury" baseTableName="manifest_record_metadata" baseColumnNames="manifest_record_id"
+                                 referencedTableSchemaName="mercury" referencedTableName="manifest_record" referencedColumnNames="manifest_record_id"/>
+        <addForeignKeyConstraint constraintName="FK_MANREC_METADATA_METADATA_ID"
+                                 baseTableSchemaName="mercury" baseTableName="manifest_record_metadata" baseColumnNames="metadata_id"
+                                 referencedTableSchemaName="mercury" referencedTableName="metadata" referencedColumnNames="metadata_id"/>
+    </changeSet>
+
+    <changeSet author="mcovarr" id="GPLIM-2885-13">
+        <createTable tableName="manifest_record_metadata_aud" schemaName="mercury">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="manifest_record_id" type="varchar2(255)" />
+            <column name="metadata_id" type="number(19,0)" />
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="manifest_record_metadata_aud" columnNames="manifest_record_id, metadata_id, rev"/>
     </changeSet>
 
 </databaseChangeLog>
