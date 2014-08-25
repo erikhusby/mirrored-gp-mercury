@@ -5,11 +5,6 @@ import clover.com.google.common.collect.Maps;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 
 import javax.annotation.Nullable;
-import javax.persistence.CascadeType;
-import javax.persistence.EnumType;
-import javax.persistence.ManyToMany;
-import javax.persistence.MapKeyEnumerated;
-import javax.persistence.OneToMany;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +16,8 @@ public class ManifestRecord {
 
 
     private Map<Metadata.Key,Metadata> metadata = new HashMap<>();
+    private Status status = Status.UPLOADED;
+    private ErrorStatus errorStatus;
 
     public ManifestRecord(List<Metadata> metadata) {
 
@@ -30,11 +27,36 @@ public class ManifestRecord {
                 return metadata.getKey();
             }
         }));
+
     }
 
     public Metadata getField(Metadata.Key sampleId) {
 
 
         return metadata.get(sampleId);
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
+    }
+
+    public ErrorStatus getErrorStatus() {
+        return errorStatus;
+    }
+
+    public void setErrorStatus(ErrorStatus errorStatus) {
+        this.errorStatus = errorStatus;
+    }
+
+    public enum Status {UPLOADED}
+
+    /**
+     * TODO scottmat fill in javadoc!!!
+     */
+    public static enum ErrorStatus {
     }
 }

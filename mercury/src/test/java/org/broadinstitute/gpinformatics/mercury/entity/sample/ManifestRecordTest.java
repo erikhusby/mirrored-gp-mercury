@@ -41,6 +41,7 @@ public class ManifestRecordTest {
     public void testCreateRecord() throws Exception {
 
         Assert.assertEquals(testRecord.getField(Metadata.Key.SAMPLE_ID).getValue(), value1);
-
+        Assert.assertEquals(testRecord.getStatus(), ManifestRecord.Status.UPLOADED);
+        Assert.assertNull(testRecord.getErrorStatus());
     }
 }
