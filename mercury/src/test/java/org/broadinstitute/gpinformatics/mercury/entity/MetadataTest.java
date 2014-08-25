@@ -18,7 +18,7 @@ public class MetadataTest {
         new Metadata();
 
         // equals and hashcode.
-        final String KEY = "key";
+        final Metadata.Key KEY = Metadata.Key.SAMPLE_ID;
         final String VALUE = "value";
         final Metadata metadata = new Metadata(KEY, VALUE);
         assertThat(metadata.getKey(), is(equalTo(KEY)));

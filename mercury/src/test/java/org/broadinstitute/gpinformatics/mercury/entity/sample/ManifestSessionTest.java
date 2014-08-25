@@ -45,13 +45,11 @@ public class ManifestSessionTest {
 
         Assert.assertEquals(testSession.getModifiedBy(), modifyUser.getUserId());
 
-        ManifestRecord testRecord = new ManifestRecord();
-
-        testSession.addRecord(testRecord);
-
-        Assert.assertTrue(testSession.getRecords().contains(testRecord));
-
-
+//        ManifestRecord testRecord = new ManifestRecord();
+//
+//        testSession.addRecord(testRecord);
+//
+//        Assert.assertTrue(testSession.getRecords().contains(testRecord));
     }
 
     private class ManifestSessionStub extends ManifestSession {

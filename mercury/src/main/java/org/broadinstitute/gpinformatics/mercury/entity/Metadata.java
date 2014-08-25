@@ -7,6 +7,8 @@ import org.hibernate.envers.Audited;
 import javax.annotation.Nonnull;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -29,7 +31,8 @@ public class Metadata {
     private String id;
 
     @Column(name = "key")
-    private String key;
+    @Enumerated(EnumType.STRING)
+    private Key key;
 
     @Column(name = "value")
     private String value;
@@ -40,12 +43,12 @@ public class Metadata {
     protected Metadata() {
     }
 
-    public Metadata(@Nonnull String key, String value) {
+    public Metadata(@Nonnull Key key, String value) {
         this.key = key;
         this.value = value;
     }
 
-    public String getKey() {
+    public Key getKey() {
         return key;
     }
 
@@ -71,4 +74,6 @@ public class Metadata {
     public int hashCode() {
         return new HashCodeBuilder().append(key).append(value).hashCode();
     }
+
+    public enum Key {GENDER, PATIENT_ID, SAMPLE_ID}
 }
