@@ -5,6 +5,7 @@ import clover.com.google.common.collect.Maps;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +19,7 @@ public class ManifestRecord {
     private Map<Metadata.Key,Metadata> metadata = new HashMap<>();
     private Status status = Status.UPLOADED;
     private ErrorStatus errorStatus;
+    private List<ManifestEventLog> logEntries = new ArrayList<>();
 
     public ManifestRecord(List<Metadata> metadata) {
 
@@ -50,6 +52,19 @@ public class ManifestRecord {
 
     public void setErrorStatus(ErrorStatus errorStatus) {
         this.errorStatus = errorStatus;
+    }
+
+    public List<ManifestEventLog> getLogEntries() {
+        return logEntries;
+    }
+
+    public void setLogEntries(List<ManifestEventLog> logEntries) {
+        this.logEntries = logEntries;
+    }
+
+    public void addLogEntry(ManifestEventLog manifestEventLog) {
+        this.logEntries.add(manifestEventLog);
+
     }
 
     public enum Status {ABANDONED, UPLOADED}

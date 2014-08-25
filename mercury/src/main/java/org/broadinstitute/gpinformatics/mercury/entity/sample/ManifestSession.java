@@ -21,6 +21,7 @@ public class ManifestSession {
     private List<ManifestRecord> records = new ArrayList<>();
     private Date created;
     private Date modified;
+    private List<ManifestEventLog> logEntries = new ArrayList<>();
 
     public ManifestSession(ResearchProject researchProject, String sessionPrefix, BspUser createdBy) {
         this.researchProject = researchProject;
@@ -80,6 +81,19 @@ public class ManifestSession {
 
     public void setRecords(List<ManifestRecord> records) {
         this.records = records;
+    }
+
+    public void addLogEntry(ManifestEventLog logEntry) {
+
+        logEntries.add(logEntry);
+    }
+
+    public List<ManifestEventLog> getLogEntries() {
+        return logEntries;
+    }
+
+    public void setLogEntries(List<ManifestEventLog> logEntries) {
+        this.logEntries = logEntries;
     }
 
     public enum SessionStatus {OPEN}

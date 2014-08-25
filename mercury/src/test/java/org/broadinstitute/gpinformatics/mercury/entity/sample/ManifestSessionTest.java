@@ -57,6 +57,20 @@ public class ManifestSessionTest {
         testSession.addRecord(testRecord);
 
         Assert.assertTrue(testSession.getRecords().contains(testRecord));
+
+        ManifestEventLog logEntry = new ManifestEventLog("Failed to Upload Record in session",
+                ManifestEventLog.Type.ERROR);
+        testSession.addLogEntry(logEntry);
+
+        Assert.assertEquals(testSession.getLogEntries().size() , 1);
+        ManifestEventLog logEntry2 = new ManifestEventLog("Failed to Upload Record in session",testRecord,
+                ManifestEventLog.Type.ERROR);
+        testSession.addLogEntry(logEntry);
+
+        Assert.assertEquals(testRecord.getLogEntries().size(), 1);
+
+        Assert.assertEquals(testSession.getLogEntries().size(), 2);
+ 
     }
 
 }
