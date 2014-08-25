@@ -800,6 +800,7 @@
             <column name="rev" type="number(19,0)">
                 <constraints nullable="false"/>
             </column>
+            <column name="revtype" type="number(3,0)" />
             <column name="metadata_id" type="number(19,0)">
                 <constraints nullable="false"/>
             </column>
@@ -811,6 +812,10 @@
             </column>
         </createTable>
         <addPrimaryKey schemaName="mercury" tableName="metadata_aud" columnNames="metadata_id, rev"/>
+        <addForeignKeyConstraint baseTableName="metadata_aud" baseTableSchemaName="mercury" baseColumnNames="rev"
+                                 constraintName="fk_metadata_ref_info"
+                                 referencedTableName="rev_info" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="rev_info_id"/>
     </changeSet>
 
     <changeSet author="mcovarr" id="GPLIM-2885-3">
@@ -841,10 +846,15 @@
             <column name="rev" type="number(19,0)">
                 <constraints nullable="false"/>
             </column>
+            <column name="revtype" type="number(3,0)" />
             <column name="sample_key" type="varchar2(255)"/>
             <column name="metadata_id" type="number(19,0)"/>
         </createTable>
         <addPrimaryKey schemaName="mercury" tableName="mercury_sample_metadata_aud" columnNames="sample_key, metadata_id, rev"/>
+        <addForeignKeyConstraint baseTableName="mercury_sample_metadata_aud" baseTableSchemaName="mercury" baseColumnNames="rev"
+                                 constraintName="fk_sample_metadata_ref_info"
+                                 referencedTableName="rev_info" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="rev_info_id"/>
     </changeSet>
 
     <changeSet author="mcovarr" id="GPLIM-2885-6">
@@ -879,6 +889,7 @@
             <column name="rev" type="number(19,0)">
                 <constraints nullable="false"/>
             </column>
+            <column name="revtype" type="number(3,0)" />
             <column name="manifest_session_id" type="number(19,0)">
                 <constraints nullable="false"/>
             </column>
@@ -890,6 +901,10 @@
             <column name="modified_date" type="timestamp(6)"/>
         </createTable>
         <addPrimaryKey schemaName="mercury" tableName="manifest_session_aud" columnNames="rev, manifest_session_id" />
+        <addForeignKeyConstraint baseTableName="manifest_session_aud" baseTableSchemaName="mercury" baseColumnNames="rev"
+                                 constraintName="fk_manifest_session_ref_info"
+                                 referencedTableName="rev_info" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="rev_info_id"/>
     </changeSet>
 
     <changeSet author="mcovarr" id="GPLIM-2885-8">
@@ -920,6 +935,7 @@
             <column name="rev" type="number(19,0)">
                 <constraints nullable="false"/>
             </column>
+            <column name="revtype" type="number(3,0)" />
             <column name="manifest_record_id" type="number(19,0)">
                 <constraints nullable="false"/>
             </column>
@@ -928,6 +944,10 @@
             <column name="errorStatus" type="varchar2(30)"/>
         </createTable>
         <addPrimaryKey schemaName="mercury" tableName="manifest_record_aud" columnNames="rev, manifest_record_id" />
+        <addForeignKeyConstraint baseTableName="manifest_record_aud" baseTableSchemaName="mercury" baseColumnNames="rev"
+                                 constraintName="fk_manifest_record_ref_info"
+                                 referencedTableName="rev_info" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="rev_info_id"/>
     </changeSet>
 
     <changeSet author="mcovarr" id="GPLIM-2885-11">
@@ -960,10 +980,15 @@
             <column name="rev" type="number(19,0)">
                 <constraints nullable="false"/>
             </column>
+            <column name="revtype" type="number(3,0)" />
             <column name="manifest_record_id" type="varchar2(255)" />
             <column name="metadata_id" type="number(19,0)" />
         </createTable>
         <addPrimaryKey schemaName="mercury" tableName="manifest_record_metadata_aud" columnNames="manifest_record_id, metadata_id, rev"/>
+        <addForeignKeyConstraint baseTableName="manifest_record_metadata_aud" baseTableSchemaName="mercury" baseColumnNames="rev"
+                                 constraintName="fk_manrec_metadata_ref_info"
+                                 referencedTableName="rev_info" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="rev_info_id"/>
     </changeSet>
 
     <changeSet author="mcovarr" id="GPLIM-2885-14">
@@ -989,6 +1014,7 @@
             <column name="rev" type="number(19,0)">
                 <constraints nullable="false"/>
             </column>
+            <column name="revtype" type="number(3,0)" />
             <column name="manifest_event_id" type="number(19,0)">
                 <constraints nullable="false"/>
             </column>
@@ -997,6 +1023,10 @@
             <column name="log_type" type="varchar(30)" />
         </createTable>
         <addPrimaryKey schemaName="mercury" tableName="manifest_event_aud" columnNames="rev, manifest_event_id"/>
+        <addForeignKeyConstraint baseTableName="manifest_event_aud" baseTableSchemaName="mercury" baseColumnNames="rev"
+                                 constraintName="fk_manifest_event_ref_info"
+                                 referencedTableName="rev_info" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="rev_info_id"/>
     </changeSet>
 
 
