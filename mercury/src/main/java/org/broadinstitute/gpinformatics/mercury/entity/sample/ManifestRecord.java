@@ -45,7 +45,7 @@ public class ManifestRecord {
     private Map<Metadata.Key, Metadata> metadata = new HashMap<>();
 
     @Enumerated(EnumType.STRING)
-    private Status status;
+    private Status status = Status.UPLOADED;
 
     @Enumerated(EnumType.STRING)
     private ErrorStatus errorStatus;
@@ -57,22 +57,23 @@ public class ManifestRecord {
     @JoinColumn(name = "manifest_session_id")
     private ManifestSession session;
 
-    /** For JPA */
+    /**
+     * For JPA
+     */
     protected ManifestRecord() {
     }
 
     public ManifestRecord(List<Metadata> metadata) {
-        this(metadata, Status.UPLOADED, null);
+        this(metadata, null);
     }
 
-    public ManifestRecord(List<Metadata> metadata, Status status, ErrorStatus errorStatus) {
+    public ManifestRecord(List<Metadata> metadata, ErrorStatus errorStatus) {
         this.metadata = new HashMap<>(Maps.uniqueIndex(metadata, new Function<Metadata, Metadata.Key>() {
             @Override
             public Metadata.Key apply(Metadata metadata) {
                 return metadata.getKey();
             }
         }));
-        this.status = status;
         this.errorStatus = errorStatus;
     }
 
@@ -106,12 +107,20 @@ public class ManifestRecord {
         this.session = session;
     }
 
-    public enum Status {ABANDONED, UPLOADED}
+    public void setStatus(Status status) {
+        this.status = status;
+    }
 
-    /**
-     * TODO scottmat fill in javadoc!!!
-     */
-    public static enum ErrorStatus {
-        DUPLICATE_SAMPLE_ID
+    public void setErrorStatus(ErrorStatus errorStatus) {
+        this.errorStatus = errorStatus;
+    }
+
+
+    public enum Status {UPLOADED, ABANDONED, UPLOAD_ACCEPTED, SCANNED, REGISTERED, ACCESSIONED}
+
+    public enum ErrorStatus {
+        DUPLICATE_SAMPLE_ID, MISMATCHED_GENDER, UNEXPECTED_TUMOR_OR_NORMAL, NOT_IN_MANIFEST, DUPLICATE_SAMPLE_SCAN,
+        MISSING_SAMPLE, CONTAINER_LOST, CONTAINER_DAMAGED, NOT_READY_FOR_ACCESSIONING, ALREADY_SCANNED_TARGET,
+        NOT_REGISTERED, ALREADY_SCANNED_SOURCE
     }
 }

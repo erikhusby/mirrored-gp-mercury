@@ -140,5 +140,5 @@ public class ManifestSession {
         this.logEntries = logEntries;
     }
 
-    public enum SessionStatus {OPEN}
+    public enum SessionStatus {OPEN, COMPLETED}
 }

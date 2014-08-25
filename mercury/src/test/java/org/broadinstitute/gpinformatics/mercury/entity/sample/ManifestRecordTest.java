@@ -31,9 +31,8 @@ public class ManifestRecordTest {
         Assert.assertNull(testRecord.getErrorStatus());
 
         // Test with specified Status and ErrorStatus.
-        testRecord = ManifestTestFactory.buildManifestRecord(ManifestRecord.Status.ABANDONED,
-                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
-                ImmutableMap.of(KEY_1, VALUE_1, KEY_2, VALUE_2, KEY_3, VALUE_3));
+        testRecord.setStatus(ManifestRecord.Status.ABANDONED);
+        testRecord.setErrorStatus(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID);
 
         Assert.assertEquals(testRecord.getStatus(), ManifestRecord.Status.ABANDONED);
         Assert.assertEquals(testRecord.getErrorStatus(), ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID);

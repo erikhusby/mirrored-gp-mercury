@@ -27,9 +27,8 @@ public class ManifestTestFactory {
         return new ManifestRecord(buildMetadata(metadataContents));
     }
 
-    public static ManifestRecord buildManifestRecord(ManifestRecord.Status status,
-                                                     ManifestRecord.ErrorStatus errorStatus,
+    public static ManifestRecord buildManifestRecord(ManifestRecord.ErrorStatus errorStatus,
                                                      Map<Metadata.Key, String> metadataContents) {
-        return new ManifestRecord(buildMetadata(metadataContents), status, errorStatus);
+        return new ManifestRecord(buildMetadata(metadataContents), errorStatus);
     }
 }

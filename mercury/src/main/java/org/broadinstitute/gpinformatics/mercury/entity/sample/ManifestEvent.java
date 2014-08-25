@@ -43,7 +43,7 @@ public class ManifestEvent {
     private ManifestSession session;
 
     /** For JPA */
-    public ManifestEvent() {
+    protected ManifestEvent() {
     }
 
     public ManifestEvent(String message, Type logType) {
@@ -80,9 +80,9 @@ public class ManifestEvent {
         this.session = session;
     }
 
-    public enum Type {ERROR}
-
     public ManifestRecord getManifestRecord() {
         return manifestRecord;
     }
+
+    public enum Type {ERROR, WARNING, INFO}
 }

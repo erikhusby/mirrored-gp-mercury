@@ -31,10 +31,9 @@ public class ManifestSessionTest {
         testUser = new BSPUserList.QADudeUser("LU", 33L);
 
         testSession = new ManifestSession(testRp, sessionPrefix, testUser);
-
     }
 
-    public void testAddRecord() throws Exception {
+    public void testBasicProperties() throws Exception {
 
         Assert.assertEquals(testSession.getResearchProject(), testRp);
         Assert.assertEquals(testSession.createSessionName(), sessionPrefix+testSession.getManifestSessionId());
@@ -48,7 +47,12 @@ public class ManifestSessionTest {
 
         Assert.assertEquals(testSession.getModifiedBy(), modifyUser.getUserId());
 
-        ManifestRecord testRecord = ManifestTestFactory.buildManifestRecord(null, null, ImmutableMap.of(
+        testAddRecord();
+
+    }
+
+    public void testAddRecord() throws Exception{
+        ManifestRecord testRecord = ManifestTestFactory.buildManifestRecord(null, ImmutableMap.of(
                 Metadata.Key.SAMPLE_TYPE, "value1",
                 Metadata.Key.TUMOR_NORMAL, "value2",
                 Metadata.Key.COLLECTION_DATE, "value3"));
@@ -57,7 +61,13 @@ public class ManifestSessionTest {
 
         Assert.assertTrue(testSession.getRecords().contains(testRecord));
         Assert.assertEquals(testRecord.getSession(), testSession);
+    }
 
+    public void testAddLogEntries() throws Exception{
+        ManifestRecord testRecord = ManifestTestFactory.buildManifestRecord(null, ImmutableMap.of(
+                Metadata.Key.SAMPLE_TYPE, "value1",
+                Metadata.Key.TUMOR_NORMAL, "value2",
+                Metadata.Key.COLLECTION_DATE, "value3"));
         ManifestEvent logEntry = new ManifestEvent("Failed to Upload Record in session",
                 ManifestEvent.Type.ERROR);
         testSession.addLogEntry(logEntry);
