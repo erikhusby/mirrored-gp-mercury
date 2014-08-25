@@ -24,9 +24,9 @@ import java.util.Map;
 @Table(schema = "mercury")
 public class ManifestRecord {
 
-    @Column(name = "id")
+    @Column(name = "MANIFEST_RECORD_ID")
     @Id
-    private Long id;
+    private Long manifestRecordId;
 
     private Map<Metadata.Key,Metadata> metadata = new HashMap<>();
 

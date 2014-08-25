@@ -43,7 +43,7 @@ public class ManifestSession {
     @Id
     @SequenceGenerator(name = "SEQ_MANIFEST_SESSION", schema = "mercury", sequenceName = "SEQ_MANIFEST_SESSION")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MANIFEST_SESSION")
-    private Long sessionId;
+    private Long manifestSessionId;
 
     @Enumerated(EnumType.STRING)
     private SessionStatus status = SessionStatus.OPEN;
@@ -52,6 +52,7 @@ public class ManifestSession {
     private Long modifiedBy;
 
     @OneToMany(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "MANIFEST_RECORD_ID")
     private List<ManifestRecord> records = new ArrayList<>();
 
     @Column(name = "CREATED_DATE")
@@ -61,6 +62,7 @@ public class ManifestSession {
     private Date modifiedDate;
 
     @OneToMany(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "MANIFEST_EVENT_LOG_ID")
     private List<ManifestEventLog> logEntries = new ArrayList<>();
 
     protected ManifestSession() {
@@ -80,12 +82,12 @@ public class ManifestSession {
         return researchProject;
     }
 
-    protected Long getSessionId() {
-        return sessionId;
+    protected Long getManifestSessionId() {
+        return manifestSessionId;
     }
 
     public String createSessionName() {
-        return getSessionPrefix() + getSessionId();
+        return getSessionPrefix() + getManifestSessionId();
     }
 
     protected String getSessionPrefix() {

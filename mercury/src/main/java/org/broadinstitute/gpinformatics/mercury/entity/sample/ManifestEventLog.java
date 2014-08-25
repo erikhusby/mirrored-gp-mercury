@@ -3,8 +3,11 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 /**
@@ -16,7 +19,9 @@ import javax.persistence.Table;
 public class ManifestEventLog {
 
     @Id
-    private Long id;
+    @SequenceGenerator(name = "SEQ_MANIFEST_EVENT_LOG", schema = "mercury",sequenceName = "SEQ_MANIFEST_EVENT_LOG")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MANIFEST_EVENT_LOG")
+    private Long manifestEventLogId;
 
     private String message;
 

@@ -37,7 +37,7 @@ public class ManifestSessionTest {
     public void testAddRecord() throws Exception {
 
         Assert.assertEquals(testSession.getResearchProject(), testRp);
-        Assert.assertEquals(testSession.createSessionName(), sessionPrefix+testSession.getSessionId());
+        Assert.assertEquals(testSession.createSessionName(), sessionPrefix+testSession.getManifestSessionId());
         Assert.assertEquals(testSession.getStatus(), ManifestSession.SessionStatus.OPEN);
 
         Assert.assertEquals(testSession.getCreatedBy() , testUser.getUserId());
@@ -61,7 +61,7 @@ public class ManifestSessionTest {
                 ManifestEventLog.Type.ERROR);
         testSession.addLogEntry(logEntry);
 
-        Assert.assertEquals(testSession.getLogEntries().size() , 1);
+        Assert.assertEquals(testSession.getLogEntries().size(), 1);
         ManifestEventLog logEntry2 = new ManifestEventLog("Failed to Upload Record in session",testRecord,
                 ManifestEventLog.Type.ERROR);
         testSession.addLogEntry(logEntry);
