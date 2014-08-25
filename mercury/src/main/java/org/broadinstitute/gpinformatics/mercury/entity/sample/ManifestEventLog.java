@@ -1,14 +1,33 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
+import org.hibernate.envers.Audited;
+
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+
 /**
  * TODO scottmat fill in javadoc!!!
  */
+@Entity
+@Audited
+@Table(schema = "mercury")
 public class ManifestEventLog {
 
+    @Id
+    private Long id;
 
     private String message;
+
+    @ManyToOne(optional = true)
     private ManifestRecord manifestRecord;
+
     private Type logType;
+
+    /** For JPA */
+    public ManifestEventLog() {
+    }
 
     public ManifestEventLog(String message, Type logType) {
 
@@ -29,4 +48,8 @@ public class ManifestEventLog {
     }
 
     public enum Type {ERROR}
+
+    public ManifestRecord getManifestRecord() {
+        return manifestRecord;
+    }
 }

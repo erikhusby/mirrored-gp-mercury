@@ -1,16 +1,16 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
+import com.google.common.collect.ImmutableMap;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.util.Arrays;
 
 /**
  * TODO scottmat fill in javadoc!!!
@@ -49,11 +49,11 @@ public class ManifestSessionTest {
 
         Assert.assertEquals(testSession.getModifiedBy(), modifyUser.getUserId());
 
-        Metadata metadata1 = new Metadata(Metadata.Key.SAMPLE_TYPE, "value1");
-        Metadata metadata2 = new Metadata(Metadata.Key.TUMOR_NORMAL, "value2");
-        Metadata metadata3 = new Metadata(Metadata.Key.COLLECTION_DATE, "value3");
+        ManifestRecord testRecord = ManifestTestFactory.buildManifestRecord(null, null, ImmutableMap.of(
+                Metadata.Key.SAMPLE_TYPE, "value1",
+                Metadata.Key.TUMOR_NORMAL, "value2",
+                Metadata.Key.COLLECTION_DATE, "value3"));
 
-        ManifestRecord testRecord = new ManifestRecord(Arrays.asList(metadata1, metadata2, metadata3));
         testSession.addRecord(testRecord);
 
         Assert.assertTrue(testSession.getRecords().contains(testRecord));
@@ -70,7 +70,5 @@ public class ManifestSessionTest {
         Assert.assertEquals(testRecord.getLogEntries().size(), 1);
 
         Assert.assertEquals(testSession.getLogEntries().size(), 2);
- 
     }
-
 }
