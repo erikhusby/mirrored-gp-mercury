@@ -993,6 +993,16 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         this.squidWorkRequest = squidWorkRequest;
     }
 
+    /**
+     * @see ResearchProject#getRegulatoryDesignationCodeForPipeline
+     */
+    public String getRegulatoryDesignationCodeForPipeline() {
+        if (researchProject == null) {
+            return null;
+        }
+        return researchProject.getRegulatoryDesignationCodeForPipeline();
+    }
+
     @Override
     public boolean equals(Object other) {
         if (this == other) {

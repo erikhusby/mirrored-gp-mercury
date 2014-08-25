@@ -63,6 +63,7 @@ public class ResearchProjectTestFactory {
                 new RegulatoryInfo("Consent for " + title, RegulatoryInfo.Type.ORSP_NOT_HUMAN_SUBJECTS_RESEARCH,
                         "ABC-" + identifier);
         researchProject.getRegulatoryInfos().add(regulatoryInfo);
+        researchProject.setRegulatoryDesignation(ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
 
         return researchProject;
     }

@@ -4,7 +4,7 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"/>
 
-<c:if test="${actionBean.creating}">
+<c:if test="${actionBean.regulatoryInformationNew}">
     <p id="addRegInfoInstructions">Fill in the details below to add new regulatory information to Mercury and this research project.</p>
 </c:if>
 
@@ -20,7 +20,7 @@
 
         <div class="controls">
             <div id="identifierDisplay" class="form-value">${actionBean.regulatoryInfoIdentifier}</div>
-            <c:if test="${actionBean.creating}">
+            <c:if test="${actionBean.regulatoryInformationNew}">
                 <stripes:hidden id="identifier" name="regulatoryInfoIdentifier" value="${actionBean.regulatoryInfoIdentifier}"/>
             </c:if>
         </div>
@@ -28,7 +28,7 @@
 
     <%-- Type --%>
     <c:choose>
-        <c:when test="${actionBean.creating}">
+        <c:when test="${actionBean.regulatoryInformationNew}">
             <div id="regInfoTypeEdit" class="control-group">
                 <stripes:label for="regulatoryInfoType" class="control-label">Type</stripes:label>
                 <div class="controls">
@@ -68,7 +68,7 @@
     <div class="control-group">
         <div class="controls">
             <c:choose>
-                <c:when test="${actionBean.creating}">
+                <c:when test="${actionBean.regulatoryInformationNew}">
                     <stripes:submit id="addNewSubmit" name="addNewRegulatoryInfo" value="Add" class="btn btn-primary"/>
                     <%-- Hidden action is needed because of the validateTitle() submit handler. See below. --%>
                     <input type="hidden" name="<%= ResearchProjectActionBean.ADD_NEW_REGULATORY_INFO_ACTION %>">

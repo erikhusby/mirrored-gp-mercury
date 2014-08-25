@@ -2416,20 +2416,9 @@
         </plugins>
 
         <testResources>
-            <!-- Filtering corrupts the xlsx test files -->
             <testResource>
                 <directory>src/test/resources</directory>
                 <filtering>true</filtering>
-                <excludes>
-                    <exclude>**/*.xlsx</exclude>
-                </excludes>
-            </testResource>
-            <testResource>
-                <directory>src/test/resources</directory>
-                <filtering>false</filtering>
-                <includes>
-                    <include>**/*.xlsx</include>
-                </includes>
             </testResource>
             <testResource>
                 <directory>src/main/webapp/WEB-INF/classes</directory>

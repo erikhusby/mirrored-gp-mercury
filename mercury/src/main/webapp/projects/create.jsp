@@ -135,6 +135,27 @@
                     </div>
 
                     <div class="control-group">
+                        <c:choose>
+                            <c:when test="${actionBean.creating}">
+                                <label class="control-label" for="regulatoryDesignation">Regulatory Designation</label>
+                                <stripes:select id="regulatoryDesignation" name="editResearchProject.regulatoryDesignation">
+                                    <stripes:option value="">Select One</stripes:option>
+                                    <stripes:options-enumeration enum="org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject.RegulatoryDesignation" label="description"/>
+                                </stripes:select>
+                            </c:when>
+                            <c:otherwise>
+                                <div class="control-group view-control-group">
+                                    <label class="control-label label-form">Regulatory Designation</label>
+                                    <div class="controls">
+                                        <div class="form-value" id="regulatoryDesignation">${actionBean.editResearchProject.regulatoryDesignationDescription}</div>
+                                        <stripes:hidden name="editResearchProject.regulatoryDesignation" value="${actionBean.editResearchProject.regulatoryDesignation}"/>
+                                    </div>
+                                </div>
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
+
+                    <div class="control-group">
                         <stripes:label for="researchProject" class="control-label">
                             Parent Research Project
                         </stripes:label>
