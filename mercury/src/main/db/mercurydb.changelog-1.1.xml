@@ -1029,5 +1029,9 @@
                                  referencedColumnNames="rev_info_id"/>
     </changeSet>
 
+    <changeSet author="mcovarr" id="GPLIM-2885-16">
+        <createSequence sequenceName="SEQ_MANIFEST_EVENT" schemaName="mercury" startValue="1" incrementBy="50"/>
+    </changeSet>
+
 
 </databaseChangeLog>

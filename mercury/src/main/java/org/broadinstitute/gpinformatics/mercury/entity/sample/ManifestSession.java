@@ -112,10 +112,9 @@ public class ManifestSession {
         this.modifiedBy = modifiedBy.getUserId();
     }
 
-    public void addRecord(ManifestRecord testRecord) {
-
-        records.add(testRecord);
-        testRecord.setSession(this);
+    public void addRecord(ManifestRecord record) {
+        records.add(record);
+        record.setSession(this);
     }
 
     public List<ManifestRecord> getRecords() {

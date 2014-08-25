@@ -11,6 +11,7 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
@@ -35,7 +36,7 @@ public class ManifestRecord {
     @Id
     @Column(name = "MANIFEST_RECORD_ID")
     @SequenceGenerator(name = "SEQ_MANIFEST_RECORD", schema = "mercury", sequenceName = "SEQ_MANIFEST_RECORD")
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MANIFEST_RECORD")
     private Long manifestRecordId;
 
     @OneToMany
@@ -77,9 +78,11 @@ public class ManifestRecord {
         this.errorStatus = errorStatus;
     }
 
+    public Map<Metadata.Key, Metadata> getMetadata() {
+        return metadata;
+    }
+
     public Metadata getField(Metadata.Key sampleId) {
-
-
         return metadata.get(sampleId);
     }
 
