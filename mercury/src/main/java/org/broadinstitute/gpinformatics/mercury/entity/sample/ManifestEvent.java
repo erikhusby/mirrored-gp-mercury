@@ -3,10 +3,14 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Column;
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -27,10 +31,16 @@ public class ManifestEvent {
 
     private String message;
 
-    @ManyToOne(optional = true)
+    @ManyToOne(cascade = CascadeType.PERSIST,optional = true)
+    @JoinColumn(name ="manifest_record_id")
     private ManifestRecord manifestRecord;
 
+    @Enumerated(EnumType.STRING)
     private Type logType;
+
+    @ManyToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "manifest_session_id")
+    private ManifestSession session;
 
     /** For JPA */
     public ManifestEvent() {
@@ -52,6 +62,22 @@ public class ManifestEvent {
     public void setManifestRecord(ManifestRecord manifestRecord) {
         this.manifestRecord = manifestRecord;
         this.manifestRecord.addLogEntry(this);
+    }
+
+    public Type getLogType() {
+        return logType;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public ManifestSession getSession() {
+        return session;
+    }
+
+    public void setSession(ManifestSession session) {
+        this.session = session;
     }
 
     public enum Type {ERROR}

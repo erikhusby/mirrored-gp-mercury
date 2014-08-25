@@ -8,8 +8,16 @@ import org.hibernate.envers.Audited;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToOne;
+import javax.persistence.MapKeyEnumerated;
 import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,19 +32,30 @@ import java.util.Map;
 @Table(schema = "mercury")
 public class ManifestRecord {
 
-    @Column(name = "MANIFEST_RECORD_ID")
     @Id
+    @Column(name = "MANIFEST_RECORD_ID")
+    @SequenceGenerator(name = "SEQ_MANIFEST_RECORD", schema = "mercury", sequenceName = "SEQ_MANIFEST_RECORD")
+    @GeneratedValue
     private Long manifestRecordId;
 
-    private Map<Metadata.Key,Metadata> metadata = new HashMap<>();
+    @OneToMany
+    @JoinTable(name = "manifest_record_metadata",
+            joinColumns = @JoinColumn(name = "MANIFEST_RECORD_ID", referencedColumnName = "manifest_record_id"))
+    @MapKeyEnumerated(EnumType.STRING)
+    private Map<Metadata.Key, Metadata> metadata = new HashMap<>();
 
+    @Enumerated(EnumType.STRING)
     private Status status;
 
+    @Enumerated(EnumType.STRING)
     private ErrorStatus errorStatus;
 
-    // TODO is this really one to many?
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "manifestRecord")
     private List<ManifestEvent> logEntries = new ArrayList<>();
+
+    @ManyToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "manifest_session_id")
+    private ManifestSession session;
 
     /** For JPA */
     protected ManifestRecord() {
@@ -77,6 +96,14 @@ public class ManifestRecord {
 
     public void addLogEntry(ManifestEvent manifestEvent) {
         this.logEntries.add(manifestEvent);
+    }
+
+    public ManifestSession getSession() {
+        return session;
+    }
+
+    public void setSession(ManifestSession session) {
+        this.session = session;
     }
 
     public enum Status {ABANDONED, UPLOADED}
