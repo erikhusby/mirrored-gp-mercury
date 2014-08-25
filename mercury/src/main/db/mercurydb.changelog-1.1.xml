@@ -796,7 +796,6 @@
     </changeSet>
     <changeSet author="thompson" id="GPLIM-2941-4">
         <sql>update mercury_sample_aud set metadata_source = 'BSP' where metadata_source is null</sql>
-        <addNotNullConstraint schemaName="mercury" tableName="mercury_sample_aud" columnName="metadata_source"/>
     </changeSet>
     <!-- fix the row migration resulting from expanding the size of the rows -->
     <changeSet author="thompson" id="GPLIM-2941-5">
