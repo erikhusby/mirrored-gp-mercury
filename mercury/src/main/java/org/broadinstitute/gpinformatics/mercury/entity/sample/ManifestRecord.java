@@ -52,11 +52,12 @@ public class ManifestRecord {
         this.errorStatus = errorStatus;
     }
 
-    public enum Status {UPLOADED}
+    public enum Status {ABANDONED, UPLOADED}
 
     /**
      * TODO scottmat fill in javadoc!!!
      */
     public static enum ErrorStatus {
+        DUPLICATE_SAMPLE_ID
     }
 }
