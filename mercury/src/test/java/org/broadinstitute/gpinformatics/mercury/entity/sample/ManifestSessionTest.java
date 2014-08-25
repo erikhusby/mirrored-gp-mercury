@@ -5,9 +5,12 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import java.util.Arrays;
 
 /**
  * TODO scottmat fill in javadoc!!!
@@ -15,7 +18,8 @@ import org.testng.annotations.Test;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ManifestSessionTest {
 
-    ManifestSessionStub testSession;
+//    ManifestSessionStub testSession;
+    ManifestSession testSession;
     private ResearchProject testRp;
     private String sessionPrefix;
     private BspUser testUser;
@@ -27,7 +31,7 @@ public class ManifestSessionTest {
         sessionPrefix = "testPrefix";
         testUser = new BSPUserList.QADudeUser("LU", 33L);
 
-        testSession = new ManifestSessionStub(testRp, sessionPrefix, testUser);
+        testSession = new ManifestSession(testRp, sessionPrefix, testUser);
 
     }
 
@@ -45,22 +49,14 @@ public class ManifestSessionTest {
 
         Assert.assertEquals(testSession.getModifiedBy(), modifyUser.getUserId());
 
-//        ManifestRecord testRecord = new ManifestRecord();
-//
-//        testSession.addRecord(testRecord);
-//
-//        Assert.assertTrue(testSession.getRecords().contains(testRecord));
+        Metadata metadata1 = new Metadata(Metadata.Key.SAMPLE_TYPE, "value1");
+        Metadata metadata2 = new Metadata(Metadata.Key.TUMOR_NORMAL, "value2");
+        Metadata metadata3 = new Metadata(Metadata.Key.COLLECTION_DATE, "value3");
+
+        ManifestRecord testRecord = new ManifestRecord(Arrays.asList(metadata1, metadata2, metadata3));
+        testSession.addRecord(testRecord);
+
+        Assert.assertTrue(testSession.getRecords().contains(testRecord));
     }
 
-    private class ManifestSessionStub extends ManifestSession {
-        public ManifestSessionStub(ResearchProject researchProject, String sessionPrefix,
-                                   BspUser createdBy) {
-            super(researchProject, sessionPrefix, createdBy);
-        }
-
-        @Override
-        protected Long getSessionId() {
-            return super.getSessionId();
-        }
-    }
 }

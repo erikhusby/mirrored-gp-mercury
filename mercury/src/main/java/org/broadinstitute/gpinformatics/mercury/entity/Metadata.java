@@ -75,5 +75,5 @@ public class Metadata {
         return new HashCodeBuilder().append(key).append(value).hashCode();
     }
 
-    public enum Key {GENDER, PATIENT_ID, SAMPLE_ID}
+    public enum Key {GENDER, PATIENT_ID, SAMPLE_TYPE, TUMOR_NORMAL, COLLECTION_DATE, SAMPLE_ID}
 }
