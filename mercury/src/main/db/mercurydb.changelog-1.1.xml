@@ -966,4 +966,38 @@
         <addPrimaryKey schemaName="mercury" tableName="manifest_record_metadata_aud" columnNames="manifest_record_id, metadata_id, rev"/>
     </changeSet>
 
+    <changeSet author="mcovarr" id="GPLIM-2885-14">
+        <createTable tableName="manifest_event" schemaName="mercury">
+            <column name="manifest_event_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="message" type="varchar2(255)"/>
+            <column name="manifest_record_id" type="number(19,0)"/>
+            <column name="log_type" type="varchar(30)" />
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="manifest_event" columnNames="manifest_event_id"/>
+        <createIndex tableName="manifest_event" indexName="ix_maneventlog_manrecord">
+            <column name="manifest_record_id"/>
+        </createIndex>
+        <addForeignKeyConstraint constraintName="FK_MANLOG_MANREC_ID"
+                                 baseTableSchemaName="mercury" baseTableName="manifest_event" baseColumnNames="manifest_record_id"
+                                 referencedTableSchemaName="mercury" referencedTableName="manifest_record" referencedColumnNames="manifest_record_id"/>
+    </changeSet>
+
+    <changeSet author="mcovarr" id="GPLIM-2885-15">
+        <createTable tableName="manifest_event_aud" schemaName="mercury">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="manifest_event_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="message" type="varchar2(255)"/>
+            <column name="manifest_record_id" type="number(19,0)"/>
+            <column name="log_type" type="varchar(30)" />
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="manifest_event_aud" columnNames="rev, manifest_event_id"/>
+    </changeSet>
+
+
 </databaseChangeLog>

@@ -30,29 +30,29 @@ public class ManifestRecord {
 
     private Map<Metadata.Key,Metadata> metadata = new HashMap<>();
 
-    private Status status = Status.UPLOADED;
+    private Status status;
 
     private ErrorStatus errorStatus;
 
     // TODO is this really one to many?
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "manifestRecord")
-    private List<ManifestEventLog> logEntries = new ArrayList<>();
+    private List<ManifestEvent> logEntries = new ArrayList<>();
 
     /** For JPA */
     protected ManifestRecord() {
     }
 
     public ManifestRecord(List<Metadata> metadata) {
+        this(metadata, Status.UPLOADED, null);
+    }
+
+    public ManifestRecord(List<Metadata> metadata, Status status, ErrorStatus errorStatus) {
         this.metadata = new HashMap<>(Maps.uniqueIndex(metadata, new Function<Metadata, Metadata.Key>() {
             @Override
             public Metadata.Key apply(Metadata metadata) {
                 return metadata.getKey();
             }
         }));
-    }
-
-    public ManifestRecord(List<Metadata> metadata, Status status, ErrorStatus errorStatus) {
-        this(metadata);
         this.status = status;
         this.errorStatus = errorStatus;
     }
@@ -71,12 +71,12 @@ public class ManifestRecord {
         return errorStatus;
     }
 
-    public List<ManifestEventLog> getLogEntries() {
+    public List<ManifestEvent> getLogEntries() {
         return logEntries;
     }
 
-    public void addLogEntry(ManifestEventLog manifestEventLog) {
-        this.logEntries.add(manifestEventLog);
+    public void addLogEntry(ManifestEvent manifestEvent) {
+        this.logEntries.add(manifestEvent);
     }
 
     public enum Status {ABANDONED, UPLOADED}

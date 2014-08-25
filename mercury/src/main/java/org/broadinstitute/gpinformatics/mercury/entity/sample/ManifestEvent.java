@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import org.hibernate.envers.Audited;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -16,12 +17,13 @@ import javax.persistence.Table;
 @Entity
 @Audited
 @Table(schema = "mercury")
-public class ManifestEventLog {
+public class ManifestEvent {
 
     @Id
-    @SequenceGenerator(name = "SEQ_MANIFEST_EVENT_LOG", schema = "mercury",sequenceName = "SEQ_MANIFEST_EVENT_LOG")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MANIFEST_EVENT_LOG")
-    private Long manifestEventLogId;
+    @SequenceGenerator(name = "SEQ_MANIFEST_EVENT", schema = "mercury", sequenceName = "SEQ_MANIFEST_EVENT")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MANIFEST_EVENT")
+    @Column(name="manifest_event_id")
+    private Long manifestEventId;
 
     private String message;
 
@@ -31,16 +33,16 @@ public class ManifestEventLog {
     private Type logType;
 
     /** For JPA */
-    public ManifestEventLog() {
+    public ManifestEvent() {
     }
 
-    public ManifestEventLog(String message, Type logType) {
+    public ManifestEvent(String message, Type logType) {
 
         this.message = message;
         this.logType = logType;
     }
 
-    public ManifestEventLog(String message, ManifestRecord record, Type logType) {
+    public ManifestEvent(String message, ManifestRecord record, Type logType) {
 
         this.message = message;
         setManifestRecord(record);

@@ -27,7 +27,7 @@ public class Metadata {
     @SequenceGenerator(name = "SEQ_METADATA", schema = "mercury", sequenceName = "SEQ_METADATA")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_METADATA")
     @SuppressWarnings("UnusedDeclaration")
-    @Column(name = "id")
+    @Column(name = "metadata_id")
     private String id;
 
     @Column(name = "key")

@@ -13,7 +13,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -30,7 +30,7 @@ import java.util.List;
 @Table(schema = "mercury")
 public class ManifestSession {
 
-    @ManyToMany(cascade = CascadeType.PERSIST)
+    @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "RESEARCH_PROJECT_ID")
     private ResearchProject researchProject;
 
@@ -63,7 +63,7 @@ public class ManifestSession {
 
     @OneToMany(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "MANIFEST_EVENT_LOG_ID")
-    private List<ManifestEventLog> logEntries = new ArrayList<>();
+    private List<ManifestEvent> logEntries = new ArrayList<>();
 
     protected ManifestSession() {
     }
@@ -128,16 +128,16 @@ public class ManifestSession {
         this.records = records;
     }
 
-    public void addLogEntry(ManifestEventLog logEntry) {
+    public void addLogEntry(ManifestEvent logEntry) {
 
         logEntries.add(logEntry);
     }
 
-    public List<ManifestEventLog> getLogEntries() {
+    public List<ManifestEvent> getLogEntries() {
         return logEntries;
     }
 
-    public void setLogEntries(List<ManifestEventLog> logEntries) {
+    public void setLogEntries(List<ManifestEvent> logEntries) {
         this.logEntries = logEntries;
     }
 
