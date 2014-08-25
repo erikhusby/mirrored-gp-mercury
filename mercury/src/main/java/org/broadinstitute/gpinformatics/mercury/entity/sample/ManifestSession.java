@@ -2,34 +2,77 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import sun.awt.X11.XBaseWindow;
+import org.hibernate.envers.Audited;
 
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToMany;
+import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 /**
- * TODO scottmat fill in javadoc!!!
+ * Manifest session contains the information related to a manifest upload.  While other entities will contain the
+ * specific information for an uploaded manifest, the session controls whether or not that data can be updated
  */
+@Entity
+@Audited
+@Table(schema = "mercury")
 public class ManifestSession {
-    private final ResearchProject researchProject;
-    private final String sessionPrefix;
-    private final Long createdBy;
+
+    @ManyToMany(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "RESEARCH_PROJECT_ID")
+    private ResearchProject researchProject;
+
+    @Column(name="SESSION_PREFIX")
+    private String sessionPrefix;
+
+    @Column(name = "CREATED_BY")
+    private Long createdBy;
+
+    @Id
+    @SequenceGenerator(name = "SEQ_MANIFEST_SESSION", schema = "mercury", sequenceName = "SEQ_MANIFEST_SESSION")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MANIFEST_SESSION")
     private Long sessionId;
+
+    @Enumerated(EnumType.STRING)
     private SessionStatus status = SessionStatus.OPEN;
+
+    @Column(name = "MODIFIED_BY")
     private Long modifiedBy;
+
+    @OneToMany(cascade = CascadeType.PERSIST)
     private List<ManifestRecord> records = new ArrayList<>();
-    private Date created;
-    private Date modified;
+
+    @Column(name = "CREATED_DATE")
+    private Date createdDate;
+
+    @Column(name = "MODIFIED_DATE")
+    private Date modifiedDate;
+
+    @OneToMany(cascade = CascadeType.PERSIST)
     private List<ManifestEventLog> logEntries = new ArrayList<>();
+
+    protected ManifestSession() {
+    }
 
     public ManifestSession(ResearchProject researchProject, String sessionPrefix, BspUser createdBy) {
         this.researchProject = researchProject;
         this.sessionPrefix = sessionPrefix;
         this.createdBy = createdBy.getUserId();
         this.modifiedBy = createdBy.getUserId();
-        created = new Date();
-        modified = new Date();
+        createdDate = new Date();
+        modifiedDate = new Date();
     }
 
 

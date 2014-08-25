@@ -18,7 +18,6 @@ import org.testng.annotations.Test;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ManifestSessionTest {
 
-//    ManifestSessionStub testSession;
     ManifestSession testSession;
     private ResearchProject testRp;
     private String sessionPrefix;
