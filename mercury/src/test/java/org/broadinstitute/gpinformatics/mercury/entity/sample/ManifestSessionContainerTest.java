@@ -16,14 +16,13 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import java.util.Arrays;
 import java.util.Date;
-import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 
 @Test(groups = TestGroups.STANDARD)
 public class ManifestSessionContainerTest extends Arquillian {
@@ -48,7 +47,7 @@ public class ManifestSessionContainerTest extends Arquillian {
 
     @BeforeMethod
     public void setUp() throws Exception {
-        if(researchProjectDao == null) {
+        if (researchProjectDao == null) {
             return;
         }
     }
@@ -61,28 +60,35 @@ public class ManifestSessionContainerTest extends Arquillian {
 
     public void roundTrip() {
 
-        ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject("RP-"+(new Date()).getTime());
+        ResearchProject researchProject =
+                ResearchProjectTestFactory.createTestResearchProject("RP-" + (new Date()).getTime());
 
         researchProjectDao.persist(researchProject);
         researchProjectDao.flush();
 
-        ManifestSession manifestSession = new ManifestSession(researchProject, "BUICK-TEST",
-                        new BSPUserList.QADudeUser("PM", 5176L));
+        ManifestSession manifestSessionIn = new ManifestSession(researchProject, "BUICK-TEST",
+                new BSPUserList.QADudeUser("PM", 5176L));
 
-        ManifestRecord manifestRecordIn = new ManifestRecord(Arrays.asList(
+        ManifestRecord manifestRecordIn = new ManifestRecord(
                 new Metadata(Metadata.Key.PATIENT_ID, PATIENT_1),
-                new Metadata(Metadata.Key.GENDER, GENDER_MALE)
-        ));
+                new Metadata(Metadata.Key.GENDER, GENDER_MALE));
 
-        manifestSession.addRecord(manifestRecordIn);
-        manifestSessionEjb.save(manifestSession);
+        manifestSessionIn.addRecord(manifestRecordIn);
+        manifestSessionEjb.save(manifestSessionIn);
+        manifestSessionDao.clear();
 
-        ManifestRecord manifestRecordOut = manifestSession.getRecords().get(0);
+        ManifestSession manifestSessionOut =
+                manifestSessionDao.findById(ManifestSession.class, manifestSessionIn.getManifestSessionId());
+
+        ManifestRecord manifestRecordOut = manifestSessionOut.getRecords().get(0);
         assertThat(manifestRecordOut.getMetadata().size(), is(equalTo(manifestRecordIn.getMetadata().size())));
         for (Metadata metadata : manifestRecordIn.getMetadata()) {
             String inValue = metadata.getValue();
             String outValue = manifestRecordOut.getMetadataByKey(metadata.getKey()).getValue();
             assertThat(inValue, is(equalTo(outValue)));
         }
+
+        assertThat(manifestRecordIn.getErrorStatus(), is(nullValue()));
+        assertThat(manifestRecordOut.getErrorStatus(), is(equalTo(manifestRecordIn.getErrorStatus())));
     }
 }

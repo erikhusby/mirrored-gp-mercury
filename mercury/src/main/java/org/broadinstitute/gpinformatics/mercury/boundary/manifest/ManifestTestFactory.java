@@ -13,14 +13,14 @@ import java.util.Map;
  */
 public class ManifestTestFactory {
 
-    private static List<Metadata> buildMetadata(Map<Metadata.Key, String> metadataContents) {
+    private static Metadata [] buildMetadata(Map<Metadata.Key, String> metadataContents) {
         List<Metadata> metadataList = new ArrayList<>();
 
         for (Map.Entry<Metadata.Key, String> entry : metadataContents.entrySet()) {
             Metadata metadata = new Metadata(entry.getKey(), entry.getValue());
             metadataList.add(metadata);
         }
-        return metadataList;
+        return metadataList.toArray(new Metadata[metadataList.size()]);
     }
 
     public static ManifestRecord buildManifestRecord(Map<Metadata.Key, String> metadataContents) {
@@ -29,6 +29,6 @@ public class ManifestTestFactory {
 
     public static ManifestRecord buildManifestRecord(ManifestRecord.ErrorStatus errorStatus,
                                                      Map<Metadata.Key, String> metadataContents) {
-        return new ManifestRecord(buildMetadata(metadataContents), errorStatus);
+        return new ManifestRecord(errorStatus, buildMetadata(metadataContents));
     }
 }

@@ -22,6 +22,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +48,7 @@ public class ManifestRecord {
     private List<Metadata> metadata = new ArrayList<>();
 
     @Transient
-    private Map<Metadata.Key, Metadata> metadataMap = new HashMap<>();
+    private Map<Metadata.Key, Metadata> metadataMap;
 
     @Enumerated(EnumType.STRING)
     private Status status = Status.UPLOADED;
@@ -65,22 +66,32 @@ public class ManifestRecord {
     /**
      * For JPA
      */
-    protected ManifestRecord() {
+    protected ManifestRecord() {}
+
+    public ManifestRecord(Metadata...metadata) {
+        this(null, metadata);
     }
 
-    public ManifestRecord(List<Metadata> metadata) {
-        this(metadata, null);
-    }
-
-    public ManifestRecord(List<Metadata> metadata, ErrorStatus errorStatus) {
-        this.metadata.addAll(metadata);
-        this.metadataMap = new HashMap<>(Maps.uniqueIndex(metadata, new Function<Metadata, Metadata.Key>() {
-            @Override
-            public Metadata.Key apply(Metadata metadata) {
-                return metadata.getKey();
-            }
-        }));
+    public ManifestRecord(ErrorStatus errorStatus, Metadata... metadata) {
+        this.metadata.addAll(Arrays.asList(metadata));
         this.errorStatus = errorStatus;
+    }
+
+    /**
+     * Builds the Metadata Map if it has not already been built.
+     */
+    private Map<Metadata.Key, Metadata> getMetadataMap() {
+        // This is constructed lazily as it can't be built within the no-arg constructor since the 'metadata' field
+        // upon which it depends will not have been initialized.
+        if (metadataMap == null) {
+            this.metadataMap = new HashMap<>(Maps.uniqueIndex(metadata, new Function<Metadata, Metadata.Key>() {
+                @Override
+                public Metadata.Key apply(Metadata metadata) {
+                    return metadata.getKey();
+                }
+            }));
+        }
+        return metadataMap;
     }
 
     public List<Metadata> getMetadata() {
@@ -88,7 +99,7 @@ public class ManifestRecord {
     }
 
     public Metadata getMetadataByKey(Metadata.Key sampleId) {
-        return metadataMap.get(sampleId);
+        return getMetadataMap().get(sampleId);
     }
 
     public Status getStatus() {
