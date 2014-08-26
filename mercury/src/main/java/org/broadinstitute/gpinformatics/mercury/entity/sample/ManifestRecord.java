@@ -30,7 +30,7 @@ import java.util.Map;
  */
 @Entity
 @Audited
-@Table(schema = "mercury")
+@Table(schema = "mercury", name = "MANIFEST_RECORD")
 public class ManifestRecord {
 
     @Id

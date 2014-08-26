@@ -20,7 +20,7 @@ import javax.persistence.Table;
  */
 @Entity
 @Audited
-@Table(schema = "mercury")
+@Table(schema = "mercury", name = "METADATA")
 public class Metadata {
 
     @Id

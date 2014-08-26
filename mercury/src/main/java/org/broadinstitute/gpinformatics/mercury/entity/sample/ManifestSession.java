@@ -27,7 +27,7 @@ import java.util.List;
  */
 @Entity
 @Audited
-@Table(schema = "mercury")
+@Table(schema = "mercury", name = "MANIFEST_SESSION")
 public class ManifestSession {
 
     @ManyToOne(cascade = CascadeType.PERSIST)

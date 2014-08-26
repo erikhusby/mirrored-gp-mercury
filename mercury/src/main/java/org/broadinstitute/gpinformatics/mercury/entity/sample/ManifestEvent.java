@@ -20,7 +20,7 @@ import javax.persistence.Table;
  */
 @Entity
 @Audited
-@Table(schema = "mercury")
+@Table(schema = "mercury", name="MANIFEST_EVENT")
 public class ManifestEvent {
 
     @Id
