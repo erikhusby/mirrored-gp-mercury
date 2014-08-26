@@ -938,7 +938,7 @@
             <column name="status" type="varchar2(30)">
                 <constraints nullable="false"/>
             </column>
-            <column name="errorStatus" type="varchar2(30)"/>
+            <column name="error_status" type="varchar2(30)"/>
         </createTable>
         <addPrimaryKey schemaName="mercury" tableName="manifest_record" columnNames="manifest_record_id" />
         <addForeignKeyConstraint constraintName="FK_MANREC_MANSESSION_ID"
@@ -957,7 +957,7 @@
             </column>
             <column name="manifest_session_id" type="number(19,0)"/>
             <column name="status" type="varchar2(30)"/>
-            <column name="errorStatus" type="varchar2(30)"/>
+            <column name="error_status" type="varchar2(30)"/>
         </createTable>
         <addPrimaryKey schemaName="mercury" tableName="manifest_record_aud" columnNames="rev, manifest_record_id" />
         <addForeignKeyConstraint baseTableName="manifest_record_aud" baseTableSchemaName="mercury" baseColumnNames="rev"

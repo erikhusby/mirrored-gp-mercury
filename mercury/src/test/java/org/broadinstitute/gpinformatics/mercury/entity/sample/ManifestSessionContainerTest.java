@@ -53,6 +53,21 @@ public class ManifestSessionContainerTest extends Arquillian {
         }
     }
 
+    public void manifestEvent() {
+        ManifestEvent manifestEvent = new ManifestEvent("Everything is OK.", ManifestEvent.Type.INFO);
+        researchProjectDao.persist(manifestEvent);
+        researchProjectDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void manifestRecord() {
+        ManifestRecord manifestRecord =
+                new ManifestRecord(Arrays.asList(new Metadata(Metadata.Key.COLLECTION_DATE, "yesterday")));
+        researchProjectDao.persist(manifestRecord);
+        researchProjectDao.flush();
+    }
+
+    @Test(enabled = true)
     public void roundTrip() {
 
         ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject("RP-"+(new Date()).getTime());
