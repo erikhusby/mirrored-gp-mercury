@@ -15,11 +15,12 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
-import javax.persistence.MapKeyEnumerated;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -39,11 +40,14 @@ public class ManifestRecord {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MANIFEST_RECORD")
     private Long manifestRecordId;
 
-    @OneToMany(cascade = CascadeType.PERSIST)
-    @JoinTable(name = "manifest_record_metadata",
-            joinColumns = @JoinColumn(name = "MANIFEST_RECORD_ID", referencedColumnName = "manifest_record_id"))
-    @MapKeyEnumerated(EnumType.STRING)
-    private Map<Metadata.Key, Metadata> metadata = new HashMap<>();
+    @ManyToMany(cascade = CascadeType.PERSIST)
+    @JoinTable(name = "manifest_record_metadata", schema = "mercury",
+            joinColumns = @JoinColumn(name = "MANIFEST_RECORD_ID"),
+            inverseJoinColumns = @JoinColumn(name = "METADATA_ID"))
+    private List<Metadata> metadata = new ArrayList<>();
+
+    @Transient
+    private Map<Metadata.Key, Metadata> metadataMap = new HashMap<>();
 
     @Enumerated(EnumType.STRING)
     private Status status = Status.UPLOADED;
@@ -69,7 +73,8 @@ public class ManifestRecord {
     }
 
     public ManifestRecord(List<Metadata> metadata, ErrorStatus errorStatus) {
-        this.metadata = new HashMap<>(Maps.uniqueIndex(metadata, new Function<Metadata, Metadata.Key>() {
+        this.metadata.addAll(metadata);
+        this.metadataMap = new HashMap<>(Maps.uniqueIndex(metadata, new Function<Metadata, Metadata.Key>() {
             @Override
             public Metadata.Key apply(Metadata metadata) {
                 return metadata.getKey();
@@ -78,12 +83,12 @@ public class ManifestRecord {
         this.errorStatus = errorStatus;
     }
 
-    public Map<Metadata.Key, Metadata> getMetadata() {
-        return metadata;
+    public List<Metadata> getMetadata() {
+        return this.metadata;
     }
 
-    public Metadata getField(Metadata.Key sampleId) {
-        return metadata.get(sampleId);
+    public Metadata getMetadataByKey(Metadata.Key sampleId) {
+        return metadataMap.get(sampleId);
     }
 
     public Status getStatus() {
@@ -117,7 +122,6 @@ public class ManifestRecord {
     public void setErrorStatus(ErrorStatus errorStatus) {
         this.errorStatus = errorStatus;
     }
-
 
     public enum Status {UPLOADED, ABANDONED, UPLOAD_ACCEPTED, SCANNED, REGISTERED, ACCESSIONED}
 

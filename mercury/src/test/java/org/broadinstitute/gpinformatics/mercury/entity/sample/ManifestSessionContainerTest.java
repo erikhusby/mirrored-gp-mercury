@@ -59,15 +59,6 @@ public class ManifestSessionContainerTest extends Arquillian {
         researchProjectDao.flush();
     }
 
-    @Test(enabled = false)
-    public void manifestRecord() {
-        ManifestRecord manifestRecord =
-                new ManifestRecord(Arrays.asList(new Metadata(Metadata.Key.COLLECTION_DATE, "yesterday")));
-        researchProjectDao.persist(manifestRecord);
-        researchProjectDao.flush();
-    }
-
-    @Test(enabled = true)
     public void roundTrip() {
 
         ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject("RP-"+(new Date()).getTime());
@@ -87,9 +78,10 @@ public class ManifestSessionContainerTest extends Arquillian {
         manifestSessionEjb.save(manifestSession);
 
         ManifestRecord manifestRecordOut = manifestSession.getRecords().get(0);
-        for (Map.Entry<Metadata.Key, Metadata> entry : manifestRecordIn.getMetadata().entrySet()) {
-            String inValue = entry.getValue().getValue();
-            String outValue = manifestRecordOut.getField(entry.getKey()).getValue();
+        assertThat(manifestRecordOut.getMetadata().size(), is(equalTo(manifestRecordIn.getMetadata().size())));
+        for (Metadata metadata : manifestRecordIn.getMetadata()) {
+            String inValue = metadata.getValue();
+            String outValue = manifestRecordOut.getMetadataByKey(metadata.getKey()).getValue();
             assertThat(inValue, is(equalTo(outValue)));
         }
     }

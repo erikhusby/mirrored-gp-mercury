@@ -24,9 +24,9 @@ public class ManifestRecordTest {
                 ManifestTestFactory.buildManifestRecord(
                         ImmutableMap.of(KEY_1, VALUE_1, KEY_2, VALUE_2, KEY_3, VALUE_3));
 
-        Assert.assertEquals(testRecord.getField(KEY_1).getValue(), VALUE_1);
-        Assert.assertEquals(testRecord.getField(KEY_2).getValue(), VALUE_2);
-        Assert.assertEquals(testRecord.getField(KEY_3).getValue(), VALUE_3);
+        Assert.assertEquals(testRecord.getMetadataByKey(KEY_1).getValue(), VALUE_1);
+        Assert.assertEquals(testRecord.getMetadataByKey(KEY_2).getValue(), VALUE_2);
+        Assert.assertEquals(testRecord.getMetadataByKey(KEY_3).getValue(), VALUE_3);
         Assert.assertEquals(testRecord.getStatus(), ManifestRecord.Status.UPLOADED);
         Assert.assertNull(testRecord.getErrorStatus());
 
