@@ -39,7 +39,7 @@ public class ManifestRecord {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MANIFEST_RECORD")
     private Long manifestRecordId;
 
-    @OneToMany
+    @OneToMany(cascade = CascadeType.PERSIST)
     @JoinTable(name = "manifest_record_metadata",
             joinColumns = @JoinColumn(name = "MANIFEST_RECORD_ID", referencedColumnName = "manifest_record_id"))
     @MapKeyEnumerated(EnumType.STRING)
@@ -51,7 +51,7 @@ public class ManifestRecord {
     @Enumerated(EnumType.STRING)
     private ErrorStatus errorStatus;
 
-    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "manifestRecord")
+    @OneToMany(cascade = {CascadeType.PERSIST}, mappedBy = "manifestRecord")
     private List<ManifestEvent> logEntries = new ArrayList<>();
 
     @ManyToOne(cascade = CascadeType.PERSIST)

@@ -28,7 +28,7 @@ public class Metadata {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_METADATA")
     @SuppressWarnings("UnusedDeclaration")
     @Column(name = "metadata_id")
-    private String id;
+    private Long id;
 
     @Column(name = "key")
     @Enumerated(EnumType.STRING)
