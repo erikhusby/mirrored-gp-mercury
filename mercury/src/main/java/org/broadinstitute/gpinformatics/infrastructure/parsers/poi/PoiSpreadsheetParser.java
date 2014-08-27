@@ -175,7 +175,7 @@ public final class PoiSpreadsheetParser {
      *
      * @return A string representation of the cell.
      */
-    private static String getCellValues(Cell cell, boolean isDate, boolean isString) {
+    public static String getCellValues(Cell cell, boolean isDate, boolean isString) {
         if (cell != null) {
             switch (cell.getCellType()) {
             case Cell.CELL_TYPE_BOOLEAN:

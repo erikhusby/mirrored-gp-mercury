@@ -67,6 +67,7 @@ public class LabMetric implements Comparable<LabMetric> {
 
     public enum MetricType {
         BSP_PICO("BSP Pico", false),
+        INITIAL_PICO("Initial Pico", false),
         PRE_FLIGHT_PRE_NORM_PICO("Pre Flight Pre Norm Pico", false),
         PRE_FLIGHT_POST_NORM_PICO("Pre Flight Post Norm Pico", false),
         POND_PICO("Pond Pico", true),
@@ -148,7 +149,7 @@ public class LabMetric implements Comparable<LabMetric> {
     @ManyToOne(fetch = FetchType.LAZY)
     private LabVessel labVessel;
 
-
+    //todo jmt convert to enum?
     private String vesselPosition;
 
     private Date createdDate;
