@@ -10,6 +10,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 
+/**
+ * Basic sanity check for Metadata.
+ */
 @Test(groups = TestGroups.DATABASE_FREE)
 public class MetadataTest {
 
@@ -17,7 +20,7 @@ public class MetadataTest {
         // Cover the no-arg constructor.
         new Metadata();
 
-        // equals and hashcode.
+        // equals and hashCode.
         final Metadata.Key KEY = Metadata.Key.SAMPLE_ID;
         final String VALUE = "value";
         final Metadata metadata = new Metadata(KEY, VALUE);

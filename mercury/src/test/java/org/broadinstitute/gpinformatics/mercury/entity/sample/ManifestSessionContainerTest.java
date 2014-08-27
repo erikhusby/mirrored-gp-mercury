@@ -76,7 +76,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         manifestSessionIn.addRecord(manifestRecordIn);
         manifestSessionEjb.save(manifestSessionIn);
         // Clear the Session to force retrieval of a persistent instance 'manifestSessionOut' below that is distinct
-        // from the now-detached 'manifestSessionIn' instance.
+        // from the detached 'manifestSessionIn' instance.
         manifestSessionDao.clear();
 
         ManifestSession manifestSessionOut =
