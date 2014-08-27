@@ -45,27 +45,27 @@ public class ManifestSessionContainerTest extends Arquillian {
     @Inject
     private ManifestSessionDao manifestSessionDao;
 
-    @BeforeMethod
-    public void setUp() throws Exception {
-        if (researchProjectDao == null) {
-            return;
-        }
-    }
-
+    /**
+     * Simple persistence check for ManifestEvent.
+     */
     public void manifestEvent() {
         ManifestEvent manifestEvent = new ManifestEvent("Everything is OK.", ManifestEvent.Type.INFO);
         researchProjectDao.persist(manifestEvent);
         researchProjectDao.flush();
     }
 
+    /**
+     * Round trip test for ManifestSession.
+     */
     public void roundTrip() {
 
+        // Create and persist Research Project.
         ResearchProject researchProject =
                 ResearchProjectTestFactory.createTestResearchProject("RP-" + (new Date()).getTime());
-
         researchProjectDao.persist(researchProject);
         researchProjectDao.flush();
 
+        // Create and persist ManifestSession.
         ManifestSession manifestSessionIn = new ManifestSession(researchProject, "BUICK-TEST",
                 new BSPUserList.QADudeUser("PM", 5176L));
 
@@ -75,11 +75,17 @@ public class ManifestSessionContainerTest extends Arquillian {
 
         manifestSessionIn.addRecord(manifestRecordIn);
         manifestSessionEjb.save(manifestSessionIn);
+        // Clear the Session to force retrieval of a persistent instance 'manifestSessionOut' below that is distinct
+        // from the now-detached 'manifestSessionIn' instance.
         manifestSessionDao.clear();
 
         ManifestSession manifestSessionOut =
                 manifestSessionDao.findById(ManifestSession.class, manifestSessionIn.getManifestSessionId());
 
+        assertThat(manifestSessionIn.getRecords().size(), is(equalTo(manifestSessionOut.getRecords().size())));
+        assertThat(manifestSessionOut.getRecords().size(), is(equalTo(1)));
+
+        // Get the sole 'out' ManifestRecord for comparison with the sole 'in' ManifestRecord.
         ManifestRecord manifestRecordOut = manifestSessionOut.getRecords().get(0);
         assertThat(manifestRecordOut.getMetadata().size(), is(equalTo(manifestRecordIn.getMetadata().size())));
         for (Metadata metadata : manifestRecordIn.getMetadata()) {
