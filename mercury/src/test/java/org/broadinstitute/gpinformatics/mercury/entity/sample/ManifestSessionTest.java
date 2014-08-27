@@ -12,9 +12,6 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-/**
- * TODO scottmat fill in javadoc!!!
- */
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ManifestSessionTest {
 

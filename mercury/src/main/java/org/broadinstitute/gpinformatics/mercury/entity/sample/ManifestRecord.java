@@ -28,7 +28,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * TODO scottmat fill in javadoc!!!
+ * A manifest record represents the accumulated data of one row in a sample manifest derived from the sample
+ * registration process.
  */
 @Entity
 @Audited
@@ -50,6 +51,9 @@ public class ManifestRecord {
     @Transient
     private Map<Metadata.Key, Metadata> metadataMap;
 
+    /**
+     * Since a record cannot exist without a successful upload of a manifest, this is the default status state
+     */
     @Enumerated(EnumType.STRING)
     private Status status = Status.UPLOADED;
 
@@ -134,11 +138,51 @@ public class ManifestRecord {
         this.errorStatus = errorStatus;
     }
 
+    /**
+     * Status represents the states that a manifest record can be in during the registration workflow.
+     */
     public enum Status {UPLOADED, ABANDONED, UPLOAD_ACCEPTED, SCANNED, REGISTERED, ACCESSIONED}
 
+    /**
+     * Represents the different error states that can occur to a record during the registration process.  For the most
+     * part, the existence of an error will halt the registration process for a manifest record, unless it specifically
+     * states that the process can continue.
+     *
+     */
     public enum ErrorStatus {
-        DUPLICATE_SAMPLE_ID, MISMATCHED_GENDER, UNEXPECTED_TUMOR_OR_NORMAL, NOT_IN_MANIFEST, DUPLICATE_SAMPLE_SCAN,
-        MISSING_SAMPLE, CONTAINER_LOST, CONTAINER_DAMAGED, NOT_READY_FOR_ACCESSIONING, ALREADY_SCANNED_TARGET,
-        NOT_REGISTERED, ALREADY_SCANNED_SOURCE
+        /** At some time before the current sample was scanned, another with the exact same
+         * sample id and also connected to the current research project was scanned
+         */
+        DUPLICATE_SAMPLE_ID ,
+        /** Another record in the system associated with the same research project and same patient
+         * ID has a different value for gender
+         */
+        MISMATCHED_GENDER,
+        /** Another record within this manifest, with the same patient ID has the same value
+         * for the tumor/normal indicator
+         */
+        UNEXPECTED_TUMOR_OR_NORMAL,
+        /** This cannot directly apply to an actual record.  Represents a sample tube that is
+         * received for which there is no previously uploaded manifest record
+         */
+        NOT_IN_MANIFEST,
+        DUPLICATE_SAMPLE_SCAN,
+        /** Represents a scenario in which a record exists that, as of the completion of a session,
+         * there was no physical sample scanned to associate with the record
+         */
+        MISSING_SAMPLE,
+        /** Represents a scenario in which the user attempts to accession a source tube that
+         * did not make it to the REGISTERED state
+         */
+        NOT_READY_FOR_ACCESSIONING,
+        /** Helpful message to note that the user is attempting to accession a source tube into
+         * a target vessel that has already gone through accessioning
+         */
+        ALREADY_SCANNED_TARGET,
+        NOT_REGISTERED,
+        /** Helpful message to note that the user is attempting to accession a source tube into
+         * that has already gone through accessioning
+         */
+        ALREADY_SCANNED_SOURCE
     }
 }
