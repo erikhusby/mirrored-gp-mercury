@@ -16,7 +16,8 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 /**
- * TODO scottmat fill in javadoc!!!
+ * Manifest events represents logged items of interest that occur during the registration and/or accessioning
+ * process.  Tracking these items is a critical piece of supporting a quality system.
  */
 @Entity
 @Audited
