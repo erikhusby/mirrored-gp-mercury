@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
@@ -167,7 +168,11 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
             orphanRemoval = true)
     private List<SubmissionTracker> submissionTrackers = new ArrayList<>();
-// todo: we can cache the submissiontrackers in a static map
+
+    @OneToMany(mappedBy = "researchProject", cascade = CascadeType.PERSIST)
+    private Set<ManifestSession> manifestSessions;
+
+    // todo: we can cache the submissiontrackers in a static map
     public SubmissionTracker getSubmissionTracker(SubmissionTuple tuple){
         Set<SubmissionTracker> foundSubmissionTrackers = new HashSet<>();
         for (SubmissionTracker submissionTracker : getSubmissionTrackers()) {
@@ -810,6 +815,14 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         for(SubmissionTracker tracker:submissionTracker) {
             tracker.setResearchProject(this);
         }
+    }
+
+    public Set<ManifestSession> getManifestSessions() {
+        return manifestSessions;
+    }
+
+    public void setManifestSessions(Set<ManifestSession> manifestSessions) {
+        this.manifestSessions = manifestSessions;
     }
 
     public enum Status implements StatusType {

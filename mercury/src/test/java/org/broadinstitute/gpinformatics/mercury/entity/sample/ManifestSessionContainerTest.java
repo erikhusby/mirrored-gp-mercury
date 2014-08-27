@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -20,7 +21,9 @@ import java.util.Date;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 
@@ -78,6 +81,10 @@ public class ManifestSessionContainerTest extends Arquillian {
 
         manifestSessionIn.addRecord(manifestRecordIn);
         manifestSessionEjb.save(manifestSessionIn);
+
+        assertThat(manifestSessionIn.getResearchProject(), is(equalTo(researchProject)));
+//        assertThat(researchProject.getManifestSessions(), hasItem(manifestSessionIn));
+
         // Clear the Session to force retrieval of a persistent instance 'manifestSessionOut' below that is distinct
         // from the detached 'manifestSessionIn' instance.
         manifestSessionDao.clear();

@@ -1,7 +1,14 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
+import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
@@ -18,8 +25,10 @@ import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Manifest session contains the information related to a single manifest upload during the sample registration process.
@@ -38,7 +47,7 @@ public class ManifestSession {
     @JoinColumn(name = "RESEARCH_PROJECT_ID")
     private ResearchProject researchProject;
 
-    @Column(name="SESSION_PREFIX")
+    @Column(name = "SESSION_PREFIX")
     private String sessionPrefix;
 
     @Column(name = "CREATED_BY")
@@ -137,9 +146,43 @@ public class ManifestSession {
         return logEntries;
     }
 
+    public boolean isManifestValid() {
+
+        Multimap<String, ManifestRecord> recordsBySamples = Multimaps.index(records,
+                new Function<ManifestRecord, String>() {
+                    @Override
+                    public String apply(ManifestRecord manifestRecord) {
+                        return manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue();
+                    }
+                });
+
+        Iterable<Map.Entry<String, Collection<ManifestRecord>>> filteredDupes = Iterables.filter(
+                recordsBySamples.asMap().entrySet(), new Predicate<Map.Entry<String, Collection<ManifestRecord>>>() {
+            @Override
+            public boolean apply(Map.Entry<String, Collection<ManifestRecord>> entry) {
+                return entry.getValue().size() > 1;
+            }
+        });
+
+        ArrayList<Map.Entry<String, Collection<ManifestRecord>>> filterEntries = Lists.newArrayList(filteredDupes);
+
+        for (Map.Entry<String, Collection<ManifestRecord>> dupeToProcess : filterEntries) {
+            for (ManifestRecord dupeRecord : dupeToProcess.getValue()) {
+                dupeRecord.setErrorStatus(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID);
+                addLogEntry(new ManifestEvent(String.format("For sample %s: %s", dupeToProcess.getKey(),
+                        ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getMessage()), dupeRecord,
+                        ManifestEvent.Type.ERROR));
+            }
+        }
+
+        return filterEntries.isEmpty();
+    }
+
     /**
      * Indicator to denote the availability (complete or otherwise) of a manifest session for the sample registration
      * process
      */
-    public enum SessionStatus {OPEN, COMPLETED}
+    public enum SessionStatus {
+        OPEN, COMPLETED
+    }
 }

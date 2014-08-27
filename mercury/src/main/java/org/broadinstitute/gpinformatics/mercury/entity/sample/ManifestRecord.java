@@ -186,6 +186,15 @@ public class ManifestRecord {
         /** Helpful message to note that the user is attempting to accession a source tube into
          * that has already gone through accessioning
          */
-        ALREADY_SCANNED_SOURCE
+        ALREADY_SCANNED_SOURCE;
+        private String message;
+
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
+        }
     }
 }
