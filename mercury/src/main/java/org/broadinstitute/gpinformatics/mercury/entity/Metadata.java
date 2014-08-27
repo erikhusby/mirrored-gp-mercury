@@ -16,7 +16,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 /**
- * Basic metadata storage class with String keys and values.
+ * Generic metadata storage class with String keys and values.
  */
 @Entity
 @Audited
@@ -26,6 +26,7 @@ public class Metadata {
     @Id
     @SequenceGenerator(name = "SEQ_METADATA", schema = "mercury", sequenceName = "SEQ_METADATA")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_METADATA")
+    /** ID field for JPA */
     @SuppressWarnings("UnusedDeclaration")
     @Column(name = "metadata_id")
     private Long id;
@@ -48,7 +49,7 @@ public class Metadata {
         this.value = value;
     }
 
-    public Key getKey() {
+    public @Nonnull Key getKey() {
         return key;
     }
 
@@ -75,5 +76,17 @@ public class Metadata {
         return new HashCodeBuilder().append(key).append(value).hashCode();
     }
 
-    public enum Key {GENDER, PATIENT_ID, SAMPLE_TYPE, TUMOR_NORMAL, COLLECTION_DATE, SAMPLE_ID}
+    /**
+     * Valid keys for Metadata records.
+     */
+    public enum Key {
+        /* These keys are currently all used for uploads of the "modified" (edited) manifest during Buick sample
+         * registration. */
+        GENDER,
+        PATIENT_ID,
+        SAMPLE_TYPE,
+        TUMOR_NORMAL,
+        COLLECTION_DATE,
+        SAMPLE_ID
+    }
 }
