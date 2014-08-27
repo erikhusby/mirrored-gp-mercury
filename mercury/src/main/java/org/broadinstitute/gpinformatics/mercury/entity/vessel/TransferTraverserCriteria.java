@@ -681,6 +681,27 @@ public interface TransferTraverserCriteria {
                     hopCount = context.getHopCount();
                 }
             }
+
+            // Check for in place events on vessel container (e.g. EndRepair, ABase, APWash)
+            if( context.getVesselContainer() != null ) {
+                LabVessel containerVessel = context.getVesselContainer().getEmbedder();
+                if (containerVessel != null) {
+                    Set<LabEvent> inPlaceLabEvents = containerVessel.getInPlaceLabEvents();
+                    for (LabEvent inPlaceLabEvent : inPlaceLabEvents) {
+                        labEvents.add(inPlaceLabEvent);
+                    }
+                    // Look for what comes in from the side (e.g. IndexedAdapterLigation, BaitAddition)
+                    for (LabEvent containerEvent : containerVessel.getTransfersTo()) {
+                        labEvents.add(containerEvent);
+                        for (LabVessel ancestorLabVessel : containerEvent.getSourceLabVessels()) {
+                            if( ancestorLabVessel.getContainerRole() != null ){
+                                labEvents.addAll(ancestorLabVessel.getContainerRole().getEmbedder().getTransfersTo());
+                            }
+                        }
+                    }
+                }
+            }
+
             return TraversalControl.ContinueTraversing;
         }
 

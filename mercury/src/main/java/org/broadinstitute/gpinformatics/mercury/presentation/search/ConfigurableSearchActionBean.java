@@ -30,13 +30,12 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
-import org.broadinstitute.gpinformatics.infrastructure.search.OptionValueDao;
+import org.broadinstitute.gpinformatics.infrastructure.search.ConstrainedValueDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.PaginationDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstanceEjb;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
-import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBeanContext;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -205,15 +204,26 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
     private BSPUserList bspUserList;
 
     @Inject
-    private OptionValueDao optionValueDao;
+    private ConstrainedValueDao constrainedValueDao;
 
     /**
-     * Called when the user first visits the page, this method fetches preferences.
+     * Called from the search menu selection link
+     * User must select the entity to search.
+     *
+     * @return JSP to edit search
+     */
+    @HandlesEvent("entitySelection")
+    @DefaultHandler
+    public Resolution entitySelectionPage() {
+        return new ForwardResolution("/search/config_search_choose_entity.jsp");
+    }
+
+    /**
+     * Called when the user selects the entity to search, this method fetches preferences.
      *
      * @return JSP to edit search
      */
     @HandlesEvent("queryPage")
-    @DefaultHandler
     public Resolution queryPage() {
         getPreferences();
         searchInstance = new SearchInstance();
@@ -432,7 +442,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
 
         searchInstance.getEvalContext().put(SearchDefinitionFactory.CONTEXT_KEY_BSP_USER_LIST, bspUserList );
         searchInstance.getEvalContext().put(SearchDefinitionFactory.CONTEXT_KEY_BSP_SAMPLE_SEARCH, bspSampleSearchService );
-        searchInstance.getEvalContext().put(SearchDefinitionFactory.CONTEXT_KEY_OPTION_VALUE_DAO, optionValueDao);
+        searchInstance.getEvalContext().put(SearchDefinitionFactory.CONTEXT_KEY_OPTION_VALUE_DAO, constrainedValueDao);
     }
 
     /**
@@ -645,6 +655,10 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
 
     public void setSearchTermFirstValue(String searchTermFirstValue) {
         this.searchTermFirstValue = searchTermFirstValue;
+    }
+
+    public ColumnEntity[] getAvailableEntityTypes(){
+        return ColumnEntity.values();
     }
 
 }

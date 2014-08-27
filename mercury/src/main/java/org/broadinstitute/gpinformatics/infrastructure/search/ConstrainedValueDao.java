@@ -29,13 +29,17 @@ import java.util.List;
  */
 @Stateful
 @RequestScoped
-public class OptionValueDao extends GenericDao implements Serializable {
+public class ConstrainedValueDao extends GenericDao implements Serializable {
 
     @Inject
     private BSPUserList bspUserList;
 
-    public OptionValueDao(){}
+    public ConstrainedValueDao(){}
 
+    /**
+     * Builds a sorted unique list of event locations from all lab events for search term option list
+     * @return List of ConstrainedValues with event location in the code and label
+     */
     public List<ConstrainedValue> getLabEventLocationOptionList(){
         List<ConstrainedValue> constrainedValues = new ArrayList<>();
 
@@ -58,29 +62,9 @@ public class OptionValueDao extends GenericDao implements Serializable {
     }
 
     /**
-     * Returns 11,000 products - not suitable for web selection
-     * @return
+     * Builds a sorted unique list of program names from all lab events for search term option list
+     * @return List of ConstrainedValues with program name in the code and label
      */
-    @Deprecated
-    public List<ConstrainedValue> getProductOrderOptionList(){
-        List<ConstrainedValue> constrainedValues = new ArrayList<>();
-
-        CriteriaBuilder criteriaBuilder = getCriteriaBuilder();
-        CriteriaQuery query = criteriaBuilder.createQuery();
-        Root<ProductOrder> productOrder = query.from(ProductOrder.class);
-
-        Path<Long> idPath = productOrder.get( ProductOrder_.productOrderId );
-        Path<String> namePath = productOrder.get( ProductOrder_.jiraTicketKey );
-        query.multiselect( idPath, namePath );
-        List<Object[]> valueArray = getEntityManager().createQuery( query ).getResultList();
-        for ( Object[] values : valueArray ) {
-            constrainedValues.add( new ConstrainedValue( ((Long)values[0]).toString(), (String)values[1] ) );
-        }
-
-        return constrainedValues;
-
-    }
-
     public List<ConstrainedValue> getLabEventProgramNameList(){
         List<ConstrainedValue> constrainedValues = new ArrayList<>();
 
@@ -105,8 +89,8 @@ public class OptionValueDao extends GenericDao implements Serializable {
     }
 
     /**
-     * Builds a sorted unique list of user names for search term option list
-     * @return ConstrainedValues with userids in the code and full name label
+     * Builds a sorted unique list of user names from all lab events or search term option list
+     * @return List of ConstrainedValues with userid in the code and full name in the label
      */
     public List<ConstrainedValue> getLabEventUserNameList(){
         List<ConstrainedValue> constrainedValues = new ArrayList<>();

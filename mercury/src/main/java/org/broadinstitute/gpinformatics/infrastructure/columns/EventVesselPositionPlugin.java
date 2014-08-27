@@ -41,7 +41,7 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
     }
 
     /**
-     * Implemented in superclass to call either source or target vessel method
+     * Implemented in subclass to call either source or target vessel method
      * Builds a nested table with rows and columns dynamically configured based upon lab event vessel geometry
      * @param entity  A single lab event passed in from parent row
      * @param columnTabulation Nested table column definition

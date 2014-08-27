@@ -535,8 +535,8 @@ public class SearchDefinitionFactory {
         searchTerm.setValuesExpression(new SearchTerm.Evaluator<List<ConstrainedValue>>() {
             @Override
             public List<ConstrainedValue> evaluate(Object entity, Map<String, Object> context) {
-                OptionValueDao optionValueDao = (OptionValueDao) context.get( CONTEXT_KEY_OPTION_VALUE_DAO);
-                return optionValueDao.getLabEventLocationOptionList();
+                ConstrainedValueDao constrainedValueDao = (ConstrainedValueDao) context.get( CONTEXT_KEY_OPTION_VALUE_DAO);
+                return constrainedValueDao.getLabEventLocationOptionList();
             }
         });
         searchTerms.add(searchTerm);
@@ -566,8 +566,8 @@ public class SearchDefinitionFactory {
             // Pick actual users out of lab events
             @Override
             public List<ConstrainedValue> evaluate(Object entity, Map<String, Object> context) {
-                OptionValueDao optionValueDao = (OptionValueDao) context.get(CONTEXT_KEY_OPTION_VALUE_DAO);
-                return optionValueDao.getLabEventUserNameList();
+                ConstrainedValueDao constrainedValueDao = (ConstrainedValueDao) context.get(CONTEXT_KEY_OPTION_VALUE_DAO);
+                return constrainedValueDao.getLabEventUserNameList();
             }
         });
         searchTerm.setValueConversionExpression(new SearchTerm.Evaluator<Object>() {
@@ -632,8 +632,8 @@ public class SearchDefinitionFactory {
         searchTerm.setValuesExpression(new SearchTerm.Evaluator<List<ConstrainedValue>>() {
             @Override
             public List<ConstrainedValue> evaluate(Object entity, Map<String, Object> context) {
-                OptionValueDao optionValueDao = (OptionValueDao) context.get(CONTEXT_KEY_OPTION_VALUE_DAO);
-                return optionValueDao.getLabEventProgramNameList();
+                ConstrainedValueDao constrainedValueDao = (ConstrainedValueDao) context.get(CONTEXT_KEY_OPTION_VALUE_DAO);
+                return constrainedValueDao.getLabEventProgramNameList();
             }
         });
         searchTerms.add(searchTerm);
@@ -923,6 +923,14 @@ public class SearchDefinitionFactory {
                     }
                 }
 
+                if( results.isEmpty() && labEvent.getInPlaceLabVessel() != null ) {
+                    if( labEvent.getInPlaceLabVessel().getContainerRole() != null ) {
+                        results.add( labEvent.getInPlaceLabVessel().getContainerRole().getEmbedder().getLabel() );
+                    } else {
+                        results.add( labEvent.getInPlaceLabVessel().getLabel() );
+                    }
+                }
+
                 return results;
             }
         });
@@ -954,6 +962,13 @@ public class SearchDefinitionFactory {
                         }
                     } else {
                         results.add(vessel.getLabel());
+                    }
+                }
+                if( results.isEmpty() && labEvent.getInPlaceLabVessel() != null ) {
+                    if( labEvent.getInPlaceLabVessel().getContainerRole() != null ) {
+                        results.add( labEvent.getInPlaceLabVessel().getContainerRole().getEmbedder().getLabel() );
+                    } else {
+                        results.add( labEvent.getInPlaceLabVessel().getLabel() );
                     }
                 }
 
@@ -1023,16 +1038,16 @@ public class SearchDefinitionFactory {
         switch( vessel.getType() ) {
         case STATIC_PLATE:
             StaticPlate plate = OrmUtil.proxySafeCast(vessel, StaticPlate.class );
-            vesselTypeName = plate.getPlateType().getAutomationName();
+            vesselTypeName = plate.getPlateType()==null?"":plate.getPlateType().getAutomationName();
             break;
         case TUBE_FORMATION:
         case RACK_OF_TUBES:
             TubeFormation tube = OrmUtil.proxySafeCast(vessel, TubeFormation.class );
-            vesselTypeName = tube.getRackType().getDisplayName();
+            vesselTypeName = tube.getRackType()==null?"":tube.getRackType().getDisplayName();
             break;
         default:
             // Not sure of others for in-place vessels
-            vesselTypeName = vessel.getType().getName();
+            vesselTypeName = vessel.getType()==null?"":vessel.getType().getName();
         }
         return vesselTypeName;
     }

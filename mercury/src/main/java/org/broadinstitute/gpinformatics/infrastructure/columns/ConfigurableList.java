@@ -71,6 +71,11 @@ public class ConfigurableList {
 
     private List<SortColumn> sortColumnIndexes;
 
+    /**
+     * Cache row plugin instances
+     */
+    private Map<Class,ListPlugin> pluginCache = new HashMap<>();
+
 //    private final Boolean isAdmin;
 
     /**
@@ -491,43 +496,35 @@ public class ConfigurableList {
             for (ColumnTabulation columnTabulation : pluginTabulations) {
                 if( columnTabulation.isNestedParent() ) {
                     ListPlugin listPlugin = null;
-                    try {
-                        listPlugin = (ListPlugin) columnTabulation.getPluginClass().newInstance();
-                        ResultList nestedResultList = listPlugin.getNestedTableData(entity, columnTabulation, context);
-                        if( nestedResultList != null ) {
-                            row.getNestedTableEntities().put(columnTabulation, nestedResultList);
-                        }
-                    } catch (InstantiationException | IllegalAccessException e) {
-                        throw new RuntimeException(e);
+                    listPlugin = getPlugin(columnTabulation.getPluginClass());
+                    ResultList nestedResultList = listPlugin.getNestedTableData(entity, columnTabulation, context);
+                    if( nestedResultList != null ) {
+                        row.getNestedTableEntities().put(columnTabulation, nestedResultList);
                     }
                 }
             }
         }
 
-        try {
-            // Call the plugins, and add their data to the accumulated rows.
-            for (ColumnTabulation columnTabulation : pluginTabulations) {
-                ListPlugin listPlugin = (ListPlugin) columnTabulation.getPluginClass().newInstance();
-                // Legacy plugin process from BSP
-                if( !columnTabulation.isNestedParent() ) {
-                    List<Row> pluginRows =
-                            listPlugin.getData(entityList, headerGroupMap.get(columnTabulation.getName()));
-                    int rowIndex = pageStartingRow;
-                    for (Row row : pluginRows) {
-                        // TODO jmt rows might be empty, if columns are all plugins
-                        Row existingRow = rows.get(rowIndex);
-                        for (Cell cell : row.getCells()) {
-                            existingRow.addCell(cell);
-                        }
-                        rowIndex++;
+        // Call the plugins, and add their data to the accumulated rows.
+        for (ColumnTabulation columnTabulation : pluginTabulations) {
+            ListPlugin listPlugin = getPlugin(columnTabulation.getPluginClass());
+            // Legacy plugin process from BSP
+            if( !columnTabulation.isNestedParent() ) {
+                List<Row> pluginRows =
+                        listPlugin.getData(entityList, headerGroupMap.get(columnTabulation.getName()));
+                int rowIndex = pageStartingRow;
+                for (Row row : pluginRows) {
+                    // TODO jmt rows might be empty, if columns are all plugins
+                    Row existingRow = rows.get(rowIndex);
+                    for (Cell cell : row.getCells()) {
+                        existingRow.addCell(cell);
                     }
+                    rowIndex++;
                 }
             }
-
-            pageStartingRow = rows.size();
-        } catch (InstantiationException | IllegalAccessException e) {
-            throw new RuntimeException(e);
         }
+
+        pageStartingRow = rows.size();
     }
 
     @SuppressWarnings("unchecked")
@@ -1176,5 +1173,28 @@ public class ConfigurableList {
 
     public void addListener(AddRowsListener addRowsListener) {
         addRowsListeners.add(addRowsListener);
+    }
+
+    /**
+     * Cache row plugins
+     * @param pluginClass
+     * @return
+     */
+    private ListPlugin getPlugin( Class pluginClass ) {
+        ListPlugin plugin = null;
+        if( pluginCache == null ) {
+            pluginCache = new HashMap<>();
+        } else {
+            plugin = pluginCache.get(pluginClass);
+        }
+        if( plugin == null ) {
+            try {
+                plugin =(ListPlugin)pluginClass.newInstance();
+                pluginCache.put(pluginClass, plugin);
+            } catch (InstantiationException | IllegalAccessException e) {
+                throw new RuntimeException("Cannot instantiate plugin class " + pluginClass.getName(), e );
+            }
+        }
+        return plugin;
     }
 }

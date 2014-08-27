@@ -11,7 +11,6 @@ import org.broadinstitute.gpinformatics.infrastructure.search.PaginationDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
-import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
@@ -41,9 +40,6 @@ public class ConfigurableListFactory {
 
     @Inject
     private BSPSampleSearchService bspSampleSearchService;
-
-    @Inject
-    private LabEventDao labEventDao;
 
     /**
      * Create a ConfigurableList instance.
@@ -341,7 +337,6 @@ public class ConfigurableListFactory {
         boolean doEventTraversal = false;
         if (entityName.equals("LabEvent")) {
             /* Only traverse descendant events if LCSET is in search criteria (or all events?) */
-
             for( SearchInstance.SearchValue searchValue : searchInstance.getSearchValues() ) {
                 if( searchValue.getSearchTerm().getName().equals("LCSET")){
                     doEventTraversal = true;
@@ -424,6 +419,7 @@ public class ConfigurableListFactory {
     /**
      * Accumulates lab events for a given LabVessel
      * LabEventDescendantCriteria sorts them by date and disambiguator
+     * TODO:  jms - Move this entity specific logic out of generic ConfigurableList logic
      */
     private List<?> getDescendantVesselLabEvents( List<?> labEventList ) {
         Set<LabEvent> sortedSet;

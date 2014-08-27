@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.Criteria;
 import org.testng.Assert;
@@ -19,7 +20,7 @@ public class ConfigurableSearchDaoTest extends ContainerTest {
     @Inject
     private ConfigurableSearchDao configurableSearchDao;
 
-    @Test
+    @Test(groups = TestGroups.STANDARD)
     public void testLcset() {
         ConfigurableSearchDefinition configurableSearchDefinition =
                 new SearchDefinitionFactory().buildLabVesselSearchDef();
@@ -34,7 +35,7 @@ public class ConfigurableSearchDaoTest extends ContainerTest {
         Assert.assertEquals(list.size(), 14);
     }
 
-    @Test
+    @Test(groups = TestGroups.STANDARD)
     public void testLabel() {
         ConfigurableSearchDefinition configurableSearchDefinition =
                 new SearchDefinitionFactory().buildLabVesselSearchDef();
