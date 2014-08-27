@@ -15,12 +15,14 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
-import javax.persistence.MapKeyEnumerated;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,11 +41,14 @@ public class ManifestRecord {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MANIFEST_RECORD")
     private Long manifestRecordId;
 
-    @OneToMany(cascade = CascadeType.PERSIST)
-    @JoinTable(name = "manifest_record_metadata",
-            joinColumns = @JoinColumn(name = "MANIFEST_RECORD_ID", referencedColumnName = "manifest_record_id"))
-    @MapKeyEnumerated(EnumType.STRING)
-    private Map<Metadata.Key, Metadata> metadata = new HashMap<>();
+    @ManyToMany(cascade = CascadeType.PERSIST)
+    @JoinTable(name = "manifest_record_metadata", schema = "mercury",
+            joinColumns = @JoinColumn(name = "MANIFEST_RECORD_ID"),
+            inverseJoinColumns = @JoinColumn(name = "METADATA_ID"))
+    private List<Metadata> metadata = new ArrayList<>();
+
+    @Transient
+    private Map<Metadata.Key, Metadata> metadataMap;
 
     @Enumerated(EnumType.STRING)
     private Status status = Status.UPLOADED;
@@ -61,29 +66,40 @@ public class ManifestRecord {
     /**
      * For JPA
      */
-    protected ManifestRecord() {
+    protected ManifestRecord() {}
+
+    public ManifestRecord(Metadata...metadata) {
+        this(null, metadata);
     }
 
-    public ManifestRecord(List<Metadata> metadata) {
-        this(metadata, null);
-    }
-
-    public ManifestRecord(List<Metadata> metadata, ErrorStatus errorStatus) {
-        this.metadata = new HashMap<>(Maps.uniqueIndex(metadata, new Function<Metadata, Metadata.Key>() {
-            @Override
-            public Metadata.Key apply(Metadata metadata) {
-                return metadata.getKey();
-            }
-        }));
+    public ManifestRecord(ErrorStatus errorStatus, Metadata... metadata) {
+        this.metadata.addAll(Arrays.asList(metadata));
         this.errorStatus = errorStatus;
     }
 
-    public Map<Metadata.Key, Metadata> getMetadata() {
-        return metadata;
+    /**
+     * Builds the Metadata Map if it has not already been built.
+     */
+    private Map<Metadata.Key, Metadata> getMetadataMap() {
+        // This is constructed lazily as it can't be built within the no-arg constructor since the 'metadata' field
+        // upon which it depends will not have been initialized.
+        if (metadataMap == null) {
+            this.metadataMap = new HashMap<>(Maps.uniqueIndex(metadata, new Function<Metadata, Metadata.Key>() {
+                @Override
+                public Metadata.Key apply(Metadata metadata) {
+                    return metadata.getKey();
+                }
+            }));
+        }
+        return metadataMap;
     }
 
-    public Metadata getField(Metadata.Key sampleId) {
-        return metadata.get(sampleId);
+    public List<Metadata> getMetadata() {
+        return this.metadata;
+    }
+
+    public Metadata getMetadataByKey(Metadata.Key sampleId) {
+        return getMetadataMap().get(sampleId);
     }
 
     public Status getStatus() {
@@ -117,7 +133,6 @@ public class ManifestRecord {
     public void setErrorStatus(ErrorStatus errorStatus) {
         this.errorStatus = errorStatus;
     }
-
 
     public enum Status {UPLOADED, ABANDONED, UPLOAD_ACCEPTED, SCANNED, REGISTERED, ACCESSIONED}
 
