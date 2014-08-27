@@ -1,7 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
-import clover.com.google.common.base.Function;
-import clover.com.google.common.collect.Maps;
+
+import com.google.common.base.Function;
+import com.google.common.collect.Maps;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.hibernate.envers.Audited;
 
@@ -40,6 +41,8 @@ public class ManifestRecord {
     @Column(name = "MANIFEST_RECORD_ID")
     @SequenceGenerator(name = "SEQ_MANIFEST_RECORD", schema = "mercury", sequenceName = "SEQ_MANIFEST_RECORD")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MANIFEST_RECORD")
+    /** JPA ID field */
+    @SuppressWarnings("UnusedDeclaration")
     private Long manifestRecordId;
 
     @ManyToMany(cascade = CascadeType.PERSIST)
