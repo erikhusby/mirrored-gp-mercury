@@ -24,6 +24,9 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 
+/**
+ * Container tests for ManifestSessions.
+ */
 @Test(groups = TestGroups.STANDARD)
 public class ManifestSessionContainerTest extends Arquillian {
 

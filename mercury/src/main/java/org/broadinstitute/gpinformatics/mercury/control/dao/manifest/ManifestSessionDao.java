@@ -7,6 +7,9 @@ import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 
+/**
+ * DAO for ManifestSessions.
+ */
 @Stateful
 @TransactionAttribute(TransactionAttributeType.SUPPORTS)
 @RequestScoped

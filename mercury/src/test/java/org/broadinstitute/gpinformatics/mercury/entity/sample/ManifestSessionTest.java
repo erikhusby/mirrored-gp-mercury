@@ -12,6 +12,9 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+/**
+ * Database free tests of ManifestSessions.
+ */
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ManifestSessionTest {
 
