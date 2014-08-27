@@ -9,6 +9,9 @@ import javax.inject.Inject;
 
 @RequestScoped
 @Stateful
+/**
+ * EJB for Buick manifest sessions used to manage sample registration.
+ */
 public class ManifestSessionEjb {
 
     @Inject
