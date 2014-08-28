@@ -13,9 +13,7 @@ import org.testng.annotations.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.emptyIterable;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
@@ -121,15 +119,14 @@ public class ManifestRecordTest {
     }
 
     /**
-     *
      * TODO
-     *
+     * <p/>
      * Awaiting decision on question asked in Confluence decision
      * <a href=https://labopsconfluence.broadinstitute.org/display/GPI/What+is+the+scope+limit+with+marking+records+as+bad \>
-     *
-     *     Till then, this test method tests that a sample in a manifest record must be unique across manifest sessions
-     *     in a research project, but marking the duplicate record is limited to the current manifest session being
-     *     validated.
+     * <p/>
+     * Till then, this test method tests that a sample in a manifest record must be unique across manifest sessions
+     * in a research project, but marking the duplicate record is limited to the current manifest session being
+     * validated.
      *
      * @throws Exception
      */
@@ -141,25 +138,23 @@ public class ManifestRecordTest {
                 buildManifestRecord(COLLABORATOR_SAMPLE_ID_1));
 
         testSession.validateManifest();
-            Assert.assertFalse(testSession.isManifestValid());
-            assertThat(testSession.getLogEntries(), is(not(empty())));
-            assertThat(testSession.getLogEntries().size(), is(equalTo(1)));
+        Assert.assertFalse(testSession.isManifestValid());
+        assertThat(testSession.getLogEntries(), is(not(empty())));
+        assertThat(testSession.getLogEntries().size(), is(equalTo(1)));
 
         assertThat(secondSession.isManifestValid(), is(equalTo(true)));
         assertThat(secondSession.getLogEntries(), is(empty()));
 
     }
 
-
-   /**
-     *
+    /**
      * TODO
-     *
+     * <p/>
      * Awaiting decision on question asked in Confluence decision
      * <a href=https://labopsconfluence.broadinstitute.org/display/GPI/Sample+ID+uniqueness+in+Research+Project+hierarchies \>
-     *
-     *     Till then, this test method tests that a sample in a manifest record does not have to be unique when
-    *     compared to another session in either the parent or child research project of its own research project.
+     * <p/>
+     * Till then, this test method tests that a sample in a manifest record does not have to be unique when
+     * compared to another session in either the parent or child research project of its own research project.
      *
      * @throws Exception
      */
@@ -173,15 +168,25 @@ public class ManifestRecordTest {
         buildTestSession().getResearchProject().setParentResearchProject(parentResearchProject);
 
         testSession.validateManifest();
-            Assert.assertTrue(testSession.isManifestValid());
-            assertThat(testSession.getLogEntries(), is(empty()));
-            assertThat(testSession.getLogEntries().size(), is(equalTo(0)));
+        Assert.assertTrue(testSession.isManifestValid());
+        assertThat(testSession.getLogEntries(), is(empty()));
+        assertThat(testSession.getLogEntries().size(), is(equalTo(0)));
 
         assertThat(secondSession.isManifestValid(), is(equalTo(true)));
         assertThat(secondSession.getLogEntries(), is(empty()));
 
     }
 
+    public void mismatchedGenderTest() throws Exception {
+        ManifestSession testSession = buildTestSession();
+
+        ManifestRecord testRecordWrongGender = ManifestTestFactory.buildManifestRecord(ImmutableMap.of(
+                Metadata.Key.SAMPLE_ID, "989282484", Metadata.Key.GENDER, "M", Metadata.Key.PATIENT_ID, VALUE_3));
+        testSession.addRecord(testRecordWrongGender);
+
+        testSession.validateManifest();
+        assertThat(testSession.isManifestValid(), is(equalTo(false)));
+    }
 
 
     public ManifestSession buildTestSession() {

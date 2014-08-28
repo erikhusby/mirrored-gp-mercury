@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import org.broadinstitute.bsp.client.users.BspUser;
@@ -154,9 +153,9 @@ public class ManifestSession {
 
         boolean validationResult = true;
 
-        for(ManifestRecord testRecord:records) {
+        for (ManifestRecord testRecord : records) {
             validationResult = (testRecord.getErrorStatus() == null);
-            if(!validationResult) {
+            if (!validationResult) {
                 break;
             }
         }
@@ -166,54 +165,90 @@ public class ManifestSession {
 
     public void validateManifest() {
 
-        final Set<String> allSampleIds = getAllSampleIDs();
+        List<ManifestRecord> allManifestRecordsAcrossThisResearchProject =
+                collectAllManifestRecordsAcrossThisResearchProject();
 
-        Multimap<String, ManifestRecord> recordsBySamples = Multimaps.index(getAllRecords(),
-                new Function<ManifestRecord, String>() {
-                    @Override
-                    public String apply(ManifestRecord manifestRecord) {
-                        return manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue();
-                    }
-                });
+        validateDuplicateCollaboratorSampleIDs(allManifestRecordsAcrossThisResearchProject);
+        validateInconsistentGenders(allManifestRecordsAcrossThisResearchProject);
+    }
 
-        Iterable<Map.Entry<String, Collection<ManifestRecord>>> filteredDupes = Iterables.filter(
-                recordsBySamples.asMap().entrySet(), new Predicate<Map.Entry<String, Collection<ManifestRecord>>>() {
-            @Override
-            public boolean apply(Map.Entry<String, Collection<ManifestRecord>> entry) {
-                return (entry.getValue().size() > 1 && allSampleIds.contains(entry.getKey()));
-            }
-        });
+    private void validateInconsistentGenders(Collection<ManifestRecord> allManifestRecordsAcrossThisResearchProject) {
 
-        ArrayList<Map.Entry<String, Collection<ManifestRecord>>> filterEntries = Lists.newArrayList(filteredDupes);
+        Multimap<String, ManifestRecord> recordsByPatientId = buildMultimapByKey(
+                allManifestRecordsAcrossThisResearchProject, Metadata.Key.PATIENT_ID);
 
-        for (Map.Entry<String, Collection<ManifestRecord>> dupeToProcess : filterEntries) {
-            for (ManifestRecord dupeRecord : dupeToProcess.getValue()) {
+        Set<String> allPatientIdsForThisManifest = collectAllValuesForKeyInThisManifest(Metadata.Key.PATIENT_ID);
 
-                if(dupeRecord.getSession().equals(this)) {
-                dupeRecord.setErrorStatus(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID);
-
-                addLogEntry(new ManifestEvent(String.format("For sample %s: %s", dupeToProcess.getKey(),
-                                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getMessage()), dupeRecord,
-                                ManifestEvent.Type.ERROR));
-                }
-            }
-        }
+        Iterable<Map.Entry<String, Collection<ManifestRecord>>> filteredDuplicatePatients =
+                filterForKeysWithMultipleValues(recordsByPatientId, allPatientIdsForThisManifest);
 
     }
 
-    private Set<String> getAllSampleIDs() {
+
+    private void validateDuplicateCollaboratorSampleIDs(
+            Collection<ManifestRecord> allManifestRecordsAcrossThisResearchProject) {
+
+        Multimap<String, ManifestRecord> recordsBySampleId = buildMultimapByKey(
+                allManifestRecordsAcrossThisResearchProject, Metadata.Key.SAMPLE_ID);
+
+        Set<String> allSampleIdsForThisManifest = collectAllValuesForKeyInThisManifest(Metadata.Key.SAMPLE_ID);
+        Iterable<Map.Entry<String, Collection<ManifestRecord>>> filteredDuplicateSamples =
+                filterForKeysWithMultipleValues(recordsBySampleId, allSampleIdsForThisManifest);
+
+        for (Map.Entry<String, Collection<ManifestRecord>> entry : filteredDuplicateSamples) {
+            for (ManifestRecord duplicatedRecord : entry.getValue()) {
+                // Ignore ManifestSessions that are not this ManifestSession, they will not have errors added by
+                // this logic.
+                if (duplicatedRecord.getSession().equals(this)) {
+                    duplicatedRecord.setErrorStatus(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID);
+
+                    String message =
+                            ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage("sample", entry.getKey());
+                    addLogEntry(new ManifestEvent(message, duplicatedRecord, ManifestEvent.Type.ERROR));
+                }
+            }
+        }
+    }
+
+    private Iterable<Map.Entry<String, Collection<ManifestRecord>>> filterForKeysWithMultipleValues(
+            Multimap<String, ManifestRecord> recordsByMetadataValue,
+            final Set<String> allRelevantMetadataValuesForThisManifest) {
+
+        return Iterables.filter(
+                recordsByMetadataValue.asMap().entrySet(),
+                new Predicate<Map.Entry<String, Collection<ManifestRecord>>>() {
+                    @Override
+                    public boolean apply(Map.Entry<String, Collection<ManifestRecord>> entry) {
+                        return (entry.getValue().size() > 1 && allRelevantMetadataValuesForThisManifest
+                                .contains(entry.getKey()));
+                    }
+                });
+    }
+
+    private Multimap<String, ManifestRecord> buildMultimapByKey(
+            Collection<ManifestRecord> allRecordsAcrossThisResearchProject, final Metadata.Key key) {
+        return Multimaps.index(allRecordsAcrossThisResearchProject,
+                new Function<ManifestRecord, String>() {
+                    @Override
+                    public String apply(ManifestRecord manifestRecord) {
+                        return manifestRecord.getMetadataByKey(key).getValue();
+                    }
+                });
+    }
+
+    private Set<String> collectAllValuesForKeyInThisManifest(Metadata.Key targetKey) {
 
         Set<String> allSampleIDs = new HashSet<>();
 
         for (ManifestRecord record : records) {
-            allSampleIDs.add(record.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue());
+            allSampleIDs.add(record.getMetadataByKey(targetKey).getValue());
         }
 
 
         return allSampleIDs;
     }
 
-    private List<ManifestRecord> getAllRecords() {
+    private List<ManifestRecord> collectAllManifestRecordsAcrossThisResearchProject() {
         List<ManifestRecord> allRecords = new ArrayList<>();
 
         for (ManifestSession manifestSession : researchProject.getManifestSessions()) {
