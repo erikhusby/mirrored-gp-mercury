@@ -150,6 +150,40 @@ public class ManifestRecordTest {
 
     }
 
+
+   /**
+     *
+     * TODO
+     *
+     * Awaiting decision on question asked in Confluence decision
+     * <a href=https://labopsconfluence.broadinstitute.org/display/GPI/Sample+ID+uniqueness+in+Research+Project+hierarchies \>
+     *
+     *     Till then, this test method tests that a sample in a manifest record does not have to be unique when
+    *     compared to another session in either the parent or child research project of its own research project.
+     *
+     * @throws Exception
+     */
+    public void duplicateAcrossRPHierarchy() throws Exception {
+
+        ManifestSession testSession = buildTestSession();
+
+        ResearchProject parentResearchProject = ResearchProjectTestFactory.createTestResearchProject("RP-334SIS");
+        ManifestSession secondSession = getManifestSession(parentResearchProject,
+                buildManifestRecord(COLLABORATOR_SAMPLE_ID_1));
+        buildTestSession().getResearchProject().setParentResearchProject(parentResearchProject);
+
+        testSession.validateManifest();
+            Assert.assertTrue(testSession.isManifestValid());
+            assertThat(testSession.getLogEntries(), is(empty()));
+            assertThat(testSession.getLogEntries().size(), is(equalTo(0)));
+
+        assertThat(secondSession.isManifestValid(), is(equalTo(true)));
+        assertThat(secondSession.getLogEntries(), is(empty()));
+
+    }
+
+
+
     public ManifestSession buildTestSession() {
         ResearchProject testProject = ResearchProjectTestFactory.createTestResearchProject("RP-334");
 
