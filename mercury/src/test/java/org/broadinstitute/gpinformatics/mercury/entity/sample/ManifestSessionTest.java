@@ -12,13 +12,20 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.util.Arrays;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+
 /**
  * Database free tests of ManifestSessions.
  */
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ManifestSessionTest {
 
-    public static final String SAMPLE_ID_1 = "SM-1";
+    private static final String SAMPLE_ID_1 = "SM-1";
+    private static final String SAMPLE_ID_2 = "SM-2";
+    private static final String SAMPLE_ID_3 = "SM-3";
     private ManifestSession testSession;
     private ResearchProject testRp;
     private String sessionPrefix;
@@ -48,7 +55,7 @@ public class ManifestSessionTest {
     }
 
     public void addRecord() throws Exception {
-        ManifestRecord testRecord = buildManifestRecord("SM-1");
+        ManifestRecord testRecord = buildManifestRecord(testSession, SAMPLE_ID_1);
 
         testSession.addRecord(testRecord);
 
@@ -56,8 +63,8 @@ public class ManifestSessionTest {
         Assert.assertEquals(testRecord.getSession(), testSession);
     }
 
-    private ManifestRecord buildManifestRecord(String sampleId) {
-        return ManifestTestFactory.buildManifestRecord(ImmutableMap.of(
+    private ManifestRecord buildManifestRecord(ManifestSession manifestSession, String sampleId) {
+        return ManifestTestFactory.buildManifestRecord(manifestSession, ImmutableMap.of(
                 Metadata.Key.SAMPLE_ID, sampleId,
                 Metadata.Key.SAMPLE_TYPE, "value1",
                 Metadata.Key.TUMOR_NORMAL, "value2",
@@ -65,14 +72,15 @@ public class ManifestSessionTest {
     }
 
     public void addLogEntries() throws Exception {
-        ManifestRecord testRecord = buildManifestRecord(SAMPLE_ID_1);
+        ManifestRecord testRecord = buildManifestRecord(testSession, SAMPLE_ID_1);
         ManifestEvent logEntryWithoutRecord = new ManifestEvent("Failed to Upload Record in session",
                 ManifestEvent.Type.ERROR);
         testSession.addLogEntry(logEntryWithoutRecord);
 
         Assert.assertEquals(testSession.getLogEntries().size(), 1);
-        ManifestEvent logEntryWithRecord = new ManifestEvent("Failed to Upload Record in session", testRecord,
-                ManifestEvent.Type.ERROR);
+        ManifestEvent logEntryWithRecord = new ManifestEvent("Failed to Upload Record in session",
+                ManifestEvent.Type.ERROR, testRecord
+        );
         testSession.addLogEntry(logEntryWithRecord);
 
         Assert.assertEquals(testRecord.getLogEntries().size(), 1);
@@ -80,7 +88,18 @@ public class ManifestSessionTest {
     }
 
     public void missingSample() {
-        ManifestRecord manifestRecord = buildManifestRecord("SM-1");
 
+        for (String sampleId : Arrays.asList(SAMPLE_ID_1, SAMPLE_ID_2, SAMPLE_ID_3)) {
+            ManifestRecord manifestRecord = buildManifestRecord(testSession, sampleId);
+            testSession.addRecord(manifestRecord);
+            // Simulate a scan for all but the first sample.
+            if (!sampleId.equals(SAMPLE_ID_1)) {
+                manifestRecord.setStatus(ManifestRecord.Status.SCANNED);
+            }
+        }
+
+        assertThat(testSession.hasErrors(), is(false));
+        testSession.close();
+        assertThat(testSession.hasErrors(), is(true));
     }
 }

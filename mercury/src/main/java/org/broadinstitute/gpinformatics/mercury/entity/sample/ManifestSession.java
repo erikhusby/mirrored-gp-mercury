@@ -26,6 +26,7 @@ import javax.persistence.Table;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -89,7 +90,6 @@ public class ManifestSession {
         modifiedDate = new Date();
     }
 
-
     public ResearchProject getResearchProject() {
         return researchProject;
     }
@@ -152,7 +152,7 @@ public class ManifestSession {
     /**
      * If there is an error with any record in this manifest session, report that some errors exist.
      */
-    public boolean areThereErrors() {
+    public boolean didSomethingGetLogged() {
 
         boolean validationResult = false;
 
@@ -201,7 +201,7 @@ public class ManifestSession {
 
                     String message =
                             ManifestRecord.ErrorStatus.MISMATCHED_GENDER.formatMessage("patient ID", entry.getKey());
-                    addLogEntry(new ManifestEvent(message, duplicatedRecord, ManifestEvent.Type.ERROR));
+                    addLogEntry(new ManifestEvent(message, ManifestEvent.Type.ERROR, duplicatedRecord));
                 }
             }
         }
@@ -254,7 +254,7 @@ public class ManifestSession {
                 if (duplicatedRecord.getSession().equals(this)) {
                     String message =
                             ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage("sample ID", entry.getKey());
-                    addLogEntry(new ManifestEvent(message, duplicatedRecord, ManifestEvent.Type.FATAL));
+                    addLogEntry(new ManifestEvent(message, ManifestEvent.Type.FATAL, duplicatedRecord));
                 }
             }
         }
@@ -290,6 +290,7 @@ public class ManifestSession {
      */
     private Multimap<String, ManifestRecord> buildMultimapByKey(
             Collection<ManifestRecord> allEligibleManifestRecords, final Metadata.Key key) {
+
         return Multimaps.index(allEligibleManifestRecords,
                 new Function<ManifestRecord, String>() {
                     @Override
@@ -318,6 +319,33 @@ public class ManifestSession {
 
         return allRecords;
     }
+
+    public void close() {
+        // Confirm all records have scanned status.
+        for (ManifestRecord record : records) {
+            if (!(record.getStatus() == ManifestRecord.Status.SCANNED)) {
+                String sampleId = record.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue();
+                String message = ManifestRecord.ErrorStatus.MISSING_SAMPLE.formatMessage("sample ID", sampleId);
+
+                ManifestEvent manifestEvent = new ManifestEvent(message, ManifestEvent.Type.FATAL);
+                logEntries.add(manifestEvent);
+            }
+        }
+    }
+
+    public boolean hasErrors() {
+        return hasManifestEventOfType(EnumSet.of(ManifestEvent.Type.ERROR, ManifestEvent.Type.FATAL));
+    }
+
+    private boolean hasManifestEventOfType(Set<ManifestEvent.Type> types) {
+        for (ManifestEvent logEntry : logEntries) {
+            if (types.contains(logEntry.getLogType())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     /**
      * Indicator to denote the availability (complete or otherwise) of a manifest session for the sample registration

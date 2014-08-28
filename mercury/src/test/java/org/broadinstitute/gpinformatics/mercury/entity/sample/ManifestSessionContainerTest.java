@@ -55,7 +55,7 @@ public class ManifestSessionContainerTest extends Arquillian {
      * Simple persistence check for ManifestEvent.
      */
     public void manifestEvent() {
-        ManifestEvent manifestEvent = new ManifestEvent("Everything is OK.", ManifestEvent.Type.INFO);
+        ManifestEvent manifestEvent = new ManifestEvent("Actually everything is OK.", ManifestEvent.Type.ERROR);
         researchProjectDao.persist(manifestEvent);
         researchProjectDao.flush();
     }

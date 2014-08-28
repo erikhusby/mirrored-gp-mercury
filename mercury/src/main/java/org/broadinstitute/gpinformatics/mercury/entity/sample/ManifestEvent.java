@@ -48,21 +48,16 @@ public class ManifestEvent {
     }
 
     public ManifestEvent(String message, Type logType) {
-
-        this.message = message;
-        this.logType = logType;
+        this(message, logType, null);
     }
 
-    public ManifestEvent(String message, ManifestRecord record, Type logType) {
-
+    public ManifestEvent(String message, Type logType, ManifestRecord record) {
         this.message = message;
-        setManifestRecord(record);
         this.logType = logType;
-    }
-
-    public void setManifestRecord(ManifestRecord manifestRecord) {
-        this.manifestRecord = manifestRecord;
-        this.manifestRecord.addLogEntry(this);
+        if (record != null) {
+            this.manifestRecord = record;
+            this.manifestRecord.addLogEntry(this);
+        }
     }
 
     public Type getLogType() {
@@ -85,5 +80,15 @@ public class ManifestEvent {
         return manifestRecord;
     }
 
-    public enum Type {FATAL, ERROR, WARNING, INFO}
+    public enum Type {
+        /**
+         * A hard stop, something like a missing or duplicate sample.
+         */
+        FATAL,
+        /**
+         * Something like mismatched gender, where there is a problem but lab users are given the discretion to
+         * continue processing a sample.
+         */
+        ERROR
+    }
 }

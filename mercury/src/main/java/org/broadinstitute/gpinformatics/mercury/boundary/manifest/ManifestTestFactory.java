@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,12 +24,13 @@ public class ManifestTestFactory {
         return metadataList.toArray(new Metadata[metadataList.size()]);
     }
 
-    public static ManifestRecord buildManifestRecord(Map<Metadata.Key, String> metadataContents) {
-        return new ManifestRecord(buildMetadata(metadataContents));
+    public static ManifestRecord buildManifestRecord(ManifestSession manifestSession, Map<Metadata.Key, String> metadataContents) {
+        ManifestRecord manifestRecord = new ManifestRecord(buildMetadata(metadataContents));
+        manifestRecord.setSession(manifestSession);
+        return manifestRecord;
     }
 
-//    public static ManifestRecord buildManifestRecord(ManifestRecord.ErrorStatus errorStatus,
-//                                                     Map<Metadata.Key, String> metadataContents) {
-//        return new ManifestRecord(errorStatus, buildMetadata(metadataContents));
-//    }
+    public static ManifestRecord buildManifestRecord(Map<Metadata.Key, String> metadataContents) {
+        return buildManifestRecord(null, metadataContents);
+    }
 }

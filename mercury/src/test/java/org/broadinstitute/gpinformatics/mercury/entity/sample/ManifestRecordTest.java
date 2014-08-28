@@ -80,7 +80,7 @@ public class ManifestRecordTest {
         testSession.addRecord(secondManifestRecord);
 
         testSession.validateManifest();
-        assertThat(testSession.areThereErrors(), is(equalTo(false)));
+        assertThat(testSession.didSomethingGetLogged(), is(equalTo(false)));
 
         assertThat(testSession.getLogEntries().size(), is(equalTo(0)));
         assertThat(testRecord.fatalErrorExists(), is(equalTo(false)));
@@ -90,7 +90,7 @@ public class ManifestRecordTest {
         assertThat(secondManifestRecord.getLogEntries(), is(empty()));
 
         secondSession.validateManifest();
-        assertThat(secondSession.areThereErrors(), is(equalTo(false)));
+        assertThat(secondSession.didSomethingGetLogged(), is(equalTo(false)));
 
         assertThat(secondSession.getLogEntries().size(), is(equalTo(0)));
     }
@@ -107,7 +107,7 @@ public class ManifestRecordTest {
 
         testSession.validateManifest();
 
-        assertThat(testSession.areThereErrors(), is(equalTo(true)));
+        assertThat(testSession.didSomethingGetLogged(), is(equalTo(true)));
 
         assertThat(testSession.getLogEntries().size(), is(equalTo(2)));
         assertThat(testRecord.fatalErrorExists(), is(equalTo(true)));
@@ -135,11 +135,11 @@ public class ManifestRecordTest {
                 buildManifestRecord(COLLABORATOR_SAMPLE_ID_1));
 
         testSession.validateManifest();
-        assertThat(testSession.areThereErrors(), is(equalTo(true)));
+        assertThat(testSession.didSomethingGetLogged(), is(equalTo(true)));
         assertThat(testSession.getLogEntries(), is(not(empty())));
         assertThat(testSession.getLogEntries().size(), is(equalTo(1)));
 
-        assertThat(secondSession.areThereErrors(), is(equalTo(false)));
+        assertThat(secondSession.didSomethingGetLogged(), is(equalTo(false)));
         assertThat(secondSession.getLogEntries(), is(empty()));
 
     }
@@ -163,11 +163,11 @@ public class ManifestRecordTest {
         buildTestSession().getResearchProject().setParentResearchProject(parentResearchProject);
 
         testSession.validateManifest();
-        assertThat(testSession.areThereErrors(), is(equalTo(false)));
+        assertThat(testSession.didSomethingGetLogged(), is(equalTo(false)));
         assertThat(testSession.getLogEntries(), is(empty()));
         assertThat(testSession.getLogEntries().size(), is(equalTo(0)));
 
-        assertThat(secondSession.areThereErrors(), is(equalTo(false)));
+        assertThat(secondSession.didSomethingGetLogged(), is(equalTo(false)));
         assertThat(secondSession.getLogEntries(), is(empty()));
 
     }
@@ -178,7 +178,7 @@ public class ManifestRecordTest {
         testSession.addRecord(testRecordWrongGender);
 
         testSession.validateManifest();
-        assertThat(testSession.areThereErrors(), is(equalTo(true)));
+        assertThat(testSession.didSomethingGetLogged(), is(equalTo(true)));
     }
 
     public void mixedValidationErrorTest() throws Exception {
@@ -195,7 +195,7 @@ public class ManifestRecordTest {
 
         testSession.validateManifest();
 
-        assertThat(testSession.areThereErrors(), is(equalTo(true)));
+        assertThat(testSession.didSomethingGetLogged(), is(equalTo(true)));
 
         assertThat(testSession.getLogEntries(), is(not(empty())));
         assertThat(testSession.getLogEntries().size(), is(equalTo(4)));
