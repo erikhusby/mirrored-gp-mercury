@@ -87,6 +87,22 @@ public class ManifestSessionTest {
         Assert.assertEquals(testSession.getLogEntries().size(), 2);
     }
 
+    /**
+     * A happy path test, all samples in the manifest have scanned and nothing is wrong.
+     */
+    public void allSamplesScanned() {
+
+        for (String sampleId : Arrays.asList(SAMPLE_ID_1, SAMPLE_ID_2, SAMPLE_ID_3)) {
+            ManifestRecord manifestRecord = buildManifestRecord(testSession, sampleId);
+            testSession.addRecord(manifestRecord);
+            manifestRecord.setStatus(ManifestRecord.Status.SCANNED);
+        }
+
+        assertThat(testSession.hasErrors(), is(false));
+        testSession.validateForClose();
+        assertThat(testSession.hasErrors(), is(false));
+    }
+
     public void missingSample() {
 
         for (String sampleId : Arrays.asList(SAMPLE_ID_1, SAMPLE_ID_2, SAMPLE_ID_3)) {
@@ -99,7 +115,7 @@ public class ManifestSessionTest {
         }
 
         assertThat(testSession.hasErrors(), is(false));
-        testSession.close();
+        testSession.validateForClose();
         assertThat(testSession.hasErrors(), is(true));
     }
 }

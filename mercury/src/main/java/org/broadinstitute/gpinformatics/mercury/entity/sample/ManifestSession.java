@@ -320,7 +320,7 @@ public class ManifestSession {
         return allRecords;
     }
 
-    public void close() {
+    public void validateForClose() {
         // Confirm all records have scanned status.
         for (ManifestRecord record : records) {
             if (!(record.getStatus() == ManifestRecord.Status.SCANNED)) {
