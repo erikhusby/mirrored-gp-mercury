@@ -144,6 +144,11 @@
                                               event="showReceipt">Receive Samples</stripes:link>
                             </li>
                         </security:authorizeBlock>
+                        <li>
+                            <stripes:link id="uploadSampleVessels"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.SampleVesselActionBean"
+                                          event="view">Upload Sample Vessels</stripes:link>
+                        </li>
                     </ul>
                 </li>
             </security:authorizeBlock>
