@@ -354,7 +354,7 @@ public class ZimsIlluminaRunFactory {
         String gssrSampleType = null;
         Boolean doAggregation = Boolean.TRUE;
 
-        if (bspSampleDTO != null) {
+        if (bspSampleDTO != null && productOrder == null) {
             Control control = mapNameToControl.get(bspSampleDTO.getCollaboratorsSampleName());
             if (control != null) {
                 switch (control.getType()) {

@@ -20,7 +20,7 @@ import org.testng.annotations.Test;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductComparatorTest {
     @DataProvider
-    public Object[][] byPartNumberDataProvider() {
+    public Object[][] byProductNameDataProvider() {
         return new Object[][]{
                 new Object[]{"A", "B", -1},
                 new Object[]{"A", "A", 0},
@@ -31,17 +31,17 @@ public class ProductComparatorTest {
         };
     }
 
-    @Test(dataProvider = "byPartNumberDataProvider")
-    public void testCompareByPartNumber(String partNumber, String otherPartNumber, int expectedResult) {
-        Product standardExomeSequencing = ProductTestFactory.createStandardExomeSequencing(null, partNumber);
-        Product anotherStandardExomeSequencing = ProductTestFactory.createStandardExomeSequencing(null, otherPartNumber);
+    @Test(dataProvider = "byProductNameDataProvider")
+    public void testCompareByProductName(String productName, String otherProductName, int expectedResult) {
+        Product standardExomeSequencing = ProductTestFactory.createStandardExomeSequencing(null, productName);
+        Product anotherStandardExomeSequencing = ProductTestFactory.createStandardExomeSequencing(null, otherProductName);
 
-        int actualResult = Product.BY_PART_NUMBER.compare(standardExomeSequencing, anotherStandardExomeSequencing);
+        int actualResult = Product.BY_PRODUCT_NAME.compare(standardExomeSequencing, anotherStandardExomeSequencing);
         Assert.assertEquals(actualResult, expectedResult);
     }
 
     @DataProvider
-    public Object[][] byProductThenPartNumberDataProvider() {
+    public Object[][] byFamilyThenProductNameDataProvider() {
         return new Object[][]{
                 new Object[]{"A", "B", "Z", "Z", -1},
                 new Object[]{"A", "A", "Z", "Z", 0},
@@ -60,13 +60,13 @@ public class ProductComparatorTest {
         };
     }
 
-    @Test(dataProvider = "byProductThenPartNumberDataProvider")
-    public void testByProductThenPartNumberDataProvider(String familyName, String otherFamilyName, String partNumber,
-                                                        String otherPartNumber, int expectedResult) {
-        Product standardExomeSequencing = ProductTestFactory.createStandardExomeSequencing(familyName, partNumber);
-        Product anotherStandardExomeSequencing = ProductTestFactory.createStandardExomeSequencing(otherFamilyName, otherPartNumber);
+    @Test(dataProvider = "byFamilyThenProductNameDataProvider")
+    public void testByFamilyThenProductName(String familyName, String otherFamilyName, String productName,
+                                                        String otherProductName, int expectedResult) {
+        Product standardExomeSequencing = ProductTestFactory.createStandardExomeSequencing(familyName, productName);
+        Product anotherStandardExomeSequencing = ProductTestFactory.createStandardExomeSequencing(otherFamilyName, otherProductName);
 
-        int actualResult = Product.BY_FAMILY_THEN_PART_NUMBER.compare(standardExomeSequencing, anotherStandardExomeSequencing);
+        int actualResult = Product.BY_FAMILY_THEN_PRODUCT_NAME.compare(standardExomeSequencing, anotherStandardExomeSequencing);
         Assert.assertEquals(actualResult, expectedResult);
     }
 }

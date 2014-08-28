@@ -2,69 +2,56 @@ package org.broadinstitute.gpinformatics.mercury.control.dao.envers;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup_;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
+import org.broadinstitute.gpinformatics.mercury.entity.notice.UserRemarks;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer_;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import javax.persistence.Id;
-import javax.persistence.metamodel.SingularAttribute;
-import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Field;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Enumeration;
 import java.util.List;
 
 @Test(enabled = true, groups = TestGroups.DATABASE_FREE)
 public class AuditReaderDbFreeTest {
+
+    // Exceptions to the Entity classes.
     private final Collection<Class> unauditableClasses = new ArrayList<Class>() {{
-        // todo make a Long primary key on JiraTicket and remove this special case.
-        add(JiraTicket.class);
-        // VesselContainer is embeddable.
-        add(VesselContainer.class);
+        add(JiraTicket.class);   // todo make a Long primary key and remove this special case.
+        add(UserRemarks.class);
     }};
 
 
     @Test
     public void areAllEntitiesAuditable() throws Exception {
-        String[] packagesToScan = new String[] {
-                "org.broadinstitute.gpinformatics.athena.entity",
-                "org.broadinstitute.gpinformatics.mercury.entity"
-        };
-        Collection<Class> classesFromPkg = new ArrayList<>();
-        for (String packageToScan : packagesToScan) {
-            classesFromPkg.addAll(getClasses(packageToScan));
-        }
+        List<String> failingClasses = new ArrayList<>();
+        List<Class> entityClasses = new ArrayList<>(ReflectionUtil.getMercuryAthenaEntityClasses());
 
-        Collection<String> failingClasses = new ArrayList<>();
-        Collection<String> entityClassnames = new ArrayList<>();
+        Assert.assertTrue(CollectionUtils.isNotEmpty(entityClasses));
+        Assert.assertTrue(entityClasses.contains(LabEvent.class));
+        Assert.assertTrue(entityClasses.contains(VesselContainer.class));
+        Assert.assertTrue(entityClasses.contains(Product.class));
+        // Should not contain the gap metric db entity classes.
+        Assert.assertFalse(entityClasses.contains(AggregationReadGroup.class));
 
-        // Finds the persistence classes by searching for SingularAttribute fields.
-        // From this generated class, strip off the trailing '_' and that's the entity class.
-        for (Class cls : classesFromPkg) {
-            if (CollectionUtils.isNotEmpty(ReflectionUtil.getFieldsOfType(cls, SingularAttribute.class))) {
-                int idx = cls.getCanonicalName().lastIndexOf("_");
-                if (idx < cls.getCanonicalName().length() - 1) {
-                    throw new RuntimeException("Unexpected generated class name: " + cls.getCanonicalName());
-                }
-                entityClassnames.add(cls.getCanonicalName().substring(0, idx));
-            }
-        }
-        Assert.assertTrue(entityClassnames.size() > 0);
+        entityClasses.removeAll(ReflectionUtil.getEmbeddableEntities());
+        entityClasses.removeAll(unauditableClasses);
+        Assert.assertTrue(entityClasses.size() > 0);
 
-        for (Class cls : classesFromPkg) {
-            if (entityClassnames.contains(cls.getCanonicalName()) && !unauditableClasses.contains(cls)) {
-                Field field = ReflectionUtil.getFieldHavingAnnotation(cls, Id.class);
-                if (field == null) {
-                    field = ReflectionUtil.getEntityIdField(cls);
-                }
-                if (field == null) {
-                    failingClasses.add(cls.getName());
-                }
+        for (Class cls : entityClasses) {
+            if (ReflectionUtil.getEntityIdField(cls) == null) {
+                failingClasses.add(cls.getName());
             }
         }
 
@@ -74,42 +61,66 @@ public class AuditReaderDbFreeTest {
         }
     }
 
-    /**
-     * Scans all classes accessible from the context class loader which belong to the given package and subpackages.
-     */
-    private Collection<Class> getClasses(String packageName) throws ClassNotFoundException, IOException {
-        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        Assert.assertNotNull(classLoader);
-        String path = packageName.replace('.', '/');
-        Enumeration<URL> resources = classLoader.getResources(path);
-        Collection<File> dirs = new ArrayList<>();
-        while (resources.hasMoreElements()) {
-            URL resource = resources.nextElement();
-            dirs.add(new File(resource.getFile()));
-        }
-        Collection<Class> classes = new ArrayList<>();
-        for (File directory : dirs) {
-            classes.addAll(recurseDirectories(directory, packageName));
-        }
-        return classes;
-    }
+    // Checks that all fields found on a mercury/athena generated class, which are the ones used by the
+    // audit trail, are fields that are accessible on the Hibernate persisted class (i.e. the entity class).
+    @Test
+    public void persistentFieldsMissingFromEntity() throws Exception {
+        List<Class> entityClasses = new ArrayList<>(ReflectionUtil.getMercuryAthenaEntityClasses());
+        entityClasses.removeAll(unauditableClasses);
+        Assert.assertTrue(entityClasses.size() > 0);
 
-    /** Returns all classes in the directory hierarchy. */
-    private static List<Class> recurseDirectories(File directory, String packageName) throws ClassNotFoundException {
-        List<Class> classes = new ArrayList<>();
-        if (directory.exists()) {
-            for (File file : directory.listFiles()) {
-                if (file.isDirectory()) {
-                    Assert.assertTrue(!file.getName().contains("."),
-                            "Unexpected class resource name contains '.': " + file.getName());
-                    classes.addAll(recurseDirectories(file, packageName + "." + file.getName()));
-                } else if (file.getName().endsWith(".class")) {
-                    int idx = file.getName().lastIndexOf(".class");
-                    String classname = packageName + '.' + file.getName().substring(0, idx);
-                    classes.add(Class.forName(classname));
-                }
+        for (Class aClass : entityClasses) {
+            List<Field> fields = ReflectionUtil.getPersistedFieldsForClass(aClass);
+            if (CollectionUtils.isNotEmpty(fields)) {
+                Assert.assertTrue(CollectionUtils.isNotEmpty(fields), "Missing fields on class " + aClass.getName());
             }
         }
-        return classes;
     }
+
+    @Test
+    public void testFormatFields() throws Exception {
+        final String barcode = "A00000001";
+
+        BarcodedTube barcodedTube = new BarcodedTube(barcode, BarcodedTube.BarcodedTubeType.VacutainerBloodTube10);
+        barcodedTube.addSample(new MercurySample("SM-0"));
+        barcodedTube.addSample(new MercurySample("SM-1"));
+
+        List<EntityField> entityFields = ReflectionUtil.formatFields(barcodedTube, barcodedTube.getClass());
+        Assert.assertTrue(CollectionUtils.isNotEmpty(entityFields));
+
+        // entityId should be first in the list, but since value is null the canonicalClassname is null too.
+        Assert.assertEquals(entityFields.get(0).getFieldName(), "labVesselId");
+        Assert.assertNull(entityFields.get(0).getCanonicalClassname());
+
+        boolean[] found = new boolean[]{false, false, false};
+        for (EntityField entityField : entityFields) {
+            if (entityField.getFieldName().equals("tubeType")) {
+                found[0] = true;
+                Assert.assertEquals(entityField.getValue(),
+                        BarcodedTube.BarcodedTubeType.VacutainerBloodTube10.toString());
+            }
+            if (entityField.getFieldName().equals("mercurySamples")) {
+                found[1] = true;
+                Assert.assertNull(entityField.getValue());
+                // Verifies the value list.
+               Assert.assertNull(entityField.getCanonicalClassname());
+                Assert.assertEquals(entityField.getEntityFieldList().size(), 2);
+                EntityField sampleEntityField = entityField.getEntityFieldList().get(0);
+                // null here because the entityId value is null.
+                Assert.assertNull(sampleEntityField.getCanonicalClassname());
+                // This value is for mercurySample entityId, which is null until object gets persisted.
+                Assert.assertEquals(sampleEntityField.getValue(), ReflectionUtil.NULL_REPRESTATION);
+            }
+            if (entityField.getFieldName().equals("label")) {
+                found[2] = true;
+                Assert.assertEquals(entityField.getValue(), barcode);
+                Assert.assertNull(entityField.getEntityFieldList());
+                Assert.assertNull(entityField.getCanonicalClassname());
+            }
+        }
+        for (boolean test : found) {
+            Assert.assertTrue(test);
+        }
+    }
+
 }

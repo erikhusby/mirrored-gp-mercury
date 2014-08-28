@@ -2,9 +2,11 @@ package org.broadinstitute.gpinformatics.infrastructure.jira;
 
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+@Test(groups = TestGroups.DATABASE_FREE)
 public class CustomFieldTest {
 
     @Test

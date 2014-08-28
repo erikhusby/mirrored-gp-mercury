@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.BSPExportsSer
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.IsExported;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEventTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
@@ -104,6 +105,7 @@ import static org.mockito.Mockito.when;
  * can configure mock DAOs to return the various test entities without also setting the expectation that each test will
  * fetch every test entity.
  */
+@Test(groups = TestGroups.DATABASE_FREE)
 public class SystemRouterTest extends BaseEventTest {
 
     private static final String MERCURY_TUBE_1 = "mercuryTube1";
@@ -607,40 +609,28 @@ public class SystemRouterTest extends BaseEventTest {
 
     /**
      * Scenarios for
-     * {@link #testSystemOfRecord(String, org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouterTest.KnownToMercury, org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouterTest.InPDO, org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouterTest.MercuryEvent, org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouterTest.KnownToBSP, org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouterTest.ExportFromBSP, org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter.System)}.
+     * {@link #testSystemOfRecord(String, KnownToMercury, InPDO, MercuryEvent, KnownToBSP, ExportFromBSP, SystemRouter.System)}.
      */
     @DataProvider(name = "systemOfRecordScenarios")
     public Object[][] getSystemOfRecordScenarios() {
+        // @formatter:off
         return new Object[][]{
-                new Object[]{"squidIntermediateLCTube", KnownToMercury.NO, InPDO.NONE, MercuryEvent.NONE, KnownToBSP.NO,
-                        ExportFromBSP.NONE, SQUID},
-                new Object[]{"bspIntermediateTube", KnownToMercury.NO, InPDO.NONE, MercuryEvent.NONE, KnownToBSP.YES,
-                        ExportFromBSP.NONE, SQUID},
-                new Object[]{"inSamplesLab", KnownToMercury.YES, InPDO.NONE, MercuryEvent.MERCURY, KnownToBSP.YES,
-                        ExportFromBSP.NONE, MERCURY},
-                new Object[]{"exportedToMercury", KnownToMercury.YES, InPDO.NONE, MercuryEvent.MERCURY, KnownToBSP.YES,
-                        ExportFromBSP.MERCURY, MERCURY},
-                new Object[]{"exportedParallelValidation", KnownToMercury.YES, InPDO.NONE, MercuryEvent.MERCURY,
-                        KnownToBSP.YES, ExportFromBSP.PARALLEL_VALIDATION, SQUID},
-                new Object[]{"exportedToSequencing", KnownToMercury.YES, InPDO.NONE, MercuryEvent.MERCURY,
-                        KnownToBSP.YES, ExportFromBSP.SEQUENCING, SQUID},
-                new Object[]{"exportedToGap", KnownToMercury.YES, InPDO.NONE, MercuryEvent.MERCURY, KnownToBSP.YES,
-                        ExportFromBSP.GAP, null},
-                new Object[]{"errorFromBSP", KnownToMercury.YES, InPDO.NONE, MercuryEvent.MERCURY, KnownToBSP.ERROR,
-                        ExportFromBSP.NONE, null},
-                new Object[]{"parallelTubeInSamplesLab", KnownToMercury.YES, InPDO.NON_EXEX, MercuryEvent.MERCURY,
-                        KnownToBSP.YES, ExportFromBSP.NONE, MERCURY},
-                new Object[]{"parallelTubeExported", KnownToMercury.YES, InPDO.NON_EXEX, MercuryEvent.MERCURY,
-                        KnownToBSP.YES, ExportFromBSP.SEQUENCING, SQUID},
-                new Object[]{"parallelTubeInSeqLab", KnownToMercury.YES, InPDO.NON_EXEX,
-                        MercuryEvent.WORKFLOW_DEPENDENT, KnownToBSP.NO, ExportFromBSP.NONE, SQUID},
-                new Object[]{"exExTubeInSamplesLab", KnownToMercury.YES, InPDO.EXEX, MercuryEvent.WORKFLOW_DEPENDENT,
-                        KnownToBSP.YES, ExportFromBSP.NONE, MERCURY},
-                new Object[]{"exExTubeExported", KnownToMercury.YES, InPDO.EXEX, MercuryEvent.WORKFLOW_DEPENDENT,
-                        KnownToBSP.YES, ExportFromBSP.MERCURY, MERCURY},
-                new Object[]{"exExTubeInSeqLab", KnownToMercury.YES, InPDO.EXEX, MercuryEvent.WORKFLOW_DEPENDENT,
-                        KnownToBSP.NO, ExportFromBSP.NONE, MERCURY},
+                new Object[] { "squidIntermediateLCTube",    KnownToMercury.NO,  InPDO.NONE,     MercuryEvent.NONE,               KnownToBSP.NO,    ExportFromBSP.NONE,                SQUID },
+                new Object[] { "bspIntermediateTube",        KnownToMercury.NO,  InPDO.NONE,     MercuryEvent.NONE,               KnownToBSP.YES,   ExportFromBSP.NONE,                SQUID },
+                new Object[] { "inSamplesLab",               KnownToMercury.YES, InPDO.NONE,     MercuryEvent.MERCURY,            KnownToBSP.YES,   ExportFromBSP.NONE,                MERCURY },
+                new Object[] { "exportedToMercury",          KnownToMercury.YES, InPDO.NONE,     MercuryEvent.MERCURY,            KnownToBSP.YES,   ExportFromBSP.MERCURY,             MERCURY },
+                new Object[] { "exportedParallelValidation", KnownToMercury.YES, InPDO.NONE,     MercuryEvent.MERCURY,            KnownToBSP.YES,   ExportFromBSP.PARALLEL_VALIDATION, SQUID },
+                new Object[] { "exportedToSequencing",       KnownToMercury.YES, InPDO.NONE,     MercuryEvent.MERCURY,            KnownToBSP.YES,   ExportFromBSP.SEQUENCING,          SQUID },
+                new Object[] { "exportedToGap",              KnownToMercury.YES, InPDO.NONE,     MercuryEvent.MERCURY,            KnownToBSP.YES,   ExportFromBSP.GAP,                 null },
+                new Object[] { "errorFromBSP",               KnownToMercury.YES, InPDO.NONE,     MercuryEvent.MERCURY,            KnownToBSP.ERROR, ExportFromBSP.NONE,                null },
+                new Object[] { "parallelTubeInSamplesLab",   KnownToMercury.YES, InPDO.NON_EXEX, MercuryEvent.MERCURY,            KnownToBSP.YES,   ExportFromBSP.NONE,                MERCURY },
+                new Object[] { "parallelTubeExported",       KnownToMercury.YES, InPDO.NON_EXEX, MercuryEvent.MERCURY,            KnownToBSP.YES,   ExportFromBSP.SEQUENCING,          SQUID },
+                new Object[] { "parallelTubeInSeqLab",       KnownToMercury.YES, InPDO.NON_EXEX, MercuryEvent.WORKFLOW_DEPENDENT, KnownToBSP.NO,    ExportFromBSP.NONE,                SQUID },
+                new Object[] { "exExTubeInSamplesLab",       KnownToMercury.YES, InPDO.EXEX,     MercuryEvent.WORKFLOW_DEPENDENT, KnownToBSP.YES,   ExportFromBSP.NONE,                MERCURY },
+                new Object[] { "exExTubeExported",           KnownToMercury.YES, InPDO.EXEX,     MercuryEvent.WORKFLOW_DEPENDENT, KnownToBSP.YES,   ExportFromBSP.MERCURY,             MERCURY },
+                new Object[] { "exExTubeInSeqLab",           KnownToMercury.YES, InPDO.EXEX,     MercuryEvent.WORKFLOW_DEPENDENT, KnownToBSP.NO,    ExportFromBSP.NONE,                MERCURY },
         };
+        // @formatter:on
     }
 
     /**

@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -356,7 +357,7 @@ public class ExtractTransformDbFreeTest {
         SortedMap<Long, Date> revs = new TreeMap<>();
         revs.put(1L, new Date(startEtlSec));
         expect(auditReaderDao.fetchAuditIds(eq(startEtlSec), anyLong())).andReturn(revs);
-        Collection<Long> revIds = revs.keySet();
+        Set<Long> revIds = revs.keySet();
         expect(productEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(1);
         expect(priceItemEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
         expect(researchProjectEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);

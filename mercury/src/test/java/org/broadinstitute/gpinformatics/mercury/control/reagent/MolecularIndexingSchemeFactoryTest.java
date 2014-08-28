@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.reagent;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
@@ -16,12 +17,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.SortedMap;
 
-import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STUBBY;
 
 /**
  * Test creation and retrieval of indexes
  */
+@Test(groups = TestGroups.STUBBY)
 public class MolecularIndexingSchemeFactoryTest extends ContainerTest {
 
     @Inject

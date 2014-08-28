@@ -16,6 +16,7 @@ import javax.inject.Inject;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
 
+@Test(groups = TestGroups.ALTERNATIVES)
 public class TooManyBSPResultsPipelineAPITest extends Arquillian {
 
     @Inject

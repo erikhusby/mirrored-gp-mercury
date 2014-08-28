@@ -141,7 +141,7 @@ public class ProductPdfFactoryUtils {
          Assert.assertEquals(deliverable, product.getDeliverables());
          Assert.assertEquals("Input Requirements", nextString(pdfData));
          String inputRequirements = getMultiLine(pdfData, null);
-         Assert.assertEquals(inputRequirements, product.getInputRequirements().replaceAll("^\\*|\n\\*", ""));
+         Assert.assertTrue(inputRequirements.startsWith(product.getInputRequirements().replaceAll("^\\*|\n\\*", "")));
      }
 
 }

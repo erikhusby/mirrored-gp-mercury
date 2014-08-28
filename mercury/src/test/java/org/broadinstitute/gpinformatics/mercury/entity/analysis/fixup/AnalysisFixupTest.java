@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.analysis.fixup;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.analysis.AnalysisEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -11,6 +12,7 @@ import javax.inject.Inject;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
+@Test(groups = TestGroups.FIXUP)
 public class AnalysisFixupTest extends Arquillian {
 
     @Inject

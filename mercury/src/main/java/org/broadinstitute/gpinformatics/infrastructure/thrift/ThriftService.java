@@ -38,6 +38,8 @@ public interface ThriftService extends Serializable {
 
     public double fetchQpcrForTube(String tubeBarcode);
 
+    public double fetchQpcrForTubeAndType(String tubeBarcode, String qpcrType);
+
     public double fetchQuantForTube(String tubeBarcode, String quantType);
 
     public List<LibraryData> fetchLibraryDetailsByLibraryName(List<String> libraryNames);

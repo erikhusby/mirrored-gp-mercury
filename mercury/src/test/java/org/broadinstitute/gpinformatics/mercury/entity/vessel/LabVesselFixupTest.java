@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.RackOfTubesDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
@@ -36,6 +37,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 /**
  * Fixup production Lab Vessel entities
  */
+@Test(groups = TestGroups.FIXUP)
 public class LabVesselFixupTest extends Arquillian {
 
     @Inject
@@ -423,6 +425,14 @@ public class LabVesselFixupTest extends Arquillian {
         BarcodedTube barcodedTube = barcodedTubeDao.findByBarcode("0116400440");
         LabMetric labMetric = barcodedTube.getMetrics().iterator().next();
         labMetric.setValue(new BigDecimal("21.75"));
+        barcodedTubeDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim2926() {
+        BarcodedTube barcodedTube = barcodedTubeDao.findByBarcode("0116404348");
+        LabMetric labMetric = barcodedTube.getMetrics().iterator().next();
+        labMetric.setValue(new BigDecimal("25.35"));
         barcodedTubeDao.flush();
     }
 

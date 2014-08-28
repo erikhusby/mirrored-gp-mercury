@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,5 +28,10 @@ public class ValidationException extends Exception {
 
     public List<String> getValidationMessages() {
         return validationMessages;
+    }
+
+    @Override
+    public String getMessage() {
+        return super.getMessage() + '\n' + StringUtils.join(validationMessages, '\n');
     }
 }

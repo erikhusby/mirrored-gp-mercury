@@ -170,11 +170,11 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
      *
      * @return the number of records created in the data file (deletes, modifies, and adds).
      */
-    public int doEtl(Collection<Long> revIds, String etlDateStr) {
+    public int doEtl(Set<Long> revIds, String etlDateStr) {
         try {
             // Retrieves the Envers-formatted list of entity changes in the given revision range.
             // Subclass may add additional entity ids based on custom rev query.
-            List<EnversAudit> auditEntities = auditReaderDao.fetchDataChanges(revIds, entityClass);
+            List<EnversAudit> auditEntities = auditReaderDao.fetchEnversAudits(revIds, entityClass);
             AuditLists<AUDITED_ENTITY_CLASS> auditLists = fetchAuditIds(auditEntities, fetchAdditionalModifies(revIds));
 
             // The convert calls optionally convert entity types for cross-entity etl classes.

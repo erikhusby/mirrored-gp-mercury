@@ -24,6 +24,7 @@ public class QuoteWorkItemsExporter extends AbstractSpreadsheetExporter<Abstract
     private static final String[] FIXED_HEADERS = { "Quote", "Platform", "Category", "Price Item", "Quantity", "Billed Date", "Billing Message"};
 
     public QuoteWorkItemsExporter(BillingSession billingSession, List<QuoteImportItem> quoteItems) {
+        super(new SpreadSheetWriter());
         this.quoteItems = quoteItems;
         this.billingSession = billingSession;
     }

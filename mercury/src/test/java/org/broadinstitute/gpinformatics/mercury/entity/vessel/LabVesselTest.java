@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ChildVesselBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
@@ -22,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 
 @SuppressWarnings("FeatureEnvy")
+@Test(groups = TestGroups.DATABASE_FREE)
 public class LabVesselTest {
     @Test
     public void testFindVesselsForLabEventTypes() {

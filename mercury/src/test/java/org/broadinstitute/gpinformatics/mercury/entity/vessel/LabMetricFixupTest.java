@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
-import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricRunDao;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -10,8 +10,6 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 
-import java.text.Format;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -20,6 +18,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 /**
  * Fixup production Lab Metric entities
  */
+@Test(groups = TestGroups.FIXUP)
 public class LabMetricFixupTest extends Arquillian {
 
     @Inject

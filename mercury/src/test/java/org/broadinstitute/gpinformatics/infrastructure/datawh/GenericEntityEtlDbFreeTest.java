@@ -17,7 +17,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.createMock;
@@ -72,13 +74,13 @@ public class GenericEntityEtlDbFreeTest {
 
 
     public void testEtl() throws Exception {
-        Collection<Long> revIds = new ArrayList<>();
+        Set<Long> revIds = new HashSet<>();
         revIds.add(entityId);
 
         List<EnversAudit> enversAudits = new ArrayList<>();
         enversAudits.add(new EnversAudit(obj, revInfo[0], RevisionType.ADD));
 
-        expect(auditReader.fetchDataChanges(revIds, tst.entityClass)).andReturn(enversAudits);
+        expect(auditReader.fetchEnversAudits(revIds, tst.entityClass)).andReturn(enversAudits);
         expect(dao.findById(LabVessel.class, entityId)).andReturn(obj);
 
         expect(obj.getLabVesselId()).andReturn(entityId).times(2);
@@ -100,7 +102,7 @@ public class GenericEntityEtlDbFreeTest {
     }
 
     public void testDeletionEtl() throws Exception {
-        Collection<Long> revIds = new ArrayList<>();
+        Set<Long> revIds = new HashSet<>();
         revIds.add(entityId);
 
         // Three changes to one entity result in one deletion record.
@@ -109,7 +111,7 @@ public class GenericEntityEtlDbFreeTest {
         dataChanges.add(new EnversAudit(obj, revInfo[1], RevisionType.MOD));
         dataChanges.add(new EnversAudit(obj, revInfo[2], RevisionType.DEL));
 
-        expect(auditReader.fetchDataChanges(eq(revIds), (Class)anyObject())).andReturn(dataChanges);
+        expect(auditReader.fetchEnversAudits(eq(revIds), (Class) anyObject())).andReturn(dataChanges);
         expect(obj.getLabVesselId()).andReturn(entityId).times(3);
 
         replay(mocks);

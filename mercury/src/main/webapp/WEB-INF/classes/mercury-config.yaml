@@ -228,6 +228,15 @@ bass:
       host:     bass.broadinstitute.org
       port:     443
 
+submission:
+    DEV:
+      host:     picard01
+      port:     33333
+
+    PROD:
+      host:     seqsubmission01.broadinstitute.org
+      port:     8080
+
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
 mercury:
 
@@ -246,6 +255,7 @@ mercury:
       hipchat: DEV
       collaborate: DEV
       bass: PROD
+      submission: DEV
 
 
     AUTO_BUILD:
@@ -263,6 +273,7 @@ mercury:
       hipchat: DEV
       collaborate: DEV
       bass: PROD
+      submission: DEV
 
     TEST:
 
@@ -279,6 +290,7 @@ mercury:
       hipchat: DEV
       collaborate: DEV
       bass:     PROD
+      submission: DEV
 
     QA:
       app:      QA
@@ -294,6 +306,7 @@ mercury:
       hipchat: DEV
       collaborate: RC
       bass:     PROD
+      submission: DEV
 
     RC:
 
@@ -310,6 +323,7 @@ mercury:
       hipchat: DEV
       collaborate: RC
       bass:     PROD
+      submission: DEV
 
 
     PROD:
@@ -327,4 +341,5 @@ mercury:
       hipchat: PROD
       collaborate: PROD
       bass:     PROD
+      submission: PROD
 

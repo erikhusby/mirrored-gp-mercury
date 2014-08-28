@@ -9,6 +9,9 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 
+import java.util.Collections;
+import java.util.List;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.closeTo;
 import static org.hamcrest.Matchers.equalTo;
@@ -57,7 +60,9 @@ public class AggregationMetricsFetcherTest extends ContainerTest {
     private static final double MAX_LOD = 55.771678;
 
     public void testFetchMetricsForSampleAggregatedByMercuryRP() {
-        Aggregation aggregation = fetcher.fetch(MERCURY_PROJECT, SAMPLE, MERCURY_AGGREGATION_VERSION);
+        List<Aggregation> aggregationResults = fetcher.fetch(Collections.singletonList(MERCURY_PROJECT), Collections.singletonList(SAMPLE), Collections.singletonList(MERCURY_AGGREGATION_VERSION));
+
+        Aggregation aggregation = aggregationResults.get(0);
         assertThat(aggregation.getProject(), equalTo(MERCURY_PROJECT));
         assertThat(aggregation.getSample(), equalTo(SAMPLE));
         assertThat(aggregation.getVersion(), equalTo(MERCURY_AGGREGATION_VERSION));
@@ -69,22 +74,26 @@ public class AggregationMetricsFetcherTest extends ContainerTest {
     }
 
     public void testFetchMetricsWithBadProject() {
-        Aggregation aggregation = fetcher.fetch("BAD-"+MERCURY_PROJECT, SAMPLE, MERCURY_AGGREGATION_VERSION);
-        assertThat(aggregation, Matchers.nullValue());
+        List<Aggregation> aggregationResults = fetcher.fetch(Collections.singletonList("BAD-"+MERCURY_PROJECT), Collections.singletonList(SAMPLE), Collections.singletonList(MERCURY_AGGREGATION_VERSION));
+        assertThat(aggregationResults, Matchers.emptyIterableOf(Aggregation.class));
     }
 
     public void testFetchMetricsWithBadSample() {
-        Aggregation aggregation = fetcher.fetch(MERCURY_PROJECT, "BAD-"+SAMPLE, MERCURY_AGGREGATION_VERSION);
-        assertThat(aggregation, Matchers.nullValue());
+        List<Aggregation> aggregationResults = fetcher.fetch(Collections.singletonList(MERCURY_PROJECT),
+                Collections.singletonList("BAD-" + SAMPLE), Collections.singletonList(MERCURY_AGGREGATION_VERSION));
+        assertThat(aggregationResults, Matchers.emptyIterableOf(Aggregation.class));
     }
 
     public void testFetchMetricsWithBadVersion() {
-        Aggregation aggregation = fetcher.fetch(MERCURY_PROJECT, SAMPLE, MERCURY_AGGREGATION_VERSION*100);
-        assertThat(aggregation, Matchers.nullValue());
+        List<Aggregation> aggregationResults = fetcher.fetch(Collections.singletonList(MERCURY_PROJECT),
+                Collections.singletonList(SAMPLE), Collections.singletonList(MERCURY_AGGREGATION_VERSION * 100));
+        assertThat(aggregationResults, Matchers.emptyIterableOf(Aggregation.class));
     }
 
     public void testFetchMetricsForSampleAggregatedBySquidProject() {
-        Aggregation aggregation = fetcher.fetch(SQUID_PROJECT, SAMPLE, SQUID_AGGREGATION_VERSION);
+        List<Aggregation> aggregationResults = fetcher.fetch(Collections.singletonList(SQUID_PROJECT),
+                Collections.singletonList(SAMPLE), Collections.singletonList(SQUID_AGGREGATION_VERSION));
+        Aggregation aggregation = aggregationResults.get(0);
         assertThat(aggregation.getProject(), equalTo(SQUID_PROJECT));
         assertThat(aggregation.getSample(), equalTo(SAMPLE));
         assertThat(aggregation.getVersion(), equalTo(SQUID_AGGREGATION_VERSION));

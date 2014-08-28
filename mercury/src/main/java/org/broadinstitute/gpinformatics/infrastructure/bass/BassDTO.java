@@ -15,6 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -45,6 +46,16 @@ public class BassDTO {
     public BassDTO(Map<BassResultColumn, String> columnToValue) {
         this.columnToValue = columnToValue;
     }
+
+// todo: should be in interface?
+    public SubmissionTuple getTuple() {
+        return new SubmissionTuple(getSample(), getFilePath(), getVersion().toString());
+    }
+
+    private String getFilePath() {
+        return getValue(BassResultColumn.path);
+    }
+
     public enum FileType {
         BAM("bam"),
         PICARD("picard"),
@@ -227,6 +238,10 @@ public class BassDTO {
 
     public String getSample() {
         return getValue(BassResultColumn.sample);
+    }
+
+    public void setSample(String sample) {
+            columnToValue.put(BassResultColumn.sample, sample);
     }
 
     public String getMd5() {

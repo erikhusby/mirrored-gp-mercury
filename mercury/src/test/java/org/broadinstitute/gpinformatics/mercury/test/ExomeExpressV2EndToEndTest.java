@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
@@ -71,6 +72,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DA
 /**
  * Test Exome Express in Mercury
  */
+@Test(groups = TestGroups.DATABASE_FREE)
 public class ExomeExpressV2EndToEndTest extends BaseEventTest {
 
     public static final String FCT_TICKET = "FCT-1";
@@ -233,8 +235,8 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
         exexJaxbBuilder.invoke();
 
         //TODO SGM   SHould this validate be on the tube formation?
-        LabEventTest.validateWorkflow(LabEventType.SHEARING_TRANSFER.getName(),
-                                      picoPlatingEntityBuilder.getNormBarcodeToTubeMap().values());
+//        LabEventTest.validateWorkflow(LabEventType.SHEARING_TRANSFER.getName(),
+//                                      picoPlatingEntityBuilder.getNormBarcodeToTubeMap().values());
         PlateTransferEventType plateToShearXfer = exexJaxbBuilder.getShearTransferEventJaxb();
 //        LabEvent shearEvent = labEventFactory.buildFromBettaLimsRackToPlateDbFree(plateToShearXfer,
 //                picoPlatingEntityBuilder.getNormTubeFormation(),
@@ -250,7 +252,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
         StaticPlate shearPlate = (StaticPlate) shearEvent.getTargetLabVessels().iterator().next();
         leHandler.processEvent(shearEvent);
 
-        LabEventTest.validateWorkflow(LabEventType.COVARIS_LOADED.getName(), shearEvent.getTargetLabVessels());
+//        LabEventTest.validateWorkflow(LabEventType.COVARIS_LOADED.getName(), shearEvent.getTargetLabVessels());
 //        // When the above event is executed, the items should be removed from the bucket.
         PlateEventType covarisxfer = exexJaxbBuilder.getCovarisLoadEventJaxb();
         LabEvent covarisEvent = labEventFactory.buildFromBettaLimsPlateEventDbFree(covarisxfer, shearPlate);

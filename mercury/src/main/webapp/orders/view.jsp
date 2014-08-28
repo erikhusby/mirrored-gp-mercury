@@ -25,13 +25,16 @@ $j(document).ready(function () {
         success: showSummary
     });
 
-    // Initializes the previously chosen sample kit detail info in the sample kit display section
-    <c:if test="${actionBean.editOrder.isSampleInitiation()}">
-    <c:forEach items="${actionBean.editOrder.productOrderKit.kitOrderDetails}" var="kitDetail">
-    showKitDetail('${kitDetail.numberOfSamples}', '${kitDetail.kitType.displayName}',
-            '${kitDetail.organismName}', '${kitDetail.bspMaterialName}',
-            '${kitDetail.getPostReceivedOptionsAsString("<br/>")}');
-    </c:forEach>
+    // Only show the fill kit detail information for sample initiation PDOs. With the collaboration portal, there
+    // can be kit definitions but since that is all automated, we do not want to show that. It is fairly irrelevant
+    // after the work request happens. Adding a work request id field to the UI when there is a work request with
+    // a non-sample initiation PDO.
+    <c:if test="${actionBean.editOrder.sampleInitiation}">
+        <c:forEach items="${actionBean.editOrder.productOrderKit.kitOrderDetails}" var="kitDetail">
+            showKitDetail('${kitDetail.numberOfSamples}', '${kitDetail.kitType.displayName}',
+                    '${kitDetail.organismName}', '${kitDetail.bspMaterialName}',
+                    '${kitDetail.getPostReceivedOptionsAsString("<br/>")}');
+        </c:forEach>
     </c:if>
 
     // if there are no sample kit details, just show one empty detail section
@@ -734,18 +737,18 @@ function formatInput(item) {
 
 <c:if test="${actionBean.editOrder.product.supportsNumberOfLanes}">
     <c:if test="${actionBean.editOrder.squidWorkRequest != null}">
-    <div>
-        <div class="control-group view-control-group">
-            <label class="control-label label-form">Squid Work Request</label>
+        <div>
+            <div class="control-group view-control-group">
+                <label class="control-label label-form">Squid Work Request</label>
 
-            <div class="controls">
-                <div class="form-value">
-                    <a target="SQUID" href="${actionBean.squidWorkRequestUrl}"
-                       class="external">${actionBean.editOrder.squidWorkRequest}</a>
+                <div class="controls">
+                    <div class="form-value">
+                        <a target="SQUID" href="${actionBean.squidWorkRequestUrl}"
+                           class="external">${actionBean.editOrder.squidWorkRequest}</a>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
     </c:if>
 </c:if>
 
@@ -761,6 +764,19 @@ function formatInput(item) {
     </div>
 </div>
 
+<!-- If this order has a work request created by the collaboration portal, then display the work request as a link. -->
+<c:if test="${actionBean.collaborationKitRequest}">
+    <div class="view-control-group control-group">
+        <label class="control-label label-form">Work Request</label>
+
+        <div class="controls">
+            <div class="form-value">
+                <a href="${actionBean.workRequestUrl}" class="external" target="BSP">
+                    ${actionBean.editOrder.productOrderKit.workRequestId}</a>
+            </div>
+        </div>
+    </div>
+</c:if>
 
 <div class="view-control-group control-group">
     <label class="control-label label-form">Order Status</label>
@@ -961,7 +977,7 @@ function formatInput(item) {
 </div>
 </div>
 
-<c:if test="${actionBean.editOrder.isSampleInitiation()}">
+<c:if test="${actionBean.editOrder.sampleInitiation}">
     <div class="form-horizontal span5">
         <fieldset>
             <legend>

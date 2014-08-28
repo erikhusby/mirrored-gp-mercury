@@ -64,6 +64,11 @@ public class BSPSampleDTO {
 
     private final Map<BSPSampleSearchColumn, String> columnToValue;
 
+    // package-local for test
+    Map<BSPSampleSearchColumn, String> getColumnToValue() {
+        return columnToValue;
+    }
+
     // This is the BSP sample receipt date format string. (ex. 11/18/2010)
     public static final String BSP_DATE_FORMAT_STRING = "MM/dd/yyyy";
 

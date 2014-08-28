@@ -1067,4 +1067,93 @@
         </createIndex>
     </changeSet>
 
+    <changeSet id="GPLIM-2895-add-tracker-table" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists schemaName="athena" tableName="SUBMISSION_TRACKER" />
+            </not>
+        </preConditions>
+        <createTable tableName="SUBMISSION_TRACKER" schemaName="athena">
+            <column name="SUBMISSION_TRACKER_ID" type="number(19,0)" >
+                <constraints nullable="false"/>
+            </column>
+            <column name="ACCESSION_IDENTIFIER" type="varchar2(255 char)" >
+                <constraints nullable="false" />
+            </column>
+            <column name="FILE_NAME" type="varchar2(255 char)" >
+                <constraints nullable="false" />
+            </column>
+            <column name="VERSION" type="varchar2(255 char)" />
+            <column name="RESEARCH_PROJECT_ID" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+        <createSequence sequenceName="SEQ_SUBMISSION_TRACKER" schemaName="athena" startValue="1"
+                        incrementBy="50"/>
+
+    </changeSet>
+
+    <changeSet id="GPLIM-2895-add-primary-key" author="scottmat">
+        <addPrimaryKey tableName="SUBMISSION_TRACKER" columnNames="SUBMISSION_TRACKER_ID" schemaName="athena"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-2895-add-research-project-foreign-key" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="FK_SUB_TRKR_RP" schemaName="athena"
+                                            foreignKeyTableName="SUBMISSION_TRACKER" />
+            </not>
+        </preConditions>
+        <addForeignKeyConstraint baseTableName="SUBMISSION_TRACKER" baseColumnNames="RESEARCH_PROJECT_ID"
+                                 baseTableSchemaName="athena" constraintName="FK_SUB_TRKR_RP"
+                                 referencedColumnNames="RESEARCH_PROJECT_ID" referencedTableName="RESEARCH_PROJECT"
+                                 referencedTableSchemaName="athena" />
+    </changeSet>
+
+    <changeSet id="GPLIM-2895-add-tracker-aud-table" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists schemaName="athena" tableName="SUBMISSION_TRACKER_AUD" />
+            </not>
+        </preConditions>
+        <createTable tableName="SUBMISSION_TRACKER_AUD" schemaName="athena">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)"/>
+
+            <column name="SUBMISSION_TRACKER_ID" type="number(19,0)" />
+            <column name="ACCESSION_IDENTIFIER" type="varchar2(255 char)"/>
+            <column name="FILE_NAME" type="varchar2(255 char)" />
+            <column name="VERSION" type="varchar2(255 char)" />
+            <column name="RESEARCH_PROJECT_ID" type="number(19,0)"/>
+        </createTable>
+
+        <addPrimaryKey tableName="SUBMISSION_TRACKER_AUD" columnNames="SUBMISSION_TRACKER_ID, rev" schemaName="athena"/>
+        <addForeignKeyConstraint baseTableName="SUBMISSION_TRACKER_AUD" baseTableSchemaName="ATHENA"
+                                 baseColumnNames="REV" constraintName="FK_SUBMIT_TRK_AUD_REV_INFO "
+                                 referencedTableName="REV_INFO" referencedTableSchemaName="MERCURY"
+                                 referencedColumnNames="REV_INFO_ID"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-2895-change-sample-column-name" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists columnName="SUBMITTED_SAMPLE_NAME" schemaName="athena" tableName="SUBMISSION_TRACKER"/>
+            </not>
+        </preConditions>
+        <renameColumn tableName="SUBMISSION_TRACKER" oldColumnName="ACCESSION_IDENTIFIER"
+                      newColumnName="SUBMITTED_SAMPLE_NAME" schemaName="athena" columnDataType="varchar2(255 char)"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-2895-change-sample-column-name-aud" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists columnName="SUBMITTED_SAMPLE_NAME" schemaName="athena" tableName="SUBMISSION_TRACKER_AUD"/>
+            </not>
+        </preConditions>
+        <renameColumn tableName="SUBMISSION_TRACKER_AUD" oldColumnName="ACCESSION_IDENTIFIER"
+                      newColumnName="SUBMITTED_SAMPLE_NAME" schemaName="athena" columnDataType="varchar2(255 char)"/>
+    </changeSet>
+
 </databaseChangeLog>

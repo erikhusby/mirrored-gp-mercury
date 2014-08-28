@@ -253,7 +253,7 @@ public class MolecularIndexingScheme {
      * {@link MolecularIndexingSchemeFactory} to create scheme instances, not the
      * constructors in this class.
      */
-    protected MolecularIndexingScheme() { }
+    public MolecularIndexingScheme() { }
 
     /**
      * Creates a new MolecularIndexingScheme with the given position/indexes.
@@ -305,7 +305,7 @@ public class MolecularIndexingScheme {
       * of the MolecularIndexingScheme. If you need a scheme with additional
       * component indexes, use the factory to get or create one.
       */
-    void addIndexPosition(IndexPosition position, MolecularIndex index) {
+    public void addIndexPosition(IndexPosition position, MolecularIndex index) {
         if (index == null) {
             throw new NullPointerException("The given MolecularIndex cannot be null.");
         }

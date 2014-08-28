@@ -111,6 +111,7 @@ public class VesselContainer<T extends LabVessel> {
      * Find the source rack for the specified LabVessel.
      */
     @Nullable
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public LabVessel getSourceRack() {
 
         // Find shortest paths to the first rack, if any.
@@ -128,12 +129,14 @@ public class VesselContainer<T extends LabVessel> {
         return firstEvent.getSourceLabVessels().iterator().next();
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     @Nullable
     public T getVesselAtPosition(VesselPosition position) {
         //noinspection unchecked
         return (T) mapPositionToVessel.get(position);
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Set<LabEvent> getTransfersFrom() {
         Set<LabEvent> transfersFrom = new HashSet<>();
         for (SectionTransfer sectionTransfer : sectionTransfersFrom) {
@@ -150,6 +153,7 @@ public class VesselContainer<T extends LabVessel> {
      *
      * @return transfers to
      */
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Set<LabEvent> getTransfersToWithRearrays() {
         Set<LabEvent> transfersTo = getTransfersTo();
         // Need to follow Re-arrays, otherwise the chain of custody is broken.  Ignore re-arrays that add tubes
@@ -172,6 +176,7 @@ public class VesselContainer<T extends LabVessel> {
      *
      * @return transfers to
      */
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Set<LabEvent> getTransfersTo() {
         Set<LabEvent> transfersTo = new HashSet<>();
         for (SectionTransfer sectionTransfer : sectionTransfersTo) {
@@ -193,6 +198,7 @@ public class VesselContainer<T extends LabVessel> {
      *
      * @return This returns a list of vessel positions within this vessel that contain the sample instances passed in.
      */
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Set<VesselPosition> getPositionsOfSampleInstance(@Nonnull SampleInstance sampleInstance) {
         Set<VesselPosition> positions = getPositions();
         Set<VesselPosition> positionList = new HashSet<>();
@@ -206,6 +212,7 @@ public class VesselContainer<T extends LabVessel> {
         return positionList;
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Set<VesselPosition> getPositionsOfSampleInstance(@Nonnull SampleInstance sampleInstance,
                                                             LabVessel.SampleType sampleType) {
         Set<VesselPosition> positions = getPositions();
@@ -220,16 +227,19 @@ public class VesselContainer<T extends LabVessel> {
         return positionList;
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Set<SampleInstance> getSampleInstancesAtPosition(VesselPosition position, LabVessel.SampleType sampleType,
                                                             @Nullable LabBatch.LabBatchType batchType) {
         LabVessel.TraversalResults traversalResults = traverseAncestors(position, sampleType, batchType);
         return traversalResults.getSampleInstances();
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Set<SampleInstance> getSampleInstancesAtPosition(VesselPosition position) {
         return getSampleInstancesAtPosition(position, LabVessel.SampleType.ANY, null);
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Set<SampleInstance> getSampleInstancesAtPosition(VesselPosition position, LabVessel.SampleType sampleType) {
         return getSampleInstancesAtPosition(position, sampleType, null);
     }
@@ -375,6 +385,7 @@ public class VesselContainer<T extends LabVessel> {
         }
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public VesselPosition getPositionOfVessel(LabVessel vesselAtPosition) {
         //construct the reverse lookup map if it doesn't exist
         if (vesselToMapPosition == null) {
@@ -386,11 +397,13 @@ public class VesselContainer<T extends LabVessel> {
         return vesselToMapPosition.get(vesselAtPosition);
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Set<SampleInstance> getSampleInstances(LabVessel.SampleType sampleType, LabBatch.LabBatchType labBatchType) {
         Set<LabVessel> sourceVessels = new HashSet<>();
         return getSampleInstances(sampleType, labBatchType, sourceVessels);
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     private Set<SampleInstance> getSampleInstances(LabVessel.SampleType sampleType, LabBatch.LabBatchType labBatchType,
                                                    Set<LabVessel> sourceVessels) {
         Set<SampleInstance> sampleInstances = new LinkedHashSet<>();
@@ -426,6 +439,7 @@ public class VesselContainer<T extends LabVessel> {
      *
      * @return contained vessels
      */
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Set<T> getContainedVessels() {
         // Wrap in HashSet so equals works against other Sets
         //noinspection unchecked
@@ -437,6 +451,7 @@ public class VesselContainer<T extends LabVessel> {
         child.addToContainer(this);
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Set<VesselPosition> getPositions() {
         if (hasAnonymousVessels()) {
             Set<VesselPosition> positions = new HashSet<>();
@@ -484,6 +499,7 @@ public class VesselContainer<T extends LabVessel> {
         return vesselToSectionTransfersTo;
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public List<LabVessel.VesselEvent> getAncestors(VesselPosition position) {
         List<LabVessel.VesselEvent> vesselEvents = new ArrayList<>();
         for (SectionTransfer sectionTransfer : sectionTransfersTo) {
@@ -523,10 +539,12 @@ public class VesselContainer<T extends LabVessel> {
         return vesselEvents;
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public List<LabVessel.VesselEvent> getAncestors(LabVessel containee) {
         return getAncestors(getPositionOfVessel(containee));
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public List<LabVessel.VesselEvent> getDescendants(VesselPosition position) {
         List<LabVessel.VesselEvent> vesselEvents = new ArrayList<>();
         for (SectionTransfer sectionTransfer : sectionTransfersFrom) {
@@ -556,10 +574,12 @@ public class VesselContainer<T extends LabVessel> {
         return vesselEvents;
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public List<LabVessel.VesselEvent> getDescendants(LabVessel containee) {
         return getDescendants(getPositionOfVessel(containee));
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public boolean hasAnonymousVessels() {
         boolean anonymousVessels = false;
         LabVessel.ContainerType type = embedder.getType();
@@ -580,10 +600,12 @@ public class VesselContainer<T extends LabVessel> {
         }
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Collection<LabBatch> getAllLabBatches() {
         return getAllLabBatches(null);
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Collection<LabBatch> getAllLabBatches(@Nullable LabBatch.LabBatchType type) {
         TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
                 new TransferTraverserCriteria.NearestLabBatchFinder(type);
@@ -591,10 +613,12 @@ public class VesselContainer<T extends LabVessel> {
         return batchCriteria.getAllLabBatches();
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Collection<LabBatch> getNearestLabBatches() {
         return getNearestLabBatches(null);
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Collection<LabBatch> getNearestLabBatches(@Nullable LabBatch.LabBatchType type) {
         TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
                 new TransferTraverserCriteria.NearestLabBatchFinder(type);
@@ -602,6 +626,7 @@ public class VesselContainer<T extends LabVessel> {
         return batchCriteria.getNearestLabBatches();
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Collection<String> getNearestProductOrders() {
         TransferTraverserCriteria.NearestProductOrderCriteria productOrderCriteria =
                 new TransferTraverserCriteria.NearestProductOrderCriteria();
@@ -609,6 +634,7 @@ public class VesselContainer<T extends LabVessel> {
         return productOrderCriteria.getNearestProductOrders();
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public List<LabBatchComposition> getLabBatchCompositions() {
         List<SampleInstance> sampleInstances = new ArrayList<>();
         for (VesselPosition position : getEmbedder().getVesselGeometry().getVesselPositions()) {
@@ -640,6 +666,7 @@ public class VesselContainer<T extends LabVessel> {
      *
      * @return A collection of the nearest metrics of the given type.
      */
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Collection<LabMetric> getNearestMetricOfType(LabMetric.MetricType metricType) {
         TransferTraverserCriteria.NearestLabMetricOfTypeCriteria metricTypeCriteria =
                 new TransferTraverserCriteria.NearestLabMetricOfTypeCriteria(metricType);
@@ -656,6 +683,7 @@ public class VesselContainer<T extends LabVessel> {
      *
      * @return LCSETs, empty if no contained vessels are associated with LCSETs
      */
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Set<LabBatch> getComputedLcSetsForSection(SBSSection section) {
         Map<LabBatch, Integer> mapLabBatchToCount = new HashMap<>();
         int numSampleInstanceWithBucketEntries = 0;
@@ -734,6 +762,7 @@ public class VesselContainer<T extends LabVessel> {
      *
      * @return All of the lab vessels for each event type passed in keyed on event.
      */
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Map<LabEvent, Set<LabVessel>> getVesselsForLabEventTypes(List<LabEventType> eventTypes) {
         TransferTraverserCriteria.VesselForEventTypeCriteria vesselForEventTypeCriteria =
                 new TransferTraverserCriteria.VesselForEventTypeCriteria(eventTypes);
@@ -748,6 +777,7 @@ public class VesselContainer<T extends LabVessel> {
      *
      * @return all nearest tube ancestors
      */
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public List<VesselAndPosition> getNearestTubeAncestors() {
         TransferTraverserCriteria.NearestTubeAncestorsCriteria
                 criteria = new TransferTraverserCriteria.NearestTubeAncestorsCriteria();
@@ -923,6 +953,7 @@ public class VesselContainer<T extends LabVessel> {
     private Map<VesselPosition, Set<SampleInstanceV2>> mapPositionToSampleInstances =
             new EnumMap<>(VesselPosition.class);
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Set<SampleInstanceV2> getSampleInstancesAtPositionV2(VesselPosition vesselPosition) {
         Set<SampleInstanceV2> sampleInstances = mapPositionToSampleInstances.get(vesselPosition);
         if (sampleInstances == null) {
@@ -950,6 +981,7 @@ public class VesselContainer<T extends LabVessel> {
         return sampleInstances;
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Set<SampleInstanceV2> getSampleInstancesV2() {
         Set<SampleInstanceV2> sampleInstanceList = new LinkedHashSet<>();
         VesselPosition[] vesselPositions = getEmbedder().getVesselGeometry().getVesselPositions();
@@ -962,6 +994,7 @@ public class VesselContainer<T extends LabVessel> {
     /**
      * Get the SampleInstances for a set of ancestor events.  Static so it can be shared with LabVessel.
      */
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     static Set<SampleInstanceV2> getAncestorSampleInstances(LabVessel labVessel,
             List<LabVessel.VesselEvent> ancestorEvents) {
         // Get ancestor SampleInstances

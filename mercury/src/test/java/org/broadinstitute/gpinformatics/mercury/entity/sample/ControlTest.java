@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -11,6 +12,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DA
  *         Date: 2/21/13
  *         Time: 10:52 AM
  */
+@Test(groups = TestGroups.DATABASE_FREE)
 public class ControlTest {
 
     private final String na12878 = "NA12878";

@@ -171,7 +171,7 @@
         </init-param>
         <init-param>
             <param-name>Extension.Packages</param-name>
-            <param-value>com.samaxes.stripes.inject</param-value>
+            <param-value>com.samaxes.stripes.inject,org.broadinstitute.gpinformatics.infrastructure.presentation</param-value>
         </init-param>
         <init-param>
             <param-name>ActionBeanContext.Class</param-name>
@@ -182,6 +182,11 @@
                 LocalizationBundleFactory.ErrorMessageBundle
             </param-name>
             <param-value>StripesResources</param-value>
+        </init-param>
+        <init-param>
+            <!-- need 20M for plates of molecular indexes -->
+            <param-name>FileUpload.MaximumPostSize</param-name>
+            <param-value>20mb</param-value>
         </init-param>
     </filter>
 

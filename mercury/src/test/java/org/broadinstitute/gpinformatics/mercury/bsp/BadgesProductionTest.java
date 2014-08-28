@@ -22,7 +22,7 @@ import java.io.InputStreamReader;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
-import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STANDARD;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
@@ -31,7 +31,7 @@ import static org.hamcrest.Matchers.equalTo;
  *         Date: 3/8/13
  *         Time: 8:14 AM
  */
-@Test(groups = EXTERNAL_INTEGRATION)
+@Test(groups = STANDARD)
 public class BadgesProductionTest extends Arquillian {
 
 
@@ -72,7 +72,7 @@ public class BadgesProductionTest extends Arquillian {
 
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = false)
+    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = false)
     public void validateBadgeIds() throws Exception {
 
         FileInputStream badgesList = (FileInputStream)Thread.currentThread()

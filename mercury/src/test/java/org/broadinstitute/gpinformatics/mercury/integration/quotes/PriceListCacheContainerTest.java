@@ -9,6 +9,7 @@ import org.testng.annotations.Test;
 
 import java.util.Collection;
 
+@Test(groups = TestGroups.STANDARD)
 public class PriceListCacheContainerTest {
     private PriceListCache priceListCache=new PriceListCache(PMBQuoteServiceProducer.testInstance());
 

@@ -20,6 +20,8 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -32,7 +34,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.STANDARD)
 public class SubmissionDtoFetcherIntegrationTest extends Arquillian {
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -47,6 +49,20 @@ public class SubmissionDtoFetcherIntegrationTest extends Arquillian {
     public static final String COLLABORATOR_SAMPLE_ID = "NA12878";
     public static final String RESEARCH_PROJECT_ID = "RP-697";
 
+
+    @BeforeMethod
+    public void setUp() throws Exception {
+        if(researchProjectDao == null) {
+            return;
+        }
+    }
+
+    @AfterMethod
+    public void tearDown() throws Exception {
+        if(researchProjectDao == null) {
+            return;
+        }
+    }
     public void testFetch() throws Exception {
         double contamination = 0.0002d;
         LevelOfDetection fingerprintLod = new LevelOfDetection(RESEARCH_PROJECT_ID, COLLABORATOR_SAMPLE_ID, 1, 53.437256, 55.771678);

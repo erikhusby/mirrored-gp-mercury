@@ -15,6 +15,7 @@ import java.util.List;
 /**
  * Test searches.
  */
+@Test(groups = TestGroups.STANDARD)
 public class ConfigurableSearchDaoTest extends ContainerTest {
 
     @Inject

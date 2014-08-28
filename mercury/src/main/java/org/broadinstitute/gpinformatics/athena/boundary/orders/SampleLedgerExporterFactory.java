@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
-import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.work.WorkCompleteMessageDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -36,7 +35,7 @@ public class SampleLedgerExporterFactory {
     private final BSPSampleDataFetcher sampleDataFetcher;
     private final AppConfig appConfig;
     private final TableauConfig tableauConfig;
-    private SampleLedgerSpreadSheetWriter spreadSheetWriter;
+    private final SampleLedgerSpreadSheetWriter spreadSheetWriter;
 
     @Inject
     public SampleLedgerExporterFactory(
@@ -88,36 +87,9 @@ public class SampleLedgerExporterFactory {
     public List<SampleLedgerRow> gatherSampleRowData(ProductOrder productOrder) {
         ArrayList<SampleLedgerRow> sampleRowData = new ArrayList<>();
         for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
-            SampleLedgerRow row = new SampleLedgerRow();
-
-            row.setSampleId(productOrderSample.getSampleKey());
-            row.setCollaboratorSampleId(productOrderSample.getBspSampleDTO().getCollaboratorsSampleName());
-            row.setMaterialType(productOrderSample.getBspSampleDTO().getMaterialType());
-            row.setRiskText(productOrderSample.getRiskString());
-            row.setDeliveryStatus(productOrderSample.getDeliveryStatus().getDisplayName());
-            row.setProductName(productOrderSample.getProductOrder().getProduct().getProductName());
-            row.setProductOrderKey(productOrderSample.getProductOrder().getBusinessKey());
-            row.setProductOrderTitle(productOrderSample.getProductOrder().getTitle());
-            row.setProjectManagerName(getBspFullName(productOrderSample.getProductOrder().getCreatedBy()));
-            row.setNumberOfLanes(productOrderSample.getProductOrder().getLaneCount());
-            row.setAutoLedgerDate(productOrderSample.getLatestAutoLedgerTimestamp());
-            row.setWorkCompleteDate(productOrderSample.getWorkCompleteDate());
-
-            sampleRowData.add(row);
+            sampleRowData.add(new SampleLedgerRow(productOrderSample,
+                    bspUserList.getUserFullName(productOrderSample.getProductOrder().getCreatedBy())));
         }
         return sampleRowData;
-    }
-
-    private String getBspFullName(long id) {
-        if (bspUserList == null) {
-            return "User id " + id;
-        }
-
-        BspUser user = bspUserList.getById(id);
-        if (user == null) {
-            return "User id " + id;
-        }
-
-        return user.getFullName();
     }
 }

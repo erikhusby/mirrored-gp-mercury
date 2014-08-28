@@ -50,7 +50,6 @@ public class BSPKitRequestService implements Serializable {
      * @return the BSP work request ID
      */
     public String createAndSubmitKitRequestForPDO(ProductOrder productOrder) {
-        BspUser creator = bspUserList.getById(productOrder.getCreatedBy());
 
         Long primaryInvestigatorId = null;
         Long externalCollaboratorId = null;
@@ -61,12 +60,12 @@ public class BSPKitRequestService implements Serializable {
             externalCollaboratorId = primaryInvestigatorId;
         }
 
-        long projectManagerId;
+        // The creator should be the project manager, if there is one, otherwise, will take the actual creator as
+        // the project manager and hope for the best. Project Managers are required for the collaboration portal,
+        // so this will work. For initiation PDOs, this is what was happening, generally.
+        BspUser creator = bspUserList.getById(productOrder.getCreatedBy());
         if (researchProject.getProjectManagers().length > 0) {
-            BspUser projectManager = bspUserList.getById(researchProject.getProjectManagers()[0]);
-            projectManagerId = projectManager.getDomainUserId();
-        } else {
-            projectManagerId = creator.getDomainUserId();
+            creator = bspUserList.getById(researchProject.getProjectManagers()[0]);
         }
 
         String workRequestName = String.format("%s - %s", productOrder.getName(), productOrder.getBusinessKey());
@@ -82,7 +81,7 @@ public class BSPKitRequestService implements Serializable {
         }
 
         SampleKitWorkRequest sampleKitWorkRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(workRequestName,
-                requesterId, productOrder.getBusinessKey(), primaryInvestigatorId, projectManagerId,
+                requesterId, productOrder.getBusinessKey(), primaryInvestigatorId, creator.getDomainUserId(),
                 externalCollaboratorId, kit.getSiteId(),
                 kit.getSampleCollectionId(), getEmailList(kit.getNotificationIds()),
                 kit.getComments(), kit.isExomeExpress(), kit.getTransferMethod(), kitDefinitions);

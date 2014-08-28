@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -8,6 +9,7 @@ import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class BSPCohortSearchServiceTest {
 
     @Test(groups = EXTERNAL_INTEGRATION, enabled = true)

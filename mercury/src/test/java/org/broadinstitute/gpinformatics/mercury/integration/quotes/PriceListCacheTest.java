@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.integration.quotes;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.quote.*;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -10,6 +11,7 @@ import java.util.Collection;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class PriceListCacheTest {
 
     private static final Log log = LogFactory.getLog(PriceListCacheTest.class);

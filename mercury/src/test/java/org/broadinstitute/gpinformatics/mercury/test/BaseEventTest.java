@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentration;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentrationProducer;
@@ -28,11 +29,13 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryP
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.graph.Graph;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferEntityGrapher;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizer;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
@@ -42,9 +45,12 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.E
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.FlowcellMessageHandler;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.SamplesDaughterPlateHandler;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
+import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
@@ -54,6 +60,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerClient;
 import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerFrame;
@@ -73,9 +80,12 @@ import org.easymock.EasyMock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumMap;
@@ -109,6 +119,22 @@ public class BaseEventTest {
     private LabBatchEjb labBatchEJB;
 
     private BucketEjb bucketEjb;
+
+    /**
+     * Controls are referenced in the routing logic
+     */
+    private static final List<Control> controlList = new ArrayList<>();
+    private static final List<String> controlCollaboratorIdList = new ArrayList<>();
+
+    static {
+        controlList.add(new Control("NA12878", Control.ControlType.POSITIVE));
+        controlList.add(new Control("WATER_CONTROL", Control.ControlType.NEGATIVE));
+
+        for (Control control : controlList) {
+            controlCollaboratorIdList.add(control.getCollaboratorSampleId());
+        }
+    }
+
 
     /**
      * The date on which Exome Express is routed to Mercury only.
@@ -726,5 +752,79 @@ public class BaseEventTest {
                 throw new RuntimeException(e);
             }
         }
+    }
+
+    public static void validateWorkflow(String nextEventTypeName, Collection<? extends LabVessel> tubes) {
+        List<LabVessel> labVessels = new ArrayList<>(tubes);
+        validateWorkflow(nextEventTypeName, labVessels);
+    }
+
+    public static void validateWorkflow(String nextEventTypeName, LabVessel labVessel) {
+        validateWorkflow(nextEventTypeName, Collections.singletonList(labVessel));
+    }
+
+    public static void validateWorkflow(String nextEventTypeName, List<LabVessel> labVessels) {
+        SystemRouter systemRouter = new SystemRouter(null, null, new WorkflowLoader(), null, null);
+        SystemRouter.System system = systemRouter.routeForVessels(labVessels,
+                controlCollaboratorIdList, mapSampleNameToDto,
+                SystemRouter.Intent.ROUTE);
+        Assert.assertEquals(system, expectedRouting);
+
+        WorkflowValidator workflowValidator = new WorkflowValidator();
+        ProductOrderDao mockProductOrderDao = Mockito.mock(ProductOrderDao.class);
+        Mockito.when(mockProductOrderDao.findByBusinessKey(Mockito.anyString())).then(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+
+                Object[] arguments = invocationOnMock.getArguments();
+
+                return ProductOrderTestFactory.createDummyProductOrder((String) arguments[0]);
+            }
+        });
+
+        workflowValidator.setProductOrderDao(mockProductOrderDao);
+        List<WorkflowValidator.WorkflowValidationError> workflowValidationErrors =
+                workflowValidator.validateWorkflow(labVessels, nextEventTypeName);
+        if (!workflowValidationErrors.isEmpty()) {
+            WorkflowValidator.WorkflowValidationError workflowValidationError = workflowValidationErrors.get(0);
+            ProductWorkflowDefVersion.ValidationError validationError = workflowValidationError.getErrors().get(0);
+            Assert.fail(validationError.getMessage() + " expected " + validationError.getExpectedEventNames() +
+                        " actual " + validationError.getActualEventNames());
+        }
+    }
+
+    ZimsIlluminaRunFactory constructZimsIlluminaRunFactory(final ProductOrder productOrder) {
+        ProductOrderDao productOrderDao = Mockito.mock(ProductOrderDao.class);
+        Mockito.when(productOrderDao.findByBusinessKey(Mockito.anyString())).thenReturn(productOrder);
+        return new ZimsIlluminaRunFactory(
+                new BSPSampleDataFetcher() {
+                    @Override
+                    public Map<String, BSPSampleDTO> fetchSamplesFromBSP(@Nonnull Collection<String> sampleNames) {
+                        Map<String, BSPSampleDTO> mapSampleIdToDto = new HashMap<>();
+                        Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>() {{
+                            put(BSPSampleSearchColumn.PRIMARY_DISEASE, "Cancer");
+                            put(BSPSampleSearchColumn.LSID, "org.broad:SM-1234");
+                            put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA Genomic");
+                            put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "4321");
+                            put(BSPSampleSearchColumn.SPECIES, "Homo Sapiens");
+                            put(BSPSampleSearchColumn.PARTICIPANT_ID, "PT-1234");
+                        }};
+                        for (String sampleName : sampleNames) {
+                            Map<BSPSampleSearchColumn, String> dataMapCopy = new HashMap<>(dataMap);
+                            dataMapCopy.put(BSPSampleSearchColumn.SAMPLE_ID, sampleName);
+                            mapSampleIdToDto.put(sampleName, new BSPSampleDTO(dataMapCopy));
+                        }
+                        return mapSampleIdToDto;
+                    }
+                },
+                new ControlDao() {
+                    @Override
+                    public List<Control> findAllActive() {
+                        return controlList;
+                    }
+                },
+                new SequencingTemplateFactory(),
+                productOrderDao
+        );
     }
 }

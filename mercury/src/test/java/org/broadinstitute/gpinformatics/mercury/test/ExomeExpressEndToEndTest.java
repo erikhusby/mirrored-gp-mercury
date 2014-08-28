@@ -26,6 +26,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
@@ -95,6 +96,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DA
  * A container free test of Exome Express
  */
 @SuppressWarnings("OverlyCoupledClass")
+@Test(groups = TestGroups.DATABASE_FREE)
 public class ExomeExpressEndToEndTest {
 
 

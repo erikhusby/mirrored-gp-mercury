@@ -109,7 +109,7 @@ public class WorkflowConfigEtlDbFreeTest {
         assertFalse(workflowDatafile.exists());
         assertFalse(processDatafile.exists());
 
-        assertEquals(tst.doEtl(Collections.<Long>emptyList(), etlDateString), EXPECTED_RECORD_COUNT);
+        assertEquals(tst.doEtl(Collections.<Long>emptySet(), etlDateString), EXPECTED_RECORD_COUNT);
 
         verifyWorkflowFile(workflowDatafile);
         verifyProcessFile(processDatafile);

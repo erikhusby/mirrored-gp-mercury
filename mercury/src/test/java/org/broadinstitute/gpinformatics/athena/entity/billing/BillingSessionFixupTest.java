@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessio
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -21,6 +22,7 @@ import java.util.*;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
+@Test(groups = TestGroups.FIXUP)
 public class BillingSessionFixupTest extends Arquillian {
 
     private static final Log logger = LogFactory.getLog(BillingSessionFixupTest.class);

@@ -25,6 +25,7 @@ import java.util.List;
 /**
  * In preparation for testing Mercury by sending it BettaLIMS production messages, import data from BSP.
  */
+@Test(groups = TestGroups.STUBBY)
 public class ImportFromBspTest extends ContainerTest {
 
     //    @PersistenceContext(unitName = "gap_pu")
@@ -181,13 +182,14 @@ public class ImportFromBspTest extends ContainerTest {
         System.out.println(response);
     }
 
-    public static void recordMetrics(VesselMetricRunBean vesselMetricRunBean) {
+    public static String recordMetrics(VesselMetricRunBean vesselMetricRunBean) {
         String response = Client.create().resource(ImportFromSquidTest.TEST_MERCURY_URL + "/rest/vesselmetric")
                 .type(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)
                 .entity(vesselMetricRunBean)
                 .post(String.class);
         System.out.println(response);
+        return response;
     }
 
     private void sendMessage(BettaLIMSMessage bettaLIMSMessage) {

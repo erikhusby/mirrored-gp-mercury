@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.MockThriftService;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftFileAccessor;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
@@ -49,6 +50,7 @@ import java.util.Map;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.ALTERNATIVES;
 
+@Test(groups = TestGroups.ALTERNATIVES)
 public class IlluminaRunResourceTest extends Arquillian {
 
     @Inject
@@ -223,7 +225,8 @@ public class IlluminaRunResourceTest extends Arquillian {
         Assert.assertEquals(run.getLanes().size(), 8, "Wrong number of lanes");
     }
 
-    public static void doAssertions(TZamboniRun thriftRun,ZimsIlluminaRun runBean,Map<Long,ProductOrder> wrIdToPDO) {
+    // Have to return something other than void, otherwise TestNG will think it's a test.
+    public static boolean doAssertions(TZamboniRun thriftRun,ZimsIlluminaRun runBean,Map<Long,ProductOrder> wrIdToPDO) {
         Assert.assertNull(runBean.getError());
         Assert.assertEquals(runBean.getLanes().size(), thriftRun.getLanes().size());
         Assert.assertEquals(runBean.getFlowcellBarcode(), thriftRun.getFlowcellBarcode());
@@ -276,6 +279,7 @@ public class IlluminaRunResourceTest extends Arquillian {
         Assert.assertTrue(hasDevAliquotData);
         Assert.assertTrue(hasRealLabInsertSize);
         Assert.assertTrue(hasRealPreCircSize);
+        return true;
     }
 
     private static void doReadAssertions(TZamboniRun thriftRun,ZimsIlluminaRun runBean) {

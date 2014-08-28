@@ -79,14 +79,17 @@ public class ProductOrderKit implements Serializable {
     /**
      * This is used by the web service call that sets up work requests (in ProductOrderResource).
      */
-    public ProductOrderKit(SampleCollection sampleCollection, Site site, ProductOrderKitDetail kitDetail, boolean exomeExpress) {
+    public ProductOrderKit(SampleCollection sampleCollection, Site site,
+                           List<ProductOrderKitDetail> kitDetails, boolean exomeExpress) {
         sampleCollectionId = sampleCollection.getCollectionId();
         sampleCollectionName = sampleCollection.getCollectionName();
         siteId = site.getId();
         siteName = site.getName();
-        kitOrderDetails.add(kitDetail);
+        kitOrderDetails.addAll(kitDetails);
         this.exomeExpress = exomeExpress;
-        kitDetail.setProductOrderKit(this);
+        for (ProductOrderKitDetail kitDetail : kitDetails) {
+            kitDetail.setProductOrderKit(this);
+        }
     }
 
     // Only used by tests.

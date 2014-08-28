@@ -12,8 +12,16 @@
                        businessKeyValue="${actionBean.editResearchProject.businessKey}">
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
+            function getParameterByName(name) {
+                name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+                var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+                    results = regex.exec(location.search);
+                return results == null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+            }
+
             $j(document).ready(function () {
                 $j( "#tabs" ).tabs({
+                active: getParameterByName("rpSelectedTab"),
                     beforeLoad: function(event, ui) {
                         if (ui.panel.children('form').length == 0) {
                             if (ui.panel.children('p.loading').length == 0) {
@@ -45,6 +53,13 @@
                 });
 
                 setupDialogs();
+
+                var selectedTabValue = '${actionBean.rpSelectedTab}';
+
+                if(selectedTabValue !== "") {
+                    $j("#tabs").tabs("load",'${actionBean.rpSelectedTab}');
+                    $j("#tabs").tabs({active: eval('${actionBean.rpSelectedTab}')});
+                }
             });
 
             function showBeginCollaboration() {
@@ -176,7 +191,7 @@
                     <div class="control-group">
                         <stripes:label style="width:80px" class="control-label" for="collaborationQuoteIdId">Quote *</stripes:label>
                         <div class="controls" style="margin-left:90px">
-                            <stripes:text id="collaborationQuoteIdId" name="quote" class="defaultText" title="Enter the Quote ID"/>
+                            <stripes:text id="collaborationQuoteIdId" name="collaborationQuoteId" class="defaultText" title="Enter the Quote ID"/>
                         </div>
                     </div>
 
@@ -518,21 +533,19 @@
             <ul>
                 <li><a href="#ordersTab">Orders</a></li>
                 <li><stripes:link beanclass="${actionBean.class.name}" event="viewSubmissions">Submission Requests
-                        <stripes:param name="researchProject" value="${actionBean.researchProject}"/>
+                        <stripes:param name="researchProject" value="${actionBean.researchProject}" />
+                        <stripes:param name="rpSelectedTab" value="<%= ResearchProjectActionBean.RESEARCH_PROJECT_SUBMISSIONS_TAB%>" />
                     </stripes:link></li>
             </ul>
 
             <div id="ordersTab">
-        <div class="tableBar" style="clear:both;">
-            <h4 style="display:inline">Orders</h4>
 
-            <stripes:link title="Create product with research project ${actionBean.editResearchProject.title}"
+            <stripes:link title="Create product order with research project ${actionBean.editResearchProject.title}"
                           beanclass="<%=ProductOrderActionBean.class.getName()%>" event="create" class="pull-right">
                 <stripes:param name="researchProjectKey" value="${actionBean.editResearchProject.businessKey}"/>
                 <i class="icon-plus"></i>
                 Add New Product Order
             </stripes:link>
-        </div>
 
         <table id="orderList" class="table simple">
             <thead>

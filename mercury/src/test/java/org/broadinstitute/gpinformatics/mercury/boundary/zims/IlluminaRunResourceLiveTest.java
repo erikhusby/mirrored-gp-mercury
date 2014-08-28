@@ -5,6 +5,7 @@ import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
@@ -25,6 +26,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.ST
 /**
  * Test against a full deployment of the pipeline API (no mocks).
  */
+@Test(groups = TestGroups.STANDARD)
 public class IlluminaRunResourceLiveTest extends Arquillian {
 
     @Deployment

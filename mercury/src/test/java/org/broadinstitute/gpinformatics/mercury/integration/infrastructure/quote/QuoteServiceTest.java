@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.integration.infrastructure.quote;
 
 import org.broadinstitute.gpinformatics.infrastructure.quote.*;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -9,6 +10,7 @@ import java.util.Date;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class QuoteServiceTest {
 
     private Quote quote;

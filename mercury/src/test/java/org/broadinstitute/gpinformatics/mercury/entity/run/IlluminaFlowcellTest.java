@@ -5,6 +5,7 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+@Test(groups = TestGroups.DATABASE_FREE)
 public class IlluminaFlowcellTest {
 
     @Test(groups = {TestGroups.DATABASE_FREE})

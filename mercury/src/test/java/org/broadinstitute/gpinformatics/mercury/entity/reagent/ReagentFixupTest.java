@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.reagent;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -14,6 +15,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 /**
  * Fixups for reagents.
  */
+@Test(groups = TestGroups.FIXUP)
 public class ReagentFixupTest extends Arquillian {
 
     @Inject

@@ -37,6 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * a very, very bad thing.  See https://gpinfojira.broadinstitute.org:8443/jira/browse/GPLIM-2501
  * for an example of double billing.
  */
+@Test(groups = TestGroups.ALTERNATIVES)
 public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTest {
 
     private static final Log logger = LogFactory.getLog(ConcurrentBillingSessionDoubleBillingTest.class);

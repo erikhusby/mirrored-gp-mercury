@@ -19,6 +19,7 @@ import java.util.UUID;
 import static org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB.IrbType.BROAD;
 import static org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB.IrbType.FARBER;
 
+@Test(groups = TestGroups.STUBBY)
 public class ResearchProjectResourceTest extends ContainerTest {
 
     private static final long TEST_CREATOR = 10;

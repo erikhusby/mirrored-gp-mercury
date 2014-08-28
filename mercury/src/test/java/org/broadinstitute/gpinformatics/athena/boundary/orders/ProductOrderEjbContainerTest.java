@@ -18,6 +18,7 @@ import java.io.IOException;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
 
+@Test(groups = TestGroups.ALTERNATIVES)
 public class ProductOrderEjbContainerTest extends Arquillian {
 
     @Inject

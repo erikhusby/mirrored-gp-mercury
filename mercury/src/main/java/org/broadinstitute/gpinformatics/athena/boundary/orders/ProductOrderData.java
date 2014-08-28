@@ -1,8 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
-import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.MaterialInfo;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ApplicationValidationException;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
@@ -20,7 +18,6 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -50,17 +47,16 @@ public class ProductOrderData {
     private String workRequestId;
     private int riskNotCalculatedCount;
 
-    // These are required input arguments for creating a work request in BSP.
+    /** Even if includeSamples == false this will still contain the number of samples in the PDO. */
     private int numberOfSamples;
-    // These are "in" parameters only.
-    private SampleKitWorkRequest.MoleculeType moleculeType;
-    private MaterialInfo materialInfo;
+
+    // This is an "in" parameter only, used to create a PDO with sample kits.
+    private List<ProductOrderKitDetailData> kitDetailData = new ArrayList<>();
 
     /**
      * This is really a list of sample IDs.
      */
-    private List<String> samples;
-    private String materialType;
+    private List<String> samples = new ArrayList<>();
 
     @SuppressWarnings("UnusedDeclaration")
     /** Required by JAXB. */
@@ -207,7 +203,7 @@ public class ProductOrderData {
      */
     @XmlElementWrapper
     public List<String> getSamples() {
-        return (samples == null) ? Collections.<String>emptyList() : samples;
+        return samples;
     }
 
     /**
@@ -294,26 +290,25 @@ public class ProductOrderData {
             throws DuplicateTitleException, NoSamplesException, QuoteNotFoundException, ApplicationValidationException {
 
         // Make sure the title/name is supplied and unique
-        if (StringUtils.isBlank(getTitle())) {
+        if (StringUtils.isBlank(title)) {
             throw new ApplicationValidationException("Title required for Product Order");
         }
 
         // Make sure the title is unique
-        if (productOrderDao.findByTitle(getTitle()) != null) {
+        if (productOrderDao.findByTitle(title) != null) {
             throw new DuplicateTitleException();
         }
 
-        ProductOrder productOrder = new ProductOrder(getTitle(), getComments(), getQuoteId());
+        ProductOrder productOrder = new ProductOrder(title, comments, quoteId);
 
         // Find the product by the product name.
-        if (!StringUtils.isBlank(getProductName())) {
-            Product product = productDao.findByName(getProductName());
-            productOrder.setProduct(product);
+        if (!StringUtils.isBlank(productName)) {
+            productOrder.setProduct(productDao.findByName(productName));
         }
 
-        if (!StringUtils.isBlank(getResearchProjectId())) {
+        if (!StringUtils.isBlank(researchProjectId)) {
             ResearchProject researchProject =
-                    researchProjectDao.findByBusinessKey(getResearchProjectId());
+                    researchProjectDao.findByBusinessKey(researchProjectId);
 
             // Make sure the required research project is present.
             if (researchProject == null) {
@@ -325,8 +320,8 @@ public class ProductOrderData {
         }
 
         // Find and add the product order samples.
-        List<ProductOrderSample> productOrderSamples = new ArrayList<>(getSamples().size());
-        for (String sample : getSamples()) {
+        List<ProductOrderSample> productOrderSamples = new ArrayList<>(samples.size());
+        for (String sample : samples) {
             productOrderSamples.add(new ProductOrderSample(sample));
         }
 
@@ -338,7 +333,7 @@ public class ProductOrderData {
         productOrder.addSamples(productOrderSamples);
 
         // Set the requisition name so one can look up the requisition in the Portal.
-        productOrder.setRequisitionName(getRequisitionName());
+        productOrder.setRequisitionName(requisitionName);
 
         return productOrder;
     }
@@ -351,35 +346,19 @@ public class ProductOrderData {
         this.numberOfSamples = numberOfSamples;
     }
 
-    public SampleKitWorkRequest.MoleculeType getMoleculeType() {
-        return moleculeType;
-    }
-
-    public void setMoleculeType(SampleKitWorkRequest.MoleculeType moleculeType) {
-        this.moleculeType = moleculeType;
-    }
-
-    public MaterialInfo getMaterialInfo() {
-        return materialInfo;
-    }
-
-    public void setMaterialInfo(MaterialInfo materialInfo) {
-        this.materialInfo = materialInfo;
-    }
-
-    public String getMaterialType() {
-        return materialType;
-    }
-
-    public void setMaterialType(String materialType) {
-        this.materialType = materialType;
-    }
-
     public int getRiskNotCalculatedCount() {
         return riskNotCalculatedCount;
     }
 
     public void setRiskNotCalculatedCount(int riskNotCalculatedCount) {
         this.riskNotCalculatedCount = riskNotCalculatedCount;
+    }
+
+    public List<ProductOrderKitDetailData> getKitDetailData() {
+        return kitDetailData;
+    }
+
+    public void setKitDetailData(List<ProductOrderKitDetailData> kitDetailData) {
+        this.kitDetailData = kitDetailData;
     }
 }

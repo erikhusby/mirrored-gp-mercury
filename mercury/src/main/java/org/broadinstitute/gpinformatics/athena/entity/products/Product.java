@@ -672,21 +672,21 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     }
 
     @Transient
-    public static Comparator<Product> BY_PART_NUMBER = new Comparator<Product>() {
+    public static Comparator<Product> BY_PRODUCT_NAME = new Comparator<Product>() {
         @Override
         public int compare(Product product, Product anotherProduct) {
-            return product.getPartNumber().compareTo(anotherProduct.getPartNumber());
+            return product.getName().compareTo(anotherProduct.getName());
         }
     };
     @Transient
-    public static Comparator<Product> BY_FAMILY_THEN_PART_NUMBER = new Comparator<Product>() {
+    public static Comparator<Product> BY_FAMILY_THEN_PRODUCT_NAME = new Comparator<Product>() {
         @Override
         public int compare(Product product, Product anotherProduct) {
             int compare = product.getProductFamily().getName().compareTo(anotherProduct.getProductFamily().getName());
             if (compare!=0){
                 return compare;
             }
-            return BY_PART_NUMBER.compare(product, anotherProduct);
+            return BY_PRODUCT_NAME.compare(product, anotherProduct);
         }
     };
 

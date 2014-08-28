@@ -12,6 +12,7 @@ import org.testng.annotations.Test;
  *         Date: 10/26/12
  *         Time: 1:50 PM
  */
+@Test(groups = TestGroups.DATABASE_FREE)
 public class BucketDBFreeTest {
 
     @Test(groups = TestGroups.DATABASE_FREE)

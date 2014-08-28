@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
@@ -18,6 +19,7 @@ import java.util.List;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STANDARD;
 
+@Test(groups = TestGroups.STANDARD)
 public class PDOSampleBillingStatusResourceTest extends RestServiceContainerTest {
 
     private static final String PDO_SAMPLE_STATUS = "pdoSampleStatus";

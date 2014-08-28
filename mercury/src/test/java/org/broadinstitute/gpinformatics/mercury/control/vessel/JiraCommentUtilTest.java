@@ -22,6 +22,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 /**
  * Test sending messaging status updates to JIRA
  */
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class JiraCommentUtilTest {
     private JiraConfig jiraConfig = new JiraConfig(DEV);
     private JiraService jiraService = new JiraServiceImpl(jiraConfig);

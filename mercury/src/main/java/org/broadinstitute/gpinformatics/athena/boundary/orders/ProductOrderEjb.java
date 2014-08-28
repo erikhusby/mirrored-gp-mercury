@@ -888,6 +888,8 @@ public class ProductOrderEjb {
         order.addSamples(samples);
         order.prepareToSave(bspUser);
         productOrderDao.persist(order);
+        handleSamplesAdded(jiraTicketKey, samples, reporter);
+
         String nameList = StringUtils.join(ProductOrderSample.getSampleNames(samples), ",");
 
         JiraIssue issue = jiraService.getIssue(jiraTicketKey);
@@ -899,7 +901,6 @@ public class ProductOrderEjb {
                 order.getSamples().size(),
                 ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
 
-        handleSamplesAdded(jiraTicketKey, samples, reporter);
         reporter.addMessage("Added samples: {0}.", nameList);
 
         updateOrderStatus(jiraTicketKey, reporter);
@@ -973,7 +974,7 @@ public class ProductOrderEjb {
             if (editOrder.isSampleInitiation()) {
                 throw new InformaticsServiceException("Kit Work Requests require at least one kit definition");
             }
-
+        } else {
             try {
                 submitSampleKitRequest(editOrder, messageCollection);
             } catch (Exception e) {

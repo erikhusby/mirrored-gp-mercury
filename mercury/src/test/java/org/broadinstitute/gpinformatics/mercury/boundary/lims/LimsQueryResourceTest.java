@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
@@ -25,6 +26,7 @@ import static org.hamcrest.Matchers.startsWith;
 /**
  * @author breilly
  */
+@Test(groups = TestGroups.STANDARD)
 public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Deployment
@@ -201,6 +203,15 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         WebResource resource = makeWebResource(baseUrl, "fetchQpcrForTube").queryParam("tubeBarcode", "0075414288");
         String result = get(resource);
         assertThat(result, equalTo("19.37698653"));
+    }
+
+    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void fetchQpcrForTubeAndType(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "fetchQpcrForTubeAndType").queryParam("tubeBarcode", "1037346690").
+                queryParam("qpcrType", "Denatured Library");
+        String result = get(resource);
+        assertThat(result, equalTo("38.87261345"));
     }
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)

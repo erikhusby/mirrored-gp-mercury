@@ -14,6 +14,7 @@ import java.util.Map;
 /**
  * Test persist and fetch
  */
+@Test(groups = TestGroups.STUBBY)
 public class BarcodedTubeDaoTest extends ContainerTest {
 
     @Inject

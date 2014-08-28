@@ -341,6 +341,23 @@ public class LimsQueryResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/fetchQpcrForTubeAndType")
+    public Double fetchQpcrForTubeAndType(@QueryParam("tubeBarcode") String tubeBarcode,
+            @QueryParam("qpcrType")String qpcrType) {
+        switch (systemRouter.getSystemOfRecordForVessel(tubeBarcode)) {
+        case MERCURY:
+            throw new RuntimeException("Not implemented in Mercury");
+        case SQUID:
+            return thriftService.fetchQpcrForTubeAndType(tubeBarcode, qpcrType);
+        default:
+            throw new RuntimeException(
+                    "Tube or quant not found for barcode: " + tubeBarcode + ", quant type: " + LabMetric.MetricType
+                            .ECO_QPCR.getDisplayName());
+        }
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchQuantForTube")
     public Double fetchQuantForTube(@QueryParam("tubeBarcode") String tubeBarcode,
                                     @QueryParam("quantType") String quantType) {

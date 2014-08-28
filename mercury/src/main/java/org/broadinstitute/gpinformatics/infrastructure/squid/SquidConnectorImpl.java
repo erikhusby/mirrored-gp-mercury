@@ -1,11 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.squid;
 
-import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.UniformInterfaceException;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.client.config.ClientConfig;
-import com.sun.jersey.api.client.config.DefaultClientConfig;
 import edu.mit.broad.prodinfo.bean.generated.AutoWorkRequestInput;
 import edu.mit.broad.prodinfo.bean.generated.AutoWorkRequestOutput;
 import edu.mit.broad.prodinfo.bean.generated.CreateProjectOptions;
@@ -16,10 +12,10 @@ import edu.mit.broad.prodinfo.bean.generated.SampleReceptacleGroup;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
+import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LaneReadStructure;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 import org.broadinstitute.gpinformatics.mercury.squid.generated.SolexaRunSynopsisBean;
-import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -45,7 +41,7 @@ public class SquidConnectorImpl implements SquidConnector {
     public SquidResponse createRun(SolexaRunBean runInformation) {
 
         ClientResponse response =
-                getWebResource(squidConfig.getUrl() + "/resources/solexarun",
+                JerseyUtils.getWebResource(squidConfig.getUrl() + "/resources/solexarun",
                         MediaType.APPLICATION_XML_TYPE).accept(MediaType.APPLICATION_XML)
                                                        .entity(runInformation).post(ClientResponse.class);
 
@@ -73,7 +69,7 @@ public class SquidConnectorImpl implements SquidConnector {
         }
 
         ClientResponse response =
-                getWebResource(squidWSUrl, MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON)
+                JerseyUtils.getWebResource(squidWSUrl, MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON)
                                                                            .entity(solexaRunSynopsis)
                                                                            .post(ClientResponse.class);
 
@@ -83,7 +79,8 @@ public class SquidConnectorImpl implements SquidConnector {
     @Override
     public CreateProjectOptions getProjectCreationOptions() throws UniformInterfaceException {
 
-        ClientResponse response = getWebResource(squidConfig.getUrl() + "/resources/projectresource/projectoptions",
+        ClientResponse response = JerseyUtils.getWebResource(
+                squidConfig.getUrl() + "/resources/projectresource/projectoptions",
                 MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
 
         return response.getEntity(CreateProjectOptions.class);
@@ -92,8 +89,9 @@ public class SquidConnectorImpl implements SquidConnector {
     @Override
     public CreateWorkRequestOptions getWorkRequestOptions(String executionType) throws UniformInterfaceException {
 
-        ClientResponse response = getWebResource(squidConfig.getUrl() +
-                                                 "/resources/projectresource/workrequestoptions/" + executionType,
+        ClientResponse response = JerseyUtils.getWebResource(squidConfig.getUrl() +
+                                                             "/resources/projectresource/workrequestoptions/"
+                                                             + executionType,
                 MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
 
         return response.getEntity(CreateWorkRequestOptions.class);
@@ -102,7 +100,8 @@ public class SquidConnectorImpl implements SquidConnector {
     @Override
     public ExecutionTypes getProjectExecutionTypes() throws UniformInterfaceException {
 
-        ClientResponse response = getWebResource(squidConfig.getUrl() + "/resources/projectresource/executiontypes",
+        ClientResponse response = JerseyUtils.getWebResource(
+                squidConfig.getUrl() + "/resources/projectresource/executiontypes",
                 MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
 
         return response.getEntity(ExecutionTypes.class);
@@ -110,7 +109,8 @@ public class SquidConnectorImpl implements SquidConnector {
 
     @Override
     public OligioGroups getOligioGroups() throws UniformInterfaceException {
-        ClientResponse response = getWebResource(squidConfig.getUrl() + "/resources/projectresource/oligioGroups",
+        ClientResponse response = JerseyUtils.getWebResource(
+                squidConfig.getUrl() + "/resources/projectresource/oligioGroups",
                 MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
 
         return response.getEntity(OligioGroups.class);
@@ -119,7 +119,8 @@ public class SquidConnectorImpl implements SquidConnector {
     @Override
     public SampleReceptacleGroup getGroupReceptacles(String groupName) throws UniformInterfaceException {
         ClientResponse response =
-                getWebResource(squidConfig.getUrl() + "/resources/projectresource/groupReceptacles/" + groupName,
+                JerseyUtils.getWebResource(
+                        squidConfig.getUrl() + "/resources/projectresource/groupReceptacles/" + groupName,
                         MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
 
         return response.getEntity(SampleReceptacleGroup.class);
@@ -128,7 +129,8 @@ public class SquidConnectorImpl implements SquidConnector {
     @Override
     public AutoWorkRequestOutput createSquidWorkRequest(AutoWorkRequestInput input) throws UniformInterfaceException {
 
-        ClientResponse response = getWebResource(squidConfig.getUrl() + "/resources/projectresource/createWorkRequest",
+        ClientResponse response = JerseyUtils.getWebResource(
+                squidConfig.getUrl() + "/resources/projectresource/createWorkRequest",
                 MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).entity(input)
                 .post(ClientResponse.class);
 
@@ -141,15 +143,5 @@ public class SquidConnectorImpl implements SquidConnector {
         return result;
     }
 
-    private WebResource.Builder getWebResource(String squidWSUrl, MediaType mediaType) {
-        Client client = Client.create();
-        if (mediaType == MediaType.APPLICATION_JSON_TYPE) {
-            ClientConfig clientConfig = new DefaultClientConfig();
-            clientConfig.getClasses().add(JacksonJsonProvider.class);
-            client = Client.create(clientConfig);
-        }
-
-        return client.resource(squidWSUrl).type(mediaType);
-    }
 }
 

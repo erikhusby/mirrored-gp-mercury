@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatMessage
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConfig;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnectorProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
@@ -85,6 +86,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.AL
 /**
  * Tests the methods in the SolexaRunResource without any rest calls
  */
+@Test(groups = TestGroups.ALTERNATIVES)
 public class SolexaRunResourceNonRestTest extends Arquillian {
 
     @Inject

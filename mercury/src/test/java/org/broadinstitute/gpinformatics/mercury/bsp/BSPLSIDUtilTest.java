@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.bsp;
 
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPLSIDUtil;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -11,6 +12,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DA
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+@Test(groups = TestGroups.DATABASE_FREE)
 public class BSPLSIDUtilTest {
 
     @Test(groups = DATABASE_FREE)

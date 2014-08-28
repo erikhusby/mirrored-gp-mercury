@@ -23,6 +23,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 /**
  * @author breilly
  */
+@Test(groups = TestGroups.STUBBY)
 public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
 
     public final String FLOWCELL_DESIGNATION_JSON =

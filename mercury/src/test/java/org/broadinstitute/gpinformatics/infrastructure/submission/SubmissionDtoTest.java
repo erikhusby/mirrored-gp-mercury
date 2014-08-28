@@ -15,8 +15,8 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDtoTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.AggregationTestFactory;
-import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.hamcrest.Matchers;
@@ -43,11 +43,12 @@ public class SubmissionDtoTest {
     public static final String BAM_FILE = BassDTO.FileType.BAM.getValue();
     private static final String DATA_TYPE = "Exome";
     private static final Double QUALITY_METRIC = 1.2;
+    public static final String SUBMISSION_UUID = "1234";
 
     private Aggregation aggregation;
     private BassDTO bassDto;
     private List<ProductOrder> productOrders = new ArrayList<>();
-
+    private SubmissionStatusDetailBean submissionStatus;
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -56,10 +57,12 @@ public class SubmissionDtoTest {
                 FINGERPRINT_LOD, DATA_TYPE, QUALITY_METRIC, null, null);
         productOrders.add(ProductOrderTestFactory.createDummyProductOrder("PDO-1234"));
         productOrders.add(ProductOrderTestFactory.createDummyProductOrder("PDO-5678"));
+        SubmissionsService submissionsService = new SubmissionsServiceStub();
+        submissionStatus = submissionsService.getSubmissionStatus(SUBMISSION_UUID).iterator().next();
     }
 
     public void testDtoForSampleWithConstructor() {
-        SubmissionDto submissionDTO = new SubmissionDto(bassDto, aggregation, productOrders);
+        SubmissionDto submissionDTO = new SubmissionDto(bassDto, aggregation, productOrders, submissionStatus);
         assertThat(submissionDTO.getAggregation(), is(Matchers.notNullValue()));
         assertThat(submissionDTO.getBassDTO(), is(Matchers.notNullValue()));
 
@@ -77,8 +80,11 @@ public class SubmissionDtoTest {
         assertThat(submissionDTO.getLanesInAggregation(), Matchers.equalTo(2));
 //        assertThat(submissionDTO.getBlacklistedLanes(), blacklistedLanes);
 //        assertThat(submissionDTO.getSubmittedVersion(), submittedVersion);
-//        assertThat(submissionDTO.getCurrentStatus(), currentStatus);
         assertThat(submissionDTO.getResearchProject(), Matchers.equalTo(RESEARCH_PROJECT));
+        assertThat(submissionDTO.getSubmittedStatus(), Matchers.equalTo(String.format(
+                SubmissionStatusDetailBean.Status.SUBMITTED.getKey(),
+                SUBMISSION_UUID, SUBMISSION_UUID)));
+        assertThat(submissionDTO.getStatusDate(), Matchers.equalTo(SubmissionsServiceStub.STUB_UPDATE_DATE));
 
     }
 

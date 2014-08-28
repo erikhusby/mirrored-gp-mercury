@@ -20,6 +20,7 @@ import java.util.List;
 /**
  * Database test of web service to import samples from BSP
  */
+@Test(groups = TestGroups.STUBBY)
 public class SampleImportResourceDbTest extends ContainerTest {
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("MMddHHmmss");

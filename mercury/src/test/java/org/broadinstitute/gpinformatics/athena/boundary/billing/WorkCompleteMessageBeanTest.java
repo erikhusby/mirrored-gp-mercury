@@ -34,6 +34,7 @@ import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.AUTO_BUILD;
 
+@Test(groups = TestGroups.STANDARD)
 public class WorkCompleteMessageBeanTest extends Arquillian {
 
     // These objects are not persisted, so using non-unique names is OK here.
