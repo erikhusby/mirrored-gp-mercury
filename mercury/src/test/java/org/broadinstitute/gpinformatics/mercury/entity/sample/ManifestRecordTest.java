@@ -32,10 +32,12 @@ public class ManifestRecordTest {
     private static final ManifestRecord.ErrorStatus NEW_ERROR_STATUS = ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID;
 
     private ManifestRecord testRecord;
+    private ManifestSession testSession;
 
     @BeforeMethod
     public void setUp() throws Exception {
         testRecord = buildManifestRecord(COLLABORATOR_SAMPLE_ID_1);
+        testSession = buildTestSession();
     }
 
     private ManifestRecord buildManifestRecord(String sampleId) {
@@ -69,7 +71,6 @@ public class ManifestRecordTest {
     }
 
     public void validManifest() {
-        ManifestSession testSession = buildTestSession();
 
         ManifestSession secondSession = getManifestSession(testSession.getResearchProject(),
                 buildManifestRecord("COLLABORATOR_SAMPLE_ID_3"));
@@ -79,9 +80,9 @@ public class ManifestRecordTest {
         testSession.addRecord(secondManifestRecord);
 
         testSession.validateManifest();
-        Assert.assertTrue(testSession.isManifestValid());
+        assertThat(testSession.areThereErrors(), is(equalTo(false)));
 
-        Assert.assertEquals(testSession.getLogEntries().size(), 0);
+        assertThat(testSession.getLogEntries().size(), is(equalTo(0)));
         assertThat(testRecord.getErrorStatus(), is(nullValue()));
         assertThat(secondManifestRecord.getErrorStatus(), is(nullValue()));
 
@@ -89,33 +90,31 @@ public class ManifestRecordTest {
         assertThat(secondManifestRecord.getLogEntries(), is(empty()));
 
         secondSession.validateManifest();
-        Assert.assertTrue(secondSession.isManifestValid());
+        assertThat(secondSession.areThereErrors(), is(equalTo(false)));
 
-        Assert.assertEquals(secondSession.getLogEntries().size(), 0);
+        assertThat(secondSession.getLogEntries().size(), is(equalTo(0)));
     }
 
 
     public void duplicateInManifest() throws Exception {
 
-        ManifestSession testSession = buildTestSession();
-
         ManifestRecord testRecordWithDupe =
                 ManifestTestFactory.buildManifestRecord(ImmutableMap.of(Metadata.Key.SAMPLE_ID,
                         COLLABORATOR_SAMPLE_ID_1,
-                        Metadata.Key.GENDER, "F", Metadata.Key.PATIENT_ID, VALUE_3));
+                        Metadata.Key.GENDER, VALUE_2, Metadata.Key.PATIENT_ID, VALUE_3));
 
         testSession.addRecord(testRecordWithDupe);
 
         testSession.validateManifest();
 
-        Assert.assertFalse(testSession.isManifestValid());
+        assertThat(testSession.areThereErrors(), is(equalTo(true)));
 
-        Assert.assertEquals(testSession.getLogEntries().size(), 2);
-        Assert.assertEquals(testRecord.getErrorStatus(), ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID);
-        Assert.assertEquals(testRecordWithDupe.getErrorStatus(), ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID);
+        assertThat(testSession.getLogEntries().size(), is(equalTo(2)));
+        assertThat(testRecord.getErrorStatus(), is(equalTo(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID)));
+        assertThat(testRecordWithDupe.getErrorStatus(), is(equalTo(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID)));
 
-        Assert.assertEquals(testRecord.getLogEntries().size(), 1);
-        Assert.assertEquals(testRecordWithDupe.getLogEntries().size(), 1);
+        assertThat(testRecord.getLogEntries().size(), is(equalTo(1)));
+        assertThat(testRecordWithDupe.getLogEntries().size(), is(equalTo(1)));
     }
 
     /**
@@ -132,17 +131,15 @@ public class ManifestRecordTest {
      */
     public void duplicateAcrossRP() throws Exception {
 
-        ManifestSession testSession = buildTestSession();
-
         ManifestSession secondSession = getManifestSession(testSession.getResearchProject(),
                 buildManifestRecord(COLLABORATOR_SAMPLE_ID_1));
 
         testSession.validateManifest();
-        Assert.assertFalse(testSession.isManifestValid());
+        assertThat(testSession.areThereErrors(), is(equalTo(true)));
         assertThat(testSession.getLogEntries(), is(not(empty())));
         assertThat(testSession.getLogEntries().size(), is(equalTo(1)));
 
-        assertThat(secondSession.isManifestValid(), is(equalTo(true)));
+        assertThat(secondSession.areThereErrors(), is(equalTo(false)));
         assertThat(secondSession.getLogEntries(), is(empty()));
 
     }
@@ -160,32 +157,56 @@ public class ManifestRecordTest {
      */
     public void duplicateAcrossRPHierarchy() throws Exception {
 
-        ManifestSession testSession = buildTestSession();
-
         ResearchProject parentResearchProject = ResearchProjectTestFactory.createTestResearchProject("RP-334SIS");
         ManifestSession secondSession = getManifestSession(parentResearchProject,
                 buildManifestRecord(COLLABORATOR_SAMPLE_ID_1));
         buildTestSession().getResearchProject().setParentResearchProject(parentResearchProject);
 
         testSession.validateManifest();
-        Assert.assertTrue(testSession.isManifestValid());
+        assertThat(testSession.areThereErrors(), is(equalTo(false)));
         assertThat(testSession.getLogEntries(), is(empty()));
         assertThat(testSession.getLogEntries().size(), is(equalTo(0)));
 
-        assertThat(secondSession.isManifestValid(), is(equalTo(true)));
+        assertThat(secondSession.areThereErrors(), is(equalTo(false)));
         assertThat(secondSession.getLogEntries(), is(empty()));
 
     }
 
     public void mismatchedGenderTest() throws Exception {
-        ManifestSession testSession = buildTestSession();
-
         ManifestRecord testRecordWrongGender = ManifestTestFactory.buildManifestRecord(ImmutableMap.of(
                 Metadata.Key.SAMPLE_ID, "989282484", Metadata.Key.GENDER, "M", Metadata.Key.PATIENT_ID, VALUE_3));
         testSession.addRecord(testRecordWrongGender);
 
         testSession.validateManifest();
-        assertThat(testSession.isManifestValid(), is(equalTo(false)));
+        assertThat(testSession.areThereErrors(), is(equalTo(true)));
+    }
+
+    public void mixedValidationErrorTest() throws Exception {
+
+        ManifestRecord dupeSampleRecord =
+                ManifestTestFactory.buildManifestRecord(ImmutableMap.of(Metadata.Key.SAMPLE_ID,
+                        COLLABORATOR_SAMPLE_ID_1, Metadata.Key.GENDER, VALUE_2, Metadata.Key.PATIENT_ID, "PI-3234"));
+        testSession.addRecord(dupeSampleRecord);
+
+        ManifestRecord genderMisMatch =
+                ManifestTestFactory.buildManifestRecord(ImmutableMap.of(Metadata.Key.SAMPLE_ID, "229249239",
+                Metadata.Key.GENDER, "M", Metadata.Key.PATIENT_ID, "PI-3234"));
+        testSession.addRecord(genderMisMatch);
+
+        testSession.validateManifest();
+
+        assertThat(testSession.areThereErrors(), is(equalTo(true)));
+
+        assertThat(testSession.getLogEntries(), is(not(empty())));
+        assertThat(testSession.getLogEntries().size(), is(equalTo(4)));
+        assertThat(testRecord.getLogEntries(), is(not(empty())));
+        assertThat(testRecord.getLogEntries().size(), is(equalTo(1)));
+
+        assertThat(dupeSampleRecord.getLogEntries(), is(not(empty())));
+        assertThat(dupeSampleRecord.getLogEntries().size(), is(equalTo(2)));
+
+        assertThat(genderMisMatch.getLogEntries(), is(not(empty())));
+        assertThat(genderMisMatch.getLogEntries().size(), is(equalTo(1)));
     }
 
 

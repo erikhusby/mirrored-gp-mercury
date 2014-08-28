@@ -149,12 +149,18 @@ public class ManifestSession {
         return logEntries;
     }
 
-    public boolean isManifestValid() {
+    /**
+     *
+     * If there is an error with any record in this manifest session, report that some errors exist
+     *
+     * @return
+     */
+    public boolean areThereErrors() {
 
-        boolean validationResult = true;
+        boolean validationResult = false;
 
         for (ManifestRecord testRecord : records) {
-            validationResult = (testRecord.getErrorStatus() == null);
+            validationResult = (testRecord.getErrorStatus() != null);
             if (!validationResult) {
                 break;
             }
@@ -163,6 +169,9 @@ public class ManifestSession {
         return validationResult;
     }
 
+    /**
+     * Execute validations against the records in this manifest that have not already been validated
+     */
     public void validateManifest() {
 
         List<ManifestRecord> allManifestRecordsAcrossThisResearchProject =
@@ -177,13 +186,40 @@ public class ManifestSession {
         Multimap<String, ManifestRecord> recordsByPatientId = buildMultimapByKey(
                 allManifestRecordsAcrossThisResearchProject, Metadata.Key.PATIENT_ID);
 
-        Set<String> allPatientIdsForThisManifest = collectAllValuesForKeyInThisManifest(Metadata.Key.PATIENT_ID);
+        Iterable<Map.Entry<String, Collection<ManifestRecord>>> patientsWithInconsistentGenders =
+                filterForPatientsWithInconsistentGenders(recordsByPatientId);
 
-        Iterable<Map.Entry<String, Collection<ManifestRecord>>> filteredDuplicatePatients =
-                filterForKeysWithMultipleValues(recordsByPatientId, allPatientIdsForThisManifest);
+        for (Map.Entry<String, Collection<ManifestRecord>> entry : patientsWithInconsistentGenders) {
+            for (ManifestRecord duplicatedRecord : entry.getValue()) {
+                // Ignore ManifestSessions that are not this ManifestSession, they will not have errors added by
+                // this logic.
+                if (duplicatedRecord.getSession().equals(this)) {
+                    duplicatedRecord.setErrorStatus(ManifestRecord.ErrorStatus.MISMATCHED_GENDER);
+
+                    String message =
+                            ManifestRecord.ErrorStatus.MISMATCHED_GENDER.formatMessage("patient ID", entry.getKey());
+                    addLogEntry(new ManifestEvent(message, duplicatedRecord, ManifestEvent.Type.ERROR));
+                }
+            }
+        }
 
     }
 
+    private Iterable<Map.Entry<String, Collection<ManifestRecord>>> filterForPatientsWithInconsistentGenders(
+            Multimap<String, ManifestRecord> recordsByPatientId) {
+
+        return Iterables.filter(recordsByPatientId.asMap().entrySet(), new Predicate<Map.Entry<String, Collection<ManifestRecord>>>() {
+
+            @Override
+            public boolean apply(Map.Entry<String, Collection<ManifestRecord>> entry) {
+                final Set<String> allGenders = new HashSet<>();
+                for (ManifestRecord manifestRecord : entry.getValue()) {
+                    allGenders.add(manifestRecord.getMetadataByKey(Metadata.Key.GENDER).getValue());
+                }
+                return allGenders.size() > 1;
+            }
+        });
+    }
 
     private void validateDuplicateCollaboratorSampleIDs(
             Collection<ManifestRecord> allManifestRecordsAcrossThisResearchProject) {
@@ -191,9 +227,8 @@ public class ManifestSession {
         Multimap<String, ManifestRecord> recordsBySampleId = buildMultimapByKey(
                 allManifestRecordsAcrossThisResearchProject, Metadata.Key.SAMPLE_ID);
 
-        Set<String> allSampleIdsForThisManifest = collectAllValuesForKeyInThisManifest(Metadata.Key.SAMPLE_ID);
         Iterable<Map.Entry<String, Collection<ManifestRecord>>> filteredDuplicateSamples =
-                filterForKeysWithMultipleValues(recordsBySampleId, allSampleIdsForThisManifest);
+                filterForKeysWithMultipleValues(recordsBySampleId);
 
         for (Map.Entry<String, Collection<ManifestRecord>> entry : filteredDuplicateSamples) {
             for (ManifestRecord duplicatedRecord : entry.getValue()) {
@@ -203,7 +238,7 @@ public class ManifestSession {
                     duplicatedRecord.setErrorStatus(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID);
 
                     String message =
-                            ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage("sample", entry.getKey());
+                            ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage("sample ID", entry.getKey());
                     addLogEntry(new ManifestEvent(message, duplicatedRecord, ManifestEvent.Type.ERROR));
                 }
             }
@@ -211,16 +246,14 @@ public class ManifestSession {
     }
 
     private Iterable<Map.Entry<String, Collection<ManifestRecord>>> filterForKeysWithMultipleValues(
-            Multimap<String, ManifestRecord> recordsByMetadataValue,
-            final Set<String> allRelevantMetadataValuesForThisManifest) {
+            Multimap<String, ManifestRecord> recordsByMetadataValue) {
 
         return Iterables.filter(
                 recordsByMetadataValue.asMap().entrySet(),
                 new Predicate<Map.Entry<String, Collection<ManifestRecord>>>() {
                     @Override
                     public boolean apply(Map.Entry<String, Collection<ManifestRecord>> entry) {
-                        return (entry.getValue().size() > 1 && allRelevantMetadataValuesForThisManifest
-                                .contains(entry.getKey()));
+                        return entry.getValue().size() > 1;
                     }
                 });
     }
