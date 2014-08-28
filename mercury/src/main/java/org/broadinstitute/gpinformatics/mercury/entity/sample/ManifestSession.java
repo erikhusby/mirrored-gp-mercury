@@ -346,6 +346,18 @@ public class ManifestSession {
         return false;
     }
 
+    public ManifestRecord findScannedRecord(String collaboratorBarcode) throws TubeTransferException {
+        for (ManifestRecord record : records) {
+            if (record.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue().equals(collaboratorBarcode)) {
+                if (record.getStatus() != ManifestRecord.Status.SCANNED) {
+                    throw new TubeTransferException(ManifestRecord.ErrorStatus.NOT_READY_FOR_ACCESSIONING);
+                }
+                return record;
+            }
+        }
+        throw new TubeTransferException(ManifestRecord.ErrorStatus.NOT_IN_MANIFEST);
+    }
+
 
     /**
      * Indicator to denote the availability (complete or otherwise) of a manifest session for the sample registration

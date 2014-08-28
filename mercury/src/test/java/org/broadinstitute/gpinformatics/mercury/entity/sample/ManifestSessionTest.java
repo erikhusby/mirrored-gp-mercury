@@ -14,7 +14,9 @@ import org.testng.annotations.Test;
 
 import java.util.Arrays;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
@@ -104,17 +106,50 @@ public class ManifestSessionTest {
 
 
     public void missingSample() {
-        for (ManifestRecord manifestRecord : testSession.getRecords()) {
-            if (manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue().equals(SAMPLE_ID_1)) {
-                manifestRecord.setStatus(ManifestRecord.Status.UPLOADED);
-            }
-        }
+        setSampleStatus(SAMPLE_ID_1, ManifestRecord.Status.UPLOADED);
         assertThat(testSession.hasErrors(), is(false));
         testSession.validateForClose();
         assertThat(testSession.hasErrors(), is(true));
     }
 
-    public void scanCollaboratorTubeInTubeTransfer() {
+    private void setSampleStatus(String sampleId, ManifestRecord.Status status) {
+        for (ManifestRecord manifestRecord : testSession.getRecords()) {
+            if (manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue().equals(sampleId)) {
+                manifestRecord.setStatus(status);
+            }
+        }
+    }
 
+    public void successfulScanCollaboratorTubeInTubeTransfer() {
+        String collaboratorBarcode = SAMPLE_ID_1;
+        ManifestRecord manifestRecord = null;
+        try {
+            manifestRecord = testSession.findScannedRecord(collaboratorBarcode);
+        } catch (TubeTransferException e) {
+            Assert.fail();
+        }
+        assertThat(manifestRecord, is(notNullValue()));
+    }
+
+    public void notReadyScanCollaboratorTubeInTubeTransfer() {
+        String collaboratorBarcode = SAMPLE_ID_1;
+        setSampleStatus(collaboratorBarcode, ManifestRecord.Status.UPLOADED);
+        try {
+            testSession.findScannedRecord(collaboratorBarcode);
+            Assert.fail();
+        } catch (TubeTransferException e) {
+            assertThat(e.getErrorStatus(), is(equalTo(ManifestRecord.ErrorStatus.NOT_READY_FOR_ACCESSIONING)));
+        }
+    }
+
+    public void notInManifestCollaboratorTubeInTubeTransfer() {
+        String collaboratorBarcode = SAMPLE_ID_1 + "_UNRECOGNIZED";
+        setSampleStatus(collaboratorBarcode, ManifestRecord.Status.UPLOADED);
+        try {
+            testSession.findScannedRecord(collaboratorBarcode);
+            Assert.fail();
+        } catch (TubeTransferException e) {
+            assertThat(e.getErrorStatus(), is(equalTo(ManifestRecord.ErrorStatus.NOT_IN_MANIFEST)));
+        }
     }
 }
