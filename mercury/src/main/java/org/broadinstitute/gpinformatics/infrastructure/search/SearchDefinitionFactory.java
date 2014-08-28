@@ -73,6 +73,10 @@ public class SearchDefinitionFactory {
         searchTerms = buildLabVesselBsp();
         mapGroupSearchTerms.put("BSP", searchTerms);
 
+        // TODO:  JMS Wait for other group to get Mercury sample metada more stable
+        // searchTerms = buildLabVesselMetadata();
+        // mapGroupSearchTerms.put("Mercury Metadata", null);
+
         searchTerms = buildLabVesselBuckets();
         mapGroupSearchTerms.put("Buckets", searchTerms);
 
@@ -197,7 +201,7 @@ public class SearchDefinitionFactory {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
-        searchTerm.setName("Label");
+        searchTerm.setName("Barcode");
         criteriaPaths = new ArrayList<>();
         criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setPropertyName("label");
@@ -208,6 +212,17 @@ public class SearchDefinitionFactory {
             public Object evaluate(Object entity, Map<String, Object> context) {
                 LabVessel labVessel = (LabVessel) entity;
                 return labVessel.getLabel();
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Vessel Type");
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                LabVessel labVessel = (LabVessel) entity;
+                return findVesselType(labVessel);
             }
         });
         searchTerms.add(searchTerm);
@@ -723,7 +738,7 @@ public class SearchDefinitionFactory {
         searchTerms.add(parentSearchTerm);
 
         parentSearchTerm = new SearchTerm();
-        parentSearchTerm.setName("Target Layout");
+        parentSearchTerm.setName("Destination Layout");
         parentSearchTerm.setIsNestedParent(Boolean.TRUE);
         parentSearchTerm.setPluginClass(EventVesselTargetPositionPlugin.class);
         parentSearchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
@@ -875,7 +890,9 @@ public class SearchDefinitionFactory {
                             Iterator<BucketEntry> iterator = bucketEntries.iterator();
                             BucketEntry bucketEntry = iterator.next();
                             LabBatch batch = bucketEntry.getLabBatch();
-                            lcSetNames.add( batch.getBatchName() );
+                            if( batch != null ) {
+                                lcSetNames.add( batch.getBatchName() );
+                            }
                         }
                     }
                 }
@@ -937,7 +954,7 @@ public class SearchDefinitionFactory {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
-        searchTerm.setName("Target Lab Vessel Type");
+        searchTerm.setName("Destination Lab Vessel Type");
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
@@ -947,7 +964,7 @@ public class SearchDefinitionFactory {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
-        searchTerm.setName("Target Barcode");
+        searchTerm.setName("Destination Barcode");
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
@@ -1037,13 +1054,16 @@ public class SearchDefinitionFactory {
         String vesselTypeName;
         switch( vessel.getType() ) {
         case STATIC_PLATE:
-            StaticPlate plate = OrmUtil.proxySafeCast(vessel, StaticPlate.class );
-            vesselTypeName = plate.getPlateType()==null?"":plate.getPlateType().getAutomationName();
+            StaticPlate p = OrmUtil.proxySafeCast(vessel, StaticPlate.class );
+            vesselTypeName = p.getPlateType()==null?"":p.getPlateType().getAutomationName();
             break;
         case TUBE_FORMATION:
+            TubeFormation tf = OrmUtil.proxySafeCast(vessel, TubeFormation.class );
+            vesselTypeName = tf.getRackType()==null?"":tf.getRackType().getDisplayName();
+            break;
         case RACK_OF_TUBES:
-            TubeFormation tube = OrmUtil.proxySafeCast(vessel, TubeFormation.class );
-            vesselTypeName = tube.getRackType()==null?"":tube.getRackType().getDisplayName();
+            RackOfTubes rot = OrmUtil.proxySafeCast(vessel, RackOfTubes.class );
+            vesselTypeName = rot.getRackType()==null?"":rot.getRackType().getDisplayName();
             break;
         default:
             // Not sure of others for in-place vessels
