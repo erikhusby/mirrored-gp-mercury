@@ -75,5 +75,29 @@ public class Metadata {
         return new HashCodeBuilder().append(key).append(value).hashCode();
     }
 
-    public enum Key {GENDER, PATIENT_ID, SAMPLE_TYPE, TUMOR_NORMAL, COLLECTION_DATE, SAMPLE_ID}
+    public enum Category {
+        SAMPLE,
+        LAB_METRIC_RUN
+    }
+
+    public enum Key {
+        GENDER(Category.SAMPLE),
+        PATIENT_ID(Category.SAMPLE),
+        SAMPLE_TYPE(Category.SAMPLE),
+        TUMOR_NORMAL(Category.SAMPLE),
+        COLLECTION_DATE(Category.SAMPLE),
+        SAMPLE_ID(Category.SAMPLE),
+
+        CORRELATION_COEFFICIENT_R2(Category.LAB_METRIC_RUN);
+
+        private Category category;
+
+        Key(Category category) {
+            this.category = category;
+        }
+
+        public Category getCategory() {
+            return category;
+        }
+    }
 }

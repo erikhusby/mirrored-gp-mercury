@@ -12,12 +12,14 @@ import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.sample.SampleVesselProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanPlateProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanRowParser;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
@@ -66,6 +68,9 @@ public class VesselEjb {
 
     @Inject
     private StaticPlateDao staticPlateDao;
+
+    @Inject
+    private LabMetricRunDao labMetricRunDao;
 
     /**
      * Registers {@code BarcodedTube}s for all specified {@param tubeBarcodes} as well as
@@ -187,7 +192,10 @@ public class VesselEjb {
             }
         }
 
-        return createVarioskanRunDaoFree(workbook, metricType, varioskanPlateProcessor, mapBarcodeToPlate);
+        LabMetricRun labMetricRun = createVarioskanRunDaoFree(workbook, metricType, varioskanPlateProcessor,
+                mapBarcodeToPlate);
+        labMetricRunDao.persist(labMetricRun);
+        return labMetricRun;
     }
 
     /**
@@ -211,9 +219,10 @@ public class VesselEjb {
         } catch (ParseException e) {
             throw new RuntimeException(e);
         }
-        mapNameValueToValue.get(VarioskanRowParser.NameValue.CORRELATION_COEFFICIENT_R2);
         LabMetricRun labMetricRun = new LabMetricRun(mapNameValueToValue.get(VarioskanRowParser.NameValue.RUN_NAME),
                 runStarted, metricType);
+        labMetricRun.getMetadata().add(new Metadata(Metadata.Key.CORRELATION_COEFFICIENT_R2,
+                mapNameValueToValue.get(VarioskanRowParser.NameValue.CORRELATION_COEFFICIENT_R2)));
 
         // Store raw values against plate wells
         for (VarioskanPlateProcessor.PlateWellResult plateWellResult : varioskanPlateProcessor.getPlateWellResults()) {

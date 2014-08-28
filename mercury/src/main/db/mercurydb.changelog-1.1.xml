@@ -1075,5 +1075,52 @@
         <createSequence sequenceName="SEQ_MANIFEST_EVENT" schemaName="mercury" startValue="1" incrementBy="50"/>
     </changeSet>
 
+    <changeSet id="GPLIM-2950-1" author="thompson">
+        <createTable schemaName="mercury" tableName="lab_metric_run_metadata">
+            <column name="lab_metric_run_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="metadata_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet id="GPLIM-2950-2" author="thompson">
+        <addPrimaryKey constraintName="PK_lab_metric_run_metadata" schemaName="mercury"
+                tableName="lab_metric_run_metadata" columnNames="lab_metric_run_id, metadata_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-2950-3" author="thompson">
+        <createTable schemaName="mercury" tableName="lab_metric_run_metadata_aud">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="lab_metric_run_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="metadata_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="GPLIM-2950-4" author="thompson">
+        <addPrimaryKey constraintName="PK_lab_metric_run_metadata_aud" schemaName="mercury"
+                tableName="lab_metric_run_metadata_aud" columnNames="rev, lab_metric_run_id, metadata_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-2950-5" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_LMRM_LAB_METRIC_RUN"
+                baseTableSchemaName="mercury" baseTableName="lab_metric_run_metadata" baseColumnNames="lab_metric_run_id"
+                referencedTableSchemaName="mercury" referencedTableName="lab_metric_run" referencedColumnNames="lab_metric_run_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-2950-6" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_LMRM_METADATA"
+                baseTableSchemaName="mercury" baseTableName="lab_metric_run_metadata" baseColumnNames="metadata_id"
+                referencedTableSchemaName="mercury" referencedTableName="metadata" referencedColumnNames="metadata_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-2950-7" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_LMRMA_REV_INFO"
+                baseTableSchemaName="mercury" baseTableName="lab_metric_run_metadata_aud" baseColumnNames="rev"
+                referencedTableSchemaName="mercury" referencedTableName="rev_info" referencedColumnNames="REV_INFO_ID"/>
+    </changeSet>
 
 </databaseChangeLog>
