@@ -1059,5 +1059,12 @@
         <createSequence sequenceName="SEQ_MANIFEST_EVENT" schemaName="mercury" startValue="1" incrementBy="50"/>
     </changeSet>
 
+    <changeSet author="mcovarr" id="GPLIM-2885-17">
+        <dropColumn columnName="error_status" tableName="manifest_record" schemaName="mercury"/>
+    </changeSet>
+
+    <changeSet author="mcovarr" id="GPLIM-2885-18">
+        <dropColumn columnName="error_status" tableName="manifest_record_aud" schemaName="mercury"/>
+    </changeSet>
 
 </databaseChangeLog>

@@ -60,9 +60,6 @@ public class ManifestRecord {
     @Enumerated(EnumType.STRING)
     private Status status = Status.UPLOADED;
 
-    @Enumerated(EnumType.STRING)
-    private ErrorStatus errorStatus;
-
     @OneToMany(cascade = {CascadeType.PERSIST}, mappedBy = "manifestRecord")
     private List<ManifestEvent> logEntries = new ArrayList<>();
 
@@ -157,51 +154,51 @@ public class ManifestRecord {
     public enum ErrorStatus {
         /**
          * At some time before the current sample was scanned, another with the exact same
-         * sample id and also connected to the current research project was scanned
+         * sample id and also connected to the current research project was scanned.
          */
         DUPLICATE_SAMPLE_ID("The given sample ID is a duplicate of another."),
         /**
          * Another record in the system associated with the same research project and same patient
-         * ID has a different value for gender
+         * ID has a different value for gender.
          */
         MISMATCHED_GENDER("At least one other manifest entry with the same patient ID has a different gender"),
         /**
          * Another record within this manifest, with the same patient ID has the same value
-         * for the tumor/normal indicator
+         * for the tumor/normal indicator.
          */
         UNEXPECTED_TUMOR_OR_NORMAL(
                 "At least one other manifest entry with the same patient ID has a different indicator for tumor/normal"),
         /**
          * This cannot directly apply to an actual record.  Represents a sample tube that is
-         * received for which there is no previously uploaded manifest record
+         * received for which there is no previously uploaded manifest record.
          */
         NOT_IN_MANIFEST("The scanned sample is not found in any manifest"),
         /**
-         * TODO This seems to be a duplicate of duplicate sample ID.  Need to fully define what this error case means.
+         * TODO This seems to be a duplicate of DUPLICATE_SAMPLE_ID.  Need to fully define what this error case means.
          */
         DUPLICATE_SAMPLE_SCAN(" "),
         /**
          * Represents a scenario in which a record exists that, as of the completion of a session,
-         * there was no physical sample scanned to associate with the record
+         * there was no physical sample scanned to associate with the record.
          */
         MISSING_SAMPLE("No sample has been scanned to correspond with the manifest record"),
         /**
          * Represents a scenario in which the user attempts to accession a source tube that
-         * did not make it to the REGISTERED state
+         * did not make it to the REGISTERED state.
          */
         NOT_READY_FOR_ACCESSIONING("Attempting to accession a sample that has not completed manifest registration"),
         /**
          * Helpful message to note that the user is attempting to accession a source tube into
-         * a target vessel that has already gone through accessioning
+         * a target vessel that has already gone through accessioning.
          */
         ALREADY_SCANNED_TARGET("The scanned target tube has already been associated with another source sample"),
         /**
-         * TODO This seems to be a duplicate of not ready for accessioning.  Need to fully define what this case means.
+         * TODO This seems to be a duplicate of NOT_READY_FOR_ACCESSIONING.  Need to fully define what this case means.
          */
         NOT_REGISTERED(" "),
         /**
          * Helpful message to note that the user is attempting to accession a source tube into
-         * that has already gone through accessioning
+         * that has already gone through accessioning.
          */
         ALREADY_SCANNED_SOURCE("The scanned source tube has already been through the accessioning process");
         private String message;
