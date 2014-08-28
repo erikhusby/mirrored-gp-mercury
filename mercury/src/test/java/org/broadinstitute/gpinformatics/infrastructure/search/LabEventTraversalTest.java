@@ -40,7 +40,7 @@ public class LabEventTraversalTest extends ContainerTest {
                 configurableListFactory.getFirstResultsPage(
                         searchInstance, configurableSearchDefinition, null, 1, null, "ASC", "LabEvent" );
 
-        Assert.assertEquals(firstPageResults.getPagination().getIdList().size(), 98);
+        Assert.assertEquals(firstPageResults.getPagination().getIdList().size(), 116);
 
     }
 

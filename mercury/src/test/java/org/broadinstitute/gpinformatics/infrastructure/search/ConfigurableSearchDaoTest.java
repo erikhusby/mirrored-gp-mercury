@@ -42,7 +42,7 @@ public class ConfigurableSearchDaoTest extends ContainerTest {
                 new SearchDefinitionFactory().buildLabVesselSearchDef();
 
         SearchInstance searchInstance = new SearchInstance();
-        SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("Label", configurableSearchDefinition);
+        SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("Barcode", configurableSearchDefinition);
         searchValue.setOperator(SearchInstance.Operator.IN);
         searchValue.setValues(Arrays.asList("0159877302", "0159877312", "0159877313", "0163049566"));
         Criteria criteria = configurableSearchDao.buildCriteria(configurableSearchDefinition, searchInstance);
