@@ -8,6 +8,7 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.Validate;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -45,9 +46,13 @@ public class SampleVesselActionBean extends CoreActionBean {
     @HandlesEvent(UPLOAD_SAMPLES)
     public Resolution uploadQuant() {
         try {
+            MessageCollection messageCollection = new MessageCollection();
             List<LabVessel> labVessels = vesselEjb.createSampleVessels(samplesSpreadsheet.getInputStream(),
-                    userBean.getLoginUserName());
-            addMessage("Successfully uploaded " + labVessels.size() + " tubes.");
+                    userBean.getLoginUserName(), messageCollection);
+            addMessages(messageCollection);
+            if (labVessels != null) {
+                addMessage("Successfully uploaded " + labVessels.size() + " tubes.");
+            }
         } catch (InvalidFormatException | IOException | ValidationException e) {
             addValidationError("samplesSpreadsheet", e.getMessage());
         }

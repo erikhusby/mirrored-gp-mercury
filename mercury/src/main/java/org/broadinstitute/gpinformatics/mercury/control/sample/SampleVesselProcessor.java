@@ -4,17 +4,15 @@ import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ChildVesselBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Parses a spreadsheet (from BSP) containing sample IDs and tube barcodes.
@@ -22,20 +20,13 @@ import java.util.Map;
 public class SampleVesselProcessor extends TableProcessor {
 
     private List<String> headers;
-    private final LabVesselFactory labVesselFactory;
-    private final LabVesselDao labVesselDao;
-    private final String userName;
 
-    private final List<ParentVesselBean> parentVesselBeans = new ArrayList<>();
-    private List<ChildVesselBean> childVesselBeans = new ArrayList<>();
-    private List<LabVessel> labVessels;
+    private final Map<String, ParentVesselBean> mapBarcodeToParentVessel = new HashMap<>();
+    private Set<String> tubeBarcodes = new HashSet<>();
+    private Set<String> sampleIds = new HashSet<>();
 
-    public SampleVesselProcessor(String sheetName, LabVesselFactory labVesselFactory, LabVesselDao labVesselDao,
-            String userName) {
+    public SampleVesselProcessor(String sheetName) {
         super(sheetName);
-        this.labVesselFactory = labVesselFactory;
-        this.labVesselDao = labVesselDao;
-        this.userName = userName;
     }
 
     @Override
@@ -54,11 +45,19 @@ public class SampleVesselProcessor extends TableProcessor {
         String tubeBarcode = dataRow.get(Headers.MANUFACTURER_TUBE_BARCODE.getText());
         String containerBarcode = dataRow.get(Headers.CONTAINER_BARCODE.getText());
         String position = dataRow.get(Headers.POSITION.getText());
-        if (parentVesselBeans.isEmpty()) {
-            parentVesselBeans.add(new ParentVesselBean(containerBarcode, null,
-                    RackOfTubes.RackType.Matrix96.getDisplayName(), childVesselBeans));
+        ParentVesselBean parentVesselBean = mapBarcodeToParentVessel.get(containerBarcode);
+        if (parentVesselBean == null) {
+            parentVesselBean = new ParentVesselBean(containerBarcode, null,
+                    RackOfTubes.RackType.Matrix96.getDisplayName(), new ArrayList<ChildVesselBean>());
+            mapBarcodeToParentVessel.put(containerBarcode, parentVesselBean);
         }
-        childVesselBeans.add(new ChildVesselBean(tubeBarcode, sampleId,
+        if (!tubeBarcodes.add(tubeBarcode)) {
+            addDataMessage("Duplicate tube barcode " + tubeBarcode, dataRowIndex);
+        }
+        if (!sampleIds.add(sampleId)) {
+            addDataMessage("Duplicate sample ID " + sampleId, dataRowIndex);
+        }
+        parentVesselBean.getChildVesselBeans().add(new ChildVesselBean(tubeBarcode, sampleId,
                 BarcodedTube.BarcodedTubeType.MatrixTube.getDisplayName(), position));
     }
 
@@ -69,10 +68,6 @@ public class SampleVesselProcessor extends TableProcessor {
 
     @Override
     public void close() {
-        // todo jmt validate that tubes and samples don't exist already?
-        labVessels = labVesselFactory.buildLabVessels(parentVesselBeans, userName, new Date(), null,
-                MercurySample.MetadataSource.MERCURY);
-        labVesselDao.persistAll(labVessels);
     }
 
     private enum Headers implements ColumnHeader {
@@ -132,11 +127,15 @@ public class SampleVesselProcessor extends TableProcessor {
         }
     }
 
-    List<ParentVesselBean> getParentVesselBeans() {
-        return parentVesselBeans;
+    public Map<String, ParentVesselBean> getMapBarcodeToParentVessel() {
+        return mapBarcodeToParentVessel;
     }
 
-    public List<LabVessel> getLabVessels() {
-        return labVessels;
+    public Set<String> getTubeBarcodes() {
+        return tubeBarcodes;
+    }
+
+    public Set<String> getSampleIds() {
+        return sampleIds;
     }
 }
