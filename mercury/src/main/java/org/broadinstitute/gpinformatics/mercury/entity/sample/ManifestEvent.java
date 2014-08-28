@@ -85,5 +85,5 @@ public class ManifestEvent {
         return manifestRecord;
     }
 
-    public enum Type {ERROR, WARNING, INFO}
+    public enum Type {FATAL, ERROR, WARNING, INFO}
 }

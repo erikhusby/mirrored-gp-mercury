@@ -56,7 +56,7 @@ public class ManifestSessionTest {
     }
 
     private ManifestRecord buildManifestRecord() {
-        return ManifestTestFactory.buildManifestRecord(null, ImmutableMap.of(
+        return ManifestTestFactory.buildManifestRecord(ImmutableMap.of(
                 Metadata.Key.SAMPLE_TYPE, "value1",
                 Metadata.Key.TUMOR_NORMAL, "value2",
                 Metadata.Key.COLLECTION_DATE, "value3"));

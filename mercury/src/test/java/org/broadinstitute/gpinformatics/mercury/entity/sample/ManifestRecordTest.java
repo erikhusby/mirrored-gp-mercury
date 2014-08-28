@@ -60,14 +60,18 @@ public class ManifestRecordTest {
         // Default status should be UPLOADED.
         Assert.assertEquals(testRecord.getStatus(), ManifestRecord.Status.UPLOADED);
         // Default error status should be null (no error).
-        Assert.assertNull(testRecord.getErrorStatus());
+        Assert.assertFalse(testRecord.fatalErrorExists());
 
         // Test with specified Status and ErrorStatus.
         testRecord.setStatus(NEW_STATUS);
-        testRecord.setErrorStatus(NEW_ERROR_STATUS);
+        testRecord.addLogEntry(new ManifestEvent(NEW_ERROR_STATUS.formatMessage("Sample ID", COLLABORATOR_SAMPLE_ID_1),
+                ManifestEvent.Type.FATAL));
+
+//        testRecord.setErrorStatus(NEW_ERROR_STATUS);
 
         Assert.assertEquals(testRecord.getStatus(), NEW_STATUS);
-        Assert.assertEquals(testRecord.getErrorStatus(), NEW_ERROR_STATUS);
+        Assert.assertTrue(testRecord.fatalErrorExists());
+//        Assert.assertEquals(testRecord.getErrorStatus(), NEW_ERROR_STATUS);
     }
 
     public void validManifest() {
@@ -83,8 +87,8 @@ public class ManifestRecordTest {
         assertThat(testSession.areThereErrors(), is(equalTo(false)));
 
         assertThat(testSession.getLogEntries().size(), is(equalTo(0)));
-        assertThat(testRecord.getErrorStatus(), is(nullValue()));
-        assertThat(secondManifestRecord.getErrorStatus(), is(nullValue()));
+        assertThat(testRecord.fatalErrorExists(), is(equalTo(false)));
+        assertThat(secondManifestRecord.fatalErrorExists(), is(equalTo(false)));
 
         assertThat(testRecord.getLogEntries(), is(empty()));
         assertThat(secondManifestRecord.getLogEntries(), is(empty()));
@@ -110,8 +114,10 @@ public class ManifestRecordTest {
         assertThat(testSession.areThereErrors(), is(equalTo(true)));
 
         assertThat(testSession.getLogEntries().size(), is(equalTo(2)));
-        assertThat(testRecord.getErrorStatus(), is(equalTo(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID)));
-        assertThat(testRecordWithDupe.getErrorStatus(), is(equalTo(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID)));
+        assertThat(testRecord.fatalErrorExists(), is(equalTo(true)));
+        assertThat(testRecordWithDupe.fatalErrorExists(), is(equalTo(true)));
+//        assertThat(testRecord.getErrorStatus(), is(equalTo(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID)));
+//        assertThat(testRecordWithDupe.getErrorStatus(), is(equalTo(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID)));
 
         assertThat(testRecord.getLogEntries().size(), is(equalTo(1)));
         assertThat(testRecordWithDupe.getLogEntries().size(), is(equalTo(1)));

@@ -150,7 +150,6 @@ public class ManifestSession {
     }
 
     /**
-     *
      * If there is an error with any record in this manifest session, report that some errors exist
      *
      * @return
@@ -160,8 +159,8 @@ public class ManifestSession {
         boolean validationResult = false;
 
         for (ManifestRecord testRecord : records) {
-            validationResult = (testRecord.getErrorStatus() != null);
-            if (!validationResult) {
+            validationResult = (!testRecord.getLogEntries().isEmpty());
+            if (validationResult) {
                 break;
             }
         }
@@ -186,7 +185,7 @@ public class ManifestSession {
      * patient iD
      *
      * @param manifestRecordsEligibleForValidation Collection of all manifest records against which to perform
-     *                                                    gender mismatch validation
+     *                                             gender mismatch validation
      */
     private void validateInconsistentGenders(Collection<ManifestRecord> manifestRecordsEligibleForValidation) {
 
@@ -201,7 +200,6 @@ public class ManifestSession {
                 // Ignore ManifestSessions that are not this ManifestSession, they will not have errors added by
                 // this logic.
                 if (duplicatedRecord.getSession().equals(this)) {
-                    duplicatedRecord.setErrorStatus(ManifestRecord.ErrorStatus.MISMATCHED_GENDER);
 
                     String message =
                             ManifestRecord.ErrorStatus.MISMATCHED_GENDER.formatMessage("patient ID", entry.getKey());
@@ -218,32 +216,32 @@ public class ManifestSession {
      *
      * @param recordsByPatientId an iterable of the map entries found in the Multimap which grouped manifest records
      *                           by their patient ID
+     *
      * @return
      */
     private Iterable<Map.Entry<String, Collection<ManifestRecord>>> filterForPatientsWithInconsistentGenders(
             Multimap<String, ManifestRecord> recordsByPatientId) {
 
-        return Iterables.filter(recordsByPatientId.asMap().entrySet(), new Predicate<Map.Entry<String, Collection<ManifestRecord>>>() {
+        return Iterables.filter(recordsByPatientId.asMap().entrySet(),
+                new Predicate<Map.Entry<String, Collection<ManifestRecord>>>() {
 
-            @Override
-            public boolean apply(Map.Entry<String, Collection<ManifestRecord>> entry) {
-                final Set<String> allGenders = new HashSet<>();
-                for (ManifestRecord manifestRecord : entry.getValue()) {
-                    allGenders.add(manifestRecord.getMetadataByKey(Metadata.Key.GENDER).getValue());
-                }
-                return allGenders.size() > 1;
-            }
-        });
+                    @Override
+                    public boolean apply(Map.Entry<String, Collection<ManifestRecord>> entry) {
+                        final Set<String> allGenders = new HashSet<>();
+                        for (ManifestRecord manifestRecord : entry.getValue()) {
+                            allGenders.add(manifestRecord.getMetadataByKey(Metadata.Key.GENDER).getValue());
+                        }
+                        return allGenders.size() > 1;
+                    }
+                });
     }
 
     /**
-     *
      * Encapsulates the logic to validate a given set of manifest records for non-unique references to collaborator
      * sample ID
      *
      * @param allEligibleManifestRecords Collection of all manifest records against which to perform unique sample id
      *                                   validation
-     *
      */
     private void validateDuplicateCollaboratorSampleIDs(Collection<ManifestRecord> allEligibleManifestRecords) {
 
@@ -258,11 +256,11 @@ public class ManifestSession {
                 // Ignore ManifestSessions that are not this ManifestSession, they will not have errors added by
                 // this logic.
                 if (duplicatedRecord.getSession().equals(this)) {
-                    duplicatedRecord.setErrorStatus(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID);
+//                    duplicatedRecord.setErrorStatus(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID);
 
                     String message =
                             ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage("sample ID", entry.getKey());
-                    addLogEntry(new ManifestEvent(message, duplicatedRecord, ManifestEvent.Type.ERROR));
+                    addLogEntry(new ManifestEvent(message, duplicatedRecord, ManifestEvent.Type.FATAL));
                 }
             }
         }
@@ -270,7 +268,9 @@ public class ManifestSession {
 
     /**
      * Helper method to filter out entries in a given MultiMap that only have 1 member of the value collection
-     * @param recordsByMetadataValue    MultiMap of Manifest Records which are to be filtered
+     *
+     * @param recordsByMetadataValue MultiMap of Manifest Records which are to be filtered
+     *
      * @return An iterable minus the entries which had only one entry in the map value
      */
     private Iterable<Map.Entry<String, Collection<ManifestRecord>>> filterForKeysWithMultipleValues(
@@ -288,9 +288,11 @@ public class ManifestSession {
 
     /**
      * Helper method to Build a MultiMap of manifest records by a given Metadata Key
-     * @param allEligibleManifestRecords    The set of manifest records to be divided up into a MultiMap
-     * @param key   type of Metadata key who's value will be index into the newly created MultiMap
-     * @return  A MultiMap of manifest records indexed the corresponding value represented by key
+     *
+     * @param allEligibleManifestRecords The set of manifest records to be divided up into a MultiMap
+     * @param key                        type of Metadata key who's value will be index into the newly created MultiMap
+     *
+     * @return A MultiMap of manifest records indexed the corresponding value represented by key
      */
     private Multimap<String, ManifestRecord> buildMultimapByKey(
             Collection<ManifestRecord> allEligibleManifestRecords, final Metadata.Key key) {
@@ -306,14 +308,15 @@ public class ManifestSession {
     /**
      * Helper method to extract all manifest records eligible for validation.  Records for which validation has been
      * run and has found errors are not eligible for validation
-     * @return  A list of all Manifest record
+     *
+     * @return A list of all Manifest record
      */
     private List<ManifestRecord> collectAllManifestRecordsAcrossThisResearchProject() {
         List<ManifestRecord> allRecords = new ArrayList<>();
 
         for (ManifestSession manifestSession : researchProject.getManifestSessions()) {
             for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
-                if(manifestRecord.getErrorStatus() == null) {
+                if (!manifestRecord.fatalErrorExists()) {
                     allRecords.add(manifestRecord);
                 }
             }

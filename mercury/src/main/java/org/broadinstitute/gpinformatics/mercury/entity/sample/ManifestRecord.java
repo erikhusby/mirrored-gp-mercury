@@ -76,13 +76,14 @@ public class ManifestRecord {
     protected ManifestRecord() {}
 
     public ManifestRecord(Metadata...metadata) {
-        this(null, metadata);
+        this.metadata.addAll(Arrays.asList(metadata));
+//        this(null, metadata);
     }
 
-    public ManifestRecord(ErrorStatus errorStatus, Metadata... metadata) {
-        this.metadata.addAll(Arrays.asList(metadata));
-        this.errorStatus = errorStatus;
-    }
+//    public ManifestRecord(ErrorStatus errorStatus, Metadata... metadata) {
+//        this.metadata.addAll(Arrays.asList(metadata));
+//        this.errorStatus = errorStatus;
+//    }
 
     /**
      * Builds the Metadata Map if it has not already been built.
@@ -113,10 +114,10 @@ public class ManifestRecord {
         return status;
     }
 
-    public ErrorStatus getErrorStatus() {
-        return errorStatus;
-    }
-
+//    public ErrorStatus getErrorStatus() {
+//        return errorStatus;
+//    }
+//
     public List<ManifestEvent> getLogEntries() {
         return logEntries;
     }
@@ -137,8 +138,21 @@ public class ManifestRecord {
         this.status = status;
     }
 
-    public void setErrorStatus(ErrorStatus errorStatus) {
-        this.errorStatus = errorStatus;
+//    public void setErrorStatus(ErrorStatus errorStatus) {
+//        this.errorStatus = errorStatus;
+//    }
+
+    public boolean fatalErrorExists() {
+        boolean fatality = false;
+
+        for (ManifestEvent logEntry : logEntries) {
+            if(logEntry.getLogType() == ManifestEvent.Type.FATAL) {
+                fatality = true;
+                break;
+            }
+        }
+
+        return fatality;
     }
 
     /**
