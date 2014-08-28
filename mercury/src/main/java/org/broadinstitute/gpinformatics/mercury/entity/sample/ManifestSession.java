@@ -181,10 +181,17 @@ public class ManifestSession {
         validateInconsistentGenders(allManifestRecordsAcrossThisResearchProject);
     }
 
-    private void validateInconsistentGenders(Collection<ManifestRecord> allManifestRecordsAcrossThisResearchProject) {
+    /**
+     * Encapsulates the logic to validate a given set of manifest records for inconsistent gender values for a
+     * patient iD
+     *
+     * @param manifestRecordsEligibleForValidation Collection of all manifest records against which to perform
+     *                                                    gender mismatch validation
+     */
+    private void validateInconsistentGenders(Collection<ManifestRecord> manifestRecordsEligibleForValidation) {
 
         Multimap<String, ManifestRecord> recordsByPatientId = buildMultimapByKey(
-                allManifestRecordsAcrossThisResearchProject, Metadata.Key.PATIENT_ID);
+                manifestRecordsEligibleForValidation, Metadata.Key.PATIENT_ID);
 
         Iterable<Map.Entry<String, Collection<ManifestRecord>>> patientsWithInconsistentGenders =
                 filterForPatientsWithInconsistentGenders(recordsByPatientId);
@@ -205,6 +212,14 @@ public class ManifestSession {
 
     }
 
+    /**
+     * Helper method for the inconsistent gender validation to limit the final validation logic to just records where
+     * the inconsistency is found.
+     *
+     * @param recordsByPatientId an iterable of the map entries found in the Multimap which grouped manifest records
+     *                           by their patient ID
+     * @return
+     */
     private Iterable<Map.Entry<String, Collection<ManifestRecord>>> filterForPatientsWithInconsistentGenders(
             Multimap<String, ManifestRecord> recordsByPatientId) {
 
@@ -221,11 +236,19 @@ public class ManifestSession {
         });
     }
 
-    private void validateDuplicateCollaboratorSampleIDs(
-            Collection<ManifestRecord> allManifestRecordsAcrossThisResearchProject) {
+    /**
+     *
+     * Encapsulates the logic to validate a given set of manifest records for non-unique references to collaborator
+     * sample ID
+     *
+     * @param allEligibleManifestRecords Collection of all manifest records against which to perform unique sample id
+     *                                   validation
+     *
+     */
+    private void validateDuplicateCollaboratorSampleIDs(Collection<ManifestRecord> allEligibleManifestRecords) {
 
         Multimap<String, ManifestRecord> recordsBySampleId = buildMultimapByKey(
-                allManifestRecordsAcrossThisResearchProject, Metadata.Key.SAMPLE_ID);
+                allEligibleManifestRecords, Metadata.Key.SAMPLE_ID);
 
         Iterable<Map.Entry<String, Collection<ManifestRecord>>> filteredDuplicateSamples =
                 filterForKeysWithMultipleValues(recordsBySampleId);
@@ -245,6 +268,11 @@ public class ManifestSession {
         }
     }
 
+    /**
+     * Helper method to filter out entries in a given MultiMap that only have 1 member of the value collection
+     * @param recordsByMetadataValue    MultiMap of Manifest Records which are to be filtered
+     * @return An iterable minus the entries which had only one entry in the map value
+     */
     private Iterable<Map.Entry<String, Collection<ManifestRecord>>> filterForKeysWithMultipleValues(
             Multimap<String, ManifestRecord> recordsByMetadataValue) {
 
@@ -258,9 +286,15 @@ public class ManifestSession {
                 });
     }
 
+    /**
+     * Helper method to Build a MultiMap of manifest records by a given Metadata Key
+     * @param allEligibleManifestRecords    The set of manifest records to be divided up into a MultiMap
+     * @param key   type of Metadata key who's value will be index into the newly created MultiMap
+     * @return  A MultiMap of manifest records indexed the corresponding value represented by key
+     */
     private Multimap<String, ManifestRecord> buildMultimapByKey(
-            Collection<ManifestRecord> allRecordsAcrossThisResearchProject, final Metadata.Key key) {
-        return Multimaps.index(allRecordsAcrossThisResearchProject,
+            Collection<ManifestRecord> allEligibleManifestRecords, final Metadata.Key key) {
+        return Multimaps.index(allEligibleManifestRecords,
                 new Function<ManifestRecord, String>() {
                     @Override
                     public String apply(ManifestRecord manifestRecord) {
@@ -269,23 +303,20 @@ public class ManifestSession {
                 });
     }
 
-    private Set<String> collectAllValuesForKeyInThisManifest(Metadata.Key targetKey) {
-
-        Set<String> allSampleIDs = new HashSet<>();
-
-        for (ManifestRecord record : records) {
-            allSampleIDs.add(record.getMetadataByKey(targetKey).getValue());
-        }
-
-
-        return allSampleIDs;
-    }
-
+    /**
+     * Helper method to extract all manifest records eligible for validation.  Records for which validation has been
+     * run and has found errors are not eligible for validation
+     * @return  A list of all Manifest record
+     */
     private List<ManifestRecord> collectAllManifestRecordsAcrossThisResearchProject() {
         List<ManifestRecord> allRecords = new ArrayList<>();
 
         for (ManifestSession manifestSession : researchProject.getManifestSessions()) {
-            allRecords.addAll(manifestSession.getRecords());
+            for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
+                if(manifestRecord.getErrorStatus() == null) {
+                    allRecords.add(manifestRecord);
+                }
+            }
         }
 
         return allRecords;
