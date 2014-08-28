@@ -73,9 +73,13 @@ public class ManifestRecordTest {
     public void validManifest() {
         ManifestSession testSession = buildTestSession();
 
+        ManifestSession secondSession = getManifestSession(testSession.getResearchProject(),
+                buildManifestRecord("COLLABORATOR_SAMPLE_ID_3"));
+
         String COLLABORATOR_SAMPLE_ID_2 = "COLLABORATOR_SAMPLE_ID_2";
         ManifestRecord secondManifestRecord = buildManifestRecord(COLLABORATOR_SAMPLE_ID_2);
         testSession.addRecord(secondManifestRecord);
+
         testSession.validateManifest();
         Assert.assertTrue(testSession.isManifestValid());
 
@@ -85,6 +89,11 @@ public class ManifestRecordTest {
 
         assertThat(testRecord.getLogEntries(), is(empty()));
         assertThat(secondManifestRecord.getLogEntries(), is(empty()));
+
+        secondSession.validateManifest();
+        Assert.assertTrue(secondSession.isManifestValid());
+
+        Assert.assertEquals(secondSession.getLogEntries().size(), 0);
     }
 
 
@@ -129,9 +138,7 @@ public class ManifestRecordTest {
         ManifestSession testSession = buildTestSession();
 
         ManifestSession secondSession = getManifestSession(testSession.getResearchProject(),
-                ManifestTestFactory.buildManifestRecord(ImmutableMap.of(Metadata.Key.SAMPLE_ID,
-                        COLLABORATOR_SAMPLE_ID_1,
-                        Metadata.Key.GENDER, "F", Metadata.Key.PATIENT_ID, VALUE_3)));
+                buildManifestRecord(COLLABORATOR_SAMPLE_ID_1));
 
         testSession.validateManifest();
             Assert.assertFalse(testSession.isManifestValid());
