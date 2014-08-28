@@ -17,7 +17,4 @@ public class ManifestSessionEjb {
     @Inject
     private ManifestSessionDao manifestSessionDao;
 
-    public void save(ManifestSession manifestSession) {
-        manifestSessionDao.persist(manifestSession);
-    }
 }

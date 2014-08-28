@@ -12,7 +12,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -49,15 +48,6 @@ public class ManifestSessionContainerTest extends Arquillian {
     private ManifestSessionDao manifestSessionDao;
 
     /**
-     * Simple persistence check for ManifestEvent.
-     */
-    public void manifestEvent() {
-        ManifestEvent manifestEvent = new ManifestEvent("Everything is OK.", ManifestEvent.Type.INFO);
-        researchProjectDao.persist(manifestEvent);
-        researchProjectDao.flush();
-    }
-
-    /**
      * Round trip test for ManifestSession.
      */
     public void roundTrip() {
@@ -73,11 +63,11 @@ public class ManifestSessionContainerTest extends Arquillian {
                 new BSPUserList.QADudeUser("PM", 5176L));
 
         ManifestRecord manifestRecordIn = new ManifestRecord(
-                new Metadata(Metadata.Key.PATIENT_ID, PATIENT_1),
+                manifestSessionIn, new Metadata(Metadata.Key.PATIENT_ID, PATIENT_1),
                 new Metadata(Metadata.Key.GENDER, GENDER_MALE));
 
-        manifestSessionIn.addRecord(manifestRecordIn);
-        manifestSessionEjb.save(manifestSessionIn);
+        manifestSessionDao.persist(manifestSessionIn);
+        manifestSessionDao.flush();
         // Clear the Session to force retrieval of a persistent instance 'manifestSessionOut' below that is distinct
         // from the detached 'manifestSessionIn' instance.
         manifestSessionDao.clear();

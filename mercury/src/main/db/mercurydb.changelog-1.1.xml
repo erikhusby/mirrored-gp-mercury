@@ -788,9 +788,7 @@
             <column name="key" type="varchar2(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="value" type="varchar2(255)">
-                <constraints nullable="true"/>
-            </column>
+            <column name="value" type="varchar2(255)" />
         </createTable>
         <addPrimaryKey schemaName="mercury" tableName="metadata" columnNames="metadata_id"/>
     </changeSet>
@@ -804,14 +802,10 @@
             <column name="metadata_id" type="number(19,0)">
                 <constraints nullable="false"/>
             </column>
-            <column name="key" type="varchar2(255)">
-                <constraints nullable="true"/>
-            </column>
-            <column name="value" type="varchar2(255)">
-                <constraints nullable="true"/>
-            </column>
+            <column name="key" type="varchar2(255)" />
+            <column name="value" type="varchar2(255)"/>
         </createTable>
-        <addPrimaryKey schemaName="mercury" tableName="metadata_aud" columnNames="metadata_id, rev"/>
+        <addPrimaryKey schemaName="mercury" tableName="metadata_aud" columnNames="rev, metadata_id"/>
         <addForeignKeyConstraint baseTableName="metadata_aud" baseTableSchemaName="mercury" baseColumnNames="rev"
                                  constraintName="fk_metadata_ref_info"
                                  referencedTableName="rev_info" referencedTableSchemaName="mercury"
@@ -850,7 +844,7 @@
             <column name="sample_key" type="varchar2(255)"/>
             <column name="metadata_id" type="number(19,0)"/>
         </createTable>
-        <addPrimaryKey schemaName="mercury" tableName="mercury_sample_metadata_aud" columnNames="sample_key, metadata_id, rev"/>
+        <addPrimaryKey schemaName="mercury" tableName="mercury_sample_metadata_aud" columnNames="rev, sample_key, metadata_id"/>
         <addForeignKeyConstraint baseTableName="mercury_sample_metadata_aud" baseTableSchemaName="mercury" baseColumnNames="rev"
                                  constraintName="fk_sample_metadata_ref_info"
                                  referencedTableName="rev_info" referencedTableSchemaName="mercury"
@@ -1000,7 +994,7 @@
             <column name="manifest_record_id" type="varchar2(255)" />
             <column name="metadata_id" type="number(19,0)" />
         </createTable>
-        <addPrimaryKey schemaName="mercury" tableName="manifest_record_metadata_aud" columnNames="manifest_record_id, metadata_id, rev"/>
+        <addPrimaryKey schemaName="mercury" tableName="manifest_record_metadata_aud" columnNames="rev, manifest_record_id, metadata_id"/>
         <addForeignKeyConstraint baseTableName="manifest_record_metadata_aud" baseTableSchemaName="mercury" baseColumnNames="rev"
                                  constraintName="fk_manrec_metadata_ref_info"
                                  referencedTableName="rev_info" referencedTableSchemaName="mercury"
@@ -1013,9 +1007,9 @@
                 <constraints nullable="false"/>
             </column>
 
-            <!--todo make session not nullable-->
-
-            <column name="manifest_session_id" type="number(19,0)"/>
+            <column name="manifest_session_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
             <column name="message" type="varchar2(255)"/>
             <column name="manifest_record_id" type="number(19,0)"/>
             <column name="log_type" type="varchar(30)" />

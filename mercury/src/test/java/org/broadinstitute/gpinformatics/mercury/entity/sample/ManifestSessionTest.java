@@ -34,7 +34,7 @@ public class ManifestSessionTest {
 
     public void basicProperties() throws Exception {
         Assert.assertEquals(testSession.getResearchProject(), testRp);
-        Assert.assertEquals(testSession.createSessionName(), sessionPrefix + testSession.getManifestSessionId());
+        Assert.assertEquals(testSession.getSessionName(), sessionPrefix + testSession.getManifestSessionId());
         Assert.assertEquals(testSession.getStatus(), ManifestSession.SessionStatus.OPEN);
 
         Assert.assertEquals(testSession.getCreatedBy(), testUser.getUserId());
@@ -47,23 +47,21 @@ public class ManifestSessionTest {
     }
 
     public void addRecord() throws Exception {
-        ManifestRecord testRecord = buildManifestRecord();
-
-        testSession.addRecord(testRecord);
+        ManifestRecord testRecord = buildManifestRecord(testSession);
 
         Assert.assertTrue(testSession.getRecords().contains(testRecord));
         Assert.assertEquals(testRecord.getSession(), testSession);
     }
 
-    private ManifestRecord buildManifestRecord() {
+    private ManifestRecord buildManifestRecord(ManifestSession sessionIn) {
         return ManifestTestFactory.buildManifestRecord(null, ImmutableMap.of(
                 Metadata.Key.SAMPLE_TYPE, "value1",
                 Metadata.Key.TUMOR_NORMAL, "value2",
-                Metadata.Key.COLLECTION_DATE, "value3"));
+                Metadata.Key.COLLECTION_DATE, "value3"), sessionIn);
     }
 
     public void addLogEntries() throws Exception {
-        ManifestRecord testRecord = buildManifestRecord();
+        ManifestRecord testRecord = buildManifestRecord(testSession);
         ManifestEvent logEntryWithoutRecord = new ManifestEvent("Failed to Upload Record in session",
                 ManifestEvent.Type.ERROR);
         testSession.addLogEntry(logEntryWithoutRecord);

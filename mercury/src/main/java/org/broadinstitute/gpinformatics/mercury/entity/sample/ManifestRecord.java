@@ -25,8 +25,10 @@ import javax.persistence.Transient;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A manifest record represents the accumulated data of one row in a sample manifest derived from the sample
@@ -49,7 +51,7 @@ public class ManifestRecord {
     @JoinTable(name = "manifest_record_metadata", schema = "mercury",
             joinColumns = @JoinColumn(name = "MANIFEST_RECORD_ID"),
             inverseJoinColumns = @JoinColumn(name = "METADATA_ID"))
-    private List<Metadata> metadata = new ArrayList<>();
+    private Set<Metadata> metadata = new HashSet<>();
 
     @Transient
     private Map<Metadata.Key, Metadata> metadataMap;
@@ -75,11 +77,13 @@ public class ManifestRecord {
      */
     protected ManifestRecord() {}
 
-    public ManifestRecord(Metadata...metadata) {
-        this(null, metadata);
+    public ManifestRecord(ManifestSession sessionIn, Metadata... metadata) {
+        this(sessionIn, null, metadata);
     }
 
-    public ManifestRecord(ErrorStatus errorStatus, Metadata... metadata) {
+    public ManifestRecord(ManifestSession session, ErrorStatus errorStatus, Metadata... metadata) {
+        this.session = session;
+        this.session.addRecord(this);
         this.metadata.addAll(Arrays.asList(metadata));
         this.errorStatus = errorStatus;
     }
@@ -91,7 +95,7 @@ public class ManifestRecord {
         // This is constructed lazily as it can't be built within the no-arg constructor since the 'metadata' field
         // upon which it depends will not have been initialized.
         if (metadataMap == null) {
-            this.metadataMap = new HashMap<>(Maps.uniqueIndex(metadata, new Function<Metadata, Metadata.Key>() {
+            metadataMap = new HashMap<>(Maps.uniqueIndex(metadata, new Function<Metadata, Metadata.Key>() {
                 @Override
                 public Metadata.Key apply(Metadata metadata) {
                     return metadata.getKey();
@@ -101,7 +105,7 @@ public class ManifestRecord {
         return metadataMap;
     }
 
-    public List<Metadata> getMetadata() {
+    public Set<Metadata> getMetadata() {
         return this.metadata;
     }
 
@@ -127,10 +131,6 @@ public class ManifestRecord {
 
     public ManifestSession getSession() {
         return session;
-    }
-
-    public void setSession(ManifestSession session) {
-        this.session = session;
     }
 
     public void setStatus(Status status) {
@@ -178,7 +178,7 @@ public class ManifestRecord {
          * did not make it to the REGISTERED state
          */
         NOT_READY_FOR_ACCESSIONING,
-        /** Helpful message to note that the user is attempting to accession a source tube into
+        /** Helpful message to note that the user is attempting to accession a source tube
          * a target vessel that has already gone through accessioning
          */
         ALREADY_SCANNED_TARGET,

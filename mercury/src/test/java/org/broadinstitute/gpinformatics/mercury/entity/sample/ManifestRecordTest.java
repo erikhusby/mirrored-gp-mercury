@@ -30,7 +30,7 @@ public class ManifestRecordTest {
         // Test with no specified Status or ErrorStatus.
         ManifestRecord testRecord =
                 ManifestTestFactory.buildManifestRecord(
-                        ImmutableMap.of(KEY_1, VALUE_1, KEY_2, VALUE_2, KEY_3, VALUE_3));
+                        ImmutableMap.of(KEY_1, VALUE_1, KEY_2, VALUE_2, KEY_3, VALUE_3), new ManifestSession());
 
         // Basic sanity check of retrieving Metadata by key.
         Assert.assertEquals(testRecord.getMetadataByKey(KEY_1).getValue(), VALUE_1);

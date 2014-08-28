@@ -18,7 +18,6 @@ public class MetadataTest {
 
     public void basics() {
         // Cover the no-arg constructor.
-        new Metadata();
 
         // equals and hashCode.
         final Metadata.Key KEY = Metadata.Key.SAMPLE_ID;
@@ -31,5 +30,10 @@ public class MetadataTest {
             add(metadata);
             add(new Metadata(KEY, VALUE));
         }};
+    }
+
+    public void testBasicConstructorMetadata() {
+        new Metadata();
+
     }
 }
