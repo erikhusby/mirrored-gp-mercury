@@ -170,7 +170,7 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     private List<SubmissionTracker> submissionTrackers = new ArrayList<>();
 
     @OneToMany(mappedBy = "researchProject", cascade = CascadeType.PERSIST)
-    private Set<ManifestSession> manifestSessions;
+    private Set<ManifestSession> manifestSessions = new HashSet<>();
 
     // todo: we can cache the submissiontrackers in a static map
     public SubmissionTracker getSubmissionTracker(SubmissionTuple tuple){
@@ -821,8 +821,9 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         return manifestSessions;
     }
 
-    public void setManifestSessions(Set<ManifestSession> manifestSessions) {
-        this.manifestSessions = manifestSessions;
+    public void addManifestSession(ManifestSession manifestSession) {
+        this.manifestSessions.add(manifestSession);
+
     }
 
     public enum Status implements StatusType {

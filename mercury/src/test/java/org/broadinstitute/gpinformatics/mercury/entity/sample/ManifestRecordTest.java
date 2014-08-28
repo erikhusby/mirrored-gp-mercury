@@ -13,7 +13,11 @@ import org.testng.annotations.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.emptyIterable;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 
 /**
@@ -72,7 +76,7 @@ public class ManifestRecordTest {
         String COLLABORATOR_SAMPLE_ID_2 = "COLLABORATOR_SAMPLE_ID_2";
         ManifestRecord secondManifestRecord = buildManifestRecord(COLLABORATOR_SAMPLE_ID_2);
         testSession.addRecord(secondManifestRecord);
-
+        testSession.validateManifest();
         Assert.assertTrue(testSession.isManifestValid());
 
         Assert.assertEquals(testSession.getLogEntries().size(), 0);
@@ -95,6 +99,8 @@ public class ManifestRecordTest {
 
         testSession.addRecord(testRecordWithDupe);
 
+        testSession.validateManifest();
+
         Assert.assertFalse(testSession.isManifestValid());
 
         Assert.assertEquals(testSession.getLogEntries().size(), 2);
@@ -105,12 +111,49 @@ public class ManifestRecordTest {
         Assert.assertEquals(testRecordWithDupe.getLogEntries().size(), 1);
     }
 
+    /**
+     *
+     * TODO
+     *
+     * Awaiting decision on question asked in Confluence decision
+     * <a href=https://labopsconfluence.broadinstitute.org/display/GPI/What+is+the+scope+limit+with+marking+records+as+bad \>
+     *
+     *     Till then, this test method tests that a sample in a manifest record must be unique across manifest sessions
+     *     in a research project, but marking the duplicate record is limited to the current manifest session being
+     *     validated.
+     *
+     * @throws Exception
+     */
+    public void duplicateAcrossRP() throws Exception {
+
+        ManifestSession testSession = buildTestSession();
+
+        ManifestSession secondSession = getManifestSession(testSession.getResearchProject(),
+                ManifestTestFactory.buildManifestRecord(ImmutableMap.of(Metadata.Key.SAMPLE_ID,
+                        COLLABORATOR_SAMPLE_ID_1,
+                        Metadata.Key.GENDER, "F", Metadata.Key.PATIENT_ID, VALUE_3)));
+
+        testSession.validateManifest();
+            Assert.assertFalse(testSession.isManifestValid());
+            assertThat(testSession.getLogEntries(), is(not(empty())));
+            assertThat(testSession.getLogEntries().size(), is(equalTo(1)));
+
+        assertThat(secondSession.isManifestValid(), is(equalTo(true)));
+        assertThat(secondSession.getLogEntries(), is(empty()));
+
+    }
+
     public ManifestSession buildTestSession() {
         ResearchProject testProject = ResearchProjectTestFactory.createTestResearchProject("RP-334");
 
-        ManifestSession testSession = new ManifestSession(testProject, "DUPLICATE_TEST", new BSPUserList.QADudeUser("LU", 33L));
+        return getManifestSession(testProject, testRecord);
+    }
 
-        testSession.addRecord(testRecord);
+    public ManifestSession getManifestSession(ResearchProject testProject, ManifestRecord testRecord1) {
+        ManifestSession testSession =
+                new ManifestSession(testProject, "DUPLICATE_TEST", new BSPUserList.QADudeUser("LU", 33L));
+
+        testSession.addRecord(testRecord1);
         return testSession;
     }
 

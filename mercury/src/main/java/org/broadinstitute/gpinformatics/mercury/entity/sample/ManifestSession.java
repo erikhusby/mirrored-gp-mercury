@@ -27,8 +27,10 @@ import javax.persistence.Table;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Manifest session contains the information related to a single manifest upload during the sample registration process.
@@ -79,6 +81,8 @@ public class ManifestSession {
 
     public ManifestSession(ResearchProject researchProject, String sessionPrefix, BspUser createdBy) {
         this.researchProject = researchProject;
+        this.researchProject.addManifestSession(this);
+
         this.sessionPrefix = sessionPrefix;
         this.createdBy = createdBy.getUserId();
         this.modifiedBy = createdBy.getUserId();
@@ -148,7 +152,23 @@ public class ManifestSession {
 
     public boolean isManifestValid() {
 
-        Multimap<String, ManifestRecord> recordsBySamples = Multimaps.index(records,
+        boolean validationResult = true;
+
+        for(ManifestRecord testRecord:records) {
+            validationResult = (testRecord.getErrorStatus() == null);
+            if(!validationResult) {
+                break;
+            }
+        }
+
+        return validationResult;
+    }
+
+    public void validateManifest() {
+
+        final Set<String> allSampleIds = getAllSampleIDs();
+
+        Multimap<String, ManifestRecord> recordsBySamples = Multimaps.index(getAllRecords(),
                 new Function<ManifestRecord, String>() {
                     @Override
                     public String apply(ManifestRecord manifestRecord) {
@@ -160,7 +180,7 @@ public class ManifestSession {
                 recordsBySamples.asMap().entrySet(), new Predicate<Map.Entry<String, Collection<ManifestRecord>>>() {
             @Override
             public boolean apply(Map.Entry<String, Collection<ManifestRecord>> entry) {
-                return entry.getValue().size() > 1;
+                return (entry.getValue().size() > 1 && allSampleIds.contains(entry.getKey()));
             }
         });
 
@@ -168,14 +188,39 @@ public class ManifestSession {
 
         for (Map.Entry<String, Collection<ManifestRecord>> dupeToProcess : filterEntries) {
             for (ManifestRecord dupeRecord : dupeToProcess.getValue()) {
+
+                if(dupeRecord.getSession().equals(this)) {
                 dupeRecord.setErrorStatus(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID);
+
                 addLogEntry(new ManifestEvent(String.format("For sample %s: %s", dupeToProcess.getKey(),
-                        ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getMessage()), dupeRecord,
-                        ManifestEvent.Type.ERROR));
+                                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getMessage()), dupeRecord,
+                                ManifestEvent.Type.ERROR));
+                }
             }
         }
 
-        return filterEntries.isEmpty();
+    }
+
+    private Set<String> getAllSampleIDs() {
+
+        Set<String> allSampleIDs = new HashSet<>();
+
+        for (ManifestRecord record : records) {
+            allSampleIDs.add(record.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue());
+        }
+
+
+        return allSampleIDs;
+    }
+
+    private List<ManifestRecord> getAllRecords() {
+        List<ManifestRecord> allRecords = new ArrayList<>();
+
+        for (ManifestSession manifestSession : researchProject.getManifestSessions()) {
+            allRecords.addAll(manifestSession.getRecords());
+        }
+
+        return allRecords;
     }
 
     /**
