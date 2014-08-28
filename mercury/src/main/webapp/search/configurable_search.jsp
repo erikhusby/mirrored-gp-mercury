@@ -123,7 +123,7 @@ Move the mouse over the question marks to see details about each section.
                         </optgroup>
                     </c:forEach>
                 </stripes:select>
-                <a href="#" id="addTerm" onclick="addTerm();return false;">Add Term</a>
+                <stripes:button id="addTermBtn" name="addTermBtn" value="Add Term" onclick="addTerm();" class="btn btn-primary"/>
                 <img id="addTermTooltip" src="${ctxpath}/images/help.png" alt="help">
             </p>
             <label>Filter: </label> <input type="text" id="filterSearchTerms" onkeyup="filterSelect($j('#searchTermSelect')[0], this);">
@@ -143,7 +143,7 @@ Move the mouse over the question marks to see details about each section.
         <legend>Result Columns <img id="resultColumnsTooltip" src="${ctxpath}/images/help.png" alt="help"></legend>
         <!-- Allow user to choose column sets -->
         <stripes:layout-render name="/columns/view_column_sets.jsp"/>
-        <a href="#" onclick="chooseColumnSet();return false;">Choose column set</a>
+        <stripes:button id="chooseColumnSetBtn" name="chooseColumnSetBtn" value="Choose Column Set" onclick="chooseColumnSet();" class="btn btn-primary"/>
         <stripes:layout-render name="/search/view_columns.jsp"
                                availableMapGroupToColumnNames="${actionBean.availableMapGroupToColumnNames}"
                                predefinedViewColumns="${actionBean.searchInstance.predefinedViewColumns}"/>
@@ -154,7 +154,7 @@ Move the mouse over the question marks to see details about each section.
 
 </stripes:form>
 <!-- Show results -->
-<fieldset title="Results">
+<fieldset>
     <legend>Results</legend>
     <stripes:layout-render name="/columns/configurable_list.jsp"
                            entityName="${actionBean.entityName}"

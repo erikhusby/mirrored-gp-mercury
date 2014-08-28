@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  * Implemented by classes that accumulate information from a traversal of transfer history
@@ -657,5 +658,64 @@ public interface TransferTraverserCriteria {
         public Map<LabEvent, Set<LabVessel>> getVesselsForLabEventType() {
             return vesselsForLabEventType;
         }
+    }
+
+    /**
+     * Capture chain of events following a lab vessel
+     */
+    public class LabEventDescendantCriteria implements TransferTraverserCriteria {
+
+        private int hopCount = -1;
+
+        private final Set<LabEvent> labEvents = new TreeSet<LabEvent>( LabEvent.BY_EVENT_DATE_LOC );
+
+        @Override
+        public TraversalControl evaluateVesselPreOrder(Context context) {
+            if (context.getEvent() != null) {
+                if(!labEvents.add(context.getEvent())) {
+                    // Not sure if/how to avoid possibility of infinite looping on a circular relationship
+                    // This prunes off descendant events
+//                    return TraversalControl.StopTraversing;
+                }
+                if (context.getHopCount() > hopCount) {
+                    hopCount = context.getHopCount();
+                }
+            }
+
+            // Check for in place events on vessel container (e.g. EndRepair, ABase, APWash)
+            if( context.getVesselContainer() != null ) {
+                LabVessel containerVessel = context.getVesselContainer().getEmbedder();
+                if (containerVessel != null) {
+                    Set<LabEvent> inPlaceLabEvents = containerVessel.getInPlaceLabEvents();
+                    for (LabEvent inPlaceLabEvent : inPlaceLabEvents) {
+                        labEvents.add(inPlaceLabEvent);
+                    }
+                    // Look for what comes in from the side (e.g. IndexedAdapterLigation, BaitAddition)
+                    for (LabEvent containerEvent : containerVessel.getTransfersTo()) {
+                        labEvents.add(containerEvent);
+                        for (LabVessel ancestorLabVessel : containerEvent.getSourceLabVessels()) {
+                            if( ancestorLabVessel.getContainerRole() != null ){
+                                labEvents.addAll(ancestorLabVessel.getContainerRole().getEmbedder().getTransfersTo());
+                            }
+                        }
+                    }
+                }
+            }
+
+            return TraversalControl.ContinueTraversing;
+        }
+
+        @Override
+        public void evaluateVesselInOrder(Context context) {
+        }
+
+        @Override
+        public void evaluateVesselPostOrder(Context context) {
+        }
+
+        public Set<LabEvent> getAllEvents() {
+            return labEvents;
+        }
+
     }
 }
