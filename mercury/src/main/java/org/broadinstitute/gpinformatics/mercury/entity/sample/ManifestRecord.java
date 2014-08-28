@@ -163,6 +163,9 @@ public class ManifestRecord {
          */
         MISMATCHED_GENDER("At least one other manifest entry with the same patient ID has a different gender"),
         /**
+         *
+         * TODO not sure this is an error, should be tracked by a Decision.
+         *
          * Another record within this manifest, with the same patient ID has the same value
          * for the tumor/normal indicator.
          */
@@ -178,8 +181,7 @@ public class ManifestRecord {
          */
         DUPLICATE_SAMPLE_SCAN(" "),
         /**
-         * Represents a scenario in which a record exists that, as of the completion of a session,
-         * there was no physical sample scanned to associate with the record.
+         * No sample was scanned for a manifest record.
          */
         MISSING_SAMPLE("No sample has been scanned to correspond with the manifest record"),
         /**

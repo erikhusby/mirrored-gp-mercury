@@ -14,8 +14,19 @@ import javax.inject.Inject;
  */
 public class ManifestSessionEjb {
 
-    @Inject
     private ManifestSessionDao manifestSessionDao;
+
+    /**
+     * For CDI
+     */
+    @SuppressWarnings("UnusedDeclaration")
+    public ManifestSessionEjb() {
+    }
+
+    @Inject
+    public ManifestSessionEjb(ManifestSessionDao manifestSessionDao) {
+        this.manifestSessionDao = manifestSessionDao;
+    }
 
     public void save(ManifestSession manifestSession) {
         manifestSessionDao.persist(manifestSession);

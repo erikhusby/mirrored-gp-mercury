@@ -38,6 +38,12 @@ public class ManifestSessionTest {
         testUser = new BSPUserList.QADudeUser("LU", 33L);
 
         testSession = new ManifestSession(testRp, sessionPrefix, testUser);
+
+        for (String sampleId : Arrays.asList(SAMPLE_ID_1, SAMPLE_ID_2, SAMPLE_ID_3)) {
+            ManifestRecord manifestRecord = buildManifestRecord(testSession, sampleId);
+            testSession.addRecord(manifestRecord);
+            manifestRecord.setStatus(ManifestRecord.Status.SCANNED);
+        }
     }
 
     public void basicProperties() throws Exception {
@@ -91,31 +97,24 @@ public class ManifestSessionTest {
      * A happy path test, all samples in the manifest have scanned and nothing is wrong.
      */
     public void allSamplesScanned() {
-
-        for (String sampleId : Arrays.asList(SAMPLE_ID_1, SAMPLE_ID_2, SAMPLE_ID_3)) {
-            ManifestRecord manifestRecord = buildManifestRecord(testSession, sampleId);
-            testSession.addRecord(manifestRecord);
-            manifestRecord.setStatus(ManifestRecord.Status.SCANNED);
-        }
-
         assertThat(testSession.hasErrors(), is(false));
         testSession.validateForClose();
         assertThat(testSession.hasErrors(), is(false));
     }
 
-    public void missingSample() {
 
-        for (String sampleId : Arrays.asList(SAMPLE_ID_1, SAMPLE_ID_2, SAMPLE_ID_3)) {
-            ManifestRecord manifestRecord = buildManifestRecord(testSession, sampleId);
-            testSession.addRecord(manifestRecord);
-            // Simulate a scan for all but the first sample.
-            if (!sampleId.equals(SAMPLE_ID_1)) {
-                manifestRecord.setStatus(ManifestRecord.Status.SCANNED);
+    public void missingSample() {
+        for (ManifestRecord manifestRecord : testSession.getRecords()) {
+            if (manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue().equals(SAMPLE_ID_1)) {
+                manifestRecord.setStatus(ManifestRecord.Status.UPLOADED);
             }
         }
-
         assertThat(testSession.hasErrors(), is(false));
         testSession.validateForClose();
         assertThat(testSession.hasErrors(), is(true));
+    }
+
+    public void scanCollaboratorTubeInTubeTransfer() {
+
     }
 }
