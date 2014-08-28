@@ -16,7 +16,6 @@ import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.nullValue;
 
 /**
  * Database free test of ManifestRecords, entities representing individual samples within a Buick manifest used for
@@ -67,16 +66,13 @@ public class ManifestRecordTest {
         testRecord.addLogEntry(new ManifestEvent(NEW_ERROR_STATUS.formatMessage("Sample ID", COLLABORATOR_SAMPLE_ID_1),
                 ManifestEvent.Type.FATAL));
 
-//        testRecord.setErrorStatus(NEW_ERROR_STATUS);
-
         Assert.assertEquals(testRecord.getStatus(), NEW_STATUS);
         Assert.assertTrue(testRecord.fatalErrorExists());
-//        Assert.assertEquals(testRecord.getErrorStatus(), NEW_ERROR_STATUS);
     }
 
     public void validManifest() {
 
-        ManifestSession secondSession = getManifestSession(testSession.getResearchProject(),
+        ManifestSession secondSession = buildTestSession(testSession.getResearchProject(),
                 buildManifestRecord("COLLABORATOR_SAMPLE_ID_3"));
 
         String COLLABORATOR_SAMPLE_ID_2 = "COLLABORATOR_SAMPLE_ID_2";
@@ -116,8 +112,6 @@ public class ManifestRecordTest {
         assertThat(testSession.getLogEntries().size(), is(equalTo(2)));
         assertThat(testRecord.fatalErrorExists(), is(equalTo(true)));
         assertThat(testRecordWithDupe.fatalErrorExists(), is(equalTo(true)));
-//        assertThat(testRecord.getErrorStatus(), is(equalTo(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID)));
-//        assertThat(testRecordWithDupe.getErrorStatus(), is(equalTo(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID)));
 
         assertThat(testRecord.getLogEntries().size(), is(equalTo(1)));
         assertThat(testRecordWithDupe.getLogEntries().size(), is(equalTo(1)));
@@ -137,7 +131,7 @@ public class ManifestRecordTest {
      */
     public void duplicateAcrossRP() throws Exception {
 
-        ManifestSession secondSession = getManifestSession(testSession.getResearchProject(),
+        ManifestSession secondSession = buildTestSession(testSession.getResearchProject(),
                 buildManifestRecord(COLLABORATOR_SAMPLE_ID_1));
 
         testSession.validateManifest();
@@ -164,7 +158,7 @@ public class ManifestRecordTest {
     public void duplicateAcrossRPHierarchy() throws Exception {
 
         ResearchProject parentResearchProject = ResearchProjectTestFactory.createTestResearchProject("RP-334SIS");
-        ManifestSession secondSession = getManifestSession(parentResearchProject,
+        ManifestSession secondSession = buildTestSession(parentResearchProject,
                 buildManifestRecord(COLLABORATOR_SAMPLE_ID_1));
         buildTestSession().getResearchProject().setParentResearchProject(parentResearchProject);
 
@@ -189,10 +183,10 @@ public class ManifestRecordTest {
 
     public void mixedValidationErrorTest() throws Exception {
 
-        ManifestRecord dupeSampleRecord =
+        ManifestRecord duplicateSampleRecord =
                 ManifestTestFactory.buildManifestRecord(ImmutableMap.of(Metadata.Key.SAMPLE_ID,
                         COLLABORATOR_SAMPLE_ID_1, Metadata.Key.GENDER, VALUE_2, Metadata.Key.PATIENT_ID, "PI-3234"));
-        testSession.addRecord(dupeSampleRecord);
+        testSession.addRecord(duplicateSampleRecord);
 
         ManifestRecord genderMisMatch =
                 ManifestTestFactory.buildManifestRecord(ImmutableMap.of(Metadata.Key.SAMPLE_ID, "229249239",
@@ -208,25 +202,24 @@ public class ManifestRecordTest {
         assertThat(testRecord.getLogEntries(), is(not(empty())));
         assertThat(testRecord.getLogEntries().size(), is(equalTo(1)));
 
-        assertThat(dupeSampleRecord.getLogEntries(), is(not(empty())));
-        assertThat(dupeSampleRecord.getLogEntries().size(), is(equalTo(2)));
+        assertThat(duplicateSampleRecord.getLogEntries(), is(not(empty())));
+        assertThat(duplicateSampleRecord.getLogEntries().size(), is(equalTo(2)));
 
         assertThat(genderMisMatch.getLogEntries(), is(not(empty())));
         assertThat(genderMisMatch.getLogEntries().size(), is(equalTo(1)));
     }
 
-
-    public ManifestSession buildTestSession() {
+    private ManifestSession buildTestSession() {
         ResearchProject testProject = ResearchProjectTestFactory.createTestResearchProject("RP-334");
 
-        return getManifestSession(testProject, testRecord);
+        return buildTestSession(testProject, testRecord);
     }
 
-    public ManifestSession getManifestSession(ResearchProject testProject, ManifestRecord testRecord1) {
+    private ManifestSession buildTestSession(ResearchProject testProject, ManifestRecord testRecord) {
         ManifestSession testSession =
                 new ManifestSession(testProject, "DUPLICATE_TEST", new BSPUserList.QADudeUser("LU", 33L));
 
-        testSession.addRecord(testRecord1);
+        testSession.addRecord(testRecord);
         return testSession;
     }
 

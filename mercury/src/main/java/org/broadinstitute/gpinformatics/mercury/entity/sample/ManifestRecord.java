@@ -184,7 +184,7 @@ public class ManifestRecord {
          */
         NOT_IN_MANIFEST("The scanned sample is not found in any manifest"),
         /**
-         * TODO This seems to be a slight duplicate to duplicate sample ID.  Need to fully define what this error case means
+         * TODO This seems to be a duplicate to duplicate sample ID.  Need to fully define what this error case means
          */
         DUPLICATE_SAMPLE_SCAN(" "),
         /** Represents a scenario in which a record exists that, as of the completion of a session,
@@ -200,7 +200,7 @@ public class ManifestRecord {
          */
         ALREADY_SCANNED_TARGET("The scanned target tube has already been associated with another source sample"),
         /**
-         * TODO This seems to be a slight duplicate of not ready for accessioning.  Need to fully define what this case means
+         * TODO This seems to be a duplicate of not ready for accessioning.  Need to fully define what this case means
          */
         NOT_REGISTERED(" "),
         /** Helpful message to note that the user is attempting to accession a source tube into

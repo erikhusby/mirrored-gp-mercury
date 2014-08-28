@@ -18,6 +18,7 @@ import org.testng.annotations.Test;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ManifestSessionTest {
 
+    public static final String SAMPLE_ID_1 = "SM-1";
     private ManifestSession testSession;
     private ResearchProject testRp;
     private String sessionPrefix;
@@ -47,7 +48,7 @@ public class ManifestSessionTest {
     }
 
     public void addRecord() throws Exception {
-        ManifestRecord testRecord = buildManifestRecord();
+        ManifestRecord testRecord = buildManifestRecord("SM-1");
 
         testSession.addRecord(testRecord);
 
@@ -55,15 +56,16 @@ public class ManifestSessionTest {
         Assert.assertEquals(testRecord.getSession(), testSession);
     }
 
-    private ManifestRecord buildManifestRecord() {
+    private ManifestRecord buildManifestRecord(String sampleId) {
         return ManifestTestFactory.buildManifestRecord(ImmutableMap.of(
+                Metadata.Key.SAMPLE_ID, sampleId,
                 Metadata.Key.SAMPLE_TYPE, "value1",
                 Metadata.Key.TUMOR_NORMAL, "value2",
                 Metadata.Key.COLLECTION_DATE, "value3"));
     }
 
     public void addLogEntries() throws Exception {
-        ManifestRecord testRecord = buildManifestRecord();
+        ManifestRecord testRecord = buildManifestRecord(SAMPLE_ID_1);
         ManifestEvent logEntryWithoutRecord = new ManifestEvent("Failed to Upload Record in session",
                 ManifestEvent.Type.ERROR);
         testSession.addLogEntry(logEntryWithoutRecord);
@@ -75,5 +77,10 @@ public class ManifestSessionTest {
 
         Assert.assertEquals(testRecord.getLogEntries().size(), 1);
         Assert.assertEquals(testSession.getLogEntries().size(), 2);
+    }
+
+    public void missingSample() {
+        ManifestRecord manifestRecord = buildManifestRecord("SM-1");
+
     }
 }

@@ -150,9 +150,7 @@ public class ManifestSession {
     }
 
     /**
-     * If there is an error with any record in this manifest session, report that some errors exist
-     *
-     * @return
+     * If there is an error with any record in this manifest session, report that some errors exist.
      */
     public boolean areThereErrors() {
 
@@ -169,7 +167,7 @@ public class ManifestSession {
     }
 
     /**
-     * Execute validations against the records in this manifest that have not already been validated
+     * Execute validations against the records in this manifest that have not already been validated.
      */
     public void validateManifest() {
 
@@ -182,7 +180,7 @@ public class ManifestSession {
 
     /**
      * Encapsulates the logic to validate a given set of manifest records for inconsistent gender values for a
-     * patient iD
+     * patient ID.
      *
      * @param manifestRecordsEligibleForValidation Collection of all manifest records against which to perform
      *                                             gender mismatch validation
@@ -216,8 +214,6 @@ public class ManifestSession {
      *
      * @param recordsByPatientId an iterable of the map entries found in the Multimap which grouped manifest records
      *                           by their patient ID
-     *
-     * @return
      */
     private Iterable<Map.Entry<String, Collection<ManifestRecord>>> filterForPatientsWithInconsistentGenders(
             Multimap<String, ManifestRecord> recordsByPatientId) {
@@ -238,7 +234,7 @@ public class ManifestSession {
 
     /**
      * Encapsulates the logic to validate a given set of manifest records for non-unique references to collaborator
-     * sample ID
+     * sample ID.
      *
      * @param allEligibleManifestRecords Collection of all manifest records against which to perform unique sample id
      *                                   validation
@@ -256,8 +252,6 @@ public class ManifestSession {
                 // Ignore ManifestSessions that are not this ManifestSession, they will not have errors added by
                 // this logic.
                 if (duplicatedRecord.getSession().equals(this)) {
-//                    duplicatedRecord.setErrorStatus(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID);
-
                     String message =
                             ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage("sample ID", entry.getKey());
                     addLogEntry(new ManifestEvent(message, duplicatedRecord, ManifestEvent.Type.FATAL));
@@ -267,7 +261,7 @@ public class ManifestSession {
     }
 
     /**
-     * Helper method to filter out entries in a given MultiMap that only have 1 member of the value collection
+     * Helper method to filter out entries in a given MultiMap that only have 1 member of the value collection.
      *
      * @param recordsByMetadataValue MultiMap of Manifest Records which are to be filtered
      *
@@ -287,7 +281,7 @@ public class ManifestSession {
     }
 
     /**
-     * Helper method to Build a MultiMap of manifest records by a given Metadata Key
+     * Helper method to Build a MultiMap of manifest records by a given Metadata Key.
      *
      * @param allEligibleManifestRecords The set of manifest records to be divided up into a MultiMap
      * @param key                        type of Metadata key who's value will be index into the newly created MultiMap
@@ -307,7 +301,7 @@ public class ManifestSession {
 
     /**
      * Helper method to extract all manifest records eligible for validation.  Records for which validation has been
-     * run and has found errors are not eligible for validation
+     * run and has found errors are not eligible for validation.
      *
      * @return A list of all Manifest record
      */
@@ -327,7 +321,7 @@ public class ManifestSession {
 
     /**
      * Indicator to denote the availability (complete or otherwise) of a manifest session for the sample registration
-     * process
+     * process.
      */
     public enum SessionStatus {
         OPEN, COMPLETED
