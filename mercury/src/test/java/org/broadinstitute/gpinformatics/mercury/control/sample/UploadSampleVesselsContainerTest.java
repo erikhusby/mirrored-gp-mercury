@@ -11,6 +11,9 @@ import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselEjb;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -40,6 +43,9 @@ public class UploadSampleVesselsContainerTest extends Arquillian {
     @Inject
     private VesselEjb vesselEjb;
 
+    @Inject
+    private BarcodedTubeDao barcodedTubeDao;
+
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(DEV);
@@ -47,6 +53,7 @@ public class UploadSampleVesselsContainerTest extends Arquillian {
 
     @Test
     public void testPersistence() {
+        // Create a spreadsheet with IDs that aren't in the database.
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
         String timestamp = simpleDateFormat.format(new Date());
         Workbook workbook = new XSSFWorkbook();
@@ -74,8 +81,19 @@ public class UploadSampleVesselsContainerTest extends Arquillian {
             File tempFile = File.createTempFile("SampleVessels", ".xlsx");
             workbook.write(new FileOutputStream(tempFile));
             MessageCollection messageCollection = new MessageCollection();
+            // Persist the samples
             vesselEjb.createSampleVessels(new FileInputStream(tempFile), "thompson", messageCollection);
             Assert.assertEquals(messageCollection.getErrors().size(), 0);
+
+            // Check tube and sample
+            BarcodedTube barcodedTube = barcodedTubeDao.findByBarcode(timestamp + 1);
+            Assert.assertNotNull(barcodedTube);
+            Assert.assertEquals(barcodedTube.getMercurySamples().size(), 1);
+            MercurySample mercurySample = barcodedTube.getMercurySamples().iterator().next();
+            Assert.assertEquals(mercurySample.getSampleKey(), "SM-" + timestamp + 1);
+            Assert.assertEquals(mercurySample.getMetadataSource(), MercurySample.MetadataSource.MERCURY);
+
+            // Check that attempting to create again the same tubes and samples gives errors.
             vesselEjb.createSampleVessels(new FileInputStream(tempFile), "thompson", messageCollection);
             Assert.assertFalse(messageCollection.getErrors().isEmpty());
         } catch (IOException e) {
