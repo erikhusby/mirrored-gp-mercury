@@ -14,7 +14,7 @@ import java.util.Map;
  */
 public class ManifestTestFactory {
 
-    private static Metadata [] buildMetadata(Map<Metadata.Key, String> metadataContents) {
+    public static Metadata [] buildMetadata(Map<Metadata.Key, String> metadataContents) {
         List<Metadata> metadataList = new ArrayList<>();
 
         for (Map.Entry<Metadata.Key, String> entry : metadataContents.entrySet()) {
@@ -22,16 +22,5 @@ public class ManifestTestFactory {
             metadataList.add(metadata);
         }
         return metadataList.toArray(new Metadata[metadataList.size()]);
-    }
-
-    public static ManifestRecord buildManifestRecord(Map<Metadata.Key, String> metadataContents,
-                                                     ManifestSession sessionIn) {
-        return new ManifestRecord(sessionIn, buildMetadata(metadataContents));
-    }
-
-    public static ManifestRecord buildManifestRecord(ManifestRecord.ErrorStatus errorStatus,
-                                                     Map<Metadata.Key, String> metadataContents,
-                                                     ManifestSession sessionIn) {
-        return new ManifestRecord(sessionIn, errorStatus, buildMetadata(metadataContents));
     }
 }

@@ -47,7 +47,6 @@ public class ManifestSessionTest {
 
         for (String sampleId : Arrays.asList(SAMPLE_ID_1, SAMPLE_ID_2, SAMPLE_ID_3)) {
             ManifestRecord manifestRecord = buildManifestRecord(testSession, sampleId);
-            testSession.addRecord(manifestRecord);
             manifestRecord.setStatus(ManifestRecord.Status.SCANNED);
         }
     }
@@ -73,11 +72,11 @@ public class ManifestSessionTest {
     }
 
     private ManifestRecord buildManifestRecord(ManifestSession manifestSession, String sampleId) {
-        return ManifestTestFactory.buildManifestRecord(manifestSession, ImmutableMap.of(
+        return new ManifestRecord(manifestSession,ManifestTestFactory.buildMetadata(ImmutableMap.of(
                 Metadata.Key.SAMPLE_ID, sampleId,
                 Metadata.Key.SAMPLE_TYPE, "value1",
                 Metadata.Key.TUMOR_NORMAL, "value2",
-                Metadata.Key.COLLECTION_DATE, "value3"), sessionIn);
+                Metadata.Key.COLLECTION_DATE, "value3")));
     }
 
     public void addLogEntries() throws Exception {
@@ -170,7 +169,6 @@ public class ManifestSessionTest {
 
         String errorRecordID = "20923842";
         ManifestRecord errorRecord = buildManifestRecord(testSession, errorRecordID);
-        testSession.addRecord(errorRecord);
         setSampleStatus(errorRecordID, ManifestRecord.Status.UPLOADED);
         testSession.addLogEntry(new ManifestEvent(
                 ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage("Sample ID", errorRecordID),

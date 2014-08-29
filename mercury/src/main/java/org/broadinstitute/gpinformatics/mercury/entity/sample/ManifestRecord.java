@@ -62,9 +62,6 @@ public class ManifestRecord {
     @Enumerated(EnumType.STRING)
     private Status status = Status.UPLOADED;
 
-    @Enumerated(EnumType.STRING)
-    private ErrorStatus errorStatus;
-
     @OneToMany(cascade = {CascadeType.PERSIST}, mappedBy = "manifestRecord")
     private List<ManifestEvent> logEntries = new ArrayList<>();
 
@@ -77,15 +74,10 @@ public class ManifestRecord {
      */
     protected ManifestRecord() {}
 
-    public ManifestRecord(ManifestSession sessionIn, Metadata... metadata) {
-        this(sessionIn, null, metadata);
-    }
-
-    public ManifestRecord(ManifestSession session, ErrorStatus errorStatus, Metadata... metadata) {
+    public ManifestRecord(ManifestSession session, Metadata... metadata) {
         this.session = session;
         this.session.addRecord(this);
         this.metadata.addAll(Arrays.asList(metadata));
-        this.errorStatus = errorStatus;
     }
 
     /**
@@ -115,10 +107,6 @@ public class ManifestRecord {
 
     public Status getStatus() {
         return status;
-    }
-
-    public ErrorStatus getErrorStatus() {
-        return errorStatus;
     }
 
     public List<ManifestEvent> getLogEntries() {
