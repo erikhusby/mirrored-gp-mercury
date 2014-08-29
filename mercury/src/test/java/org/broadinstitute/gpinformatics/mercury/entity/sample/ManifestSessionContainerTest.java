@@ -83,7 +83,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         manifestSessionEjb.save(manifestSessionIn);
 
         assertThat(manifestSessionIn.getResearchProject(), is(equalTo(researchProject)));
-//        assertThat(researchProject.getManifestSessions(), hasItem(manifestSessionIn));
+        assertThat(researchProject.getManifestSessions(), hasItem(manifestSessionIn));
 
         // Clear the Session to force retrieval of a persistent instance 'manifestSessionOut' below that is distinct
         // from the detached 'manifestSessionIn' instance.

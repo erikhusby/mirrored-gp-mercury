@@ -8,16 +8,20 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.hamcrest.CoreMatchers;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
 
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.not;
+
 
 /**
  * Database free tests of ManifestSessions.
@@ -64,9 +68,7 @@ public class ManifestSessionTest {
 
     public void addRecord() throws Exception {
         ManifestRecord testRecord = buildManifestRecord(testSession, SAMPLE_ID_1);
-
         testSession.addRecord(testRecord);
-
         Assert.assertTrue(testSession.getRecords().contains(testRecord));
         Assert.assertEquals(testRecord.getSession(), testSession);
     }
@@ -120,14 +122,10 @@ public class ManifestSessionTest {
         }
     }
 
-    public void successfulScanCollaboratorTubeInTubeTransfer() {
+    public void successfulScanCollaboratorTubeInTubeTransfer() throws TubeTransferException {
         String collaboratorBarcode = SAMPLE_ID_1;
         ManifestRecord manifestRecord = null;
-        try {
-            manifestRecord = testSession.findScannedRecord(collaboratorBarcode);
-        } catch (TubeTransferException e) {
-            Assert.fail();
-        }
+        manifestRecord = testSession.findScannedRecord(collaboratorBarcode);
         assertThat(manifestRecord, is(notNullValue()));
     }
 
@@ -138,7 +136,8 @@ public class ManifestSessionTest {
             testSession.findScannedRecord(collaboratorBarcode);
             Assert.fail();
         } catch (TubeTransferException e) {
-            assertThat(e.getErrorStatus(), is(equalTo(ManifestRecord.ErrorStatus.NOT_READY_FOR_ACCESSIONING)));
+            assertThat(e.getErrorStatus(), is(
+                    CoreMatchers.equalTo(ManifestRecord.ErrorStatus.NOT_READY_FOR_ACCESSIONING)));
         }
     }
 
@@ -149,7 +148,41 @@ public class ManifestSessionTest {
             testSession.findScannedRecord(collaboratorBarcode);
             Assert.fail();
         } catch (TubeTransferException e) {
-            assertThat(e.getErrorStatus(), is(equalTo(ManifestRecord.ErrorStatus.NOT_IN_MANIFEST)));
+            assertThat(e.getErrorStatus(), is(CoreMatchers.equalTo(ManifestRecord.ErrorStatus.NOT_IN_MANIFEST)));
         }
+    }
+
+    public void scanSampleInManifest() throws Exception {
+
+        setSampleStatus(SAMPLE_ID_1, ManifestRecord.Status.UPLOAD_ACCEPTED);
+
+        ManifestRecord record = testSession.scanSample(SAMPLE_ID_1);
+        assertThat(record.getStatus(), is(CoreMatchers.equalTo(ManifestRecord.Status.SCANNED)));
+
+        assertThat(testSession.getLogEntries(), is(empty()));
+        try {
+            ManifestRecord record2 = testSession.scanSample(SAMPLE_ID_1 + "_NOTIN");
+            Assert.fail();
+        } catch (TubeTransferException tte) {
+            assertThat(tte.getErrorStatus(), is(CoreMatchers.equalTo(ManifestRecord.ErrorStatus.NOT_IN_MANIFEST)));
+            assertThat(testSession.getLogEntries(), is(not(empty())));
+            assertThat(testSession.getLogEntries().size(), is(equalTo(1)));
+        }
+
+        String errorRecordID = "20923842";
+        ManifestRecord errorRecord = buildManifestRecord(testSession, errorRecordID);
+        testSession.addRecord(errorRecord);
+        setSampleStatus(errorRecordID, ManifestRecord.Status.UPLOADED);
+        testSession.addLogEntry(new ManifestEvent(
+                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage("Sample ID", errorRecordID),
+                ManifestEvent.Type.FATAL, errorRecord));
+
+        try {
+            testSession.scanSample(errorRecordID);
+            Assert.fail();
+        } catch (TubeTransferException e) {
+            assertThat(e.getErrorStatus(), is(equalTo(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE)));
+        }
+
     }
 }

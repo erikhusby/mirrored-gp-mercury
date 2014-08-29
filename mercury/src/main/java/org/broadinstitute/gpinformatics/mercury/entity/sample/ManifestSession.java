@@ -5,6 +5,7 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
@@ -135,10 +136,6 @@ public class ManifestSession {
         return records;
     }
 
-    public void setRecords(List<ManifestRecord> records) {
-        this.records = records;
-    }
-
     public void addLogEntry(ManifestEvent logEntry) {
 
         logEntries.add(logEntry);
@@ -197,7 +194,7 @@ public class ManifestSession {
             for (ManifestRecord duplicatedRecord : entry.getValue()) {
                 // Ignore ManifestSessions that are not this ManifestSession, they will not have errors added by
                 // this logic.
-                if (duplicatedRecord.getSession().equals(this)) {
+                if (this.equals(duplicatedRecord.getSession())) {
 
                     String message =
                             ManifestRecord.ErrorStatus.MISMATCHED_GENDER.formatMessage("patient ID", entry.getKey());
@@ -320,23 +317,41 @@ public class ManifestSession {
         return allRecords;
     }
 
+    /**
+     * Called before the manifest session is set to completed, this will ensure that all records on the session are
+     * in the proper state.  If not, manifest Events entries are recorded for the record to indicate that it has not
+     * been scanned
+     */
     public void validateForClose() {
         // Confirm all records have scanned status.
         for (ManifestRecord record : records) {
-            if (!(record.getStatus() == ManifestRecord.Status.SCANNED)) {
+            if ((record.getStatus() != ManifestRecord.Status.SCANNED) && !record.fatalErrorExists()) {
+
                 String sampleId = record.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue();
                 String message = ManifestRecord.ErrorStatus.MISSING_SAMPLE.formatMessage("sample ID", sampleId);
 
-                ManifestEvent manifestEvent = new ManifestEvent(message, ManifestEvent.Type.FATAL);
+                ManifestEvent manifestEvent = new ManifestEvent(message, ManifestEvent.Type.ERROR, record);
                 logEntries.add(manifestEvent);
             }
         }
     }
 
+    /**
+     * hasErrors is used to determine if any manifest event entries exist that can be considered errors
+     *
+     * @return true if even one manifest event entry can be considered an error
+     */
     public boolean hasErrors() {
         return hasManifestEventOfType(EnumSet.of(ManifestEvent.Type.ERROR, ManifestEvent.Type.FATAL));
     }
 
+    /**
+     * Helper method to check if there are any manifest event entries of a given type
+     *
+     * @param types set of types to check for entries against
+     *
+     * @return true if even one event entry matches a type in the given set of event types
+     */
     private boolean hasManifestEventOfType(Set<ManifestEvent.Type> types) {
         for (ManifestEvent logEntry : logEntries) {
             if (types.contains(logEntry.getLogType())) {
@@ -346,18 +361,65 @@ public class ManifestSession {
         return false;
     }
 
-    public ManifestRecord findScannedRecord(String collaboratorBarcode) throws TubeTransferException {
+    /**
+     * Provides the caller with the ability to find a manifest record on the current manifest session that corresponds
+     * to the given sample id
+     *
+     * @param collaboratorBarcode Collaborator sample ID for which this method intends to find a manifest record
+     *
+     * @return the found record (if it exists)
+     */
+    public ManifestRecord findScannedRecord(String collaboratorBarcode) {
         for (ManifestRecord record : records) {
             if (record.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue().equals(collaboratorBarcode)) {
                 if (record.getStatus() != ManifestRecord.Status.SCANNED) {
-                    throw new TubeTransferException(ManifestRecord.ErrorStatus.NOT_READY_FOR_ACCESSIONING);
+                    throw new TubeTransferException(ManifestRecord.ErrorStatus.NOT_READY_FOR_ACCESSIONING, "Sample ID",
+                            collaboratorBarcode);
                 }
                 return record;
             }
         }
-        throw new TubeTransferException(ManifestRecord.ErrorStatus.NOT_IN_MANIFEST);
+        throw new TubeTransferException(ManifestRecord.ErrorStatus.NOT_IN_MANIFEST, "Sample ID", collaboratorBarcode);
     }
 
+    /**
+     * Encapsulates the series of steps to perform when a user wishes to scan a source sample tube
+     *
+     * @param sampleId collaborator sample ID of the tube being scanned
+     *
+     * @return Manifest record associated with the scanned
+     */
+    public ManifestRecord scanSample(String sampleId) {
+
+        ManifestRecord foundRecord = null;
+        try {
+            foundRecord = findRecordByState(sampleId);
+        } catch (TubeTransferException e) {
+            addLogEntry(new ManifestEvent(e.getErrorStatus().formatMessage("Sample ID", sampleId),
+                    ManifestEvent.Type.ERROR));
+            throw e;
+        }
+        if (foundRecord.fatalErrorExists()) {
+
+            Set<String> fatalMessages = foundRecord.getFatalRecordMessages();
+
+            throw new TubeTransferException(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE, "Sample ID",
+                    sampleId,
+                    StringUtils.join(fatalMessages, ", "));
+        }
+        foundRecord.setStatus(ManifestRecord.Status.SCANNED);
+        return foundRecord;
+    }
+
+    private ManifestRecord findRecordByState(String collaboratorBarcode)
+            throws TubeTransferException {
+        for (ManifestRecord record : records) {
+            if (record.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue().equals(collaboratorBarcode)) {
+                return record;
+            }
+        }
+        throw new TubeTransferException(ManifestRecord.ErrorStatus.NOT_IN_MANIFEST, "Sample ID", collaboratorBarcode);
+    }
 
     /**
      * Indicator to denote the availability (complete or otherwise) of a manifest session for the sample registration

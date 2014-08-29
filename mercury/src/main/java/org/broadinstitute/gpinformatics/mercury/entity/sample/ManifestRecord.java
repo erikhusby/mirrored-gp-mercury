@@ -25,8 +25,10 @@ import javax.persistence.Transient;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A manifest record represents the accumulated data of one row in a sample manifest derived from the sample
@@ -139,6 +141,16 @@ public class ManifestRecord {
         return fatality;
     }
 
+    public Set<String> getFatalRecordMessages() {
+        Set<String> fatalMessages = new HashSet<>();
+        for (ManifestEvent manifestEvent : getLogEntries()) {
+            if (manifestEvent.getLogType() == ManifestEvent.Type.FATAL) {
+                fatalMessages.add(manifestEvent.getMessage());
+            }
+        }
+        return fatalMessages;
+    }
+
     /**
      * Status represents the states that a manifest record can be in during the registration workflow.
      */
@@ -202,7 +214,9 @@ public class ManifestRecord {
          * Helpful message to note that the user is attempting to accession a source tube into
          * that has already gone through accessioning.
          */
-        ALREADY_SCANNED_SOURCE("The scanned source tube has already been through the accessioning process");
+        ALREADY_SCANNED_SOURCE("The scanned source tube has already been through the accessioning process"),
+
+        PREVIOUS_ERRORS_UNABLE_TO_CONTINUE("Due to Errors previously found, this sample is unable to continue.");
         private String message;
 
         ErrorStatus(String message) {
