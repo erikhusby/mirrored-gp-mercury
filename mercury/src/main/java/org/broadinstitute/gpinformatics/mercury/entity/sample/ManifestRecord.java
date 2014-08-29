@@ -86,7 +86,7 @@ public class ManifestRecord {
         // This is constructed lazily as it can't be built within the no-arg constructor since the 'metadata' field
         // upon which it depends will not have been initialized.
         if (metadataMap == null) {
-            metadataMap = new HashMap<>(Maps.uniqueIndex(metadata, new Function<Metadata, Metadata.Key>() {
+            metadataMap = new HashMap<>(Maps.uniqueIndex(getMetadata(), new Function<Metadata, Metadata.Key>() {
                 @Override
                 public Metadata.Key apply(Metadata metadata) {
                     return metadata.getKey();
@@ -221,19 +221,14 @@ public class ManifestRecord {
 
         ErrorStatus(String message) {
             this.message = message;
-
         }
 
         public String getMessage() {
             return message;
         }
 
-        public void setMessage(String message) {
-            this.message = message;
-        }
-
         public String formatMessage(String entityType, String value) {
-            return String.format("For %s %s: %s", entityType, value, message);
+            return String.format("For %s %s: %s", entityType, value, getMessage());
         }
     }
 }
