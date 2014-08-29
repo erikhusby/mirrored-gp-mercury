@@ -87,7 +87,7 @@ public class VarioskanParserTest {
             Assert.assertEquals(mapPositionToTube.get(VesselPosition.A01).getMetrics().iterator().next().getValue(),
                     new BigDecimal("3.34"));
             Assert.assertEquals(mapPositionToTube.get(VesselPosition.A02).getMetrics().iterator().next().getValue(),
-                    new BigDecimal("1.37"));
+                    new BigDecimal("0.87"));
             Assert.assertEquals(mapPositionToTube.get(VesselPosition.A03).getMetrics().iterator().next().getValue(),
                     new BigDecimal("1.37"));
         } catch (IOException | InvalidFormatException | ValidationException e) {
@@ -122,7 +122,7 @@ public class VarioskanParserTest {
 
     public static InputStream getSpreadsheet() {
         InputStream testSpreadSheetInputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                "VarioskanOutput.xls");
+                "testdata/VarioskanOutput.xls");
         Assert.assertNotNull(testSpreadSheetInputStream);
         return testSpreadSheetInputStream;
     }
