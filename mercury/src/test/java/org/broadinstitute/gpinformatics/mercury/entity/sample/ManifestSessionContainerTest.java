@@ -67,7 +67,7 @@ public class ManifestSessionContainerTest extends Arquillian {
 
         // Create and persist Research Project.
         ResearchProject researchProject =
-                ResearchProjectTestFactory.createTestResearchProject("RP-" + (new Date()).getTime());
+                ResearchProjectTestFactory.createTestResearchProject(ResearchProject.PREFIX + (new Date()).getTime());
         researchProjectDao.persist(researchProject);
         researchProjectDao.flush();
 
