@@ -54,7 +54,7 @@ public class ManifestSessionTest {
 
     public void basicProperties() throws Exception {
         Assert.assertEquals(testSession.getResearchProject(), testRp);
-        Assert.assertEquals(testSession.createSessionName(), sessionPrefix + testSession.getManifestSessionId());
+        Assert.assertEquals(testSession.getSessionName(), sessionPrefix + testSession.getManifestSessionId());
         Assert.assertEquals(testSession.getStatus(), ManifestSession.SessionStatus.OPEN);
 
         Assert.assertEquals(testSession.getCreatedBy(), testUser.getUserId());
@@ -68,7 +68,6 @@ public class ManifestSessionTest {
 
     public void addRecord() throws Exception {
         ManifestRecord testRecord = buildManifestRecord(testSession, SAMPLE_ID_1);
-        testSession.addRecord(testRecord);
         Assert.assertTrue(testSession.getRecords().contains(testRecord));
         Assert.assertEquals(testRecord.getSession(), testSession);
     }
@@ -78,7 +77,7 @@ public class ManifestSessionTest {
                 Metadata.Key.SAMPLE_ID, sampleId,
                 Metadata.Key.SAMPLE_TYPE, "value1",
                 Metadata.Key.TUMOR_NORMAL, "value2",
-                Metadata.Key.COLLECTION_DATE, "value3"));
+                Metadata.Key.COLLECTION_DATE, "value3"), sessionIn);
     }
 
     public void addLogEntries() throws Exception {

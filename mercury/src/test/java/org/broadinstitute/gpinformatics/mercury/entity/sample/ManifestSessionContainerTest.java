@@ -6,7 +6,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
-import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -46,19 +45,7 @@ public class ManifestSessionContainerTest extends Arquillian {
     private ResearchProjectDao researchProjectDao;
 
     @Inject
-    private ManifestSessionEjb manifestSessionEjb;
-
-    @Inject
     private ManifestSessionDao manifestSessionDao;
-
-    /**
-     * Simple persistence check for ManifestEvent.
-     */
-    public void manifestEvent() {
-        ManifestEvent manifestEvent = new ManifestEvent("Actually everything is OK.", ManifestEvent.Type.ERROR);
-        researchProjectDao.persist(manifestEvent);
-        researchProjectDao.flush();
-    }
 
     /**
      * Round trip test for ManifestSession.
@@ -76,11 +63,10 @@ public class ManifestSessionContainerTest extends Arquillian {
                 new BSPUserList.QADudeUser("PM", 5176L));
 
         ManifestRecord manifestRecordIn = new ManifestRecord(
-                new Metadata(Metadata.Key.PATIENT_ID, PATIENT_1),
+                manifestSessionIn, new Metadata(Metadata.Key.PATIENT_ID, PATIENT_1),
                 new Metadata(Metadata.Key.GENDER, GENDER_MALE));
 
-        manifestSessionIn.addRecord(manifestRecordIn);
-        manifestSessionEjb.save(manifestSessionIn);
+        manifestSessionDao.persist(manifestSessionIn);
 
         assertThat(manifestSessionIn.getResearchProject(), is(equalTo(researchProject)));
         assertThat(researchProject.getManifestSessions(), hasItem(manifestSessionIn));

@@ -51,7 +51,7 @@ public class ManifestRecord {
     @JoinTable(name = "manifest_record_metadata", schema = "mercury",
             joinColumns = @JoinColumn(name = "MANIFEST_RECORD_ID"),
             inverseJoinColumns = @JoinColumn(name = "METADATA_ID"))
-    private List<Metadata> metadata = new ArrayList<>();
+    private Set<Metadata> metadata = new HashSet<>();
 
     @Transient
     private Map<Metadata.Key, Metadata> metadataMap;
@@ -61,6 +61,9 @@ public class ManifestRecord {
      */
     @Enumerated(EnumType.STRING)
     private Status status = Status.UPLOADED;
+
+    @Enumerated(EnumType.STRING)
+    private ErrorStatus errorStatus;
 
     @OneToMany(cascade = {CascadeType.PERSIST}, mappedBy = "manifestRecord")
     private List<ManifestEvent> logEntries = new ArrayList<>();
@@ -72,11 +75,17 @@ public class ManifestRecord {
     /**
      * For JPA
      */
-    protected ManifestRecord() {
+    protected ManifestRecord() {}
+
+    public ManifestRecord(ManifestSession sessionIn, Metadata... metadata) {
+        this(sessionIn, null, metadata);
     }
 
-    public ManifestRecord(Metadata... metadata) {
+    public ManifestRecord(ManifestSession session, ErrorStatus errorStatus, Metadata... metadata) {
+        this.session = session;
+        this.session.addRecord(this);
         this.metadata.addAll(Arrays.asList(metadata));
+        this.errorStatus = errorStatus;
     }
 
     /**
@@ -96,7 +105,7 @@ public class ManifestRecord {
         return metadataMap;
     }
 
-    public List<Metadata> getMetadata() {
+    public Set<Metadata> getMetadata() {
         return this.metadata;
     }
 
@@ -106,6 +115,10 @@ public class ManifestRecord {
 
     public Status getStatus() {
         return status;
+    }
+
+    public ErrorStatus getErrorStatus() {
+        return errorStatus;
     }
 
     public List<ManifestEvent> getLogEntries() {

@@ -28,7 +28,4 @@ public class ManifestSessionEjb {
         this.manifestSessionDao = manifestSessionDao;
     }
 
-    public void save(ManifestSession manifestSession) {
-        manifestSessionDao.persist(manifestSession);
-    }
 }

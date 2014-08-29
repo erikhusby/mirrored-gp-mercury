@@ -24,6 +24,7 @@ import javax.persistence.Table;
 @Table(schema = "mercury", name="MANIFEST_EVENT")
 public class ManifestEvent {
 
+    @SuppressWarnings("UnusedDeclaration")
     @Id
     @SequenceGenerator(name = "SEQ_MANIFEST_EVENT", schema = "mercury", sequenceName = "SEQ_MANIFEST_EVENT")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MANIFEST_EVENT")

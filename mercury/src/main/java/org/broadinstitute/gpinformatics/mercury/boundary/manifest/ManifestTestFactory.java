@@ -24,13 +24,14 @@ public class ManifestTestFactory {
         return metadataList.toArray(new Metadata[metadataList.size()]);
     }
 
-    public static ManifestRecord buildManifestRecord(ManifestSession manifestSession, Map<Metadata.Key, String> metadataContents) {
-        ManifestRecord manifestRecord = new ManifestRecord(buildMetadata(metadataContents));
-        manifestRecord.setSession(manifestSession);
-        return manifestRecord;
+    public static ManifestRecord buildManifestRecord(Map<Metadata.Key, String> metadataContents,
+                                                     ManifestSession sessionIn) {
+        return new ManifestRecord(sessionIn, buildMetadata(metadataContents));
     }
 
-    public static ManifestRecord buildManifestRecord(Map<Metadata.Key, String> metadataContents) {
-        return buildManifestRecord(null, metadataContents);
+    public static ManifestRecord buildManifestRecord(ManifestRecord.ErrorStatus errorStatus,
+                                                     Map<Metadata.Key, String> metadataContents,
+                                                     ManifestSession sessionIn) {
+        return new ManifestRecord(sessionIn, errorStatus, buildMetadata(metadataContents));
     }
 }

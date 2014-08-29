@@ -44,7 +44,7 @@ public class ManifestSession {
     @Id
     @SequenceGenerator(name = "SEQ_MANIFEST_SESSION", schema = "mercury", sequenceName = "SEQ_MANIFEST_SESSION")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MANIFEST_SESSION")
-    private Long manifestSessionId;
+    Long manifestSessionId;
 
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "RESEARCH_PROJECT_ID")
@@ -99,7 +99,7 @@ public class ManifestSession {
         return manifestSessionId;
     }
 
-    public String createSessionName() {
+    public String getSessionName() {
         return getSessionPrefix() + getManifestSessionId();
     }
 
@@ -129,7 +129,6 @@ public class ManifestSession {
 
     public void addRecord(ManifestRecord record) {
         records.add(record);
-        record.setSession(this);
     }
 
     public List<ManifestRecord> getRecords() {
