@@ -21,7 +21,6 @@ public class ConfigurableSearchDaoTest extends ContainerTest {
     @Inject
     private ConfigurableSearchDao configurableSearchDao;
 
-    @Test(groups = TestGroups.STANDARD)
     public void testLcset() {
         ConfigurableSearchDefinition configurableSearchDefinition =
                 new SearchDefinitionFactory().buildLabVesselSearchDef();
@@ -36,7 +35,6 @@ public class ConfigurableSearchDaoTest extends ContainerTest {
         Assert.assertEquals(list.size(), 14);
     }
 
-    @Test(groups = TestGroups.STANDARD)
     public void testLabel() {
         ConfigurableSearchDefinition configurableSearchDefinition =
                 new SearchDefinitionFactory().buildLabVesselSearchDef();
