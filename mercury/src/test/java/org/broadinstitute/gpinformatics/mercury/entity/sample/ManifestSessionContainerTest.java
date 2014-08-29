@@ -6,7 +6,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
-import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -42,9 +41,6 @@ public class ManifestSessionContainerTest extends Arquillian {
     private ResearchProjectDao researchProjectDao;
 
     @Inject
-    private ManifestSessionEjb manifestSessionEjb;
-
-    @Inject
     private ManifestSessionDao manifestSessionDao;
 
     /**
@@ -67,7 +63,6 @@ public class ManifestSessionContainerTest extends Arquillian {
                 new Metadata(Metadata.Key.GENDER, GENDER_MALE));
 
         manifestSessionDao.persist(manifestSessionIn);
-        manifestSessionDao.flush();
         // Clear the Session to force retrieval of a persistent instance 'manifestSessionOut' below that is distinct
         // from the detached 'manifestSessionIn' instance.
         manifestSessionDao.clear();

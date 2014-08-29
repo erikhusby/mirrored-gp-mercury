@@ -790,7 +790,7 @@
             </column>
             <column name="value" type="varchar2(255)" />
         </createTable>
-        <addPrimaryKey schemaName="mercury" tableName="metadata" columnNames="metadata_id"/>
+        <addPrimaryKey schemaName="mercury" tableName="metadata" columnNames="metadata_id" constraintName="PK_METADATA"/>
     </changeSet>
 
     <changeSet author="mcovarr" id="GPLIM-2885-2">
@@ -805,7 +805,8 @@
             <column name="key" type="varchar2(255)" />
             <column name="value" type="varchar2(255)"/>
         </createTable>
-        <addPrimaryKey schemaName="mercury" tableName="metadata_aud" columnNames="rev, metadata_id"/>
+        <addPrimaryKey schemaName="mercury" tableName="metadata_aud" columnNames="rev, metadata_id"
+                       constraintName="PK_METADATA_AUD"/>
         <addForeignKeyConstraint baseTableName="metadata_aud" baseTableSchemaName="mercury" baseColumnNames="rev"
                                  constraintName="fk_metadata_ref_info"
                                  referencedTableName="rev_info" referencedTableSchemaName="mercury"
@@ -825,7 +826,8 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-        <addPrimaryKey schemaName="mercury" tableName="mercury_sample_metadata" columnNames="sample_key, metadata_id"/>
+        <addPrimaryKey schemaName="mercury" tableName="mercury_sample_metadata" columnNames="sample_key, metadata_id"
+                       constraintName="PK_SAMPLE_TO_METADATA_JOIN"/>
         <createIndex tableName="mercury_sample_metadata" indexName="ix_mercsmpl_metadata_smpl_key">
             <column name="sample_key"/>
         </createIndex>
@@ -844,7 +846,8 @@
             <column name="sample_key" type="varchar2(255)"/>
             <column name="metadata_id" type="number(19,0)"/>
         </createTable>
-        <addPrimaryKey schemaName="mercury" tableName="mercury_sample_metadata_aud" columnNames="rev, sample_key, metadata_id"/>
+        <addPrimaryKey schemaName="mercury" tableName="mercury_sample_metadata_aud"
+                       columnNames="rev, sample_key, metadata_id" constraintName="PK_SAMPLE_TO_METADATA_JOIN_AUD"/>
         <addForeignKeyConstraint baseTableName="mercury_sample_metadata_aud" baseTableSchemaName="mercury" baseColumnNames="rev"
                                  constraintName="fk_sample_metadata_ref_info"
                                  referencedTableName="rev_info" referencedTableSchemaName="mercury"
@@ -878,7 +881,8 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-        <addPrimaryKey schemaName="mercury" tableName="manifest_session" columnNames="manifest_session_id" />
+        <addPrimaryKey schemaName="mercury" tableName="manifest_session" columnNames="manifest_session_id"
+                       constraintName="PK_MANIFEST_SESSION" />
     </changeSet>
 
     <changeSet id="GPLIM-2885-6-RPFK" author="scottmat">
@@ -910,7 +914,8 @@
             <column name="created_date" type="timestamp(6)"/>
             <column name="modified_date" type="timestamp(6)"/>
         </createTable>
-        <addPrimaryKey schemaName="mercury" tableName="manifest_session_aud" columnNames="rev, manifest_session_id" />
+        <addPrimaryKey schemaName="mercury" tableName="manifest_session_aud" columnNames="rev, manifest_session_id"
+                constraintName="PK_MANIFEST_SESSION_AUD"/>
         <addForeignKeyConstraint baseTableName="manifest_session_aud" baseTableSchemaName="mercury" baseColumnNames="rev"
                                  constraintName="fk_manifest_session_ref_info"
                                  referencedTableName="rev_info" referencedTableSchemaName="mercury"
@@ -934,7 +939,8 @@
             </column>
             <column name="error_status" type="varchar2(30)"/>
         </createTable>
-        <addPrimaryKey schemaName="mercury" tableName="manifest_record" columnNames="manifest_record_id" />
+        <addPrimaryKey schemaName="mercury" tableName="manifest_record" columnNames="manifest_record_id"
+                constraintName="PK_MANIFEST_RECORD"/>
         <addForeignKeyConstraint constraintName="FK_MANREC_MANSESSION_ID"
                                  baseTableSchemaName="mercury" baseTableName="manifest_record" baseColumnNames="manifest_session_id"
                                  referencedTableSchemaName="mercury" referencedTableName="manifest_session" referencedColumnNames="manifest_session_id"/>
@@ -953,7 +959,8 @@
             <column name="status" type="varchar2(30)"/>
             <column name="error_status" type="varchar2(30)"/>
         </createTable>
-        <addPrimaryKey schemaName="mercury" tableName="manifest_record_aud" columnNames="rev, manifest_record_id" />
+        <addPrimaryKey schemaName="mercury" tableName="manifest_record_aud" columnNames="rev, manifest_record_id"
+                constraintName="PK_MANIFEST_RECORD_AUD"/>
         <addForeignKeyConstraint baseTableName="manifest_record_aud" baseTableSchemaName="mercury" baseColumnNames="rev"
                                  constraintName="fk_manifest_record_ref_info"
                                  referencedTableName="rev_info" referencedTableSchemaName="mercury"
@@ -973,7 +980,8 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-        <addPrimaryKey schemaName="mercury" tableName="manifest_record_metadata" columnNames="manifest_record_id, metadata_id"/>
+        <addPrimaryKey schemaName="mercury" tableName="manifest_record_metadata"
+                       columnNames="manifest_record_id, metadata_id" constraintName="PK_MAN_REC_METADATA_JOIN"/>
         <createIndex tableName="manifest_record_metadata" indexName="ix_manifest_record_metadata">
             <column name="manifest_record_id"/>
         </createIndex>
@@ -994,7 +1002,9 @@
             <column name="manifest_record_id" type="varchar2(255)" />
             <column name="metadata_id" type="number(19,0)" />
         </createTable>
-        <addPrimaryKey schemaName="mercury" tableName="manifest_record_metadata_aud" columnNames="rev, manifest_record_id, metadata_id"/>
+        <addPrimaryKey schemaName="mercury" tableName="manifest_record_metadata_aud"
+                       columnNames="rev, manifest_record_id, metadata_id"
+                       constraintName="PK_MAN_REC_METADATA_JOIN_AUD"/>
         <addForeignKeyConstraint baseTableName="manifest_record_metadata_aud" baseTableSchemaName="mercury" baseColumnNames="rev"
                                  constraintName="fk_manrec_metadata_ref_info"
                                  referencedTableName="rev_info" referencedTableSchemaName="mercury"
@@ -1014,7 +1024,8 @@
             <column name="manifest_record_id" type="number(19,0)"/>
             <column name="log_type" type="varchar(30)" />
         </createTable>
-        <addPrimaryKey schemaName="mercury" tableName="manifest_event" columnNames="manifest_event_id"/>
+        <addPrimaryKey schemaName="mercury" tableName="manifest_event" columnNames="manifest_event_id"
+                constraintName="PK_MANIFEST_EVENT"/>
         <createIndex tableName="manifest_event" indexName="ix_maneventlog_manrecord">
             <column name="manifest_record_id"/>
         </createIndex>
@@ -1042,7 +1053,8 @@
             <column name="manifest_record_id" type="number(19,0)"/>
             <column name="log_type" type="varchar(30)" />
         </createTable>
-        <addPrimaryKey schemaName="mercury" tableName="manifest_event_aud" columnNames="rev, manifest_event_id"/>
+        <addPrimaryKey schemaName="mercury" tableName="manifest_event_aud" columnNames="rev, manifest_event_id"
+                constraintName="PK_MANIFEST_EVENT_AUD"/>
         <addForeignKeyConstraint baseTableName="manifest_event_aud" baseTableSchemaName="mercury" baseColumnNames="rev"
                                  constraintName="fk_manifest_event_ref_info"
                                  referencedTableName="rev_info" referencedTableSchemaName="mercury"
