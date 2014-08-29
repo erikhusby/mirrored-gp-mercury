@@ -156,8 +156,8 @@
 
     <properties>
         <!-- Clover -->
-        <clover.version>3.3.0</clover.version>
-        <clover.plugin.version>3.3.0</clover.plugin.version>
+        <clover.version>4.0.0</clover.version>
+        <clover.plugin.version>4.0.0</clover.plugin.version>
         <clover.targetPercentage>15%</clover.targetPercentage>
 
 
@@ -1618,7 +1618,7 @@
         <dependency>
             <groupId>lims</groupId>
             <artifactId>limsThrift</artifactId>
-            <version>1.0-20140812.214152-56</version>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>
@@ -1633,7 +1633,7 @@
 
         <!-- exists only to be included in ShrinkWrap deployments. would be better to include explicitly in DeploymentBuilder -->
         <dependency>
-            <groupId>com.cenqua.clover</groupId>
+            <groupId>com.atlassian.clover</groupId>
             <artifactId>clover</artifactId>
             <version>${clover.version}</version>
             <!-- cannot be test scoped because it is needed for compiling instrumented main sources -->
@@ -1668,7 +1668,7 @@
             <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
             <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
             <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
-            <version>1.3.62</version>
+            <version>[1.3,)</version>
             <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
             <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
             <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->

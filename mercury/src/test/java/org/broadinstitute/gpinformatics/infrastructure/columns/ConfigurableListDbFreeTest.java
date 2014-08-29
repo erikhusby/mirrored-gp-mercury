@@ -30,7 +30,7 @@ public class ConfigurableListDbFreeTest {
 
         BarcodedTube tube1 = new BarcodedTube("tube1");
         List<ColumnTabulation> columnTabulations = new ArrayList<>();
-        columnTabulations.add(configurableSearchDefinition.getSearchTerm("Label"));
+        columnTabulations.add(configurableSearchDefinition.getSearchTerm("Barcode"));
         ConfigurableList configurableList = new ConfigurableList(columnTabulations, 1, "ASC", ColumnEntity.LAB_VESSEL);
 
         List<LabVessel> entityList = new ArrayList<>();

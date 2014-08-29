@@ -214,6 +214,11 @@
                                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.LCSetSearchActionBean"
                                       event="view">LCSets</stripes:link>
                     </li>
+                    <li>
+                        <stripes:link id="userDefSearch"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.ConfigurableSearchActionBean"
+                                      event="entitySelection">User-Defined</stripes:link>
+                    </li>
                 </ul>
             </li>
         </ul>
