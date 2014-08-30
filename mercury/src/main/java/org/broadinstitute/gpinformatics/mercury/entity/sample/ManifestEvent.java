@@ -38,7 +38,7 @@ public class ManifestEvent {
     private ManifestRecord manifestRecord;
 
     @Enumerated(EnumType.STRING)
-    private Type logType;
+    private Severity severity;
 
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "manifest_session_id")
@@ -48,21 +48,21 @@ public class ManifestEvent {
     protected ManifestEvent() {
     }
 
-    public ManifestEvent(String message, Type logType) {
-        this(message, logType, null);
+    public ManifestEvent(Severity severity, String message) {
+        this(severity, message, null);
     }
 
-    public ManifestEvent(String message, Type logType, ManifestRecord record) {
+    public ManifestEvent(Severity severity, String message, ManifestRecord record) {
+        this.severity = severity;
         this.message = message;
-        this.logType = logType;
         if (record != null) {
             this.manifestRecord = record;
-            this.manifestRecord.addLogEntry(this);
+            this.manifestRecord.addManifestEvent(this);
         }
     }
 
-    public Type getLogType() {
-        return logType;
+    public Severity getSeverity() {
+        return severity;
     }
 
     public String getMessage() {
@@ -81,7 +81,7 @@ public class ManifestEvent {
         return manifestRecord;
     }
 
-    public enum Type {
+    public enum Severity {
         /**
          * A hard stop, something like a missing or duplicate sample.
          */

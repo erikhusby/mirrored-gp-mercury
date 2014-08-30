@@ -68,7 +68,7 @@ public class ManifestSessionTest {
     public void addRecord() throws Exception {
         ManifestRecord testRecord = buildManifestRecord(testSession, SAMPLE_ID_1);
         Assert.assertTrue(testSession.getRecords().contains(testRecord));
-        Assert.assertEquals(testRecord.getSession(), testSession);
+        Assert.assertEquals(testRecord.getManifestSession(), testSession);
     }
 
     private ManifestRecord buildManifestRecord(ManifestSession manifestSession, String sampleId) {
@@ -81,18 +81,19 @@ public class ManifestSessionTest {
 
     public void addLogEntries() throws Exception {
         ManifestRecord testRecord = buildManifestRecord(testSession, SAMPLE_ID_1);
-        ManifestEvent logEntryWithoutRecord = new ManifestEvent("Failed to Upload Record in session",
-                ManifestEvent.Type.ERROR);
-        testSession.addLogEntry(logEntryWithoutRecord);
-
-        Assert.assertEquals(testSession.getLogEntries().size(), 1);
-        ManifestEvent logEntryWithRecord = new ManifestEvent("Failed to Upload Record in session",
-                ManifestEvent.Type.ERROR, testRecord
+        ManifestEvent manifestEventWithoutRecord = new ManifestEvent(ManifestEvent.Severity.ERROR,
+                "Failed to Upload Record in session"
         );
-        testSession.addLogEntry(logEntryWithRecord);
+        testSession.addManifestEvent(manifestEventWithoutRecord);
 
-        Assert.assertEquals(testRecord.getLogEntries().size(), 1);
-        Assert.assertEquals(testSession.getLogEntries().size(), 2);
+        Assert.assertEquals(testSession.getManifestEvents().size(), 1);
+        ManifestEvent manifestEventWithRecord = new ManifestEvent(ManifestEvent.Severity.ERROR,
+                "Failed to Upload Record in session",
+                testRecord);
+        testSession.addManifestEvent(manifestEventWithRecord);
+
+        Assert.assertEquals(testRecord.getManifestEvents().size(), 1);
+        Assert.assertEquals(testSession.getManifestEvents().size(), 2);
     }
 
     /**
@@ -157,22 +158,23 @@ public class ManifestSessionTest {
         ManifestRecord record = testSession.scanSample(SAMPLE_ID_1);
         assertThat(record.getStatus(), is(CoreMatchers.equalTo(ManifestRecord.Status.SCANNED)));
 
-        assertThat(testSession.getLogEntries(), is(empty()));
+        assertThat(testSession.getManifestEvents(), is(empty()));
         try {
             ManifestRecord record2 = testSession.scanSample(SAMPLE_ID_1 + "_NOTIN");
             Assert.fail();
         } catch (TubeTransferException tte) {
             assertThat(tte.getErrorStatus(), is(CoreMatchers.equalTo(ManifestRecord.ErrorStatus.NOT_IN_MANIFEST)));
-            assertThat(testSession.getLogEntries(), is(not(empty())));
-            assertThat(testSession.getLogEntries().size(), is(equalTo(1)));
+            assertThat(testSession.getManifestEvents(), is(not(empty())));
+            assertThat(testSession.getManifestEvents().size(), is(equalTo(1)));
         }
 
         String errorRecordID = "20923842";
         ManifestRecord errorRecord = buildManifestRecord(testSession, errorRecordID);
         setSampleStatus(errorRecordID, ManifestRecord.Status.UPLOADED);
-        testSession.addLogEntry(new ManifestEvent(
+        testSession.addManifestEvent(new ManifestEvent(
+                ManifestEvent.Severity.FATAL,
                 ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage("Sample ID", errorRecordID),
-                ManifestEvent.Type.FATAL, errorRecord));
+                errorRecord));
 
         try {
             testSession.scanSample(errorRecordID);
