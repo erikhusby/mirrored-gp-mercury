@@ -145,23 +145,6 @@ public class ManifestSession {
     }
 
     /**
-     * If there is an error with any record in this manifest session, report that some errors exist.
-     */
-    public boolean didSomethingGetLogged() {
-
-        boolean validationResult = false;
-
-        for (ManifestRecord testRecord : records) {
-            validationResult = (!testRecord.getManifestEvents().isEmpty());
-            if (validationResult) {
-                break;
-            }
-        }
-
-        return validationResult;
-    }
-
-    /**
      * Execute validations against the records in this manifest that have not already been validated.
      */
     public void validateManifest() {
