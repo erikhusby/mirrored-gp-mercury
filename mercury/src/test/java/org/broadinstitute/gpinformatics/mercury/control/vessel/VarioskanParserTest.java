@@ -49,7 +49,6 @@ public class VarioskanParserTest {
                     VarioskanRowParser.QUANTITATIVE_CURVE_FIT1_TAB);
             PoiSpreadsheetParser parser = new PoiSpreadsheetParser(Collections.<String, TableProcessor>emptyMap());
 
-            // get R2, just use raw POI API?
             parser.processRows(WorkbookFactory.create(testSpreadSheetInputStream).getSheet(
                             VarioskanRowParser.QUANTITATIVE_CURVE_FIT1_TAB),
                     varioskanPlateProcessor);
@@ -82,7 +81,7 @@ public class VarioskanParserTest {
                     PLATE1_BARCODE, PLATE2_BARCODE, "");
 
             LabMetricRun labMetricRun = vesselEjb.createVarioskanRunDaoFree(workbook, LabMetric.MetricType.INITIAL_PICO,
-                            varioskanPlateProcessor, mapBarcodeToPlate);
+                            varioskanPlateProcessor, mapBarcodeToPlate, 101L);
             Assert.assertEquals(labMetricRun.getLabMetrics().size(), 3 * 96);
             Assert.assertEquals(mapPositionToTube.get(VesselPosition.A01).getMetrics().iterator().next().getValue(),
                     new BigDecimal("3.34"));
@@ -99,7 +98,9 @@ public class VarioskanParserTest {
             String plate1Barcode, String plate2Barcode, String tubePrefix) {
         Map<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
         for (VesselPosition vesselPosition : RackOfTubes.RackType.Matrix96.getVesselGeometry().getVesselPositions()) {
-            mapPositionToTube.put(vesselPosition, new BarcodedTube(tubePrefix + vesselPosition.toString()));
+            BarcodedTube barcodedTube = new BarcodedTube(tubePrefix + vesselPosition.toString());
+            barcodedTube.setVolume(new BigDecimal("75"));
+            mapPositionToTube.put(vesselPosition, barcodedTube);
         }
 
         TubeFormation tubeFormation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
@@ -122,7 +123,7 @@ public class VarioskanParserTest {
 
     public static InputStream getSpreadsheet() {
         InputStream testSpreadSheetInputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                "testdata/VarioskanOutput.xls");
+                "VarioskanOutput.xls");
         Assert.assertNotNull(testSpreadSheetInputStream);
         return testSpreadSheetInputStream;
     }

@@ -1123,4 +1123,57 @@
                 referencedTableSchemaName="mercury" referencedTableName="rev_info" referencedColumnNames="REV_INFO_ID"/>
     </changeSet>
 
+    <changeSet id="GPLIM-2879-1" author="thompson">
+        <createTable tableName="lab_metric_decision" schemaName="mercury">
+            <column name="lab_metric_decision_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="decided_date" type="timestamp"/>
+            <column name="decider_user_id" type="number(19,0)"/>
+            <column name="decision" type="varchar2(255)"/>
+            <column name="override_reason" type="varchar2(255)"/>
+        </createTable>
+        <addPrimaryKey tableName="lab_metric_decision" columnNames="lab_metric_decision_id"
+                       constraintName="PK_LAB_METRIC_DECISION"/>
+    </changeSet>
+    <changeSet id="GPLIM-2879-2" author="thompson">
+        <createTable tableName="lab_metric_decision_aud" schemaName="mercury">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="lab_metric_decision_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)"/>
+            <column name="decided_date" type="timestamp"/>
+            <column name="decider_user_id" type="number(19,0)"/>
+            <column name="decision" type="varchar2(255)"/>
+            <column name="override_reason" type="varchar2(255)"/>
+        </createTable>
+        <addPrimaryKey tableName="lab_metric_decision_aud" columnNames="rev, lab_metric_decision_id"
+                       constraintName="PK_LAB_METRIC_DECISION_AUD"/>
+    </changeSet>
+    <changeSet id="GPLIM-2879-3" author="thompson">
+        <addColumn tableName="lab_metric">
+            <column name="lab_metric_decision" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2879-4" author="thompson">
+        <addColumn tableName="lab_metric_aud">
+            <column name="lab_metric_decision" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2879-5" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_LM_DECISION"
+                baseTableName="lab_metric" baseColumnNames="lab_metric_decision"
+                referencedTableName="lab_metric_decision" referencedColumnNames="lab_metric_decision_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-2879-6" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_LMDA_REV_INFO"
+                baseTableName="lab_metric_decision_aud" baseColumnNames="rev"
+                referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-2879-7" author="thompson">
+        <createSequence sequenceName="SEQ_LAB_METRIC_DECISION" incrementBy="50"/>
+    </changeSet>
 </databaseChangeLog>

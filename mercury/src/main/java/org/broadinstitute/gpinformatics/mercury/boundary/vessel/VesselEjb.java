@@ -24,6 +24,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
@@ -162,7 +163,8 @@ public class VesselEjb {
     /**
      * Create a LabMetricRun from a Varioskan spreadsheet.
      */
-    public LabMetricRun createVarioskanRun(InputStream varioskanSpreadsheet, LabMetric.MetricType metricType) {
+    public LabMetricRun createVarioskanRun(InputStream varioskanSpreadsheet, LabMetric.MetricType metricType,
+            Long decidingUser) {
         VarioskanPlateProcessor varioskanPlateProcessor = new VarioskanPlateProcessor(
                 VarioskanRowParser.QUANTITATIVE_CURVE_FIT1_TAB);
         PoiSpreadsheetParser parser = new PoiSpreadsheetParser(Collections.<String, TableProcessor>emptyMap());
@@ -193,7 +195,7 @@ public class VesselEjb {
         }
 
         LabMetricRun labMetricRun = createVarioskanRunDaoFree(workbook, metricType, varioskanPlateProcessor,
-                mapBarcodeToPlate);
+                mapBarcodeToPlate, decidingUser);
         labMetricRunDao.persist(labMetricRun);
         return labMetricRun;
     }
@@ -203,7 +205,8 @@ public class VesselEjb {
      */
     @DaoFree
     public LabMetricRun createVarioskanRunDaoFree(Workbook varioskanSpreadsheet, LabMetric.MetricType metricType,
-            VarioskanPlateProcessor varioskanPlateProcessor, Map<String, StaticPlate> mapBarcodeToPlate) {
+            VarioskanPlateProcessor varioskanPlateProcessor, Map<String, StaticPlate> mapBarcodeToPlate,
+            Long decidingUser) {
 
         Map<LabVessel, List<BigDecimal>> mapTubeToListValues = new HashMap<>();
         Map<LabVessel, VesselPosition> mapTubeToPosition = new HashMap<>();
@@ -270,6 +273,11 @@ public class VesselEjb {
                     BigDecimal.ROUND_HALF_UP);
             LabMetric labMetric = new LabMetric(average, metricType, LabMetric.LabUnit.NG_PER_UL,
                     mapTubeToPosition.get(tube).name(), runStarted);
+            LabMetric.Decider decider = metricType.getDecider();
+            if (decider != null) {
+                labMetric.setLabMetricDecision(new LabMetricDecision(decider.makeDecision(tube, labMetric), new Date(),
+                        decidingUser, labMetric));
+            }
             tube.addMetric(labMetric);
             labMetricRun.addMetric(labMetric);
         }
