@@ -77,10 +77,6 @@ public class ManifestEvent {
         this.session = session;
     }
 
-    public ManifestRecord getManifestRecord() {
-        return manifestRecord;
-    }
-
     public enum Severity {
         /**
          * A hard stop, something like a missing or duplicate sample.

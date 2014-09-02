@@ -176,8 +176,7 @@ public class ManifestRecordTest {
     }
 
     public void mismatchedGenderTest() throws Exception {
-        ManifestRecord testRecordWrongGender =
-                new ManifestRecord(testSession, ManifestTestFactory.buildMetadata(ImmutableMap.of(
+        new ManifestRecord(testSession, ManifestTestFactory.buildMetadata(ImmutableMap.of(
                         Metadata.Key.SAMPLE_ID, "989282484", Metadata.Key.GENDER, "M", Metadata.Key.PATIENT_ID,
                         VALUE_3)));
 

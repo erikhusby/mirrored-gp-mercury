@@ -123,8 +123,7 @@ public class ManifestSessionTest {
 
     public void successfulScanCollaboratorTubeInTubeTransfer() throws TubeTransferException {
         String collaboratorBarcode = SAMPLE_ID_1;
-        ManifestRecord manifestRecord = null;
-        manifestRecord = testSession.findScannedRecord(collaboratorBarcode);
+        ManifestRecord manifestRecord = testSession.findScannedRecord(collaboratorBarcode);
         assertThat(manifestRecord, is(notNullValue()));
     }
 
