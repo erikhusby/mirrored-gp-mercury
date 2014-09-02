@@ -9,6 +9,23 @@ import java.util.Collection;
  */
 public class TestUtils {
     /**
+     * The location of where test data is stored.
+     */
+    public static final String TEST_DATA_LOCATION = "src/test/resources/testdata";
+
+    /**
+     * This method returns the full path to, and including the specified file name.
+     *
+     * @param fileName the file which you seek
+     *
+     * @return the full path to fileName.
+     */
+    public static String getTestData(String fileName) {
+        return TEST_DATA_LOCATION + "/" + fileName;
+    }
+
+
+    /**
      * Convenience method to return the first item in a collection. This method will return null
      * if the collection is empty.
      *

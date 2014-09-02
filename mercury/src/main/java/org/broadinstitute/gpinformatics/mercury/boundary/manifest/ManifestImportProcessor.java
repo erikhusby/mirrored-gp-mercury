@@ -29,15 +29,13 @@ import java.util.Map;
  * </ul>
  */
 public class ManifestImportProcessor extends TableProcessor {
-    public static final String DATE_FORMAT_STRING = "dd-MMM-yyyy";
-
     public static final String UNKNOWN_HEADER_FORMAT = "Ignoring unknown header(s) '%s'.";
     private ColumnHeader[] columnHeaders;
     // This should be a list of Metadata, but that's on a different branch...
     private List<Map<String, String>> manifestList = new ArrayList<>();
 
-    protected ManifestImportProcessor(String sheetName) {
-        super(sheetName);
+    protected ManifestImportProcessor() {
+        super(null);
     }
 
     @Override
@@ -48,7 +46,8 @@ public class ManifestImportProcessor extends TableProcessor {
     @Override
     public void processHeader(List<String> headers, int row) {
         try {
-            // how do we need to deal with unknown headers?
+            // how do we deal with unknown headers?
+            // how do we deal with hidden headers?.
             Collection<? extends ColumnHeader> foundHeaders =
                     ManifestHeader.fromValues(headers.toArray(new String[headers.size()]));
             columnHeaders = foundHeaders.toArray(new ColumnHeader[foundHeaders.size()]);
@@ -76,9 +75,7 @@ public class ManifestImportProcessor extends TableProcessor {
 
     @Override
     protected ColumnHeader[] getColumnHeaders() {
-        List<ColumnHeader> columnHeaders = new ArrayList<>();
-        columnHeaders.addAll(ManifestHeader.fromValues(getHeaderNames().toArray(new String[getHeaderNames().size()])));
-        return columnHeaders.toArray(new ColumnHeader[columnHeaders.size()]);
+        return ManifestHeader.values();
     }
 
     @Override

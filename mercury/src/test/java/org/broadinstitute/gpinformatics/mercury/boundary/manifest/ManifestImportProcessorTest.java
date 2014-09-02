@@ -31,13 +31,12 @@ import static org.hamcrest.Matchers.is;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ManifestImportProcessorTest {
-    private static final String SHEET_NAME = "what-evaaaah";
     private ManifestImportProcessor processor;
     private Map<String, String> dataRow;
 
     @BeforeMethod
     public void setUp() throws Exception {
-        processor = new ManifestImportProcessor(SHEET_NAME);
+        processor = new ManifestImportProcessor();
         dataRow = makeDataRow();
     }
 
@@ -53,10 +52,6 @@ public class ManifestImportProcessorTest {
 
     public void testGetColumns() throws Exception {
         processor.processHeader(new ArrayList<>(dataRow.keySet()), 0);
-        ArrayList<String> allHeaders = new ArrayList<>();
-        for (ManifestHeader manifestHeader : ManifestHeader.values()) {
-            allHeaders.add(manifestHeader.getText());
-        }
 
         assertThat(processor.getColumnHeaders(),
                 arrayContainingInAnyOrder((ColumnHeader[]) ManifestHeader.values()));
@@ -84,8 +79,7 @@ public class ManifestImportProcessorTest {
         dataRow.put(unknownHeader, "new to me too!");
         processor.processHeader(new ArrayList<>(dataRow.keySet()), row);
         assertThat(processor.getWarnings(), Matchers.hasItem(
-                String.format("Sheet %s, Row #%d " + ManifestImportProcessor.UNKNOWN_HEADER_FORMAT, SHEET_NAME, row,
-                        unknownHeader)));
+                String.format("Row #%d " + ManifestImportProcessor.UNKNOWN_HEADER_FORMAT, row, unknownHeader)));
     }
 
     public void testGetColumnHeaders() throws Exception {
