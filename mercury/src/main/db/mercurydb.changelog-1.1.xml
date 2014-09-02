@@ -828,9 +828,6 @@
         </createTable>
         <addPrimaryKey schemaName="mercury" tableName="mercury_sample_metadata" columnNames="sample_key, metadata_id"
                        constraintName="PK_SAMPLE_TO_METADATA_JOIN"/>
-        <createIndex tableName="mercury_sample_metadata" indexName="ix_mercsmpl_metadata_smpl_key">
-            <column name="sample_key"/>
-        </createIndex>
         <!-- There cannot be a foreign key constraint to MERCURY_SAMPLE.SAMPLE_KEY as that is neither a key nor unique. -->
         <addForeignKeyConstraint constraintName="FK_MERCURY_SAMPLE_METADATA_ID"
                                  baseTableSchemaName="mercury" baseTableName="mercury_sample_metadata" baseColumnNames="metadata_id"
