@@ -63,20 +63,20 @@ public class ManifestRecord {
     private Status status = Status.UPLOADED;
 
     @OneToMany(cascade = {CascadeType.PERSIST}, mappedBy = "manifestRecord")
-    private List<ManifestEvent> logEntries = new ArrayList<>();
+    private List<ManifestEvent> manifestEvents = new ArrayList<>();
 
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "manifest_session_id")
-    private ManifestSession session;
+    private ManifestSession manifestSession;
 
     /**
      * For JPA
      */
     protected ManifestRecord() {}
 
-    public ManifestRecord(ManifestSession session, Metadata... metadata) {
-        this.session = session;
-        this.session.addRecord(this);
+    public ManifestRecord(ManifestSession manifestSession, Metadata... metadata) {
+        this.manifestSession = manifestSession;
+        this.manifestSession.addRecord(this);
         this.metadata.addAll(Arrays.asList(metadata));
     }
 
@@ -109,20 +109,20 @@ public class ManifestRecord {
         return status;
     }
 
-    public List<ManifestEvent> getLogEntries() {
-        return logEntries;
+    public List<ManifestEvent> getManifestEvents() {
+        return manifestEvents;
     }
 
-    public void addLogEntry(ManifestEvent manifestEvent) {
-        this.logEntries.add(manifestEvent);
+    public void addManifestEvent(ManifestEvent manifestEvent) {
+        this.manifestEvents.add(manifestEvent);
     }
 
-    public ManifestSession getSession() {
-        return session;
+    public ManifestSession getManifestSession() {
+        return manifestSession;
     }
 
-    public void setSession(ManifestSession session) {
-        this.session = session;
+    public void setManifestSession(ManifestSession manifestSession) {
+        this.manifestSession = manifestSession;
     }
 
     public void setStatus(Status status) {
@@ -132,8 +132,8 @@ public class ManifestRecord {
     public boolean quarantinedErrorExists() {
         boolean quarantined = false;
 
-        for (ManifestEvent logEntry : logEntries) {
-            if (logEntry.getLogType() == ManifestEvent.Type.QUARANTINED) {
+        for (ManifestEvent manifestEvent : manifestEvents) {
+            if (manifestEvent.getSeverity() == ManifestEvent.Severity.QUARANTINED) {
                 quarantined = true;
                 break;
             }
@@ -144,8 +144,8 @@ public class ManifestRecord {
 
     public Set<String> getQuarantinedRecordMessages() {
         Set<String> quarantinedMessages = new HashSet<>();
-        for (ManifestEvent manifestEvent : getLogEntries()) {
-            if (manifestEvent.getLogType() == ManifestEvent.Type.QUARANTINED) {
+        for (ManifestEvent manifestEvent : getManifestEvents()) {
+            if (manifestEvent.getSeverity() == ManifestEvent.Severity.QUARANTINED) {
                 quarantinedMessages.add(manifestEvent.getMessage());
             }
         }

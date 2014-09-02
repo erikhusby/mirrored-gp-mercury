@@ -13,7 +13,6 @@ import org.testng.annotations.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 
@@ -71,8 +70,9 @@ public class ManifestRecordTest {
 
         // Test with specified Status and ErrorStatus.
         testRecord.setStatus(NEW_STATUS);
-        testRecord.addLogEntry(new ManifestEvent(NEW_ERROR_STATUS.formatMessage("Sample ID", COLLABORATOR_SAMPLE_ID_1),
-                ManifestEvent.Type.QUARANTINED));
+        testRecord.addManifestEvent(new ManifestEvent(ManifestEvent.Severity.QUARANTINED,
+                NEW_ERROR_STATUS.formatMessage("Sample ID", COLLABORATOR_SAMPLE_ID_1)
+        ));
 
         Assert.assertEquals(testRecord.getStatus(), NEW_STATUS);
         Assert.assertTrue(testRecord.quarantinedErrorExists());
@@ -86,19 +86,19 @@ public class ManifestRecordTest {
         ManifestRecord secondManifestRecord = buildManifestRecord(COLLABORATOR_SAMPLE_ID_2);
 
         testSession.validateManifest();
-        assertThat(testSession.didSomethingGetLogged(), is(equalTo(false)));
+        assertThat(testSession.hasErrors(), is(false));
 
-        assertThat(testSession.getLogEntries().size(), is(equalTo(0)));
-        assertThat(testRecord.quarantinedErrorExists(), is(equalTo(false)));
-        assertThat(secondManifestRecord.quarantinedErrorExists(), is(equalTo(false)));
+        assertThat(testSession.getManifestEvents().size(), is(0));
+        assertThat(testRecord.quarantinedErrorExists(), is(false));
+        assertThat(secondManifestRecord.quarantinedErrorExists(), is(false));
 
-        assertThat(testRecord.getLogEntries(), is(empty()));
-        assertThat(secondManifestRecord.getLogEntries(), is(empty()));
+        assertThat(testRecord.getManifestEvents(), is(empty()));
+        assertThat(secondManifestRecord.getManifestEvents(), is(empty()));
 
         secondSession.validateManifest();
-        assertThat(secondSession.didSomethingGetLogged(), is(equalTo(false)));
+        assertThat(secondSession.hasErrors(), is(false));
 
-        assertThat(secondSession.getLogEntries().size(), is(equalTo(0)));
+        assertThat(secondSession.getManifestEvents().size(), is(0));
     }
 
 
@@ -112,14 +112,14 @@ public class ManifestRecordTest {
 
         testSession.validateManifest();
 
-        assertThat(testSession.didSomethingGetLogged(), is(equalTo(true)));
+        assertThat(testSession.hasErrors(), is(true));
 
-        assertThat(testSession.getLogEntries().size(), is(equalTo(2)));
-        assertThat(testRecord.quarantinedErrorExists(), is(equalTo(true)));
-        assertThat(testRecordWithDupe.quarantinedErrorExists(), is(equalTo(true)));
+        assertThat(testSession.getManifestEvents().size(), is(2));
+        assertThat(testRecord.quarantinedErrorExists(), is(true));
+        assertThat(testRecordWithDupe.quarantinedErrorExists(), is(true));
 
-        assertThat(testRecord.getLogEntries().size(), is(equalTo(1)));
-        assertThat(testRecordWithDupe.getLogEntries().size(), is(equalTo(1)));
+        assertThat(testRecord.getManifestEvents().size(), is(1));
+        assertThat(testRecordWithDupe.getManifestEvents().size(), is(1));
     }
 
     /**
@@ -139,12 +139,12 @@ public class ManifestRecordTest {
         ManifestSession secondSession = buildTestSession(testSession.getResearchProject(), COLLABORATOR_SAMPLE_ID_1);
 
         testSession.validateManifest();
-        assertThat(testSession.didSomethingGetLogged(), is(equalTo(true)));
-        assertThat(testSession.getLogEntries(), is(not(empty())));
-        assertThat(testSession.getLogEntries().size(), is(equalTo(1)));
+        assertThat(testSession.hasErrors(), is(true));
+        assertThat(testSession.getManifestEvents(), is(not(empty())));
+        assertThat(testSession.getManifestEvents().size(), is(1));
 
-        assertThat(secondSession.didSomethingGetLogged(), is(equalTo(false)));
-        assertThat(secondSession.getLogEntries(), is(empty()));
+        assertThat(secondSession.hasErrors(), is(false));
+        assertThat(secondSession.getManifestEvents(), is(empty()));
 
     }
 
@@ -166,12 +166,12 @@ public class ManifestRecordTest {
         buildTestSession().getResearchProject().setParentResearchProject(parentResearchProject);
 
         testSession.validateManifest();
-        assertThat(testSession.didSomethingGetLogged(), is(equalTo(false)));
-        assertThat(testSession.getLogEntries(), is(empty()));
-        assertThat(testSession.getLogEntries().size(), is(equalTo(0)));
+        assertThat(testSession.hasErrors(), is(false));
+        assertThat(testSession.getManifestEvents(), is(empty()));
+        assertThat(testSession.getManifestEvents().size(), is(0));
 
-        assertThat(secondSession.didSomethingGetLogged(), is(equalTo(false)));
-        assertThat(secondSession.getLogEntries(), is(empty()));
+        assertThat(secondSession.hasErrors(), is(false));
+        assertThat(secondSession.getManifestEvents(), is(empty()));
 
     }
 
@@ -182,7 +182,7 @@ public class ManifestRecordTest {
                         VALUE_3)));
 
         testSession.validateManifest();
-        assertThat(testSession.didSomethingGetLogged(), is(equalTo(true)));
+        assertThat(testSession.hasErrors(), is(true));
     }
 
     public void mixedValidationErrorTest() throws Exception {
@@ -200,18 +200,18 @@ public class ManifestRecordTest {
 
         testSession.validateManifest();
 
-        assertThat(testSession.didSomethingGetLogged(), is(equalTo(true)));
+        assertThat(testSession.hasErrors(), is(true));
 
-        assertThat(testSession.getLogEntries(), is(not(empty())));
-        assertThat(testSession.getLogEntries().size(), is(equalTo(4)));
-        assertThat(testRecord.getLogEntries(), is(not(empty())));
-        assertThat(testRecord.getLogEntries().size(), is(equalTo(1)));
+        assertThat(testSession.getManifestEvents(), is(not(empty())));
+        assertThat(testSession.getManifestEvents().size(), is(4));
+        assertThat(testRecord.getManifestEvents(), is(not(empty())));
+        assertThat(testRecord.getManifestEvents().size(), is(1));
 
-        assertThat(duplicateSampleRecord.getLogEntries(), is(not(empty())));
-        assertThat(duplicateSampleRecord.getLogEntries().size(), is(equalTo(2)));
+        assertThat(duplicateSampleRecord.getManifestEvents(), is(not(empty())));
+        assertThat(duplicateSampleRecord.getManifestEvents().size(), is(2));
 
-        assertThat(genderMisMatch.getLogEntries(), is(not(empty())));
-        assertThat(genderMisMatch.getLogEntries().size(), is(equalTo(1)));
+        assertThat(genderMisMatch.getManifestEvents(), is(not(empty())));
+        assertThat(genderMisMatch.getManifestEvents().size(), is(1));
     }
 
     private ManifestSession buildTestSession() {

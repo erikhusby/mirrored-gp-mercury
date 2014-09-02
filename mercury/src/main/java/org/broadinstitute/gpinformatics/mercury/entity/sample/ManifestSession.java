@@ -72,7 +72,7 @@ public class ManifestSession {
     private Date modifiedDate;
 
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "session")
-    private List<ManifestEvent> logEntries = new ArrayList<>();
+    private List<ManifestEvent> manifestEvents = new ArrayList<>();
 
     /**
      * For JPA
@@ -135,31 +135,13 @@ public class ManifestSession {
         return records;
     }
 
-    public void addLogEntry(ManifestEvent logEntry) {
-
-        logEntries.add(logEntry);
-        logEntry.setSession(this);
+    public void addManifestEvent(ManifestEvent manifestEvent) {
+        manifestEvents.add(manifestEvent);
+        manifestEvent.setSession(this);
     }
 
-    public List<ManifestEvent> getLogEntries() {
-        return logEntries;
-    }
-
-    /**
-     * If there is an error with any record in this manifest session, report that some errors exist.
-     */
-    public boolean didSomethingGetLogged() {
-
-        boolean validationResult = false;
-
-        for (ManifestRecord testRecord : records) {
-            validationResult = (!testRecord.getLogEntries().isEmpty());
-            if (validationResult) {
-                break;
-            }
-        }
-
-        return validationResult;
+    public List<ManifestEvent> getManifestEvents() {
+        return manifestEvents;
     }
 
     /**
@@ -193,11 +175,11 @@ public class ManifestSession {
             for (ManifestRecord duplicatedRecord : entry.getValue()) {
                 // Ignore ManifestSessions that are not this ManifestSession, they will not have errors added by
                 // this logic.
-                if (this.equals(duplicatedRecord.getSession())) {
+                if (this.equals(duplicatedRecord.getManifestSession())) {
 
                     String message =
                             ManifestRecord.ErrorStatus.MISMATCHED_GENDER.formatMessage("patient ID", entry.getKey());
-                    addLogEntry(new ManifestEvent(message, ManifestEvent.Type.ERROR, duplicatedRecord));
+                    addManifestEvent(new ManifestEvent(ManifestEvent.Severity.ERROR, message, duplicatedRecord));
                 }
             }
         }
@@ -247,10 +229,10 @@ public class ManifestSession {
             for (ManifestRecord duplicatedRecord : entry.getValue()) {
                 // Ignore ManifestSessions that are not this ManifestSession, they will not have errors added by
                 // this logic.
-                if (duplicatedRecord.getSession().equals(this)) {
+                if (duplicatedRecord.getManifestSession().equals(this)) {
                     String message =
                             ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage("sample ID", entry.getKey());
-                    addLogEntry(new ManifestEvent(message, ManifestEvent.Type.QUARANTINED, duplicatedRecord));
+                    addManifestEvent(new ManifestEvent(ManifestEvent.Severity.QUARANTINED, message, duplicatedRecord));
                 }
             }
         }
@@ -329,8 +311,8 @@ public class ManifestSession {
                 String sampleId = record.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue();
                 String message = ManifestRecord.ErrorStatus.MISSING_SAMPLE.formatMessage("sample ID", sampleId);
 
-                ManifestEvent manifestEvent = new ManifestEvent(message, ManifestEvent.Type.ERROR, record);
-                logEntries.add(manifestEvent);
+                ManifestEvent manifestEvent = new ManifestEvent(ManifestEvent.Severity.ERROR, message, record);
+                manifestEvents.add(manifestEvent);
             }
         }
     }
@@ -341,19 +323,19 @@ public class ManifestSession {
      * @return true if even one manifest event entry can be considered an error
      */
     public boolean hasErrors() {
-        return hasManifestEventOfType(EnumSet.of(ManifestEvent.Type.ERROR, ManifestEvent.Type.QUARANTINED));
+        return hasManifestEventOfType(EnumSet.of(ManifestEvent.Severity.ERROR, ManifestEvent.Severity.QUARANTINED));
     }
 
     /**
      * Helper method to check if there are any manifest event entries of a given type
      *
-     * @param types set of types to check for entries against
+     * @param severities set of types to check for entries against
      *
      * @return true if even one event entry matches a type in the given set of event types
      */
-    private boolean hasManifestEventOfType(Set<ManifestEvent.Type> types) {
-        for (ManifestEvent logEntry : logEntries) {
-            if (types.contains(logEntry.getLogType())) {
+    private boolean hasManifestEventOfType(Set<ManifestEvent.Severity> severities) {
+        for (ManifestEvent manifestEvent : manifestEvents) {
+            if (severities.contains(manifestEvent.getSeverity())) {
                 return true;
             }
         }
@@ -394,8 +376,9 @@ public class ManifestSession {
         try {
             foundRecord = findRecordByState(sampleId);
         } catch (TubeTransferException e) {
-            addLogEntry(new ManifestEvent(e.getErrorStatus().formatMessage("Sample ID", sampleId),
-                    ManifestEvent.Type.ERROR));
+            addManifestEvent(new ManifestEvent(ManifestEvent.Severity.ERROR,
+                    e.getErrorStatus().formatMessage("Sample ID", sampleId)
+            ));
             throw e;
         }
         if (foundRecord.quarantinedErrorExists()) {

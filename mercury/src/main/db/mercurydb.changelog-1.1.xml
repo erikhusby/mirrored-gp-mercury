@@ -1073,4 +1073,13 @@
         <dropColumn columnName="error_status" tableName="manifest_record_aud" schemaName="mercury"/>
     </changeSet>
 
+    <changeSet author="mcovarr" id="GPLIM-2885-19">
+        <renameColumn tableName="manifest_event" oldColumnName="log_type" newColumnName="severity" schemaName="mercury"/>
+    </changeSet>
+
+    <changeSet author="mcovarr" id="GPLIM-2885-20">
+        <renameColumn tableName="manifest_event_aud" oldColumnName="log_type" newColumnName="severity" schemaName="mercury"/>
+    </changeSet>
+
+
 </databaseChangeLog>
