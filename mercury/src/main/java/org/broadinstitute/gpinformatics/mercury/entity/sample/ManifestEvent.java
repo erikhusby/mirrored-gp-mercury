@@ -85,7 +85,7 @@ public class ManifestEvent {
         /**
          * A hard stop, something like a missing or duplicate sample.
          */
-        FATAL,
+        QUARANTINED,
         /**
          * Something like mismatched gender, where there is a problem but lab users are given the discretion to
          * continue processing a sample.

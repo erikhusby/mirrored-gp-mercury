@@ -250,7 +250,7 @@ public class ManifestSession {
                 if (duplicatedRecord.getSession().equals(this)) {
                     String message =
                             ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage("sample ID", entry.getKey());
-                    addLogEntry(new ManifestEvent(message, ManifestEvent.Type.FATAL, duplicatedRecord));
+                    addLogEntry(new ManifestEvent(message, ManifestEvent.Type.QUARANTINED, duplicatedRecord));
                 }
             }
         }
@@ -307,7 +307,7 @@ public class ManifestSession {
 
         for (ManifestSession manifestSession : researchProject.getManifestSessions()) {
             for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
-                if (!manifestRecord.fatalErrorExists()) {
+                if (!manifestRecord.quarantinedErrorExists()) {
                     allRecords.add(manifestRecord);
                 }
             }
@@ -324,7 +324,7 @@ public class ManifestSession {
     public void validateForClose() {
         // Confirm all records have scanned status.
         for (ManifestRecord record : records) {
-            if ((record.getStatus() != ManifestRecord.Status.SCANNED) && !record.fatalErrorExists()) {
+            if ((record.getStatus() != ManifestRecord.Status.SCANNED) && !record.quarantinedErrorExists()) {
 
                 String sampleId = record.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue();
                 String message = ManifestRecord.ErrorStatus.MISSING_SAMPLE.formatMessage("sample ID", sampleId);
@@ -341,7 +341,7 @@ public class ManifestSession {
      * @return true if even one manifest event entry can be considered an error
      */
     public boolean hasErrors() {
-        return hasManifestEventOfType(EnumSet.of(ManifestEvent.Type.ERROR, ManifestEvent.Type.FATAL));
+        return hasManifestEventOfType(EnumSet.of(ManifestEvent.Type.ERROR, ManifestEvent.Type.QUARANTINED));
     }
 
     /**
@@ -398,9 +398,9 @@ public class ManifestSession {
                     ManifestEvent.Type.ERROR));
             throw e;
         }
-        if (foundRecord.fatalErrorExists()) {
+        if (foundRecord.quarantinedErrorExists()) {
 
-            Set<String> fatalMessages = foundRecord.getFatalRecordMessages();
+            Set<String> fatalMessages = foundRecord.getQuarantinedRecordMessages();
 
             throw new TubeTransferException(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE, "Sample ID",
                     sampleId,

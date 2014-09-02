@@ -90,7 +90,7 @@ public class ManifestSessionContainerTest extends Arquillian {
             assertThat(inValue, is(equalTo(outValue)));
         }
 
-        assertThat(manifestRecordIn.fatalErrorExists(), is(equalTo(false)));
-        assertThat(manifestRecordOut.fatalErrorExists(), is(equalTo(manifestRecordIn.fatalErrorExists())));
+        assertThat(manifestRecordIn.quarantinedErrorExists(), is(equalTo(false)));
+        assertThat(manifestRecordOut.quarantinedErrorExists(), is(equalTo(manifestRecordIn.quarantinedErrorExists())));
     }
 }

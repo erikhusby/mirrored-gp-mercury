@@ -129,34 +129,34 @@ public class ManifestRecord {
         this.status = status;
     }
 
-    public boolean fatalErrorExists() {
-        boolean fatality = false;
+    public boolean quarantinedErrorExists() {
+        boolean quarantined = false;
 
         for (ManifestEvent logEntry : logEntries) {
-            if (logEntry.getLogType() == ManifestEvent.Type.FATAL) {
-                fatality = true;
+            if (logEntry.getLogType() == ManifestEvent.Type.QUARANTINED) {
+                quarantined = true;
                 break;
             }
         }
 
-        return fatality;
+        return quarantined;
     }
 
-    public Set<String> getFatalRecordMessages() {
-        Set<String> fatalMessages = new HashSet<>();
+    public Set<String> getQuarantinedRecordMessages() {
+        Set<String> quarantinedMessages = new HashSet<>();
         for (ManifestEvent manifestEvent : getLogEntries()) {
-            if (manifestEvent.getLogType() == ManifestEvent.Type.FATAL) {
-                fatalMessages.add(manifestEvent.getMessage());
+            if (manifestEvent.getLogType() == ManifestEvent.Type.QUARANTINED) {
+                quarantinedMessages.add(manifestEvent.getMessage());
             }
         }
-        return fatalMessages;
+        return quarantinedMessages;
     }
 
     /**
      * Status represents the states that a manifest record can be in during the registration workflow.
      */
     public enum Status {
-        UPLOADED, ABANDONED, UPLOAD_ACCEPTED, SCANNED, REGISTERED, ACCESSIONED
+        UPLOADED, ABANDONED, UPLOAD_ACCEPTED, SCANNED, ACCESSIONED, SAMPLE_TRANSFERRED_TO_TUBE
     }
 
     /**
@@ -199,7 +199,7 @@ public class ManifestRecord {
         MISSING_SAMPLE("No sample has been scanned to correspond with the manifest record"),
         /**
          * Represents a scenario in which the user attempts to accession a source tube that
-         * did not make it to the REGISTERED state.
+         * did not make it to the ACCESSIONED state.
          */
         NOT_READY_FOR_ACCESSIONING("Attempting to accession a sample that has not completed manifest registration"),
         /**

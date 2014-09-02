@@ -172,7 +172,7 @@ public class ManifestSessionTest {
         setSampleStatus(errorRecordID, ManifestRecord.Status.UPLOADED);
         testSession.addLogEntry(new ManifestEvent(
                 ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage("Sample ID", errorRecordID),
-                ManifestEvent.Type.FATAL, errorRecord));
+                ManifestEvent.Type.QUARANTINED, errorRecord));
 
         try {
             testSession.scanSample(errorRecordID);
