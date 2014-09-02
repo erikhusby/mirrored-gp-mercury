@@ -72,11 +72,13 @@ public class ManifestSessionTest {
     }
 
     private ManifestRecord buildManifestRecord(ManifestSession manifestSession, String sampleId) {
-        return new ManifestRecord(manifestSession,ManifestTestFactory.buildMetadata(ImmutableMap.of(
+        ManifestRecord manifestRecord = new ManifestRecord(ManifestTestFactory.buildMetadata(ImmutableMap.of(
                 Metadata.Key.SAMPLE_ID, sampleId,
                 Metadata.Key.SAMPLE_TYPE, "value1",
                 Metadata.Key.TUMOR_NORMAL, "value2",
                 Metadata.Key.COLLECTION_DATE, "value3")));
+        manifestSession.addRecord(manifestRecord);
+        return manifestRecord;
     }
 
     public void addLogEntries() throws Exception {

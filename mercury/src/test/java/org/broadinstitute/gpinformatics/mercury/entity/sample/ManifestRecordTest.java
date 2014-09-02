@@ -44,9 +44,11 @@ public class ManifestRecordTest {
     }
 
     private ManifestRecord buildManifestRecord(String sampleId, ManifestSession testSession1) {
-        return new ManifestRecord(testSession1, ManifestTestFactory.buildMetadata(
+        ManifestRecord manifestRecord = new ManifestRecord(ManifestTestFactory.buildMetadata(
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, sampleId, Metadata.Key.GENDER, VALUE_2, Metadata.Key.PATIENT_ID,
                         VALUE_3)));
+        testSession1.addRecord(manifestRecord);
+        return manifestRecord;
     }
 
     /**
@@ -106,11 +108,10 @@ public class ManifestRecordTest {
     public void duplicateInManifest() throws Exception {
 
         ManifestRecord testRecordWithDupe =
-                new ManifestRecord(testSession,
-                        ManifestTestFactory.buildMetadata(ImmutableMap.of(Metadata.Key.SAMPLE_ID,
+                new ManifestRecord(ManifestTestFactory.buildMetadata(ImmutableMap.of(Metadata.Key.SAMPLE_ID,
                                 COLLABORATOR_SAMPLE_ID_1,
                                 Metadata.Key.GENDER, VALUE_2, Metadata.Key.PATIENT_ID, VALUE_3)));
-
+        testSession.addRecord(testRecordWithDupe);
         testSession.validateManifest();
 
         assertThat(testSession.hasErrors(), is(true));
@@ -177,10 +178,10 @@ public class ManifestRecordTest {
     }
 
     public void mismatchedGenderTest() throws Exception {
-        new ManifestRecord(testSession, ManifestTestFactory.buildMetadata(ImmutableMap.of(
-                        Metadata.Key.SAMPLE_ID, "989282484", Metadata.Key.GENDER, "M", Metadata.Key.PATIENT_ID,
-                        VALUE_3)));
-
+        ManifestRecord manifestRecord = new ManifestRecord(ManifestTestFactory.buildMetadata(ImmutableMap.of(
+                Metadata.Key.SAMPLE_ID, "989282484", Metadata.Key.GENDER, "M", Metadata.Key.PATIENT_ID,
+                VALUE_3)));
+        testSession.addRecord(manifestRecord);
         testSession.validateManifest();
         assertThat(testSession.hasErrors(), is(true));
     }
@@ -188,16 +189,16 @@ public class ManifestRecordTest {
     public void mixedValidationErrorTest() throws Exception {
 
         ManifestRecord duplicateSampleRecord =
-                new ManifestRecord(testSession,
+                new ManifestRecord(
                         ManifestTestFactory.buildMetadata(ImmutableMap.of(Metadata.Key.SAMPLE_ID,
                                 COLLABORATOR_SAMPLE_ID_1, Metadata.Key.GENDER, VALUE_2, Metadata.Key.PATIENT_ID,
                                 "PI-3234")));
-
+        testSession.addRecord(duplicateSampleRecord);
         ManifestRecord genderMisMatch =
-                new ManifestRecord(testSession,
+                new ManifestRecord(
                         ManifestTestFactory.buildMetadata(ImmutableMap.of(Metadata.Key.SAMPLE_ID, "229249239",
                                 Metadata.Key.GENDER, "M", Metadata.Key.PATIENT_ID, "PI-3234")));
-
+        testSession.addRecord(genderMisMatch);
         testSession.validateManifest();
 
         assertThat(testSession.hasErrors(), is(true));
