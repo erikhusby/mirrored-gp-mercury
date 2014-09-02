@@ -54,6 +54,7 @@ public class VarioskanParserContainerTest extends Arquillian {
 
     @Test
     public void testPersistence() {
+        // Replace plate barcodes with timestamps, to avoid unique constraints
         InputStream spreadsheet = VarioskanParserTest.getSpreadsheet();
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
         String timestamp = simpleDateFormat.format(new Date());
@@ -61,9 +62,9 @@ public class VarioskanParserContainerTest extends Arquillian {
         String plate2Barcode = timestamp + "2";
         try {
             Workbook workbook = WorkbookFactory.create(spreadsheet);
-            Sheet sheet = workbook.getSheet(VarioskanRowParser.QUANTITATIVE_CURVE_FIT1_TAB);
-            for (int i = 0; i < sheet.getLastRowNum(); i++) {
-                Row row = sheet.getRow(i);
+            Sheet curveSheet = workbook.getSheet(VarioskanRowParser.QUANTITATIVE_CURVE_FIT1_TAB);
+            for (int i = 0; i < curveSheet.getLastRowNum(); i++) {
+                Row row = curveSheet.getRow(i);
                 if (row != null) {
                     for (int j = 0; j < row.getLastCellNum(); j++) {
                         Cell cell = row.getCell(j);
@@ -77,6 +78,20 @@ public class VarioskanParserContainerTest extends Arquillian {
                     }
                 }
             }
+            // Replace run name with timestamp, to avoid unique constraints
+            Sheet generalSheet = workbook.getSheet(VarioskanRowParser.GENERAL_INFO_TAB);
+            for (int i = 0; i < generalSheet.getLastRowNum(); i++) {
+                Row row = generalSheet.getRow(i);
+                if (row != null) {
+                    Cell nameCell = row.getCell(VarioskanRowParser.NAME_COLUMN);
+                    if (nameCell != null && nameCell.getStringCellValue().equals(
+                            VarioskanRowParser.NameValue.RUN_NAME.getFieldName())) {
+                        Cell valueCell = row.getCell(VarioskanRowParser.VALUE_COLUMN);
+                        valueCell.setCellValue(simpleDateFormat.format(new Date()) + " Mike Test");
+                    }
+                }
+            }
+
             File tempFile = File.createTempFile("Varioskan", ".xls");
             workbook.write(new FileOutputStream(tempFile));
             Map<String, StaticPlate> mapBarcodeToPlate = new HashMap<>();
