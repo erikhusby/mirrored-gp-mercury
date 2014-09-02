@@ -57,7 +57,7 @@ public class ManifestSessionTest {
         return ManifestTestFactory.buildManifestRecord(null, ImmutableMap.of(
                 Metadata.Key.SAMPLE_TYPE, "value1",
                 Metadata.Key.TUMOR_NORMAL, "value2",
-                Metadata.Key.COLLECTION_DATE, "value3"), sessionIn);
+                Metadata.Key.BUICK_COLLECTION_DATE, "value3"), sessionIn);
     }
 
     public void addLogEntries() throws Exception {
