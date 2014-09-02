@@ -76,7 +76,7 @@ public class ManifestSessionTest {
                 Metadata.Key.SAMPLE_ID, sampleId,
                 Metadata.Key.SAMPLE_TYPE, "value1",
                 Metadata.Key.TUMOR_NORMAL, "value2",
-                Metadata.Key.COLLECTION_DATE, "value3")));
+                Metadata.Key.BUICK_COLLECTION_DATE, "value3")));
         manifestSession.addRecord(manifestRecord);
         return manifestRecord;
     }

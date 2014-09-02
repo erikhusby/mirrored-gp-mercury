@@ -75,10 +75,6 @@ public class ManifestRecord {
     protected ManifestRecord() {}
 
     public ManifestRecord(Metadata... metadata) {
-        this(null, metadata);
-    }
-
-    public ManifestRecord(ErrorStatus errorStatus, Metadata... metadata) {
         this.metadata.addAll(Arrays.asList(metadata));
     }
 

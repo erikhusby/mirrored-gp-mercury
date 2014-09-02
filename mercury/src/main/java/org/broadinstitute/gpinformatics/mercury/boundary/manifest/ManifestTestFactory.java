@@ -31,11 +31,4 @@ public class ManifestTestFactory {
         return manifestRecord;
     }
 
-    public static ManifestRecord buildManifestRecord(ManifestRecord.ErrorStatus errorStatus,
-                                                     Map<Metadata.Key, String> metadataContents,
-                                                     ManifestSession sessionIn) {
-        ManifestRecord manifestRecord = new ManifestRecord(errorStatus, buildMetadata(metadataContents));
-        sessionIn.addRecord(manifestRecord);
-        return manifestRecord;
-    }
 }
