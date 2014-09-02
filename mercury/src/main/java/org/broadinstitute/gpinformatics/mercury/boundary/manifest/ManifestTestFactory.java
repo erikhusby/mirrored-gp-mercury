@@ -26,12 +26,16 @@ public class ManifestTestFactory {
 
     public static ManifestRecord buildManifestRecord(Map<Metadata.Key, String> metadataContents,
                                                      ManifestSession sessionIn) {
-        return new ManifestRecord(sessionIn, buildMetadata(metadataContents));
+        ManifestRecord manifestRecord = new ManifestRecord(buildMetadata(metadataContents));
+        sessionIn.addRecord(manifestRecord);
+        return manifestRecord;
     }
 
     public static ManifestRecord buildManifestRecord(ManifestRecord.ErrorStatus errorStatus,
                                                      Map<Metadata.Key, String> metadataContents,
                                                      ManifestSession sessionIn) {
-        return new ManifestRecord(sessionIn, errorStatus, buildMetadata(metadataContents));
+        ManifestRecord manifestRecord = new ManifestRecord(errorStatus, buildMetadata(metadataContents));
+        sessionIn.addRecord(manifestRecord);
+        return manifestRecord;
     }
 }

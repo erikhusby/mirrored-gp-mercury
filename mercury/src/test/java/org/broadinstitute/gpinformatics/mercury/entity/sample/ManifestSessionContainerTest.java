@@ -59,9 +59,9 @@ public class ManifestSessionContainerTest extends Arquillian {
                 new BSPUserList.QADudeUser("PM", 5176L));
 
         ManifestRecord manifestRecordIn = new ManifestRecord(
-                manifestSessionIn, new Metadata(Metadata.Key.PATIENT_ID, PATIENT_1),
+                new Metadata(Metadata.Key.PATIENT_ID, PATIENT_1),
                 new Metadata(Metadata.Key.GENDER, GENDER_MALE));
-
+        manifestSessionIn.addRecord(manifestRecordIn);
         manifestSessionDao.persist(manifestSessionIn);
         // Clear the Session to force retrieval of a persistent instance 'manifestSessionOut' below that is distinct
         // from the detached 'manifestSessionIn' instance.

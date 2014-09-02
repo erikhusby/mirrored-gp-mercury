@@ -1,8 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
-import com.google.common.collect.ImmutableMap;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -28,9 +26,10 @@ public class ManifestRecordTest {
 
         ManifestRecord.ErrorStatus NEW_ERROR_STATUS = ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID;
         // Test with no specified Status or ErrorStatus.
-        ManifestRecord testRecord = new ManifestRecord(new ManifestSession(),
+        ManifestSession sessionIn = new ManifestSession();
+        ManifestRecord testRecord = new ManifestRecord(
                 new Metadata(KEY_1, VALUE_1), new Metadata(KEY_2, VALUE_2), new Metadata(KEY_3, VALUE_3));
-
+        sessionIn.addRecord(testRecord);
         // Basic sanity check of retrieving Metadata by key.
         Assert.assertEquals(testRecord.getMetadataByKey(KEY_1).getValue(), VALUE_1);
         Assert.assertEquals(testRecord.getMetadataByKey(KEY_2).getValue(), VALUE_2);

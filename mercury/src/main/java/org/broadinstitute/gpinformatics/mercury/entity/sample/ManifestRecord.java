@@ -77,13 +77,11 @@ public class ManifestRecord {
      */
     protected ManifestRecord() {}
 
-    public ManifestRecord(ManifestSession sessionIn, Metadata... metadata) {
-        this(sessionIn, null, metadata);
+    public ManifestRecord(Metadata... metadata) {
+        this(null, metadata);
     }
 
-    public ManifestRecord(ManifestSession session, ErrorStatus errorStatus, Metadata... metadata) {
-        this.session = session;
-        this.session.addRecord(this);
+    public ManifestRecord(ErrorStatus errorStatus, Metadata... metadata) {
         this.metadata.addAll(Arrays.asList(metadata));
         this.errorStatus = errorStatus;
     }
@@ -139,6 +137,10 @@ public class ManifestRecord {
 
     public void setErrorStatus(ErrorStatus errorStatus) {
         this.errorStatus = errorStatus;
+    }
+
+    void setSession(ManifestSession session) {
+        this.session = session;
     }
 
     /**
