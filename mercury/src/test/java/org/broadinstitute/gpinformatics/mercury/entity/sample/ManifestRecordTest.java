@@ -71,14 +71,19 @@ public class ManifestRecordTest {
         // Default error status should be null (no error).
         Assert.assertFalse(testRecord.quarantinedErrorExists());
 
+    }
+
+    public void testStatusUpdate() throws Exception {
+        // Test with no specified Status or ErrorStatus.
+        ManifestRecord testRecord = new ManifestRecord(
+                new Metadata(key_1, value_1), new Metadata(key_2, value_2), new Metadata(key_3, value_3));
+
         // Test with specified Status and ErrorStatus.
         testRecord.setStatus(NEW_STATUS);
-        testRecord.addManifestEvent(new ManifestEvent(ManifestEvent.Severity.QUARANTINED,
-                NEW_ERROR_STATUS.formatMessage("Sample ID", COLLABORATOR_SAMPLE_ID_1)
-        ));
+        testRecord.setErrorStatus(NEW_ERROR_STATUS);
 
         Assert.assertEquals(testRecord.getStatus(), NEW_STATUS);
-        Assert.assertTrue(testRecord.quarantinedErrorExists());
+        Assert.assertEquals(testRecord.getErrorStatus(), NEW_ERROR_STATUS);
     }
 
     public void validManifest() {

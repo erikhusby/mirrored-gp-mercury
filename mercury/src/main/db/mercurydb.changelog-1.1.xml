@@ -840,8 +840,12 @@
                 <constraints nullable="false"/>
             </column>
             <column name="revtype" type="number(3,0)" />
-            <column name="sample_key" type="varchar2(255)"/>
-            <column name="metadata_id" type="number(19,0)"/>
+            <column name="sample_key" type="varchar2(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="metadata_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
         <addPrimaryKey schemaName="mercury" tableName="mercury_sample_metadata_aud"
                        columnNames="rev, sample_key, metadata_id" constraintName="PK_SAMPLE_TO_METADATA_JOIN_AUD"/>
@@ -996,8 +1000,12 @@
                 <constraints nullable="false"/>
             </column>
             <column name="revtype" type="number(3,0)" />
-            <column name="manifest_record_id" type="varchar2(255)" />
-            <column name="metadata_id" type="number(19,0)" />
+            <column name="manifest_record_id" type="varchar2(255)" >
+                <constraints nullable="false"/>
+            </column>
+            <column name="metadata_id" type="number(19,0)" >
+                <constraints nullable="false"/>
+            </column>
         </createTable>
         <addPrimaryKey schemaName="mercury" tableName="manifest_record_metadata_aud"
                        columnNames="rev, manifest_record_id, metadata_id"

@@ -95,7 +95,7 @@ public class ManifestSession {
         return researchProject;
     }
 
-    protected Long getManifestSessionId() {
+    Long getManifestSessionId() {
         return manifestSessionId;
     }
 

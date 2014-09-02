@@ -86,7 +86,8 @@ public class Metadata {
         PATIENT_ID,
         SAMPLE_TYPE,
         TUMOR_NORMAL,
-        COLLECTION_DATE,
-        SAMPLE_ID
+        BUICK_COLLECTION_DATE,
+        SAMPLE_ID,
+        BUICK_VISIT
     }
 }

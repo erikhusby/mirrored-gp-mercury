@@ -6,8 +6,11 @@ import org.testng.annotations.Test;
 
 import java.util.HashSet;
 
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 
 /**
@@ -26,10 +29,19 @@ public class MetadataTest {
         assertThat(metadata.getKey(), is(equalTo(KEY)));
         assertThat(metadata.getValue(), is(equalTo(VALUE)));
 
-        new HashSet<Metadata>() {{
+        HashSet<Metadata> metadataSet = new HashSet<Metadata>() {{
             add(metadata);
             add(new Metadata(KEY, VALUE));
         }};
+
+        assertThat("Even though 2 entries were added, they had the same essential values.  Hash set should only be 1",
+                metadataSet.size(), is(1));
+        Metadata secondMetadata = new Metadata(Metadata.Key.PATIENT_ID, "value2");
+        metadataSet.add(secondMetadata);
+        assertThat("Hash set size should have increased to 2.  That failed", metadataSet.size(), is(2));
+        assertThat("Existence check of known records failed", metadataSet, hasItems(metadata, secondMetadata));
+        assertThat("Different key same value match failed", metadataSet, not(hasItem(new Metadata(Metadata.Key.GENDER, VALUE))));
+        assertThat("Same key different value match failed", metadataSet, not(hasItem(new Metadata(Metadata.Key.SAMPLE_ID, "M"))));
     }
 
     public void testBasicConstructorMetadata() {

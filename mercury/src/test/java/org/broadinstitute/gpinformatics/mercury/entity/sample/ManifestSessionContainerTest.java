@@ -36,6 +36,8 @@ public class ManifestSessionContainerTest extends Arquillian {
 
     private static final String GENDER_MALE = "Male";
 
+    private ResearchProject researchProject;
+
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(DEV);
@@ -47,25 +49,23 @@ public class ManifestSessionContainerTest extends Arquillian {
     @Inject
     private ManifestSessionDao manifestSessionDao;
 
+    @BeforeMethod
+    public void setUp() throws Exception {
+        researchProject = ResearchProjectTestFactory.createTestResearchProject("RP-" + (new Date()).getTime());
+    }
+
     /**
      * Round trip test for ManifestSession.
      */
     public void roundTrip() {
 
-        // Create and persist Research Project.
-        ResearchProject researchProject =
-                ResearchProjectTestFactory.createTestResearchProject(ResearchProject.PREFIX + (new Date()).getTime());
-        researchProjectDao.persist(researchProject);
-        researchProjectDao.flush();
-
-        // Create and persist ManifestSession.
         ManifestSession manifestSessionIn = new ManifestSession(researchProject, "BUICK-TEST",
                 new BSPUserList.QADudeUser("PM", 5176L));
-
-        ManifestRecord manifestRecordIn = new ManifestRecord(
-                new Metadata(Metadata.Key.PATIENT_ID, PATIENT_1),
+        ManifestRecord manifestRecordIn = new ManifestRecord(new Metadata(Metadata.Key.PATIENT_ID, PATIENT_1),
                 new Metadata(Metadata.Key.GENDER, GENDER_MALE));
         manifestSessionIn.addRecord(manifestRecordIn);
+        // Create and persist ManifestSession.
+
         manifestSessionDao.persist(manifestSessionIn);
 
         assertThat(manifestSessionIn.getResearchProject(), is(equalTo(researchProject)));
@@ -93,4 +93,5 @@ public class ManifestSessionContainerTest extends Arquillian {
         assertThat(manifestRecordIn.quarantinedErrorExists(), is(equalTo(false)));
         assertThat(manifestRecordOut.quarantinedErrorExists(), is(equalTo(manifestRecordIn.quarantinedErrorExists())));
     }
+
 }
