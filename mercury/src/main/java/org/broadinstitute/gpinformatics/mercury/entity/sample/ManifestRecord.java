@@ -74,9 +74,11 @@ public class ManifestRecord {
      */
     protected ManifestRecord() {}
 
-    public ManifestRecord(ManifestSession manifestSession, Metadata... metadata) {
-        this.manifestSession = manifestSession;
-        this.manifestSession.addRecord(this);
+    public ManifestRecord(Metadata... metadata) {
+        this(null, metadata);
+    }
+
+    public ManifestRecord(ErrorStatus errorStatus, Metadata... metadata) {
         this.metadata.addAll(Arrays.asList(metadata));
     }
 
@@ -121,7 +123,7 @@ public class ManifestRecord {
         return manifestSession;
     }
 
-    public void setManifestSession(ManifestSession manifestSession) {
+    void setManifestSession(ManifestSession manifestSession) {
         this.manifestSession = manifestSession;
     }
 

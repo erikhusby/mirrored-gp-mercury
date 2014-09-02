@@ -55,9 +55,10 @@ public class ManifestRecordTest {
     public void createRecord() throws Exception {
 
         // Test with no specified Status or ErrorStatus.
-        ManifestRecord testRecord = new ManifestRecord(new ManifestSession(),
-                new Metadata(Metadata.Key.SAMPLE_ID, COLLABORATOR_SAMPLE_ID_1),
+        ManifestSession sessionIn = new ManifestSession();
+        ManifestRecord testRecord = new ManifestRecord(new Metadata(Metadata.Key.SAMPLE_ID, COLLABORATOR_SAMPLE_ID_1),
                 new Metadata(Metadata.Key.GENDER, VALUE_2), new Metadata(Metadata.Key.PATIENT_ID, VALUE_3));
+        sessionIn.addRecord(testRecord);
 
         // Basic sanity check of retrieving Metadata by key.
         Assert.assertEquals(testRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue(), COLLABORATOR_SAMPLE_ID_1);

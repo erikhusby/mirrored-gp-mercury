@@ -129,6 +129,7 @@ public class ManifestSession {
 
     public void addRecord(ManifestRecord record) {
         records.add(record);
+        record.setSession(this);
     }
 
     public List<ManifestRecord> getRecords() {
