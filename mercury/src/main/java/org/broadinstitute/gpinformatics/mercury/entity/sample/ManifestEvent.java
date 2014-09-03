@@ -79,7 +79,7 @@ public class ManifestEvent {
 
     public enum Severity {
         /**
-         * A hard stop, something like a missing or duplicate sample.
+         * A hard stop, e.g. duplicate sample ID within the same research project.
          */
         QUARANTINED,
         /**

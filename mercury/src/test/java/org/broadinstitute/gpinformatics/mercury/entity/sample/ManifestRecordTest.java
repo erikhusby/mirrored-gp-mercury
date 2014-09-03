@@ -43,11 +43,11 @@ public class ManifestRecordTest {
         return buildManifestRecord(sampleId, testSession1);
     }
 
-    private ManifestRecord buildManifestRecord(String sampleId, ManifestSession testSession1) {
+    private ManifestRecord buildManifestRecord(String sampleId, ManifestSession testSession) {
         ManifestRecord manifestRecord = new ManifestRecord(ManifestTestFactory.buildMetadata(
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, sampleId, Metadata.Key.GENDER, VALUE_2, Metadata.Key.PATIENT_ID,
                         VALUE_3)));
-        testSession1.addRecord(manifestRecord);
+        testSession.addRecord(manifestRecord);
         return manifestRecord;
     }
 

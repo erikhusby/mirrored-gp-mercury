@@ -14,6 +14,9 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -21,6 +24,7 @@ import java.util.List;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 @Test(groups = TestGroups.DATABASE_FREE)
@@ -53,7 +57,7 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
-    public void test() {
+    public void uploadManifest() throws FileNotFoundException {
         ManifestSessionDao manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
         ResearchProjectDao researchProjectDao = Mockito.mock(ResearchProjectDao.class);
         Mockito.when(researchProjectDao.findByBusinessKey(Mockito.anyString())).thenAnswer(new Answer<Object>() {
@@ -65,13 +69,45 @@ public class ManifestSessionEjbDBFreeTest {
         });
 
         ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
-        ManifestSession manifestSession = ejb.uploadManifest("RP-1", null, "/path/to/spreadsheet.xls", TEST_USER);
+        String PATH_TO_SPREADSHEET = "src/test/resources/testdata/test-manifest.xlsx";
+        InputStream inputStream = new FileInputStream(PATH_TO_SPREADSHEET);
+        ManifestSession manifestSession = ejb.uploadManifest("RP-1", inputStream, PATH_TO_SPREADSHEET, TEST_USER);
         assertThat(manifestSession, is(notNullValue()));
+    }
+
+    public void loadManifestSessionSuccess() {
+        ManifestSessionDao manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
+        ResearchProjectDao researchProjectDao = Mockito.mock(ResearchProjectDao.class);
+        final long TEST_MANIFEST_SESSION_ID = 3L;
+        Mockito.when(manifestSessionDao.find(Mockito.anyLong())).then(new Answer<ManifestSession>() {
+            @Override
+            public ManifestSession answer(final InvocationOnMock invocation) throws Throwable {
+                return new ManifestSession() {
+                    @Override
+                    public Long getManifestSessionId() {
+                        return TEST_MANIFEST_SESSION_ID;
+                    }
+                };
+            }
+        });
+        ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
+        ManifestSession manifestSession = ejb.loadManifestSession(TEST_MANIFEST_SESSION_ID);
+        assertThat(manifestSession, is(notNullValue()));
+        assertThat(manifestSession.getManifestSessionId(), is(TEST_MANIFEST_SESSION_ID));
+    }
+
+    public void loadManifestSessionFailure() {
+        ManifestSessionDao manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
+        ResearchProjectDao researchProjectDao = Mockito.mock(ResearchProjectDao.class);
+        final long TEST_MANIFEST_SESSION_ID = 3L;
+        ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
+        ManifestSession manifestSession = ejb.loadManifestSession(TEST_MANIFEST_SESSION_ID);
+        assertThat(manifestSession, is(nullValue()));
     }
 
     @DataProvider(name = PATHS_TO_PREFIXES_PROVIDER)
     private Iterator<Object []> pathsToPrefixesProvider() {
-        final String[] paths = {
+        String[] paths = {
                 // no path
                 "",
                 // Unix path
@@ -80,7 +116,7 @@ public class ManifestSessionEjbDBFreeTest {
                 "c:\\ugh\\windows\\"
         };
         // Old and new Excel formats
-        final String[] suffixes = {
+        String[] suffixes = {
                 ".xls",
                 ".xlsx"
         };

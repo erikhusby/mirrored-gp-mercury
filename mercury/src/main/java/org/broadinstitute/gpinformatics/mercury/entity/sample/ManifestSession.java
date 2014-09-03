@@ -95,7 +95,7 @@ public class ManifestSession {
         return researchProject;
     }
 
-    Long getManifestSessionId() {
+    public Long getManifestSessionId() {
         return manifestSessionId;
     }
 
@@ -146,7 +146,8 @@ public class ManifestSession {
     }
 
     /**
-     * Execute validations against the records in this manifest that have not already been validated.
+     * Called during manifest upload, this executes validations against the records in this manifest that have
+     * not already been validated.
      */
     public void validateManifest() {
 
@@ -301,8 +302,8 @@ public class ManifestSession {
 
     /**
      * Called before the manifest session is set to completed, this will ensure that all records on the session are
-     * in the proper state.  If not, manifest Events entries are recorded for the record to indicate that it has not
-     * been scanned
+     * in the proper state.  If not, manifest events are added to the record to indicate that it has not
+     * been scanned.
      */
     public void validateForClose() {
         // Confirm all records have scanned status.
