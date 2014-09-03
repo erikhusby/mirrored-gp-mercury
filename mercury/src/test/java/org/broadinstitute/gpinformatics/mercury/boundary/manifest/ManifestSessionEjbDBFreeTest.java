@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
@@ -69,7 +70,7 @@ public class ManifestSessionEjbDBFreeTest {
         });
 
         ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
-        String PATH_TO_SPREADSHEET = "src/test/resources/testdata/test-manifest.xlsx";
+        String PATH_TO_SPREADSHEET = TestUtils.getTestData("manifest-import/test-manifest.xlsx");
         InputStream inputStream = new FileInputStream(PATH_TO_SPREADSHEET);
         ManifestSession manifestSession = ejb.uploadManifest("RP-1", inputStream, PATH_TO_SPREADSHEET, TEST_USER);
         assertThat(manifestSession, is(notNullValue()));

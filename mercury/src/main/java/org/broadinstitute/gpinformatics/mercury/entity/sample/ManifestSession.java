@@ -132,6 +132,12 @@ public class ManifestSession {
         record.setManifestSession(this);
     }
 
+    public void addRecords(Collection<ManifestRecord> manifestRecords) {
+        for (ManifestRecord manifestRecord : manifestRecords) {
+            addRecord(manifestRecord);
+        }
+    }
+
     public List<ManifestRecord> getRecords() {
         return records;
     }

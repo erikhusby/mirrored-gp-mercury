@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 
 import javax.ejb.Stateful;
@@ -16,6 +17,7 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
 
 @RequestScoped
 @Stateful
@@ -60,10 +62,9 @@ public class ManifestSessionEjb {
         } catch (InvalidFormatException | IOException | ValidationException e) {
             throw new InformaticsServiceException(e);
         }
-        // TODO ManifestImportProcessor needs to return multiple ManifestRecords.
-
+        Collection<ManifestRecord> manifestRecords = manifestImportProcessor.getManifestRecords();
         ManifestSession manifestSession = new ManifestSession(researchProject, prefix, bspUser);
-        // TODO Add manifest records from the spreadsheet parsing above.
+        manifestSession.addRecords(manifestRecords);
         // The flush is required so the validation logic will see all the newly added records from the manifest that
         // was just parsed.
         manifestSessionDao.flush();
