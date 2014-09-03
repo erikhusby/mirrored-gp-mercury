@@ -99,8 +99,8 @@ public class ManifestRecord {
         return this.metadata;
     }
 
-    public Metadata getMetadataByKey(Metadata.Key sampleId) {
-        return getMetadataMap().get(sampleId);
+    public Metadata getMetadataByKey(Metadata.Key key) {
+        return getMetadataMap().get(key);
     }
 
     public Status getStatus() {

@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity;
 
 
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.HashSet;
@@ -19,16 +20,24 @@ import static org.hamcrest.Matchers.is;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class MetadataTest {
 
-    public void basics() {
-        // Cover the no-arg constructor.
+    private Metadata metadata;
 
+    private static final Metadata.Key KEY = Metadata.Key.SAMPLE_ID;
+
+    private static final String VALUE = "value";
+
+    @BeforeMethod
+    public void before() {
         // equals and hashCode.
-        final Metadata.Key KEY = Metadata.Key.SAMPLE_ID;
-        final String VALUE = "value";
-        final Metadata metadata = new Metadata(KEY, VALUE);
+        metadata = new Metadata(KEY, VALUE);
+    }
+
+    public void basics() {
         assertThat(metadata.getKey(), is(equalTo(KEY)));
         assertThat(metadata.getValue(), is(equalTo(VALUE)));
+    }
 
+    public void hashCodeAndEquals() {
         HashSet<Metadata> metadataSet = new HashSet<Metadata>() {{
             add(metadata);
             add(new Metadata(KEY, VALUE));
@@ -45,7 +54,7 @@ public class MetadataTest {
     }
 
     public void testBasicConstructorMetadata() {
+        // Cover the no-arg constructor.
         new Metadata();
-
     }
 }

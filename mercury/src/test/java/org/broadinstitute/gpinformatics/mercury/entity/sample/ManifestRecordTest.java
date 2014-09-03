@@ -75,8 +75,7 @@ public class ManifestRecordTest {
 
     public void testStatusUpdate() throws Exception {
         // Test with no specified Status or ErrorStatus.
-        ManifestRecord testRecord = new ManifestRecord(new Metadata(Metadata.Key.SAMPLE_ID, COLLABORATOR_SAMPLE_ID_1),
-                new Metadata(Metadata.Key.GENDER, VALUE_2), new Metadata(Metadata.Key.PATIENT_ID, VALUE_3));
+        ManifestRecord testRecord = new ManifestRecord();
 
         // Test with specified Status and ErrorStatus.
         testRecord.setStatus(NEW_STATUS);

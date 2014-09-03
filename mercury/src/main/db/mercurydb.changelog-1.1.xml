@@ -983,9 +983,6 @@
         </createTable>
         <addPrimaryKey schemaName="mercury" tableName="manifest_record_metadata"
                        columnNames="manifest_record_id, metadata_id" constraintName="PK_MAN_REC_METADATA_JOIN"/>
-        <createIndex tableName="manifest_record_metadata" indexName="ix_manifest_record_metadata">
-            <column name="manifest_record_id"/>
-        </createIndex>
         <addForeignKeyConstraint constraintName="FK_MANREC_METADATA_MANREC_ID"
                                  baseTableSchemaName="mercury" baseTableName="manifest_record_metadata" baseColumnNames="manifest_record_id"
                                  referencedTableSchemaName="mercury" referencedTableName="manifest_record" referencedColumnNames="manifest_record_id"/>
