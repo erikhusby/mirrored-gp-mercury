@@ -1,0 +1,79 @@
+<%@ include file="/resources/layout/taglibs.jsp" %>
+
+<stripes:useActionBean var="actionBean"
+                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.PicoDispositionActionBean" />
+
+<stripes:layout-render name="/layout.jsp" pageTitle="${actionBean.pageTitle}" sectionTitle="${actionBean.pageTitle}" showCreate="false">
+
+    <stripes:layout-component name="extraHead">
+        <script type="text/javascript">
+            $j(document).ready(function () {
+
+                $j('#dispositions').dataTable({
+                    "oTableTools": ttExportDefines,
+                    "aaSorting": [[3,'asc']],
+                    "aoColumns": [
+                        {"bSortable": true, "sType": "html"},             // position
+                        {"bSortable": true, "sType": "html"},             // barcode
+                        {"bSortable": true, "sType": "numeric"},          // concentration
+                        {"bSortable": true, "sType": "title-numeric"}     // next step
+                    ]
+                })
+            });
+        </script>
+
+    </stripes:layout-component>
+
+    <stripes:layout-component name="content">
+        <%-- Puts the Scan Rack button far to the right. --%>
+        <table border="0">
+            <tr>
+                <td width="99%"/>
+                <td>
+                    <stripes:form beanclass="${actionBean.class.name}" id="scanRackForm">
+                        <div class="control-group">
+                            <div class="control-label">&#160;</div>
+                            <div class="controls actionButtons">
+                                <stripes:submit name="setupScanner" value="Use Scanned Rack"
+                                                style="margin-right: 10px;margin-top:10px;" class="btn btn-mini"/>
+                            </div>
+                        </div>
+                    </stripes:form>
+                </td>
+            </tr>
+        </table>
+
+        <div class="clearfix"></div>
+        <table class="table simple" id="dispositions">
+            <thead>
+            <tr>
+                <th class="columnPosition">Position</th>
+                <th class="columnBarcode">Barcode</th>
+                <th class="columnConcentration">Concentration</th>
+                <th class="columnNextStep">Next Step</th>
+            </tr>
+            </thead>
+            <tbody>
+            <c:forEach items="${actionBean.listItems}" var="listItem">
+                <tr>
+                    <td class="columnPosition">
+                            ${listItem.position}
+                    </td>
+                    <td class="columnBarcode">
+                            ${listItem.barcode}
+                    </td>
+                    <td class="columnConcentration">
+                            ${listItem.concentration}
+                    </td>
+                    <td class="columnNextStep">
+                        <div title="${listItem.disposition.rangeCompare}">
+                            ${listItem.disposition.stepName}
+                        </div>
+                    </td>
+                </tr>
+            </c:forEach>
+            </tbody>
+        </table>
+
+    </stripes:layout-component>
+</stripes:layout-render>

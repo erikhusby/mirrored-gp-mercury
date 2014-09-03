@@ -2,26 +2,26 @@ package org.broadinstitute.gpinformatics.mercury.presentation.sample;
 
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
+import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.bsp.client.rackscan.ScannerException;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainerEmbedder;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
-import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean;
 
 import javax.inject.Inject;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -29,15 +29,18 @@ import java.util.Map;
  * Action bean that shows per-sample disposition after initial pico.
  * Sorting by multiple columns is the main trick by this class.
  */
-@UrlBinding(value = "/sample/PicoDisposition.action")
-public class PicoDispositionActionBean extends CoreActionBean {
-    public static String PICO_DISPOSTION_PAGE = "/sample/picoDisposition.jsp";
+@UrlBinding(value = PicoDispositionActionBean.ACTION_BEAN_URL)
+public class PicoDispositionActionBean extends RackScanActionBean {
+    public static final String ACTION_BEAN_URL = "/sample/PicoDisposition.action";
+    public static final String PICO_DISPOSTION_PAGE = "/sample/picoDisposition.jsp";
+    public static final String PICO_DISPOSTION_RACK_SCAN_PAGE = "/sample/picoDispositionRackScan.jsp";
+    public static final String PAGE_TITLE = "Initial Pico Sample Disposition";
 
     @Inject
     private TubeFormationDao tubeFormationDao;
 
     @Inject
-    private LabVesselDao labVesselDao;
+    private BarcodedTubeDao barcodedTubeDao;
 
     // Spreadsheet upload page invokes this action bean and passes in the tubeFormationLabel parameter.
     private String tubeFormationLabel;
@@ -45,19 +48,8 @@ public class PicoDispositionActionBean extends CoreActionBean {
     // ListItem is one row of the "next step" table shown by the jsp.
     private List<ListItem> listItems = new ArrayList<>();
 
-    // With the "rack scan" button, the rack barcode is used to find tubes to display.
-    private String rackBarcode = null;
-
-    // Sorting options set by jsp checkboxes.
-    private boolean sortOnPosition = true;
-    private boolean sortOnConcentration = false;
-    private boolean sortOnNextStep = true;
-    private boolean reversePositionOrder = false;
-    private boolean reverseConcentrationOrder = false;
-    private boolean reverseNextStepOrder = false;
-
-    // TubeFormation accessible only for test purposes.
     private TubeFormation tubeFormation;
+    private static final Map<VesselPosition, BarcodedTube> positionToTubeMap = new HashMap<>();
 
 
     public String getTubeFormationLabel() {
@@ -76,62 +68,6 @@ public class PicoDispositionActionBean extends CoreActionBean {
         this.listItems = listItems;
     }
 
-    public boolean isSortOnPosition() {
-        return sortOnPosition;
-    }
-
-    public void setSortOnPosition(boolean sortOnPosition) {
-        this.sortOnPosition = sortOnPosition;
-    }
-
-    public boolean isSortOnConcentration() {
-        return sortOnConcentration;
-    }
-
-    public void setSortOnConcentration(boolean sortOnConcentration) {
-        this.sortOnConcentration = sortOnConcentration;
-    }
-
-    public boolean isSortOnNextStep() {
-        return sortOnNextStep;
-    }
-
-    public void setSortOnNextStep(boolean sortOnNextStep) {
-        this.sortOnNextStep = sortOnNextStep;
-    }
-
-    public boolean isReversePositionOrder() {
-        return reversePositionOrder;
-    }
-
-    public void setReversePositionOrder(boolean reversePositionOrder) {
-        this.reversePositionOrder = reversePositionOrder;
-    }
-
-    public boolean isReverseConcentrationOrder() {
-        return reverseConcentrationOrder;
-    }
-
-    public void setReverseConcentrationOrder(boolean reverseConcentrationOrder) {
-        this.reverseConcentrationOrder = reverseConcentrationOrder;
-    }
-
-    public boolean isReverseNextStepOrder() {
-        return reverseNextStepOrder;
-    }
-
-    public void setReverseNextStepOrder(boolean reverseNextStepOrder) {
-        this.reverseNextStepOrder = reverseNextStepOrder;
-    }
-
-    public String getRackBarcode() {
-        return rackBarcode;
-    }
-
-    public void setRackBarcode(String rackBarcode) {
-        this.rackBarcode = rackBarcode;
-    }
-
     // TubeFormation accessible only for test purposes.
     TubeFormation getTubeFormation() {
         return tubeFormation;
@@ -147,8 +83,6 @@ public class PicoDispositionActionBean extends CoreActionBean {
      */
     public class ListItem {
         private String position;
-        private String row;
-        private int column;
         private String barcode;
         private BigDecimal concentration;
         private NextStep disposition;
@@ -157,23 +91,15 @@ public class PicoDispositionActionBean extends CoreActionBean {
         public ListItem(String position, String barcode, BigDecimal concentration,  NextStep disposition,
                         boolean override) {
             this.position = position;
-            row = StringUtils.isAlpha(position.substring(0,1)) ? position.substring(0,1) : "";
-            String col = StringUtils.isAlpha(position.substring(0,1)) ? position.substring(1) : position;
-            column = StringUtils.isNumeric(col) ? Integer.parseInt(col) : 0;
             this.barcode = barcode;
-            this.concentration = concentration;
+            // Limits the decimal digits displayed.
+            this.concentration = (concentration != null) ? concentration.setScale(2, RoundingMode.HALF_EVEN) : null;
             this.disposition = disposition;
             this.override = override;
         }
 
         public String getPosition() {
             return position;
-        }
-        public String getRow() {
-            return row;
-        }
-        public int getColumn() {
-            return column;
         }
         public String getBarcode() {
             return barcode;
@@ -199,7 +125,9 @@ public class PicoDispositionActionBean extends CoreActionBean {
         EXCLUDE("Exclude", -1);
 
         private String stepName;
-        // Indicates which NextStep to use when concentration is below range (-1), in range (0), above range (+1).
+
+        // rangeCompare indicates below range (-1), in range (0), above range (+1).
+        // It is also used for sorting a list of NextStep.
         private int rangeCompare;
 
         private NextStep(String stepName, int rangeCompare) {
@@ -216,6 +144,7 @@ public class PicoDispositionActionBean extends CoreActionBean {
             return rangeCompare;
         }
 
+        /** Returns the NextStep for the given NextStep.rangeCompare, or null if not found. */
         public static NextStep getNextStepForRangeCompare(int compareResult) {
             return mapRangeCompareToNextStep.get(compareResult);
         }
@@ -225,106 +154,111 @@ public class PicoDispositionActionBean extends CoreActionBean {
      * Populates the list of pico sample dispositions for the jsp to display.
      */
     @DefaultHandler
+    @HandlesEvent(VIEW_ACTION)
     public Resolution displayList() {
-
-        // If no ListItems exist, finds the tubes and creates a ListItem for each one.
-        if (CollectionUtils.isEmpty(listItems) &&
-            (tubeFormation != null || StringUtils.isNotBlank(tubeFormationLabel))) {
-
-            if (tubeFormation == null) {
-                tubeFormation = tubeFormationDao.findByDigest(tubeFormationLabel);
-            }
-            if (tubeFormation == null) {
-                createSafeErrorMessage("Cannot find tube formation having label '" + tubeFormationLabel + "'");
-            } else {
-                makeListItems(tubeFormation);
-            }
+        if (StringUtils.isBlank(tubeFormationLabel) && tubeFormation == null) {
+            addMessage("tubeFormationLabel is missing");
         }
-
-        sortList();
+        makeListItems(tubeFormationLabel, tubeFormation);
         return new ForwardResolution(PICO_DISPOSTION_PAGE);
+    }
+
+    @HandlesEvent("setupScanner")
+    public Resolution setupScanner() {
+        setAppendScanResults(false);
+        return new ForwardResolution(PICO_DISPOSTION_RACK_SCAN_PAGE);
+    }
+
+    @Override
+    public String getRackScanPageUrl() {
+        return ACTION_BEAN_URL;
+    }
+
+    @Override
+    public String getPageTitle() {
+        return PAGE_TITLE;
     }
 
     /**
-     * Does a rack scan and uses the rack as input to the sample disposition list.
+     * Uses a rack scanner to find tubes.
+     * @throws org.broadinstitute.bsp.client.rackscan.ScannerException
      */
-    public Resolution scanRack() {
+    @Override
+    @HandlesEvent(SCAN_EVENT)
+    public Resolution scan() throws ScannerException {
         listItems.clear();
-
-        // xxx todo get rackBarcode from somewhere
-
-        if (StringUtils.isBlank(rackBarcode)) {
-            createSafeErrorMessage("Rack scan barcode is null.");
+        if (getRackScanner() == null) {
+            addMessage("No rack scanner is selected.");
         } else {
-
-            Map<String,LabVessel> map = labVesselDao.findByBarcodes(Collections.singletonList(rackBarcode));
-            if (map == null) {
-                createSafeErrorMessage("Cannot find rack for barcode '" + rackBarcode + "'");
-            }
-            LabVessel rack = map.get(rackBarcode);
-
-            if (OrmUtil.proxySafeIsInstance(rack, VesselContainerEmbedder.class)) {
-                makeListItems(OrmUtil.proxySafeCast(rack, VesselContainerEmbedder.class));
-                sortList();
-            } else {
-                createSafeErrorMessage("Barcode '" + rackBarcode + "' is not from a rack of tubes.");
-            }
+            // Runs the rack scanner.  Ignores the returned Stripes Resolution and
+            // uses the map of position->tubeBarcode.
+            super.scan();
+            makeListItems(rackScan);
         }
         return new ForwardResolution(PICO_DISPOSTION_PAGE);
     }
 
-    // Makes a ListItem for every tube in the rack.
-    private void makeListItems(VesselContainerEmbedder vesselContainer) {
+
+
+    // Makes all listItems from a tube formation label, or the tube formation entity.
+    private void makeListItems(String label, TubeFormation container) {
         listItems.clear();
-        if (vesselContainer != null && vesselContainer.getContainerRole() != null) {
-            Map<VesselPosition, BarcodedTube> mapPositionToTube =
-                    vesselContainer.getContainerRole().getMapPositionToVessel();
-
-            for (VesselPosition vesselPosition : mapPositionToTube.keySet()) {
-                BarcodedTube tube = mapPositionToTube.get(vesselPosition);
-                int rangeCompare = tube.concentrationInFingerprintRange();
-                boolean override = false; //xxx todo get this from somewhere in labVessel
-
-                listItems.add(new ListItem(vesselPosition.name(), tube.getLabel(), tube.getConcentration(),
-                        NextStep.getNextStepForRangeCompare(rangeCompare), override));
+        if (container != null || StringUtils.isNotBlank(label)) {
+            if (container == null) {
+                container = tubeFormationDao.findByDigest(label);
+            }
+            if (container == null || container.getContainerRole() == null) {
+                addMessage("Cannot find tube formation having label '" + label + "'");
+            } else {
+                makeListItems(container.getContainerRole().getMapPositionToVessel());
             }
         }
     }
 
-    // Sorts the ListItems according to the current sort settings.
-    private void sortList() {
-        // Builds a comparator for sorting the list.  Applies multiple key sorting in this order:
-        // first by nextStep, then by concentration, then by position, then by barcode.
-        Comparator<ListItem> listItemComparator = new Comparator<ListItem>() {
-            @Override
-            public int compare(ListItem o1, ListItem o2) {
-                if (sortOnNextStep) {
-                    int compareResult = Integer.compare(o1.getDisposition().getRangeCompare(),
-                            o2.getDisposition().getRangeCompare());
-                    if (compareResult != 0) {
-                        return reverseNextStepOrder ? -compareResult : compareResult;
-                    }
-                }
-                if (sortOnConcentration) {
-                    int compareResult = o1.getConcentration().compareTo(o2.getConcentration());
-                    if (compareResult != 0) {
-                        return reverseConcentrationOrder ? -compareResult : compareResult;
-                    }
-                }
-                if (sortOnPosition) {
-                    int compareRow = o1.getRow().compareTo(o2.getRow());
-                    int compareCol = Integer.compare(o1.getColumn(), o2.getColumn());
-                    if (reversePositionOrder) {
-                        return (compareRow != 0) ? compareRow : compareCol;
+    // Makes all listItems from a position->barcode map.
+    private void makeListItems(LinkedHashMap<String, String> positionToBarcodeMap) {
+        // First makes a map of position->tube.
+        positionToTubeMap.clear();
+        for (String position : positionToBarcodeMap.keySet()) {
+            String tubeBarcode = positionToBarcodeMap.get(position);
+            if (StringUtils.isNotBlank(tubeBarcode)) {
+                BarcodedTube tube = barcodedTubeDao.findByBarcode(tubeBarcode);
+                if (tube == null) {
+                    addMessage("Cannot find tube having barcode '" + tubeBarcode + "'");
+                } else {
+                    VesselPosition vesselPosition = VesselPosition.getByName(position);
+                    if (vesselPosition == null) {
+                        addMessage("Unknown vessel position '" + position + "'");
                     } else {
-                        return (compareCol != 0) ? compareCol : compareRow;
+                        positionToTubeMap.put(VesselPosition.getByName(position), tube);
                     }
                 }
-                return o1.getBarcode().compareTo(o2.getBarcode());
-            }};
-
-        Collections.sort(listItems, listItemComparator);
+            }
+        }
+        if (positionToTubeMap.size() == 0) {
+            addMessage("Scanned rack scan has no tubes.");
+        }
+        makeListItems(positionToTubeMap);
     }
 
+    // Makes all listItems from a position->tube map.
+    private void makeListItems(Map<VesselPosition, BarcodedTube> map) {
+        for (VesselPosition vesselPosition : map.keySet()) {
+            BarcodedTube tube = map.get(vesselPosition);
+            int rangeCompare = tube.concentrationInFingerprintRange();
+            boolean override = false; //xxx todo get this from somewhere in labVessel?
+            listItems.add(new ListItem(vesselPosition.name(), tube.getLabel(), tube.getConcentration(),
+                    NextStep.getNextStepForRangeCompare(rangeCompare), override));
+        }
+        Collections.sort(listItems, BY_DISPOSITION_THEN_POSITION);
+    }
+
+    private static final Comparator<ListItem> BY_DISPOSITION_THEN_POSITION = new Comparator<ListItem>() {
+            @Override
+            public int compare(ListItem o1, ListItem o2) {
+                int compareResult = Integer.compare(o1.getDisposition().getRangeCompare(),
+                        o2.getDisposition().getRangeCompare());
+                return (compareResult != 0) ? compareResult :  o1.getPosition().compareTo(o2.getPosition());
+            }};
 
 }
