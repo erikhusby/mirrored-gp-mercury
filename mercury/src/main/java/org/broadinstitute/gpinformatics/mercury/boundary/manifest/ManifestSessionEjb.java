@@ -74,12 +74,11 @@ public class ManifestSessionEjb {
         return manifestSessionDao.find(manifestSessionId);
     }
 
-    public ManifestSession acceptManifestUpload(long manifestSessionId) {
+    public void acceptManifestUpload(long manifestSessionId) {
         ManifestSession manifestSession = loadManifestSession(manifestSessionId);
         if (manifestSession == null) {
             throw new InformaticsServiceException("Unrecognized Manifest Session ID: " + manifestSessionId);
         }
         manifestSession.acceptUpload();
-        return manifestSession;
     }
 }

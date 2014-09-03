@@ -423,7 +423,7 @@ public class ManifestSession {
 
     public void acceptUpload() {
         for (ManifestRecord record : getNonQuarantinedRecords()) {
-            // record.setStatus(ManifestRecord.Status.UPLOAD_ACCEPTED);
+            record.setStatus(ManifestRecord.Status.UPLOAD_ACCEPTED);
         }
     }
 

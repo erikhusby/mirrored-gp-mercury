@@ -113,20 +113,13 @@ public class ManifestSessionEjbDBFreeTest {
     public void acceptUpload() {
         ManifestSessionDao manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
         ResearchProjectDao researchProjectDao = Mockito.mock(ResearchProjectDao.class);
-        final long TEST_MANIFEST_SESSION_ID = 3L;
-        Mockito.when(manifestSessionDao.find(Mockito.anyLong())).then(new Answer<ManifestSession>() {
-            @Override
-            public ManifestSession answer(final InvocationOnMock invocation) throws Throwable {
-                return new ManifestSession() {
-                    @Override
-                    public Long getManifestSessionId() {
-                        return TEST_MANIFEST_SESSION_ID;
-                    }
-                };
-            }
-        });
+        ManifestSession manifestSession = ManifestTestFactory.buildManifestSession(
+                "RP-1000", "ManifestSessionPrefix", TEST_USER, 10);
+
+        Mockito.when(manifestSessionDao.find(Mockito.anyLong())).thenReturn(manifestSession);
         ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
-        ManifestSession manifestSession = ejb.acceptManifestUpload(TEST_MANIFEST_SESSION_ID);
+        long MANIFEST_SESSION_ID = 3L;
+        ejb.acceptManifestUpload(MANIFEST_SESSION_ID);
         for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
             assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOAD_ACCEPTED));
         }
