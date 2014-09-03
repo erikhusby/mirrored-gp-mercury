@@ -226,6 +226,10 @@ public class VesselEjb {
                 runStarted, metricType);
         labMetricRun.getMetadata().add(new Metadata(Metadata.Key.CORRELATION_COEFFICIENT_R2,
                 mapNameValueToValue.get(VarioskanRowParser.NameValue.CORRELATION_COEFFICIENT_R2)));
+        labMetricRun.getMetadata().add(new Metadata(Metadata.Key.INSTRUMENT_NAME,
+                mapNameValueToValue.get(VarioskanRowParser.NameValue.INSTRUMENT_NAME)));
+        labMetricRun.getMetadata().add(new Metadata(Metadata.Key.INSTRUMENT_SERIAL_NUMBER,
+                mapNameValueToValue.get(VarioskanRowParser.NameValue.INSTRUMENT_SERIAL_NUMBER)));
 
         // Store raw values against plate wells
         for (VarioskanPlateProcessor.PlateWellResult plateWellResult : varioskanPlateProcessor.getPlateWellResults()) {
