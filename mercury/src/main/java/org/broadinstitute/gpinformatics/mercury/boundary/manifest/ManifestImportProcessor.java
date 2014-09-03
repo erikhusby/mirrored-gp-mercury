@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * This class is responsible for parsing manifest files which are used when importing sample metadata.
+ * This class is responsible for parsing <b>Buick</b> manifest files which are used when importing sample metadata.
  * <p/>
  * <br/>See:<ul>
  * <li><a href="https://labopsconfluence.broadinstitute.org/display/GPI/Sample+Receipt+and+Accessioning">
@@ -33,6 +33,7 @@ import java.util.Map;
 public class ManifestImportProcessor extends TableProcessor {
     public static final String UNKNOWN_HEADER_FORMAT = "Unknown header(s) '%s'.";
     private static final int ALLOWABLE_NUMBER_OF_SHEETS = 1;
+    static final String DUPLICATE_HEADER_FORMAT = "Duplicate header found: %s";
     private ColumnHeader[] columnHeaders;
     // This should be a list of Metadata, but that's on a different branch...
     private Collection<ManifestRecord> manifestRecords=new ArrayList<>();
@@ -46,9 +47,24 @@ public class ManifestImportProcessor extends TableProcessor {
         return ManifestHeader.headerNames(columnHeaders);
     }
 
+    /**
+     * Process headers of Manifest file.
+     * Validations protect against duplicate headers and unknown headers
+     *
+     * @param headers List header strings in this row
+     * @param row     The row number in the file.
+     */
     @Override
     public void processHeader(List<String> headers, int row) {
         List<String> errors = new ArrayList<>();
+        List<String> seenHeaders=new ArrayList<>();
+        for (String header : headers) {
+            if (seenHeaders.contains(header)) {
+                addDataMessage(String.format(DUPLICATE_HEADER_FORMAT, header), row);
+            }
+            seenHeaders.add(header);
+        }
+
         Collection<? extends ColumnHeader> foundHeaders =
                 ManifestHeader.fromText(errors, headers.toArray(new String[headers.size()]));
         columnHeaders = foundHeaders.toArray(new ColumnHeader[foundHeaders.size()]);

@@ -29,6 +29,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -36,7 +37,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyCollectionOf;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isOneOf;
+import static org.hamcrest.Matchers.startsWith;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ManifestImporterTest {
@@ -47,6 +50,11 @@ public class ManifestImporterTest {
             TEST_MANIFEST_DIRECTORY + "/" + "test-manifest-missing-required.xlsx";
     public static final String UNKNOWN_HEADERS = TEST_MANIFEST_DIRECTORY + "/" + "test-manifest-unknown-headers.xlsx";
     public static final String TOO_MANY_SHEETS = TEST_MANIFEST_DIRECTORY + "/" + "test-manifest-too-many-sheets.xlsx";
+    public static final String REARRANGED_COLUMNS =
+            TEST_MANIFEST_DIRECTORY + "/" + "test-manifest-rearranged-columns.xlsx";
+    public static final String DUPLICATE_COLUMNS =
+            TEST_MANIFEST_DIRECTORY + "/" + "test-manifest-duplicate-columns.xlsx";
+    private static final String ROW_NUMBER_PREFIX = "Row #%s ";
 
     private ManifestImportProcessor manifestImportProcessor;
 
@@ -68,24 +76,8 @@ public class ManifestImporterTest {
     public void testImport(String excelFileName) throws InvalidFormatException, IOException, ValidationException {
         InputStream inputStream = new FileInputStream(excelFileName);
         PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
-        Map<String, String> manifestRow = new HashMap<>();
 
-        for (ManifestRecord manifestRecord : manifestImportProcessor.getManifestRecords()) {
-            for (final Metadata metadata : manifestRecord.getMetadata()) {
-                ManifestHeader header = ManifestHeader.fromMetadataKey(metadata.getKey());
-                manifestRow.put(header.getText(), metadata.getValue());
-            }
-        }
-
-
-        PoiSpreadsheetValidator.validateSpreadsheetRow(manifestRow, ManifestHeader.class);
-        for (Map.Entry<String, String> manifestCell : manifestRow.entrySet()) {
-            String header = manifestCell.getKey();
-            String value = manifestCell.getValue();
-            if (header.equals(ManifestHeader.TUMOR_OR_NORMAL.getText())) {
-                assertThat(value, isOneOf("Tumor", "Normal"));
-            }
-        }
+        validateManifestRecords(manifestImportProcessor.getManifestRecords());
         assertThat(manifestImportProcessor.getMessages(), emptyCollectionOf(String.class));
         assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
     }
@@ -96,7 +88,8 @@ public class ManifestImporterTest {
         PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
 
         assertThat(manifestImportProcessor.getMessages(),
-                hasItem("Row #1 " + String.format(TableProcessor.REQUIRED_VALUE_IS_MISSING, ManifestHeader.SAMPLE_ID.getText())));
+                hasItem(String.format(ROW_NUMBER_PREFIX + TableProcessor.REQUIRED_VALUE_IS_MISSING, 1,
+                        ManifestHeader.SAMPLE_ID.getText())));
         assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
 
     }
@@ -111,8 +104,59 @@ public class ManifestImporterTest {
         InputStream inputStream = new FileInputStream(TestUtils.getTestData(UNKNOWN_HEADERS));
         PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
 
-        String expectedError = String.format(ManifestImportProcessorTest.TEST_UNKNOWN_HEADER_FORMAT, 0, Arrays.asList("YOMAMA"));
+        String expectedError =
+                String.format(ManifestImportProcessorTest.TEST_UNKNOWN_HEADER_FORMAT, 0, Arrays.asList("YOMAMA"));
         assertThat(manifestImportProcessor.getMessages(), contains(expectedError));
         assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
+    }
+
+    public void testImportRearrangedColumns() throws InvalidFormatException, IOException, ValidationException {
+        InputStream inputStream = new FileInputStream(TestUtils.getTestData(REARRANGED_COLUMNS));
+        PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
+
+        assertThat(manifestImportProcessor.getMessages(), emptyCollectionOf(String.class));
+        assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
+        validateManifestRecords(manifestImportProcessor.getManifestRecords());
+    }
+
+    public void testImportDuplicateColumns() throws InvalidFormatException, IOException, ValidationException {
+        InputStream inputStream = new FileInputStream(TestUtils.getTestData(DUPLICATE_COLUMNS));
+        PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
+
+        String expectedError =
+                String.format(ROW_NUMBER_PREFIX + ManifestImportProcessor.DUPLICATE_HEADER_FORMAT, 0, "Patient_ID");
+        assertThat(manifestImportProcessor.getMessages(), hasItem(expectedError));
+        assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
+    }
+
+    private static void validateManifestRecords(Collection<ManifestRecord> manifestRecords) {
+        Map<String, String> manifestRow = new HashMap<>();
+        for (ManifestRecord manifestRecord : manifestRecords) {
+            for (final Metadata metadata : manifestRecord.getMetadata()) {
+                ManifestHeader header = ManifestHeader.fromMetadataKey(metadata.getKey());
+                manifestRow.put(header.getText(), metadata.getValue());
+            }
+            PoiSpreadsheetValidator.validateSpreadsheetRow(manifestRow, ManifestHeader.class);
+            for (Map.Entry<String, String> manifestCell : manifestRow.entrySet()) {
+                String header = manifestCell.getKey();
+                String value = manifestCell.getValue();
+                if (header.equals(ManifestHeader.TUMOR_OR_NORMAL.getText())) {
+                    assertThat(value, isOneOf("Tumor", "Normal"));
+                }
+                if (header.equals(ManifestHeader.SEX.getText())) {
+                    assertThat(value, isOneOf("Male", "Female"));
+                }
+                if (header.equals(ManifestHeader.VISIT.getText())) {
+                    assertThat(value, is("Screening"));
+                }
+                if (header.equals(ManifestHeader.SAMPLE_ID.getText())) {
+                    assertThat(value, startsWith("0310"));
+                }
+                if (header.equals(ManifestHeader.PATIENT_ID.getText())) {
+                    assertThat(value, startsWith("00"));
+                }
+            }
+        }
+
     }
 }
