@@ -68,7 +68,7 @@ public final class PoiSpreadsheetParser {
             for (int i = 0; i < processor.getHeaderNames().size(); i++) {
                 String headerName = processor.getHeaderNames().get(i);
                 dataByHeader.put(headerName,
-                        extractCellContent(row, headerName, i, processor.isDateColumn(i), processor.isStringColumn(i)));
+                        extractCellContent(row, headerName, i, processor.isDateColumn(i)));
             }
 
             // Take the map and turn it into objects and process the data appropriately.
@@ -93,7 +93,7 @@ public final class PoiSpreadsheetParser {
             while (cellIterator.hasNext()) {
                 // Headers are always strings, so the false is for the date and the true is in case the header looks
                 // like a number to excel
-                headers.add(getCellValues(cellIterator.next(), false, true));
+                headers.add(getCellValues(cellIterator.next(), false));
             }
 
             // The primary header row is the one that needs to be generally validated.
@@ -150,11 +150,11 @@ public final class PoiSpreadsheetParser {
      *
      * @return A string representation of the data in the cell indicated by the given row/column (header) combination
      */
-    protected String extractCellContent(Row row, String headerName, int columnIndex, boolean isDate, boolean isString) {
+    protected String extractCellContent(Row row, String headerName, int columnIndex, boolean isDate) {
 
         Cell cell = row.getCell(columnIndex);
 
-        String result = getCellValues(cell, isDate, isString);
+        String result = getCellValues(cell, isDate);
         if (StringUtils.isBlank(result)) {
             validationMessages.add("Row # " + row.getRowNum() + ": Unable to determine cell type for " + headerName);
         }
@@ -171,23 +171,16 @@ public final class PoiSpreadsheetParser {
      *
      * @return A string representation of the cell.
      */
-    private static String getCellValues(Cell cell, boolean isDate, boolean isString) {
+    private static String getCellValues(Cell cell, boolean isDate) {
         if (cell != null) {
-            switch (cell.getCellType()) {
-            case Cell.CELL_TYPE_BOOLEAN:
+            if (cell.getCellType() == Cell.CELL_TYPE_BOOLEAN) {
                 return String.valueOf(cell.getBooleanCellValue());
-            case Cell.CELL_TYPE_NUMERIC:
-                if (isDate) {
-                    return DATE_FORMATTER.format(cell.getDateCellValue());
-                }
-                if (isString) {
-                    cell.setCellType(Cell.CELL_TYPE_STRING);
-                    return cell.getStringCellValue();
-                }
-                return String.valueOf(cell.getNumericCellValue());
-            case Cell.CELL_TYPE_STRING:
-                return cell.getStringCellValue();
             }
+            if (isDate) {
+                return DATE_FORMATTER.format(cell.getDateCellValue());
+            }
+            cell.setCellType(Cell.CELL_TYPE_STRING);
+            return cell.getStringCellValue();
         }
 
         return "";
