@@ -11,8 +11,10 @@ import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -24,9 +26,32 @@ import java.util.Set;
 public class LabMetricDecision {
 
     public enum Decision {
-        PASS,
-        FAIL,
-        RISK
+        PASS(false),
+        FAIL(true),
+        RISK(true);
+
+        private boolean editable;
+
+        Decision(boolean editable) {
+            this.editable = editable;
+        }
+
+        public boolean isEditable() {
+            return editable;
+        }
+
+        private static List<Decision> editableDecisions = new ArrayList<>();
+        static {
+            for (Decision decision : Decision.values()) {
+                if (decision.isEditable()) {
+                    editableDecisions.add(decision);
+                }
+            }
+        }
+
+        public static List<Decision> getEditableDecisions() {
+            return editableDecisions;
+        }
     }
 
     @SuppressWarnings("UnusedDeclaration")

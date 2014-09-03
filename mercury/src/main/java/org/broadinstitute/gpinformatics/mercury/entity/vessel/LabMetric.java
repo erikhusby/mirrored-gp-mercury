@@ -72,7 +72,7 @@ public class LabMetric implements Comparable<LabMetric> {
     }
 
     public enum MetricType {
-        INITIAL_PICO("Initial Pico", false, new Decider() {
+        INITIAL_PICO("Initial Pico", true, new Decider() {
             @Override
             public LabMetricDecision.Decision makeDecision(LabVessel labVessel, LabMetric labMetric) {
                 if (labVessel.getVolume() != null) {
@@ -83,7 +83,7 @@ public class LabMetric implements Comparable<LabMetric> {
                 return LabMetricDecision.Decision.FAIL;
             }
         }),
-        FINGERPRINT_PICO("Fingerprint Pico", false, new Decider() {
+        FINGERPRINT_PICO("Fingerprint Pico", true, new Decider() {
             @Override
             public LabMetricDecision.Decision makeDecision(LabVessel labVessel, LabMetric labMetric) {
                 if (labVessel.getVolume() != null) {
@@ -95,7 +95,7 @@ public class LabMetric implements Comparable<LabMetric> {
                 return LabMetricDecision.Decision.FAIL;
             }
         }),
-        SHEARING_PICO("Shearing Pico", false, new Decider() {
+        SHEARING_PICO("Shearing Pico", true, new Decider() {
             @Override
             public LabMetricDecision.Decision makeDecision(LabVessel labVessel, LabMetric labMetric) {
                 if (labVessel.getVolume() != null) {
@@ -174,7 +174,6 @@ public class LabMetric implements Comparable<LabMetric> {
         }
     }
 
-    @SuppressWarnings("UnusedDeclaration")
     @SequenceGenerator(name = "SEQ_LAB_METRIC", schema = "mercury", sequenceName = "SEQ_LAB_METRIC")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LAB_METRIC")
     @Id
@@ -229,6 +228,13 @@ public class LabMetric implements Comparable<LabMetric> {
         this.labUnit = labUnit;
         this.vesselPosition = vesselPosition;
         this.createdDate = createdDate;
+    }
+
+    public BigDecimal getTotalNg() {
+        if (labVessel.getVolume() != null) {
+            return value.multiply(labVessel.getVolume());
+        }
+        return null;
     }
 
     public Long getLabMetricId() {
