@@ -37,7 +37,9 @@ import java.util.Map;
 public class VarioskanParserTest {
 
     public static final String PLATE1_BARCODE = "000001234567";
+    public static final String PLATE1_BARCODE_IN_SS = "1234567.0";
     public static final String PLATE2_BARCODE = "000002345678";
+    public static final String PLATE2_BARCODE_IN_SS = "2345678.0";
 
     @Test
     public void testBasic() {
@@ -76,29 +78,12 @@ public class VarioskanParserTest {
             parser.processRows(workbook.getSheet(VarioskanRowParser.QUANTITATIVE_CURVE_FIT1_TAB), varioskanPlateProcessor);
             Map<String, StaticPlate> mapBarcodeToPlate = new HashMap<>();
 
-            Map<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
-            mapPositionToTube.put(VesselPosition.A01, new BarcodedTube("A01"));
-            mapPositionToTube.put(VesselPosition.A02, new BarcodedTube("A02"));
-            mapPositionToTube.put(VesselPosition.A03, new BarcodedTube("A03"));
-            TubeFormation tubeFormation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
-
-            StaticPlate staticPlate1 = new StaticPlate(PLATE1_BARCODE, StaticPlate.PlateType.Eppendorf96);
-            mapBarcodeToPlate.put(staticPlate1.getLabel(), staticPlate1);
-            StaticPlate staticPlate2 = new StaticPlate(PLATE2_BARCODE, StaticPlate.PlateType.Eppendorf96);
-            mapBarcodeToPlate.put(staticPlate2.getLabel(), staticPlate2);
-
-            LabEvent labEvent1 = new LabEvent(LabEventType.PICO_MICROFLUOR_TRANSFER, new Date(), "BATMAN", 1L, 101L,
-                    "Bravo");
-            labEvent1.getSectionTransfers().add(new SectionTransfer(tubeFormation.getContainerRole(), SBSSection.ALL96,
-                    null, staticPlate1.getContainerRole(), SBSSection.ALL96, null, labEvent1));
-            LabEvent labEvent2 = new LabEvent(LabEventType.PICO_MICROFLUOR_TRANSFER, new Date(), "BATMAN", 2L, 101L,
-                    "Bravo");
-            labEvent2.getSectionTransfers().add(new SectionTransfer(tubeFormation.getContainerRole(), SBSSection.ALL96,
-                    null, staticPlate2.getContainerRole(), SBSSection.ALL96, null, labEvent2));
+            Map<VesselPosition, BarcodedTube> mapPositionToTube = buildTubesAndTransfers(mapBarcodeToPlate,
+                    PLATE1_BARCODE, PLATE2_BARCODE, "");
 
             LabMetricRun labMetricRun = vesselEjb.createVarioskanRunDaoFree(workbook, LabMetric.MetricType.INITIAL_PICO,
                             varioskanPlateProcessor, mapBarcodeToPlate);
-            Assert.assertEquals(labMetricRun.getLabMetrics().size(), 2 * 96 + 3);
+            Assert.assertEquals(labMetricRun.getLabMetrics().size(), 3 * 96);
             Assert.assertEquals(mapPositionToTube.get(VesselPosition.A01).getMetrics().iterator().next().getValue(),
                     new BigDecimal("3.34"));
             Assert.assertEquals(mapPositionToTube.get(VesselPosition.A02).getMetrics().iterator().next().getValue(),
@@ -110,9 +95,34 @@ public class VarioskanParserTest {
         }
     }
 
-    private InputStream getSpreadsheet() {
+    public static Map<VesselPosition, BarcodedTube> buildTubesAndTransfers(Map<String, StaticPlate> mapBarcodeToPlate,
+            String plate1Barcode, String plate2Barcode, String tubePrefix) {
+        Map<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
+        for (VesselPosition vesselPosition : RackOfTubes.RackType.Matrix96.getVesselGeometry().getVesselPositions()) {
+            mapPositionToTube.put(vesselPosition, new BarcodedTube(tubePrefix + vesselPosition.toString()));
+        }
+
+        TubeFormation tubeFormation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
+
+        StaticPlate staticPlate1 = new StaticPlate(plate1Barcode, StaticPlate.PlateType.Eppendorf96);
+        mapBarcodeToPlate.put(staticPlate1.getLabel(), staticPlate1);
+        StaticPlate staticPlate2 = new StaticPlate(plate2Barcode, StaticPlate.PlateType.Eppendorf96);
+        mapBarcodeToPlate.put(staticPlate2.getLabel(), staticPlate2);
+
+        LabEvent labEvent1 = new LabEvent(LabEventType.PICO_MICROFLUOR_TRANSFER, new Date(), "BATMAN", 1L, 101L,
+                "Bravo");
+        labEvent1.getSectionTransfers().add(new SectionTransfer(tubeFormation.getContainerRole(), SBSSection.ALL96,
+                null, staticPlate1.getContainerRole(), SBSSection.ALL96, null, labEvent1));
+        LabEvent labEvent2 = new LabEvent(LabEventType.PICO_MICROFLUOR_TRANSFER, new Date(), "BATMAN", 2L, 101L,
+                "Bravo");
+        labEvent2.getSectionTransfers().add(new SectionTransfer(tubeFormation.getContainerRole(), SBSSection.ALL96,
+                null, staticPlate2.getContainerRole(), SBSSection.ALL96, null, labEvent2));
+        return mapPositionToTube;
+    }
+
+    public static InputStream getSpreadsheet() {
         InputStream testSpreadSheetInputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                "testdata/VarioskanOutput.xls");
+                "VarioskanOutput.xls");
         Assert.assertNotNull(testSpreadSheetInputStream);
         return testSpreadSheetInputStream;
     }

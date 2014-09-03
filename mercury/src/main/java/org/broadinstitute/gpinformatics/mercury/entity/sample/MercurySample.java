@@ -121,4 +121,5 @@ public class MercurySample extends AbstractSample {
     public int hashCode() {
         return new HashCodeBuilder().append(getSampleKey()).toHashCode();
     }
+
 }
