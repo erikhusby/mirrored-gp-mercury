@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.parsers.poi;
 
+import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.emptyCollectionOf;
 import static org.hamcrest.Matchers.equalTo;
 
 @Test(groups = TestGroups.DATABASE_FREE)
@@ -52,6 +54,7 @@ public class PoiSpreadsheetParserTest {
     @Test(dataProvider = "excelFileDataProvider")
     public void testParseAndValidateExcelFile(InputStream testFileInputStream) throws Exception {
         PoiSpreadsheetParser.processSingleWorksheet(testFileInputStream, testProcessor);
+        assertThat(testProcessor.getMessages(), emptyCollectionOf(String.class));
         for (Map<String, String> spreadsheetRowValues : testProcessor.getSpreadsheetValues()) {
             String calculatedValue = spreadsheetRowValues.get(TestHeaders.calculated.getText());
             String expectedValue = spreadsheetRowValues.get(TestHeaders.expected.getText());
@@ -59,6 +62,24 @@ public class PoiSpreadsheetParserTest {
             assertThat(failedReason, calculatedValue, equalTo(expectedValue));
             PoiSpreadsheetValidator.validateSpreadsheetRow(spreadsheetRowValues, TestHeaders.class);
         }
+    }
+
+    @Test(dataProvider = "excelFileDataProvider", expectedExceptions = ValidationException.class)
+    public void testParseAndValidateExcelFileTooManyRowsFails(InputStream testFileInputStream) throws Exception {
+        PoiSpreadsheetParser.processSingleWorksheet(testFileInputStream, new TestProcessor() {
+            @Override
+            public void validateNumberOfWorksheets(int actualNumberOfSheets) throws ValidationException {
+                throw new ValidationException("No, No!, Noooooooeoo!");
+            }
+        });
+
+    }
+
+    @Test(dataProvider = "excelFileDataProvider")
+    public void testParseAndValidateExcelFileTooManyRowsPasses(InputStream testFileInputStream) throws Exception {
+        PoiSpreadsheetParser.processSingleWorksheet(testFileInputStream, testProcessor);
+        assertThat(testProcessor.getMessages(), emptyCollectionOf(String.class));
+        assertThat(testProcessor.getWarnings(), emptyCollectionOf(String.class));
     }
 
     enum TestHeaders implements ColumnHeader {

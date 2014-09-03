@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.parsers;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -19,6 +20,7 @@ import java.util.Set;
 public abstract class TableProcessor implements Serializable {
 
     private static final long serialVersionUID = 8122298462727182883L;
+    public static final String REQUIRED_VALUE_IS_MISSING = "Required value for %s is missing";
 
     private final List<String> validationMessages = new ArrayList<>();
 
@@ -110,7 +112,7 @@ public abstract class TableProcessor implements Serializable {
         for (ColumnHeader header : getColumnHeaders()) {
             if (header.isRequiredValue() &&
                 (!dataRow.containsKey(header.getText()) || StringUtils.isBlank(dataRow.get(header.getText())))) {
-                addDataMessage("Required value for " + header.getText() + " is missing", dataRowIndex);
+                addDataMessage(String.format(REQUIRED_VALUE_IS_MISSING, header.getText()), dataRowIndex);
                 hasValue = false;
             }
         }
@@ -122,10 +124,16 @@ public abstract class TableProcessor implements Serializable {
 
     public abstract void close();
 
+    /**
+     * Messages are FATAL errors.
+     */
     public List<String> getMessages() {
         return validationMessages;
     }
 
+    /**
+     * Warnings are non-fatal messages.
+     */
     public Collection<String> getWarnings() {
         return warnings;
     }
@@ -139,6 +147,9 @@ public abstract class TableProcessor implements Serializable {
         validationMessages.add(getPrefixedMessage(message, dataRowIndex));
     }
 
+    /**
+     * Warnings are non-fatal messages.
+     */
     protected void addWarning(String message, int dataRowIndex) {
         warnings.add(getPrefixedMessage(message, dataRowIndex));
     }
@@ -171,5 +182,9 @@ public abstract class TableProcessor implements Serializable {
         }
 
         return null;
+    }
+
+    public void validateNumberOfWorksheets(int actualNumberOfSheets) throws ValidationException {
+
     }
 }
