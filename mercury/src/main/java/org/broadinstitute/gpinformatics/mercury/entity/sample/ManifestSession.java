@@ -41,6 +41,8 @@ import java.util.Set;
 @Table(schema = "mercury", name = "MANIFEST_SESSION")
 public class ManifestSession {
 
+    private  static final String SAMPLE_ID_KEY = "Sample ID";
+
     @Id
     @SequenceGenerator(name = "SEQ_MANIFEST_SESSION", schema = "mercury", sequenceName = "SEQ_MANIFEST_SESSION")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MANIFEST_SESSION")
@@ -239,7 +241,7 @@ public class ManifestSession {
                 // this logic.
                 if (duplicatedRecord.getManifestSession().equals(this)) {
                     String message =
-                            ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage("sample ID", entry.getKey());
+                            ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage(SAMPLE_ID_KEY, entry.getKey());
                     addManifestEvent(new ManifestEvent(ManifestEvent.Severity.QUARANTINED, message, duplicatedRecord));
                 }
             }
@@ -296,13 +298,19 @@ public class ManifestSession {
         List<ManifestRecord> allRecords = new ArrayList<>();
 
         for (ManifestSession manifestSession : researchProject.getManifestSessions()) {
-            for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
-                if (!manifestRecord.quarantinedErrorExists()) {
-                    allRecords.add(manifestRecord);
-                }
-            }
+            allRecords.addAll(manifestSession.getNonQuarantinedRecords());
         }
 
+        return allRecords;
+    }
+
+    private List<ManifestRecord> getNonQuarantinedRecords() {
+        List<ManifestRecord> allRecords = new ArrayList<>();
+        for (ManifestRecord manifestRecord : getRecords()) {
+            if (!manifestRecord.quarantinedErrorExists()) {
+                allRecords.add(manifestRecord);
+            }
+        }
         return allRecords;
     }
 
@@ -317,7 +325,7 @@ public class ManifestSession {
             if ((record.getStatus() != ManifestRecord.Status.SCANNED) && !record.quarantinedErrorExists()) {
 
                 String sampleId = record.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue();
-                String message = ManifestRecord.ErrorStatus.MISSING_SAMPLE.formatMessage("sample ID", sampleId);
+                String message = ManifestRecord.ErrorStatus.MISSING_SAMPLE.formatMessage(SAMPLE_ID_KEY, sampleId);
 
                 ManifestEvent manifestEvent = new ManifestEvent(ManifestEvent.Severity.ERROR, message, record);
                 manifestEvents.add(manifestEvent);
@@ -362,13 +370,14 @@ public class ManifestSession {
         for (ManifestRecord record : records) {
             if (record.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue().equals(collaboratorBarcode)) {
                 if (record.getStatus() != ManifestRecord.Status.SCANNED) {
-                    throw new TubeTransferException(ManifestRecord.ErrorStatus.NOT_READY_FOR_ACCESSIONING, "Sample ID",
+                    throw new TubeTransferException(ManifestRecord.ErrorStatus.NOT_READY_FOR_ACCESSIONING,
+                            SAMPLE_ID_KEY,
                             collaboratorBarcode);
                 }
                 return record;
             }
         }
-        throw new TubeTransferException(ManifestRecord.ErrorStatus.NOT_IN_MANIFEST, "Sample ID", collaboratorBarcode);
+        throw new TubeTransferException(ManifestRecord.ErrorStatus.NOT_IN_MANIFEST, SAMPLE_ID_KEY, collaboratorBarcode);
     }
 
     /**
@@ -385,7 +394,7 @@ public class ManifestSession {
             foundRecord = findRecordByState(sampleId);
         } catch (TubeTransferException e) {
             addManifestEvent(new ManifestEvent(ManifestEvent.Severity.ERROR,
-                    e.getErrorStatus().formatMessage("Sample ID", sampleId)
+                    e.getErrorStatus().formatMessage(SAMPLE_ID_KEY, sampleId)
             ));
             throw e;
         }
@@ -393,7 +402,8 @@ public class ManifestSession {
 
             Set<String> fatalMessages = foundRecord.getQuarantinedRecordMessages();
 
-            throw new TubeTransferException(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE, "Sample ID",
+            throw new TubeTransferException(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE,
+                    SAMPLE_ID_KEY,
                     sampleId,
                     StringUtils.join(fatalMessages, ", "));
         }
@@ -408,7 +418,13 @@ public class ManifestSession {
                 return record;
             }
         }
-        throw new TubeTransferException(ManifestRecord.ErrorStatus.NOT_IN_MANIFEST, "Sample ID", collaboratorBarcode);
+        throw new TubeTransferException(ManifestRecord.ErrorStatus.NOT_IN_MANIFEST, SAMPLE_ID_KEY, collaboratorBarcode);
+    }
+
+    public void acceptUpload() {
+        for (ManifestRecord record : getNonQuarantinedRecords()) {
+            // record.setStatus(ManifestRecord.Status.UPLOAD_ACCEPTED);
+        }
     }
 
     /**

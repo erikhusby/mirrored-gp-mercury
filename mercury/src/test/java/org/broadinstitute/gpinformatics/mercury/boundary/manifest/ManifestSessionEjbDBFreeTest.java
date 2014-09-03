@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -27,6 +28,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.collection.IsCollectionWithSize.*;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ManifestSessionEjbDBFreeTest {
@@ -74,6 +76,8 @@ public class ManifestSessionEjbDBFreeTest {
         InputStream inputStream = new FileInputStream(PATH_TO_SPREADSHEET);
         ManifestSession manifestSession = ejb.uploadManifest("RP-1", inputStream, PATH_TO_SPREADSHEET, TEST_USER);
         assertThat(manifestSession, is(notNullValue()));
+        assertThat(manifestSession.getRecords(), hasSize(23));
+        assertThat(manifestSession.hasErrors(), is(false));
     }
 
     public void loadManifestSessionSuccess() {
@@ -104,6 +108,28 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
         ManifestSession manifestSession = ejb.loadManifestSession(TEST_MANIFEST_SESSION_ID);
         assertThat(manifestSession, is(nullValue()));
+    }
+
+    public void acceptUpload() {
+        ManifestSessionDao manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
+        ResearchProjectDao researchProjectDao = Mockito.mock(ResearchProjectDao.class);
+        final long TEST_MANIFEST_SESSION_ID = 3L;
+        Mockito.when(manifestSessionDao.find(Mockito.anyLong())).then(new Answer<ManifestSession>() {
+            @Override
+            public ManifestSession answer(final InvocationOnMock invocation) throws Throwable {
+                return new ManifestSession() {
+                    @Override
+                    public Long getManifestSessionId() {
+                        return TEST_MANIFEST_SESSION_ID;
+                    }
+                };
+            }
+        });
+        ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
+        ManifestSession manifestSession = ejb.acceptManifestUpload(TEST_MANIFEST_SESSION_ID);
+        for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
+            assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOAD_ACCEPTED));
+        }
     }
 
     @DataProvider(name = PATHS_TO_PREFIXES_PROVIDER)

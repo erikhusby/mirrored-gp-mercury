@@ -64,15 +64,22 @@ public class ManifestSessionEjb {
         }
         Collection<ManifestRecord> manifestRecords = manifestImportProcessor.getManifestRecords();
         ManifestSession manifestSession = new ManifestSession(researchProject, prefix, bspUser);
+        manifestSessionDao.persist(manifestSession);
         manifestSession.addRecords(manifestRecords);
-        // The flush is required so the validation logic will see all the newly added records from the manifest that
-        // was just parsed.
-        manifestSessionDao.flush();
         manifestSession.validateManifest();
         return manifestSession;
     }
 
-    public ManifestSession loadManifestSession(long id) {
-        return manifestSessionDao.find(id);
+    public ManifestSession loadManifestSession(long manifestSessionId) {
+        return manifestSessionDao.find(manifestSessionId);
+    }
+
+    public ManifestSession acceptManifestUpload(long manifestSessionId) {
+        ManifestSession manifestSession = loadManifestSession(manifestSessionId);
+        if (manifestSession == null) {
+            throw new InformaticsServiceException("Unrecognized Manifest Session ID: " + manifestSessionId);
+        }
+        manifestSession.acceptUpload();
+        return manifestSession;
     }
 }

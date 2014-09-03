@@ -210,12 +210,12 @@ public class ManifestRecord {
          */
         NOT_REGISTERED(" "),
         /**
-         * Helpful message to note that the user is attempting to accession a source tube into
+         * Helpful message to note that the user is attempting to accession a source tube
          * that has already gone through accessioning.
          */
         ALREADY_SCANNED_SOURCE("The scanned source tube has already been through the accessioning process"),
 
-        PREVIOUS_ERRORS_UNABLE_TO_CONTINUE("Due to Errors previously found, this sample is unable to continue.");
+        PREVIOUS_ERRORS_UNABLE_TO_CONTINUE("Due to errors previously found, this sample is unable to continue.");
         private String message;
 
         ErrorStatus(String message) {
