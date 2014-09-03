@@ -13,6 +13,8 @@ package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.hamcrest.Matchers;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -20,6 +22,7 @@ import org.testng.annotations.Test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -70,7 +73,16 @@ public class ManifestImportProcessorTest {
 
     public void testProcessRowDetailsShouldPass() throws Exception {
         processor.processRowDetails(dataRow, 0);
+        processor.getMessages();
         assertThat(processor.getMessages(), is(empty()));
+        ManifestRecord manifestRecord = processor.getManifestRecord();
+        List<Metadata> expectedMetadata = new ArrayList<>();
+        for (Map.Entry<String, String> stringStringEntry : dataRow.entrySet()) {
+            expectedMetadata.add(new Metadata(ManifestHeader.fromText(stringStringEntry.getKey()).getMetadataKey(),
+                    stringStringEntry.getValue()));
+        }
+        assertThat(manifestRecord.getMetadata().toArray(), arrayContainingInAnyOrder(expectedMetadata.toArray()));
+
     }
 
     public void testProcessHeadersUnknownColumn() throws Exception {
@@ -91,14 +103,11 @@ public class ManifestImportProcessorTest {
 
     private Map<String, String> makeDataRow() {
         Map<String, String> dataRow = new HashMap<>();
-        dataRow.put(ManifestHeader.STUDY_NUMBER.getText(), "C16002");
         dataRow.put(ManifestHeader.SAMPLE_ID.getText(), "03101231193");
         dataRow.put(ManifestHeader.PATIENT_ID.getText(), "004-002");
         dataRow.put(ManifestHeader.SEX.getText(), "");
-        dataRow.put(ManifestHeader.SAMPLE_TYPE.getText(), "DNA");
-        dataRow.put(ManifestHeader.TEST_NAME.getText(), "BM DNA Storage 1");
-        dataRow.put(ManifestHeader.COLLECTION_DATE.getText(), "10-Oct-1841");
         dataRow.put(ManifestHeader.VISIT.getText(), "Screening");
+        dataRow.put(ManifestHeader.COLLECTION_DATE.getText(), "10-Oct-1841");
         dataRow.put(ManifestHeader.TUMOR_OR_NORMAL.getText(), "Tumor");
 
         return dataRow;

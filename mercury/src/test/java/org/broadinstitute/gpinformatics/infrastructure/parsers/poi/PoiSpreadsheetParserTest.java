@@ -29,7 +29,7 @@ import java.util.Map;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
-@Test(enabled = true)
+@Test(groups = TestGroups.DATABASE_FREE)
 public class PoiSpreadsheetParserTest {
     private static final String POI_TEST_XLS = "poi-test.xls";
     private static final String POI_TEST_XLSX = "poi-test.xlsx";
@@ -49,7 +49,7 @@ public class PoiSpreadsheetParserTest {
 
     }
 
-    @Test(groups = TestGroups.DATABASE_FREE, dataProvider = "excelFileDataProvider")
+    @Test(dataProvider = "excelFileDataProvider")
     public void testParseAndValidateExcelFile(InputStream testFileInputStream) throws Exception {
         PoiSpreadsheetParser.processSingleWorksheet(testFileInputStream, testProcessor);
         for (Map<String, String> spreadsheetRowValues : testProcessor.getSpreadsheetValues()) {

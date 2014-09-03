@@ -12,6 +12,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -21,23 +22,23 @@ import java.util.List;
  * This enum holds header information for sample metadata manifests.
  */
 public enum ManifestHeader implements ColumnHeader {
-    STUDY_NUMBER("Study_Number", 0, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE),
-    SAMPLE_ID("Sample ID", 1, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE),
-    PATIENT_ID("Patient_ID", 2, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE),
-    SEX("Sex", 3, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_VALUE),
-    SAMPLE_TYPE("Sample_Type", 4, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE),
-    TEST_NAME("TestName", 5, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE),
-    COLLECTION_DATE("Collection_Date", 6, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE),
-    VISIT("Visit", 7, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE),
-    TUMOR_OR_NORMAL("T/N", 8, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE);
+    SAMPLE_ID("Sample ID", 0, Metadata.Key.SAMPLE_ID, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE),
+    PATIENT_ID("Patient_ID", 1, Metadata.Key.PATIENT_ID, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE),
+    SEX("Sex", 2, Metadata.Key.GENDER, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_VALUE),
+    COLLECTION_DATE("Collection_Date", 3, Metadata.Key.BUICK_COLLECTION_DATE, ColumnHeader.REQUIRED_HEADER,
+            ColumnHeader.OPTIONAL_VALUE),
+    VISIT("Visit", 4, Metadata.Key.BUICK_VISIT, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_VALUE),
+    TUMOR_OR_NORMAL("T/N", 5, Metadata.Key.TUMOR_NORMAL, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE);
     private final String text;
     private final int index;
+    private final Metadata.Key metadataKey;
     private final boolean requiredHeader;
     private final boolean requiredValue;
 
-    ManifestHeader(String text, int index, boolean requiredHeader, boolean requiredValue) {
+    ManifestHeader(String text, int index, Metadata.Key metadataKey, boolean requiredHeader, boolean requiredValue) {
         this.text = text;
         this.index = index;
+        this.metadataKey = metadataKey;
         this.requiredHeader = requiredHeader;
         this.requiredValue = requiredValue;
     }
@@ -55,6 +56,10 @@ public enum ManifestHeader implements ColumnHeader {
             allHeaderNames.add(manifestHeader.getText());
         }
         return allHeaderNames;
+    }
+
+    public Metadata.Key getMetadataKey() {
+        return metadataKey;
     }
 
     @Override
@@ -104,10 +109,10 @@ public enum ManifestHeader implements ColumnHeader {
      *
      * @return Collection of ColumnHeaders for the columnNames
      */
-    static Collection<? extends ColumnHeader> fromValues(String... columnNames) {
+    static Collection<? extends ColumnHeader> fromText(String... columnNames) {
         List<ManifestHeader> matches = new ArrayList<>();
         for (String columnName : columnNames) {
-            matches.add(ManifestHeader.fromValue(columnName));
+            matches.add(ManifestHeader.fromText(columnName));
         }
         return matches;
     }
@@ -121,12 +126,31 @@ public enum ManifestHeader implements ColumnHeader {
      *
      * @throws java.lang.EnumConstantNotPresentException if enum does not exist for columnName.
      */
-    private static ManifestHeader fromValue(String columnName) {
+    public static ManifestHeader fromText(String columnName) {
         for (ManifestHeader manifestHeader : ManifestHeader.values()) {
             if (manifestHeader.getText().equals(columnName)) {
                 return manifestHeader;
             }
         }
         throw new EnumConstantNotPresentException(ManifestHeader.class, columnName);
+    }
+
+    /**
+     * Look up the ManifestHeader for given Metadata.Key.
+     *
+     * @param key Metadata.Key to search for.
+     *
+     * @return ManifestHeader with Metadata.Key matching key
+     *
+     * @throws java.lang.EnumConstantNotPresentException if enum does not exist for key.
+     */
+
+    public static ManifestHeader fromMetadataKey(Metadata.Key key) {
+        for (ManifestHeader manifestHeader : ManifestHeader.values()) {
+            if (manifestHeader.getMetadataKey() == key) {
+                return manifestHeader;
+            }
+        }
+        throw new EnumConstantNotPresentException(ManifestHeader.class, key.name());
     }
 }
