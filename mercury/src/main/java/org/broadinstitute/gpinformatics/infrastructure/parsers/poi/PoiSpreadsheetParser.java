@@ -238,7 +238,9 @@ public final class PoiSpreadsheetParser {
         PoiSpreadsheetParser parser = new PoiSpreadsheetParser(Collections.<String, TableProcessor>emptyMap());
 
         try {
-            parser.processRows(WorkbookFactory.create(spreadsheet).getSheetAt(0), processor);
+            Workbook workbook = WorkbookFactory.create(spreadsheet);
+            processor.validateNumberOfWorksheets(workbook.getNumberOfSheets());
+            parser.processRows(workbook.getSheetAt(0), processor);
         } finally {
             processor.close();
         }

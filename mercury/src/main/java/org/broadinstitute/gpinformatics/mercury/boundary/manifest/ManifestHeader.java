@@ -109,10 +109,14 @@ public enum ManifestHeader implements ColumnHeader {
      *
      * @return Collection of ColumnHeaders for the columnNames
      */
-    static Collection<? extends ColumnHeader> fromText(String... columnNames) {
+    static Collection<? extends ColumnHeader> fromText(List<String> errors, String... columnNames) {
         List<ManifestHeader> matches = new ArrayList<>();
         for (String columnName : columnNames) {
-            matches.add(ManifestHeader.fromText(columnName));
+            try {
+                matches.add(ManifestHeader.fromText(columnName));
+            } catch (EnumConstantNotPresentException e) {
+                errors.add(e.constantName());
+            }
         }
         return matches;
     }

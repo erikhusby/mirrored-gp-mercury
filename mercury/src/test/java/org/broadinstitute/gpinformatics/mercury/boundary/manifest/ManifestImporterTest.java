@@ -14,10 +14,12 @@ package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
+import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetValidator;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -26,17 +28,25 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyCollectionOf;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.isOneOf;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ManifestImporterTest {
-    public static final String TEST_MANIFEST_XLS = "test-manifest.xls";
-    public static final String TEST_MANIFEST_XLSX = "test-manifest.xlsx";
+    public static final String TEST_MANIFEST_DIRECTORY = "manifest-import";
+    public static final String TEST_MANIFEST_XLS = TEST_MANIFEST_DIRECTORY + "/" + "test-manifest.xls";
+    public static final String TEST_MANIFEST_XLSX = TEST_MANIFEST_DIRECTORY + "/" + "test-manifest.xlsx";
+    public static final String MISSING_REQUIRED_VALUE =
+            TEST_MANIFEST_DIRECTORY + "/" + "test-manifest-missing-required.xlsx";
+    public static final String UNKNOWN_HEADERS = TEST_MANIFEST_DIRECTORY + "/" + "test-manifest-unknown-headers.xlsx";
+    public static final String TOO_MANY_SHEETS = TEST_MANIFEST_DIRECTORY + "/" + "test-manifest-too-many-sheets.xlsx";
 
     private ManifestImportProcessor manifestImportProcessor;
 
@@ -60,9 +70,11 @@ public class ManifestImporterTest {
         PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
         Map<String, String> manifestRow = new HashMap<>();
 
-        for (final Metadata metadata : manifestImportProcessor.getManifestRecord().getMetadata()) {
-            ManifestHeader header = ManifestHeader.fromMetadataKey(metadata.getKey());
-            manifestRow.put(header.getText(), metadata.getValue());
+        for (ManifestRecord manifestRecord : manifestImportProcessor.getManifestRecords()) {
+            for (final Metadata metadata : manifestRecord.getMetadata()) {
+                ManifestHeader header = ManifestHeader.fromMetadataKey(metadata.getKey());
+                manifestRow.put(header.getText(), metadata.getValue());
+            }
         }
 
 
@@ -70,13 +82,37 @@ public class ManifestImporterTest {
         for (Map.Entry<String, String> manifestCell : manifestRow.entrySet()) {
             String header = manifestCell.getKey();
             String value = manifestCell.getValue();
-
             if (header.equals(ManifestHeader.TUMOR_OR_NORMAL.getText())) {
                 assertThat(value, isOneOf("Tumor", "Normal"));
             }
         }
         assertThat(manifestImportProcessor.getMessages(), emptyCollectionOf(String.class));
         assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
+    }
 
+
+    public void testImportMissingRequiredValue() throws InvalidFormatException, IOException, ValidationException {
+        InputStream inputStream = new FileInputStream(TestUtils.getTestData(MISSING_REQUIRED_VALUE));
+        PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
+
+        assertThat(manifestImportProcessor.getMessages(),
+                hasItem("Row #1 " + String.format(TableProcessor.REQUIRED_VALUE_IS_MISSING, ManifestHeader.SAMPLE_ID.getText())));
+        assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
+
+    }
+
+    @Test(expectedExceptions = ValidationException.class)
+    public void testImportTwoManyWorksheets() throws InvalidFormatException, IOException, ValidationException {
+        InputStream inputStream = new FileInputStream(TestUtils.getTestData(TOO_MANY_SHEETS));
+        PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
+    }
+
+    public void testImportExtraHeaders() throws InvalidFormatException, IOException, ValidationException {
+        InputStream inputStream = new FileInputStream(TestUtils.getTestData(UNKNOWN_HEADERS));
+        PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
+
+        String expectedError = String.format(ManifestImportProcessorTest.TEST_UNKNOWN_HEADER_FORMAT, 0, Arrays.asList("YOMAMA"));
+        assertThat(manifestImportProcessor.getMessages(), contains(expectedError));
+        assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
     }
 }

@@ -36,7 +36,7 @@ import static org.hamcrest.Matchers.is;
 public class ManifestImportProcessorTest {
     private ManifestImportProcessor processor;
     private Map<String, String> dataRow;
-
+    protected static final String TEST_UNKNOWN_HEADER_FORMAT = "Row #%d " + ManifestImportProcessor.UNKNOWN_HEADER_FORMAT;
     @BeforeMethod
     public void setUp() throws Exception {
         processor = new ManifestImportProcessor();
@@ -75,13 +75,14 @@ public class ManifestImportProcessorTest {
         processor.processRowDetails(dataRow, 0);
         processor.getMessages();
         assertThat(processor.getMessages(), is(empty()));
-        ManifestRecord manifestRecord = processor.getManifestRecord();
-        List<Metadata> expectedMetadata = new ArrayList<>();
-        for (Map.Entry<String, String> stringStringEntry : dataRow.entrySet()) {
-            expectedMetadata.add(new Metadata(ManifestHeader.fromText(stringStringEntry.getKey()).getMetadataKey(),
-                    stringStringEntry.getValue()));
+        for (ManifestRecord manifestRecord : processor.getManifestRecords()) {
+            List<Metadata> expectedMetadata = new ArrayList<>();
+            for (Map.Entry<String, String> stringStringEntry : dataRow.entrySet()) {
+                expectedMetadata.add(new Metadata(ManifestHeader.fromText(stringStringEntry.getKey()).getMetadataKey(),
+                        stringStringEntry.getValue()));
+            }
+            assertThat(manifestRecord.getMetadata().toArray(), arrayContainingInAnyOrder(expectedMetadata.toArray()));
         }
-        assertThat(manifestRecord.getMetadata().toArray(), arrayContainingInAnyOrder(expectedMetadata.toArray()));
 
     }
 
@@ -90,8 +91,8 @@ public class ManifestImportProcessorTest {
         int row = 0;
         dataRow.put(unknownHeader, "new to me too!");
         processor.processHeader(new ArrayList<>(dataRow.keySet()), row);
-        assertThat(processor.getWarnings(), Matchers.hasItem(
-                String.format("Row #%d " + ManifestImportProcessor.UNKNOWN_HEADER_FORMAT, row, unknownHeader)));
+        assertThat(processor.getMessages(), Matchers.hasItem(
+                String.format(TEST_UNKNOWN_HEADER_FORMAT, row, Arrays.asList(unknownHeader))));
     }
 
     public void testGetColumnHeaders() throws Exception {
