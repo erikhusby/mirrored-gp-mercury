@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -8,6 +10,8 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.mockito.Mockito;
@@ -23,16 +27,16 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
-import static org.hamcrest.collection.IsEmptyCollection.*;
+import static org.hamcrest.collection.IsEmptyCollection.empty;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ManifestSessionEjbDBFreeTest {
@@ -157,16 +161,25 @@ public class ManifestSessionEjbDBFreeTest {
                 ResearchProjectTestFactory.createTestResearchProject(TEST_RESEARCH_PROJECT_KEY);
 
         ManifestSession manifestSession1 =
-                uploadManifest("manifest-upload/gender-mismatches/good-manifest-1.xlsx", researchProject);
+                uploadManifest("manifest-upload/gender-mismatches-across-sessions/good-manifest-1.xlsx", researchProject);
         assertThat(manifestSession1, is(notNullValue()));
         assertThat(manifestSession1.getManifestEvents(), is(empty()));
         assertThat(manifestSession1.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
 
         ManifestSession manifestSession2 =
-                uploadManifest("manifest-upload/gender-mismatches/good-manifest-2.xlsx", researchProject);
+                uploadManifest("manifest-upload/gender-mismatches-across-sessions/good-manifest-2.xlsx", researchProject);
         assertThat(manifestSession2, is(notNullValue()));
         assertThat(manifestSession2.getManifestEvents(), hasSize(3));
         assertThat(manifestSession2.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
+        Set<String> expectedPatientIds = ImmutableSet.of("001-001", "005-005", "009-001");
+        for (ManifestRecord manifestRecord : manifestSession2.getRecords()) {
+            assertThat(manifestRecord.isQuarantined(), is(false));
+            Metadata patientIdMetadata = manifestRecord.getMetadataByKey(Metadata.Key.PATIENT_ID);
+            if (expectedPatientIds.contains(patientIdMetadata.getValue())) {
+                assertThat(manifestRecord.getManifestEvents(), hasSize(1));
+                assertThat(manifestRecord.getManifestEvents().get(0).getSeverity(), is(ManifestEvent.Severity.ERROR));
+            }
+        }
     }
 
     public void loadManifestSessionSuccess() {
