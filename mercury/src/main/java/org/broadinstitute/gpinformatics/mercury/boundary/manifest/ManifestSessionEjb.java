@@ -59,8 +59,12 @@ public class ManifestSessionEjb {
         try {
             // TODO the return value of this invocation is ignored here and elsewhere in the code base.
             PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
-        } catch (InvalidFormatException | IOException | ValidationException e) {
+        } catch (ValidationException e) {
             throw new InformaticsServiceException(e);
+        } catch (Exception e) {
+            throw new InformaticsServiceException(String.format(
+                    "Error reading manifest file '%s'.  Manifest files must be in the proper Excel format: %s",
+                    FilenameUtils.getName(pathToFile), e.getMessage()));
         }
         Collection<ManifestRecord> manifestRecords = manifestImportProcessor.getManifestRecords();
         ManifestSession manifestSession = new ManifestSession(researchProject, prefix, bspUser);

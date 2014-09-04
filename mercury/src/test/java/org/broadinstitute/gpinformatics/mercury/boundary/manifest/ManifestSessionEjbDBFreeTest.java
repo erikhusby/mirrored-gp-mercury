@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -60,7 +61,10 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
-    public void uploadManifest() throws FileNotFoundException {
+    /**
+     * Worker method for manifest upload testing.
+     */
+    private ManifestSession uploadManifest(String pathToManifestFile) throws FileNotFoundException {
         ManifestSessionDao manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
         ResearchProjectDao researchProjectDao = Mockito.mock(ResearchProjectDao.class);
         Mockito.when(researchProjectDao.findByBusinessKey(Mockito.anyString())).thenAnswer(new Answer<Object>() {
@@ -72,12 +76,57 @@ public class ManifestSessionEjbDBFreeTest {
         });
 
         ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
-        String PATH_TO_SPREADSHEET = TestUtils.getTestData("manifest-import/test-manifest.xlsx");
+        String PATH_TO_SPREADSHEET = TestUtils.getTestData(pathToManifestFile);
         InputStream inputStream = new FileInputStream(PATH_TO_SPREADSHEET);
-        ManifestSession manifestSession = ejb.uploadManifest("RP-1", inputStream, PATH_TO_SPREADSHEET, TEST_USER);
+        return ejb.uploadManifest("RP-1", inputStream, PATH_TO_SPREADSHEET, TEST_USER);
+    }
+
+    public void uploadGoodManifest() throws FileNotFoundException {
+        ManifestSession manifestSession = uploadManifest("manifest-upload/good-manifest.xlsx");
         assertThat(manifestSession, is(notNullValue()));
         assertThat(manifestSession.getRecords(), hasSize(23));
         assertThat(manifestSession.hasErrors(), is(false));
+    }
+
+    public void uploadManifestWithDuplicates() throws FileNotFoundException {
+        ManifestSession manifestSession = uploadManifest("manifest-upload/manifest-with-duplicates.xlsx");
+        assertThat(manifestSession, is(notNullValue()));
+        assertThat(manifestSession.getRecords(), hasSize(23));
+        assertThat(manifestSession.hasErrors(), is(true));
+        List<ManifestRecord> quarantinedRecords = new ArrayList<>();
+
+        for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
+            if (manifestRecord.isQuarantined()) {
+                quarantinedRecords.add(manifestRecord);
+            }
+        }
+        // This file contains two instances of duplication and one triplication, so 2 x 2 + 3 = 7.
+        assertThat(quarantinedRecords, hasSize(7));
+    }
+
+    public void uploadNonExcelManifest() throws FileNotFoundException {
+        try {
+            uploadManifest("manifest-upload/not-an-excel-file.txt");
+            Assert.fail();
+        } catch (InformaticsServiceException e) {
+            assertThat(e.getMessage(), containsString("Error reading manifest file"));
+        }
+    }
+
+    public void uploadManifestWithOneSampleMissingSampleId() throws FileNotFoundException {
+        try {
+            uploadManifest("manifest-upload/manifest-with-one-sample-missing-sample-id.xlsx");
+            Assert.fail();
+        } catch (InformaticsServiceException ignored) {
+        }
+    }
+
+    public void uploadManifestWithMissingColumn() throws FileNotFoundException {
+        try {
+            uploadManifest("manifest-upload/manifest-with-missing-column.xlsx");
+            Assert.fail();
+        } catch (InformaticsServiceException ignored) {
+        }
     }
 
     public void loadManifestSessionSuccess() {
@@ -110,7 +159,15 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(manifestSession, is(nullValue()));
     }
 
-    public void acceptUpload() {
+    public void acceptUploadSessionNotFound() {
+        ManifestSessionDao manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
+        ResearchProjectDao researchProjectDao = Mockito.mock(ResearchProjectDao.class);
+        ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
+        long MANIFEST_SESSION_ID = 3L;
+        ejb.acceptManifestUpload(MANIFEST_SESSION_ID);
+    }
+
+    public void acceptUploadSuccessful() {
         ManifestSessionDao manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
         ResearchProjectDao researchProjectDao = Mockito.mock(ResearchProjectDao.class);
         ManifestSession manifestSession = ManifestTestFactory.buildManifestSession(
