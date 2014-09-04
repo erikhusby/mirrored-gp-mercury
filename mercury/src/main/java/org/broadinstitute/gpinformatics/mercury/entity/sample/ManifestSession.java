@@ -307,7 +307,7 @@ public class ManifestSession {
     private List<ManifestRecord> getNonQuarantinedRecords() {
         List<ManifestRecord> allRecords = new ArrayList<>();
         for (ManifestRecord manifestRecord : getRecords()) {
-            if (!manifestRecord.quarantinedErrorExists()) {
+            if (!manifestRecord.isQuarantined()) {
                 allRecords.add(manifestRecord);
             }
         }
@@ -322,7 +322,7 @@ public class ManifestSession {
     public void validateForClose() {
         // Confirm all records have scanned status.
         for (ManifestRecord record : records) {
-            if ((record.getStatus() != ManifestRecord.Status.SCANNED) && !record.quarantinedErrorExists()) {
+            if ((record.getStatus() != ManifestRecord.Status.SCANNED) && !record.isQuarantined()) {
 
                 String sampleId = record.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue();
                 String message = ManifestRecord.ErrorStatus.MISSING_SAMPLE.formatMessage(SAMPLE_ID_KEY, sampleId);
@@ -398,7 +398,7 @@ public class ManifestSession {
             ));
             throw e;
         }
-        if (foundRecord.quarantinedErrorExists()) {
+        if (foundRecord.isQuarantined()) {
 
             Set<String> fatalMessages = foundRecord.getQuarantinedRecordMessages();
 

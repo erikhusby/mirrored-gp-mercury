@@ -127,17 +127,13 @@ public class ManifestRecord {
         this.status = status;
     }
 
-    public boolean quarantinedErrorExists() {
-        boolean quarantined = false;
-
+    public boolean isQuarantined() {
         for (ManifestEvent manifestEvent : manifestEvents) {
             if (manifestEvent.getSeverity() == ManifestEvent.Severity.QUARANTINED) {
-                quarantined = true;
-                break;
+                return true;
             }
         }
-
-        return quarantined;
+        return false;
     }
 
     public Set<String> getQuarantinedRecordMessages() {

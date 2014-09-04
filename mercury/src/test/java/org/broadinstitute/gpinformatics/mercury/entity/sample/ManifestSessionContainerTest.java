@@ -11,7 +11,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -90,8 +89,8 @@ public class ManifestSessionContainerTest extends Arquillian {
             assertThat(inValue, is(equalTo(outValue)));
         }
 
-        assertThat(manifestRecordIn.quarantinedErrorExists(), is(equalTo(false)));
-        assertThat(manifestRecordOut.quarantinedErrorExists(), is(equalTo(manifestRecordIn.quarantinedErrorExists())));
+        assertThat(manifestRecordIn.isQuarantined(), is(equalTo(false)));
+        assertThat(manifestRecordOut.isQuarantined(), is(equalTo(manifestRecordIn.isQuarantined())));
     }
 
 }

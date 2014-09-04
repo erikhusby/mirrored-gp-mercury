@@ -69,7 +69,7 @@ public class ManifestRecordTest {
         // Default status should be UPLOADED.
         Assert.assertEquals(testRecord.getStatus(), ManifestRecord.Status.UPLOADED);
         // Default error status should be null (no error).
-        Assert.assertFalse(testRecord.quarantinedErrorExists());
+        Assert.assertFalse(testRecord.isQuarantined());
 
     }
 
@@ -94,8 +94,8 @@ public class ManifestRecordTest {
         assertThat(testSession.hasErrors(), is(false));
 
         assertThat(testSession.getManifestEvents().size(), is(0));
-        assertThat(testRecord.quarantinedErrorExists(), is(false));
-        assertThat(secondManifestRecord.quarantinedErrorExists(), is(false));
+        assertThat(testRecord.isQuarantined(), is(false));
+        assertThat(secondManifestRecord.isQuarantined(), is(false));
 
         assertThat(testRecord.getManifestEvents(), is(empty()));
         assertThat(secondManifestRecord.getManifestEvents(), is(empty()));
@@ -119,8 +119,8 @@ public class ManifestRecordTest {
         assertThat(testSession.hasErrors(), is(true));
 
         assertThat(testSession.getManifestEvents().size(), is(2));
-        assertThat(testRecord.quarantinedErrorExists(), is(true));
-        assertThat(testRecordWithDupe.quarantinedErrorExists(), is(true));
+        assertThat(testRecord.isQuarantined(), is(true));
+        assertThat(testRecordWithDupe.isQuarantined(), is(true));
 
         assertThat(testRecord.getManifestEvents().size(), is(1));
         assertThat(testRecordWithDupe.getManifestEvents().size(), is(1));

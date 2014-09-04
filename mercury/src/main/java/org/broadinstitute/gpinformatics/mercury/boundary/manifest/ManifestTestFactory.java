@@ -43,4 +43,4 @@ public class ManifestTestFactory {
         }
         return manifestSession;
     }
-}
+}                                                                   `
