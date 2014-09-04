@@ -6,17 +6,20 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -51,6 +54,7 @@ public class VarioskanParserContainerTest extends Arquillian {
 
     @Test
     public void testPersistence() {
+        // Replace plate barcodes with timestamps, to avoid unique constraints
         InputStream spreadsheet = VarioskanParserTest.getSpreadsheet();
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
         String timestamp = simpleDateFormat.format(new Date());
@@ -58,9 +62,9 @@ public class VarioskanParserContainerTest extends Arquillian {
         String plate2Barcode = timestamp + "2";
         try {
             Workbook workbook = WorkbookFactory.create(spreadsheet);
-            Sheet sheet = workbook.getSheet(VarioskanRowParser.QUANTITATIVE_CURVE_FIT1_TAB);
-            for (int i = 0; i < sheet.getLastRowNum(); i++) {
-                Row row = sheet.getRow(i);
+            Sheet curveSheet = workbook.getSheet(VarioskanRowParser.QUANTITATIVE_CURVE_FIT1_TAB);
+            for (int i = 0; i < curveSheet.getLastRowNum(); i++) {
+                Row row = curveSheet.getRow(i);
                 if (row != null) {
                     for (int j = 0; j < row.getLastCellNum(); j++) {
                         Cell cell = row.getCell(j);
@@ -74,6 +78,20 @@ public class VarioskanParserContainerTest extends Arquillian {
                     }
                 }
             }
+            // Replace run name with timestamp, to avoid unique constraints
+            Sheet generalSheet = workbook.getSheet(VarioskanRowParser.GENERAL_INFO_TAB);
+            for (int i = 0; i < generalSheet.getLastRowNum(); i++) {
+                Row row = generalSheet.getRow(i);
+                if (row != null) {
+                    Cell nameCell = row.getCell(VarioskanRowParser.NAME_COLUMN);
+                    if (nameCell != null && nameCell.getStringCellValue().equals(
+                            VarioskanRowParser.NameValue.RUN_NAME.getFieldName())) {
+                        Cell valueCell = row.getCell(VarioskanRowParser.VALUE_COLUMN);
+                        valueCell.setCellValue(simpleDateFormat.format(new Date()) + " Mike Test");
+                    }
+                }
+            }
+
             File tempFile = File.createTempFile("Varioskan", ".xls");
             workbook.write(new FileOutputStream(tempFile));
             Map<String, StaticPlate> mapBarcodeToPlate = new HashMap<>();
@@ -81,8 +99,10 @@ public class VarioskanParserContainerTest extends Arquillian {
                     mapBarcodeToPlate, plate1Barcode, plate2Barcode, timestamp);
             labVesselDao.persistAll(mapBarcodeToPlate.values());
             labVesselDao.persistAll(mapPositionToTube.values());
-            vesselEjb.createVarioskanRun(new FileInputStream(tempFile), LabMetric.MetricType.INITIAL_PICO);
-            // todo jmt asserts
+            LabMetricRun labMetricRun = vesselEjb.createVarioskanRun(new FileInputStream(tempFile),
+                    LabMetric.MetricType.INITIAL_PICO, BSPManagerFactoryStub.QA_DUDE_USER_ID);
+
+            Assert.assertEquals(labMetricRun.getLabMetrics().size(), 96 * 3);
         } catch (InvalidFormatException | IOException e) {
             throw new RuntimeException(e);
         }

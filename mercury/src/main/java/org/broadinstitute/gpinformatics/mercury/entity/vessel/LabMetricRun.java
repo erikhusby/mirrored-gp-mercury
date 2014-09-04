@@ -31,7 +31,6 @@ import java.util.Set;
         uniqueConstraints = @UniqueConstraint(name = "UK_LMR_NAME_TYPE", columnNames = {"runName", "runDate"}))
 public class LabMetricRun {
 
-    @SuppressWarnings("UnusedDeclaration")
     @SequenceGenerator(name = "SEQ_LAB_METRIC_RUN", schema = "mercury", sequenceName = "SEQ_LAB_METRIC_RUN")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LAB_METRIC_RUN")
     @Id
@@ -69,6 +68,9 @@ public class LabMetricRun {
         labMetric.setLabMetricRun(this);
     }
 
+    public Long getLabMetricRunId() {
+        return labMetricRunId;
+    }
 
     public String getRunName() {
         return runName;

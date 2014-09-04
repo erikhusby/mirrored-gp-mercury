@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
  * and two or three sample plates with numeric barcodes;
  * </li>
  * <li>
- * Curve Fit Calibrator Table typically in row 430 (depends on number of plates in previous table) with same headers,
+ * Curve Fit Calibrator Table typically in row 430 (depends on number of plates in previous table) with similar headers,
  * but no sample plates.
  * </li>
  * </ul>
@@ -35,6 +35,7 @@ import java.util.regex.Pattern;
  */
 public class VarioskanPlateProcessor extends TableProcessor {
 
+    // The barcode sometimes has a trailing .0, so use a group to extract only the digits before that
     private static final Pattern BARCODE_PATTERN = Pattern.compile("(\\d*)\\.?\\d*");
     public static final int SCALE = 2;
     private List<String> headers;
@@ -90,20 +91,28 @@ public class VarioskanPlateProcessor extends TableProcessor {
         String well = dataRow.get(Headers.WELL.getText());
         String value = dataRow.get(Headers.VALUE.getText());
         String result = dataRow.get(Headers.RESULT.getText());
-        // todo jmt y = 0.73x + 0.69
 
-        Matcher matcher = BARCODE_PATTERN.matcher(plate);
-        if (plate != null && !plate.isEmpty() && matcher.matches()) {
-            String paddedBarcode = StringUtils.leftPad(matcher.group(1), 12, '0');
-            VesselPosition vesselPosition = VesselPosition.getByName(well.trim());
-            if (vesselPosition == null) {
-                addDataMessage("Failed to find position " + well, dataRowIndex);
-            }
-            try {
-                BigDecimal bigDecimal = new BigDecimal(result).setScale(SCALE, BigDecimal.ROUND_HALF_UP);
-                plateWellResults.add(new PlateWellResult(paddedBarcode, vesselPosition, bigDecimal));
-            } catch (NumberFormatException e) {
-                addDataMessage("Failed to find position " + well, dataRowIndex);
+        if (plate != null && !plate.isEmpty()) {
+            Matcher matcher = BARCODE_PATTERN.matcher(plate);
+            if (matcher.matches()) {
+                String paddedBarcode = StringUtils.leftPad(matcher.group(1), 12, '0');
+                VesselPosition vesselPosition = VesselPosition.getByName(well.trim());
+                if (vesselPosition == null) {
+                    addDataMessage("Failed to find position " + well, dataRowIndex);
+                }
+                try {
+                    BigDecimal bigDecimal;
+                    if (result.equals("NaN")) {
+                        // result = 0.73 * value + 0.69
+                        bigDecimal = new BigDecimal(value).multiply(new BigDecimal("0.73")).add(new BigDecimal("0.69"));
+                    } else {
+                        bigDecimal = new BigDecimal(result);
+                    }
+                    bigDecimal = bigDecimal.setScale(SCALE, BigDecimal.ROUND_HALF_UP);
+                    plateWellResults.add(new PlateWellResult(paddedBarcode, vesselPosition, bigDecimal));
+                } catch (NumberFormatException e) {
+                    addDataMessage("Failed to find position " + well, dataRowIndex);
+                }
             }
         }
     }

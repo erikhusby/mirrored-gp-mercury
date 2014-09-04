@@ -88,7 +88,9 @@ public class Metadata {
         COLLECTION_DATE(Category.SAMPLE),
         SAMPLE_ID(Category.SAMPLE),
 
-        CORRELATION_COEFFICIENT_R2(Category.LAB_METRIC_RUN);
+        CORRELATION_COEFFICIENT_R2(Category.LAB_METRIC_RUN),
+        INSTRUMENT_NAME(Category.LAB_METRIC_RUN),
+        INSTRUMENT_SERIAL_NUMBER(Category.LAB_METRIC_RUN);
 
         private Category category;
 

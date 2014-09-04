@@ -49,13 +49,13 @@ public class VarioskanRowParser {
         CORRELATION_COEFFICIENT_R2("Correlation Coefficient R2", 17, QUANTITATIVE_CURVE_FIT1_TAB),
         ;
 
-        private String name;
+        private String fieldName;
         private int row;
         private String sheetName;
         private String dateFormat;
 
-        NameValue(String name, int row, String sheetName) {
-            this.name = name;
+        NameValue(String fieldName, int row, String sheetName) {
+            this.fieldName = fieldName;
             this.row = row;
             this.sheetName = sheetName;
         }
@@ -65,8 +65,8 @@ public class VarioskanRowParser {
             this.dateFormat = dateFormat;
         }
 
-        public String getName() {
-            return name;
+        public String getFieldName() {
+            return fieldName;
         }
 
         public int getRow() {
@@ -96,9 +96,9 @@ public class VarioskanRowParser {
             Sheet sheet = workbook.getSheet(nameValue.getSheetName());
             Row row = sheet.getRow(nameValue.getRow());
             String name = row.getCell(NAME_COLUMN).getStringCellValue();
-            if (!name.equals(nameValue.getName())) {
+            if (!name.equals(nameValue.getFieldName())) {
                 // todo accumulate errors
-                throw new RuntimeException("Expected " + nameValue.getName() + ", found " + name);
+                throw new RuntimeException("Expected " + nameValue.getFieldName() + ", found " + name);
             }
             String cellValue = PoiSpreadsheetParser.getCellValues(row.getCell(VALUE_COLUMN), false, false);
             mapNameValueToValue.put(nameValue, cellValue);
