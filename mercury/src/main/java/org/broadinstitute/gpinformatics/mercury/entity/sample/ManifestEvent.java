@@ -86,11 +86,6 @@ public class ManifestEvent {
          * Something like mismatched gender, where there is a problem but lab users are given the discretion to
          * continue processing a sample.
          */
-        ERROR,
-        /**
-         * Informational message for an error that occurs but may be fixable
-         */
-        WARNING
-
+        ERROR
     }
 }

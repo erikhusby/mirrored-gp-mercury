@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -26,17 +27,24 @@ import java.util.List;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
+import static org.hamcrest.collection.IsEmptyCollection.*;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ManifestSessionEjbDBFreeTest {
 
     private static final String PATHS_TO_PREFIXES_PROVIDER = "pathsToPrefixesProvider";
 
+    private static final String BAD_MANIFEST_UPLOAD_PROVIDER = "badManifestUploadProvider";
+
     private static final BSPUserList.QADudeUser TEST_USER = new BSPUserList.QADudeUser("BUICK USER", 42);
+
+    private static final String TEST_RESEARCH_PROJECT_KEY = "RP-1";
+    public static final int NUM_RECORDS_IN_GOOD_MANIFEST = 23;
 
     public void researchProjectNotFound() {
         ManifestSessionDao manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
@@ -65,33 +73,37 @@ public class ManifestSessionEjbDBFreeTest {
      * Worker method for manifest upload testing.
      */
     private ManifestSession uploadManifest(String pathToManifestFile) throws FileNotFoundException {
+        ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(TEST_RESEARCH_PROJECT_KEY);
+        return uploadManifest(pathToManifestFile, researchProject);
+    }
+
+    /**
+     * Worker method for manifest upload testing.
+     */
+    private ManifestSession uploadManifest(String pathToManifestFile, ResearchProject researchProject)
+            throws FileNotFoundException {
         ManifestSessionDao manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
         ResearchProjectDao researchProjectDao = Mockito.mock(ResearchProjectDao.class);
-        Mockito.when(researchProjectDao.findByBusinessKey(Mockito.anyString())).thenAnswer(new Answer<Object>() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                String key = (String) invocation.getArguments()[0];
-                return ResearchProjectTestFactory.createTestResearchProject(key);
-            }
-        });
+        Mockito.when(researchProjectDao.findByBusinessKey(Mockito.anyString())).thenReturn(researchProject);
 
         ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
         String PATH_TO_SPREADSHEET = TestUtils.getTestData(pathToManifestFile);
         InputStream inputStream = new FileInputStream(PATH_TO_SPREADSHEET);
-        return ejb.uploadManifest("RP-1", inputStream, PATH_TO_SPREADSHEET, TEST_USER);
+        return ejb.uploadManifest(researchProject.getBusinessKey(), inputStream, PATH_TO_SPREADSHEET, TEST_USER);
     }
 
     public void uploadGoodManifest() throws FileNotFoundException {
         ManifestSession manifestSession = uploadManifest("manifest-upload/good-manifest.xlsx");
         assertThat(manifestSession, is(notNullValue()));
-        assertThat(manifestSession.getRecords(), hasSize(23));
+        assertThat(manifestSession.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
         assertThat(manifestSession.hasErrors(), is(false));
+        assertThat(manifestSession.getManifestEvents(), is(empty()));
     }
 
     public void uploadManifestWithDuplicates() throws FileNotFoundException {
         ManifestSession manifestSession = uploadManifest("manifest-upload/manifest-with-duplicates.xlsx");
         assertThat(manifestSession, is(notNullValue()));
-        assertThat(manifestSession.getRecords(), hasSize(23));
+        assertThat(manifestSession.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
         assertThat(manifestSession.hasErrors(), is(true));
         List<ManifestRecord> quarantinedRecords = new ArrayList<>();
 
@@ -104,29 +116,40 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(quarantinedRecords, hasSize(7));
     }
 
-    public void uploadNonExcelManifest() throws FileNotFoundException {
-        try {
-            uploadManifest("manifest-upload/not-an-excel-file.txt");
-            Assert.fail();
-        } catch (InformaticsServiceException e) {
-            assertThat(e.getMessage(), containsString("Error reading manifest file"));
-        }
+    @DataProvider(name = BAD_MANIFEST_UPLOAD_PROVIDER)
+    public Object [][] badManifestUploadProvider() {
+        return new Object[][]{
+                {"Not an Excel file", "manifest-upload/not-an-excel-file.txt"},
+                {"Missing required field", "manifest-import/test-manifest-missing-required.xlsx"},
+                {"Missing column", "manifest-upload/manifest-with-missing-column.xlsx"},
+                {"Empty manifest", "manifest-upload/empty-manifest.xlsx"}
+        };
     }
 
-    public void uploadManifestWithOneSampleMissingSampleId() throws FileNotFoundException {
+    @Test(dataProvider = BAD_MANIFEST_UPLOAD_PROVIDER)
+    public void uploadBadManifest(String description, String pathToManifestFile) throws FileNotFoundException {
         try {
-            uploadManifest("manifest-import/test-manifest-missing-required.xlsx");
-            Assert.fail();
+            uploadManifest(pathToManifestFile);
+            Assert.fail(description);
         } catch (InformaticsServiceException ignored) {
         }
     }
 
-    public void uploadManifestWithMissingColumn() throws FileNotFoundException {
-        try {
-            uploadManifest("manifest-upload/manifest-with-missing-column.xlsx");
-            Assert.fail();
-        } catch (InformaticsServiceException ignored) {
-        }
+    public void uploadManifestThatDuplicatesSampleIdInAnotherManifest() throws FileNotFoundException {
+        ResearchProject researchProject =
+                ResearchProjectTestFactory.createTestResearchProject(TEST_RESEARCH_PROJECT_KEY);
+
+        ManifestSession manifestSession1 =
+                uploadManifest("manifest-upload/duplicates/good-manifest-1.xlsx", researchProject);
+        assertThat(manifestSession1, is(notNullValue()));
+        assertThat(manifestSession1.getManifestEvents(), is(empty()));
+        assertThat(manifestSession1.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
+
+        ManifestSession manifestSession2 =
+                uploadManifest("manifest-upload/duplicates/good-manifest-2.xlsx", researchProject);
+        assertThat(manifestSession2, is(notNullValue()));
+        assertThat(manifestSession2.getManifestEvents(), hasSize(2));
+        assertThat(manifestSession2.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
     }
 
     public void loadManifestSessionSuccess() {
