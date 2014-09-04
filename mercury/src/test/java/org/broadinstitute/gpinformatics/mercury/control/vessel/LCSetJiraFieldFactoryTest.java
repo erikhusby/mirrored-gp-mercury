@@ -97,7 +97,7 @@ public class LCSetJiraFieldFactoryTest {
             String barcode = "R" + sampleIndex + sampleIndex + sampleIndex + sampleIndex + sampleIndex + sampleIndex;
             String bspStock = vesselSampleList.get(sampleIndex - 1);
             BarcodedTube bspAliquot = new BarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(bspStock));
+            bspAliquot.addSample(new MercurySample(bspStock, MercurySample.MetadataSource.BSP));
             bspAliquot.addBucketEntry(new BucketEntry(bspAliquot,
                                                       sampleIndex == 1 ? singleSampleOrder : testProductOrder,
                                                       BucketEntry.BucketEntryType.PDO_ENTRY));
@@ -188,9 +188,9 @@ public class LCSetJiraFieldFactoryTest {
         Set<LabVessel> newTubes = new HashSet<>();
         Set<LabVessel> reworks = new HashSet<>();
         LabVessel tube1 = new BarcodedTube("000012");
-        tube1.addSample(new MercurySample("SM-1"));
+        tube1.addSample(new MercurySample("SM-1", MercurySample.MetadataSource.BSP));
         LabVessel tube2 = new BarcodedTube("000033");
-        tube2.addSample(new MercurySample("SM-2"));
+        tube2.addSample(new MercurySample("SM-2", MercurySample.MetadataSource.BSP));
         newTubes.add(tube1);
         reworks.add(tube2);
 
@@ -209,7 +209,7 @@ public class LCSetJiraFieldFactoryTest {
 
         Set<LabVessel> newTubes = new HashSet<>();
         LabVessel tube = new BarcodedTube("000012");
-        tube.addSample(new MercurySample(sampleKey));
+        tube.addSample(new MercurySample(sampleKey, MercurySample.MetadataSource.BSP));
         newTubes.add(tube);
 
         LabBatch batch = new LabBatch("test", newTubes, LabBatch.LabBatchType.WORKFLOW);

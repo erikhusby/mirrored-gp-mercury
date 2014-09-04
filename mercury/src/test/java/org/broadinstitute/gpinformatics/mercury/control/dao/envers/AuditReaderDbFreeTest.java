@@ -3,18 +3,14 @@ package org.broadinstitute.gpinformatics.mercury.control.dao.envers;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
-import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup_;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.UserRemarks;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer_;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -82,8 +78,8 @@ public class AuditReaderDbFreeTest {
         final String barcode = "A00000001";
 
         BarcodedTube barcodedTube = new BarcodedTube(barcode, BarcodedTube.BarcodedTubeType.VacutainerBloodTube10);
-        barcodedTube.addSample(new MercurySample("SM-0"));
-        barcodedTube.addSample(new MercurySample("SM-1"));
+        barcodedTube.addSample(new MercurySample("SM-0", MercurySample.MetadataSource.BSP));
+        barcodedTube.addSample(new MercurySample("SM-1", MercurySample.MetadataSource.BSP));
 
         List<EntityField> entityFields = ReflectionUtil.formatFields(barcodedTube, barcodedTube.getClass());
         Assert.assertTrue(CollectionUtils.isNotEmpty(entityFields));

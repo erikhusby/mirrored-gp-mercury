@@ -22,6 +22,8 @@ import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.ejb.HibernateEntityManager;
 
+import javax.ejb.Stateful;
+import javax.enterprise.context.RequestScoped;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -36,6 +38,8 @@ import java.util.Map;
  * the entity out of the criteria, to get a list of IDs. The page method then retrieves
  * entities for a subset of the list of IDs.
  */
+@Stateful
+@RequestScoped
 public class PaginationDao extends GenericDao {
     /**
      * Holds the current location in a pagination sequence, intended to be placed in HTTP
@@ -90,17 +94,15 @@ public class PaginationDao extends GenericDao {
             return resultEntity;
         }
 
-        public void setResultEntity(String resultEntity) {
+        public void setResultEntity(String resultEntity, String resultEntityId) {
             this.resultEntity = resultEntity;
+            this.resultEntityId = resultEntityId;
         }
 
         public String getResultEntityId() {
             return resultEntityId;
         }
 
-        public void setResultEntityId(String resultEntityId) {
-            this.resultEntityId = resultEntityId;
-        }
     }
 
     /**
@@ -109,13 +111,14 @@ public class PaginationDao extends GenericDao {
      * @param criteria   criteria for which results are to be paginated
      * @param pagination holds pagination state
      */
-    public void startPagination(Criteria criteria, Pagination pagination) {
+    public void startPagination(Criteria criteria, Pagination pagination, boolean doInitialFetchFullEntity) {
         // Always append entity ID to order, because other less-specific orders may not
         // yield reproducible results.
 
         criteria.addOrder(Order.asc(pagination.getResultEntityId()));
-
-        criteria.setProjection(Projections.property(pagination.getResultEntityId()));
+        if( !doInitialFetchFullEntity ) {
+            criteria.setProjection(Projections.property(pagination.getResultEntityId()));
+        }
         //noinspection unchecked
         pagination.setIdList(criteria.list());
     }
