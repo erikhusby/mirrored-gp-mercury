@@ -780,4 +780,46 @@
                 referencedTableSchemaName="mercury" referencedTableName="lab_Vessel" referencedColumnNames="lab_vessel_id"/>
     </changeSet>
 
+    <changeSet author="thompson" id="GPLIM-2941-1">
+        <addColumn schemaName="mercury" tableName="mercury_sample">
+            <column name="metadata_source" type="varchar2(255 char)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="thompson" id="GPLIM-2941-2">
+        <addColumn schemaName="mercury" tableName="mercury_sample_aud">
+            <column name="metadata_source" type="varchar2(255 char)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="thompson" id="GPLIM-2941-3">
+        <sql>update mercury_sample set metadata_source = 'BSP' where metadata_source is null</sql>
+        <addNotNullConstraint schemaName="mercury" tableName="mercury_sample" columnName="metadata_source"/>
+    </changeSet>
+    <changeSet author="thompson" id="GPLIM-2941-4">
+        <sql>update mercury_sample_aud set metadata_source = 'BSP' where metadata_source is null</sql>
+    </changeSet>
+    <!-- fix the row migration resulting from expanding the size of the rows -->
+    <changeSet author="thompson" id="GPLIM-2941-5">
+        <sql>alter table mercury_sample move tablespace MERCURY_DAT PCTFREE 1</sql>
+        <sql>alter table mercury_sample PCTFREE 10</sql>
+        <sql>alter index SYS_C00125240 rebuild</sql>
+        <sql>alter index IX_MS_SAMPLE_KEY rebuild</sql>
+    </changeSet>
+    <changeSet author="thompson" id="GPLIM-2941-6">
+        <sql>alter table mercury_sample_aud move tablespace MERCURY_DAT PCTFREE 1</sql>
+        <sql>alter table mercury_sample_aud PCTFREE 10</sql>
+        <sql>alter index PK_MERCURY_SAMPLE_AUD rebuild</sql>
+    </changeSet>
+    <changeSet author="thompson" id="GPLIM-2941-7">
+        <sql>call DBMS_STATS.GATHER_TABLE_STATS (
+            ownname => 'mercury',
+            tabname => 'mercury_sample',
+            estimate_percent => 15
+            )</sql>
+        <sql>call DBMS_STATS.GATHER_TABLE_STATS (
+            ownname => 'mercury',
+            tabname => 'mercury_sample_aud',
+            estimate_percent => 15
+            )</sql>
+    </changeSet>
+
 </databaseChangeLog>

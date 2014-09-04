@@ -40,6 +40,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 
@@ -344,7 +345,8 @@ public class ProductOrderResource {
 
         Date currentDate = new Date();
         List<LabVessel> vessels = labVesselFactory.buildLabVessels(
-                addSamplesToPdoBean.parentVesselBeans, bspUser.getUsername(), currentDate, LabEventType.SAMPLE_PACKAGE);
+                addSamplesToPdoBean.parentVesselBeans, bspUser.getUsername(), currentDate, LabEventType.SAMPLE_PACKAGE,
+                MercurySample.MetadataSource.BSP);
         labVesselDao.persistAll(vessels);
 
         // Get all the sample ids

@@ -10,6 +10,7 @@ import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -92,7 +93,8 @@ public class SpreadsheetCreator {
         Integer(1),
         Decimal(2),
         Date(0x16),
-        Text(0x31);
+        Text(0x31),
+        Header(0x31);
 
         private String name;
 
@@ -104,6 +106,14 @@ public class SpreadsheetCreator {
             CellStyle style = wb.createCellStyle();
             style.setFont(font);
             style.setDataFormat(dataFormat.getFormat(name));
+            return style;
+        }
+
+        public CellStyle createHeaderStyle(Workbook wb, Font font, DataFormat dataFormat) {
+            CellStyle style = wb.createCellStyle();
+            style.setFont(font);
+            style.setDataFormat(dataFormat.getFormat(name));
+            style.setBorderBottom(CellStyle.BORDER_MEDIUM);
             return style;
         }
     }
@@ -121,6 +131,8 @@ public class SpreadsheetCreator {
             throw new RuntimeException("Cannot have a blank worksheet name.");
         }
 
+        boolean isHeader = false;
+
         // create a new sheet
         Sheet sheet = workbook.createSheet(sheetName);
 
@@ -132,12 +144,21 @@ public class SpreadsheetCreator {
         // make it black
         font.setColor(Font.COLOR_NORMAL);
 
+        Font headerFont = workbook.createFont();
+        // set font to 10 point type
+        headerFont.setFontHeightInPoints((short) 10);
+        // make it black and bold
+        headerFont.setColor(Font.COLOR_NORMAL);
+        headerFont.setBoldweight(Font.BOLDWEIGHT_BOLD);
+
         // Create cell styles.
         Map<POIBuiltinFormats, CellStyle> styleMap =
                 new EnumMap<>(POIBuiltinFormats.class);
         for (POIBuiltinFormats format : POIBuiltinFormats.values()) {
             styleMap.put(format, format.createStyle(workbook, font, dataFormat));
         }
+        // Manually create a header format
+        styleMap.put(POIBuiltinFormats.Header, POIBuiltinFormats.Header.createHeaderStyle(workbook, headerFont, dataFormat));
 
         if (rows.length > MAX_ROW_NUMBER) {
             throw new RuntimeException(String.format(
@@ -168,6 +189,9 @@ public class SpreadsheetCreator {
                     } else if (data instanceof Date) {
                         cell.setCellStyle(styleMap.get(POIBuiltinFormats.Date));
                         cell.setCellValue((Date) data);
+                    } else if (data instanceof ExcelHeader) {
+                        cell.setCellStyle(styleMap.get(POIBuiltinFormats.Header));
+                        cell.setCellValue(data.toString());
                     } else {
                         cell.setCellStyle(styleMap.get(POIBuiltinFormats.General));
                         if (data != null) {
@@ -178,8 +202,24 @@ public class SpreadsheetCreator {
             }
         }
         sheet.createRow(rowNum);
-        for (int cellNum = 1; cellNum <= rows[rowNum-1].length; cellNum++) {
+        for (int cellNum = 0; cellNum <= rows[rowNum-1].length; cellNum++) {
             sheet.autoSizeColumn(cellNum);
+        }
+    }
+
+    /**
+     * Avery t hin wrapper to allow consumer to wrap values (typically a String)
+     *    to flag for format as a header in spreadsheet (or ignore in any String based export)
+     */
+    public static class ExcelHeader {
+        private String label;
+        public ExcelHeader( String label ) {
+            this.label = label;
+        }
+
+        @Override
+        public String toString() {
+            return label;
         }
     }
 }
