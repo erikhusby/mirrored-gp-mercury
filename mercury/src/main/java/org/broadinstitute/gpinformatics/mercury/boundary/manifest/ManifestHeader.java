@@ -22,13 +22,13 @@ import java.util.List;
  * This enum holds header information for sample metadata manifests.
  */
 public enum ManifestHeader implements ColumnHeader {
-    SAMPLE_ID("Sample ID", 0, Metadata.Key.SAMPLE_ID, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE),
+    SPECIMEN_NUMBER("Specimen_Number", 0, Metadata.Key.SAMPLE_ID, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE),
     PATIENT_ID("Patient_ID", 1, Metadata.Key.PATIENT_ID, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE),
     SEX("Sex", 2, Metadata.Key.GENDER, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_VALUE),
     COLLECTION_DATE("Collection_Date", 3, Metadata.Key.BUICK_COLLECTION_DATE, ColumnHeader.REQUIRED_HEADER,
             ColumnHeader.OPTIONAL_VALUE),
     VISIT("Visit", 4, Metadata.Key.BUICK_VISIT, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_VALUE),
-    TUMOR_OR_NORMAL("T/N", 5, Metadata.Key.TUMOR_NORMAL, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE);
+    TUMOR_OR_NORMAL("SAMPLE_TYPE", 5, Metadata.Key.TUMOR_NORMAL, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE);
     private final String text;
     private final int index;
     private final Metadata.Key metadataKey;

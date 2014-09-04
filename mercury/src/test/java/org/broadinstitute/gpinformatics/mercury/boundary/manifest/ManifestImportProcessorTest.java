@@ -104,7 +104,7 @@ public class ManifestImportProcessorTest {
 
     private Map<String, String> makeDataRow() {
         Map<String, String> dataRow = new HashMap<>();
-        dataRow.put(ManifestHeader.SAMPLE_ID.getText(), "03101231193");
+        dataRow.put(ManifestHeader.SPECIMEN_NUMBER.getText(), "03101231193");
         dataRow.put(ManifestHeader.PATIENT_ID.getText(), "004-002");
         dataRow.put(ManifestHeader.SEX.getText(), "");
         dataRow.put(ManifestHeader.VISIT.getText(), "Screening");

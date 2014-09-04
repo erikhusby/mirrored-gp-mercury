@@ -89,7 +89,7 @@ public class ManifestImporterTest {
 
         assertThat(manifestImportProcessor.getMessages(),
                 hasItem(String.format(ROW_NUMBER_PREFIX + TableProcessor.REQUIRED_VALUE_IS_MISSING, 1,
-                        ManifestHeader.SAMPLE_ID.getText())));
+                        ManifestHeader.SPECIMEN_NUMBER.getText())));
         assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
 
     }
@@ -149,7 +149,7 @@ public class ManifestImporterTest {
                 if (header.equals(ManifestHeader.VISIT.getText())) {
                     assertThat(value, is("Screening"));
                 }
-                if (header.equals(ManifestHeader.SAMPLE_ID.getText())) {
+                if (header.equals(ManifestHeader.SPECIMEN_NUMBER.getText())) {
                     assertThat(value, startsWith("0310"));
                 }
                 if (header.equals(ManifestHeader.PATIENT_ID.getText())) {
