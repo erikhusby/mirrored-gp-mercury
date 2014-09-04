@@ -77,7 +77,8 @@ public class ManifestSessionEjbDBFreeTest {
      * Worker method for manifest upload testing.
      */
     private ManifestSession uploadManifest(String pathToManifestFile) throws FileNotFoundException {
-        ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(TEST_RESEARCH_PROJECT_KEY);
+        ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(
+                TEST_RESEARCH_PROJECT_KEY);
         return uploadManifest(pathToManifestFile, researchProject);
     }
 
@@ -104,7 +105,7 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(manifestSession.getManifestEvents(), is(empty()));
     }
 
-    public void uploadManifestWithDuplicates() throws FileNotFoundException {
+    public void uploadManifestThatDuplicatesSampleIdInSameManifest() throws FileNotFoundException {
         ManifestSession manifestSession = uploadManifest("manifest-upload/manifest-with-duplicates.xlsx");
         assertThat(manifestSession, is(notNullValue()));
         assertThat(manifestSession.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
@@ -180,7 +181,8 @@ public class ManifestSessionEjbDBFreeTest {
                 ResearchProjectTestFactory.createTestResearchProject(TEST_RESEARCH_PROJECT_KEY);
 
         ManifestSession manifestSession1 =
-                uploadManifest("manifest-upload/gender-mismatches-across-sessions/good-manifest-1.xlsx", researchProject);
+                uploadManifest("manifest-upload/gender-mismatches-across-sessions/good-manifest-1.xlsx",
+                        researchProject);
         assertThat(manifestSession1, is(notNullValue()));
         assertThat(manifestSession1.getManifestEvents(), is(empty()));
         assertThat(manifestSession1.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
