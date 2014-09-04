@@ -54,6 +54,12 @@ public class ManifestSessionEjbDBFreeTest {
 
     private static final int NUM_DUPLICATES_IN_MANIFEST_WITH_DUPLICATES_IN_SAME_SESSION = 7;
 
+    private static final String MANIFEST_FILE_MISMATCHED_GENDERS_THIS_MANIFEST =
+            "manifest-upload/gender-mismatches-within-session/good-manifest.xlsx";
+
+    private static final ImmutableSet<String> PATIENT_IDS_FOR_SAME_MANIFEST_GENDER_MISMATCHES =
+            ImmutableSet.of("004-002", "003-009", "005-012");
+
     public void researchProjectNotFound() {
         ManifestSessionDao manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
         ResearchProjectDao researchProjectDao = Mockito.mock(ResearchProjectDao.class);
@@ -119,22 +125,6 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(manifestSession.getManifestEvents(), is(empty()));
     }
 
-    public void uploadManifestThatDuplicatesSampleIdInSameManifest() throws FileNotFoundException {
-        ManifestSession manifestSession = uploadManifest(MANIFEST_FILE_DUPLICATES_SAME_SESSION);
-        assertThat(manifestSession, is(notNullValue()));
-        assertThat(manifestSession.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
-        assertThat(manifestSession.hasErrors(), is(true));
-        List<ManifestRecord> quarantinedRecords = new ArrayList<>();
-
-        for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
-            if (manifestRecord.isQuarantined()) {
-                quarantinedRecords.add(manifestRecord);
-            }
-        }
-        // This file contains two instances of duplication and one triplication, so 2 x 2 + 3 = 7.
-        assertThat(quarantinedRecords, hasSize(NUM_DUPLICATES_IN_MANIFEST_WITH_DUPLICATES_IN_SAME_SESSION));
-    }
-
     @DataProvider(name = BAD_MANIFEST_UPLOAD_PROVIDER)
     public Object [][] badManifestUploadProvider() {
         return new Object[][]{
@@ -154,6 +144,22 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
+    public void uploadManifestThatDuplicatesSampleIdInSameManifest() throws FileNotFoundException {
+        ManifestSession manifestSession = uploadManifest(MANIFEST_FILE_DUPLICATES_SAME_SESSION);
+        assertThat(manifestSession, is(notNullValue()));
+        assertThat(manifestSession.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
+        assertThat(manifestSession.hasErrors(), is(true));
+        List<ManifestRecord> quarantinedRecords = new ArrayList<>();
+
+        for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
+            if (manifestRecord.isQuarantined()) {
+                quarantinedRecords.add(manifestRecord);
+            }
+        }
+        // This file contains two instances of duplication and one triplication, so 2 x 2 + 3 = 7.
+        assertThat(quarantinedRecords, hasSize(NUM_DUPLICATES_IN_MANIFEST_WITH_DUPLICATES_IN_SAME_SESSION));
+    }
+
     public void uploadManifestThatDuplicatesSampleIdInAnotherManifest() throws FileNotFoundException {
         ResearchProject researchProject =
                 ResearchProjectTestFactory.createTestResearchProject(TEST_RESEARCH_PROJECT_KEY);
@@ -171,19 +177,17 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(manifestSession2.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
     }
 
-    public void uploadManifestThatMismatchesGenderInThisManifest() throws FileNotFoundException {
-        ManifestSession manifestSession =
-                uploadManifest("manifest-upload/gender-mismatches-within-session/good-manifest.xlsx");
+    public void uploadManifestThatMismatchesGenderInSameManifest() throws FileNotFoundException {
+        ManifestSession manifestSession = uploadManifest(MANIFEST_FILE_MISMATCHED_GENDERS_THIS_MANIFEST);
         assertThat(manifestSession, is(notNullValue()));
         assertThat(manifestSession.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
 
-        Set<String> expectedPatientIds = ImmutableSet.of("004-002", "003-009", "005-012");
-        // The assert below is for size * 2 since all manifest records in question are in the same manifest session.
-        assertThat(manifestSession.getManifestEvents(), hasSize(expectedPatientIds.size() * 2));
+        // The assert below is for size * 2 since all manifest records in question are in this manifest session.
+        assertThat(manifestSession.getManifestEvents(), hasSize(PATIENT_IDS_FOR_SAME_MANIFEST_GENDER_MISMATCHES.size() * 2));
         for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
             assertThat(manifestRecord.isQuarantined(), is(false));
             Metadata patientIdMetadata = manifestRecord.getMetadataByKey(Metadata.Key.PATIENT_ID);
-            if (expectedPatientIds.contains(patientIdMetadata.getValue())) {
+            if (PATIENT_IDS_FOR_SAME_MANIFEST_GENDER_MISMATCHES.contains(patientIdMetadata.getValue())) {
                 assertThat(manifestRecord.getManifestEvents(), hasSize(1));
                 assertThat(manifestRecord.getManifestEvents().get(0).getSeverity(), is(ManifestEvent.Severity.ERROR));
             }
@@ -276,14 +280,10 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
-    public void acceptSessionWithDuplicatesInThisSession() throws FileNotFoundException {
-        ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(
-                TEST_RESEARCH_PROJECT_KEY);
-        ManifestSessionDao manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
+    private ManifestSessionEjb buildEjbForSessionAcceptance(final ManifestSession[] manifestSessionHolder,
+                                                            ResearchProject researchProject) {
 
-        // This will hold a reference to a ManifestSession that hasn't been created at the time the ManifestSessionDAO
-        // mock is being programmed.
-        final ManifestSession[] manifestSessionHolder = new ManifestSession[1];
+        ManifestSessionDao manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
         Mockito.when(manifestSessionDao.find(Mockito.anyLong())).thenAnswer(new Answer<ManifestSession>() {
             @Override
             public ManifestSession answer(InvocationOnMock invocation) throws Throwable {
@@ -293,7 +293,17 @@ public class ManifestSessionEjbDBFreeTest {
         ResearchProjectDao researchProjectDao = Mockito.mock(ResearchProjectDao.class);
         Mockito.when(researchProjectDao.findByBusinessKey(Mockito.anyString())).thenReturn(researchProject);
 
-        ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
+        return new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
+    }
+
+    public void acceptSessionWithDuplicatesInThisSession() throws FileNotFoundException {
+        // This will hold a reference to a ManifestSession that hasn't been created at the time the ManifestSessionDAO
+        // mock is being programmed.
+        ManifestSession[] manifestSessionHolder = new ManifestSession[1];
+        ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(
+                TEST_RESEARCH_PROJECT_KEY);
+
+        ManifestSessionEjb ejb = buildEjbForSessionAcceptance(manifestSessionHolder, researchProject);
         ManifestSession manifestSession = uploadManifest(ejb, MANIFEST_FILE_DUPLICATES_SAME_SESSION, researchProject);
 
         List<ManifestRecord> manifestRecordsMarkedAsDuplicates = new ArrayList<>();
@@ -322,6 +332,52 @@ public class ManifestSessionEjbDBFreeTest {
                 assertThat(manifestRecord.getManifestEvents(), is(empty()));
                 assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOAD_ACCEPTED));
             } else {
+                // No new events should have been added.
+                assertThat(manifestRecord.getManifestEvents(), hasSize(1));
+            }
+        }
+    }
+
+    public void acceptSessionWithMismatchedGendersThisSession() throws FileNotFoundException {
+        // This will hold a reference to a ManifestSession that hasn't been created at the time the ManifestSessionDAO
+        // mock is being programmed.
+        ManifestSession[] manifestSessionHolder = new ManifestSession[1];
+        ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(
+                TEST_RESEARCH_PROJECT_KEY);
+
+        ManifestSessionEjb ejb = buildEjbForSessionAcceptance(manifestSessionHolder, researchProject);
+        ManifestSession manifestSession = uploadManifest(ejb, MANIFEST_FILE_MISMATCHED_GENDERS_THIS_MANIFEST, researchProject);
+
+        List<ManifestRecord> manifestRecordsWithMismatchedGenders = new ArrayList<>();
+
+        for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
+            assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOADED));
+            assertThat(manifestRecord.isQuarantined(), is(false));
+
+            List<ManifestEvent> manifestEvents = manifestRecord.getManifestEvents();
+            boolean hasManifestEvents = !manifestEvents.isEmpty();
+            if (hasManifestEvents) {
+                assertThat(manifestEvents, hasSize(1));
+                assertThat(manifestEvents.get(0).getSeverity(), is(ManifestEvent.Severity.ERROR));
+                manifestRecordsWithMismatchedGenders.add(manifestRecord);
+            }
+            String patientId = manifestRecord.getMetadataByKey(Metadata.Key.PATIENT_ID).getValue();
+            assertThat(PATIENT_IDS_FOR_SAME_MANIFEST_GENDER_MISMATCHES.contains(patientId),
+                    is(equalTo(hasManifestEvents)));
+        }
+
+        // Now that the manifest session has been created, put it in the holder so the DAO will be able to retrieve it.
+        manifestSessionHolder[0] = manifestSession;
+        // Arbitrary ID, the DAO is programmed to return the same manifest session for any requested ID.
+        long MANIFEST_SESSION_ID = 3L;
+        ejb.acceptManifestUpload(MANIFEST_SESSION_ID);
+
+        for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
+            boolean shouldBeMarkedAsDuplicate = manifestRecordsWithMismatchedGenders.contains(manifestRecord);
+            assertThat(manifestRecord.getManifestEvents().isEmpty(), is(!shouldBeMarkedAsDuplicate));
+            assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOAD_ACCEPTED));
+
+            if (shouldBeMarkedAsDuplicate) {
                 // No new events should have been added.
                 assertThat(manifestRecord.getManifestEvents(), hasSize(1));
             }
