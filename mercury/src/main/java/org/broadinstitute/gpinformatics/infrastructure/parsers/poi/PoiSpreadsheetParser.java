@@ -232,7 +232,7 @@ public final class PoiSpreadsheetParser {
      * @throws IOException File issues
      * @throws ValidationException Any problems with the data in the spreadsheet
      */
-    public static List<String> processSingleWorksheet(InputStream spreadsheet, TableProcessor processor)
+    public static void processSingleWorksheet(InputStream spreadsheet, TableProcessor processor)
             throws InvalidFormatException, IOException, ValidationException {
 
         PoiSpreadsheetParser parser = new PoiSpreadsheetParser(Collections.<String, TableProcessor>emptyMap());
@@ -244,7 +244,5 @@ public final class PoiSpreadsheetParser {
         } finally {
             processor.close();
         }
-
-        return parser.validationMessages;
     }
 }
