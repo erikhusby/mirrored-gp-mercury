@@ -36,6 +36,7 @@ import java.util.Map;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyCollectionOf;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isOneOf;
@@ -77,21 +78,21 @@ public class ManifestImporterTest {
         InputStream inputStream = new FileInputStream(excelFileName);
         PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
 
-        validateManifestRecords(manifestImportProcessor.getManifestRecords());
+        validateManifestRecords(manifestImportProcessor);
         assertThat(manifestImportProcessor.getMessages(), emptyCollectionOf(String.class));
         assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
     }
 
-
+    @Test(expectedExceptions = ValidationException.class)
     public void testImportMissingRequiredValue() throws InvalidFormatException, IOException, ValidationException {
         InputStream inputStream = new FileInputStream(TestUtils.getTestData(MISSING_REQUIRED_VALUE));
         PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
 
+        validateManifestRecords(manifestImportProcessor);
         assertThat(manifestImportProcessor.getMessages(),
                 hasItem(String.format(ROW_NUMBER_PREFIX + TableProcessor.REQUIRED_VALUE_IS_MISSING, 1,
                         ManifestHeader.SPECIMEN_NUMBER.getText())));
         assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
-
     }
 
     @Test(expectedExceptions = ValidationException.class)
@@ -100,10 +101,12 @@ public class ManifestImporterTest {
         PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
     }
 
+    @Test(expectedExceptions = ValidationException.class)
     public void testImportExtraHeaders() throws InvalidFormatException, IOException, ValidationException {
         InputStream inputStream = new FileInputStream(TestUtils.getTestData(UNKNOWN_HEADERS));
         PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
 
+        validateManifestRecords(manifestImportProcessor);
         String expectedError =
                 String.format(ManifestImportProcessorTest.TEST_UNKNOWN_HEADER_FORMAT, 0, Arrays.asList("YOMAMA"));
         assertThat(manifestImportProcessor.getMessages(), contains(expectedError));
@@ -114,22 +117,40 @@ public class ManifestImporterTest {
         InputStream inputStream = new FileInputStream(TestUtils.getTestData(REARRANGED_COLUMNS));
         PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
 
+        validateManifestRecords(manifestImportProcessor);
         assertThat(manifestImportProcessor.getMessages(), emptyCollectionOf(String.class));
         assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
-        validateManifestRecords(manifestImportProcessor.getManifestRecords());
     }
 
+    @Test(expectedExceptions = ValidationException.class)
     public void testImportDuplicateColumns() throws InvalidFormatException, IOException, ValidationException {
         InputStream inputStream = new FileInputStream(TestUtils.getTestData(DUPLICATE_COLUMNS));
         PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
 
+        validateManifestRecords(manifestImportProcessor);
         String expectedError =
                 String.format(ROW_NUMBER_PREFIX + ManifestImportProcessor.DUPLICATE_HEADER_FORMAT, 0, "Patient_ID");
         assertThat(manifestImportProcessor.getMessages(), hasItem(expectedError));
         assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
     }
 
-    private static void validateManifestRecords(Collection<ManifestRecord> manifestRecords) {
+    /**
+     * Basic sweep of manifest importing results. This asserts basic assumptions about the import are true. Validations
+     * specific to a particular test must be run there.
+     *
+     * @param manifestImportProcessor ManifestImportProcessor which was used in an import.
+     *
+     * @throws ValidationException for any violations of data importing rules.
+     */
+    private void validateManifestRecords(ManifestImportProcessor manifestImportProcessor)
+            throws ValidationException {
+        Collection<ManifestRecord> manifestRecords;
+        try {
+            manifestRecords = manifestImportProcessor.getManifestRecords();
+        } catch (ValidationException e) {
+            assertThat(e.getValidationMessages(), equalTo(manifestImportProcessor.getMessages()));
+            throw e;
+        }
         Map<String, String> manifestRow = new HashMap<>();
         for (ManifestRecord manifestRecord : manifestRecords) {
             for (final Metadata metadata : manifestRecord.getMetadata()) {

@@ -88,7 +88,17 @@ public class ManifestImportProcessor extends TableProcessor {
         manifestRecords.add(manifestRecord);
     }
 
-    public Collection<ManifestRecord> getManifestRecords() {
+    /**
+     * Once the import is complete, the resulting data can be obtained here.
+     *
+     * @return All ManifestRecords from parsed file.
+     *
+     * @throws ValidationException if there were any errors.
+     */
+    public Collection<ManifestRecord> getManifestRecords() throws ValidationException {
+        if (!getMessages().isEmpty()) {
+            throw new ValidationException("There was an error importing the Manifest.", getMessages());
+        }
         return manifestRecords;
     }
 
@@ -114,7 +124,7 @@ public class ManifestImportProcessor extends TableProcessor {
         if (actualNumberOfSheets != ALLOWABLE_NUMBER_OF_SHEETS) {
             String errorMessage = String.format("Expected %d Worksheets, but workbook has %d", ALLOWABLE_NUMBER_OF_SHEETS,
                     actualNumberOfSheets);
-            throw new ValidationException(errorMessage, getMessages());
+            throw new ValidationException(errorMessage);
         }
     }
 

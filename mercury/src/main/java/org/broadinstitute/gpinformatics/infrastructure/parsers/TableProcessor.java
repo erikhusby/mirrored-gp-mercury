@@ -184,7 +184,15 @@ public abstract class TableProcessor implements Serializable {
         return null;
     }
 
-    public void validateNumberOfWorksheets(int actualNumberOfSheets) throws ValidationException {
 
-    }
+    /**
+     * If your requirements state that a workbook must have a certain amount of worksheets you can override
+     * to include that logic.
+     *
+     * @param actualNumberOfSheets number of sheets in workbook
+     *
+     * @throws ValidationException if the actual number of worksheets differs from your requirements.
+     */
+    public void validateNumberOfWorksheets(int actualNumberOfSheets) throws ValidationException {    }
+
 }
