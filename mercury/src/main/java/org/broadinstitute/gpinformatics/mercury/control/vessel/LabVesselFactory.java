@@ -65,7 +65,8 @@ public class LabVesselFactory implements Serializable {
             List<ParentVesselBean> parentVesselBeans,
             String userName,
             Date eventDate,
-            LabEventType labEventType) {
+            LabEventType labEventType,
+            MercurySample.MetadataSource metadataSource) {
         List<String> barcodes = new ArrayList<>();
         List<String> sampleIds = new ArrayList<>();
         for (ParentVesselBean parentVesselBean : parentVesselBeans) {
@@ -92,7 +93,7 @@ public class LabVesselFactory implements Serializable {
         Map<String, Set<ProductOrderSample>> mapIdToListPdoSamples = productOrderSampleDao.findMapBySamples(sampleIds);
         return buildLabVesselDaoFree(mapBarcodeToVessel, mapIdToListMercurySample,
                                      mapIdToListPdoSamples, userName, eventDate,
-                                     parentVesselBeans, labEventType);
+                                     parentVesselBeans, labEventType, metadataSource);
     }
 
 
@@ -106,7 +107,8 @@ public class LabVesselFactory implements Serializable {
      *
      * @return vessels, associated with samples
      */
-    public List<LabVessel> buildInitialLabVessels(String sampleName, String barcode, String userName, Date eventDate) {
+    public List<LabVessel> buildInitialLabVessels(String sampleName, String barcode, String userName, Date eventDate,
+            MercurySample.MetadataSource metadataSource) {
         List<String> barcodes = new ArrayList<>();
         barcodes.add(barcode);
         Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
@@ -122,7 +124,7 @@ public class LabVesselFactory implements Serializable {
         parentVesselBeans.add(new ParentVesselBean(barcode, sampleName, null, null));
 
         return buildLabVesselDaoFree(mapBarcodeToVessel, mapIdToListMercurySample, mapIdToListPdoSamples, userName,
-                                     eventDate, parentVesselBeans, null);
+                eventDate, parentVesselBeans, null, metadataSource);
     }
 
     /**
@@ -146,7 +148,8 @@ public class LabVesselFactory implements Serializable {
             String userName,
             Date eventDate,
             List<ParentVesselBean> parentVesselBeans,
-            LabEventType labEventType) {
+            LabEventType labEventType,
+            MercurySample.MetadataSource metadataSource) {
 
         List<LabVessel> labVessels = new ArrayList<>();
         BspUser bspUser = bspUserList.getByUsername(userName);
@@ -174,7 +177,7 @@ public class LabVesselFactory implements Serializable {
                         (BarcodedTube) labVessel;
 
                 MercurySample mercurySample = getMercurySample(mapIdToListMercurySample, mapIdToListPdoSamples,
-                                                               sampleId);
+                        sampleId, metadataSource);
                 barcodedTube.addSample(mercurySample);
                 if (labEventType != null) {
                     barcodedTube.addInPlaceEvent(new LabEvent(labEventType, eventDate, "BSP", disambiguator,
@@ -198,11 +201,13 @@ public class LabVesselFactory implements Serializable {
                         }
                         PlateWell plateWell = new PlateWell(staticPlate, vesselPosition);
                         plateWell.addSample(getMercurySample(mapIdToListMercurySample, mapIdToListPdoSamples,
-                                                             childVesselBean.getSampleId()));
+                                childVesselBean.getSampleId(), metadataSource));
                         staticPlate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
                     }
-                    staticPlate.addInPlaceEvent(new LabEvent(labEventType, eventDate, "BSP", disambiguator, operator,
-                                                             "BSP"));
+                    if (labEventType != null) {
+                        staticPlate.addInPlaceEvent(new LabEvent(labEventType, eventDate, "BSP", disambiguator, operator,
+                                                                 "BSP"));
+                    }
                     disambiguator++;
                 } else if (vesselType.toLowerCase().contains("rack") || vesselType.toLowerCase().contains("box")
                            || RackOfTubes.RackType.getByName(vesselType) != null) {
@@ -228,9 +233,11 @@ public class LabVesselFactory implements Serializable {
                                     childVesselBean.getVesselType());
                         }
                         barcodedTube.addSample(getMercurySample(mapIdToListMercurySample, mapIdToListPdoSamples,
-                                                                    childVesselBean.getSampleId()));
-                        barcodedTube.addInPlaceEvent(new LabEvent(labEventType, eventDate, "BSP", disambiguator,
-                                                                      operator, "BSP"));
+                                childVesselBean.getSampleId(), metadataSource));
+                        if (labEventType != null) {
+                            barcodedTube.addInPlaceEvent(new LabEvent(labEventType, eventDate, "BSP", disambiguator,
+                                    operator, "BSP"));
+                        }
                         disambiguator++;
                         mapPositionToTube.put(vesselPosition, barcodedTube);
                         labVessels.add(barcodedTube);
@@ -247,8 +254,10 @@ public class LabVesselFactory implements Serializable {
                         tubeFormation = existingTubeFormation;
                     }
                     tubeFormation.addRackOfTubes(rackOfTubes);
-                    tubeFormation.addInPlaceEvent(new LabEvent(labEventType, eventDate, "BSP", disambiguator, operator,
-                            "BSP"));
+                    if (labEventType != null) {
+                        tubeFormation.addInPlaceEvent(new LabEvent(labEventType, eventDate, "BSP", disambiguator, operator,
+                                "BSP"));
+                    }
                 } else {
                     throw new RuntimeException("Unexpected vessel type with child vessels " +
                                                parentVesselBean.getVesselType());
@@ -267,12 +276,13 @@ public class LabVesselFactory implements Serializable {
      * @param mapIdToListPdoSamples    Athena samples
      * @param sampleId                 ID for which to create the Mercury Sample
      *
+     * @param metadataSource BSP or Mercury
      * @return MercurySample with mandatory sampleId and optional Product Order
      */
     @DaoFree
     private MercurySample getMercurySample(Map<String, List<MercurySample>> mapIdToListMercurySample,
-                                           Map<String, Set<ProductOrderSample>> mapIdToListPdoSamples,
-                                           String sampleId) {
+            Map<String, Set<ProductOrderSample>> mapIdToListPdoSamples,
+            String sampleId, MercurySample.MetadataSource metadataSource) {
         List<MercurySample> mercurySamples = mapIdToListMercurySample.get(sampleId);
         if (mercurySamples == null) {
             mercurySamples = Collections.emptyList();
@@ -285,10 +295,10 @@ public class LabVesselFactory implements Serializable {
         MercurySample mercurySample = null;
         if (mercurySamples.isEmpty()) {
             if (productOrderSamples.isEmpty()) {
-                mercurySample = new MercurySample(sampleId);
+                mercurySample = new MercurySample(sampleId, metadataSource);
             } else {
                 for (ProductOrderSample productOrderSample : productOrderSamples) {
-                    mercurySample = new MercurySample(productOrderSample.getName());
+                    mercurySample = new MercurySample(productOrderSample.getName(), metadataSource);
                 }
             }
         } else if (mercurySamples.size() > 1) {

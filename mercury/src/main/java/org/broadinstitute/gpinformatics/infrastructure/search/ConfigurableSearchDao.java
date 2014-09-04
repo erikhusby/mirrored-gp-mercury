@@ -14,6 +14,8 @@ import org.hibernate.criterion.Subqueries;
 import org.hibernate.ejb.HibernateEntityManager;
 import org.hibernate.sql.JoinFragment;
 
+import javax.ejb.Stateful;
+import javax.enterprise.context.RequestScoped;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
@@ -33,6 +35,8 @@ import java.util.Map;
  * dao.getPage(1,...<br/>
  * ...
  */
+@Stateful
+@RequestScoped
 public class ConfigurableSearchDao extends GenericDao {
     /**
      * The maximum allowed length for all {@code IN} queries in a single SQL statement.
@@ -44,15 +48,16 @@ public class ConfigurableSearchDao extends GenericDao {
      */
     public static final int IN_QUERY_TOTAL_SIZE = 32768;
 
+    // todo jmt this should probably be supplied as a parameter, not stored as a field.
     private ConfigurableSearchDefinition configurableSearchDefinition;
 
     /**
-     * From a search definition and an instance, build Hibernate criteria
+     * From a search definition, an instance, and sorting definition, build Hibernate criteria
      *
      * @param configurableSearchDefinition definitions of search terms
      * @param searchInstance               instances of search terms, with values
-     * @param orderPath                    dot separated path to the property to order by
-     * @param orderDirection               ASC or DSC
+     * @param orderPath                    dot separated path to the property to order by, null if no sorting
+     * @param orderDirection               ASC or DSC (ignored if orderPath is null, otherwise required)
      * @return Hibernate criteria
      */
     public Criteria buildCriteria(
@@ -95,53 +100,15 @@ public class ConfigurableSearchDao extends GenericDao {
     }
 
     /**
+     * Build Hibernate criteria without any sorting
+     * As of 08/06/2014 only called from ConfigurableSearchDaoTest
      * @param configurableSearchDefinition
      * @param searchInstance
      * @return
      */
     public Criteria buildCriteria(ConfigurableSearchDefinition configurableSearchDefinition,
                                   SearchInstance searchInstance) {
-
-        this.configurableSearchDefinition = configurableSearchDefinition;
-        searchInstance.checkValues();
-        HibernateEntityManager hibernateEntityManager = getEntityManager().unwrap(HibernateEntityManager.class);
-        Session hibernateSession = hibernateEntityManager.getSession();
-
-        Criteria criteria = hibernateSession.createCriteria(configurableSearchDefinition.getResultEntity());
-        criteria.setResultTransformer(Criteria.DISTINCT_ROOT_ENTITY);
-
-        // Each term contains a list of criteria names and a property. We may encounter
-        // the same criteria name more than once in the parent / child hierarchy, so we
-        // have to keep track of them and re-use previously created criteria,
-        // otherwise Hibernate will give an error about duplicate paths.
-        /*
-         * Update 02-03-11 jdeffen:
-         * 
-         * There appears to be a flaw in this logic. The recurseSearchValues() method
-         * creates a new mapPathToCriteria Map instance when it encounters child criteria
-         * instead of pulling from the previously declared criteria in the Map. Thus
-         * creating duplicate sub-criteria. Then addOrderByToCriteria() method doesn't
-         * look at the Map either. The same Map of criteria should be used everywhere so
-         * no duplicate criteria is created.
-         * 
-         * When this is done, however, there is a Hibernate 3.2 Bug that creates bad SQL
-         * on JBOSS/Oracle systems....
-         */
-        Map<String, DetachedCriteria> mapPathToCriteria = new HashMap<>();
-
-        recurseSearchValues(1, criteria, null, mapPathToCriteria, searchInstance.getSearchValues(),
-                configurableSearchDefinition);
-
-        if (searchInstance.getOrderByList() != null) {
-
-            for (SearchInstance.SearchOrderBy orderBy : searchInstance.getOrderByList()) {
-
-                if (orderBy.getDbSortPath() != null) {
-                    addOrderByToCriteria(criteria, orderBy.getDbSortPath(), orderBy.getSortDirection());
-                }
-            }
-        }
-        return criteria;
+        return buildCriteria(configurableSearchDefinition, searchInstance, null, null );
     }
 
     /**
@@ -229,8 +196,7 @@ public class ConfigurableSearchDao extends GenericDao {
                                 resultCriteria.add(disjunction);
                             }
                             // Create a detached criteria for the top level criteria, and find
-                            // the definition of which property will be projected out of
-                            // the criteria
+                            // the definition of which property will be projected out of the criteria
                             String firstCriteriaName = criteriaPath.getCriteria().get(0);
                             ConfigurableSearchDefinition.CriteriaProjection criteriaProjection = configurableSearchDefinition
                                     .getCriteriaProjection(firstCriteriaName);
@@ -240,12 +206,10 @@ public class ConfigurableSearchDao extends GenericDao {
                             }
                             detachedCriteria = DetachedCriteria.forEntityName(criteriaProjection.getEntityName());
 
-                            // Start a new map for the new detached criteria (the map
-                            // avoids duplicate paths)
+                            // Start a new map for the new detached criteria (the map avoids duplicate paths)
                             mapPathToCriteria = new HashMap<>();
 
-                            // Add the detached criteria as a subquery of the result
-                            // criteria
+                            // Add the detached criteria as a subquery of the result criteria
                             detachedCriteria.setProjection(Property.forName(criteriaProjection.getSubProperty()));
                             disjunction.add(Subqueries.propertyIn(criteriaProjection.getSuperProperty(),
                                     detachedCriteria));
@@ -280,12 +244,12 @@ public class ConfigurableSearchDao extends GenericDao {
      * @param pagination to hold results IDs
      * @param criteria   from buildCriteria
      */
-    public void startPagination(PaginationDao.Pagination pagination, Criteria criteria) {
-        pagination.setResultEntity(configurableSearchDefinition.getResultEntity());
-        pagination.setResultEntityId(configurableSearchDefinition.getResultEntityId());
+    public void startPagination(PaginationDao.Pagination pagination, Criteria criteria, boolean doInitialfullFetch ) {
+        pagination.setResultEntity(configurableSearchDefinition.getResultEntity()
+                , configurableSearchDefinition.getResultEntityId());
         // TODO set join fetch paths? would require access to column defs
         PaginationDao paginationDao = new PaginationDao();
-        paginationDao.startPagination(criteria, pagination);
+        paginationDao.startPagination( criteria, pagination, doInitialfullFetch );
     }
 
     /**

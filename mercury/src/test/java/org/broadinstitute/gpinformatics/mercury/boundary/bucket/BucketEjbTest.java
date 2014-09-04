@@ -149,7 +149,7 @@ public class BucketEjbTest extends ContainerTest {
 
         productOrderSamples.add(new ProductOrderSample(bspStock));
         bspAliquot1 = new BarcodedTube(barcode1);
-        bspAliquot1.addSample(new MercurySample(bspStock));
+        bspAliquot1.addSample(new MercurySample(bspStock, MercurySample.MetadataSource.BSP));
         bspAliquot1.addBucketEntry(new BucketEntry(bspAliquot1, productOrder1, BucketEntry.BucketEntryType.PDO_ENTRY));
         mapBarcodeToTube.put(barcode1, bspAliquot1);
 
@@ -165,7 +165,7 @@ public class BucketEjbTest extends ContainerTest {
 
         productOrderSamples.add(new ProductOrderSample(bspStock));
         bspAliquot2 = new BarcodedTube(barcode2);
-        bspAliquot2.addSample(new MercurySample(bspStock));
+        bspAliquot2.addSample(new MercurySample(bspStock, MercurySample.MetadataSource.BSP));
         bspAliquot2.addBucketEntry(new BucketEntry(bspAliquot2, productOrder2, BucketEntry.BucketEntryType.PDO_ENTRY));
         mapBarcodeToTube.put(barcode2, bspAliquot2);
 
@@ -181,7 +181,7 @@ public class BucketEjbTest extends ContainerTest {
 
         productOrderSamples.add(new ProductOrderSample(bspStock));
         bspAliquot3 = new BarcodedTube(barcode3);
-        bspAliquot3.addSample(new MercurySample(bspStock));
+        bspAliquot3.addSample(new MercurySample(bspStock, MercurySample.MetadataSource.BSP));
         bspAliquot3.addBucketEntry(new BucketEntry(bspAliquot3, productOrder3, BucketEntry.BucketEntryType.PDO_ENTRY));
         mapBarcodeToTube.put(barcode3, bspAliquot3);
 
@@ -197,7 +197,7 @@ public class BucketEjbTest extends ContainerTest {
 
         productOrderSamples.add(new ProductOrderSample(bspStock));
         bspAliquot4 = new BarcodedTube(barcode4);
-        bspAliquot4.addSample(new MercurySample(bspStock));
+        bspAliquot4.addSample(new MercurySample(bspStock, MercurySample.MetadataSource.BSP));
         bspAliquot4.addBucketEntry(new BucketEntry(bspAliquot4, productOrder3, BucketEntry.BucketEntryType.PDO_ENTRY));
         mapBarcodeToTube.put(barcode4, bspAliquot4);
 
