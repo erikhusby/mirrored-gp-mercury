@@ -124,16 +124,10 @@ public abstract class TableProcessor implements Serializable {
 
     public abstract void close();
 
-    /**
-     * Messages are FATAL errors.
-     */
     public List<String> getMessages() {
         return validationMessages;
     }
 
-    /**
-     * Warnings are non-fatal messages.
-     */
     public Collection<String> getWarnings() {
         return warnings;
     }
@@ -147,9 +141,6 @@ public abstract class TableProcessor implements Serializable {
         validationMessages.add(getPrefixedMessage(message, dataRowIndex));
     }
 
-    /**
-     * Warnings are non-fatal messages.
-     */
     protected void addWarning(String message, int dataRowIndex) {
         warnings.add(getPrefixedMessage(message, dataRowIndex));
     }
