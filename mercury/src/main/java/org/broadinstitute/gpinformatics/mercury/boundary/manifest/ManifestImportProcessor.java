@@ -75,7 +75,7 @@ public class ManifestImportProcessor extends TableProcessor {
 
 
     /**
-     * Iterate through the data and add it to the manifestList.
+     * Iterate through the data and add it to the list of ManifestRecords.
      */
     @Override
     public void processRowDetails(Map<String, String> dataRow, int dataRowIndex) {
@@ -102,6 +102,13 @@ public class ManifestImportProcessor extends TableProcessor {
 
     }
 
+    /**
+     * In Buick, we only allow workbooks with one worksheet.
+     *
+     * @param actualNumberOfSheets number of sheets in workbook
+     *
+     * @throws ValidationException if the actualNumber of sheets differs from ALLOWABLE_NUMBER_OF_SHEETS.
+     */
     @Override
     public void validateNumberOfWorksheets(int actualNumberOfSheets) throws ValidationException {
         if (actualNumberOfSheets != ALLOWABLE_NUMBER_OF_SHEETS) {
