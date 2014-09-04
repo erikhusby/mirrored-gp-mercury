@@ -276,7 +276,7 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
-    public void acceptUploadWithDuplicatesInThisSession() throws FileNotFoundException {
+    public void acceptSessionWithDuplicatesInThisSession() throws FileNotFoundException {
         ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(
                 TEST_RESEARCH_PROJECT_KEY);
         ManifestSessionDao manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
@@ -321,6 +321,9 @@ public class ManifestSessionEjbDBFreeTest {
             if (!shouldBeMarkedAsDuplicate) {
                 assertThat(manifestRecord.getManifestEvents(), is(empty()));
                 assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOAD_ACCEPTED));
+            } else {
+                // No new events should have been added.
+                assertThat(manifestRecord.getManifestEvents(), hasSize(1));
             }
         }
     }
