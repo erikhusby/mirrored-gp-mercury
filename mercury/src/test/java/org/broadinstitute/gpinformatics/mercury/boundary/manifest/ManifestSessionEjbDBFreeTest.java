@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -48,7 +47,12 @@ public class ManifestSessionEjbDBFreeTest {
     private static final BSPUserList.QADudeUser TEST_USER = new BSPUserList.QADudeUser("BUICK USER", 42);
 
     private static final String TEST_RESEARCH_PROJECT_KEY = "RP-1";
-    public static final int NUM_RECORDS_IN_GOOD_MANIFEST = 23;
+
+    private static final int NUM_RECORDS_IN_GOOD_MANIFEST = 23;
+
+    private static final String MANIFEST_FILE_DUPLICATES_SAME_SESSION = "manifest-upload/manifest-with-duplicates.xlsx";
+
+    private static final int NUM_DUPLICATES_IN_MANIFEST_WITH_DUPLICATES_IN_SAME_SESSION = 7;
 
     public void researchProjectNotFound() {
         ManifestSessionDao manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
@@ -82,19 +86,29 @@ public class ManifestSessionEjbDBFreeTest {
         return uploadManifest(pathToManifestFile, researchProject);
     }
 
+    private ManifestSession uploadManifest(ManifestSessionEjb manifestSessionEjb, String pathToManifestFile, ResearchProject researchProject)
+            throws FileNotFoundException {
+        String PATH_TO_SPREADSHEET = TestUtils.getTestData(pathToManifestFile);
+        InputStream inputStream = new FileInputStream(PATH_TO_SPREADSHEET);
+        return manifestSessionEjb.uploadManifest(researchProject.getBusinessKey(), inputStream, PATH_TO_SPREADSHEET,
+                TEST_USER);
+    }
+
     /**
      * Worker method for manifest upload testing.
      */
     private ManifestSession uploadManifest(String pathToManifestFile, ResearchProject researchProject)
             throws FileNotFoundException {
+        ManifestSessionEjb ejb = buildEjbForUpload(researchProject);
+        return uploadManifest(ejb, pathToManifestFile, researchProject);
+    }
+
+    private ManifestSessionEjb buildEjbForUpload(ResearchProject researchProject) {
         ManifestSessionDao manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
         ResearchProjectDao researchProjectDao = Mockito.mock(ResearchProjectDao.class);
         Mockito.when(researchProjectDao.findByBusinessKey(Mockito.anyString())).thenReturn(researchProject);
 
-        ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
-        String PATH_TO_SPREADSHEET = TestUtils.getTestData(pathToManifestFile);
-        InputStream inputStream = new FileInputStream(PATH_TO_SPREADSHEET);
-        return ejb.uploadManifest(researchProject.getBusinessKey(), inputStream, PATH_TO_SPREADSHEET, TEST_USER);
+        return new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
     }
 
     public void uploadGoodManifest() throws FileNotFoundException {
@@ -106,7 +120,7 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     public void uploadManifestThatDuplicatesSampleIdInSameManifest() throws FileNotFoundException {
-        ManifestSession manifestSession = uploadManifest("manifest-upload/manifest-with-duplicates.xlsx");
+        ManifestSession manifestSession = uploadManifest(MANIFEST_FILE_DUPLICATES_SAME_SESSION);
         assertThat(manifestSession, is(notNullValue()));
         assertThat(manifestSession.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
         assertThat(manifestSession.hasErrors(), is(true));
@@ -118,7 +132,7 @@ public class ManifestSessionEjbDBFreeTest {
             }
         }
         // This file contains two instances of duplication and one triplication, so 2 x 2 + 3 = 7.
-        assertThat(quarantinedRecords, hasSize(7));
+        assertThat(quarantinedRecords, hasSize(NUM_DUPLICATES_IN_MANIFEST_WITH_DUPLICATES_IN_SAME_SESSION));
     }
 
     @DataProvider(name = BAD_MANIFEST_UPLOAD_PROVIDER)
@@ -188,7 +202,8 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(manifestSession1.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
 
         ManifestSession manifestSession2 =
-                uploadManifest("manifest-upload/gender-mismatches-across-sessions/good-manifest-2.xlsx", researchProject);
+                uploadManifest("manifest-upload/gender-mismatches-across-sessions/good-manifest-2.xlsx",
+                        researchProject);
         assertThat(manifestSession2, is(notNullValue()));
         Set<String> expectedPatientIds = ImmutableSet.of("001-001", "005-005", "009-001");
         assertThat(manifestSession2.getManifestEvents(), hasSize(expectedPatientIds.size()));
@@ -258,6 +273,55 @@ public class ManifestSessionEjbDBFreeTest {
         ejb.acceptManifestUpload(MANIFEST_SESSION_ID);
         for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
             assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOAD_ACCEPTED));
+        }
+    }
+
+    public void acceptUploadWithDuplicatesInThisSession() throws FileNotFoundException {
+        ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(
+                TEST_RESEARCH_PROJECT_KEY);
+        ManifestSessionDao manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
+
+        // This will hold a reference to a ManifestSession that hasn't been created at the time the ManifestSessionDAO
+        // mock is being programmed.
+        final ManifestSession[] manifestSessionHolder = new ManifestSession[1];
+        Mockito.when(manifestSessionDao.find(Mockito.anyLong())).thenAnswer(new Answer<ManifestSession>() {
+            @Override
+            public ManifestSession answer(InvocationOnMock invocation) throws Throwable {
+                return manifestSessionHolder[0];
+            }
+        });
+        ResearchProjectDao researchProjectDao = Mockito.mock(ResearchProjectDao.class);
+        Mockito.when(researchProjectDao.findByBusinessKey(Mockito.anyString())).thenReturn(researchProject);
+
+        ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
+        ManifestSession manifestSession = uploadManifest(ejb, MANIFEST_FILE_DUPLICATES_SAME_SESSION, researchProject);
+
+        List<ManifestRecord> manifestRecordsMarkedAsDuplicates = new ArrayList<>();
+
+        for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
+            assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOADED));
+            if (manifestRecord.isQuarantined()) {
+                manifestRecordsMarkedAsDuplicates.add(manifestRecord);
+            } else {
+                assertThat(manifestRecord.getManifestEvents(), is(empty()));
+            }
+        }
+        assertThat(manifestRecordsMarkedAsDuplicates,
+                hasSize(NUM_DUPLICATES_IN_MANIFEST_WITH_DUPLICATES_IN_SAME_SESSION));
+
+        // Now that the manifest session has been created, put it in the holder so the DAO will be able to retrieve it.
+        manifestSessionHolder[0] = manifestSession;
+        // Arbitrary ID, the DAO is programmed to return the same manifest session for any requested ID.
+        long MANIFEST_SESSION_ID = 3L;
+        ejb.acceptManifestUpload(MANIFEST_SESSION_ID);
+
+        for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
+            boolean shouldBeMarkedAsDuplicate = manifestRecordsMarkedAsDuplicates.contains(manifestRecord);
+            assertThat(manifestRecord.isQuarantined(), is(shouldBeMarkedAsDuplicate));
+            if (!shouldBeMarkedAsDuplicate) {
+                assertThat(manifestRecord.getManifestEvents(), is(empty()));
+                assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOAD_ACCEPTED));
+            }
         }
     }
 
