@@ -1,8 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
@@ -17,7 +14,7 @@ import java.util.Map;
  */
 public class ManifestTestFactory {
 
-    public static Metadata [] buildMetadata(Map<Metadata.Key, String> metadataContents) {
+    private static Metadata [] buildMetadata(Map<Metadata.Key, String> metadataContents) {
         List<Metadata> metadataList = new ArrayList<>();
 
         for (Map.Entry<Metadata.Key, String> entry : metadataContents.entrySet()) {
@@ -27,20 +24,11 @@ public class ManifestTestFactory {
         return metadataList.toArray(new Metadata[metadataList.size()]);
     }
 
-    public static ManifestSession buildManifestSession(String researchProjectKey, String sessionPrefix,
-                                                       BSPUserList.QADudeUser createdBy, int numberOfRecords) {
-        ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(researchProjectKey);
-        ManifestSession manifestSession = new ManifestSession(researchProject, sessionPrefix,
-                createdBy);
-
-        for (int i = 1; i <= numberOfRecords; i++) {
-            ManifestRecord manifestRecord = new ManifestRecord();
-            for (Metadata.Key key : Metadata.Key.values()) {
-                Metadata metadata = new Metadata(key, key.name() + "_" + i);
-                manifestRecord.getMetadata().add(metadata);
-            }
-            manifestSession.addRecord(manifestRecord);
-        }
-        return manifestSession;
+    public static ManifestRecord buildManifestRecord(ManifestRecord.ErrorStatus errorStatus,
+                                                     Map<Metadata.Key, String> metadataContents,
+                                                     ManifestSession sessionIn) {
+        ManifestRecord manifestRecord = new ManifestRecord(errorStatus, buildMetadata(metadataContents));
+        sessionIn.addRecord(manifestRecord);
+        return manifestRecord;
     }
 }
