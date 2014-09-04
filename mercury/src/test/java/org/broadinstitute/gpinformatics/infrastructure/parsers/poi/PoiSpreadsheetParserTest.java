@@ -29,7 +29,6 @@ import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.emptyCollectionOf;
-import static org.hamcrest.Matchers.equalTo;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class PoiSpreadsheetParserTest {
@@ -56,10 +55,6 @@ public class PoiSpreadsheetParserTest {
         PoiSpreadsheetParser.processSingleWorksheet(testFileInputStream, testProcessor);
         assertThat(testProcessor.getMessages(), emptyCollectionOf(String.class));
         for (Map<String, String> spreadsheetRowValues : testProcessor.getSpreadsheetValues()) {
-            String calculatedValue = spreadsheetRowValues.get(TestHeaders.calculated.getText());
-            String expectedValue = spreadsheetRowValues.get(TestHeaders.expected.getText());
-            String failedReason = spreadsheetRowValues.get(TestHeaders.testname.getText()) + " failed.";
-            assertThat(failedReason, calculatedValue, equalTo(expectedValue));
             PoiSpreadsheetValidator.validateSpreadsheetRow(spreadsheetRowValues, TestHeaders.class);
         }
     }
