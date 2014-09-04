@@ -67,8 +67,7 @@ public class ManifestImporterTest {
     @DataProvider(name = "excelFileDataProvider")
     public static Object[][] excelFileDataProvider() throws FileNotFoundException {
         return new Object[][]{
-                new Object[]{TestUtils.getTestData(TEST_MANIFEST_XLS)},
-                new Object[]{TestUtils.getTestData(TEST_MANIFEST_XLSX)},
+                {TestUtils.getTestData(TEST_MANIFEST_XLS)}, {TestUtils.getTestData(TEST_MANIFEST_XLSX)},
         };
 
     }

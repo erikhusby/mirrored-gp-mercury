@@ -45,8 +45,8 @@ public class PoiSpreadsheetParserTest {
     @DataProvider(name = "excelFileDataProvider")
     public static Object[][] excelFileDataProvider() throws FileNotFoundException {
         return new Object[][]{
-                new Object[]{new FileInputStream(TestUtils.getTestData(POI_TEST_XLS))},
-                new Object[]{new FileInputStream(TestUtils.getTestData(POI_TEST_XLSX))},
+                {new FileInputStream(TestUtils.getTestData(POI_TEST_XLS))},
+                {new FileInputStream(TestUtils.getTestData(POI_TEST_XLSX))},
         };
 
     }
