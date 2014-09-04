@@ -156,6 +156,25 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(manifestSession2.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
     }
 
+    public void uploadManifestThatMismatchesGenderInThisManifest() throws FileNotFoundException {
+        ManifestSession manifestSession =
+                uploadManifest("manifest-upload/gender-mismatches-within-session/good-manifest.xlsx");
+        assertThat(manifestSession, is(notNullValue()));
+        assertThat(manifestSession.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
+
+        Set<String> expectedPatientIds = ImmutableSet.of("004-002", "003-009", "005-012");
+        // The assert below is for size * 2 since all manifest records in question are in the same manifest session.
+        assertThat(manifestSession.getManifestEvents(), hasSize(expectedPatientIds.size() * 2));
+        for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
+            assertThat(manifestRecord.isQuarantined(), is(false));
+            Metadata patientIdMetadata = manifestRecord.getMetadataByKey(Metadata.Key.PATIENT_ID);
+            if (expectedPatientIds.contains(patientIdMetadata.getValue())) {
+                assertThat(manifestRecord.getManifestEvents(), hasSize(1));
+                assertThat(manifestRecord.getManifestEvents().get(0).getSeverity(), is(ManifestEvent.Severity.ERROR));
+            }
+        }
+    }
+
     public void uploadManifestThatMismatchesGenderInAnotherManifest() throws FileNotFoundException {
         ResearchProject researchProject =
                 ResearchProjectTestFactory.createTestResearchProject(TEST_RESEARCH_PROJECT_KEY);
@@ -169,9 +188,9 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSession manifestSession2 =
                 uploadManifest("manifest-upload/gender-mismatches-across-sessions/good-manifest-2.xlsx", researchProject);
         assertThat(manifestSession2, is(notNullValue()));
-        assertThat(manifestSession2.getManifestEvents(), hasSize(3));
-        assertThat(manifestSession2.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
         Set<String> expectedPatientIds = ImmutableSet.of("001-001", "005-005", "009-001");
+        assertThat(manifestSession2.getManifestEvents(), hasSize(expectedPatientIds.size()));
+        assertThat(manifestSession2.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
         for (ManifestRecord manifestRecord : manifestSession2.getRecords()) {
             assertThat(manifestRecord.isQuarantined(), is(false));
             Metadata patientIdMetadata = manifestRecord.getMetadataByKey(Metadata.Key.PATIENT_ID);
