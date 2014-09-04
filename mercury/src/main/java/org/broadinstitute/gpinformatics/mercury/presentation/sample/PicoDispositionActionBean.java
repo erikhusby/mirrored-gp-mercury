@@ -235,9 +235,6 @@ public class PicoDispositionActionBean extends RackScanActionBean {
                 }
             }
         }
-        if (positionToTubeMap.size() == 0) {
-            addMessage("Scanned rack scan has no tubes.");
-        }
         makeListItems(positionToTubeMap);
     }
 
