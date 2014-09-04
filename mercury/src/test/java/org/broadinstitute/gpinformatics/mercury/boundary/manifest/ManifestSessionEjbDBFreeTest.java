@@ -152,6 +152,23 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(manifestSession2.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
     }
 
+    public void uploadManifestThatMismatchesGenderInAnotherManifest() throws FileNotFoundException {
+        ResearchProject researchProject =
+                ResearchProjectTestFactory.createTestResearchProject(TEST_RESEARCH_PROJECT_KEY);
+
+        ManifestSession manifestSession1 =
+                uploadManifest("manifest-upload/gender-mismatches/good-manifest-1.xlsx", researchProject);
+        assertThat(manifestSession1, is(notNullValue()));
+        assertThat(manifestSession1.getManifestEvents(), is(empty()));
+        assertThat(manifestSession1.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
+
+        ManifestSession manifestSession2 =
+                uploadManifest("manifest-upload/gender-mismatches/good-manifest-2.xlsx", researchProject);
+        assertThat(manifestSession2, is(notNullValue()));
+        assertThat(manifestSession2.getManifestEvents(), hasSize(3));
+        assertThat(manifestSession2.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
+    }
+
     public void loadManifestSessionSuccess() {
         ManifestSessionDao manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
         ResearchProjectDao researchProjectDao = Mockito.mock(ResearchProjectDao.class);
