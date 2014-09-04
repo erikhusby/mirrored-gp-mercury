@@ -115,7 +115,7 @@ public class ManifestSessionEjbDBFreeTest {
 
     public void uploadManifestWithOneSampleMissingSampleId() throws FileNotFoundException {
         try {
-            uploadManifest("manifest-upload/manifest-with-one-sample-missing-sample-id.xlsx");
+            uploadManifest("manifest-import/test-manifest-missing-required.xlsx");
             Assert.fail();
         } catch (InformaticsServiceException ignored) {
         }
@@ -164,7 +164,12 @@ public class ManifestSessionEjbDBFreeTest {
         ResearchProjectDao researchProjectDao = Mockito.mock(ResearchProjectDao.class);
         ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
         long MANIFEST_SESSION_ID = 3L;
-        ejb.acceptManifestUpload(MANIFEST_SESSION_ID);
+        try {
+            ejb.acceptManifestUpload(MANIFEST_SESSION_ID);
+            Assert.fail();
+        } catch (InformaticsServiceException ignored) {
+            assertThat(ignored.getMessage(), containsString("Unrecognized Manifest Session ID"));
+        }
     }
 
     public void acceptUploadSuccessful() {

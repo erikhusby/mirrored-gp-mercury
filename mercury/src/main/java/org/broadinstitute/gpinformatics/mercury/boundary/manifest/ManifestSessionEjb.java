@@ -1,7 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
@@ -15,9 +16,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
+import java.util.List;
 
 @RequestScoped
 @Stateful
@@ -57,14 +58,19 @@ public class ManifestSessionEjb {
         String prefix = extractPrefixFromFilename(pathToFile);
         ManifestImportProcessor manifestImportProcessor = new ManifestImportProcessor();
         try {
-            // TODO the return value of this invocation is ignored here and elsewhere in the code base.
+            // This is deliberately ignoring the unhelpful messages from the parser as appears to be the norm.
             PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
+            List<String> messages = manifestImportProcessor.getMessages();
+            if (!CollectionUtils.isEmpty(messages)) {
+                String messageText = StringUtils.join(messages, ", ");
+                throw new InformaticsServiceException("Error reading manifest file: %s", messageText);
+            }
         } catch (ValidationException e) {
             throw new InformaticsServiceException(e);
         } catch (Exception e) {
-            throw new InformaticsServiceException(String.format(
-                    "Error reading manifest file '%s'.  Manifest files must be in the proper Excel format: %s",
-                    FilenameUtils.getName(pathToFile), e.getMessage()));
+            throw new InformaticsServiceException(
+                    "Error reading manifest file '%s'.  Manifest files must be in the proper Excel format.",
+                    e, FilenameUtils.getName(pathToFile));
         }
         Collection<ManifestRecord> manifestRecords = manifestImportProcessor.getManifestRecords();
         ManifestSession manifestSession = new ManifestSession(researchProject, prefix, bspUser);
