@@ -14,6 +14,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 
+import java.lang.EnumConstantNotPresentException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -67,6 +68,10 @@ public enum ManifestHeader implements ColumnHeader {
         return text;
     }
 
+    public String getColumnHeader() {
+        return text;
+    }
+
     @Override
     public int getIndex() {
         return index;
@@ -109,11 +114,11 @@ public enum ManifestHeader implements ColumnHeader {
      *
      * @return Collection of ColumnHeaders for the columnNames
      */
-    static Collection<? extends ColumnHeader> fromText(List<String> errors, String... columnNames) {
+    static Collection<? extends ColumnHeader> fromColumnHeader(List<String> errors, String... columnNames) {
         List<ManifestHeader> matches = new ArrayList<>();
         for (String columnName : columnNames) {
             try {
-                matches.add(ManifestHeader.fromText(columnName));
+                matches.add(ManifestHeader.fromColumnHeader(columnName));
             } catch (EnumConstantNotPresentException e) {
                 errors.add(e.constantName());
             }
@@ -122,21 +127,21 @@ public enum ManifestHeader implements ColumnHeader {
     }
 
     /**
-     * Look up the ManifestHeader for given columnName.
+     * Look up the ManifestHeader for given columnHeader.
      *
-     * @param columnName column to search for.
+     * @param columnHeader column to search for.
      *
      * @return ManifestHeader for given column.
      *
-     * @throws java.lang.EnumConstantNotPresentException if enum does not exist for columnName.
+     * @throws EnumConstantNotPresentException if enum does not exist for columnHeader.
      */
-    public static ManifestHeader fromText(String columnName) {
+    public static ManifestHeader fromColumnHeader(String columnHeader) {
         for (ManifestHeader manifestHeader : ManifestHeader.values()) {
-            if (manifestHeader.getText().equals(columnName)) {
+            if (manifestHeader.getColumnHeader().equals(columnHeader)) {
                 return manifestHeader;
             }
         }
-        throw new EnumConstantNotPresentException(ManifestHeader.class, columnName);
+        throw new EnumConstantNotPresentException(ManifestHeader.class, columnHeader);
     }
 
     /**
@@ -146,7 +151,7 @@ public enum ManifestHeader implements ColumnHeader {
      *
      * @return ManifestHeader with Metadata.Key matching key
      *
-     * @throws java.lang.EnumConstantNotPresentException if enum does not exist for key.
+     * @throws EnumConstantNotPresentException if enum does not exist for key.
      */
 
     public static ManifestHeader fromMetadataKey(Metadata.Key key) {

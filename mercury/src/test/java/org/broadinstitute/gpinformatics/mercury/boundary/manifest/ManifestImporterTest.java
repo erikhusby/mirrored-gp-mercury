@@ -90,7 +90,7 @@ public class ManifestImporterTest {
         validateManifestRecords(manifestImportProcessor);
         assertThat(manifestImportProcessor.getMessages(),
                 hasItem(String.format(ROW_NUMBER_PREFIX + TableProcessor.REQUIRED_VALUE_IS_MISSING, 1,
-                        ManifestHeader.SPECIMEN_NUMBER.getText())));
+                        ManifestHeader.SPECIMEN_NUMBER.getColumnHeader())));
         assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
     }
 
@@ -154,25 +154,25 @@ public class ManifestImporterTest {
         for (ManifestRecord manifestRecord : manifestRecords) {
             for (final Metadata metadata : manifestRecord.getMetadata()) {
                 ManifestHeader header = ManifestHeader.fromMetadataKey(metadata.getKey());
-                manifestRow.put(header.getText(), metadata.getValue());
+                manifestRow.put(header.getColumnHeader(), metadata.getValue());
             }
             PoiSpreadsheetValidator.validateSpreadsheetRow(manifestRow, ManifestHeader.class);
             for (Map.Entry<String, String> manifestCell : manifestRow.entrySet()) {
                 String header = manifestCell.getKey();
                 String value = manifestCell.getValue();
-                if (header.equals(ManifestHeader.TUMOR_OR_NORMAL.getText())) {
+                if (header.equals(ManifestHeader.TUMOR_OR_NORMAL.getColumnHeader())) {
                     assertThat(value, isOneOf("Tumor", "Normal"));
                 }
-                if (header.equals(ManifestHeader.SEX.getText())) {
+                if (header.equals(ManifestHeader.SEX.getColumnHeader())) {
                     assertThat(value, isOneOf("Male", "Female"));
                 }
-                if (header.equals(ManifestHeader.VISIT.getText())) {
+                if (header.equals(ManifestHeader.VISIT.getColumnHeader())) {
                     assertThat(value, is("Screening"));
                 }
-                if (header.equals(ManifestHeader.SPECIMEN_NUMBER.getText())) {
+                if (header.equals(ManifestHeader.SPECIMEN_NUMBER.getColumnHeader())) {
                     assertThat(value, startsWith("0310"));
                 }
-                if (header.equals(ManifestHeader.PATIENT_ID.getText())) {
+                if (header.equals(ManifestHeader.PATIENT_ID.getColumnHeader())) {
                     assertThat(value, startsWith("00"));
                 }
             }

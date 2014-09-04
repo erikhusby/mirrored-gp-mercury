@@ -66,7 +66,7 @@ public class ManifestImportProcessor extends TableProcessor {
         }
 
         Collection<? extends ColumnHeader> foundHeaders =
-                ManifestHeader.fromText(errors, headers.toArray(new String[headers.size()]));
+                ManifestHeader.fromColumnHeader(errors, headers.toArray(new String[headers.size()]));
         columnHeaders = foundHeaders.toArray(new ColumnHeader[foundHeaders.size()]);
         if (!errors.isEmpty()) {
             addDataMessage(String.format(UNKNOWN_HEADER_FORMAT, errors), row);
@@ -81,7 +81,7 @@ public class ManifestImportProcessor extends TableProcessor {
     public void processRowDetails(Map<String, String> dataRow, int dataRowIndex) {
         ManifestRecord manifestRecord = new ManifestRecord();
         for (Map.Entry<String, String> columnEntry : dataRow.entrySet()) {
-            ManifestHeader header = ManifestHeader.fromText(columnEntry.getKey());
+            ManifestHeader header = ManifestHeader.fromColumnHeader(columnEntry.getKey());
             Metadata metadata = new Metadata(header.getMetadataKey(), columnEntry.getValue());
             manifestRecord.getMetadata().add(metadata);
         }

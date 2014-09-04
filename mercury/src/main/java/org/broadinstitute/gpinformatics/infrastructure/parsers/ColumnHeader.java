@@ -12,6 +12,10 @@ public interface ColumnHeader {
     boolean OPTIONAL_HEADER = false;
     boolean REQUIRED_VALUE = true;
     boolean OPTIONAL_VALUE = false;
+    boolean IS_DATE = true;
+    boolean NON_DATE = false;
+    boolean IS_STRING = true;
+    boolean NON_STRING = false;
 
     /**
      * @return The text used to match the header in the input.  This should be unique in the list of headers

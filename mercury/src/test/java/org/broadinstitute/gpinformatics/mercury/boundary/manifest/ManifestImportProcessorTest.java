@@ -47,7 +47,7 @@ public class ManifestImportProcessorTest {
         processor.processHeader(new ArrayList<>(dataRow.keySet()), 0);
         ArrayList<String> allHeaders = new ArrayList<>();
         for (ManifestHeader manifestHeader : ManifestHeader.values()) {
-            allHeaders.add(manifestHeader.getText());
+            allHeaders.add(manifestHeader.getColumnHeader());
         }
 
         assertThat(processor.getHeaderNames(), containsInAnyOrder(allHeaders.toArray()));
@@ -65,7 +65,7 @@ public class ManifestImportProcessorTest {
         processor.processHeader(new ArrayList<>(dataRow.keySet()), 0);
         ArrayList<String> allHeaders = new ArrayList<>();
         for (ManifestHeader manifestHeader : ManifestHeader.values()) {
-            allHeaders.add(manifestHeader.getText());
+            allHeaders.add(manifestHeader.getColumnHeader());
         }
 
         assertThat(processor.getHeaderNames(), containsInAnyOrder(allHeaders.toArray()));
@@ -78,7 +78,7 @@ public class ManifestImportProcessorTest {
         for (ManifestRecord manifestRecord : processor.getManifestRecords()) {
             List<Metadata> expectedMetadata = new ArrayList<>();
             for (Map.Entry<String, String> stringStringEntry : dataRow.entrySet()) {
-                expectedMetadata.add(new Metadata(ManifestHeader.fromText(stringStringEntry.getKey()).getMetadataKey(),
+                expectedMetadata.add(new Metadata(ManifestHeader.fromColumnHeader(stringStringEntry.getKey()).getMetadataKey(),
                         stringStringEntry.getValue()));
             }
             assertThat(manifestRecord.getMetadata().toArray(), arrayContainingInAnyOrder(expectedMetadata.toArray()));
@@ -104,12 +104,12 @@ public class ManifestImportProcessorTest {
 
     private Map<String, String> makeDataRow() {
         Map<String, String> dataRow = new HashMap<>();
-        dataRow.put(ManifestHeader.SPECIMEN_NUMBER.getText(), "03101231193");
-        dataRow.put(ManifestHeader.PATIENT_ID.getText(), "004-002");
-        dataRow.put(ManifestHeader.SEX.getText(), "");
-        dataRow.put(ManifestHeader.VISIT.getText(), "Screening");
-        dataRow.put(ManifestHeader.COLLECTION_DATE.getText(), "10-Oct-1841");
-        dataRow.put(ManifestHeader.TUMOR_OR_NORMAL.getText(), "Tumor");
+        dataRow.put(ManifestHeader.SPECIMEN_NUMBER.getColumnHeader(), "03101231193");
+        dataRow.put(ManifestHeader.PATIENT_ID.getColumnHeader(), "004-002");
+        dataRow.put(ManifestHeader.SEX.getColumnHeader(), "");
+        dataRow.put(ManifestHeader.VISIT.getColumnHeader(), "Screening");
+        dataRow.put(ManifestHeader.COLLECTION_DATE.getColumnHeader(), "10-Oct-1841");
+        dataRow.put(ManifestHeader.TUMOR_OR_NORMAL.getColumnHeader(), "Tumor");
 
         return dataRow;
     }
