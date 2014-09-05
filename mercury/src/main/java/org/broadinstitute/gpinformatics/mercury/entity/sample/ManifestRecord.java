@@ -184,9 +184,9 @@ public class ManifestRecord {
          */
         NOT_IN_MANIFEST("The scanned sample is not found in any manifest"),
         /**
-         * TODO This seems to be a duplicate of DUPLICATE_SAMPLE_ID.  Need to fully define what this error case means.
+         * Encapsulates the error message to indicate to the user that they have already scanned the tube
          */
-        DUPLICATE_SAMPLE_SCAN(" "),
+        DUPLICATE_SAMPLE_SCAN("This sample has been scanned previously."),
         /**
          * No sample was scanned for a manifest record.
          */
