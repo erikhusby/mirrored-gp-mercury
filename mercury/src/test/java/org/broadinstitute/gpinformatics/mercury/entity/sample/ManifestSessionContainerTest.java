@@ -79,7 +79,7 @@ public class ManifestSessionContainerTest extends Arquillian {
 
     @BeforeMethod
     public void setUp() throws Exception {
-        researchProject = ResearchProjectTestFactory.createTestResearchProject("RP-" + (new Date()).getTime());
+        researchProject = ResearchProjectTestFactory.createTestResearchProject(ResearchProject.PREFIX + (new Date()).getTime());
         manifestSessionI = new ManifestSession(researchProject, "BUICK-TEST",
                 new BSPUserList.QADudeUser("PM", 5176L));
         manifestRecordI = new ManifestRecord(new Metadata(Metadata.Key.PATIENT_ID, PATIENT_1),

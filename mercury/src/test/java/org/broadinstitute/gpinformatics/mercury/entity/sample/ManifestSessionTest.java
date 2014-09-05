@@ -137,7 +137,7 @@ public class ManifestSessionTest {
             Assert.fail();
         } catch (TubeTransferException e) {
             assertThat(e.getErrorStatus(), is(
-                    CoreMatchers.equalTo(ManifestRecord.ErrorStatus.NOT_READY_FOR_ACCESSIONING)));
+                    CoreMatchers.equalTo(ManifestRecord.ErrorStatus.NOT_READY_FOR_TUBE_TRANSFER)));
         }
     }
 
