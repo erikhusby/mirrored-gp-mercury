@@ -23,7 +23,6 @@ import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.athena.entity.preference.SearchInstanceList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
-import org.broadinstitute.gpinformatics.infrastructure.RemoteServiceException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
@@ -36,6 +35,7 @@ import org.broadinstitute.gpinformatics.infrastructure.search.PaginationDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstanceEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
@@ -384,8 +384,8 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
             } catch (IllegalArgumentException e) {
                 log.error(e.getMessage(), e);
                 addGlobalValidationError(e.getMessage());
-            } catch (RemoteServiceException bspse) {
-                handleRemoteServiceFailure( bspse );
+            } catch (BSPLookupException bspse) {
+                handleRemoteServiceFailure(bspse);
             }
         }
         return new ForwardResolution("/search/configurable_search.jsp");
@@ -409,7 +409,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
                     configurableListFactory.getSubsequentResultsPage(searchInstance, pageNumber, getEntityName(),
                             (PaginationDao.Pagination) getContext().getRequest().getSession().getAttribute(
                                     PAGINATION_PREFIX + sessionKey));
-        } catch (RemoteServiceException bspse) {
+        } catch (BSPLookupException bspse) {
             handleRemoteServiceFailure( bspse );
         }
         return new ForwardResolution("/search/configurable_search.jsp");
@@ -419,7 +419,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
      * If a search relies on data retrieved via web services (Lab Vessel BSP columns),
      * Gracefully allow the user to view the issue and avoid the hard failure page
      */
-    private void handleRemoteServiceFailure( RemoteServiceException bspse ) {
+    private void handleRemoteServiceFailure( BSPLookupException bspse ) {
         log.error(bspse.getMessage(), bspse);
         addGlobalValidationError( "BSP access failure:  " + bspse.getMessage() );
         if( bspse.getCause() != null ){
