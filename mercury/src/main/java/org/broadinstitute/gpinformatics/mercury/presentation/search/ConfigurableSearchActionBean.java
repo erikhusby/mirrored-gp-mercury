@@ -23,6 +23,7 @@ import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.athena.entity.preference.SearchInstanceList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
+import org.broadinstitute.gpinformatics.infrastructure.RemoteServiceException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
@@ -383,6 +384,8 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
             } catch (IllegalArgumentException e) {
                 log.error(e.getMessage(), e);
                 addGlobalValidationError(e.getMessage());
+            } catch (RemoteServiceException bspse) {
+                handleRemoteServiceFailure( bspse );
             }
         }
         return new ForwardResolution("/search/configurable_search.jsp");
@@ -401,10 +404,28 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
 
         buildSearchContext();
 
-        configurableResultList = configurableListFactory.getSubsequentResultsPage(searchInstance, pageNumber,  getEntityName() ,
-                (PaginationDao.Pagination) getContext().getRequest().getSession().getAttribute(
-                        PAGINATION_PREFIX + sessionKey));
+        try {
+            configurableResultList =
+                    configurableListFactory.getSubsequentResultsPage(searchInstance, pageNumber, getEntityName(),
+                            (PaginationDao.Pagination) getContext().getRequest().getSession().getAttribute(
+                                    PAGINATION_PREFIX + sessionKey));
+        } catch (RemoteServiceException bspse) {
+            handleRemoteServiceFailure( bspse );
+        }
         return new ForwardResolution("/search/configurable_search.jsp");
+    }
+
+    /**
+     * If a search relies on data retrieved via web services (Lab Vessel BSP columns),
+     * Gracefully allow the user to view the issue and avoid the hard failure page
+     */
+    private void handleRemoteServiceFailure( RemoteServiceException bspse ) {
+        log.error(bspse.getMessage(), bspse);
+        addGlobalValidationError( "BSP access failure:  " + bspse.getMessage() );
+        if( bspse.getCause() != null ){
+            addGlobalValidationError( " Root cause:  " + bspse.getCause().getMessage() );
+        }
+        addGlobalValidationError( "Remove BSP columns from search or try again later" );
     }
 
     /**
