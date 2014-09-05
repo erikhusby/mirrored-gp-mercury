@@ -131,6 +131,8 @@ public class ManifestSessionEjb {
         ManifestSession manifestSession = manifestSessionDao.find(manifestSessionId);
         ManifestRecord manifestRecord =
                 manifestSession.getRecordWithMatchingValueForKey(Metadata.Key.SAMPLE_ID, collaboratorSampleId);
+
+        // TODO make the entity type an enum to get rid of these Sample ID literals all over the place.
         if (manifestRecord == null) {
             throw new InformaticsServiceException(
                     ManifestRecord.ErrorStatus.NOT_IN_MANIFEST.formatMessage(
@@ -141,6 +143,12 @@ public class ManifestSessionEjb {
             throw new InformaticsServiceException(
                     ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage("Sample ID", collaboratorSampleId));
         }
+
+        if (manifestRecord.getStatus() == ManifestRecord.Status.SCANNED) {
+            throw new InformaticsServiceException(
+                    ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_SCAN.formatMessage("Sample ID", collaboratorSampleId));
+        }
+
         manifestRecord.setStatus(ManifestRecord.Status.SCANNED);
     }
 }

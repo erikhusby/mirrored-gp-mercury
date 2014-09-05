@@ -494,12 +494,31 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOAD_ACCEPTED));
 
         ManifestEvent manifestEvent = manifestRecord.getManifestEvents().iterator().next();
-        assertThat(manifestEvent.getMessage(), containsString(ManifestRecord.ErrorStatus.MISMATCHED_GENDER.getBaseMessage()));
+        assertThat(manifestEvent.getMessage(), containsString(
+                ManifestRecord.ErrorStatus.MISMATCHED_GENDER.getBaseMessage()));
         assertThat(manifestEvent.getSeverity(), is(ManifestEvent.Severity.ERROR));
 
         ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue());
 
         assertThat(manifestSession.getManifestEvents(), hasSize(EXPECTED_NUMBER_OF_EVENTS_ON_SESSION));
         assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.SCANNED));
+    }
+
+    public void accessionScanDoubleScan() throws FileNotFoundException {
+        ManifestSessionAndEjbHolder holder = buildHolderForAcceptSession(MANIFEST_FILE_GOOD);
+        ManifestSessionEjb ejb = holder.ejb;
+        ejb.acceptManifestUpload(ARBITRARY_MANIFEST_SESSION_ID);
+        // The correct state after manifest upload is checked in other tests.
+
+        ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, GOOD_TUBE_BARCODE);
+        // The results of this are checked in accessionScanGoodManifest
+
+        try {
+            // Should fail on a second scan.
+            ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, GOOD_TUBE_BARCODE);
+            Assert.fail();
+        } catch (InformaticsServiceException e) {
+            assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_SCAN.getBaseMessage()));
+        }
     }
 }
