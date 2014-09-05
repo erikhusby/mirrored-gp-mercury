@@ -522,7 +522,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
             String barcode = "R" + testPrefix + rackPosition;
             String bspStock = "SM-" + testPrefix + rackPosition;
             BarcodedTube bspAliquot = new BarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(bspStock));
+            bspAliquot.addSample(new MercurySample(bspStock, MercurySample.MetadataSource.BSP));
             mapBarcodeToTube.put(barcode, bspAliquot);
 
             barcodedTubeDao.persist(bspAliquot);

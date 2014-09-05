@@ -269,9 +269,9 @@ public class BucketEjbDbFreeTest {
                     List<LabVessel> mockCreatedVessels = new ArrayList<>();
                     mockCreatedVessels.add(labVessels.get(rackPosition - 1));
                     expect(labVesselFactory.buildInitialLabVessels(eq(pdoSample.getName()),
-                                                                   eq(makeTubeBarcode(rackPosition)), eq(pdoCreator),
-                                                                   (Date) anyObject()))
-                            .andReturn(mockCreatedVessels);
+                            eq(makeTubeBarcode(rackPosition)), eq(pdoCreator), (Date) anyObject(),
+                            eq(MercurySample.MetadataSource.BSP))).
+                                    andReturn(mockCreatedVessels);
                 }
             }
         }

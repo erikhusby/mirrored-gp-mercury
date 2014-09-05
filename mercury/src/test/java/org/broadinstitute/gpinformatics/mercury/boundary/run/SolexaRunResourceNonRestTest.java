@@ -273,8 +273,8 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         miSeqFlowcell = new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.MiSeqFlowcell, miSeqBarcode);
 
         for (ProductOrderSample currSample : exexOrder.getSamples()) {
-            newFlowcell.addSample(new MercurySample(currSample.getBspSampleName()));
-            miSeqFlowcell.addSample(new MercurySample(currSample.getBspSampleName()));
+            newFlowcell.addSample(new MercurySample(currSample.getBspSampleName(), MercurySample.MetadataSource.BSP));
+            miSeqFlowcell.addSample(new MercurySample(currSample.getBspSampleName(), MercurySample.MetadataSource.BSP));
         }
 
         flowcellDao.persist(miSeqFlowcell);

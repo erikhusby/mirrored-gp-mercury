@@ -11,6 +11,8 @@ import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -31,6 +33,12 @@ import java.util.Set;
 @Table(schema = "mercury")
 public class MercurySample extends AbstractSample {
 
+    /** Determines from which system Mercury gets metadata, e.g. collaborator sample ID */
+    public enum MetadataSource {
+        BSP,
+        MERCURY
+    }
+
     @Id
     @SequenceGenerator(name = "SEQ_MERCURY_SAMPLE", schema = "mercury", sequenceName = "SEQ_MERCURY_SAMPLE")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MERCURY_SAMPLE")
@@ -46,14 +54,18 @@ public class MercurySample extends AbstractSample {
     @OneToMany(mappedBy = "mercurySample", fetch = FetchType.LAZY,  cascade = CascadeType.PERSIST)
     private Set<ProductOrderSample> productOrderSamples = new HashSet<>();
 
+    @Enumerated(EnumType.STRING)
+    private MetadataSource metadataSource;
+
     /**
      * For JPA
      */
     protected MercurySample() {
     }
 
-    public MercurySample(String sampleKey) {
+    public MercurySample(String sampleKey, MetadataSource metadataSource) {
         this.sampleKey = sampleKey;
+        this.metadataSource = metadataSource;
     }
 
     public MercurySample(String sampleKey, BSPSampleDTO bspSampleDTO) {
@@ -84,6 +96,10 @@ public class MercurySample extends AbstractSample {
     public void addProductOrderSample(ProductOrderSample productOrderSample) {
         productOrderSamples.add(productOrderSample);
         productOrderSample.setMercurySample(this);
+    }
+
+    public MetadataSource getMetadataSource() {
+        return metadataSource;
     }
 
     @Override
