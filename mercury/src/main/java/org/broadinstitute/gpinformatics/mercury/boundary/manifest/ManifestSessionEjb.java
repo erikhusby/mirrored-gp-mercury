@@ -135,6 +135,11 @@ public class ManifestSessionEjb {
                     ManifestRecord.ErrorStatus.NOT_IN_MANIFEST.formatMessage(
                             "Sample ID", collaboratorSampleId));
         }
+
+        if (manifestRecord.isQuarantined()) {
+            throw new InformaticsServiceException(
+                    ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage("Sample ID", collaboratorSampleId));
+        }
         manifestRecord.setStatus(ManifestRecord.Status.SCANNED);
     }
 }

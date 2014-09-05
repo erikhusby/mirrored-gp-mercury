@@ -62,10 +62,16 @@ public class ManifestSessionEjbDBFreeTest {
     private static final Set<String> PATIENT_IDS_FOR_SAME_MANIFEST_GENDER_MISMATCHES =
             ImmutableSet.of("004-002", "003-009", "005-012");
 
+    private static final Set<String> DUPLICATED_SAMPLE_IDS =
+            ImmutableSet.of("03101231193", "03101411324", "03101254356");
+
     private static final long ARBITRARY_MANIFEST_SESSION_ID = 3L;
 
-    private static final String ARBITRARY_COLLABORATOR_SAMPLE_ID = "COLLABORATOR-SAMPLE-1";
-    public static final String GOOD_MANIFEST_ACCESSION_SCAN_PROVIDER = "goodManifestAccessionScanProvider";
+    private static final String GOOD_MANIFEST_ACCESSION_SCAN_PROVIDER = "goodManifestAccessionScanProvider";
+
+    private static final String GOOD_TUBE_BARCODE = "03101231193";
+
+    private static final String BAD_TUBE_BARCODE = "bad tube barcode";
 
     public void researchProjectNotFound() {
         ManifestSessionDao manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
@@ -411,8 +417,9 @@ public class ManifestSessionEjbDBFreeTest {
     public Object [][] goodManifestAccessionScanProvider() {
         return new Object[][]{
                 // Good tube barcode should succeed.
-                {"03101231193", true},
-                {"bad tube barcode", false}};
+                {GOOD_TUBE_BARCODE, true},
+                // Bad tube barcode should fail.
+                {BAD_TUBE_BARCODE, false}};
     }
 
     @Test(dataProvider = GOOD_MANIFEST_ACCESSION_SCAN_PROVIDER)
@@ -445,6 +452,23 @@ public class ManifestSessionEjbDBFreeTest {
                 assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOAD_ACCEPTED));
             }
             assertThat(manifestRecord.getManifestEvents(), is(empty()));
+        }
+    }
+
+    public void accessionScanManifestWithDuplicates() throws FileNotFoundException {
+        ManifestSessionAndEjbHolder holder = buildHolderForAcceptSession(MANIFEST_FILE_DUPLICATES_SAME_SESSION);
+        ManifestSessionEjb ejb = holder.ejb;
+        ejb.acceptManifestUpload(ARBITRARY_MANIFEST_SESSION_ID);
+        // The correct state after manifest upload is checked in other tests.
+
+        try {
+            // Take an arbitrary one of the duplicated sample IDs.
+            String duplicatedSampleId = DUPLICATED_SAMPLE_IDS.iterator().next();
+
+            ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, duplicatedSampleId);
+            Assert.fail();
+        } catch (InformaticsServiceException e) {
+            assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getBaseMessage()));
         }
     }
 }
