@@ -98,7 +98,7 @@ public class LabBatchEJBTest extends ContainerTest {
             String barcode = "R" + sampleIndex + sampleIndex + sampleIndex + sampleIndex + sampleIndex + sampleIndex;
             String bspStock = vesselSampleList.get(sampleIndex - 1);
             BarcodedTube bspAliquot = new BarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(bspStock));
+            bspAliquot.addSample(new MercurySample(bspStock, MercurySample.MetadataSource.BSP));
             tubeDao.persist(bspAliquot);
             mapBarcodeToTube.put(barcode, bspAliquot);
         }

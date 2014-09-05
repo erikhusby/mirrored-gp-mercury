@@ -2,18 +2,30 @@ package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
 import com.google.common.collect.Sets;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
+import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.sample.SampleVesselProcessor;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.validation.constraints.Null;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -29,6 +41,12 @@ public class VesselEjb {
 
     @Inject
     private MercurySampleDao mercurySampleDao;
+
+    @Inject
+    private LabVesselFactory labVesselFactory;
+
+    @Inject
+    private LabVesselDao labVesselDao;
 
     /**
      * Registers {@code BarcodedTube}s for all specified {@param tubeBarcodes} as well as
@@ -73,7 +91,7 @@ public class VesselEjb {
                 Sets.difference(sampleNamesToAssociate, previouslyRegisteredSampleNames);
 
         for (String sampleName : sampleNamesToRegister) {
-            mercurySampleDao.persist(new MercurySample(sampleName));
+            mercurySampleDao.persist(new MercurySample(sampleName, MercurySample.MetadataSource.BSP));
         }
         // Explicit flush required as Mercury runs in FlushModeType.COMMIT and we want to see the results of any
         // persists done in the loop above reflected in the query below.
@@ -103,5 +121,40 @@ public class VesselEjb {
         }
 
         mercurySampleDao.flush();
+    }
+
+    /**
+     * Create LabVessels and MercurySamples from a spreadsheet (from BSP).
+     */
+    public List<LabVessel> createSampleVessels(InputStream samplesSpreadsheetStream, String loginUserName,
+            MessageCollection messageCollection)
+            throws InvalidFormatException, IOException, ValidationException {
+        SampleVesselProcessor sampleVesselProcessor = new SampleVesselProcessor("Sheet1");
+        messageCollection.addErrors(PoiSpreadsheetParser.processSingleWorksheet(samplesSpreadsheetStream,
+                sampleVesselProcessor));
+
+        List<LabVessel> labVessels = null;
+        if (!messageCollection.hasErrors()) {
+            Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(new ArrayList<>(
+                    sampleVesselProcessor.getTubeBarcodes()));
+            for (LabVessel labVessel : mapBarcodeToVessel.values()) {
+                if (labVessel != null) {
+                    messageCollection.addError("Tube " + labVessel.getLabel() + " is already in the database.");
+                }
+            }
+
+            List<MercurySample> mercurySamples = mercurySampleDao.findBySampleKeys(sampleVesselProcessor.getSampleIds());
+            for (MercurySample mercurySample : mercurySamples) {
+                messageCollection.addError("Sample " + mercurySample.getSampleKey() + " is already in the database.");
+            }
+
+            if (!messageCollection.hasErrors()) {
+                labVessels = labVesselFactory.buildLabVessels(
+                        new ArrayList<>(sampleVesselProcessor.getMapBarcodeToParentVessel().values()),
+                        loginUserName, new Date(), null, MercurySample.MetadataSource.MERCURY);
+                labVesselDao.persistAll(labVessels);
+            }
+        }
+        return labVessels;
     }
 }

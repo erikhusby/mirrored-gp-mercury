@@ -53,7 +53,7 @@ public class LabBatchResource {
         for (TubeBean tubeBean : labBatchBean.getTubeBeans()) {
             tubeBarcodes.add(tubeBean.getBarcode());
             if (tubeBean.getSampleBarcode() != null) {
-                mercurySampleKeys.add(new MercurySample(tubeBean.getSampleBarcode()));
+                mercurySampleKeys.add(new MercurySample(tubeBean.getSampleBarcode(), MercurySample.MetadataSource.BSP));
             }
         }
 
@@ -93,7 +93,8 @@ public class LabBatchResource {
             }
 
             if (tubeBean.getSampleBarcode() != null) {
-                MercurySample mercurySampleKey = new MercurySample(tubeBean.getSampleBarcode());
+                MercurySample mercurySampleKey = new MercurySample(tubeBean.getSampleBarcode(),
+                        MercurySample.MetadataSource.BSP);
                 MercurySample mercurySample = mapBarcodeToSample.get(mercurySampleKey);
                 if (mercurySample == null) {
                     mercurySample = mercurySampleKey;
