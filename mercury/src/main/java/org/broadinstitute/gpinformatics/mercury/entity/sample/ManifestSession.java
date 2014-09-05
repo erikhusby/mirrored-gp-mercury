@@ -482,13 +482,6 @@ public class ManifestSession {
     }
 
     /**
-     * Return the sample whose collaborator sample ID (Key.SAMPLE_ID) matches the specified value.
-     */
-    public ManifestRecord getRecordWithCollaboratorSampleId(String collaboratorSampleId) {
-        return getRecordWithMatchingValueForKey(Metadata.Key.SAMPLE_ID, collaboratorSampleId);
-    }
-
-    /**
      * Return the record whose value matches the specified {@code value} parameter for the
      * specified key.  e.g. if searching for a record having sample ID "SM-1234":
      *
@@ -498,7 +491,7 @@ public class ManifestSession {
      *
      * @return matching ManifestRecord or null if none match.
      */
-    private ManifestRecord getRecordWithMatchingValueForKey(Metadata.Key key, String value) {
+    public ManifestRecord getRecordWithMatchingValueForKey(Metadata.Key key, String value) {
         for (ManifestRecord record : records) {
             if (record.getMetadataByKey(key).getValue().equals(value)) {
                 return record;

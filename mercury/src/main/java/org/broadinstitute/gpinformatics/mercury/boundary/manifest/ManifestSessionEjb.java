@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 
@@ -129,7 +130,7 @@ public class ManifestSessionEjb {
     public void accessionScan(long manifestSessionId, String collaboratorSampleId) {
         ManifestSession manifestSession = manifestSessionDao.find(manifestSessionId);
         ManifestRecord manifestRecord =
-                manifestSession.getRecordWithCollaboratorSampleId(collaboratorSampleId);
+                manifestSession.getRecordWithMatchingValueForKey(Metadata.Key.SAMPLE_ID, collaboratorSampleId);
         if (manifestRecord == null) {
             throw new InformaticsServiceException(
                     ManifestRecord.ErrorStatus.NOT_IN_MANIFEST.formatMessage(

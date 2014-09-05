@@ -471,4 +471,35 @@ public class ManifestSessionEjbDBFreeTest {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getBaseMessage()));
         }
     }
+
+    public void accessionScanGenderMismatches() throws FileNotFoundException {
+        ManifestSessionAndEjbHolder holder = buildHolderForAcceptSession(MANIFEST_FILE_MISMATCHED_GENDERS_SAME_SESSION);
+        ManifestSessionEjb ejb = holder.ejb;
+        ejb.acceptManifestUpload(ARBITRARY_MANIFEST_SESSION_ID);
+        // The correct state after manifest upload is checked in other tests.
+
+        ManifestSession manifestSession = holder.manifestSession;
+        // There should be twice as many manifest events as there are patient IDs with mismatched genders as all the
+        // mismatches are in the same manifest.
+        int EXPECTED_NUMBER_OF_EVENTS_ON_SESSION = PATIENT_IDS_FOR_SAME_MANIFEST_GENDER_MISMATCHES.size() * 2;
+        assertThat(manifestSession.getManifestEvents(), hasSize(EXPECTED_NUMBER_OF_EVENTS_ON_SESSION));
+
+        // Pick an arbitrary one of the mismatched gender patient IDs.
+        String mismatchedGenderPatientId = PATIENT_IDS_FOR_SAME_MANIFEST_GENDER_MISMATCHES.iterator().next();
+        // Find one of the records for this patient.
+        ManifestRecord manifestRecord =
+                manifestSession.getRecordWithMatchingValueForKey(Metadata.Key.PATIENT_ID, mismatchedGenderPatientId);
+
+        assertThat(manifestRecord.getManifestEvents(), hasSize(1));
+        assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOAD_ACCEPTED));
+
+        ManifestEvent manifestEvent = manifestRecord.getManifestEvents().iterator().next();
+        assertThat(manifestEvent.getMessage(), containsString(ManifestRecord.ErrorStatus.MISMATCHED_GENDER.getBaseMessage()));
+        assertThat(manifestEvent.getSeverity(), is(ManifestEvent.Severity.ERROR));
+
+        ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue());
+
+        assertThat(manifestSession.getManifestEvents(), hasSize(EXPECTED_NUMBER_OF_EVENTS_ON_SESSION));
+        assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.SCANNED));
+    }
 }
