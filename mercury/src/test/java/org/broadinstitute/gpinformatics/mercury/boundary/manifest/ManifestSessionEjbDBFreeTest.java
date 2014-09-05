@@ -54,7 +54,7 @@ public class ManifestSessionEjbDBFreeTest {
 
     private static final int NUM_DUPLICATES_IN_MANIFEST_WITH_DUPLICATES_IN_SAME_SESSION = 7;
 
-    private static final String MANIFEST_FILE_MISMATCHED_GENDERS_THIS_MANIFEST =
+    private static final String MANIFEST_FILE_MISMATCHED_GENDERS_SAME_SESSION =
             "manifest-upload/gender-mismatches-within-session/good-manifest.xlsx";
 
     private static final Set<String> PATIENT_IDS_FOR_SAME_MANIFEST_GENDER_MISMATCHES =
@@ -178,7 +178,7 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     public void uploadManifestThatMismatchesGenderInSameManifest() throws FileNotFoundException {
-        ManifestSession manifestSession = uploadManifest(MANIFEST_FILE_MISMATCHED_GENDERS_THIS_MANIFEST);
+        ManifestSession manifestSession = uploadManifest(MANIFEST_FILE_MISMATCHED_GENDERS_SAME_SESSION);
         assertThat(manifestSession, is(notNullValue()));
         assertThat(manifestSession.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
 
@@ -296,30 +296,19 @@ public class ManifestSessionEjbDBFreeTest {
         return new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
     }
 
-    private class ManifestSessionAndEJBHolder {
-        // The level of indirection is required as the ManifestSession will not exist at the time the
-        // ManifestSessionDAO is being programmed.
-        private final ManifestSession[] manifestSessionHolder = new ManifestSession[1];
-
+    /**
+     * Utility class to encapsulate both objects returned by the #buildForAcceptSession method, as well as affording
+     * the level of indirection required for programming a ManifestSessionDao mock to return a particular
+     * ManifestSession before that ManifestSession has actually been created.
+     *
+     */
+    private class ManifestSessionAndEjbHolder {
+        ManifestSession manifestSession;
         ManifestSessionEjb ejb;
-
-        /**
-         * Convenience method to get the ManifestSession from its holder.
-         */
-        ManifestSession getManifestSession() {
-            return manifestSessionHolder[0];
-        }
-
-        /**
-         * Convenience method to set the ManifestSession into its holder.
-         */
-        void setManifestSession(ManifestSession manifestSession) {
-            manifestSessionHolder[0] = manifestSession;
-        }
     }
 
-    ManifestSessionAndEJBHolder buildForAcceptSession() throws FileNotFoundException {
-        final ManifestSessionAndEJBHolder holder = new ManifestSessionAndEJBHolder();
+    private ManifestSessionAndEjbHolder buildHolderForAcceptSession(String fileName) throws FileNotFoundException {
+        final ManifestSessionAndEjbHolder holder = new ManifestSessionAndEjbHolder();
 
         ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(
                 TEST_RESEARCH_PROJECT_KEY);
@@ -328,28 +317,24 @@ public class ManifestSessionEjbDBFreeTest {
         Mockito.when(manifestSessionDao.find(Mockito.anyLong())).thenAnswer(new Answer<ManifestSession>() {
             @Override
             public ManifestSession answer(InvocationOnMock invocation) throws Throwable {
-                return holder.getManifestSession();
+                return holder.manifestSession;
             }
         });
         ResearchProjectDao researchProjectDao = Mockito.mock(ResearchProjectDao.class);
         Mockito.when(researchProjectDao.findByBusinessKey(Mockito.anyString())).thenReturn(researchProject);
 
-        ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
-        ManifestSession manifestSession = uploadManifest(ejb, MANIFEST_FILE_DUPLICATES_SAME_SESSION, researchProject);
-        holder.setManifestSession(manifestSession);
-        holder.ejb = ejb;
+        holder.ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
+        holder.manifestSession = uploadManifest(holder.ejb, fileName, researchProject);
         return holder;
 
     }
 
     public void acceptSessionWithDuplicatesInThisSession() throws FileNotFoundException {
-        ManifestSessionAndEJBHolder holder = buildForAcceptSession();
-        ManifestSession manifestSession = holder.getManifestSession();
-        ManifestSessionEjb ejb = holder.ejb;
+        ManifestSessionAndEjbHolder holder = buildHolderForAcceptSession(MANIFEST_FILE_DUPLICATES_SAME_SESSION);
 
         List<ManifestRecord> manifestRecordsMarkedAsDuplicates = new ArrayList<>();
 
-        for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
+        for (ManifestRecord manifestRecord : holder.manifestSession.getRecords()) {
             assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOADED));
             if (manifestRecord.isQuarantined()) {
                 manifestRecordsMarkedAsDuplicates.add(manifestRecord);
@@ -362,9 +347,9 @@ public class ManifestSessionEjbDBFreeTest {
 
         // Arbitrary ID, the DAO is programmed to return the same manifest session for any requested ID.
         long MANIFEST_SESSION_ID = 3L;
-        ejb.acceptManifestUpload(MANIFEST_SESSION_ID);
+        holder.ejb.acceptManifestUpload(MANIFEST_SESSION_ID);
 
-        for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
+        for (ManifestRecord manifestRecord : holder.manifestSession.getRecords()) {
             boolean shouldBeMarkedAsDuplicate = manifestRecordsMarkedAsDuplicates.contains(manifestRecord);
             assertThat(manifestRecord.isQuarantined(), is(shouldBeMarkedAsDuplicate));
             if (!shouldBeMarkedAsDuplicate) {
@@ -378,18 +363,11 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     public void acceptSessionWithMismatchedGendersThisSession() throws FileNotFoundException {
-        // This will hold a reference to a ManifestSession that hasn't been created at the time the ManifestSessionDAO
-        // mock is being programmed.
-        ManifestSession[] manifestSessionHolder = new ManifestSession[1];
-        ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(
-                TEST_RESEARCH_PROJECT_KEY);
-
-        ManifestSessionEjb ejb = buildEjbForSessionAcceptance(manifestSessionHolder, researchProject);
-        ManifestSession manifestSession = uploadManifest(ejb, MANIFEST_FILE_MISMATCHED_GENDERS_THIS_MANIFEST, researchProject);
+        ManifestSessionAndEjbHolder holder = buildHolderForAcceptSession(MANIFEST_FILE_MISMATCHED_GENDERS_SAME_SESSION);
 
         List<ManifestRecord> manifestRecordsWithMismatchedGenders = new ArrayList<>();
 
-        for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
+        for (ManifestRecord manifestRecord : holder.manifestSession.getRecords()) {
             assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOADED));
             assertThat(manifestRecord.isQuarantined(), is(false));
 
@@ -405,13 +383,11 @@ public class ManifestSessionEjbDBFreeTest {
                     is(equalTo(hasManifestEvents)));
         }
 
-        // Now that the manifest session has been created, put it in the holder so the DAO will be able to retrieve it.
-        manifestSessionHolder[0] = manifestSession;
         // Arbitrary ID, the DAO is programmed to return the same manifest session for any requested ID.
         long MANIFEST_SESSION_ID = 3L;
-        ejb.acceptManifestUpload(MANIFEST_SESSION_ID);
+        holder.ejb.acceptManifestUpload(MANIFEST_SESSION_ID);
 
-        for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
+        for (ManifestRecord manifestRecord : holder.manifestSession.getRecords()) {
             boolean shouldBeMarkedAsDuplicate = manifestRecordsWithMismatchedGenders.contains(manifestRecord);
             assertThat(manifestRecord.getManifestEvents().isEmpty(), is(!shouldBeMarkedAsDuplicate));
             assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOAD_ACCEPTED));
