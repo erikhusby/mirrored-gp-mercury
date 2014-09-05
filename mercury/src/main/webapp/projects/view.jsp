@@ -270,7 +270,8 @@
                             <c:if test="${actionBean.editResearchProject.jiraTicketKey != null}">
                                 <stripes:link target="JIRA"
                                               href="${actionBean.jiraUrl(actionBean.editResearchProject.jiraTicketKey)}"
-                                              class="external">
+                                              class="external"
+                                              id="rpId">
                                     ${actionBean.editResearchProject.jiraTicketKey}
                                 </stripes:link>
                             </c:if>
@@ -284,6 +285,13 @@
 
                     <div class="controls">
                         <div class="form-value">${actionBean.editResearchProject.synopsis}</div>
+                    </div>
+                </div>
+
+                <div class="control-group view-control-group">
+                    <label class="control-label label-form">Regulatory Designation</label>
+                    <div class="controls">
+                        <div class="form-value" id="regulatoryDesignation">${actionBean.editResearchProject.regulatoryDesignationDescription}</div>
                     </div>
                 </div>
 
