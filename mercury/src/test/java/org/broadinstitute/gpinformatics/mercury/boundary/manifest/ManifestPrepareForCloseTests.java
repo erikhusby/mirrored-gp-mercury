@@ -42,7 +42,7 @@ public class ManifestPrepareForCloseTests {
 
         Collection<String> errors = session.buildErrorMessagesForSession();
         Assert.assertEquals(errors.size(),1);
-        Assert.assertTrue(errors.iterator().next().contains(ManifestRecord.ErrorStatus.MISSING_SAMPLE.getMessage()));
+        Assert.assertTrue(errors.iterator().next().contains(ManifestRecord.ErrorStatus.MISSING_SAMPLE.getBaseMessage()));
     }
 
     @Test
@@ -52,7 +52,7 @@ public class ManifestPrepareForCloseTests {
 
         Collection<String> errors = session.buildErrorMessagesForSession();
         Assert.assertEquals(errors.size(),1);
-        Assert.assertTrue(errors.iterator().next().contains(ManifestRecord.ErrorStatus.MISSING_SAMPLE.getMessage()));
+        Assert.assertTrue(errors.iterator().next().contains(ManifestRecord.ErrorStatus.MISSING_SAMPLE.getBaseMessage()));
     }
 
     @Test
@@ -61,7 +61,7 @@ public class ManifestPrepareForCloseTests {
 
         Collection<String> errors = session.buildErrorMessagesForSession();
         Assert.assertEquals(errors.size(),1);
-        Assert.assertTrue(errors.iterator().next().contains(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getMessage()));
+        Assert.assertTrue(errors.iterator().next().contains(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getBaseMessage()));
     }
 
     private void addDuplicateManifestRecord() {

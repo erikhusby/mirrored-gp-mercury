@@ -62,6 +62,11 @@ public class ManifestSessionEjbDBFreeTest {
     private static final Set<String> PATIENT_IDS_FOR_SAME_MANIFEST_GENDER_MISMATCHES =
             ImmutableSet.of("004-002", "003-009", "005-012");
 
+    private static final long ARBITRARY_MANIFEST_SESSION_ID = 3L;
+
+    private static final String ARBITRARY_COLLABORATOR_SAMPLE_ID = "COLLABORATOR-SAMPLE-1";
+    public static final String GOOD_MANIFEST_ACCESSION_SCAN_PROVIDER = "goodManifestAccessionScanProvider";
+
     public void researchProjectNotFound() {
         ManifestSessionDao manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
         ResearchProjectDao researchProjectDao = Mockito.mock(ResearchProjectDao.class);
@@ -227,7 +232,7 @@ public class ManifestSessionEjbDBFreeTest {
     public void loadManifestSessionSuccess() {
         ManifestSessionDao manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
         ResearchProjectDao researchProjectDao = Mockito.mock(ResearchProjectDao.class);
-        final long TEST_MANIFEST_SESSION_ID = 3L;
+        final long TEST_MANIFEST_SESSION_ID = ARBITRARY_MANIFEST_SESSION_ID;
         Mockito.when(manifestSessionDao.find(Mockito.anyLong())).then(new Answer<ManifestSession>() {
             @Override
             public ManifestSession answer(final InvocationOnMock invocation) throws Throwable {
@@ -248,7 +253,7 @@ public class ManifestSessionEjbDBFreeTest {
     public void loadManifestSessionFailure() {
         ManifestSessionDao manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
         ResearchProjectDao researchProjectDao = Mockito.mock(ResearchProjectDao.class);
-        final long TEST_MANIFEST_SESSION_ID = 3L;
+        final long TEST_MANIFEST_SESSION_ID = ARBITRARY_MANIFEST_SESSION_ID;
         ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
         ManifestSession manifestSession = ejb.loadManifestSession(TEST_MANIFEST_SESSION_ID);
         assertThat(manifestSession, is(nullValue()));
@@ -258,7 +263,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionDao manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
         ResearchProjectDao researchProjectDao = Mockito.mock(ResearchProjectDao.class);
         ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
-        long MANIFEST_SESSION_ID = 3L;
+        long MANIFEST_SESSION_ID = ARBITRARY_MANIFEST_SESSION_ID;
         try {
             ejb.acceptManifestUpload(MANIFEST_SESSION_ID);
             Assert.fail();
@@ -302,8 +307,7 @@ public class ManifestSessionEjbDBFreeTest {
 
     public void acceptUploadSuccessful() throws FileNotFoundException {
         ManifestSessionAndEjbHolder holder = buildHolderForAcceptSession(MANIFEST_FILE_GOOD);
-        long MANIFEST_SESSION_ID = 3L;
-        holder.ejb.acceptManifestUpload(MANIFEST_SESSION_ID);
+        holder.ejb.acceptManifestUpload(ARBITRARY_MANIFEST_SESSION_ID);
         for (ManifestRecord manifestRecord : holder.manifestSession.getRecords()) {
             assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOAD_ACCEPTED));
         }
@@ -326,8 +330,7 @@ public class ManifestSessionEjbDBFreeTest {
                 hasSize(NUM_DUPLICATES_IN_MANIFEST_WITH_DUPLICATES_IN_SAME_SESSION));
 
         // Arbitrary ID, the DAO is programmed to return the same manifest session for any requested ID.
-        long MANIFEST_SESSION_ID = 3L;
-        holder.ejb.acceptManifestUpload(MANIFEST_SESSION_ID);
+        holder.ejb.acceptManifestUpload(ARBITRARY_MANIFEST_SESSION_ID);
 
         for (ManifestRecord manifestRecord : holder.manifestSession.getRecords()) {
             boolean shouldBeMarkedAsDuplicate = manifestRecordsMarkedAsDuplicates.contains(manifestRecord);
@@ -364,8 +367,7 @@ public class ManifestSessionEjbDBFreeTest {
         }
 
         // Arbitrary ID, the DAO is programmed to return the same manifest session for any requested ID.
-        long MANIFEST_SESSION_ID = 3L;
-        holder.ejb.acceptManifestUpload(MANIFEST_SESSION_ID);
+        holder.ejb.acceptManifestUpload(ARBITRARY_MANIFEST_SESSION_ID);
 
         for (ManifestRecord manifestRecord : holder.manifestSession.getRecords()) {
             boolean shouldBeMarkedAsDuplicate = manifestRecordsWithMismatchedGenders.contains(manifestRecord);
@@ -405,8 +407,44 @@ public class ManifestSessionEjbDBFreeTest {
         return pathsAndBaseFileNames.iterator();
     }
 
-    public void scanTubeGoodManifest() throws FileNotFoundException {
-        ManifestSession manifestSession = uploadManifest(MANIFEST_FILE_GOOD);
+    @DataProvider(name = GOOD_MANIFEST_ACCESSION_SCAN_PROVIDER)
+    public Object [][] goodManifestAccessionScanProvider() {
+        return new Object[][]{
+                // Good tube barcode should succeed.
+                {"03101231193", true},
+                {"bad tube barcode", false}};
+    }
 
+    @Test(dataProvider = GOOD_MANIFEST_ACCESSION_SCAN_PROVIDER)
+    public void accessionScanGoodManifest(String tubeBarcode, boolean successExpected) throws FileNotFoundException {
+        ManifestSessionAndEjbHolder holder = buildHolderForAcceptSession(MANIFEST_FILE_GOOD);
+        ManifestSessionEjb ejb = holder.ejb;
+        ejb.acceptManifestUpload(ARBITRARY_MANIFEST_SESSION_ID);
+        // The correct state after manifest upload is checked in other tests.
+
+        try {
+            ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, tubeBarcode);
+            if (!successExpected) {
+                Assert.fail();
+            }
+        } catch (InformaticsServiceException e) {
+            if (successExpected) {
+                Assert.fail();
+            }
+            assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.NOT_IN_MANIFEST.getBaseMessage()));
+        }
+
+        ManifestSession manifestSession = holder.manifestSession;
+        assertThat(manifestSession.getManifestEvents(), is(empty()));
+
+        for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
+            String collaboratorSampleId = manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue();
+            if (collaboratorSampleId.equals(tubeBarcode)) {
+                assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.SCANNED));
+            } else {
+                assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOAD_ACCEPTED));
+            }
+            assertThat(manifestRecord.getManifestEvents(), is(empty()));
+        }
     }
 }

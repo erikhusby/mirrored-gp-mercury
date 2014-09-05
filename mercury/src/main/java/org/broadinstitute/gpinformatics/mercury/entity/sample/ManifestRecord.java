@@ -212,18 +212,22 @@ public class ManifestRecord {
         ALREADY_SCANNED_SOURCE("The scanned source tube has already been through the accessioning process"),
 
         PREVIOUS_ERRORS_UNABLE_TO_CONTINUE("Due to errors previously found, this sample is unable to continue.");
-        private String message;
 
-        ErrorStatus(String message) {
-            this.message = message;
+        private final String baseMessage;
+
+        ErrorStatus(String baseMessage) {
+            this.baseMessage = baseMessage;
         }
 
-        public String getMessage() {
-            return message;
+        /**
+         * The base message to which an entity type and value will be added for display.
+         */
+        public String getBaseMessage() {
+            return baseMessage;
         }
 
         public String formatMessage(String entityType, String value) {
-            return String.format("For %s %s: %s", entityType, value, getMessage());
+            return String.format("For %s %s: %s", entityType, value, baseMessage);
         }
     }
 

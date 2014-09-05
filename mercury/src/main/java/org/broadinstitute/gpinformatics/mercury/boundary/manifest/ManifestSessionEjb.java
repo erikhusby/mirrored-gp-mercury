@@ -125,4 +125,16 @@ public class ManifestSessionEjb {
         }
         return errorMessages;
     }
+
+    public void accessionScan(long manifestSessionId, String collaboratorSampleId) {
+        ManifestSession manifestSession = manifestSessionDao.find(manifestSessionId);
+        ManifestRecord manifestRecord =
+                manifestSession.getRecordWithCollaboratorSampleId(collaboratorSampleId);
+        if (manifestRecord == null) {
+            throw new InformaticsServiceException(
+                    ManifestRecord.ErrorStatus.NOT_IN_MANIFEST.formatMessage(
+                            "Sample ID", collaboratorSampleId));
+        }
+        manifestRecord.setStatus(ManifestRecord.Status.SCANNED);
+    }
 }

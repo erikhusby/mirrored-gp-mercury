@@ -8,11 +8,9 @@ import com.google.common.collect.Multimaps;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.hibernate.envers.Audited;
 
-import javax.annotation.Nonnull;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -481,6 +479,32 @@ public class ManifestSession {
             errorMessages.add(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage(ManifestSession.SAMPLE_ID_KEY,duplicateSampleId));
         }
         return errorMessages;
+    }
+
+    /**
+     * Return the sample whose collaborator sample ID (Key.SAMPLE_ID) matches the specified value.
+     */
+    public ManifestRecord getRecordWithCollaboratorSampleId(String collaboratorSampleId) {
+        return getRecordWithMatchingValueForKey(Metadata.Key.SAMPLE_ID, collaboratorSampleId);
+    }
+
+    /**
+     * Return the record whose value matches the specified {@code value} parameter for the
+     * specified key.  e.g. if searching for a record having sample ID "SM-1234":
+     *
+     * <pre>
+     *     getRecordWithMatchingValueForKey(Key.SAMPLE_ID, "SM-1234");
+     * </pre>
+     *
+     * @return matching ManifestRecord or null if none match.
+     */
+    private ManifestRecord getRecordWithMatchingValueForKey(Metadata.Key key, String value) {
+        for (ManifestRecord record : records) {
+            if (record.getMetadataByKey(key).getValue().equals(value)) {
+                return record;
+            }
+        }
+        return null;
     }
 
     /**
