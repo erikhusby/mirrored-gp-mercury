@@ -40,6 +40,8 @@ import static org.hamcrest.collection.IsEmptyCollection.empty;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ManifestSessionEjbDBFreeTest {
 
+    private static final String MANIFEST_FILE_GOOD = "manifest-upload/good-manifest.xlsx";
+
     private static final String PATHS_TO_PREFIXES_PROVIDER = "pathsToPrefixesProvider";
 
     private static final String BAD_MANIFEST_UPLOAD_PROVIDER = "badManifestUploadProvider";
@@ -118,7 +120,7 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     public void uploadGoodManifest() throws FileNotFoundException {
-        ManifestSession manifestSession = uploadManifest("manifest-upload/good-manifest.xlsx");
+        ManifestSession manifestSession = uploadManifest(MANIFEST_FILE_GOOD);
         assertThat(manifestSession, is(notNullValue()));
         assertThat(manifestSession.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
         assertThat(manifestSession.hasErrors(), is(false));
@@ -265,37 +267,6 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
-    public void acceptUploadSuccessful() {
-        ManifestSessionDao manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
-        ResearchProjectDao researchProjectDao = Mockito.mock(ResearchProjectDao.class);
-        ManifestSession manifestSession = ManifestTestFactory.buildManifestSession(
-                "RP-1000", "ManifestSessionPrefix", TEST_USER, 10);
-
-        Mockito.when(manifestSessionDao.find(Mockito.anyLong())).thenReturn(manifestSession);
-        ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
-        long MANIFEST_SESSION_ID = 3L;
-        ejb.acceptManifestUpload(MANIFEST_SESSION_ID);
-        for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
-            assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOAD_ACCEPTED));
-        }
-    }
-
-    private ManifestSessionEjb buildEjbForSessionAcceptance(final ManifestSession[] manifestSessionHolder,
-                                                            ResearchProject researchProject) {
-
-        ManifestSessionDao manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
-        Mockito.when(manifestSessionDao.find(Mockito.anyLong())).thenAnswer(new Answer<ManifestSession>() {
-            @Override
-            public ManifestSession answer(InvocationOnMock invocation) throws Throwable {
-                return manifestSessionHolder[0];
-            }
-        });
-        ResearchProjectDao researchProjectDao = Mockito.mock(ResearchProjectDao.class);
-        Mockito.when(researchProjectDao.findByBusinessKey(Mockito.anyString())).thenReturn(researchProject);
-
-        return new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
-    }
-
     /**
      * Utility class to encapsulate both objects returned by the #buildForAcceptSession method, as well as affording
      * the level of indirection required for programming a ManifestSessionDao mock to return a particular
@@ -327,6 +298,15 @@ public class ManifestSessionEjbDBFreeTest {
         holder.manifestSession = uploadManifest(holder.ejb, fileName, researchProject);
         return holder;
 
+    }
+
+    public void acceptUploadSuccessful() throws FileNotFoundException {
+        ManifestSessionAndEjbHolder holder = buildHolderForAcceptSession(MANIFEST_FILE_GOOD);
+        long MANIFEST_SESSION_ID = 3L;
+        holder.ejb.acceptManifestUpload(MANIFEST_SESSION_ID);
+        for (ManifestRecord manifestRecord : holder.manifestSession.getRecords()) {
+            assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOAD_ACCEPTED));
+        }
     }
 
     public void acceptSessionWithDuplicatesInThisSession() throws FileNotFoundException {
@@ -426,7 +406,7 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     public void scanTubeGoodManifest() throws FileNotFoundException {
-        ManifestSession manifestSession = uploadManifest("manifest-upload/good-manifest.xlsx");
+        ManifestSession manifestSession = uploadManifest(MANIFEST_FILE_GOOD);
 
     }
 }
