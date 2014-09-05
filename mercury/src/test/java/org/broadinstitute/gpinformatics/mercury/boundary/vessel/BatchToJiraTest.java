@@ -97,11 +97,11 @@ public class BatchToJiraTest extends Arquillian {
         String tube2Label = "Rework01";
 
         LabVessel tube1 = new BarcodedTube(tube1Label);
-        tube1.addSample(new MercurySample("SM-01"));
+        tube1.addSample(new MercurySample("SM-01", MercurySample.MetadataSource.BSP));
         startingVessels.add(tube1);
         Set<LabVessel> reworkVessels = new HashSet<>();
         LabVessel tube2 = new BarcodedTube(tube2Label);
-        tube2.addSample(new MercurySample("SM-02"));
+        tube2.addSample(new MercurySample("SM-02", MercurySample.MetadataSource.BSP));
         labVesselDao.persistAll(Arrays.asList(tube1, tube2));
 
         labVesselDao.flush();

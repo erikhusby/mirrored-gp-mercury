@@ -144,6 +144,11 @@
                                               event="showReceipt">Receive Samples</stripes:link>
                             </li>
                         </security:authorizeBlock>
+                        <li>
+                            <stripes:link id="uploadSampleVessels"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.SampleVesselActionBean"
+                                          event="view">Upload Sample Vessels</stripes:link>
+                        </li>
                     </ul>
                 </li>
             </security:authorizeBlock>
@@ -208,6 +213,11 @@
                         <stripes:link id="lcsetSearch"
                                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.LCSetSearchActionBean"
                                       event="view">LCSets</stripes:link>
+                    </li>
+                    <li>
+                        <stripes:link id="userDefSearch"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.ConfigurableSearchActionBean"
+                                      event="entitySelection">User-Defined</stripes:link>
                     </li>
                 </ul>
             </li>

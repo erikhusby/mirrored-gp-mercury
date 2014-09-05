@@ -156,8 +156,8 @@
 
     <properties>
         <!-- Clover -->
-        <clover.version>3.3.0</clover.version>
-        <clover.plugin.version>3.3.0</clover.plugin.version>
+        <clover.version>4.0.0</clover.version>
+        <clover.plugin.version>4.0.0</clover.plugin.version>
         <clover.targetPercentage>15%</clover.targetPercentage>
 
 
@@ -1633,7 +1633,7 @@
 
         <!-- exists only to be included in ShrinkWrap deployments. would be better to include explicitly in DeploymentBuilder -->
         <dependency>
-            <groupId>com.cenqua.clover</groupId>
+            <groupId>com.atlassian.clover</groupId>
             <artifactId>clover</artifactId>
             <version>${clover.version}</version>
             <!-- cannot be test scoped because it is needed for compiling instrumented main sources -->
@@ -2416,9 +2416,20 @@
         </plugins>
 
         <testResources>
+            <!-- Filtering corrupts the xlsx test files -->
             <testResource>
                 <directory>src/test/resources</directory>
                 <filtering>true</filtering>
+                <excludes>
+                    <exclude>**/*.xlsx</exclude>
+                </excludes>
+            </testResource>
+            <testResource>
+                <directory>src/test/resources</directory>
+                <filtering>false</filtering>
+                <includes>
+                    <include>**/*.xlsx</include>
+                </includes>
             </testResource>
             <testResource>
                 <directory>src/main/webapp/WEB-INF/classes</directory>

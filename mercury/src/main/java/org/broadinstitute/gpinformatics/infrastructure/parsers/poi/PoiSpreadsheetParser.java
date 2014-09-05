@@ -47,7 +47,7 @@ public final class PoiSpreadsheetParser {
      *
      * @throws ValidationException
      */
-    private void processRows(Sheet workSheet, TableProcessor processor) throws ValidationException {
+    public void processRows(Sheet workSheet, TableProcessor processor) throws ValidationException {
         Iterator<Row> rows = workSheet.rowIterator();
         processHeaders(processor, rows);
         processData(processor, rows);
