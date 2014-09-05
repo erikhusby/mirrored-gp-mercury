@@ -57,7 +57,7 @@ public class ManifestSessionEjbDBFreeTest {
     private static final String MANIFEST_FILE_MISMATCHED_GENDERS_THIS_MANIFEST =
             "manifest-upload/gender-mismatches-within-session/good-manifest.xlsx";
 
-    private static final ImmutableSet<String> PATIENT_IDS_FOR_SAME_MANIFEST_GENDER_MISMATCHES =
+    private static final Set<String> PATIENT_IDS_FOR_SAME_MANIFEST_GENDER_MISMATCHES =
             ImmutableSet.of("004-002", "003-009", "005-012");
 
     public void researchProjectNotFound() {
@@ -296,15 +296,56 @@ public class ManifestSessionEjbDBFreeTest {
         return new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
     }
 
-    public void acceptSessionWithDuplicatesInThisSession() throws FileNotFoundException {
-        // This will hold a reference to a ManifestSession that hasn't been created at the time the ManifestSessionDAO
-        // mock is being programmed.
-        ManifestSession[] manifestSessionHolder = new ManifestSession[1];
+    private class ManifestSessionAndEJBHolder {
+        // The level of indirection is required as the ManifestSession will not exist at the time the
+        // ManifestSessionDAO is being programmed.
+        private final ManifestSession[] manifestSessionHolder = new ManifestSession[1];
+
+        ManifestSessionEjb ejb;
+
+        /**
+         * Convenience method to get the ManifestSession from its holder.
+         */
+        ManifestSession getManifestSession() {
+            return manifestSessionHolder[0];
+        }
+
+        /**
+         * Convenience method to set the ManifestSession into its holder.
+         */
+        void setManifestSession(ManifestSession manifestSession) {
+            manifestSessionHolder[0] = manifestSession;
+        }
+    }
+
+    ManifestSessionAndEJBHolder buildForAcceptSession() throws FileNotFoundException {
+        final ManifestSessionAndEJBHolder holder = new ManifestSessionAndEJBHolder();
+
         ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(
                 TEST_RESEARCH_PROJECT_KEY);
 
-        ManifestSessionEjb ejb = buildEjbForSessionAcceptance(manifestSessionHolder, researchProject);
+        ManifestSessionDao manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
+        Mockito.when(manifestSessionDao.find(Mockito.anyLong())).thenAnswer(new Answer<ManifestSession>() {
+            @Override
+            public ManifestSession answer(InvocationOnMock invocation) throws Throwable {
+                return holder.getManifestSession();
+            }
+        });
+        ResearchProjectDao researchProjectDao = Mockito.mock(ResearchProjectDao.class);
+        Mockito.when(researchProjectDao.findByBusinessKey(Mockito.anyString())).thenReturn(researchProject);
+
+        ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
         ManifestSession manifestSession = uploadManifest(ejb, MANIFEST_FILE_DUPLICATES_SAME_SESSION, researchProject);
+        holder.setManifestSession(manifestSession);
+        holder.ejb = ejb;
+        return holder;
+
+    }
+
+    public void acceptSessionWithDuplicatesInThisSession() throws FileNotFoundException {
+        ManifestSessionAndEJBHolder holder = buildForAcceptSession();
+        ManifestSession manifestSession = holder.getManifestSession();
+        ManifestSessionEjb ejb = holder.ejb;
 
         List<ManifestRecord> manifestRecordsMarkedAsDuplicates = new ArrayList<>();
 
@@ -319,8 +360,6 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(manifestRecordsMarkedAsDuplicates,
                 hasSize(NUM_DUPLICATES_IN_MANIFEST_WITH_DUPLICATES_IN_SAME_SESSION));
 
-        // Now that the manifest session has been created, put it in the holder so the DAO will be able to retrieve it.
-        manifestSessionHolder[0] = manifestSession;
         // Arbitrary ID, the DAO is programmed to return the same manifest session for any requested ID.
         long MANIFEST_SESSION_ID = 3L;
         ejb.acceptManifestUpload(MANIFEST_SESSION_ID);
@@ -408,5 +447,10 @@ public class ManifestSessionEjbDBFreeTest {
             }
         }
         return pathsAndBaseFileNames.iterator();
+    }
+
+    public void scanTubeGoodManifest() throws FileNotFoundException {
+        ManifestSession manifestSession = uploadManifest("manifest-upload/good-manifest.xlsx");
+
     }
 }
