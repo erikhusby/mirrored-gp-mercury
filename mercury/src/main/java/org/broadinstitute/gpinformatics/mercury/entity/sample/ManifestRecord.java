@@ -226,4 +226,13 @@ public class ManifestRecord {
             return String.format("For %s %s: %s", entityType, value, getMessage());
         }
     }
+
+    public String getSampleId() {
+        String sampleId = null;
+        Metadata sampleMetadata = getMetadataByKey(Metadata.Key.SAMPLE_ID);
+        if (sampleMetadata != null) {
+            sampleId = sampleMetadata.getValue();
+        }
+        return sampleId;
+    }
 }

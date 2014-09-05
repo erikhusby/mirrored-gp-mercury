@@ -41,7 +41,7 @@ import java.util.Set;
 @Table(schema = "mercury", name = "MANIFEST_SESSION")
 public class ManifestSession {
 
-    private  static final String SAMPLE_ID_KEY = "Sample ID";
+    public static final String SAMPLE_ID_KEY = "Sample ID";
 
     @Id
     @SequenceGenerator(name = "SEQ_MANIFEST_SESSION", schema = "mercury", sequenceName = "SEQ_MANIFEST_SESSION")
@@ -425,6 +425,29 @@ public class ManifestSession {
         for (ManifestRecord record : getNonQuarantinedRecords()) {
             record.setStatus(ManifestRecord.Status.UPLOAD_ACCEPTED);
         }
+    }
+
+    public boolean hasManifestEvents() {
+        return !manifestEvents.isEmpty();
+    }
+
+    public int getNumEvents() {
+        return manifestEvents.size();
+    }
+
+    public Set<String> getDuplicatedSampleIds() {
+        Set<String> allSampleIds = new HashSet<>();
+        Set<String> duplicates = new HashSet<>();
+        for (ManifestRecord manifestRecord : getRecords()) {
+            String sampleId = manifestRecord.getSampleId();
+            if (StringUtils.isNotBlank(sampleId)) {
+                if (allSampleIds.contains(sampleId)) {
+                    duplicates.add(sampleId);
+                }
+                allSampleIds.add(sampleId);
+            }
+        }
+        return duplicates;
     }
 
     /**
