@@ -24,7 +24,6 @@ public class DbFreeSquidThriftLibraryConverterTest {
     public void test_mercury_fields() throws Exception {
         TZamboniRun thriftRun = ThriftFileAccessor.deserializeRun();
         ResearchProject project = new ResearchProject(1L,"RP title","rp synopsis",false);
-        project.setRegulatoryDesignation(ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
 
         BspUser bspUser = new BspUser();
         bspUser.setUserId(ResearchProjectTestFactory.TEST_CREATOR);
