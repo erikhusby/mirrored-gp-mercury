@@ -8,9 +8,11 @@ import com.google.common.collect.Multimaps;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.hibernate.envers.Audited;
 
+import javax.annotation.Nonnull;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -319,6 +321,7 @@ public class ManifestSession {
      * in the proper state.  If not, manifest events are added to the record to indicate that it has not
      * been scanned.
      */
+    // todo migrate this (and tests) to use buildErrorMessagesForSession()
     public void validateForClose() {
         // Confirm all records have scanned status.
         for (ManifestRecord record : records) {
@@ -448,6 +451,36 @@ public class ManifestSession {
             }
         }
         return duplicates;
+    }
+
+    public Collection<String> buildErrorMessagesForSession() {
+        Set<String> errorMessages = new HashSet<>();
+        for (ManifestRecord manifestRecord : getRecords()) {
+            ManifestRecord.Status status = manifestRecord.getStatus();
+            // todo instead of recalculating these errors, just walk through the existing records
+            // and create the error messages
+            if (isNotDuplicatedSample(manifestRecord.getSampleId()) && (status == ManifestRecord.Status.UPLOAD_ACCEPTED || status == ManifestRecord.Status.UPLOADED)) {
+                errorMessages.add(ManifestRecord.ErrorStatus.MISSING_SAMPLE.formatMessage(ManifestSession.SAMPLE_ID_KEY,manifestRecord.getSampleId()));
+            }
+        }
+        errorMessages.addAll(buildDuplicateSampleErrorMessages());
+        return errorMessages;
+    }
+
+    /**
+     * Returns whether or not the sampleId is a duplicated
+     * sample within this session
+     */
+    private boolean isNotDuplicatedSample(String sampleId) {
+        return !getDuplicatedSampleIds().contains(sampleId);
+    }
+
+    private Collection<String> buildDuplicateSampleErrorMessages() {
+        Set<String> errorMessages = new HashSet<>();
+        for (String duplicateSampleId : getDuplicatedSampleIds()) {
+            errorMessages.add(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage(ManifestSession.SAMPLE_ID_KEY,duplicateSampleId));
+        }
+        return errorMessages;
     }
 
     /**

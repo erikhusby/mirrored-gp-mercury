@@ -14,13 +14,10 @@ import java.util.Collection;
 
 public class ManifestPrepareForCloseTests {
 
-    private ManifestSessionEjb manifestSessionEjb;
-
     private ManifestSession session;
 
     @BeforeMethod
     public void setUp() {
-        manifestSessionEjb = new ManifestSessionEjb();
         String sessionPrefix = "DoctorZhivago";
         BspUser user = new BspUser();
         // todo use rp test factory and manifest test factory?
@@ -35,7 +32,7 @@ public class ManifestPrepareForCloseTests {
 
     @Test
     public void testPrepareForCloseOnCleanSession() {
-        Assert.assertTrue(manifestSessionEjb.buildErrorMessagesForSession(session).isEmpty(),
+        Assert.assertTrue(session.buildErrorMessagesForSession().isEmpty(),
                           "Clean session should have no errors.");
     }
 
@@ -43,7 +40,7 @@ public class ManifestPrepareForCloseTests {
     public void testValidationErrorForUploadedSample() {
         setManifestRecordStatus(ManifestRecord.Status.UPLOADED);
 
-        Collection<String> errors = manifestSessionEjb.buildErrorMessagesForSession(session);
+        Collection<String> errors = session.buildErrorMessagesForSession();
         Assert.assertEquals(errors.size(),1);
         Assert.assertTrue(errors.iterator().next().contains(ManifestRecord.ErrorStatus.MISSING_SAMPLE.getMessage()));
     }
@@ -53,7 +50,7 @@ public class ManifestPrepareForCloseTests {
         // todo parameterize with test above this
         setManifestRecordStatus(ManifestRecord.Status.UPLOAD_ACCEPTED);
 
-        Collection<String> errors = manifestSessionEjb.buildErrorMessagesForSession(session);
+        Collection<String> errors = session.buildErrorMessagesForSession();
         Assert.assertEquals(errors.size(),1);
         Assert.assertTrue(errors.iterator().next().contains(ManifestRecord.ErrorStatus.MISSING_SAMPLE.getMessage()));
     }
@@ -62,7 +59,7 @@ public class ManifestPrepareForCloseTests {
     public void testValidationForDuplicateSample() {
         addDuplicateManifestRecord();
 
-        Collection<String> errors = manifestSessionEjb.buildErrorMessagesForSession(session);
+        Collection<String> errors = session.buildErrorMessagesForSession();
         Assert.assertEquals(errors.size(),1);
         Assert.assertTrue(errors.iterator().next().contains(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getMessage()));
     }
