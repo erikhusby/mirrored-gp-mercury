@@ -184,25 +184,25 @@ public class ManifestRecord {
          */
         NOT_IN_MANIFEST("The scanned sample is not found in any manifest"),
         /**
-         * TODO This seems to be a duplicate of DUPLICATE_SAMPLE_ID.  Need to fully define what this error case means.
+         * Encapsulates the error message to indicate to the user that they have already scanned the tube
          */
-        DUPLICATE_SAMPLE_SCAN(" "),
+        DUPLICATE_SAMPLE_SCAN("This sample has been scanned previously."),
         /**
          * No sample was scanned for a manifest record.
          */
         MISSING_SAMPLE("No sample has been scanned to correspond with the manifest record"),
         /**
-         * Represents a scenario in which the user attempts to accession a source tube that
+         * Represents a scenario in which the user attempts to transfer a source tube that
          * did not make it to the ACCESSIONED state.
          */
-        NOT_READY_FOR_ACCESSIONING("Attempting to accession a sample that has not completed manifest registration"),
+        NOT_READY_FOR_TUBE_TRANSFER("Attempting to transfer a sample that has not completed Accessioning"),
         /**
          * Helpful message to note that the user is attempting to accession a source tube into
          * a target vessel that has already gone through accessioning.
          */
         ALREADY_SCANNED_TARGET("The scanned target tube has already been associated with another source sample"),
         /**
-         * TODO This seems to be a duplicate of NOT_READY_FOR_ACCESSIONING.  Need to fully define what this case means.
+         * TODO This seems to be a duplicate of NOT_READY_FOR_TUBE_TRANSFER.  Need to fully define what this case means.
          */
         NOT_REGISTERED(" "),
         /**
@@ -225,5 +225,14 @@ public class ManifestRecord {
         public String formatMessage(String entityType, String value) {
             return String.format("For %s %s: %s", entityType, value, getMessage());
         }
+    }
+
+    public String getSampleId() {
+        String sampleId = null;
+        Metadata sampleMetadata = getMetadataByKey(Metadata.Key.SAMPLE_ID);
+        if (sampleMetadata != null) {
+            sampleId = sampleMetadata.getValue();
+        }
+        return sampleId;
     }
 }
