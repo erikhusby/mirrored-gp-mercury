@@ -381,6 +381,7 @@ public class ReworkEjbTest extends Arquillian {
                                               "Rework Integration Test RP " + currDate.getTime() + "RP",
                                               "Rework Integration Test RP", false);
         researchProject.setJiraTicketKey(rpJiraTicketKey);
+        researchProject.setRegulatoryDesignation(ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
         researchProjectDao.persist(researchProject);
 
         bucketReadySamples1 = new ArrayList<>(2);
