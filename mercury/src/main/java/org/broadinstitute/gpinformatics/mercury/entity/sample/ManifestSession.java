@@ -370,7 +370,7 @@ public class ManifestSession {
         for (ManifestRecord record : records) {
             if (record.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue().equals(collaboratorBarcode)) {
                 if (record.getStatus() != ManifestRecord.Status.SCANNED) {
-                    throw new TubeTransferException(ManifestRecord.ErrorStatus.NOT_READY_FOR_ACCESSIONING,
+                    throw new TubeTransferException(ManifestRecord.ErrorStatus.NOT_READY_FOR_TUBE_TRANSFER,
                             SAMPLE_ID_KEY,
                             collaboratorBarcode);
                 }

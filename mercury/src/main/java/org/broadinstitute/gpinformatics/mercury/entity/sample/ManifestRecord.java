@@ -192,17 +192,17 @@ public class ManifestRecord {
          */
         MISSING_SAMPLE("No sample has been scanned to correspond with the manifest record"),
         /**
-         * Represents a scenario in which the user attempts to accession a source tube that
+         * Represents a scenario in which the user attempts to transfer a source tube that
          * did not make it to the ACCESSIONED state.
          */
-        NOT_READY_FOR_ACCESSIONING("Attempting to accession a sample that has not completed manifest registration"),
+        NOT_READY_FOR_TUBE_TRANSFER("Attempting to transfer a sample that has not completed Accessioning"),
         /**
          * Helpful message to note that the user is attempting to accession a source tube into
          * a target vessel that has already gone through accessioning.
          */
         ALREADY_SCANNED_TARGET("The scanned target tube has already been associated with another source sample"),
         /**
-         * TODO This seems to be a duplicate of NOT_READY_FOR_ACCESSIONING.  Need to fully define what this case means.
+         * TODO This seems to be a duplicate of NOT_READY_FOR_TUBE_TRANSFER.  Need to fully define what this case means.
          */
         NOT_REGISTERED(" "),
         /**
