@@ -13,19 +13,18 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
- * TODO scottmat fill in javadoc!!!
+ * Database free tests of ManifestSessions.
  */
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ManifestSessionTest {
 
-    ManifestSession testSession;
+    private ManifestSession testSession;
     private ResearchProject testRp;
     private String sessionPrefix;
     private BspUser testUser;
 
     @BeforeMethod
     public void setUp() throws Exception {
-
         testRp = ResearchProjectTestFactory.createTestResearchProject("RP-332");
         sessionPrefix = "testPrefix";
         testUser = new BSPUserList.QADudeUser("LU", 33L);
@@ -33,52 +32,46 @@ public class ManifestSessionTest {
         testSession = new ManifestSession(testRp, sessionPrefix, testUser);
     }
 
-    public void testBasicProperties() throws Exception {
-
+    public void basicProperties() throws Exception {
         Assert.assertEquals(testSession.getResearchProject(), testRp);
-        Assert.assertEquals(testSession.createSessionName(), sessionPrefix+testSession.getManifestSessionId());
+        Assert.assertEquals(testSession.getSessionName(), sessionPrefix + testSession.getManifestSessionId());
         Assert.assertEquals(testSession.getStatus(), ManifestSession.SessionStatus.OPEN);
 
-        Assert.assertEquals(testSession.getCreatedBy() , testUser.getUserId());
+        Assert.assertEquals(testSession.getCreatedBy(), testUser.getUserId());
         Assert.assertEquals(testSession.getModifiedBy(), testUser.getUserId());
 
         BSPUserList.QADudeUser modifyUser = new BSPUserList.QADudeUser("LM", 43L);
         testSession.setModifiedBy(modifyUser);
 
         Assert.assertEquals(testSession.getModifiedBy(), modifyUser.getUserId());
-
-        testAddRecord();
-
     }
 
-    public void testAddRecord() throws Exception{
-        ManifestRecord testRecord = ManifestTestFactory.buildManifestRecord(null, ImmutableMap.of(
-                Metadata.Key.SAMPLE_TYPE, "value1",
-                Metadata.Key.TUMOR_NORMAL, "value2",
-                Metadata.Key.COLLECTION_DATE, "value3"));
-
-        testSession.addRecord(testRecord);
+    public void addRecord() throws Exception {
+        ManifestRecord testRecord = buildManifestRecord(testSession);
 
         Assert.assertTrue(testSession.getRecords().contains(testRecord));
         Assert.assertEquals(testRecord.getSession(), testSession);
     }
 
-    public void testAddLogEntries() throws Exception{
-        ManifestRecord testRecord = ManifestTestFactory.buildManifestRecord(null, ImmutableMap.of(
+    private ManifestRecord buildManifestRecord(ManifestSession sessionIn) {
+        return ManifestTestFactory.buildManifestRecord(null, ImmutableMap.of(
                 Metadata.Key.SAMPLE_TYPE, "value1",
                 Metadata.Key.TUMOR_NORMAL, "value2",
-                Metadata.Key.COLLECTION_DATE, "value3"));
-        ManifestEvent logEntry = new ManifestEvent("Failed to Upload Record in session",
+                Metadata.Key.BUICK_COLLECTION_DATE, "value3"), sessionIn);
+    }
+
+    public void addLogEntries() throws Exception {
+        ManifestRecord testRecord = buildManifestRecord(testSession);
+        ManifestEvent logEntryWithoutRecord = new ManifestEvent("Failed to Upload Record in session",
                 ManifestEvent.Type.ERROR);
-        testSession.addLogEntry(logEntry);
+        testSession.addLogEntry(logEntryWithoutRecord);
 
         Assert.assertEquals(testSession.getLogEntries().size(), 1);
-        ManifestEvent logEntry2 = new ManifestEvent("Failed to Upload Record in session",testRecord,
+        ManifestEvent logEntryWithRecord = new ManifestEvent("Failed to Upload Record in session", testRecord,
                 ManifestEvent.Type.ERROR);
-        testSession.addLogEntry(logEntry);
+        testSession.addLogEntry(logEntryWithRecord);
 
         Assert.assertEquals(testRecord.getLogEntries().size(), 1);
-
         Assert.assertEquals(testSession.getLogEntries().size(), 2);
     }
 }

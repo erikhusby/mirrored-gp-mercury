@@ -17,7 +17,7 @@ import java.util.Collections;
  * Tests the upload of a spreadsheet containing sample IDs and 2D tube barcodes.
  */
 @Test(groups = TestGroups.DATABASE_FREE)
-public class UploadSampleTubesTest {
+public class UploadSampleVesselsTest {
 
     @Test
     public void testBasic() {
@@ -25,12 +25,13 @@ public class UploadSampleTubesTest {
                 "testdata/SampleVessel.xlsx");
         Assert.assertNotNull(testSpreadSheetInputStream);
         try {
-            SampleVesselProcessor sampleVesselProcessor = new SampleVesselProcessor("Test", null, null, "thompson");
+            SampleVesselProcessor sampleVesselProcessor = new SampleVesselProcessor("Test");
             PoiSpreadsheetParser parser = new PoiSpreadsheetParser(Collections.<String, TableProcessor>emptyMap());
 
             parser.processRows(WorkbookFactory.create(testSpreadSheetInputStream).getSheetAt(0), sampleVesselProcessor);
-            Assert.assertEquals(sampleVesselProcessor.getParentVesselBeans().size(), 1);
-            Assert.assertEquals(sampleVesselProcessor.getParentVesselBeans().get(0).getChildVesselBeans().size(), 16);
+            Assert.assertEquals(sampleVesselProcessor.getMapBarcodeToParentVessel().size(), 1);
+            Assert.assertEquals(sampleVesselProcessor.getMapBarcodeToParentVessel().values().iterator().next().
+                    getChildVesselBeans().size(), 16);
         } catch (ValidationException | IOException | InvalidFormatException e) {
             throw new RuntimeException(e);
         } finally {

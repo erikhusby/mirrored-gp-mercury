@@ -657,7 +657,7 @@ public class ProductOrderEjb {
     /**
      * JIRA Resolutions used by PDOs.
      */
-    private enum JiraResolution {
+    enum JiraResolution {
         UNRESOLVED("Unresolved"),
         COMPLETED("Completed"),
         CANCELLED("Cancelled");
@@ -782,11 +782,11 @@ public class ProductOrderEjb {
      *
      * @throws IOException
      */
-    private void transitionJiraTicket(String jiraTicketKey, JiraResolution currentResolution, JiraTransition state,
+    public void transitionJiraTicket(String jiraTicketKey, JiraResolution currentResolution, JiraTransition state,
                                       @Nullable String transitionComments) throws IOException {
         JiraIssue issue = jiraService.getIssue(jiraTicketKey);
         JiraResolution resolution = JiraResolution.fromString(issue.getResolution());
-        if (currentResolution == resolution) {
+        if (currentResolution != resolution) {
             String jiraCommentText = getUserName() + " performed " + state.getStateName() + " transition";
             if (transitionComments != null) {
                 jiraCommentText = jiraCommentText + ": " + transitionComments;

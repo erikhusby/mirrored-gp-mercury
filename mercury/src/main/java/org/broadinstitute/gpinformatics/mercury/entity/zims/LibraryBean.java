@@ -178,6 +178,9 @@ public class LibraryBean {
     @JsonProperty("workRequestDomain")
     private String workRequestDomain;
 
+    @JsonProperty("regulatoryDesignation")
+    private String regulatoryDesignation;
+
     private String stockSample;
 
 
@@ -215,10 +218,10 @@ public class LibraryBean {
 
         // project was always null in the calls here, so don't send it through. Can add back later.
         this(library, null, initiative, workRequest, indexingScheme, hasIndexingRead, expectedInsertSize,
-                analysisType, referenceSequence, referenceSequenceVersion, null, organism, species, strain, null,
-                aligner, rrbsSizeRange, restrictionEnzyme, bait, null, labMeasuredInsertSize, positiveControl,
-                negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation, customAmpliconSetNames,
-                productOrder, lcSet, bspSampleDTO, labWorkflow, productOrderSample, libraryCreationDate, null, null);
+             analysisType, referenceSequence, referenceSequenceVersion, null, organism, species, strain, null,
+             aligner, rrbsSizeRange, restrictionEnzyme, bait, null, labMeasuredInsertSize, positiveControl,
+             negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation, customAmpliconSetNames,
+             productOrder, lcSet, bspSampleDTO, labWorkflow, productOrderSample, libraryCreationDate, null, null);
     }
 
     /**
@@ -336,6 +339,9 @@ public class LibraryBean {
         this.lcSet = lcSet;
         this.workRequestType = workRequestType;
         this.workRequestDomain = workRequestDomain;
+        if (productOrder != null) {
+            this.regulatoryDesignation = productOrder.getRegulatoryDesignationCodeForPipeline();
+        }
     }
 
     /**
@@ -563,6 +569,10 @@ public class LibraryBean {
 
     public String getWorkRequestDomain() {
         return workRequestDomain;
+    }
+
+    public String getRegulatoryDesignation() {
+        return regulatoryDesignation;
     }
 
     public static final Comparator<LibraryBean> BY_SAMPLE_ID = new Comparator<LibraryBean> () {

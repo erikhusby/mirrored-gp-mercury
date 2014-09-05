@@ -204,8 +204,10 @@ public class LabVesselFactory implements Serializable {
                                 childVesselBean.getSampleId(), metadataSource));
                         staticPlate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
                     }
-                    staticPlate.addInPlaceEvent(new LabEvent(labEventType, eventDate, "BSP", disambiguator, operator,
-                                                             "BSP"));
+                    if (labEventType != null) {
+                        staticPlate.addInPlaceEvent(new LabEvent(labEventType, eventDate, "BSP", disambiguator, operator,
+                                                                 "BSP"));
+                    }
                     disambiguator++;
                 } else if (vesselType.toLowerCase().contains("rack") || vesselType.toLowerCase().contains("box")
                            || RackOfTubes.RackType.getByName(vesselType) != null) {
@@ -231,9 +233,11 @@ public class LabVesselFactory implements Serializable {
                                     childVesselBean.getVesselType());
                         }
                         barcodedTube.addSample(getMercurySample(mapIdToListMercurySample, mapIdToListPdoSamples,
-                                childVesselBean.getSampleId(), MercurySample.MetadataSource.BSP));
-                        barcodedTube.addInPlaceEvent(new LabEvent(labEventType, eventDate, "BSP", disambiguator,
-                                                                      operator, "BSP"));
+                                childVesselBean.getSampleId(), metadataSource));
+                        if (labEventType != null) {
+                            barcodedTube.addInPlaceEvent(new LabEvent(labEventType, eventDate, "BSP", disambiguator,
+                                    operator, "BSP"));
+                        }
                         disambiguator++;
                         mapPositionToTube.put(vesselPosition, barcodedTube);
                         labVessels.add(barcodedTube);
@@ -250,8 +254,10 @@ public class LabVesselFactory implements Serializable {
                         tubeFormation = existingTubeFormation;
                     }
                     tubeFormation.addRackOfTubes(rackOfTubes);
-                    tubeFormation.addInPlaceEvent(new LabEvent(labEventType, eventDate, "BSP", disambiguator, operator,
-                            "BSP"));
+                    if (labEventType != null) {
+                        tubeFormation.addInPlaceEvent(new LabEvent(labEventType, eventDate, "BSP", disambiguator, operator,
+                                "BSP"));
+                    }
                 } else {
                     throw new RuntimeException("Unexpected vessel type with child vessels " +
                                                parentVesselBean.getVesselType());
