@@ -214,11 +214,11 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
      * no arg constructor.
      */
     public ResearchProject() {
-        this(null, null, null, false);
+        this(null, null, null, false, null);
     }
 
     public ResearchProject(BspUser user) {
-        this(user.getUserId(), null, null, false);
+        this(user.getUserId(), null, null, false, null);
     }
 
     /**
@@ -228,8 +228,10 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
      * @param title         The title (name) of the project
      * @param synopsis      A description of the project
      * @param irbNotEngaged Is this project set up for NO IRB?
+     * @param regulatoryDesignation
      */
-    public ResearchProject(Long createdBy, String title, String synopsis, boolean irbNotEngaged) {
+    public ResearchProject(Long createdBy, String title, String synopsis, boolean irbNotEngaged,
+                           RegulatoryDesignation regulatoryDesignation) {
         createdDate = new Date();
         modifiedDate = createdDate;
         irbNotes = "";
@@ -239,6 +241,7 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         this.createdBy = createdBy;
         this.modifiedBy = createdBy;
         this.irbNotEngaged = irbNotEngaged;
+        this.regulatoryDesignation = regulatoryDesignation;
         if (createdBy != null) {
             addPerson(RoleType.PM, createdBy);
         }

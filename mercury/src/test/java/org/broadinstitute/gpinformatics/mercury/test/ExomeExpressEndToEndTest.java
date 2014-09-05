@@ -121,7 +121,8 @@ public class ExomeExpressEndToEndTest {
                 "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
                 40, null, null, true, Workflow.AGILENT_EXOME_EXPRESS, false, "agg type"),
                                                       new ResearchProject(101L, "Test RP", "Test synopsis",
-                                                                          false));
+                                                                          false,
+                                                                          ResearchProject.RegulatoryDesignation.RESEARCH_ONLY));
         String jiraTicketKey = "PD0-1";
         productOrder1.setJiraTicketKey(jiraTicketKey);
         productOrder1.setOrderStatus(ProductOrder.OrderStatus.Submitted);
