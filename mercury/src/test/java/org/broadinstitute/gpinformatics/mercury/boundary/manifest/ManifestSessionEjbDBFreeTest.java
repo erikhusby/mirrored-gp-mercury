@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -26,7 +25,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -295,10 +293,19 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     private ManifestSessionAndEjbHolder buildHolderForAcceptSession(String fileName) throws FileNotFoundException {
+        return buildHolderForSession(fileName, TEST_RESEARCH_PROJECT_KEY, ManifestTestFactory.CreationType.UPLOAD,
+                ManifestRecord.Status.SCANNED);
+
+    }
+
+    private ManifestSessionAndEjbHolder buildHolderForSession(String fileName, String researchProjectKey,
+                                                              ManifestTestFactory.CreationType starterType,
+                                                              ManifestRecord.Status initialStatus)
+            throws FileNotFoundException {
         final ManifestSessionAndEjbHolder holder = new ManifestSessionAndEjbHolder();
 
         ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(
-                TEST_RESEARCH_PROJECT_KEY);
+                researchProjectKey);
 
         Mockito.when(manifestSessionDao.find(Mockito.anyLong())).thenAnswer(new Answer<ManifestSession>() {
             @Override
@@ -309,9 +316,13 @@ public class ManifestSessionEjbDBFreeTest {
         Mockito.when(researchProjectDao.findByBusinessKey(Mockito.anyString())).thenReturn(researchProject);
 
         holder.ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
-        holder.manifestSession = uploadManifest(holder.ejb, fileName, researchProject);
+        if(starterType == ManifestTestFactory.CreationType.UPLOAD) {
+            holder.manifestSession = uploadManifest(holder.ejb, fileName, researchProject);
+        }else {
+            holder.manifestSession = ManifestTestFactory.buildManifestSession(researchProjectKey, "BuickCloseGood",
+                    new BSPUserList.QADudeUser("LU", 342L), 20, initialStatus);
+        }
         return holder;
-
     }
 
     public void acceptUploadSuccessful() throws FileNotFoundException {
@@ -527,38 +538,35 @@ public class ManifestSessionEjbDBFreeTest {
 
     public void closeGoodManifest() throws Exception {
 
-        ManifestSession session = ManifestTestFactory.buildManifestSession(TEST_RESEARCH_PROJECT_KEY, "BuickCloseGood",
-                new BSPUserList.QADudeUser("LU", 342L),20, ManifestRecord.Status.SCANNED);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(null,TEST_RESEARCH_PROJECT_KEY, ManifestTestFactory.CreationType.FACTORY,
+                ManifestRecord.Status.SCANNED);
 
-        Mockito.when(manifestSessionDao.find(Mockito.anyLong())).thenReturn(session);
-        ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
+        holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
 
-        ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
-
-        assertThat(session.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
-        assertThat(session.getManifestEvents(), is(empty()));
-        for (ManifestRecord manifestRecord : session.getRecords()) {
+        assertThat(holder.manifestSession.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
+        assertThat(holder.manifestSession.getManifestEvents(), is(empty()));
+        for (ManifestRecord manifestRecord : holder.manifestSession.getRecords()) {
             assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.ACCESSIONED ));
         }
     }
 
     public void closeManifestWithDuplicate() throws Exception {
 
-        ManifestSession session = ManifestTestFactory.buildManifestSession(TEST_RESEARCH_PROJECT_KEY, "BuickCloseGood",
-                new BSPUserList.QADudeUser("LU", 342L), 19, ManifestRecord.Status.SCANNED);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
+                ManifestTestFactory.CreationType.FACTORY,
+                ManifestRecord.Status.SCANNED);
         String dupeSampleId = GOOD_TUBE_BARCODE;
-        addExtraRecord(session, dupeSampleId, ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
-                ManifestRecord.Status.UPLOADED);
+        ManifestTestFactory
+                .addExtraRecord(holder.manifestSession, dupeSampleId, ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
+                        ManifestRecord.Status.UPLOADED);
 
-        Mockito.when(manifestSessionDao.find(Mockito.anyLong())).thenReturn(session);
-        ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
 
-        ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
-        assertThat(session.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
+        holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
+        assertThat(holder.manifestSession.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
 
-        assertThat(session.getManifestEvents().size(), is(1));
+        assertThat(holder.manifestSession.getManifestEvents().size(), is(1));
 
-        for (ManifestRecord manifestRecord : session.getRecords()) {
+        for (ManifestRecord manifestRecord : holder.manifestSession.getRecords()) {
             if (manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue().equals(dupeSampleId)) {
                 assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOADED));
             } else {
@@ -568,22 +576,21 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     public void closeManifestWithUnScannedRecord() throws Exception {
-        ManifestSession session = ManifestTestFactory.buildManifestSession(TEST_RESEARCH_PROJECT_KEY, "BuickCloseGood",
-                new BSPUserList.QADudeUser("LU", 342L), 19, ManifestRecord.Status.SCANNED);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
+                ManifestTestFactory.CreationType.FACTORY,
+                ManifestRecord.Status.SCANNED);
         String unscannedBarcode = GOOD_TUBE_BARCODE;
-        addExtraRecord(session, unscannedBarcode, ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
+        ManifestTestFactory.addExtraRecord(holder.manifestSession, unscannedBarcode,
+                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
                 ManifestRecord.Status.UPLOAD_ACCEPTED);
 
-        Mockito.when(manifestSessionDao.find(Mockito.anyLong())).thenReturn(session);
-        ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
+        holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
 
-        ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
+        assertThat(holder.manifestSession.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
 
-        assertThat(session.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
+        assertThat(holder.manifestSession.getManifestEvents().size(), is(1));
 
-        assertThat(session.getManifestEvents().size(), is(1));
-
-        for (ManifestRecord manifestRecord : session.getRecords()) {
+        for (ManifestRecord manifestRecord : holder.manifestSession.getRecords()) {
             if(manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue().equals(unscannedBarcode)) {
                 assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOAD_ACCEPTED));
             } else {
@@ -594,29 +601,28 @@ public class ManifestSessionEjbDBFreeTest {
 
     public void closeManifestWithDuplicateAndUnScannedRecords() throws Exception {
 
-        ManifestSession session = ManifestTestFactory.buildManifestSession(TEST_RESEARCH_PROJECT_KEY, "BuickCloseGood",
-                new BSPUserList.QADudeUser("LU", 342L), 19, ManifestRecord.Status.SCANNED);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
+                ManifestTestFactory.CreationType.FACTORY,
+                ManifestRecord.Status.SCANNED);
 
         String unscannedBarcode = GOOD_TUBE_BARCODE;
-        addExtraRecord(session, unscannedBarcode, ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
+        ManifestTestFactory.addExtraRecord(holder.manifestSession, unscannedBarcode,
+                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
                 ManifestRecord.Status.UPLOAD_ACCEPTED);
 
 
         String dupeSampleId = GOOD_TUBE_BARCODE+"dupe";
-        addExtraRecord(session, dupeSampleId, ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
-                ManifestRecord.Status.UPLOADED);
+        ManifestTestFactory
+                .addExtraRecord(holder.manifestSession, dupeSampleId, ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
+                        ManifestRecord.Status.UPLOADED);
+
+        holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
 
 
-        Mockito.when(manifestSessionDao.find(Mockito.anyLong())).thenReturn(session);
-        ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
+        assertThat(holder.manifestSession.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
 
-        ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
-
-
-        assertThat(session.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
-
-        assertThat(session.getManifestEvents().size(), is(2));
-        for (ManifestRecord manifestRecord : session.getRecords()) {
+        assertThat(holder.manifestSession.getManifestEvents().size(), is(2));
+        for (ManifestRecord manifestRecord : holder.manifestSession.getRecords()) {
             if(manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue().equals(unscannedBarcode)) {
                 assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOAD_ACCEPTED));
             } else if(manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue().equals(dupeSampleId)) {
@@ -628,21 +634,4 @@ public class ManifestSessionEjbDBFreeTest {
 
     }
 
-    private void addExtraRecord(ManifestSession session, String sampleId, ManifestRecord.ErrorStatus targetStatus,
-                                ManifestRecord.Status status) {
-        ManifestRecord dupeRecord = ManifestTestFactory.buildManifestRecord(20, sampleId);
-        dupeRecord.setStatus(status);
-        session.addRecord(dupeRecord);
-        Optional<ManifestRecord.ErrorStatus> possibleStatus = Optional.of(targetStatus);
-        if(possibleStatus.isPresent()) {
-            session.addManifestEvent(new ManifestEvent(getSeverity(possibleStatus.get()),
-                    possibleStatus.get().formatMessage(Metadata.Key.SAMPLE_ID.name(), sampleId), dupeRecord));
-        }
-    }
-
-    private ManifestEvent.Severity getSeverity(ManifestRecord.ErrorStatus status) {
-        EnumSet<ManifestRecord.ErrorStatus> quarantinedSet = EnumSet.of(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
-                ManifestRecord.ErrorStatus.NOT_READY_FOR_TUBE_TRANSFER);
-        return (quarantinedSet.contains(status))?ManifestEvent.Severity.QUARANTINED: ManifestEvent.Severity.ERROR;
-    }
 }

@@ -1,14 +1,17 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
+import com.google.common.base.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 
@@ -67,4 +70,24 @@ public class ManifestTestFactory {
         }
         return manifestRecord;
     }
+
+    public static void addExtraRecord(ManifestSession session, String sampleId, ManifestRecord.ErrorStatus targetStatus,
+                                ManifestRecord.Status status) {
+        ManifestRecord dupeRecord = buildManifestRecord(20, sampleId);
+        dupeRecord.setStatus(status);
+        session.addRecord(dupeRecord);
+        Optional<ManifestRecord.ErrorStatus> possibleStatus = Optional.of(targetStatus);
+        if(possibleStatus.isPresent()) {
+            session.addManifestEvent(new ManifestEvent(getSeverity(possibleStatus.get()),
+                    possibleStatus.get().formatMessage(Metadata.Key.SAMPLE_ID.name(), sampleId), dupeRecord));
+        }
+    }
+
+    public static ManifestEvent.Severity getSeverity(ManifestRecord.ErrorStatus status) {
+        EnumSet<ManifestRecord.ErrorStatus> quarantinedSet = EnumSet.of(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
+                ManifestRecord.ErrorStatus.NOT_READY_FOR_TUBE_TRANSFER);
+        return (quarantinedSet.contains(status))?ManifestEvent.Severity.QUARANTINED: ManifestEvent.Severity.ERROR;
+    }
+
+    public enum CreationType{UPLOAD, FACTORY}
 }
