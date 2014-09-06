@@ -508,7 +508,7 @@ public class ManifestSession {
                 String sampleId = record.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue();
                 String message = ManifestRecord.ErrorStatus.MISSING_SAMPLE.formatMessage(SAMPLE_ID_KEY, sampleId);
 
-                ManifestEvent manifestEvent = new ManifestEvent(ManifestEvent.Severity.ERROR, message, record);
+                ManifestEvent manifestEvent = new ManifestEvent(ManifestEvent.Severity.QUARANTINED, message, record);
                 manifestEvents.add(manifestEvent);
             } else {
                 record.setStatus(ManifestRecord.Status.ACCESSIONED);

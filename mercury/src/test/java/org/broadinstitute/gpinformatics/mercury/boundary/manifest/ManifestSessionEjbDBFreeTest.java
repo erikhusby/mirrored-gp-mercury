@@ -110,7 +110,8 @@ public class ManifestSessionEjbDBFreeTest {
         return uploadManifest(pathToManifestFile, researchProject);
     }
 
-    private ManifestSession uploadManifest(ManifestSessionEjb manifestSessionEjb, String pathToManifestFile, ResearchProject researchProject)
+    private ManifestSession uploadManifest(ManifestSessionEjb manifestSessionEjb, String pathToManifestFile,
+                                           ResearchProject researchProject)
             throws FileNotFoundException {
         String PATH_TO_SPREADSHEET = TestUtils.getTestData(pathToManifestFile);
         InputStream inputStream = new FileInputStream(PATH_TO_SPREADSHEET);
@@ -142,7 +143,7 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     @DataProvider(name = BAD_MANIFEST_UPLOAD_PROVIDER)
-    public Object [][] badManifestUploadProvider() {
+    public Object[][] badManifestUploadProvider() {
         return new Object[][]{
                 {"Not an Excel file", "manifest-upload/not-an-excel-file.txt"},
                 {"Missing required field", "manifest-import/test-manifest-missing-required.xlsx"},
@@ -199,7 +200,8 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(manifestSession.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
 
         // The assert below is for size * 2 since all manifest records in question are in this manifest session.
-        assertThat(manifestSession.getManifestEvents(), hasSize(PATIENT_IDS_FOR_SAME_MANIFEST_GENDER_MISMATCHES.size() * 2));
+        assertThat(manifestSession.getManifestEvents(),
+                hasSize(PATIENT_IDS_FOR_SAME_MANIFEST_GENDER_MISMATCHES.size() * 2));
         for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
             assertThat(manifestRecord.isQuarantined(), is(false));
             Metadata patientIdMetadata = manifestRecord.getMetadataByKey(Metadata.Key.PATIENT_ID);
@@ -285,7 +287,6 @@ public class ManifestSessionEjbDBFreeTest {
      * Utility class to encapsulate both objects returned by the #buildForAcceptSession method, as well as affording
      * the level of indirection required for programming a ManifestSessionDao mock to return a particular
      * ManifestSession before that ManifestSession has actually been created.
-     *
      */
     private class ManifestSessionAndEjbHolder {
         ManifestSession manifestSession;
@@ -316,9 +317,9 @@ public class ManifestSessionEjbDBFreeTest {
         Mockito.when(researchProjectDao.findByBusinessKey(Mockito.anyString())).thenReturn(researchProject);
 
         holder.ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
-        if(starterType == ManifestTestFactory.CreationType.UPLOAD) {
+        if (starterType == ManifestTestFactory.CreationType.UPLOAD) {
             holder.manifestSession = uploadManifest(holder.ejb, fileName, researchProject);
-        }else {
+        } else {
             holder.manifestSession = ManifestTestFactory.buildManifestSession(researchProjectKey, "BuickCloseGood",
                     new BSPUserList.QADudeUser("LU", 342L), 20, initialStatus);
         }
@@ -402,7 +403,7 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     @DataProvider(name = PATHS_TO_PREFIXES_PROVIDER)
-    private Iterator<Object []> pathsToPrefixesProvider() {
+    private Iterator<Object[]> pathsToPrefixesProvider() {
         String[] paths = {
                 // no path
                 "",
@@ -428,7 +429,7 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     @DataProvider(name = GOOD_MANIFEST_ACCESSION_SCAN_PROVIDER)
-    public Object [][] goodManifestAccessionScanProvider() {
+    public Object[][] goodManifestAccessionScanProvider() {
         return new Object[][]{
                 // Good tube barcode should succeed.
                 {GOOD_TUBE_BARCODE, true},
@@ -512,7 +513,8 @@ public class ManifestSessionEjbDBFreeTest {
                 ManifestRecord.ErrorStatus.MISMATCHED_GENDER.getBaseMessage()));
         assertThat(manifestEvent.getSeverity(), is(ManifestEvent.Severity.ERROR));
 
-        ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue());
+        ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID,
+                manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue());
 
         assertThat(manifestSession.getManifestEvents(), hasSize(EXPECTED_NUMBER_OF_EVENTS_ON_SESSION));
         assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.SCANNED));
@@ -532,21 +534,23 @@ public class ManifestSessionEjbDBFreeTest {
             ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, GOOD_TUBE_BARCODE);
             Assert.fail();
         } catch (InformaticsServiceException e) {
-            assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_SCAN.getBaseMessage()));
+            assertThat(e.getMessage(),
+                    containsString(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_SCAN.getBaseMessage()));
         }
     }
 
     public void closeGoodManifest() throws Exception {
 
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(null,TEST_RESEARCH_PROJECT_KEY, ManifestTestFactory.CreationType.FACTORY,
-                ManifestRecord.Status.SCANNED);
+        ManifestSessionAndEjbHolder holder =
+                buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY, ManifestTestFactory.CreationType.FACTORY,
+                        ManifestRecord.Status.SCANNED);
 
         holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
 
         assertThat(holder.manifestSession.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
         assertThat(holder.manifestSession.getManifestEvents(), is(empty()));
         for (ManifestRecord manifestRecord : holder.manifestSession.getRecords()) {
-            assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.ACCESSIONED ));
+            assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.ACCESSIONED));
         }
     }
 
@@ -581,8 +585,9 @@ public class ManifestSessionEjbDBFreeTest {
                 ManifestRecord.Status.SCANNED);
         String unscannedBarcode = GOOD_TUBE_BARCODE;
         ManifestTestFactory.addExtraRecord(holder.manifestSession, unscannedBarcode,
-                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
+                null,
                 ManifestRecord.Status.UPLOAD_ACCEPTED);
+
 
         holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
 
@@ -591,8 +596,9 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(holder.manifestSession.getManifestEvents().size(), is(1));
 
         for (ManifestRecord manifestRecord : holder.manifestSession.getRecords()) {
-            if(manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue().equals(unscannedBarcode)) {
+            if (manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue().equals(unscannedBarcode)) {
                 assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOAD_ACCEPTED));
+                assertThat(manifestRecord.isQuarantined(), is(true));
             } else {
                 assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.ACCESSIONED));
             }
@@ -607,31 +613,57 @@ public class ManifestSessionEjbDBFreeTest {
 
         String unscannedBarcode = GOOD_TUBE_BARCODE;
         ManifestTestFactory.addExtraRecord(holder.manifestSession, unscannedBarcode,
+                null, ManifestRecord.Status.UPLOAD_ACCEPTED);
+
+
+        String dupeSampleId = GOOD_TUBE_BARCODE + "dupe";
+        ManifestTestFactory.addExtraRecord(holder.manifestSession, dupeSampleId,
                 ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
-                ManifestRecord.Status.UPLOAD_ACCEPTED);
-
-
-        String dupeSampleId = GOOD_TUBE_BARCODE+"dupe";
-        ManifestTestFactory
-                .addExtraRecord(holder.manifestSession, dupeSampleId, ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
-                        ManifestRecord.Status.UPLOADED);
+                ManifestRecord.Status.UPLOADED);
 
         holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
-
 
         assertThat(holder.manifestSession.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
 
         assertThat(holder.manifestSession.getManifestEvents().size(), is(2));
         for (ManifestRecord manifestRecord : holder.manifestSession.getRecords()) {
-            if(manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue().equals(unscannedBarcode)) {
+            if (manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue().equals(unscannedBarcode)) {
                 assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOAD_ACCEPTED));
-            } else if(manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue().equals(dupeSampleId)) {
+                assertThat(manifestRecord.isQuarantined(), is(true));
+            } else if (manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue().equals(dupeSampleId)) {
                 assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOADED));
+                assertThat(manifestRecord.isQuarantined(), is(true));
             } else {
                 assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.ACCESSIONED));
             }
         }
+    }
 
+    public void closeManifestWithMisMatchedGenderRecords() throws Exception {
+
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
+                ManifestTestFactory.CreationType.FACTORY,
+                ManifestRecord.Status.SCANNED);
+
+        String misMatch1Barcode = GOOD_TUBE_BARCODE + "BadGender1";
+        ManifestTestFactory.addExtraRecord(holder.manifestSession, misMatch1Barcode,
+                ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
+                ManifestRecord.Status.SCANNED);
+
+        String misMatch2Barcode = GOOD_TUBE_BARCODE + "BadGender2";
+        ManifestTestFactory.addExtraRecord(holder.manifestSession, misMatch2Barcode,
+                ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
+                ManifestRecord.Status.SCANNED);
+
+        holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
+
+        assertThat(holder.manifestSession.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
+
+        assertThat(holder.manifestSession.getManifestEvents().size(), is(2));
+
+        for (ManifestRecord manifestRecord : holder.manifestSession.getRecords()) {
+            assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.ACCESSIONED));
+        }
     }
 
 }

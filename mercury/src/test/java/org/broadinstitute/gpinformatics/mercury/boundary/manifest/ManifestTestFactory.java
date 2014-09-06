@@ -71,15 +71,15 @@ public class ManifestTestFactory {
         return manifestRecord;
     }
 
-    public static void addExtraRecord(ManifestSession session, String sampleId, ManifestRecord.ErrorStatus targetStatus,
+    public static void addExtraRecord(ManifestSession session, String sampleId, ManifestRecord.ErrorStatus errorStatus,
                                 ManifestRecord.Status status) {
         ManifestRecord dupeRecord = buildManifestRecord(20, sampleId);
         dupeRecord.setStatus(status);
         session.addRecord(dupeRecord);
-        Optional<ManifestRecord.ErrorStatus> possibleStatus = Optional.of(targetStatus);
-        if(possibleStatus.isPresent()) {
-            session.addManifestEvent(new ManifestEvent(getSeverity(possibleStatus.get()),
-                    possibleStatus.get().formatMessage(Metadata.Key.SAMPLE_ID.name(), sampleId), dupeRecord));
+
+        if(errorStatus != null) {
+            session.addManifestEvent(new ManifestEvent(getSeverity(errorStatus),
+                    errorStatus.formatMessage(Metadata.Key.SAMPLE_ID.name(), sampleId), dupeRecord));
         }
     }
 
