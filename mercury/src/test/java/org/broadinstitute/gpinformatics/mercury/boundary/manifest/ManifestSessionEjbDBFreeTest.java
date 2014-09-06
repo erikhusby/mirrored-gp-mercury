@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -25,6 +26,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -544,13 +546,9 @@ public class ManifestSessionEjbDBFreeTest {
 
         ManifestSession session = ManifestTestFactory.buildManifestSession(TEST_RESEARCH_PROJECT_KEY, "BuickCloseGood",
                 new BSPUserList.QADudeUser("LU", 342L), 19, ManifestRecord.Status.SCANNED);
-        String dupeSampleId = "8238294";
-        ManifestRecord dupeRecord = ManifestTestFactory.buildManifestRecord(20, dupeSampleId);
-        dupeRecord.setStatus(ManifestRecord.Status.UPLOADED);
-        session.addRecord(dupeRecord);
-        session.addManifestEvent(new ManifestEvent(ManifestEvent.Severity.QUARANTINED,
-                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID
-                        .formatMessage(Metadata.Key.SAMPLE_ID.name(), dupeSampleId), dupeRecord));
+        String dupeSampleId = GOOD_TUBE_BARCODE;
+        addExtraRecord(session, dupeSampleId, ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
+                ManifestRecord.Status.UPLOADED);
 
         Mockito.when(manifestSessionDao.find(Mockito.anyLong())).thenReturn(session);
         ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
@@ -567,5 +565,48 @@ public class ManifestSessionEjbDBFreeTest {
                 assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.ACCESSIONED));
             }
         }
+    }
+
+    public void closeManifestWithUnScannedRecord() throws Exception {
+        ManifestSession session = ManifestTestFactory.buildManifestSession(TEST_RESEARCH_PROJECT_KEY, "BuickCloseGood",
+                new BSPUserList.QADudeUser("LU", 342L), 19, ManifestRecord.Status.SCANNED);
+        String unscannedBarcode = GOOD_TUBE_BARCODE;
+        addExtraRecord(session, unscannedBarcode, ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
+                ManifestRecord.Status.UPLOAD_ACCEPTED);
+
+        Mockito.when(manifestSessionDao.find(Mockito.anyLong())).thenReturn(session);
+        ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
+
+        ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
+
+        assertThat(session.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
+
+        assertThat(session.getManifestEvents().size(), is(1));
+
+        for (ManifestRecord manifestRecord : session.getRecords()) {
+            if(manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue().equals(unscannedBarcode)) {
+                assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOAD_ACCEPTED));
+            } else {
+                assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.ACCESSIONED));
+            }
+        }
+    }
+
+    private void addExtraRecord(ManifestSession session, String sampleId, ManifestRecord.ErrorStatus targetStatus,
+                                ManifestRecord.Status status) {
+        ManifestRecord dupeRecord = ManifestTestFactory.buildManifestRecord(20, sampleId);
+        dupeRecord.setStatus(status);
+        session.addRecord(dupeRecord);
+        Optional<ManifestRecord.ErrorStatus> possibleStatus = Optional.of(targetStatus);
+        if(possibleStatus.isPresent()) {
+            session.addManifestEvent(new ManifestEvent(getSeverity(possibleStatus.get()),
+                    possibleStatus.get().formatMessage(Metadata.Key.SAMPLE_ID.name(), sampleId), dupeRecord));
+        }
+    }
+
+    private ManifestEvent.Severity getSeverity(ManifestRecord.ErrorStatus status) {
+        EnumSet<ManifestRecord.ErrorStatus> quarantinedSet = EnumSet.of(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
+                ManifestRecord.ErrorStatus.NOT_READY_FOR_TUBE_TRANSFER);
+        return (quarantinedSet.contains(status))?ManifestEvent.Severity.QUARANTINED: ManifestEvent.Severity.ERROR;
     }
 }
