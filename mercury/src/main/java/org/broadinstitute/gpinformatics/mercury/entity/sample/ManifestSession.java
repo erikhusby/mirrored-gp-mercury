@@ -500,6 +500,23 @@ public class ManifestSession {
         return null;
     }
 
+    public void completeSession() {
+
+        for (ManifestRecord record : getNonQuarantinedRecords()) {
+            if ((record.getStatus() != ManifestRecord.Status.SCANNED) ) {
+
+                String sampleId = record.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue();
+                String message = ManifestRecord.ErrorStatus.MISSING_SAMPLE.formatMessage(SAMPLE_ID_KEY, sampleId);
+
+                ManifestEvent manifestEvent = new ManifestEvent(ManifestEvent.Severity.ERROR, message, record);
+                manifestEvents.add(manifestEvent);
+            } else {
+                record.setStatus(ManifestRecord.Status.ACCESSIONED);
+            }
+        }
+        setStatus(SessionStatus.COMPLETED);
+    }
+
     /**
      * Indicator to denote the availability (complete or otherwise) of a manifest session for the sample registration
      * process.

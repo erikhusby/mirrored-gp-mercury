@@ -17,6 +17,7 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -72,10 +73,10 @@ public class ManifestSessionEjbDBFreeTest {
     private static final String GOOD_TUBE_BARCODE = "03101231193";
 
     private static final String BAD_TUBE_BARCODE = "bad tube barcode";
+    private ManifestSessionDao manifestSessionDao;
+    private ResearchProjectDao researchProjectDao;
 
     public void researchProjectNotFound() {
-        ManifestSessionDao manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
-        ResearchProjectDao researchProjectDao = Mockito.mock(ResearchProjectDao.class);
         ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
         try {
             ejb.uploadManifest(null, null, null, TEST_USER);
@@ -84,10 +85,14 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
+    @BeforeMethod
+    public void setUp() throws Exception {
+        manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
+        researchProjectDao = Mockito.mock(ResearchProjectDao.class);
+    }
+
     @Test(dataProvider = PATHS_TO_PREFIXES_PROVIDER)
     public void extractPrefixFromFilename(String path, String expectedPrefix) {
-        ManifestSessionDao manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
-        ResearchProjectDao researchProjectDao = Mockito.mock(ResearchProjectDao.class);
         ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
         try {
             String actualPrefix = ejb.extractPrefixFromFilename(path);
@@ -123,8 +128,6 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     private ManifestSessionEjb buildEjbForUpload(ResearchProject researchProject) {
-        ManifestSessionDao manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
-        ResearchProjectDao researchProjectDao = Mockito.mock(ResearchProjectDao.class);
         Mockito.when(researchProjectDao.findByBusinessKey(Mockito.anyString())).thenReturn(researchProject);
 
         return new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
@@ -295,14 +298,12 @@ public class ManifestSessionEjbDBFreeTest {
         ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(
                 TEST_RESEARCH_PROJECT_KEY);
 
-        ManifestSessionDao manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
         Mockito.when(manifestSessionDao.find(Mockito.anyLong())).thenAnswer(new Answer<ManifestSession>() {
             @Override
             public ManifestSession answer(InvocationOnMock invocation) throws Throwable {
                 return holder.manifestSession;
             }
         });
-        ResearchProjectDao researchProjectDao = Mockito.mock(ResearchProjectDao.class);
         Mockito.when(researchProjectDao.findByBusinessKey(Mockito.anyString())).thenReturn(researchProject);
 
         holder.ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
@@ -519,6 +520,52 @@ public class ManifestSessionEjbDBFreeTest {
             Assert.fail();
         } catch (InformaticsServiceException e) {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_SCAN.getBaseMessage()));
+        }
+    }
+
+    public void closeGoodManifest() throws Exception {
+
+        ManifestSession session = ManifestTestFactory.buildManifestSession(TEST_RESEARCH_PROJECT_KEY, "BuickCloseGood",
+                new BSPUserList.QADudeUser("LU", 342L),20, ManifestRecord.Status.SCANNED);
+
+        Mockito.when(manifestSessionDao.find(Mockito.anyLong())).thenReturn(session);
+        ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
+
+        ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
+
+        assertThat(session.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
+        assertThat(session.getManifestEvents(), is(empty()));
+        for (ManifestRecord manifestRecord : session.getRecords()) {
+            assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.ACCESSIONED ));
+        }
+    }
+
+    public void closeManifestWithDuplicate() throws Exception {
+
+        ManifestSession session = ManifestTestFactory.buildManifestSession(TEST_RESEARCH_PROJECT_KEY, "BuickCloseGood",
+                new BSPUserList.QADudeUser("LU", 342L), 19, ManifestRecord.Status.SCANNED);
+        String dupeSampleId = "8238294";
+        ManifestRecord dupeRecord = ManifestTestFactory.buildManifestRecord(20, dupeSampleId);
+        dupeRecord.setStatus(ManifestRecord.Status.UPLOADED);
+        session.addRecord(dupeRecord);
+        session.addManifestEvent(new ManifestEvent(ManifestEvent.Severity.QUARANTINED,
+                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID
+                        .formatMessage(Metadata.Key.SAMPLE_ID.name(), dupeSampleId), dupeRecord));
+
+        Mockito.when(manifestSessionDao.find(Mockito.anyLong())).thenReturn(session);
+        ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
+
+        ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
+        assertThat(session.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
+
+        assertThat(session.getManifestEvents().size(), is(1));
+
+        for (ManifestRecord manifestRecord : session.getRecords()) {
+            if (manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue().equals(dupeSampleId)) {
+                assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOADED));
+            } else {
+                assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.ACCESSIONED));
+            }
         }
     }
 }

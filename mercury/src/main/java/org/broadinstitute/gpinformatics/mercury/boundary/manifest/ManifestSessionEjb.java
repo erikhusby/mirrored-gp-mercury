@@ -151,4 +151,14 @@ public class ManifestSessionEjb {
 
         manifestRecord.setStatus(ManifestRecord.Status.SCANNED);
     }
+
+    public void closeSession(long sessionId) {
+
+        ManifestSession manifestSession = manifestSessionDao.find(sessionId);
+
+        manifestSession.completeSession();
+
+        manifestSessionDao.persist(manifestSession);
+
+    }
 }

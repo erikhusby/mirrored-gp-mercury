@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
@@ -29,18 +30,41 @@ public class ManifestTestFactory {
 
     public static ManifestSession buildManifestSession(String researchProjectKey, String sessionPrefix,
                                                        BSPUserList.QADudeUser createdBy, int numberOfRecords) {
+        return buildManifestSession(researchProjectKey, sessionPrefix, createdBy, numberOfRecords,
+                ManifestRecord.Status.UPLOADED);
+    }
+
+    public static ManifestSession buildManifestSession(String researchProjectKey, String sessionPrefix,
+                                                        BSPUserList.QADudeUser createdBy, int numberOfRecords,
+                                                        ManifestRecord.Status defaultStatus) {
         ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(researchProjectKey);
         ManifestSession manifestSession = new ManifestSession(researchProject, sessionPrefix,
                 createdBy);
 
         for (int i = 1; i <= numberOfRecords; i++) {
-            ManifestRecord manifestRecord = new ManifestRecord();
-            for (Metadata.Key key : Metadata.Key.values()) {
-                Metadata metadata = new Metadata(key, key.name() + "_" + i);
-                manifestRecord.getMetadata().add(metadata);
-            }
+            ManifestRecord manifestRecord = buildManifestRecord((int) i);
+            manifestRecord.setStatus(defaultStatus);
             manifestSession.addRecord(manifestRecord);
         }
         return manifestSession;
+    }
+
+    public static ManifestRecord buildManifestRecord(int i) {
+        return buildManifestRecord(i, null);
+    }
+
+    public static ManifestRecord buildManifestRecord(int i, String sampleId) {
+        ManifestRecord manifestRecord = new ManifestRecord();
+        for (Metadata.Key key : Metadata.Key.values()) {
+            String value;
+            if(key == Metadata.Key.SAMPLE_ID && StringUtils.isNotBlank(sampleId)) {
+                value = sampleId;
+            } else {
+                value = key.name() + "_" + i;
+            }
+            Metadata metadata = new Metadata(key, value);
+            manifestRecord.getMetadata().add(metadata);
+        }
+        return manifestRecord;
     }
 }
