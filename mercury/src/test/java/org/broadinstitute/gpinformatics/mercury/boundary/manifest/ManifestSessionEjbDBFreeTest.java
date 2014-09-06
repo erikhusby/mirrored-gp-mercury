@@ -592,6 +592,42 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
+    public void closeManifestWithDuplicateAndUnScannedRecords() throws Exception {
+
+        ManifestSession session = ManifestTestFactory.buildManifestSession(TEST_RESEARCH_PROJECT_KEY, "BuickCloseGood",
+                new BSPUserList.QADudeUser("LU", 342L), 19, ManifestRecord.Status.SCANNED);
+
+        String unscannedBarcode = GOOD_TUBE_BARCODE;
+        addExtraRecord(session, unscannedBarcode, ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
+                ManifestRecord.Status.UPLOAD_ACCEPTED);
+
+
+        String dupeSampleId = GOOD_TUBE_BARCODE+"dupe";
+        addExtraRecord(session, dupeSampleId, ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
+                ManifestRecord.Status.UPLOADED);
+
+
+        Mockito.when(manifestSessionDao.find(Mockito.anyLong())).thenReturn(session);
+        ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
+
+        ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
+
+
+        assertThat(session.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
+
+        assertThat(session.getManifestEvents().size(), is(2));
+        for (ManifestRecord manifestRecord : session.getRecords()) {
+            if(manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue().equals(unscannedBarcode)) {
+                assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOAD_ACCEPTED));
+            } else if(manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue().equals(dupeSampleId)) {
+                assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOADED));
+            } else {
+                assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.ACCESSIONED));
+            }
+        }
+
+    }
+
     private void addExtraRecord(ManifestSession session, String sampleId, ManifestRecord.ErrorStatus targetStatus,
                                 ManifestRecord.Status status) {
         ManifestRecord dupeRecord = ManifestTestFactory.buildManifestRecord(20, sampleId);
