@@ -173,7 +173,7 @@ public class ManifestSessionTest {
         ManifestRecord errorRecord = buildManifestRecord(testSession, errorRecordID);
         setSampleStatus(errorRecordID, ManifestRecord.Status.UPLOADED);
         testSession.addManifestEvent(new ManifestEvent(
-                ManifestEvent.Severity.QUARANTINED,
+                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getSeverity(),
                 ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage("Sample ID", errorRecordID),
                 errorRecord));
 

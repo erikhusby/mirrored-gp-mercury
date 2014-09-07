@@ -189,7 +189,8 @@ public class ManifestSession {
 
                     String message =
                             ManifestRecord.ErrorStatus.MISMATCHED_GENDER.formatMessage("patient ID", entry.getKey());
-                    addManifestEvent(new ManifestEvent(ManifestEvent.Severity.ERROR, message, duplicatedRecord));
+                    addManifestEvent(new ManifestEvent(ManifestRecord.ErrorStatus.MISMATCHED_GENDER.getSeverity(),
+                            message, duplicatedRecord));
                 }
             }
         }
@@ -242,7 +243,7 @@ public class ManifestSession {
                 if (duplicatedRecord.getManifestSession().equals(this)) {
                     String message =
                             ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage(SAMPLE_ID_KEY, entry.getKey());
-                    addManifestEvent(new ManifestEvent(ManifestEvent.Severity.QUARANTINED, message, duplicatedRecord));
+                    addManifestEvent(new ManifestEvent(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getSeverity(), message, duplicatedRecord));
                 }
             }
         }
@@ -328,7 +329,8 @@ public class ManifestSession {
                 String sampleId = record.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue();
                 String message = ManifestRecord.ErrorStatus.MISSING_SAMPLE.formatMessage(SAMPLE_ID_KEY, sampleId);
 
-                ManifestEvent manifestEvent = new ManifestEvent(ManifestEvent.Severity.ERROR, message, record);
+                ManifestEvent manifestEvent = new ManifestEvent(ManifestRecord.ErrorStatus.MISSING_SAMPLE.getSeverity(),
+                        message, record);
                 manifestEvents.add(manifestEvent);
             }
         }
@@ -394,7 +396,7 @@ public class ManifestSession {
         try {
             foundRecord = findRecordByState(sampleId);
         } catch (TubeTransferException e) {
-            addManifestEvent(new ManifestEvent(ManifestEvent.Severity.ERROR,
+            addManifestEvent(new ManifestEvent(e.getErrorStatus().getSeverity(),
                     e.getErrorStatus().formatMessage(SAMPLE_ID_KEY, sampleId)
             ));
             throw e;
@@ -508,7 +510,8 @@ public class ManifestSession {
                 String sampleId = record.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue();
                 String message = ManifestRecord.ErrorStatus.MISSING_SAMPLE.formatMessage(SAMPLE_ID_KEY, sampleId);
 
-                ManifestEvent manifestEvent = new ManifestEvent(ManifestEvent.Severity.QUARANTINED, message, record);
+                ManifestEvent manifestEvent = new ManifestEvent(ManifestRecord.ErrorStatus.MISSING_SAMPLE.getSeverity(),
+                        message, record);
                 manifestEvents.add(manifestEvent);
             } else {
                 record.setStatus(ManifestRecord.Status.ACCESSIONED);

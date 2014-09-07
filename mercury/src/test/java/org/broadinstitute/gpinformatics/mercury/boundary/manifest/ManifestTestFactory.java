@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
-import com.google.common.base.Optional;
-import org.apache.commons.lang3.StringUtils;
+import com.google.common.collect.ImmutableMap;
+import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +22,7 @@ import java.util.Map;
  */
 public class ManifestTestFactory {
 
-    public static Metadata [] buildMetadata(Map<Metadata.Key, String> metadataContents) {
+    public static Metadata[] buildMetadata(Map<Metadata.Key, String> metadataContents) {
         List<Metadata> metadataList = new ArrayList<>();
 
         for (Map.Entry<Metadata.Key, String> entry : metadataContents.entrySet()) {
@@ -32,14 +33,8 @@ public class ManifestTestFactory {
     }
 
     public static ManifestSession buildManifestSession(String researchProjectKey, String sessionPrefix,
-                                                       BSPUserList.QADudeUser createdBy, int numberOfRecords) {
-        return buildManifestSession(researchProjectKey, sessionPrefix, createdBy, numberOfRecords,
-                ManifestRecord.Status.UPLOADED);
-    }
-
-    public static ManifestSession buildManifestSession(String researchProjectKey, String sessionPrefix,
-                                                        BSPUserList.QADudeUser createdBy, int numberOfRecords,
-                                                        ManifestRecord.Status defaultStatus) {
+                                                       BSPUserList.QADudeUser createdBy, int numberOfRecords,
+                                                       ManifestRecord.Status defaultStatus) {
         ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(researchProjectKey);
         ManifestSession manifestSession = new ManifestSession(researchProject, sessionPrefix,
                 createdBy);
@@ -56,12 +51,15 @@ public class ManifestTestFactory {
         return buildManifestRecord(i, null);
     }
 
-    public static ManifestRecord buildManifestRecord(int i, String sampleId) {
-        ManifestRecord manifestRecord = new ManifestRecord();
+    public static ManifestRecord buildManifestRecord(int i, Map<Metadata.Key, String> initialData) {
+        ManifestRecord manifestRecord;
+
+        manifestRecord = new ManifestRecord();
+
         for (Metadata.Key key : Metadata.Key.values()) {
             String value;
-            if(key == Metadata.Key.SAMPLE_ID && StringUtils.isNotBlank(sampleId)) {
-                value = sampleId;
+            if(initialData != null && initialData.containsKey(key)) {
+                value=initialData.get(key);
             } else {
                 value = key.name() + "_" + i;
             }
@@ -71,23 +69,18 @@ public class ManifestTestFactory {
         return manifestRecord;
     }
 
-    public static void addExtraRecord(ManifestSession session, String sampleId, ManifestRecord.ErrorStatus errorStatus,
-                                ManifestRecord.Status status) {
-        ManifestRecord dupeRecord = buildManifestRecord(20, sampleId);
+    public static void addExtraRecord(ManifestSession session, Map<Metadata.Key, String> initalData,
+                                      ManifestRecord.ErrorStatus errorStatus,
+                                      ManifestRecord.Status status) {
+        ManifestRecord dupeRecord = buildManifestRecord(20, initalData);
         dupeRecord.setStatus(status);
         session.addRecord(dupeRecord);
 
-        if(errorStatus != null) {
-            session.addManifestEvent(new ManifestEvent(getSeverity(errorStatus),
-                    errorStatus.formatMessage(Metadata.Key.SAMPLE_ID.name(), sampleId), dupeRecord));
+        if (errorStatus != null) {
+            session.addManifestEvent(new ManifestEvent(errorStatus.getSeverity(),
+                    errorStatus.formatMessage(Metadata.Key.SAMPLE_ID.name(), dupeRecord.getSampleId()), dupeRecord));
         }
     }
 
-    public static ManifestEvent.Severity getSeverity(ManifestRecord.ErrorStatus status) {
-        EnumSet<ManifestRecord.ErrorStatus> quarantinedSet = EnumSet.of(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
-                ManifestRecord.ErrorStatus.NOT_READY_FOR_TUBE_TRANSFER);
-        return (quarantinedSet.contains(status))?ManifestEvent.Severity.QUARANTINED: ManifestEvent.Severity.ERROR;
-    }
-
-    public enum CreationType{UPLOAD, FACTORY}
+    public enum CreationType {UPLOAD, FACTORY}
 }
