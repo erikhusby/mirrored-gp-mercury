@@ -26,9 +26,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -344,22 +341,27 @@ public class ManifestSessionEjbDBFreeTest {
                 TEST_RESEARCH_PROJECT_KEY,
                 ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.UPLOADED, 20);
 
-        ManifestTestFactory.addExtraRecord(holder.manifestSession, ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101231193"),
-                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED);
-        ManifestTestFactory.addExtraRecord(holder.manifestSession, ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101231193"),
-                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED);
-        ManifestTestFactory.addExtraRecord(holder.manifestSession, ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101254356"),
-                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED);
-        ManifestTestFactory.addExtraRecord(holder.manifestSession, ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101254356"),
-                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED);
-        ManifestTestFactory.addExtraRecord(holder.manifestSession, ImmutableMap.of(Metadata.Key.SAMPLE_ID,
-                "03101254356"),
-                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED);
-        ManifestTestFactory.addExtraRecord(holder.manifestSession, ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101411324"),
-                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED);
-        ManifestTestFactory.addExtraRecord(holder.manifestSession, ImmutableMap.of(Metadata.Key.SAMPLE_ID,
-                "03101411324"),
-                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED);
+        ManifestTestFactory.addExtraRecord(holder.manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101231193"), ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
+                ManifestRecord.Status.UPLOADED);
+        ManifestTestFactory.addExtraRecord(holder.manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101231193"), ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
+                ManifestRecord.Status.UPLOADED);
+        ManifestTestFactory.addExtraRecord(holder.manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101254356"), ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
+                ManifestRecord.Status.UPLOADED);
+        ManifestTestFactory.addExtraRecord(holder.manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101254356"), ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
+                ManifestRecord.Status.UPLOADED);
+        ManifestTestFactory.addExtraRecord(holder.manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101254356"), ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
+                ManifestRecord.Status.UPLOADED);
+        ManifestTestFactory.addExtraRecord(holder.manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101411324"), ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
+                ManifestRecord.Status.UPLOADED);
+        ManifestTestFactory.addExtraRecord(holder.manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101411324"), ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
+                ManifestRecord.Status.UPLOADED);
 
         List<ManifestRecord> manifestRecordsMarkedAsDuplicates = new ArrayList<>();
 
