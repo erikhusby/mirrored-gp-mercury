@@ -33,6 +33,7 @@ import java.util.Set;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -394,8 +395,33 @@ public class ManifestSessionEjbDBFreeTest {
 
     public void acceptSessionWithMismatchedGendersThisSession() throws FileNotFoundException {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(MANIFEST_FILE_MISMATCHED_GENDERS_SAME_SESSION,
-                TEST_RESEARCH_PROJECT_KEY,
-                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.UPLOADED, 20);
+                TEST_RESEARCH_PROJECT_KEY, ManifestTestFactory.CreationType.FACTORY,
+                ManifestRecord.Status.UPLOADED, 20);
+
+        ManifestTestFactory.addExtraRecord(holder.manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101947686", Metadata.Key.PATIENT_ID, "003-009",
+                        Metadata.Key.GENDER, "Female"), ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
+                ManifestRecord.Status.UPLOADED);
+        ManifestTestFactory.addExtraRecord(holder.manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101989209", Metadata.Key.PATIENT_ID, "003-009",
+                        Metadata.Key.GENDER, "Male"), ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
+                ManifestRecord.Status.UPLOADED);
+        ManifestTestFactory.addExtraRecord(holder.manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101231193", Metadata.Key.PATIENT_ID, "004-002",
+                        Metadata.Key.GENDER, "Male"), ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
+                ManifestRecord.Status.UPLOADED);
+        ManifestTestFactory.addExtraRecord(holder.manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101067213", Metadata.Key.PATIENT_ID, "004-002",
+                        Metadata.Key.GENDER, "Female"), ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
+                ManifestRecord.Status.UPLOADED);
+        ManifestTestFactory.addExtraRecord(holder.manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101752021", Metadata.Key.PATIENT_ID, "005-012",
+                        Metadata.Key.GENDER, "Female"), ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
+                ManifestRecord.Status.UPLOADED);
+        ManifestTestFactory.addExtraRecord(holder.manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101752020", Metadata.Key.PATIENT_ID, "005-012",
+                        Metadata.Key.GENDER, "Male"), ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
+                ManifestRecord.Status.UPLOADED);
 
         List<ManifestRecord> manifestRecordsWithMismatchedGenders = new ArrayList<>();
 
@@ -415,8 +441,14 @@ public class ManifestSessionEjbDBFreeTest {
                     is(equalTo(hasManifestEvents)));
         }
 
+        assertThat(manifestRecordsWithMismatchedGenders, is(not(empty())));
+        assertThat(holder.manifestSession.getManifestEvents().size(), is(6));
+
         // Arbitrary ID, the DAO is programmed to return the same manifest session for any requested ID.
         holder.ejb.acceptManifestUpload(ARBITRARY_MANIFEST_SESSION_ID);
+
+        assertThat(holder.manifestSession.getManifestEvents().size(), is(6));
+        assertThat(holder.manifestSession.getManifestEvents(), is(not(empty())));
 
         for (ManifestRecord manifestRecord : holder.manifestSession.getRecords()) {
             boolean shouldBeMarkedAsDuplicate = manifestRecordsWithMismatchedGenders.contains(manifestRecord);
@@ -508,19 +540,26 @@ public class ManifestSessionEjbDBFreeTest {
                 TEST_RESEARCH_PROJECT_KEY,
                 ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.UPLOADED, 20);
 
-        ManifestTestFactory.addExtraRecord(holder.manifestSession, ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101231193"),
+        ManifestTestFactory.addExtraRecord(holder.manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101231193"),
                 ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED);
-        ManifestTestFactory.addExtraRecord(holder.manifestSession, ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101231193"),
+        ManifestTestFactory.addExtraRecord(holder.manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101231193"),
                 ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED);
-        ManifestTestFactory.addExtraRecord(holder.manifestSession, ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101254356"),
+        ManifestTestFactory.addExtraRecord(holder.manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101254356"),
                 ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED);
-        ManifestTestFactory.addExtraRecord(holder.manifestSession, ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101254356"),
+        ManifestTestFactory.addExtraRecord(holder.manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101254356"),
                 ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED);
-        ManifestTestFactory.addExtraRecord(holder.manifestSession, ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101254356"),
+        ManifestTestFactory.addExtraRecord(holder.manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101254356"),
                 ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED);
-        ManifestTestFactory.addExtraRecord(holder.manifestSession, ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101411324"),
+        ManifestTestFactory.addExtraRecord(holder.manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101411324"),
                 ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED);
-        ManifestTestFactory.addExtraRecord(holder.manifestSession, ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101411324"),
+        ManifestTestFactory.addExtraRecord(holder.manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101411324"),
                 ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED);
 
         ManifestSessionEjb ejb = holder.ejb;
@@ -729,12 +768,14 @@ public class ManifestSessionEjbDBFreeTest {
                 ManifestRecord.Status.SCANNED, 20);
 
         String misMatch1Barcode = GOOD_TUBE_BARCODE + "BadGender1";
-        ManifestTestFactory.addExtraRecord(holder.manifestSession, ImmutableMap.of(Metadata.Key.SAMPLE_ID, misMatch1Barcode),
+        ManifestTestFactory.addExtraRecord(holder.manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, misMatch1Barcode),
                 ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
                 ManifestRecord.Status.SCANNED);
 
         String misMatch2Barcode = GOOD_TUBE_BARCODE + "BadGender2";
-        ManifestTestFactory.addExtraRecord(holder.manifestSession, ImmutableMap.of(Metadata.Key.SAMPLE_ID, misMatch2Barcode),
+        ManifestTestFactory.addExtraRecord(holder.manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, misMatch2Barcode),
                 ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
                 ManifestRecord.Status.SCANNED);
 
