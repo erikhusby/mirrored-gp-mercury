@@ -5,6 +5,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.RapSheet;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
@@ -17,6 +18,9 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
@@ -56,6 +60,14 @@ public class MercurySample extends AbstractSample {
 
     @Enumerated(EnumType.STRING)
     private MetadataSource metadataSource;
+
+    @ManyToMany(cascade = CascadeType.PERSIST)
+    @JoinTable(name = "mercury_sample_metadata", schema = "mercury",
+            joinColumns = @JoinColumn(name = "MANIFEST_RECORD_ID"),
+            inverseJoinColumns = @JoinColumn(name = "METADATA_ID"))
+    private Set<Metadata> metadata = new HashSet<>();
+
+
 
     /**
      * For JPA
@@ -101,6 +113,9 @@ public class MercurySample extends AbstractSample {
 
     public MetadataSource getMetadataSource() {
         return metadataSource;
+    }
+
+    public void addMetaData(Metadata metadata) {
     }
 
     @Override

@@ -9,6 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
@@ -42,6 +43,7 @@ import java.util.Set;
 public class ManifestSession {
 
     public static final String SAMPLE_ID_KEY = "Sample ID";
+    public static final String VESSEL_LABEL = "Vessel barcode";
 
     @Id
     @SequenceGenerator(name = "SEQ_MANIFEST_SESSION", schema = "mercury", sequenceName = "SEQ_MANIFEST_SESSION")
@@ -536,6 +538,16 @@ public class ManifestSession {
         }
 
         return recordForTransfer;
+    }
+
+    public void performTransfer(String sourceCollaboratorSample, MercurySample targetSample, LabVessel targetVessel) {
+
+        ManifestRecord sourceRecord = findRecordForTransfer(sourceCollaboratorSample);
+
+        for (Metadata metadata : sourceRecord.getMetadata()) {
+            targetSample.addMetaData(metadata);
+        }
+
     }
 
     /**

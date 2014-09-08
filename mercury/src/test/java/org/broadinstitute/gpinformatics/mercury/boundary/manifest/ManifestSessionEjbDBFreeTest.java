@@ -10,10 +10,17 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -23,15 +30,17 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -80,35 +89,40 @@ public class ManifestSessionEjbDBFreeTest {
     private ResearchProjectDao researchProjectDao;
     private String sourceForTransfer = "9294923";
 
-    public void researchProjectNotFound() {
-        ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
-        try {
-            ejb.uploadManifest(null, null, null, TEST_USER);
-            Assert.fail();
-        } catch (InformaticsServiceException ignored) {
-        }
-    }
+    private static final String TEST_SAMPLE_KEY = "SM-BUICK1";
+    private static final String BSP_TEST_SAMPLE_KEY = TEST_SAMPLE_KEY + "BSP";
+    private static final String TEST_SAMPLE_ALREADY_ACCESSIONED = TEST_SAMPLE_KEY + "ACCESSIONED";
+    private static final String TEST_SAMPLE_KEY_UNASSOCIATED = "SM-BUICK2";
+
+    private final MercurySample testSampleForAccessioning =
+            new MercurySample(TEST_SAMPLE_KEY, MercurySample.MetadataSource.MERCURY);
+    private final MercurySample testUnassociatedSampleForAccessioning =
+            new MercurySample(TEST_SAMPLE_KEY_UNASSOCIATED, MercurySample.MetadataSource.MERCURY);
+    private final MercurySample testSampleForBsp =
+            new MercurySample(BSP_TEST_SAMPLE_KEY, MercurySample.MetadataSource.BSP);
+    private final MercurySample testSampleAlreadyAccessioned = new MercurySample(TEST_SAMPLE_ALREADY_ACCESSIONED,
+            MercurySample.MetadataSource.MERCURY);
+
+    private static final String TEST_VESSEL_LABEL = "A0993929292";
+    private final LabVessel testVessel =
+            new BarcodedTube(TEST_VESSEL_LABEL, BarcodedTube.BarcodedTubeType.MatrixTube2mL);
+
+    private MercurySampleDao mercurySampleDao;
+    private LabVesselDao labVesselDao;
+    private final BSPUserList.QADudeUser testLabUser = new BSPUserList.QADudeUser("LU", 342L);
 
     @BeforeMethod
     public void setUp() throws Exception {
         manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
         researchProjectDao = Mockito.mock(ResearchProjectDao.class);
-    }
-
-    @Test(dataProvider = PATHS_TO_PREFIXES_PROVIDER)
-    public void extractPrefixFromFilename(String path, String expectedPrefix) {
-        ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
-        try {
-            String actualPrefix = ejb.extractPrefixFromFilename(path);
-            assertThat(actualPrefix, is(equalTo(expectedPrefix)));
-        } catch (InformaticsServiceException ignored) {
-        }
+        mercurySampleDao = Mockito.mock(MercurySampleDao.class);
+        labVesselDao = Mockito.mock(LabVesselDao.class);
     }
 
     /**
      * Worker method for manifest upload testing.
      */
-    private ManifestSession uploadManifest(String pathToManifestFile) throws FileNotFoundException {
+    private ManifestSession uploadManifest(String pathToManifestFile) throws Exception {
         ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(
                 TEST_RESEARCH_PROJECT_KEY);
         return uploadManifest(pathToManifestFile, researchProject);
@@ -116,7 +130,7 @@ public class ManifestSessionEjbDBFreeTest {
 
     private ManifestSession uploadManifest(ManifestSessionEjb manifestSessionEjb, String pathToManifestFile,
                                            ResearchProject researchProject)
-            throws FileNotFoundException {
+            throws Exception {
         String PATH_TO_SPREADSHEET = TestUtils.getTestData(pathToManifestFile);
         InputStream inputStream = new FileInputStream(PATH_TO_SPREADSHEET);
         return manifestSessionEjb.uploadManifest(researchProject.getBusinessKey(), inputStream, PATH_TO_SPREADSHEET,
@@ -127,7 +141,7 @@ public class ManifestSessionEjbDBFreeTest {
      * Worker method for manifest upload testing.
      */
     private ManifestSession uploadManifest(String pathToManifestFile, ResearchProject researchProject)
-            throws FileNotFoundException {
+            throws Exception {
         ManifestSessionEjb ejb = buildEjbForUpload(researchProject);
         return uploadManifest(ejb, pathToManifestFile, researchProject);
     }
@@ -135,10 +149,140 @@ public class ManifestSessionEjbDBFreeTest {
     private ManifestSessionEjb buildEjbForUpload(ResearchProject researchProject) {
         Mockito.when(researchProjectDao.findByBusinessKey(Mockito.anyString())).thenReturn(researchProject);
 
-        return new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
+        return new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao);
     }
 
-    public void uploadGoodManifest() throws FileNotFoundException {
+    /**
+     * Utility class to encapsulate both objects returned by the #buildForAcceptSession method, as well as affording
+     * the level of indirection required for programming a ManifestSessionDao mock to return a particular
+     * ManifestSession before that ManifestSession has actually been created.
+     */
+    private class ManifestSessionAndEjbHolder {
+        ManifestSession manifestSession;
+        ManifestSessionEjb ejb;
+    }
+
+
+    private ManifestSessionAndEjbHolder buildHolderForAcceptSession(String fileName) throws Exception {
+        return buildHolderForSession(fileName, TEST_RESEARCH_PROJECT_KEY, ManifestTestFactory.CreationType.UPLOAD,
+                ManifestRecord.Status.SCANNED, 20);
+
+    }
+
+    /**
+     * helper method to initialize the EJ and session used for testing based on parameters.  This version is called if
+     * the user wants a new Research Project Created
+     *
+     * @param fileName           File name to upload (only used for CreationType.UPLOAD)
+     * @param researchProjectKey ResearchProjectKey to associate with the created Research Project
+     * @param starterType        Initialization mode that this helper method runs in.  Will determine if the Session
+     *                           is created via a new'd up entities or executing an upload on fileName through
+     *                           the EJB
+     * @param initialStatus      Initial status for all the manifest records created
+     * @param numberOfRecords    the number of initial manifest records to create
+     *
+     * @return A new instance of EJB and Holder class (which holds a manifest session ejb and
+     * session
+     *
+     * @throws Exception
+     */
+    private ManifestSessionAndEjbHolder buildHolderForSession(String fileName, String researchProjectKey,
+                                                              ManifestTestFactory.CreationType starterType,
+                                                              ManifestRecord.Status initialStatus, int numberOfRecords)
+            throws Exception {
+        ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(
+                researchProjectKey);
+
+        return buildHolderForSession(fileName, starterType, initialStatus, numberOfRecords, researchProject);
+    }
+
+    /**
+     * @param fileName        File name to upload (only used for CreationType.UPLOAD)
+     * @param starterType     Initialization mode that this helper method runs in.  Will determine if the Session
+     *                        is created via a new'd up entities or executing an upload on fileName through
+     *                        the EJB
+     * @param initialStatus   Initial status for all the manifest records created
+     * @param numberOfRecords the number of initial manifest records to create
+     * @param researchProject An instance of a research project with which to associate the new session
+     *
+     * @return A new instance of EJB and Holder class (which holds a manifest session ejb and
+     * session
+     *
+     * @throws Exception
+     */
+    private ManifestSessionAndEjbHolder buildHolderForSession(String fileName,
+                                                              ManifestTestFactory.CreationType starterType,
+                                                              ManifestRecord.Status initialStatus,
+                                                              int numberOfRecords,
+                                                              ResearchProject researchProject)
+            throws Exception {
+        final ManifestSessionAndEjbHolder holder = new ManifestSessionAndEjbHolder();
+
+        Mockito.when(manifestSessionDao.find(Mockito.anyLong())).thenAnswer(new Answer<ManifestSession>() {
+            @Override
+            public ManifestSession answer(InvocationOnMock invocation) throws Throwable {
+                return holder.manifestSession;
+            }
+        });
+        Mockito.when(researchProjectDao.findByBusinessKey(Mockito.anyString())).thenReturn(researchProject);
+
+        Mockito.when(mercurySampleDao.findBySampleKey(Mockito.eq(TEST_SAMPLE_KEY))).thenReturn(
+                Collections.singletonList(testSampleForAccessioning));
+
+        Mockito.when(mercurySampleDao.findBySampleKey(Mockito.eq(BSP_TEST_SAMPLE_KEY))).thenReturn(
+                Collections.singletonList(testSampleForBsp));
+
+        Mockito.when(mercurySampleDao.findBySampleKey(Mockito.eq(TEST_SAMPLE_ALREADY_ACCESSIONED))).thenReturn(
+                Collections.singletonList(testSampleAlreadyAccessioned));
+
+        Mockito.when(mercurySampleDao.findBySampleKey(Mockito.eq(TEST_SAMPLE_KEY_UNASSOCIATED))).thenReturn(
+                Collections.singletonList(testUnassociatedSampleForAccessioning)
+        );
+
+        testVessel.addSample(testSampleForAccessioning);
+
+        Mockito.when(labVesselDao.findByIdentifier(Mockito.eq(TEST_VESSEL_LABEL))).thenReturn(testVessel);
+
+        LabEvent initialTare = new LabEvent(LabEventType.INITIAL_TARE, new Date(), "Here", 1L, testLabUser.getUserId(),
+                "BuickTest");
+
+        holder.ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao);
+        if (starterType == ManifestTestFactory.CreationType.UPLOAD) {
+            holder.manifestSession = uploadManifest(holder.ejb, fileName, researchProject);
+        } else {
+            holder.manifestSession = ManifestTestFactory.buildManifestSession(researchProject.getBusinessKey(),
+                    "BuickCloseGood", testLabUser, numberOfRecords, initialStatus);
+        }
+        return holder;
+    }
+
+    /* ================================================================= */
+    /* =====  Test Cases =============================================== */
+    /* ================================================================= */
+
+    public void researchProjectNotFound() {
+        ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao,
+                labVesselDao);
+        try {
+            ejb.uploadManifest(null, null, null, TEST_USER);
+            Assert.fail();
+        } catch (InformaticsServiceException ignored) {
+        }
+    }
+
+    @Test(dataProvider = PATHS_TO_PREFIXES_PROVIDER)
+    public void extractPrefixFromFilename(String path, String expectedPrefix) {
+        ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao,
+                labVesselDao);
+        try {
+            String actualPrefix = ejb.extractPrefixFromFilename(path);
+            assertThat(actualPrefix, is(equalTo(expectedPrefix)));
+        } catch (InformaticsServiceException ignored) {
+        }
+    }
+
+
+    public void uploadGoodManifest() throws Exception {
         ManifestSession manifestSession = uploadManifest(MANIFEST_FILE_GOOD);
         assertThat(manifestSession, is(notNullValue()));
         assertThat(manifestSession.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
@@ -157,7 +301,7 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     @Test(dataProvider = BAD_MANIFEST_UPLOAD_PROVIDER)
-    public void uploadBadManifest(String description, String pathToManifestFile) throws FileNotFoundException {
+    public void uploadBadManifest(String description, String pathToManifestFile) throws Exception {
         try {
             uploadManifest(pathToManifestFile);
             Assert.fail(description);
@@ -165,7 +309,7 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
-    public void uploadManifestThatDuplicatesSampleIdInSameManifest() throws FileNotFoundException {
+    public void uploadManifestThatDuplicatesSampleIdInSameManifest() throws Exception {
         ManifestSession manifestSession = uploadManifest(MANIFEST_FILE_DUPLICATES_SAME_SESSION);
         assertThat(manifestSession, is(notNullValue()));
         assertThat(manifestSession.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
@@ -181,7 +325,7 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(quarantinedRecords, hasSize(NUM_DUPLICATES_IN_MANIFEST_WITH_DUPLICATES_IN_SAME_SESSION));
     }
 
-    public void uploadManifestThatDuplicatesSampleIdInAnotherManifest() throws FileNotFoundException {
+    public void uploadManifestThatDuplicatesSampleIdInAnotherManifest() throws Exception {
         ResearchProject researchProject =
                 ResearchProjectTestFactory.createTestResearchProject(TEST_RESEARCH_PROJECT_KEY);
 
@@ -198,7 +342,7 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(manifestSession2.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
     }
 
-    public void uploadManifestThatMismatchesGenderInSameManifest() throws FileNotFoundException {
+    public void uploadManifestThatMismatchesGenderInSameManifest() throws Exception {
         ManifestSession manifestSession = uploadManifest(MANIFEST_FILE_MISMATCHED_GENDERS_SAME_SESSION);
         assertThat(manifestSession, is(notNullValue()));
         assertThat(manifestSession.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
@@ -216,7 +360,7 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
-    public void uploadManifestThatMismatchesGenderInAnotherManifest() throws FileNotFoundException {
+    public void uploadManifestThatMismatchesGenderInAnotherManifest() throws Exception {
         ResearchProject researchProject =
                 ResearchProjectTestFactory.createTestResearchProject(TEST_RESEARCH_PROJECT_KEY);
 
@@ -259,7 +403,8 @@ public class ManifestSessionEjbDBFreeTest {
                 };
             }
         });
-        ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
+        ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao,
+                labVesselDao);
         ManifestSession manifestSession = ejb.loadManifestSession(TEST_MANIFEST_SESSION_ID);
         assertThat(manifestSession, is(notNullValue()));
         assertThat(manifestSession.getManifestSessionId(), is(TEST_MANIFEST_SESSION_ID));
@@ -269,7 +414,8 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionDao manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
         ResearchProjectDao researchProjectDao = Mockito.mock(ResearchProjectDao.class);
         final long TEST_MANIFEST_SESSION_ID = ARBITRARY_MANIFEST_SESSION_ID;
-        ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
+        ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao,
+                labVesselDao);
         ManifestSession manifestSession = ejb.loadManifestSession(TEST_MANIFEST_SESSION_ID);
         assertThat(manifestSession, is(nullValue()));
     }
@@ -277,7 +423,8 @@ public class ManifestSessionEjbDBFreeTest {
     public void acceptUploadSessionNotFound() {
         ManifestSessionDao manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
         ResearchProjectDao researchProjectDao = Mockito.mock(ResearchProjectDao.class);
-        ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
+        ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao,
+                labVesselDao);
         long MANIFEST_SESSION_ID = ARBITRARY_MANIFEST_SESSION_ID;
         try {
             ejb.acceptManifestUpload(MANIFEST_SESSION_ID);
@@ -287,59 +434,8 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
-    /**
-     * Utility class to encapsulate both objects returned by the #buildForAcceptSession method, as well as affording
-     * the level of indirection required for programming a ManifestSessionDao mock to return a particular
-     * ManifestSession before that ManifestSession has actually been created.
-     */
-    private class ManifestSessionAndEjbHolder {
-        ManifestSession manifestSession;
-        ManifestSessionEjb ejb;
-    }
 
-    private ManifestSessionAndEjbHolder buildHolderForAcceptSession(String fileName) throws FileNotFoundException {
-        return buildHolderForSession(fileName, TEST_RESEARCH_PROJECT_KEY, ManifestTestFactory.CreationType.UPLOAD,
-                ManifestRecord.Status.SCANNED, 20);
-
-    }
-
-    private ManifestSessionAndEjbHolder buildHolderForSession(String fileName, String researchProjectKey,
-                                                              ManifestTestFactory.CreationType starterType,
-                                                              ManifestRecord.Status initialStatus, int numberOfRecords)
-            throws FileNotFoundException {
-        ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(
-                researchProjectKey);
-
-        return buildHolderForSession(fileName, starterType, initialStatus, numberOfRecords, researchProject);
-    }
-
-    private ManifestSessionAndEjbHolder buildHolderForSession(String fileName,
-                                                              ManifestTestFactory.CreationType starterType,
-                                                              ManifestRecord.Status initialStatus,
-                                                              int numberOfRecords,
-                                                              ResearchProject researchProject)
-            throws FileNotFoundException {
-        final ManifestSessionAndEjbHolder holder = new ManifestSessionAndEjbHolder();
-
-        Mockito.when(manifestSessionDao.find(Mockito.anyLong())).thenAnswer(new Answer<ManifestSession>() {
-            @Override
-            public ManifestSession answer(InvocationOnMock invocation) throws Throwable {
-                return holder.manifestSession;
-            }
-        });
-        Mockito.when(researchProjectDao.findByBusinessKey(Mockito.anyString())).thenReturn(researchProject);
-
-        holder.ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
-        if (starterType == ManifestTestFactory.CreationType.UPLOAD) {
-            holder.manifestSession = uploadManifest(holder.ejb, fileName, researchProject);
-        } else {
-            holder.manifestSession = ManifestTestFactory.buildManifestSession(researchProject.getBusinessKey(),
-                    "BuickCloseGood", new BSPUserList.QADudeUser("LU", 342L), numberOfRecords, initialStatus);
-        }
-        return holder;
-    }
-
-    public void acceptUploadSuccessful() throws FileNotFoundException {
+    public void acceptUploadSuccessful() throws Exception {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(MANIFEST_FILE_GOOD, TEST_RESEARCH_PROJECT_KEY,
                 ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.UPLOADED, 20);
         holder.ejb.acceptManifestUpload(ARBITRARY_MANIFEST_SESSION_ID);
@@ -348,7 +444,7 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
-    public void acceptSessionWithDuplicatesInThisSession() throws FileNotFoundException {
+    public void acceptSessionWithDuplicatesInThisSession() throws Exception {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(MANIFEST_FILE_DUPLICATES_SAME_SESSION,
                 TEST_RESEARCH_PROJECT_KEY,
                 ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.UPLOADED, 20);
@@ -404,7 +500,7 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
-    public void acceptSessionWithMismatchedGendersThisSession() throws FileNotFoundException {
+    public void acceptSessionWithMismatchedGendersThisSession() throws Exception {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(MANIFEST_FILE_MISMATCHED_GENDERS_SAME_SESSION,
                 TEST_RESEARCH_PROJECT_KEY, ManifestTestFactory.CreationType.FACTORY,
                 ManifestRecord.Status.UPLOADED, 20);
@@ -509,7 +605,7 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     @Test(dataProvider = GOOD_MANIFEST_ACCESSION_SCAN_PROVIDER)
-    public void accessionScanGoodManifest(String tubeBarcode, boolean successExpected) throws FileNotFoundException {
+    public void accessionScanGoodManifest(String tubeBarcode, boolean successExpected) throws Exception {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(MANIFEST_FILE_GOOD,
                 TEST_RESEARCH_PROJECT_KEY,
                 ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.UPLOADED, 20);
@@ -546,7 +642,7 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
-    public void accessionScanManifestWithDuplicates() throws FileNotFoundException {
+    public void accessionScanManifestWithDuplicates() throws Exception {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(MANIFEST_FILE_DUPLICATES_SAME_SESSION,
                 TEST_RESEARCH_PROJECT_KEY,
                 ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.UPLOADED, 20);
@@ -588,7 +684,7 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
-    public void accessionScanGenderMismatches() throws FileNotFoundException {
+    public void accessionScanGenderMismatches() throws Exception {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(MANIFEST_FILE_MISMATCHED_GENDERS_SAME_SESSION,
                 TEST_RESEARCH_PROJECT_KEY,
                 ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.UPLOAD_ACCEPTED, 20);
@@ -649,7 +745,7 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.SCANNED));
     }
 
-    public void accessionScanDoubleScan() throws FileNotFoundException {
+    public void accessionScanDoubleScan() throws Exception {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(MANIFEST_FILE_GOOD,
                 TEST_RESEARCH_PROJECT_KEY,
                 ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.UPLOADED, 20);
@@ -717,7 +813,7 @@ public class ManifestSessionEjbDBFreeTest {
                 ManifestRecord.Status.SCANNED, 20);
         String unScannedBarcode = GOOD_TUBE_BARCODE;
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, unScannedBarcode),null,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, unScannedBarcode), null,
                 ManifestRecord.Status.UPLOAD_ACCEPTED);
 
 
@@ -827,7 +923,8 @@ public class ManifestSessionEjbDBFreeTest {
                     sourceForTransfer);
             Assert.fail();
         } catch (Exception ignored) {
-            assertThat(ignored.getMessage(), is(equalTo(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE.formatMessage(ManifestSession.SAMPLE_ID_KEY, sourceForTransfer))));
+            assertThat(ignored.getMessage(), is(equalTo(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE
+                    .formatMessage(ManifestSession.SAMPLE_ID_KEY, sourceForTransfer))));
         }
     }
 
@@ -875,10 +972,126 @@ public class ManifestSessionEjbDBFreeTest {
                     sourceForTransfer);
             Assert.fail();
         } catch (Exception ignored) {
-            assertThat(ignored.getMessage(), is(equalTo(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE.formatMessage(ManifestSession.SAMPLE_ID_KEY, sourceForTransfer))));
+            assertThat(ignored.getMessage(), is(equalTo(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE
+                    .formatMessage(ManifestSession.SAMPLE_ID_KEY, sourceForTransfer))));
         }
     }
 
+    public void validateValidTargetSample() throws Exception {
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
+                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 1);
 
+        MercurySample foundSample = holder.ejb.validateTargetSample(TEST_SAMPLE_KEY);
 
+        assertThat(foundSample.getSampleKey(), is(equalTo(TEST_SAMPLE_KEY)));
+
+    }
+
+    public void validateTargetForBSPSample() throws Exception {
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
+                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 1);
+
+        try {
+            MercurySample foundSample = holder.ejb.validateTargetSample(BSP_TEST_SAMPLE_KEY);
+            Assert.fail();
+        } catch (Exception e) {
+            assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
+                    .formatMessage(ManifestSession.SAMPLE_ID_KEY, BSP_TEST_SAMPLE_KEY)));
+            assertThat(e.getMessage(), containsString(ManifestSessionEjb.SAMPLE_NOT_ELLIGIBLE_FOR_CLINICAL_MESSAGE));
+        }
+    }
+
+    public void validateTargetForNotFoundSample() throws Exception {
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
+                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 1);
+
+        try {
+            MercurySample foundSample = holder.ejb.validateTargetSample(TEST_SAMPLE_KEY + "BAD");
+            Assert.fail();
+        } catch (Exception e) {
+            assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
+                    .formatMessage(ManifestSession.SAMPLE_ID_KEY, TEST_SAMPLE_KEY + "BAD")));
+            assertThat(e.getMessage(), containsString(ManifestSessionEjb.SAMPLE_NOT_FOUND_MESSAGE));
+        }
+    }
+
+    public void validateTargetForSampleAlreadyAccessioned() throws Exception {
+
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
+                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 1);
+
+        try {
+            MercurySample foundSample = holder.ejb.validateTargetSample(TEST_SAMPLE_ALREADY_ACCESSIONED);
+            Assert.fail();
+        } catch (Exception e) {
+            assertThat(e.getMessage(), containsString("Sample already accessioned"));
+        }
+    }
+
+    public void validateTargetTubeAndSampleOnValidRecord() throws Exception {
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
+                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 1);
+
+        LabVessel foundVessel = holder.ejb.validateTargetSampleAndVessel(TEST_SAMPLE_KEY, TEST_VESSEL_LABEL);
+
+        assertThat(foundVessel.getLabel(), is(equalTo(TEST_VESSEL_LABEL)));
+
+        assertThat(foundVessel.getSampleNames(), hasItem(TEST_SAMPLE_KEY));
+    }
+
+    public void validateTargetTubeAndSampleNotAssociated() throws Exception {
+
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
+                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 1);
+
+        try {
+            LabVessel foundVessel = holder.ejb.validateTargetSampleAndVessel(TEST_SAMPLE_KEY_UNASSOCIATED, TEST_VESSEL_LABEL);
+            Assert.fail();
+        } catch (Exception e) {
+            assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
+                    .formatMessage(ManifestSession.VESSEL_LABEL, TEST_VESSEL_LABEL)));
+            assertThat(e.getMessage(), containsString(ManifestSessionEjb.UNASSOCIATED_TUBE_SAMPLE_MESSAGE));
+        }
+    }
+
+    public void validateTargetTubeWithNonRegisteredSample() throws Exception {
+
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
+                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 1);
+
+        try {
+            LabVessel foundVessel = holder.ejb.validateTargetSampleAndVessel(TEST_SAMPLE_KEY + "BAD", TEST_VESSEL_LABEL);
+            Assert.fail();
+        } catch (Exception e) {
+            assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
+                    .formatMessage(ManifestSession.SAMPLE_ID_KEY, TEST_SAMPLE_KEY + "BAD")));
+            assertThat(e.getMessage(), containsString(ManifestSessionEjb.SAMPLE_NOT_FOUND_MESSAGE));
+        }
+    }
+
+    public void validateTargetTubeNotRegisterdWithRegisteredSample() throws Exception {
+
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
+                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 1);
+
+        try {
+            LabVessel foundVessel = holder.ejb.validateTargetSampleAndVessel(TEST_SAMPLE_KEY, TEST_VESSEL_LABEL + "BAD");
+            Assert.fail();
+        } catch (Exception e) {
+            assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
+                    .formatMessage(ManifestSession.VESSEL_LABEL, TEST_VESSEL_LABEL + "BAD")));
+            assertThat(e.getMessage(), containsString(ManifestSessionEjb.VESSEL_NOT_FOUND_MESSAGE));
+        }
+    }
+
+    public void transferSampleValidRecord() throws Exception {
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
+                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 20);
+
+        ManifestTestFactory.addExtraRecord(holder.manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), null, ManifestRecord.Status.ACCESSIONED);
+
+        holder.ejb.transferSample(ARBITRARY_MANIFEST_SESSION_ID,GOOD_TUBE_BARCODE, TEST_SAMPLE_KEY, TEST_VESSEL_LABEL);
+
+    }
 }

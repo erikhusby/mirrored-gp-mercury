@@ -214,7 +214,8 @@ public class ManifestRecord {
          */
         ALREADY_SCANNED_SOURCE("The scanned source tube has already been through the accessioning process", ManifestEvent.Severity.ERROR),
 
-        PREVIOUS_ERRORS_UNABLE_TO_CONTINUE("Due to errors previously found, this sample is unable to continue.", ManifestEvent.Severity.ERROR);
+        PREVIOUS_ERRORS_UNABLE_TO_CONTINUE("Due to errors previously found, this sample is unable to continue.", ManifestEvent.Severity.ERROR),
+        INVALID_TARGET("The Target sample or vessel appears to be invalid", ManifestEvent.Severity.ERROR);
 
         private final String baseMessage;
         private final ManifestEvent.Severity severity;
