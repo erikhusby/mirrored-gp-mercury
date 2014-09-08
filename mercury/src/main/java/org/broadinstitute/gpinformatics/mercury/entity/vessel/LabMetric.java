@@ -86,11 +86,9 @@ public class LabMetric implements Comparable<LabMetric> {
         FINGERPRINT_PICO("Fingerprint Pico", true, new Decider() {
             @Override
             public LabMetricDecision.Decision makeDecision(LabVessel labVessel, LabMetric labMetric) {
-                if (labVessel.getVolume() != null) {
-                    if (labMetric.getValue().compareTo(new BigDecimal("9.99")) == 1 &&
-                            labMetric.getValue().compareTo(new BigDecimal("60.01")) == -1) {
-                        return LabMetricDecision.Decision.PASS;
-                    }
+                if (labMetric.getValue().compareTo(new BigDecimal("9.99")) == 1 &&
+                        labMetric.getValue().compareTo(new BigDecimal("60.01")) == -1) {
+                    return LabMetricDecision.Decision.PASS;
                 }
                 return LabMetricDecision.Decision.FAIL;
             }
@@ -98,11 +96,9 @@ public class LabMetric implements Comparable<LabMetric> {
         SHEARING_PICO("Shearing Pico", true, new Decider() {
             @Override
             public LabMetricDecision.Decision makeDecision(LabVessel labVessel, LabMetric labMetric) {
-                if (labVessel.getVolume() != null) {
-                    if (labMetric.getValue().compareTo(new BigDecimal("1.49")) == 1 &&
-                            labMetric.getValue().compareTo(new BigDecimal("5.01")) == -1) {
-                        return LabMetricDecision.Decision.PASS;
-                    }
+                if (labMetric.getValue().compareTo(new BigDecimal("1.49")) == 1 &&
+                        labMetric.getValue().compareTo(new BigDecimal("5.01")) == -1) {
+                    return LabMetricDecision.Decision.PASS;
                 }
                 return LabMetricDecision.Decision.FAIL;
             }
