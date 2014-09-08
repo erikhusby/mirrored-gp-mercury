@@ -130,7 +130,8 @@ public class PicoDispositionActionBean extends RackScanActionBean {
         FP_DAUGHTER("FP Daughter", 2),
         SHEARING_DAUGHTER("Shearing Daughter", 1),
         SHEARING_DAUGHTER_AT_RISK("Shearing Daughter (At Risk)", 1),
-        EXCLUDE("Exclude", 0);
+        EXCLUDE("Exclude", 0),
+        NULL("", -1);  // Out of band enum used when metric is missing.
 
         private String stepName;
         private int sortOrder;
@@ -257,7 +258,8 @@ public class PicoDispositionActionBean extends RackScanActionBean {
                 int rangeCompare = labMetric.initialPicoDispositionRange();
                 listItems.add(new ListItem(vesselPosition.name(), tube.getLabel(), concentration,
                         NextStep.calculateNextStep(rangeCompare, riskOverride), riskOverride));
-
+            } else {
+                listItems.add(new ListItem(vesselPosition.name(), tube.getLabel(), null, null, false));
             }
         }
         Collections.sort(listItems, BY_DISPOSITION_THEN_POSITION);
@@ -280,8 +282,11 @@ public class PicoDispositionActionBean extends RackScanActionBean {
     private static final Comparator<ListItem> BY_DISPOSITION_THEN_POSITION = new Comparator<ListItem>() {
             @Override
             public int compare(ListItem o1, ListItem o2) {
-                int compareResult = Integer.compare(o1.getDisposition().getSortOrder(),
-                        o2.getDisposition().getSortOrder());
+                int o1DispositionOrder = (o1.getDisposition() != null) ?
+                        o1.getDisposition().getSortOrder() : NextStep.NULL.getSortOrder();
+                int o2DispositionOrder = (o2.getDisposition() != null) ?
+                        o2.getDisposition().getSortOrder() : NextStep.NULL.getSortOrder();
+                int compareResult = Integer.compare(o1DispositionOrder, o2DispositionOrder);
                 return (compareResult != 0) ? compareResult :  o1.getPosition().compareTo(o2.getPosition());
             }};
 

@@ -2,15 +2,12 @@ package org.broadinstitute.gpinformatics.mercury.presentation.sample;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
-import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -28,10 +25,12 @@ import java.util.Map;
 public class PicoDispositionActionBeanTest extends TestCase {
     private PicoDispositionActionBean picoDispositionActionBean;
     private final long now = System.currentTimeMillis();
+    // 3 timestamps having increasing datetime.
     private final Date[] timeSteps = new Date[]{new Date(now - 30000), new Date(now - 20000), new Date(now - 10000)};
     private final int NUMBER_TUBES = 96;
     private final int NUMBER_COLUMNS = 12;
     private final String FIRST_CELLNAME = "A01";
+    private final BigDecimal BD_70 = new BigDecimal(70.0);
 
     // Makes a rack of tubes with initial pico quant metrics.
     private void setUpQuants(int numberTubes) {
@@ -134,18 +133,50 @@ public class PicoDispositionActionBeanTest extends TestCase {
 
     @Test
     public void testMissingQuant() {
+        // Removes quants if value is over a fairly arbitrary threshold, just to see the get no disposition.
+        int numberAboveThreshold = 0;
+        setUpQuants(NUMBER_TUBES);
+        for (BarcodedTube barcodedTube : picoDispositionActionBean.getTubeFormation().getContainerRole().
+                getMapPositionToVessel().values()) {
+            for (LabMetric labMetric : barcodedTube.getMetrics()) {
+                if (labMetric.getValue().compareTo(BD_70) > 0) {
+                    barcodedTube.getMetrics().clear();
+                    ++numberAboveThreshold;
+                    break;
+                }
+            }
+        }
+        Assert.assertTrue(numberAboveThreshold > 0);
+
+        // Should have a full list of samples but not all have dispositions.
+        picoDispositionActionBean.displayList();
+        Assert.assertEquals(NUMBER_TUBES, picoDispositionActionBean.getListItems().size());
+        int numberWithoutDisposition = 0;
+        for (PicoDispositionActionBean.ListItem listItem : picoDispositionActionBean.getListItems()) {
+            if (listItem.getDisposition() == null) {
+                Assert.assertNull(listItem.getConcentration());
+                ++numberWithoutDisposition;
+            }
+        }
+        Assert.assertEquals(numberWithoutDisposition, numberAboveThreshold);
+    }
+
+    @Test
+    public void testWrongMetric() {
         // Overwrites the existing quant with one that should not be used for pico dispositions.
         setUpQuants(1);
         BarcodedTube barcodedTube = picoDispositionActionBean.getTubeFormation().getContainerRole().
-                getMapPositionToVessel().entrySet().iterator().next().getValue();
+                getMapPositionToVessel().values().iterator().next();
 
         barcodedTube.getMetrics().clear();
         barcodedTube.addMetric(new LabMetric(new BigDecimal(11.1), LabMetric.MetricType.CATCH_PICO,
                 LabMetric.LabUnit.NG_PER_UL, FIRST_CELLNAME, timeSteps[0]));
 
-        // Should have an empty list of sample dispositions.
+        // Should have 1 sample in list but having no next step.
         picoDispositionActionBean.displayList();
-        Assert.assertTrue(CollectionUtils.isEmpty(picoDispositionActionBean.getListItems()));
+        Assert.assertEquals(1, picoDispositionActionBean.getListItems().size());
+        Assert.assertNull(picoDispositionActionBean.getListItems().get(0).getConcentration());
+        Assert.assertNull(picoDispositionActionBean.getListItems().get(0).getDisposition());
     }
 
     @Test
@@ -212,6 +243,4 @@ public class PicoDispositionActionBeanTest extends TestCase {
         Assert.assertEquals(PicoDispositionActionBean.NextStep.FP_DAUGHTER,
                 picoDispositionActionBean.getListItems().get(0).getDisposition());
     }
-
-
 }
