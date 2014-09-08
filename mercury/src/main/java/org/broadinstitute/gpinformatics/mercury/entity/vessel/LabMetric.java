@@ -306,4 +306,27 @@ public class LabMetric implements Comparable<LabMetric> {
         }
         return compareToBuilder.build();
     }
+
+
+    /** These define the concentration range in ug/ml (ng/ul) for acceptable fingerprinting. */
+    public static final BigDecimal INITIAL_PICO_LOW_THRESHOLD = new BigDecimal(3.4);
+    public static final BigDecimal INITIAL_PICO_HIGH_THRESHOLD = new BigDecimal(60.0);
+
+    /**
+     * Determines initial pico disposition from the sample's quant.
+     *
+     * @return  -1, 0, or +1 indicating that concentration is
+     *          below range, in range, or above range, respectively.
+     */
+    public int initialPicoDispositionRange() {
+        if (value == null || value.compareTo(INITIAL_PICO_LOW_THRESHOLD) < 0) {
+            return -1;
+        } else {
+            if (value.compareTo(INITIAL_PICO_HIGH_THRESHOLD) > 0) {
+                return 1;
+            }
+        }
+        return 0;
+    }
+
 }

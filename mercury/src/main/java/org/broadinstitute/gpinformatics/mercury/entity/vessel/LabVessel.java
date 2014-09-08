@@ -1830,25 +1830,4 @@ public abstract class LabVessel implements Serializable {
             containerRole.clearCaches();
         }
     }
-
-    /** These define the concentration range in ug/ml (ng/ul) for acceptable fingerprinting. */
-    public static final BigDecimal FINGERPRINT_CONCENTRATION_LOW_THRESHOLD = new BigDecimal(3.4);
-    public static final BigDecimal FINGERPRINT_CONCENTRATION_HIGH_THRESHOLD = new BigDecimal(60.0);
-
-    /**
-     * Determines if the sample concentration is in fingerprinting range.
-     *
-     * @return  -1, 0, or +1 indicating that concentration is
-     *          below range, in range, or above range, respectively.
-     */
-    public int concentrationInFingerprintRange() {
-        if (concentration == null || concentration.compareTo(FINGERPRINT_CONCENTRATION_LOW_THRESHOLD) < 0) {
-            return -1;
-        } else {
-            if (concentration.compareTo(FINGERPRINT_CONCENTRATION_HIGH_THRESHOLD) > 0) {
-                return 1;
-            }
-        }
-        return 0;
-    }
 }

@@ -4,8 +4,12 @@ import junit.framework.Assert;
 import junit.framework.TestCase;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
+import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
@@ -13,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,62 +26,192 @@ import java.util.Map;
  */
 @Test(groups = TestGroups.DATABASE_FREE)
 public class PicoDispositionActionBeanTest extends TestCase {
+    private PicoDispositionActionBean picoDispositionActionBean;
+    private final long now = System.currentTimeMillis();
+    private final Date[] timeSteps = new Date[]{new Date(now - 30000), new Date(now - 20000), new Date(now - 10000)};
+    private final int NUMBER_TUBES = 96;
+    private final int NUMBER_COLUMNS = 12;
+    private final String FIRST_CELLNAME = "A01";
 
-    @Test
-    public void testDisplayList() throws Exception {
-        PicoDispositionActionBean pdab = new PicoDispositionActionBean();
+    // Makes a rack of tubes with initial pico quant metrics.
+    private void setUpQuants(int numberTubes) {
+        boolean needAtRiskMetric = true;
+            Map<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
+        for (int incrementer = 0; incrementer < numberTubes; ++incrementer) {
+            String barcode = "A" + (100000 - incrementer);
+            BarcodedTube tube = new BarcodedTube(barcode, BarcodedTube.BarcodedTubeType.MatrixTube);
 
-        // Makes list of post-pico dispositions from the tube formation label.
-        Map<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
-        int incrementer = 0;
-        for (int i = 0; i < 8; ++i) {
-            for (int col = 1; col <= 12; ++col) {
-                ++incrementer;
-                String cellname = "ABCDEFGH".substring(i, i + 1) + col;
-                VesselPosition vesselPosition = VesselPosition.getByName(cellname);
-                // Barcode decreases for increasing position.
-                String barcode = "A" + (100000 - incrementer);
-                BarcodedTube tube = new BarcodedTube(barcode, BarcodedTube.BarcodedTubeType.MatrixTube);
-                // Bounces the concentration around for successive positions.
-                tube.setConcentration(new BigDecimal((col % 2 == 1) ? incrementer : 96 - incrementer));
-                mapPositionToTube.put(vesselPosition, tube);
+            int row = incrementer / NUMBER_COLUMNS;
+            int col = (incrementer % NUMBER_COLUMNS) + 1;
+            String cellname = "ABCDEFGH".substring(row, row + 1) + col;
+            VesselPosition vesselPosition = VesselPosition.getByName(cellname);
+            mapPositionToTube.put(vesselPosition, tube);
+
+            // Concentration bounces around for successive positions (i.e. 96, 1, 94, 3, 92, 5, ...)
+            // so code can check sorting.
+            BigDecimal concentration = new BigDecimal(incrementer % 2 == 1 ? incrementer : NUMBER_TUBES - incrementer);
+            // Puts the quant metric on each tube.
+            LabMetric labMetric = new LabMetric(concentration, LabMetric.MetricType.INITIAL_PICO,
+                    LabMetric.LabUnit.NG_PER_UL, cellname, timeSteps[0]);
+            tube.addMetric(labMetric);
+            // Adds the lab metric decision which is used for the Risk Override indication.
+            // This decision does NOT determine the next steps -- that is a separate categorization
+            // done by the Action Bean.
+            boolean isBelowRange = concentration.compareTo(LabMetric.INITIAL_PICO_LOW_THRESHOLD) < 0;
+            if (isBelowRange) {
+                if (needAtRiskMetric) {
+                    needAtRiskMetric = false;
+                    labMetric.setLabMetricDecision(new LabMetricDecision(LabMetricDecision.Decision.RISK, timeSteps[1],
+                            BSPManagerFactoryStub.QA_DUDE_USER_ID, labMetric));
+                } else {
+                    labMetric.setLabMetricDecision(new LabMetricDecision(LabMetricDecision.Decision.FAIL, timeSteps[1],
+                            BSPManagerFactoryStub.QA_DUDE_USER_ID, labMetric));
+                }
+            } else {
+                labMetric.setLabMetricDecision(new LabMetricDecision(LabMetricDecision.Decision.PASS, timeSteps[1],
+                        BSPManagerFactoryStub.QA_DUDE_USER_ID, labMetric));
             }
         }
+
+        // Gives the tube formation to the action bean instead of having the action bean look it up.
         RackOfTubes rackOfTubes = new RackOfTubes("rackBarcode", RackOfTubes.RackType.Matrix96);
         TubeFormation tubeFormation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
         tubeFormation.getContainerRole().setEmbedder(rackOfTubes);
 
-        pdab.setTubeFormation(tubeFormation);
+        picoDispositionActionBean = new PicoDispositionActionBean();
+        picoDispositionActionBean.setTubeFormation(tubeFormation);
+    }
 
-        // Creates the list.
-        pdab.displayList();
-        Assert.assertTrue(CollectionUtils.isNotEmpty(pdab.getListItems()));
+    @Test
+    public void testDisplayList() throws Exception {
+        // Creates the list of sample dispositions.
+        setUpQuants(NUMBER_TUBES);
+        picoDispositionActionBean.displayList();
+        Assert.assertEquals(NUMBER_TUBES, picoDispositionActionBean.getListItems().size());
 
-        // Checks that all dispositions are consistent with concentration.
-        for (PicoDispositionActionBean.ListItem listItem : pdab.getListItems()) {
+        // Checks each sample for consistent disposition and concentration.
+        boolean found[] = new boolean[] {false, false, false, false};
+        for (PicoDispositionActionBean.ListItem listItem : picoDispositionActionBean.getListItems()) {
             Assert.assertTrue(StringUtils.isNotBlank(listItem.getPosition()));
             Assert.assertTrue(StringUtils.isNotBlank(listItem.getBarcode()));
             Assert.assertNotNull(listItem.getConcentration());
             Assert.assertNotNull(listItem.getDisposition());
 
-            if (listItem.getConcentration().compareTo(LabVessel.FINGERPRINT_CONCENTRATION_LOW_THRESHOLD) < 0) {
-                Assert.assertEquals(listItem.getDisposition(), PicoDispositionActionBean.NextStep.EXCLUDE);
+            if (listItem.getConcentration().compareTo(LabMetric.INITIAL_PICO_HIGH_THRESHOLD) > 0) {
+                found[0] = true;
+                Assert.assertEquals(listItem.getDisposition(), PicoDispositionActionBean.NextStep.FP_DAUGHTER);
+            } else if (listItem.getConcentration().compareTo(LabMetric.INITIAL_PICO_LOW_THRESHOLD) > 0) {
+                    found[1] = true;
+                    Assert.assertEquals(listItem.getDisposition(),
+                            PicoDispositionActionBean.NextStep.SHEARING_DAUGHTER);
             } else {
-                if (listItem.getConcentration().compareTo(LabVessel.FINGERPRINT_CONCENTRATION_HIGH_THRESHOLD) > 0) {
-                    Assert.assertEquals(listItem.getDisposition(), PicoDispositionActionBean.NextStep.FP_DAUGHTER);
+                if (listItem.hasRiskOverride()) {
+                    found[2] = true;
+                    Assert.assertEquals(listItem.getDisposition(),
+                            PicoDispositionActionBean.NextStep.SHEARING_DAUGHTER_AT_RISK);
                 } else {
-                    Assert.assertEquals(listItem.getDisposition(), PicoDispositionActionBean.NextStep.SHEARING_DAUGHTER);
+                    found[3] = true;
+                    Assert.assertEquals(listItem.getDisposition(), PicoDispositionActionBean.NextStep.EXCLUDE);
                 }
             }
         }
+        // Checks that all test cases are found.
+        for (int i = 0; i < found.length; ++i) {
+            Assert.assertTrue("at " + i, found[i]);
+        }
 
         // Checks sorting by disposition and position.
-        for (int i = 0; i < 95; ++i) {
-            int compare1 = Integer.compare(pdab.getListItems().get(i).getDisposition().getRangeCompare(),
-                    pdab.getListItems().get(i+1).getDisposition().getRangeCompare());
-            int compare2 = pdab.getListItems().get(i).getPosition().compareTo(
-                    pdab.getListItems().get(i+1).getPosition());
-            Assert.assertTrue("at " + i, compare1 < 0 || compare1 == 0 && compare2 < 0);
+        for (int i = 0; i < NUMBER_TUBES - 1; ++i) {
+            PicoDispositionActionBean.ListItem item = picoDispositionActionBean.getListItems().get(i);
+            PicoDispositionActionBean.ListItem nextItem = picoDispositionActionBean.getListItems().get(i + 1);
+
+            int dispositionOrder =
+                    Integer.compare(item.getDisposition().getSortOrder(), nextItem.getDisposition().getSortOrder());
+            int positionOrder = item.getPosition().compareTo(nextItem.getPosition());
+            Assert.assertTrue("at " + i, dispositionOrder < 0 || dispositionOrder == 0 && positionOrder < 0);
         }
     }
+
+    @Test
+    public void testMissingQuant() {
+        // Overwrites the existing quant with one that should not be used for pico dispositions.
+        setUpQuants(1);
+        BarcodedTube barcodedTube = picoDispositionActionBean.getTubeFormation().getContainerRole().
+                getMapPositionToVessel().entrySet().iterator().next().getValue();
+
+        barcodedTube.getMetrics().clear();
+        barcodedTube.addMetric(new LabMetric(new BigDecimal(11.1), LabMetric.MetricType.CATCH_PICO,
+                LabMetric.LabUnit.NG_PER_UL, FIRST_CELLNAME, timeSteps[0]));
+
+        // Should have an empty list of sample dispositions.
+        picoDispositionActionBean.displayList();
+        Assert.assertTrue(CollectionUtils.isEmpty(picoDispositionActionBean.getListItems()));
+    }
+
+    @Test
+    public void testGetsLatestMetric() {
+        setUpQuants(1);
+        BarcodedTube barcodedTube = picoDispositionActionBean.getTubeFormation().getContainerRole().
+                getMapPositionToVessel().entrySet().iterator().next().getValue();
+
+        // Adds conflicting metrics that should be resolved by taking only the latest one.
+        // Earliest metric has a high concentration and PASS decision.
+        // Then a later metric with low concentration and RISK decision.
+        // Then the latest metric with low concentration and FAIL decision.
+        barcodedTube.getMetrics().clear();
+
+        LabMetric labMetric0 = new LabMetric(new BigDecimal(94.0), LabMetric.MetricType.INITIAL_PICO,
+                LabMetric.LabUnit.NG_PER_UL, FIRST_CELLNAME, timeSteps[0]);
+        labMetric0.setLabMetricDecision(new LabMetricDecision(LabMetricDecision.Decision.PASS, timeSteps[0],
+                BSPManagerFactoryStub.QA_DUDE_USER_ID, labMetric0));
+        barcodedTube.addMetric(labMetric0);
+
+        LabMetric labMetric1 = new LabMetric(new BigDecimal(1.1), LabMetric.MetricType.INITIAL_PICO,
+                LabMetric.LabUnit.NG_PER_UL, FIRST_CELLNAME, timeSteps[1]);
+        labMetric1.setLabMetricDecision(new LabMetricDecision(LabMetricDecision.Decision.RISK, timeSteps[1],
+                BSPManagerFactoryStub.QA_DUDE_USER_ID, labMetric1));
+        barcodedTube.addMetric(labMetric1);
+
+        LabMetric labMetric2 = new LabMetric(new BigDecimal(1.1), LabMetric.MetricType.INITIAL_PICO,
+                LabMetric.LabUnit.NG_PER_UL, FIRST_CELLNAME, timeSteps[2]);
+        labMetric2.setLabMetricDecision(new LabMetricDecision(LabMetricDecision.Decision.FAIL, timeSteps[2],
+                BSPManagerFactoryStub.QA_DUDE_USER_ID, labMetric2));
+        barcodedTube.addMetric(labMetric2);
+
+        // Creates the list of sample dispositions.
+        picoDispositionActionBean.displayList();
+        Assert.assertEquals(1, picoDispositionActionBean.getListItems().size());
+        Assert.assertEquals(PicoDispositionActionBean.NextStep.EXCLUDE,
+                picoDispositionActionBean.getListItems().get(0).getDisposition());
+    }
+
+    @Test
+    public void testGetsNonNullDateMetric() {
+        setUpQuants(1);
+        BarcodedTube barcodedTube = picoDispositionActionBean.getTubeFormation().getContainerRole().
+                getMapPositionToVessel().entrySet().iterator().next().getValue();
+
+        // Adds a conflicting metric that has a null date, and so should be ignored.
+        barcodedTube.getMetrics().clear();
+
+        LabMetric labMetric0 = new LabMetric(new BigDecimal(94.0), LabMetric.MetricType.INITIAL_PICO,
+                LabMetric.LabUnit.NG_PER_UL, FIRST_CELLNAME, timeSteps[0]);
+        labMetric0.setLabMetricDecision(new LabMetricDecision(LabMetricDecision.Decision.PASS, timeSteps[0],
+                BSPManagerFactoryStub.QA_DUDE_USER_ID, labMetric0));
+        barcodedTube.addMetric(labMetric0);
+
+        LabMetric labMetric1 = new LabMetric(new BigDecimal(1.1), LabMetric.MetricType.INITIAL_PICO,
+                LabMetric.LabUnit.NG_PER_UL, FIRST_CELLNAME, null);
+        labMetric1.setLabMetricDecision(new LabMetricDecision(LabMetricDecision.Decision.FAIL, null,
+                BSPManagerFactoryStub.QA_DUDE_USER_ID, labMetric1));
+        barcodedTube.addMetric(labMetric1);
+
+        // Creates the list of sample dispositions.
+        picoDispositionActionBean.displayList();
+        Assert.assertEquals(1, picoDispositionActionBean.getListItems().size());
+        Assert.assertEquals(PicoDispositionActionBean.NextStep.FP_DAUGHTER,
+                picoDispositionActionBean.getListItems().get(0).getDisposition());
+    }
+
+
 }

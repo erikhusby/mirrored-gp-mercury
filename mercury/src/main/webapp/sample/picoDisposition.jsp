@@ -66,7 +66,7 @@
                             ${listItem.concentration}
                     </td>
                     <td class="columnNextStep">
-                        <div title="${listItem.disposition.rangeCompare}">
+                        <div title="${listItem.disposition.sortOrder}">
                             ${listItem.disposition.stepName}
                         </div>
                     </td>

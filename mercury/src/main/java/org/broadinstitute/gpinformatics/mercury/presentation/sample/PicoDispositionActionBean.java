@@ -8,8 +8,12 @@ import net.sourceforge.stripes.action.UrlBinding;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.rackscan.ScannerException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanPlateProcessor;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean;
@@ -41,6 +45,9 @@ public class PicoDispositionActionBean extends RackScanActionBean {
 
     @Inject
     private BarcodedTubeDao barcodedTubeDao;
+
+    @Inject
+    private LabMetricDao labMetricDao;
 
     // Spreadsheet upload page invokes this action bean and passes in the tubeFormationLabel parameter.
     private String tubeFormationLabel;
@@ -79,23 +86,24 @@ public class PicoDispositionActionBean extends RackScanActionBean {
     }
 
     /**
-     * ListItem represents a lab vessel displayed in the jsp's list.
+     * SampleDisposition represents a sample disposition displayed in the jsp's list.
      */
     public class ListItem {
         private String position;
         private String barcode;
         private BigDecimal concentration;
         private NextStep disposition;
-        private boolean override;
+        private boolean riskOverride;
 
         public ListItem(String position, String barcode, BigDecimal concentration,  NextStep disposition,
-                        boolean override) {
+                        boolean riskOverride) {
             this.position = position;
             this.barcode = barcode;
-            // Limits the decimal digits displayed.
-            this.concentration = (concentration != null) ? concentration.setScale(2, RoundingMode.HALF_EVEN) : null;
+            // Sets the number of decimal digits to display.
+            this.concentration = (concentration != null) ?
+                    concentration.setScale(VarioskanPlateProcessor.SCALE, RoundingMode.HALF_EVEN) : null;
             this.disposition = disposition;
-            this.override = override;
+            this.riskOverride = riskOverride;
         }
 
         public String getPosition() {
@@ -110,43 +118,48 @@ public class PicoDispositionActionBean extends RackScanActionBean {
         public NextStep getDisposition() {
             return disposition;
         }
-        public boolean isOverride() {
-            return override;
+        public boolean hasRiskOverride() {
+            return riskOverride;
         }
     }
-    private static Map<Integer, NextStep> mapRangeCompareToNextStep = new HashMap<>();
 
     /**
      * NextStep describes what should happen next to a tube after initial pico.
      */
     public enum NextStep {
-        FP_DAUGHTER("FP Daughter", 1),
-        SHEARING_DAUGHTER("Shearing Daughter", 0),
-        EXCLUDE("Exclude", -1);
+        FP_DAUGHTER("FP Daughter", 2),
+        SHEARING_DAUGHTER("Shearing Daughter", 1),
+        SHEARING_DAUGHTER_AT_RISK("Shearing Daughter (At Risk)", 1),
+        EXCLUDE("Exclude", 0);
 
         private String stepName;
+        private int sortOrder;
 
-        // rangeCompare indicates below range (-1), in range (0), above range (+1).
-        // It is also used for sorting a list of NextStep.
-        private int rangeCompare;
-
-        private NextStep(String stepName, int rangeCompare) {
+        private NextStep(String stepName, int sortOrder) {
             this.stepName = stepName;
-            this.rangeCompare = rangeCompare;
-            mapRangeCompareToNextStep.put(rangeCompare, this);
+            this.sortOrder = sortOrder;
         }
 
         public String getStepName() {
             return stepName;
         }
 
-        public int getRangeCompare() {
-            return rangeCompare;
+        public int getSortOrder() {
+            return sortOrder;
         }
 
-        /** Returns the NextStep for the given NextStep.rangeCompare, or null if not found. */
-        public static NextStep getNextStepForRangeCompare(int compareResult) {
-            return mapRangeCompareToNextStep.get(compareResult);
+        /**
+         * Returns the NextStep based on quant range comparison and at risk override.
+         * @param rangeComparison  +, -, or 0  indicating quant is above, below, or in range.
+         * @param override   true if user accepted this sample despite its low quant.
+         */
+        public static NextStep calculateNextStep(int rangeComparison, boolean override) {
+            if (rangeComparison < 0) {
+                return override ? SHEARING_DAUGHTER_AT_RISK : EXCLUDE;
+            } else if (rangeComparison == 0) {
+                return SHEARING_DAUGHTER;
+            }
+            return FP_DAUGHTER;
         }
     }
 
@@ -156,9 +169,6 @@ public class PicoDispositionActionBean extends RackScanActionBean {
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
     public Resolution displayList() {
-        if (StringUtils.isBlank(tubeFormationLabel) && tubeFormation == null) {
-            addMessage("tubeFormationLabel is missing");
-        }
         makeListItems(tubeFormationLabel, tubeFormation);
         return new ForwardResolution(PICO_DISPOSTION_PAGE);
     }
@@ -198,24 +208,21 @@ public class PicoDispositionActionBean extends RackScanActionBean {
         return new ForwardResolution(PICO_DISPOSTION_PAGE);
     }
 
-
-
-    // Makes all listItems from a tube formation label, or the tube formation entity.
+    /** Makes listItems from either a tube formation or its label. */
     private void makeListItems(String label, TubeFormation container) {
         listItems.clear();
-        if (container != null || StringUtils.isNotBlank(label)) {
-            if (container == null) {
-                container = tubeFormationDao.findByDigest(label);
-            }
+        if (StringUtils.isNotBlank(label) && container == null) {
+            container = tubeFormationDao.findByDigest(label);
             if (container == null || container.getContainerRole() == null) {
                 addMessage("Cannot find tube formation having label '" + label + "'");
-            } else {
-                makeListItems(container.getContainerRole().getMapPositionToVessel());
             }
+        }
+        if (container != null) {
+            makeListItems(container.getContainerRole().getMapPositionToVessel());
         }
     }
 
-    // Makes all listItems from a position->barcode map.
+    /** Makes listItems from a position->barcode map. */
     private void makeListItems(LinkedHashMap<String, String> positionToBarcodeMap) {
         // First makes a map of position->tube.
         positionToTubeMap.clear();
@@ -238,23 +245,43 @@ public class PicoDispositionActionBean extends RackScanActionBean {
         makeListItems(positionToTubeMap);
     }
 
-    // Makes all listItems from a position->tube map.
+    /** Makes listItems from a position->tube map. */
     private void makeListItems(Map<VesselPosition, BarcodedTube> map) {
         for (VesselPosition vesselPosition : map.keySet()) {
             BarcodedTube tube = map.get(vesselPosition);
-            int rangeCompare = tube.concentrationInFingerprintRange();
-            boolean override = false; //xxx todo get this from somewhere in labVessel?
-            listItems.add(new ListItem(vesselPosition.name(), tube.getLabel(), tube.getConcentration(),
-                    NextStep.getNextStepForRangeCompare(rangeCompare), override));
+            LabMetric labMetric = findMostRecentInitialPicoMetric(tube);
+            if (labMetric != null) {
+                BigDecimal concentration = labMetric.getValue();
+                boolean riskOverride =
+                        labMetric.getLabMetricDecision().getDecision().equals(LabMetricDecision.Decision.RISK);
+                int rangeCompare = labMetric.initialPicoDispositionRange();
+                listItems.add(new ListItem(vesselPosition.name(), tube.getLabel(), concentration,
+                        NextStep.calculateNextStep(rangeCompare, riskOverride), riskOverride));
+
+            }
         }
         Collections.sort(listItems, BY_DISPOSITION_THEN_POSITION);
+    }
+
+    /** Looks up the most recent initial pico quant for the tube. */
+    private LabMetric findMostRecentInitialPicoMetric(BarcodedTube tube) {
+        LabMetric latestInitialPico = null;
+        for (LabMetric labMetric : tube.getMetrics()) {
+            if (labMetric.getName().equals(LabMetric.MetricType.INITIAL_PICO) &&
+                (latestInitialPico == null || latestInitialPico.getCreatedDate() == null ||
+                 (labMetric.getCreatedDate() != null &&
+                  labMetric.getCreatedDate().after(latestInitialPico.getCreatedDate())))) {
+                latestInitialPico = labMetric;
+            }
+        }
+        return latestInitialPico;
     }
 
     private static final Comparator<ListItem> BY_DISPOSITION_THEN_POSITION = new Comparator<ListItem>() {
             @Override
             public int compare(ListItem o1, ListItem o2) {
-                int compareResult = Integer.compare(o1.getDisposition().getRangeCompare(),
-                        o2.getDisposition().getRangeCompare());
+                int compareResult = Integer.compare(o1.getDisposition().getSortOrder(),
+                        o2.getDisposition().getSortOrder());
                 return (compareResult != 0) ? compareResult :  o1.getPosition().compareTo(o2.getPosition());
             }};
 
