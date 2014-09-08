@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
+import javax.annotation.Nonnull;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The contents of Configurable Lists are typically driven by object graph navigation
@@ -18,4 +20,13 @@ public interface ListPlugin {
      * @return list of rows of cells, with each cell having a reference to a header
      */
     public List<ConfigurableList.Row> getData(List<?> entityList, ConfigurableList.HeaderGroup headerGroup);
+
+    /**
+     * Defines a mechanism for creating nested table data
+     *
+     * @param entity  The entity for which to return any nested table data
+     * @param columnTabulation Column definition for the nested table
+     * @return ResultList containing nested table data
+     */
+    public ConfigurableList.ResultList getNestedTableData(Object entity, ColumnTabulation columnTabulation, @Nonnull Map<String, Object> context);
 }

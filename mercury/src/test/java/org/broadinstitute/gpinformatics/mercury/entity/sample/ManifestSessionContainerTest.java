@@ -6,7 +6,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
-import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -24,12 +23,17 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 
+/**
+ * Container tests for ManifestSessions.
+ */
 @Test(groups = TestGroups.STANDARD)
 public class ManifestSessionContainerTest extends Arquillian {
 
     private static final String PATIENT_1 = "PATIENT 1";
 
     private static final String GENDER_MALE = "Male";
+
+    private ResearchProject researchProject;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -40,46 +44,40 @@ public class ManifestSessionContainerTest extends Arquillian {
     private ResearchProjectDao researchProjectDao;
 
     @Inject
-    private ManifestSessionEjb manifestSessionEjb;
-
-    @Inject
     private ManifestSessionDao manifestSessionDao;
 
     @BeforeMethod
     public void setUp() throws Exception {
-        if (researchProjectDao == null) {
-            return;
+        if (researchProjectDao != null) {
+            researchProject = ResearchProjectTestFactory.createTestResearchProject("RP-" + (new Date()).getTime());
+            researchProjectDao.persist(researchProject);
         }
     }
 
-    public void manifestEvent() {
-        ManifestEvent manifestEvent = new ManifestEvent("Everything is OK.", ManifestEvent.Type.INFO);
-        researchProjectDao.persist(manifestEvent);
-        researchProjectDao.flush();
-    }
-
+    /**
+     * Round trip test for ManifestSession.
+     */
     public void roundTrip() {
-
-        ResearchProject researchProject =
-                ResearchProjectTestFactory.createTestResearchProject("RP-" + (new Date()).getTime());
-
-        researchProjectDao.persist(researchProject);
-        researchProjectDao.flush();
 
         ManifestSession manifestSessionIn = new ManifestSession(researchProject, "BUICK-TEST",
                 new BSPUserList.QADudeUser("PM", 5176L));
-
-        ManifestRecord manifestRecordIn = new ManifestRecord(
-                new Metadata(Metadata.Key.PATIENT_ID, PATIENT_1),
+        ManifestRecord manifestRecordIn = new ManifestRecord(new Metadata(Metadata.Key.PATIENT_ID, PATIENT_1),
                 new Metadata(Metadata.Key.GENDER, GENDER_MALE));
-
         manifestSessionIn.addRecord(manifestRecordIn);
-        manifestSessionEjb.save(manifestSessionIn);
+        // Create and persist ManifestSession.
+
+        manifestSessionDao.persist(manifestSessionIn);
+        // Clear the Session to force retrieval of a persistent instance 'manifestSessionOut' below that is distinct
+        // from the detached 'manifestSessionIn' instance.
         manifestSessionDao.clear();
 
         ManifestSession manifestSessionOut =
                 manifestSessionDao.findById(ManifestSession.class, manifestSessionIn.getManifestSessionId());
 
+        assertThat(manifestSessionIn.getRecords().size(), is(equalTo(manifestSessionOut.getRecords().size())));
+        assertThat(manifestSessionOut.getRecords().size(), is(equalTo(1)));
+
+        // Get the sole 'out' ManifestRecord for comparison with the sole 'in' ManifestRecord.
         ManifestRecord manifestRecordOut = manifestSessionOut.getRecords().get(0);
         assertThat(manifestRecordOut.getMetadata().size(), is(equalTo(manifestRecordIn.getMetadata().size())));
         for (Metadata metadata : manifestRecordIn.getMetadata()) {
@@ -91,4 +89,5 @@ public class ManifestSessionContainerTest extends Arquillian {
         assertThat(manifestRecordIn.getErrorStatus(), is(nullValue()));
         assertThat(manifestRecordOut.getErrorStatus(), is(equalTo(manifestRecordIn.getErrorStatus())));
     }
+
 }

@@ -68,6 +68,8 @@ public class ZimsIlluminaRunFactoryTest {
     private JiraService mockJiraService;
     private ProductOrderDao productOrderDao;
     private List<MolecularIndexReagent> reagents;
+    private static final ResearchProject.RegulatoryDesignation
+            REGULATORY_DESIGNATION = ResearchProject.RegulatoryDesignation.CLINICAL_DIAGNOSTICS;
 
     @BeforeMethod(groups = DATABASE_FREE)
     public void setUp() {
@@ -111,7 +113,7 @@ public class ZimsIlluminaRunFactoryTest {
         ResearchProject testResearchProject =
                 new ResearchProject(101L, "Test Project", "ZimsIlluminaRunFactoryTest project", true);
         testResearchProject.setJiraTicketKey("TestRP-1");
-
+        testResearchProject.setRegulatoryDesignation(REGULATORY_DESIGNATION);
 
         // Create a test product order
         List<ProductOrderSample> pdoSamples = new ArrayList<>();
@@ -297,6 +299,7 @@ public class ZimsIlluminaRunFactoryTest {
             // in mercury, pipeline should always be told to aggregate
             assertThat(libraryBean.doAggregation(), equalTo(true));
             assertThat(libraryBean.getProductOrderSample(), equalTo(sampleId));
+            assertThat("The pipeline API expects enum names for regulatory designations",libraryBean.getRegulatoryDesignation(),equalTo(REGULATORY_DESIGNATION.name()));
         }
     }
 

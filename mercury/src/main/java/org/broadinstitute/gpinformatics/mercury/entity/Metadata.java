@@ -16,7 +16,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 /**
- * Basic metadata storage class with String keys and values.
+ * Generic metadata storage class with String keys and values.
  */
 @Entity
 @Audited
@@ -26,6 +26,7 @@ public class Metadata {
     @Id
     @SequenceGenerator(name = "SEQ_METADATA", schema = "mercury", sequenceName = "SEQ_METADATA")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_METADATA")
+    /** ID field for JPA */
     @SuppressWarnings("UnusedDeclaration")
     @Column(name = "metadata_id")
     private Long id;
@@ -48,7 +49,7 @@ public class Metadata {
         this.value = value;
     }
 
-    public Key getKey() {
+    public @Nonnull Key getKey() {
         return key;
     }
 
@@ -85,8 +86,9 @@ public class Metadata {
         PATIENT_ID(Category.SAMPLE),
         SAMPLE_TYPE(Category.SAMPLE),
         TUMOR_NORMAL(Category.SAMPLE),
-        COLLECTION_DATE(Category.SAMPLE),
+        BUICK_COLLECTION_DATE(Category.SAMPLE),
         SAMPLE_ID(Category.SAMPLE),
+        BUICK_VISIT(Category.SAMPLE),
 
         CORRELATION_COEFFICIENT_R2(Category.LAB_METRIC_RUN),
         INSTRUMENT_NAME(Category.LAB_METRIC_RUN),

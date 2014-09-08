@@ -22,13 +22,17 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * Manifest session contains the information related to a manifest upload.  While other entities will contain the
- * specific information for an uploaded manifest, the session controls whether or not that data can be updated
+ * Manifest session contains the information related to a single manifest upload during the sample registration process.
  */
 @Entity
 @Audited
 @Table(schema = "mercury", name = "MANIFEST_SESSION")
 public class ManifestSession {
+
+    @Id
+    @SequenceGenerator(name = "SEQ_MANIFEST_SESSION", schema = "mercury", sequenceName = "SEQ_MANIFEST_SESSION")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MANIFEST_SESSION")
+    private Long manifestSessionId;
 
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "RESEARCH_PROJECT_ID")
@@ -39,11 +43,6 @@ public class ManifestSession {
 
     @Column(name = "CREATED_BY")
     private Long createdBy;
-
-    @Id
-    @SequenceGenerator(name = "SEQ_MANIFEST_SESSION", schema = "mercury", sequenceName = "SEQ_MANIFEST_SESSION")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MANIFEST_SESSION")
-    private Long manifestSessionId;
 
     @Enumerated(EnumType.STRING)
     private SessionStatus status = SessionStatus.OPEN;
@@ -63,6 +62,9 @@ public class ManifestSession {
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "session")
     private List<ManifestEvent> logEntries = new ArrayList<>();
 
+    /**
+     * For JPA
+     */
     protected ManifestSession() {
     }
 
@@ -80,11 +82,11 @@ public class ManifestSession {
         return researchProject;
     }
 
-    protected Long getManifestSessionId() {
+    Long getManifestSessionId() {
         return manifestSessionId;
     }
 
-    public String createSessionName() {
+    public String getSessionName() {
         return getSessionPrefix() + getManifestSessionId();
     }
 
@@ -121,10 +123,6 @@ public class ManifestSession {
         return records;
     }
 
-    public void setRecords(List<ManifestRecord> records) {
-        this.records = records;
-    }
-
     public void addLogEntry(ManifestEvent logEntry) {
 
         logEntries.add(logEntry);
@@ -135,9 +133,9 @@ public class ManifestSession {
         return logEntries;
     }
 
-    public void setLogEntries(List<ManifestEvent> logEntries) {
-        this.logEntries = logEntries;
-    }
-
+    /**
+     * Indicator to denote the availability (complete or otherwise) of a manifest session for the sample registration
+     * process
+     */
     public enum SessionStatus {OPEN, COMPLETED}
 }

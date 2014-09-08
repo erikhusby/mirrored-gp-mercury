@@ -5,6 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
@@ -151,13 +152,36 @@ public class VesselEjb {
     /**
      * Create LabVessels and MercurySamples from a spreadsheet (from BSP).
      */
-    public List<LabVessel> createSampleVessels(
-            InputStream samplesSpreadsheetStream, String loginUserName)
+    public List<LabVessel> createSampleVessels(InputStream samplesSpreadsheetStream, String loginUserName,
+            MessageCollection messageCollection)
             throws InvalidFormatException, IOException, ValidationException {
-        SampleVesselProcessor sampleVesselProcessor = new SampleVesselProcessor("Sheet1", labVesselFactory,
-                labVesselDao, loginUserName);
-        PoiSpreadsheetParser.processSingleWorksheet(samplesSpreadsheetStream, sampleVesselProcessor);
-        return sampleVesselProcessor.getLabVessels();
+        SampleVesselProcessor sampleVesselProcessor = new SampleVesselProcessor("Sheet1");
+        messageCollection.addErrors(PoiSpreadsheetParser.processSingleWorksheet(samplesSpreadsheetStream,
+                sampleVesselProcessor));
+
+        List<LabVessel> labVessels = null;
+        if (!messageCollection.hasErrors()) {
+            Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(new ArrayList<>(
+                    sampleVesselProcessor.getTubeBarcodes()));
+            for (LabVessel labVessel : mapBarcodeToVessel.values()) {
+                if (labVessel != null) {
+                    messageCollection.addError("Tube " + labVessel.getLabel() + " is already in the database.");
+                }
+            }
+
+            List<MercurySample> mercurySamples = mercurySampleDao.findBySampleKeys(sampleVesselProcessor.getSampleIds());
+            for (MercurySample mercurySample : mercurySamples) {
+                messageCollection.addError("Sample " + mercurySample.getSampleKey() + " is already in the database.");
+            }
+
+            if (!messageCollection.hasErrors()) {
+                labVessels = labVesselFactory.buildLabVessels(
+                        new ArrayList<>(sampleVesselProcessor.getMapBarcodeToParentVessel().values()),
+                        loginUserName, new Date(), null, MercurySample.MetadataSource.MERCURY);
+                labVesselDao.persistAll(labVessels);
+            }
+        }
+        return labVessels;
     }
 
     /**

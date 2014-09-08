@@ -16,13 +16,15 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 /**
- * TODO scottmat fill in javadoc!!!
+ * Manifest events represents logged items of interest that occur during the registration and/or accessioning
+ * process.  Tracking these items is a critical piece of supporting a quality system.
  */
 @Entity
 @Audited
 @Table(schema = "mercury", name="MANIFEST_EVENT")
 public class ManifestEvent {
 
+    @SuppressWarnings("UnusedDeclaration")
     @Id
     @SequenceGenerator(name = "SEQ_MANIFEST_EVENT", schema = "mercury", sequenceName = "SEQ_MANIFEST_EVENT")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MANIFEST_EVENT")

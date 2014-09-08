@@ -30,17 +30,7 @@ public class VarioskanRowParser {
         workbook = varioskanSpreadsheet;
     }
 
-    public enum Converter {
-        DATE(Date.class),
-        STRING(String.class);
-
-        Converter(Class<?> aClass) {
-
-        }
-    }
-
     public enum NameValue {
-        // Need a way to return String or Date.  Caller would know from context.  Alternatively, include the date format string in the enum
         RUN_NAME("Run name", 6, GENERAL_INFO_TAB),
         RUN_STARTED("Run started", 8, GENERAL_INFO_TAB, "MM/dd/yyyy hh:mm:ss a"),
         INSTRUMENT_NAME("Instrument name", 13, GENERAL_INFO_TAB),
@@ -97,7 +87,7 @@ public class VarioskanRowParser {
             Row row = sheet.getRow(nameValue.getRow());
             String name = row.getCell(NAME_COLUMN).getStringCellValue();
             if (!name.equals(nameValue.getFieldName())) {
-                // todo accumulate errors
+                // todo jmt accumulate errors?
                 throw new RuntimeException("Expected " + nameValue.getFieldName() + ", found " + name);
             }
             String cellValue = PoiSpreadsheetParser.getCellValues(row.getCell(VALUE_COLUMN), false, false);

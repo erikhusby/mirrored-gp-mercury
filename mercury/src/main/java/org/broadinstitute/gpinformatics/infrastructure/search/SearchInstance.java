@@ -369,9 +369,11 @@ public class SearchInstance implements Serializable {
             return propertyValues;
         }
 
-        public Object evalDisplayExpression(Object root) {
+        public Object evalDisplayExpression(Object root, Map<String, Object> context) {
+            if( context == null ) {
+                context = new HashMap<>();
+            }
             // Evaluate the display value expression for the search term.
-            Map<String, Object> context = new HashMap<>();
             context.put(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_VALUE, this);
             try {
                 return getSearchTerm().getDisplayExpression().evaluate(root, context);
@@ -381,12 +383,14 @@ public class SearchInstance implements Serializable {
             }
         }
 
-        public Object evalHeaderExpression(Object root) {
+        public Object evalHeaderExpression(Object root, Map<String, Object> context) {
             // If the header is an expression, evaluate it.
             if (getSearchTerm().getViewHeader() == null) {
                 return getSearchTerm().getName();
             } else {
-                Map<String, Object> context = new HashMap<>();
+                if( context == null ) {
+                    context = new HashMap<>();
+                }
                 context.put(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_VALUE, this);
                 return getSearchTerm().getViewHeader().evaluate(root, context);
             }
@@ -486,17 +490,17 @@ public class SearchInstance implements Serializable {
 
         @Override
         public Object evalPlainTextExpression(Object entity, Map<String, Object> context) {
-            return evalDisplayExpression(entity);
+            return evalDisplayExpression(entity, context);
         }
 
         @Override
         public Object evalFormattedExpression(Object entity, Map<String, Object> context) {
-            return evalDisplayExpression(entity);
+            return evalDisplayExpression(entity, context);
         }
 
         @Override
         public Object evalViewHeaderExpression(Object entity, Map<String, Object> context) {
-            return evalHeaderExpression(entity);
+            return evalHeaderExpression(entity, context);
         }
 
         /* ***********************************************
@@ -530,7 +534,7 @@ public class SearchInstance implements Serializable {
 
         @Override
         public Object evalDownloadHeader1Expression(Object entity, Map<String, Object> context) {
-            return evalHeaderExpression(entity);
+            return evalHeaderExpression(entity, context);
         }
 
         @Override
@@ -543,8 +547,18 @@ public class SearchInstance implements Serializable {
         }
 
         @Override
-        public String getPluginClass() {
-            return null;
+        public Class getPluginClass() {
+            if( getSearchTerm() != null ) {
+                return getSearchTerm().getPluginClass();
+            } else {
+                return null;
+            }
+        }
+        @Override
+        public void setPluginClass( Class pluginClass){
+            if( getSearchTerm() != null ) {
+                getSearchTerm().setPluginClass(pluginClass);
+            }
         }
 
         @Override
