@@ -830,4 +830,55 @@ public class ManifestSessionEjbDBFreeTest {
             assertThat(ignored.getMessage(), is(equalTo(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE.formatMessage(ManifestSession.SAMPLE_ID_KEY, sourceForTransfer))));
         }
     }
+
+    public void validateSourceNotFoundInManifest() throws Exception {
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
+                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 20);
+
+        try {
+            ManifestRecord foundRecord = holder.ejb.validateSourceTubeForTransfer(ARBITRARY_MANIFEST_SESSION_ID,
+                    sourceForTransfer);
+            Assert.fail();
+        } catch (Exception ignored) {
+            assertThat(ignored.getMessage(),
+                    is(equalTo(ManifestRecord.ErrorStatus.NOT_IN_MANIFEST.formatMessage(ManifestSession.SAMPLE_ID_KEY,
+                            sourceForTransfer))));
+        }
+    }
+
+    public void validateSourceOnMismatchedGenderRecord() throws Exception {
+
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
+                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 20);
+
+        ManifestTestFactory.addExtraRecord(holder.manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, sourceForTransfer),
+                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.ACCESSIONED);
+
+        ManifestRecord foundRecord =
+                holder.ejb.validateSourceTubeForTransfer(ARBITRARY_MANIFEST_SESSION_ID, sourceForTransfer);
+
+        assertThat(foundRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue(), is(equalTo(sourceForTransfer)));
+        assertThat(foundRecord.getManifestEvents().size(), is(equalTo(1)));
+    }
+
+    public void validateSourceOnUnScannedRecord() throws Exception {
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
+                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 20);
+
+        ManifestTestFactory.addExtraRecord(holder.manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, sourceForTransfer),
+                ManifestRecord.ErrorStatus.MISSING_SAMPLE, ManifestRecord.Status.UPLOAD_ACCEPTED);
+
+        try {
+            ManifestRecord foundRecord = holder.ejb.validateSourceTubeForTransfer(ARBITRARY_MANIFEST_SESSION_ID,
+                    sourceForTransfer);
+            Assert.fail();
+        } catch (Exception ignored) {
+            assertThat(ignored.getMessage(), is(equalTo(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE.formatMessage(ManifestSession.SAMPLE_ID_KEY, sourceForTransfer))));
+        }
+    }
+
+
+
 }
