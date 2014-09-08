@@ -520,6 +520,24 @@ public class ManifestSession {
         setStatus(SessionStatus.COMPLETED);
     }
 
+    public ManifestRecord findRecordForTransfer(String sourceForTransfer) {
+
+        ManifestRecord recordForTransfer = findRecordByState(sourceForTransfer);
+
+        if(recordForTransfer.isQuarantined()) {
+
+            throw new TubeTransferException(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE,
+                    SAMPLE_ID_KEY, sourceForTransfer);
+        }
+
+        if(recordForTransfer.getStatus() != ManifestRecord.Status.ACCESSIONED) {
+            throw new TubeTransferException(ManifestRecord.ErrorStatus.NOT_READY_FOR_TUBE_TRANSFER,
+                    SAMPLE_ID_KEY, sourceForTransfer);
+        }
+
+        return recordForTransfer;
+    }
+
     /**
      * Indicator to denote the availability (complete or otherwise) of a manifest session for the sample registration
      * process.

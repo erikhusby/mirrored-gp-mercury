@@ -161,4 +161,11 @@ public class ManifestSessionEjb {
         manifestSessionDao.persist(manifestSession);
 
     }
+
+    public ManifestRecord validateSourceTubeForTransfer(long manifestSessionId, String sourceForTransfer) {
+
+        ManifestSession manifestSession = manifestSessionDao.find(manifestSessionId);
+
+        return manifestSession.findRecordForTransfer(sourceForTransfer);
+    }
 }

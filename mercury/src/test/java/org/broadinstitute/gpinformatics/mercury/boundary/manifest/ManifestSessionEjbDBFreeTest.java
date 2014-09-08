@@ -39,6 +39,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.collection.IsEmptyCollection.empty;
+import static org.hamcrest.collection.IsEmptyCollection.emptyCollectionOf;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ManifestSessionEjbDBFreeTest {
@@ -305,10 +306,19 @@ public class ManifestSessionEjbDBFreeTest {
                                                               ManifestTestFactory.CreationType starterType,
                                                               ManifestRecord.Status initialStatus, int numberOfRecords)
             throws FileNotFoundException {
-        final ManifestSessionAndEjbHolder holder = new ManifestSessionAndEjbHolder();
-
         ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(
                 researchProjectKey);
+
+        return buildHolderForSession(fileName, starterType, initialStatus, numberOfRecords, researchProject);
+    }
+
+    private ManifestSessionAndEjbHolder buildHolderForSession(String fileName,
+                                                              ManifestTestFactory.CreationType starterType,
+                                                              ManifestRecord.Status initialStatus,
+                                                              int numberOfRecords,
+                                                              ResearchProject researchProject)
+            throws FileNotFoundException {
+        final ManifestSessionAndEjbHolder holder = new ManifestSessionAndEjbHolder();
 
         Mockito.when(manifestSessionDao.find(Mockito.anyLong())).thenAnswer(new Answer<ManifestSession>() {
             @Override
@@ -322,8 +332,8 @@ public class ManifestSessionEjbDBFreeTest {
         if (starterType == ManifestTestFactory.CreationType.UPLOAD) {
             holder.manifestSession = uploadManifest(holder.ejb, fileName, researchProject);
         } else {
-            holder.manifestSession = ManifestTestFactory.buildManifestSession(researchProjectKey, "BuickCloseGood",
-                    new BSPUserList.QADudeUser("LU", 342L), numberOfRecords, initialStatus);
+            holder.manifestSession = ManifestTestFactory.buildManifestSession(researchProject.getBusinessKey(),
+                    "BuickCloseGood", new BSPUserList.QADudeUser("LU", 342L), numberOfRecords, initialStatus);
         }
         return holder;
     }
@@ -764,19 +774,16 @@ public class ManifestSessionEjbDBFreeTest {
     public void closeManifestWithMisMatchedGenderRecords() throws Exception {
 
         ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
-                ManifestTestFactory.CreationType.FACTORY,
-                ManifestRecord.Status.SCANNED, 20);
+                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.SCANNED, 20);
 
         String misMatch1Barcode = GOOD_TUBE_BARCODE + "BadGender1";
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, misMatch1Barcode),
-                ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, misMatch1Barcode), ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
                 ManifestRecord.Status.SCANNED);
 
         String misMatch2Barcode = GOOD_TUBE_BARCODE + "BadGender2";
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, misMatch2Barcode),
-                ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, misMatch2Barcode), ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
                 ManifestRecord.Status.SCANNED);
 
         holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
@@ -790,4 +797,21 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
+
+    public void validateSourceOnCLeanSession() throws Exception {
+
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
+                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 20);
+
+        String sourceForTransfer = "9294923";
+        ManifestTestFactory.addExtraRecord(holder.manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, sourceForTransfer), null, ManifestRecord.Status.ACCESSIONED);
+
+
+        ManifestRecord foundRecord =
+                holder.ejb.validateSourceTubeForTransfer(ARBITRARY_MANIFEST_SESSION_ID, sourceForTransfer);
+
+        assertThat(foundRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue(), is(equalTo(sourceForTransfer)));
+        assertThat(foundRecord.getManifestEvents(), is(emptyCollectionOf(ManifestEvent.class)));
+    }
 }
