@@ -14,33 +14,33 @@ package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 
-import java.lang.EnumConstantNotPresentException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * This enum holds header information for sample metadata manifests.
  */
 public enum ManifestHeader implements ColumnHeader {
-    SPECIMEN_NUMBER("Specimen_Number", 0, Metadata.Key.SAMPLE_ID, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE),
-    PATIENT_ID("Patient_ID", 1, Metadata.Key.PATIENT_ID, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE),
-    SEX("Sex", 2, Metadata.Key.GENDER, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_VALUE),
-    COLLECTION_DATE("Collection_Date", 3, Metadata.Key.BUICK_COLLECTION_DATE, ColumnHeader.REQUIRED_HEADER,
+    SPECIMEN_NUMBER("Specimen_Number", 0, Metadata.Key.SAMPLE_ID, ColumnHeader.REQUIRED_VALUE),
+    SEX("Sex", 2, Metadata.Key.GENDER, ColumnHeader.OPTIONAL_VALUE),
+    PATIENT_ID("Patient_ID", 1, Metadata.Key.PATIENT_ID, ColumnHeader.REQUIRED_VALUE),
+    COLLECTION_DATE("Collection_Date", 3, Metadata.Key.BUICK_COLLECTION_DATE,
             ColumnHeader.OPTIONAL_VALUE),
-    VISIT("Visit", 4, Metadata.Key.BUICK_VISIT, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_VALUE),
-    TUMOR_OR_NORMAL("SAMPLE_TYPE", 5, Metadata.Key.TUMOR_NORMAL, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE);
+    VISIT("Visit", 4, Metadata.Key.BUICK_VISIT, ColumnHeader.OPTIONAL_VALUE),
+    TUMOR_OR_NORMAL("SAMPLE_TYPE", 5, Metadata.Key.TUMOR_NORMAL, ColumnHeader.REQUIRED_VALUE);
     private final String text;
     private final int index;
     private final Metadata.Key metadataKey;
     private final boolean requiredHeader;
     private final boolean requiredValue;
 
-    ManifestHeader(String text, int index, Metadata.Key metadataKey, boolean requiredHeader, boolean requiredValue) {
+    ManifestHeader(String text, int index, Metadata.Key metadataKey, boolean requiredValue) {
         this.text = text;
         this.index = index;
         this.metadataKey = metadataKey;
-        this.requiredHeader = requiredHeader;
+        this.requiredHeader = ColumnHeader.REQUIRED_HEADER;
         this.requiredValue = requiredValue;
     }
 
@@ -52,7 +52,7 @@ public enum ManifestHeader implements ColumnHeader {
      * @return a List of header names.
      */
     public static List<String> headerNames(ColumnHeader... columnHeaders) {
-        List<String> allHeaderNames = new ArrayList<>();
+        List<String> allHeaderNames = new ArrayList<>(columnHeaders.length);
         for (ColumnHeader manifestHeader : columnHeaders) {
             allHeaderNames.add(manifestHeader.getText());
         }
@@ -89,8 +89,6 @@ public enum ManifestHeader implements ColumnHeader {
 
     /**
      * We only hold string values, even for dates.
-     *
-     * @return
      */
     @Override
     public boolean isDateColumn() {
@@ -99,8 +97,6 @@ public enum ManifestHeader implements ColumnHeader {
 
     /**
      * Since we only hold string values of data, always return true.
-     *
-     * @return
      */
     @Override
     public boolean isStringColumn() {
@@ -161,5 +157,19 @@ public enum ManifestHeader implements ColumnHeader {
             }
         }
         throw new EnumConstantNotPresentException(ManifestHeader.class, key.name());
+    }
+
+    /**
+     * Create an array of Metadata for the the data row.
+     *
+     * @param dataRow key-value mapping of header to row value.
+     */
+    public static Metadata[] toMetadata(Map<String, String> dataRow) {
+        List<Metadata> metadata = new ArrayList<>(dataRow.size());
+        for (Map.Entry<String, String> columnEntry : dataRow.entrySet()) {
+            ManifestHeader header = ManifestHeader.fromColumnHeader(columnEntry.getKey());
+            metadata.add(new Metadata(header.getMetadataKey(), columnEntry.getValue()));
+        }
+        return metadata.toArray(new Metadata[metadata.size()]);
     }
 }

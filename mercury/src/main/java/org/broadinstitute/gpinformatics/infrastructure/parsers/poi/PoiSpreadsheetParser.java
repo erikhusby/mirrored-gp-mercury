@@ -167,7 +167,7 @@ public final class PoiSpreadsheetParser {
      * let POI turn things into real objects in the map in the future, but for now this was what callers were
      * expecting.
      * <p/>
-     * <b>Note, if your cell contains a formula, this method will return neither the calculated value, nor the formula
+     * <b>Note, if your cell contains a formula, this method will return not the calculated value, nor the formula
      * but an empty string instead.</b>
      *
      * @param cell The cell data.
@@ -242,17 +242,19 @@ public final class PoiSpreadsheetParser {
      * @throws IOException File issues
      * @throws ValidationException Any problems with the data in the spreadsheet
      */
-    public static void processSingleWorksheet(InputStream spreadsheet, TableProcessor processor)
+    public static List<String> processSingleWorksheet(InputStream spreadsheet, TableProcessor processor)
             throws InvalidFormatException, IOException, ValidationException {
 
         PoiSpreadsheetParser parser = new PoiSpreadsheetParser(Collections.<String, TableProcessor>emptyMap());
-
+        List<String> messages=new ArrayList<>();
         try {
             Workbook workbook = WorkbookFactory.create(spreadsheet);
             processor.validateNumberOfWorksheets(workbook.getNumberOfSheets());
             parser.processRows(workbook.getSheetAt(0), processor);
+            messages=processor.getMessages();
         } finally {
             processor.close();
         }
+        return messages;
     }
 }

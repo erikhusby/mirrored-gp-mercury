@@ -7,7 +7,6 @@ package org.broadinstitute.gpinformatics.infrastructure.parsers;
  * enough to be used by part of the system.
  */
 public interface ColumnHeader {
-
     boolean REQUIRED_HEADER = true;
     boolean OPTIONAL_HEADER = false;
     boolean REQUIRED_VALUE = true;

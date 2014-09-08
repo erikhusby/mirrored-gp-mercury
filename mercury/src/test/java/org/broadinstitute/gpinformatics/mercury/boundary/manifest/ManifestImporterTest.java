@@ -33,6 +33,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestHeader.SPECIMEN_NUMBER;
+import static org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestHeader.fromColumnHeader;
+import static org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestHeader.fromMetadataKey;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyCollectionOf;
@@ -44,17 +47,14 @@ import static org.hamcrest.Matchers.startsWith;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ManifestImporterTest {
-    public static final String TEST_MANIFEST_DIRECTORY = "manifest-import";
-    public static final String TEST_MANIFEST_XLS = TEST_MANIFEST_DIRECTORY + "/" + "test-manifest.xls";
-    public static final String TEST_MANIFEST_XLSX = TEST_MANIFEST_DIRECTORY + "/" + "test-manifest.xlsx";
-    public static final String MISSING_REQUIRED_VALUE =
-            TEST_MANIFEST_DIRECTORY + "/" + "test-manifest-missing-required.xlsx";
-    public static final String UNKNOWN_HEADERS = TEST_MANIFEST_DIRECTORY + "/" + "test-manifest-unknown-headers.xlsx";
-    public static final String TOO_MANY_SHEETS = TEST_MANIFEST_DIRECTORY + "/" + "test-manifest-too-many-sheets.xlsx";
-    public static final String REARRANGED_COLUMNS =
-            TEST_MANIFEST_DIRECTORY + "/" + "test-manifest-rearranged-columns.xlsx";
-    public static final String DUPLICATE_COLUMNS =
-            TEST_MANIFEST_DIRECTORY + "/" + "test-manifest-duplicate-columns.xlsx";
+    private static final String TEST_MANIFEST_DIRECTORY = "manifest-import";
+    private static final String TEST_MANIFEST_XLS = relativePathToTestFile("test-manifest.xls");
+    private static final String TEST_MANIFEST_XLSX = relativePathToTestFile("test-manifest.xlsx");
+    private static final String MISSING_REQUIRED_VALUE = relativePathToTestFile("test-manifest-missing-required.xlsx");
+    private static final String UNKNOWN_HEADERS = relativePathToTestFile("test-manifest-unknown-headers.xlsx");
+    private static final String TOO_MANY_SHEETS = relativePathToTestFile("test-manifest-too-many-sheets.xlsx");
+    private static final String REARRANGED_COLUMNS = relativePathToTestFile("test-manifest-rearranged-columns.xlsx");
+    private static final String DUPLICATE_COLUMNS = relativePathToTestFile("test-manifest-duplicate-columns.xlsx");
     private static final String ROW_NUMBER_PREFIX = "Row #%s ";
 
     private ManifestImportProcessor manifestImportProcessor;
@@ -65,11 +65,16 @@ public class ManifestImporterTest {
     }
 
     @DataProvider(name = "excelFileDataProvider")
-    public static Object[][] excelFileDataProvider() throws FileNotFoundException {
+    public Object[][] excelFileDataProvider() throws FileNotFoundException {
         return new Object[][]{
                 {TestUtils.getTestData(TEST_MANIFEST_XLS)}, {TestUtils.getTestData(TEST_MANIFEST_XLSX)},
         };
 
+    }
+
+
+    private static String relativePathToTestFile(String fileName) {
+        return TEST_MANIFEST_DIRECTORY + "/" + fileName;
     }
 
     @Test(dataProvider = "excelFileDataProvider")
@@ -90,7 +95,7 @@ public class ManifestImporterTest {
         validateManifestRecords(manifestImportProcessor);
         assertThat(manifestImportProcessor.getMessages(),
                 hasItem(String.format(ROW_NUMBER_PREFIX + TableProcessor.REQUIRED_VALUE_IS_MISSING, 1,
-                        ManifestHeader.SPECIMEN_NUMBER.getColumnHeader())));
+                        SPECIMEN_NUMBER.getColumnHeader())));
         assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
     }
 
@@ -152,28 +157,29 @@ public class ManifestImporterTest {
         }
         Map<String, String> manifestRow = new HashMap<>();
         for (ManifestRecord manifestRecord : manifestRecords) {
-            for (final Metadata metadata : manifestRecord.getMetadata()) {
-                ManifestHeader header = ManifestHeader.fromMetadataKey(metadata.getKey());
+            for (Metadata metadata : manifestRecord.getMetadata()) {
+                ManifestHeader header = fromMetadataKey(metadata.getKey());
                 manifestRow.put(header.getColumnHeader(), metadata.getValue());
             }
             PoiSpreadsheetValidator.validateSpreadsheetRow(manifestRow, ManifestHeader.class);
             for (Map.Entry<String, String> manifestCell : manifestRow.entrySet()) {
-                String header = manifestCell.getKey();
                 String value = manifestCell.getValue();
-                if (header.equals(ManifestHeader.TUMOR_OR_NORMAL.getColumnHeader())) {
+                switch (fromColumnHeader(manifestCell.getKey())) {
+                case TUMOR_OR_NORMAL:
                     assertThat(value, isOneOf("Tumor", "Normal"));
-                }
-                if (header.equals(ManifestHeader.SEX.getColumnHeader())) {
+                    break;
+                case SEX:
                     assertThat(value, isOneOf("Male", "Female"));
-                }
-                if (header.equals(ManifestHeader.VISIT.getColumnHeader())) {
+                    break;
+                case VISIT:
                     assertThat(value, is("Screening"));
-                }
-                if (header.equals(ManifestHeader.SPECIMEN_NUMBER.getColumnHeader())) {
+                    break;
+                case SPECIMEN_NUMBER:
                     assertThat(value, startsWith("0310"));
-                }
-                if (header.equals(ManifestHeader.PATIENT_ID.getColumnHeader())) {
+                    break;
+                case PATIENT_ID:
                     assertThat(value, startsWith("00"));
+                    break;
                 }
             }
         }
