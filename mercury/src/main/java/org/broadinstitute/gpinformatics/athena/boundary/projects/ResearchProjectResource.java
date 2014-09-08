@@ -226,7 +226,8 @@ public class ResearchProjectResource {
                     "Cannot create a project that already exists - the project name is already being used.");
         }
 
-        ResearchProject project = new ResearchProject(null, data.title, data.synopsis, false);
+        ResearchProject project = new ResearchProject(null, data.title, data.synopsis, false,
+                                                      ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
         BspUser user = bspUserList.getByUsername(data.username);
         project.setCreatedBy(user.getUserId());
 

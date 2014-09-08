@@ -53,7 +53,8 @@ public class SampleLedgerExporterFactoryTest {
         product.setProductName(TEST_PRODUCT_NAME);
 
         ResearchProject researchProject =
-                new ResearchProject(RESEARCH_PROJECT_CREATOR_ID, "Test Project", "Test", true);
+                new ResearchProject(RESEARCH_PROJECT_CREATOR_ID, "Test Project", "Test", true,
+                                    ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
 
         productOrder = new ProductOrder(PRODUCT_ORDER_CREATOR_ID, TEST_PRODUCT_ORDER_TITLE,
                 Collections.<ProductOrderSample>emptyList(), "QUOTE-1", product, researchProject);

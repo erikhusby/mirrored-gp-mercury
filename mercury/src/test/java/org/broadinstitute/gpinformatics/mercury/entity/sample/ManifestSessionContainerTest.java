@@ -48,7 +48,10 @@ public class ManifestSessionContainerTest extends Arquillian {
 
     @BeforeMethod
     public void setUp() throws Exception {
-        researchProject = ResearchProjectTestFactory.createTestResearchProject("RP-" + (new Date()).getTime());
+        if (researchProjectDao != null) {
+            researchProject = ResearchProjectTestFactory.createTestResearchProject("RP-" + (new Date()).getTime());
+            researchProjectDao.persist(researchProject);
+        }
     }
 
     /**

@@ -24,13 +24,6 @@ public class ManifestTestFactory {
         return metadataList.toArray(new Metadata[metadataList.size()]);
     }
 
-    public static ManifestRecord buildManifestRecord(Map<Metadata.Key, String> metadataContents,
-                                                     ManifestSession sessionIn) {
-        ManifestRecord manifestRecord = new ManifestRecord(buildMetadata(metadataContents));
-        sessionIn.addRecord(manifestRecord);
-        return manifestRecord;
-    }
-
     public static ManifestRecord buildManifestRecord(ManifestRecord.ErrorStatus errorStatus,
                                                      Map<Metadata.Key, String> metadataContents,
                                                      ManifestSession sessionIn) {

@@ -35,7 +35,8 @@ public class ResearchProjectTestFactory {
 
     public static ResearchProject createDummyResearchProject(long createdBy, String title, String synopsis,
                                                              boolean irbNotEngaged) {
-        ResearchProject researchProject = new ResearchProject(createdBy, title, synopsis, irbNotEngaged);
+        ResearchProject researchProject = new ResearchProject(createdBy, title, synopsis, irbNotEngaged,
+                                                              ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
 
         Set<Funding> fundingList =
                 Collections.singleton(new Funding(Funding.PURCHASE_ORDER, "A piece of Funding", "POFunding"));
@@ -63,6 +64,7 @@ public class ResearchProjectTestFactory {
                 new RegulatoryInfo("Consent for " + title, RegulatoryInfo.Type.ORSP_NOT_HUMAN_SUBJECTS_RESEARCH,
                         "ABC-" + identifier);
         researchProject.getRegulatoryInfos().add(regulatoryInfo);
+        researchProject.setRegulatoryDesignation(ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
 
         return researchProject;
     }
@@ -77,7 +79,8 @@ public class ResearchProjectTestFactory {
     public static ResearchProject createDummyResearchProject(
             ResearchProjectEjb researchProjectEjb, BSPUserList userList, String researchProjectTitle) throws IOException {
         ResearchProject dummyProject =
-                new ResearchProject(TEST_CREATOR, researchProjectTitle, "Simple test object for unit tests", true);
+                new ResearchProject(TEST_CREATOR, researchProjectTitle, "Simple test object for unit tests", true,
+                                    ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
         RegulatoryInfo regulatoryInfo =
                         new RegulatoryInfo("IRB Consent for " + researchProjectTitle, RegulatoryInfo.Type.IRB, "8675309");
         dummyProject.getRegulatoryInfos().add(regulatoryInfo);

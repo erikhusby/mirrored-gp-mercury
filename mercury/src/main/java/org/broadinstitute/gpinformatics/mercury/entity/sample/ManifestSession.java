@@ -32,7 +32,7 @@ public class ManifestSession {
     @Id
     @SequenceGenerator(name = "SEQ_MANIFEST_SESSION", schema = "mercury", sequenceName = "SEQ_MANIFEST_SESSION")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MANIFEST_SESSION")
-    Long manifestSessionId;
+    private Long manifestSessionId;
 
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "RESEARCH_PROJECT_ID")

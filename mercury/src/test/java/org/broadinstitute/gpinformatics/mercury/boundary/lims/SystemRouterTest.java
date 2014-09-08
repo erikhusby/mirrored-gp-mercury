@@ -247,7 +247,8 @@ public class SystemRouterTest extends BaseEventTest {
                     put(MERCURY_PLATE, plate);
                 }});
 
-        testProject = new ResearchProject(101L, "Test Project", "Test project", true);
+        testProject = new ResearchProject(101L, "Test Project", "Test project", true,
+                                          ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
 
         ProductFamily family = new ProductFamily("Test Product Family");
         testProduct = new Product("Test Product", family, "Test product", "P-TEST-1", new Date(), new Date(),
