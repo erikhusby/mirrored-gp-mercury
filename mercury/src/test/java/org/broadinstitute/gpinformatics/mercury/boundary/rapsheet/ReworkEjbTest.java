@@ -379,7 +379,8 @@ public class ReworkEjbTest extends Arquillian {
         String rpJiraTicketKey = "RP-SGM-Rework_tst1" + currDate.getTime() + "RP";
         researchProject = new ResearchProject(bspUserList.getByUsername("scottmat").getUserId(),
                                               "Rework Integration Test RP " + currDate.getTime() + "RP",
-                                              "Rework Integration Test RP", false);
+                                              "Rework Integration Test RP", false,
+                                              ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
         researchProject.setJiraTicketKey(rpJiraTicketKey);
         researchProjectDao.persist(researchProject);
 

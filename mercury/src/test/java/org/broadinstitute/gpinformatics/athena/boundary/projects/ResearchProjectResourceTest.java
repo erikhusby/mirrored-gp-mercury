@@ -65,7 +65,8 @@ public class ResearchProjectResourceTest extends ContainerTest {
 
     public static ResearchProject createDummyResearchProject(String title) {
         ResearchProject researchProject =
-                new ResearchProject(TEST_CREATOR, title, "To study stuff.", ResearchProject.IRB_NOT_ENGAGED);
+                new ResearchProject(TEST_CREATOR, title, "To study stuff.", ResearchProject.IRB_NOT_ENGAGED,
+                                    ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
         researchProject.setJiraTicketKey(title);
 
         researchProject.addFunding(new ResearchProjectFunding(researchProject, "TheGrant_" + UUID.randomUUID()));

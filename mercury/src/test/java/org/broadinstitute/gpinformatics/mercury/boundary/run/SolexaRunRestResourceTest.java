@@ -128,7 +128,8 @@ public class SolexaRunRestResourceTest extends Arquillian {
         String rpJiraTicketKey = "RP-" + testPrefix + runDate.getTime() + "RP";
         researchProject = new ResearchProject(bspUserList.getByUsername("scottmat").getUserId(),
                                               "Rework Integration Test RP " + runDate.getTime() + "RP",
-                                              "Rework Integration Test RP", false);
+                                              "Rework Integration Test RP", false,
+                                              ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
         researchProject.setJiraTicketKey(rpJiraTicketKey);
         researchProjectDao.persist(researchProject);
 

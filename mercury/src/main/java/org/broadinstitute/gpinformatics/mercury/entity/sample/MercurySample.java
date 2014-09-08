@@ -71,6 +71,7 @@ public class MercurySample extends AbstractSample {
     public MercurySample(String sampleKey, BSPSampleDTO bspSampleDTO) {
         super(bspSampleDTO);
         this.sampleKey = sampleKey;
+        this.metadataSource = MetadataSource.BSP;
     }
 
     public RapSheet getRapSheet() {
@@ -121,4 +122,5 @@ public class MercurySample extends AbstractSample {
     public int hashCode() {
         return new HashCodeBuilder().append(getSampleKey()).toHashCode();
     }
+
 }

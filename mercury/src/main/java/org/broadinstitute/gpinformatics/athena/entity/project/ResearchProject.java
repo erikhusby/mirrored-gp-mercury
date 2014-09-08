@@ -54,6 +54,27 @@ import java.util.TreeSet;
 @Audited
 @Table(name = "RESEARCH_PROJECT", schema = "athena")
 public class ResearchProject implements BusinessObject, JiraProject, Comparable<ResearchProject>, Serializable {
+
+    public enum RegulatoryDesignation {
+        // changing enum names requires integration testing with the pipeline,
+        // but descriptions can change without impacting the pipeline
+        RESEARCH_ONLY("Research Grade"),
+        CLINICAL_DIAGNOSTICS("Clinical Diagnostics"),
+        GENERAL_CLIA_CAP("General CLIA/CAP Quality System");
+
+        // this field is what is stored in the database
+        private final String description;
+
+        private RegulatoryDesignation(String description) {
+            this.description = description;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+    }
+
     public static final boolean IRB_ENGAGED = false;
 
     public static final boolean IRB_NOT_ENGAGED = true;
@@ -164,6 +185,11 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     @Transient
     private String originalTitle;
 
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "regulatory_designation")
+    private RegulatoryDesignation regulatoryDesignation;
+
     @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
             orphanRemoval = true)
     private List<SubmissionTracker> submissionTrackers = new ArrayList<>();
@@ -188,11 +214,11 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
      * no arg constructor.
      */
     public ResearchProject() {
-        this(null, null, null, false);
+        this(null, null, null, false, null);
     }
 
     public ResearchProject(BspUser user) {
-        this(user.getUserId(), null, null, false);
+        this(user.getUserId(), null, null, false, null);
     }
 
     /**
@@ -202,8 +228,10 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
      * @param title         The title (name) of the project
      * @param synopsis      A description of the project
      * @param irbNotEngaged Is this project set up for NO IRB?
+     * @param regulatoryDesignation
      */
-    public ResearchProject(Long createdBy, String title, String synopsis, boolean irbNotEngaged) {
+    public ResearchProject(Long createdBy, String title, String synopsis, boolean irbNotEngaged,
+                           RegulatoryDesignation regulatoryDesignation) {
         createdDate = new Date();
         modifiedDate = createdDate;
         irbNotes = "";
@@ -213,6 +241,7 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         this.createdBy = createdBy;
         this.modifiedBy = createdBy;
         this.irbNotEngaged = irbNotEngaged;
+        this.regulatoryDesignation = regulatoryDesignation;
         if (createdBy != null) {
             addPerson(RoleType.PM, createdBy);
         }
@@ -336,6 +365,30 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
 
     public void setRegulatoryInfos(Collection<RegulatoryInfo> regulatoryInfos) {
         this.regulatoryInfos = regulatoryInfos;
+    }
+
+    public RegulatoryDesignation getRegulatoryDesignation() {
+        return regulatoryDesignation;
+    }
+    public void setRegulatoryDesignation(RegulatoryDesignation regulatoryDesignation) {
+        this.regulatoryDesignation = regulatoryDesignation;
+    }
+
+    public String getRegulatoryDesignationDescription() {
+        return getRegulatoryDesignation().getDescription();
+    }
+
+    /**
+     * Returns a stable code for the regulatory designation so that
+     * the UI description can change independent of the underlying
+     * code by which the pipeline knows the regulatory designation.
+     */
+    public String getRegulatoryDesignationCodeForPipeline() {
+        String regulatoryDesignationCode = null;
+        if (regulatoryDesignation != null) {
+            regulatoryDesignationCode = regulatoryDesignation.name();
+        }
+        return regulatoryDesignationCode;
     }
 
     /**
