@@ -15,6 +15,16 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 
+/**
+ * This class is used to calculate the beginning and ending date and time for the fiscal quarter based on either
+ * current date, or a specified date. Quarters are:
+ * <ul>
+ * <li>January-March</li>
+ * <li>April-June</li>
+ * <li>July-September</li>
+ * <li>October-December</li>
+ * </ul>
+ */
 public class OneQuarterDateRange extends DateRange.ComputeStartAndStopDate {
     public OneQuarterDateRange() {
         this(new Date());
