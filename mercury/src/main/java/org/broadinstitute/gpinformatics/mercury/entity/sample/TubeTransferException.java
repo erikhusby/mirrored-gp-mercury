@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -30,7 +31,7 @@ public class TubeTransferException extends RuntimeException {
 
     public TubeTransferException(@Nonnull ManifestRecord.ErrorStatus errorStatus, @Nonnull String metaDataType,
                                  @Nonnull String metaDataValue, @Nonnull String message) {
-        super(errorStatus.formatMessage(metaDataType, metaDataValue) + " " + message);
+        super(StringUtils.trim(errorStatus.formatMessage(metaDataType, metaDataValue) + " " + message));
         this.errorStatus = errorStatus;
         logger.error(getMessage());
     }

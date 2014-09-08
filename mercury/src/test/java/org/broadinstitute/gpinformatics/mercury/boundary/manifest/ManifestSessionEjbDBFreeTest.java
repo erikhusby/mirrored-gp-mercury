@@ -78,6 +78,7 @@ public class ManifestSessionEjbDBFreeTest {
     private static final String BAD_TUBE_BARCODE = "bad tube barcode";
     private ManifestSessionDao manifestSessionDao;
     private ResearchProjectDao researchProjectDao;
+    private String sourceForTransfer = "9294923";
 
     public void researchProjectNotFound() {
         ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao);
@@ -798,20 +799,35 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
 
-    public void validateSourceOnCLeanSession() throws Exception {
+    public void validateSourceOnCleanSession() throws Exception {
 
         ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
                 ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 20);
 
-        String sourceForTransfer = "9294923";
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, sourceForTransfer), null, ManifestRecord.Status.ACCESSIONED);
-
 
         ManifestRecord foundRecord =
                 holder.ejb.validateSourceTubeForTransfer(ARBITRARY_MANIFEST_SESSION_ID, sourceForTransfer);
 
         assertThat(foundRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue(), is(equalTo(sourceForTransfer)));
         assertThat(foundRecord.getManifestEvents(), is(emptyCollectionOf(ManifestEvent.class)));
+    }
+
+    public void validateSourceOnDuplicateRecord() throws Exception {
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
+                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 20);
+
+        ManifestTestFactory.addExtraRecord(holder.manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, sourceForTransfer),
+                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED);
+
+        try {
+            ManifestRecord foundRecord = holder.ejb.validateSourceTubeForTransfer(ARBITRARY_MANIFEST_SESSION_ID,
+                    sourceForTransfer);
+            Assert.fail();
+        } catch (Exception ignored) {
+            assertThat(ignored.getMessage(), is(equalTo(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE.formatMessage(ManifestSession.SAMPLE_ID_KEY, sourceForTransfer))));
+        }
     }
 }
