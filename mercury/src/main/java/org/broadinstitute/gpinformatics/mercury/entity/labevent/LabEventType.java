@@ -314,6 +314,8 @@ public enum LabEventType {
     PICO_REWORK("PicoRework", ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY,
             CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE),
+    PICO_TRANSFER("PicoTransfer", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY,
+            CreateSources.FALSE, PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE),
 
     // Dried Blood Spot
     DBS_SAMPLE_PUNCH("DBSSamplePunch", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY,
