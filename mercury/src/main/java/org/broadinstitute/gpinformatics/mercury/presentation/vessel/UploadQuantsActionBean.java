@@ -12,6 +12,7 @@ import net.sourceforge.stripes.validation.ValidationErrors;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.io.IOUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.QuantificationEJB;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselEjb;
@@ -106,8 +107,10 @@ public class UploadQuantsActionBean extends CoreActionBean {
             quantStream = quantSpreadsheet.getInputStream();
             switch (quantFormat) {
             case VARIOSKAN:
+                MessageCollection messageCollection = new MessageCollection();
                 labMetricRun = vesselEjb.createVarioskanRun(quantStream, getQuantType(),
-                        userBean.getBspUser().getUserId());
+                        userBean.getBspUser().getUserId(), messageCollection);
+                addMessages(messageCollection);
                 break;
             case GENERIC:
                 labMetrics = quantEJB.validateQuantsDontExist(quantStream, quantType);

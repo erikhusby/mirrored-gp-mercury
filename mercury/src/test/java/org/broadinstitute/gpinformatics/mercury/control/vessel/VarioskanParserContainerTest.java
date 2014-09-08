@@ -6,6 +6,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -99,9 +100,11 @@ public class VarioskanParserContainerTest extends Arquillian {
                     mapBarcodeToPlate, plate1Barcode, plate2Barcode, timestamp);
             labVesselDao.persistAll(mapBarcodeToPlate.values());
             labVesselDao.persistAll(mapPositionToTube.values());
+            MessageCollection messageCollection = new MessageCollection();
             LabMetricRun labMetricRun = vesselEjb.createVarioskanRun(new FileInputStream(tempFile),
-                    LabMetric.MetricType.INITIAL_PICO, BSPManagerFactoryStub.QA_DUDE_USER_ID);
+                    LabMetric.MetricType.INITIAL_PICO, BSPManagerFactoryStub.QA_DUDE_USER_ID, messageCollection);
 
+            Assert.assertFalse(messageCollection.hasErrors());
             Assert.assertEquals(labMetricRun.getLabMetrics().size(), 96 * 3);
         } catch (InvalidFormatException | IOException e) {
             throw new RuntimeException(e);

@@ -185,50 +185,59 @@ public class VesselEjb {
     }
 
     /**
-     * Create a LabMetricRun from a Varioskan spreadsheet.
+     * Create a LabMetricRun from a Varioskan spreadsheet.  This method assumes that a rack of tubes was
+     * transferred into one or more plates, and the plates are in the spreadsheet.
      */
     public LabMetricRun createVarioskanRun(InputStream varioskanSpreadsheet, LabMetric.MetricType metricType,
-            Long decidingUser) {
-        VarioskanPlateProcessor varioskanPlateProcessor = new VarioskanPlateProcessor(
-                VarioskanRowParser.QUANTITATIVE_CURVE_FIT1_TAB);
-        PoiSpreadsheetParser parser = new PoiSpreadsheetParser(Collections.<String, TableProcessor>emptyMap());
+            Long decidingUser, MessageCollection messageCollection) {
 
-        Workbook workbook;
         try {
-            workbook = WorkbookFactory.create(varioskanSpreadsheet);
+            Workbook workbook = WorkbookFactory.create(varioskanSpreadsheet);
+            VarioskanRowParser varioskanRowParser = new VarioskanRowParser(workbook);
+            Map<VarioskanRowParser.NameValue, String> mapNameValueToValue = varioskanRowParser.getValues();
+
+            String runName = mapNameValueToValue.get(VarioskanRowParser.NameValue.RUN_NAME);
+            LabMetricRun labMetricRun = labMetricRunDao.findByName(runName);
+            if (labMetricRun != null) {
+                messageCollection.addWarning("This run has been uploaded previously.");
+                return labMetricRun;
+            }
+
+            VarioskanPlateProcessor varioskanPlateProcessor = new VarioskanPlateProcessor(
+                    VarioskanRowParser.QUANTITATIVE_CURVE_FIT1_TAB);
+            PoiSpreadsheetParser parser = new PoiSpreadsheetParser(Collections.<String, TableProcessor>emptyMap());
             parser.processRows(workbook.getSheet(VarioskanRowParser.QUANTITATIVE_CURVE_FIT1_TAB),
                     varioskanPlateProcessor);
+
+            // Fetch the plates
+            Map<String, StaticPlate> mapBarcodeToPlate = new HashMap<>();
+            for (VarioskanPlateProcessor.PlateWellResult plateWellResult :
+                    varioskanPlateProcessor.getPlateWellResults()) {
+                StaticPlate staticPlate = mapBarcodeToPlate.get(plateWellResult.getPlateBarcode());
+                if (staticPlate == null) {
+                    staticPlate = staticPlateDao.findByBarcode(plateWellResult.getPlateBarcode());
+                    if (staticPlate == null) {
+                        throw new RuntimeException("Failed to find plate " + plateWellResult.getPlateBarcode());
+                    }
+                    mapBarcodeToPlate.put(plateWellResult.getPlateBarcode(), staticPlate);
+                }
+            }
+
+            labMetricRun = createVarioskanRunDaoFree(mapNameValueToValue, metricType, varioskanPlateProcessor,
+                    mapBarcodeToPlate, decidingUser);
+            labMetricRunDao.persist(labMetricRun);
+            return labMetricRun;
         } catch (IOException | InvalidFormatException | ValidationException e) {
             throw new RuntimeException(e);
         }
-
-        // todo jmt R2 < 0.97
-
-        // Store raw values against plates
-        Map<String, StaticPlate> mapBarcodeToPlate = new HashMap<>();
-
-        for (VarioskanPlateProcessor.PlateWellResult plateWellResult : varioskanPlateProcessor.getPlateWellResults()) {
-            StaticPlate staticPlate = mapBarcodeToPlate.get(plateWellResult.getPlateBarcode());
-            if (staticPlate == null) {
-                staticPlate = staticPlateDao.findByBarcode(plateWellResult.getPlateBarcode());
-                if (staticPlate == null) {
-                    throw new RuntimeException("Failed to find plate " + plateWellResult.getPlateBarcode());
-                }
-                mapBarcodeToPlate.put(plateWellResult.getPlateBarcode(), staticPlate);
-            }
-        }
-
-        LabMetricRun labMetricRun = createVarioskanRunDaoFree(workbook, metricType, varioskanPlateProcessor,
-                mapBarcodeToPlate, decidingUser);
-        labMetricRunDao.persist(labMetricRun);
-        return labMetricRun;
     }
 
     /**
      * Create a LabMetricRun from a Varioskan spreadsheet.
      */
     @DaoFree
-    public LabMetricRun createVarioskanRunDaoFree(Workbook varioskanSpreadsheet, LabMetric.MetricType metricType,
+    public LabMetricRun createVarioskanRunDaoFree(Map<VarioskanRowParser.NameValue, String> mapNameValueToValue,
+            LabMetric.MetricType metricType,
             VarioskanPlateProcessor varioskanPlateProcessor, Map<String, StaticPlate> mapBarcodeToPlate,
             Long decidingUser) {
 
@@ -236,8 +245,6 @@ public class VesselEjb {
         Map<LabVessel, VesselPosition> mapTubeToPosition = new HashMap<>();
 
         // Create the run
-        VarioskanRowParser varioskanRowParser = new VarioskanRowParser(varioskanSpreadsheet);
-        Map<VarioskanRowParser.NameValue, String> mapNameValueToValue = varioskanRowParser.getValues();
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(
                 VarioskanRowParser.NameValue.RUN_STARTED.getDateFormat());
         Date runStarted;
@@ -248,8 +255,14 @@ public class VesselEjb {
         }
         LabMetricRun labMetricRun = new LabMetricRun(mapNameValueToValue.get(VarioskanRowParser.NameValue.RUN_NAME),
                 runStarted, metricType);
-        labMetricRun.getMetadata().add(new Metadata(Metadata.Key.CORRELATION_COEFFICIENT_R2,
-                mapNameValueToValue.get(VarioskanRowParser.NameValue.CORRELATION_COEFFICIENT_R2)));
+
+        String r2 = mapNameValueToValue.get(VarioskanRowParser.NameValue.CORRELATION_COEFFICIENT_R2);
+        labMetricRun.getMetadata().add(new Metadata(Metadata.Key.CORRELATION_COEFFICIENT_R2, r2));
+        boolean runFailed = false;
+        if (new BigDecimal(r2).compareTo(new BigDecimal("0.97")) == -1) {
+            runFailed = true;
+        }
+
         labMetricRun.getMetadata().add(new Metadata(Metadata.Key.INSTRUMENT_NAME,
                 mapNameValueToValue.get(VarioskanRowParser.NameValue.INSTRUMENT_NAME)));
         labMetricRun.getMetadata().add(new Metadata(Metadata.Key.INSTRUMENT_SERIAL_NUMBER,
@@ -302,9 +315,14 @@ public class VesselEjb {
             LabMetric labMetric = new LabMetric(average, metricType, LabMetric.LabUnit.NG_PER_UL,
                     mapTubeToPosition.get(tube).name(), runStarted);
             LabMetric.Decider decider = metricType.getDecider();
-            if (decider != null) {
-                labMetric.setLabMetricDecision(new LabMetricDecision(decider.makeDecision(tube, labMetric), new Date(),
-                        decidingUser, labMetric));
+            LabMetricDecision.Decision decision = null;
+            if (runFailed) {
+                decision = LabMetricDecision.Decision.RUN_FAILED;
+            } else if (decider != null) {
+                decision = decider.makeDecision(tube, labMetric);
+            }
+            if (decision != null) {
+                labMetric.setLabMetricDecision(new LabMetricDecision(decision, new Date(), decidingUser, labMetric));
             }
             tube.addMetric(labMetric);
             labMetricRun.addMetric(labMetric);
