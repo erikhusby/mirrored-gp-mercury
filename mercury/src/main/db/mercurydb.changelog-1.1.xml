@@ -1162,5 +1162,57 @@
         <renameColumn tableName="manifest_event_aud" oldColumnName="log_type" newColumnName="severity" schemaName="mercury"/>
     </changeSet>
 
+    <changeSet id="GPLIM-2887-drop-sample-metadata" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="mercury_sample_metadata" schemaName="mercury" />
+        </preConditions>
+        <sql>drop table mercury_sample_metadata cascade constraints</sql>
+    </changeSet>
 
+    <changeSet id="GPLIM-2887-drop-sample-metadata-aud" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="mercury_sample_metadata_aud" schemaName="mercury" />
+        </preConditions>
+        <sql>drop table mercury_sample_metadata_aud cascade constraints</sql>
+    </changeSet>
+
+    <changeSet author="scottmat" id="GPLIM-2887-re-add-mercury_sample">
+        <createTable tableName="mercury_sample_metadata" schemaName="mercury">
+            <column name="mercury_sample" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
+            <column name="metadata" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="mercury_sample_metadata" columnNames="mercury_sample, metadata"
+                       constraintName="PK_SAMPLE_TO_METADATA_JOIN"/>
+        <addForeignKeyConstraint constraintName="FK_MERCURY_SAMP_METADATA_META"
+                                 baseTableSchemaName="mercury" baseTableName="mercury_sample_metadata" baseColumnNames="metadata"
+                                 referencedTableSchemaName="mercury" referencedTableName="metadata" referencedColumnNames="metadata_id"/>
+        <addForeignKeyConstraint constraintName="FK_MERCURY_SAMP_METADATA_SAMP"
+                                 baseTableSchemaName="mercury" baseTableName="mercury_sample_metadata" baseColumnNames="mercury_sample"
+                                 referencedTableSchemaName="mercury" referencedTableName="mercury_sample" referencedColumnNames="mercury_sample_id"/>
+    </changeSet>
+
+    <changeSet author="scottmat" id="GPLIM-2887-re-add-mercury-sample-aud">
+        <createTable tableName="mercury_sample_metadata_aud" schemaName="mercury">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)" />
+            <column name="mercury_sample" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="metadata" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="mercury_sample_metadata_aud"
+                       columnNames="rev, mercury_sample, metadata" constraintName="PK_SAMPLE_TO_METADATA_JOIN_AUD"/>
+        <addForeignKeyConstraint baseTableName="mercury_sample_metadata_aud" baseTableSchemaName="mercury" baseColumnNames="rev"
+                                 constraintName="fk_sample_metadata_ref_info"
+                                 referencedTableName="rev_info" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="rev_info_id"/>
+    </changeSet>
 </databaseChangeLog>
