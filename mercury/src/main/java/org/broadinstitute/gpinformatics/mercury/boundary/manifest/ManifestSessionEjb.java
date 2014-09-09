@@ -3,8 +3,8 @@ package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -15,11 +15,11 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSes
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.TubeTransferException;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
@@ -29,6 +29,7 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.InputStream;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -44,7 +45,8 @@ public class ManifestSessionEjb {
             "The given target sample id is not associated with the given target vessel";
     public static final String SAMPLE_NOT_FOUND_MESSAGE = ":: This sample ID is not found.";
     public static final String SAMPLE_NOT_UNIQUE_MESSAGE = ":: This sample ID is not unique in Mercury";
-    public static final String SAMPLE_NOT_ELLIGIBLE_FOR_CLINICAL_MESSAGE = ":: The sample found is not eligible for clinical work";
+    public static final String SAMPLE_NOT_ELLIGIBLE_FOR_CLINICAL_MESSAGE =
+            ":: The sample found is not eligible for clinical work";
     public static final String VESSEL_NOT_FOUND_MESSAGE = "::  The target vessel is not found";
     private ManifestSessionDao manifestSessionDao;
 
@@ -74,7 +76,7 @@ public class ManifestSessionEjb {
     }
 
     public ManifestSession uploadManifest(String researchProjectKey, InputStream inputStream, String pathToFile,
-                               BSPUserList.QADudeUser bspUser) {
+                                          BSPUserList.QADudeUser bspUser) {
         ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
         if (researchProject == null) {
             throw new InformaticsServiceException("Research Project '" + researchProjectKey + "' not found");
@@ -122,8 +124,10 @@ public class ManifestSessionEjb {
         Set<String> errorMessages = new HashSet<>();
         for (ManifestRecord manifestRecord : session.getRecords()) {
             ManifestRecord.Status status = manifestRecord.getStatus();
-            if (isNotDuplicatedSample(session,manifestRecord.getSampleId()) && (status == ManifestRecord.Status.UPLOAD_ACCEPTED || status == ManifestRecord.Status.UPLOADED)) {
-                errorMessages.add(ManifestRecord.ErrorStatus.MISSING_SAMPLE.formatMessage(ManifestSession.SAMPLE_ID_KEY,manifestRecord.getSampleId()));
+            if (isNotDuplicatedSample(session, manifestRecord.getSampleId()) && (
+                    status == ManifestRecord.Status.UPLOAD_ACCEPTED || status == ManifestRecord.Status.UPLOADED)) {
+                errorMessages.add(ManifestRecord.ErrorStatus.MISSING_SAMPLE
+                        .formatMessage(ManifestSession.SAMPLE_ID_KEY, manifestRecord.getSampleId()));
             }
         }
         errorMessages.addAll(buildDuplicateSampleErrorMessages(session));
@@ -141,7 +145,8 @@ public class ManifestSessionEjb {
     private Collection<String> buildDuplicateSampleErrorMessages(ManifestSession session) {
         Set<String> errorMessages = new HashSet<>();
         for (String duplicateSampleId : session.getDuplicatedSampleIds()) {
-            errorMessages.add(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage(ManifestSession.SAMPLE_ID_KEY,duplicateSampleId));
+            errorMessages.add(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID
+                    .formatMessage(ManifestSession.SAMPLE_ID_KEY, duplicateSampleId));
         }
         return errorMessages;
     }
@@ -191,19 +196,19 @@ public class ManifestSessionEjb {
     public MercurySample validateTargetSample(String targetSampleKey) {
         Collection<MercurySample> targetSamples = mercurySampleDao.findBySampleKey(targetSampleKey);
 
-        if(CollectionUtils.isEmpty(targetSamples)) {
+        if (CollectionUtils.isEmpty(targetSamples)) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET,
                     ManifestSession.SAMPLE_ID_KEY, targetSampleKey, SAMPLE_NOT_FOUND_MESSAGE);
         }
 
-        if(targetSamples.size() > 1) {
+        if (targetSamples.size() > 1) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET,
                     ManifestSession.SAMPLE_ID_KEY, targetSampleKey, SAMPLE_NOT_UNIQUE_MESSAGE);
         }
 
         MercurySample foundTarget = targetSamples.iterator().next();
 
-        if(foundTarget.getMetadataSource() == MercurySample.MetadataSource.BSP) {
+        if (foundTarget.getMetadataSource() == MercurySample.MetadataSource.BSP) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.SAMPLE_ID_KEY,
                     targetSampleKey, SAMPLE_NOT_ELLIGIBLE_FOR_CLINICAL_MESSAGE);
         }
@@ -223,7 +228,7 @@ public class ManifestSessionEjb {
     private LabVessel findAndValidateTargetVessel(String targetVesselLabel, MercurySample foundSample) {
         LabVessel foundVessel = labVesselDao.findByIdentifier(targetVesselLabel);
 
-        if(foundVessel == null) {
+        if (foundVessel == null) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
                     targetVesselLabel, VESSEL_NOT_FOUND_MESSAGE);
         }
@@ -234,7 +239,7 @@ public class ManifestSessionEjb {
         sufficient
          */
         for (MercurySample mercurySample : foundVessel.getMercurySamples()) {
-            if(mercurySample.equals(foundSample)) {
+            if (mercurySample.equals(foundSample)) {
                 return foundVessel;
             }
         }
@@ -243,10 +248,11 @@ public class ManifestSessionEjb {
                 targetVesselLabel, "::\n" + UNASSOCIATED_TUBE_SAMPLE_MESSAGE);
     }
 
-    public void transferSample(long manifestSessionId, String sourceCollaboratorSample, String sampleKey, String vesselLabel) {
+    public void transferSample(long manifestSessionId, String sourceCollaboratorSample, String sampleKey,
+                               String vesselLabel, BspUser user) {
         ManifestSession session = manifestSessionDao.find(manifestSessionId);
 
-        if(session == null) {
+        if (session == null) {
             throw new InformaticsServiceException("The selected session was not found");
         }
 
@@ -256,5 +262,8 @@ public class ManifestSessionEjb {
 
         session.performTransfer(sourceCollaboratorSample, targetSample, targetVessel);
 
+        LabEvent collaboratorTransferEvent =
+                new LabEvent(LabEventType.COLLABORATOR_TRANSFER, new Date(), " ", 1L, user.getUserId(), "");
+        targetVessel.addInPlaceEvent(collaboratorTransferEvent);
     }
 }

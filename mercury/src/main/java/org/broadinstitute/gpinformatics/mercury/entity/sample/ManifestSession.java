@@ -396,7 +396,7 @@ public class ManifestSession {
 
         ManifestRecord foundRecord = null;
         try {
-            foundRecord = findRecordByState(sampleId);
+            foundRecord = findRecordByCollaboratorId(sampleId);
         } catch (TubeTransferException e) {
             addManifestEvent(new ManifestEvent(e.getErrorStatus().getSeverity(),
                     e.getErrorStatus().formatMessage(SAMPLE_ID_KEY, sampleId)
@@ -416,7 +416,7 @@ public class ManifestSession {
         return foundRecord;
     }
 
-    private ManifestRecord findRecordByState(String collaboratorBarcode)
+    public ManifestRecord findRecordByCollaboratorId(String collaboratorBarcode)
             throws TubeTransferException {
         for (ManifestRecord record : records) {
             if (record.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue().equals(collaboratorBarcode)) {
@@ -524,7 +524,7 @@ public class ManifestSession {
 
     public ManifestRecord findRecordForTransfer(String sourceForTransfer) {
 
-        ManifestRecord recordForTransfer = findRecordByState(sourceForTransfer);
+        ManifestRecord recordForTransfer = findRecordByCollaboratorId(sourceForTransfer);
 
         if(recordForTransfer.isQuarantined()) {
 
@@ -547,6 +547,8 @@ public class ManifestSession {
         for (Metadata metadata : sourceRecord.getMetadata()) {
             targetSample.addMetaData(metadata);
         }
+
+        sourceRecord.setStatus(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
 
     }
 

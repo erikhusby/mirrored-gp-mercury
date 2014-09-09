@@ -1069,7 +1069,7 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
-    public void validateTargetTubeNotRegisterdWithRegisteredSample() throws Exception {
+    public void validateTargetTubeNotRegisteredWithRegisteredSample() throws Exception {
 
         ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
                 ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 1);
@@ -1084,14 +1084,74 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
-    public void transferSampleValidRecord() throws Exception {
+    public void transferSourceValidRecord() throws Exception {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
                 ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 20);
 
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), null, ManifestRecord.Status.ACCESSIONED);
 
-        holder.ejb.transferSample(ARBITRARY_MANIFEST_SESSION_ID,GOOD_TUBE_BARCODE, TEST_SAMPLE_KEY, TEST_VESSEL_LABEL);
+        ManifestRecord usedRecord = holder.manifestSession.findRecordByCollaboratorId(GOOD_TUBE_BARCODE);
+        assertThat(usedRecord.getStatus(), is(equalTo(ManifestRecord.Status.ACCESSIONED)));
 
+        List<MercurySample> testSample = mercurySampleDao.findBySampleKey(TEST_SAMPLE_KEY);
+
+        for (MercurySample mercurySample : testSample) {
+            assertThat(mercurySample.getMetadata(), is(empty()));
+        }
+
+        holder.ejb.transferSample(ARBITRARY_MANIFEST_SESSION_ID,GOOD_TUBE_BARCODE, TEST_SAMPLE_KEY, TEST_VESSEL_LABEL,
+                testLabUser);
+
+        assertThat(usedRecord.getStatus(), is(equalTo(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE)));
+
+        for (MercurySample mercurySample : testSample) {
+            assertThat(mercurySample.getMetadata(), is(not(empty())));
+        }
+    }
+
+    public void transferSourceRecordNotFound() throws Exception {
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
+                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 20);
+
+        List<MercurySample> testSample = mercurySampleDao.findBySampleKey(TEST_SAMPLE_KEY);
+
+        for (MercurySample mercurySample : testSample) {
+            assertThat(mercurySample.getMetadata(), is(empty()));
+        }
+
+        try {
+            holder.ejb.transferSample(ARBITRARY_MANIFEST_SESSION_ID,GOOD_TUBE_BARCODE, TEST_SAMPLE_KEY,
+                    TEST_VESSEL_LABEL, testLabUser);
+            Assert.fail();
+        } catch (Exception e) {
+            assertThat(e.getMessage(),
+                    containsString(ManifestRecord.ErrorStatus.NOT_IN_MANIFEST
+                            .formatMessage(ManifestSession.SAMPLE_ID_KEY, GOOD_TUBE_BARCODE)));
+            for (MercurySample mercurySample : testSample) {
+                assertThat(mercurySample.getMetadata(), is(empty()));
+            }
+        }
+    }
+
+    public void transferSourceToSampleNotFound() throws Exception {
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
+                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 20);
+
+        ManifestTestFactory.addExtraRecord(holder.manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), null, ManifestRecord.Status.ACCESSIONED);
+
+        ManifestRecord usedRecord = holder.manifestSession.findRecordByCollaboratorId(GOOD_TUBE_BARCODE);
+        assertThat(usedRecord.getStatus(), is(equalTo(ManifestRecord.Status.ACCESSIONED)));
+
+        try {
+            holder.ejb.transferSample(ARBITRARY_MANIFEST_SESSION_ID, GOOD_TUBE_BARCODE, TEST_SAMPLE_KEY+"BAD",
+                    TEST_VESSEL_LABEL, testLabUser);
+            Assert.fail();
+        } catch (Exception e) {
+            assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
+                    .formatMessage(ManifestSession.SAMPLE_ID_KEY, TEST_SAMPLE_KEY + "BAD")));
+            assertThat(e.getMessage(), containsString(ManifestSessionEjb.SAMPLE_NOT_FOUND_MESSAGE));
+        }
     }
 }

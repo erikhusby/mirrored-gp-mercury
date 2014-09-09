@@ -18,8 +18,6 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
@@ -61,13 +59,8 @@ public class MercurySample extends AbstractSample {
     @Enumerated(EnumType.STRING)
     private MetadataSource metadataSource;
 
-    @ManyToMany(cascade = CascadeType.PERSIST)
-    @JoinTable(name = "mercury_sample_metadata", schema = "mercury",
-            joinColumns = @JoinColumn(name = "MANIFEST_RECORD_ID"),
-            inverseJoinColumns = @JoinColumn(name = "METADATA_ID"))
+    @ManyToMany
     private Set<Metadata> metadata = new HashSet<>();
-
-
 
     /**
      * For JPA
@@ -116,7 +109,15 @@ public class MercurySample extends AbstractSample {
     }
 
     public void addMetaData(Metadata metadata) {
+        this.metadata.add(metadata);
     }
+
+    public Set<Metadata> getMetadata() {
+        return metadata;
+    }
+
+
+
 
     @Override
     public boolean equals(Object o) {
