@@ -36,7 +36,7 @@ public class ManifestTestFactory {
                 createdBy);
 
         for (int i = 1; i <= numberOfRecords; i++) {
-            ManifestRecord manifestRecord = buildManifestRecord((int) i);
+            ManifestRecord manifestRecord = buildManifestRecord(i);
             manifestRecord.setStatus(defaultStatus);
             manifestSession.addRecord(manifestRecord);
         }
@@ -65,16 +65,16 @@ public class ManifestTestFactory {
         return manifestRecord;
     }
 
-    public static void addExtraRecord(ManifestSession session, Map<Metadata.Key, String> initalData,
+    public static void addExtraRecord(ManifestSession session, Map<Metadata.Key, String> initialData,
                                       ManifestRecord.ErrorStatus errorStatus,
                                       ManifestRecord.Status status) {
-        ManifestRecord dupeRecord = buildManifestRecord(20, initalData);
-        dupeRecord.setStatus(status);
-        session.addRecord(dupeRecord);
+        ManifestRecord record = buildManifestRecord(20, initialData);
+        record.setStatus(status);
+        session.addRecord(record);
 
         if (errorStatus != null) {
             session.addManifestEvent(new ManifestEvent(errorStatus.getSeverity(),
-                    errorStatus.formatMessage(Metadata.Key.SAMPLE_ID.name(), dupeRecord.getSampleId()), dupeRecord));
+                    errorStatus.formatMessage(Metadata.Key.SAMPLE_ID.name(), record.getSampleId()), record));
         }
     }
 }
