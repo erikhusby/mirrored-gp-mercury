@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
+import com.google.common.collect.ImmutableMap;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -37,7 +38,6 @@ public class ManifestPrepareForCloseTests {
             manifestRecord.setStatus(ManifestRecord.Status.SCANNED);
         }
     }
-
 
     @Test
     public void testPrepareForCloseOnCleanSession() {
@@ -100,8 +100,7 @@ public class ManifestPrepareForCloseTests {
     }
 
     public void testValidationForGenderMismatchSample() {
-        ManifestTestFactory.addRecord(session, ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
-                ManifestRecord.Status.SCANNED);
+        addRecord(session, ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.SCANNED);
 
         ManifestStatus manifestStatus = session.generateSessionStatusForClose();
 
@@ -112,12 +111,18 @@ public class ManifestPrepareForCloseTests {
 
         assertThat(manifestStatus.getErrorMessages(), is(not(empty())));
         assertThat(manifestStatus.getErrorMessages().size(), is(1));
-        assertThat(manifestStatus.getErrorMessages(), hasItem(containsString(ManifestRecord.ErrorStatus.MISMATCHED_GENDER.getBaseMessage())));
+        assertThat(manifestStatus.getErrorMessages(),
+                hasItem(containsString(ManifestRecord.ErrorStatus.MISMATCHED_GENDER.getBaseMessage())));
+    }
+
+    private static void addRecord(ManifestSession session, ManifestRecord.ErrorStatus errorStatus,
+                           ManifestRecord.Status status) {
+        ManifestTestFactory.addRecord(session, errorStatus, status, ImmutableMap.<Metadata.Key, String>of());
     }
 
     public void testValidationForUnscannedAndDuplicates() {
         addDuplicateManifestRecord();
-        ManifestTestFactory.addRecord(session, null, ManifestRecord.Status.UPLOAD_ACCEPTED);
+        addRecord(session, null, ManifestRecord.Status.UPLOAD_ACCEPTED);
 
         ManifestStatus manifestStatus = session.generateSessionStatusForClose();
 
@@ -127,17 +132,16 @@ public class ManifestPrepareForCloseTests {
 
         assertThat(manifestStatus.getErrorMessages(), is(not(empty())));
         assertThat(manifestStatus.getErrorMessages().size(), is(2));
-        assertThat(manifestStatus.getErrorMessages(), hasItem(containsString(ManifestRecord.ErrorStatus.MISSING_SAMPLE.getBaseMessage())));
-        assertThat(manifestStatus.getErrorMessages(), hasItem(containsString(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getBaseMessage())));
-
+        assertThat(manifestStatus.getErrorMessages(),
+                hasItem(containsString(ManifestRecord.ErrorStatus.MISSING_SAMPLE.getBaseMessage())));
+        assertThat(manifestStatus.getErrorMessages(),
+                hasItem(containsString(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getBaseMessage())));
     }
 
     public void testValidationForUnscannedAndDuplicatesAndMismatchedGender() {
         addDuplicateManifestRecord();
-        ManifestTestFactory.addRecord(session, null, ManifestRecord.Status.UPLOAD_ACCEPTED);
-        ManifestTestFactory.addRecord(session, ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
-                ManifestRecord.Status.SCANNED);
-
+        addRecord(session, null, ManifestRecord.Status.UPLOAD_ACCEPTED);
+        addRecord(session, ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.SCANNED);
 
         ManifestStatus manifestStatus = session.generateSessionStatusForClose();
 
@@ -147,18 +151,20 @@ public class ManifestPrepareForCloseTests {
 
         assertThat(manifestStatus.getErrorMessages(), is(not(empty())));
         assertThat(manifestStatus.getErrorMessages().size(), is(3));
-        assertThat(manifestStatus.getErrorMessages(), hasItem(containsString(ManifestRecord.ErrorStatus.MISSING_SAMPLE.getBaseMessage())));
-        assertThat(manifestStatus.getErrorMessages(), hasItem(containsString(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getBaseMessage())));
-        assertThat(manifestStatus.getErrorMessages(), hasItem(containsString(ManifestRecord.ErrorStatus.MISMATCHED_GENDER.getBaseMessage())));
+        assertThat(manifestStatus.getErrorMessages(),
+                hasItem(containsString(ManifestRecord.ErrorStatus.MISSING_SAMPLE.getBaseMessage())));
+        assertThat(manifestStatus.getErrorMessages(),
+                hasItem(containsString(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getBaseMessage())));
+        assertThat(manifestStatus.getErrorMessages(),
+                hasItem(containsString(ManifestRecord.ErrorStatus.MISMATCHED_GENDER.getBaseMessage())));
 
     }
 
     private void addDuplicateManifestRecord() {
         ManifestRecord record = session.getRecords().iterator().next();
 
-        ManifestTestFactory.addRecord(session,
-                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
-                Metadata.Key.SAMPLE_ID, record.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue());
+        ManifestTestFactory.addRecord(session, ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, record.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue()));
     }
 
     private void setManifestRecordStatus(ManifestRecord.Status status) {
