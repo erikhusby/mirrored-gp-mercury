@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestStatus;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -288,6 +289,10 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
 
+    /********************************************************************/
+    /**  =======  upload manifest tests ============================== **/
+    /********************************************************************/
+
     public void uploadGoodManifest() throws Exception {
         ManifestSession manifestSession = uploadManifest(MANIFEST_FILE_GOOD);
         assertThat(manifestSession, is(notNullValue()));
@@ -394,6 +399,10 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
+    /********************************************************************/
+    /**  =======  Load session tests  ================================ **/
+    /********************************************************************/
+
     public void loadManifestSessionSuccess() {
         ManifestSessionDao manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
         ResearchProjectDao researchProjectDao = Mockito.mock(ResearchProjectDao.class);
@@ -425,6 +434,10 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSession manifestSession = ejb.loadManifestSession(TEST_MANIFEST_SESSION_ID);
         assertThat(manifestSession, is(nullValue()));
     }
+
+    /********************************************************************/
+    /**  =======  Accept upload tests ================================ **/
+    /********************************************************************/
 
     public void acceptUploadSessionNotFound() {
         ManifestSessionDao manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
@@ -610,6 +623,11 @@ public class ManifestSessionEjbDBFreeTest {
                 {BAD_TUBE_BARCODE, false}};
     }
 
+
+    /********************************************************************/
+    /**  =======  accession scan tests =============================== **/
+    /********************************************************************/
+
     @Test(dataProvider = GOOD_MANIFEST_ACCESSION_SCAN_PROVIDER)
     public void accessionScanGoodManifest(String tubeBarcode, boolean successExpected) throws Exception {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(MANIFEST_FILE_GOOD,
@@ -773,6 +791,113 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
+    /********************************************************************/
+    /**  =======  Prepare to close    ================================ **/
+    /********************************************************************/
+
+
+    public void prepareForSessionCloseGoodSession() throws Exception {
+
+        ManifestSessionAndEjbHolder holder =
+                buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY, ManifestTestFactory.CreationType.FACTORY,
+                        ManifestRecord.Status.SCANNED, 20);
+
+        ManifestStatus sessionStatus = holder.ejb.getSessionStatus(ARBITRARY_MANIFEST_SESSION_ID);
+
+        assertThat(sessionStatus.getErrorMessages(), is(empty()));
+        assertThat(sessionStatus.getSamplesEligibleInManifest(), is(20));
+        assertThat(sessionStatus.getSamplesSuccessfullyScanned(), is(20));
+        assertThat(sessionStatus.getSamplesInManifest(), is(20));
+    }
+
+    public void prepareForSessionCloseWithDuplicate() throws Exception {
+
+        ManifestSessionAndEjbHolder holder =
+                buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY, ManifestTestFactory.CreationType.FACTORY,
+                        ManifestRecord.Status.SCANNED, 20);
+
+        ManifestTestFactory.addExtraRecord(holder.manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
+                ManifestRecord.Status.UPLOADED);
+
+        ManifestStatus sessionStatus = holder.ejb.getSessionStatus(ARBITRARY_MANIFEST_SESSION_ID);
+
+        assertThat(sessionStatus.getErrorMessages().size(), is(1));
+        assertThat(sessionStatus.getErrorMessages(), hasItem(containsString(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getBaseMessage())));
+        assertThat(sessionStatus.getSamplesEligibleInManifest(), is(20));
+        assertThat(sessionStatus.getSamplesSuccessfullyScanned(), is(20));
+        assertThat(sessionStatus.getSamplesInManifest(), is(21));
+    }
+
+    public void prepareForSessionCloseWithUnScanned() throws Exception {
+
+        ManifestSessionAndEjbHolder holder =
+                buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY, ManifestTestFactory.CreationType.FACTORY,
+                        ManifestRecord.Status.SCANNED, 20);
+
+        ManifestTestFactory.addExtraRecord(holder.manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), null,
+                ManifestRecord.Status.UPLOAD_ACCEPTED);
+
+        ManifestStatus sessionStatus = holder.ejb.getSessionStatus(ARBITRARY_MANIFEST_SESSION_ID);
+
+        assertThat(sessionStatus.getErrorMessages().size(), is(1));
+        assertThat(sessionStatus.getErrorMessages(), hasItem(containsString(ManifestRecord.ErrorStatus.MISSING_SAMPLE.getBaseMessage())));
+        assertThat(sessionStatus.getSamplesEligibleInManifest(), is(21));
+        assertThat(sessionStatus.getSamplesSuccessfullyScanned(), is(20));
+        assertThat(sessionStatus.getSamplesInManifest(), is(21));
+    }
+
+    public void prepareForSessionCloseWithUnScannedAndDuplicate() throws Exception {
+
+        ManifestSessionAndEjbHolder holder =
+                buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY, ManifestTestFactory.CreationType.FACTORY,
+                        ManifestRecord.Status.SCANNED, 20);
+
+        ManifestTestFactory.addExtraRecord(holder.manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), null,
+                ManifestRecord.Status.UPLOAD_ACCEPTED);
+
+        ManifestTestFactory.addExtraRecord(holder.manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
+                ManifestRecord.Status.UPLOADED);
+
+        ManifestStatus sessionStatus = holder.ejb.getSessionStatus(ARBITRARY_MANIFEST_SESSION_ID);
+
+        assertThat(sessionStatus.getErrorMessages().size(), is(2));
+        assertThat(sessionStatus.getErrorMessages(), hasItem(containsString(ManifestRecord.ErrorStatus.MISSING_SAMPLE.getBaseMessage())));
+        assertThat(sessionStatus.getErrorMessages(), hasItem(containsString(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getBaseMessage())));
+        assertThat(sessionStatus.getSamplesEligibleInManifest(), is(21));
+        assertThat(sessionStatus.getSamplesSuccessfullyScanned(), is(20));
+        assertThat(sessionStatus.getSamplesInManifest(), is(22));
+    }
+
+    public void prepareForSessionCloseWithMismatchedGenders() throws Exception {
+
+        ManifestSessionAndEjbHolder holder =
+                buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY, ManifestTestFactory.CreationType.FACTORY,
+                        ManifestRecord.Status.SCANNED, 20);
+
+        ManifestTestFactory.addExtraRecord(holder.manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
+                ManifestRecord.Status.SCANNED);
+
+        ManifestStatus sessionStatus = holder.ejb.getSessionStatus(ARBITRARY_MANIFEST_SESSION_ID);
+
+        assertThat(sessionStatus.getErrorMessages().size(), is(1));
+        assertThat(sessionStatus.getErrorMessages(), hasItem(containsString(ManifestRecord.ErrorStatus.MISMATCHED_GENDER.getBaseMessage())));
+        assertThat(sessionStatus.getSamplesEligibleInManifest(), is(21));
+        assertThat(sessionStatus.getSamplesSuccessfullyScanned(), is(21));
+        assertThat(sessionStatus.getSamplesInManifest(), is(21));
+    }
+
+
+
+    /********************************************************************/
+    /**  =======  close    ================================ **/
+    /********************************************************************/
+
+
     public void closeGoodManifest() throws Exception {
 
         ManifestSessionAndEjbHolder holder =
@@ -900,6 +1025,9 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
+    /********************************************************************/
+    /**  =======  Validate source test (Supports Ajax Call) ========== **/
+    /********************************************************************/
 
     public void validateSourceOnCleanSession() throws Exception {
 
@@ -983,6 +1111,10 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
+    /********************************************************************/
+    /**  =======  Validate target sample tests ======================= **/
+    /********************************************************************/
+
     public void validateValidTargetSample() throws Exception {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
                 ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 1);
@@ -1033,6 +1165,10 @@ public class ManifestSessionEjbDBFreeTest {
             assertThat(e.getMessage(), containsString("Sample already accessioned"));
         }
     }
+
+    /********************************************************************/
+    /**  =======  Validate tube and Sample tests ===================== **/
+    /********************************************************************/
 
     public void validateTargetTubeAndSampleOnValidRecord() throws Exception {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
@@ -1089,6 +1225,10 @@ public class ManifestSessionEjbDBFreeTest {
             assertThat(e.getMessage(), containsString(ManifestSessionEjb.VESSEL_NOT_FOUND_MESSAGE));
         }
     }
+
+    /********************************************************************/
+    /**  =======  Record Transfer Tests ============================== **/
+    /********************************************************************/
 
     public void transferSourceValidRecord() throws Exception {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
@@ -1243,7 +1383,6 @@ public class ManifestSessionEjbDBFreeTest {
                 assertThat(mercurySample.getMetadata(), is(empty()));
             }
         }
-
     }
 
     public void transferSourceMismatchedGenderRecord() throws Exception {
