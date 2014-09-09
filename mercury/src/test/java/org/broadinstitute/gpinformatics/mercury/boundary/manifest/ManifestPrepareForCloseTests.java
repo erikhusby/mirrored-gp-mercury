@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
-import com.google.common.collect.ImmutableMap;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -8,8 +7,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestStatus;
-import org.hamcrest.MatcherAssert;
-import org.hamcrest.Matchers;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -17,19 +14,11 @@ import org.testng.annotations.Test;
 import java.util.Collection;
 
 import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.collection.IsEmptyCollection.empty;
-import static org.hamcrest.collection.IsEmptyCollection.emptyCollectionOf;
-
-
-import static org.hamcrest.MatcherAssert.assertThat;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ManifestPrepareForCloseTests {
@@ -111,7 +100,7 @@ public class ManifestPrepareForCloseTests {
     }
 
     public void testValidationForGenderMismatchSample() {
-        ManifestTestFactory.addExtraRecord(session, null, ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
+        ManifestTestFactory.addExtraRecord(session, ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
                 ManifestRecord.Status.SCANNED);
 
         ManifestStatus manifestStatus = session.generateSessionStatusForClose();
@@ -128,7 +117,7 @@ public class ManifestPrepareForCloseTests {
 
     public void testValidationForUnscannedAndDuplicates() {
         addDuplicateManifestRecord();
-        ManifestTestFactory.addExtraRecord(session, null, null, ManifestRecord.Status.UPLOAD_ACCEPTED);
+        ManifestTestFactory.addExtraRecord(session, null, ManifestRecord.Status.UPLOAD_ACCEPTED);
 
         ManifestStatus manifestStatus = session.generateSessionStatusForClose();
 
@@ -145,8 +134,8 @@ public class ManifestPrepareForCloseTests {
 
     public void testValidationForUnscannedAndDuplicatesAndMismatchedGender() {
         addDuplicateManifestRecord();
-        ManifestTestFactory.addExtraRecord(session, null, null, ManifestRecord.Status.UPLOAD_ACCEPTED);
-        ManifestTestFactory.addExtraRecord(session, null, ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
+        ManifestTestFactory.addExtraRecord(session, null, ManifestRecord.Status.UPLOAD_ACCEPTED);
+        ManifestTestFactory.addExtraRecord(session, ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
                 ManifestRecord.Status.SCANNED);
 
 
@@ -168,8 +157,8 @@ public class ManifestPrepareForCloseTests {
         ManifestRecord record = session.getRecords().iterator().next();
 
         ManifestTestFactory.addExtraRecord(session,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, record.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue()),
-                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED);
+                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
+                Metadata.Key.SAMPLE_ID, record.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue());
     }
 
     private void setManifestRecordStatus(ManifestRecord.Status status) {

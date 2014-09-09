@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
+import com.google.common.collect.ImmutableMap;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
@@ -65,9 +66,8 @@ public class ManifestTestFactory {
         return manifestRecord;
     }
 
-    public static void addExtraRecord(ManifestSession session, Map<Metadata.Key, String> initialData,
-                                      ManifestRecord.ErrorStatus errorStatus,
-                                      ManifestRecord.Status status) {
+    private static void addExtraRecord(ManifestSession session, ManifestRecord.ErrorStatus errorStatus,
+                                       ManifestRecord.Status status, Map<Metadata.Key, String> initialData) {
         ManifestRecord record = buildManifestRecord(20, initialData);
         record.setStatus(status);
         session.addRecord(record);
@@ -76,5 +76,22 @@ public class ManifestTestFactory {
             session.addManifestEvent(new ManifestEvent(errorStatus.getSeverity(),
                     errorStatus.formatMessage(Metadata.Key.SAMPLE_ID.name(), record.getSampleId()), record));
         }
+    }
+
+    public static void addExtraRecord(ManifestSession manifestSession, ManifestRecord.ErrorStatus errorStatus, ManifestRecord.Status status) {
+        addExtraRecord(manifestSession, errorStatus, status, ImmutableMap.<Metadata.Key, String>of());
+    }
+
+    public static void addExtraRecord(ManifestSession manifestSession, ManifestRecord.ErrorStatus errorStatus,
+                                      ManifestRecord.Status status, Metadata.Key key, String value) {
+        addExtraRecord(manifestSession, errorStatus, status, ImmutableMap.of(key, value));
+    }
+
+    public static void addExtraRecord(ManifestSession manifestSession,
+                                      ManifestRecord.ErrorStatus errorStatus, ManifestRecord.Status status,
+                                      Metadata.Key key1, String value1,
+                                      Metadata.Key key2, String value2,
+                                      Metadata.Key key3, String value3) {
+        addExtraRecord(manifestSession, errorStatus, status, ImmutableMap.of(key1, value1, key2, value2, key3, value3));
     }
 }

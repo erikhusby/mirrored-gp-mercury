@@ -39,7 +39,7 @@ public class ManifestSessionEjb {
             "The given target sample id is not associated with the given target vessel";
     public static final String SAMPLE_NOT_FOUND_MESSAGE = ":: This sample ID is not found.";
     public static final String SAMPLE_NOT_UNIQUE_MESSAGE = ":: This sample ID is not unique in Mercury";
-    public static final String SAMPLE_NOT_ELLIGIBLE_FOR_CLINICAL_MESSAGE =
+    public static final String SAMPLE_NOT_ELIGIBLE_FOR_CLINICAL_MESSAGE =
             ":: The sample found is not eligible for clinical work";
     public static final String VESSEL_NOT_FOUND_MESSAGE = "::  The target vessel is not found";
     public static final String VESSEL_USED_FOR_PREVIOUS_TRANSFER =
@@ -186,7 +186,7 @@ public class ManifestSessionEjb {
 
         if (foundTarget.getMetadataSource() == MercurySample.MetadataSource.BSP) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.SAMPLE_ID_KEY,
-                    targetSampleKey, SAMPLE_NOT_ELLIGIBLE_FOR_CLINICAL_MESSAGE);
+                    targetSampleKey, SAMPLE_NOT_ELIGIBLE_FOR_CLINICAL_MESSAGE);
         }
 
         return foundTarget;

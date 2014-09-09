@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -447,26 +446,26 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSession manifestSession = holder.manifestSession;
 
         ManifestTestFactory.addExtraRecord(manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101231193"), ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
-                ManifestRecord.Status.UPLOADED);
+                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
+                Metadata.Key.SAMPLE_ID, "03101231193");
         ManifestTestFactory.addExtraRecord(manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101231193"), ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
-                ManifestRecord.Status.UPLOADED);
+                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
+                Metadata.Key.SAMPLE_ID, "03101231193");
         ManifestTestFactory.addExtraRecord(manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101254356"), ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
-                ManifestRecord.Status.UPLOADED);
+                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
+                Metadata.Key.SAMPLE_ID, "03101254356");
         ManifestTestFactory.addExtraRecord(manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101254356"), ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
-                ManifestRecord.Status.UPLOADED);
+                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
+                Metadata.Key.SAMPLE_ID, "03101254356");
         ManifestTestFactory.addExtraRecord(manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101254356"), ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
-                ManifestRecord.Status.UPLOADED);
+                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
+                Metadata.Key.SAMPLE_ID, "03101254356");
         ManifestTestFactory.addExtraRecord(manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101411324"), ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
-                ManifestRecord.Status.UPLOADED);
+                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
+                Metadata.Key.SAMPLE_ID, "03101411324");
         ManifestTestFactory.addExtraRecord(manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101411324"), ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
-                ManifestRecord.Status.UPLOADED);
+                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
+                Metadata.Key.SAMPLE_ID, "03101411324");
 
         List<ManifestRecord> manifestRecordsMarkedAsDuplicates = new ArrayList<>();
 
@@ -503,29 +502,23 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSession manifestSession = holder.manifestSession;
 
         ManifestTestFactory.addExtraRecord(manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101947686", Metadata.Key.PATIENT_ID, "003-009",
-                        Metadata.Key.GENDER, FEMALE), ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
-                ManifestRecord.Status.UPLOADED);
+                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.UPLOADED,
+                Metadata.Key.SAMPLE_ID, "03101947686", Metadata.Key.PATIENT_ID, "003-009", Metadata.Key.GENDER, FEMALE);
         ManifestTestFactory.addExtraRecord(manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101989209", Metadata.Key.PATIENT_ID, "003-009",
-                        Metadata.Key.GENDER, MALE), ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
-                ManifestRecord.Status.UPLOADED);
+                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.UPLOADED,
+                Metadata.Key.SAMPLE_ID, "03101989209", Metadata.Key.PATIENT_ID, "003-009", Metadata.Key.GENDER, MALE);
         ManifestTestFactory.addExtraRecord(manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101231193", Metadata.Key.PATIENT_ID, "004-002",
-                        Metadata.Key.GENDER, MALE), ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
-                ManifestRecord.Status.UPLOADED);
+                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.UPLOADED,
+                Metadata.Key.SAMPLE_ID, "03101231193", Metadata.Key.PATIENT_ID, "004-002", Metadata.Key.GENDER, MALE);
         ManifestTestFactory.addExtraRecord(manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101067213", Metadata.Key.PATIENT_ID, "004-002",
-                        Metadata.Key.GENDER, FEMALE), ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
-                ManifestRecord.Status.UPLOADED);
+                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.UPLOADED,
+                Metadata.Key.SAMPLE_ID, "03101067213", Metadata.Key.PATIENT_ID, "004-002", Metadata.Key.GENDER, FEMALE);
         ManifestTestFactory.addExtraRecord(manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101752021", Metadata.Key.PATIENT_ID, "005-012",
-                        Metadata.Key.GENDER, FEMALE), ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
-                ManifestRecord.Status.UPLOADED);
+                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.UPLOADED,
+                Metadata.Key.SAMPLE_ID, "03101752021", Metadata.Key.PATIENT_ID, "005-012", Metadata.Key.GENDER, FEMALE);
         ManifestTestFactory.addExtraRecord(manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101752020", Metadata.Key.PATIENT_ID, "005-012",
-                        Metadata.Key.GENDER, MALE), ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
-                ManifestRecord.Status.UPLOADED);
+                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.UPLOADED,
+                Metadata.Key.SAMPLE_ID, "03101752020", Metadata.Key.PATIENT_ID, "005-012", Metadata.Key.GENDER, MALE);
 
         List<ManifestRecord> manifestRecordsWithMismatchedGenders = new ArrayList<>();
 
@@ -610,7 +603,7 @@ public class ManifestSessionEjbDBFreeTest {
     public void accessionScanGoodManifest(String tubeBarcode, boolean successExpected) throws Exception {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.UPLOADED, 20);
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101231193"), null, ManifestRecord.Status.UPLOAD_ACCEPTED);
+                null, ManifestRecord.Status.UPLOAD_ACCEPTED, Metadata.Key.SAMPLE_ID, "03101231193");
 
         ManifestSessionEjb ejb = holder.ejb;
         ejb.acceptManifestUpload(ARBITRARY_MANIFEST_SESSION_ID);
@@ -648,26 +641,26 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSession manifestSession = holder.manifestSession;
 
         ManifestTestFactory.addExtraRecord(manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101231193"),
-                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED);
+                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
+                Metadata.Key.SAMPLE_ID, "03101231193");
         ManifestTestFactory.addExtraRecord(manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101231193"),
-                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED);
+                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
+                Metadata.Key.SAMPLE_ID, "03101231193");
         ManifestTestFactory.addExtraRecord(manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101254356"),
-                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED);
+                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
+                Metadata.Key.SAMPLE_ID, "03101254356");
         ManifestTestFactory.addExtraRecord(manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101254356"),
-                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED);
+                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
+                Metadata.Key.SAMPLE_ID, "03101254356");
         ManifestTestFactory.addExtraRecord(manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101254356"),
-                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED);
+                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
+                Metadata.Key.SAMPLE_ID, "03101254356");
         ManifestTestFactory.addExtraRecord(manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101411324"),
-                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED);
+                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
+                Metadata.Key.SAMPLE_ID, "03101411324");
         ManifestTestFactory.addExtraRecord(manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101411324"),
-                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED);
+                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
+                Metadata.Key.SAMPLE_ID, "03101411324");
 
         ManifestSessionEjb ejb = holder.ejb;
         ejb.acceptManifestUpload(ARBITRARY_MANIFEST_SESSION_ID);
@@ -690,29 +683,23 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSession manifestSession = holder.manifestSession;
 
         ManifestTestFactory.addExtraRecord(manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101947686", Metadata.Key.PATIENT_ID, "003-009",
-                        Metadata.Key.GENDER, FEMALE), ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
-                ManifestRecord.Status.UPLOAD_ACCEPTED);
+                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.UPLOAD_ACCEPTED,
+                Metadata.Key.SAMPLE_ID, "03101947686", Metadata.Key.PATIENT_ID, "003-009", Metadata.Key.GENDER, FEMALE);
         ManifestTestFactory.addExtraRecord(manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101989209", Metadata.Key.PATIENT_ID, "003-009",
-                        Metadata.Key.GENDER, MALE), ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
-                ManifestRecord.Status.UPLOAD_ACCEPTED);
+                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.UPLOAD_ACCEPTED,
+                Metadata.Key.SAMPLE_ID, "03101989209", Metadata.Key.PATIENT_ID, "003-009", Metadata.Key.GENDER, MALE);
         ManifestTestFactory.addExtraRecord(manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101231193", Metadata.Key.PATIENT_ID, "004-002",
-                        Metadata.Key.GENDER, MALE), ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
-                ManifestRecord.Status.UPLOAD_ACCEPTED);
+                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.UPLOAD_ACCEPTED,
+                Metadata.Key.SAMPLE_ID, "03101231193", Metadata.Key.PATIENT_ID, "004-002", Metadata.Key.GENDER, MALE);
         ManifestTestFactory.addExtraRecord(manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101067213", Metadata.Key.PATIENT_ID, "004-002",
-                        Metadata.Key.GENDER, FEMALE), ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
-                ManifestRecord.Status.UPLOAD_ACCEPTED);
+                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.UPLOAD_ACCEPTED,
+                Metadata.Key.SAMPLE_ID, "03101067213", Metadata.Key.PATIENT_ID, "004-002", Metadata.Key.GENDER, FEMALE);
         ManifestTestFactory.addExtraRecord(manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101752021", Metadata.Key.PATIENT_ID, "005-012",
-                        Metadata.Key.GENDER, FEMALE), ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
-                ManifestRecord.Status.UPLOAD_ACCEPTED);
+                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.UPLOAD_ACCEPTED,
+                Metadata.Key.SAMPLE_ID, "03101752021", Metadata.Key.PATIENT_ID, "005-012", Metadata.Key.GENDER, FEMALE);
         ManifestTestFactory.addExtraRecord(manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101752020", Metadata.Key.PATIENT_ID, "005-012",
-                        Metadata.Key.GENDER, MALE), ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
-                ManifestRecord.Status.UPLOAD_ACCEPTED);
+                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.UPLOAD_ACCEPTED,
+                Metadata.Key.SAMPLE_ID, "03101752020", Metadata.Key.PATIENT_ID, "005-012", Metadata.Key.GENDER, MALE);
 
         // There should be twice as many manifest events as there are patient IDs with mismatched genders as all the
         // mismatches are in the same manifest.
@@ -781,8 +768,8 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.SCANNED, 20);
 
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
-                ManifestRecord.Status.UPLOADED);
+                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
+                Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE);
 
         ManifestStatus sessionStatus = holder.ejb.getSessionStatus(ARBITRARY_MANIFEST_SESSION_ID);
 
@@ -798,8 +785,8 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.SCANNED, 20);
 
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), null,
-                ManifestRecord.Status.UPLOAD_ACCEPTED);
+                null, ManifestRecord.Status.UPLOAD_ACCEPTED, Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE
+        );
 
         ManifestStatus sessionStatus = holder.ejb.getSessionStatus(ARBITRARY_MANIFEST_SESSION_ID);
 
@@ -815,12 +802,12 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.SCANNED, 20);
 
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), null,
-                ManifestRecord.Status.UPLOAD_ACCEPTED);
+                null, ManifestRecord.Status.UPLOAD_ACCEPTED, Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE
+        );
 
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
-                ManifestRecord.Status.UPLOADED);
+                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
+                Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE);
 
         ManifestStatus sessionStatus = holder.ejb.getSessionStatus(ARBITRARY_MANIFEST_SESSION_ID);
 
@@ -837,8 +824,8 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.SCANNED, 20);
 
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
-                ManifestRecord.Status.SCANNED);
+                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.SCANNED,
+                Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE);
 
         ManifestStatus sessionStatus = holder.ejb.getSessionStatus(ARBITRARY_MANIFEST_SESSION_ID);
 
@@ -869,11 +856,10 @@ public class ManifestSessionEjbDBFreeTest {
     public void closeManifestWithDuplicate() throws Exception {
 
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.SCANNED, 20);
-        String dupeSampleId = GOOD_TUBE_BARCODE;
+        String duplicateSampleId = GOOD_TUBE_BARCODE;
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, dupeSampleId),
-                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED);
-
+                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
+                Metadata.Key.SAMPLE_ID, duplicateSampleId);
 
         holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
         assertThat(holder.manifestSession.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
@@ -881,7 +867,7 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(holder.manifestSession.getManifestEvents().size(), is(1));
 
         for (ManifestRecord manifestRecord : holder.manifestSession.getRecords()) {
-            if (manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue().equals(dupeSampleId)) {
+            if (manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue().equals(duplicateSampleId)) {
                 assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOADED));
             } else {
                 assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.ACCESSIONED));
@@ -893,9 +879,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.SCANNED, 20);
         String unScannedBarcode = GOOD_TUBE_BARCODE;
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, unScannedBarcode), null,
-                ManifestRecord.Status.UPLOAD_ACCEPTED);
-
+                null, ManifestRecord.Status.UPLOAD_ACCEPTED, Metadata.Key.SAMPLE_ID, unScannedBarcode);
 
         holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
 
@@ -919,13 +903,12 @@ public class ManifestSessionEjbDBFreeTest {
 
         String unscannedBarcode = GOOD_TUBE_BARCODE;
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, unscannedBarcode),
-                null, ManifestRecord.Status.UPLOAD_ACCEPTED);
+                null, ManifestRecord.Status.UPLOAD_ACCEPTED, Metadata.Key.SAMPLE_ID, unscannedBarcode);
 
         String dupeSampleId = GOOD_TUBE_BARCODE + "dupe";
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, dupeSampleId),
-                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED);
+                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
+                Metadata.Key.SAMPLE_ID, dupeSampleId);
 
         holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
 
@@ -952,13 +935,13 @@ public class ManifestSessionEjbDBFreeTest {
         String misMatch1Barcode = GOOD_TUBE_BARCODE + "BadGender1";
         ManifestSession manifestSession = holder.manifestSession;
         ManifestTestFactory.addExtraRecord(manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, misMatch1Barcode), ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
-                ManifestRecord.Status.SCANNED);
+                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.SCANNED,
+                Metadata.Key.SAMPLE_ID, misMatch1Barcode);
 
         String misMatch2Barcode = GOOD_TUBE_BARCODE + "BadGender2";
         ManifestTestFactory.addExtraRecord(manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, misMatch2Barcode), ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
-                ManifestRecord.Status.SCANNED);
+                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.SCANNED,
+                Metadata.Key.SAMPLE_ID, misMatch2Barcode);
 
         holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
 
@@ -980,7 +963,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20);
 
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, sourceForTransfer), null, ManifestRecord.Status.ACCESSIONED);
+                null, ManifestRecord.Status.ACCESSIONED, Metadata.Key.SAMPLE_ID, sourceForTransfer);
 
         ManifestRecord foundRecord =
                 holder.ejb.validateSourceTubeForTransfer(ARBITRARY_MANIFEST_SESSION_ID, sourceForTransfer);
@@ -993,8 +976,8 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20);
 
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, sourceForTransfer),
-                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED);
+                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
+                Metadata.Key.SAMPLE_ID, sourceForTransfer);
 
         try {
             holder.ejb.validateSourceTubeForTransfer(ARBITRARY_MANIFEST_SESSION_ID, sourceForTransfer);
@@ -1023,8 +1006,8 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20);
 
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, sourceForTransfer),
-                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.ACCESSIONED);
+                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.ACCESSIONED,
+                Metadata.Key.SAMPLE_ID, sourceForTransfer);
 
         ManifestRecord foundRecord =
                 holder.ejb.validateSourceTubeForTransfer(ARBITRARY_MANIFEST_SESSION_ID, sourceForTransfer);
@@ -1037,8 +1020,8 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20);
 
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, sourceForTransfer),
-                ManifestRecord.ErrorStatus.MISSING_SAMPLE, ManifestRecord.Status.UPLOAD_ACCEPTED);
+                ManifestRecord.ErrorStatus.MISSING_SAMPLE, ManifestRecord.Status.UPLOAD_ACCEPTED,
+                Metadata.Key.SAMPLE_ID, sourceForTransfer);
 
         try {
             holder.ejb.validateSourceTubeForTransfer(ARBITRARY_MANIFEST_SESSION_ID, sourceForTransfer);
@@ -1071,7 +1054,7 @@ public class ManifestSessionEjbDBFreeTest {
         } catch (Exception e) {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
                     .formatMessage(ManifestSession.SAMPLE_ID_KEY, BSP_TEST_SAMPLE_KEY)));
-            assertThat(e.getMessage(), containsString(ManifestSessionEjb.SAMPLE_NOT_ELLIGIBLE_FOR_CLINICAL_MESSAGE));
+            assertThat(e.getMessage(), containsString(ManifestSessionEjb.SAMPLE_NOT_ELIGIBLE_FOR_CLINICAL_MESSAGE));
         }
     }
 
@@ -1166,7 +1149,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20);
 
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), null, ManifestRecord.Status.ACCESSIONED);
+                null, ManifestRecord.Status.ACCESSIONED, Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE);
 
         ManifestRecord usedRecord = holder.manifestSession.findRecordByCollaboratorId(GOOD_TUBE_BARCODE);
         assertThat(usedRecord.getStatus(), is(equalTo(ManifestRecord.Status.ACCESSIONED)));
@@ -1214,7 +1197,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20);
 
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), null, ManifestRecord.Status.ACCESSIONED);
+                null, ManifestRecord.Status.ACCESSIONED, Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE);
 
         ManifestRecord usedRecord = holder.manifestSession.findRecordByCollaboratorId(GOOD_TUBE_BARCODE);
         assertThat(usedRecord.getStatus(), is(equalTo(ManifestRecord.Status.ACCESSIONED)));
@@ -1234,7 +1217,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20);
 
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), null, ManifestRecord.Status.ACCESSIONED);
+                null, ManifestRecord.Status.ACCESSIONED, Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE);
 
         ManifestRecord usedRecord = holder.manifestSession.findRecordByCollaboratorId(GOOD_TUBE_BARCODE);
         assertThat(usedRecord.getStatus(), is(equalTo(ManifestRecord.Status.ACCESSIONED)));
@@ -1259,7 +1242,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20);
 
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), null, ManifestRecord.Status.ACCESSIONED);
+                null, ManifestRecord.Status.ACCESSIONED, Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE);
 
         ManifestRecord usedRecord = holder.manifestSession.findRecordByCollaboratorId(GOOD_TUBE_BARCODE);
         assertThat(usedRecord.getStatus(), is(equalTo(ManifestRecord.Status.ACCESSIONED)));
@@ -1285,8 +1268,8 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20);
 
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE),
-                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED);
+                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
+                Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE);
 
         ManifestRecord usedRecord = holder.manifestSession.findRecordByCollaboratorId(GOOD_TUBE_BARCODE);
         assertThat(usedRecord.getStatus(), is(equalTo(ManifestRecord.Status.UPLOADED)));
@@ -1314,8 +1297,8 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20);
 
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE),
-                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.ACCESSIONED);
+                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.ACCESSIONED,
+                Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE);
 
         ManifestRecord usedRecord = holder.manifestSession.findRecordByCollaboratorId(GOOD_TUBE_BARCODE);
         assertThat(usedRecord.getStatus(), is(equalTo(ManifestRecord.Status.ACCESSIONED)));
@@ -1340,8 +1323,8 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20);
 
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE),
-                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED);
+                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
+                Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE);
 
         ManifestRecord usedRecord = holder.manifestSession.findRecordByCollaboratorId(GOOD_TUBE_BARCODE);
         assertThat(usedRecord.getStatus(), is(equalTo(ManifestRecord.Status.UPLOADED)));
