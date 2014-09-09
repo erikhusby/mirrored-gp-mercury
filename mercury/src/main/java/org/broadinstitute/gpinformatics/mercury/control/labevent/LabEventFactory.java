@@ -44,6 +44,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
@@ -339,7 +340,13 @@ public class LabEventFactory implements Serializable {
             persistLabEvent(uniqueEvents, labEvent, true);
             labEvents.add(labEvent);
             if (plateEventType.getPositionMap() != null) {
-                updateReceptacles.addAll(plateEventType.getPositionMap().getReceptacle());
+                LabEventType labEventType = labEvent.getLabEventType();
+                if (labEventType.getVolumeConcUpdate() == LabEventType.VolumeConcUpdate.BSP_AND_MERCURY &&
+                        labEvent.getInPlaceLabVessel().getContainerRole().getContainedVessels().iterator().next().
+                                getSampleInstancesV2().iterator().next().getRootMercurySamples().iterator().next().
+                                getMetadataSource() == MercurySample.MetadataSource.BSP) {
+                    updateReceptacles.addAll(plateEventType.getPositionMap().getReceptacle());
+                }
             }
         }
         for (PlateTransferEventType plateTransferEventType : bettaLIMSMessage.getPlateTransferEvent()) {
