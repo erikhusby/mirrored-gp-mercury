@@ -15,7 +15,6 @@ public class ManifestStatus {
 
     public ManifestStatus(int samplesInManifest, int samplesEligibleInManifest, int samplesSuccessfullyScanned) {
 
-
         this.samplesInManifest = samplesInManifest;
         this.samplesEligibleInManifest = samplesEligibleInManifest;
         this.samplesSuccessfullyScanned = samplesSuccessfullyScanned;

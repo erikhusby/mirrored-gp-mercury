@@ -92,16 +92,18 @@ public class ManifestSessionEjbDBFreeTest {
 
     private static final String TEST_SAMPLE_KEY = "SM-BUICK1";
     private static final String BSP_TEST_SAMPLE_KEY = TEST_SAMPLE_KEY + "BSP";
-    private static final String TEST_SAMPLE_ALREADY_ACCESSIONED = TEST_SAMPLE_KEY + "ACCESSIONED";
+    private static final String TEST_SAMPLE_ALREADY_TRANSFERRED = TEST_SAMPLE_KEY + "ACCESSIONED";
     private static final String TEST_SAMPLE_KEY_UNASSOCIATED = "SM-BUICK2";
 
     private MercurySample testSampleForAccessioning;
     private MercurySample testUnassociatedSampleForAccessioning;
     private MercurySample testSampleForBsp;
-    private MercurySample testSampleAlreadyAccessioned;
+    private MercurySample testSampleAlreadyTransfered;
 
+    private static final String TEST_VESSEL_LABEL_ALREADY_TRANSFERRED = "A0993929292Trans";
     private static final String TEST_VESSEL_LABEL = "A0993929292";
     private LabVessel testVessel;
+    private LabVessel testVesselAlreadyTransfered;
 
     private MercurySampleDao mercurySampleDao;
     private LabVesselDao labVesselDao;
@@ -120,10 +122,13 @@ public class ManifestSessionEjbDBFreeTest {
                 new MercurySample(TEST_SAMPLE_KEY_UNASSOCIATED, MercurySample.MetadataSource.MERCURY);
         testSampleForBsp =
                 new MercurySample(BSP_TEST_SAMPLE_KEY, MercurySample.MetadataSource.BSP);
-        testSampleAlreadyAccessioned = new MercurySample(TEST_SAMPLE_ALREADY_ACCESSIONED,
+        testSampleAlreadyTransfered = new MercurySample(TEST_SAMPLE_ALREADY_TRANSFERRED,
                 MercurySample.MetadataSource.MERCURY);
         testVessel =
                 new BarcodedTube(TEST_VESSEL_LABEL, BarcodedTube.BarcodedTubeType.MatrixTube2mL);
+        testVesselAlreadyTransfered = new BarcodedTube(TEST_VESSEL_LABEL_ALREADY_TRANSFERRED,
+                BarcodedTube.BarcodedTubeType.MatrixTube2mL);
+
     }
 
     /**
@@ -239,8 +244,8 @@ public class ManifestSessionEjbDBFreeTest {
         Mockito.when(mercurySampleDao.findBySampleKey(Mockito.eq(BSP_TEST_SAMPLE_KEY))).thenReturn(
                 Collections.singletonList(testSampleForBsp));
 
-        Mockito.when(mercurySampleDao.findBySampleKey(Mockito.eq(TEST_SAMPLE_ALREADY_ACCESSIONED))).thenReturn(
-                Collections.singletonList(testSampleAlreadyAccessioned));
+        Mockito.when(mercurySampleDao.findBySampleKey(Mockito.eq(TEST_SAMPLE_ALREADY_TRANSFERRED))).thenReturn(
+                Collections.singletonList(testSampleAlreadyTransfered));
 
         Mockito.when(mercurySampleDao.findBySampleKey(Mockito.eq(TEST_SAMPLE_KEY_UNASSOCIATED))).thenReturn(
                 Collections.singletonList(testUnassociatedSampleForAccessioning)
@@ -250,8 +255,15 @@ public class ManifestSessionEjbDBFreeTest {
 
         Mockito.when(labVesselDao.findByIdentifier(Mockito.eq(TEST_VESSEL_LABEL))).thenReturn(testVessel);
 
-        LabEvent initialTare = new LabEvent(LabEventType.INITIAL_TARE, new Date(), "Here", 1L, testLabUser.getUserId(),
-                "BuickTest");
+
+        testVesselAlreadyTransfered.addSample(testSampleAlreadyTransfered);
+        LabEvent collaboratorTransferEvent =
+                new LabEvent(LabEventType.COLLABORATOR_TRANSFER, new Date(), " ", 1L, testLabUser.getUserId(), "");
+        testVesselAlreadyTransfered.addInPlaceEvent(collaboratorTransferEvent);
+
+        Mockito.when(labVesselDao.findByIdentifier(Mockito.eq(TEST_VESSEL_LABEL_ALREADY_TRANSFERRED)))
+                .thenReturn(testVesselAlreadyTransfered);
+
 
         holder.ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao);
         if (starterType == ManifestTestFactory.CreationType.UPLOAD) {
@@ -1153,19 +1165,6 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
-    public void validateTargetForSampleAlreadyAccessioned() throws Exception {
-
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
-                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 1);
-
-        try {
-            MercurySample foundSample = holder.ejb.validateTargetSample(TEST_SAMPLE_ALREADY_ACCESSIONED);
-            Assert.fail();
-        } catch (Exception e) {
-            assertThat(e.getMessage(), containsString("Sample already accessioned"));
-        }
-    }
-
     /********************************************************************/
     /**  =======  Validate tube and Sample tests ===================== **/
     /********************************************************************/
@@ -1223,6 +1222,21 @@ public class ManifestSessionEjbDBFreeTest {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
                     .formatMessage(ManifestSession.VESSEL_LABEL, TEST_VESSEL_LABEL + "BAD")));
             assertThat(e.getMessage(), containsString(ManifestSessionEjb.VESSEL_NOT_FOUND_MESSAGE));
+        }
+    }
+
+    public void validateTargetTubeAlreadyAccessioned() throws Exception {
+
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
+                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 1);
+
+        try {
+            LabVessel foundVessel = holder.ejb.validateTargetSampleAndVessel(TEST_SAMPLE_ALREADY_TRANSFERRED,
+                    TEST_VESSEL_LABEL_ALREADY_TRANSFERRED);
+            Assert.fail();
+        } catch (Exception e) {
+            assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET.getBaseMessage()));
+            assertThat(e.getMessage(), containsString(ManifestSessionEjb.VESSEL_USED_FOR_PREVIOUS_TRANSFER));
         }
     }
 
@@ -1409,6 +1423,35 @@ public class ManifestSessionEjbDBFreeTest {
 
         for (MercurySample mercurySample : testSample) {
             assertThat(mercurySample.getMetadata(), is(not(empty())));
+        }
+    }
+
+    public void transferSourceGoodRecordUsedTarget() throws Exception {
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
+                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 20);
+
+        ManifestTestFactory.addExtraRecord(holder.manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE),
+                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED);
+
+        ManifestRecord usedRecord = holder.manifestSession.findRecordByCollaboratorId(GOOD_TUBE_BARCODE);
+        assertThat(usedRecord.getStatus(), is(equalTo(ManifestRecord.Status.UPLOADED)));
+
+        List<MercurySample> testSample = mercurySampleDao.findBySampleKey(TEST_SAMPLE_ALREADY_TRANSFERRED);
+
+        for (MercurySample mercurySample : testSample) {
+            assertThat(mercurySample.getMetadata(), is(empty()));
+        }
+
+        try {
+            holder.ejb.transferSample(ARBITRARY_MANIFEST_SESSION_ID, GOOD_TUBE_BARCODE, TEST_SAMPLE_ALREADY_TRANSFERRED,
+                    TEST_VESSEL_LABEL_ALREADY_TRANSFERRED, testLabUser);
+        } catch (Exception e) {
+            assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET.getBaseMessage()));
+            assertThat(e.getMessage(), containsString(ManifestSessionEjb.VESSEL_USED_FOR_PREVIOUS_TRANSFER));
+            for (MercurySample mercurySample : testSample) {
+                assertThat(mercurySample.getMetadata(), is(empty()));
+            }
         }
     }
 }

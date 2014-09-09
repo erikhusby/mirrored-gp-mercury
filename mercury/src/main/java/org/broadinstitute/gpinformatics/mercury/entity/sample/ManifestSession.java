@@ -9,6 +9,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.Audited;
 
@@ -533,7 +535,8 @@ public class ManifestSession {
         return recordForTransfer;
     }
 
-    public void performTransfer(String sourceCollaboratorSample, MercurySample targetSample, LabVessel targetVessel) {
+    public void performTransfer(String sourceCollaboratorSample, MercurySample targetSample, LabVessel targetVessel,
+                                BspUser user) {
 
         ManifestRecord sourceRecord = findRecordForTransfer(sourceCollaboratorSample);
 
@@ -542,6 +545,10 @@ public class ManifestSession {
         }
 
         sourceRecord.setStatus(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
+
+        LabEvent collaboratorTransferEvent =
+                new LabEvent(LabEventType.COLLABORATOR_TRANSFER, new Date(), " ", 1L, user.getUserId(), "");
+        targetVessel.addInPlaceEvent(collaboratorTransferEvent);
 
     }
 

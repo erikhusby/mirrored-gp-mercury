@@ -14,8 +14,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSes
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestStatus;
@@ -28,7 +26,6 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.InputStream;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 
 @RequestScoped
@@ -45,6 +42,8 @@ public class ManifestSessionEjb {
     public static final String SAMPLE_NOT_ELLIGIBLE_FOR_CLINICAL_MESSAGE =
             ":: The sample found is not eligible for clinical work";
     public static final String VESSEL_NOT_FOUND_MESSAGE = "::  The target vessel is not found";
+    public static final String VESSEL_USED_FOR_PREVIOUS_TRANSFER =
+            ":: the target vessel has already been used for a tube transfer";
     private ManifestSessionDao manifestSessionDao;
 
     private ResearchProjectDao researchProjectDao;
@@ -134,21 +133,20 @@ public class ManifestSessionEjb {
         ManifestRecord manifestRecord =
                 manifestSession.getRecordWithMatchingValueForKey(Metadata.Key.SAMPLE_ID, collaboratorSampleId);
 
-        // TODO make the entity type an enum to get rid of these Sample ID literals all over the place.
         if (manifestRecord == null) {
             throw new InformaticsServiceException(
                     ManifestRecord.ErrorStatus.NOT_IN_MANIFEST.formatMessage(
-                            "Sample ID", collaboratorSampleId));
+                            ManifestSession.SAMPLE_ID_KEY, collaboratorSampleId));
         }
 
         if (manifestRecord.isQuarantined()) {
             throw new InformaticsServiceException(
-                    ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage("Sample ID", collaboratorSampleId));
+                    ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage(ManifestSession.SAMPLE_ID_KEY, collaboratorSampleId));
         }
 
         if (manifestRecord.getStatus() == ManifestRecord.Status.SCANNED) {
             throw new InformaticsServiceException(
-                    ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_SCAN.formatMessage("Sample ID", collaboratorSampleId));
+                    ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_SCAN.formatMessage(ManifestSession.SAMPLE_ID_KEY, collaboratorSampleId));
         }
 
         manifestRecord.setStatus(ManifestRecord.Status.SCANNED);
@@ -191,8 +189,6 @@ public class ManifestSessionEjb {
                     targetSampleKey, SAMPLE_NOT_ELLIGIBLE_FOR_CLINICAL_MESSAGE);
         }
 
-        //TODO Determine if sample has already been accessioned
-
         return foundTarget;
     }
 
@@ -209,6 +205,11 @@ public class ManifestSessionEjb {
         if (foundVessel == null) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
                     targetVesselLabel, VESSEL_NOT_FOUND_MESSAGE);
+        }
+
+        if(foundVessel.hasBeenUsedForClinical()) {
+            throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
+                    targetVesselLabel, VESSEL_USED_FOR_PREVIOUS_TRANSFER);
         }
 
         /*
@@ -238,10 +239,6 @@ public class ManifestSessionEjb {
 
         LabVessel targetVessel = findAndValidateTargetVessel(vesselLabel, targetSample);
 
-        session.performTransfer(sourceCollaboratorSample, targetSample, targetVessel);
-
-        LabEvent collaboratorTransferEvent =
-                new LabEvent(LabEventType.COLLABORATOR_TRANSFER, new Date(), " ", 1L, user.getUserId(), "");
-        targetVessel.addInPlaceEvent(collaboratorTransferEvent);
+        session.performTransfer(sourceCollaboratorSample, targetSample, targetVessel, user);
     }
 }
