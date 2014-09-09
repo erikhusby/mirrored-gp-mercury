@@ -94,18 +94,13 @@ public class ManifestSessionEjbDBFreeTest {
     private static final String TEST_SAMPLE_ALREADY_ACCESSIONED = TEST_SAMPLE_KEY + "ACCESSIONED";
     private static final String TEST_SAMPLE_KEY_UNASSOCIATED = "SM-BUICK2";
 
-    private final MercurySample testSampleForAccessioning =
-            new MercurySample(TEST_SAMPLE_KEY, MercurySample.MetadataSource.MERCURY);
-    private final MercurySample testUnassociatedSampleForAccessioning =
-            new MercurySample(TEST_SAMPLE_KEY_UNASSOCIATED, MercurySample.MetadataSource.MERCURY);
-    private final MercurySample testSampleForBsp =
-            new MercurySample(BSP_TEST_SAMPLE_KEY, MercurySample.MetadataSource.BSP);
-    private final MercurySample testSampleAlreadyAccessioned = new MercurySample(TEST_SAMPLE_ALREADY_ACCESSIONED,
-            MercurySample.MetadataSource.MERCURY);
+    private MercurySample testSampleForAccessioning;
+    private MercurySample testUnassociatedSampleForAccessioning;
+    private MercurySample testSampleForBsp;
+    private MercurySample testSampleAlreadyAccessioned;
 
     private static final String TEST_VESSEL_LABEL = "A0993929292";
-    private final LabVessel testVessel =
-            new BarcodedTube(TEST_VESSEL_LABEL, BarcodedTube.BarcodedTubeType.MatrixTube2mL);
+    private LabVessel testVessel;
 
     private MercurySampleDao mercurySampleDao;
     private LabVesselDao labVesselDao;
@@ -117,6 +112,17 @@ public class ManifestSessionEjbDBFreeTest {
         researchProjectDao = Mockito.mock(ResearchProjectDao.class);
         mercurySampleDao = Mockito.mock(MercurySampleDao.class);
         labVesselDao = Mockito.mock(LabVesselDao.class);
+
+        testSampleForAccessioning =
+                new MercurySample(TEST_SAMPLE_KEY, MercurySample.MetadataSource.MERCURY);
+        testUnassociatedSampleForAccessioning =
+                new MercurySample(TEST_SAMPLE_KEY_UNASSOCIATED, MercurySample.MetadataSource.MERCURY);
+        testSampleForBsp =
+                new MercurySample(BSP_TEST_SAMPLE_KEY, MercurySample.MetadataSource.BSP);
+        testSampleAlreadyAccessioned = new MercurySample(TEST_SAMPLE_ALREADY_ACCESSIONED,
+                MercurySample.MetadataSource.MERCURY);
+        testVessel =
+                new BarcodedTube(TEST_VESSEL_LABEL, BarcodedTube.BarcodedTubeType.MatrixTube2mL);
     }
 
     /**
@@ -1152,6 +1158,118 @@ public class ManifestSessionEjbDBFreeTest {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
                     .formatMessage(ManifestSession.SAMPLE_ID_KEY, TEST_SAMPLE_KEY + "BAD")));
             assertThat(e.getMessage(), containsString(ManifestSessionEjb.SAMPLE_NOT_FOUND_MESSAGE));
+        }
+    }
+
+    public void transferSourceToVesselNotFound() throws Exception {
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
+                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 20);
+
+        ManifestTestFactory.addExtraRecord(holder.manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), null, ManifestRecord.Status.ACCESSIONED);
+
+        ManifestRecord usedRecord = holder.manifestSession.findRecordByCollaboratorId(GOOD_TUBE_BARCODE);
+        assertThat(usedRecord.getStatus(), is(equalTo(ManifestRecord.Status.ACCESSIONED)));
+
+        List<MercurySample> testSample = mercurySampleDao.findBySampleKey(TEST_SAMPLE_KEY);
+
+        for (MercurySample mercurySample : testSample) {
+            assertThat(mercurySample.getMetadata(), is(empty()));
+        }
+
+        try {
+            holder.ejb.transferSample(ARBITRARY_MANIFEST_SESSION_ID, GOOD_TUBE_BARCODE, TEST_SAMPLE_KEY,
+                    TEST_VESSEL_LABEL+"BAD", testLabUser);
+            Assert.fail();
+        } catch (Exception e) {
+            assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
+                    .formatMessage(ManifestSession.VESSEL_LABEL, TEST_VESSEL_LABEL + "BAD")));
+            assertThat(e.getMessage(), containsString(ManifestSessionEjb.VESSEL_NOT_FOUND_MESSAGE));
+        }
+    }
+    public void transferSourceToMisMatchedSampleAndVesselNotFound() throws Exception {
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
+                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 20);
+
+        ManifestTestFactory.addExtraRecord(holder.manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), null, ManifestRecord.Status.ACCESSIONED);
+
+        ManifestRecord usedRecord = holder.manifestSession.findRecordByCollaboratorId(GOOD_TUBE_BARCODE);
+        assertThat(usedRecord.getStatus(), is(equalTo(ManifestRecord.Status.ACCESSIONED)));
+
+        List<MercurySample> testSample = mercurySampleDao.findBySampleKey(TEST_SAMPLE_KEY_UNASSOCIATED);
+
+        for (MercurySample mercurySample : testSample) {
+            assertThat(mercurySample.getMetadata(), is(empty()));
+        }
+
+        try {
+            holder.ejb.transferSample(ARBITRARY_MANIFEST_SESSION_ID, GOOD_TUBE_BARCODE,
+                    TEST_SAMPLE_KEY_UNASSOCIATED, TEST_VESSEL_LABEL, testLabUser);
+            Assert.fail();
+        } catch (Exception e) {
+            assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
+                    .formatMessage(ManifestSession.VESSEL_LABEL, TEST_VESSEL_LABEL)));
+            assertThat(e.getMessage(), containsString(ManifestSessionEjb.UNASSOCIATED_TUBE_SAMPLE_MESSAGE));
+        }
+    }
+
+
+    public void transferSourceQuarantinedRecord() throws Exception {
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
+                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 20);
+
+        ManifestTestFactory.addExtraRecord(holder.manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE),
+                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED);
+
+        ManifestRecord usedRecord = holder.manifestSession.findRecordByCollaboratorId(GOOD_TUBE_BARCODE);
+        assertThat(usedRecord.getStatus(), is(equalTo(ManifestRecord.Status.UPLOADED)));
+
+        List<MercurySample> testSample = mercurySampleDao.findBySampleKey(TEST_SAMPLE_KEY);
+
+        for (MercurySample mercurySample : testSample) {
+            assertThat(mercurySample.getMetadata(), is(empty()));
+        }
+
+        try {
+            holder.ejb.transferSample(ARBITRARY_MANIFEST_SESSION_ID, GOOD_TUBE_BARCODE, TEST_SAMPLE_KEY,
+                    TEST_VESSEL_LABEL, testLabUser);
+        } catch (Exception e) {
+            assertThat(e.getMessage(),
+                    containsString(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE
+                            .formatMessage(ManifestSession.SAMPLE_ID_KEY, GOOD_TUBE_BARCODE)));
+            for (MercurySample mercurySample : testSample) {
+                assertThat(mercurySample.getMetadata(), is(empty()));
+            }
+        }
+
+    }
+
+    public void transferSourceMismatchedGenderRecord() throws Exception {
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
+                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 20);
+
+        ManifestTestFactory.addExtraRecord(holder.manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE),
+                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.ACCESSIONED);
+
+        ManifestRecord usedRecord = holder.manifestSession.findRecordByCollaboratorId(GOOD_TUBE_BARCODE);
+        assertThat(usedRecord.getStatus(), is(equalTo(ManifestRecord.Status.ACCESSIONED)));
+
+        List<MercurySample> testSample = mercurySampleDao.findBySampleKey(TEST_SAMPLE_KEY);
+
+        for (MercurySample mercurySample : testSample) {
+            assertThat(mercurySample.getMetadata(), is(empty()));
+        }
+
+        holder.ejb.transferSample(ARBITRARY_MANIFEST_SESSION_ID,GOOD_TUBE_BARCODE, TEST_SAMPLE_KEY, TEST_VESSEL_LABEL,
+                testLabUser);
+
+        assertThat(usedRecord.getStatus(), is(equalTo(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE)));
+
+        for (MercurySample mercurySample : testSample) {
+            assertThat(mercurySample.getMetadata(), is(not(empty())));
         }
     }
 }
