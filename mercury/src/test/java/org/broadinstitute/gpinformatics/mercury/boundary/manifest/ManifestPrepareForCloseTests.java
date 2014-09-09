@@ -100,7 +100,7 @@ public class ManifestPrepareForCloseTests {
     }
 
     public void testValidationForGenderMismatchSample() {
-        ManifestTestFactory.addExtraRecord(session, ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
+        ManifestTestFactory.addRecord(session, ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
                 ManifestRecord.Status.SCANNED);
 
         ManifestStatus manifestStatus = session.generateSessionStatusForClose();
@@ -117,7 +117,7 @@ public class ManifestPrepareForCloseTests {
 
     public void testValidationForUnscannedAndDuplicates() {
         addDuplicateManifestRecord();
-        ManifestTestFactory.addExtraRecord(session, null, ManifestRecord.Status.UPLOAD_ACCEPTED);
+        ManifestTestFactory.addRecord(session, null, ManifestRecord.Status.UPLOAD_ACCEPTED);
 
         ManifestStatus manifestStatus = session.generateSessionStatusForClose();
 
@@ -134,8 +134,8 @@ public class ManifestPrepareForCloseTests {
 
     public void testValidationForUnscannedAndDuplicatesAndMismatchedGender() {
         addDuplicateManifestRecord();
-        ManifestTestFactory.addExtraRecord(session, null, ManifestRecord.Status.UPLOAD_ACCEPTED);
-        ManifestTestFactory.addExtraRecord(session, ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
+        ManifestTestFactory.addRecord(session, null, ManifestRecord.Status.UPLOAD_ACCEPTED);
+        ManifestTestFactory.addRecord(session, ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
                 ManifestRecord.Status.SCANNED);
 
 
@@ -156,7 +156,7 @@ public class ManifestPrepareForCloseTests {
     private void addDuplicateManifestRecord() {
         ManifestRecord record = session.getRecords().iterator().next();
 
-        ManifestTestFactory.addExtraRecord(session,
+        ManifestTestFactory.addRecord(session,
                 ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
                 Metadata.Key.SAMPLE_ID, record.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue());
     }

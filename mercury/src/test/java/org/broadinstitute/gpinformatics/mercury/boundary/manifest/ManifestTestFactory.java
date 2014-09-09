@@ -66,8 +66,8 @@ public class ManifestTestFactory {
         return manifestRecord;
     }
 
-    private static void addExtraRecord(ManifestSession session, ManifestRecord.ErrorStatus errorStatus,
-                                       ManifestRecord.Status status, Map<Metadata.Key, String> initialData) {
+    private static void addRecord(ManifestSession session, ManifestRecord.ErrorStatus errorStatus,
+                                  ManifestRecord.Status status, Map<Metadata.Key, String> initialData) {
         ManifestRecord record = buildManifestRecord(20, initialData);
         record.setStatus(status);
         session.addRecord(record);
@@ -78,20 +78,21 @@ public class ManifestTestFactory {
         }
     }
 
-    public static void addExtraRecord(ManifestSession manifestSession, ManifestRecord.ErrorStatus errorStatus, ManifestRecord.Status status) {
-        addExtraRecord(manifestSession, errorStatus, status, ImmutableMap.<Metadata.Key, String>of());
+    public static void addRecord(ManifestSession manifestSession, ManifestRecord.ErrorStatus errorStatus,
+                                 ManifestRecord.Status status) {
+        addRecord(manifestSession, errorStatus, status, ImmutableMap.<Metadata.Key, String>of());
     }
 
-    public static void addExtraRecord(ManifestSession manifestSession, ManifestRecord.ErrorStatus errorStatus,
-                                      ManifestRecord.Status status, Metadata.Key key, String value) {
-        addExtraRecord(manifestSession, errorStatus, status, ImmutableMap.of(key, value));
+    public static void addRecord(ManifestSession manifestSession, ManifestRecord.ErrorStatus errorStatus,
+                                 ManifestRecord.Status status, Metadata.Key key, String value) {
+        addRecord(manifestSession, errorStatus, status, ImmutableMap.of(key, value));
     }
 
-    public static void addExtraRecord(ManifestSession manifestSession,
-                                      ManifestRecord.ErrorStatus errorStatus, ManifestRecord.Status status,
-                                      Metadata.Key key1, String value1,
-                                      Metadata.Key key2, String value2,
-                                      Metadata.Key key3, String value3) {
-        addExtraRecord(manifestSession, errorStatus, status, ImmutableMap.of(key1, value1, key2, value2, key3, value3));
+    public static void addRecord(ManifestSession manifestSession,
+                                 ManifestRecord.ErrorStatus errorStatus, ManifestRecord.Status status,
+                                 Metadata.Key key1, String value1,
+                                 Metadata.Key key2, String value2,
+                                 Metadata.Key key3, String value3) {
+        addRecord(manifestSession, errorStatus, status, ImmutableMap.of(key1, value1, key2, value2, key3, value3));
     }
 }
