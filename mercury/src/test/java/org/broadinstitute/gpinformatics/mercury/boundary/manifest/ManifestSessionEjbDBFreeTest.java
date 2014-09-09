@@ -438,8 +438,9 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
-    public void acceptSessionWithDuplicatesInThisSession() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.UPLOADED, 20);
+    private ManifestSessionAndEjbHolder buildSessionWithDuplicates(ManifestRecord.Status initialStatus)
+            throws Exception {
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(initialStatus, 20);
 
         ManifestSession manifestSession = holder.manifestSession;
 
@@ -453,10 +454,18 @@ public class ManifestSessionEjbDBFreeTest {
             for (int i = 0; i < numberOfCopies; i++) {
                 String collaboratorBarcode = entry.getKey();
                 ManifestTestFactory.addRecord(manifestSession,
-                        ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
+                        ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, initialStatus,
                         Metadata.Key.SAMPLE_ID, collaboratorBarcode);
             }
         }
+
+        return holder;
+    }
+
+    public void acceptSessionWithDuplicatesInThisSession() throws Exception {
+        ManifestSessionAndEjbHolder holder = buildSessionWithDuplicates(ManifestRecord.Status.UPLOADED);
+
+        ManifestSession manifestSession = holder.manifestSession;
 
         List<ManifestRecord> manifestRecordsMarkedAsDuplicates = new ArrayList<>();
 
@@ -487,29 +496,37 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
-    public void acceptSessionWithMismatchedGendersThisSession() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.UPLOADED, 20);
+    public ManifestSessionAndEjbHolder buildMismatchedGenderSession(ManifestRecord.Status initialStatus)
+            throws Exception {
 
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(initialStatus, 20);
         ManifestSession manifestSession = holder.manifestSession;
 
         ManifestTestFactory.addRecord(manifestSession,
-                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.UPLOADED,
+                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, initialStatus,
                 Metadata.Key.SAMPLE_ID, "03101947686", Metadata.Key.PATIENT_ID, "003-009", Metadata.Key.GENDER, FEMALE);
         ManifestTestFactory.addRecord(manifestSession,
-                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.UPLOADED,
+                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, initialStatus,
                 Metadata.Key.SAMPLE_ID, "03101989209", Metadata.Key.PATIENT_ID, "003-009", Metadata.Key.GENDER, MALE);
         ManifestTestFactory.addRecord(manifestSession,
-                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.UPLOADED,
+                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, initialStatus,
                 Metadata.Key.SAMPLE_ID, "03101231193", Metadata.Key.PATIENT_ID, "004-002", Metadata.Key.GENDER, MALE);
         ManifestTestFactory.addRecord(manifestSession,
-                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.UPLOADED,
+                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, initialStatus,
                 Metadata.Key.SAMPLE_ID, "03101067213", Metadata.Key.PATIENT_ID, "004-002", Metadata.Key.GENDER, FEMALE);
         ManifestTestFactory.addRecord(manifestSession,
-                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.UPLOADED,
+                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, initialStatus,
                 Metadata.Key.SAMPLE_ID, "03101752021", Metadata.Key.PATIENT_ID, "005-012", Metadata.Key.GENDER, FEMALE);
         ManifestTestFactory.addRecord(manifestSession,
-                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.UPLOADED,
+                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, initialStatus,
                 Metadata.Key.SAMPLE_ID, "03101752020", Metadata.Key.PATIENT_ID, "005-012", Metadata.Key.GENDER, MALE);
+
+        return holder;
+    }
+
+    public void acceptSessionWithMismatchedGendersThisSession() throws Exception {
+        ManifestSessionAndEjbHolder holder = buildMismatchedGenderSession(ManifestRecord.Status.UPLOADED);
+        ManifestSession manifestSession = holder.manifestSession;
 
         List<ManifestRecord> manifestRecordsWithMismatchedGenders = new ArrayList<>();
 
@@ -529,14 +546,12 @@ public class ManifestSessionEjbDBFreeTest {
                     is(equalTo(hasManifestEvents)));
         }
 
-        assertThat(manifestRecordsWithMismatchedGenders, is(not(empty())));
-        assertThat(manifestSession.getManifestEvents().size(), is(6));
+        assertThat(manifestSession.getManifestEvents(), hasSize(6));
 
         // Arbitrary ID, the DAO is programmed to return the same manifest session for any requested ID.
         holder.ejb.acceptManifestUpload(ARBITRARY_MANIFEST_SESSION_ID);
 
-        assertThat(manifestSession.getManifestEvents().size(), is(6));
-        assertThat(manifestSession.getManifestEvents(), is(not(empty())));
+        assertThat(manifestSession.getManifestEvents(), hasSize(6));
 
         for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
             boolean shouldBeMarkedAsDuplicate = manifestRecordsWithMismatchedGenders.contains(manifestRecord);
@@ -623,31 +638,7 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     public void accessionScanManifestWithDuplicates() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.UPLOAD_ACCEPTED, 20);
-
-        ManifestSession manifestSession = holder.manifestSession;
-
-        ManifestTestFactory.addRecord(manifestSession,
-                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
-                Metadata.Key.SAMPLE_ID, "03101231193");
-        ManifestTestFactory.addRecord(manifestSession,
-                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
-                Metadata.Key.SAMPLE_ID, "03101231193");
-        ManifestTestFactory.addRecord(manifestSession,
-                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
-                Metadata.Key.SAMPLE_ID, "03101254356");
-        ManifestTestFactory.addRecord(manifestSession,
-                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
-                Metadata.Key.SAMPLE_ID, "03101254356");
-        ManifestTestFactory.addRecord(manifestSession,
-                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
-                Metadata.Key.SAMPLE_ID, "03101254356");
-        ManifestTestFactory.addRecord(manifestSession,
-                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
-                Metadata.Key.SAMPLE_ID, "03101411324");
-        ManifestTestFactory.addRecord(manifestSession,
-                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
-                Metadata.Key.SAMPLE_ID, "03101411324");
+        ManifestSessionAndEjbHolder holder = buildSessionWithDuplicates(ManifestRecord.Status.UPLOAD_ACCEPTED);
 
         try {
             // Take an arbitrary one of the duplicated sample IDs.
@@ -661,28 +652,8 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     public void accessionScanGenderMismatches() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.UPLOAD_ACCEPTED, 20);
-
+        ManifestSessionAndEjbHolder holder = buildMismatchedGenderSession(ManifestRecord.Status.UPLOAD_ACCEPTED);
         ManifestSession manifestSession = holder.manifestSession;
-
-        ManifestTestFactory.addRecord(manifestSession,
-                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.UPLOAD_ACCEPTED,
-                Metadata.Key.SAMPLE_ID, "03101947686", Metadata.Key.PATIENT_ID, "003-009", Metadata.Key.GENDER, FEMALE);
-        ManifestTestFactory.addRecord(manifestSession,
-                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.UPLOAD_ACCEPTED,
-                Metadata.Key.SAMPLE_ID, "03101989209", Metadata.Key.PATIENT_ID, "003-009", Metadata.Key.GENDER, MALE);
-        ManifestTestFactory.addRecord(manifestSession,
-                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.UPLOAD_ACCEPTED,
-                Metadata.Key.SAMPLE_ID, "03101231193", Metadata.Key.PATIENT_ID, "004-002", Metadata.Key.GENDER, MALE);
-        ManifestTestFactory.addRecord(manifestSession,
-                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.UPLOAD_ACCEPTED,
-                Metadata.Key.SAMPLE_ID, "03101067213", Metadata.Key.PATIENT_ID, "004-002", Metadata.Key.GENDER, FEMALE);
-        ManifestTestFactory.addRecord(manifestSession,
-                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.UPLOAD_ACCEPTED,
-                Metadata.Key.SAMPLE_ID, "03101752021", Metadata.Key.PATIENT_ID, "005-012", Metadata.Key.GENDER, FEMALE);
-        ManifestTestFactory.addRecord(manifestSession,
-                ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.UPLOAD_ACCEPTED,
-                Metadata.Key.SAMPLE_ID, "03101752020", Metadata.Key.PATIENT_ID, "005-012", Metadata.Key.GENDER, MALE);
 
         // There should be twice as many manifest events as there are patient IDs with mismatched genders as all the
         // mismatches are in the same manifest.
@@ -754,7 +725,7 @@ public class ManifestSessionEjbDBFreeTest {
 
         ManifestStatus sessionStatus = holder.ejb.getSessionStatus(ARBITRARY_MANIFEST_SESSION_ID);
 
-        assertThat(sessionStatus.getErrorMessages().size(), is(1));
+        assertThat(sessionStatus.getErrorMessages(), hasSize(1));
         assertThat(sessionStatus.getErrorMessages(),
                 hasItem(containsString(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getBaseMessage())));
         assertThat(sessionStatus.getSamplesEligibleInManifest(), is(20));
@@ -771,7 +742,7 @@ public class ManifestSessionEjbDBFreeTest {
 
         ManifestStatus sessionStatus = holder.ejb.getSessionStatus(ARBITRARY_MANIFEST_SESSION_ID);
 
-        assertThat(sessionStatus.getErrorMessages().size(), is(1));
+        assertThat(sessionStatus.getErrorMessages(), hasSize(1));
         assertThat(sessionStatus.getErrorMessages(),
                 hasItem(containsString(ManifestRecord.ErrorStatus.MISSING_SAMPLE.getBaseMessage())));
         assertThat(sessionStatus.getSamplesEligibleInManifest(), is(21));
@@ -792,7 +763,7 @@ public class ManifestSessionEjbDBFreeTest {
 
         ManifestStatus sessionStatus = holder.ejb.getSessionStatus(ARBITRARY_MANIFEST_SESSION_ID);
 
-        assertThat(sessionStatus.getErrorMessages().size(), is(2));
+        assertThat(sessionStatus.getErrorMessages(), hasSize(2));
         assertThat(sessionStatus.getErrorMessages(),
                 hasItem(containsString(ManifestRecord.ErrorStatus.MISSING_SAMPLE.getBaseMessage())));
         assertThat(sessionStatus.getErrorMessages(),
@@ -812,7 +783,7 @@ public class ManifestSessionEjbDBFreeTest {
 
         ManifestStatus sessionStatus = holder.ejb.getSessionStatus(ARBITRARY_MANIFEST_SESSION_ID);
 
-        assertThat(sessionStatus.getErrorMessages().size(), is(1));
+        assertThat(sessionStatus.getErrorMessages(), hasSize(1));
         assertThat(sessionStatus.getErrorMessages(),
                 hasItem(containsString(ManifestRecord.ErrorStatus.MISMATCHED_GENDER.getBaseMessage())));
         assertThat(sessionStatus.getSamplesEligibleInManifest(), is(21));
@@ -848,7 +819,7 @@ public class ManifestSessionEjbDBFreeTest {
         holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
         assertThat(holder.manifestSession.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
 
-        assertThat(holder.manifestSession.getManifestEvents().size(), is(1));
+        assertThat(holder.manifestSession.getManifestEvents(), hasSize(1));
 
         for (ManifestRecord manifestRecord : holder.manifestSession.getRecords()) {
             if (manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue().equals(duplicateSampleId)) {
@@ -869,7 +840,7 @@ public class ManifestSessionEjbDBFreeTest {
 
         assertThat(holder.manifestSession.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
 
-        assertThat(holder.manifestSession.getManifestEvents().size(), is(1));
+        assertThat(holder.manifestSession.getManifestEvents(), hasSize(1));
 
         for (ManifestRecord manifestRecord : holder.manifestSession.getRecords()) {
             if (manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue().equals(unScannedBarcode)) {
@@ -898,7 +869,7 @@ public class ManifestSessionEjbDBFreeTest {
 
         assertThat(holder.manifestSession.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
 
-        assertThat(holder.manifestSession.getManifestEvents().size(), is(2));
+        assertThat(holder.manifestSession.getManifestEvents(), hasSize(2));
         for (ManifestRecord manifestRecord : holder.manifestSession.getRecords()) {
             if (manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue().equals(unscannedBarcode)) {
                 assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOAD_ACCEPTED));
@@ -931,7 +902,7 @@ public class ManifestSessionEjbDBFreeTest {
 
         assertThat(manifestSession.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
 
-        assertThat(manifestSession.getManifestEvents().size(), is(2));
+        assertThat(manifestSession.getManifestEvents(), hasSize(2));
 
         for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
             assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.ACCESSIONED));
@@ -997,7 +968,7 @@ public class ManifestSessionEjbDBFreeTest {
                 holder.ejb.validateSourceTubeForTransfer(ARBITRARY_MANIFEST_SESSION_ID, sourceForTransfer);
 
         assertThat(foundRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue(), is(equalTo(sourceForTransfer)));
-        assertThat(foundRecord.getManifestEvents().size(), is(equalTo(1)));
+        assertThat(foundRecord.getManifestEvents(), hasSize(1));
     }
 
     public void validateSourceOnUnScannedRecord() throws Exception {
