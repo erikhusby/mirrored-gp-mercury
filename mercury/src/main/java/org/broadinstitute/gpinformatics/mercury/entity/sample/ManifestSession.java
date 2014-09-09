@@ -307,6 +307,12 @@ public class ManifestSession {
         return allRecords;
     }
 
+    /**
+     * Filters out the list of records to return only the ones that do not have blocking errors such as
+     * Duplicate_Sample_ID
+     *
+     * @return all records on this session without blocking errors.
+     */
     private List<ManifestRecord> getNonQuarantinedRecords() {
         List<ManifestRecord> allRecords = new ArrayList<>();
         for (ManifestRecord manifestRecord : getRecords()) {
@@ -416,6 +422,12 @@ public class ManifestSession {
         return foundRecord;
     }
 
+    /**
+     * Helper method to find a specific manifest record that has
+     * @param collaboratorBarcode
+     * @return
+     * @throws TubeTransferException
+     */
     public ManifestRecord findRecordByCollaboratorId(String collaboratorBarcode)
             throws TubeTransferException {
         for (ManifestRecord record : records) {
@@ -430,14 +442,6 @@ public class ManifestSession {
         for (ManifestRecord record : getNonQuarantinedRecords()) {
             record.setStatus(ManifestRecord.Status.UPLOAD_ACCEPTED);
         }
-    }
-
-    public boolean hasManifestEvents() {
-        return !manifestEvents.isEmpty();
-    }
-
-    public int getNumEvents() {
-        return manifestEvents.size();
     }
 
     public ManifestStatus generateSessionStatusForClose() {
