@@ -247,7 +247,9 @@ public class ManifestSession {
                 if (duplicatedRecord.getManifestSession().equals(this)) {
                     String message =
                             ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage(SAMPLE_ID_KEY, entry.getKey());
-                    addManifestEvent(new ManifestEvent(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getSeverity(), message, duplicatedRecord));
+                    addManifestEvent(
+                            new ManifestEvent(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getSeverity(), message,
+                                    duplicatedRecord));
                 }
             }
         }
@@ -425,10 +427,7 @@ public class ManifestSession {
     }
 
     /**
-     * Helper method to find a specific manifest record that has
-     * @param collaboratorBarcode
-     * @return
-     * @throws TubeTransferException
+     * Method to find the manifest record that has the specified collaborator barcode.
      */
     public ManifestRecord findRecordByCollaboratorId(String collaboratorBarcode)
             throws TubeTransferException {
@@ -448,7 +447,7 @@ public class ManifestSession {
 
     public ManifestStatus generateSessionStatusForClose() {
 
-        ManifestStatus sessionStatus =  new ManifestStatus(getRecords().size(), getNonQuarantinedRecords().size(),
+        ManifestStatus sessionStatus = new ManifestStatus(getRecords().size(), getNonQuarantinedRecords().size(),
                 getRecordsByStatus(ManifestRecord.Status.SCANNED).size());
 
         for (ManifestEvent manifestEvent : getManifestEvents()) {
@@ -458,7 +457,7 @@ public class ManifestSession {
         for (ManifestRecord manifestRecord : getNonQuarantinedRecords()) {
             ManifestRecord.Status manifestRecordStatus = manifestRecord.getStatus();
 
-            if(manifestRecordStatus != ManifestRecord.Status.SCANNED) {
+            if (manifestRecordStatus != ManifestRecord.Status.SCANNED) {
                 sessionStatus.addError(ManifestRecord.ErrorStatus.MISSING_SAMPLE
                         .formatMessage(ManifestSession.SAMPLE_ID_KEY, manifestRecord.getSampleId()));
             }
@@ -466,13 +465,12 @@ public class ManifestSession {
         return sessionStatus;
     }
 
-
     private Collection<ManifestRecord> getRecordsByStatus(ManifestRecord.Status status) {
 
         Set<ManifestRecord> foundRecords = new HashSet<>();
 
         for (ManifestRecord record : records) {
-            if(record.getStatus() == status) {
+            if (record.getStatus() == status) {
                 foundRecords.add(record);
             }
         }
@@ -483,7 +481,7 @@ public class ManifestSession {
     /**
      * Return the record whose value matches the specified {@code value} parameter for the
      * specified key.  e.g. if searching for a record having sample ID "SM-1234":
-     *
+     * <p/>
      * <pre>
      *     getRecordWithMatchingValueForKey(Key.SAMPLE_ID, "SM-1234");
      * </pre>
@@ -502,7 +500,7 @@ public class ManifestSession {
     public void completeSession() {
 
         for (ManifestRecord record : getNonQuarantinedRecords()) {
-            if ((record.getStatus() != ManifestRecord.Status.SCANNED) ) {
+            if ((record.getStatus() != ManifestRecord.Status.SCANNED)) {
 
                 String sampleId = record.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue();
                 String message = ManifestRecord.ErrorStatus.MISSING_SAMPLE.formatMessage(SAMPLE_ID_KEY, sampleId);
@@ -521,13 +519,13 @@ public class ManifestSession {
 
         ManifestRecord recordForTransfer = findRecordByCollaboratorId(sourceForTransfer);
 
-        if(recordForTransfer.isQuarantined()) {
+        if (recordForTransfer.isQuarantined()) {
 
             throw new TubeTransferException(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE,
                     SAMPLE_ID_KEY, sourceForTransfer);
         }
 
-        if(recordForTransfer.getStatus() != ManifestRecord.Status.ACCESSIONED) {
+        if (recordForTransfer.getStatus() != ManifestRecord.Status.ACCESSIONED) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.NOT_READY_FOR_TUBE_TRANSFER,
                     SAMPLE_ID_KEY, sourceForTransfer);
         }

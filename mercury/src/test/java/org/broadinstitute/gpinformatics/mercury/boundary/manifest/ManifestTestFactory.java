@@ -1,8 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
-import com.google.common.collect.ImmutableMap;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestEvent;
@@ -29,8 +28,12 @@ public class ManifestTestFactory {
         return metadataList.toArray(new Metadata[metadataList.size()]);
     }
 
+    public static ManifestSession buildManifestSession(String researchProjectKey, String sessionPrefix, BspUser user) {
+        return buildManifestSession(researchProjectKey, sessionPrefix, user, 0, ManifestRecord.Status.SCANNED);
+    }
+
     public static ManifestSession buildManifestSession(String researchProjectKey, String sessionPrefix,
-                                                       BSPUserList.QADudeUser createdBy, int numberOfRecords,
+                                                       BspUser createdBy, int numberOfRecords,
                                                        ManifestRecord.Status defaultStatus) {
         ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(researchProjectKey);
         ManifestSession manifestSession = new ManifestSession(researchProject, sessionPrefix,
@@ -55,8 +58,8 @@ public class ManifestTestFactory {
 
         for (Metadata.Key key : Metadata.Key.values()) {
             String value;
-            if(initialData != null && initialData.containsKey(key)) {
-                value=initialData.get(key);
+            if (initialData != null && initialData.containsKey(key)) {
+                value = initialData.get(key);
             } else {
                 value = key.name() + "_" + i;
             }
@@ -67,7 +70,7 @@ public class ManifestTestFactory {
     }
 
     public static void addRecord(ManifestSession session, ManifestRecord.ErrorStatus errorStatus,
-                                  ManifestRecord.Status status, Map<Metadata.Key, String> initialData) {
+                                 ManifestRecord.Status status, Map<Metadata.Key, String> initialData) {
         ManifestRecord record = buildManifestRecord(20, initialData);
         record.setStatus(status);
         session.addRecord(record);
@@ -77,4 +80,5 @@ public class ManifestTestFactory {
                     errorStatus.formatMessage(Metadata.Key.SAMPLE_ID.name(), record.getSampleId()), record));
         }
     }
+
 }
