@@ -8,7 +8,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProj
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
@@ -19,20 +18,18 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestStatus;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.TubeTransferException;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
-import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @RequestScoped
 @Stateful
@@ -118,41 +115,22 @@ public class ManifestSessionEjb {
         manifestSession.acceptUpload();
     }
 
-    @DaoFree
-    public Collection<String> buildErrorMessagesForSession(@Nonnull ManifestSession session) {
-        // todo wrap this method up in a transactional one that starts with the session id?
-        Set<String> errorMessages = new HashSet<>();
-        for (ManifestRecord manifestRecord : session.getRecords()) {
-            ManifestRecord.Status status = manifestRecord.getStatus();
-            if (isNotDuplicatedSample(session, manifestRecord.getSampleId()) && (
-                    status == ManifestRecord.Status.UPLOAD_ACCEPTED || status == ManifestRecord.Status.UPLOADED)) {
-                errorMessages.add(ManifestRecord.ErrorStatus.MISSING_SAMPLE
-                        .formatMessage(ManifestSession.SAMPLE_ID_KEY, manifestRecord.getSampleId()));
-            }
+    public ManifestStatus getSessionStatus(long manifestSessionId) {
+        ManifestSession manifestSession = manifestSessionDao.find(manifestSessionId);
+        if(manifestSession == null ) {
+            throw new InformaticsServiceException("The selected session was not found");
         }
-        errorMessages.addAll(buildDuplicateSampleErrorMessages(session));
-        return errorMessages;
-    }
 
-    /**
-     * Returns whether or not the sampleId is a duplicated
-     * sample within the given session
-     */
-    private boolean isNotDuplicatedSample(ManifestSession session, String sampleId) {
-        return !session.getDuplicatedSampleIds().contains(sampleId);
-    }
+        return manifestSession.generateSessionStatusForClose();
 
-    private Collection<String> buildDuplicateSampleErrorMessages(ManifestSession session) {
-        Set<String> errorMessages = new HashSet<>();
-        for (String duplicateSampleId : session.getDuplicatedSampleIds()) {
-            errorMessages.add(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID
-                    .formatMessage(ManifestSession.SAMPLE_ID_KEY, duplicateSampleId));
-        }
-        return errorMessages;
     }
 
     public void accessionScan(long manifestSessionId, String collaboratorSampleId) {
         ManifestSession manifestSession = manifestSessionDao.find(manifestSessionId);
+
+        if(manifestSession == null ) {
+            throw new InformaticsServiceException("The selected session was not found");
+        }
         ManifestRecord manifestRecord =
                 manifestSession.getRecordWithMatchingValueForKey(Metadata.Key.SAMPLE_ID, collaboratorSampleId);
 

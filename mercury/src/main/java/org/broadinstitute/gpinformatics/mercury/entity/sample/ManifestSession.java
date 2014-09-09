@@ -322,7 +322,7 @@ public class ManifestSession {
      * in the proper state.  If not, manifest events are added to the record to indicate that it has not
      * been scanned.
      */
-    // todo migrate this (and tests) to use buildErrorMessagesForSession()
+    // todo migrate this (and tests) to use generateSessionStatusForClose()
     public void validateForClose() {
         // Confirm all records have scanned status.
         for (ManifestRecord record : records) {
@@ -440,49 +440,38 @@ public class ManifestSession {
         return manifestEvents.size();
     }
 
-    public Set<String> getDuplicatedSampleIds() {
-        Set<String> allSampleIds = new HashSet<>();
-        Set<String> duplicates = new HashSet<>();
-        for (ManifestRecord manifestRecord : getRecords()) {
-            String sampleId = manifestRecord.getSampleId();
-            if (StringUtils.isNotBlank(sampleId)) {
-                if (allSampleIds.contains(sampleId)) {
-                    duplicates.add(sampleId);
-                }
-                allSampleIds.add(sampleId);
+    public ManifestStatus generateSessionStatusForClose() {
+
+        ManifestStatus sessionStatus =  new ManifestStatus(getRecords().size(), getNonQuarantinedRecords().size(),
+                getRecordsByStatus(ManifestRecord.Status.SCANNED).size());
+
+        for (ManifestEvent manifestEvent : getManifestEvents()) {
+            sessionStatus.addError(manifestEvent.getMessage());
+        }
+
+        for (ManifestRecord manifestRecord : getNonQuarantinedRecords()) {
+            ManifestRecord.Status manifestRecordStatus = manifestRecord.getStatus();
+
+            if(manifestRecordStatus != ManifestRecord.Status.SCANNED) {
+                sessionStatus.addError(ManifestRecord.ErrorStatus.MISSING_SAMPLE
+                        .formatMessage(ManifestSession.SAMPLE_ID_KEY, manifestRecord.getSampleId()));
             }
         }
-        return duplicates;
+        return sessionStatus;
     }
 
-    public Collection<String> buildErrorMessagesForSession() {
-        Set<String> errorMessages = new HashSet<>();
-        for (ManifestRecord manifestRecord : getRecords()) {
-            ManifestRecord.Status status = manifestRecord.getStatus();
-            // todo instead of recalculating these errors, just walk through the existing records
-            // and create the error messages
-            if (isNotDuplicatedSample(manifestRecord.getSampleId()) && (status == ManifestRecord.Status.UPLOAD_ACCEPTED || status == ManifestRecord.Status.UPLOADED)) {
-                errorMessages.add(ManifestRecord.ErrorStatus.MISSING_SAMPLE.formatMessage(ManifestSession.SAMPLE_ID_KEY,manifestRecord.getSampleId()));
+
+    private Collection<ManifestRecord> getRecordsByStatus(ManifestRecord.Status status) {
+
+        Set<ManifestRecord> foundRecords = new HashSet<>();
+
+        for (ManifestRecord record : records) {
+            if(record.getStatus() == status) {
+                foundRecords.add(record);
             }
         }
-        errorMessages.addAll(buildDuplicateSampleErrorMessages());
-        return errorMessages;
-    }
 
-    /**
-     * Returns whether or not the sampleId is a duplicated
-     * sample within this session
-     */
-    private boolean isNotDuplicatedSample(String sampleId) {
-        return !getDuplicatedSampleIds().contains(sampleId);
-    }
-
-    private Collection<String> buildDuplicateSampleErrorMessages() {
-        Set<String> errorMessages = new HashSet<>();
-        for (String duplicateSampleId : getDuplicatedSampleIds()) {
-            errorMessages.add(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage(ManifestSession.SAMPLE_ID_KEY,duplicateSampleId));
-        }
-        return errorMessages;
+        return foundRecords;
     }
 
     /**
