@@ -68,7 +68,7 @@ public class ManifestSession {
     @Column(name = "MODIFIED_BY")
     private Long modifiedBy;
 
-    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "manifestSession")
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "manifestSession", orphanRemoval = true)
     private List<ManifestRecord> records = new ArrayList<>();
 
     @Column(name = "CREATED_DATE")
@@ -77,7 +77,7 @@ public class ManifestSession {
     @Column(name = "MODIFIED_DATE")
     private Date modifiedDate;
 
-    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "session")
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "session", orphanRemoval = true)
     private List<ManifestEvent> manifestEvents = new ArrayList<>();
 
     /**

@@ -62,7 +62,7 @@ public class ManifestRecord {
     @Enumerated(EnumType.STRING)
     private Status status = Status.UPLOADED;
 
-    @OneToMany(cascade = {CascadeType.PERSIST}, mappedBy = "manifestRecord")
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "manifestRecord", orphanRemoval = true)
     private List<ManifestEvent> manifestEvents = new ArrayList<>();
 
     @ManyToOne(cascade = CascadeType.PERSIST)
@@ -125,6 +125,10 @@ public class ManifestRecord {
 
     public void setStatus(Status status) {
         this.status = status;
+    }
+
+    Long getManifestRecordId() {
+        return manifestRecordId;
     }
 
     public boolean isQuarantined() {
