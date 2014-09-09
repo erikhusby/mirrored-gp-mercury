@@ -10,9 +10,8 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
@@ -61,7 +60,7 @@ public class BucketEjb {
     private final WorkflowLoader workflowLoader;
     private final BSPUserList bspUserList;
     private final LabVesselFactory labVesselFactory;
-    private final BSPSampleDataFetcher bspSampleDataFetcher;
+    private final SampleDataFetcher sampleDataFetcher;
     private final ProductOrderDao productOrderDao;
 
     private static final Log logger = LogFactory.getLog(BucketEjb.class);
@@ -77,7 +76,7 @@ public class BucketEjb {
                      BucketEntryDao bucketEntryDao,
                      LabVesselDao labVesselDao,
                      LabVesselFactory labVesselFactory,
-                     BSPSampleDataFetcher bspSampleDataFetcher,
+                     SampleDataFetcher sampleDataFetcher,
                      BSPUserList bspUserList,
                      WorkflowLoader workflowLoader, ProductOrderDao productOrderDao) {
         this.labEventFactory = labEventFactory;
@@ -86,7 +85,7 @@ public class BucketEjb {
         this.bucketEntryDao = bucketEntryDao;
         this.labVesselDao = labVesselDao;
         this.labVesselFactory = labVesselFactory;
-        this.bspSampleDataFetcher = bspSampleDataFetcher;
+        this.sampleDataFetcher = sampleDataFetcher;
         this.bspUserList = bspUserList;
         this.workflowLoader = workflowLoader;
         this.productOrderDao = productOrderDao;
@@ -420,7 +419,7 @@ public class BucketEjb {
      * @return the created LabVessels
      */
     public Collection<LabVessel> createInitialVessels(Collection<String> samplesWithoutVessel, String username) {
-        Map<String, BSPSampleDTO> bspDtoMap = bspSampleDataFetcher.fetchSamplesFromBSP(samplesWithoutVessel);
+        Map<String, BSPSampleDTO> bspDtoMap = sampleDataFetcher.fetchSamplesFromBSP(samplesWithoutVessel);
         Collection<LabVessel> vessels = new ArrayList<>();
         List<String> cannotAddToBucket = new ArrayList<>();
 

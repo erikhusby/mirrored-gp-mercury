@@ -14,7 +14,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceStub;
@@ -155,7 +155,7 @@ public class ReworkEjbTest extends Arquillian {
     private BSPSampleSearchService bspSampleSearchService;
 
     @Inject
-    private BSPSampleDataFetcher bspSampleDataFetcher;
+    private SampleDataFetcher sampleDataFetcher;
 
     @Inject
     private LabBatchEjb labBatchEJB;
@@ -1327,11 +1327,11 @@ public class ReworkEjbTest extends Arquillian {
 
         for (ProductOrderSample currSamp : pos) {
             String barcode =
-                    bspSampleDataFetcher.fetchSingleSampleFromBSP(currSamp.getBspSampleName()).getContainerId();
+                    sampleDataFetcher.fetchSingleSampleFromBSP(currSamp.getBspSampleName()).getContainerId();
 
             BarcodedTube aliquot = new BarcodedTube(barcode);
             aliquot.addSample(new MercurySample(currSamp.getBspSampleName(),
-                                                bspSampleDataFetcher.fetchSingleSampleFromBSP(
+                                                sampleDataFetcher.fetchSingleSampleFromBSP(
                                                         currSamp.getBspSampleName())));
             mapBarcodeToTube.put(barcode, aliquot);
             labVesselDao.persist(aliquot);

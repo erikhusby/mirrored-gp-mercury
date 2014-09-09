@@ -13,7 +13,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -35,7 +35,7 @@ public class BillingEjbTest {
     public static final String STOCK_ID = "SM-STOCK";
 
     private BillingEjb billingEjb = new BillingEjb(null,null,null,null,
-            new BSPSampleDataFetcher(new BSPSampleSearchService() {
+            new SampleDataFetcher(new BSPSampleSearchService() {
                 @Override
                 public List<Map<BSPSampleSearchColumn, String>> runSampleSearch(final Collection<String> sampleIDs,
                                                                                 BSPSampleSearchColumn... resultColumns) {

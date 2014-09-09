@@ -7,7 +7,7 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -39,7 +39,7 @@ public class SampleLibrariesActionBean extends CoreActionBean {
     private MercurySampleDao mercurySampleDao;
 
     @Inject
-    private BSPSampleDataFetcher sampleDataFetcher;
+    private SampleDataFetcher sampleDataFetcher;
 
 
     private String searchKey;

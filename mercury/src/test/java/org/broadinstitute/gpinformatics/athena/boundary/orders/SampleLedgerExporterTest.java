@@ -15,7 +15,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
@@ -133,7 +133,7 @@ public class SampleLedgerExporterTest {
         WorkCompleteMessageDao mockWorkCompleteMessageDao = Mockito.mock(WorkCompleteMessageDao.class);
         SampleLedgerExporterFactory factory = new SampleLedgerExporterFactory(null, mockBspUserList,
                 new PriceListCache(new ArrayList<QuotePriceItem>()), mockWorkCompleteMessageDao,
-                Mockito.mock(BSPSampleDataFetcher.class), new AppConfig(Deployment.DEV),
+                Mockito.mock(SampleDataFetcher.class), new AppConfig(Deployment.DEV),
                 new TableauConfig(Deployment.DEV), mockWriter);
         SampleLedgerExporter exporter = factory.makeExporter(Collections.singletonList(productOrder));
 

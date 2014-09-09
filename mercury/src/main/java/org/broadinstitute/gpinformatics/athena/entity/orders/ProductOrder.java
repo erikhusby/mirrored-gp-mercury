@@ -14,7 +14,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
@@ -330,8 +330,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         }
 
         // This gets all the sample names. We could get unique sample names from BSP as a future optimization.
-        BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
-        Map<String, BSPSampleDTO> bspSampleMetaData = bspSampleDataFetcher.fetchSamplesFromBSP(
+        SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
+        Map<String, BSPSampleDTO> bspSampleMetaData = sampleDataFetcher.fetchSamplesFromBSP(
                 (Collection<String>) bspSampleNames);
 
         // The non-null DTOs which we use to look up FFPE status.
@@ -347,7 +347,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         }
 
         // Fill out all the non-null DTOs with FFPE status in one shot.
-        bspSampleDataFetcher.fetchFFPEDerived(nonNullDTOs);
+        sampleDataFetcher.fetchFFPEDerived(nonNullDTOs);
     }
 
     // Initialize our transient data after the object has been loaded from the database.

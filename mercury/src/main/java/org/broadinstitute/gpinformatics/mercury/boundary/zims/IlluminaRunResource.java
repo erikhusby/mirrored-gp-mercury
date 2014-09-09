@@ -12,7 +12,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPLSIDUtil;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
@@ -57,7 +57,7 @@ public class IlluminaRunResource implements Serializable {
     private static final Log LOG = LogFactory.getLog(IlluminaRunResource.class);
 
     @Inject
-    private BSPSampleDataFetcher bspSampleDataFetcher;
+    private SampleDataFetcher sampleDataFetcher;
 
     @Inject
     private ThriftService thriftService;
@@ -78,10 +78,10 @@ public class IlluminaRunResource implements Serializable {
     }
 
     public IlluminaRunResource(ThriftService thriftService,
-            BSPSampleDataFetcher bspSampleDataFetcher,
+            SampleDataFetcher sampleDataFetcher,
             IlluminaSequencingRunDao illuminaSequencingRunDao) {
         this.thriftService = thriftService;
-        this.bspSampleDataFetcher = bspSampleDataFetcher;
+        this.sampleDataFetcher = sampleDataFetcher;
         this.illuminaSequencingRunDao = illuminaSequencingRunDao;
     }
 
@@ -217,7 +217,7 @@ public class IlluminaRunResource implements Serializable {
                 sampleNames.add(lsIdToBareId.getValue());
             }
         }
-        Map<String, BSPSampleDTO> sampleToBspDto = bspSampleDataFetcher.fetchSamplesFromBSP(sampleNames);
+        Map<String, BSPSampleDTO> sampleToBspDto = sampleDataFetcher.fetchSamplesFromBSP(sampleNames);
 
         Map<String, BSPSampleDTO> lsidToBspDto = new HashMap<>();
         for (Map.Entry<String, BSPSampleDTO> bspSampleDTOEntry : sampleToBspDto.entrySet()) {

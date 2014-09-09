@@ -6,7 +6,7 @@ import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
@@ -29,7 +29,7 @@ public class SampleSearchActionBean extends SearchActionBean {
     private static final String SESSION_LIST_PAGE = "/search/sample_search.jsp";
 
     @Inject
-    private BSPSampleDataFetcher bspSampleDataFetcher;
+    private SampleDataFetcher sampleDataFetcher;
 
     @Inject
     private MercurySampleDao mercurySampleDao;
@@ -74,7 +74,7 @@ public class SampleSearchActionBean extends SearchActionBean {
                 for (MercurySample sample : samples) {
                     sampleNames.add(sample.getSampleKey());
                 }
-                sampleDTOMap.putAll(bspSampleDataFetcher.fetchSamplesFromBSP((Collection<String>) sampleNames));
+                sampleDTOMap.putAll(sampleDataFetcher.fetchSamplesFromBSP((Collection<String>) sampleNames));
                 for (MercurySample sample : samples) {
                     mercurySampleToVessels.put(sample, allVessels);
                     BSPSampleDTO bspSampleDTO = sampleDTOMap.get(sample.getSampleKey());

@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -17,7 +18,7 @@ public class BSPSampleDataFetcherTest {
     BSPSampleSearchService sampleSearchService = BSPSampleSearchServiceProducer.testInstance();
 
     public void testBSPSampleDataFetcher() {
-        BSPSampleDataFetcher fetcher = new BSPSampleDataFetcher(sampleSearchService);
+        SampleDataFetcher fetcher = new SampleDataFetcher(sampleSearchService);
         BSPSampleDTO bspSampleDTO = fetcher.fetchSingleSampleFromBSP("SM-1T7HE");
 
         assertEquals(bspSampleDTO.getCollaboratorName(), "Herman Taylor");
@@ -31,18 +32,18 @@ public class BSPSampleDataFetcherTest {
     }
 
     public void testGetStockIdForAliquotId() {
-        BSPSampleDataFetcher fetcher = new BSPSampleDataFetcher(sampleSearchService);
+        SampleDataFetcher fetcher = new SampleDataFetcher(sampleSearchService);
 
         Assert.assertEquals(fetcher.getStockIdForAliquotId("SM-1T7HE"), "SM-1KXW2");
     }
 
     public void testGetStockIdForAliquotIdNoPrefix() {
-        BSPSampleDataFetcher fetcher = new BSPSampleDataFetcher(sampleSearchService);
+        SampleDataFetcher fetcher = new SampleDataFetcher(sampleSearchService);
         Assert.assertEquals(fetcher.getStockIdForAliquotId("1T7HE"), "SM-1KXW2");
     }
 
     public void testPooledSampleWithMultipleRoots() {
-        BSPSampleDataFetcher fetcher = new BSPSampleDataFetcher(sampleSearchService);
+        SampleDataFetcher fetcher = new SampleDataFetcher(sampleSearchService);
         BSPSampleDTO bspSampleDTO = fetcher.fetchSingleSampleFromBSP("SM-41YNK");
 
         assertTrue(bspSampleDTO.isSampleReceived());
@@ -56,7 +57,7 @@ public class BSPSampleDataFetcherTest {
     }
 
     public void testFetchSingleColumn()  {
-        BSPSampleDataFetcher fetcher = new BSPSampleDataFetcher(sampleSearchService);
+        SampleDataFetcher fetcher = new SampleDataFetcher(sampleSearchService);
         String sampleName = "SM-1T7HE";
         Map<String, BSPSampleDTO> bspSampleDTO = fetcher.fetchSamplesFromBSP(Arrays.asList(sampleName),
                 BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID);

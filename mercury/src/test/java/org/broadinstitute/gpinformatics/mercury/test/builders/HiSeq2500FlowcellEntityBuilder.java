@@ -23,7 +23,9 @@ import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.testng.Assert;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -193,7 +195,22 @@ public class HiSeq2500FlowcellEntityBuilder {
                 illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(VesselPosition.LANE1);
         Assert.assertEquals(lane1SampleInstances.size(), denatureTube.getSampleInstances().size(),
                 "Wrong number of samples in flowcell lane");
-        SampleInstance sampleInstance = TestUtils.getFirst(lane1SampleInstances);
+
+        SampleInstance sampleInstance = null;
+        Collection<String> noWorkflowSamples = new HashSet<>();
+        for (SampleInstance instance : lane1SampleInstances) {
+            if (instance.getWorkflowName() == null) {
+                noWorkflowSamples.add(instance.getStartingSample().getSampleKey());
+            } else {
+                sampleInstance = instance;
+            }
+        }
+        // LabEventTest.testExomeExpressRework reworks 2 samples [SM-1243A, SM-49505251A] for which getSampleInstances cannot determine a workflow
+        // TODO: remove these calls to remove() after switching to getSampleInstancesV2
+        noWorkflowSamples.remove("SM-1243A");
+        noWorkflowSamples.remove("SM-49505251A");
+        Assert.assertTrue(noWorkflowSamples.isEmpty(), noWorkflowSamples.toString());
+
         Assert.assertNotNull(sampleInstance);
         String workflowName = sampleInstance.getWorkflowName();
         Assert.assertNotNull(workflowName);

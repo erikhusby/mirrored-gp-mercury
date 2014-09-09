@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.zims;
 
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -82,7 +82,7 @@ public class LibraryBeanTest {
     public void testBspFields() {
         BSPSampleSearchServiceStub bspSampleSearchServiceStub = new BSPSampleSearchServiceStub();
         BSPSampleDTO sampleDTO =
-            new BSPSampleDataFetcher(
+            new SampleDataFetcher(
                 bspSampleSearchServiceStub).fetchSingleSampleFromBSP(BSPSampleSearchServiceStub.SM_12CO4);
 
         LibraryBean libraryBean = new LibraryBean(null, null, null, null, null, null, null, sampleDTO, null,

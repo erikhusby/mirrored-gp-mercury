@@ -6,7 +6,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.BSPExportsService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.IsExported;
@@ -123,7 +123,7 @@ public class SystemRouterTest extends BaseEventTest {
 
     private LabVesselDao mockLabVesselDao;
     private ControlDao mockControlDao;
-    private BSPSampleDataFetcher mockBspSampleDataFetcher;
+    private SampleDataFetcher mockSampleDataFetcher;
     private BSPExportsService mockBspExportService;
     private int productOrderSequence = 1;
 
@@ -148,10 +148,10 @@ public class SystemRouterTest extends BaseEventTest {
         mockLabVesselDao = mock(LabVesselDao.class);
         mockControlDao = mock(ControlDao.class);
 //        mockAthenaClientService = mock(AthenaClientService.class);
-        mockBspSampleDataFetcher = mock(BSPSampleDataFetcher.class);
+        mockSampleDataFetcher = mock(SampleDataFetcher.class);
         mockBspExportService = mock(BSPExportsService.class);
         systemRouter = new SystemRouter(mockLabVesselDao, mockControlDao,
-                                        new WorkflowLoader(), mockBspSampleDataFetcher, mockBspExportService);
+                                        new WorkflowLoader(), mockSampleDataFetcher, mockBspExportService);
 
         // By default, make BSP answer that it knows about all vessels and returns that they have not been exported.
         when(mockBspExportService.findExportDestinations(anyCollectionOf(LabVessel.class))).thenAnswer(
@@ -177,7 +177,7 @@ public class SystemRouterTest extends BaseEventTest {
                 new HashMap<String, LabVessel>() {{
                     put(MERCURY_TUBE_1, tube1);
                 }});
-        when(mockBspSampleDataFetcher.fetchSamplesFromBSP(Arrays.asList("SM-1")))
+        when(mockSampleDataFetcher.fetchSamplesFromBSP(Arrays.asList("SM-1")))
                 .thenReturn(Collections.singletonMap("SM-1", makeBspSampleDTO("Sample1")));
 
         tube2 = new BarcodedTube(MERCURY_TUBE_2);
@@ -236,7 +236,7 @@ public class SystemRouterTest extends BaseEventTest {
 
         when(mockControlDao.findAllActive())
                 .thenReturn(Arrays.asList(new Control(NA12878, Control.ControlType.POSITIVE)));
-        when(mockBspSampleDataFetcher.fetchSamplesFromBSP(Arrays.asList(CONTROL_SAMPLE_ID)))
+        when(mockSampleDataFetcher.fetchSamplesFromBSP(Arrays.asList(CONTROL_SAMPLE_ID)))
                 .thenReturn(Collections.singletonMap(CONTROL_SAMPLE_ID, makeBspSampleDTO(NA12878)));
 
         plate = new StaticPlate(MERCURY_PLATE, Eppendorf96);
@@ -384,7 +384,7 @@ public class SystemRouterTest extends BaseEventTest {
 
         verify(mockLabVesselDao).findByBarcodes(testBarcodes);
         verify(mockControlDao).findAllActive();
-        verify(mockBspSampleDataFetcher).fetchSamplesFromBSP(Arrays.asList(CONTROL_SAMPLE_ID));
+        verify(mockSampleDataFetcher).fetchSamplesFromBSP(Arrays.asList(CONTROL_SAMPLE_ID));
     }
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
@@ -409,7 +409,7 @@ public class SystemRouterTest extends BaseEventTest {
 
         verify(mockLabVesselDao).findByBarcodes(testBarcodes);
         verify(mockControlDao).findAllActive();
-        verify(mockBspSampleDataFetcher).fetchSamplesFromBSP(Arrays.asList(CONTROL_SAMPLE_ID));
+        verify(mockSampleDataFetcher).fetchSamplesFromBSP(Arrays.asList(CONTROL_SAMPLE_ID));
     }
 
     /*

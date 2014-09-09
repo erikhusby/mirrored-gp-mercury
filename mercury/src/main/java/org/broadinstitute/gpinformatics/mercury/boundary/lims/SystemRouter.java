@@ -5,7 +5,7 @@ import org.apache.commons.collections4.MultiMap;
 import org.apache.commons.collections4.map.MultiValueMap;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.BSPExportsService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.IsExported;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
@@ -14,7 +14,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceExcep
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
@@ -40,7 +39,6 @@ import java.util.Set;
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter.System.BOTH;
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter.System.MERCURY;
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter.System.SQUID;
-import static org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch.LabBatchType;
 
 /**
  * Utility for routing messages and queries to Mercury or Squid as determined by the supplied sample containers.
@@ -81,7 +79,7 @@ public class SystemRouter implements Serializable {
     private LabVesselDao         labVesselDao;
     private ControlDao           controlDao;
     private WorkflowLoader       workflowLoader;
-    private BSPSampleDataFetcher bspSampleDataFetcher;
+    private SampleDataFetcher sampleDataFetcher;
     private BSPExportsService    bspExportsService;
 
     SystemRouter() {
@@ -89,12 +87,12 @@ public class SystemRouter implements Serializable {
 
     @Inject
     public SystemRouter(LabVesselDao labVesselDao, ControlDao controlDao,
-                        WorkflowLoader workflowLoader, BSPSampleDataFetcher bspSampleDataFetcher,
+                        WorkflowLoader workflowLoader, SampleDataFetcher sampleDataFetcher,
                         BSPExportsService bspExportsService) {
         this.labVesselDao = labVesselDao;
         this.controlDao = controlDao;
         this.workflowLoader = workflowLoader;
-        this.bspSampleDataFetcher = bspSampleDataFetcher;
+        this.sampleDataFetcher = sampleDataFetcher;
         this.bspExportsService = bspExportsService;
     }
 
@@ -260,7 +258,7 @@ public class SystemRouter implements Serializable {
             for (SampleInstanceV2 sampleInstance : possibleControls) {
                 sampleNames.add(sampleInstance.getEarliestMercurySampleName());
             }
-            mapSampleNameToDto = bspSampleDataFetcher.fetchSamplesFromBSP(sampleNames);
+            mapSampleNameToDto = sampleDataFetcher.fetchSamplesFromBSP(sampleNames);
 
             List<Control> controls = controlDao.findAllActive();
             for (Control control : controls) {

@@ -22,7 +22,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationWithRollbackException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
@@ -84,7 +84,7 @@ public class ReworkEjb {
     @Inject
     private LabVesselDao labVesselDao;
 
-    private BSPSampleDataFetcher bspSampleDataFetcher;
+    private SampleDataFetcher sampleDataFetcher;
 
     @Inject
     private BucketEjb bucketEjb;
@@ -200,8 +200,8 @@ public class ReworkEjb {
         for (ProductOrderSample sample : samplesById) {
             sampleIDs.add(sample.getName());
         }
-        Map<String, BSPSampleDTO> bspResult = bspSampleDataFetcher.fetchSamplesFromBSP(sampleIDs);
-        bspSampleDataFetcher.fetchSamplePlastic(bspResult.values());
+        Map<String, BSPSampleDTO> bspResult = sampleDataFetcher.fetchSamplesFromBSP(sampleIDs);
+        sampleDataFetcher.fetchSamplePlastic(bspResult.values());
         for (ProductOrderSample sample : samplesById) {
             Workflow workflow = sample.getProductOrder().getProduct().getWorkflow();
 
@@ -481,8 +481,8 @@ public class ReworkEjb {
     }
 
     @Inject
-    public void setBspSampleDataFetcher(BSPSampleDataFetcher bspSampleDataFetcher) {
-        this.bspSampleDataFetcher = bspSampleDataFetcher;
+    public void setSampleDataFetcher(SampleDataFetcher sampleDataFetcher) {
+        this.sampleDataFetcher = sampleDataFetcher;
     }
 
     /**

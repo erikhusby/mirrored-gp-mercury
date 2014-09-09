@@ -20,7 +20,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bass.BassDtoTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.AggregationMetricsFetcher;
@@ -84,16 +84,16 @@ public class SubmissionDtoFetcherTest {
         dataMap.put(BSPSampleSearchColumn.SAMPLE_ID, TEST_SAMPLE);
         dataMap.put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, COLLABORATOR_SAMPLE_ID);
 
-        BSPSampleDataFetcher bspSampleDataFetcher = Mockito.mock(BSPSampleDataFetcher.class);
+        SampleDataFetcher sampleDataFetcher = Mockito.mock(SampleDataFetcher.class);
         bspSampleDTOMap.put(TEST_SAMPLE, new BSPSampleDTO(dataMap));
 
-        Mockito.when(bspSampleDataFetcher.fetchSamplesFromBSP(Mockito.anyCollectionOf(String.class), Mockito.any(BSPSampleSearchColumn.class))).thenReturn( bspSampleDTOMap);
+        Mockito.when(sampleDataFetcher.fetchSamplesFromBSP(Mockito.anyCollectionOf(String.class), Mockito.any(BSPSampleSearchColumn.class))).thenReturn( bspSampleDTOMap);
 
         BSPConfig testBspConfig = new BSPConfig(Deployment.STUBBY);
-        Mockito.when(bspSampleDataFetcher.getBspConfig()).thenReturn(testBspConfig);
 
         SubmissionDtoFetcher submissionDtoFetcher =
-                new SubmissionDtoFetcher(aggregationMetricsFetcher, bassSearchService, bspSampleDataFetcher, submissionService);
+                new SubmissionDtoFetcher(aggregationMetricsFetcher, bassSearchService, sampleDataFetcher, submissionService,
+                        testBspConfig);
         List<SubmissionDto> submissionDtoList = submissionDtoFetcher.fetch(researchProject);
 
         assertThat(submissionDtoList, is(not(empty())));

@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentration;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentrationProducer;
@@ -797,7 +798,7 @@ public class BaseEventTest {
         ProductOrderDao productOrderDao = Mockito.mock(ProductOrderDao.class);
         Mockito.when(productOrderDao.findByBusinessKey(Mockito.anyString())).thenReturn(productOrder);
         return new ZimsIlluminaRunFactory(
-                new BSPSampleDataFetcher() {
+                new SampleDataFetcher(new BSPSampleDataFetcher() {
                     @Override
                     public Map<String, BSPSampleDTO> fetchSamplesFromBSP(@Nonnull Collection<String> sampleNames) {
                         Map<String, BSPSampleDTO> mapSampleIdToDto = new HashMap<>();
@@ -816,7 +817,7 @@ public class BaseEventTest {
                         }
                         return mapSampleIdToDto;
                     }
-                },
+                }),
                 new ControlDao() {
                     @Override
                     public List<Control> findAllActive() {

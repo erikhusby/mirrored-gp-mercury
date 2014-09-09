@@ -5,7 +5,7 @@ import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
 
 import javax.annotation.Nonnull;
@@ -30,7 +30,7 @@ import java.util.Map;
 public class VesselResource {
 
     @Inject
-    private BSPSampleDataFetcher bspSampleDataFetcher;
+    private SampleDataFetcher sampleDataFetcher;
 
     @Inject
     private VesselEjb vesselEjb;
@@ -110,7 +110,7 @@ public class VesselResource {
         // IntelliJ does not realize that the CollectionUtils.isEmpty test precludes tubeBarcodes from being null.
         @SuppressWarnings("ConstantConditions")
         Map<String, GetSampleDetails.SampleInfo> sampleInfoMap =
-                bspSampleDataFetcher.fetchSampleDetailsByBarcode(tubeBarcodes);
+                sampleDataFetcher.fetchSampleDetailsByBarcode(tubeBarcodes);
 
         for (String tubeBarcode : tubeBarcodes) {
             String well = null;

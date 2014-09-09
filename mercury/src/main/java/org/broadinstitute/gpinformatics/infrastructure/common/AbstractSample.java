@@ -2,14 +2,13 @@ package org.broadinstitute.gpinformatics.infrastructure.common;
 
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
 import javax.annotation.Nonnull;
 import javax.persistence.Transient;
-import java.util.regex.Pattern;
 
 /**
  * This abstraction describes a sample in both project management and LIMS in Mercury. Put code in here that will be
@@ -64,8 +63,8 @@ public abstract class AbstractSample {
             if (isInBspFormat() ||
                 ServiceAccessUtility.getBean(BSPConfig.class).getMercuryDeployment() != Deployment.PROD) {
 
-                BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
-                bspSampleDTO = bspSampleDataFetcher.fetchSingleSampleFromBSP(getSampleKey());
+                SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
+                bspSampleDTO = sampleDataFetcher.fetchSingleSampleFromBSP(getSampleKey());
 
                 // If there is no DTO, create one with no data populated.
                 if (bspSampleDTO == null) {

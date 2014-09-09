@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
@@ -12,19 +13,19 @@ import java.util.Map;
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class BSPSampleDataFetcherContainerTest {
     private BSPConfig bspConfig=BSPConfig.produce(Deployment.DEV);
-    private BSPSampleDataFetcher bspSampleDataFetcher=new BSPSampleDataFetcher(
+    private SampleDataFetcher sampleDataFetcher =new SampleDataFetcher(
             BSPSampleSearchServiceProducer.testInstance(), bspConfig);
     public void testFFPE() {
-        BSPSampleDTO ffpe = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-16BL4");
-        BSPSampleDTO paraffin = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-2UVBU");
-        BSPSampleDTO notFFPE = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-3HM8");
+        BSPSampleDTO ffpe = sampleDataFetcher.fetchSingleSampleFromBSP("SM-16BL4");
+        BSPSampleDTO paraffin = sampleDataFetcher.fetchSingleSampleFromBSP("SM-2UVBU");
+        BSPSampleDTO notFFPE = sampleDataFetcher.fetchSingleSampleFromBSP("SM-3HM8");
 
         Assert.assertNotNull(ffpe);
         Assert.assertNotNull(paraffin);
         Assert.assertNotNull(notFFPE);
         List<BSPSampleDTO> dtoList = Arrays.asList(ffpe, paraffin, notFFPE);
 
-        bspSampleDataFetcher.fetchFFPEDerived(dtoList);
+        sampleDataFetcher.fetchFFPEDerived(dtoList);
 
         Assert.assertTrue(ffpe.getFfpeStatus());
         Assert.assertTrue(paraffin.getFfpeStatus());
@@ -32,14 +33,14 @@ public class BSPSampleDataFetcherContainerTest {
     }
 
     public void testSamplePlastic() {
-        BSPSampleDTO rootSample = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-12LY");
-        BSPSampleDTO aliquotSample = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-3HM8");
+        BSPSampleDTO rootSample = sampleDataFetcher.fetchSingleSampleFromBSP("SM-12LY");
+        BSPSampleDTO aliquotSample = sampleDataFetcher.fetchSingleSampleFromBSP("SM-3HM8");
 
         Assert.assertNotNull(rootSample);
         Assert.assertNotNull(aliquotSample);
         List<BSPSampleDTO> dtoList = Arrays.asList(rootSample, aliquotSample);
 
-        bspSampleDataFetcher.fetchSamplePlastic(dtoList);
+        sampleDataFetcher.fetchSamplePlastic(dtoList);
 
         Assert.assertNotNull(rootSample.getPlasticBarcodes());
         Assert.assertNotNull(aliquotSample.getPlasticBarcodes());
@@ -130,7 +131,7 @@ public class BSPSampleDataFetcherContainerTest {
                         "0163047841", "0163047842", "0163047843", "0163047844", "0163047845", "0163047846",
                         "0163047847", "0163047848", "0163047849", "0163047850", "0163047851");
         Map<String, GetSampleDetails.SampleInfo> mapBarcodeToSampleInfo =
-                bspSampleDataFetcher.fetchSampleDetailsByBarcode(barcodes);
+                sampleDataFetcher.fetchSampleDetailsByBarcode(barcodes);
         GetSampleDetails.SampleInfo sampleInfo = mapBarcodeToSampleInfo.get(barcode);
         Assert.assertEquals(mapBarcodeToSampleInfo.size(), barcodes.size());
         Assert.assertEquals(sampleInfo.getManufacturerBarcode(), barcode);

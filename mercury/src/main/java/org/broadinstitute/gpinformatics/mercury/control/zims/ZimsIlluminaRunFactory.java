@@ -15,7 +15,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
@@ -79,7 +79,7 @@ import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTra
 @SuppressWarnings("FeatureEnvy")
 public class ZimsIlluminaRunFactory {
 
-    private BSPSampleDataFetcher bspSampleDataFetcher;
+    private SampleDataFetcher sampleDataFetcher;
     private ControlDao controlDao;
     private SequencingTemplateFactory sequencingTemplateFactory;
     private ProductOrderDao productOrderDao;
@@ -87,10 +87,10 @@ public class ZimsIlluminaRunFactory {
     private static final Log log = LogFactory.getLog(ZimsIlluminaRunFactory.class);
 
     @Inject
-    public ZimsIlluminaRunFactory(BSPSampleDataFetcher bspSampleDataFetcher,
+    public ZimsIlluminaRunFactory(SampleDataFetcher sampleDataFetcher,
                                   ControlDao controlDao, SequencingTemplateFactory sequencingTemplateFactory,
                                   ProductOrderDao productOrderDao) {
-        this.bspSampleDataFetcher = bspSampleDataFetcher;
+        this.sampleDataFetcher = sampleDataFetcher;
         this.controlDao = controlDao;
         this.sequencingTemplateFactory = sequencingTemplateFactory;
         this.productOrderDao = productOrderDao;
@@ -155,7 +155,7 @@ public class ZimsIlluminaRunFactory {
         }
         int numberOfLanes = laneNum;
 
-        Map<String, BSPSampleDTO> mapSampleIdToDto = bspSampleDataFetcher.fetchSamplesFromBSP(sampleIds);
+        Map<String, BSPSampleDTO> mapSampleIdToDto = sampleDataFetcher.fetchSamplesFromBSP(sampleIds);
         Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<>();
         for (String productOrderKey : productOrderKeys) {
             mapKeyToProductOrder.put(productOrderKey, productOrderDao.findByBusinessKey(productOrderKey));

@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.sample.MaterialType;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 
 import javax.annotation.Nonnull;
@@ -380,8 +381,8 @@ public class BSPSampleDTO {
 
     public Boolean getFfpeStatus() {
         if (ffpeStatus == FFPEStatus.UNKNOWN) {
-            BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
-            bspSampleDataFetcher.fetchFFPEDerived(Collections.singletonList(this));
+            SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
+            sampleDataFetcher.fetchFFPEDerived(Collections.singletonList(this));
         }
         return ffpeStatus.derived;
     }
@@ -392,8 +393,8 @@ public class BSPSampleDTO {
 
     public List<String> getPlasticBarcodes() {
         if (plasticBarcodes == null) {
-            BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
-            bspSampleDataFetcher.fetchSamplePlastic(Collections.singletonList(this));
+            SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
+            sampleDataFetcher.fetchSamplePlastic(Collections.singletonList(this));
         }
         return plasticBarcodes;
     }

@@ -8,7 +8,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
@@ -62,7 +62,7 @@ public class ZimsIlluminaRunFactoryTest {
     private final List<String> testSampleIds = new ArrayList<>();
     private ZimsIlluminaRunFactory zimsIlluminaRunFactory;
     private IlluminaFlowcell flowcell;
-    private BSPSampleDataFetcher mockBSPSampleDataFetcher;
+    private SampleDataFetcher mockSampleDataFetcher;
     private ControlDao mockControlDao;
     private ProductOrder testProductOrder;
     private JiraService mockJiraService;
@@ -78,7 +78,7 @@ public class ZimsIlluminaRunFactoryTest {
         testSampleIds.add("TestSM-1");
         testSampleIds.add("TestSM-2");
 
-        mockBSPSampleDataFetcher = Mockito.mock(BSPSampleDataFetcher.class);
+        mockSampleDataFetcher = Mockito.mock(SampleDataFetcher.class);
         mockControlDao = Mockito.mock(ControlDao.class);
 
         mockJiraService = Mockito.mock(JiraService.class);
@@ -90,7 +90,7 @@ public class ZimsIlluminaRunFactoryTest {
                                           "P-TEST-1", new Date(), new Date(), 0, 0, 0, 0, "Test samples only", "None",
                                           true, Workflow.AGILENT_EXOME_EXPRESS, false, "agg type");
 
-        zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(mockBSPSampleDataFetcher, mockControlDao,
+        zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(mockSampleDataFetcher, mockControlDao,
                 new SequencingTemplateFactory(), productOrderDao);
         LabEventFactory labEventFactory = new LabEventFactory(null, null);
         labEventFactory.setLabEventRefDataFetcher(new LabEventRefDataFetcher() {

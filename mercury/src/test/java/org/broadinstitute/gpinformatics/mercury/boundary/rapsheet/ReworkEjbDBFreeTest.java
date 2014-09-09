@@ -4,7 +4,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
@@ -166,7 +166,7 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
         productOrderSampleSet.add(poSample4);
 
 
-        BSPSampleDataFetcher mockFetcher = Mockito.mock(BSPSampleDataFetcher.class);
+        SampleDataFetcher mockFetcher = Mockito.mock(SampleDataFetcher.class);
         Mockito.when(mockFetcher.fetchSamplesFromBSP(Mockito.anyCollectionOf(String.class))).then(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
@@ -184,7 +184,7 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
                 return sampleIdDataMap;
             }
         });
-        reworkEjb.setBspSampleDataFetcher(mockFetcher);
+        reworkEjb.setSampleDataFetcher(mockFetcher);
 
 
         Collection<ReworkEjb.BucketCandidate> candidates =
@@ -228,7 +228,7 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
         productOrderSampleSet.add(nonExomesample);
 
 
-        BSPSampleDataFetcher mockFetcher = Mockito.mock(BSPSampleDataFetcher.class);
+        SampleDataFetcher mockFetcher = Mockito.mock(SampleDataFetcher.class);
         Mockito.when(mockFetcher.fetchSamplesFromBSP(Mockito.anyCollectionOf(String.class))).then(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
@@ -246,7 +246,7 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
                 return sampleIdDataMap;
             }
         });
-        reworkEjb.setBspSampleDataFetcher(mockFetcher);
+        reworkEjb.setSampleDataFetcher(mockFetcher);
 
         Collection<ReworkEjb.BucketCandidate> candidates =
                 reworkEjb.collectBucketCandidatesThatHaveBSPVessels(productOrderSampleSet);

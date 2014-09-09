@@ -7,7 +7,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestOptions;
@@ -164,7 +164,7 @@ public class ExomeExpressEndToEndTest {
                 Temporarily adding from ProjectPlanFromPassTest to move test case content along.
              */
 
-            BSPSampleDataFetcher bspDataFetcher = new BSPSampleDataFetcher(new EverythingYouAskForYouGetAndItsHuman());
+            SampleDataFetcher bspDataFetcher = new SampleDataFetcher(new EverythingYouAskForYouGetAndItsHuman());
             //            BaitSetListResult baitsCache = new BaitSetListResult();
             //            BaitSet baitSet = new BaitSet();
             //            baitSet.setDesignName(BAIT_DESIGN_NAME);
@@ -557,7 +557,7 @@ public class ExomeExpressEndToEndTest {
                 }
             });
 
-            ZimsIlluminaRunFactory zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(new BSPSampleDataFetcher(),
+            ZimsIlluminaRunFactory zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(new SampleDataFetcher(),
                                                                                        null,
                                                                                        new SequencingTemplateFactory(),
                                                                                        productOrderDao);
