@@ -174,22 +174,10 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionEjb ejb;
     }
 
-
-    private ManifestSessionAndEjbHolder buildHolderForAcceptSession(String fileName) throws Exception {
-        return buildHolderForSession(fileName, TEST_RESEARCH_PROJECT_KEY, ManifestTestFactory.CreationType.UPLOAD,
-                ManifestRecord.Status.SCANNED, 20);
-
-    }
-
     /**
      * helper method to initialize the EJ and session used for testing based on parameters.  This version is called if
      * the user wants a new Research Project Created
      *
-     * @param fileName           File name to upload (only used for CreationType.UPLOAD)
-     * @param researchProjectKey ResearchProjectKey to associate with the created Research Project
-     * @param starterType        Initialization mode that this helper method runs in.  Will determine if the Session
-     *                           is created via a new'd up entities or executing an upload on fileName through
-     *                           the EJB
      * @param initialStatus      Initial status for all the manifest records created
      * @param numberOfRecords    the number of initial manifest records to create
      *
@@ -198,21 +186,15 @@ public class ManifestSessionEjbDBFreeTest {
      *
      * @throws Exception
      */
-    private ManifestSessionAndEjbHolder buildHolderForSession(String fileName, String researchProjectKey,
-                                                              ManifestTestFactory.CreationType starterType,
-                                                              ManifestRecord.Status initialStatus, int numberOfRecords)
+    private ManifestSessionAndEjbHolder buildHolderForSession(ManifestRecord.Status initialStatus, int numberOfRecords)
             throws Exception {
-        ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(
-                researchProjectKey);
 
-        return buildHolderForSession(fileName, starterType, initialStatus, numberOfRecords, researchProject);
+        ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(
+                TEST_RESEARCH_PROJECT_KEY);
+        return buildHolderForSession(initialStatus, numberOfRecords, researchProject);
     }
 
     /**
-     * @param fileName        File name to upload (only used for CreationType.UPLOAD)
-     * @param starterType     Initialization mode that this helper method runs in.  Will determine if the Session
-     *                        is created via a new'd up entities or executing an upload on fileName through
-     *                        the EJB
      * @param initialStatus   Initial status for all the manifest records created
      * @param numberOfRecords the number of initial manifest records to create
      * @param researchProject An instance of a research project with which to associate the new session
@@ -222,9 +204,7 @@ public class ManifestSessionEjbDBFreeTest {
      *
      * @throws Exception
      */
-    private ManifestSessionAndEjbHolder buildHolderForSession(String fileName,
-                                                              ManifestTestFactory.CreationType starterType,
-                                                              ManifestRecord.Status initialStatus,
+    private ManifestSessionAndEjbHolder buildHolderForSession(ManifestRecord.Status initialStatus,
                                                               int numberOfRecords,
                                                               ResearchProject researchProject)
             throws Exception {
@@ -264,14 +244,10 @@ public class ManifestSessionEjbDBFreeTest {
         Mockito.when(labVesselDao.findByIdentifier(Mockito.eq(TEST_VESSEL_LABEL_ALREADY_TRANSFERRED)))
                 .thenReturn(testVesselAlreadyTransfered);
 
-
         holder.ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao);
-        if (starterType == ManifestTestFactory.CreationType.UPLOAD) {
-            holder.manifestSession = uploadManifest(holder.ejb, fileName, researchProject);
-        } else {
-            holder.manifestSession = ManifestTestFactory.buildManifestSession(researchProject.getBusinessKey(),
-                    "BuickCloseGood", testLabUser, numberOfRecords, initialStatus);
-        }
+
+        holder.manifestSession = ManifestTestFactory.buildManifestSession(researchProject.getBusinessKey(),
+                "BuickCloseGood", testLabUser, numberOfRecords, initialStatus);
         return holder;
     }
 
@@ -416,8 +392,6 @@ public class ManifestSessionEjbDBFreeTest {
     /********************************************************************/
 
     public void loadManifestSessionSuccess() {
-        ManifestSessionDao manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
-        ResearchProjectDao researchProjectDao = Mockito.mock(ResearchProjectDao.class);
         final long TEST_MANIFEST_SESSION_ID = ARBITRARY_MANIFEST_SESSION_ID;
         Mockito.when(manifestSessionDao.find(Mockito.anyLong())).then(new Answer<ManifestSession>() {
             @Override
@@ -438,8 +412,6 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     public void loadManifestSessionFailure() {
-        ManifestSessionDao manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
-        ResearchProjectDao researchProjectDao = Mockito.mock(ResearchProjectDao.class);
         final long TEST_MANIFEST_SESSION_ID = ARBITRARY_MANIFEST_SESSION_ID;
         ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao,
                 labVesselDao);
@@ -452,8 +424,6 @@ public class ManifestSessionEjbDBFreeTest {
     /********************************************************************/
 
     public void acceptUploadSessionNotFound() {
-        ManifestSessionDao manifestSessionDao = Mockito.mock(ManifestSessionDao.class);
-        ResearchProjectDao researchProjectDao = Mockito.mock(ResearchProjectDao.class);
         ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao,
                 labVesselDao);
         long MANIFEST_SESSION_ID = ARBITRARY_MANIFEST_SESSION_ID;
@@ -465,10 +435,8 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
-
     public void acceptUploadSuccessful() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(MANIFEST_FILE_GOOD, TEST_RESEARCH_PROJECT_KEY,
-                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.UPLOADED, 20);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.UPLOADED, 20);
         holder.ejb.acceptManifestUpload(ARBITRARY_MANIFEST_SESSION_ID);
         for (ManifestRecord manifestRecord : holder.manifestSession.getRecords()) {
             assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOAD_ACCEPTED));
@@ -476,9 +444,7 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     public void acceptSessionWithDuplicatesInThisSession() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(MANIFEST_FILE_DUPLICATES_SAME_SESSION,
-                TEST_RESEARCH_PROJECT_KEY,
-                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.UPLOADED, 20);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.UPLOADED, 20);
 
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101231193"), ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
@@ -532,9 +498,7 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     public void acceptSessionWithMismatchedGendersThisSession() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(MANIFEST_FILE_MISMATCHED_GENDERS_SAME_SESSION,
-                TEST_RESEARCH_PROJECT_KEY, ManifestTestFactory.CreationType.FACTORY,
-                ManifestRecord.Status.UPLOADED, 20);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.UPLOADED, 20);
 
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101947686", Metadata.Key.PATIENT_ID, "003-009",
@@ -642,9 +606,7 @@ public class ManifestSessionEjbDBFreeTest {
 
     @Test(dataProvider = GOOD_MANIFEST_ACCESSION_SCAN_PROVIDER)
     public void accessionScanGoodManifest(String tubeBarcode, boolean successExpected) throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(MANIFEST_FILE_GOOD,
-                TEST_RESEARCH_PROJECT_KEY,
-                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.UPLOADED, 20);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.UPLOADED, 20);
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101231193"), null, ManifestRecord.Status.UPLOAD_ACCEPTED);
 
@@ -679,9 +641,7 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     public void accessionScanManifestWithDuplicates() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(MANIFEST_FILE_DUPLICATES_SAME_SESSION,
-                TEST_RESEARCH_PROJECT_KEY,
-                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.UPLOADED, 20);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.UPLOADED, 20);
 
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101231193"),
@@ -721,9 +681,7 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     public void accessionScanGenderMismatches() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(MANIFEST_FILE_MISMATCHED_GENDERS_SAME_SESSION,
-                TEST_RESEARCH_PROJECT_KEY,
-                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.UPLOAD_ACCEPTED, 20);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.UPLOAD_ACCEPTED, 20);
 
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, "03101947686", Metadata.Key.PATIENT_ID, "003-009",
@@ -782,9 +740,7 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     public void accessionScanDoubleScan() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(MANIFEST_FILE_GOOD,
-                TEST_RESEARCH_PROJECT_KEY,
-                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.UPLOADED, 20);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.UPLOADED, 20);
         ManifestSessionEjb ejb = holder.ejb;
         ejb.acceptManifestUpload(ARBITRARY_MANIFEST_SESSION_ID);
         // The correct state after manifest upload is checked in other tests.
@@ -810,9 +766,7 @@ public class ManifestSessionEjbDBFreeTest {
 
     public void prepareForSessionCloseGoodSession() throws Exception {
 
-        ManifestSessionAndEjbHolder holder =
-                buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY, ManifestTestFactory.CreationType.FACTORY,
-                        ManifestRecord.Status.SCANNED, 20);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.SCANNED, 20);
 
         ManifestStatus sessionStatus = holder.ejb.getSessionStatus(ARBITRARY_MANIFEST_SESSION_ID);
 
@@ -824,9 +778,7 @@ public class ManifestSessionEjbDBFreeTest {
 
     public void prepareForSessionCloseWithDuplicate() throws Exception {
 
-        ManifestSessionAndEjbHolder holder =
-                buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY, ManifestTestFactory.CreationType.FACTORY,
-                        ManifestRecord.Status.SCANNED, 20);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.SCANNED, 20);
 
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
@@ -843,9 +795,7 @@ public class ManifestSessionEjbDBFreeTest {
 
     public void prepareForSessionCloseWithUnScanned() throws Exception {
 
-        ManifestSessionAndEjbHolder holder =
-                buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY, ManifestTestFactory.CreationType.FACTORY,
-                        ManifestRecord.Status.SCANNED, 20);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.SCANNED, 20);
 
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), null,
@@ -862,9 +812,7 @@ public class ManifestSessionEjbDBFreeTest {
 
     public void prepareForSessionCloseWithUnScannedAndDuplicate() throws Exception {
 
-        ManifestSessionAndEjbHolder holder =
-                buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY, ManifestTestFactory.CreationType.FACTORY,
-                        ManifestRecord.Status.SCANNED, 20);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.SCANNED, 20);
 
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), null,
@@ -886,9 +834,7 @@ public class ManifestSessionEjbDBFreeTest {
 
     public void prepareForSessionCloseWithMismatchedGenders() throws Exception {
 
-        ManifestSessionAndEjbHolder holder =
-                buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY, ManifestTestFactory.CreationType.FACTORY,
-                        ManifestRecord.Status.SCANNED, 20);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.SCANNED, 20);
 
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
@@ -903,18 +849,13 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(sessionStatus.getSamplesInManifest(), is(21));
     }
 
-
-
     /********************************************************************/
     /**  =======  close    ================================ **/
     /********************************************************************/
 
-
     public void closeGoodManifest() throws Exception {
 
-        ManifestSessionAndEjbHolder holder =
-                buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY, ManifestTestFactory.CreationType.FACTORY,
-                        ManifestRecord.Status.SCANNED, 20);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.SCANNED, 20);
 
         holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
 
@@ -927,9 +868,7 @@ public class ManifestSessionEjbDBFreeTest {
 
     public void closeManifestWithDuplicate() throws Exception {
 
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
-                ManifestTestFactory.CreationType.FACTORY,
-                ManifestRecord.Status.SCANNED, 20);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.SCANNED, 20);
         String dupeSampleId = GOOD_TUBE_BARCODE;
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, dupeSampleId),
@@ -951,9 +890,7 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     public void closeManifestWithUnScannedRecord() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
-                ManifestTestFactory.CreationType.FACTORY,
-                ManifestRecord.Status.SCANNED, 20);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.SCANNED, 20);
         String unScannedBarcode = GOOD_TUBE_BARCODE;
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, unScannedBarcode), null,
@@ -978,15 +915,12 @@ public class ManifestSessionEjbDBFreeTest {
 
     public void closeManifestWithDuplicateAndUnScannedRecords() throws Exception {
 
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
-                ManifestTestFactory.CreationType.FACTORY,
-                ManifestRecord.Status.SCANNED, 20);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.SCANNED, 20);
 
         String unscannedBarcode = GOOD_TUBE_BARCODE;
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, unscannedBarcode),
                 null, ManifestRecord.Status.UPLOAD_ACCEPTED);
-
 
         String dupeSampleId = GOOD_TUBE_BARCODE + "dupe";
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
@@ -1013,8 +947,7 @@ public class ManifestSessionEjbDBFreeTest {
 
     public void closeManifestWithMisMatchedGenderRecords() throws Exception {
 
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
-                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.SCANNED, 20);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.SCANNED, 20);
 
         String misMatch1Barcode = GOOD_TUBE_BARCODE + "BadGender1";
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
@@ -1043,8 +976,7 @@ public class ManifestSessionEjbDBFreeTest {
 
     public void validateSourceOnCleanSession() throws Exception {
 
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
-                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 20);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20);
 
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, sourceForTransfer), null, ManifestRecord.Status.ACCESSIONED);
@@ -1057,8 +989,7 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     public void validateSourceOnDuplicateRecord() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
-                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 20);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20);
 
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, sourceForTransfer),
@@ -1075,8 +1006,7 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     public void validateSourceNotFoundInManifest() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
-                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 20);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20);
 
         try {
             ManifestRecord foundRecord = holder.ejb.validateSourceTubeForTransfer(ARBITRARY_MANIFEST_SESSION_ID,
@@ -1091,8 +1021,7 @@ public class ManifestSessionEjbDBFreeTest {
 
     public void validateSourceOnMismatchedGenderRecord() throws Exception {
 
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
-                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 20);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20);
 
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, sourceForTransfer),
@@ -1106,8 +1035,7 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     public void validateSourceOnUnScannedRecord() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
-                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 20);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20);
 
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, sourceForTransfer),
@@ -1128,8 +1056,7 @@ public class ManifestSessionEjbDBFreeTest {
     /********************************************************************/
 
     public void validateValidTargetSample() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
-                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 1);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 1);
 
         MercurySample foundSample = holder.ejb.validateTargetSample(TEST_SAMPLE_KEY);
 
@@ -1138,8 +1065,7 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     public void validateTargetForBSPSample() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
-                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 1);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 1);
 
         try {
             MercurySample foundSample = holder.ejb.validateTargetSample(BSP_TEST_SAMPLE_KEY);
@@ -1152,8 +1078,7 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     public void validateTargetForNotFoundSample() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
-                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 1);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 1);
 
         try {
             MercurySample foundSample = holder.ejb.validateTargetSample(TEST_SAMPLE_KEY + "BAD");
@@ -1170,8 +1095,7 @@ public class ManifestSessionEjbDBFreeTest {
     /********************************************************************/
 
     public void validateTargetTubeAndSampleOnValidRecord() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
-                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 1);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 1);
 
         LabVessel foundVessel = holder.ejb.validateTargetSampleAndVessel(TEST_SAMPLE_KEY, TEST_VESSEL_LABEL);
 
@@ -1182,8 +1106,7 @@ public class ManifestSessionEjbDBFreeTest {
 
     public void validateTargetTubeAndSampleNotAssociated() throws Exception {
 
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
-                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 1);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 1);
 
         try {
             LabVessel foundVessel = holder.ejb.validateTargetSampleAndVessel(TEST_SAMPLE_KEY_UNASSOCIATED, TEST_VESSEL_LABEL);
@@ -1197,8 +1120,7 @@ public class ManifestSessionEjbDBFreeTest {
 
     public void validateTargetTubeWithNonRegisteredSample() throws Exception {
 
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
-                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 1);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 1);
 
         try {
             LabVessel foundVessel = holder.ejb.validateTargetSampleAndVessel(TEST_SAMPLE_KEY + "BAD", TEST_VESSEL_LABEL);
@@ -1212,8 +1134,7 @@ public class ManifestSessionEjbDBFreeTest {
 
     public void validateTargetTubeNotRegisteredWithRegisteredSample() throws Exception {
 
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
-                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 1);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 1);
 
         try {
             LabVessel foundVessel = holder.ejb.validateTargetSampleAndVessel(TEST_SAMPLE_KEY, TEST_VESSEL_LABEL + "BAD");
@@ -1227,8 +1148,7 @@ public class ManifestSessionEjbDBFreeTest {
 
     public void validateTargetTubeAlreadyAccessioned() throws Exception {
 
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
-                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 1);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 1);
 
         try {
             LabVessel foundVessel = holder.ejb.validateTargetSampleAndVessel(TEST_SAMPLE_ALREADY_TRANSFERRED,
@@ -1245,8 +1165,7 @@ public class ManifestSessionEjbDBFreeTest {
     /********************************************************************/
 
     public void transferSourceValidRecord() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
-                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 20);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20);
 
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), null, ManifestRecord.Status.ACCESSIONED);
@@ -1271,8 +1190,7 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     public void transferSourceRecordNotFound() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
-                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 20);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20);
 
         List<MercurySample> testSample = mercurySampleDao.findBySampleKey(TEST_SAMPLE_KEY);
 
@@ -1295,8 +1213,7 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     public void transferSourceToSampleNotFound() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
-                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 20);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20);
 
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), null, ManifestRecord.Status.ACCESSIONED);
@@ -1316,8 +1233,7 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     public void transferSourceToVesselNotFound() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
-                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 20);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20);
 
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), null, ManifestRecord.Status.ACCESSIONED);
@@ -1342,8 +1258,7 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
     public void transferSourceToMisMatchedSampleAndVesselNotFound() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
-                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 20);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20);
 
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), null, ManifestRecord.Status.ACCESSIONED);
@@ -1368,10 +1283,8 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
-
     public void transferSourceQuarantinedRecord() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
-                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 20);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20);
 
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE),
@@ -1400,8 +1313,7 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     public void transferSourceMismatchedGenderRecord() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
-                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 20);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20);
 
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE),
@@ -1427,8 +1339,7 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     public void transferSourceGoodRecordUsedTarget() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(null, TEST_RESEARCH_PROJECT_KEY,
-                ManifestTestFactory.CreationType.FACTORY, ManifestRecord.Status.ACCESSIONED, 20);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20);
 
         ManifestTestFactory.addExtraRecord(holder.manifestSession,
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE),

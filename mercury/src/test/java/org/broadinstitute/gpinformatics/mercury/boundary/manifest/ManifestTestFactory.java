@@ -1,7 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
-import com.google.common.collect.ImmutableMap;
-import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
@@ -11,8 +9,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 
@@ -81,6 +77,4 @@ public class ManifestTestFactory {
                     errorStatus.formatMessage(Metadata.Key.SAMPLE_ID.name(), dupeRecord.getSampleId()), dupeRecord));
         }
     }
-
-    public enum CreationType {UPLOAD, FACTORY}
 }
