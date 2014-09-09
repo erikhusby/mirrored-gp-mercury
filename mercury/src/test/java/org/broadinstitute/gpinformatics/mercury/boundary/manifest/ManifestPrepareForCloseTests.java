@@ -12,14 +12,10 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
-
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.hasItem;
+import static org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestStatusErrorMatcher.hasError;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.collection.IsEmptyCollection.empty;
+import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ManifestPrepareForCloseTests {
@@ -60,10 +56,8 @@ public class ManifestPrepareForCloseTests {
         assertThat(manifestStatus.getSamplesEligibleInManifest(), is(1));
         assertThat(manifestStatus.getSamplesSuccessfullyScanned(), is(0));
 
-        Collection<String> errors = manifestStatus.getErrorMessages();
-        Assert.assertEquals(errors.size(), 1);
-        Assert.assertTrue(
-                errors.iterator().next().contains(ManifestRecord.ErrorStatus.MISSING_SAMPLE.getBaseMessage()));
+        assertThat(manifestStatus.getErrorMessages(), hasSize(1));
+        assertThat(manifestStatus, hasError(ManifestRecord.ErrorStatus.MISSING_SAMPLE));
     }
 
     @Test
@@ -77,10 +71,8 @@ public class ManifestPrepareForCloseTests {
         assertThat(manifestStatus.getSamplesEligibleInManifest(), is(1));
         assertThat(manifestStatus.getSamplesSuccessfullyScanned(), is(0));
 
-        Collection<String> errors = manifestStatus.getErrorMessages();
-        Assert.assertEquals(errors.size(), 1);
-        Assert.assertTrue(
-                errors.iterator().next().contains(ManifestRecord.ErrorStatus.MISSING_SAMPLE.getBaseMessage()));
+        assertThat(manifestStatus.getErrorMessages(), hasSize(1));
+        assertThat(manifestStatus, hasError(ManifestRecord.ErrorStatus.MISSING_SAMPLE));
     }
 
     @Test
@@ -93,10 +85,8 @@ public class ManifestPrepareForCloseTests {
         assertThat(manifestStatus.getSamplesEligibleInManifest(), is(1));
         assertThat(manifestStatus.getSamplesSuccessfullyScanned(), is(1));
 
-        Collection<String> errors = manifestStatus.getErrorMessages();
-        Assert.assertEquals(errors.size(), 1);
-        Assert.assertTrue(
-                errors.iterator().next().contains(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getBaseMessage()));
+        assertThat(manifestStatus.getErrorMessages(), hasSize(1));
+        assertThat(manifestStatus, hasError(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID));
     }
 
     public void testValidationForGenderMismatchSample() {
@@ -108,11 +98,8 @@ public class ManifestPrepareForCloseTests {
         assertThat(manifestStatus.getSamplesEligibleInManifest(), is(2));
         assertThat(manifestStatus.getSamplesSuccessfullyScanned(), is(2));
 
-
-        assertThat(manifestStatus.getErrorMessages(), is(not(empty())));
-        assertThat(manifestStatus.getErrorMessages().size(), is(1));
-        assertThat(manifestStatus.getErrorMessages(),
-                hasItem(containsString(ManifestRecord.ErrorStatus.MISMATCHED_GENDER.getBaseMessage())));
+        assertThat(manifestStatus.getErrorMessages(), hasSize(1));
+        assertThat(manifestStatus, hasError(ManifestRecord.ErrorStatus.MISMATCHED_GENDER));
     }
 
     private static void addRecord(ManifestSession session, ManifestRecord.ErrorStatus errorStatus,
@@ -130,12 +117,9 @@ public class ManifestPrepareForCloseTests {
         assertThat(manifestStatus.getSamplesEligibleInManifest(), is(2));
         assertThat(manifestStatus.getSamplesSuccessfullyScanned(), is(1));
 
-        assertThat(manifestStatus.getErrorMessages(), is(not(empty())));
-        assertThat(manifestStatus.getErrorMessages().size(), is(2));
-        assertThat(manifestStatus.getErrorMessages(),
-                hasItem(containsString(ManifestRecord.ErrorStatus.MISSING_SAMPLE.getBaseMessage())));
-        assertThat(manifestStatus.getErrorMessages(),
-                hasItem(containsString(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getBaseMessage())));
+        assertThat(manifestStatus.getErrorMessages(), hasSize(2));
+        assertThat(manifestStatus, hasError(ManifestRecord.ErrorStatus.MISSING_SAMPLE));
+        assertThat(manifestStatus, hasError(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID));
     }
 
     public void testValidationForUnscannedAndDuplicatesAndMismatchedGender() {
@@ -149,14 +133,10 @@ public class ManifestPrepareForCloseTests {
         assertThat(manifestStatus.getSamplesEligibleInManifest(), is(3));
         assertThat(manifestStatus.getSamplesSuccessfullyScanned(), is(2));
 
-        assertThat(manifestStatus.getErrorMessages(), is(not(empty())));
-        assertThat(manifestStatus.getErrorMessages().size(), is(3));
-        assertThat(manifestStatus.getErrorMessages(),
-                hasItem(containsString(ManifestRecord.ErrorStatus.MISSING_SAMPLE.getBaseMessage())));
-        assertThat(manifestStatus.getErrorMessages(),
-                hasItem(containsString(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getBaseMessage())));
-        assertThat(manifestStatus.getErrorMessages(),
-                hasItem(containsString(ManifestRecord.ErrorStatus.MISMATCHED_GENDER.getBaseMessage())));
+        assertThat(manifestStatus.getErrorMessages(), hasSize(3));
+        assertThat(manifestStatus, hasError(ManifestRecord.ErrorStatus.MISSING_SAMPLE));
+        assertThat(manifestStatus, hasError(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID));
+        assertThat(manifestStatus, hasError(ManifestRecord.ErrorStatus.MISMATCHED_GENDER));
 
     }
 

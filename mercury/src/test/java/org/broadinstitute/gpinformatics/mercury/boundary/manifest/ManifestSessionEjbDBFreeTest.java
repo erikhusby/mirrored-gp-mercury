@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestStatusErrorMatcher.hasError;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
@@ -726,8 +727,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestStatus sessionStatus = holder.ejb.getSessionStatus(ARBITRARY_MANIFEST_SESSION_ID);
 
         assertThat(sessionStatus.getErrorMessages(), hasSize(1));
-        assertThat(sessionStatus.getErrorMessages(),
-                hasItem(containsString(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getBaseMessage())));
+        assertThat(sessionStatus, hasError(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID));
         assertThat(sessionStatus.getSamplesEligibleInManifest(), is(20));
         assertThat(sessionStatus.getSamplesSuccessfullyScanned(), is(20));
         assertThat(sessionStatus.getSamplesInManifest(), is(21));
@@ -742,8 +742,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestStatus sessionStatus = holder.ejb.getSessionStatus(ARBITRARY_MANIFEST_SESSION_ID);
 
         assertThat(sessionStatus.getErrorMessages(), hasSize(1));
-        assertThat(sessionStatus.getErrorMessages(),
-                hasItem(containsString(ManifestRecord.ErrorStatus.MISSING_SAMPLE.getBaseMessage())));
+        assertThat(sessionStatus, hasError(ManifestRecord.ErrorStatus.MISSING_SAMPLE));
         assertThat(sessionStatus.getSamplesEligibleInManifest(), is(21));
         assertThat(sessionStatus.getSamplesSuccessfullyScanned(), is(20));
         assertThat(sessionStatus.getSamplesInManifest(), is(21));
@@ -761,10 +760,8 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestStatus sessionStatus = holder.ejb.getSessionStatus(ARBITRARY_MANIFEST_SESSION_ID);
 
         assertThat(sessionStatus.getErrorMessages(), hasSize(2));
-        assertThat(sessionStatus.getErrorMessages(),
-                hasItem(containsString(ManifestRecord.ErrorStatus.MISSING_SAMPLE.getBaseMessage())));
-        assertThat(sessionStatus.getErrorMessages(),
-                hasItem(containsString(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getBaseMessage())));
+        assertThat(sessionStatus, hasError(ManifestRecord.ErrorStatus.MISSING_SAMPLE));
+        assertThat(sessionStatus, hasError(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID));
         assertThat(sessionStatus.getSamplesEligibleInManifest(), is(21));
         assertThat(sessionStatus.getSamplesSuccessfullyScanned(), is(20));
         assertThat(sessionStatus.getSamplesInManifest(), is(22));
@@ -780,8 +777,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestStatus sessionStatus = holder.ejb.getSessionStatus(ARBITRARY_MANIFEST_SESSION_ID);
 
         assertThat(sessionStatus.getErrorMessages(), hasSize(1));
-        assertThat(sessionStatus.getErrorMessages(),
-                hasItem(containsString(ManifestRecord.ErrorStatus.MISMATCHED_GENDER.getBaseMessage())));
+        assertThat(sessionStatus, hasError(ManifestRecord.ErrorStatus.MISMATCHED_GENDER));
         assertThat(sessionStatus.getSamplesEligibleInManifest(), is(21));
         assertThat(sessionStatus.getSamplesSuccessfullyScanned(), is(21));
         assertThat(sessionStatus.getSamplesInManifest(), is(21));
