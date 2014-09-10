@@ -1833,22 +1833,27 @@ public abstract class LabVessel implements Serializable {
 
     public boolean hasBeenUsedForClinical() {
 
-        for (LabEvent labEvent : getEvents()) {
-            if (labEvent.getLabEventType() == LabEventType.COLLABORATOR_TRANSFER) {
-                return true;
-            }
+        if (isEventPresent(getEvents(), LabEventType.COLLABORATOR_TRANSFER)) {
+            return true;
         }
 
         TransferTraverserCriteria.LabEventDescendantCriteria eventTraversalCriteria =
                 new TransferTraverserCriteria.LabEventDescendantCriteria();
         evaluateCriteria(eventTraversalCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
 
-        for (LabEvent labEvent : eventTraversalCriteria.getAllEvents()) {
-            if (labEvent.getLabEventType() == LabEventType.COLLABORATOR_TRANSFER) {
+        if (isEventPresent(eventTraversalCriteria.getAllEvents(), LabEventType.COLLABORATOR_TRANSFER)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private boolean isEventPresent(Set<LabEvent> allEvents, LabEventType targetEvent) {
+        for (LabEvent labEvent : allEvents) {
+            if (labEvent.getLabEventType() == targetEvent) {
                 return true;
             }
         }
-
         return false;
     }
 
