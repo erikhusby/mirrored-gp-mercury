@@ -176,7 +176,6 @@ public class ProductPdfFactory {
         private final OneQuarterDateRange oneQuarter = new OneQuarterDateRange(now);
         private final String formattedEndOfQuarter=formatDate(oneQuarter.startAndStopDate()[1]);
 
-        OneQuarterDateRange thisQuarter = new OneQuarterDateRange(new Date());
         @Override
         public void onEndPage(PdfWriter writer, Document document) {
             Rectangle rect = writer.getBoxSize("art");
