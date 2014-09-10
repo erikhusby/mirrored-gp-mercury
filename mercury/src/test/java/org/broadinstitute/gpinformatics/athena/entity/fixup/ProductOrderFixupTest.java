@@ -477,7 +477,7 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrderEjb.updateOrderStatus("PDO-2635", reporter);
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void gplim2969UpdatePriceItemType() {
         userBean.loginOSUser();
         Set<String> samples = new HashSet<>();

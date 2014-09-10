@@ -191,7 +191,7 @@ public class UserBean implements Serializable {
         if (PRODINFO_USER.equals(osUser)) {
             throw new RuntimeException("You probably shouldn't be running this script as " + osUser + " because it will corrupt the audit trail.");
         }
-        loginDeveloper(System.getProperty("user.name"));
+        loginDeveloper(osUser);
     }
 
     private void loginDeveloper(String user) {
