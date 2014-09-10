@@ -29,7 +29,6 @@ import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.emptyCollectionOf;
-import static org.hamcrest.Matchers.equalTo;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class PoiSpreadsheetParserTest {
@@ -45,8 +44,8 @@ public class PoiSpreadsheetParserTest {
     @DataProvider(name = "excelFileDataProvider")
     public static Object[][] excelFileDataProvider() throws FileNotFoundException {
         return new Object[][]{
-                new Object[]{new FileInputStream(TestUtils.getTestData(POI_TEST_XLS))},
-                new Object[]{new FileInputStream(TestUtils.getTestData(POI_TEST_XLSX))},
+                {new FileInputStream(TestUtils.getTestData(POI_TEST_XLS))},
+                {new FileInputStream(TestUtils.getTestData(POI_TEST_XLSX))},
         };
 
     }
@@ -56,10 +55,6 @@ public class PoiSpreadsheetParserTest {
         PoiSpreadsheetParser.processSingleWorksheet(testFileInputStream, testProcessor);
         assertThat(testProcessor.getMessages(), emptyCollectionOf(String.class));
         for (Map<String, String> spreadsheetRowValues : testProcessor.getSpreadsheetValues()) {
-            String calculatedValue = spreadsheetRowValues.get(TestHeaders.calculated.getText());
-            String expectedValue = spreadsheetRowValues.get(TestHeaders.expected.getText());
-            String failedReason = spreadsheetRowValues.get(TestHeaders.testname.getText()) + " failed.";
-            assertThat(failedReason, calculatedValue, equalTo(expectedValue));
             PoiSpreadsheetValidator.validateSpreadsheetRow(spreadsheetRowValues, TestHeaders.class);
         }
     }
@@ -83,15 +78,15 @@ public class PoiSpreadsheetParserTest {
     }
 
     enum TestHeaders implements ColumnHeader {
-        testname(0, false, true, true),
-        stringData1(1, false, true, false),
-        stringData2(2, false, true, false),
-        numericData1(3, false, false, false),
-        numericData2(4, false, false, false),
-        calculated(5, false, true, false),
-        expected(6, false, true, false),
-        aBoolean(7, false, false, false),
-        aDate(8, true, false, false);
+        testname(0, ColumnHeader.NON_DATE, ColumnHeader.IS_STRING, ColumnHeader.REQUIRED_VALUE),
+        stringData1(1, ColumnHeader.NON_DATE, ColumnHeader.IS_STRING, ColumnHeader.OPTIONAL_VALUE),
+        stringData2(2, ColumnHeader.NON_DATE, ColumnHeader.IS_STRING, ColumnHeader.OPTIONAL_VALUE),
+        numericData1(3, ColumnHeader.NON_DATE, ColumnHeader.NON_STRING, ColumnHeader.OPTIONAL_VALUE),
+        numericData2(4, ColumnHeader.NON_DATE, ColumnHeader.NON_STRING, ColumnHeader.OPTIONAL_VALUE),
+        calculated(5, ColumnHeader.NON_DATE, ColumnHeader.IS_STRING, ColumnHeader.OPTIONAL_VALUE),
+        expected(6, ColumnHeader.NON_DATE, ColumnHeader.IS_STRING, ColumnHeader.OPTIONAL_VALUE),
+        aBoolean(7, ColumnHeader.NON_DATE, ColumnHeader.NON_STRING, ColumnHeader.OPTIONAL_VALUE),
+        aDate(8, ColumnHeader.IS_DATE, ColumnHeader.NON_STRING, ColumnHeader.OPTIONAL_VALUE);
         private final int index;
         private final boolean isDateColumn;
         private final boolean isStringColumn;

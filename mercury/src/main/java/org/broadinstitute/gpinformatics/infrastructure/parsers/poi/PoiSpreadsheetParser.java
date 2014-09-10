@@ -68,7 +68,7 @@ public final class PoiSpreadsheetParser {
             for (int i = 0; i < processor.getHeaderNames().size(); i++) {
                 String headerName = processor.getHeaderNames().get(i);
                 dataByHeader.put(headerName,
-                        extractCellContent(row, headerName, i, processor.isDateColumn(i)));
+                        extractCellContent(row, headerName, i, processor.isDateColumn(i), processor.isStringColumn(i)));
             }
 
             // Take the map and turn it into objects and process the data appropriately.
@@ -93,7 +93,7 @@ public final class PoiSpreadsheetParser {
             while (cellIterator.hasNext()) {
                 // Headers are always strings, so the false is for the date and the true is in case the header looks
                 // like a number to excel
-                headers.add(getCellValues(cellIterator.next(), false));
+                headers.add(getCellValues(cellIterator.next(), false, true));
             }
 
             // The primary header row is the one that needs to be generally validated.
@@ -150,11 +150,11 @@ public final class PoiSpreadsheetParser {
      *
      * @return A string representation of the data in the cell indicated by the given row/column (header) combination
      */
-    protected String extractCellContent(Row row, String headerName, int columnIndex, boolean isDate) {
+    protected String extractCellContent(Row row, String headerName, int columnIndex, boolean isDate, boolean isString) {
 
         Cell cell = row.getCell(columnIndex);
 
-        String result = getCellValues(cell, isDate);
+        String result = getCellValues(cell, isDate, isString);
         if (StringUtils.isBlank(result)) {
             validationMessages.add("Row # " + row.getRowNum() + ": Unable to determine cell type for " + headerName);
         }
@@ -166,21 +166,31 @@ public final class PoiSpreadsheetParser {
      * We leave all parsing and validating up to the caller by turning everything into a string. We might want to
      * let POI turn things into real objects in the map in the future, but for now this was what callers were
      * expecting.
+     * <p/>
+     * <b>Note, if your cell contains a formula, this method will return not the calculated value, nor the formula
+     * but an empty string instead.</b>
      *
      * @param cell The cell data.
      *
      * @return A string representation of the cell.
      */
-    private static String getCellValues(Cell cell, boolean isDate) {
+    private static String getCellValues(Cell cell, boolean isDate, boolean isString) {
         if (cell != null) {
-            if (cell.getCellType() == Cell.CELL_TYPE_BOOLEAN) {
+            switch (cell.getCellType()) {
+            case Cell.CELL_TYPE_BOOLEAN:
                 return String.valueOf(cell.getBooleanCellValue());
-            }
+            case Cell.CELL_TYPE_NUMERIC:
             if (isDate) {
                 return DATE_FORMATTER.format(cell.getDateCellValue());
             }
+                if (isString) {
             cell.setCellType(Cell.CELL_TYPE_STRING);
             return cell.getStringCellValue();
+        }
+                return String.valueOf(cell.getNumericCellValue());
+            case Cell.CELL_TYPE_STRING:
+                return cell.getStringCellValue();
+            }
         }
 
         return "";
@@ -236,15 +246,15 @@ public final class PoiSpreadsheetParser {
             throws InvalidFormatException, IOException, ValidationException {
 
         PoiSpreadsheetParser parser = new PoiSpreadsheetParser(Collections.<String, TableProcessor>emptyMap());
-
+        List<String> messages=new ArrayList<>();
         try {
             Workbook workbook = WorkbookFactory.create(spreadsheet);
             processor.validateNumberOfWorksheets(workbook.getNumberOfSheets());
             parser.processRows(workbook.getSheetAt(0), processor);
+            messages=processor.getMessages();
         } finally {
             processor.close();
         }
-
-        return parser.validationMessages;
+        return messages;
     }
 }

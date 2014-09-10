@@ -16,14 +16,13 @@ public class TestUtils {
     /**
      * This method returns the full path to, and including the specified file name.
      *
-     * @param fileName the file which you seek
+     * @param fileName the name file which you seek
      *
      * @return the full path to fileName.
      */
     public static String getTestData(String fileName) {
         return TEST_DATA_LOCATION + "/" + fileName;
     }
-
 
     /**
      * Convenience method to return the first item in a collection. This method will return null

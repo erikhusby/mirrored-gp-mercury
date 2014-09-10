@@ -31,8 +31,8 @@ public class PoiSpreadsheetValidator {
      * Validate row data based on ColumnHeader.
      */
     public static <T extends ColumnHeader> void validateSpreadsheetRow(Map<String, String> spreadsheetRowValues, Class<T> headerType) {
-        for (Map.Entry<String, String> stringStringEntry : spreadsheetRowValues.entrySet()) {
-            ColumnHeader header = getHeaderByKey(stringStringEntry.getKey(), headerType);
+        for (String key : spreadsheetRowValues.keySet()) {
+            ColumnHeader header = getHeaderByKey(key, headerType);
             assertThat(header, notNullValue());
             String value = spreadsheetRowValues.get(header.getText());
 

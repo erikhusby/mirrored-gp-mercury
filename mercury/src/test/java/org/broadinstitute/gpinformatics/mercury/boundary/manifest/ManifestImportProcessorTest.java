@@ -15,7 +15,6 @@ import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
-import org.hamcrest.Matchers;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -29,6 +28,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContainingInAnyOrder;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 
 
@@ -36,7 +36,9 @@ import static org.hamcrest.Matchers.is;
 public class ManifestImportProcessorTest {
     private ManifestImportProcessor processor;
     private Map<String, String> dataRow;
-    protected static final String TEST_UNKNOWN_HEADER_FORMAT = "Row #%d " + ManifestImportProcessor.UNKNOWN_HEADER_FORMAT;
+    protected static final String TEST_UNKNOWN_HEADER_FORMAT =
+            "Row #%d " + ManifestImportProcessor.UNKNOWN_HEADER_FORMAT;
+
     @BeforeMethod
     public void setUp() throws Exception {
         processor = new ManifestImportProcessor();
@@ -45,12 +47,14 @@ public class ManifestImportProcessorTest {
 
     public void testGetHeaderNames() throws Exception {
         processor.processHeader(new ArrayList<>(dataRow.keySet()), 0);
-        ArrayList<String> allHeaders = new ArrayList<>();
-        for (ManifestHeader manifestHeader : ManifestHeader.values()) {
-            allHeaders.add(manifestHeader.getText());
+        String[] allHeaders = new String[ManifestHeader.values().length];
+        ManifestHeader[] values = ManifestHeader.values();
+        for (int i = 0; i < values.length; i++) {
+            ManifestHeader manifestHeader = values[i];
+            allHeaders[i] = manifestHeader.getColumnName();
         }
 
-        assertThat(processor.getHeaderNames(), containsInAnyOrder(allHeaders.toArray()));
+        assertThat(processor.getHeaderNames(), containsInAnyOrder(allHeaders));
     }
 
     public void testGetColumns() throws Exception {
@@ -63,9 +67,9 @@ public class ManifestImportProcessorTest {
 
     public void testProcessHeader() throws Exception {
         processor.processHeader(new ArrayList<>(dataRow.keySet()), 0);
-        ArrayList<String> allHeaders = new ArrayList<>();
+        List<String> allHeaders = new ArrayList<>();
         for (ManifestHeader manifestHeader : ManifestHeader.values()) {
-            allHeaders.add(manifestHeader.getText());
+            allHeaders.add(manifestHeader.getColumnName());
         }
 
         assertThat(processor.getHeaderNames(), containsInAnyOrder(allHeaders.toArray()));
@@ -77,9 +81,10 @@ public class ManifestImportProcessorTest {
         assertThat(processor.getMessages(), is(empty()));
         for (ManifestRecord manifestRecord : processor.getManifestRecords()) {
             List<Metadata> expectedMetadata = new ArrayList<>();
-            for (Map.Entry<String, String> stringStringEntry : dataRow.entrySet()) {
-                expectedMetadata.add(new Metadata(ManifestHeader.fromText(stringStringEntry.getKey()).getMetadataKey(),
-                        stringStringEntry.getValue()));
+            for (Map.Entry<String, String> dataRowEntry : dataRow.entrySet()) {
+                expectedMetadata
+                        .add(new Metadata(ManifestHeader.fromColumnName(dataRowEntry.getKey()).getMetadataKey(),
+                                dataRowEntry.getValue()));
             }
             assertThat(manifestRecord.getMetadata().toArray(), arrayContainingInAnyOrder(expectedMetadata.toArray()));
         }
@@ -91,8 +96,8 @@ public class ManifestImportProcessorTest {
         int row = 0;
         dataRow.put(unknownHeader, "new to me too!");
         processor.processHeader(new ArrayList<>(dataRow.keySet()), row);
-        assertThat(processor.getMessages(), Matchers.hasItem(
-                String.format(TEST_UNKNOWN_HEADER_FORMAT, row, Arrays.asList(unknownHeader))));
+        assertThat(processor.getMessages(),
+                hasItem(String.format(TEST_UNKNOWN_HEADER_FORMAT, row, Arrays.asList(unknownHeader))));
     }
 
     public void testGetColumnHeaders() throws Exception {
@@ -104,12 +109,12 @@ public class ManifestImportProcessorTest {
 
     private Map<String, String> makeDataRow() {
         Map<String, String> dataRow = new HashMap<>();
-        dataRow.put(ManifestHeader.SAMPLE_ID.getText(), "03101231193");
-        dataRow.put(ManifestHeader.PATIENT_ID.getText(), "004-002");
-        dataRow.put(ManifestHeader.SEX.getText(), "");
-        dataRow.put(ManifestHeader.VISIT.getText(), "Screening");
-        dataRow.put(ManifestHeader.COLLECTION_DATE.getText(), "10-Oct-1841");
-        dataRow.put(ManifestHeader.TUMOR_OR_NORMAL.getText(), "Tumor");
+        dataRow.put(ManifestHeader.SPECIMEN_NUMBER.getColumnName(), "03101231193");
+        dataRow.put(ManifestHeader.PATIENT_ID.getColumnName(), "004-002");
+        dataRow.put(ManifestHeader.SEX.getColumnName(), "");
+        dataRow.put(ManifestHeader.VISIT.getColumnName(), "Screening");
+        dataRow.put(ManifestHeader.COLLECTION_DATE.getColumnName(), "10-Oct-1841");
+        dataRow.put(ManifestHeader.TUMOR_OR_NORMAL.getColumnName(), "Tumor");
 
         return dataRow;
     }
