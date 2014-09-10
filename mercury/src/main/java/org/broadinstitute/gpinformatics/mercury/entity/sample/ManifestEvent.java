@@ -88,4 +88,12 @@ public class ManifestEvent {
          */
         ERROR
     }
+
+    @Override
+    public String toString() {
+        return "ManifestEvent{" +
+               "message='" + message + '\'' +
+               ", severity=" + severity +
+               '}';
+    }
 }

@@ -112,6 +112,7 @@ public class ManifestSessionEjb {
             throw new InformaticsServiceException("Unrecognized Manifest Session ID: " + manifestSessionId);
         }
         manifestSession.acceptUpload();
+        manifestSessionDao.persist(manifestSession);
     }
 
     public ManifestStatus getSessionStatus(long manifestSessionId) {
@@ -150,6 +151,7 @@ public class ManifestSessionEjb {
         }
 
         manifestRecord.setStatus(ManifestRecord.Status.SCANNED);
+        manifestSessionDao.persist(manifestSession);
     }
 
     public void closeSession(long sessionId) {
@@ -240,5 +242,6 @@ public class ManifestSessionEjb {
         LabVessel targetVessel = findAndValidateTargetVessel(vesselLabel, targetSample);
 
         session.performTransfer(sourceCollaboratorSample, targetSample, targetVessel, user);
+        manifestSessionDao.persist(session);
     }
 }

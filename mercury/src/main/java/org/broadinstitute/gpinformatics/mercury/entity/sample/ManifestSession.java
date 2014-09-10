@@ -343,7 +343,7 @@ public class ManifestSession {
 
                 ManifestEvent manifestEvent = new ManifestEvent(ManifestRecord.ErrorStatus.MISSING_SAMPLE.getSeverity(),
                         message, record);
-                manifestEvents.add(manifestEvent);
+                addManifestEvent(manifestEvent);
             }
         }
     }
@@ -507,7 +507,7 @@ public class ManifestSession {
 
                 ManifestEvent manifestEvent = new ManifestEvent(ManifestRecord.ErrorStatus.MISSING_SAMPLE.getSeverity(),
                         message, record);
-                manifestEvents.add(manifestEvent);
+                addManifestEvent(manifestEvent);
             } else {
                 record.setStatus(ManifestRecord.Status.ACCESSIONED);
             }
