@@ -328,27 +328,6 @@ public class ManifestSession {
     }
 
     /**
-     * Called before the manifest session is set to completed, this will ensure that all records on the session are
-     * in the proper state.  If not, manifest events are added to the record to indicate that it has not
-     * been scanned.
-     */
-    // todo migrate this (and tests) to use generateSessionStatusForClose()
-    public void validateForClose() {
-        // Confirm all records have scanned status.
-        for (ManifestRecord record : records) {
-            if ((record.getStatus() != ManifestRecord.Status.SCANNED) && !record.isQuarantined()) {
-
-                String sampleId = record.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue();
-                String message = ManifestRecord.ErrorStatus.MISSING_SAMPLE.formatMessage(SAMPLE_ID_KEY, sampleId);
-
-                ManifestEvent manifestEvent = new ManifestEvent(ManifestRecord.ErrorStatus.MISSING_SAMPLE.getSeverity(),
-                        message, record);
-                addManifestEvent(manifestEvent);
-            }
-        }
-    }
-
-    /**
      * hasErrors is used to determine if any manifest event entries exist that can be considered errors
      *
      * @return true if even one manifest event entry can be considered an error
@@ -439,12 +418,20 @@ public class ManifestSession {
         throw new TubeTransferException(ManifestRecord.ErrorStatus.NOT_IN_MANIFEST, SAMPLE_ID_KEY, collaboratorBarcode);
     }
 
+    /**
+     * Sets all non quarantined records within this session to the status of UPLOAD_ACCEPTED
+     */
     public void acceptUpload() {
         for (ManifestRecord record : getNonQuarantinedRecords()) {
             record.setStatus(ManifestRecord.Status.UPLOAD_ACCEPTED);
         }
     }
 
+    /**
+     * Creates and returns a Pojo which represents the current state of the session.  A summary
+     * of errors found in the associated events, and particular counts of interest are populated in the pojo
+     * @return a {@link ManifestStatus} populated with summary information of interest for the session
+     */
     public ManifestStatus generateSessionStatusForClose() {
 
         ManifestStatus sessionStatus = new ManifestStatus(getRecords().size(), getNonQuarantinedRecords().size(),
@@ -465,6 +452,12 @@ public class ManifestSession {
         return sessionStatus;
     }
 
+    /**
+     * Returns all records contained in this session that currently have a status that matches the given status
+     *
+     * @param status    Status with which to filter records to be returned
+     * @return          A collection of records filtered by the given status
+     */
     private Collection<ManifestRecord> getRecordsByStatus(ManifestRecord.Status status) {
 
         Set<ManifestRecord> foundRecords = new HashSet<>();
@@ -497,6 +490,14 @@ public class ManifestSession {
         return null;
     }
 
+    /**
+     * Encapsulates the logic required to mark a session completed:
+     * <ul>
+     *     <li>Mark all scanned, un-quarantined, records as Accessioned</li>
+     *     <li>Create ManifestEvents for all un-scanned ,un-quarantined, records</li>
+     *     <li>Set the status of the session to Completed</li>
+     * </ul>
+     */
     public void completeSession() {
 
         for (ManifestRecord record : getNonQuarantinedRecords()) {
@@ -515,6 +516,15 @@ public class ManifestSession {
         setStatus(SessionStatus.COMPLETED);
     }
 
+    /**
+     * Within the context of trying to transfer a source sample, find the corresponding record contained within the
+     * session.  Given this context, the method should inform the caller of any issues with attempting to transfer
+     * from this record such as the record is quarantined, or not in the correct state within the session, or just
+     * not found
+     *
+     * @param sourceForTransfer     Sample ID for which the caller wishes to find the corresponding record
+     * @return  The record that matches the source sample
+     */
     public ManifestRecord findRecordForTransfer(String sourceForTransfer) {
 
         ManifestRecord recordForTransfer = findRecordByCollaboratorId(sourceForTransfer);
@@ -533,6 +543,15 @@ public class ManifestSession {
         return recordForTransfer;
     }
 
+    /**
+     * Encapsulates the logic required to mark a record within this session as having been transfered
+     *
+     * @param sourceCollaboratorSample  Sample ID for the source sample.  This should correspond to a record within
+     *                                  the session
+     * @param targetSample              Mercury Sample to which the transfer will be associated
+     * @param targetVessel              Lab Vessel to which the transfer will be associated
+     * @param user                      Represents the user attempting to make the transfer
+     */
     public void performTransfer(String sourceCollaboratorSample, MercurySample targetSample, LabVessel targetVessel,
                                 BspUser user) {
 

@@ -15,6 +15,7 @@ import org.testng.annotations.Test;
 
 import java.util.Arrays;
 
+import static org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestStatusErrorMatcher.hasError;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -103,16 +104,24 @@ public class ManifestSessionTest {
      */
     public void allSamplesScanned() {
         assertThat(testSession.hasErrors(), is(false));
-        testSession.validateForClose();
-        assertThat(testSession.hasErrors(), is(false));
+        ManifestStatus manifestStatus = testSession.generateSessionStatusForClose();
+        assertThat(manifestStatus.getErrorMessages(), is(empty()));
+        assertThat(manifestStatus.getSamplesSuccessfullyScanned(), is(3));
+        assertThat(manifestStatus.getSamplesEligibleInManifest(), is(3));
+        assertThat(manifestStatus.getSamplesInManifest(), is(3));
     }
 
 
     public void missingSample() {
         setSampleStatus(SAMPLE_ID_1, ManifestRecord.Status.UPLOADED);
         assertThat(testSession.hasErrors(), is(false));
-        testSession.validateForClose();
-        assertThat(testSession.hasErrors(), is(true));
+        ManifestStatus manifestStatus = testSession.generateSessionStatusForClose();
+        assertThat(manifestStatus.getErrorMessages(), is(not(empty())));
+        assertThat(manifestStatus, hasError(ManifestRecord.ErrorStatus.MISSING_SAMPLE));
+
+        assertThat(manifestStatus.getSamplesSuccessfullyScanned(), is(2));
+        assertThat(manifestStatus.getSamplesEligibleInManifest(), is(3));
+        assertThat(manifestStatus.getSamplesInManifest(), is(3));
     }
 
     private void setSampleStatus(String sampleId, ManifestRecord.Status status) {

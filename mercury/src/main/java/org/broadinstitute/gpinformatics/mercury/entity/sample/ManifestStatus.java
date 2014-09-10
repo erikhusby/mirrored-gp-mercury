@@ -4,7 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * TODO scottmat fill in javadoc!!!
+ * A Pojo used t represent the state of a {@link ManifestSession} at a particular point in time.
  */
 public class ManifestStatus {
     private final int samplesInManifest;
