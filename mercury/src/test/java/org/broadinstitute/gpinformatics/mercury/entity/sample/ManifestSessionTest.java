@@ -126,7 +126,7 @@ public class ManifestSessionTest {
 
     private void setSampleStatus(String sampleId, ManifestRecord.Status status) {
         for (ManifestRecord manifestRecord : testSession.getRecords()) {
-            if (manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue().equals(sampleId)) {
+            if (manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID).equals(sampleId)) {
                 manifestRecord.setStatus(status);
             }
         }

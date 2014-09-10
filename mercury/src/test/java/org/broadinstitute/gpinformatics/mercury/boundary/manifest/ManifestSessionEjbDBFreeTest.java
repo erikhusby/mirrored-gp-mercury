@@ -544,7 +544,7 @@ public class ManifestSessionEjbDBFreeTest {
                 assertThat(manifestEvents.get(0).getSeverity(), is(ManifestEvent.Severity.ERROR));
                 manifestRecordsWithMismatchedGenders.add(manifestRecord);
             }
-            String patientId = manifestRecord.getMetadataByKey(Metadata.Key.PATIENT_ID).getValue();
+            String patientId = manifestRecord.getValueByKey(Metadata.Key.PATIENT_ID);
             assertThat(PATIENT_IDS_FOR_SAME_MANIFEST_GENDER_MISMATCHES.contains(patientId),
                     is(equalTo(hasManifestEvents)));
         }
@@ -629,7 +629,7 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(manifestSession.getManifestEvents(), is(empty()));
 
         for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
-            String collaboratorSampleId = manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue();
+            String collaboratorSampleId = manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID);
             if (collaboratorSampleId.equals(tubeBarcode)) {
                 assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.SCANNED));
             } else {
@@ -677,7 +677,7 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(manifestEvent.getSeverity(), is(ManifestEvent.Severity.ERROR));
 
         holder.ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID,
-                manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue());
+                manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID));
 
         assertThat(manifestSession.getManifestEvents(), hasSize(EXPECTED_NUMBER_OF_EVENTS_ON_SESSION));
         assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.SCANNED));
@@ -813,7 +813,7 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(holder.manifestSession.getManifestEvents(), hasSize(1));
 
         for (ManifestRecord manifestRecord : holder.manifestSession.getRecords()) {
-            if (manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue().equals(duplicateSampleId)) {
+            if (manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID).equals(duplicateSampleId)) {
                 assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOADED));
             } else {
                 assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.ACCESSIONED));
@@ -833,7 +833,7 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(holder.manifestSession.getManifestEvents(), hasSize(1));
 
         for (ManifestRecord manifestRecord : holder.manifestSession.getRecords()) {
-            if (manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue().equals(unScannedBarcode)) {
+            if (manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID).equals(unScannedBarcode)) {
                 assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOAD_ACCEPTED));
                 assertThat(manifestRecord.isQuarantined(), is(true));
             } else {
@@ -859,10 +859,10 @@ public class ManifestSessionEjbDBFreeTest {
 
         assertThat(holder.manifestSession.getManifestEvents(), hasSize(2));
         for (ManifestRecord manifestRecord : holder.manifestSession.getRecords()) {
-            if (manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue().equals(unscannedBarcode)) {
+            if (manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID).equals(unscannedBarcode)) {
                 assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOAD_ACCEPTED));
                 assertThat(manifestRecord.isQuarantined(), is(true));
-            } else if (manifestRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue().equals(dupeSampleId)) {
+            } else if (manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID).equals(dupeSampleId)) {
                 assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOADED));
                 assertThat(manifestRecord.isQuarantined(), is(true));
             } else {
@@ -910,7 +910,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestRecord foundRecord =
                 holder.ejb.validateSourceTubeForTransfer(ARBITRARY_MANIFEST_SESSION_ID, sourceForTransfer);
 
-        assertThat(foundRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue(), is(equalTo(sourceForTransfer)));
+        assertThat(foundRecord.getValueByKey(Metadata.Key.SAMPLE_ID), is(equalTo(sourceForTransfer)));
         assertThat(foundRecord.getManifestEvents(), is(emptyCollectionOf(ManifestEvent.class)));
     }
 
@@ -952,7 +952,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestRecord foundRecord =
                 holder.ejb.validateSourceTubeForTransfer(ARBITRARY_MANIFEST_SESSION_ID, sourceForTransfer);
 
-        assertThat(foundRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue(), is(equalTo(sourceForTransfer)));
+        assertThat(foundRecord.getValueByKey(Metadata.Key.SAMPLE_ID), is(equalTo(sourceForTransfer)));
         assertThat(foundRecord.getManifestEvents(), hasSize(1));
     }
 

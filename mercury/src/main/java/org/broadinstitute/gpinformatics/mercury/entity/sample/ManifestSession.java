@@ -218,7 +218,7 @@ public class ManifestSession {
                     public boolean apply(Map.Entry<String, Collection<ManifestRecord>> entry) {
                         final Set<String> allGenders = new HashSet<>();
                         for (ManifestRecord manifestRecord : entry.getValue()) {
-                            allGenders.add(manifestRecord.getMetadataByKey(Metadata.Key.GENDER).getValue());
+                            allGenders.add(manifestRecord.getValueByKey(Metadata.Key.GENDER));
                         }
                         return allGenders.size() > 1;
                     }
@@ -290,7 +290,7 @@ public class ManifestSession {
                 new Function<ManifestRecord, String>() {
                     @Override
                     public String apply(ManifestRecord manifestRecord) {
-                        return manifestRecord.getMetadataByKey(key).getValue();
+                        return manifestRecord.getValueByKey(key);
                     }
                 });
     }
@@ -362,7 +362,7 @@ public class ManifestSession {
      */
     public ManifestRecord findScannedRecord(String collaboratorBarcode) {
         for (ManifestRecord record : records) {
-            if (record.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue().equals(collaboratorBarcode)) {
+            if (record.getValueByKey(Metadata.Key.SAMPLE_ID).equals(collaboratorBarcode)) {
                 if (record.getStatus() != ManifestRecord.Status.SCANNED) {
                     throw new TubeTransferException(ManifestRecord.ErrorStatus.NOT_READY_FOR_TUBE_TRANSFER,
                             SAMPLE_ID_KEY,
@@ -411,7 +411,7 @@ public class ManifestSession {
     public ManifestRecord findRecordByCollaboratorId(String collaboratorBarcode)
             throws TubeTransferException {
         for (ManifestRecord record : records) {
-            if (record.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue().equals(collaboratorBarcode)) {
+            if (record.getValueByKey(Metadata.Key.SAMPLE_ID).equals(collaboratorBarcode)) {
                 return record;
             }
         }
@@ -483,7 +483,7 @@ public class ManifestSession {
      */
     public ManifestRecord getRecordWithMatchingValueForKey(Metadata.Key key, String value) {
         for (ManifestRecord record : records) {
-            if (record.getMetadataByKey(key).getValue().equals(value)) {
+            if (record.getValueByKey(key).equals(value)) {
                 return record;
             }
         }
@@ -503,7 +503,7 @@ public class ManifestSession {
         for (ManifestRecord record : getNonQuarantinedRecords()) {
             if ((record.getStatus() != ManifestRecord.Status.SCANNED)) {
 
-                String sampleId = record.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue();
+                String sampleId = record.getValueByKey(Metadata.Key.SAMPLE_ID);
                 String message = ManifestRecord.ErrorStatus.MISSING_SAMPLE.formatMessage(SAMPLE_ID_KEY, sampleId);
 
                 ManifestEvent manifestEvent = new ManifestEvent(ManifestRecord.ErrorStatus.MISSING_SAMPLE.getSeverity(),

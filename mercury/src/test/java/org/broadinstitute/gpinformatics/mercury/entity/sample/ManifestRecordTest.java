@@ -63,9 +63,9 @@ public class ManifestRecordTest {
         sessionIn.addRecord(testRecord);
 
         // Basic sanity check of retrieving Metadata by key.
-        Assert.assertEquals(testRecord.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue(), COLLABORATOR_SAMPLE_ID_1);
-        Assert.assertEquals(testRecord.getMetadataByKey(Metadata.Key.GENDER).getValue(), VALUE_2);
-        Assert.assertEquals(testRecord.getMetadataByKey(Metadata.Key.PATIENT_ID).getValue(), VALUE_3);
+        Assert.assertEquals(testRecord.getValueByKey(Metadata.Key.SAMPLE_ID), COLLABORATOR_SAMPLE_ID_1);
+        Assert.assertEquals(testRecord.getValueByKey(Metadata.Key.GENDER), VALUE_2);
+        Assert.assertEquals(testRecord.getValueByKey(Metadata.Key.PATIENT_ID), VALUE_3);
         // Default status should be UPLOADED.
         Assert.assertEquals(testRecord.getStatus(), ManifestRecord.Status.UPLOADED);
         // Default error status should be null (no error).

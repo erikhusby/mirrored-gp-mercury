@@ -103,6 +103,10 @@ public class ManifestRecord {
         return getMetadataMap().get(key);
     }
 
+    public String getValueByKey(Metadata.Key key) {
+        return getMetadataByKey(key).getValue();
+    }
+
     public Status getStatus() {
         return status;
     }

@@ -139,7 +139,7 @@ public class ManifestPrepareForCloseTests {
 
     private void addDuplicateManifestRecord() {
         ManifestRecord record = session.getRecords().iterator().next();
-        String value = record.getMetadataByKey(Metadata.Key.SAMPLE_ID).getValue();
+        String value = record.getValueByKey(Metadata.Key.SAMPLE_ID);
 
         ManifestTestFactory
                 .addRecord(session, ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,

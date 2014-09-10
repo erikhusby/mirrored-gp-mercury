@@ -292,6 +292,5 @@ public class ManifestSessionEjb {
         LabVessel targetVessel = findAndValidateTargetVessel(vesselLabel, targetSample);
 
         session.performTransfer(sourceCollaboratorSample, targetSample, targetVessel, user);
-        manifestSessionDao.persist(session);
     }
 }
