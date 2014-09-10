@@ -71,21 +71,8 @@ public class ManifestSessionContainerTest extends Arquillian {
     private ResearchProject researchProject;
     private ManifestSession manifestSessionI;
     private ManifestRecord manifestRecordI;
-    private ManifestRecord manifestRecordIn2;
-    private ManifestRecord manifestRecordIn3;
-    private ManifestRecord manifestRecordIn4;
-    private ManifestRecord manifestRecordIn5;
-    private ManifestRecord manifestRecordIn6;
     private ManifestSession manifestSessionII;
-    private ManifestRecord manifestRecordII1;
-    private ManifestRecord manifestRecordII3;
-    private ManifestRecord manifestRecordII4;
-    private ManifestRecord manifestRecordII5;
-    private ManifestRecord manifestRecordII6;
-    private ManifestRecord manifestRecordII2;
     private BSPUserList.QADudeUser testUser = new BSPUserList.QADudeUser("PM", 5176L);
-    private String UPLOADED_COLLABORATOR_SESSION_1 = "03101067213";
-    private String UPLOADED_PATIENT_ID_SESSION_1 = "001-001";
 
     private List<String> firstUploadedScannedSamples =
             Arrays.asList("03101231193", "03101067213", "03101214167", "03101067211", "03101989209", "03101947686",
@@ -130,56 +117,46 @@ public class ManifestSessionContainerTest extends Arquillian {
         researchProject =
                 ResearchProjectTestFactory.createTestResearchProject(ResearchProject.PREFIX + (new Date()).getTime());
         manifestSessionI = new ManifestSession(researchProject, "BUICK-TEST", testUser);
-        manifestRecordI = new ManifestRecord(new Metadata(Metadata.Key.PATIENT_ID, PATIENT_1),
-                new Metadata(Metadata.Key.GENDER, GENDER_MALE), new Metadata(Metadata.Key.SAMPLE_ID, SAMPLE_ID_1));
-        manifestRecordIn2 = new ManifestRecord(new Metadata(Metadata.Key.SAMPLE_ID, SAMPLE_ID_2),
-                new Metadata(Metadata.Key.GENDER, GENDER_FEMALE),
-                new Metadata(Metadata.Key.PATIENT_ID, PATIENT_1 + "2"));
-        manifestRecordIn3 = new ManifestRecord(new Metadata(Metadata.Key.SAMPLE_ID, SAMPLE_ID_3),
-                new Metadata(Metadata.Key.GENDER, GENDER_MALE),
-                new Metadata(Metadata.Key.PATIENT_ID, PATIENT_1 + "3"));
-        manifestRecordIn4 = new ManifestRecord(new Metadata(Metadata.Key.SAMPLE_ID, SAMPLE_ID_4),
-                new Metadata(Metadata.Key.GENDER, GENDER_FEMALE),
-                new Metadata(Metadata.Key.PATIENT_ID, PATIENT_1 + "4"));
-        manifestRecordIn5 = new ManifestRecord(new Metadata(Metadata.Key.SAMPLE_ID, SAMPLE_ID_5),
-                new Metadata(Metadata.Key.GENDER, GENDER_FEMALE),
-                new Metadata(Metadata.Key.PATIENT_ID, PATIENT_1 + "5"));
-        manifestRecordIn6 = new ManifestRecord(new Metadata(Metadata.Key.SAMPLE_ID, SAMPLE_ID_6),
-                new Metadata(Metadata.Key.GENDER, GENDER_MALE),
-                new Metadata(Metadata.Key.PATIENT_ID, PATIENT_1 + "6"));
+        manifestRecordI = createManifestRecord(Metadata.Key.PATIENT_ID, PATIENT_1, Metadata.Key.GENDER, GENDER_MALE,
+                Metadata.Key.SAMPLE_ID, SAMPLE_ID_1);
         manifestSessionI.addRecord(manifestRecordI);
-        manifestSessionI.addRecord(manifestRecordIn2);
-        manifestSessionI.addRecord(manifestRecordIn3);
-        manifestSessionI.addRecord(manifestRecordIn4);
-        manifestSessionI.addRecord(manifestRecordIn5);
-        manifestSessionI.addRecord(manifestRecordIn6);
+
+        manifestSessionI.addRecord(
+                createManifestRecord(Metadata.Key.SAMPLE_ID, SAMPLE_ID_2, Metadata.Key.GENDER, GENDER_FEMALE,
+                        Metadata.Key.PATIENT_ID, PATIENT_1 + "2"));
+        manifestSessionI.addRecord(
+                createManifestRecord(Metadata.Key.SAMPLE_ID, SAMPLE_ID_3, Metadata.Key.GENDER, GENDER_MALE,
+                        Metadata.Key.PATIENT_ID, PATIENT_1 + "3"));
+        manifestSessionI.addRecord(
+                createManifestRecord(Metadata.Key.SAMPLE_ID, SAMPLE_ID_4, Metadata.Key.GENDER, GENDER_FEMALE,
+                        Metadata.Key.PATIENT_ID, PATIENT_1 + "4"));
+        manifestSessionI.addRecord(
+                createManifestRecord(Metadata.Key.SAMPLE_ID, SAMPLE_ID_5, Metadata.Key.GENDER, GENDER_FEMALE,
+                        Metadata.Key.PATIENT_ID, PATIENT_1 + "5"));
+        manifestSessionI.addRecord(
+                createManifestRecord(Metadata.Key.SAMPLE_ID, SAMPLE_ID_6, Metadata.Key.GENDER, GENDER_MALE,
+                        Metadata.Key.PATIENT_ID, PATIENT_1 + "6"));
 
         manifestSessionII = new ManifestSession(researchProject, "BUICK-TEST2", testUser);
 
-        manifestRecordII1 = new ManifestRecord(new Metadata(Metadata.Key.PATIENT_ID, PATIENT_1 + "7"),
-                new Metadata(Metadata.Key.GENDER, GENDER_MALE), new Metadata(Metadata.Key.SAMPLE_ID, SAMPLE_ID_7));
-        manifestRecordII2 = new ManifestRecord(new Metadata(Metadata.Key.SAMPLE_ID, SAMPLE_ID_8),
-                new Metadata(Metadata.Key.GENDER, GENDER_FEMALE),
-                new Metadata(Metadata.Key.PATIENT_ID, PATIENT_1 + "8"));
-        manifestRecordII3 = new ManifestRecord(new Metadata(Metadata.Key.SAMPLE_ID, SAMPLE_ID_9),
-                new Metadata(Metadata.Key.GENDER, GENDER_MALE),
-                new Metadata(Metadata.Key.PATIENT_ID, PATIENT_1 + "9"));
-        manifestRecordII4 = new ManifestRecord(new Metadata(Metadata.Key.SAMPLE_ID, SAMPLE_ID_10),
-                new Metadata(Metadata.Key.GENDER, GENDER_FEMALE),
-                new Metadata(Metadata.Key.PATIENT_ID, PATIENT_1 + "10"));
-        manifestRecordII5 = new ManifestRecord(new Metadata(Metadata.Key.SAMPLE_ID, SAMPLE_ID_11),
-                new Metadata(Metadata.Key.GENDER, GENDER_FEMALE),
-                new Metadata(Metadata.Key.PATIENT_ID, PATIENT_1 + "11"));
-        manifestRecordII6 = new ManifestRecord(new Metadata(Metadata.Key.SAMPLE_ID, SAMPLE_ID_12),
-                new Metadata(Metadata.Key.GENDER, GENDER_MALE),
-                new Metadata(Metadata.Key.PATIENT_ID, PATIENT_1 + "12"));
-
-        manifestSessionII.addRecord(manifestRecordII1);
-        manifestSessionII.addRecord(manifestRecordII2);
-        manifestSessionII.addRecord(manifestRecordII3);
-        manifestSessionII.addRecord(manifestRecordII4);
-        manifestSessionII.addRecord(manifestRecordII5);
-        manifestSessionII.addRecord(manifestRecordII6);
+        manifestSessionII.addRecord(
+                createManifestRecord(Metadata.Key.PATIENT_ID, PATIENT_1 + "7", Metadata.Key.GENDER, GENDER_MALE,
+                        Metadata.Key.SAMPLE_ID, SAMPLE_ID_7));
+        manifestSessionII.addRecord(
+                createManifestRecord(Metadata.Key.SAMPLE_ID, SAMPLE_ID_8, Metadata.Key.GENDER, GENDER_FEMALE,
+                        Metadata.Key.PATIENT_ID, PATIENT_1 + "8"));
+        manifestSessionII.addRecord(
+                createManifestRecord(Metadata.Key.SAMPLE_ID, SAMPLE_ID_9, Metadata.Key.GENDER, GENDER_MALE,
+                        Metadata.Key.PATIENT_ID, PATIENT_1 + "9"));
+        manifestSessionII.addRecord(
+                createManifestRecord(Metadata.Key.SAMPLE_ID, SAMPLE_ID_10, Metadata.Key.GENDER, GENDER_FEMALE,
+                        Metadata.Key.PATIENT_ID, PATIENT_1 + "10"));
+        manifestSessionII.addRecord(
+                createManifestRecord(Metadata.Key.SAMPLE_ID, SAMPLE_ID_11, Metadata.Key.GENDER, GENDER_FEMALE,
+                        Metadata.Key.PATIENT_ID, PATIENT_1 + "11"));
+        manifestSessionII.addRecord(
+                createManifestRecord(Metadata.Key.SAMPLE_ID, SAMPLE_ID_12, Metadata.Key.GENDER, GENDER_MALE,
+                        Metadata.Key.PATIENT_ID, PATIENT_1 + "12"));
 
         Date today = new Date();
 
@@ -199,6 +176,11 @@ public class ManifestSessionContainerTest extends Arquillian {
                     BarcodedTube.BarcodedTubeType.MatrixTube2mL));
             sourceSampleToTargetVessel.get(sourceSample).addSample(sourceSampleToMercurySample.get(sourceSample));
         }
+    }
+
+    private ManifestRecord createManifestRecord(Metadata.Key key1, String value1, Metadata.Key key2, String value2,
+                                                Metadata.Key key3, String value3) {
+        return new ManifestRecord(new Metadata(key1, value1), new Metadata(key2, value2), new Metadata(key3, value3));
     }
 
     /**
@@ -284,6 +266,8 @@ public class ManifestSessionContainerTest extends Arquillian {
         assertThat(openSessions, hasItem(uploadedSession));
         assertThat(manifestSessionDao.findClosedSessions(), not(hasItem(uploadedSession)));
 
+        String UPLOADED_COLLABORATOR_SESSION_1 = "03101067213";
+        String UPLOADED_PATIENT_ID_SESSION_1 = "001-001";
         assertThat(uploadedSession.findRecordByCollaboratorId(UPLOADED_COLLABORATOR_SESSION_1)
                 .getValueByKey(Metadata.Key.PATIENT_ID), is(UPLOADED_PATIENT_ID_SESSION_1));
 
