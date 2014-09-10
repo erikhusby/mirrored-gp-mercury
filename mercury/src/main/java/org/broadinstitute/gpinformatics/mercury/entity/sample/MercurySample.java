@@ -116,8 +116,9 @@ public class MercurySample extends AbstractSample {
         return metadata;
     }
 
-
-
+    public Long getMercurySampleId() {
+        return mercurySampleId;
+    }
 
     @Override
     public boolean equals(Object o) {

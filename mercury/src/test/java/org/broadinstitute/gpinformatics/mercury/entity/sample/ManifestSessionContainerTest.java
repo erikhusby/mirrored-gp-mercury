@@ -2,7 +2,10 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
+import org.broadinstitute.gpinformatics.athena.entity.project.Irb;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectCohort;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -18,12 +21,12 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -187,7 +190,6 @@ public class ManifestSessionContainerTest extends Arquillian {
                         //, "03101778110" omitting the last one so that there is an error
                 );
         firstUplaodedOmittedScan = "03101778110";
-//        secondUploadPatientsWithMismatchedGender = Collections.singletonList("005-010");
         secondUploadPatientsWithMismatchedGender = Collections.singletonList("03101492492ZZZ");
         secondUploadedSamplesGood =
                 Arrays.asList("03101067213ZZZ", "03101214167ZZZ", "03101067211ZZZ", "03101989209ZZZ",
@@ -237,8 +239,6 @@ public class ManifestSessionContainerTest extends Arquillian {
                         BarcodedTube.BarcodedTubeType.MatrixTube2mL));
         sourceSampleToTargetVessel.get(firstUplaodedOmittedScan).addSample(
                 sourceSampleToMercurySample.get(firstUplaodedOmittedScan));
-
-
     }
 
     /**
@@ -294,13 +294,19 @@ public class ManifestSessionContainerTest extends Arquillian {
     @Test(groups = TestGroups.STANDARD)
     public void endToEnd() throws Exception {
 
+        /*
+         * Setup required preliminary entities
+         */
         for (LabVessel targetVessel : sourceSampleToTargetVessel.values()) {
             labVesselDao.persist(targetVessel);
         }
 
-
         researchProjectDao.persist(researchProject);
 
+
+        /*
+         * Mimic user upload of manifest
+         */
         String excelFilePath = "manifest-upload/duplicates/good-manifest-1.xlsx";
         InputStream testStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(excelFilePath);
 
@@ -320,15 +326,25 @@ public class ManifestSessionContainerTest extends Arquillian {
             assertThat(manifestRecord.getManifestRecordId(), is(notNullValue()));
         }
 
+
+        /*
+         *  Test that the session is listed in all open sessions and not listed in the closed sessions
+         */
         List<ManifestSession> openSessions = manifestSessionDao.findOpenSessions();
 
         assertThat(openSessions, hasItem(uploadedSession));
+        List<ManifestSession> preClosedSessions = manifestSessionDao.findClosedSessions();
+        assertThat(preClosedSessions, not(hasItem(uploadedSession)));
 
         assertThat(uploadedSession.findRecordByCollaboratorId(UPLOADED_COLLABORATOR_SESSION_1).getMetadataByKey(
                 Metadata.Key.PATIENT_ID).getValue(), is(UPLOADED_PATIENT_ID_SESSION_1));
 
         manifestSessionDao.clear();
 
+
+        /*
+         *  Mimic user accepting the upload
+         */
         manifestSessionEjb.acceptManifestUpload(uploadedSession.getManifestSessionId());
 
         ManifestSession acceptedSession = manifestSessionDao.find(uploadedSession.getManifestSessionId());
@@ -345,7 +361,13 @@ public class ManifestSessionContainerTest extends Arquillian {
 
         manifestSessionDao.clear();
 
+
         ManifestSession sessionOfScan = manifestSessionDao.find(uploadedSession.getManifestSessionId());
+
+        /*
+         *  Mimic the scan of all samples in the manifest... except One (to test closing and validating with an
+         *  omitted scan.
+         */
         for (String sourceSampleToTest : firstUploadedSessionSamples) {
 
             manifestSessionEjb.accessionScan(sessionOfScan.getManifestSessionId(), sourceSampleToTest);
@@ -357,6 +379,10 @@ public class ManifestSessionContainerTest extends Arquillian {
             assertThat(sessionOfScan.hasErrors(), is(false));
         }
 
+
+        /*
+         * Mimic the user getting a "Pre-close" validation
+         */
         ManifestStatus sessionStatus = manifestSessionEjb.getSessionStatus(sessionOfScan.getManifestSessionId());
 
         assertThat(sessionStatus, is(notNullValue()));
@@ -364,11 +390,13 @@ public class ManifestSessionContainerTest extends Arquillian {
         assertThat(sessionStatus.getSamplesSuccessfullyScanned(), is(22));
         assertThat(sessionStatus.getSamplesEligibleInManifest(), is(23));
         assertThat(sessionStatus.getErrorMessages(), is(not(empty())));
-        assertThat(sessionStatus.getErrorMessages(),
-                hasItem(ManifestRecord.ErrorStatus.MISSING_SAMPLE
-                        .formatMessage(ManifestSession.SAMPLE_ID_KEY, firstUplaodedOmittedScan)));
+        assertThat(sessionStatus.getErrorMessages(), hasItem(ManifestRecord.ErrorStatus.MISSING_SAMPLE
+                .formatMessage(ManifestSession.SAMPLE_ID_KEY, firstUplaodedOmittedScan)));
 
 
+        /*
+         * Mimic a user closing the session, and the ramifications of that.
+         */
         manifestSessionEjb.closeSession(sessionOfScan.getManifestSessionId());
 
         ManifestSession closedSession = manifestSessionDao.find(sessionOfScan.getManifestSessionId());
@@ -383,16 +411,23 @@ public class ManifestSessionContainerTest extends Arquillian {
             if (StringUtils.equals(firstUplaodedOmittedScan, manifestRecord.getSampleId())) {
                 assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOAD_ACCEPTED));
                 assertThat(manifestRecord.getManifestEvents().size(), is(1));
-                assertThat(manifestRecord.getManifestEvents(), hasEventError(ManifestRecord.ErrorStatus.MISSING_SAMPLE));
+                assertThat(manifestRecord.getManifestEvents(),
+                        hasEventError(ManifestRecord.ErrorStatus.MISSING_SAMPLE));
             } else {
                 assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.ACCESSIONED));
             }
         }
 
+        /*
+         * Validate that the session is not in the list of closed sessions
+         */
         List<ManifestSession> closedSessions = manifestSessionDao.findClosedSessions();
 
         assertThat(closedSessions, Matchers.hasItem(closedSession));
 
+        /*
+         * Mimic the user actually performing the tube scans for transferring the material to Broad tubes
+         */
         for (String sourceSampleToTest : firstUploadedSessionSamples) {
 
             ManifestRecord manifestRecord = manifestSessionEjb
@@ -415,6 +450,10 @@ public class ManifestSessionContainerTest extends Arquillian {
 
         }
 
+        /*
+         * Mimic the user "Accidentally" attempting to transfer the tube that was never scanned before session was
+         * closed
+         */
         try {
             manifestSessionEjb
                     .validateSourceTubeForTransfer(closedSession.getManifestSessionId(), firstUplaodedOmittedScan);
@@ -427,29 +466,35 @@ public class ManifestSessionContainerTest extends Arquillian {
                 .validateTargetSample(sourceSampleToMercurySample.get(firstUplaodedOmittedScan).getSampleKey());
         assertThat(targetSampleForOmitted, is(notNullValue()));
         LabVessel targetVesselForOmitted =
-                manifestSessionEjb.validateTargetSampleAndVessel(sourceSampleToMercurySample.get(firstUplaodedOmittedScan)
-                        .getSampleKey(), sourceSampleToTargetVessel.get(firstUplaodedOmittedScan).getLabel());
+                manifestSessionEjb
+                        .validateTargetSampleAndVessel(sourceSampleToMercurySample.get(firstUplaodedOmittedScan)
+                                .getSampleKey(), sourceSampleToTargetVessel.get(firstUplaodedOmittedScan).getLabel());
         assertThat(targetVesselForOmitted, is(notNullValue()));
 
         try {
             manifestSessionEjb.transferSample(closedSession.getManifestSessionId(), firstUplaodedOmittedScan,
                     sourceSampleToMercurySample.get(firstUplaodedOmittedScan)
-                            .getSampleKey(), sourceSampleToTargetVessel.get(firstUplaodedOmittedScan).getLabel(), testUser);
+                            .getSampleKey(), sourceSampleToTargetVessel.get(firstUplaodedOmittedScan).getLabel(),
+                    testUser);
         } catch (Exception e) {
             assertThat(e.getMessage(),
                     containsString(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE.getBaseMessage()));
         }
 
-        /*****   Second Upload   ******/
+        /*
+         *   ============  Second Upload   =============
+         *
+         *  This upload will contain 2 records that are duplicates of samples found in the first manifest.  it will
+         *  also contain one record that shares a patient ID with the first manifest but the gender is listed
+         *  differently
+         */
 
-
-        List<String> secondUploadAll = new ArrayList<>();
-        secondUploadAll.addAll(secondUploadedSamplesGood);
-        secondUploadAll.addAll(secondUploadedSamplesDupes);
-//        secondUploadAll.addAll(secondUploadPatientsWithMismatchedGender);
 
         manifestSessionDao.clear();
 
+        /*
+         * Mimic the user uploading the manifest
+         */
         String pathToTestFile2 = "manifest-upload/duplicates/good-manifest-3.xlsx";
         InputStream testStream2 = Thread.currentThread().getContextClassLoader().getResourceAsStream(pathToTestFile2);
         ResearchProject rpSecondUpload = researchProjectDao.findByBusinessKey(researchProject.getBusinessKey());
@@ -480,12 +525,20 @@ public class ManifestSessionContainerTest extends Arquillian {
             assertThat(dupeRecord.getSampleId(), is(genderSample));
         }
 
+        /*
+         * Check that the new upload is in the list of uploaded sessions and not in the list of closed sessions
+         */
         List<ManifestSession> checkOpenSessions = manifestSessionDao.findOpenSessions();
+        List<ManifestSession> checkClosedSessions = manifestSessionDao.findClosedSessions();
 
         assertThat(checkOpenSessions, hasItem(uploadedSession2));
+        assertThat(checkClosedSessions, not(hasItem(uploadedSession2)));
 
         manifestSessionDao.clear();
 
+        /*
+         * mimic the user accepting the second manifest
+         */
         manifestSessionEjb.acceptManifestUpload(uploadedSession2.getManifestSessionId());
 
         ManifestSession acceptedSession2 = manifestSessionDao.find(uploadedSession2.getManifestSessionId());
@@ -515,6 +568,9 @@ public class ManifestSessionContainerTest extends Arquillian {
 
         ManifestSession sessionOfScan2 = manifestSessionDao.find(acceptedSession2.getManifestSessionId());
 
+        /*
+         * Mimic the user Scanning the tubes to complete accessioning
+         */
         for (String sampleId : secondUploadedSamplesGood) {
             manifestSessionEjb.accessionScan(sessionOfScan2.getManifestSessionId(), sampleId);
 
@@ -525,6 +581,9 @@ public class ManifestSessionContainerTest extends Arquillian {
             assertThat(sessionOfScan2.hasErrors(), is(true));
         }
 
+        /*
+         * Mimic the user attempting to scan the dupes "Accidentally"
+         */
         for (String sampleId : secondUploadedSamplesDupes) {
             try {
                 manifestSessionEjb.accessionScan(sessionOfScan2.getManifestSessionId(), sampleId);
@@ -535,6 +594,10 @@ public class ManifestSessionContainerTest extends Arquillian {
             }
         }
 
+        /*
+         * mimic the user scanning the tube(s) for the record(s) that contain mismatched gender
+         *
+         */
         sessionOfScan2 = manifestSessionDao.find(acceptedSession2.getManifestSessionId());
         for (String sampleId : secondUploadPatientsWithMismatchedGender) {
             manifestSessionEjb.accessionScan(sessionOfScan2.getManifestSessionId(), sampleId);
@@ -546,6 +609,10 @@ public class ManifestSessionContainerTest extends Arquillian {
             assertThat(sessionOfScan2.hasErrors(), is(true));
         }
 
+
+        /*
+         * mimic the user preparing to close the session and getting a summary of events that occurred.
+         */
         ManifestStatus sessionStatus2 = manifestSessionEjb.getSessionStatus(sessionOfScan2.getManifestSessionId());
 
         assertThat(sessionStatus2, is(notNullValue()));
@@ -554,6 +621,10 @@ public class ManifestSessionContainerTest extends Arquillian {
         assertThat(sessionStatus2.getSamplesEligibleInManifest(), is(21));
         assertThat(sessionStatus2.getErrorMessages().size(), is(3));
 
+
+        /*
+         * Mimic the user closing the session
+         */
         manifestSessionEjb.closeSession(sessionOfScan2.getManifestSessionId());
         ManifestSession closedSession2 = manifestSessionDao.find(sessionOfScan2.getManifestSessionId());
 
@@ -568,10 +639,12 @@ public class ManifestSessionContainerTest extends Arquillian {
             if (secondUploadedSamplesDupes.contains(manifestRecord.getSampleId())) {
                 assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.UPLOADED));
                 assertThat(manifestRecord.getManifestEvents().size(), is(1));
-                assertThat(manifestRecord.getManifestEvents(), hasEventError(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID));
+                assertThat(manifestRecord.getManifestEvents(),
+                        hasEventError(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID));
             } else if (secondUploadPatientsWithMismatchedGender.contains(manifestRecord.getSampleId())) {
                 assertThat(manifestRecord.getManifestEvents().size(), is(1));
-                assertThat(manifestRecord.getManifestEvents(), hasEventError(ManifestRecord.ErrorStatus.MISMATCHED_GENDER));
+                assertThat(manifestRecord.getManifestEvents(),
+                        hasEventError(ManifestRecord.ErrorStatus.MISMATCHED_GENDER));
                 assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.ACCESSIONED));
             } else {
                 assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.ACCESSIONED));
@@ -582,6 +655,9 @@ public class ManifestSessionContainerTest extends Arquillian {
 
         assertThat(closedSessions2, Matchers.hasItem(closedSession2));
 
+        /*
+         * mimic the user performing the tube transfer
+         */
         for (String sourceSampleToTest : secondUploadedSamplesGood) {
 
             ManifestRecord manifestRecord = manifestSessionEjb
@@ -623,6 +699,10 @@ public class ManifestSessionContainerTest extends Arquillian {
 
             assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE));
         }
+
+        /*
+         * mimic the user attempting to "Accidentally" perform tube transfer on the duplicate tubes
+         */
         for (String sourceSampleToTest : secondUploadedSamplesDupes) {
 
             try {
