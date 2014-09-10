@@ -430,7 +430,8 @@ public class ManifestSessionContainerTest extends Arquillian {
          *  also contain one record that shares a patient ID with the first manifest but the gender is listed
          *  differently
          */
-
+        int NUM_DUPLICATES_IN_SESSION_2 = 2;
+        int NUM_MISMATCHED_GENDERS_IN_SESSION_2 = 1;
         manifestSessionDao.clear();
 
         /*
@@ -529,7 +530,7 @@ public class ManifestSessionContainerTest extends Arquillian {
                 manifestSessionEjb.accessionScan(sessionOfScan2.getManifestSessionId(), sampleId);
                 Assert.fail();
             } catch (Exception e) {
-                assertThat(e.getMessage(), Matchers.containsString(
+                assertThat(e.getMessage(), containsString(
                         ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getBaseMessage()));
             }
         }
@@ -545,7 +546,7 @@ public class ManifestSessionContainerTest extends Arquillian {
             ManifestRecord sourceToTest = sessionOfScan2.findRecordByCollaboratorId(sampleId);
 
             assertThat(sourceToTest.getStatus(), is(ManifestRecord.Status.SCANNED));
-            assertThat(sourceToTest.getManifestEvents(), hasSize(1));
+            assertThat(sourceToTest.getManifestEvents(), hasSize(NUM_MISMATCHED_GENDERS_IN_SESSION_2));
             assertThat(sessionOfScan2.hasErrors(), is(true));
         }
 
@@ -556,9 +557,9 @@ public class ManifestSessionContainerTest extends Arquillian {
 
         assertThat(sessionStatus2, is(notNullValue()));
         assertThat(sessionStatus2.getSamplesInManifest(), is(NUM_RECORDS_IN_SPREADSHEET));
-        assertThat(sessionStatus2.getSamplesSuccessfullyScanned(), is(21));
-        assertThat(sessionStatus2.getSamplesEligibleInManifest(), is(21));
-        assertThat(sessionStatus2.getErrorMessages(), hasSize(3));
+        assertThat(sessionStatus2.getSamplesSuccessfullyScanned(), is(NUM_RECORDS_IN_SPREADSHEET - NUM_DUPLICATES_IN_SESSION_2));
+        assertThat(sessionStatus2.getSamplesEligibleInManifest(), is(NUM_RECORDS_IN_SPREADSHEET - NUM_DUPLICATES_IN_SESSION_2));
+        assertThat(sessionStatus2.getErrorMessages(), hasSize(NUM_DUPLICATES_IN_SESSION_2 + NUM_MISMATCHED_GENDERS_IN_SESSION_2));
 
         /*
          * Mimic the user closing the session
@@ -569,7 +570,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         assertThat(closedSession2, is(notNullValue()));
 
         assertThat(closedSession2.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
-        assertThat(closedSession2.getManifestEvents(), hasSize(3));
+        assertThat(closedSession2.getManifestEvents(), hasSize(NUM_DUPLICATES_IN_SESSION_2 + NUM_MISMATCHED_GENDERS_IN_SESSION_2));
         assertThat(closedSession2.getManifestEvents(), hasEventError(ManifestRecord.ErrorStatus.MISMATCHED_GENDER));
         assertThat(closedSession2.getManifestEvents(), hasEventError(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID));
 
@@ -591,7 +592,7 @@ public class ManifestSessionContainerTest extends Arquillian {
 
         List<ManifestSession> closedSessions2 = manifestSessionDao.findClosedSessions();
 
-        assertThat(closedSessions2, Matchers.hasItem(closedSession2));
+        assertThat(closedSessions2, hasItem(closedSession2));
 
         /*
          * mimic the user performing the tube transfer

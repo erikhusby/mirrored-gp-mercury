@@ -187,17 +187,15 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestTestFactory.addRecord(holder.manifestSession, errorStatus, status,
                 ImmutableMap.of(key1, value1, key2, value2, key3, value3));
     }
+
     /**
-     * helper method to initialize the EJ and session used for testing based on parameters.  This version is called if
-     * the user wants a new Research Project Created
+     * Helper method to initialize the EJB and session used for testing.
      *
      * @param initialStatus   Initial status for all the manifest records created
      * @param numberOfRecords the number of initial manifest records to create
      *
-     * @return A new instance of EJB and Holder class (which holds a manifest session ejb and
-     * session
-     *
-     * @throws Exception
+     * @return A new instance of EJB and Holder class (which holds a ManifestSessionEjb and
+     * ManifestSession)
      */
     private ManifestSessionAndEjbHolder buildHolderForSession(ManifestRecord.Status initialStatus, int numberOfRecords)
             throws Exception {
