@@ -33,14 +33,12 @@ public enum ManifestHeader implements ColumnHeader {
     private final String text;
     private final int index;
     private final Metadata.Key metadataKey;
-    private final boolean requiredHeader;
     private final boolean requiredValue;
 
     ManifestHeader(String text, int index, Metadata.Key metadataKey, boolean requiredValue) {
         this.text = text;
         this.index = index;
         this.metadataKey = metadataKey;
-        this.requiredHeader = ColumnHeader.REQUIRED_HEADER;
         this.requiredValue = requiredValue;
     }
 
@@ -79,7 +77,7 @@ public enum ManifestHeader implements ColumnHeader {
 
     @Override
     public boolean isRequiredHeader() {
-        return requiredHeader;
+        return ColumnHeader.REQUIRED_HEADER;
     }
 
     @Override
