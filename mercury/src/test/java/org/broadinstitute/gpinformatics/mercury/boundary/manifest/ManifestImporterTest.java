@@ -33,9 +33,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestHeader.SPECIMEN_NUMBER;
-import static org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestHeader.fromColumnHeader;
-import static org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestHeader.fromMetadataKey;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyCollectionOf;
@@ -95,7 +92,7 @@ public class ManifestImporterTest {
         validateManifestRecords(manifestImportProcessor);
         assertThat(manifestImportProcessor.getMessages(),
                 hasItem(String.format(ROW_NUMBER_PREFIX + TableProcessor.REQUIRED_VALUE_IS_MISSING, 1,
-                        SPECIMEN_NUMBER.getColumnHeader())));
+                        ManifestHeader.SPECIMEN_NUMBER.getColumnName())));
         assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
     }
 
@@ -158,13 +155,13 @@ public class ManifestImporterTest {
         Map<String, String> manifestRow = new HashMap<>();
         for (ManifestRecord manifestRecord : manifestRecords) {
             for (Metadata metadata : manifestRecord.getMetadata()) {
-                ManifestHeader header = fromMetadataKey(metadata.getKey());
-                manifestRow.put(header.getColumnHeader(), metadata.getValue());
+                ManifestHeader header = ManifestHeader.fromMetadataKey(metadata.getKey());
+                manifestRow.put(header.getColumnName(), metadata.getValue());
             }
             PoiSpreadsheetValidator.validateSpreadsheetRow(manifestRow, ManifestHeader.class);
             for (Map.Entry<String, String> manifestCell : manifestRow.entrySet()) {
                 String value = manifestCell.getValue();
-                switch (fromColumnHeader(manifestCell.getKey())) {
+                switch (ManifestHeader.fromColumnName(manifestCell.getKey())) {
                 case TUMOR_OR_NORMAL:
                     assertThat(value, isOneOf("Tumor", "Normal"));
                     break;

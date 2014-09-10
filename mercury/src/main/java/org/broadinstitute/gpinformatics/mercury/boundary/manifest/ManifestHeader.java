@@ -24,7 +24,7 @@ import java.util.Map;
  */
 public enum ManifestHeader implements ColumnHeader {
     SPECIMEN_NUMBER("Specimen_Number", 0, Metadata.Key.SAMPLE_ID, ColumnHeader.REQUIRED_VALUE),
-    SEX("Sex", 2, Metadata.Key.GENDER, ColumnHeader.OPTIONAL_VALUE),
+    SEX("Sex", 2, Metadata.Key.GENDER, ColumnHeader.REQUIRED_VALUE),
     PATIENT_ID("Patient_ID", 1, Metadata.Key.PATIENT_ID, ColumnHeader.REQUIRED_VALUE),
     COLLECTION_DATE("Collection_Date", 3, Metadata.Key.BUICK_COLLECTION_DATE,
             ColumnHeader.OPTIONAL_VALUE),
@@ -66,7 +66,7 @@ public enum ManifestHeader implements ColumnHeader {
         return text;
     }
 
-    public String getColumnHeader() {
+    public String getColumnName() {
         return text;
     }
 
@@ -108,11 +108,11 @@ public enum ManifestHeader implements ColumnHeader {
      *
      * @return Collection of ColumnHeaders for the columnNames
      */
-    static Collection<? extends ColumnHeader> fromColumnHeader(List<String> errors, String... columnNames) {
+    static Collection<? extends ColumnHeader> fromColumnName(List<String> errors, String... columnNames) {
         List<ManifestHeader> matches = new ArrayList<>();
         for (String columnName : columnNames) {
             try {
-                matches.add(ManifestHeader.fromColumnHeader(columnName));
+                matches.add(ManifestHeader.fromColumnName(columnName));
             } catch (EnumConstantNotPresentException e) {
                 errors.add(e.constantName());
             }
@@ -129,9 +129,9 @@ public enum ManifestHeader implements ColumnHeader {
      *
      * @throws EnumConstantNotPresentException if enum does not exist for columnHeader.
      */
-    public static ManifestHeader fromColumnHeader(String columnHeader) {
+    public static ManifestHeader fromColumnName(String columnHeader) {
         for (ManifestHeader manifestHeader : ManifestHeader.values()) {
-            if (manifestHeader.getColumnHeader().equals(columnHeader)) {
+            if (manifestHeader.getColumnName().equals(columnHeader)) {
                 return manifestHeader;
             }
         }
@@ -165,7 +165,7 @@ public enum ManifestHeader implements ColumnHeader {
     public static Metadata[] toMetadata(Map<String, String> dataRow) {
         List<Metadata> metadata = new ArrayList<>(dataRow.size());
         for (Map.Entry<String, String> columnEntry : dataRow.entrySet()) {
-            ManifestHeader header = ManifestHeader.fromColumnHeader(columnEntry.getKey());
+            ManifestHeader header = ManifestHeader.fromColumnName(columnEntry.getKey());
             metadata.add(new Metadata(header.getMetadataKey(), columnEntry.getValue()));
         }
         return metadata.toArray(new Metadata[metadata.size()]);

@@ -51,7 +51,7 @@ public class ManifestImportProcessorTest {
         ManifestHeader[] values = ManifestHeader.values();
         for (int i = 0; i < values.length; i++) {
             ManifestHeader manifestHeader = values[i];
-            allHeaders[i] = manifestHeader.getColumnHeader();
+            allHeaders[i] = manifestHeader.getColumnName();
         }
 
         assertThat(processor.getHeaderNames(), containsInAnyOrder(allHeaders));
@@ -69,7 +69,7 @@ public class ManifestImportProcessorTest {
         processor.processHeader(new ArrayList<>(dataRow.keySet()), 0);
         List<String> allHeaders = new ArrayList<>();
         for (ManifestHeader manifestHeader : ManifestHeader.values()) {
-            allHeaders.add(manifestHeader.getColumnHeader());
+            allHeaders.add(manifestHeader.getColumnName());
         }
 
         assertThat(processor.getHeaderNames(), containsInAnyOrder(allHeaders.toArray()));
@@ -81,10 +81,10 @@ public class ManifestImportProcessorTest {
         assertThat(processor.getMessages(), is(empty()));
         for (ManifestRecord manifestRecord : processor.getManifestRecords()) {
             List<Metadata> expectedMetadata = new ArrayList<>();
-            for (Map.Entry<String, String> stringStringEntry : dataRow.entrySet()) {
+            for (Map.Entry<String, String> dataRowEntry : dataRow.entrySet()) {
                 expectedMetadata
-                        .add(new Metadata(ManifestHeader.fromColumnHeader(stringStringEntry.getKey()).getMetadataKey(),
-                                stringStringEntry.getValue()));
+                        .add(new Metadata(ManifestHeader.fromColumnName(dataRowEntry.getKey()).getMetadataKey(),
+                                dataRowEntry.getValue()));
             }
             assertThat(manifestRecord.getMetadata().toArray(), arrayContainingInAnyOrder(expectedMetadata.toArray()));
         }
@@ -109,12 +109,12 @@ public class ManifestImportProcessorTest {
 
     private Map<String, String> makeDataRow() {
         Map<String, String> dataRow = new HashMap<>();
-        dataRow.put(ManifestHeader.SPECIMEN_NUMBER.getColumnHeader(), "03101231193");
-        dataRow.put(ManifestHeader.PATIENT_ID.getColumnHeader(), "004-002");
-        dataRow.put(ManifestHeader.SEX.getColumnHeader(), "");
-        dataRow.put(ManifestHeader.VISIT.getColumnHeader(), "Screening");
-        dataRow.put(ManifestHeader.COLLECTION_DATE.getColumnHeader(), "10-Oct-1841");
-        dataRow.put(ManifestHeader.TUMOR_OR_NORMAL.getColumnHeader(), "Tumor");
+        dataRow.put(ManifestHeader.SPECIMEN_NUMBER.getColumnName(), "03101231193");
+        dataRow.put(ManifestHeader.PATIENT_ID.getColumnName(), "004-002");
+        dataRow.put(ManifestHeader.SEX.getColumnName(), "");
+        dataRow.put(ManifestHeader.VISIT.getColumnName(), "Screening");
+        dataRow.put(ManifestHeader.COLLECTION_DATE.getColumnName(), "10-Oct-1841");
+        dataRow.put(ManifestHeader.TUMOR_OR_NORMAL.getColumnName(), "Tumor");
 
         return dataRow;
     }

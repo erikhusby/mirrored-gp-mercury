@@ -64,7 +64,7 @@ public class ManifestImportProcessor extends TableProcessor {
         }
 
         Collection<? extends ColumnHeader> foundHeaders =
-                ManifestHeader.fromColumnHeader(errors, headers.toArray(new String[headers.size()]));
+                ManifestHeader.fromColumnName(errors, headers.toArray(new String[headers.size()]));
         columnHeaders = foundHeaders.toArray(new ColumnHeader[foundHeaders.size()]);
         if (!errors.isEmpty()) {
             addDataMessage(String.format(UNKNOWN_HEADER_FORMAT, errors), row);
