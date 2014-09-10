@@ -416,7 +416,7 @@ public class ManifestSessionEjbDBFreeTest {
         });
         ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao,
                 labVesselDao);
-        ManifestSession manifestSession = ejb.loadManifestSession(TEST_MANIFEST_SESSION_ID);
+        ManifestSession manifestSession = manifestSessionDao.find(TEST_MANIFEST_SESSION_ID);
         assertThat(manifestSession, is(notNullValue()));
         assertThat(manifestSession.getManifestSessionId(), is(TEST_MANIFEST_SESSION_ID));
     }
@@ -424,7 +424,7 @@ public class ManifestSessionEjbDBFreeTest {
     public void loadManifestSessionFailure() {
         ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao,
                 labVesselDao);
-        ManifestSession manifestSession = ejb.loadManifestSession(ARBITRARY_MANIFEST_SESSION_ID);
+        ManifestSession manifestSession = manifestSessionDao.find(ARBITRARY_MANIFEST_SESSION_ID);
         assertThat(manifestSession, is(nullValue()));
     }
 

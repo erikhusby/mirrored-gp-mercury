@@ -67,10 +67,30 @@ public class ManifestSessionEjb {
     }
 
     /* package private */
+
+    /**
+     * Helper method to extract just the file name (without extension) from a file path
+     *
+     * @param filename  full file path of a file for upload
+     * @return  the file name without extension
+     */
     String extractPrefixFromFilename(String filename) {
         return FilenameUtils.getBaseName(filename);
     }
 
+    /**
+     * Encapsulates the logic to process a clinical Manifest file for the purpose of starting the accessioning
+     * process for a set of received samples
+     *
+     * @param researchProjectKey    The business key of an existing research project to which the created
+     *                              accessioning session is to be associated
+     * @param inputStream           File Input stream that contains the manifest being uploaded
+     * @param pathToFile            Full path of the manifest as it was uploaded.  This is used to extract the
+     *                              manifest name which will help to identify the accessioning session
+     * @param bspUser               represents the user that is initiating the manifest upload
+     *
+     * @return  the newly created manifest session
+     */
     public ManifestSession uploadManifest(String researchProjectKey, InputStream inputStream, String pathToFile,
                                           BSPUserList.QADudeUser bspUser) {
         ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
@@ -107,12 +127,13 @@ public class ManifestSessionEjb {
         return manifestSession;
     }
 
-    public ManifestSession loadManifestSession(long manifestSessionId) {
-        return manifestSessionDao.find(manifestSessionId);
-    }
-
+    /**
+     * Encapsulates the logic to execute a users request to mark a given manifest as being accepted
+     *
+     * @param manifestSessionId     Database ID of the session which should be accepted
+     */
     public void acceptManifestUpload(long manifestSessionId) {
-        ManifestSession manifestSession = loadManifestSession(manifestSessionId);
+        ManifestSession manifestSession = manifestSessionDao.find(manifestSessionId);
         if (manifestSession == null) {
             throw new InformaticsServiceException("Unrecognized Manifest Session ID: " + manifestSessionId);
         }
@@ -120,6 +141,11 @@ public class ManifestSessionEjb {
         manifestSessionDao.persist(manifestSession);
     }
 
+    /**
+     * Encapsulates the logic to provide a user with the status of an accessioning session at a given point in time
+     * @param manifestSessionId     Database ID of the session which should be accepted
+     * @return
+     */
     public ManifestStatus getSessionStatus(long manifestSessionId) {
         ManifestSession manifestSession = manifestSessionDao.find(manifestSessionId);
         if(manifestSession == null ) {
@@ -130,6 +156,12 @@ public class ManifestSessionEjb {
 
     }
 
+    /**
+     * Encapsulates the logic to perform when a user initiates a scan of a source clinical sample against an
+     * accessioning session
+     * @param manifestSessionId     Database ID of the session which should be accepted
+     * @param collaboratorSampleId  sample identifier for a source clinical sample
+     */
     public void accessionScan(long manifestSessionId, String collaboratorSampleId) {
         ManifestSession manifestSession = manifestSessionDao.find(manifestSessionId);
 
@@ -159,6 +191,11 @@ public class ManifestSessionEjb {
         manifestSessionDao.persist(manifestSession);
     }
 
+    /**
+     * Encapsulates the logic to perform when a user intends to close an accessioning session
+     *
+     * @param sessionId     Database ID of the session which should be accepted
+     */
     public void closeSession(long sessionId) {
 
         ManifestSession manifestSession = manifestSessionDao.find(sessionId);
@@ -169,6 +206,14 @@ public class ManifestSessionEjb {
 
     }
 
+    /**
+     * Encapsulates the logic needed to validate that a clinical source tube intended to be used for tube transfer
+     * is eligible.
+     *
+     * @param manifestSessionId     Database ID of the session which should be accepted
+     * @param sourceForTransfer     sample identifier for the source collaborator sample
+     * @return  The record on the session associated with the source identifier
+     */
     public ManifestRecord validateSourceTubeForTransfer(long manifestSessionId, String sourceForTransfer) {
 
         ManifestSession manifestSession = manifestSessionDao.find(manifestSessionId);
