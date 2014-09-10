@@ -14,12 +14,10 @@ public class ManifestStatus {
     private final Set<String> errorMessages = new HashSet<>();
 
     public ManifestStatus(int samplesInManifest, int samplesEligibleInManifest, int samplesSuccessfullyScanned) {
-
         this.samplesInManifest = samplesInManifest;
         this.samplesEligibleInManifest = samplesEligibleInManifest;
         this.samplesSuccessfullyScanned = samplesSuccessfullyScanned;
     }
-
 
     public int getSamplesInManifest() {
         return samplesInManifest;
@@ -34,7 +32,6 @@ public class ManifestStatus {
     }
 
     public void addError(String errorMessage) {
-
         errorMessages.add(errorMessage);
     }
 

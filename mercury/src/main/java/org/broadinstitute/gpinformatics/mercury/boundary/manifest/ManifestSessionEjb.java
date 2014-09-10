@@ -35,14 +35,14 @@ import java.util.List;
  */
 public class ManifestSessionEjb {
 
-    public static final String UNASSOCIATED_TUBE_SAMPLE_MESSAGE =
+    /* package private */ static final String UNASSOCIATED_TUBE_SAMPLE_MESSAGE =
             "The given target sample id is not associated with the given target vessel";
-    public static final String SAMPLE_NOT_FOUND_MESSAGE = ":: This sample ID is not found.";
-    public static final String SAMPLE_NOT_UNIQUE_MESSAGE = ":: This sample ID is not unique in Mercury";
-    public static final String SAMPLE_NOT_ELIGIBLE_FOR_CLINICAL_MESSAGE =
+    /* package private */ static final String SAMPLE_NOT_FOUND_MESSAGE = ":: This sample ID is not found.";
+    private static final String SAMPLE_NOT_UNIQUE_MESSAGE = ":: This sample ID is not unique in Mercury";
+    /* package private */ static final String SAMPLE_NOT_ELIGIBLE_FOR_CLINICAL_MESSAGE =
             ":: The sample found is not eligible for clinical work";
-    public static final String VESSEL_NOT_FOUND_MESSAGE = "::  The target vessel is not found";
-    public static final String VESSEL_USED_FOR_PREVIOUS_TRANSFER =
+    /* package private */ static final String VESSEL_NOT_FOUND_MESSAGE = "::  The target vessel is not found";
+    /* package private */ static final String VESSEL_USED_FOR_PREVIOUS_TRANSFER =
             ":: the target vessel has already been used for a tube transfer";
     private ManifestSessionDao manifestSessionDao;
 
