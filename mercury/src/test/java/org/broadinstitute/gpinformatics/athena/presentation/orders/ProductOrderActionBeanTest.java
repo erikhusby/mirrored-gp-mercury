@@ -599,7 +599,8 @@ public class ProductOrderActionBeanTest {
 
         Mockito.when(regulatoryInfoDao.findListByList(Mockito.eq(RegulatoryInfo.class),
                 Mockito.eq(RegulatoryInfo_.regulatoryInfoId), Mockito.anyCollection())).thenReturn(
-                (regulatoryInfo != null) ? Collections.singletonList(regulatoryInfo) : Collections.<RegulatoryInfo>emptyList());
+                (regulatoryInfo != null) ? Collections.singletonList(regulatoryInfo) :
+                        Collections.<RegulatoryInfo>emptyList());
         actionBean.setRegulatoryInfoDao(regulatoryInfoDao);
         actionBean.setSelectedRegulatoryIds(regInfoIds);
 
@@ -608,6 +609,42 @@ public class ProductOrderActionBeanTest {
         actionBean.validateRegulatoryInformation(action);
         Assert.assertEquals(actionBean.getValidationErrors().isEmpty(), expectedToPass);
     }
+
+    public void testRegulatoryInformationProjectHasNoIrbButParentDoes()
+            throws ParseException {
+        ResearchProject dummyParentProduct = ResearchProjectTestFactory.createTestResearchProject();
+        dummyParentProduct.setJiraTicketKey("rp-parent");
+        ResearchProject dummyChildProduct = ResearchProjectTestFactory.createTestResearchProject();
+        dummyChildProduct.setJiraTicketKey("rp-child");
+        dummyChildProduct.getRegulatoryInfos().clear();
+        RegulatoryInfo regulatoryInfoFromParent =
+                new RegulatoryInfo("IRB Consent", RegulatoryInfo.Type.IRB, new Date().toString());
+        dummyParentProduct.getRegulatoryInfos().clear();
+        dummyParentProduct.addRegulatoryInfo(regulatoryInfoFromParent);
+        dummyChildProduct.setParentResearchProject(dummyParentProduct);
+
+
+        ProductOrder productOrder = ProductOrderTestFactory.buildSampleInitiationProductOrder(2);
+        productOrder.setResearchProject(dummyChildProduct);
+
+        actionBean.setEditOrder(productOrder);
+        RegulatoryInfoDao regulatoryInfoDao = Mockito.mock(RegulatoryInfoDao.class);
+
+        Mockito.when(regulatoryInfoDao.findListByList(
+                Mockito.eq(RegulatoryInfo.class),
+                Mockito.eq(RegulatoryInfo_.regulatoryInfoId),
+                        Mockito.anyCollectionOf(Long.class)))
+                .thenReturn(Collections.singletonList(regulatoryInfoFromParent));
+        actionBean.setRegulatoryInfoDao(regulatoryInfoDao);
+        actionBean.setSelectedRegulatoryIds(Collections.singletonList(1234l));
+        actionBean.getEditOrder().setAttestationConfirmed(true);
+
+        actionBean.initRegulatoryParameter();
+
+        actionBean.validateRegulatoryInformation(ProductOrderActionBean.SAVE_ACTION);
+        Assert.assertTrue(actionBean.getValidationErrors().isEmpty());
+    }
+
 
     public static class RegulatoryInfoStub extends RegulatoryInfo {
 
