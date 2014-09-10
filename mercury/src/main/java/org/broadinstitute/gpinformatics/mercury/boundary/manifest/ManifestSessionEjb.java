@@ -144,7 +144,6 @@ public class ManifestSessionEjb {
     /**
      * Encapsulates the logic to provide a user with the status of an accessioning session at a given point in time
      * @param manifestSessionId     Database ID of the session which should be accepted
-     * @return
      */
     public ManifestStatus getSessionStatus(long manifestSessionId) {
         ManifestSession manifestSession = manifestSessionDao.find(manifestSessionId);

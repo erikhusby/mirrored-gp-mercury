@@ -14,7 +14,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matchers;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -29,10 +28,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestEventMatcher.hasEventError;
@@ -89,8 +86,6 @@ public class ManifestSessionContainerTest extends Arquillian {
     private BSPUserList.QADudeUser testUser = new BSPUserList.QADudeUser("PM", 5176L);
     private String UPLOADED_COLLABORATOR_SESSION_1 = "03101067213";
     private String UPLOADED_PATIENT_ID_SESSION_1 = "001-001";
-
-    private Set<Long> sessionsToDelete;
 
     private List<String> firstUploadedScannedSamples =
             Arrays.asList("03101231193", "03101067213", "03101214167", "03101067211", "03101989209", "03101947686",
@@ -186,8 +181,6 @@ public class ManifestSessionContainerTest extends Arquillian {
         manifestSessionII.addRecord(manifestRecordII5);
         manifestSessionII.addRecord(manifestRecordII6);
 
-        sessionsToDelete = new HashSet<>();
-
         Date today = new Date();
 
         sourceSampleToMercurySample = new HashMap<>();
@@ -221,12 +214,10 @@ public class ManifestSessionContainerTest extends Arquillian {
 
         assertThat(manifestSessionI.getResearchProject(), is(equalTo(researchProject)));
         assertThat(manifestSessionI.getManifestSessionId(), notNullValue());
-        sessionsToDelete.add(manifestSessionI.getManifestSessionId());
         assertThat(manifestSessionI.hasErrors(), is(equalTo(false)));
 
         assertThat(manifestSessionII.getResearchProject(), is(equalTo(researchProject)));
         assertThat(manifestSessionII.getManifestSessionId(), notNullValue());
-        sessionsToDelete.add(manifestSessionII.getManifestSessionId());
         assertThat(manifestSessionII.hasErrors(), is(equalTo(false)));
         assertThat(researchProject.getManifestSessions(), hasItems(manifestSessionI, manifestSessionII));
 
@@ -277,7 +268,6 @@ public class ManifestSessionContainerTest extends Arquillian {
 
         assertThat(uploadedSession, is(notNullValue()));
         assertThat(uploadedSession.getManifestSessionId(), is(notNullValue()));
-        sessionsToDelete.add(uploadedSession.getManifestSessionId());
         assertThat(uploadedSession.hasErrors(), is(false));
         assertThat(uploadedSession.getResearchProject(), is(equalTo(researchProject)));
         assertThat(uploadedSession.getRecords(), hasSize(NUM_RECORDS_IN_SPREADSHEET));
@@ -401,7 +391,8 @@ public class ManifestSessionContainerTest extends Arquillian {
 
             String sourceSampleLabel = sourceSampleToTargetVessel.get(sourceSampleToTest).getLabel();
 
-            LabVessel targetVessel = manifestSessionEjb.validateTargetSampleAndVessel(sourceSampleKey, sourceSampleLabel);
+            LabVessel targetVessel =
+                    manifestSessionEjb.validateTargetSampleAndVessel(sourceSampleKey, sourceSampleLabel);
             assertThat(targetVessel, is(notNullValue()));
 
             MercurySample mercurySample = sourceSampleToMercurySample.get(sourceSampleToTest);
@@ -432,13 +423,13 @@ public class ManifestSessionContainerTest extends Arquillian {
         String omittedScanSampleKey = sourceSampleToMercurySample.get(firstUploadedOmittedScan).getSampleKey();
         String omittedScanSampleLabel = sourceSampleToTargetVessel.get(firstUploadedOmittedScan).getLabel();
 
-        MercurySample targetSampleForOmitted = manifestSessionEjb.validateTargetSample(omittedScanSampleKey);
-        assertThat(targetSampleForOmitted, is(notNullValue()));
+        MercurySample targetSampleForOmittedScan = manifestSessionEjb.validateTargetSample(omittedScanSampleKey);
+        assertThat(targetSampleForOmittedScan, is(notNullValue()));
 
-        LabVessel targetVesselForOmitted =
+        LabVessel targetVesselForOmittedScan =
                 manifestSessionEjb.validateTargetSampleAndVessel(omittedScanSampleKey, omittedScanSampleLabel);
 
-        assertThat(targetVesselForOmitted, is(notNullValue()));
+        assertThat(targetVesselForOmittedScan, is(notNullValue()));
 
         try {
             manifestSessionEjb.transferSample(closedSession.getManifestSessionId(), firstUploadedOmittedScan,
@@ -470,7 +461,6 @@ public class ManifestSessionContainerTest extends Arquillian {
 
         assertThat(uploadedSession2, is(notNullValue()));
         assertThat(uploadedSession2.getManifestSessionId(), is(notNullValue()));
-        sessionsToDelete.add(uploadedSession2.getManifestSessionId());
         assertThat(uploadedSession2.hasErrors(), is(true));
         assertThat(uploadedSession2.getResearchProject(), is(equalTo(rpSecondUpload)));
 
@@ -605,12 +595,12 @@ public class ManifestSessionContainerTest extends Arquillian {
                 assertThat(manifestRecord.getManifestEvents(), hasSize(1));
                 assertThat(manifestRecord.getManifestEvents(),
                         hasEventError(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID));
-            } else if (secondUploadPatientsWithMismatchedGender.contains(manifestRecord.getSampleId())) {
-                assertThat(manifestRecord.getManifestEvents(), hasSize(1));
-                assertThat(manifestRecord.getManifestEvents(),
-                        hasEventError(ManifestRecord.ErrorStatus.MISMATCHED_GENDER));
-                assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.ACCESSIONED));
             } else {
+                if (secondUploadPatientsWithMismatchedGender.contains(manifestRecord.getSampleId())) {
+                    assertThat(manifestRecord.getManifestEvents(), hasSize(1));
+                    assertThat(manifestRecord.getManifestEvents(),
+                            hasEventError(ManifestRecord.ErrorStatus.MISMATCHED_GENDER));
+                }
                 assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.ACCESSIONED));
             }
         }
@@ -633,14 +623,14 @@ public class ManifestSessionContainerTest extends Arquillian {
             assertThat(targetSample, is(notNullValue()));
             String sourceSampleLabel = sourceSampleToTargetVessel.get(sourceSampleToTest).getLabel();
 
-            LabVessel targetVessel = manifestSessionEjb.validateTargetSampleAndVessel(sourceSampleKey, sourceSampleLabel);
+            LabVessel targetVessel =
+                    manifestSessionEjb.validateTargetSampleAndVessel(sourceSampleKey, sourceSampleLabel);
             assertThat(targetVessel, is(notNullValue()));
 
             manifestSessionEjb.transferSample(closedSession2.getManifestSessionId(), sourceSampleToTest,
                     sourceSampleKey, sourceSampleLabel, testUser);
 
             assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE));
-
         }
 
         for (String sourceSampleToTest : secondUploadPatientsWithMismatchedGender) {
@@ -652,7 +642,8 @@ public class ManifestSessionContainerTest extends Arquillian {
             MercurySample targetSample = manifestSessionEjb.validateTargetSample(sourceSampleKey);
             assertThat(targetSample, is(notNullValue()));
             String sourceSampleLabel = sourceSampleToTargetVessel.get(sourceSampleToTest).getLabel();
-            LabVessel targetVessel = manifestSessionEjb.validateTargetSampleAndVessel(sourceSampleKey, sourceSampleLabel);
+            LabVessel targetVessel =
+                    manifestSessionEjb.validateTargetSampleAndVessel(sourceSampleKey, sourceSampleLabel);
             assertThat(targetVessel, is(notNullValue()));
 
             manifestSessionEjb.transferSample(closedSession2.getManifestSessionId(), sourceSampleToTest,
@@ -665,7 +656,6 @@ public class ManifestSessionContainerTest extends Arquillian {
          * mimic the user accidentally performing tube transfer on the duplicate tubes
          */
         for (String sourceSampleToTest : secondUploadedSamplesDupes) {
-
             try {
                 manifestSessionEjb
                         .validateSourceTubeForTransfer(closedSession2.getManifestSessionId(), sourceSampleToTest);
