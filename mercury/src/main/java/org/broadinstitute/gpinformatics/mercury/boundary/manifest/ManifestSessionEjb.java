@@ -94,7 +94,12 @@ public class ManifestSessionEjb {
                     "Error reading manifest file '%s'.  Manifest files must be in the proper Excel format.",
                     e, FilenameUtils.getName(pathToFile));
         }
-        Collection<ManifestRecord> manifestRecords = manifestImportProcessor.getManifestRecords();
+        Collection<ManifestRecord> manifestRecords = null;
+        try {
+            manifestRecords = manifestImportProcessor.getManifestRecords();
+        } catch (ValidationException e) {
+            throw new InformaticsServiceException(e);
+        }
         ManifestSession manifestSession = new ManifestSession(researchProject, prefix, bspUser);
         manifestSessionDao.persist(manifestSession);
         manifestSession.addRecords(manifestRecords);
