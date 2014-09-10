@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
@@ -166,17 +167,19 @@ public class ManifestSessionContainerTest extends Arquillian {
                 new Metadata(Metadata.Key.GENDER, GENDER_MALE),
                 new Metadata(Metadata.Key.PATIENT_ID, PATIENT_1 + "12"));
 
-        manifestSessionI.addRecord(manifestRecordII1);
-        manifestSessionI.addRecord(manifestRecordII2);
-        manifestSessionI.addRecord(manifestRecordII3);
-        manifestSessionI.addRecord(manifestRecordII4);
-        manifestSessionI.addRecord(manifestRecordII5);
-        manifestSessionI.addRecord(manifestRecordII6);
+        manifestSessionII.addRecord(manifestRecordII1);
+        manifestSessionII.addRecord(manifestRecordII2);
+        manifestSessionII.addRecord(manifestRecordII3);
+        manifestSessionII.addRecord(manifestRecordII4);
+        manifestSessionII.addRecord(manifestRecordII5);
+        manifestSessionII.addRecord(manifestRecordII6);
 
         UPLOADED_COLLABORATOR_SESSION_1 = "03101067213";
         UPLOADED_PATIENT_ID_SESSION_1 = "001-001";
 
         sessionsToDelete = new HashSet<>();
+
+        Date today = new Date();
 
         firstUploadedSessionSamples =
                 Arrays.asList("03101231193", "03101067213", "03101214167", "03101067211", "03101989209", "03101947686",
@@ -199,37 +202,37 @@ public class ManifestSessionContainerTest extends Arquillian {
         sourceSampleToTargetVessel = new HashMap<>();
 
         for (String sourceSample : firstUploadedSessionSamples) {
-            sourceSampleToMercurySample.put(sourceSample, new MercurySample("SM_" + sourceSample,
+            sourceSampleToMercurySample.put(sourceSample, new MercurySample("SM_" + sourceSample + today.getTime(),
                     MercurySample.MetadataSource.MERCURY));
-            sourceSampleToTargetVessel.put(sourceSample, new BarcodedTube("A0" + sourceSample,
+            sourceSampleToTargetVessel.put(sourceSample, new BarcodedTube("A0" + sourceSample + today.getTime(),
                     BarcodedTube.BarcodedTubeType.MatrixTube2mL));
             sourceSampleToTargetVessel.get(sourceSample).addSample(sourceSampleToMercurySample.get(sourceSample));
         }
         for (String sourceSample : secondUploadedSamplesDupes) {
-            sourceSampleToMercurySample.put(sourceSample, new MercurySample("SM_" + sourceSample,
+            sourceSampleToMercurySample.put(sourceSample, new MercurySample("SM_" + sourceSample + today.getTime(),
                     MercurySample.MetadataSource.MERCURY));
-            sourceSampleToTargetVessel.put(sourceSample, new BarcodedTube("A0" + sourceSample,
+            sourceSampleToTargetVessel.put(sourceSample, new BarcodedTube("A0" + sourceSample + today.getTime(),
                     BarcodedTube.BarcodedTubeType.MatrixTube2mL));
             sourceSampleToTargetVessel.get(sourceSample).addSample(sourceSampleToMercurySample.get(sourceSample));
         }
         for (String sourceSample : secondUploadedSamplesGood) {
-            sourceSampleToMercurySample.put(sourceSample, new MercurySample("SM_" + sourceSample,
+            sourceSampleToMercurySample.put(sourceSample, new MercurySample("SM_" + sourceSample + today.getTime(),
                     MercurySample.MetadataSource.MERCURY));
-            sourceSampleToTargetVessel.put(sourceSample, new BarcodedTube("A0" + sourceSample,
+            sourceSampleToTargetVessel.put(sourceSample, new BarcodedTube("A0" + sourceSample + today.getTime(),
                     BarcodedTube.BarcodedTubeType.MatrixTube2mL));
             sourceSampleToTargetVessel.get(sourceSample).addSample(sourceSampleToMercurySample.get(sourceSample));
         }
         for (String sourceSample : secondUploadPatientsWithMismatchedGender) {
-            sourceSampleToMercurySample.put(sourceSample, new MercurySample("SM_" + sourceSample,
+            sourceSampleToMercurySample.put(sourceSample, new MercurySample("SM_" + sourceSample + today.getTime(),
                     MercurySample.MetadataSource.MERCURY));
-            sourceSampleToTargetVessel.put(sourceSample, new BarcodedTube("A0" + sourceSample,
+            sourceSampleToTargetVessel.put(sourceSample, new BarcodedTube("A0" + sourceSample + today.getTime(),
                     BarcodedTube.BarcodedTubeType.MatrixTube2mL));
             sourceSampleToTargetVessel.get(sourceSample).addSample(sourceSampleToMercurySample.get(sourceSample));
         }
 
-        sourceSampleToMercurySample.put(firstUplaodedOmittedScan, new MercurySample("SM_" + firstUplaodedOmittedScan,
+        sourceSampleToMercurySample.put(firstUplaodedOmittedScan, new MercurySample("SM_" + firstUplaodedOmittedScan + today.getTime(),
                 MercurySample.MetadataSource.MERCURY));
-        sourceSampleToTargetVessel.put(firstUplaodedOmittedScan, new BarcodedTube("A0" + firstUplaodedOmittedScan,
+        sourceSampleToTargetVessel.put(firstUplaodedOmittedScan, new BarcodedTube("A0" + firstUplaodedOmittedScan + today.getTime(),
                 BarcodedTube.BarcodedTubeType.MatrixTube2mL));
         sourceSampleToTargetVessel.get(firstUplaodedOmittedScan).addSample(
                 sourceSampleToMercurySample.get(firstUplaodedOmittedScan));
@@ -249,15 +252,15 @@ public class ManifestSessionContainerTest extends Arquillian {
 
         //Persist Everything
         manifestSessionDao.persist(manifestSessionI);
-
+        manifestSessionDao.flush();
 
         assertThat(manifestSessionI.getResearchProject(), is(equalTo(researchProject)));
-        assertThat(manifestSessionI.getManifestSessionId(), is(not(null)));
+        assertThat(manifestSessionI.getManifestSessionId(), notNullValue());
         sessionsToDelete.add(manifestSessionI.getManifestSessionId());
         assertThat(manifestSessionI.hasErrors(), is(equalTo(false)));
 
         assertThat(manifestSessionII.getResearchProject(), is(equalTo(researchProject)));
-        assertThat(manifestSessionII.getManifestSessionId(), is(not(null)));
+        assertThat(manifestSessionII.getManifestSessionId(), notNullValue());
         sessionsToDelete.add(manifestSessionII.getManifestSessionId());
         assertThat(manifestSessionII.hasErrors(), is(equalTo(false)));
         assertThat(researchProject.getManifestSessions(), hasItems(manifestSessionI, manifestSessionII));
@@ -270,7 +273,7 @@ public class ManifestSessionContainerTest extends Arquillian {
                 manifestSessionDao.findById(ManifestSession.class, manifestSessionI.getManifestSessionId());
 
         assertThat(manifestSessionI.getRecords().size(), is(equalTo(manifestSessionOut.getRecords().size())));
-        assertThat(manifestSessionOut.getRecords().size(), is(equalTo(1)));
+        assertThat(manifestSessionOut.getRecords().size(), is(equalTo(6)));
 
         // Get the sole 'out' ManifestRecord for comparison with the sole 'in' ManifestRecord.
         //Just to make sure the annotations are correct
@@ -297,7 +300,7 @@ public class ManifestSessionContainerTest extends Arquillian {
 
         researchProjectDao.persist(researchProject);
 
-        String pathToTestFile1 = "manifest-upload/duplicates/good-manifest-1.xlsx";
+        String pathToTestFile1 = TestUtils.getTestData("manifest-upload/duplicates/good-manifest-1.xlsx");
         FileInputStream testStream = new FileInputStream(pathToTestFile1);
 
         ManifestSession uploadedSession =
@@ -419,7 +422,7 @@ public class ManifestSessionContainerTest extends Arquillian {
 
         manifestSessionDao.clear();
 
-        String pathToTestFile2 = "manifest-upload/duplicates/good-manifest-1.xlsx";
+        String pathToTestFile2 = TestUtils.getTestData("manifest-upload/duplicates/good-manifest-1.xlsx");
         FileInputStream testStream2 = new FileInputStream(pathToTestFile2);
         ResearchProject rpSecondUpload = researchProjectDao.findByBusinessKey(researchProject.getBusinessKey());
         ManifestSession uploadedSession2 =
