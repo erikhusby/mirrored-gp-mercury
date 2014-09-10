@@ -1831,6 +1831,11 @@ public abstract class LabVessel implements Serializable {
         }
     }
 
+    /**
+     * Allows the caller to determine if the current vessel or any of its ancestors have been involved in a tube
+     * transfer for clinical work
+     * @return true if the vessel is affiliated with clinical work
+     */
     public boolean hasBeenUsedForClinical() {
 
         if (isEventPresent(getEvents(), LabEventType.COLLABORATOR_TRANSFER)) {
@@ -1848,7 +1853,13 @@ public abstract class LabVessel implements Serializable {
         return false;
     }
 
-    private boolean isEventPresent(Set<LabEvent> allEvents, LabEventType targetEvent) {
+    /**
+     * Helper method to search a collection of events for the existence of a particular lab event
+     * @param allEvents     Collection of events in which to search for an event
+     * @param targetEvent   the specific event to look for
+     * @return  true if the event is present in the given collection
+     */
+    private boolean isEventPresent(Collection<LabEvent> allEvents, LabEventType targetEvent) {
         for (LabEvent labEvent : allEvents) {
             if (labEvent.getLabEventType() == targetEvent) {
                 return true;

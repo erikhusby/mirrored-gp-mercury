@@ -144,6 +144,7 @@ public class ManifestSessionEjb {
     /**
      * Encapsulates the logic to provide a user with the status of an accessioning session at a given point in time
      * @param manifestSessionId     Database ID of the session which should be accepted
+     * @return  the constructed status of the session at the requested moment in time
      */
     public ManifestStatus getSessionStatus(long manifestSessionId) {
         ManifestSession manifestSession = manifestSessionDao.find(manifestSessionId);
@@ -220,6 +221,12 @@ public class ManifestSessionEjb {
         return manifestSession.findRecordForTransfer(sourceForTransfer);
     }
 
+    /**
+     * Encapsulates the logic needed to determine if a given mercury sample can be used for clinical work
+     *
+     * @param targetSampleKey   The sample Key for the target mercury sample for the tube transfer
+     * @return  the desired mercury sample if it is both found and eligible
+     */
     public MercurySample validateTargetSample(String targetSampleKey) {
         Collection<MercurySample> targetSamples = mercurySampleDao.findBySampleKey(targetSampleKey);
 
@@ -243,6 +250,14 @@ public class ManifestSessionEjb {
         return foundTarget;
     }
 
+    /**
+     * Encapsulates the logic to determine if the combination of a sample and lab vessel can be used in an initial
+     * transfer of a collaborators sample for clinical work
+     *
+     * @param targetSampleKey       The sample Key for the target mercury sample for the tube transfer
+     * @param targetVesselLabel     The label of the lab vessel that should be associated with the given mercury sample
+     * @return  the referenced lab vessel if it is both found and eligible
+     */
     public LabVessel validateTargetSampleAndVessel(String targetSampleKey, String targetVesselLabel) {
 
         MercurySample foundSample = validateTargetSample(targetSampleKey);
@@ -250,6 +265,16 @@ public class ManifestSessionEjb {
         return findAndValidateTargetVessel(targetVesselLabel, foundSample);
     }
 
+    /**
+     * Helper method to determine target vessel and Sample viability.  Extracts the logic of finding the lab vessel
+     * to make this method available for re-use
+     *
+     * {@link #validateTargetSampleAndVessel(String, String)}
+     *
+     * @param targetVesselLabel      The label of the lab vessel that should be associated with the given mercury sample
+     * @param foundSample            The target mercury sample for the tube transfer
+     * @return  the referenced lab vessel if it is both found and eligible
+     */
     private LabVessel findAndValidateTargetVessel(String targetVesselLabel, MercurySample foundSample) {
         LabVessel foundVessel = labVesselDao.findByIdentifier(targetVesselLabel);
 
@@ -278,6 +303,15 @@ public class ManifestSessionEjb {
                 targetVesselLabel, "::\n" + UNASSOCIATED_TUBE_SAMPLE_MESSAGE);
     }
 
+    /**
+     * Encapsulates the logic necessary to informatically mark all relevant entities as having completed the tube
+     * transfer process
+     * @param manifestSessionId         Database ID of the session which is affiliated with this transfer
+     * @param sourceCollaboratorSample  sample identifier for a source clinical sample
+     * @param sampleKey                 The sample Key for the target mercury sample for the tube transfer
+     * @param vesselLabel               The label of the lab vessel that should be associated with the given mercury sample
+     * @param user                      represents the user that is initiating the manifest upload
+     */
     public void transferSample(long manifestSessionId, String sourceCollaboratorSample, String sampleKey,
                                String vesselLabel, BspUser user) {
         ManifestSession session = manifestSessionDao.find(manifestSessionId);
