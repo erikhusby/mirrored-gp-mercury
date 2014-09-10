@@ -2,12 +2,12 @@ package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestStatus;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 
 /**
- * TODO scottmat fill in javadoc!!!
+ * Tests if the argument has an error message consistent with one of the messages in the manifest event against which
+ * it is to be matched
  */
 public class ManifestEventMatcher extends BaseMatcher<Iterable<ManifestEvent>> {
 
@@ -25,7 +25,7 @@ public class ManifestEventMatcher extends BaseMatcher<Iterable<ManifestEvent>> {
     public boolean matches(Object o) {
         Iterable<ManifestEvent> events = (Iterable<ManifestEvent>) o;
         for (ManifestEvent event : events) {
-            if(event.getMessage().contains(errorStatus.getBaseMessage())){
+            if (event.getMessage().contains(errorStatus.getBaseMessage())) {
                 return true;
             }
         }
@@ -35,6 +35,6 @@ public class ManifestEventMatcher extends BaseMatcher<Iterable<ManifestEvent>> {
 
     @Override
     public void describeTo(Description description) {
-        description.appendText("Manivest Event with "+ errorStatus);
+        description.appendText("Manivest Event with " + errorStatus);
     }
 }

@@ -6,7 +6,7 @@ import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 
 /**
- * Tests if the argument has an error message consistent with th
+ * Tests if the argument has an error message consistent with the ManifestStatus against which it is to be matched
  */
 public class ManifestStatusErrorMatcher extends BaseMatcher<ManifestStatus> {
 
