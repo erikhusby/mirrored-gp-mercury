@@ -1839,7 +1839,6 @@ public abstract class LabVessel implements Serializable {
             }
         }
 
-
         TransferTraverserCriteria.LabEventDescendantCriteria eventTraversalCriteria =
                 new TransferTraverserCriteria.LabEventDescendantCriteria();
         evaluateCriteria(eventTraversalCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
@@ -1852,6 +1851,5 @@ public abstract class LabVessel implements Serializable {
 
         return false;
     }
-
 
 }

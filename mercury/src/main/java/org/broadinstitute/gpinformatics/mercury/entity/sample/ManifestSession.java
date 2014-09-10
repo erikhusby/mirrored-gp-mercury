@@ -544,7 +544,7 @@ public class ManifestSession {
     }
 
     /**
-     * Encapsulates the logic required to mark a record within this session as having been transfered
+     * Encapsulates the logic required to mark a record within this session as having been transferred
      *
      * @param sourceCollaboratorSample  Sample ID for the source sample.  This should correspond to a record within
      *                                  the session
@@ -557,16 +557,12 @@ public class ManifestSession {
 
         ManifestRecord sourceRecord = findRecordForTransfer(sourceCollaboratorSample);
 
-        for (Metadata metadata : sourceRecord.getMetadata()) {
-            targetSample.addMetaData(metadata);
-        }
-
+        targetSample.addMetadata(sourceRecord.getMetadata());
         sourceRecord.setStatus(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
 
         LabEvent collaboratorTransferEvent =
                 new LabEvent(LabEventType.COLLABORATOR_TRANSFER, new Date(), " ", 1L, user.getUserId(), "");
         targetVessel.addInPlaceEvent(collaboratorTransferEvent);
-
     }
 
     /**

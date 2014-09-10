@@ -191,7 +191,7 @@ public class ManifestSessionEjb {
 
         MercurySample foundTarget = targetSamples.iterator().next();
 
-        if (foundTarget.getMetadataSource() == MercurySample.MetadataSource.BSP) {
+        if (foundTarget.getMetadataSource() != MercurySample.MetadataSource.MERCURY) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.SAMPLE_ID_KEY,
                     targetSampleKey, SAMPLE_NOT_ELIGIBLE_FOR_CLINICAL_MESSAGE);
         }
@@ -214,7 +214,7 @@ public class ManifestSessionEjb {
                     targetVesselLabel, VESSEL_NOT_FOUND_MESSAGE);
         }
 
-        if(foundVessel.hasBeenUsedForClinical()) {
+        if (foundVessel.hasBeenUsedForClinical()) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
                     targetVesselLabel, VESSEL_USED_FOR_PREVIOUS_TRANSFER);
         }
