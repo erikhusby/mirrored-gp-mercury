@@ -31,6 +31,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 
@@ -117,6 +118,17 @@ public class RegulatoryInfo implements Serializable, BusinessObject {
 
     public Collection<ResearchProject> getResearchProjects() {
         return researchProjects;
+    }
+
+    /**
+     * Returns all ResearchProjects this RegulatoryInfo is associated with, including child ResearchProjects
+     */
+    public Collection<ResearchProject> getAvailableResearchProjects() {
+        Collection<ResearchProject> allProjects = new ArrayList<>(getResearchProjects());
+        for (ResearchProject project : getResearchProjects()) {
+            allProjects.addAll(project.getAllChildren());
+        }
+        return allProjects;
     }
 
     public void addResearchProject(ResearchProject researchProject) {

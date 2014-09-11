@@ -477,7 +477,8 @@ public class ProductOrderActionBeanTest {
         Assert.assertTrue(actionBean.getValidationErrors().isEmpty());
 
         Product dummyProduct =
-                ProductTestFactory.createDummyProduct(Workflow.NONE, Product.EXOME_EXPRESS_V2_PART_NUMBER, false, false);
+                ProductTestFactory
+                        .createDummyProduct(Workflow.NONE, Product.EXOME_EXPRESS_V2_PART_NUMBER, false, false);
         actionBean.getEditOrder().setProduct(dummyProduct);
         actionBean.getEditOrder().setQuoteId("");
         actionBean.validateQuoteOptions(ProductOrderActionBean.VALIDATE_ORDER);
@@ -612,18 +613,21 @@ public class ProductOrderActionBeanTest {
 
     public void testRegulatoryInformationProjectHasNoIrbButParentDoes()
             throws ParseException {
+        // set up two products, one will be the child of the other.
         ResearchProject dummyParentProduct = ResearchProjectTestFactory.createTestResearchProject();
         dummyParentProduct.setJiraTicketKey("rp-parent");
         ResearchProject dummyChildProduct = ResearchProjectTestFactory.createTestResearchProject();
         dummyChildProduct.setJiraTicketKey("rp-child");
+        // clear the regulatory infos from both of them
         dummyChildProduct.getRegulatoryInfos().clear();
+        dummyParentProduct.getRegulatoryInfos().clear();
+        // create a regulatory info and add it only to the parent.
         RegulatoryInfo regulatoryInfoFromParent =
                 new RegulatoryInfo("IRB Consent", RegulatoryInfo.Type.IRB, new Date().toString());
-        dummyParentProduct.getRegulatoryInfos().clear();
         dummyParentProduct.addRegulatoryInfo(regulatoryInfoFromParent);
         dummyChildProduct.setParentResearchProject(dummyParentProduct);
 
-
+        // finally create a product order and add the child project to it.
         ProductOrder productOrder = ProductOrderTestFactory.buildSampleInitiationProductOrder(2);
         productOrder.setResearchProject(dummyChildProduct);
 
@@ -633,7 +637,7 @@ public class ProductOrderActionBeanTest {
         Mockito.when(regulatoryInfoDao.findListByList(
                 Mockito.eq(RegulatoryInfo.class),
                 Mockito.eq(RegulatoryInfo_.regulatoryInfoId),
-                        Mockito.anyCollectionOf(Long.class)))
+                Mockito.anyCollectionOf(Long.class)))
                 .thenReturn(Collections.singletonList(regulatoryInfoFromParent));
         actionBean.setRegulatoryInfoDao(regulatoryInfoDao);
         actionBean.setSelectedRegulatoryIds(Collections.singletonList(1234l));
@@ -641,8 +645,12 @@ public class ProductOrderActionBeanTest {
 
         actionBean.initRegulatoryParameter();
 
-        actionBean.validateRegulatoryInformation(ProductOrderActionBean.SAVE_ACTION);
-        Assert.assertTrue(actionBean.getValidationErrors().isEmpty());
+        // test validation for all pertinent actions.
+        for (String action : Arrays.asList(ProductOrderActionBean.SAVE_ACTION, ProductOrderActionBean.VALIDATE_ORDER,
+                ProductOrderActionBean.PLACE_ORDER)) {
+            actionBean.validateRegulatoryInformation(action);
+            Assert.assertTrue(actionBean.getValidationErrors().isEmpty(), "Validation failed for " + action);
+        }
     }
 
 
