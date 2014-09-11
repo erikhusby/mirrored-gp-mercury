@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
@@ -14,6 +15,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.Audited;
 
+import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -37,7 +39,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Manifest session contains the information related to a single manifest upload during the sample registration process.
+ * Manifest session contains the information related to a single manifest upload during the sample accessioning process.
  */
 @Entity
 @Audited
@@ -226,17 +228,18 @@ public class ManifestSession {
     }
 
     /**
-     * Encapsulates the logic to validate a given set of manifest records for non-unique references to collaborator
-     * sample ID.
+     * Validate a Collection of manifest records for non-unique collaborator sample IDs.
      *
      * @param allEligibleManifestRecords Collection of all manifest records against which to perform unique sample id
      *                                   validation
      */
     private void validateDuplicateCollaboratorSampleIDs(Collection<ManifestRecord> allEligibleManifestRecords) {
 
+        // Build a map of collaborator sample IDs to manifest records with those collaborator sample IDs.
         Multimap<String, ManifestRecord> recordsBySampleId = buildMultimapByKey(
                 allEligibleManifestRecords, Metadata.Key.SAMPLE_ID);
 
+        // Remove entries in this map which are not duplicates (i.e., leave only the duplicates).
         Iterable<Map.Entry<String, Collection<ManifestRecord>>> filteredDuplicateSamples =
                 filterForKeysWithMultipleValues(recordsBySampleId);
 
@@ -247,12 +250,57 @@ public class ManifestSession {
                 if (duplicatedRecord.getManifestSession().equals(this)) {
                     String message =
                             ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage(SAMPLE_ID_KEY, entry.getKey());
+                    String sessionsWithDuplicates =
+                            identifyOtherManifestSessionsWithDuplicates(duplicatedRecord, entry.getValue());
                     addManifestEvent(
-                            new ManifestEvent(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getSeverity(), message,
+                            new ManifestEvent(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getSeverity(),
+                                    message + "  " + sessionsWithDuplicates,
                                     duplicatedRecord));
                 }
             }
         }
+    }
+
+    /**
+     * Produce a presentable description of where the duplicates of {@code thisDuplicate} can be found.
+     */
+    private String identifyOtherManifestSessionsWithDuplicates(final ManifestRecord thisDuplicate,
+                                                               Collection<ManifestRecord> allDuplicates) {
+
+        // Filter 'thisDuplicate' from consideration as a duplicate of itself.
+        Iterable<ManifestRecord> allButThisDuplicate = Iterables.filter(allDuplicates, new Predicate<ManifestRecord>() {
+            @Override
+            public boolean apply(@Nullable ManifestRecord record) {
+                return record != thisDuplicate;
+            }
+        });
+
+        // Group manifest records by manifest session name.
+        ImmutableListMultimap<String, ManifestRecord> recordsBySession =
+                Multimaps.index(allButThisDuplicate, new Function<ManifestRecord, String>() {
+                    @Override
+                    public String apply(ManifestRecord record) {
+                        return record.getManifestSession().getSessionName();
+                    }
+                });
+
+        List<String> duplicateMessages = new ArrayList<>();
+        // Add an appropriate message for each duplicate to duplicateMessages.
+        for (Map.Entry<String, Collection<ManifestRecord>> entry : recordsBySession.asMap().entrySet()) {
+
+            StringBuilder messageBuilder = new StringBuilder();
+
+            int numDuplicates = entry.getValue().size();
+            messageBuilder.append((numDuplicates == 1) ? "1 duplicate" : numDuplicates + " duplicates");
+            messageBuilder.append(" found in ");
+
+            String sessionName = entry.getKey();
+            String thisSessionName = thisDuplicate.getManifestSession().getSessionName();
+            messageBuilder.append(
+                    sessionName.equals(thisSessionName) ? "this manifest session" : "manifest session " + sessionName);
+            duplicateMessages.add(messageBuilder.toString());
+        }
+        return StringUtils.join(duplicateMessages, ", ") + ".";
     }
 
     /**

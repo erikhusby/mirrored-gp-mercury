@@ -1,7 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Multimaps;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -30,9 +33,11 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import javax.annotation.Nullable;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
@@ -113,6 +118,12 @@ public class ManifestSessionEjbDBFreeTest {
     private MercurySampleDao mercurySampleDao;
     private LabVesselDao labVesselDao;
     private final BSPUserList.QADudeUser testLabUser = new BSPUserList.QADudeUser("LU", 342L);
+    /**
+     * How many instances of a particular collaborator barcode are seen in this manifest (anything more than 1 is
+     * an error).
+     */
+    private static final Map<String, Integer> SAMPLE_ID_TO_NUMBER_OF_COPIES_FOR_DUPLICATE_TESTS =
+            ImmutableMap.of("03101231193", 2, "03101254356", 3, "03101411324", 2);
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -330,6 +341,17 @@ public class ManifestSessionEjbDBFreeTest {
         }
         // This file contains two instances of duplication and one triplication, so 2 x 2 + 3 = 7.
         assertThat(quarantinedRecords, hasSize(NUM_DUPLICATES_IN_MANIFEST_WITH_DUPLICATES_IN_SAME_SESSION));
+
+        for (ManifestRecord record : quarantinedRecords) {
+            assertThat(record.getManifestEvents(), hasSize(1));
+            ManifestEvent manifestEvent = record.getManifestEvents().iterator().next();
+            String sampleId = record.getValueByKey(Metadata.Key.SAMPLE_ID);
+            // -1 to account for the number of copies to number of duplicates conversion.
+            int expectedNumberOfDuplicates = SAMPLE_ID_TO_NUMBER_OF_COPIES_FOR_DUPLICATE_TESTS.get(sampleId) - 1;
+
+            String expectedText = expectedNumberOfDuplicates == 1 ? "duplicate" : "duplicates";
+            assertThat(manifestEvent.getMessage(), containsString(expectedText + " found in this manifest session"));
+        }
     }
 
     public void uploadManifestThatDuplicatesSampleIdInAnotherManifest() throws Exception {
@@ -347,6 +369,18 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(manifestSession2, is(notNullValue()));
         assertThat(manifestSession2.getManifestEvents(), hasSize(2));
         assertThat(manifestSession2.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
+
+        Set<String> duplicatedSampleIds = ImmutableSet.of("03101231193", "03101752020");
+
+        for (ManifestRecord record : manifestSession2.getRecords()) {
+            if (duplicatedSampleIds.contains(record.getValueByKey(Metadata.Key.SAMPLE_ID))) {
+                assertThat(record.getManifestEvents(), hasSize(1));
+                ManifestEvent manifestEvent = record.getManifestEvents().iterator().next();
+                assertThat(manifestEvent.getMessage(), containsString("1 duplicate found in manifest session " + manifestSession1.getSessionName()));
+            } else {
+                assertThat(record.getManifestEvents(), is(empty()));
+            }
+        }
     }
 
     public void uploadManifestThatMismatchesGenderInSameManifest() throws Exception {
@@ -412,16 +446,12 @@ public class ManifestSessionEjbDBFreeTest {
                 };
             }
         });
-        ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao,
-                labVesselDao);
         ManifestSession manifestSession = manifestSessionDao.find(TEST_MANIFEST_SESSION_ID);
         assertThat(manifestSession, is(notNullValue()));
         assertThat(manifestSession.getManifestSessionId(), is(TEST_MANIFEST_SESSION_ID));
     }
 
     public void loadManifestSessionFailure() {
-        ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao,
-                labVesselDao);
         ManifestSession manifestSession = manifestSessionDao.find(ARBITRARY_MANIFEST_SESSION_ID);
         assertThat(manifestSession, is(nullValue()));
     }
@@ -453,12 +483,7 @@ public class ManifestSessionEjbDBFreeTest {
             throws Exception {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(initialStatus, 20);
 
-        // How many instances of a particular collaborator barcode are seen in this manifest (anything more than 1 is
-        // an error).
-        Map<String, Integer> collaboratorBarcodeToNumberOfCopies =
-                ImmutableMap.of("03101231193", 2, "03101254356", 3, "03101411324", 2);
-
-        for (Map.Entry<String, Integer> entry : collaboratorBarcodeToNumberOfCopies.entrySet()) {
+        for (Map.Entry<String, Integer> entry : SAMPLE_ID_TO_NUMBER_OF_COPIES_FOR_DUPLICATE_TESTS.entrySet()) {
             Integer numberOfCopies = entry.getValue();
             for (int i = 0; i < numberOfCopies; i++) {
                 String collaboratorBarcode = entry.getKey();
