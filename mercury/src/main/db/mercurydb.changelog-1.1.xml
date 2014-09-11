@@ -296,7 +296,7 @@
             <column name="lanes_sequenced" type="varchar(255)"></column>
         </addColumn>
     </changeSet>
-    
+
     <changeSet author="scottmat" id="GPLIM-1698-1">
         <preConditions onFail="MARK_RAN">
             <not>
@@ -394,7 +394,7 @@
                 baseTableSchemaName="mercury" baseTableName="lab_event" baseColumnNames="manual_override_lc_set"
                 referencedTableSchemaName="mercury" referencedTableName="lab_batch" referencedColumnNames="lab_batch_id"/>
     </changeSet>
-    
+
     <changeSet id="GPLIM-2079-1" author="thompson">
         <addColumn schemaName="mercury" tableName="LAB_VESSEL">
             <column name="receptacle_weight" type="number(19,2)"/>
@@ -1215,4 +1215,215 @@
                                  referencedTableName="rev_info" referencedTableSchemaName="mercury"
                                  referencedColumnNames="rev_info_id"/>
     </changeSet>
+
+    <changeSet id="GPLIM-2885-add-man-record-created-by" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="manifest_record" columnName="created_by" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="manifest_record" schemaName="mercury">
+            <column name="created_by" type="number(19,0)" />
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2885-add-man-record-aud-created-by" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="manifest_record_aud" columnName="created_by" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="manifest_record_aud" schemaName="mercury">
+            <column name="created_by" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-add-man-record-created-date" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="manifest_record" columnName="created_date" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="manifest_record" schemaName="mercury">
+            <column name="created_date" type="timestamp(6)" />
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2885-add-man-record-aud-created-date" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="manifest_record_aud" columnName="created_date" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="manifest_record_aud" schemaName="mercury">
+            <column name="created_date" type="timestamp(6)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-add-man-record-modified-by" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="manifest_record" columnName="modified_by" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="manifest_record" schemaName="mercury">
+            <column name="modified_by" type="number(19,0)" />
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2885-add-man-record-aud-modified-by" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="manifest_record_aud" columnName="modified_by" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="manifest_record_aud" schemaName="mercury">
+            <column name="modified_by" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-add-man-record-modified_date" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="manifest_record" columnName="modified_date" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="manifest_record" schemaName="mercury">
+            <column name="modified_date" type="timestamp(6)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2885-add-man-record-aud-modified-date" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="manifest_record_aud" columnName="modified_date" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="manifest_record_aud" schemaName="mercury">
+            <column name="modified_date" type="timestamp(6)"/>
+        </addColumn>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-2885-add-man-event-created-by" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="manifest_event" columnName="created_by" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="manifest_event" schemaName="mercury">
+            <column name="created_by" type="number(19,0)" />
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2885-add-man-event-aud-created-by" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="manifest_event_aud" columnName="created_by" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="manifest_event_aud" schemaName="mercury">
+            <column name="created_by" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-add-man-event-created-date" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="manifest_event" columnName="created_date" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="manifest_event" schemaName="mercury">
+            <column name="created_date" type="timestamp(6)" />
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2885-add-man-event-aud-created-date" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="manifest_event_aud" columnName="created_date" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="manifest_event_aud" schemaName="mercury">
+            <column name="created_date" type="timestamp(6)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-add-man-event-modified-by" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="manifest_event" columnName="modified_by" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="manifest_event" schemaName="mercury">
+            <column name="modified_by" type="number(19,0)" />
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2885-add-man-event-aud-modified-by" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="manifest_event_aud" columnName="modified_by" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="manifest_event_aud" schemaName="mercury">
+            <column name="modified_by" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-add-man-event-modified_date" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="manifest_event" columnName="modified_date" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="manifest_event" schemaName="mercury">
+            <column name="modified_date" type="timestamp(6)" />
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2885-add-man-event-aud-modified-date" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="manifest_event_aud" columnName="modified_date" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="manifest_event_aud" schemaName="mercury">
+            <column name="modified_date" type="timestamp(6)"/>
+        </addColumn>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-2885-add-not-null-constraint-man-rec-created-by" author="scottmat">
+        <sql>update manifest_record set created_by = 5176 where created_by is null</sql>
+        <addNotNullConstraint tableName="manifest_record" columnName="created_by" schemaName="mercury" />
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-add-not-null-constraint-man-rec-created-date" author="scottmat">
+        <sql>update manifest_record set created_date = TO_DATE('09/11/2014', 'MM/DD/YYYY') where created_date is null</sql>
+        <addNotNullConstraint tableName="manifest_record" columnName="created_date" schemaName="mercury" />
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-add-not-null-constraint-man-rec-modified-by" author="scottmat">
+        <sql>update manifest_record set modified_by = 5176 where modified_by is null</sql>
+        <addNotNullConstraint tableName="manifest_record" columnName="modified_by" schemaName="mercury" />
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-add-not-null-constraint-man-rec-modified-date" author="scottmat">
+        <sql>update manifest_record set modified_date = TO_DATE('09/11/2014', 'MM/DD/YYYY') where modified_date is null</sql>
+        <addNotNullConstraint tableName="manifest_record" columnName="modified_date" schemaName="mercury" />
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-add-not-null-constraint-man-event-created-by" author="scottmat">
+        <sql>update manifest_event set created_by = 5176 where created_by is null</sql>
+        <addNotNullConstraint tableName="manifest_event" columnName="created_by" schemaName="mercury" />
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-add-not-null-constraint-man-event-created-date" author="scottmat">
+        <sql>update manifest_event set created_date = TO_DATE('09/11/2014', 'MM/DD/YYYY') where created_date is null</sql>
+        <addNotNullConstraint tableName="manifest_event" columnName="created_date" schemaName="mercury" />
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-add-not-null-constraint-man-event-modified-by" author="scottmat">
+        <sql>update manifest_event set modified_by = 5176 where modified_by is null</sql>
+        <addNotNullConstraint tableName="manifest_event" columnName="modified_by" schemaName="mercury" />
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-add-not-null-constraint-man-event-modified-date" author="scottmat">
+        <sql>update manifest_event set modified_date = TO_DATE('09/11/2014', 'MM/DD/YYYY') where modified_date is null</sql>
+        <addNotNullConstraint tableName="manifest_event" columnName="modified_date" schemaName="mercury" />
+    </changeSet>
+
 </databaseChangeLog>

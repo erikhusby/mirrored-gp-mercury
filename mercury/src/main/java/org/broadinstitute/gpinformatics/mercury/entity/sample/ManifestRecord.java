@@ -3,12 +3,16 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Maps;
+import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.Updateable;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.UpdatedEntityInterceptor;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
@@ -24,6 +28,7 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -35,9 +40,10 @@ import java.util.Set;
  * registration process.
  */
 @Entity
+@EntityListeners(UpdatedEntityInterceptor.class)
 @Audited
 @Table(schema = "mercury", name = "MANIFEST_RECORD")
-public class ManifestRecord {
+public class ManifestRecord implements Updateable {
 
     @Id
     @Column(name = "MANIFEST_RECORD_ID")
@@ -68,6 +74,19 @@ public class ManifestRecord {
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "manifest_session_id")
     private ManifestSession manifestSession;
+
+    @Column(name = "CREATED_BY")
+    private Long createdBy;
+
+    @Column(name = "MODIFIED_BY")
+    private Long modifiedBy;
+
+    @Column(name = "CREATED_DATE")
+    private Date createdDate;
+
+    @Column(name = "MODIFIED_DATE")
+    private Date modifiedDate;
+
 
     /**
      * For JPA
@@ -152,6 +171,51 @@ public class ManifestRecord {
             }
         }
         return quarantinedMessages;
+    }
+
+    @Override
+    public void setModifiedDate(Date date) {
+        this.modifiedDate = date;
+    }
+
+    @Override
+    public Long getCreatedBy() {
+        return this.createdBy;
+    }
+
+    @Override
+    public Long getModifiedBy() {
+        return this.modifiedBy;
+    }
+
+    @Override
+    public void setModifiedBy(BspUser user) {
+        this.modifiedBy = user.getUserId();
+    }
+
+    @Override
+    public Date getModifiedDate() {
+        return this.modifiedDate;
+    }
+
+    @Override
+    public Date getCreatedDate() {
+        return this.createdDate;
+    }
+
+    @Override
+    public void setCreatedBy(BspUser createdBy) {
+        this.createdBy = createdBy.getUserId();
+    }
+
+    @Override
+    public void setCreatedDate(Date createdDate) {
+        this.createdDate = createdDate;
+    }
+
+    @Override
+    public void setModifiedBy(Long modifiedUserId) {
+        this.modifiedBy = modifiedUserId;
     }
 
     /**

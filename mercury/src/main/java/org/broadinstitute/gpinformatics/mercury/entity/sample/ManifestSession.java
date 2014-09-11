@@ -9,6 +9,8 @@ import com.google.common.collect.Multimaps;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.Updateable;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.UpdatedEntityInterceptor;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -19,6 +21,7 @@ import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
@@ -42,9 +45,10 @@ import java.util.Set;
  * Manifest session contains the information related to a single manifest upload during the sample accessioning process.
  */
 @Entity
+@EntityListeners(UpdatedEntityInterceptor.class)
 @Audited
 @Table(schema = "mercury", name = "MANIFEST_SESSION")
-public class ManifestSession {
+public class ManifestSession implements Updateable {
 
     public static final String SAMPLE_ID_KEY = "Sample ID";
     public static final String VESSEL_LABEL = "Vessel barcode";
@@ -94,9 +98,6 @@ public class ManifestSession {
 
         this.sessionPrefix = sessionPrefix;
         this.createdBy = createdBy.getUserId();
-        this.modifiedBy = createdBy.getUserId();
-        createdDate = new Date();
-        modifiedDate = new Date();
     }
 
     public ResearchProject getResearchProject() {
@@ -123,10 +124,12 @@ public class ManifestSession {
         this.status = status;
     }
 
+    @Override
     public Long getCreatedBy() {
         return createdBy;
     }
 
+    @Override
     public Long getModifiedBy() {
         return modifiedBy;
     }
@@ -157,6 +160,36 @@ public class ManifestSession {
 
     public List<ManifestEvent> getManifestEvents() {
         return manifestEvents;
+    }
+
+    @Override
+    public void setModifiedDate(Date date) {
+        this.modifiedDate = date;
+    }
+
+    @Override
+    public Date getModifiedDate() {
+        return modifiedDate;
+    }
+
+    @Override
+    public Date getCreatedDate() {
+        return createdDate;
+    }
+
+    @Override
+    public void setCreatedBy(BspUser createdBy) {
+        this.createdBy = createdBy.getUserId();
+    }
+
+    @Override
+    public void setCreatedDate(Date createdDate) {
+        this.createdDate = createdDate;
+    }
+
+    @Override
+    public void setModifiedBy(Long modifiedUserId) {
+        this.modifiedBy = modifiedUserId;
     }
 
     /**

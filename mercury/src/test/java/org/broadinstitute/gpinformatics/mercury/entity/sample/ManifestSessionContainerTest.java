@@ -14,6 +14,9 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.hamcrest.CoreMatchers;
+import org.hamcrest.Matchers;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -111,10 +114,23 @@ public class ManifestSessionContainerTest extends Arquillian {
     @Inject
     private LabVesselDao labVesselDao;
 
+    @Inject
+    private UserBean userBean;
+
     @BeforeMethod
     public void setUp() throws Exception {
+
+        if(userBean == null) {
+            return;
+        }
+
+        userBean.loginTestUser();
+
+        Date researchProjectCreateTime = new Date();
         researchProject =
-                ResearchProjectTestFactory.createTestResearchProject(ResearchProject.PREFIX + (new Date()).getTime());
+                ResearchProjectTestFactory.createTestResearchProject(ResearchProject.PREFIX + researchProjectCreateTime.getTime());
+        researchProject.setTitle("Buick test Project" + researchProjectCreateTime.getTime());
+
         manifestSessionI = new ManifestSession(researchProject, "BUICK-TEST", testUser);
         manifestRecordI = createManifestRecord(Metadata.Key.PATIENT_ID, PATIENT_1, Metadata.Key.GENDER, GENDER_MALE,
                 Metadata.Key.SAMPLE_ID, SAMPLE_ID_1);
@@ -202,6 +218,13 @@ public class ManifestSessionContainerTest extends Arquillian {
         assertThat(manifestSessionII.hasErrors(), is(equalTo(false)));
         assertThat(researchProject.getManifestSessions(), hasItems(manifestSessionI, manifestSessionII));
 
+        assertThat(manifestSessionI.getModifiedDate(), is(equalTo(manifestSessionI.getCreatedDate())));
+
+        for (ManifestRecord manifestRecord : manifestSessionI.getRecords()) {
+            assertThat(manifestRecord.getModifiedDate(), is(equalTo(manifestRecord.getCreatedDate())));
+        }
+
+
         // Clear the Session to force retrieval of a persistent instance 'manifestSessionOut' below that is distinct
         // from the detached 'manifestSessionI' instance.
         manifestSessionDao.clear();
@@ -225,6 +248,24 @@ public class ManifestSessionContainerTest extends Arquillian {
         assertThat(manifestRecordI.isQuarantined(), is(equalTo(false)));
         assertThat(manifestRecordOut.isQuarantined(), is(equalTo(manifestRecordI.isQuarantined())));
 
+        manifestSessionOut.setStatus(ManifestSession.SessionStatus.COMPLETED);
+        for (ManifestRecord manifestRecord : manifestSessionOut.getRecords()) {
+            manifestRecord.setStatus(ManifestRecord.Status.UPLOAD_ACCEPTED);
+        }
+
+        manifestSessionDao.persist(manifestSessionOut);
+
+        manifestSessionDao.flush();
+        manifestSessionDao.clear();
+
+        ManifestSession sessionClosed = manifestSessionDao.find(manifestSessionOut.getManifestSessionId());
+
+        assertThat(sessionClosed.getModifiedDate(), is(not(equalTo(manifestSessionI.getModifiedDate()))));
+        assertThat(sessionClosed.getCreatedDate(), is(not(equalTo(sessionClosed.getModifiedDate()))));
+        for (ManifestRecord manifestRecord : sessionClosed.getRecords()) {
+            assertThat(manifestRecord.getCreatedDate(), is(not(equalTo(manifestRecord.getModifiedDate()))));
+        }
+
     }
 
     @Test(groups = TestGroups.STANDARD)
@@ -246,6 +287,8 @@ public class ManifestSessionContainerTest extends Arquillian {
         ManifestSession uploadedSession =
                 manifestSessionEjb.uploadManifest(researchProject.getBusinessKey(), testStream, excelFilePath,
                         testUser);
+        assertThat(uploadedSession.getModifiedBy(), is(not(equalTo(uploadedSession.getCreatedBy()))));
+        assertThat(uploadedSession.getModifiedDate(), is(equalTo(uploadedSession.getCreatedDate())));
 
         assertThat(uploadedSession, is(notNullValue()));
         assertThat(uploadedSession.getManifestSessionId(), is(notNullValue()));
@@ -333,6 +376,8 @@ public class ManifestSessionContainerTest extends Arquillian {
         // Clear to force a reload.
         manifestSessionDao.clear();
         ManifestSession closedSession = manifestSessionDao.find(sessionOfScan.getManifestSessionId());
+
+        assertThat(closedSession.getModifiedDate(), is(not(equalTo(uploadedSession.getModifiedDate()))));
 
         assertThat(closedSession, is(notNullValue()));
 
