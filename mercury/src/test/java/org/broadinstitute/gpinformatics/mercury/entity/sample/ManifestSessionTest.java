@@ -11,9 +11,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.hamcrest.CoreMatchers;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
+import java.util.List;
 
 import static org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestStatusErrorMatcher.hasError;
 import static org.hamcrest.CoreMatchers.is;
@@ -22,6 +24,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 
 
 /**
@@ -30,10 +33,13 @@ import static org.hamcrest.Matchers.not;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ManifestSessionTest {
 
+    private static final String DATA_PROVIDER_RECORD_STATUS = "recordStatusProvider";
     private static final String SAMPLE_ID_1 = "SM-1";
     private static final String SAMPLE_ID_2 = "SM-2";
     private static final String SAMPLE_ID_3 = "SM-3";
-    private ManifestSession testSession;
+    private static final List<String> SAMPLES_IN_MANIFEST = Arrays.asList(SAMPLE_ID_1, SAMPLE_ID_2, SAMPLE_ID_3);
+    private static final int NUM_SAMPLES_IN_MANIFEST = SAMPLES_IN_MANIFEST.size();
+    private ManifestSession session;
     private ResearchProject testRp;
     private String sessionPrefix;
     private BspUser testUser;
@@ -44,32 +50,32 @@ public class ManifestSessionTest {
         sessionPrefix = "testPrefix";
         testUser = new BSPUserList.QADudeUser("LU", 33L);
 
-        testSession = new ManifestSession(testRp, sessionPrefix, testUser);
+        session = new ManifestSession(testRp, sessionPrefix, testUser);
 
-        for (String sampleId : Arrays.asList(SAMPLE_ID_1, SAMPLE_ID_2, SAMPLE_ID_3)) {
-            ManifestRecord manifestRecord = buildManifestRecord(testSession, sampleId);
+        for (String sampleId : SAMPLES_IN_MANIFEST) {
+            ManifestRecord manifestRecord = buildManifestRecord(session, sampleId);
             manifestRecord.setStatus(ManifestRecord.Status.SCANNED);
         }
     }
 
     public void basicProperties() throws Exception {
-        Assert.assertEquals(testSession.getResearchProject(), testRp);
-        Assert.assertEquals(testSession.getSessionName(), sessionPrefix + testSession.getManifestSessionId());
-        Assert.assertEquals(testSession.getStatus(), ManifestSession.SessionStatus.OPEN);
+        Assert.assertEquals(session.getResearchProject(), testRp);
+        Assert.assertEquals(session.getSessionName(), sessionPrefix + session.getManifestSessionId());
+        Assert.assertEquals(session.getStatus(), ManifestSession.SessionStatus.OPEN);
 
-        Assert.assertEquals(testSession.getCreatedBy(), testUser.getUserId());
-        Assert.assertEquals(testSession.getModifiedBy(), testUser.getUserId());
+        Assert.assertEquals(session.getCreatedBy(), testUser.getUserId());
+        Assert.assertEquals(session.getModifiedBy(), testUser.getUserId());
 
         BSPUserList.QADudeUser modifyUser = new BSPUserList.QADudeUser("LM", 43L);
-        testSession.setModifiedBy(modifyUser);
+        session.setModifiedBy(modifyUser);
 
-        Assert.assertEquals(testSession.getModifiedBy(), modifyUser.getUserId());
+        Assert.assertEquals(session.getModifiedBy(), modifyUser.getUserId());
     }
 
     public void addRecord() throws Exception {
-        ManifestRecord testRecord = buildManifestRecord(testSession, SAMPLE_ID_1);
-        Assert.assertTrue(testSession.getRecords().contains(testRecord));
-        Assert.assertEquals(testRecord.getManifestSession(), testSession);
+        ManifestRecord testRecord = buildManifestRecord(session, SAMPLE_ID_1);
+        Assert.assertTrue(session.getRecords().contains(testRecord));
+        Assert.assertEquals(testRecord.getManifestSession(), session);
     }
 
     private ManifestRecord buildManifestRecord(ManifestSession manifestSession, String sampleId) {
@@ -83,28 +89,28 @@ public class ManifestSessionTest {
     }
 
     public void addLogEntries() throws Exception {
-        ManifestRecord testRecord = buildManifestRecord(testSession, SAMPLE_ID_1);
+        ManifestRecord testRecord = buildManifestRecord(session, SAMPLE_ID_1);
         ManifestEvent manifestEventWithoutRecord = new ManifestEvent(ManifestEvent.Severity.ERROR,
                 "Failed to Upload Record in session"
         );
-        testSession.addManifestEvent(manifestEventWithoutRecord);
+        session.addManifestEvent(manifestEventWithoutRecord);
 
-        Assert.assertEquals(testSession.getManifestEvents().size(), 1);
+        Assert.assertEquals(session.getManifestEvents().size(), 1);
         ManifestEvent manifestEventWithRecord = new ManifestEvent(ManifestEvent.Severity.ERROR,
                 "Failed to Upload Record in session",
                 testRecord);
-        testSession.addManifestEvent(manifestEventWithRecord);
+        session.addManifestEvent(manifestEventWithRecord);
 
         Assert.assertEquals(testRecord.getManifestEvents().size(), 1);
-        Assert.assertEquals(testSession.getManifestEvents().size(), 2);
+        Assert.assertEquals(session.getManifestEvents().size(), 2);
     }
 
     /**
      * A happy path test, all samples in the manifest have scanned and nothing is wrong.
      */
     public void allSamplesScanned() {
-        assertThat(testSession.hasErrors(), is(false));
-        ManifestStatus manifestStatus = testSession.generateSessionStatusForClose();
+        assertThat(session.hasErrors(), is(false));
+        ManifestStatus manifestStatus = session.generateSessionStatusForClose();
         assertThat(manifestStatus.getErrorMessages(), is(empty()));
         assertThat(manifestStatus.getSamplesSuccessfullyScanned(), is(3));
         assertThat(manifestStatus.getSamplesEligibleInManifest(), is(3));
@@ -114,8 +120,8 @@ public class ManifestSessionTest {
 
     public void missingSample() {
         setSampleStatus(SAMPLE_ID_1, ManifestRecord.Status.UPLOADED);
-        assertThat(testSession.hasErrors(), is(false));
-        ManifestStatus manifestStatus = testSession.generateSessionStatusForClose();
+        assertThat(session.hasErrors(), is(false));
+        ManifestStatus manifestStatus = session.generateSessionStatusForClose();
         assertThat(manifestStatus.getErrorMessages(), is(not(empty())));
         assertThat(manifestStatus, hasError(ManifestRecord.ErrorStatus.MISSING_SAMPLE));
 
@@ -125,7 +131,7 @@ public class ManifestSessionTest {
     }
 
     private void setSampleStatus(String sampleId, ManifestRecord.Status status) {
-        for (ManifestRecord manifestRecord : testSession.getRecords()) {
+        for (ManifestRecord manifestRecord : session.getRecords()) {
             if (manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID).equals(sampleId)) {
                 manifestRecord.setStatus(status);
             }
@@ -134,7 +140,7 @@ public class ManifestSessionTest {
 
     public void successfulScanCollaboratorTubeInTubeTransfer() throws TubeTransferException {
         String collaboratorBarcode = SAMPLE_ID_1;
-        ManifestRecord manifestRecord = testSession.findScannedRecord(collaboratorBarcode);
+        ManifestRecord manifestRecord = session.findScannedRecord(collaboratorBarcode);
         assertThat(manifestRecord, is(notNullValue()));
     }
 
@@ -142,7 +148,7 @@ public class ManifestSessionTest {
         String collaboratorBarcode = SAMPLE_ID_1;
         setSampleStatus(collaboratorBarcode, ManifestRecord.Status.UPLOADED);
         try {
-            testSession.findScannedRecord(collaboratorBarcode);
+            session.findScannedRecord(collaboratorBarcode);
             Assert.fail();
         } catch (TubeTransferException e) {
             assertThat(e.getErrorStatus(), is(
@@ -154,7 +160,7 @@ public class ManifestSessionTest {
         String collaboratorBarcode = SAMPLE_ID_1 + "_UNRECOGNIZED";
         setSampleStatus(collaboratorBarcode, ManifestRecord.Status.UPLOADED);
         try {
-            testSession.findScannedRecord(collaboratorBarcode);
+            session.findScannedRecord(collaboratorBarcode);
             Assert.fail();
         } catch (TubeTransferException e) {
             assertThat(e.getErrorStatus(), is(CoreMatchers.equalTo(ManifestRecord.ErrorStatus.NOT_IN_MANIFEST)));
@@ -165,33 +171,140 @@ public class ManifestSessionTest {
 
         setSampleStatus(SAMPLE_ID_1, ManifestRecord.Status.UPLOAD_ACCEPTED);
 
-        ManifestRecord record = testSession.scanSample(SAMPLE_ID_1);
+        ManifestRecord record = session.scanSample(SAMPLE_ID_1);
         assertThat(record.getStatus(), is(CoreMatchers.equalTo(ManifestRecord.Status.SCANNED)));
 
-        assertThat(testSession.getManifestEvents(), is(empty()));
+        assertThat(session.getManifestEvents(), is(empty()));
         try {
-            ManifestRecord record2 = testSession.scanSample(SAMPLE_ID_1 + "_NOTIN");
+            session.scanSample(SAMPLE_ID_1 + "_NOTIN");
             Assert.fail();
         } catch (TubeTransferException tte) {
             assertThat(tte.getErrorStatus(), is(CoreMatchers.equalTo(ManifestRecord.ErrorStatus.NOT_IN_MANIFEST)));
-            assertThat(testSession.getManifestEvents(), is(not(empty())));
-            assertThat(testSession.getManifestEvents().size(), is(equalTo(1)));
+            assertThat(session.getManifestEvents(), is(not(empty())));
+            assertThat(session.getManifestEvents().size(), is(equalTo(1)));
         }
 
         String errorRecordID = "20923842";
-        ManifestRecord errorRecord = buildManifestRecord(testSession, errorRecordID);
+        ManifestRecord errorRecord = buildManifestRecord(session, errorRecordID);
         setSampleStatus(errorRecordID, ManifestRecord.Status.UPLOADED);
-        testSession.addManifestEvent(new ManifestEvent(
+        session.addManifestEvent(new ManifestEvent(
                 ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getSeverity(),
                 ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage("Sample ID", errorRecordID),
                 errorRecord));
 
         try {
-            testSession.scanSample(errorRecordID);
+            session.scanSample(errorRecordID);
             Assert.fail();
         } catch (TubeTransferException e) {
             assertThat(e.getErrorStatus(), is(equalTo(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE)));
         }
+    }
 
+    public void testPrepareForCloseOnCleanSession() {
+        ManifestStatus manifestStatus = session.generateSessionStatusForClose();
+        assertThat(manifestStatus.getSamplesInManifest(), is(NUM_SAMPLES_IN_MANIFEST));
+        assertThat(manifestStatus.getSamplesEligibleInManifest(), is(NUM_SAMPLES_IN_MANIFEST));
+        assertThat(manifestStatus.getSamplesSuccessfullyScanned(), is(NUM_SAMPLES_IN_MANIFEST));
+
+        Assert.assertTrue(manifestStatus.getErrorMessages().isEmpty(),
+                "Clean session should have no errors.");
+    }
+
+    @DataProvider(name = DATA_PROVIDER_RECORD_STATUS)
+    private Object[][] statusForValidationErrorProvider() {
+        return new Object[][]{
+                {ManifestRecord.Status.UPLOADED},
+                {ManifestRecord.Status.UPLOAD_ACCEPTED}};
+    }
+
+    @Test(dataProvider = DATA_PROVIDER_RECORD_STATUS)
+    public void testValidationError(ManifestRecord.Status status) {
+        setManifestRecordStatus(status);
+
+        ManifestStatus manifestStatus = session.generateSessionStatusForClose();
+
+        assertThat(manifestStatus.getSamplesInManifest(), is(NUM_SAMPLES_IN_MANIFEST));
+        assertThat(manifestStatus.getSamplesEligibleInManifest(), is(NUM_SAMPLES_IN_MANIFEST));
+        assertThat(manifestStatus.getSamplesSuccessfullyScanned(), is(NUM_SAMPLES_IN_MANIFEST - 1));
+
+        assertThat(manifestStatus.getErrorMessages(), hasSize(1));
+        assertThat(manifestStatus, hasError(ManifestRecord.ErrorStatus.MISSING_SAMPLE));
+    }
+
+    public void testValidationForDuplicateSample() {
+        addDuplicateManifestRecord();
+
+        ManifestStatus manifestStatus = session.generateSessionStatusForClose();
+
+        assertThat(manifestStatus.getSamplesInManifest(), is(NUM_SAMPLES_IN_MANIFEST + 1));
+        assertThat(manifestStatus.getSamplesEligibleInManifest(), is(NUM_SAMPLES_IN_MANIFEST));
+        assertThat(manifestStatus.getSamplesSuccessfullyScanned(), is(NUM_SAMPLES_IN_MANIFEST));
+
+        assertThat(manifestStatus.getErrorMessages(), hasSize(1));
+        assertThat(manifestStatus, hasError(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID));
+    }
+
+    public void testValidationForGenderMismatchSample() {
+        addRecord(session, ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.SCANNED);
+
+        ManifestStatus manifestStatus = session.generateSessionStatusForClose();
+
+        assertThat(manifestStatus.getSamplesInManifest(), is(NUM_SAMPLES_IN_MANIFEST + 1));
+        assertThat(manifestStatus.getSamplesEligibleInManifest(), is(NUM_SAMPLES_IN_MANIFEST + 1));
+        assertThat(manifestStatus.getSamplesSuccessfullyScanned(), is(NUM_SAMPLES_IN_MANIFEST + 1));
+
+        assertThat(manifestStatus.getErrorMessages(), hasSize(1));
+        assertThat(manifestStatus, hasError(ManifestRecord.ErrorStatus.MISMATCHED_GENDER));
+    }
+
+    private static void addRecord(ManifestSession session, ManifestRecord.ErrorStatus errorStatus,
+                                  ManifestRecord.Status status) {
+        ManifestTestFactory.addRecord(session, errorStatus, status, ImmutableMap.<Metadata.Key, String>of());
+    }
+
+    public void testValidationForUnscannedAndDuplicates() {
+        addDuplicateManifestRecord();
+        addRecord(session, null, ManifestRecord.Status.UPLOAD_ACCEPTED);
+
+        ManifestStatus manifestStatus = session.generateSessionStatusForClose();
+
+        assertThat(manifestStatus.getSamplesInManifest(), is(NUM_SAMPLES_IN_MANIFEST + 2));
+        assertThat(manifestStatus.getSamplesEligibleInManifest(), is(NUM_SAMPLES_IN_MANIFEST + 1));
+        assertThat(manifestStatus.getSamplesSuccessfullyScanned(), is(NUM_SAMPLES_IN_MANIFEST));
+
+        assertThat(manifestStatus.getErrorMessages(), hasSize(2));
+        assertThat(manifestStatus, hasError(ManifestRecord.ErrorStatus.MISSING_SAMPLE));
+        assertThat(manifestStatus, hasError(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID));
+    }
+
+    public void testValidationForUnscannedAndDuplicatesAndMismatchedGender() {
+        addDuplicateManifestRecord();
+        addRecord(session, null, ManifestRecord.Status.UPLOAD_ACCEPTED);
+        addRecord(session, ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.SCANNED);
+
+        ManifestStatus manifestStatus = session.generateSessionStatusForClose();
+
+        assertThat(manifestStatus.getSamplesInManifest(), is(NUM_SAMPLES_IN_MANIFEST + 3));
+        assertThat(manifestStatus.getSamplesEligibleInManifest(), is(NUM_SAMPLES_IN_MANIFEST + 2));
+        assertThat(manifestStatus.getSamplesSuccessfullyScanned(), is(NUM_SAMPLES_IN_MANIFEST + 1));
+
+        assertThat(manifestStatus.getErrorMessages(), hasSize(3));
+        assertThat(manifestStatus, hasError(ManifestRecord.ErrorStatus.MISSING_SAMPLE));
+        assertThat(manifestStatus, hasError(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID));
+        assertThat(manifestStatus, hasError(ManifestRecord.ErrorStatus.MISMATCHED_GENDER));
+
+    }
+
+    private void addDuplicateManifestRecord() {
+        ManifestRecord record = session.getRecords().iterator().next();
+        String value = record.getValueByKey(Metadata.Key.SAMPLE_ID);
+
+        ManifestTestFactory
+                .addRecord(session, ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
+                        ImmutableMap.of(Metadata.Key.SAMPLE_ID, value));
+    }
+
+    private void setManifestRecordStatus(ManifestRecord.Status status) {
+        session.getRecords().iterator().next().setStatus(status);
     }
 }
