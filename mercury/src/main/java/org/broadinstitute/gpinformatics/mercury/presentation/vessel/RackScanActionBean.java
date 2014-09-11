@@ -69,20 +69,6 @@ public abstract class RackScanActionBean extends CoreActionBean {
     protected LinkedHashMap<String,String> rackScan;
 
     /**
-     * Determines whether jsp will append results to existing page,
-     * or do essentially a page forward to the results page.
-     */
-    protected boolean appendScanResults = true;
-
-    public boolean isAppendScanResults() {
-        return appendScanResults;
-    }
-
-    public void setAppendScanResults(boolean appendScanResults) {
-        this.appendScanResults = appendScanResults;
-    }
-
-    /**
      * Shows a page where you can select the lab you're using.
      */
     @DefaultHandler

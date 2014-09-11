@@ -309,8 +309,8 @@ public class LabMetric implements Comparable<LabMetric> {
 
 
     /** These define the concentration range in ug/ml (ng/ul) for acceptable fingerprinting. */
-    public static final BigDecimal INITIAL_PICO_LOW_THRESHOLD = new BigDecimal(3.4);
-    public static final BigDecimal INITIAL_PICO_HIGH_THRESHOLD = new BigDecimal(60.0);
+    public static final BigDecimal INITIAL_PICO_LOW_THRESHOLD = new BigDecimal("3.4");
+    public static final BigDecimal INITIAL_PICO_HIGH_THRESHOLD = new BigDecimal("60.0");
 
     /**
      * Determines initial pico disposition from the sample's quant.

@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,9 +37,16 @@ import java.util.Map;
 @UrlBinding(value = PicoDispositionActionBean.ACTION_BEAN_URL)
 public class PicoDispositionActionBean extends RackScanActionBean {
     public static final String ACTION_BEAN_URL = "/sample/PicoDisposition.action";
-    public static final String PICO_DISPOSTION_PAGE = "/sample/picoDisposition.jsp";
-    public static final String PICO_DISPOSTION_RACK_SCAN_PAGE = "/sample/picoDispositionRackScan.jsp";
     public static final String PAGE_TITLE = "Initial Pico Sample Disposition";
+
+    public static final String NEXT_STEPS_PAGE = "/sample/pico_disp.jsp";
+    public static final String NEXT_STEPS_SCAN_PAGE = "/sample/pico_disp_scan.jsp";
+    public static final String CONFIRM_REARRAY_PAGE = "/sample/pico_disp_rearray.jsp";
+    public static final String CONFIRM_REARRAY_RACK_SCAN_PAGE = "/sample/pico_disp_rearray_scan.jsp";
+
+    public static final String REVIEW_SCANNED_RACK_EVENT = "reviewScannedRack";
+    public static final String CONFIRM_REARRAY_EVENT = "confirmRearray";
+    public static final String CONFIRM_REARRAY_SCAN_EVENT = "confirmRearrayScan";
 
     @Inject
     private TubeFormationDao tubeFormationDao;
@@ -58,6 +66,8 @@ public class PicoDispositionActionBean extends RackScanActionBean {
     private TubeFormation tubeFormation;
     private static final Map<VesselPosition, BarcodedTube> positionToTubeMap = new HashMap<>();
 
+    // Indicates the selection of next step by the user during rearray confirm.
+    private NextStep nextStepSelect;
 
     public String getTubeFormationLabel() {
         return tubeFormationLabel;
@@ -73,6 +83,34 @@ public class PicoDispositionActionBean extends RackScanActionBean {
 
     public void setListItems(List<ListItem> listItems) {
         this.listItems = listItems;
+    }
+
+    /** The list of next steps that can possibly apply to tubes after a manual rearray. */
+    public List<NextStep> getConfirmableNextSteps() {
+        return new ArrayList<NextStep>() {{
+            add(NextStep.SHEARING_DAUGHTER);
+            add(NextStep.FP_DAUGHTER);
+        }};
+    }
+
+    public String getNextStepSelect() {
+        return nextStepSelect != null ? nextStepSelect.getStepName() : "";
+    }
+
+    public void setNextStepSelect(String nextStepName) {
+        nextStepSelect = NextStep.getNextStep(nextStepName);
+    }
+
+    public String getShowLabSelectionEvent() {
+        return SHOW_LAB_SELECTION_EVENT;
+    }
+
+    public String getConfirmRearrayPage() {
+        return CONFIRM_REARRAY_PAGE;
+    }
+
+    public String getConfirmRearrayScanEvent() {
+        return CONFIRM_REARRAY_SCAN_EVENT;
     }
 
     // TubeFormation accessible only for test purposes.
@@ -127,18 +165,21 @@ public class PicoDispositionActionBean extends RackScanActionBean {
      * NextStep describes what should happen next to a tube after initial pico.
      */
     public enum NextStep {
-        FP_DAUGHTER("FP Daughter", 2),
-        SHEARING_DAUGHTER("Shearing Daughter", 1),
-        SHEARING_DAUGHTER_AT_RISK("Shearing Daughter (At Risk)", 1),
-        EXCLUDE("Exclude", 0),
-        NULL("", -1);  // Out of band enum used when metric is missing.
+        FP_DAUGHTER("FP Daughter", 2, 2),
+        SHEARING_DAUGHTER("Shearing Daughter", 1, 1),
+        SHEARING_DAUGHTER_AT_RISK("Shearing Daughter (At Risk)", 1, 1),
+        EXCLUDE("Exclude", 0, 0),
+        NULL("", -1, 0);  // Out of band enum used when metric is missing.
 
         private String stepName;
         private int sortOrder;
+        // nextStepConfirmationGroup
+        private int nextStepConfirmationGroup;
 
-        private NextStep(String stepName, int sortOrder) {
+        private NextStep(String stepName, int sortOrder, int nextStepConfirmationGroup) {
             this.stepName = stepName;
             this.sortOrder = sortOrder;
+            this.nextStepConfirmationGroup = nextStepConfirmationGroup;
         }
 
         public String getStepName() {
@@ -147,6 +188,10 @@ public class PicoDispositionActionBean extends RackScanActionBean {
 
         public int getSortOrder() {
             return sortOrder;
+        }
+
+        public int getNextStepConfirmationGroup() {
+            return nextStepConfirmationGroup;
         }
 
         /**
@@ -162,6 +207,15 @@ public class PicoDispositionActionBean extends RackScanActionBean {
             }
             return FP_DAUGHTER;
         }
+
+        public static NextStep getNextStep(String stepName) {
+            for (NextStep nextStep : values()) {
+                if (nextStep.getStepName().equals(stepName)) {
+                    return nextStep;
+                }
+            }
+            return null;
+        }
     }
 
     /**
@@ -171,13 +225,17 @@ public class PicoDispositionActionBean extends RackScanActionBean {
     @HandlesEvent(VIEW_ACTION)
     public Resolution displayList() {
         makeListItems(tubeFormationLabel, tubeFormation);
-        return new ForwardResolution(PICO_DISPOSTION_PAGE);
+        return new ForwardResolution(NEXT_STEPS_PAGE);
     }
 
-    @HandlesEvent("setupScanner")
-    public Resolution setupScanner() {
-        setAppendScanResults(false);
-        return new ForwardResolution(PICO_DISPOSTION_RACK_SCAN_PAGE);
+    @HandlesEvent(REVIEW_SCANNED_RACK_EVENT)
+    public Resolution reviewScannedRack() {
+        return new ForwardResolution(NEXT_STEPS_SCAN_PAGE);
+    }
+
+    @HandlesEvent(CONFIRM_REARRAY_EVENT)
+    public Resolution confirmRearray() {
+        return new ForwardResolution(CONFIRM_REARRAY_RACK_SCAN_PAGE);
     }
 
     @Override
@@ -191,22 +249,52 @@ public class PicoDispositionActionBean extends RackScanActionBean {
     }
 
     /**
-     * Uses a rack scanner to find tubes.
+     * Uses a rack scanner to find tubes and generates their next step dispositions.
      * @throws org.broadinstitute.bsp.client.rackscan.ScannerException
      */
     @Override
     @HandlesEvent(SCAN_EVENT)
     public Resolution scan() throws ScannerException {
-        listItems.clear();
-        if (getRackScanner() == null) {
-            addMessage("No rack scanner is selected.");
-        } else {
-            // Runs the rack scanner.  Ignores the returned Stripes Resolution and
-            // uses the map of position->tubeBarcode.
-            super.scan();
-            makeListItems(rackScan);
+        boolean ok = scanAndMakeListItems();
+        return new ForwardResolution(ok ? NEXT_STEPS_PAGE : NEXT_STEPS_SCAN_PAGE);
+    }
+
+    /**
+     * Uses a rack scanner to find rearrayed tubes to confirm.
+     * @throws org.broadinstitute.bsp.client.rackscan.ScannerException
+     */
+    @HandlesEvent(CONFIRM_REARRAY_SCAN_EVENT)
+    public Resolution confirmRearrayScan() throws ScannerException {
+        // Default is to revisit scan input page.
+        String nextPage = CONFIRM_REARRAY_RACK_SCAN_PAGE;
+        if (nextStepSelect == null) {
+            addMessage("Missing Next Step selection.");
+            setLabToFilterBy(null);
+        } else if (scanAndMakeListItems()) {
+            // Removes tubes with the expected Next Step confirmationGroup value,
+            // leaving only incorrect ones in listItems.
+            final int expectedGroup = nextStepSelect.getNextStepConfirmationGroup();
+            for (Iterator<ListItem> iter = listItems.iterator(); iter.hasNext(); ) {
+                if (iter.next().getDisposition().getNextStepConfirmationGroup() == expectedGroup) {
+                    iter.remove();
+                }
+            }
+            nextPage = CONFIRM_REARRAY_PAGE;
         }
-        return new ForwardResolution(PICO_DISPOSTION_PAGE);
+        return new ForwardResolution(nextPage);
+    }
+
+    private boolean scanAndMakeListItems() throws ScannerException {
+        if (getRackScanner() == null) {
+            addMessage("Missing rack scanner selection.");
+            setLabToFilterBy(null);
+            return false;
+        }
+        // Runs the rack scanner.  Ignores the returned Stripes Resolution and
+        // uses the map of position->tubeBarcode.
+        super.scan();
+        makeListItems(rackScan);
+        return true;
     }
 
     /** Makes listItems from either a tube formation or its label. */

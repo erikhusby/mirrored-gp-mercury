@@ -25,27 +25,23 @@
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
-        <%-- Puts the Scan Rack button far to the right. --%>
-        <table border="0">
-            <tr>
-                <td width="99%"/>
-                <td>
-                    <stripes:form beanclass="${actionBean.class.name}" id="scanRackForm">
-                        <div class="control-group">
-                            <div class="control-label">&#160;</div>
-                            <div class="controls actionButtons">
-                                <stripes:submit name="setupScanner" value="Use Scanned Rack"
-                                                style="margin-right: 10px;margin-top:10px;" class="btn btn-mini"/>
-                            </div>
-                        </div>
-                    </stripes:form>
-                </td>
-            </tr>
-        </table>
+        <div class="control-group" style="float:right">
+            <div class="control-label">&#160;</div>
+            <div class="controls actionButtons">
+                <stripes:form beanclass="${actionBean.class.name}" id="scanRackForm">
+                    <stripes:submit name="reviewScannedRack" value="Review Scanned Rack"
+                                    style="margin-right: 10px;margin-top:10px;" class="btn btn-mini"/>
+                </stripes:form>
+                <stripes:form beanclass="${actionBean.class.name}" id="confirmRearrayForm">
+                    <stripes:submit name="confirmRearray" value="Confirm Rarray"
+                                    style="margin-right: 10px;margin-top:10px;" class="btn btn-mini"/>
+                </stripes:form>
+            </div>
+        </div>
 
         <div class="clearfix"></div>
         <table class="table simple" id="dispositions">
-            <thead>
+        <thead>
             <tr>
                 <th class="columnPosition">Position</th>
                 <th class="columnBarcode">Barcode</th>
