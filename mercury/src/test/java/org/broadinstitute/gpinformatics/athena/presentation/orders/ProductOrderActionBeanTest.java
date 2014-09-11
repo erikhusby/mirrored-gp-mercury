@@ -613,23 +613,23 @@ public class ProductOrderActionBeanTest {
 
     public void testRegulatoryInformationProjectHasNoIrbButParentDoes()
             throws ParseException {
-        // set up two products, one will be the child of the other.
-        ResearchProject dummyParentProduct = ResearchProjectTestFactory.createTestResearchProject();
-        dummyParentProduct.setJiraTicketKey("rp-parent");
-        ResearchProject dummyChildProduct = ResearchProjectTestFactory.createTestResearchProject();
-        dummyChildProduct.setJiraTicketKey("rp-child");
+        // set up two projects, one will be the child of the other.
+        ResearchProject dummyParentProject = ResearchProjectTestFactory.createTestResearchProject();
+        dummyParentProject.setJiraTicketKey("rp-parent");
+        ResearchProject dummyChildProject = ResearchProjectTestFactory.createTestResearchProject();
+        dummyChildProject.setJiraTicketKey("rp-child");
         // clear the regulatory infos from both of them
-        dummyChildProduct.getRegulatoryInfos().clear();
-        dummyParentProduct.getRegulatoryInfos().clear();
+        dummyChildProject.getRegulatoryInfos().clear();
+        dummyParentProject.getRegulatoryInfos().clear();
         // create a regulatory info and add it only to the parent.
         RegulatoryInfo regulatoryInfoFromParent =
                 new RegulatoryInfo("IRB Consent", RegulatoryInfo.Type.IRB, new Date().toString());
-        dummyParentProduct.addRegulatoryInfo(regulatoryInfoFromParent);
-        dummyChildProduct.setParentResearchProject(dummyParentProduct);
+        dummyParentProject.addRegulatoryInfo(regulatoryInfoFromParent);
+        dummyChildProject.setParentResearchProject(dummyParentProject);
 
         // finally create a product order and add the child project to it.
         ProductOrder productOrder = ProductOrderTestFactory.buildSampleInitiationProductOrder(2);
-        productOrder.setResearchProject(dummyChildProduct);
+        productOrder.setResearchProject(dummyChildProject);
 
         actionBean.setEditOrder(productOrder);
         RegulatoryInfoDao regulatoryInfoDao = Mockito.mock(RegulatoryInfoDao.class);

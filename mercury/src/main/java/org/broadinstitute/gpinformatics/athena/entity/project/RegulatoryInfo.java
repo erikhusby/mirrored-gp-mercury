@@ -121,9 +121,12 @@ public class RegulatoryInfo implements Serializable, BusinessObject {
     }
 
     /**
-     * Returns all ResearchProjects this RegulatoryInfo is associated with, including child ResearchProjects
+     * Since RegulatoryInfo can be used not only for associated ResearchProjects, but also their children, it is
+     * helpful to be able to get a list lf all ResearchProjects and their children.
+     *
+     * @return all ResearchProjects this RegulatoryInfo is associated with, including child ResearchProjects.
      */
-    public Collection<ResearchProject> getAvailableResearchProjects() {
+    public Collection<ResearchProject> getResearchProjectsIncludingChildren() {
         Collection<ResearchProject> allProjects = new ArrayList<>(getResearchProjects());
         for (ResearchProject project : getResearchProjects()) {
             allProjects.addAll(project.getAllChildren());
