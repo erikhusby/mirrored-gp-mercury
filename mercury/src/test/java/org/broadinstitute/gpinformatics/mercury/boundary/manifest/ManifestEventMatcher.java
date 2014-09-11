@@ -23,6 +23,7 @@ public class ManifestEventMatcher extends BaseMatcher<Iterable<ManifestEvent>> {
 
     @Override
     public boolean matches(Object o) {
+        @SuppressWarnings("unchecked")
         Iterable<ManifestEvent> events = (Iterable<ManifestEvent>) o;
         for (ManifestEvent event : events) {
             if (event.getMessage().contains(errorStatus.getBaseMessage())) {
@@ -35,6 +36,6 @@ public class ManifestEventMatcher extends BaseMatcher<Iterable<ManifestEvent>> {
 
     @Override
     public void describeTo(Description description) {
-        description.appendText("Manivest Event with " + errorStatus);
+        description.appendText("Manifest Event with " + errorStatus);
     }
 }

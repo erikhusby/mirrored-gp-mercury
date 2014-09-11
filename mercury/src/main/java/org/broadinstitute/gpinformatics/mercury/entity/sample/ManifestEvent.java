@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import org.broadinstitute.bsp.client.users.BspUser;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.Updateable;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.Updatable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.UpdatedEntityInterceptor;
 import org.hibernate.envers.Audited;
 
@@ -21,26 +21,26 @@ import javax.persistence.Table;
 import java.util.Date;
 
 /**
- * Manifest events represents logged items of interest that occur during the registration and/or accessioning
- * process.  Tracking these items is a critical piece of supporting a quality system.
+ * Manifest events represent logged items of interest that occur during the accessioning or tube scanning processes.
+ * Tracking these items is a critical piece of supporting a quality system.
  */
 @Entity
 @EntityListeners(UpdatedEntityInterceptor.class)
 @Audited
-@Table(schema = "mercury", name="MANIFEST_EVENT")
-public class ManifestEvent implements Updateable {
+@Table(schema = "mercury", name = "MANIFEST_EVENT")
+public class ManifestEvent implements Updatable {
 
     @SuppressWarnings("UnusedDeclaration")
     @Id
     @SequenceGenerator(name = "SEQ_MANIFEST_EVENT", schema = "mercury", sequenceName = "SEQ_MANIFEST_EVENT")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MANIFEST_EVENT")
-    @Column(name="manifest_event_id")
+    @Column(name = "manifest_event_id")
     private Long manifestEventId;
 
     private String message;
 
-    @ManyToOne(cascade = CascadeType.PERSIST,optional = true)
-    @JoinColumn(name ="manifest_record_id")
+    @ManyToOne(cascade = CascadeType.PERSIST, optional = true)
+    @JoinColumn(name = "manifest_record_id")
     private ManifestRecord manifestRecord;
 
     @Enumerated(EnumType.STRING)
@@ -62,7 +62,9 @@ public class ManifestEvent implements Updateable {
     @Column(name = "MODIFIED_DATE")
     private Date modifiedDate;
 
-    /** For JPA */
+    /**
+     * For JPA
+     */
     protected ManifestEvent() {
     }
 

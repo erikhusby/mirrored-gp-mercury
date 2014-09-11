@@ -8,7 +8,7 @@ import java.util.Date;
 /**
  * interface to define fields for tracking changes to entities
  */
-public interface Updateable {
+public interface Updatable {
     public void setModifiedDate(Date date);
 
     Long getCreatedBy();

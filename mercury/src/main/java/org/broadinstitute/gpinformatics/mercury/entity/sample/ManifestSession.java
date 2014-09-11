@@ -9,7 +9,7 @@ import com.google.common.collect.Multimaps;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.Updateable;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.Updatable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.UpdatedEntityInterceptor;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -48,7 +48,7 @@ import java.util.Set;
 @EntityListeners(UpdatedEntityInterceptor.class)
 @Audited
 @Table(schema = "mercury", name = "MANIFEST_SESSION")
-public class ManifestSession implements Updateable {
+public class ManifestSession implements Updatable {
 
     public static final String SAMPLE_ID_KEY = "Sample ID";
     public static final String VESSEL_LABEL = "Vessel barcode";
@@ -512,6 +512,7 @@ public class ManifestSession implements Updateable {
     /**
      * Creates and returns a Pojo which represents the current state of the session.  A summary
      * of errors found in the associated events, and particular counts of interest are populated in the pojo
+     *
      * @return a {@link ManifestStatus} populated with summary information of interest for the session
      */
     public ManifestStatus generateSessionStatusForClose() {
@@ -537,8 +538,9 @@ public class ManifestSession implements Updateable {
     /**
      * Returns all records contained in this session that currently have a status that matches the given status
      *
-     * @param status    Status with which to filter records to be returned
-     * @return          A collection of records filtered by the given status
+     * @param status Status with which to filter records to be returned
+     *
+     * @return A collection of records filtered by the given status
      */
     private Collection<ManifestRecord> getRecordsByStatus(ManifestRecord.Status status) {
 
@@ -575,9 +577,9 @@ public class ManifestSession implements Updateable {
     /**
      * Encapsulates the logic required to mark a session completed:
      * <ul>
-     *     <li>Mark all scanned, un-quarantined, records as Accessioned</li>
-     *     <li>Create ManifestEvents for all un-scanned ,un-quarantined, records</li>
-     *     <li>Set the status of the session to Completed</li>
+     * <li>Mark all scanned, un-quarantined, records as Accessioned</li>
+     * <li>Create ManifestEvents for all un-scanned ,un-quarantined, records</li>
+     * <li>Set the status of the session to Completed</li>
      * </ul>
      */
     public void completeSession() {
@@ -604,8 +606,9 @@ public class ManifestSession implements Updateable {
      * from this record such as the record is quarantined, or not in the correct state within the session, or just
      * not found
      *
-     * @param sourceForTransfer     Sample ID for which the caller wishes to find the corresponding record
-     * @return  The record that matches the source sample
+     * @param sourceForTransfer Sample ID for which the caller wishes to find the corresponding record
+     *
+     * @return The record that matches the source sample
      */
     public ManifestRecord findRecordForTransfer(String sourceForTransfer) {
 
@@ -628,11 +631,11 @@ public class ManifestSession implements Updateable {
     /**
      * Encapsulates the logic required to mark a record within this session as having been transferred
      *
-     * @param sourceCollaboratorSample  Sample ID for the source sample.  This should correspond to a record within
-     *                                  the session
-     * @param targetSample              Mercury Sample to which the transfer will be associated
-     * @param targetVessel              Lab Vessel to which the transfer will be associated
-     * @param user                      Represents the user attempting to make the transfer
+     * @param sourceCollaboratorSample Sample ID for the source sample.  This should correspond to a record within
+     *                                 the session
+     * @param targetSample             Mercury Sample to which the transfer will be associated
+     * @param targetVessel             Lab Vessel to which the transfer will be associated
+     * @param user                     Represents the user attempting to make the transfer
      */
     public void performTransfer(String sourceCollaboratorSample, MercurySample targetSample, LabVessel targetVessel,
                                 BspUser user) {

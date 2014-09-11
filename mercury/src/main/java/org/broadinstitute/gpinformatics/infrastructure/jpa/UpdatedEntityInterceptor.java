@@ -22,26 +22,25 @@ public class UpdatedEntityInterceptor {
     @PreUpdate
     @PrePersist
     public void myPreSave(Object obj) {
-        if (OrmUtil.proxySafeIsInstance(obj, Updateable.class)) {
-            Updateable updateObj = OrmUtil.proxySafeCast(obj, Updateable.class);
-
+        if (OrmUtil.proxySafeIsInstance(obj, Updatable.class)) {
+            Updatable updateObj = OrmUtil.proxySafeCast(obj, Updatable.class);
 
             Date trackingDate = new Date();
             updateObj.setModifiedDate(trackingDate);
-            if(updateObj.getCreatedDate() == null) {
+            if (updateObj.getCreatedDate() == null) {
                 updateObj.setCreatedDate(trackingDate);
             }
 
             UserBean currentBean = ServiceAccessUtility.getBean(UserBean.class);
 
-            if(currentBean == null) {
+            if (currentBean == null) {
                 logger.info("Unable to determine the current user because User bean is null");
                 updateObj.setModifiedBy(updateObj.getCreatedBy());
             } else {
                 BspUser bspUser = currentBean.getBspUser();
                 updateObj.setModifiedBy(bspUser);
 
-                if(updateObj.getCreatedBy() == null ) {
+                if (updateObj.getCreatedBy() == null) {
                     updateObj.setCreatedBy(bspUser);
                 }
             }

@@ -4,7 +4,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 import com.google.common.base.Function;
 import com.google.common.collect.Maps;
 import org.broadinstitute.bsp.client.users.BspUser;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.Updateable;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.Updatable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.UpdatedEntityInterceptor;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.hibernate.envers.Audited;
@@ -43,7 +43,7 @@ import java.util.Set;
 @EntityListeners(UpdatedEntityInterceptor.class)
 @Audited
 @Table(schema = "mercury", name = "MANIFEST_RECORD")
-public class ManifestRecord implements Updateable {
+public class ManifestRecord implements Updatable {
 
     @Id
     @Column(name = "MANIFEST_RECORD_ID")
@@ -91,7 +91,8 @@ public class ManifestRecord implements Updateable {
     /**
      * For JPA
      */
-    protected ManifestRecord() {}
+    protected ManifestRecord() {
+    }
 
     public ManifestRecord(Metadata... metadata) {
         this.metadata.addAll(Arrays.asList(metadata));
@@ -243,9 +244,8 @@ public class ManifestRecord implements Updateable {
         MISMATCHED_GENDER("At least one other manifest entry with the same patient ID has a different gender.",
                 ManifestEvent.Severity.ERROR),
         /**
-         *
          * TODO not sure this is an error, should be tracked by a Decision.
-         *
+         * <p/>
          * Another record within this manifest, with the same patient ID has the same value
          * for the tumor/normal indicator.
          */
@@ -264,7 +264,8 @@ public class ManifestRecord implements Updateable {
         /**
          * No sample was scanned for a manifest record.
          */
-        MISSING_SAMPLE("No sample has been scanned to correspond with the manifest record.", ManifestEvent.Severity.QUARANTINED),
+        MISSING_SAMPLE("No sample has been scanned to correspond with the manifest record.",
+                ManifestEvent.Severity.QUARANTINED),
         /**
          * Represents a scenario in which the user attempts to transfer a source tube that
          * did not make it to the ACCESSIONED state.
@@ -275,7 +276,8 @@ public class ManifestRecord implements Updateable {
          * Helpful message to note that the user is attempting to accession a source tube into
          * a target vessel that has already gone through accessioning.
          */
-        ALREADY_SCANNED_TARGET("The scanned target tube has already been associated with another source sample.", ManifestEvent.Severity.ERROR),
+        ALREADY_SCANNED_TARGET("The scanned target tube has already been associated with another source sample.",
+                ManifestEvent.Severity.ERROR),
         /**
          * TODO This seems to be a duplicate of NOT_READY_FOR_TUBE_TRANSFER.  Need to fully define what this case means.
          */
@@ -284,14 +286,15 @@ public class ManifestRecord implements Updateable {
          * Helpful message to note that the user is attempting to accession a source tube
          * that has already gone through accessioning.
          */
-        ALREADY_SCANNED_SOURCE("The scanned source tube has already been through the accessioning process.", ManifestEvent.Severity.ERROR),
+        ALREADY_SCANNED_SOURCE("The scanned source tube has already been through the accessioning process.",
+                ManifestEvent.Severity.ERROR),
 
-        PREVIOUS_ERRORS_UNABLE_TO_CONTINUE("Due to errors previously found, this sample is unable to continue.", ManifestEvent.Severity.ERROR),
+        PREVIOUS_ERRORS_UNABLE_TO_CONTINUE("Due to errors previously found, this sample is unable to continue.",
+                ManifestEvent.Severity.ERROR),
         INVALID_TARGET("The Target sample or vessel appears to be invalid.", ManifestEvent.Severity.ERROR);
 
         private final String baseMessage;
         private final ManifestEvent.Severity severity;
-
 
         ErrorStatus(String baseMessage, ManifestEvent.Severity severity) {
 
