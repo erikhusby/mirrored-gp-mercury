@@ -176,7 +176,7 @@ public class ManifestRecord {
          * Another record in the system associated with the same research project and same patient
          * ID has a different value for gender.
          */
-        MISMATCHED_GENDER("At least one other manifest entry with the same patient ID has a different gender",
+        MISMATCHED_GENDER("At least one other manifest entry with the same patient ID has a different gender.",
                 ManifestEvent.Severity.ERROR),
         /**
          *
@@ -186,13 +186,13 @@ public class ManifestRecord {
          * for the tumor/normal indicator.
          */
         UNEXPECTED_TUMOR_OR_NORMAL(
-                "At least one other manifest entry with the same patient ID has a different indicator for tumor/normal",
+                "At least one other manifest entry with the same patient ID has a different indicator for tumor/normal.",
                 ManifestEvent.Severity.ERROR),
         /**
          * This cannot directly apply to an actual record.  Represents a sample tube that is
          * received for which there is no previously uploaded manifest record.
          */
-        NOT_IN_MANIFEST("The scanned sample is not found in any manifest", ManifestEvent.Severity.ERROR),
+        NOT_IN_MANIFEST("The scanned sample is not found in any manifest.", ManifestEvent.Severity.ERROR),
         /**
          * Encapsulates the error message to indicate to the user that they have already scanned the tube
          */
@@ -200,18 +200,18 @@ public class ManifestRecord {
         /**
          * No sample was scanned for a manifest record.
          */
-        MISSING_SAMPLE("No sample has been scanned to correspond with the manifest record", ManifestEvent.Severity.QUARANTINED),
+        MISSING_SAMPLE("No sample has been scanned to correspond with the manifest record.", ManifestEvent.Severity.QUARANTINED),
         /**
          * Represents a scenario in which the user attempts to transfer a source tube that
          * did not make it to the ACCESSIONED state.
          */
-        NOT_READY_FOR_TUBE_TRANSFER("Attempting to transfer a sample that has not completed Accessioning",
+        NOT_READY_FOR_TUBE_TRANSFER("Attempting to transfer a sample that has not completed accessioning.",
                 ManifestEvent.Severity.QUARANTINED),
         /**
          * Helpful message to note that the user is attempting to accession a source tube into
          * a target vessel that has already gone through accessioning.
          */
-        ALREADY_SCANNED_TARGET("The scanned target tube has already been associated with another source sample", ManifestEvent.Severity.ERROR),
+        ALREADY_SCANNED_TARGET("The scanned target tube has already been associated with another source sample.", ManifestEvent.Severity.ERROR),
         /**
          * TODO This seems to be a duplicate of NOT_READY_FOR_TUBE_TRANSFER.  Need to fully define what this case means.
          */
@@ -220,10 +220,10 @@ public class ManifestRecord {
          * Helpful message to note that the user is attempting to accession a source tube
          * that has already gone through accessioning.
          */
-        ALREADY_SCANNED_SOURCE("The scanned source tube has already been through the accessioning process", ManifestEvent.Severity.ERROR),
+        ALREADY_SCANNED_SOURCE("The scanned source tube has already been through the accessioning process.", ManifestEvent.Severity.ERROR),
 
         PREVIOUS_ERRORS_UNABLE_TO_CONTINUE("Due to errors previously found, this sample is unable to continue.", ManifestEvent.Severity.ERROR),
-        INVALID_TARGET("The Target sample or vessel appears to be invalid", ManifestEvent.Severity.ERROR);
+        INVALID_TARGET("The Target sample or vessel appears to be invalid.", ManifestEvent.Severity.ERROR);
 
         private final String baseMessage;
         private final ManifestEvent.Severity severity;

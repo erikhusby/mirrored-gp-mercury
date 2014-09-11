@@ -164,7 +164,6 @@ public class ManifestSession {
      * not already been validated.
      */
     public void validateManifest() {
-
         List<ManifestRecord> allManifestRecordsAcrossThisResearchProject =
                 collectAllManifestRecordsAcrossThisResearchProject();
 
@@ -188,19 +187,22 @@ public class ManifestSession {
                 filterForPatientsWithInconsistentGenders(recordsByPatientId);
 
         for (Map.Entry<String, Collection<ManifestRecord>> entry : patientsWithInconsistentGenders) {
-            for (ManifestRecord duplicatedRecord : entry.getValue()) {
+            for (ManifestRecord record : entry.getValue()) {
                 // Ignore ManifestSessions that are not this ManifestSession, they will not have errors added by
                 // this logic.
-                if (this.equals(duplicatedRecord.getManifestSession())) {
+                if (this.equals(record.getManifestSession())) {
 
                     String message =
                             ManifestRecord.ErrorStatus.MISMATCHED_GENDER.formatMessage("patient ID", entry.getKey());
+
+                    String otherSessionsWithSamePatientId =
+                            describeOtherManifestSessionsWithMatchingRecords(record, entry.getValue());
+
                     addManifestEvent(new ManifestEvent(ManifestRecord.ErrorStatus.MISMATCHED_GENDER.getSeverity(),
-                            message, duplicatedRecord));
+                            message + "  " + otherSessionsWithSamePatientId, record));
                 }
             }
         }
-
     }
 
     /**
@@ -251,56 +253,55 @@ public class ManifestSession {
                     String message =
                             ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage(SAMPLE_ID_KEY, entry.getKey());
                     String sessionsWithDuplicates =
-                            identifyOtherManifestSessionsWithDuplicates(duplicatedRecord, entry.getValue());
+                            describeOtherManifestSessionsWithMatchingRecords(duplicatedRecord, entry.getValue());
                     addManifestEvent(
                             new ManifestEvent(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getSeverity(),
-                                    message + "  " + sessionsWithDuplicates,
-                                    duplicatedRecord));
+                                    message + "  " + sessionsWithDuplicates, duplicatedRecord));
                 }
             }
         }
     }
 
     /**
-     * Produce a presentable description of where the duplicates of {@code thisDuplicate} can be found.
+     * Create a presentable description of where the duplicates of {@code thisDuplicate} can be found.
      */
-    private String identifyOtherManifestSessionsWithDuplicates(final ManifestRecord thisDuplicate,
-                                                               Collection<ManifestRecord> allDuplicates) {
+    private String describeOtherManifestSessionsWithMatchingRecords(final ManifestRecord thisRecord,
+                                                                    Collection<ManifestRecord> allRecords) {
 
-        // Filter 'thisDuplicate' from consideration as a duplicate of itself.
-        Iterable<ManifestRecord> allButThisDuplicate = Iterables.filter(allDuplicates, new Predicate<ManifestRecord>() {
+        // Filter 'thisRecord' from consideration as a duplicate of itself.
+        Iterable<ManifestRecord> allButThisRecord = Iterables.filter(allRecords, new Predicate<ManifestRecord>() {
             @Override
             public boolean apply(@Nullable ManifestRecord record) {
-                return record != thisDuplicate;
+                return record != thisRecord;
             }
         });
 
         // Group manifest records by manifest session name.
-        ImmutableListMultimap<String, ManifestRecord> recordsBySession =
-                Multimaps.index(allButThisDuplicate, new Function<ManifestRecord, String>() {
+        ImmutableListMultimap<String, ManifestRecord> recordsBySessionName =
+                Multimaps.index(allButThisRecord, new Function<ManifestRecord, String>() {
                     @Override
                     public String apply(ManifestRecord record) {
                         return record.getManifestSession().getSessionName();
                     }
                 });
 
-        List<String> duplicateMessages = new ArrayList<>();
-        // Add an appropriate message for each duplicate to duplicateMessages.
-        for (Map.Entry<String, Collection<ManifestRecord>> entry : recordsBySession.asMap().entrySet()) {
+        List<String> messages = new ArrayList<>();
+        // Add an appropriate message for each record to messages.
+        for (Map.Entry<String, Collection<ManifestRecord>> entry : recordsBySessionName.asMap().entrySet()) {
 
             StringBuilder messageBuilder = new StringBuilder();
 
-            int numDuplicates = entry.getValue().size();
-            messageBuilder.append((numDuplicates == 1) ? "1 duplicate" : numDuplicates + " duplicates");
+            int numInstances = entry.getValue().size();
+            messageBuilder.append((numInstances == 1) ? "1 instance" : numInstances + " instances");
             messageBuilder.append(" found in ");
 
             String sessionName = entry.getKey();
-            String thisSessionName = thisDuplicate.getManifestSession().getSessionName();
+            String thisSessionName = thisRecord.getManifestSession().getSessionName();
             messageBuilder.append(
                     sessionName.equals(thisSessionName) ? "this manifest session" : "manifest session " + sessionName);
-            duplicateMessages.add(messageBuilder.toString());
+            messages.add(messageBuilder.toString());
         }
-        return StringUtils.join(duplicateMessages, ", ") + ".";
+        return StringUtils.join(messages, ", ") + ".";
     }
 
     /**
@@ -431,7 +432,7 @@ public class ManifestSession {
      */
     public ManifestRecord scanSample(String sampleId) {
 
-        ManifestRecord foundRecord = null;
+        ManifestRecord foundRecord;
         try {
             foundRecord = findRecordByCollaboratorId(sampleId);
         } catch (TubeTransferException e) {

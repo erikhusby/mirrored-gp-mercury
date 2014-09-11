@@ -1,10 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Multimaps;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -33,11 +30,9 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import javax.annotation.Nullable;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
@@ -349,7 +344,7 @@ public class ManifestSessionEjbDBFreeTest {
             // -1 to account for the number of copies to number of duplicates conversion.
             int expectedNumberOfDuplicates = SAMPLE_ID_TO_NUMBER_OF_COPIES_FOR_DUPLICATE_TESTS.get(sampleId) - 1;
 
-            String expectedText = expectedNumberOfDuplicates == 1 ? "duplicate" : "duplicates";
+            String expectedText = "instance" + (expectedNumberOfDuplicates == 1 ? "" : "s");
             assertThat(manifestEvent.getMessage(), containsString(expectedText + " found in this manifest session"));
         }
     }
@@ -376,7 +371,7 @@ public class ManifestSessionEjbDBFreeTest {
             if (duplicatedSampleIds.contains(record.getValueByKey(Metadata.Key.SAMPLE_ID))) {
                 assertThat(record.getManifestEvents(), hasSize(1));
                 ManifestEvent manifestEvent = record.getManifestEvents().iterator().next();
-                assertThat(manifestEvent.getMessage(), containsString("1 duplicate found in manifest session " + manifestSession1.getSessionName()));
+                assertThat(manifestEvent.getMessage(), containsString("1 instance found in manifest session " + manifestSession1.getSessionName()));
             } else {
                 assertThat(record.getManifestEvents(), is(empty()));
             }
@@ -396,7 +391,9 @@ public class ManifestSessionEjbDBFreeTest {
             Metadata patientIdMetadata = manifestRecord.getMetadataByKey(Metadata.Key.PATIENT_ID);
             if (PATIENT_IDS_FOR_SAME_MANIFEST_GENDER_MISMATCHES.contains(patientIdMetadata.getValue())) {
                 assertThat(manifestRecord.getManifestEvents(), hasSize(1));
-                assertThat(manifestRecord.getManifestEvents().get(0).getSeverity(), is(ManifestEvent.Severity.ERROR));
+                ManifestEvent manifestEvent = manifestRecord.getManifestEvents().get(0);
+                assertThat(manifestEvent.getSeverity(), is(ManifestEvent.Severity.ERROR));
+                assertThat(manifestEvent.getMessage(), containsString("1 instance found in this manifest session"));
             }
         }
     }
@@ -419,14 +416,20 @@ public class ManifestSessionEjbDBFreeTest {
         Set<String> expectedPatientIds = ImmutableSet.of("001-001", "005-005", "009-001");
         assertThat(manifestSession2.getManifestEvents(), hasSize(expectedPatientIds.size()));
         assertThat(manifestSession2.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
+        int observedMismatches = 0;
         for (ManifestRecord manifestRecord : manifestSession2.getRecords()) {
             assertThat(manifestRecord.isQuarantined(), is(false));
-            Metadata patientIdMetadata = manifestRecord.getMetadataByKey(Metadata.Key.PATIENT_ID);
-            if (expectedPatientIds.contains(patientIdMetadata.getValue())) {
+            String patientId = manifestRecord.getValueByKey(Metadata.Key.PATIENT_ID);
+            if (expectedPatientIds.contains(patientId)) {
                 assertThat(manifestRecord.getManifestEvents(), hasSize(1));
-                assertThat(manifestRecord.getManifestEvents().get(0).getSeverity(), is(ManifestEvent.Severity.ERROR));
+                ManifestEvent manifestEvent = manifestRecord.getManifestEvents().get(0);
+                assertThat(manifestEvent.getSeverity(), is(ManifestEvent.Severity.ERROR));
+                assertThat(manifestEvent.getMessage(),
+                        containsString("1 instance found in manifest session " + manifestSession1.getSessionName()));
+                observedMismatches++;
             }
         }
+        assertThat(observedMismatches, is(equalTo(expectedPatientIds.size())));
     }
 
     /********************************************************************/
