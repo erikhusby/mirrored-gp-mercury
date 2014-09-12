@@ -5,6 +5,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.Maps;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.HasUpdateData;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.UpdatedEntityInterceptor;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
 import org.hibernate.envers.Audited;
@@ -23,8 +24,6 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
-import javax.persistence.MapKeyColumn;
-import javax.persistence.MapKeyEnumerated;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -170,6 +169,25 @@ public class ManifestRecord implements HasUpdateData {
 
     public UpdateData getUpdateData() {
         return updateData;
+    }
+
+    /**
+     * Scan the sample corresponding to this ManifestRecord as part of accessioning.
+     */
+    public void accessionScan() {
+
+        if (isQuarantined()) {
+            throw new InformaticsServiceException(
+                    ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID
+                            .formatMessage(ManifestSession.SAMPLE_ID_KEY, getSampleId()));
+        }
+        if (getStatus() == ManifestRecord.Status.SCANNED) {
+            throw new InformaticsServiceException(
+                    ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_SCAN
+                            .formatMessage(ManifestSession.SAMPLE_ID_KEY, getSampleId()));
+        }
+
+        setStatus(ManifestRecord.Status.SCANNED);
     }
 
     /**

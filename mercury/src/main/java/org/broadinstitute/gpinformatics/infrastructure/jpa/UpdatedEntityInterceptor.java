@@ -13,8 +13,8 @@ import javax.persistence.PreUpdate;
 import java.util.Date;
 
 /**
- * Interceptor to automatically set/update the createdBy, modifiedBy, createdDate, modifiedDate properties for entities
- * annotated with @EntityListeners(UpdatedEntityInterceptor.class) and having a #getUpdateData method.
+ * Interceptor to automatically set/update the createdBy, modifiedBy, createdDate, and modifiedDate properties for
+ * entities annotated with @EntityListeners(UpdatedEntityInterceptor.class) and implementing {@code HasUpdateData}.
  */
 public class UpdatedEntityInterceptor {
 

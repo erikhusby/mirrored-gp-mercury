@@ -58,8 +58,6 @@ public class ManifestSessionEjbDBFreeTest {
 
     private static final String MANIFEST_FILE_GOOD = "manifest-upload/good-manifest.xlsx";
 
-    private static final String PATHS_TO_PREFIXES_PROVIDER = "pathsToPrefixesProvider";
-
     private static final String BAD_MANIFEST_UPLOAD_PROVIDER = "badManifestUploadProvider";
 
     private static final BSPUserList.QADudeUser TEST_USER = new BSPUserList.QADudeUser("BUICK USER", 42);
@@ -279,18 +277,6 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
-    @Test(dataProvider = PATHS_TO_PREFIXES_PROVIDER)
-    public void extractPrefixFromFilename(String path, String expectedPrefix) {
-        ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao,
-                labVesselDao);
-        try {
-            String actualPrefix = ejb.extractPrefixFromFilename(path);
-            assertThat(actualPrefix, is(equalTo(expectedPrefix)));
-        } catch (InformaticsServiceException ignored) {
-        }
-    }
-
-
     /********************************************************************/
     /**  =======  upload manifest tests ============================== **/
     /********************************************************************/
@@ -470,7 +456,7 @@ public class ManifestSessionEjbDBFreeTest {
             ejb.acceptManifestUpload(ARBITRARY_MANIFEST_SESSION_ID);
             Assert.fail();
         } catch (InformaticsServiceException ignored) {
-            assertThat(ignored.getMessage(), containsString("Unrecognized Manifest Session ID"));
+            assertThat(ignored.getMessage(), containsString("not found"));
         }
     }
 
@@ -592,32 +578,6 @@ public class ManifestSessionEjbDBFreeTest {
                 assertThat(manifestRecord.getManifestEvents(), hasSize(1));
             }
         }
-    }
-
-    @DataProvider(name = PATHS_TO_PREFIXES_PROVIDER)
-    private Iterator<Object[]> pathsToPrefixesProvider() {
-        String[] paths = {
-                // no path
-                "",
-                // Unix path
-                "/some/path/to/",
-                // Windows path
-                "c:\\ugh\\windows\\"
-        };
-        // Old and new Excel formats
-        String[] suffixes = {
-                ".xls",
-                ".xlsx"
-        };
-
-        List<Object[]> pathsAndBaseFileNames = new ArrayList<>();
-        for (String path : paths) {
-            for (String suffix : suffixes) {
-                String BASE_FILENAME = "spreadsheet";
-                pathsAndBaseFileNames.add(new Object[]{path + BASE_FILENAME + suffix, BASE_FILENAME});
-            }
-        }
-        return pathsAndBaseFileNames.iterator();
     }
 
     @DataProvider(name = GOOD_MANIFEST_ACCESSION_SCAN_PROVIDER)

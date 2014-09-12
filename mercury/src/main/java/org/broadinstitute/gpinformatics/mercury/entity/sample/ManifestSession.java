@@ -6,11 +6,13 @@ import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.HasUpdateData;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.UpdatedEntityInterceptor;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -82,16 +84,16 @@ public class ManifestSession implements HasUpdateData {
     private UpdateData updateData = new UpdateData();
 
     /**
-     * For JPA
+     * For JPA.
      */
     protected ManifestSession() {
     }
 
-    public ManifestSession(ResearchProject researchProject, String sessionPrefix, BspUser createdBy) {
+    public ManifestSession(ResearchProject researchProject, String pathToManifestFile, BspUser createdBy) {
         this.researchProject = researchProject;
-        this.researchProject.addManifestSession(this);
+        researchProject.addManifestSession(this);
 
-        this.sessionPrefix = sessionPrefix;
+        sessionPrefix = FilenameUtils.getBaseName(pathToManifestFile);
         updateData.setCreatedBy(createdBy.getUserId());
     }
 
@@ -599,6 +601,22 @@ public class ManifestSession implements HasUpdateData {
         LabEvent collaboratorTransferEvent =
                 new LabEvent(LabEventType.COLLABORATOR_TRANSFER, new Date(), " ", 1L, user.getUserId(), "");
         targetVessel.addInPlaceEvent(collaboratorTransferEvent);
+    }
+
+    /**
+     * Scan the specified sample as part of the accessioning process.
+     *
+     * @param collaboratorSampleId The collaborator sample ID the current sample
+     */
+    public void accessionScan(String collaboratorSampleId) {
+        ManifestRecord manifestRecord = getRecordWithMatchingValueForKey(Metadata.Key.SAMPLE_ID, collaboratorSampleId);
+
+        if (manifestRecord == null) {
+            throw new InformaticsServiceException(
+                    ManifestRecord.ErrorStatus.NOT_IN_MANIFEST.formatMessage(
+                            ManifestSession.SAMPLE_ID_KEY, collaboratorSampleId));
+        }
+        manifestRecord.accessionScan();
     }
 
     /**

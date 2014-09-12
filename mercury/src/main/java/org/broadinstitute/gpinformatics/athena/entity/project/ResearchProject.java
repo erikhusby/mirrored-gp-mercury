@@ -879,7 +879,6 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
 
     public void addManifestSession(ManifestSession manifestSession) {
         this.manifestSessions.add(manifestSession);
-
     }
 
     public enum Status implements StatusType {
