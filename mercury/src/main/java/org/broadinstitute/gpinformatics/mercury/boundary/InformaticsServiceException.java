@@ -22,11 +22,11 @@ import javax.ejb.ApplicationException;
 public class InformaticsServiceException extends RuntimeException {
 
     public InformaticsServiceException(@Nonnull String template, Object... args) {
-        super(args == null ? template : String.format(template, args));
+        super(args.length == 0 ? template : String.format(template, args));
     }
 
     public InformaticsServiceException(@Nonnull String template, Throwable cause, Object... args) {
-        super(args == null ? template : String.format(template, args), cause);
+        super(args.length == 0 ? template : String.format(template, args), cause);
     }
 
     public InformaticsServiceException(Throwable throwableIn) {
