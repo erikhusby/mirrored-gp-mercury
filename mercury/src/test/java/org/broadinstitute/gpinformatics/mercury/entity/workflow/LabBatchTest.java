@@ -58,7 +58,7 @@ public class LabBatchTest {
                 "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
                 40, null, null, true, workflow, false, "agg type"),
                 new ResearchProject(101L, "Test RP", "Test synopsis",
-                        false));
+                        false, ResearchProject.RegulatoryDesignation.RESEARCH_ONLY));
         productOrder.setJiraTicketKey(pdoBusinessName);
         productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         mapKeyToProductOrder.put(pdoBusinessName, productOrder);
@@ -73,7 +73,7 @@ public class LabBatchTest {
             String bspStock = vesselSampleList.get(sampleIndex - 1);
             productOrderSamples.add(new ProductOrderSample(bspStock));
             BarcodedTube bspAliquot = new BarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(bspStock));
+            bspAliquot.addSample(new MercurySample(bspStock, MercurySample.MetadataSource.BSP));
             mapBarcodeToTube.put(barcode, bspAliquot);
         }
 

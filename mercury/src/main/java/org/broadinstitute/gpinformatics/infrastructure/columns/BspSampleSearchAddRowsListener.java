@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A listener for the ConfigurableList addRows method.  Fetches columns from BSP.
@@ -37,8 +38,11 @@ public class BspSampleSearchAddRowsListener implements ConfigurableList.AddRowsL
         List<String> sampleIDs = new ArrayList<>();
         for (Object entity : entityList) {
             LabVessel labVessel = (LabVessel) entity;
-            MercurySample mercurySample = labVessel.getMercurySamples().iterator().next();
-            sampleIDs.add(mercurySample.getSampleKey());
+            Set<MercurySample> mercurySamples = labVessel.getMercurySamples();
+            if( !mercurySamples.isEmpty() ) {
+                MercurySample mercurySample = mercurySamples.iterator().next();
+                sampleIDs.add(mercurySample.getSampleKey());
+            }
         }
         if (!columnsInitialized) {
             bspSampleSearchColumns.add(BSPSampleSearchColumn.SAMPLE_ID);
@@ -60,8 +64,13 @@ public class BspSampleSearchAddRowsListener implements ConfigurableList.AddRowsL
             columnsInitialized = true;
         }
 
-        List<Map<BSPSampleSearchColumn, String>> listMapColumnToValue = bspSampleSearchService.runSampleSearch(
-                sampleIDs, bspSampleSearchColumns.toArray(new BSPSampleSearchColumn[bspSampleSearchColumns.size()]));
+        List<Map<BSPSampleSearchColumn, String>> listMapColumnToValue;
+        if( sampleIDs.isEmpty() ) {
+            listMapColumnToValue = new ArrayList<>();
+        } else {
+            listMapColumnToValue = bspSampleSearchService.runSampleSearch(
+                    sampleIDs, bspSampleSearchColumns.toArray(new BSPSampleSearchColumn[bspSampleSearchColumns.size()]));
+        }
         for (Map<BSPSampleSearchColumn, String> mapColumnToValue : listMapColumnToValue) {
             mapSampleIdToColumns.put(mapColumnToValue.get(BSPSampleSearchColumn.SAMPLE_ID), mapColumnToValue);
         }

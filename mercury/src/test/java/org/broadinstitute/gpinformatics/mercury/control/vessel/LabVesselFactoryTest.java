@@ -47,7 +47,8 @@ public class LabVesselFactoryTest {
         List<LabVessel> labVessels = labVesselFactory.buildLabVesselDaoFree(
                 new HashMap<String, LabVessel>(), new HashMap<String, List<MercurySample>>(),
                 new HashMap<String, Set<ProductOrderSample>>(), sampleReceiptBean.getReceivingUserName(),
-                sampleReceiptBean.getReceiptDate(), sampleReceiptBean.getParentVesselBeans(), LabEventType.SAMPLE_RECEIPT);
+                sampleReceiptBean.getReceiptDate(), sampleReceiptBean.getParentVesselBeans(),
+                LabEventType.SAMPLE_RECEIPT, MercurySample.MetadataSource.BSP);
 
         Assert.assertEquals(labVessels.size(), 2, "Wrong number of vessels");
         LabVessel labVessel = labVessels.get(0);
@@ -75,7 +76,8 @@ public class LabVesselFactoryTest {
         List<LabVessel> labVessels = labVesselFactory.buildLabVesselDaoFree(
                 new HashMap<String, LabVessel>(), new HashMap<String, List<MercurySample>>(),
                 new HashMap<String, Set<ProductOrderSample>>(), sampleReceiptBean.getReceivingUserName(),
-                sampleReceiptBean.getReceiptDate(), sampleReceiptBean.getParentVesselBeans(), LabEventType.SAMPLE_RECEIPT);
+                sampleReceiptBean.getReceiptDate(), sampleReceiptBean.getParentVesselBeans(),
+                LabEventType.SAMPLE_RECEIPT, MercurySample.MetadataSource.BSP);
 
         Assert.assertEquals(((BarcodedTube)labVessels.get(0)).getTubeType(),
                 BarcodedTube.BarcodedTubeType.VacutainerBloodTubeEDTA_3);
@@ -100,7 +102,8 @@ public class LabVesselFactoryTest {
         List<LabVessel> labVessels = labVesselFactory.buildLabVesselDaoFree(
                 new HashMap<String, LabVessel>(), new HashMap<String, List<MercurySample>>(),
                 mapIdToListPdoSamples, sampleReceiptBean.getReceivingUserName(), sampleReceiptBean.getReceiptDate(),
-                sampleReceiptBean.getParentVesselBeans(), LabEventType.SAMPLE_RECEIPT);
+                sampleReceiptBean.getParentVesselBeans(), LabEventType.SAMPLE_RECEIPT,
+                MercurySample.MetadataSource.BSP);
 
         Assert.assertEquals(labVessels.size(), 2, "Wrong number of vessels");
         LabVessel labVessel = labVessels.get(0);
@@ -133,7 +136,8 @@ public class LabVesselFactoryTest {
         List<LabVessel> labVessels = labVesselFactory.buildLabVesselDaoFree(
                 new HashMap<String, LabVessel>(), new HashMap<String, List<MercurySample>>(),
                 new HashMap<String, Set<ProductOrderSample>>(), sampleReceiptBean.getReceivingUserName(),
-                sampleReceiptBean.getReceiptDate(), sampleReceiptBean.getParentVesselBeans(), LabEventType.SAMPLE_RECEIPT);
+                sampleReceiptBean.getReceiptDate(), sampleReceiptBean.getParentVesselBeans(),
+                LabEventType.SAMPLE_RECEIPT, MercurySample.MetadataSource.BSP);
         Assert.assertEquals(labVessels.size(), 1, "Wrong number of vessels");
         StaticPlate staticPlate = (StaticPlate) labVessels.get(0);
         Assert.assertEquals(staticPlate.getContainerRole().getMapPositionToVessel().size(), 2,
@@ -158,7 +162,8 @@ public class LabVesselFactoryTest {
         List<LabVessel> labVessels = labVesselFactory.buildLabVesselDaoFree(
                 new HashMap<String, LabVessel>(), new HashMap<String, List<MercurySample>>(),
                 new HashMap<String, Set<ProductOrderSample>>(), sampleReceiptBean.getReceivingUserName(),
-                sampleReceiptBean.getReceiptDate(), sampleReceiptBean.getParentVesselBeans(), LabEventType.SAMPLE_RECEIPT);
+                sampleReceiptBean.getReceiptDate(), sampleReceiptBean.getParentVesselBeans(),
+                LabEventType.SAMPLE_RECEIPT, MercurySample.MetadataSource.BSP);
         StaticPlate staticPlate = (StaticPlate) labVessels.get(0);
         Assert.assertEquals(staticPlate.getPlateType(), StaticPlate.PlateType.Plate96Well200PCR);
     }

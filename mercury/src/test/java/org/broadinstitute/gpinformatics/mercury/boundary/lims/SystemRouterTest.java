@@ -197,7 +197,7 @@ public class SystemRouterTest extends BaseEventTest {
                 }});
 
         controlTube = new BarcodedTube(CONTROL_TUBE);
-        controlTube.addSample(new MercurySample(CONTROL_SAMPLE_ID));
+        controlTube.addSample(new MercurySample(CONTROL_SAMPLE_ID, MercurySample.MetadataSource.BSP));
         when(mockLabVesselDao.findByBarcodes(new ArrayList<String>() {{
             add(CONTROL_TUBE);
         }})).thenReturn(
@@ -247,7 +247,8 @@ public class SystemRouterTest extends BaseEventTest {
                     put(MERCURY_PLATE, plate);
                 }});
 
-        testProject = new ResearchProject(101L, "Test Project", "Test project", true);
+        testProject = new ResearchProject(101L, "Test Project", "Test project", true,
+                                          ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
 
         ProductFamily family = new ProductFamily("Test Product Family");
         testProduct = new Product("Test Product", family, "Test product", "P-TEST-1", new Date(), new Date(),
@@ -795,7 +796,7 @@ public class SystemRouterTest extends BaseEventTest {
         // Override controlDao behavior from setUp so that the sample in MERCURY_TUBE_1 is a control sample.
         when(mockControlDao.findAllActive())
                 .thenReturn(Arrays.asList(new Control("Sample1", Control.ControlType.POSITIVE)));
-        tube1.addSample(new MercurySample("SM-1"));
+        tube1.addSample(new MercurySample("SM-1", MercurySample.MetadataSource.BSP));
 
         if (Deployment.isCRSP) {
             try {
@@ -1129,7 +1130,7 @@ public class SystemRouterTest extends BaseEventTest {
         for (LabVessel tube : tubes) {
             String sampleName = "SM-" + sampleNum;
             productOrderSamples.add(new ProductOrderSample(sampleName));
-            tube.addSample(new MercurySample(sampleName));
+            tube.addSample(new MercurySample(sampleName, MercurySample.MetadataSource.BSP));
             sampleNum++;
         }
         ProductOrder order = new ProductOrder(101L, "Test Order", productOrderSamples, "Quote-1", product, testProject);

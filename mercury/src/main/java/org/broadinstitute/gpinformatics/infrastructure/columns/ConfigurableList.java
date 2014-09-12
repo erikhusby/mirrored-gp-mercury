@@ -5,10 +5,10 @@ import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.athena.entity.preference.ColumnSetsPreference;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
+import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.SpreadsheetCreator;
 
 import javax.annotation.Nonnull;
 import java.io.PrintWriter;
-import java.lang.reflect.InvocationTargetException;
 import java.text.Format;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -70,6 +70,11 @@ public class ConfigurableList {
     private final boolean multiValueAddTrailingDelimiter;
 
     private List<SortColumn> sortColumnIndexes;
+
+    /**
+     * Cache row plugin instances
+     */
+    private Map<Class,ListPlugin> pluginCache = new HashMap<>();
 
 //    private final Boolean isAdmin;
 
@@ -420,7 +425,7 @@ public class ConfigurableList {
         /**
          * Hold the entity list for a nested table at the row level (required when building ResultList)
          */
-        private final Map<ColumnTabulation, Collection<?>> nestedTableEntities = new LinkedHashMap<>();
+        private final Map<ColumnTabulation, ResultList> nestedTableEntities = new LinkedHashMap<>();
 
         Row(String id) {
             this.id = id;
@@ -442,7 +447,7 @@ public class ConfigurableList {
          * Access nested tables when building ResultList
          * @return All nested tables for this row
          */
-        Map<ColumnTabulation, Collection<?>> getNestedTableEntities() {
+        Map<ColumnTabulation, ResultList> getNestedTableEntities() {
             return nestedTableEntities;
         }
     }
@@ -468,8 +473,6 @@ public class ConfigurableList {
      */
     public void addRows(List<?> entityList, @Nonnull Map<String, Object> context ) {
 
-//        context.put("isAdmin", isAdmin);
-
         for (AddRowsListener addRowsListener : addRowsListeners) {
             addRowsListener.addRows(entityList, context, nonPluginTabulations);
         }
@@ -482,22 +485,33 @@ public class ConfigurableList {
                     recurseColumns(context, entity, row, columnTabulation, columnTabulation.getName());
                 } else {
                     Collection<?> nestedEntities = columnTabulation.evalNestedTableExpression(entity, context);
+                    // Build final nested ResultList here...
                     if( nestedEntities != null && nestedEntities.size() > 0 ) {
-                        row.getNestedTableEntities().put(columnTabulation, nestedEntities);
+                        ResultList nestedResultList = buildNestedTable(columnTabulation, nestedEntities, context);
+                        row.getNestedTableEntities().put(columnTabulation, nestedResultList);
+                    }
+                }
+            }
+            // Plugins for nested table processing handled on a row-by-row basis
+            for (ColumnTabulation columnTabulation : pluginTabulations) {
+                if( columnTabulation.isNestedParent() ) {
+                    ListPlugin listPlugin = null;
+                    listPlugin = getPlugin(columnTabulation.getPluginClass());
+                    ResultList nestedResultList = listPlugin.getNestedTableData(entity, columnTabulation, context);
+                    if( nestedResultList != null ) {
+                        row.getNestedTableEntities().put(columnTabulation, nestedResultList);
                     }
                 }
             }
         }
 
-        try {
-            // Call the plugins, and add their data to the accumulated rows.
-            for (ColumnTabulation columnTabulation : pluginTabulations) {
-                // Plugins not supported for nested tables
-                if( columnTabulation.isNestedParent() ) continue;
-
-                ListPlugin listPlugin = (ListPlugin) Class.forName(columnTabulation.getPluginClass()).getConstructor().
-                        newInstance();
-                List<Row> pluginRows = listPlugin.getData(entityList, headerGroupMap.get(columnTabulation.getName()));
+        // Call the plugins, and add their data to the accumulated rows.
+        for (ColumnTabulation columnTabulation : pluginTabulations) {
+            ListPlugin listPlugin = getPlugin(columnTabulation.getPluginClass());
+            // Legacy plugin process from BSP
+            if( !columnTabulation.isNestedParent() ) {
+                List<Row> pluginRows =
+                        listPlugin.getData(entityList, headerGroupMap.get(columnTabulation.getName()));
                 int rowIndex = pageStartingRow;
                 for (Row row : pluginRows) {
                     // TODO jmt rows might be empty, if columns are all plugins
@@ -505,16 +519,12 @@ public class ConfigurableList {
                     for (Cell cell : row.getCells()) {
                         existingRow.addCell(cell);
                     }
-
                     rowIndex++;
                 }
             }
-
-            pageStartingRow = rows.size();
-        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException | NoSuchMethodException |
-                InvocationTargetException e) {
-            throw new RuntimeException(e);
         }
+
+        pageStartingRow = rows.size();
     }
 
     @SuppressWarnings("unchecked")
@@ -648,12 +658,21 @@ public class ConfigurableList {
     }
 
     /**
+     * Default is to re-sort results
+     * @return
+     */
+    public ResultList getResultList() {
+        return getResultList( true );
+    }
+
+    /**
      * Converts from Rows of compact Cells to a sparse matrix with empty cells to align
      * each cell with its associated header.
      *
      * @return data structure intended to be easy to render to HTML or spreadsheet.
+     * Re-sorting not done for spreadsheet downloads
      */
-    public ResultList getResultList() {
+    public ResultList getResultList(  boolean doSort ) {
 
         List<Header> headers = getHeaders();
         List<ResultRow> resultRows = new ArrayList<>();
@@ -695,20 +714,18 @@ public class ConfigurableList {
             }
             ResultRow resultRow = new ResultRow(sortableCells, renderableCells, row.getId());
 
-            // Build nested tables
-            for( Map.Entry<ColumnTabulation, Collection<?>> entry : row.getNestedTableEntities().entrySet() ){
-                //TODO jms Deal with context (store as member variable?)
-                ResultList nestedTable = buildNestedTable(entry.getKey(), entry.getValue(), new HashMap<String, Object>());
-                resultRow.addNestedTable( entry.getKey().getName() , nestedTable );
+            // Append nested tables to result row
+            for( Map.Entry<ColumnTabulation, ResultList> entry : row.getNestedTableEntities().entrySet() ){
+                resultRow.addNestedTable( entry.getKey().getName() , entry.getValue() );
             }
 
             resultRows.add(resultRow);
         }
 
         // In-memory sort if only one page.
-        if (sortColumnIndexes != null) {
+        if (doSort && sortColumnIndexes != null) {
             Collections.sort(resultRows, new ResultRowComparator(sortColumnIndexes));
-        } else if (sortColumnIndex != null) {
+        } else if (doSort && sortColumnIndex != null) {
             Collections.sort(resultRows, new ResultRowComparator(sortColumnIndex, sortDirection));
         }
         return new ResultList(resultRows, headers, sortColumnIndex, sortDirection);
@@ -839,7 +856,7 @@ public class ConfigurableList {
             for (ConfigurableList.ResultRow resultRow : getResultRows()) {
                 int nestCols;
                 for( ResultList nestedTable: resultRow.getNestedTables().values() ){
-                    rows += nestedTable.getResultRows().size() + 1;
+                    rows += nestedTable.getResultRows().size() + 2;
                     nestCols = nestedTable.getHeaders().size() + 1;
                     if( nestCols > cols ) cols = nestCols;
                 }
@@ -852,10 +869,10 @@ public class ConfigurableList {
             boolean headerRow2Present = false;
             for (columnNumber = 0; columnNumber < getHeaders().size(); columnNumber++) {
                 ConfigurableList.Header header = getHeaders().get(columnNumber);
-                rowObjects[0][columnNumber] = header.getDownloadHeader1();
+                rowObjects[0][columnNumber] = new SpreadsheetCreator.ExcelHeader(header.getDownloadHeader1());
                 String header2Name = header.getDownloadHeader2();
                 if (header2Name != null && header2Name.length() > 0) {
-                    rowObjects[1][columnNumber] = header2Name;
+                    rowObjects[1][columnNumber] = new SpreadsheetCreator.ExcelHeader(header2Name);
                     headerRow2Present = true;
                 }
             }
@@ -863,17 +880,15 @@ public class ConfigurableList {
             int rowNumber = headerRow2Present ? 2 : 1;
             for (ConfigurableList.ResultRow resultRow : getResultRows()) {
                 columnNumber = 0;
-                for (Comparable<?> comparable : resultRow.getSortableCells()) {
-                    rowObjects[rowNumber][columnNumber] = comparable;
+                for (String value : resultRow.getRenderableCells()) {
+                    rowObjects[rowNumber][columnNumber] = value;
                     columnNumber++;
                 }
                 rowNumber++;
 
                 // Nested tables
-                columnNumber = 0;
                 for( Map.Entry<String,ResultList> nestedTable : resultRow.getNestedTables().entrySet() ) {
-                    rowObjects[rowNumber][columnNumber] = nestedTable.getKey();
-                    columnNumber++;
+                    rowObjects[rowNumber][1] = new SpreadsheetCreator.ExcelHeader(nestedTable.getKey());
                     rowNumber++;
                     rowNumber = appendNestedRows(rowNumber, 1, nestedTable.getValue(), rowObjects);
                 }
@@ -896,7 +911,7 @@ public class ConfigurableList {
             int col = startColumn;
 
             for( Header header : resultList.getHeaders() ) {
-                rowObjects[rowIndex][col] = header.getViewHeader();
+                rowObjects[rowIndex][col] = new SpreadsheetCreator.ExcelHeader(header.getViewHeader());
                 col++;
             }
             rowIndex++;
@@ -929,19 +944,6 @@ public class ConfigurableList {
             return resultSortDirection;
         }
 
-/*
-        public List<String> getSampleIds(int index) {
-            List<String> resultIds = new ArrayList<> ();
-            for (ConfigurableList.ResultRow resultRow : getResultRows()) {
-                try {
-                    resultIds.add(Sample.extractId(resultRow.getSortableCells().get(index).toString()));
-                } catch (LSIDIdConversionException | MPGException e) {
-                    // Should be able to extract the ids from the sample ids in the results, otherwise, get what we get
-                }
-            }
-            return resultIds;
-        }
-*/
     }
 
     /**
@@ -1141,15 +1143,6 @@ public class ConfigurableList {
 
 
     /**
-     * Add the data from this instance as a sheet with the specified name to the workbook.
-     */
-/*
-    public void createSampleInfoSheet(@Nonnull String sheetName, @Nonnull Workbook workbook) {
-        SpreadsheetCreator.createSheet(sheetName, getResultList().getAsArray(), workbook);
-    }
-*/
-
-    /**
      * This takes a formatted value and escapes the substrings pushed into the formatted value in all places it was
      * pushed into.
      *
@@ -1180,5 +1173,28 @@ public class ConfigurableList {
 
     public void addListener(AddRowsListener addRowsListener) {
         addRowsListeners.add(addRowsListener);
+    }
+
+    /**
+     * Cache row plugins
+     * @param pluginClass
+     * @return
+     */
+    private ListPlugin getPlugin( Class pluginClass ) {
+        ListPlugin plugin = null;
+        if( pluginCache == null ) {
+            pluginCache = new HashMap<>();
+        } else {
+            plugin = pluginCache.get(pluginClass);
+        }
+        if( plugin == null ) {
+            try {
+                plugin =(ListPlugin)pluginClass.newInstance();
+                pluginCache.put(pluginClass, plugin);
+            } catch (InstantiationException | IllegalAccessException e) {
+                throw new RuntimeException("Cannot instantiate plugin class " + pluginClass.getName(), e );
+            }
+        }
+        return plugin;
     }
 }

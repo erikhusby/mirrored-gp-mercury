@@ -100,7 +100,8 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
                                                                     40, null, null, true,
                                                                     Workflow.AGILENT_EXOME_EXPRESS, false, "agg type"),
                                                             new ResearchProject(101L, "Test RP", "Test synopsis",
-                                                                                false));
+                                                                                false,
+                                                                                ResearchProject.RegulatoryDesignation.RESEARCH_ONLY));
         final String productOrder1Key = "PD0-1";
         String jiraTicketKey = productOrder1Key;
         productOrder1.setJiraTicketKey(jiraTicketKey);
@@ -178,7 +179,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
 
             productOrderSamples.add(new ProductOrderSample(bspStock));
             BarcodedTube bspAliquot = new BarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(bspStock));
+            bspAliquot.addSample(new MercurySample(bspStock, MercurySample.MetadataSource.BSP));
             mapBarcodeToTube.put(barcode, bspAliquot);
         }
 

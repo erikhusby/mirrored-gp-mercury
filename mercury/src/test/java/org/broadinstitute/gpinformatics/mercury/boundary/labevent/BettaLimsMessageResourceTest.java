@@ -482,7 +482,8 @@ public class BettaLimsMessageResourceTest extends Arquillian {
 
         ResearchProject researchProject = researchProjectDao.findByBusinessKey("RP-19");
         if (researchProject == null) {
-            researchProject = new ResearchProject(10950L, "SIGMA Sarcoma", "SIGMA Sarcoma", false);
+            researchProject = new ResearchProject(10950L, "SIGMA Sarcoma", "SIGMA Sarcoma", false,
+                                                  ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
             researchProjectDao.persist(researchProject);
         }
 
@@ -522,7 +523,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
             String barcode = "R" + testPrefix + rackPosition;
             String bspStock = "SM-" + testPrefix + rackPosition;
             BarcodedTube bspAliquot = new BarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(bspStock));
+            bspAliquot.addSample(new MercurySample(bspStock, MercurySample.MetadataSource.BSP));
             mapBarcodeToTube.put(barcode, bspAliquot);
 
             barcodedTubeDao.persist(bspAliquot);

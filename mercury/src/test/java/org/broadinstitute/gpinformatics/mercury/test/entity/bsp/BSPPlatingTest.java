@@ -42,19 +42,19 @@ public class BSPPlatingTest  {
 
         Map<MercurySample, AliquotParameters> starterMap = new HashMap<>();
 
-        MercurySample sample = new MercurySample("SM-26BPV");
+        MercurySample sample = new MercurySample("SM-26BPV", MercurySample.MetadataSource.BSP);
         starterMap.put(sample, new AliquotParameters(0.0f, 1.0f));
 
-        sample = new MercurySample("SM-26BHJ");
+        sample = new MercurySample("SM-26BHJ", MercurySample.MetadataSource.BSP);
         starterMap.put(sample, new AliquotParameters(0.0f, 1.0f));
 
-        sample = new MercurySample("SM-26BPU");
+        sample = new MercurySample("SM-26BPU", MercurySample.MetadataSource.BSP);
         starterMap.put(sample, new AliquotParameters(0.0f, 1.0f));
 
-        sample = new MercurySample("SM-HOWIE");
+        sample = new MercurySample("SM-HOWIE", MercurySample.MetadataSource.BSP);
         starterMap.put(sample, new AliquotParameters(0.0f, 1.0f));
 
-        sample = new MercurySample("SM-26BPK");
+        sample = new MercurySample("SM-26BPK", MercurySample.MetadataSource.BSP);
         starterMap.put(sample, new AliquotParameters(0.0f, 1.0f));
 
 

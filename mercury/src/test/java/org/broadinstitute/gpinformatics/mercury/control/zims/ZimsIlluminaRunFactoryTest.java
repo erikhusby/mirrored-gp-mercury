@@ -68,6 +68,8 @@ public class ZimsIlluminaRunFactoryTest {
     private JiraService mockJiraService;
     private ProductOrderDao productOrderDao;
     private List<MolecularIndexReagent> reagents;
+    private static final ResearchProject.RegulatoryDesignation
+            REGULATORY_DESIGNATION = ResearchProject.RegulatoryDesignation.CLINICAL_DIAGNOSTICS;
 
     @BeforeMethod(groups = DATABASE_FREE)
     public void setUp() {
@@ -109,9 +111,10 @@ public class ZimsIlluminaRunFactoryTest {
         });
         // Create a test research project
         ResearchProject testResearchProject =
-                new ResearchProject(101L, "Test Project", "ZimsIlluminaRunFactoryTest project", true);
+                new ResearchProject(101L, "Test Project", "ZimsIlluminaRunFactoryTest project", true,
+                                    ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
         testResearchProject.setJiraTicketKey("TestRP-1");
-
+        testResearchProject.setRegulatoryDesignation(REGULATORY_DESIGNATION);
 
         // Create a test product order
         List<ProductOrderSample> pdoSamples = new ArrayList<>();
@@ -175,7 +178,8 @@ public class ZimsIlluminaRunFactoryTest {
             String sourceTubeBarcode = "testTube" + sampleIdx;
             BarcodedTube testTube = new BarcodedTube(sourceTubeBarcode);
 
-            MercurySample mercurySample = new MercurySample(testSampleIds.get(sampleIdx));
+            MercurySample mercurySample = new MercurySample(testSampleIds.get(sampleIdx),
+                    MercurySample.MetadataSource.BSP);
             testTube.addSample(mercurySample);
 
             BucketEntry bucketEntry =
@@ -296,6 +300,7 @@ public class ZimsIlluminaRunFactoryTest {
             // in mercury, pipeline should always be told to aggregate
             assertThat(libraryBean.doAggregation(), equalTo(true));
             assertThat(libraryBean.getProductOrderSample(), equalTo(sampleId));
+            assertThat("The pipeline API expects enum names for regulatory designations",libraryBean.getRegulatoryDesignation(),equalTo(REGULATORY_DESIGNATION.name()));
         }
     }
 
