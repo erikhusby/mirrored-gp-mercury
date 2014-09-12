@@ -83,10 +83,14 @@ public final class PoiSpreadsheetParser {
      * @param rows The row iterator.
      */
     private static void processHeaders(TableProcessor processor, Iterator<Row> rows) throws ValidationException {
-        int headerRowIndex = 0;
+        int headerRowIndex = processor.getHeaderRowIndex();
+        int headerRowNum = 0;
         int numHeaderRows = processor.getNumHeaderRows();
-        while (rows.hasNext() && headerRowIndex < numHeaderRows) {
+        while (rows.hasNext() && headerRowNum < numHeaderRows) {
             Row headerRow = rows.next();
+            if (headerRow.getRowNum() < headerRowIndex) {
+                continue;
+            }
 
             List<String> headers = new ArrayList<>();
             Iterator<Cell> cellIterator = headerRow.cellIterator();
@@ -104,7 +108,7 @@ public final class PoiSpreadsheetParser {
             }
 
             // Turn the header strings for this row into whatever objects are needed to continue on.
-            processor.processHeader(headers, headerRowIndex++);
+            processor.processHeader(headers, headerRowNum++);
         }
     }
 
@@ -171,7 +175,7 @@ public final class PoiSpreadsheetParser {
      *
      * @return A string representation of the cell.
      */
-    private static String getCellValues(Cell cell, boolean isDate, boolean isString) {
+    public static String getCellValues(Cell cell, boolean isDate, boolean isString) {
         if (cell != null) {
             switch (cell.getCellType()) {
             case Cell.CELL_TYPE_BOOLEAN:

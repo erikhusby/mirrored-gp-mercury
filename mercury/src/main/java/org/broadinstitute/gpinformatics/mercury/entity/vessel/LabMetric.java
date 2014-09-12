@@ -3,6 +3,8 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.hibernate.envers.Audited;
 
+import javax.annotation.Nullable;
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -65,20 +67,67 @@ public class LabMetric implements Comparable<LabMetric> {
         }
     }
 
+    public interface Decider {
+        LabMetricDecision.Decision makeDecision(LabVessel labVessel, LabMetric labMetric);
+    }
+
     public enum MetricType {
-        BSP_PICO("BSP Pico", false),
-        PRE_FLIGHT_PRE_NORM_PICO("Pre Flight Pre Norm Pico", false),
-        PRE_FLIGHT_POST_NORM_PICO("Pre Flight Post Norm Pico", false),
-        POND_PICO("Pond Pico", true),
-        CATCH_PICO("Catch Pico", true),
-        FINAL_LIBRARY_SIZE("Final Library Size", false),
-        POST_NORMALIZATION_PICO("Post-Normalization Pico", false),
-        TSCA_PICO("TSCA Pico", false),
-        ECO_QPCR("ECO QPCR", true);
+        INITIAL_PICO("Initial Pico", true, new Decider() {
+            @Override
+            public LabMetricDecision.Decision makeDecision(LabVessel labVessel, LabMetric labMetric) {
+                if (labVessel.getVolume() != null) {
+                    if (labMetric.getValue().multiply(labVessel.getVolume()).compareTo(new BigDecimal("250")) == 1) {
+                        return LabMetricDecision.Decision.PASS;
+                    }
+                }
+                return LabMetricDecision.Decision.FAIL;
+            }
+        }),
+        FINGERPRINT_PICO("Fingerprint Pico", true, new Decider() {
+            @Override
+            public LabMetricDecision.Decision makeDecision(LabVessel labVessel, LabMetric labMetric) {
+                if (labMetric.getValue().compareTo(new BigDecimal("9.99")) == 1 &&
+                        labMetric.getValue().compareTo(new BigDecimal("60.01")) == -1) {
+                    return LabMetricDecision.Decision.PASS;
+                }
+                return LabMetricDecision.Decision.FAIL;
+            }
+        }),
+        SHEARING_PICO("Shearing Pico", true, new Decider() {
+            @Override
+            public LabMetricDecision.Decision makeDecision(LabVessel labVessel, LabMetric labMetric) {
+                if (labMetric.getValue().compareTo(new BigDecimal("1.49")) == 1 &&
+                        labMetric.getValue().compareTo(new BigDecimal("5.01")) == -1) {
+                    return LabMetricDecision.Decision.PASS;
+                }
+                return LabMetricDecision.Decision.FAIL;
+            }
+        }),
+        POND_PICO("Pond Pico", true, new Decider() {
+            @Override
+            public LabMetricDecision.Decision makeDecision(LabVessel labVessel, LabMetric labMetric) {
+                if (labMetric.getValue().compareTo(new BigDecimal("25")) == 1) {
+                    return LabMetricDecision.Decision.PASS;
+                }
+                return LabMetricDecision.Decision.FAIL;
+            }
+        }),
+        CATCH_PICO("Catch Pico", true, new Decider() {
+            @Override
+            public LabMetricDecision.Decision makeDecision(LabVessel labVessel, LabMetric labMetric) {
+                if (labMetric.getValue().compareTo(new BigDecimal("2")) == 1) {
+                    return LabMetricDecision.Decision.PASS;
+                }
+                return LabMetricDecision.Decision.FAIL;
+            }
+        }),
+        FINAL_LIBRARY_SIZE("Final Library Size", false, null),
+        ECO_QPCR("ECO QPCR", true, null);
 
         private String displayName;
         private boolean uploadEnabled;
         private static final Map<String, MetricType> mapNameToType = new HashMap<>();
+        private Decider decider;
 
         static {
             for (MetricType metricType : MetricType.values()) {
@@ -86,13 +135,19 @@ public class LabMetric implements Comparable<LabMetric> {
             }
         }
 
-        MetricType(String displayName, boolean uploadEnabled) {
+        MetricType(String displayName, boolean uploadEnabled, Decider decider) {
             this.displayName = displayName;
             this.uploadEnabled = uploadEnabled;
+            this.decider = decider;
         }
 
         public String getDisplayName() {
             return displayName;
+        }
+
+        @Nullable
+        public Decider getDecider() {
+            return decider;
         }
 
         public static MetricType getByDisplayName(String displayName) {
@@ -115,7 +170,6 @@ public class LabMetric implements Comparable<LabMetric> {
         }
     }
 
-    @SuppressWarnings("UnusedDeclaration")
     @SequenceGenerator(name = "SEQ_LAB_METRIC", schema = "mercury", sequenceName = "SEQ_LAB_METRIC")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LAB_METRIC")
     @Id
@@ -148,10 +202,14 @@ public class LabMetric implements Comparable<LabMetric> {
     @ManyToOne(fetch = FetchType.LAZY)
     private LabVessel labVessel;
 
-
+    //todo jmt convert to enum?
     private String vesselPosition;
 
     private Date createdDate;
+
+    /** This is actually OneToOne, but using ManyToOne to avoid N+1 selects */
+    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
+    private LabMetricDecision labMetricDecision;
 
     /**
      * For JPA
@@ -166,6 +224,13 @@ public class LabMetric implements Comparable<LabMetric> {
         this.labUnit = labUnit;
         this.vesselPosition = vesselPosition;
         this.createdDate = createdDate;
+    }
+
+    public BigDecimal getTotalNg() {
+        if (labVessel.getVolume() != null) {
+            return value.multiply(labVessel.getVolume());
+        }
+        return null;
     }
 
     public Long getLabMetricId() {
@@ -217,6 +282,14 @@ public class LabMetric implements Comparable<LabMetric> {
 
     public void setCreatedDate(Date createdDate) {
         this.createdDate = createdDate;
+    }
+
+    public LabMetricDecision getLabMetricDecision() {
+        return labMetricDecision;
+    }
+
+    public void setLabMetricDecision(LabMetricDecision labMetricDecision) {
+        this.labMetricDecision = labMetricDecision;
     }
 
     @Override
