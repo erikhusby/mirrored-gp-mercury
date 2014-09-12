@@ -321,10 +321,8 @@ public class LabMetric implements Comparable<LabMetric> {
     public int initialPicoDispositionRange() {
         if (value == null || value.compareTo(INITIAL_PICO_LOW_THRESHOLD) < 0) {
             return -1;
-        } else {
-            if (value.compareTo(INITIAL_PICO_HIGH_THRESHOLD) > 0) {
-                return 1;
-            }
+        } else if (value.compareTo(INITIAL_PICO_HIGH_THRESHOLD) > 0) {
+            return 1;
         }
         return 0;
     }

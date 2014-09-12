@@ -1,7 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.sample;
 
-import junit.framework.Assert;
-import junit.framework.TestCase;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -11,6 +9,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
@@ -22,11 +21,11 @@ import java.util.Map;
  * Tests the PicoDispositionActionBean
  */
 @Test(groups = TestGroups.DATABASE_FREE)
-public class PicoDispositionActionBeanTest extends TestCase {
+public class PicoDispositionActionBeanTest {
     private PicoDispositionActionBean picoDispositionActionBean;
     private final long now = System.currentTimeMillis();
     // 3 timestamps having increasing datetime.
-    private final Date[] timeSteps = new Date[]{new Date(now - 30000), new Date(now - 20000), new Date(now - 10000)};
+    private final Date[] timeSteps = {new Date(now - 30000), new Date(now - 20000), new Date(now - 10000)};
     private final int NUMBER_TUBES = 96;
     private final int NUMBER_COLUMNS = 12;
     private final String FIRST_CELLNAME = "A01";
@@ -36,7 +35,7 @@ public class PicoDispositionActionBeanTest extends TestCase {
     // Makes a rack of tubes with initial pico quant metrics.
     private void setUpQuants(int numberTubes) {
         boolean needAtRiskMetric = true;
-            Map<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
+        Map<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
         for (int incrementer = 0; incrementer < numberTubes; ++incrementer) {
             String barcode = "A" + (100000 - incrementer);
             BarcodedTube tube = new BarcodedTube(barcode, BarcodedTube.BarcodedTubeType.MatrixTube);
@@ -58,19 +57,20 @@ public class PicoDispositionActionBeanTest extends TestCase {
             // This decision does NOT determine the next steps -- that is a separate categorization
             // done by the Action Bean.
             boolean isBelowRange = concentration.compareTo(LabMetric.INITIAL_PICO_LOW_THRESHOLD) < 0;
+            LabMetricDecision.Decision decision;
             if (isBelowRange) {
                 if (needAtRiskMetric) {
                     needAtRiskMetric = false;
-                    labMetric.setLabMetricDecision(new LabMetricDecision(LabMetricDecision.Decision.RISK, timeSteps[1],
-                            BSPManagerFactoryStub.QA_DUDE_USER_ID, labMetric));
+                    decision = LabMetricDecision.Decision.RISK;
                 } else {
-                    labMetric.setLabMetricDecision(new LabMetricDecision(LabMetricDecision.Decision.FAIL, timeSteps[1],
-                            BSPManagerFactoryStub.QA_DUDE_USER_ID, labMetric));
+                    decision = LabMetricDecision.Decision.FAIL;
                 }
             } else {
-                labMetric.setLabMetricDecision(new LabMetricDecision(LabMetricDecision.Decision.PASS, timeSteps[1],
-                        BSPManagerFactoryStub.QA_DUDE_USER_ID, labMetric));
+                decision = LabMetricDecision.Decision.PASS;
             }
+            labMetric.setLabMetricDecision(
+                    new LabMetricDecision(decision, timeSteps[1], BSPManagerFactoryStub.QA_DUDE_USER_ID, labMetric));
+
         }
 
         // Gives the tube formation to the action bean instead of having the action bean look it up.
@@ -90,7 +90,7 @@ public class PicoDispositionActionBeanTest extends TestCase {
         Assert.assertEquals(NUMBER_TUBES, picoDispositionActionBean.getListItems().size());
 
         // Checks each sample for consistent disposition and concentration.
-        boolean found[] = new boolean[] {false, false, false, false};
+        boolean found[] = {false, false, false, false};
         for (PicoDispositionActionBean.ListItem listItem : picoDispositionActionBean.getListItems()) {
             Assert.assertTrue(StringUtils.isNotBlank(listItem.getPosition()));
             Assert.assertTrue(StringUtils.isNotBlank(listItem.getBarcode()));
@@ -117,7 +117,7 @@ public class PicoDispositionActionBeanTest extends TestCase {
         }
         // Checks that all test cases are found.
         for (int i = 0; i < found.length; ++i) {
-            Assert.assertTrue("at " + i, found[i]);
+            Assert.assertTrue(found[i], "at " + i);
         }
 
         // Checks sorting by disposition and position.
@@ -128,7 +128,7 @@ public class PicoDispositionActionBeanTest extends TestCase {
             int dispositionOrder =
                     Integer.compare(item.getDisposition().getSortOrder(), nextItem.getDisposition().getSortOrder());
             int positionOrder = item.getPosition().compareTo(nextItem.getPosition());
-            Assert.assertTrue("at " + i, dispositionOrder < 0 || dispositionOrder == 0 && positionOrder < 0);
+            Assert.assertTrue(dispositionOrder < 0 || (dispositionOrder == 0 && positionOrder < 0), "at " + i);
         }
     }
 

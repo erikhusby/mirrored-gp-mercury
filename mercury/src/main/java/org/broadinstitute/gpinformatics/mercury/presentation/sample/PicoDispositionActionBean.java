@@ -48,6 +48,12 @@ public class PicoDispositionActionBean extends RackScanActionBean {
     public static final String CONFIRM_REARRAY_EVENT = "confirmRearray";
     public static final String CONFIRM_REARRAY_SCAN_EVENT = "confirmRearrayScan";
 
+    /** The next steps that should appear in the confirm rearray dropdown. */
+    private static final List<NextStep> CONFIRMABLE_NEXT_STEPS = new ArrayList<NextStep>() {{
+        add(NextStep.SHEARING_DAUGHTER);
+        add(NextStep.FP_DAUGHTER);
+    }};
+
     @Inject
     private TubeFormationDao tubeFormationDao;
 
@@ -87,10 +93,7 @@ public class PicoDispositionActionBean extends RackScanActionBean {
 
     /** The list of next steps that can possibly apply to tubes after a manual rearray. */
     public List<NextStep> getConfirmableNextSteps() {
-        return new ArrayList<NextStep>() {{
-            add(NextStep.SHEARING_DAUGHTER);
-            add(NextStep.FP_DAUGHTER);
-        }};
+        return CONFIRMABLE_NEXT_STEPS;
     }
 
     public String getNextStepSelect() {
@@ -173,7 +176,6 @@ public class PicoDispositionActionBean extends RackScanActionBean {
 
         private String stepName;
         private int sortOrder;
-        // nextStepConfirmationGroup
         private int nextStepConfirmationGroup;
 
         private NextStep(String stepName, int sortOrder, int nextStepConfirmationGroup) {
@@ -268,7 +270,7 @@ public class PicoDispositionActionBean extends RackScanActionBean {
         // Default is to revisit scan input page.
         String nextPage = CONFIRM_REARRAY_RACK_SCAN_PAGE;
         if (nextStepSelect == null) {
-            addMessage("Missing Next Step selection.");
+            addGlobalValidationError("Missing Next Step selection.");
             setLabToFilterBy(null);
         } else if (scanAndMakeListItems()) {
             // Removes tubes with the expected Next Step confirmationGroup value,
@@ -286,14 +288,14 @@ public class PicoDispositionActionBean extends RackScanActionBean {
 
     private boolean scanAndMakeListItems() throws ScannerException {
         if (getRackScanner() == null) {
-            addMessage("Missing rack scanner selection.");
+            addGlobalValidationError("Missing rack scanner selection.");
             setLabToFilterBy(null);
             return false;
         }
         // Runs the rack scanner.  Ignores the returned Stripes Resolution and
         // uses the map of position->tubeBarcode.
         super.scan();
-        makeListItems(rackScan);
+        makeListItemsFromBarcodeMap(rackScan);
         return true;
     }
 
@@ -303,7 +305,7 @@ public class PicoDispositionActionBean extends RackScanActionBean {
         if (StringUtils.isNotBlank(label) && container == null) {
             container = tubeFormationDao.findByDigest(label);
             if (container == null || container.getContainerRole() == null) {
-                addMessage("Cannot find tube formation having label '" + label + "'");
+                addGlobalValidationError("Cannot find tube formation having label '" + label + "'");
             }
         }
         if (container != null) {
@@ -312,7 +314,7 @@ public class PicoDispositionActionBean extends RackScanActionBean {
     }
 
     /** Makes listItems from a position->barcode map. */
-    private void makeListItems(LinkedHashMap<String, String> positionToBarcodeMap) {
+    private void makeListItemsFromBarcodeMap(Map<String, String> positionToBarcodeMap) {
         // First makes a map of position->tube.
         positionToTubeMap.clear();
         for (String position : positionToBarcodeMap.keySet()) {
@@ -320,11 +322,11 @@ public class PicoDispositionActionBean extends RackScanActionBean {
             if (StringUtils.isNotBlank(tubeBarcode)) {
                 BarcodedTube tube = barcodedTubeDao.findByBarcode(tubeBarcode);
                 if (tube == null) {
-                    addMessage("Cannot find tube having barcode '" + tubeBarcode + "'");
+                    addGlobalValidationError("Cannot find tube having barcode '" + tubeBarcode + "'");
                 } else {
                     VesselPosition vesselPosition = VesselPosition.getByName(position);
                     if (vesselPosition == null) {
-                        addMessage("Unknown vessel position '" + position + "'");
+                        addGlobalValidationError("Unknown vessel position '" + position + "'");
                     } else {
                         positionToTubeMap.put(VesselPosition.getByName(position), tube);
                     }
@@ -338,7 +340,7 @@ public class PicoDispositionActionBean extends RackScanActionBean {
     private void makeListItems(Map<VesselPosition, BarcodedTube> map) {
         for (VesselPosition vesselPosition : map.keySet()) {
             BarcodedTube tube = map.get(vesselPosition);
-            LabMetric labMetric = findMostRecentInitialPicoMetric(tube);
+            LabMetric labMetric = tube.findMostRecentLabMetric(LabMetric.MetricType.INITIAL_PICO);
             if (labMetric != null) {
                 BigDecimal concentration = labMetric.getValue();
                 boolean riskOverride =
@@ -351,20 +353,6 @@ public class PicoDispositionActionBean extends RackScanActionBean {
             }
         }
         Collections.sort(listItems, BY_DISPOSITION_THEN_POSITION);
-    }
-
-    /** Looks up the most recent initial pico quant for the tube. */
-    private LabMetric findMostRecentInitialPicoMetric(BarcodedTube tube) {
-        LabMetric latestInitialPico = null;
-        for (LabMetric labMetric : tube.getMetrics()) {
-            if (labMetric.getName().equals(LabMetric.MetricType.INITIAL_PICO) &&
-                (latestInitialPico == null || latestInitialPico.getCreatedDate() == null ||
-                 (labMetric.getCreatedDate() != null &&
-                  labMetric.getCreatedDate().after(latestInitialPico.getCreatedDate())))) {
-                latestInitialPico = labMetric;
-            }
-        }
-        return latestInitialPico;
     }
 
     private static final Comparator<ListItem> BY_DISPOSITION_THEN_POSITION = new Comparator<ListItem>() {

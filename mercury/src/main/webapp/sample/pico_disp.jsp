@@ -29,12 +29,10 @@
             <div class="control-label">&#160;</div>
             <div class="controls actionButtons">
                 <stripes:form beanclass="${actionBean.class.name}" id="scanRackForm">
-                    <stripes:submit name="reviewScannedRack" value="Review Scanned Rack"
-                                    style="margin-right: 10px;margin-top:10px;" class="btn btn-mini"/>
+                    <stripes:submit name="reviewScannedRack" value="Review Scanned Rack" class="btn btn-mini"/>
                 </stripes:form>
                 <stripes:form beanclass="${actionBean.class.name}" id="confirmRearrayForm">
-                    <stripes:submit name="confirmRearray" value="Confirm Rarray"
-                                    style="margin-right: 10px;margin-top:10px;" class="btn btn-mini"/>
+                    <stripes:submit name="confirmRearray" value="Confirm Rarray" class="btn btn-mini"/>
                 </stripes:form>
             </div>
         </div>
