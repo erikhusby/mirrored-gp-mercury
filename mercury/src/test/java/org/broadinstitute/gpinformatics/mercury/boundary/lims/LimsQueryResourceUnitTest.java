@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
+import edu.mit.broad.prodinfo.thrift.lims.ConcentrationAndVolume;
 import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
 import edu.mit.broad.prodinfo.thrift.lims.PlateTransfer;
 import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
@@ -11,6 +12,7 @@ import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.lims.LimsQueryResourceResponseFactory;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ConcentrationAndVolumeAndWeightType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.FlowcellDesignationType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
@@ -330,6 +332,42 @@ public class LimsQueryResourceUnitTest {
 
         double result = resource.fetchQuantForTube("barcode", "test");
         assertThat(result, equalTo(1.23));
+
+        verifyAll();
+    }
+
+    @Test(groups = DATABASE_FREE)
+    public void testFetchConcentrationAndVolumeForTubeBarcodesFromSquid() {
+        List<String> barcodes = Arrays.asList("barcode");
+        expect(mockSystemRouter.getSystemOfRecordForVesselBarcodes(barcodes)).andReturn(SQUID);
+        Map<String, ConcentrationAndVolume> map = new HashMap<>();
+        ConcentrationAndVolume concentrationAndVolume = new ConcentrationAndVolume();
+        ConcentrationAndVolumeAndWeightType concentrationAndVolumeType = new ConcentrationAndVolumeAndWeightType();
+        map.put("barcode", concentrationAndVolume);
+        expect(mockThriftService.fetchConcentrationAndVolumeForTubeBarcodes(barcodes)).andReturn(map);
+        expect(mockResponseFactory.makeConcentrationAndVolumeAndWeight(concentrationAndVolume)).andReturn(concentrationAndVolumeType);
+        replayAll();
+
+        Map<String, ConcentrationAndVolumeAndWeightType> result =
+                resource.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(barcodes);
+        assertThat(result.get("barcode"), equalTo(concentrationAndVolumeType));
+
+        verifyAll();
+    }
+
+    @Test(groups = DATABASE_FREE)
+    public void testFetchConcentrationAndVolumeForTubeBarcodesFromMercury() {
+        List<String> barcodes = Arrays.asList("barcode");
+        expect(mockSystemRouter.getSystemOfRecordForVesselBarcodes(barcodes)).andReturn(MERCURY);
+        Map<String, ConcentrationAndVolumeAndWeightType> map = new HashMap<>();
+        ConcentrationAndVolumeAndWeightType concentrationAndVolume  = new ConcentrationAndVolumeAndWeightType();
+        map.put("barcode", concentrationAndVolume);
+        expect(mockLimsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(barcodes)).andReturn(map);
+        replayAll();
+
+        Map<String, ConcentrationAndVolumeAndWeightType> result =
+                resource.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(barcodes);
+        assertThat(result.get("barcode"), equalTo(concentrationAndVolume));
 
         verifyAll();
     }

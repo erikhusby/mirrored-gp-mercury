@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
+import clover.org.apache.commons.collections.comparators.NullComparator;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.hibernate.envers.Audited;
 
@@ -15,6 +16,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -228,5 +230,14 @@ public class LabMetric implements Comparable<LabMetric> {
             compareToBuilder.append(getLabMetricId(), labMetric.getLabMetricId());
         }
         return compareToBuilder.build();
+    }
+
+    public static class LabMetricRunDateComparator
+            implements Comparator<LabMetric> {
+        @Override
+        public int compare(LabMetric labMetric1, LabMetric labMetric2) {
+            return labMetric2.getLabMetricRun().getRunDate()
+                    .compareTo(labMetric1.getLabMetricRun().getRunDate());
+        }
     }
 }

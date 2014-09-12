@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ConcentrationAndVolumeAndWeightType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LibraryDataType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SampleInfoType;
@@ -236,5 +237,33 @@ public class LimsQueriesTest {
         Assert.assertTrue(limsQueries.doesLimsRecognizeAllTubes(Arrays.asList(barcode)), "Wrong return");
         Assert.assertFalse(limsQueries.doesLimsRecognizeAllTubes(Arrays.asList(badBarcode)), "Wrong return");
         verify(barcodedTubeDao);
+    }
+
+    //TODO
+    @Test(groups = DATABASE_FREE)
+    public void testFetchConcentrationAndVolumeForTubeBarcodes() {
+        String barcode = "tube1";
+        Map<String, LabVessel> mercuryTubes = new HashMap<>();
+        BarcodedTube tube = new BarcodedTube(barcode);
+        mercuryTubes.put(barcode, tube);
+
+        LabMetric quantMetric =
+                new LabMetric(new BigDecimal("22.21"), LabMetric.MetricType.BSP_PICO, LabMetric.LabUnit.UG_PER_ML,
+                        "A02", new Date());
+        tube.addMetric(quantMetric);
+        tube.setVolume(new BigDecimal("40.04"));
+        tube.setReceptacleWeight(new BigDecimal(".002"));
+
+        Map<String, ConcentrationAndVolumeAndWeightType> concentrationAndVolumeTypeMap =
+                limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(mercuryTubes);
+        assertThat(concentrationAndVolumeTypeMap.size(), equalTo(1));
+        ConcentrationAndVolumeAndWeightType concentrationAndVolumeType = concentrationAndVolumeTypeMap.get(barcode);
+        assertThat(concentrationAndVolumeType.isWasFound(), equalTo(true));
+        assertThat(concentrationAndVolumeType.getTubeBarcode(), equalTo(barcode));
+        assertThat(concentrationAndVolumeType.getConcentration(), equalTo(22.21));
+        assertThat(concentrationAndVolumeType.getVolume(), equalTo(40.04));
+        assertThat(concentrationAndVolumeType.getWeight(), equalTo(.002));
+        assertThat(concentrationAndVolumeType.getConcentrationUnits(),
+                equalTo(LabMetric.LabUnit.UG_PER_ML.getDisplayName()));
     }
 }

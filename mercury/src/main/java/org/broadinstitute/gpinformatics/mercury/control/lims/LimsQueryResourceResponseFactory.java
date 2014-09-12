@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.lims;
 
 import edu.mit.broad.prodinfo.thrift.lims.*;
+import edu.mit.broad.prodinfo.thrift.lims.ConcentrationAndVolume;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.*;
 
 import javax.xml.datatype.DatatypeConfigurationException;
@@ -126,5 +127,15 @@ public class LimsQueryResourceResponseFactory {
             poolGroupType.getTubeBarcodes().add(tubeBarcode);
         }
         return poolGroupType;
+    }
+
+    public ConcentrationAndVolumeAndWeightType makeConcentrationAndVolumeAndWeight(ConcentrationAndVolume data) {
+        ConcentrationAndVolumeAndWeightType concentrationAndVolumeType = new ConcentrationAndVolumeAndWeightType();
+        concentrationAndVolumeType.setConcentration(data.getConcentration());
+        concentrationAndVolumeType.setConcentrationUnits(data.getConcentrationUnits());
+        concentrationAndVolumeType.setTubeBarcode(data.getTubeBarcode());
+        concentrationAndVolumeType.setVolume(data.getVolume());
+        concentrationAndVolumeType.setVolumeUnits(data.getVolumeUnits());
+        return concentrationAndVolumeType;
     }
 }

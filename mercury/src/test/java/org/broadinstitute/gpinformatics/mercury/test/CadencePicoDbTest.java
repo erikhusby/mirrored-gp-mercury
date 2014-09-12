@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventResponseBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.MetadataBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.ReagentBean;
+import org.broadinstitute.gpinformatics.mercury.test.builders.ArrayPlatingJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.CadencePicoJaxbBuilder;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -37,49 +38,56 @@ public class CadencePicoDbTest extends ContainerTest {
 
         BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
 
-        double dilutionFactor = 2;
-        String sourceRackBarcode = "CadencePicoSamplesRack" + testSuffix;
-        List<String> picoSampleTubeBarcodes = new ArrayList<>();
-        for (int rackPosition = 1; rackPosition <= 96; rackPosition++) {
-            picoSampleTubeBarcodes.add("CadencePico" + testSuffix + rackPosition);
-        }
+//        double dilutionFactor = 2;
+//        String sourceRackBarcode = "CadencePicoSamplesRack" + testSuffix;
+//        List<String> picoSampleTubeBarcodes = new ArrayList<>();
+//        for (int rackPosition = 1; rackPosition <= 96; rackPosition++) {
+//            picoSampleTubeBarcodes.add("CadencePico" + testSuffix + rackPosition);
+//        }
 
         Client client = Client.create();
         client.addFilter(new LoggingFilter(System.out));
+//
+//        CadencePicoJaxbBuilder cadencePicoJaxbBuilder = new CadencePicoJaxbBuilder(
+//                bettaLimsMessageTestFactory, testSuffix, picoSampleTubeBarcodes, sourceRackBarcode, dilutionFactor
+//        ).invoke();
+//
+//        String batchId = "BP-" + testSuffix;
+//
+//        SamplesPicoDbTest.createBatch(baseUrl, client, batchId, picoSampleTubeBarcodes);
+//        SamplesPicoDbTest.sendMessages(baseUrl, client, cadencePicoJaxbBuilder.getMessageList());
+//
+//        //fetches plate transfers for batchless
+//        LabEventResponseBean labEventResponseBean = client.resource(baseUrl.toExternalForm() + "rest/labevent/transfersToFirstAncestorRack")
+//                .queryParam("plateBarcodes", cadencePicoJaxbBuilder.getPicoMicrofluorBarcode())
+//                .get(LabEventResponseBean.class);
+//        List<LabEventBean> labEventBeans = labEventResponseBean.getLabEventBeans();
+//        Assert.assertEquals(2, labEventBeans.size(), "Wrong number of lab events");
+//        SamplesPicoEndToEndTest.printLabEvents(labEventBeans);
+//
+//        LabEventBean dilutionLabEvent = labEventBeans.get(0);
+//        List<MetadataBean> metadataBeans = dilutionLabEvent.getMetadatas();
+//        Assert.assertEquals(1, metadataBeans.size());
+//        MetadataBean metadataBean = metadataBeans.get(0);
+//        Assert.assertEquals("DilutionFactor", metadataBean.getName());
+//
+//        //Fetch reagent addition message for batchless
+//        labEventResponseBean = client.resource(baseUrl.toExternalForm() + "rest/labevent/inPlaceReagentEvents")
+//                .queryParam("plateBarcodes", cadencePicoJaxbBuilder.getPicoMicrofluorBarcode())
+//                .get(LabEventResponseBean.class);
+//        labEventBeans = labEventResponseBean.getLabEventBeans();
+//        Assert.assertEquals(1, labEventBeans.size(), "Wrong number of lab events");
+//        LabEventBean labEventBean = labEventBeans.get(0);
+//        Assert.assertEquals(1, labEventBean.getReagents().size(), "Wrong number of reagents");
+//        ReagentBean reagentBean = labEventBean.getReagents().get(0);
+//        Assert.assertNotNull(reagentBean.getExpiration(), "Expiration should be set");
 
-        CadencePicoJaxbBuilder cadencePicoJaxbBuilder = new CadencePicoJaxbBuilder(
-                bettaLimsMessageTestFactory, testSuffix, picoSampleTubeBarcodes, sourceRackBarcode, dilutionFactor
-        ).invoke();
+        List<String> barcodes = new ArrayList<>();
+        barcodes.add("1101214650");
+        ArrayPlatingJaxbBuilder arrayPlatingJaxbBuilder =
+                new ArrayPlatingJaxbBuilder(bettaLimsMessageTestFactory, "", barcodes, "CO-8601672").invoke();
 
-        String batchId = "BP-" + testSuffix;
-
-        SamplesPicoDbTest.createBatch(baseUrl, client, batchId, picoSampleTubeBarcodes);
-        SamplesPicoDbTest.sendMessages(baseUrl, client, cadencePicoJaxbBuilder.getMessageList());
-
-        //fetches plate transfers for batchless
-        LabEventResponseBean labEventResponseBean = client.resource(baseUrl.toExternalForm() + "rest/labevent/transfersToFirstAncestorRack")
-                .queryParam("plateBarcodes", cadencePicoJaxbBuilder.getPicoMicrofluorBarcode())
-                .get(LabEventResponseBean.class);
-        List<LabEventBean> labEventBeans = labEventResponseBean.getLabEventBeans();
-        Assert.assertEquals(2, labEventBeans.size(), "Wrong number of lab events");
-        SamplesPicoEndToEndTest.printLabEvents(labEventBeans);
-
-        LabEventBean dilutionLabEvent = labEventBeans.get(0);
-        List<MetadataBean> metadataBeans = dilutionLabEvent.getMetadatas();
-        Assert.assertEquals(1, metadataBeans.size());
-        MetadataBean metadataBean = metadataBeans.get(0);
-        Assert.assertEquals("DilutionFactor", metadataBean.getName());
-
-        //Fetch reagent addition message for batchless
-        labEventResponseBean = client.resource(baseUrl.toExternalForm() + "rest/labevent/inPlaceReagentEvents")
-                .queryParam("plateBarcodes", cadencePicoJaxbBuilder.getPicoMicrofluorBarcode())
-                .get(LabEventResponseBean.class);
-        labEventBeans = labEventResponseBean.getLabEventBeans();
-        Assert.assertEquals(1, labEventBeans.size(), "Wrong number of lab events");
-        LabEventBean labEventBean = labEventBeans.get(0);
-        Assert.assertEquals(1, labEventBean.getReagents().size(), "Wrong number of reagents");
-        ReagentBean reagentBean = labEventBean.getReagents().get(0);
-        Assert.assertNotNull(reagentBean.getExpiration(), "Expiration should be set");
+        SamplesPicoDbTest.sendMessages(baseUrl, client, arrayPlatingJaxbBuilder.getMessageList());
 
     }
 }
