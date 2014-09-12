@@ -125,7 +125,7 @@ public class VarioskanParserTest {
 
     public static InputStream getSpreadsheet() {
         InputStream testSpreadSheetInputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                "testdata/VarioskanOutput.xls");
+                "VarioskanOutput.xls");
         Assert.assertNotNull(testSpreadSheetInputStream);
         return testSpreadSheetInputStream;
     }

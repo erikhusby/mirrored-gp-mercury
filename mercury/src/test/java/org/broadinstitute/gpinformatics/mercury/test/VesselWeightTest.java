@@ -65,8 +65,8 @@ public class VesselWeightTest extends Arquillian {
         BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(false);
         // Can't find a BSP web service to create tubes, so have to use existing
         List<String> tubeBarcodes = new ArrayList<>();
-        tubeBarcodes.add("1073785008");
-        tubeBarcodes.add("1069803776");
+        tubeBarcodes.add("1075671760");
+        tubeBarcodes.add("1075671761");
         PlateEventType initialTareEvent = bettaLimsMessageTestFactory.buildRackEvent(
                 LabEventType.INITIAL_TARE.getName(), "TARETEST", tubeBarcodes);
         Random random = new SecureRandom();
