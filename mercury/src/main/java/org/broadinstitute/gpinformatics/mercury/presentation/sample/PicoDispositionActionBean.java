@@ -26,7 +26,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -258,7 +257,7 @@ public class PicoDispositionActionBean extends RackScanActionBean {
     @HandlesEvent(SCAN_EVENT)
     public Resolution scan() throws ScannerException {
         boolean ok = scanAndMakeListItems();
-        return new ForwardResolution(ok ? NEXT_STEPS_PAGE : NEXT_STEPS_SCAN_PAGE);
+        return new ForwardResolution((ok && !hasErrors()) ? NEXT_STEPS_PAGE : NEXT_STEPS_SCAN_PAGE);
     }
 
     /**
@@ -275,13 +274,15 @@ public class PicoDispositionActionBean extends RackScanActionBean {
         } else if (scanAndMakeListItems()) {
             // Removes tubes with the expected Next Step confirmationGroup value,
             // leaving only incorrect ones in listItems.
-            final int expectedGroup = nextStepSelect.getNextStepConfirmationGroup();
-            for (Iterator<ListItem> iter = listItems.iterator(); iter.hasNext(); ) {
-                if (iter.next().getDisposition().getNextStepConfirmationGroup() == expectedGroup) {
-                    iter.remove();
+            if (!hasErrors()) {
+                final int expectedGroup = nextStepSelect.getNextStepConfirmationGroup();
+                for (Iterator<ListItem> iter = listItems.iterator(); iter.hasNext(); ) {
+                    if (iter.next().getDisposition().getNextStepConfirmationGroup() == expectedGroup) {
+                        iter.remove();
+                    }
                 }
+                nextPage = CONFIRM_REARRAY_PAGE;
             }
-            nextPage = CONFIRM_REARRAY_PAGE;
         }
         return new ForwardResolution(nextPage);
     }
