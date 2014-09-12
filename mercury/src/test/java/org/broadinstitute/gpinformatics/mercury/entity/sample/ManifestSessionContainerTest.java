@@ -12,11 +12,10 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSes
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
-import org.hamcrest.CoreMatchers;
-import org.hamcrest.Matchers;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -218,10 +217,11 @@ public class ManifestSessionContainerTest extends Arquillian {
         assertThat(manifestSessionII.hasErrors(), is(equalTo(false)));
         assertThat(researchProject.getManifestSessions(), hasItems(manifestSessionI, manifestSessionII));
 
-        assertThat(manifestSessionI.getModifiedDate(), is(equalTo(manifestSessionI.getCreatedDate())));
+        assertThat(manifestSessionI.getUpdateData().getModifiedDate(), is(equalTo(
+                manifestSessionI.getUpdateData().getCreatedDate())));
 
         for (ManifestRecord manifestRecord : manifestSessionI.getRecords()) {
-            assertThat(manifestRecord.getModifiedDate(), is(equalTo(manifestRecord.getCreatedDate())));
+            assertThat(manifestRecord.getUpdateData().getModifiedDate(), is(equalTo(manifestRecord.getUpdateData().getCreatedDate())));
         }
 
 
@@ -260,10 +260,10 @@ public class ManifestSessionContainerTest extends Arquillian {
 
         ManifestSession sessionClosed = manifestSessionDao.find(manifestSessionOut.getManifestSessionId());
 
-        assertThat(sessionClosed.getModifiedDate(), is(not(equalTo(manifestSessionI.getModifiedDate()))));
-        assertThat(sessionClosed.getCreatedDate(), is(not(equalTo(sessionClosed.getModifiedDate()))));
+        assertThat(sessionClosed.getUpdateData().getModifiedDate(), is(not(equalTo(manifestSessionI.getUpdateData().getModifiedDate()))));
+        assertThat(sessionClosed.getUpdateData().getCreatedDate(), is(not(equalTo(sessionClosed.getUpdateData().getModifiedDate()))));
         for (ManifestRecord manifestRecord : sessionClosed.getRecords()) {
-            assertThat(manifestRecord.getCreatedDate(), is(not(equalTo(manifestRecord.getModifiedDate()))));
+            assertThat(manifestRecord.getUpdateData().getCreatedDate(), is(not(equalTo(manifestRecord.getUpdateData().getModifiedDate()))));
         }
 
     }
@@ -287,8 +287,9 @@ public class ManifestSessionContainerTest extends Arquillian {
         ManifestSession uploadedSession =
                 manifestSessionEjb.uploadManifest(researchProject.getBusinessKey(), testStream, excelFilePath,
                         testUser);
-        assertThat(uploadedSession.getModifiedBy(), is(not(equalTo(uploadedSession.getCreatedBy()))));
-        assertThat(uploadedSession.getModifiedDate(), is(equalTo(uploadedSession.getCreatedDate())));
+        UpdateData updateData = uploadedSession.getUpdateData();
+        assertThat(updateData.getModifiedBy(), is(not(equalTo(updateData.getCreatedBy()))));
+        assertThat(updateData.getModifiedDate(), is(equalTo(updateData.getCreatedDate())));
 
         assertThat(uploadedSession, is(notNullValue()));
         assertThat(uploadedSession.getManifestSessionId(), is(notNullValue()));
@@ -377,7 +378,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         manifestSessionDao.clear();
         ManifestSession closedSession = manifestSessionDao.find(sessionOfScan.getManifestSessionId());
 
-        assertThat(closedSession.getModifiedDate(), is(not(equalTo(uploadedSession.getModifiedDate()))));
+        assertThat(closedSession.getUpdateData().getModifiedDate(), is(not(equalTo(updateData.getModifiedDate()))));
 
         assertThat(closedSession, is(notNullValue()));
 

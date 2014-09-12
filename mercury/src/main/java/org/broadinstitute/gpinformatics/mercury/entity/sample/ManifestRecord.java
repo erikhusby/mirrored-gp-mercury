@@ -3,14 +3,15 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Maps;
-import org.broadinstitute.bsp.client.users.BspUser;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.Updatable;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.HasUpdateData;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.UpdatedEntityInterceptor;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
+import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.EntityListeners;
 import javax.persistence.EnumType;
@@ -22,13 +23,14 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.MapKeyColumn;
+import javax.persistence.MapKeyEnumerated;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -43,7 +45,7 @@ import java.util.Set;
 @EntityListeners(UpdatedEntityInterceptor.class)
 @Audited
 @Table(schema = "mercury", name = "MANIFEST_RECORD")
-public class ManifestRecord implements Updatable {
+public class ManifestRecord implements HasUpdateData {
 
     @Id
     @Column(name = "MANIFEST_RECORD_ID")
@@ -75,18 +77,10 @@ public class ManifestRecord implements Updatable {
     @JoinColumn(name = "manifest_session_id")
     private ManifestSession manifestSession;
 
-    @Column(name = "CREATED_BY")
-    private Long createdBy;
-
-    @Column(name = "MODIFIED_BY")
-    private Long modifiedBy;
-
-    @Column(name = "CREATED_DATE")
-    private Date createdDate;
-
-    @Column(name = "MODIFIED_DATE")
-    private Date modifiedDate;
-
+    // IntelliJ claims this is unused.
+    @SuppressWarnings("UnusedDeclaration")
+    @Embedded
+    private UpdateData updateData = new UpdateData();
 
     /**
      * For JPA
@@ -174,49 +168,8 @@ public class ManifestRecord implements Updatable {
         return quarantinedMessages;
     }
 
-    @Override
-    public void setModifiedDate(Date date) {
-        this.modifiedDate = date;
-    }
-
-    @Override
-    public Long getCreatedBy() {
-        return this.createdBy;
-    }
-
-    @Override
-    public Long getModifiedBy() {
-        return this.modifiedBy;
-    }
-
-    @Override
-    public void setModifiedBy(BspUser user) {
-        this.modifiedBy = user.getUserId();
-    }
-
-    @Override
-    public Date getModifiedDate() {
-        return this.modifiedDate;
-    }
-
-    @Override
-    public Date getCreatedDate() {
-        return this.createdDate;
-    }
-
-    @Override
-    public void setCreatedBy(BspUser createdBy) {
-        this.createdBy = createdBy.getUserId();
-    }
-
-    @Override
-    public void setCreatedDate(Date createdDate) {
-        this.createdDate = createdDate;
-    }
-
-    @Override
-    public void setModifiedBy(Long modifiedUserId) {
-        this.modifiedBy = modifiedUserId;
+    public UpdateData getUpdateData() {
+        return updateData;
     }
 
     /**
@@ -319,11 +272,10 @@ public class ManifestRecord implements Updatable {
     }
 
     public String getSampleId() {
-        String sampleId = null;
         Metadata sampleMetadata = getMetadataByKey(Metadata.Key.SAMPLE_ID);
         if (sampleMetadata != null) {
-            sampleId = sampleMetadata.getValue();
+            return sampleMetadata.getValue();
         }
-        return sampleId;
+        return null;
     }
 }

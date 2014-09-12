@@ -1,12 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
-import org.broadinstitute.bsp.client.users.BspUser;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.Updatable;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.HasUpdateData;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.UpdatedEntityInterceptor;
+import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Column;
 import javax.persistence.CascadeType;
+import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.EntityListeners;
 import javax.persistence.EnumType;
@@ -18,7 +19,6 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import java.util.Date;
 
 /**
  * Manifest events represent logged items of interest that occur during the accessioning or tube scanning processes.
@@ -28,7 +28,7 @@ import java.util.Date;
 @EntityListeners(UpdatedEntityInterceptor.class)
 @Audited
 @Table(schema = "mercury", name = "MANIFEST_EVENT")
-public class ManifestEvent implements Updatable {
+public class ManifestEvent implements HasUpdateData {
 
     @SuppressWarnings("UnusedDeclaration")
     @Id
@@ -39,6 +39,8 @@ public class ManifestEvent implements Updatable {
 
     private String message;
 
+    // IntelliJ wants to convert this to a local, not one of its better suggestions.
+    @SuppressWarnings("FieldCanBeLocal")
     @ManyToOne(cascade = CascadeType.PERSIST, optional = true)
     @JoinColumn(name = "manifest_record_id")
     private ManifestRecord manifestRecord;
@@ -50,17 +52,10 @@ public class ManifestEvent implements Updatable {
     @JoinColumn(name = "manifest_session_id")
     private ManifestSession session;
 
-    @Column(name = "CREATED_BY")
-    private Long createdBy;
-
-    @Column(name = "MODIFIED_BY")
-    private Long modifiedBy;
-
-    @Column(name = "CREATED_DATE")
-    private Date createdDate;
-
-    @Column(name = "MODIFIED_DATE")
-    private Date modifiedDate;
+    // IntelliJ claims this is unused.
+    @SuppressWarnings("UnusedDeclaration")
+    @Embedded
+    private UpdateData updateData = new UpdateData();
 
     /**
      * For JPA
@@ -97,49 +92,8 @@ public class ManifestEvent implements Updatable {
         this.session = session;
     }
 
-    @Override
-    public void setModifiedDate(Date date) {
-        this.modifiedDate = date;
-    }
-
-    @Override
-    public Long getCreatedBy() {
-        return this.createdBy;
-    }
-
-    @Override
-    public Long getModifiedBy() {
-        return this.modifiedBy;
-    }
-
-    @Override
-    public void setModifiedBy(BspUser user) {
-        this.modifiedBy = user.getUserId();
-    }
-
-    @Override
-    public Date getModifiedDate() {
-        return this.modifiedDate;
-    }
-
-    @Override
-    public Date getCreatedDate() {
-        return this.createdDate;
-    }
-
-    @Override
-    public void setCreatedBy(BspUser createdBy) {
-        this.createdBy = createdBy.getUserId();
-    }
-
-    @Override
-    public void setCreatedDate(Date createdDate) {
-        this.createdDate = createdDate;
-    }
-
-    @Override
-    public void setModifiedBy(Long modifiedUserId) {
-        this.modifiedBy = modifiedUserId;
+    public UpdateData getUpdateData() {
+        return updateData;
     }
 
     public enum Severity {

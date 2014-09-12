@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
 import org.hamcrest.CoreMatchers;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -63,13 +64,13 @@ public class ManifestSessionTest {
         Assert.assertEquals(session.getSessionName(), sessionPrefix + session.getManifestSessionId());
         Assert.assertEquals(session.getStatus(), ManifestSession.SessionStatus.OPEN);
 
-        Assert.assertEquals(session.getCreatedBy(), testUser.getUserId());
-        Assert.assertEquals(session.getModifiedBy(), testUser.getUserId());
+        UpdateData updateData = session.getUpdateData();
+        Assert.assertEquals(updateData.getCreatedBy(), testUser.getUserId());
 
         BSPUserList.QADudeUser modifyUser = new BSPUserList.QADudeUser("LM", 43L);
-        session.setModifiedBy(modifyUser);
+        updateData.setModifiedBy(modifyUser);
 
-        Assert.assertEquals(session.getModifiedBy(), modifyUser.getUserId());
+        Assert.assertEquals(updateData.getModifiedBy(), modifyUser.getUserId());
     }
 
     public void addRecord() throws Exception {

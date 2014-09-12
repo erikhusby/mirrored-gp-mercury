@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.persistence.PrePersist;
@@ -12,8 +13,8 @@ import javax.persistence.PreUpdate;
 import java.util.Date;
 
 /**
- * Entity to automatically set/update the createdBy, modifiedBy, createdDate, modifiedDate fields for entities
- * that implement the right interface
+ * Interceptor to automatically set/update the createdBy, modifiedBy, createdDate, modifiedDate properties for entities
+ * annotated with @EntityListeners(UpdatedEntityInterceptor.class) and having a #getUpdateData method.
  */
 public class UpdatedEntityInterceptor {
 
@@ -21,27 +22,28 @@ public class UpdatedEntityInterceptor {
 
     @PreUpdate
     @PrePersist
-    public void myPreSave(Object obj) {
-        if (OrmUtil.proxySafeIsInstance(obj, Updatable.class)) {
-            Updatable updateObj = OrmUtil.proxySafeCast(obj, Updatable.class);
+    public void preUpdateOrPersist(Object object) {
+        if (OrmUtil.proxySafeIsInstance(object, HasUpdateData.class)) {
+            HasUpdateData objectWithUpdateData = OrmUtil.proxySafeCast(object, HasUpdateData.class);
+            UpdateData updateData = objectWithUpdateData.getUpdateData();
 
-            Date trackingDate = new Date();
-            updateObj.setModifiedDate(trackingDate);
-            if (updateObj.getCreatedDate() == null) {
-                updateObj.setCreatedDate(trackingDate);
+            Date now = new Date();
+            updateData.setModifiedDate(now);
+            if (updateData.getCreatedDate() == null) {
+                updateData.setCreatedDate(now);
             }
 
-            UserBean currentBean = ServiceAccessUtility.getBean(UserBean.class);
+            UserBean userBean = ServiceAccessUtility.getBean(UserBean.class);
 
-            if (currentBean == null) {
+            if (userBean == null) {
                 logger.info("Unable to determine the current user because User bean is null");
-                updateObj.setModifiedBy(updateObj.getCreatedBy());
+                updateData.setModifiedBy(updateData.getCreatedBy());
             } else {
-                BspUser bspUser = currentBean.getBspUser();
-                updateObj.setModifiedBy(bspUser);
+                BspUser bspUser = userBean.getBspUser();
+                updateData.setModifiedBy(bspUser);
 
-                if (updateObj.getCreatedBy() == null) {
-                    updateObj.setCreatedBy(bspUser);
+                if (updateData.getCreatedBy() == null) {
+                    updateData.setCreatedBy(bspUser);
                 }
             }
         }

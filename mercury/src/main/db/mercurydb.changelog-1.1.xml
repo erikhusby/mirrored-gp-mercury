@@ -1387,12 +1387,11 @@
 
 
     <changeSet id="GPLIM-2885-add-not-null-constraint-man-rec-created-by" author="scottmat">
-        <sql>update manifest_record set created_by = 5176 where created_by is null</sql>
-        <addNotNullConstraint tableName="manifest_record" columnName="created_by" schemaName="mercury" />
+        <addNotNullConstraint tableName="manifest_record" columnName="created_by" schemaName="mercury" defaultNullValue="5176"/>
     </changeSet>
 
     <changeSet id="GPLIM-2885-add-not-null-constraint-man-rec-created-date" author="scottmat">
-        <sql>update manifest_record set created_date = TO_DATE('09/11/2014', 'MM/DD/YYYY') where created_date is null</sql>
+        <sql>update manifest_record set created_date = sysdate where created_date is null</sql>
         <addNotNullConstraint tableName="manifest_record" columnName="created_date" schemaName="mercury" />
     </changeSet>
 

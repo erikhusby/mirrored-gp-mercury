@@ -9,9 +9,10 @@ import com.google.common.collect.Multimaps;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.Updatable;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.HasUpdateData;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.UpdatedEntityInterceptor;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -20,6 +21,7 @@ import org.hibernate.envers.Audited;
 import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
+import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.EntityListeners;
 import javax.persistence.EnumType;
@@ -48,7 +50,7 @@ import java.util.Set;
 @EntityListeners(UpdatedEntityInterceptor.class)
 @Audited
 @Table(schema = "mercury", name = "MANIFEST_SESSION")
-public class ManifestSession implements Updatable {
+public class ManifestSession implements HasUpdateData {
 
     public static final String SAMPLE_ID_KEY = "Sample ID";
     public static final String VESSEL_LABEL = "Vessel barcode";
@@ -65,26 +67,19 @@ public class ManifestSession implements Updatable {
     @Column(name = "SESSION_PREFIX")
     private String sessionPrefix;
 
-    @Column(name = "CREATED_BY")
-    private Long createdBy;
-
     @Enumerated(EnumType.STRING)
     private SessionStatus status = SessionStatus.OPEN;
-
-    @Column(name = "MODIFIED_BY")
-    private Long modifiedBy;
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "manifestSession", orphanRemoval = true)
     private List<ManifestRecord> records = new ArrayList<>();
 
-    @Column(name = "CREATED_DATE")
-    private Date createdDate;
-
-    @Column(name = "MODIFIED_DATE")
-    private Date modifiedDate;
-
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "session", orphanRemoval = true)
     private List<ManifestEvent> manifestEvents = new ArrayList<>();
+
+    // IntelliJ claims this is unused.
+    @SuppressWarnings("UnusedDeclaration")
+    @Embedded
+    private UpdateData updateData = new UpdateData();
 
     /**
      * For JPA
@@ -97,7 +92,7 @@ public class ManifestSession implements Updatable {
         this.researchProject.addManifestSession(this);
 
         this.sessionPrefix = sessionPrefix;
-        this.createdBy = createdBy.getUserId();
+        updateData.setCreatedBy(createdBy.getUserId());
     }
 
     public ResearchProject getResearchProject() {
@@ -124,20 +119,6 @@ public class ManifestSession implements Updatable {
         this.status = status;
     }
 
-    @Override
-    public Long getCreatedBy() {
-        return createdBy;
-    }
-
-    @Override
-    public Long getModifiedBy() {
-        return modifiedBy;
-    }
-
-    public void setModifiedBy(BspUser modifiedBy) {
-        this.modifiedBy = modifiedBy.getUserId();
-    }
-
     public void addRecord(ManifestRecord record) {
         records.add(record);
         record.setManifestSession(this);
@@ -160,36 +141,6 @@ public class ManifestSession implements Updatable {
 
     public List<ManifestEvent> getManifestEvents() {
         return manifestEvents;
-    }
-
-    @Override
-    public void setModifiedDate(Date date) {
-        this.modifiedDate = date;
-    }
-
-    @Override
-    public Date getModifiedDate() {
-        return modifiedDate;
-    }
-
-    @Override
-    public Date getCreatedDate() {
-        return createdDate;
-    }
-
-    @Override
-    public void setCreatedBy(BspUser createdBy) {
-        this.createdBy = createdBy.getUserId();
-    }
-
-    @Override
-    public void setCreatedDate(Date createdDate) {
-        this.createdDate = createdDate;
-    }
-
-    @Override
-    public void setModifiedBy(Long modifiedUserId) {
-        this.modifiedBy = modifiedUserId;
     }
 
     /**
@@ -656,5 +607,9 @@ public class ManifestSession implements Updatable {
      */
     public enum SessionStatus {
         OPEN, COMPLETED
+    }
+
+    public UpdateData getUpdateData() {
+        return updateData;
     }
 }

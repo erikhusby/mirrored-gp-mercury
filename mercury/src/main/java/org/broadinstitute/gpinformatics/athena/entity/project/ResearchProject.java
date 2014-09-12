@@ -195,6 +195,9 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
             orphanRemoval = true)
     private List<SubmissionTracker> submissionTrackers = new ArrayList<>();
 
+    /**
+     * The Buick ManifestSessions linked to this ResearchProject.
+     */
     @OneToMany(mappedBy = "researchProject", cascade = CascadeType.PERSIST)
     private Set<ManifestSession> manifestSessions = new HashSet<>();
 
@@ -233,7 +236,7 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
      * @param title         The title (name) of the project
      * @param synopsis      A description of the project
      * @param irbNotEngaged Is this project set up for NO IRB?
-     * @param regulatoryDesignation
+     * @param regulatoryDesignation The regulatory designation for this research project
      */
     public ResearchProject(Long createdBy, String title, String synopsis, boolean irbNotEngaged,
                            RegulatoryDesignation regulatoryDesignation) {
