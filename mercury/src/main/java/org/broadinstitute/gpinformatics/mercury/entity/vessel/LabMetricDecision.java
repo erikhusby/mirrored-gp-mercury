@@ -27,6 +27,7 @@ public class LabMetricDecision {
 
     public enum Decision {
         PASS(false),
+        RUN_FAILED(false),
         FAIL(true),
         RISK(true);
 

@@ -111,7 +111,8 @@ public class ZimsIlluminaRunFactoryTest {
         });
         // Create a test research project
         ResearchProject testResearchProject =
-                new ResearchProject(101L, "Test Project", "ZimsIlluminaRunFactoryTest project", true);
+                new ResearchProject(101L, "Test Project", "ZimsIlluminaRunFactoryTest project", true,
+                                    ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
         testResearchProject.setJiraTicketKey("TestRP-1");
         testResearchProject.setRegulatoryDesignation(REGULATORY_DESIGNATION);
 

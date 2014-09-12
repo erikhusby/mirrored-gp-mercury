@@ -12,6 +12,7 @@ import net.sourceforge.stripes.validation.ValidationErrors;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.io.IOUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.QuantificationEJB;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselEjb;
@@ -62,7 +63,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
     @Inject
     private LabMetricDao labMetricDao;
 
-    @Validate(required = true, on = "uploadQuant")
+    @Validate(required = true, on = UPLOAD_QUANT)
     private FileBean quantSpreadsheet;
     private LabMetric.MetricType quantType;
     private Set<LabMetric> labMetrics;
@@ -72,8 +73,6 @@ public class UploadQuantsActionBean extends CoreActionBean {
     private List<Long> selectedMetrics = new ArrayList<>();
     private String overrideReason;
     private LabMetricDecision.Decision overrideDecision;
-
-    // todo jmt search for previous runs (name, date range)
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -106,8 +105,10 @@ public class UploadQuantsActionBean extends CoreActionBean {
             quantStream = quantSpreadsheet.getInputStream();
             switch (quantFormat) {
             case VARIOSKAN:
+                MessageCollection messageCollection = new MessageCollection();
                 labMetricRun = vesselEjb.createVarioskanRun(quantStream, getQuantType(),
-                        userBean.getBspUser().getUserId());
+                        userBean.getBspUser().getUserId(), messageCollection);
+                addMessages(messageCollection);
                 break;
             case GENERIC:
                 labMetrics = quantEJB.validateQuantsDontExist(quantStream, quantType);
@@ -140,21 +141,27 @@ public class UploadQuantsActionBean extends CoreActionBean {
 
     @HandlesEvent(SAVE_METRICS)
     public Resolution saveMetrics() {
-        List<LabMetric> selectedLabMetrics = labMetricDao.findListByList(LabMetric.class, LabMetric_.labMetricId,
-                selectedMetrics);
-        Date now = new Date();
-        for (LabMetric selectedLabMetric : selectedLabMetrics) {
-            LabMetricDecision labMetricDecision = selectedLabMetric.getLabMetricDecision();
-            if (labMetricDecision.getDecision().isEditable()) {
-                labMetricDecision.setDecidedDate(now);
-                labMetricDecision.setDeciderUserId(userBean.getBspUser().getUserId());
-                labMetricDecision.setDecision(overrideDecision);
-                labMetricDecision.setOverrideReason(overrideReason);
+        if (selectedMetrics.isEmpty()) {
+            addGlobalValidationError("Check at least one box.");
+        } else if (overrideReason == null || overrideReason.trim().isEmpty()) {
+            addValidationError("overrideReason", "Override reason is required");
+        } else {
+            List<LabMetric> selectedLabMetrics = labMetricDao.findListByList(LabMetric.class, LabMetric_.labMetricId,
+                    selectedMetrics);
+            Date now = new Date();
+            for (LabMetric selectedLabMetric : selectedLabMetrics) {
+                LabMetricDecision labMetricDecision = selectedLabMetric.getLabMetricDecision();
+                if (labMetricDecision.getDecision().isEditable()) {
+                    labMetricDecision.setDecidedDate(now);
+                    labMetricDecision.setDeciderUserId(userBean.getBspUser().getUserId());
+                    labMetricDecision.setDecision(overrideDecision);
+                    labMetricDecision.setOverrideReason(overrideReason);
+                }
             }
-        }
 
-        labMetricDao.flush();
-        addMessage("Successfully saved metrics.");
+            labMetricDao.flush();
+            addMessage("Successfully saved metrics.");
+        }
         labMetricRun = labMetricRunDao.findById(LabMetricRun.class, labMetricRunId);
         return new ForwardResolution(VIEW_PAGE);
     }

@@ -71,7 +71,7 @@
         <c:if test="${actionBean.labMetricRun != null}">
             Type: ${actionBean.labMetricRun.metricType.displayName}
             <br/>
-            Run Date: ${actionBean.labMetricRun.runDate}
+            Run Date: <fmt:formatDate value="${actionBean.labMetricRun.runDate}" pattern="${actionBean.dateTimePattern}"/>
             <br/>
             Run Name: ${actionBean.labMetricRun.runName}
             <table class="table simple" id="runTable">
@@ -92,50 +92,50 @@
                 <table class="table simple" id="metricsTable">
                     <thead>
                     <tr>
-                        <th class="columnRevId">Position</th>
-                        <th class="columnRevId">Barcode</th>
-                        <th class="columnRevDate">Value</th>
-                        <th class="columnRevDate">Volume</th>
-                        <th class="columnRevDate">Total ng</th>
-                        <th class="columnUser">Decision</th>
-                        <th class="columnUser">User</th>
-                        <th class="columnUser">Date</th>
-                        <th class="columnUser">Reason</th>
-                        <th class="columnUser"></th>
+                        <th>Position</th>
+                        <th>Barcode</th>
+                        <th>Value</th>
+                        <th>Volume</th>
+                        <th>Total ng</th>
+                        <th>Decision</th>
+                        <th>User</th>
+                        <th>Date</th>
+                        <th>Reason</th>
+                        <th></th>
                     </tr>
                     </thead>
                     <tbody>
                     <c:forEach items="${actionBean.labMetricRun.labMetrics}" var="labMetric">
                         <c:if test="${labMetric.labMetricDecision != null}">
                             <tr>
-                                <td class="columnRevId">
+                                <td>
                                     ${labMetric.vesselPosition}
                                 </td>
-                                <td class="columnRevId">
+                                <td>
                                     ${labMetric.labVessel.label}
                                 </td>
-                                <td class="columnRevDate">
+                                <td>
                                     ${labMetric.value}
                                 </td>
-                                <td class="columnRevDate">
+                                <td>
                                     ${labMetric.labVessel.volume}
                                 </td>
-                                <td class="columnRevDate">
+                                <td>
                                     ${labMetric.totalNg}
                                 </td>
-                                <td class="columnUser">
+                                <td>
                                     ${labMetric.labMetricDecision.decision}
                                 </td>
-                                <td class="columnUser">
+                                <td>
                                     ${actionBean.getUserFullName(labMetric.labMetricDecision.deciderUserId)}
                                 </td>
-                                <td class="columnUser">
-                                    ${labMetric.labMetricDecision.decidedDate}
+                                <td>
+                                    <fmt:formatDate value="${labMetric.labMetricDecision.decidedDate}" pattern="${actionBean.dateTimePattern}"/>
                                 </td>
-                                <td class="columnUser">
+                                <td>
                                     ${labMetric.labMetricDecision.overrideReason}
                                 </td>
-                                <td class="columnUser">
+                                <td>
                                     <c:if test="${labMetric.labMetricDecision.decision.editable}">
                                         <stripes:checkbox name="selectedMetrics" value="${labMetric.labMetricId}"/>
                                     </c:if>

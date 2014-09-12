@@ -80,8 +80,10 @@ public class VarioskanParserTest {
             Map<VesselPosition, BarcodedTube> mapPositionToTube = buildTubesAndTransfers(mapBarcodeToPlate,
                     PLATE1_BARCODE, PLATE2_BARCODE, "");
 
-            LabMetricRun labMetricRun = vesselEjb.createVarioskanRunDaoFree(workbook, LabMetric.MetricType.INITIAL_PICO,
-                            varioskanPlateProcessor, mapBarcodeToPlate, 101L);
+            VarioskanRowParser varioskanRowParser = new VarioskanRowParser(workbook);
+            Map<VarioskanRowParser.NameValue, String> mapNameValueToValue = varioskanRowParser.getValues();
+            LabMetricRun labMetricRun = vesselEjb.createVarioskanRunDaoFree(mapNameValueToValue,
+                    LabMetric.MetricType.INITIAL_PICO, varioskanPlateProcessor, mapBarcodeToPlate, 101L);
             Assert.assertEquals(labMetricRun.getLabMetrics().size(), 3 * 96);
             Assert.assertEquals(mapPositionToTube.get(VesselPosition.A01).getMetrics().iterator().next().getValue(),
                     new BigDecimal("3.34"));
