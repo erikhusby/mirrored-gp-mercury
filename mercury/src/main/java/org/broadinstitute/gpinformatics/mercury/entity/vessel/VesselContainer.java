@@ -81,19 +81,19 @@ public class VesselContainer<T extends LabVessel> {
     @Transient
     private Map<LabVessel, VesselPosition> vesselToMapPosition;
 
-    @OneToMany(mappedBy = "sourceVessel")
+    @OneToMany(mappedBy = "sourceVessel", cascade = CascadeType.PERSIST)
     private Set<SectionTransfer> sectionTransfersFrom = new HashSet<>();
 
-    @OneToMany(mappedBy = "targetVessel")
+    @OneToMany(mappedBy = "targetVessel", cascade = CascadeType.PERSIST)
     private Set<SectionTransfer> sectionTransfersTo = new HashSet<>();
 
-    @OneToMany(mappedBy = "sourceVessel")
+    @OneToMany(mappedBy = "sourceVessel", cascade = CascadeType.PERSIST)
     private Set<CherryPickTransfer> cherryPickTransfersFrom = new HashSet<>();
 
-    @OneToMany(mappedBy = "targetVessel")
+    @OneToMany(mappedBy = "targetVessel", cascade = CascadeType.PERSIST)
     private Set<CherryPickTransfer> cherryPickTransfersTo = new HashSet<>();
 
-    @OneToMany(mappedBy = "targetVessel")
+    @OneToMany(mappedBy = "targetVessel", cascade = CascadeType.PERSIST)
     private Set<VesselToSectionTransfer> vesselToSectionTransfersTo = new HashSet<>();
 
     @SuppressWarnings("InstanceVariableMayNotBeInitialized")

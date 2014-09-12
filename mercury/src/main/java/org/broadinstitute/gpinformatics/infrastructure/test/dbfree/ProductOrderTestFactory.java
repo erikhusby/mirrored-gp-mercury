@@ -170,7 +170,8 @@ public class ProductOrderTestFactory {
                         false, "Aggregation Data Type");
 
 
-        ResearchProject researchProject = new ResearchProject(-1L, "Research Project " + uuid, "Synopsis", false);
+        ResearchProject researchProject = new ResearchProject(-1L, "Research Project " + uuid, "Synopsis", false,
+                                                              ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
         researchProject.setJiraTicketKey("RP-" + uuid);
 
         List<ProductOrderSample> productOrderSamples = new ArrayList<>();
