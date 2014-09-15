@@ -150,7 +150,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
             @Validate(field = "title", label = "Project", required = true, maxlength = 4000, on = {SAVE_ACTION}),
             @Validate(field = "synopsis", label = "Synopsis", required = true, maxlength = 4000, on = {SAVE_ACTION}),
             @Validate(field = "irbNotes", label = "IRB Notes", required = false, maxlength = 255, on = {SAVE_ACTION}),
-            @Validate(field = "comments", label = "Comments", maxlength = 2000, on = {SAVE_ACTION})
+            @Validate(field = "comments", label = "Comments", maxlength = 2000, on = {SAVE_ACTION}),
+            @Validate(field = "regulatoryDesignation", label = "Regulatory Designation", required = true, on = {SAVE_ACTION})
     })
     private ResearchProject editResearchProject;
 
@@ -650,18 +651,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
      *
      * @return true if creating a new regulatory information; false otherwise
      */
-    @Override
-    public boolean isCreating() {
+    public boolean isRegulatoryInformationNew() {
         return regulatoryInfoId == null;
-    }
-
-    /**
-     * Determines whether or not the regulatory information form represents an existing record.
-     *
-     * @return true if editing an existing regulatory information; false otherwise
-     */
-    public boolean isEditing() {
-        return !isCreating();
     }
 
     /**
@@ -1129,4 +1120,5 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public void setRpSelectedTab(String rpSelectedTab) {
         this.rpSelectedTab = rpSelectedTab;
     }
+
 }

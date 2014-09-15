@@ -5,4 +5,7 @@
 <jboss-web>
     <context-root>/Mercury</context-root>
     <security-domain>crowd_custom_realm</security-domain>
+    <session-config>
+        <session-timeout>10</session-timeout>
+    </session-config>
 </jboss-web>

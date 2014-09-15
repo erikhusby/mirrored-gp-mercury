@@ -82,7 +82,8 @@ public class SampleLedgerExporterTest {
         PriceItem priceItem = new PriceItem("Quote-1", "Crush", "Test", "Test Price Item");
         product.setPrimaryPriceItem(priceItem);
 
-        ResearchProject researchProject = new ResearchProject(1L, "Test Project", "Test", true);
+        ResearchProject researchProject = new ResearchProject(1L, "Test Project", "Test", true,
+                                                              ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
 
         /*
          * Create a product order sample with a few bits of BSP data, manual risk, and a delivery status of "Delivered".

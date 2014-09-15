@@ -33,11 +33,16 @@
             var scanUrl = "${ctxpath}${actionBean.rackScanPageUrl}?${actionBean.scanEvent}=&labToFilterBy="
                     + $j("select#labToFilterBy option:selected").val()
                     + "&rackScanner=" +$j("select#rackScanner option:selected").val();
-            $j.ajax({
-                url: scanUrl,
-                dataType:'html',
-                success:showResults
-            });
+            <%-- Either appends the scan results using ajax, or replaces the window contents with the results. --%>
+            if (${actionBean.appendScanResults}) {
+                $j.ajax({
+                    url: scanUrl,
+                    dataType:'html',
+                    success:showResults
+                });
+            } else {
+                document.location.href = scanUrl;
+            }
         });
     }
     function showResults(data) {
