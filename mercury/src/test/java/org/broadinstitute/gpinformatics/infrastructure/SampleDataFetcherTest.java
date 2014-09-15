@@ -22,8 +22,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.mockito.Matchers.anyCollectionOf;
-import static org.mockito.Matchers.endsWith;
-import static org.mockito.Matchers.matches;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -128,15 +126,21 @@ public class SampleDataFetcherTest {
         when(mockBspSampleDataFetcher.getStockIdForAliquotId(BSP_SAMPLE_ID)).thenReturn(BSP_STOCK_ID);
         when(mockBspSampleDataFetcher.getStockIdForAliquotId(BSP_BARE_SAMPLE_ID)).thenReturn(BSP_STOCK_ID);
 
-        when(mockBspSampleDataFetcher.getStockIdByAliquotId(Collections.singleton(BSP_ONLY_SAMPLE_ID)))
+        when(mockBspSampleDataFetcher.getStockIdByAliquotId(argThat(contains(BSP_ONLY_SAMPLE_ID))))
                 .thenReturn(ImmutableMap.of(BSP_ONLY_SAMPLE_ID, BSP_STOCK_ID));
 
-        when(mockBspSampleDataFetcher.getStockIdByAliquotId(Collections.singleton(BSP_SAMPLE_ID)))
+        when(mockBspSampleDataFetcher.getStockIdByAliquotId(argThat(contains(BSP_SAMPLE_ID))))
                 .thenReturn(ImmutableMap.of(BSP_SAMPLE_ID, BSP_STOCK_ID));
 
-        /*
-         * Create unit under test.
-         */
+        when(mockMercurySampleDao.findBySampleKeys(Collections.singleton(BSP_ONLY_SAMPLE_ID)))
+                .thenReturn(Collections.singletonList(new MercurySample(BSP_ONLY_SAMPLE_ID, MercurySample.MetadataSource.BSP)));
+
+        when(mockMercurySampleDao.findBySampleKeys(Collections.singleton(BSP_SAMPLE_ID)))
+                .thenReturn(Collections.singletonList(new MercurySample(BSP_SAMPLE_ID, MercurySample.MetadataSource.BSP)));
+
+        when(mockMercurySampleDao.findBySampleKeys(Collections.singleton(CLINICAL_SAMPLE_ID)))
+                .thenReturn(Collections.singletonList(new MercurySample(CLINICAL_SAMPLE_ID, MercurySample.MetadataSource.MERCURY)));
+
         sampleDataFetcher = new SampleDataFetcher(mockBspSampleDataFetcher, mockMercurySampleDao);
     }
 

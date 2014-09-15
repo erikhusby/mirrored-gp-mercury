@@ -161,8 +161,10 @@ public class SampleDataFetcher {
         Map<String, String> stockIdByAliquotId = new HashMap<>();
 
         // Handle BSP samples.
-        Collection<String> bspSampleIds = sampleIdsByMetadataSource.get(MercurySample.MetadataSource.BSP);
-        stockIdByAliquotId.putAll(bspSampleDataFetcher.getStockIdByAliquotId(bspSampleIds));
+        if (sampleIdsByMetadataSource.containsKey(MercurySample.MetadataSource.BSP)) {
+            Collection<String> bspSampleIds = sampleIdsByMetadataSource.get(MercurySample.MetadataSource.BSP);
+            stockIdByAliquotId.putAll(bspSampleDataFetcher.getStockIdByAliquotId(bspSampleIds));
+        }
 
         // Handle Mercury samples.
         for (String sampleId : sampleIdsByMetadataSource.get(MercurySample.MetadataSource.MERCURY)) {
