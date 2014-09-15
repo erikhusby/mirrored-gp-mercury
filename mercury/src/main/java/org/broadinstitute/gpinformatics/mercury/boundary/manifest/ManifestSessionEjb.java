@@ -3,15 +3,19 @@ package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestStatus;
@@ -32,6 +36,8 @@ import java.util.List;
  * EJB for Buick manifest sessions used to manage sample registration.
  */
 public class ManifestSessionEjb {
+
+    private static final Log logger = LogFactory.getLog(ManifestSessionEjb.class);
 
     static final String UNASSOCIATED_TUBE_SAMPLE_MESSAGE =
             "The given target sample id is not associated with the given target vessel";
@@ -80,6 +86,25 @@ public class ManifestSessionEjb {
                                           BSPUserList.QADudeUser bspUser) {
 
         ResearchProject researchProject = findResearchProject(researchProjectKey);
+        return uploadManifest(inputStream, pathToFile, bspUser, researchProject);
+    }
+
+    /**
+     * DBfree implementation to Upload a clinical manifest file to begin the accessioning process for a set of
+     * received samples.
+     *
+     * @param inputStream     File Input stream that contains the manifest being uploaded
+     * @param pathToFile      Full path of the manifest as it was uploaded.  This is used to extract the
+     *                        manifest name which will help to identify the accessioning session
+     * @param bspUser         represents the user that is initiating the manifest upload
+     * @param researchProject an existing research project to which the created accessioning session is to be
+     *                        associated
+     *
+     * @return the newly created manifest session
+     */
+    @DaoFree
+    private ManifestSession uploadManifest(InputStream inputStream, String pathToFile, BSPUserList.QADudeUser bspUser,
+                                           ResearchProject researchProject) {
         ManifestImportProcessor manifestImportProcessor = new ManifestImportProcessor();
 
         try {
@@ -246,7 +271,7 @@ public class ManifestSessionEjb {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
                     targetVesselLabel, VESSEL_NOT_FOUND_MESSAGE);
         }
-        if (foundVessel.hasBeenUsedForClinical()) {
+        if (foundVessel.doesChainOfCostodyInclude(LabEventType.COLLABORATOR_TRANSFER)) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
                     targetVesselLabel, VESSEL_USED_FOR_PREVIOUS_TRANSFER);
         }

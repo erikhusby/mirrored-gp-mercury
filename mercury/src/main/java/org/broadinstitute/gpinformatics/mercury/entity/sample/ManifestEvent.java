@@ -19,6 +19,8 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Manifest events represent logged items of interest that occur during the accessioning or tube scanning processes.
@@ -63,8 +65,12 @@ public class ManifestEvent implements HasUpdateData {
     protected ManifestEvent() {
     }
 
-    public ManifestEvent(Severity severity, String message) {
-        this(severity, message, null);
+    public ManifestEvent(ManifestRecord.ErrorStatus severityError, String message) {
+        this(severityError, message, null);
+    }
+
+    public ManifestEvent(ManifestRecord.ErrorStatus severityError, String message, ManifestRecord record) {
+        this(severityError.getSeverity(), message, record);
     }
 
     public ManifestEvent(Severity severity, String message, ManifestRecord record) {
@@ -74,6 +80,29 @@ public class ManifestEvent implements HasUpdateData {
             this.manifestRecord = record;
             this.manifestRecord.addManifestEvent(this);
         }
+    }
+
+    public ManifestEvent(Severity error, String message) {
+        this(error, message, null);
+
+    }
+
+    /**
+     * Helper method to check if there are any manifest event entries of a given type
+     *
+     * @param manifestEvents    List of manifest events within which to find one that meets the given severity
+     * @param severities        set of types to check for entries against
+     *
+     * @return true if even one event entry matches a type in the given set of event types
+     */
+    static boolean hasManifestEventOfType(List<ManifestEvent> manifestEvents,
+                                          Set<Severity> severities) {
+        for (ManifestEvent manifestEvent : manifestEvents) {
+            if (severities.contains(manifestEvent.getSeverity())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public Severity getSeverity() {

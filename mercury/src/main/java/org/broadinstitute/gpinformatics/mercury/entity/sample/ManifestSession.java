@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.Audited;
+import org.jvnet.inflector.Noun;
 
 import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
@@ -92,7 +93,6 @@ public class ManifestSession implements HasUpdateData {
     public ManifestSession(ResearchProject researchProject, String pathToManifestFile, BspUser createdBy) {
         this.researchProject = researchProject;
         researchProject.addManifestSession(this);
-
         sessionPrefix = FilenameUtils.getBaseName(pathToManifestFile);
         updateData.setCreatedBy(createdBy.getUserId());
     }
@@ -146,12 +146,12 @@ public class ManifestSession implements HasUpdateData {
     }
 
     /**
-     * Called during manifest upload, this executes validations against the records in this manifest that have
-     * not already been validated.
+     * Called during manifest upload, this executes validations against the records in this manifest (taking into
+     * context records from other manifests in the same Research Project) that have not already been validated.
      */
     public void validateManifest() {
         List<ManifestRecord> allManifestRecordsAcrossThisResearchProject =
-                collectAllManifestRecordsAcrossThisResearchProject();
+                researchProject.collectNonQuarantinedManifestRecords();
 
         validateDuplicateCollaboratorSampleIDs(allManifestRecordsAcrossThisResearchProject);
         validateInconsistentGenders(allManifestRecordsAcrossThisResearchProject);
@@ -161,13 +161,13 @@ public class ManifestSession implements HasUpdateData {
      * Encapsulates the logic to validate a given set of manifest records for inconsistent gender values for a
      * patient ID.
      *
-     * @param manifestRecordsEligibleForValidation Collection of all manifest records against which to perform
-     *                                             gender mismatch validation
+     * @param manifestRecords Collection of all manifest records against which to perform
+     *                        gender mismatch validation
      */
-    private void validateInconsistentGenders(Collection<ManifestRecord> manifestRecordsEligibleForValidation) {
+    private void validateInconsistentGenders(Collection<ManifestRecord> manifestRecords) {
 
         Multimap<String, ManifestRecord> recordsByPatientId = buildMultimapByKey(
-                manifestRecordsEligibleForValidation, Metadata.Key.PATIENT_ID);
+                manifestRecords, Metadata.Key.PATIENT_ID);
 
         Iterable<Map.Entry<String, Collection<ManifestRecord>>> patientsWithInconsistentGenders =
                 filterForPatientsWithInconsistentGenders(recordsByPatientId);
@@ -184,7 +184,7 @@ public class ManifestSession implements HasUpdateData {
                     String otherSessionsWithSamePatientId =
                             describeOtherManifestSessionsWithMatchingRecords(record, entry.getValue());
 
-                    addManifestEvent(new ManifestEvent(ManifestRecord.ErrorStatus.MISMATCHED_GENDER.getSeverity(),
+                    addManifestEvent(new ManifestEvent(ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
                             message + "  " + otherSessionsWithSamePatientId, record));
                 }
             }
@@ -209,8 +209,11 @@ public class ManifestSession implements HasUpdateData {
                         final Set<String> allGenders = new HashSet<>();
                         for (ManifestRecord manifestRecord : entry.getValue()) {
                             allGenders.add(manifestRecord.getValueByKey(Metadata.Key.GENDER));
+                            if (allGenders.size() > 1) {
+                                return true;
+                            }
                         }
-                        return allGenders.size() > 1;
+                        return false;
                     }
                 });
     }
@@ -218,14 +221,14 @@ public class ManifestSession implements HasUpdateData {
     /**
      * Validate a Collection of manifest records for non-unique collaborator sample IDs.
      *
-     * @param allEligibleManifestRecords Collection of all manifest records against which to perform unique sample id
-     *                                   validation
+     * @param manifestRecords Collection of all manifest records against which to perform unique sample id
+     *                        validation
      */
-    private void validateDuplicateCollaboratorSampleIDs(Collection<ManifestRecord> allEligibleManifestRecords) {
+    private void validateDuplicateCollaboratorSampleIDs(Collection<ManifestRecord> manifestRecords) {
 
         // Build a map of collaborator sample IDs to manifest records with those collaborator sample IDs.
         Multimap<String, ManifestRecord> recordsBySampleId = buildMultimapByKey(
-                allEligibleManifestRecords, Metadata.Key.SAMPLE_ID);
+                manifestRecords, Metadata.Key.SAMPLE_ID);
 
         // Remove entries in this map which are not duplicates (i.e., leave only the duplicates).
         Iterable<Map.Entry<String, Collection<ManifestRecord>>> filteredDuplicateSamples =
@@ -235,13 +238,13 @@ public class ManifestSession implements HasUpdateData {
             for (ManifestRecord duplicatedRecord : entry.getValue()) {
                 // Ignore ManifestSessions that are not this ManifestSession, they will not have errors added by
                 // this logic.
-                if (duplicatedRecord.getManifestSession().equals(this)) {
+                if (this.equals(duplicatedRecord.getManifestSession())) {
                     String message =
                             ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage(SAMPLE_ID_KEY, entry.getKey());
                     String sessionsWithDuplicates =
                             describeOtherManifestSessionsWithMatchingRecords(duplicatedRecord, entry.getValue());
                     addManifestEvent(
-                            new ManifestEvent(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getSeverity(),
+                            new ManifestEvent(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
                                     message + "  " + sessionsWithDuplicates, duplicatedRecord));
                 }
             }
@@ -278,7 +281,8 @@ public class ManifestSession implements HasUpdateData {
             StringBuilder messageBuilder = new StringBuilder();
 
             int numInstances = entry.getValue().size();
-            messageBuilder.append((numInstances == 1) ? "1 instance" : numInstances + " instances");
+            messageBuilder.append(numInstances).append(" ");
+            messageBuilder.append(Noun.pluralOf("instance", numInstances));
             messageBuilder.append(" found in ");
 
             String sessionName = entry.getKey();
@@ -331,28 +335,12 @@ public class ManifestSession implements HasUpdateData {
     }
 
     /**
-     * Helper method to extract all manifest records eligible for validation.  Records for which validation has been
-     * run and has found errors are not eligible for validation.
-     *
-     * @return A list of all Manifest record
-     */
-    private List<ManifestRecord> collectAllManifestRecordsAcrossThisResearchProject() {
-        List<ManifestRecord> allRecords = new ArrayList<>();
-
-        for (ManifestSession manifestSession : researchProject.getManifestSessions()) {
-            allRecords.addAll(manifestSession.getNonQuarantinedRecords());
-        }
-
-        return allRecords;
-    }
-
-    /**
      * Filters out the list of records to return only the ones that do not have blocking errors such as
      * Duplicate_Sample_ID
      *
      * @return all records on this session without blocking errors.
      */
-    private List<ManifestRecord> getNonQuarantinedRecords() {
+    public List<ManifestRecord> getNonQuarantinedRecords() {
         List<ManifestRecord> allRecords = new ArrayList<>();
         for (ManifestRecord manifestRecord : getRecords()) {
             if (!manifestRecord.isQuarantined()) {
@@ -368,23 +356,8 @@ public class ManifestSession implements HasUpdateData {
      * @return true if even one manifest event entry can be considered an error
      */
     public boolean hasErrors() {
-        return hasManifestEventOfType(EnumSet.of(ManifestEvent.Severity.ERROR, ManifestEvent.Severity.QUARANTINED));
-    }
-
-    /**
-     * Helper method to check if there are any manifest event entries of a given type
-     *
-     * @param severities set of types to check for entries against
-     *
-     * @return true if even one event entry matches a type in the given set of event types
-     */
-    private boolean hasManifestEventOfType(Set<ManifestEvent.Severity> severities) {
-        for (ManifestEvent manifestEvent : manifestEvents) {
-            if (severities.contains(manifestEvent.getSeverity())) {
-                return true;
-            }
-        }
-        return false;
+        return ManifestEvent.hasManifestEventOfType(manifestEvents,
+                EnumSet.of(ManifestEvent.Severity.ERROR, ManifestEvent.Severity.QUARANTINED));
     }
 
     /**
@@ -397,7 +370,7 @@ public class ManifestSession implements HasUpdateData {
      */
     public ManifestRecord findScannedRecord(String collaboratorBarcode) {
         for (ManifestRecord record : records) {
-            if (record.getValueByKey(Metadata.Key.SAMPLE_ID).equals(collaboratorBarcode)) {
+            if (record.getSampleId().equals(collaboratorBarcode)) {
                 if (record.getStatus() != ManifestRecord.Status.SCANNED) {
                     throw new TubeTransferException(ManifestRecord.ErrorStatus.NOT_READY_FOR_TUBE_TRANSFER,
                             SAMPLE_ID_KEY,
@@ -422,7 +395,7 @@ public class ManifestSession implements HasUpdateData {
         try {
             foundRecord = findRecordByCollaboratorId(sampleId);
         } catch (TubeTransferException e) {
-            addManifestEvent(new ManifestEvent(e.getErrorStatus().getSeverity(),
+            addManifestEvent(new ManifestEvent(e.getErrorStatus(),
                     e.getErrorStatus().formatMessage(SAMPLE_ID_KEY, sampleId)
             ));
             throw e;
@@ -454,7 +427,8 @@ public class ManifestSession implements HasUpdateData {
     }
 
     /**
-     * Sets all non quarantined records within this session to the status of UPLOAD_ACCEPTED
+     * Method to support the user accepting an uploaded manifest in order to continue with the accessioning process.
+     * To do so, it will set all non quarantined records within this session to the status of UPLOAD_ACCEPTED
      */
     public void acceptUpload() {
         for (ManifestRecord record : getNonQuarantinedRecords()) {
@@ -463,19 +437,19 @@ public class ManifestSession implements HasUpdateData {
     }
 
     /**
-     * Creates and returns a Pojo which represents the current state of the session.  A summary
-     * of errors found in the associated events, and particular counts of interest are populated in the pojo
+     * Creates and returns an object which represents the current state of the session.  A summary of errors found in
+     * the associated events, and particular counts of interest are populated in the pojo
      *
      * @return a {@link ManifestStatus} populated with summary information of interest for the session
      */
     public ManifestStatus generateSessionStatusForClose() {
 
-        ManifestStatus sessionStatus = new ManifestStatus(getRecords().size(), getNonQuarantinedRecords().size(),
-                getRecordsByStatus(ManifestRecord.Status.SCANNED).size());
-
+        Set<String> manifestMessages = new HashSet<>();
         for (ManifestEvent manifestEvent : getManifestEvents()) {
-            sessionStatus.addError(manifestEvent.getMessage());
+            manifestMessages.add(manifestEvent.getMessage());
         }
+        ManifestStatus sessionStatus = new ManifestStatus(getRecords().size(), getNonQuarantinedRecords().size(),
+                getRecordsByStatus(ManifestRecord.Status.SCANNED).size(), manifestMessages);
 
         for (ManifestRecord manifestRecord : getNonQuarantinedRecords()) {
             ManifestRecord.Status manifestRecordStatus = manifestRecord.getStatus();
@@ -538,12 +512,12 @@ public class ManifestSession implements HasUpdateData {
     public void completeSession() {
 
         for (ManifestRecord record : getNonQuarantinedRecords()) {
-            if ((record.getStatus() != ManifestRecord.Status.SCANNED)) {
+            if (record.getStatus() != ManifestRecord.Status.SCANNED) {
 
                 String sampleId = record.getValueByKey(Metadata.Key.SAMPLE_ID);
                 String message = ManifestRecord.ErrorStatus.MISSING_SAMPLE.formatMessage(SAMPLE_ID_KEY, sampleId);
 
-                ManifestEvent manifestEvent = new ManifestEvent(ManifestRecord.ErrorStatus.MISSING_SAMPLE.getSeverity(),
+                ManifestEvent manifestEvent = new ManifestEvent(ManifestRecord.ErrorStatus.MISSING_SAMPLE,
                         message, record);
                 addManifestEvent(manifestEvent);
             } else {
@@ -568,7 +542,6 @@ public class ManifestSession implements HasUpdateData {
         ManifestRecord recordForTransfer = findRecordByCollaboratorId(sourceForTransfer);
 
         if (recordForTransfer.isQuarantined()) {
-
             throw new TubeTransferException(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE,
                     SAMPLE_ID_KEY, sourceForTransfer);
         }
@@ -582,7 +555,8 @@ public class ManifestSession implements HasUpdateData {
     }
 
     /**
-     * Encapsulates the logic required to mark a record within this session as having been transferred
+     * Encapsulates the logic required to informatically execute a transfer from the collaborator provided tube to
+     * a broad tube.  This is primarily done by marking a record within this session as having been transferred.
      *
      * @param sourceCollaboratorSample Sample ID for the source sample.  This should correspond to a record within
      *                                 the session
@@ -599,7 +573,8 @@ public class ManifestSession implements HasUpdateData {
         sourceRecord.setStatus(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
 
         LabEvent collaboratorTransferEvent =
-                new LabEvent(LabEventType.COLLABORATOR_TRANSFER, new Date(), " ", 1L, user.getUserId(), "");
+                new LabEvent(LabEventType.COLLABORATOR_TRANSFER, new Date(), LabEvent.UI_EVENT_LOCATION, 1L,
+                        user.getUserId(), LabEvent.UI_PROGRAM_NAME);
         targetVessel.addInPlaceEvent(collaboratorTransferEvent);
     }
 

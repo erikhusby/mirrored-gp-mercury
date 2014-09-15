@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Index;
@@ -879,6 +880,23 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
 
     public void addManifestSession(ManifestSession manifestSession) {
         this.manifestSessions.add(manifestSession);
+    }
+
+
+    /**
+     * Helper method to extract all manifest records eligible for validation.  Records for which validation has been
+     * run and has found errors are not eligible for validation.
+     *
+     * @return A list of all Manifest record
+     */
+    public List<ManifestRecord> collectNonQuarantinedManifestRecords() {
+        List<ManifestRecord> allRecords = new ArrayList<>();
+
+        for (ManifestSession manifestSession : getManifestSessions()) {
+            allRecords.addAll(manifestSession.getNonQuarantinedRecords());
+        }
+
+        return allRecords;
     }
 
     public enum Status implements StatusType {
