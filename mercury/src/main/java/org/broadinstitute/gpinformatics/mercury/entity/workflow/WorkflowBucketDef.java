@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -38,6 +40,14 @@ public class WorkflowBucketDef extends WorkflowStepDef {
     }
 
     public boolean meetsBucketCriteria(LabVessel labVessel) {
+        // Samples with a Mercury metadata source always meet the criteria, because they don't have material types.
+        for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+            for (MercurySample mercurySample : sampleInstanceV2.getRootMercurySamples()) {
+                if (mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
+                    return true;
+                }
+            }
+        }
 
         // todo remove this code block when Bamboo works with MVEL
         if (entryExpression != null && entryExpression.contains("getMaterialType() contains \"DNA:\"")) {
