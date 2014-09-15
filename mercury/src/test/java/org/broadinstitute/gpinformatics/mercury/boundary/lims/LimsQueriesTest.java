@@ -248,7 +248,7 @@ public class LimsQueriesTest {
         mercuryTubes.put(barcode, tube);
 
         LabMetric quantMetric =
-                new LabMetric(new BigDecimal("22.21"), LabMetric.MetricType.BSP_PICO, LabMetric.LabUnit.UG_PER_ML,
+                new LabMetric(new BigDecimal("22.21"), LabMetric.MetricType.INITIAL_PICO, LabMetric.LabUnit.UG_PER_ML,
                         "A02", new Date());
         tube.addMetric(quantMetric);
         tube.setVolume(new BigDecimal("40.04"));
