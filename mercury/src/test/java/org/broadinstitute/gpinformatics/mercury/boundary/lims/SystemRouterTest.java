@@ -177,7 +177,7 @@ public class SystemRouterTest extends BaseEventTest {
                 new HashMap<String, LabVessel>() {{
                     put(MERCURY_TUBE_1, tube1);
                 }});
-        when(mockSampleDataFetcher.fetchSamplesFromBSP(Arrays.asList("SM-1")))
+        when(mockSampleDataFetcher.fetchSampleData(Arrays.asList("SM-1")))
                 .thenReturn(Collections.singletonMap("SM-1", makeBspSampleDTO("Sample1")));
 
         tube2 = new BarcodedTube(MERCURY_TUBE_2);
@@ -236,7 +236,7 @@ public class SystemRouterTest extends BaseEventTest {
 
         when(mockControlDao.findAllActive())
                 .thenReturn(Arrays.asList(new Control(NA12878, Control.ControlType.POSITIVE)));
-        when(mockSampleDataFetcher.fetchSamplesFromBSP(Arrays.asList(CONTROL_SAMPLE_ID)))
+        when(mockSampleDataFetcher.fetchSampleData(Arrays.asList(CONTROL_SAMPLE_ID)))
                 .thenReturn(Collections.singletonMap(CONTROL_SAMPLE_ID, makeBspSampleDTO(NA12878)));
 
         plate = new StaticPlate(MERCURY_PLATE, Eppendorf96);
@@ -384,7 +384,7 @@ public class SystemRouterTest extends BaseEventTest {
 
         verify(mockLabVesselDao).findByBarcodes(testBarcodes);
         verify(mockControlDao).findAllActive();
-        verify(mockSampleDataFetcher).fetchSamplesFromBSP(Arrays.asList(CONTROL_SAMPLE_ID));
+        verify(mockSampleDataFetcher).fetchSampleData(Arrays.asList(CONTROL_SAMPLE_ID));
     }
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
@@ -409,7 +409,7 @@ public class SystemRouterTest extends BaseEventTest {
 
         verify(mockLabVesselDao).findByBarcodes(testBarcodes);
         verify(mockControlDao).findAllActive();
-        verify(mockSampleDataFetcher).fetchSamplesFromBSP(Arrays.asList(CONTROL_SAMPLE_ID));
+        verify(mockSampleDataFetcher).fetchSampleData(Arrays.asList(CONTROL_SAMPLE_ID));
     }
 
     /*

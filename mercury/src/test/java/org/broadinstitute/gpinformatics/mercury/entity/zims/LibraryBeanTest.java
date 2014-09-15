@@ -83,7 +83,7 @@ public class LibraryBeanTest {
         BSPSampleSearchServiceStub bspSampleSearchServiceStub = new BSPSampleSearchServiceStub();
         BSPSampleDTO sampleDTO =
             new SampleDataFetcher(
-                bspSampleSearchServiceStub).fetchSingleSampleFromBSP(BSPSampleSearchServiceStub.SM_12CO4);
+                bspSampleSearchServiceStub).fetchSampleData(BSPSampleSearchServiceStub.SM_12CO4);
 
         LibraryBean libraryBean = new LibraryBean(null, null, null, null, null, null, null, sampleDTO, null,
                 LibraryBean.NO_PDO_SAMPLE, null);

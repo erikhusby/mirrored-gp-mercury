@@ -1327,11 +1327,11 @@ public class ReworkEjbTest extends Arquillian {
 
         for (ProductOrderSample currSamp : pos) {
             String barcode =
-                    sampleDataFetcher.fetchSingleSampleFromBSP(currSamp.getBspSampleName()).getContainerId();
+                    sampleDataFetcher.fetchSampleData(currSamp.getBspSampleName()).getContainerId();
 
             BarcodedTube aliquot = new BarcodedTube(barcode);
             aliquot.addSample(new MercurySample(currSamp.getBspSampleName(),
-                                                sampleDataFetcher.fetchSingleSampleFromBSP(
+                                                sampleDataFetcher.fetchSampleData(
                                                         currSamp.getBspSampleName())));
             mapBarcodeToTube.put(barcode, aliquot);
             labVesselDao.persist(aliquot);

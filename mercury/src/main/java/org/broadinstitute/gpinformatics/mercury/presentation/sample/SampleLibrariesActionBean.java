@@ -105,7 +105,7 @@ public class SampleLibrariesActionBean extends CoreActionBean {
                     startingVessel.findVesselsForLabEventTypes(eventTypes);
             vesselToEventVesselsMap.put(startingVessel, eventListMap);
         }
-        sampleToBspPicoValueMap = sampleDataFetcher.fetchSamplesFromBSP(sampleNames);
+        sampleToBspPicoValueMap = sampleDataFetcher.fetchSampleData(sampleNames);
     }
 
     public List<MolecularIndexReagent> getIndexesForSample(String sampleName) {

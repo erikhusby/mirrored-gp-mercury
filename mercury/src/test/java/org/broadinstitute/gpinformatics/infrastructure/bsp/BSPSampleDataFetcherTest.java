@@ -18,7 +18,7 @@ public class BSPSampleDataFetcherTest {
     BSPSampleSearchService sampleSearchService = BSPSampleSearchServiceProducer.testInstance();
 
     public void testBSPSampleDataFetcher() {
-        SampleDataFetcher fetcher = new SampleDataFetcher(sampleSearchService);
+        BSPSampleDataFetcher fetcher = new BSPSampleDataFetcher(sampleSearchService);
         BSPSampleDTO bspSampleDTO = fetcher.fetchSingleSampleFromBSP("SM-1T7HE");
 
         assertEquals(bspSampleDTO.getCollaboratorName(), "Herman Taylor");
@@ -32,18 +32,18 @@ public class BSPSampleDataFetcherTest {
     }
 
     public void testGetStockIdForAliquotId() {
-        SampleDataFetcher fetcher = new SampleDataFetcher(sampleSearchService);
+        BSPSampleDataFetcher fetcher = new BSPSampleDataFetcher(sampleSearchService);
 
         Assert.assertEquals(fetcher.getStockIdForAliquotId("SM-1T7HE"), "SM-1KXW2");
     }
 
     public void testGetStockIdForAliquotIdNoPrefix() {
-        SampleDataFetcher fetcher = new SampleDataFetcher(sampleSearchService);
+        BSPSampleDataFetcher fetcher = new BSPSampleDataFetcher(sampleSearchService);
         Assert.assertEquals(fetcher.getStockIdForAliquotId("1T7HE"), "SM-1KXW2");
     }
 
     public void testPooledSampleWithMultipleRoots() {
-        SampleDataFetcher fetcher = new SampleDataFetcher(sampleSearchService);
+        BSPSampleDataFetcher fetcher = new BSPSampleDataFetcher(sampleSearchService);
         BSPSampleDTO bspSampleDTO = fetcher.fetchSingleSampleFromBSP("SM-41YNK");
 
         assertTrue(bspSampleDTO.isSampleReceived());
@@ -57,7 +57,7 @@ public class BSPSampleDataFetcherTest {
     }
 
     public void testFetchSingleColumn()  {
-        SampleDataFetcher fetcher = new SampleDataFetcher(sampleSearchService);
+        BSPSampleDataFetcher fetcher = new BSPSampleDataFetcher(sampleSearchService);
         String sampleName = "SM-1T7HE";
         Map<String, BSPSampleDTO> bspSampleDTO = fetcher.fetchSamplesFromBSP(Arrays.asList(sampleName),
                 BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID);

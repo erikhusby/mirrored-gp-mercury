@@ -85,7 +85,7 @@ public class LCSetSearchActionBean extends SearchActionBean {
                 }
             }
         }
-        sampleToBspPicoValueMap = sampleDataFetcher.fetchSamplesFromBSP(sampleNames);
+        sampleToBspPicoValueMap = sampleDataFetcher.fetchSampleData(sampleNames);
     }
 
     public Double getExportedSampleConcentration(LabVessel vessel) {

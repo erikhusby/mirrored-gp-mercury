@@ -155,7 +155,7 @@ public class ZimsIlluminaRunFactory {
         }
         int numberOfLanes = laneNum;
 
-        Map<String, BSPSampleDTO> mapSampleIdToDto = sampleDataFetcher.fetchSamplesFromBSP(sampleIds);
+        Map<String, BSPSampleDTO> mapSampleIdToDto = sampleDataFetcher.fetchSampleData(sampleIds);
         Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<>();
         for (String productOrderKey : productOrderKeys) {
             mapKeyToProductOrder.put(productOrderKey, productOrderDao.findByBusinessKey(productOrderKey));

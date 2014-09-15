@@ -64,7 +64,7 @@ public abstract class AbstractSample {
                 ServiceAccessUtility.getBean(BSPConfig.class).getMercuryDeployment() != Deployment.PROD) {
 
                 SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
-                bspSampleDTO = sampleDataFetcher.fetchSingleSampleFromBSP(getSampleKey());
+                bspSampleDTO = sampleDataFetcher.fetchSampleData(getSampleKey());
 
                 // If there is no DTO, create one with no data populated.
                 if (bspSampleDTO == null) {

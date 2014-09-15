@@ -419,7 +419,7 @@ public class BucketEjb {
      * @return the created LabVessels
      */
     public Collection<LabVessel> createInitialVessels(Collection<String> samplesWithoutVessel, String username) {
-        Map<String, BSPSampleDTO> bspDtoMap = sampleDataFetcher.fetchSamplesFromBSP(samplesWithoutVessel);
+        Map<String, BSPSampleDTO> bspDtoMap = sampleDataFetcher.fetchSampleData(samplesWithoutVessel);
         Collection<LabVessel> vessels = new ArrayList<>();
         List<String> cannotAddToBucket = new ArrayList<>();
 

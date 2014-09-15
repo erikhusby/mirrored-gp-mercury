@@ -192,7 +192,7 @@ public class BucketEjbDbFreeTest {
                                                           (LabBatch) anyObject(), (String) anyObject(),
                                                           (String) anyObject(), (LabEventType) anyObject()))
                     .andReturn(Collections.<LabEvent>emptyList());
-            expect(sampleDataFetcher.fetchSamplesFromBSP((List<String>) anyObject())).andReturn(bspDtoMap);
+            expect(sampleDataFetcher.fetchSampleData((List<String>) anyObject())).andReturn(bspDtoMap);
             bucketDao.persist(bucket);
 
             replay(mocks);
@@ -217,7 +217,7 @@ public class BucketEjbDbFreeTest {
                 sampleDTO.addPlastic(badLabelResult);
             }
 
-            expect(sampleDataFetcher.fetchSamplesFromBSP((List<String>) anyObject())).andReturn(bspDtoMap);
+            expect(sampleDataFetcher.fetchSampleData((List<String>) anyObject())).andReturn(bspDtoMap);
 
             replay(mocks);
 

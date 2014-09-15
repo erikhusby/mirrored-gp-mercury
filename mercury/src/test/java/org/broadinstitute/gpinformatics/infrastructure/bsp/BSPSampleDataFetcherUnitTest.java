@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
-import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
@@ -24,17 +23,17 @@ import static org.mockito.Mockito.when;
 public class BSPSampleDataFetcherUnitTest {
 
     private BSPSampleSearchService mockBspSampleSearchService;
-    private SampleDataFetcher sampleDataFetcher;
+    private BSPSampleDataFetcher bspSampleDataFetcher;
 
     @BeforeMethod
     public void setUp() {
         mockBspSampleSearchService = Mockito.mock(BSPSampleSearchService.class);
-        sampleDataFetcher = new SampleDataFetcher(mockBspSampleSearchService);
+        bspSampleDataFetcher = new BSPSampleDataFetcher(mockBspSampleSearchService);
     }
 
     @Test
     public void testGetStockIdByAliquotIdEmpty() {
-        Map<String, String> result = sampleDataFetcher.getStockIdByAliquotId(Collections.<String>emptyList());
+        Map<String, String> result = bspSampleDataFetcher.getStockIdByAliquotId(Collections.<String>emptyList());
 
         assertThat(result, equalTo(Collections.<String, String>emptyMap()));
         verify(mockBspSampleSearchService, never())
@@ -49,7 +48,7 @@ public class BSPSampleDataFetcherUnitTest {
         when(mockBspSampleSearchService.runSampleSearch(Collections.singleton("1234"), BSPSampleSearchColumn.SAMPLE_ID,
                 BSPSampleSearchColumn.STOCK_SAMPLE)).thenReturn(Collections.singletonList(searchServiceResult));
 
-        Map<String, String> result = sampleDataFetcher.getStockIdByAliquotId(Collections.singleton("1234"));
+        Map<String, String> result = bspSampleDataFetcher.getStockIdByAliquotId(Collections.singleton("1234"));
 
         assertThat("Should have 1 result", result.size(), equalTo(1));
         assertThat(result.get("SM-1234"), equalTo("SM-1230"));

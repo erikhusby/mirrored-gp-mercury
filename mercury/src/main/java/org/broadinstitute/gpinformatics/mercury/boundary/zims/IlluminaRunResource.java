@@ -217,7 +217,7 @@ public class IlluminaRunResource implements Serializable {
                 sampleNames.add(lsIdToBareId.getValue());
             }
         }
-        Map<String, BSPSampleDTO> sampleToBspDto = sampleDataFetcher.fetchSamplesFromBSP(sampleNames);
+        Map<String, BSPSampleDTO> sampleToBspDto = sampleDataFetcher.fetchSampleData(sampleNames);
 
         Map<String, BSPSampleDTO> lsidToBspDto = new HashMap<>();
         for (Map.Entry<String, BSPSampleDTO> bspSampleDTOEntry : sampleToBspDto.entrySet()) {

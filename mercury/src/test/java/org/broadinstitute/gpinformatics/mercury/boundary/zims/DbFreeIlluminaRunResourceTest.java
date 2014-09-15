@@ -125,7 +125,7 @@ public class DbFreeIlluminaRunResourceTest {
         TZamboniRun thriftRun = ThriftFileAccessor.deserializeRun();
         SampleDataFetcher sampleDataFetcher = new SampleDataFetcher(new BSPSampleSearchServiceStub());
         String sample = BSPSampleSearchServiceStub.SM_12CO4;
-        BSPSampleDTO sampleDTO = sampleDataFetcher.fetchSingleSampleFromBSP(sample);
+        BSPSampleDTO sampleDTO = sampleDataFetcher.fetchSampleData(sample);
         Map<String, BSPSampleDTO> lsidToSampleDTO = new HashMap<>();
         lsidToSampleDTO.put(sampleDTO.getSampleLsid(), sampleDTO);
 

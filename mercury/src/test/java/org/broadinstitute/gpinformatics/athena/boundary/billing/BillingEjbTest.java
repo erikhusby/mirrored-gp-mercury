@@ -14,13 +14,16 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumMap;
@@ -34,32 +37,18 @@ public class BillingEjbTest {
     public static final String ALIQUOT_ID_2 = "SM-ALQT2";
     public static final String STOCK_ID = "SM-STOCK";
 
-    private BillingEjb billingEjb = new BillingEjb(null,null,null,null,
-            new SampleDataFetcher(new BSPSampleSearchService() {
+    private BillingEjb billingEjb = new BillingEjb(null, null, null, null,
+            new SampleDataFetcher() {
                 @Override
-                public List<Map<BSPSampleSearchColumn, String>> runSampleSearch(final Collection<String> sampleIDs,
-                                                                                BSPSampleSearchColumn... resultColumns) {
-                    // For this test case, both aliquots map to the same sample.
-                    final String sampleId = sampleIDs.iterator().next();
-                    if (sampleId.equals(ALIQUOT_ID_1) || sampleId.equals(ALIQUOT_ID_2)) {
-                        return new ArrayList<Map<BSPSampleSearchColumn, String>>() {{
-                            add(new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
-                                put(BSPSampleSearchColumn.STOCK_SAMPLE, STOCK_ID);
-                                put(BSPSampleSearchColumn.SAMPLE_ID, sampleId);
-                            }});
-                        }};
+                public String getStockIdForAliquotId(@Nonnull String aliquotId) {
+                    if (aliquotId.equals(ALIQUOT_ID_1) || aliquotId.equals(ALIQUOT_ID_2)) {
+                        return STOCK_ID;
                     } else {
-                        return new ArrayList<Map<BSPSampleSearchColumn, String>>() {{
-                            add(new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
-                                put(BSPSampleSearchColumn.STOCK_SAMPLE, sampleId);
-                                put(BSPSampleSearchColumn.SAMPLE_ID, sampleId);
-                            }});
-                        }};
+                        return aliquotId;
                     }
                 }
-            })
+            }
     );
-
 
     public void testMapAliquotIdToSampleInvalid() {
         ProductOrder order = ProductOrderDBTestFactory.createTestProductOrder(STOCK_ID);

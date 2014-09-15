@@ -6,7 +6,7 @@ import org.broadinstitute.bsp.client.rackscan.RackScannerConfig;
 import org.broadinstitute.bsp.client.rackscan.ScannerException;
 import org.broadinstitute.bsp.client.rackscan.abgene.AbgeneNetworkRackScanner;
 import org.broadinstitute.bsp.client.rackscan.zaith.ZaithNetworkRackScanner;
-import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
 
 import javax.ejb.Stateful;
@@ -26,7 +26,7 @@ import java.util.Map;
 public class RackScannerEjb {
 
     @Inject
-    private SampleDataFetcher sampleDataFetcherService;
+    private BSPSampleDataFetcher sampleDataFetcherService;
 
     /**
      * Based upon the RackScanner selected, this runs the rack scan and returns a linked HashMap of position to barcode

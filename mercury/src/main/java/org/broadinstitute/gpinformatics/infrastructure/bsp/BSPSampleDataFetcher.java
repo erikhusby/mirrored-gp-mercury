@@ -134,7 +134,7 @@ public class BSPSampleDataFetcher extends BSPJerseyClient implements Serializabl
             return;
         }
 
-        final Map<String, BSPSampleDTO> barcodeToDTOMap = new HashMap<String, BSPSampleDTO>();
+        final Map<String, BSPSampleDTO> barcodeToDTOMap = new HashMap<>();
         for (BSPSampleDTO bspSampleDTO : bspSampleDTOs) {
             barcodeToDTOMap.put(bspSampleDTO.getSampleId(), bspSampleDTO);
         }
@@ -188,7 +188,7 @@ public class BSPSampleDataFetcher extends BSPJerseyClient implements Serializabl
     }
 
     /**
-     * Given an aliquot ID, return its stock sample ID.
+     * Given an aliquot ID, return its stock sample ID. The aliquot ID may, but is not required to, have a "SM-" prefix.
      */
     public String getStockIdForAliquotId(@Nonnull String aliquotId) {
         Map<String, String> stockIdByAliquotId = getStockIdByAliquotId(Collections.singletonList(aliquotId));

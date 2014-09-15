@@ -33,7 +33,7 @@ public class BSPSetVolumeConcentrationTest  {
                     testSampleId, newVolume[i], newConcentration[i], newReceptacleWeight[i]);
             Assert.assertEquals(result, BSPSetVolumeConcentration.RESULT_OK);
 
-            BSPSampleDTO bspSampleDTO = dataFetcher.fetchSingleSampleFromBSP(testSampleId);
+            BSPSampleDTO bspSampleDTO = dataFetcher.fetchSampleData(testSampleId);
             Double currentVolume = bspSampleDTO.getVolume();
             Double currentConcentration = bspSampleDTO.getConcentration();
 

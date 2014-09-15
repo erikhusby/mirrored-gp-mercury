@@ -258,7 +258,7 @@ public class SystemRouter implements Serializable {
             for (SampleInstanceV2 sampleInstance : possibleControls) {
                 sampleNames.add(sampleInstance.getEarliestMercurySampleName());
             }
-            mapSampleNameToDto = sampleDataFetcher.fetchSamplesFromBSP(sampleNames);
+            mapSampleNameToDto = sampleDataFetcher.fetchSampleData(sampleNames);
 
             List<Control> controls = controlDao.findAllActive();
             for (Control control : controls) {
