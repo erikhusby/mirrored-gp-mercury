@@ -35,6 +35,7 @@ import org.broadinstitute.gpinformatics.infrastructure.search.PaginationDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstanceEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
@@ -383,6 +384,8 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
             } catch (IllegalArgumentException e) {
                 log.error(e.getMessage(), e);
                 addGlobalValidationError(e.getMessage());
+            } catch (BSPLookupException bspse) {
+                handleRemoteServiceFailure(bspse);
             }
         }
         return new ForwardResolution("/search/configurable_search.jsp");
@@ -401,10 +404,28 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
 
         buildSearchContext();
 
-        configurableResultList = configurableListFactory.getSubsequentResultsPage(searchInstance, pageNumber,  getEntityName() ,
-                (PaginationDao.Pagination) getContext().getRequest().getSession().getAttribute(
-                        PAGINATION_PREFIX + sessionKey));
+        try {
+            configurableResultList =
+                    configurableListFactory.getSubsequentResultsPage(searchInstance, pageNumber, getEntityName(),
+                            (PaginationDao.Pagination) getContext().getRequest().getSession().getAttribute(
+                                    PAGINATION_PREFIX + sessionKey));
+        } catch (BSPLookupException bspse) {
+            handleRemoteServiceFailure( bspse );
+        }
         return new ForwardResolution("/search/configurable_search.jsp");
+    }
+
+    /**
+     * If a search relies on data retrieved via web services (Lab Vessel BSP columns),
+     * Gracefully allow the user to view the issue and avoid the hard failure page
+     */
+    private void handleRemoteServiceFailure( BSPLookupException bspse ) {
+        log.error(bspse.getMessage(), bspse);
+        addGlobalValidationError( "BSP access failure:  " + bspse.getMessage() );
+        if( bspse.getCause() != null ){
+            addGlobalValidationError( " Root cause:  " + bspse.getCause().getMessage() );
+        }
+        addGlobalValidationError( "Remove BSP columns from search or try again later" );
     }
 
     /**
