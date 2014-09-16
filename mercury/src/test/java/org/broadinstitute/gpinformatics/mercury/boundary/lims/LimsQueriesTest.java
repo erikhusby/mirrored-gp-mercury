@@ -241,7 +241,7 @@ public class LimsQueriesTest {
 
     //TODO
     @Test(groups = DATABASE_FREE)
-    public void testFetchConcentrationAndVolumeForTubeBarcodes() {
+    public void testFetchConcentrationAndVolumeAndWeightForTubeBarcodes() {
         String barcode = "tube1";
         Map<String, LabVessel> mercuryTubes = new HashMap<>();
         BarcodedTube tube = new BarcodedTube(barcode);

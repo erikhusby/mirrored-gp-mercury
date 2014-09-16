@@ -369,13 +369,12 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
                         "Unable to extract parameter from http request: javax.ws.rs.QueryParam(\"idType\") value is 'THISWILLFAIL'"));
     }
 
-    //TODO This shoould work wonderbar
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testFetchConcentrationAndVolumeForTubeBarcodes(@ArquillianResource URL baseUrl) {
+    public void testFetchConcentrationAndVolumeAndWeightForTubeBarcodes(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "fetchConcentrationAndVolumeAndWeightForTubeBarcodes");
 
-        String result1 = get(addQueryParam(resource, "q", Arrays.asList("0099443960", "406164")));
+        String result1 = get(addQueryParam(resource, "q", Arrays.asList("1075671760", "1075671761")));
         assertThat(result1, notNullValue());
         int index = result1.indexOf("\"wasFound\":true");
         assertThat(index, not(equalTo(-1)));
@@ -384,7 +383,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         index = result1.indexOf("\"wasFound\":true", index + 1);
         assertThat(index, equalTo(-1));
 
-        String result2 = get(addQueryParam(resource, "q", Arrays.asList("0099443960", "unknown_barcode")));
+        String result2 = get(addQueryParam(resource, "q", Arrays.asList("1075671760", "unknown_barcode")));
         assertThat(result2, notNullValue());
         index = result2.indexOf("\"wasFound\":true");
         assertThat(index, not(equalTo(-1)));

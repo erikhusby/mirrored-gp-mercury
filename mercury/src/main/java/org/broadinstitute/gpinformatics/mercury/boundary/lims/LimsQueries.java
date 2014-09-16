@@ -294,40 +294,40 @@ public class LimsQueries {
             ConcentrationAndVolumeAndWeightType concentrationAndVolumeAndWeightType =
                     new ConcentrationAndVolumeAndWeightType();
             concentrationAndVolumeAndWeightType.setTubeBarcode(tubeBarcode);
-            boolean wasFound = false;
-            if(labVessel.getReceptacleWeight() != null) {
-                concentrationAndVolumeAndWeightType.setWeight(labVessel.getReceptacleWeight().doubleValue());
-                wasFound = true;
-            }
-            if(labVessel.getVolume() != null) {
-                concentrationAndVolumeAndWeightType.setVolume(labVessel.getVolume().doubleValue());
-                wasFound = true;
-            }
-            if(labVessel.getConcentration() != null) {
-                concentrationAndVolumeAndWeightType.setConcentration(labVessel.getConcentration().doubleValue());
-                wasFound = true;
+            if (entry.getValue() == null) {
+                concentrationAndVolumeAndWeightType.setWasFound(false);
             } else {
-                Set<LabMetric> metrics = labVessel.getMetrics();
-                if (metrics != null) {
-                    List<LabMetric> metricList = new ArrayList<>(metrics);
-                    if (metricList.size() > 0) {
-                        Collections.sort(metricList, new LabMetric.LabMetricRunDateComparator());
-                        LabMetric.MetricType metricType = metricList.get(0).getName();
-                        for (LabMetric labMetric : metricList) {
-                            if (labMetric.getName() != metricType) {
-                                throw new RuntimeException(
-                                        "Got more than one quant for barcode:" + tubeBarcode);
+                concentrationAndVolumeAndWeightType.setWasFound(true);
+                if (labVessel.getReceptacleWeight() != null) {
+                    concentrationAndVolumeAndWeightType.setWeight(labVessel.getReceptacleWeight().doubleValue());
+                }
+                if (labVessel.getVolume() != null) {
+                    concentrationAndVolumeAndWeightType.setVolume(labVessel.getVolume().doubleValue());
+                }
+                if (labVessel.getConcentration() != null) {
+                    concentrationAndVolumeAndWeightType.setConcentration(labVessel.getConcentration().doubleValue());
+                } else {
+                    Set<LabMetric> metrics = labVessel.getMetrics();
+                    if (metrics != null) {
+                        List<LabMetric> metricList = new ArrayList<>(metrics);
+                        if (metricList.size() > 0) {
+                            Collections.sort(metricList, new LabMetric.LabMetricRunDateComparator());
+                            LabMetric.MetricType metricType = metricList.get(0).getName();
+                            for (LabMetric labMetric : metricList) {
+                                if (labMetric.getName() != metricType) {
+                                    throw new RuntimeException(
+                                            "Got more than one quant for barcode:" + tubeBarcode);
+                                }
                             }
                         }
+                        LabMetric labMetric = metricList.get(0);
+                        double quant = labMetric.getValue().doubleValue();
+                        concentrationAndVolumeAndWeightType.setConcentration(quant);
+                        concentrationAndVolumeAndWeightType
+                                .setConcentrationUnits(labMetric.getUnits().getDisplayName());
                     }
-                    LabMetric labMetric = metricList.get(0);
-                    double quant = labMetric.getValue().doubleValue();
-                    concentrationAndVolumeAndWeightType.setConcentration(quant);
-                    concentrationAndVolumeAndWeightType.setConcentrationUnits(labMetric.getUnits().getDisplayName());
-                    wasFound = true;
                 }
             }
-            concentrationAndVolumeAndWeightType.setWasFound(wasFound);
             concentrationAndVolumeAndWeightTypeMap.put(tubeBarcode, concentrationAndVolumeAndWeightType);
         }
 
