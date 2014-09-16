@@ -239,7 +239,6 @@ public class LimsQueriesTest {
         verify(barcodedTubeDao);
     }
 
-    //TODO
     @Test(groups = DATABASE_FREE)
     public void testFetchConcentrationAndVolumeAndWeightForTubeBarcodes() {
         String barcode = "tube1";
