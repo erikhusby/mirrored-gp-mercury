@@ -76,7 +76,7 @@ public class ManifestSession implements HasUpdateData {
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "manifestSession", orphanRemoval = true)
     private List<ManifestRecord> records = new ArrayList<>();
 
-    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "session", orphanRemoval = true)
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "manifestSession", orphanRemoval = true)
     private List<ManifestEvent> manifestEvents = new ArrayList<>();
 
     // IntelliJ claims this is unused.
@@ -138,7 +138,7 @@ public class ManifestSession implements HasUpdateData {
 
     public void addManifestEvent(ManifestEvent manifestEvent) {
         manifestEvents.add(manifestEvent);
-        manifestEvent.setSession(this);
+        manifestEvent.setManifestSession(this);
     }
 
     public List<ManifestEvent> getManifestEvents() {
