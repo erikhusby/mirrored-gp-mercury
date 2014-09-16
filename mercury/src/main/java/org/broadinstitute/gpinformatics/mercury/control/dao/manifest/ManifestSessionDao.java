@@ -17,16 +17,16 @@ import java.util.List;
 @TransactionAttribute(TransactionAttributeType.SUPPORTS)
 @RequestScoped
 public class ManifestSessionDao extends GenericDao {
+
     public ManifestSession find(long id) {
         return findById(ManifestSession.class, id);
     }
 
     public List<ManifestSession> findOpenSessions() {
-
         return findList(ManifestSession.class, ManifestSession_.status, ManifestSession.SessionStatus.OPEN);
     }
-    public List<ManifestSession> findClosedSessions() {
 
+    public List<ManifestSession> findClosedSessions() {
         return findList(ManifestSession.class, ManifestSession_.status, ManifestSession.SessionStatus.COMPLETED);
     }
 }
