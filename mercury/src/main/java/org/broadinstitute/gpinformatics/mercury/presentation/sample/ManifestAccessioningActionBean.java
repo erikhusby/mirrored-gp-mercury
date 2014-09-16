@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.sample;
 
-import net.sourceforge.stripes.action.Before;
+import net.sourceforge.stripes.action.After;
+import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.FileBean;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
@@ -25,7 +26,7 @@ import java.util.List;
 @SuppressWarnings("unused")
 @UrlBinding(ManifestAccessioningActionBean.ACTIONBEAN_URL_BINDING)
 public class ManifestAccessioningActionBean extends CoreActionBean {
-    public static final String ACTIONBEAN_URL_BINDING = "/samples/manifestAccessioning";
+    public static final String ACTIONBEAN_URL_BINDING = "/sample/accessioning.action";
     private static Log logger = LogFactory.getLog(ManifestAccessioningActionBean.class);
 
     public static final String START_SESSION_PAGE = "/sample/start_session.jsp";
@@ -72,9 +73,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
         super();
     }
 
-
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {LOAD_SESSION_ACTION, ACCEPT_UPLOAD_ACTION,
-            EXIT_SESSION_ACTION, SCAN_ACCESSION_SOURCE_ACTION, PREVIEW_SESSION_ACTION, CLOSE_SESSION_ACTION})
+    @After(stages = LifecycleStage.BindingAndValidation, on = {"!" + START_A_SESSION_ACTION})
     public void init() {
         selectedSession = manifestSessionDao.find(selectedSessionId);
     }
@@ -85,9 +84,14 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
         //TODO determine page based on session and record state. Putting upload review for now
 
         return new ForwardResolution(REVIEW_UPLOAD_PAGE);
-
     }
 
+    @HandlesEvent(VIEW_UPLOAD_ACTION)
+    public Resolution view() {
+        return new ForwardResolution(REVIEW_UPLOAD_PAGE);
+    }
+
+    @DefaultHandler
     @HandlesEvent(START_A_SESSION_ACTION)
     public Resolution startASession() {
         openSessions = manifestSessionDao.findOpenSessions();
@@ -98,18 +102,18 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     @HandlesEvent(UPLOAD_MANIFEST_ACTION)
     public Resolution uploadManifest() {
 
-        //TODO. DO not think we have to pass in bsp user.  Can probably just inject userbean in Manifest Session Ejb
         try {
-            manifestSessionEjb.uploadManifest(researchProjectKey, manifestFile.getInputStream(),
-                    manifestFile.getFileName(), userBean.getBspUser());
+            selectedSession =
+                    manifestSessionEjb.uploadManifest(researchProjectKey, manifestFile.getInputStream(),
+                            manifestFile.getFileName(), userBean.getBspUser());
 
         } catch (IOException | InformaticsServiceException e) {
-            addGlobalValidationError("Un able to upload the manifest file:  %s", e.getMessage());
+            addGlobalValidationError("Unable to upload the manifest file: {2}", e.getMessage());
             return new RedirectResolution(getClass(), BEGIN_ACCESSION_ACTION)
                     .addParameter("researchProjectKey", researchProjectKey);
         }
 
-        return new ForwardResolution(getClass(), START_A_SESSION_ACTION);
+        return new ForwardResolution(REVIEW_UPLOAD_PAGE);
     }
 
 
