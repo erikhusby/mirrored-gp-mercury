@@ -98,12 +98,12 @@ public class ManifestRecord implements HasUpdateData {
         // This is constructed lazily as it can't be built within the no-arg constructor since the 'metadata' field
         // upon which it depends will not have been initialized.
         if (metadataMap == null) {
-            metadataMap = new HashMap<>(Maps.uniqueIndex(getMetadata(), new Function<Metadata, Metadata.Key>() {
+            metadataMap = Maps.uniqueIndex(getMetadata(), new Function<Metadata, Metadata.Key>() {
                 @Override
                 public Metadata.Key apply(Metadata metadata) {
                     return metadata.getKey();
                 }
-            }));
+            });
         }
         return metadataMap;
     }
