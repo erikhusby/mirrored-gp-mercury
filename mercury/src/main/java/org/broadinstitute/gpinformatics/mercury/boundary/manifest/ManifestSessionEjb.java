@@ -83,7 +83,7 @@ public class ManifestSessionEjb {
      * @return the newly created manifest session
      */
     public ManifestSession uploadManifest(String researchProjectKey, InputStream inputStream, String pathToFile,
-                                          BSPUserList.QADudeUser bspUser) {
+                                          BspUser bspUser) {
 
         ResearchProject researchProject = findResearchProject(researchProjectKey);
         return uploadManifest(inputStream, pathToFile, bspUser, researchProject);
@@ -103,7 +103,7 @@ public class ManifestSessionEjb {
      * @return the newly created manifest session
      */
     @DaoFree
-    private ManifestSession uploadManifest(InputStream inputStream, String pathToFile, BSPUserList.QADudeUser bspUser,
+    private ManifestSession uploadManifest(InputStream inputStream, String pathToFile, BspUser bspUser,
                                            ResearchProject researchProject) {
         ManifestImportProcessor manifestImportProcessor = new ManifestImportProcessor();
 
