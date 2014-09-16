@@ -34,7 +34,7 @@ public class UpdateData {
     }
 
     public void setCreatedBy(BspUser createdBy) {
-        this.createdBy = createdBy.getDomainUserId();
+        this.createdBy = createdBy.getUserId();
     }
 
     public Date getModifiedDate() {
@@ -50,7 +50,7 @@ public class UpdateData {
     }
 
     public void setModifiedBy(BspUser modifiedBy) {
-        this.modifiedBy = modifiedBy.getDomainUserId();
+        this.modifiedBy = modifiedBy.getUserId();
     }
 
     /**
