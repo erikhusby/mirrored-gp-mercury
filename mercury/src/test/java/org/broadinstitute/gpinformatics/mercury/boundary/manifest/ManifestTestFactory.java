@@ -77,7 +77,7 @@ public class ManifestTestFactory {
 
         if (errorStatus != null) {
             session.addManifestEvent(new ManifestEvent(errorStatus,
-                    errorStatus.formatMessage(Metadata.Key.SAMPLE_ID.name(), record.getSampleId()), record));
+                    errorStatus.formatMessage(Metadata.Key.SAMPLE_ID, record.getSampleId()), record));
         }
     }
 

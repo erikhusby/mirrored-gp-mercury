@@ -82,12 +82,21 @@ public class Metadata {
     public enum Key {
         /* These keys are currently all used for uploads of the "modified" (edited) manifest during Buick sample
          * registration. */
-        GENDER,
-        PATIENT_ID,
-        SAMPLE_TYPE,
-        TUMOR_NORMAL,
-        BUICK_COLLECTION_DATE,
-        SAMPLE_ID,
-        BUICK_VISIT
+        GENDER("Gender"),
+        PATIENT_ID("Patient ID"),
+        SAMPLE_TYPE("Sample Type"),
+        TUMOR_NORMAL("Tumor/Normal"),
+        BUICK_COLLECTION_DATE("Collection Date"),
+        SAMPLE_ID("Sample ID"),
+        BUICK_VISIT("Visit");
+        private final String displayName;
+
+        Key(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
     }
 }

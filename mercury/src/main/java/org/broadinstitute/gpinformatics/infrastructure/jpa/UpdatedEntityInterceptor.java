@@ -4,6 +4,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -37,7 +38,8 @@ public class UpdatedEntityInterceptor {
 
             if (userBean == null) {
                 logger.info("Unable to determine the current user because User bean is null");
-                updateData.setModifiedBy(updateData.getCreatedBy());
+                throw new InformaticsServiceException("Unable to determine an existing user to record who " +
+                                                      "is modifying data");
             } else {
                 BspUser bspUser = userBean.getBspUser();
                 updateData.setModifiedBy(bspUser);

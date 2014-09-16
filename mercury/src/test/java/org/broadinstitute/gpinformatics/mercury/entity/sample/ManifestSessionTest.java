@@ -190,7 +190,7 @@ public class ManifestSessionTest {
         setSampleStatus(errorRecordID, ManifestRecord.Status.UPLOADED);
         session.addManifestEvent(new ManifestEvent(
                 ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getSeverity(),
-                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage("Sample ID", errorRecordID),
+                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage(Metadata.Key.SAMPLE_ID, errorRecordID),
                 errorRecord));
 
         try {

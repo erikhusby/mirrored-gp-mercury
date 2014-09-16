@@ -179,12 +179,12 @@ public class ManifestRecord implements HasUpdateData {
         if (isQuarantined()) {
             throw new InformaticsServiceException(
                     ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID
-                            .formatMessage(ManifestSession.SAMPLE_ID_KEY, getSampleId()));
+                            .formatMessage(Metadata.Key.SAMPLE_ID, getSampleId()));
         }
         if (getStatus() == ManifestRecord.Status.SCANNED) {
             throw new InformaticsServiceException(
                     ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_SCAN
-                            .formatMessage(ManifestSession.SAMPLE_ID_KEY, getSampleId()));
+                            .formatMessage(Metadata.Key.SAMPLE_ID, getSampleId()));
         }
 
         setStatus(ManifestRecord.Status.SCANNED);
@@ -280,12 +280,16 @@ public class ManifestRecord implements HasUpdateData {
             return baseMessage;
         }
 
-        public String formatMessage(String entityType, String value) {
-            return String.format("For %s %s: %s", entityType, value, baseMessage);
+        public String formatMessage(Metadata.Key entityType, String value) {
+            return formatMessage(entityType.getDisplayName(), value);
         }
 
         public ManifestEvent.Severity getSeverity() {
             return severity;
+        }
+
+        public String formatMessage(String typeString, String value) {
+            return String.format("For %s %s: %s", typeString, value, baseMessage);
         }
     }
 
