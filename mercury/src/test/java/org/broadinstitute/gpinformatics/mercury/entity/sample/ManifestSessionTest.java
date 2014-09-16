@@ -139,68 +139,6 @@ public class ManifestSessionTest {
         }
     }
 
-    public void successfulScanCollaboratorTubeInTubeTransfer() throws TubeTransferException {
-        String collaboratorBarcode = SAMPLE_ID_1;
-        ManifestRecord manifestRecord = session.findScannedRecord(collaboratorBarcode);
-        assertThat(manifestRecord, is(notNullValue()));
-    }
-
-    public void notReadyScanCollaboratorTubeInTubeTransfer() {
-        String collaboratorBarcode = SAMPLE_ID_1;
-        setSampleStatus(collaboratorBarcode, ManifestRecord.Status.UPLOADED);
-        try {
-            session.findScannedRecord(collaboratorBarcode);
-            Assert.fail();
-        } catch (TubeTransferException e) {
-            assertThat(e.getErrorStatus(), is(
-                    CoreMatchers.equalTo(ManifestRecord.ErrorStatus.NOT_READY_FOR_TUBE_TRANSFER)));
-        }
-    }
-
-    public void notInManifestCollaboratorTubeInTubeTransfer() {
-        String collaboratorBarcode = SAMPLE_ID_1 + "_UNRECOGNIZED";
-        setSampleStatus(collaboratorBarcode, ManifestRecord.Status.UPLOADED);
-        try {
-            session.findScannedRecord(collaboratorBarcode);
-            Assert.fail();
-        } catch (TubeTransferException e) {
-            assertThat(e.getErrorStatus(), is(CoreMatchers.equalTo(ManifestRecord.ErrorStatus.NOT_IN_MANIFEST)));
-        }
-    }
-
-    public void scanSampleInManifest() throws Exception {
-
-        setSampleStatus(SAMPLE_ID_1, ManifestRecord.Status.UPLOAD_ACCEPTED);
-
-        ManifestRecord record = session.scanSample(SAMPLE_ID_1);
-        assertThat(record.getStatus(), is(CoreMatchers.equalTo(ManifestRecord.Status.SCANNED)));
-
-        assertThat(session.getManifestEvents(), is(empty()));
-        try {
-            session.scanSample(SAMPLE_ID_1 + "_NOTIN");
-            Assert.fail();
-        } catch (TubeTransferException tte) {
-            assertThat(tte.getErrorStatus(), is(CoreMatchers.equalTo(ManifestRecord.ErrorStatus.NOT_IN_MANIFEST)));
-            assertThat(session.getManifestEvents(), is(not(empty())));
-            assertThat(session.getManifestEvents().size(), is(equalTo(1)));
-        }
-
-        String errorRecordID = "20923842";
-        ManifestRecord errorRecord = buildManifestRecord(session, errorRecordID);
-        setSampleStatus(errorRecordID, ManifestRecord.Status.UPLOADED);
-        session.addManifestEvent(new ManifestEvent(
-                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getSeverity(),
-                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage(Metadata.Key.SAMPLE_ID, errorRecordID),
-                errorRecord));
-
-        try {
-            session.scanSample(errorRecordID);
-            Assert.fail();
-        } catch (TubeTransferException e) {
-            assertThat(e.getErrorStatus(), is(equalTo(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE)));
-        }
-    }
-
     public void testPrepareForCloseOnCleanSession() {
         ManifestStatus manifestStatus = session.generateSessionStatusForClose();
         assertThat(manifestStatus.getSamplesInManifest(), is(NUM_SAMPLES_IN_MANIFEST));
