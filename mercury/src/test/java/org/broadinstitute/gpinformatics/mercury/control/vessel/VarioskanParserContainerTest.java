@@ -59,8 +59,8 @@ public class VarioskanParserContainerTest extends Arquillian {
         InputStream spreadsheet = VarioskanParserTest.getSpreadsheet();
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
         String timestamp = simpleDateFormat.format(new Date());
-        String plate1Barcode = timestamp + "1";
-        String plate2Barcode = timestamp + "2";
+        String plate1Barcode = timestamp + "01";
+        String plate2Barcode = timestamp + "02";
         try {
             Workbook workbook = WorkbookFactory.create(spreadsheet);
             Sheet curveSheet = workbook.getSheet(VarioskanRowParser.QUANTITATIVE_CURVE_FIT1_TAB);

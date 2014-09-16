@@ -124,9 +124,20 @@ public class VarioskanParserTest {
     }
 
     public static InputStream getSpreadsheet() {
-        InputStream testSpreadSheetInputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                "VarioskanOutput.xls");
+        InputStream testSpreadSheetInputStream = getTestResource("VarioskanOutput.xls");
         Assert.assertNotNull(testSpreadSheetInputStream);
         return testSpreadSheetInputStream;
+    }
+
+    public static InputStream getTestResource(String fileName) {
+        InputStream testSpreadSheetInputStream = getResourceAsStream(fileName);
+        if (testSpreadSheetInputStream == null) {
+            testSpreadSheetInputStream = getResourceAsStream("testdata/" + fileName);
+        }
+        return testSpreadSheetInputStream;
+    }
+
+    public static InputStream getResourceAsStream(String fileName) {
+        return Thread.currentThread().getContextClassLoader().getResourceAsStream(fileName);
     }
 }
