@@ -372,7 +372,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         assertThat(sessionStatus.getSamplesEligibleInManifest(), is(NUM_RECORDS_IN_SPREADSHEET));
         assertThat(sessionStatus.getErrorMessages(), is(not(empty())));
         assertThat(sessionStatus.getErrorMessages(), hasItem(ManifestRecord.ErrorStatus.MISSING_SAMPLE
-                .formatMessage(ManifestSession.SAMPLE_ID_KEY, firstUploadedOmittedScan)));
+                .formatMessage(Metadata.Key.SAMPLE_ID, firstUploadedOmittedScan)));
 
         /*
          * Mimic a user closing the session, and the ramifications of that.

@@ -52,7 +52,7 @@ public class ManifestEvent implements HasUpdateData {
 
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "manifest_session_id")
-    private ManifestSession session;
+    private ManifestSession manifestSession;
 
     // IntelliJ claims this is unused.
     @SuppressWarnings("UnusedDeclaration")
@@ -113,12 +113,12 @@ public class ManifestEvent implements HasUpdateData {
         return message;
     }
 
-    public ManifestSession getSession() {
-        return session;
+    public ManifestSession getManifestSession() {
+        return manifestSession;
     }
 
-    public void setSession(ManifestSession session) {
-        this.session = session;
+    public void setManifestSession(ManifestSession session) {
+        this.manifestSession = session;
     }
 
     public UpdateData getUpdateData() {

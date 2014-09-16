@@ -76,7 +76,7 @@ public class ManifestSession implements HasUpdateData {
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "manifestSession", orphanRemoval = true)
     private List<ManifestRecord> records = new ArrayList<>();
 
-    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "session", orphanRemoval = true)
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "manifestSession", orphanRemoval = true)
     private List<ManifestEvent> manifestEvents = new ArrayList<>();
 
     // IntelliJ claims this is unused.
@@ -138,7 +138,7 @@ public class ManifestSession implements HasUpdateData {
 
     public void addManifestEvent(ManifestEvent manifestEvent) {
         manifestEvents.add(manifestEvent);
-        manifestEvent.setSession(this);
+        manifestEvent.setManifestSession(this);
     }
 
     public List<ManifestEvent> getManifestEvents() {
@@ -179,7 +179,8 @@ public class ManifestSession implements HasUpdateData {
                 if (this.equals(record.getManifestSession())) {
 
                     String message =
-                            ManifestRecord.ErrorStatus.MISMATCHED_GENDER.formatMessage("patient ID", entry.getKey());
+                            ManifestRecord.ErrorStatus.MISMATCHED_GENDER
+                                    .formatMessage(Metadata.Key.PATIENT_ID, entry.getKey());
 
                     String otherSessionsWithSamePatientId =
                             describeOtherManifestSessionsWithMatchingRecords(record, entry.getValue());
@@ -240,7 +241,8 @@ public class ManifestSession implements HasUpdateData {
                 // this logic.
                 if (this.equals(duplicatedRecord.getManifestSession())) {
                     String message =
-                            ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage(SAMPLE_ID_KEY, entry.getKey());
+                            ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage(Metadata.Key.SAMPLE_ID,
+                                    entry.getKey());
                     String sessionsWithDuplicates =
                             describeOtherManifestSessionsWithMatchingRecords(duplicatedRecord, entry.getValue());
                     addManifestEvent(
@@ -361,59 +363,6 @@ public class ManifestSession implements HasUpdateData {
     }
 
     /**
-     * Provides the caller with the ability to find a manifest record on the current manifest session that corresponds
-     * to the given sample id
-     *
-     * @param collaboratorBarcode Collaborator sample ID for which this method intends to find a manifest record
-     *
-     * @return the found record (if it exists)
-     */
-    public ManifestRecord findScannedRecord(String collaboratorBarcode) {
-        for (ManifestRecord record : records) {
-            if (record.getSampleId().equals(collaboratorBarcode)) {
-                if (record.getStatus() != ManifestRecord.Status.SCANNED) {
-                    throw new TubeTransferException(ManifestRecord.ErrorStatus.NOT_READY_FOR_TUBE_TRANSFER,
-                            SAMPLE_ID_KEY,
-                            collaboratorBarcode);
-                }
-                return record;
-            }
-        }
-        throw new TubeTransferException(ManifestRecord.ErrorStatus.NOT_IN_MANIFEST, SAMPLE_ID_KEY, collaboratorBarcode);
-    }
-
-    /**
-     * Encapsulates the series of steps to perform when a user wishes to scan a source sample tube
-     *
-     * @param sampleId collaborator sample ID of the tube being scanned
-     *
-     * @return Manifest record associated with the scanned
-     */
-    public ManifestRecord scanSample(String sampleId) {
-
-        ManifestRecord foundRecord;
-        try {
-            foundRecord = findRecordByCollaboratorId(sampleId);
-        } catch (TubeTransferException e) {
-            addManifestEvent(new ManifestEvent(e.getErrorStatus(),
-                    e.getErrorStatus().formatMessage(SAMPLE_ID_KEY, sampleId)
-            ));
-            throw e;
-        }
-        if (foundRecord.isQuarantined()) {
-
-            Set<String> fatalMessages = foundRecord.getQuarantinedRecordMessages();
-
-            throw new TubeTransferException(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE,
-                    SAMPLE_ID_KEY,
-                    sampleId,
-                    StringUtils.join(fatalMessages, ", "));
-        }
-        foundRecord.setStatus(ManifestRecord.Status.SCANNED);
-        return foundRecord;
-    }
-
-    /**
      * Method to find the manifest record that has the specified collaborator barcode.
      */
     public ManifestRecord findRecordByCollaboratorId(String collaboratorBarcode)
@@ -423,7 +372,8 @@ public class ManifestSession implements HasUpdateData {
                 return record;
             }
         }
-        throw new TubeTransferException(ManifestRecord.ErrorStatus.NOT_IN_MANIFEST, SAMPLE_ID_KEY, collaboratorBarcode);
+        throw new TubeTransferException(ManifestRecord.ErrorStatus.NOT_IN_MANIFEST, Metadata.Key.SAMPLE_ID,
+                collaboratorBarcode);
     }
 
     /**
@@ -444,19 +394,22 @@ public class ManifestSession implements HasUpdateData {
      */
     public ManifestStatus generateSessionStatusForClose() {
 
+        List<ManifestRecord> nonQuarantinedRecords = getNonQuarantinedRecords();
+
         Set<String> manifestMessages = new HashSet<>();
         for (ManifestEvent manifestEvent : getManifestEvents()) {
             manifestMessages.add(manifestEvent.getMessage());
         }
-        ManifestStatus sessionStatus = new ManifestStatus(getRecords().size(), getNonQuarantinedRecords().size(),
+
+        ManifestStatus sessionStatus = new ManifestStatus(getRecords().size(), nonQuarantinedRecords.size(),
                 getRecordsByStatus(ManifestRecord.Status.SCANNED).size(), manifestMessages);
 
-        for (ManifestRecord manifestRecord : getNonQuarantinedRecords()) {
+        for (ManifestRecord manifestRecord : nonQuarantinedRecords) {
             ManifestRecord.Status manifestRecordStatus = manifestRecord.getStatus();
 
             if (manifestRecordStatus != ManifestRecord.Status.SCANNED) {
                 sessionStatus.addError(ManifestRecord.ErrorStatus.MISSING_SAMPLE
-                        .formatMessage(ManifestSession.SAMPLE_ID_KEY, manifestRecord.getSampleId()));
+                        .formatMessage(Metadata.Key.SAMPLE_ID, manifestRecord.getSampleId()));
             }
         }
         return sessionStatus;
@@ -515,7 +468,8 @@ public class ManifestSession implements HasUpdateData {
             if (record.getStatus() != ManifestRecord.Status.SCANNED) {
 
                 String sampleId = record.getValueByKey(Metadata.Key.SAMPLE_ID);
-                String message = ManifestRecord.ErrorStatus.MISSING_SAMPLE.formatMessage(SAMPLE_ID_KEY, sampleId);
+                String message = ManifestRecord.ErrorStatus.MISSING_SAMPLE.formatMessage(Metadata.Key.SAMPLE_ID,
+                        sampleId);
 
                 ManifestEvent manifestEvent = new ManifestEvent(ManifestRecord.ErrorStatus.MISSING_SAMPLE,
                         message, record);
@@ -543,12 +497,12 @@ public class ManifestSession implements HasUpdateData {
 
         if (recordForTransfer.isQuarantined()) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE,
-                    SAMPLE_ID_KEY, sourceForTransfer);
+                    Metadata.Key.SAMPLE_ID, sourceForTransfer);
         }
 
         if (recordForTransfer.getStatus() != ManifestRecord.Status.ACCESSIONED) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.NOT_READY_FOR_TUBE_TRANSFER,
-                    SAMPLE_ID_KEY, sourceForTransfer);
+                    Metadata.Key.SAMPLE_ID, sourceForTransfer);
         }
 
         return recordForTransfer;
@@ -589,7 +543,7 @@ public class ManifestSession implements HasUpdateData {
         if (manifestRecord == null) {
             throw new InformaticsServiceException(
                     ManifestRecord.ErrorStatus.NOT_IN_MANIFEST.formatMessage(
-                            ManifestSession.SAMPLE_ID_KEY, collaboratorSampleId));
+                            Metadata.Key.SAMPLE_ID, collaboratorSampleId));
         }
         manifestRecord.accessionScan();
     }

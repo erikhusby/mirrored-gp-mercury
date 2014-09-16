@@ -910,7 +910,7 @@ public class ManifestSessionEjbDBFreeTest {
             Assert.fail();
         } catch (Exception ignored) {
             assertThat(ignored.getMessage(), is(equalTo(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE
-                    .formatMessage(ManifestSession.SAMPLE_ID_KEY, sourceForTransfer))));
+                    .formatMessage(Metadata.Key.SAMPLE_ID, sourceForTransfer))));
         }
     }
 
@@ -922,7 +922,7 @@ public class ManifestSessionEjbDBFreeTest {
             Assert.fail();
         } catch (Exception ignored) {
             assertThat(ignored.getMessage(),
-                    is(equalTo(ManifestRecord.ErrorStatus.NOT_IN_MANIFEST.formatMessage(ManifestSession.SAMPLE_ID_KEY,
+                    is(equalTo(ManifestRecord.ErrorStatus.NOT_IN_MANIFEST.formatMessage(Metadata.Key.SAMPLE_ID,
                             sourceForTransfer))));
         }
     }
@@ -952,7 +952,7 @@ public class ManifestSessionEjbDBFreeTest {
             Assert.fail();
         } catch (Exception ignored) {
             assertThat(ignored.getMessage(), is(equalTo(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE
-                    .formatMessage(ManifestSession.SAMPLE_ID_KEY, sourceForTransfer))));
+                    .formatMessage(Metadata.Key.SAMPLE_ID, sourceForTransfer))));
         }
     }
 
@@ -977,7 +977,7 @@ public class ManifestSessionEjbDBFreeTest {
             Assert.fail();
         } catch (Exception e) {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
-                    .formatMessage(ManifestSession.SAMPLE_ID_KEY, BSP_TEST_SAMPLE_KEY)));
+                    .formatMessage(Metadata.Key.SAMPLE_ID, BSP_TEST_SAMPLE_KEY)));
             assertThat(e.getMessage(), containsString(ManifestSessionEjb.SAMPLE_NOT_ELIGIBLE_FOR_CLINICAL_MESSAGE));
         }
     }
@@ -990,7 +990,7 @@ public class ManifestSessionEjbDBFreeTest {
             Assert.fail();
         } catch (Exception e) {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
-                    .formatMessage(ManifestSession.SAMPLE_ID_KEY, TEST_SAMPLE_KEY + "BAD")));
+                    .formatMessage(Metadata.Key.SAMPLE_ID, TEST_SAMPLE_KEY + "BAD")));
             assertThat(e.getMessage(), containsString(ManifestSessionEjb.SAMPLE_NOT_FOUND_MESSAGE));
         }
     }
@@ -1032,7 +1032,7 @@ public class ManifestSessionEjbDBFreeTest {
             Assert.fail();
         } catch (Exception e) {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
-                    .formatMessage(ManifestSession.SAMPLE_ID_KEY, TEST_SAMPLE_KEY + "BAD")));
+                    .formatMessage(Metadata.Key.SAMPLE_ID, TEST_SAMPLE_KEY + "BAD")));
             assertThat(e.getMessage(), containsString(ManifestSessionEjb.SAMPLE_NOT_FOUND_MESSAGE));
         }
     }
@@ -1109,7 +1109,7 @@ public class ManifestSessionEjbDBFreeTest {
         } catch (Exception e) {
             assertThat(e.getMessage(),
                     containsString(ManifestRecord.ErrorStatus.NOT_IN_MANIFEST
-                            .formatMessage(ManifestSession.SAMPLE_ID_KEY, GOOD_TUBE_BARCODE)));
+                            .formatMessage(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE)));
             for (MercurySample mercurySample : testSample) {
                 assertThat(mercurySample.getMetadata(), is(empty()));
             }
@@ -1130,7 +1130,7 @@ public class ManifestSessionEjbDBFreeTest {
             Assert.fail();
         } catch (Exception e) {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
-                    .formatMessage(ManifestSession.SAMPLE_ID_KEY, TEST_SAMPLE_KEY + "BAD")));
+                    .formatMessage(Metadata.Key.SAMPLE_ID, TEST_SAMPLE_KEY + "BAD")));
             assertThat(e.getMessage(), containsString(ManifestSessionEjb.SAMPLE_NOT_FOUND_MESSAGE));
         }
     }
@@ -1206,7 +1206,7 @@ public class ManifestSessionEjbDBFreeTest {
         } catch (Exception e) {
             assertThat(e.getMessage(),
                     containsString(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE
-                            .formatMessage(ManifestSession.SAMPLE_ID_KEY, GOOD_TUBE_BARCODE)));
+                            .formatMessage(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE)));
             for (MercurySample mercurySample : testSample) {
                 assertThat(mercurySample.getMetadata(), is(empty()));
             }
