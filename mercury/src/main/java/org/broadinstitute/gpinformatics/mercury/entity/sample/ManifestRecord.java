@@ -30,7 +30,6 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -117,7 +116,11 @@ public class ManifestRecord implements HasUpdateData {
     }
 
     public String getValueByKey(Metadata.Key key) {
-        return getMetadataByKey(key).getValue();
+        Metadata metadata = getMetadataByKey(key);
+        if (metadata != null) {
+            return metadata.getValue();
+        }
+        return null;
     }
 
     public Status getStatus() {
@@ -299,5 +302,9 @@ public class ManifestRecord implements HasUpdateData {
             return sampleMetadata.getValue();
         }
         return null;
+    }
+
+    public static String key(Metadata.Key key) {
+        return key.name();
     }
 }

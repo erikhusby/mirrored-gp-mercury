@@ -15,6 +15,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -80,14 +81,15 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
 
     @HandlesEvent(LOAD_SESSION_ACTION)
     public Resolution loadSession() {
-
-        //TODO determine page based on session and record state. Putting upload review for now
-
-        return new ForwardResolution(REVIEW_UPLOAD_PAGE);
+        return new ForwardResolution(getClass(), VIEW_UPLOAD_ACTION);
     }
 
     @HandlesEvent(VIEW_UPLOAD_ACTION)
     public Resolution view() {
+        for (ManifestEvent event : selectedSession.getManifestEvents()) {
+            addGlobalValidationError(event.getMessage());
+        }
+
         return new ForwardResolution(REVIEW_UPLOAD_PAGE);
     }
 
@@ -155,5 +157,9 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
 
     public void setClosedSessions(List<ManifestSession> closedSessions) {
         this.closedSessions = closedSessions;
+    }
+
+    public ManifestSession getSelectedSession() {
+        return selectedSession;
     }
 }
