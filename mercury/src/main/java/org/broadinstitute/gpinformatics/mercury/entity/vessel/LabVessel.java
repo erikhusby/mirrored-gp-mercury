@@ -1069,6 +1069,7 @@ public abstract class LabVessel implements Serializable {
              */
             throw new RuntimeException("Vessel already contains an entry equal to: " + bucketEntry);
         }
+        clearCaches();
     }
 
     public void addNonReworkLabBatch(LabBatch labBatch) {
