@@ -91,15 +91,24 @@ public class SampleDataFetcherTest {
         when(mockMercurySampleDao.findBySampleKey(BSP_SAMPLE_ID))
                 .thenReturn(Collections.singletonList(bspMercurySample));
 
-        MercurySample mercuryMercurySample =
+        MercurySample clinicalMercurySample =
                 new MercurySample(CLINICAL_SAMPLE_ID, MercurySample.MetadataSource.MERCURY);
         when(mockMercurySampleDao.findBySampleKey(CLINICAL_SAMPLE_ID))
-                .thenReturn(Collections.singletonList(mercuryMercurySample));
+                .thenReturn(Collections.singletonList(clinicalMercurySample));
 
         when(mockMercurySampleDao.findBySampleKey(FUBAR_SAMPLE_ID))
                 .thenReturn(Arrays.asList(
                         new MercurySample(FUBAR_SAMPLE_ID, MercurySample.MetadataSource.BSP),
                         new MercurySample(FUBAR_SAMPLE_ID, MercurySample.MetadataSource.MERCURY)));
+
+        when(mockMercurySampleDao.findBySampleKeys(argThat(contains(BSP_ONLY_SAMPLE_ID))))
+                .thenReturn(Collections.<MercurySample>emptyList());
+
+        when(mockMercurySampleDao.findBySampleKeys(argThat(contains(BSP_SAMPLE_ID))))
+                .thenReturn(Collections.singletonList(bspMercurySample));
+
+        when(mockMercurySampleDao.findBySampleKeys(argThat(contains(CLINICAL_SAMPLE_ID))))
+                .thenReturn(Collections.singletonList(clinicalMercurySample));
 
         /*
          * Configure mock BSPSampleDataFetcher.
@@ -131,15 +140,6 @@ public class SampleDataFetcherTest {
 
         when(mockBspSampleDataFetcher.getStockIdByAliquotId(argThat(contains(BSP_SAMPLE_ID))))
                 .thenReturn(ImmutableMap.of(BSP_SAMPLE_ID, BSP_STOCK_ID));
-
-        when(mockMercurySampleDao.findBySampleKeys(Collections.singleton(BSP_ONLY_SAMPLE_ID)))
-                .thenReturn(Collections.singletonList(new MercurySample(BSP_ONLY_SAMPLE_ID, MercurySample.MetadataSource.BSP)));
-
-        when(mockMercurySampleDao.findBySampleKeys(Collections.singleton(BSP_SAMPLE_ID)))
-                .thenReturn(Collections.singletonList(new MercurySample(BSP_SAMPLE_ID, MercurySample.MetadataSource.BSP)));
-
-        when(mockMercurySampleDao.findBySampleKeys(Collections.singleton(CLINICAL_SAMPLE_ID)))
-                .thenReturn(Collections.singletonList(new MercurySample(CLINICAL_SAMPLE_ID, MercurySample.MetadataSource.MERCURY)));
 
         sampleDataFetcher = new SampleDataFetcher(mockBspSampleDataFetcher, mockMercurySampleDao);
     }

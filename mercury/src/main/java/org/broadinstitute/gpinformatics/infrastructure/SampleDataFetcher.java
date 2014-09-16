@@ -4,6 +4,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
+import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
@@ -157,6 +158,10 @@ public class SampleDataFetcher {
         for (MercurySample mercurySample : mercurySamples) {
             sampleIdsByMetadataSource.put(mercurySample.getMetadataSource(), mercurySample.getSampleKey());
         }
+
+        // Assume that BSP is the owner of samples data for sample IDs with no MercurySample.
+        Collection<String> unknownBspSamples = CollectionUtils.subtract(aliquotIds, sampleIdsByMetadataSource.values());
+        sampleIdsByMetadataSource.putAll(MercurySample.MetadataSource.BSP, unknownBspSamples);
 
         Map<String, String> stockIdByAliquotId = new HashMap<>();
 
