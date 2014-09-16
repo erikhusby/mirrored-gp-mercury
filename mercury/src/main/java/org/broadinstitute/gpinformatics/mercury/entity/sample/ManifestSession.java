@@ -424,7 +424,7 @@ public class ManifestSession implements HasUpdateData {
      */
     private Collection<ManifestRecord> getRecordsByStatus(ManifestRecord.Status status) {
 
-        Set<ManifestRecord> foundRecords = new HashSet<>();
+        List<ManifestRecord> foundRecords = new ArrayList<>();
 
         for (ManifestRecord record : records) {
             if (record.getStatus() == status) {
