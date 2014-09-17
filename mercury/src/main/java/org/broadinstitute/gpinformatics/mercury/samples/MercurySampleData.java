@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.samples;
 
 import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 
 import java.text.ParseException;
 import java.util.Date;
@@ -10,6 +11,15 @@ import java.util.List;
 /**
  */
 public class MercurySampleData implements SampleData {
+    private String sampleId;
+
+    public MercurySampleData(MercurySample mercurySample) {
+        this.sampleId=mercurySample.getSampleKey();
+    }
+
+    public MercurySampleData() {
+    }
+
     @Override
     public boolean hasData() {
         return false;
@@ -147,7 +157,7 @@ public class MercurySampleData implements SampleData {
 
     @Override
     public String getSampleId() {
-        return null;
+        return sampleId;
     }
 
     @Override
