@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.common;
 
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
@@ -21,7 +22,7 @@ public abstract class AbstractSample {
 
     // TODO: replace BSP specific sample data support with a generic API that can support other platforms.
     @Transient
-    private BSPSampleDTO bspSampleDTO = new BSPSampleDTO();
+    private SampleData sampleData = new BSPSampleDTO();
 
     @Transient
     private boolean hasBspDTOBeenInitialized;
@@ -29,8 +30,8 @@ public abstract class AbstractSample {
     public AbstractSample() {
     }
 
-    public AbstractSample(@Nonnull BSPSampleDTO bspSampleDTO) {
-        setBspSampleDTO(bspSampleDTO);
+    public AbstractSample(@Nonnull SampleData sampleData) {
+        setBspSampleDTO(sampleData);
     }
 
     /**
@@ -49,14 +50,14 @@ public abstract class AbstractSample {
      * @return true if sample is a loaded BSP sample but BSP didn't have any data for it.
      */
     public boolean bspMetaDataMissing() {
-        return isInBspFormat() && hasBspDTOBeenInitialized && !bspSampleDTO.hasData();
+        return isInBspFormat() && hasBspDTOBeenInitialized && !sampleData.hasData();
     }
 
     /**
      * @return the BSP sample data for this sample
      */
     @Nonnull
-    public BSPSampleDTO getBspSampleDTO() {
+    public SampleData getBspSampleDTO() {
         if (!hasBspDTOBeenInitialized) {
             // We allow non-BSP samples through for test cases only.
             // FIXME: update tests to produce BSP sample names so this check is unnecessary.
@@ -64,32 +65,32 @@ public abstract class AbstractSample {
                 ServiceAccessUtility.getBean(BSPConfig.class).getMercuryDeployment() != Deployment.PROD) {
 
                 SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
-                bspSampleDTO = sampleDataFetcher.fetchSampleData(getSampleKey());
+                sampleData = sampleDataFetcher.fetchSampleData(getSampleKey());
 
                 // If there is no DTO, create one with no data populated.
-                if (bspSampleDTO == null) {
-                    bspSampleDTO = new BSPSampleDTO();
+                if (sampleData == null) {
+                    sampleData = new BSPSampleDTO();
                 }
             }
 
             hasBspDTOBeenInitialized = true;
         }
 
-        return bspSampleDTO;
+        return sampleData;
     }
 
     /**
      * Set the BSP sample data manually. This is used when loading the sample data for a group of samples at once.
      *
-     * @param bspSampleDTO the data to set
+     * @param sampleData the data to set
      */
-    public void setBspSampleDTO(@Nonnull BSPSampleDTO bspSampleDTO) {
+    public void setBspSampleDTO(@Nonnull SampleData sampleData) {
         //noinspection ConstantConditions
-        if (bspSampleDTO == null) {
+        if (sampleData == null) {
             throw new NullPointerException("BSP Sample DTO cannot be null");
         }
 
-        this.bspSampleDTO = bspSampleDTO;
+        this.sampleData = sampleData;
         hasBspDTOBeenInitialized = true;
     }
 

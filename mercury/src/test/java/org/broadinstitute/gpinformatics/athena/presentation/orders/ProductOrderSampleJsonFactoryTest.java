@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
@@ -67,7 +68,7 @@ public class ProductOrderSampleJsonFactoryTest {
         data.put(BSPSampleSearchColumn.PICO_RUN_DATE, "05/23/2014");
         data.put(BSPSampleSearchColumn.TOTAL_DNA, "2.3");
         data.put(BSPSampleSearchColumn.RACKSCAN_MISMATCH, "true");
-        BSPSampleDTO bspSampleDto = new BSPSampleDTO(data);
+        SampleData bspSampleDto = new BSPSampleDTO(data);
         LabVessel tube = new BarcodedTube("0123");
         setPackageDate(tube, PACKAGE_DATE);
         setReceiptDate(tube, RECEIPT_DATE);
@@ -93,7 +94,7 @@ public class ProductOrderSampleJsonFactoryTest {
     }
 
     public void testBspSampleNoPico() throws JSONException {
-        BSPSampleDTO bspSampleDto = new BSPSampleDTO(new HashMap<BSPSampleSearchColumn, String>());
+        SampleData bspSampleDto = new BSPSampleDTO(new HashMap<BSPSampleSearchColumn, String>());
         ProductOrderSample productOrderSample = new ProductOrderSample("SM-1234", bspSampleDto, 2L);
 
         JSONObject jsonObject = factory.toJson(productOrderSample);

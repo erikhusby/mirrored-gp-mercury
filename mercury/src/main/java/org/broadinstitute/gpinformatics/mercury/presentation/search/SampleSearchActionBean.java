@@ -5,7 +5,7 @@ import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -34,7 +34,7 @@ public class SampleSearchActionBean extends SearchActionBean {
     @Inject
     private MercurySampleDao mercurySampleDao;
 
-    private Map<String, BSPSampleDTO> sampleDTOMap = new HashMap<>();
+    private Map<String, SampleData> sampleDTOMap = new HashMap<>();
 
     // order of samples in result list should match input order from text area; hence LinkedHashMap
     private Map<MercurySample, Set<LabVessel>> mercurySampleToVessels = new LinkedHashMap<>();
@@ -77,9 +77,9 @@ public class SampleSearchActionBean extends SearchActionBean {
                 sampleDTOMap.putAll(sampleDataFetcher.fetchSampleData((Collection<String>) sampleNames));
                 for (MercurySample sample : samples) {
                     mercurySampleToVessels.put(sample, allVessels);
-                    BSPSampleDTO bspSampleDTO = sampleDTOMap.get(sample.getSampleKey());
-                    if (bspSampleDTO != null) {
-                        sample.setBspSampleDTO(bspSampleDTO);
+                    SampleData sampleData = sampleDTOMap.get(sample.getSampleKey());
+                    if (sampleData != null) {
+                        sample.setBspSampleDTO(sampleData);
                     }
                     foundSampleNames.add(sample.getSampleKey());
                 }
@@ -96,9 +96,9 @@ public class SampleSearchActionBean extends SearchActionBean {
         Set<SampleInstance> allSamples = vessel.getSampleInstances(type, null);
         Set<SampleInstance> filteredSamples = new HashSet<>();
 
-        BSPSampleDTO sampleDTO = sampleDTOMap.get(sample.getSampleKey());
+        SampleData sampleDTO = sampleDTOMap.get(sample.getSampleKey());
         for (SampleInstance sampleInstance : allSamples) {
-            BSPSampleDTO sampleInstanceDTO = sampleDTOMap.get(sampleInstance.getStartingSample().getSampleKey());
+            SampleData sampleInstanceDTO = sampleDTOMap.get(sampleInstance.getStartingSample().getSampleKey());
             //check if samples have a common ancestor
             if (sampleDTO != null && sampleInstanceDTO != null
                 && sampleInstance.getStartingSample() != null

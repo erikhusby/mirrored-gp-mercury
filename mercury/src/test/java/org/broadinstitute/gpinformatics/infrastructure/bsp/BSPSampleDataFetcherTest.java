@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
-import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -19,7 +19,7 @@ public class BSPSampleDataFetcherTest {
 
     public void testBSPSampleDataFetcher() {
         BSPSampleDataFetcher fetcher = new BSPSampleDataFetcher(sampleSearchService);
-        BSPSampleDTO bspSampleDTO = fetcher.fetchSingleSampleFromBSP("SM-1T7HE");
+        SampleData bspSampleDTO = fetcher.fetchSingleSampleFromBSP("SM-1T7HE");
 
         assertEquals(bspSampleDTO.getCollaboratorName(), "Herman Taylor");
         assertEquals(bspSampleDTO.getOrganism(), "Homo : Homo sapiens");
@@ -44,14 +44,14 @@ public class BSPSampleDataFetcherTest {
 
     public void testPooledSampleWithMultipleRoots() {
         BSPSampleDataFetcher fetcher = new BSPSampleDataFetcher(sampleSearchService);
-        BSPSampleDTO bspSampleDTO = fetcher.fetchSingleSampleFromBSP("SM-41YNK");
+        SampleData bspSampleDTO = fetcher.fetchSingleSampleFromBSP("SM-41YNK");
 
         assertTrue(bspSampleDTO.isSampleReceived());
 
         //Now this checks all of the roots
         String[] sampleIds = bspSampleDTO.getRootSample().split(" ");
         Map<String, BSPSampleDTO> roots = fetcher.fetchSamplesFromBSP(Arrays.asList(sampleIds));
-        for (BSPSampleDTO sampleDTO : roots.values()) {
+        for (SampleData sampleDTO : roots.values()) {
             assertTrue(sampleDTO.isSampleReceived());
         }
     }
@@ -59,10 +59,10 @@ public class BSPSampleDataFetcherTest {
     public void testFetchSingleColumn()  {
         BSPSampleDataFetcher fetcher = new BSPSampleDataFetcher(sampleSearchService);
         String sampleName = "SM-1T7HE";
-        Map<String, BSPSampleDTO> bspSampleDTO = fetcher.fetchSamplesFromBSP(Arrays.asList(sampleName),
+        Map<String, ? extends SampleData> bspSampleDTO = fetcher.fetchSamplesFromBSP(Arrays.asList(sampleName),
                 BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID);
         Assert.assertEquals(bspSampleDTO.keySet().size(), 1);
-        BSPSampleDTO bspSample = bspSampleDTO.get(sampleName);
+        BSPSampleDTO bspSample = (BSPSampleDTO) bspSampleDTO.get(sampleName);
         Assert.assertEquals(bspSample.getColumnToValue().size(), 2);
         Assert.assertNotNull(bspSample.getCollaboratorsSampleName());
         Assert.assertNotNull(bspSample.getSampleId());

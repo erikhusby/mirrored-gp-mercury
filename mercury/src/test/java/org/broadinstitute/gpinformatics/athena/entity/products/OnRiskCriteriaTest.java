@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.products;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -28,12 +29,12 @@ public class OnRiskCriteriaTest {
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_1234);
         }};
 
-        BSPSampleDTO lowNumSample = new BSPSampleDTO(dataMap);
+        SampleData lowNumSample = new BSPSampleDTO(dataMap);
         dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.CONCENTRATION, HIGH_NUMBER);
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_1234);
         }};
-        BSPSampleDTO highNumSample = new BSPSampleDTO(dataMap);
+        SampleData highNumSample = new BSPSampleDTO(dataMap);
 
         handleNumericOnRisk(lowNumSample, highNumSample, RiskCriterion.RiskCriteriaType.CONCENTRATION);
     }
@@ -48,14 +49,14 @@ public class OnRiskCriteriaTest {
             put(BSPSampleSearchColumn.VOLUME, LOW_NUMBER);
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_1234);
         }};
-        BSPSampleDTO lowNumSample = new BSPSampleDTO(dataMap);
+        SampleData lowNumSample = new BSPSampleDTO(dataMap);
 
         dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.VOLUME, HIGH_NUMBER);
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_1235);
         }};
 
-        BSPSampleDTO highNumSample =  new BSPSampleDTO(dataMap);
+        SampleData highNumSample =  new BSPSampleDTO(dataMap);
         handleNumericOnRisk(lowNumSample, highNumSample, RiskCriterion.RiskCriteriaType.VOLUME);
     }
 
@@ -68,13 +69,13 @@ public class OnRiskCriteriaTest {
             put(BSPSampleSearchColumn.RIN, LOW_NUMBER);
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_1234);
         }};
-        BSPSampleDTO lowNumSample = new BSPSampleDTO(dataMap);
+        SampleData lowNumSample = new BSPSampleDTO(dataMap);
 
         dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.RIN, HIGH_NUMBER);
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_1235);
         }};
-        BSPSampleDTO highNumSample =  new BSPSampleDTO(dataMap);
+        SampleData highNumSample =  new BSPSampleDTO(dataMap);
 
         handleNumericOnRisk(lowNumSample, highNumSample, RiskCriterion.RiskCriteriaType.RIN);
 
@@ -123,8 +124,8 @@ public class OnRiskCriteriaTest {
         if (rqs != null) {
             data.put(BSPSampleSearchColumn.RQS, rqs);
         }
-        BSPSampleDTO bspSampleDTO = new BSPSampleDTO(data);
-        return new ProductOrderSample("SM-1234", bspSampleDTO);
+        SampleData sampleData = new BSPSampleDTO(data);
+        return new ProductOrderSample("SM-1234", sampleData);
     }
 
     /**
@@ -136,13 +137,13 @@ public class OnRiskCriteriaTest {
             put(BSPSampleSearchColumn.TOTAL_DNA, LOW_NUMBER);
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_1234);
         }};
-        BSPSampleDTO lowNumSample = new BSPSampleDTO(dataMap);
+        SampleData lowNumSample = new BSPSampleDTO(dataMap);
 
         dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.TOTAL_DNA, HIGH_NUMBER);
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_1235);
         }};
-        BSPSampleDTO highNumSample =  new BSPSampleDTO(dataMap);
+        SampleData highNumSample =  new BSPSampleDTO(dataMap);
 
         handleNumericOnRisk(lowNumSample, highNumSample, RiskCriterion.RiskCriteriaType.TOTAL_DNA);
     }
@@ -158,13 +159,13 @@ public class OnRiskCriteriaTest {
             put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA WGA Cleaned");
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_1234);
         }};
-        BSPSampleDTO hasWgaDummy = new BSPSampleDTO(dataMap);
+        SampleData hasWgaDummy = new BSPSampleDTO(dataMap);
 
         dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA Genomic");
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_1235);
         }};
-        BSPSampleDTO nonWgaDummy = new BSPSampleDTO(dataMap);
+        SampleData nonWgaDummy = new BSPSampleDTO(dataMap);
 
         handleBooleanOnRisk(hasWgaDummy, nonWgaDummy, RiskCriterion.RiskCriteriaType.WGA);
     }
@@ -204,7 +205,7 @@ public class OnRiskCriteriaTest {
      * @param notOnRiskSample  Sample DTO which is expected to NOT be on risk.
      * @param riskCriteriaType Risk Criteria Type to test with.  Fails on non-boolean based.
      */
-    private void handleBooleanOnRisk(BSPSampleDTO onRiskSample, BSPSampleDTO notOnRiskSample,
+    private void handleBooleanOnRisk(SampleData onRiskSample, SampleData notOnRiskSample,
                                      RiskCriterion.RiskCriteriaType riskCriteriaType) {
 
         Assert.assertEquals(riskCriteriaType.getOperatorType(), Operator.OperatorType.BOOLEAN);
@@ -280,7 +281,7 @@ public class OnRiskCriteriaTest {
      * @param highNumSample    sample with a high number of whatever is being tested.
      * @param riskCriteriaType Risk Criteria Type to test with.  Fails on non-numeric based.
      */
-    private void handleNumericOnRisk(BSPSampleDTO lowNumSample, BSPSampleDTO highNumSample,
+    private void handleNumericOnRisk(SampleData lowNumSample, SampleData highNumSample,
                                      RiskCriterion.RiskCriteriaType riskCriteriaType) {
 
         Assert.assertEquals(riskCriteriaType.getOperatorType(), Operator.OperatorType.NUMERIC);
@@ -290,7 +291,7 @@ public class OnRiskCriteriaTest {
 
         Map<BSPSampleSearchColumn, String> data = new HashMap<>();
         data.put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1234");
-        BSPSampleDTO missingNumSample = new BSPSampleDTO(data);
+        SampleData missingNumSample = new BSPSampleDTO(data);
         ProductOrderSample missingNumberPOSample = new ProductOrderSample("SM-1234", missingNumSample);
 
         //  EXPECT TO BE ON RISK START.

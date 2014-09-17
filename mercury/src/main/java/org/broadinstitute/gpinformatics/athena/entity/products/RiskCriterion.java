@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.products;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
@@ -204,7 +204,7 @@ public class RiskCriterion implements Serializable {
 
             @Override
             public String getValue(ProductOrderSample sample) {
-                BSPSampleDTO sampleDTO = sample.getBspSampleDTO();
+                SampleData sampleDTO = sample.getBspSampleDTO();
 
                 // On risk if there is no pico date or if the run date is older than one year ago.
                 return String.valueOf(((sampleDTO.getPicoRunDate() == null) ||

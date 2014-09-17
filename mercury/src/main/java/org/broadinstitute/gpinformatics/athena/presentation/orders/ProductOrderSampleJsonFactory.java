@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
@@ -27,9 +28,9 @@ public class ProductOrderSampleJsonFactory {
     }
 
     private void populateBspValues(JSONObject jsonObject, ProductOrderSample productOrderSample) throws JSONException {
-        BSPSampleDTO bspSampleDTO = productOrderSample.getBspSampleDTO();
-        setCollaboratorSampleId(jsonObject, bspSampleDTO.getCollaboratorsSampleName());
-        setPatientId(jsonObject, bspSampleDTO.getPatientId());
+        SampleData sampleData = productOrderSample.getBspSampleDTO();
+        setCollaboratorSampleId(jsonObject, sampleData.getCollaboratorsSampleName());
+        setPatientId(jsonObject, sampleData.getPatientId());
     }
 
     private void populateEmptyValues(JSONObject jsonObject) throws JSONException {
@@ -46,20 +47,20 @@ public class ProductOrderSampleJsonFactory {
     }
 
     public static void setupSampleDTOItems(ProductOrderSample sample, JSONObject item) throws JSONException {
-        BSPSampleDTO bspSampleDTO = sample.getBspSampleDTO();
+        SampleData sampleData = sample.getBspSampleDTO();
 
         item.put(BSPSampleDTO.SAMPLE_ID, sample.getProductOrderSampleId());
-        item.put(BSPSampleDTO.COLLABORATOR_SAMPLE_ID, bspSampleDTO.getCollaboratorsSampleName());
-        item.put(BSPSampleDTO.PATIENT_ID, bspSampleDTO.getPatientId());
-        item.put(BSPSampleDTO.COLLABORATOR_PARTICIPANT_ID, bspSampleDTO.getCollaboratorParticipantId());
-        item.put(BSPSampleDTO.VOLUME, bspSampleDTO.getVolume());
-        item.put(BSPSampleDTO.CONCENTRATION, bspSampleDTO.getConcentration());
-        item.put(BSPSampleDTO.JSON_RIN_KEY, bspSampleDTO.getRawRin());
-        item.put(BSPSampleDTO.JSON_RQS_KEY, bspSampleDTO.getRqs());
-        item.put(BSPSampleDTO.PICO_DATE, formatPicoRunDate(bspSampleDTO.getPicoRunDate(), "No Pico"));
-        item.put(BSPSampleDTO.TOTAL, bspSampleDTO.getTotal());
+        item.put(BSPSampleDTO.COLLABORATOR_SAMPLE_ID, sampleData.getCollaboratorsSampleName());
+        item.put(BSPSampleDTO.PATIENT_ID, sampleData.getPatientId());
+        item.put(BSPSampleDTO.COLLABORATOR_PARTICIPANT_ID, sampleData.getCollaboratorParticipantId());
+        item.put(BSPSampleDTO.VOLUME, sampleData.getVolume());
+        item.put(BSPSampleDTO.CONCENTRATION, sampleData.getConcentration());
+        item.put(BSPSampleDTO.JSON_RIN_KEY, sampleData.getRawRin());
+        item.put(BSPSampleDTO.JSON_RQS_KEY, sampleData.getRqs());
+        item.put(BSPSampleDTO.PICO_DATE, formatPicoRunDate(sampleData.getPicoRunDate(), "No Pico"));
+        item.put(BSPSampleDTO.TOTAL, sampleData.getTotal());
         item.put(BSPSampleDTO.HAS_SAMPLE_KIT_UPLOAD_RACKSCAN_MISMATCH,
-                bspSampleDTO.getHasSampleKitUploadRackscanMismatch());
+                sampleData.getHasSampleKitUploadRackscanMismatch());
         item.put(BSPSampleDTO.COMPLETELY_BILLED, sample.isCompletelyBilled());
 
         LabEventSampleDTO labEventSampleDTO = sample.getLabEventSampleDTO();

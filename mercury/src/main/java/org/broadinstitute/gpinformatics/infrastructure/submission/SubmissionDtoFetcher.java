@@ -20,11 +20,11 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
@@ -47,7 +47,7 @@ public class SubmissionDtoFetcher {
     private static final Log log = LogFactory.getLog(SubmissionDtoFetcher.class);
     private AggregationMetricsFetcher aggregationMetricsFetcher;
     private BassSearchService bassSearchService;
-    private BSPSampleDataFetcher sampleDataFetcher;
+    private BSPSampleDataFetcher bspSampleDataFetcher;
     private SubmissionsService submissionsService;
 
     // TODO: fix tests so that this isn't needed
@@ -58,11 +58,11 @@ public class SubmissionDtoFetcher {
 
     @Inject
     public SubmissionDtoFetcher(AggregationMetricsFetcher aggregationMetricsFetcher,
-                                BassSearchService bassSearchService, BSPSampleDataFetcher sampleDataFetcher,
+                                BassSearchService bassSearchService, BSPSampleDataFetcher bspSampleDataFetcher,
                                 SubmissionsService submissionsService, BSPConfig bspConfig) {
         this.aggregationMetricsFetcher = aggregationMetricsFetcher;
         this.bassSearchService = bassSearchService;
-        this.sampleDataFetcher = sampleDataFetcher;
+        this.bspSampleDataFetcher = bspSampleDataFetcher;
         this.submissionsService = submissionsService;
         this.bspConfig = bspConfig;
     }
@@ -78,12 +78,12 @@ public class SubmissionDtoFetcher {
         }
 
         Map<String, BSPSampleDTO> bulkInfo =
-                sampleDataFetcher.fetchSamplesFromBSP(sampleList, BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID);
+                bspSampleDataFetcher.fetchSamplesFromBSP(sampleList, BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID);
 
         for (final ProductOrderSample sample : samples) {
-            BSPSampleDTO bspSampleDTO = bulkInfo.get(sample.getName());
-            if (bspSampleDTO != null) {
-                sample.setBspSampleDTO(bspSampleDTO);
+            SampleData sampleData = bulkInfo.get(sample.getName());
+            if (sampleData != null) {
+                sample.setBspSampleDTO(sampleData);
                 // In non-production environments bogus samples are often created so we will
                 // only create a new BSPSampleDTO in those cases
             } else if (bspConfig.getMercuryDeployment() != Deployment.PROD) {

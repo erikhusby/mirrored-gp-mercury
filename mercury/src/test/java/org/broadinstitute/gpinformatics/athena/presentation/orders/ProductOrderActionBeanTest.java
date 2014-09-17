@@ -27,6 +27,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo_;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.StripesMockTestUtils;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
@@ -113,8 +114,8 @@ public class ProductOrderActionBeanTest {
      */
     private Collection<ProductOrderSample> createPdoSamples() {
         List<ProductOrderSample> pdoSamples = new ArrayList<>();
-        BSPSampleDTO sampleWithGoodRin = getSampleDTOWithGoodRinScore();
-        BSPSampleDTO sampleWithBadRin = getSamplDTOWithBadRinScore();
+        SampleData sampleWithGoodRin = getSampleDTOWithGoodRinScore();
+        SampleData sampleWithBadRin = getSamplDTOWithBadRinScore();
         pdoSamples.add(new ProductOrderSample(sampleWithGoodRin.getSampleId(), sampleWithGoodRin));
         pdoSamples.add(new ProductOrderSample(sampleWithBadRin.getSampleId(), sampleWithBadRin));
         pdoSamples.add(new ProductOrderSample("123.0")); // throw in a gssr sample
@@ -177,7 +178,7 @@ public class ProductOrderActionBeanTest {
     public void testNoRinScore() throws JSONException {
         Map<BSPSampleSearchColumn, String> data = new EnumMap<>(BSPSampleSearchColumn.class);
         data.put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1234");
-        BSPSampleDTO bspSampleDTO = new BSPSampleDTO(data);
+        SampleData bspSampleDTO = new BSPSampleDTO(data);
 
         jsonObject.put(BSPSampleDTO.JSON_RIN_KEY, bspSampleDTO.getRawRin());
 
@@ -188,7 +189,7 @@ public class ProductOrderActionBeanTest {
         Map<BSPSampleSearchColumn, String> data = new EnumMap<>(BSPSampleSearchColumn.class);
         data.put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1234");
         data.put(BSPSampleSearchColumn.RIN, "1.2-3.4");
-        BSPSampleDTO bspSampleDTO = new BSPSampleDTO(data);
+        SampleData bspSampleDTO = new BSPSampleDTO(data);
 
         jsonObject.put(BSPSampleDTO.JSON_RIN_KEY, bspSampleDTO.getRawRin());
 
@@ -217,12 +218,12 @@ public class ProductOrderActionBeanTest {
     }
 
     public void testCanBadRinScoreBeUsedForOnRiskCalculation() {
-        BSPSampleDTO badRinScoreSample = getSamplDTOWithBadRinScore();
+        SampleData badRinScoreSample = getSamplDTOWithBadRinScore();
         Assert.assertFalse(badRinScoreSample.canRinScoreBeUsedForOnRiskCalculation());
     }
 
     public void testCanGoodRinScoreBeUsedForOnRiskCalculation() {
-        BSPSampleDTO goodRinScoreSample = getSampleDTOWithGoodRinScore();
+        SampleData goodRinScoreSample = getSampleDTOWithGoodRinScore();
         Assert.assertTrue(goodRinScoreSample.canRinScoreBeUsedForOnRiskCalculation());
     }
 
@@ -298,7 +299,7 @@ public class ProductOrderActionBeanTest {
         Assert.assertFalse(actionBean.getPostReceiveOptionKeys().isEmpty());
     }
 
-    private BSPSampleDTO getSamplDTOWithBadRinScore() {
+    private SampleData getSamplDTOWithBadRinScore() {
         Map<BSPSampleSearchColumn, String> dataMap = new EnumMap<BSPSampleSearchColumn, String>(
                 BSPSampleSearchColumn.class) {{
             put(BSPSampleSearchColumn.RIN, expectedNonNumericRinScore);
@@ -307,7 +308,7 @@ public class ProductOrderActionBeanTest {
         return new BSPSampleDTO(dataMap);
     }
 
-    private BSPSampleDTO getSampleDTOWithGoodRinScore() {
+    private SampleData getSampleDTOWithGoodRinScore() {
         Map<BSPSampleSearchColumn, String> dataMap = new EnumMap<BSPSampleSearchColumn, String>(
                 BSPSampleSearchColumn.class) {{
             put(BSPSampleSearchColumn.RIN, String.valueOf(expectedNumericValue));

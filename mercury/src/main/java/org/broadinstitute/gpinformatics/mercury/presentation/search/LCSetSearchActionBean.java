@@ -7,7 +7,7 @@ import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import org.apache.commons.collections4.CollectionUtils;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -38,10 +38,10 @@ public class LCSetSearchActionBean extends SearchActionBean {
     @Inject
     private SampleDataFetcher sampleDataFetcher;
 
-    private Map<String, BSPSampleDTO> sampleToBspPicoValueMap = new HashMap<>();
+    private Map<String, SampleData> sampleToBspPicoValueMap = new HashMap<>();
     private Map<LabVessel, Set<SampleInstance>> vesselToSampleInstanceMap = new HashMap<>();
 
-    public Map<String, BSPSampleDTO> getSampleToBspPicoValueMap() {
+    public Map<String, SampleData> getSampleToBspPicoValueMap() {
         return sampleToBspPicoValueMap;
     }
 

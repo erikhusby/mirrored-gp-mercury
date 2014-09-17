@@ -14,7 +14,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
@@ -155,7 +155,7 @@ public class ZimsIlluminaRunFactory {
         }
         int numberOfLanes = laneNum;
 
-        Map<String, BSPSampleDTO> mapSampleIdToDto = sampleDataFetcher.fetchSampleData(sampleIds);
+        Map<String, SampleData> mapSampleIdToDto = sampleDataFetcher.fetchSampleData(sampleIds);
         Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<>();
         for (String productOrderKey : productOrderKeys) {
             mapKeyToProductOrder.put(productOrderKey, productOrderDao.findByBusinessKey(productOrderKey));
@@ -228,7 +228,7 @@ public class ZimsIlluminaRunFactory {
 
     @DaoFree
     public List<LibraryBean> makeLibraryBeans(List<SampleInstanceDto> sampleInstanceDtos,
-                                              Map<String, BSPSampleDTO> mapSampleIdToDto,
+                                              Map<String, SampleData> mapSampleIdToDto,
                                               Map<String, ProductOrder> mapKeyToProductOrder,
                                               Map<String, Control> mapNameToControl) {
         List<LibraryBean> libraryBeans = new ArrayList<>();
@@ -298,10 +298,10 @@ public class ZimsIlluminaRunFactory {
                         indexingSchemeEntity.getName(), positionSequenceMap);
             }
 
-            BSPSampleDTO bspSampleDTO = mapSampleIdToDto.get(sampleInstanceDto.getSampleId());
+            SampleData sampleData = mapSampleIdToDto.get(sampleInstanceDto.getSampleId());
 
             libraryBeans.add(
-                    createLibraryBean(sampleInstanceDto.getLabVessel(), productOrder, bspSampleDTO, lcSet, baitName,
+                    createLibraryBean(sampleInstanceDto.getLabVessel(), productOrder, sampleData, lcSet, baitName,
                                       indexingSchemeEntity, catNames,
                                       sampleInstanceDto.getSampleInstance().getWorkflowName(),
                                       indexingSchemeDto, mapNameToControl, sampleInstanceDto.getPdoSampleName()));
@@ -328,7 +328,7 @@ public class ZimsIlluminaRunFactory {
     }
 
     private LibraryBean createLibraryBean(
-            LabVessel labVessel, ProductOrder productOrder, BSPSampleDTO bspSampleDTO, String lcSet, String baitName,
+            LabVessel labVessel, ProductOrder productOrder, SampleData sampleData, String lcSet, String baitName,
             MolecularIndexingScheme indexingSchemeEntity, List<String> catNames, String labWorkflow,
             edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme indexingSchemeDto,
             Map<String, Control> mapNameToControl, String pdoSampleName) {
@@ -354,8 +354,8 @@ public class ZimsIlluminaRunFactory {
         String gssrSampleType = null;
         Boolean doAggregation = Boolean.TRUE;
 
-        if (bspSampleDTO != null && productOrder == null) {
-            Control control = mapNameToControl.get(bspSampleDTO.getCollaboratorsSampleName());
+        if (sampleData != null && productOrder == null) {
+            Control control = mapNameToControl.get(sampleData.getCollaboratorsSampleName());
             if (control != null) {
                 switch (control.getType()) {
                 case POSITIVE:
@@ -410,7 +410,7 @@ public class ZimsIlluminaRunFactory {
                 analysisType, referenceSequence, referenceSequenceVersion, organism, species,
                 strain, aligner, rrbsSizeRange, restrictionEnzyme, bait, labMeasuredInsertSize,
                 positiveControl, negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation,
-                catNames, productOrder, lcSet, bspSampleDTO, labWorkflow, libraryCreationDate, pdoSampleName);
+                catNames, productOrder, lcSet, sampleData, labWorkflow, libraryCreationDate, pdoSampleName);
     }
 
     private static class PipelineTransformationCriteria implements TransferTraverserCriteria {

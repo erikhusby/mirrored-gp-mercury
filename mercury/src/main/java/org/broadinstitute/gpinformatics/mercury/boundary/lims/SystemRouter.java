@@ -4,7 +4,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MultiMap;
 import org.apache.commons.collections4.map.MultiValueMap;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.BSPExportsService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.IsExported;
@@ -253,7 +253,7 @@ public class SystemRouter implements Serializable {
 
         List<String> controlCollaboratorSampleIds = new ArrayList<>();
         Collection<String> sampleNames = new ArrayList<>();
-        Map<String, BSPSampleDTO> mapSampleNameToDto = null;
+        Map<String, SampleData> mapSampleNameToDto = null;
         if (!possibleControls.isEmpty()) {
             for (SampleInstanceV2 sampleInstance : possibleControls) {
                 sampleNames.add(sampleInstance.getEarliestMercurySampleName());
@@ -295,7 +295,7 @@ public class SystemRouter implements Serializable {
      */
     @DaoFree
     public System routeForVessels(Collection<LabVessel> vessels, List<String> controlCollaboratorSampleIds,
-                                         Map<String, BSPSampleDTO> mapSampleNameToDto, Intent intent) {
+                                         Map<String, SampleData> mapSampleNameToDto, Intent intent) {
         Set<System> routingOptions = EnumSet.noneOf(System.class);
         for (LabVessel vessel : vessels) {
             if (vessel == null) {
@@ -360,7 +360,7 @@ public class SystemRouter implements Serializable {
                         } else {
                             for (SampleInstanceV2 possibleControl : possibleControls) {
                                 String sampleKey = possibleControl.getEarliestMercurySampleName();
-                                BSPSampleDTO sampleDTO = mapSampleNameToDto.get(sampleKey);
+                                SampleData sampleDTO = mapSampleNameToDto.get(sampleKey);
                                 if (sampleDTO == null) {
                                     // Don't know what this is, but it isn't for Mercury.
                                     badCrspRouting();

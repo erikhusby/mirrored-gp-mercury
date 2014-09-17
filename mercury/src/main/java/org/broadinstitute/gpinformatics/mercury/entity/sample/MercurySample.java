@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.RapSheet;
 import org.hibernate.annotations.Index;
@@ -68,8 +68,8 @@ public class MercurySample extends AbstractSample {
         this.metadataSource = metadataSource;
     }
 
-    public MercurySample(String sampleKey, BSPSampleDTO bspSampleDTO) {
-        super(bspSampleDTO);
+    public MercurySample(String sampleKey, SampleData sampleData) {
+        super(sampleData);
         this.sampleKey = sampleKey;
         this.metadataSource = MetadataSource.BSP;
     }

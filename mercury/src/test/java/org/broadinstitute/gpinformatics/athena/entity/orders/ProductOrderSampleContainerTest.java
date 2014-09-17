@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -31,7 +31,7 @@ public class ProductOrderSampleContainerTest extends ContainerTest {
         Assert.assertTrue(testSample.needsBspMetaData());
 
         try {
-            BSPSampleDTO bspDTO = testSample.getBspSampleDTO();
+            SampleData bspDTO = testSample.getBspSampleDTO();
             Assert.assertTrue(bspDTO.isSampleReceived());
             Assert.assertTrue(bspDTO.isActiveStock());
 

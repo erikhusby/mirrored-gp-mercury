@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.rapsheet;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
@@ -172,7 +173,7 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 Collection<String> sampleIds = (Collection<String>) invocationOnMock.getArguments()[0];
 
-                Map<String, BSPSampleDTO> sampleIdDataMap = new HashMap<>();
+                Map<String, SampleData> sampleIdDataMap = new HashMap<>();
 
                 for(String sampleId:sampleIds) {
 
@@ -234,7 +235,7 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 Collection<String> sampleIds = (Collection<String>) invocationOnMock.getArguments()[0];
 
-                Map<String, BSPSampleDTO> sampleIdDataMap = new HashMap<>();
+                Map<String, SampleData> sampleIdDataMap = new HashMap<>();
 
                 for (String sampleId : sampleIds) {
 

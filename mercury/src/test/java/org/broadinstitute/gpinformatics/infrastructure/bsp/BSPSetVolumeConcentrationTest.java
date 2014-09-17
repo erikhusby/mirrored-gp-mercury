@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -33,7 +34,7 @@ public class BSPSetVolumeConcentrationTest  {
                     testSampleId, newVolume[i], newConcentration[i], newReceptacleWeight[i]);
             Assert.assertEquals(result, BSPSetVolumeConcentration.RESULT_OK);
 
-            BSPSampleDTO bspSampleDTO = dataFetcher.fetchSampleData(testSampleId);
+            SampleData bspSampleDTO = dataFetcher.fetchSampleData(testSampleId);
             Double currentVolume = bspSampleDTO.getVolume();
             Double currentConcentration = bspSampleDTO.getConcentration();
 

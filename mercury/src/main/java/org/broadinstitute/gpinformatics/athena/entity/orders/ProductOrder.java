@@ -13,7 +13,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDataFetcher;
@@ -331,18 +331,18 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
         // This gets all the sample names. We could get unique sample names from BSP as a future optimization.
         SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
-        Map<String, BSPSampleDTO> bspSampleMetaData = sampleDataFetcher.fetchSampleData(
+        Map<String, SampleData> bspSampleMetaData = sampleDataFetcher.fetchSampleData(
                 (Collection<String>) bspSampleNames);
 
         // The non-null DTOs which we use to look up FFPE status.
-        List<BSPSampleDTO> nonNullDTOs = new ArrayList<>();
+        List<SampleData> nonNullDTOs = new ArrayList<>();
         for (ProductOrderSample sample : samples) {
-            BSPSampleDTO bspSampleDTO = bspSampleMetaData.get(sample.getName());
+            SampleData sampleData = bspSampleMetaData.get(sample.getName());
 
             // If the DTO is null, we do not need to set it because it defaults to DUMMY inside sample.
-            if (bspSampleDTO != null) {
-                sample.setBspSampleDTO(bspSampleDTO);
-                nonNullDTOs.add(bspSampleDTO);
+            if (sampleData != null) {
+                sample.setBspSampleDTO(sampleData);
+                nonNullDTOs.add(sampleData);
             }
         }
 
@@ -1423,7 +1423,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
          * @param participantSet The unique collection of participants by Id.
          * @param bspDTO         The BSP DTO.
          */
-        private void updateDTOCounts(Set<String> participantSet, BSPSampleDTO bspDTO) {
+        private void updateDTOCounts(Set<String> participantSet, SampleData bspDTO) {
             if (bspDTO.isSampleReceived()) {
                 receivedSampleCount++;
             }

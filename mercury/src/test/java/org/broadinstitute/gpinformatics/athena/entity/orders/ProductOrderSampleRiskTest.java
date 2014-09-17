@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -52,7 +53,7 @@ public class ProductOrderSampleRiskTest {
 
         bspData = new HashMap<>();
         bspData.put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1234");
-        BSPSampleDTO bspSampleDto = new BSPSampleDTO(bspData);
+        SampleData bspSampleDto = new BSPSampleDTO(bspData);
         productOrderSample = new ProductOrderSample("SM-1234", bspSampleDto);
 
         productOrder.addSample(productOrderSample);

@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
@@ -57,7 +58,7 @@ public class ZimsIlluminaRunFactoryTest {
 
     private static final String PRODUCT_ORDER_KEY = "TestPDO-1";
     private static final short LANE_NUMBER = 1;
-    private final Map<String, BSPSampleDTO> mapSampleIdToDto = new HashMap<>();
+    private final Map<String, SampleData> mapSampleIdToDto = new HashMap<>();
     private final Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<>();
     private final List<String> testSampleIds = new ArrayList<>();
     private ZimsIlluminaRunFactory zimsIlluminaRunFactory;

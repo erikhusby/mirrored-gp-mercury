@@ -6,7 +6,7 @@ import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.ValidationMethod;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -43,12 +43,12 @@ public class SampleLibrariesActionBean extends CoreActionBean {
 
 
     private String searchKey;
-    private Map<String, BSPSampleDTO> sampleToBspPicoValueMap = new HashMap<>();
+    private Map<String, SampleData> sampleToBspPicoValueMap = new HashMap<>();
     private Map<LabVessel, Map<LabEvent, Set<LabVessel>>> vesselToEventVesselsMap = new HashMap<>();
     private List<String> selectedSamples = new ArrayList<>();
     private Map<String, List<LabVessel>> sampleNameToVesselsMap = new HashMap<>();
 
-    public Map<String, BSPSampleDTO> getSampleToBspPicoValueMap() {
+    public Map<String, SampleData> getSampleToBspPicoValueMap() {
         return sampleToBspPicoValueMap;
     }
 

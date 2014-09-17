@@ -13,13 +13,13 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleDataFetcher;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +32,9 @@ public class SampleDataFetcher {
 
     @Inject
     private BSPSampleDataFetcher bspSampleDataFetcher;
+
+    @Inject
+    private MercurySampleDataFetcher mercurySampleDataFetcher;
 
     @Inject
     private MercurySampleDao mercurySampleDao;
@@ -48,9 +51,12 @@ public class SampleDataFetcher {
         this.bspSampleDataFetcher = bspSampleDataFetcher;
     }
 
-    public SampleDataFetcher(@Nonnull BSPSampleDataFetcher bspSampleDataFetcher, MercurySampleDao mercurySampleDao) {
-        this.bspSampleDataFetcher = bspSampleDataFetcher;
+    public SampleDataFetcher(@Nonnull MercurySampleDao mercurySampleDao,
+                             @Nonnull BSPSampleDataFetcher bspSampleDataFetcher,
+                             @Nonnull MercurySampleDataFetcher mercurySampleDataFetcher) {
         this.mercurySampleDao = mercurySampleDao;
+        this.bspSampleDataFetcher = bspSampleDataFetcher;
+        this.mercurySampleDataFetcher = mercurySampleDataFetcher;
     }
 
     public SampleDataFetcher(@Nonnull BSPSampleSearchService service) {
@@ -68,12 +74,26 @@ public class SampleDataFetcher {
      *
      * @return The sample DTO that was fetched.
      */
-    public BSPSampleDTO fetchSampleData(String sampleName) {
-        BSPSampleDTO bspSampleDTO = null;
-        if (BSPUtil.isInBspFormat(sampleName)) {
-            bspSampleDTO = bspSampleDataFetcher.fetchSingleSampleFromBSP(sampleName);
+    public SampleData fetchSampleData(String sampleName) {
+        MercurySample.MetadataSource metadataSource = determineMetadataSource(sampleName);
+
+        SampleData sampleData;
+        switch (metadataSource) {
+        case BSP:
+            if (BSPUtil.isInBspFormat(sampleName)) {
+                sampleData = bspSampleDataFetcher.fetchSingleSampleFromBSP(sampleName);
+            } else {
+                sampleData = null;
+            }
+            break;
+        case MERCURY:
+            sampleData = mercurySampleDataFetcher.fetchSampleData(sampleName);
+            break;
+        default:
+            throw new IllegalStateException("Unknown sample data source: " + metadataSource);
         }
-        return bspSampleDTO;
+
+        return sampleData;
     }
 
     /**
@@ -84,16 +104,17 @@ public class SampleDataFetcher {
      *
      * @return Mapping of sample id to its bsp data
      */
-    public Map<String, BSPSampleDTO> fetchSampleData(@Nonnull Collection<String> sampleNames) {
+    public Map<String, SampleData> fetchSampleData(@Nonnull Collection<String> sampleNames) {
         List<String> bspSamples = new ArrayList<>();
         for (String sampleName : sampleNames) {
             if (BSPUtil.isInBspFormat(sampleName)) {
                 bspSamples.add(sampleName);
             }
         }
-        Map<String, BSPSampleDTO> sampleData = Collections.emptyMap();
+        Map<String, SampleData> sampleData = new HashMap<>();
         if (!bspSamples.isEmpty()) {
-            sampleData = bspSampleDataFetcher.fetchSamplesFromBSP(bspSamples);
+            Map<String, BSPSampleDTO> bspSampleData = bspSampleDataFetcher.fetchSamplesFromBSP(bspSamples);
+            sampleData.putAll(bspSampleData);
         }
         return sampleData;
     }
@@ -101,43 +122,25 @@ public class SampleDataFetcher {
     /**
      * There is much copying and pasting of code from BSPSampleSearchServiceImpl into here -- a refactoring is needed.
      *
-     * @param bspSampleDTOs BSP DTOs whose sampleID field will be referenced for the barcode value, and which will
+     * @param sampleDatas BSP DTOs whose sampleID field will be referenced for the barcode value, and which will
      *                      be filled with the ffpeDerived value returned by the FFPE webservice
      */
-    public void fetchFFPEDerived(@Nonnull Collection<BSPSampleDTO> bspSampleDTOs) {
+    public void fetchFFPEDerived(@Nonnull Collection<SampleData> sampleDatas) {
 
         // Check to see if BSP is supported before trying to get data.
-        bspSampleDataFetcher.fetchFFPEDerived(bspSampleDTOs);
+        bspSampleDataFetcher.fetchFFPEDerived(BSPSampleDataFetcher.convertToBSPSampleDTOCollection(sampleDatas));
     }
 
-    public void fetchSamplePlastic(@Nonnull Collection<BSPSampleDTO> bspSampleDTOs) {
+    public void fetchSamplePlastic(@Nonnull Collection<SampleData> sampleDatas) {
 
-        bspSampleDataFetcher.fetchSamplePlastic(bspSampleDTOs);
+        bspSampleDataFetcher.fetchSamplePlastic(BSPSampleDataFetcher.convertToBSPSampleDTOCollection(sampleDatas));
     }
 
     /**
      * Given an aliquot ID, return its stock sample ID.
      */
     public String getStockIdForAliquotId(@Nonnull String aliquotId) {
-        List<MercurySample> mercurySamples = mercurySampleDao.findBySampleKey(aliquotId);
-        Multiset<MercurySample.MetadataSource> metadataSources = HashMultiset.create();
-        for (MercurySample mercurySample : mercurySamples) {
-            metadataSources.add(mercurySample.getMetadataSource());
-        }
-        MercurySample.MetadataSource metadataSource;
-        if (metadataSources.isEmpty()) {
-            metadataSource = MercurySample.MetadataSource.BSP;
-        } else if (metadataSources.size() > 1) {
-            String metadataSourceCounts = "";
-            for (MercurySample.MetadataSource source : metadataSources) {
-                metadataSourceCounts += String.format("%s: %d", source, metadataSources.count(source));
-            }
-            throw new RuntimeException(
-                    String.format("There are MercurySamples for %s that disagree on the sample data source: %s",
-                            aliquotId, metadataSourceCounts));
-        } else {
-            metadataSource = metadataSources.iterator().next();
-        }
+        MercurySample.MetadataSource metadataSource = determineMetadataSource(aliquotId);
 
         switch (metadataSource) {
         case BSP:
@@ -190,5 +193,28 @@ public class SampleDataFetcher {
         // Fills in the map values using SampleDetails that were found in BSP.
 
         return bspSampleDataFetcher.fetchSampleDetailsByBarcode(barcodes);
+    }
+
+    private MercurySample.MetadataSource determineMetadataSource(String sampleName) {
+        List<MercurySample> mercurySamples = mercurySampleDao.findBySampleKey(sampleName);
+        Multiset<MercurySample.MetadataSource> metadataSources = HashMultiset.create();
+        for (MercurySample mercurySample : mercurySamples) {
+            metadataSources.add(mercurySample.getMetadataSource());
+        }
+        MercurySample.MetadataSource metadataSource;
+        if (metadataSources.isEmpty()) {
+            metadataSource = MercurySample.MetadataSource.BSP;
+        } else if (metadataSources.size() > 1) {
+            String metadataSourceCounts = "";
+            for (MercurySample.MetadataSource source : metadataSources) {
+                metadataSourceCounts += String.format("%s: %d", source, metadataSources.count(source));
+            }
+            throw new RuntimeException(
+                    String.format("There are MercurySamples for %s that disagree on the sample data source: %s",
+                            sampleName, metadataSourceCounts));
+        } else {
+            metadataSource = metadataSources.iterator().next();
+        }
+        return metadataSource;
     }
 }

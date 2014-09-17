@@ -10,6 +10,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPLSIDUtil;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
@@ -138,7 +139,7 @@ public class IlluminaRunResource implements Serializable {
      * @return DTO
      */
     ZimsIlluminaRun getRun(@Nonnull TZamboniRun thriftRun,
-                           Map<String, BSPSampleDTO> lsidToBSPSample,
+                           Map<String, SampleData> lsidToBSPSample,
                            ThriftLibraryConverter thriftLibConverter,
                            ProductOrderDao pdoDao) {
         if (thriftRun == null) {
@@ -154,7 +155,7 @@ public class IlluminaRunResource implements Serializable {
         for (TZamboniLane tZamboniLane : thriftRun.getLanes()) {
             List<LibraryBean> libraries = new ArrayList<>(96);
             for (TZamboniLibrary zamboniLibrary : tZamboniLane.getLibraries()) {
-                BSPSampleDTO bspDTO = lsidToBSPSample.get(zamboniLibrary.getLsid());
+                SampleData bspDTO = lsidToBSPSample.get(zamboniLibrary.getLsid());
                 ProductOrder pdo = null;
                 if (zamboniLibrary.getPdoKey() != null) {
                     pdo = pdoDao.findByBusinessKey(zamboniLibrary.getPdoKey());
@@ -180,7 +181,7 @@ public class IlluminaRunResource implements Serializable {
         ZimsIlluminaRun runBean = new ZimsIlluminaRun();
         TZamboniRun tRun = thriftService.fetchRun(runName);
         if (tRun != null) {
-            Map<String, BSPSampleDTO> lsidToBSPSample = fetchAllBSPDataAtOnce(tRun);
+            Map<String, SampleData> lsidToBSPSample = fetchAllBSPDataAtOnce(tRun);
             runBean = getRun(tRun, lsidToBSPSample, new SquidThriftLibraryConverter(), pdoDao);
         } else {
             setErrorNoRun(runName, runBean);
@@ -199,7 +200,7 @@ public class IlluminaRunResource implements Serializable {
      * @param run from Thrift
      * @return map lsid to DTO
      */
-    private Map<String, BSPSampleDTO> fetchAllBSPDataAtOnce(TZamboniRun run) {
+    private Map<String, SampleData> fetchAllBSPDataAtOnce(TZamboniRun run) {
         Set<String> sampleLsids = new HashSet<>();
         for (TZamboniLane zamboniLane : run.getLanes()) {
             for (TZamboniLibrary zamboniLibrary : zamboniLane.getLibraries()) {
@@ -217,11 +218,11 @@ public class IlluminaRunResource implements Serializable {
                 sampleNames.add(lsIdToBareId.getValue());
             }
         }
-        Map<String, BSPSampleDTO> sampleToBspDto = sampleDataFetcher.fetchSampleData(sampleNames);
+        Map<String, SampleData> sampleToBspDto = sampleDataFetcher.fetchSampleData(sampleNames);
 
-        Map<String, BSPSampleDTO> lsidToBspDto = new HashMap<>();
-        for (Map.Entry<String, BSPSampleDTO> bspSampleDTOEntry : sampleToBspDto.entrySet()) {
-            BSPSampleDTO bspDto = bspSampleDTOEntry.getValue();
+        Map<String, SampleData> lsidToBspDto = new HashMap<>();
+        for (Map.Entry<String, SampleData> bspSampleDTOEntry : sampleToBspDto.entrySet()) {
+            SampleData bspDto = bspSampleDTOEntry.getValue();
             // Make sure we get something out of BSP.  If we don't, consider it a
             // catastrophe, especially for the pipeline.
             String sampleName = bspSampleDTOEntry.getKey();

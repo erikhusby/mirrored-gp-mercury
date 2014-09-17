@@ -6,6 +6,7 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
@@ -142,7 +143,7 @@ public class BaseEventTest {
      */
     public static final GregorianCalendar EX_EX_IN_MERCURY_CALENDAR = new GregorianCalendar(2013, 6, 26);
 
-    protected static Map<String, BSPSampleDTO> mapSampleNameToDto = new HashMap<>();
+    protected static Map<String, SampleData> mapSampleNameToDto = new HashMap<>();
 
     protected final LabEventRefDataFetcher labEventRefDataFetcher =
             new LabEventRefDataFetcher() {
@@ -604,7 +605,7 @@ public class BaseEventTest {
 
         // Controls are added in a re-array
         BarcodedTube posControlTube = new BarcodedTube("C1");
-        BSPSampleDTO bspSampleDtoPos = new BSPSampleDTO(
+        SampleData bspSampleDtoPos = new BSPSampleDTO(
                 new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
                     put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, POSITIVE_CONTROL);
                 }});
@@ -613,7 +614,7 @@ public class BaseEventTest {
         mapBarcodeToDaughterTube.put(VesselPosition.H11, posControlTube);
 
         BarcodedTube negControlTube = new BarcodedTube("C2");
-        BSPSampleDTO bspSampleDtoNeg = new BSPSampleDTO(
+        SampleData bspSampleDtoNeg = new BSPSampleDTO(
                 new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
                     put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, NEGATIVE_CONTROL);
                 }});
@@ -692,7 +693,7 @@ public class BaseEventTest {
 
         // Controls are added in a re-array
         BarcodedTube posControlTube = new BarcodedTube("C1");
-        BSPSampleDTO bspSampleDtoPos = new BSPSampleDTO(
+        SampleData bspSampleDtoPos = new BSPSampleDTO(
                 new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
                     put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, POSITIVE_CONTROL);
                 }});
@@ -701,7 +702,7 @@ public class BaseEventTest {
         mapBarcodeToDaughterTube.put(VesselPosition.H11, posControlTube);
 
         BarcodedTube negControlTube = new BarcodedTube("C2");
-        BSPSampleDTO bspSampleDtoNeg = new BSPSampleDTO(
+        SampleData bspSampleDtoNeg = new BSPSampleDTO(
                 new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
                     put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, NEGATIVE_CONTROL);
                 }});

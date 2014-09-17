@@ -4,7 +4,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
@@ -84,11 +84,11 @@ public class BucketEjbDbFreeTest {
     private BucketDao bucketDao = createNiceMock(BucketDao.class);
     private BucketEntryDao bucketEntryDao = createMock(BucketEntryDao.class);
     private LabVesselDao labVesselDao = createNiceMock(LabVesselDao.class);
-    private SampleDataFetcher sampleDataFetcher = createMock(SampleDataFetcher.class);
+    private BSPSampleDataFetcher bspSampleDataFetcher = createMock(BSPSampleDataFetcher.class);
     private LabVesselFactory labVesselFactory = createMock(LabVesselFactory.class);
 
     private Object[] mocks =
-            new Object[]{bucketDao, bucketEntryDao, labVesselDao, sampleDataFetcher,
+            new Object[]{bucketDao, bucketEntryDao, labVesselDao, bspSampleDataFetcher,
                     labVesselFactory, labEventFactory};
 
     @BeforeClass(groups = TestGroups.DATABASE_FREE)
@@ -122,7 +122,7 @@ public class BucketEjbDbFreeTest {
         setupMercurySamples(pdo, expectedSamples, labVessels);
 
         bucketEjb = new BucketEjb(labEventFactory, JiraServiceProducer.stubInstance(), bucketDao, bucketEntryDao,
-                                  labVesselDao, labVesselFactory, sampleDataFetcher,
+                                  labVesselDao, labVesselFactory, bspSampleDataFetcher,
                                   bspUserList, workflowLoader, createNiceMock(ProductOrderDao.class));
     }
 
@@ -192,7 +192,7 @@ public class BucketEjbDbFreeTest {
                                                           (LabBatch) anyObject(), (String) anyObject(),
                                                           (String) anyObject(), (LabEventType) anyObject()))
                     .andReturn(Collections.<LabEvent>emptyList());
-            expect(sampleDataFetcher.fetchSampleData((List<String>) anyObject())).andReturn(bspDtoMap);
+            expect(bspSampleDataFetcher.fetchSamplesFromBSP((List<String>) anyObject())).andReturn(bspDtoMap);
             bucketDao.persist(bucket);
 
             replay(mocks);
@@ -217,7 +217,7 @@ public class BucketEjbDbFreeTest {
                 sampleDTO.addPlastic(badLabelResult);
             }
 
-            expect(sampleDataFetcher.fetchSampleData((List<String>) anyObject())).andReturn(bspDtoMap);
+            expect(bspSampleDataFetcher.fetchSamplesFromBSP((List<String>) anyObject())).andReturn(bspDtoMap);
 
             replay(mocks);
 

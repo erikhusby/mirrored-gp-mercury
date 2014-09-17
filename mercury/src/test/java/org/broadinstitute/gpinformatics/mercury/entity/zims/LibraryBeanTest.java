@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.zims;
 
 import org.apache.commons.lang.StringUtils;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
@@ -48,7 +49,7 @@ public class LibraryBeanTest {
             put(BSPSampleSearchColumn.PARTICIPANT_ID, bspParticipant);
         }};
 
-        BSPSampleDTO bspDto = new BSPSampleDTO(dataMap);
+        SampleData bspDto = new BSPSampleDTO(dataMap);
 
         // send in some GSSR sample attributes in addition to bsp DTO to verify GSSR override.
         LibraryBean libraryBean = new LibraryBean(gssrLsid, gssrMaterialType, gssrCollabSampleId, gssrOrganism,
@@ -80,10 +81,8 @@ public class LibraryBeanTest {
      */
     @Test(groups = DATABASE_FREE)
     public void testBspFields() {
-        BSPSampleSearchServiceStub bspSampleSearchServiceStub = new BSPSampleSearchServiceStub();
-        BSPSampleDTO sampleDTO =
-            new SampleDataFetcher(
-                bspSampleSearchServiceStub).fetchSampleData(BSPSampleSearchServiceStub.SM_12CO4);
+        SampleData sampleDTO =
+                new BSPSampleDTO(BSPSampleSearchServiceStub.getSamples().get(BSPSampleSearchServiceStub.SM_12CO4));
 
         LibraryBean libraryBean = new LibraryBean(null, null, null, null, null, null, null, sampleDTO, null,
                 LibraryBean.NO_PDO_SAMPLE, null);

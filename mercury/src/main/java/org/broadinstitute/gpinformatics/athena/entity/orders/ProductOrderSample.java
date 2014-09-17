@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.athena.entity.samples.SampleReceiptValidation;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
@@ -224,7 +225,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     public boolean canRinScoreBeUsedForOnRiskCalculation() {
         boolean canRinScoreBeUsed = false;
         if (isInBspFormat()) {
-            BSPSampleDTO bspDto = getBspSampleDTO();
+            SampleData bspDto = getBspSampleDTO();
             if (bspDto != null) {
                 canRinScoreBeUsed = getBspSampleDTO().canRinScoreBeUsedForOnRiskCalculation();
             }
@@ -304,8 +305,8 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      * Used for testing only.
      */
     public ProductOrderSample(@Nonnull String sampleName,
-                              @Nonnull BSPSampleDTO bspSampleDTO) {
-        super(bspSampleDTO);
+                              @Nonnull SampleData sampleData) {
+        super(sampleData);
         this.sampleName = sampleName;
     }
 
@@ -313,13 +314,13 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      * TEST-ONLY delegating constructor that also sets the entity's primary key.
      *
      * @param sampleName      the sample ID
-     * @param bspSampleDTO    the sample data from BSP
+     * @param sampleData    the sample data from BSP
      * @param primaryKey      the primary key
      *
-     * @see #ProductOrderSample(String, BSPSampleDTO)
+     * @see #ProductOrderSample(String, SampleData)
      */
-    public ProductOrderSample(@Nonnull String sampleName, @Nonnull BSPSampleDTO bspSampleDTO, Long primaryKey) {
-        this(sampleName, bspSampleDTO);
+    public ProductOrderSample(@Nonnull String sampleName, @Nonnull SampleData sampleData, Long primaryKey) {
+        this(sampleName, sampleData);
         this.productOrderSampleId = primaryKey;
     }
 
