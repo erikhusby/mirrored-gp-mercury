@@ -153,10 +153,16 @@
                 <li>
                     <stripes:link id="accessioning"
                                   beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.ManifestAccessioningActionBean">
-                                    Upload Manifest File
-                                  </stripes:link>
+                        Upload Manifest File
+                    </stripes:link>
+                </li>
+                <li>
+                    <stripes:link id="manifestTubeTransfer"
+                                  beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.ManifestTubeTransferActionBean">
+                        Transfer Tubes from Manifest
+                    </stripes:link>
 
-                        </li>
+                </li>
             </ul>
         </li>
     </security:authorizeBlock>
