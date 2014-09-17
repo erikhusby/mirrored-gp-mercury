@@ -140,4 +140,16 @@
         </xsd:sequence>
     </xsd:complexType>
 
+    <xsd:complexType name="concentrationAndVolumeAndWeightType">
+        <xsd:sequence>
+            <xsd:element name="wasFound" type="xsd:boolean"/>
+            <xsd:element name="concentration" type="xsd:decimal"/>
+            <xsd:element name="volume" type="xsd:decimal"/>
+            <xsd:element name="weight" type="xsd:decimal"/>
+            <xsd:element name="tubeBarcode" type="xsd:string"/>
+            <xsd:element name="concentrationUnits" type="xsd:string"/>
+            <xsd:element name="volumeUnits" type="xsd:string"/>
+            <xsd:element name="weightUnits" type="xsd:string"/>
+        </xsd:sequence>
+    </xsd:complexType>
 </xsd:schema>

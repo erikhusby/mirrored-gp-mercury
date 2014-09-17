@@ -17,6 +17,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -303,24 +304,12 @@ public class LabMetric implements Comparable<LabMetric> {
         return compareToBuilder.build();
     }
 
-
-    /** These define the concentration range in ug/ml (ng/ul) for acceptable fingerprinting. */
-    public static final BigDecimal INITIAL_PICO_LOW_THRESHOLD = new BigDecimal("3.4");
-    public static final BigDecimal INITIAL_PICO_HIGH_THRESHOLD = new BigDecimal("60.0");
-
-    /**
-     * Determines initial pico disposition from the sample's quant.
-     *
-     * @return  -1, 0, or +1 indicating that concentration is
-     *          below range, in range, or above range, respectively.
-     */
-    public int initialPicoDispositionRange() {
-        if (value == null || value.compareTo(INITIAL_PICO_LOW_THRESHOLD) < 0) {
-            return -1;
-        } else if (value.compareTo(INITIAL_PICO_HIGH_THRESHOLD) > 0) {
-            return 1;
+    public static class LabMetricRunDateComparator
+            implements Comparator<LabMetric> {
+        @Override
+        public int compare(LabMetric labMetric1, LabMetric labMetric2) {
+            return labMetric2.getLabMetricRun().getRunDate()
+                    .compareTo(labMetric1.getLabMetricRun().getRunDate());
         }
-        return 0;
     }
-
 }

@@ -119,6 +119,11 @@ public class OfflineThriftService implements ThriftService {
         return null;
     }
 
+    @Override
+    public Map<String, ConcentrationAndVolume> fetchConcentrationAndVolumeForTubeBarcodes(List<String> tubeBarcodes) {
+        return null;
+    }
+
     public static TZamboniRun makeRun(String runName, int numLanes, int numLibraries) {
         List<TZamboniLane> lanes = new ArrayList<>();
         for (int i = 1; i <= numLanes; i++) {
