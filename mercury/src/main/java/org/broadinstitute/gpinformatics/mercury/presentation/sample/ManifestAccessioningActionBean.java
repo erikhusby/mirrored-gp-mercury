@@ -76,7 +76,9 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
 
     @After(stages = LifecycleStage.BindingAndValidation, on = {"!" + START_A_SESSION_ACTION})
     public void init() {
-        selectedSession = manifestSessionDao.find(selectedSessionId);
+        if (selectedSessionId != null) {
+            selectedSession = manifestSessionDao.find(selectedSessionId);
+        }
     }
 
     @HandlesEvent(LOAD_SESSION_ACTION)
@@ -86,11 +88,15 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
 
     @HandlesEvent(VIEW_UPLOAD_ACTION)
     public Resolution view() {
+        addErrorMessages();
+
+        return new ForwardResolution(REVIEW_UPLOAD_PAGE);
+    }
+
+    private void addErrorMessages() {
         for (ManifestEvent event : selectedSession.getManifestEvents()) {
             addGlobalValidationError(event.getMessage());
         }
-
-        return new ForwardResolution(REVIEW_UPLOAD_PAGE);
     }
 
     @DefaultHandler
@@ -114,7 +120,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
             return new RedirectResolution(getClass(), BEGIN_ACCESSION_ACTION)
                     .addParameter("researchProjectKey", researchProjectKey);
         }
-
+        addErrorMessages();
         return new ForwardResolution(REVIEW_UPLOAD_PAGE);
     }
 

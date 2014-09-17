@@ -1425,4 +1425,42 @@
         <addNotNullConstraint tableName="manifest_event" columnName="modified_date" schemaName="mercury" />
     </changeSet>
 
+    <changeSet id="GPLIM-2885-add-spreadsheet-row" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="manifest_record" columnName="spreadsheet_row" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="manifest_record" schemaName="mercury">
+            <column name="spreadsheet_row" type="integer"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-add-spreadsheet-row-aud" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="manifest_record_aud" columnName="spreadsheet_row" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="manifest_record_aud" schemaName="mercury">
+            <column name="spreadsheet_row" type="integer"/>
+        </addColumn>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-2885-spreadsheet-row-backfill" author="mcovarr">
+        <comment>
+          Update to backfill spreadsheet rows in manifest records where the spreadsheet row is currently null.
+          Spreadsheet rows are assigned starting at 2 for the manifest record with the smallest ID within a manifest
+          session and increasing monotonically to N + 1 for the manifest record with the largest ID within a manifest
+          session.
+        </comment>
+        <sql>
+            update manifest_record mr set spreadsheet_row = (
+                select spreadsheet_row from (
+                    select manifest_record_id, 1 + row_number() over (partition by manifest_session_id order by manifest_record_id) spreadsheet_row from manifest_record
+            ) sub where sub.manifest_record_id = mr.manifest_record_id) where spreadsheet_row is null
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>

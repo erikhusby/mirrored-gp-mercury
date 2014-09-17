@@ -9,7 +9,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProje
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
-import org.hamcrest.CoreMatchers;
+import org.hamcrest.Matchers;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
@@ -19,11 +19,11 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestStatusErrorMatcher.hasError;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 
@@ -40,6 +40,7 @@ public class ManifestSessionTest {
     private static final String SAMPLE_ID_3 = "SM-3";
     private static final List<String> SAMPLES_IN_MANIFEST = Arrays.asList(SAMPLE_ID_1, SAMPLE_ID_2, SAMPLE_ID_3);
     private static final int NUM_SAMPLES_IN_MANIFEST = SAMPLES_IN_MANIFEST.size();
+    private static final int ROW_NUMBER = 2;
     private ManifestSession session;
     private ResearchProject testRp;
     private String sessionPrefix;
@@ -61,7 +62,8 @@ public class ManifestSessionTest {
 
     public void basicProperties() throws Exception {
         Assert.assertEquals(session.getResearchProject(), testRp);
-        Assert.assertEquals(session.getSessionName(), sessionPrefix + session.getManifestSessionId());
+        assertThat(session.getSessionName(), containsString(sessionPrefix));
+        assertThat(session.getSessionName(), containsString(String.valueOf(session.getManifestSessionId())));
         Assert.assertEquals(session.getStatus(), ManifestSession.SessionStatus.OPEN);
 
         UpdateData updateData = session.getUpdateData();
@@ -80,7 +82,7 @@ public class ManifestSessionTest {
     }
 
     private ManifestRecord buildManifestRecord(ManifestSession manifestSession, String sampleId) {
-        ManifestRecord manifestRecord = new ManifestRecord(ManifestTestFactory.buildMetadata(ImmutableMap.of(
+        ManifestRecord manifestRecord = new ManifestRecord(ROW_NUMBER, ManifestTestFactory.buildMetadata(ImmutableMap.of(
                 Metadata.Key.SAMPLE_ID, sampleId,
                 Metadata.Key.SAMPLE_TYPE, "value1",
                 Metadata.Key.TUMOR_NORMAL, "value2",

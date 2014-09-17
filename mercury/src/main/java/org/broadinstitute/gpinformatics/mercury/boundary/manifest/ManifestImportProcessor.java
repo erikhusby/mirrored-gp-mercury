@@ -35,8 +35,9 @@ import java.util.Map;
  */
 public class ManifestImportProcessor extends TableProcessor {
     private static final int ALLOWABLE_NUMBER_OF_SHEETS = 1;
+    private static final int NUM_HEADER_ROWS = 1;
     private ColumnHeader[] columnHeaders;
-    private Collection<ManifestRecord> manifestRecords = new ArrayList<>();
+    private List<ManifestRecord> manifestRecords = new ArrayList<>();
     static final String UNKNOWN_HEADER_FORMAT = "Unknown header(s) '%s'.";
     static final String DUPLICATE_HEADER_FORMAT = "Duplicate header found: %s";
 
@@ -81,7 +82,7 @@ public class ManifestImportProcessor extends TableProcessor {
      */
     @Override
     public void processRowDetails(Map<String, String> dataRow, int dataRowIndex) {
-        manifestRecords.add(new ManifestRecord(ManifestHeader.toMetadata(dataRow)));
+        manifestRecords.add(new ManifestRecord(dataRowIndex + NUM_HEADER_ROWS, ManifestHeader.toMetadata(dataRow)));
     }
 
     /**
@@ -91,7 +92,7 @@ public class ManifestImportProcessor extends TableProcessor {
      *
      * @throws ValidationException if there were any errors.
      */
-    public Collection<ManifestRecord> getManifestRecords() throws ValidationException {
+    public List<ManifestRecord> getManifestRecords() throws ValidationException {
         if (!getMessages().isEmpty()) {
             throw new ValidationException("There was an error importing the Manifest.", getMessages());
         }

@@ -96,6 +96,8 @@ public class ManifestSessionContainerTest extends Arquillian {
     @Inject
     private MercurySampleDao mercurySampleDao;
 
+    private int rowCounter;
+
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(DEV);
@@ -119,7 +121,7 @@ public class ManifestSessionContainerTest extends Arquillian {
     @BeforeMethod
     public void setUp() throws Exception {
 
-        if(userBean == null) {
+        if (userBean == null) {
             return;
         }
 
@@ -127,9 +129,11 @@ public class ManifestSessionContainerTest extends Arquillian {
 
         Date researchProjectCreateTime = new Date();
         researchProject =
-                ResearchProjectTestFactory.createTestResearchProject(ResearchProject.PREFIX + researchProjectCreateTime.getTime());
+                ResearchProjectTestFactory
+                        .createTestResearchProject(ResearchProject.PREFIX + researchProjectCreateTime.getTime());
         researchProject.setTitle("Buick test Project" + researchProjectCreateTime.getTime());
 
+        resetRowCounter();
         manifestSessionI = new ManifestSession(researchProject, "BUICK-TEST", testUser);
         manifestRecordI = createManifestRecord(Metadata.Key.PATIENT_ID, PATIENT_1, Metadata.Key.GENDER, GENDER_MALE,
                 Metadata.Key.SAMPLE_ID, SAMPLE_ID_1);
@@ -151,6 +155,7 @@ public class ManifestSessionContainerTest extends Arquillian {
                 createManifestRecord(Metadata.Key.SAMPLE_ID, SAMPLE_ID_6, Metadata.Key.GENDER, GENDER_MALE,
                         Metadata.Key.PATIENT_ID, PATIENT_1 + "6"));
 
+        resetRowCounter();
         manifestSessionII = new ManifestSession(researchProject, "BUICK-TEST2", testUser);
 
         manifestSessionII.addRecord(
@@ -192,9 +197,14 @@ public class ManifestSessionContainerTest extends Arquillian {
         }
     }
 
+    private void resetRowCounter() {
+        rowCounter = 2;
+    }
+
     private ManifestRecord createManifestRecord(Metadata.Key key1, String value1, Metadata.Key key2, String value2,
                                                 Metadata.Key key3, String value3) {
-        return new ManifestRecord(new Metadata(key1, value1), new Metadata(key2, value2), new Metadata(key3, value3));
+        return new ManifestRecord(rowCounter++, new Metadata(key1, value1), new Metadata(key2, value2),
+                new Metadata(key3, value3));
     }
 
     /**
@@ -221,7 +231,8 @@ public class ManifestSessionContainerTest extends Arquillian {
                 manifestSessionI.getUpdateData().getCreatedDate())));
 
         for (ManifestRecord manifestRecord : manifestSessionI.getRecords()) {
-            assertThat(manifestRecord.getUpdateData().getModifiedDate(), is(equalTo(manifestRecord.getUpdateData().getCreatedDate())));
+            assertThat(manifestRecord.getUpdateData().getModifiedDate(),
+                    is(equalTo(manifestRecord.getUpdateData().getCreatedDate())));
         }
 
 
@@ -260,10 +271,13 @@ public class ManifestSessionContainerTest extends Arquillian {
 
         ManifestSession sessionClosed = manifestSessionDao.find(manifestSessionOut.getManifestSessionId());
 
-        assertThat(sessionClosed.getUpdateData().getModifiedDate(), is(not(equalTo(manifestSessionI.getUpdateData().getModifiedDate()))));
-        assertThat(sessionClosed.getUpdateData().getCreatedDate(), is(not(equalTo(sessionClosed.getUpdateData().getModifiedDate()))));
+        assertThat(sessionClosed.getUpdateData().getModifiedDate(),
+                is(not(equalTo(manifestSessionI.getUpdateData().getModifiedDate()))));
+        assertThat(sessionClosed.getUpdateData().getCreatedDate(),
+                is(not(equalTo(sessionClosed.getUpdateData().getModifiedDate()))));
         for (ManifestRecord manifestRecord : sessionClosed.getRecords()) {
-            assertThat(manifestRecord.getUpdateData().getCreatedDate(), is(not(equalTo(manifestRecord.getUpdateData().getModifiedDate()))));
+            assertThat(manifestRecord.getUpdateData().getCreatedDate(),
+                    is(not(equalTo(manifestRecord.getUpdateData().getModifiedDate()))));
         }
 
     }
@@ -569,11 +583,11 @@ public class ManifestSessionContainerTest extends Arquillian {
 
             manifestSessionDao.clear();
             ManifestSession reFetchedSessionOfScan2 = manifestSessionDao.find(sessionOfScan2.getManifestSessionId());
-            ManifestRecord sourceToTest = reFetchedSessionOfScan2 .findRecordByCollaboratorId(sampleId);
+            ManifestRecord sourceToTest = reFetchedSessionOfScan2.findRecordByCollaboratorId(sampleId);
 
             assertThat(sourceToTest.getStatus(), is(ManifestRecord.Status.SCANNED));
             assertThat(sourceToTest.getManifestEvents(), is(empty()));
-            assertThat(reFetchedSessionOfScan2 .hasErrors(), is(true));
+            assertThat(reFetchedSessionOfScan2.hasErrors(), is(true));
         }
 
         /*
@@ -613,9 +627,12 @@ public class ManifestSessionContainerTest extends Arquillian {
 
         assertThat(sessionStatus2, is(notNullValue()));
         assertThat(sessionStatus2.getSamplesInManifest(), is(NUM_RECORDS_IN_SPREADSHEET));
-        assertThat(sessionStatus2.getSamplesSuccessfullyScanned(), is(NUM_RECORDS_IN_SPREADSHEET - NUM_DUPLICATES_IN_SESSION_2));
-        assertThat(sessionStatus2.getSamplesEligibleInManifest(), is(NUM_RECORDS_IN_SPREADSHEET - NUM_DUPLICATES_IN_SESSION_2));
-        assertThat(sessionStatus2.getErrorMessages(), hasSize(NUM_DUPLICATES_IN_SESSION_2 + NUM_MISMATCHED_GENDERS_IN_SESSION_2));
+        assertThat(sessionStatus2.getSamplesSuccessfullyScanned(),
+                is(NUM_RECORDS_IN_SPREADSHEET - NUM_DUPLICATES_IN_SESSION_2));
+        assertThat(sessionStatus2.getSamplesEligibleInManifest(),
+                is(NUM_RECORDS_IN_SPREADSHEET - NUM_DUPLICATES_IN_SESSION_2));
+        assertThat(sessionStatus2.getErrorMessages(),
+                hasSize(NUM_DUPLICATES_IN_SESSION_2 + NUM_MISMATCHED_GENDERS_IN_SESSION_2));
 
         /*
          * Mimic the user closing the session
@@ -627,7 +644,8 @@ public class ManifestSessionContainerTest extends Arquillian {
         assertThat(closedSession2, is(notNullValue()));
 
         assertThat(closedSession2.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
-        assertThat(closedSession2.getManifestEvents(), hasSize(NUM_DUPLICATES_IN_SESSION_2 + NUM_MISMATCHED_GENDERS_IN_SESSION_2));
+        assertThat(closedSession2.getManifestEvents(),
+                hasSize(NUM_DUPLICATES_IN_SESSION_2 + NUM_MISMATCHED_GENDERS_IN_SESSION_2));
         assertThat(closedSession2.getManifestEvents(), hasEventError(ManifestRecord.ErrorStatus.MISMATCHED_GENDER));
         assertThat(closedSession2.getManifestEvents(), hasEventError(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID));
 

@@ -50,7 +50,6 @@ public class ManifestRecord implements HasUpdateData {
     @SequenceGenerator(name = "SEQ_MANIFEST_RECORD", schema = "mercury", sequenceName = "SEQ_MANIFEST_RECORD")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MANIFEST_RECORD")
     /** JPA ID field */
-    @SuppressWarnings("UnusedDeclaration")
     private Long manifestRecordId;
 
     @ManyToMany(cascade = CascadeType.PERSIST)
@@ -58,6 +57,9 @@ public class ManifestRecord implements HasUpdateData {
             joinColumns = @JoinColumn(name = "MANIFEST_RECORD_ID"),
             inverseJoinColumns = @JoinColumn(name = "METADATA_ID"))
     private Set<Metadata> metadata = new HashSet<>();
+
+    @Column(name = "SPREADSHEET_ROW")
+    private int spreadsheetRow;
 
     @Transient
     private Map<Metadata.Key, Metadata> metadataMap;
@@ -75,8 +77,6 @@ public class ManifestRecord implements HasUpdateData {
     @JoinColumn(name = "manifest_session_id")
     private ManifestSession manifestSession;
 
-    // IntelliJ claims this is unused.
-    @SuppressWarnings("UnusedDeclaration")
     @Embedded
     private UpdateData updateData = new UpdateData();
 
@@ -86,7 +86,8 @@ public class ManifestRecord implements HasUpdateData {
     protected ManifestRecord() {
     }
 
-    public ManifestRecord(Metadata... metadata) {
+    public ManifestRecord(int spreadsheetRow, Metadata... metadata) {
+        this.spreadsheetRow = spreadsheetRow;
         this.metadata.addAll(Arrays.asList(metadata));
     }
 
@@ -306,5 +307,9 @@ public class ManifestRecord implements HasUpdateData {
 
     public static String key(Metadata.Key key) {
         return key.name();
+    }
+
+    public int getSpreadsheetRow() {
+        return spreadsheetRow;
     }
 }

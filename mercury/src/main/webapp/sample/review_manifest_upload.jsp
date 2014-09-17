@@ -36,27 +36,27 @@
             <tbody>
             <c:forEach items="${session.records}" var="record">
                 <tr>
-                    <th>
+                    <td>
                         <c:if test="${record.quarantined}">X</c:if>
-                    </th>
-                    <th>
+                    </td>
+                    <td>
                             ${record.getValueByKey(sampleIdKey)}
-                    </th>
-                    <th>
+                    </td>
+                    <td>
                             ${record.getValueByKey(patientIdKey)}
-                    </th>
-                    <th>
+                    </td>
+                    <td>
                             ${record.getValueByKey(genderKey)}
-                    </th>
-                    <th>
+                    </td>
+                    <td>
                             ${record.getValueByKey(tumorNormalKey)}
-                    </th>
-                    <th>
+                    </td>
+                    <td>
                             ${record.getValueByKey(collectionDateKey)}
-                    </th>
-                    <th>
+                    </td>
+                    <td>
                             ${record.getValueByKey(visitKey)}
-                    </th>
+                    </td>
                 </tr>
             </c:forEach>
             </tbody>

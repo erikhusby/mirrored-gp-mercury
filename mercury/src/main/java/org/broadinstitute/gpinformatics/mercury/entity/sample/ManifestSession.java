@@ -55,7 +55,6 @@ import java.util.Set;
 @Table(schema = "mercury", name = "MANIFEST_SESSION")
 public class ManifestSession implements HasUpdateData {
 
-    public static final String SAMPLE_ID_KEY = "Sample ID";
     public static final String VESSEL_LABEL = "Vessel barcode";
 
     @Id
@@ -105,12 +104,13 @@ public class ManifestSession implements HasUpdateData {
         return manifestSessionId;
     }
 
+    /**
+     * Calculate and return the session name.  Note this is a function of the Hibernate-assigned ID and the result of
+     * this method is not cached.  If this is called before this ManifestSession is assigned an ID it will produce a
+     * different result than after an ID is assigned.
+     */
     public String getSessionName() {
-        return getSessionPrefix() + getManifestSessionId();
-    }
-
-    protected String getSessionPrefix() {
-        return sessionPrefix;
+        return sessionPrefix.trim() + "-" + manifestSessionId;
     }
 
     public SessionStatus getStatus() {

@@ -15,42 +15,37 @@
             <table id="sessionList" class="table simple">
                 <thead>
                 <tr>
-                    <th>Research Project</th>
                     <th>Session Name</th>
-                    <th>Creator</th>
-                    <th>Creation Date</th>
+                    <th>Research Project</th>
+                    <th>Created By</th>
+                    <th>Created Time</th>
                     <th>Last Modified By</th>
-                    <th>Last Modified Date</th>
-                    <th></th>
+                    <th>Last Modified Time</th>
                 </tr>
                 </thead>
                 <tbody>
                 <c:forEach items="${actionBean.openSessions}" var="openSession">
                     <tr>
                         <td>
-                                ${openSession.researchProject.businessKey}
+                            <stripes:link beanclass="${actionBean.class.name}" event="viewUpload">
+                            <stripes:param name="selectedSessionId" value="${openSession.manifestSessionId}"/>
+                                ${openSession.sessionName}
+                            </stripes:link>
                         </td>
                         <td>
-                                ${openSession.sessionName}
+                                ${openSession.researchProject.businessKey}
                         </td>
                         <td>
                                 ${actionBean.getUserFullName(openSession.updateData.createdBy)}
                         </td>
                         <td>
-                            <fmt:formatDate value="${openSession.updateData.createdDate}" pattern="${actionBean.datePattern}"/>
+                            <fmt:formatDate value="${openSession.updateData.createdDate}" pattern="${actionBean.dateTimePattern}"/>
                         </td>
                         <td>
                                 ${actionBean.getUserFullName(openSession.updateData.modifiedBy)}
                         </td>
                         <td>
-                            <fmt:formatDate value="${openSession.updateData.modifiedDate}" pattern="${actionBean.datePattern}"/>
-                        </td>
-                        <td>
-                            <stripes:link beanclass="${actionBean.class.name}" event="viewUpload">
-                                <stripes:param name="selectedSessionId" value="${openSession.manifestSessionId}"/>
-                                Load
-                            </stripes:link>
-
+                            <fmt:formatDate value="${openSession.updateData.modifiedDate}" pattern="${actionBean.dateTimePattern}"/>
                         </td>
                     </tr>
                 </c:forEach>
