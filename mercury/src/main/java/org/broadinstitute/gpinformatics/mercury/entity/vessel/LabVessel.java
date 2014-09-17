@@ -264,6 +264,20 @@ public abstract class LabVessel implements Serializable {
         return labMetrics;
     }
 
+    public Set<LabMetric> getConcentrationMetrics() {
+        if(labMetrics != null) {
+            Set<LabMetric> concentrationLabMetrics = new HashSet<>();
+            for (LabMetric labMetric: labMetrics) {
+                if(labMetric.getName().getIsConcentration() == LabMetric.MetricType.IsConcentration.TRUE) {
+                    concentrationLabMetrics.add(labMetric);
+                }
+            }
+            return concentrationLabMetrics;
+        }
+
+        return null;
+    }
+
     @SuppressWarnings("unused")
     public Map<String, Set<LabMetric>> getMetricMap() {
         return metricMap;
@@ -1069,6 +1083,7 @@ public abstract class LabVessel implements Serializable {
              */
             throw new RuntimeException("Vessel already contains an entry equal to: " + bucketEntry);
         }
+        clearCaches();
     }
 
     public void addNonReworkLabBatch(LabBatch labBatch) {
