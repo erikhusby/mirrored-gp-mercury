@@ -96,8 +96,6 @@ public class ManifestSessionContainerTest extends Arquillian {
     @Inject
     private MercurySampleDao mercurySampleDao;
 
-    private int rowCounter;
-
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(DEV);
@@ -132,8 +130,8 @@ public class ManifestSessionContainerTest extends Arquillian {
                 ResearchProjectTestFactory
                         .createTestResearchProject(ResearchProject.PREFIX + researchProjectCreateTime.getTime());
         researchProject.setTitle("Buick test Project" + researchProjectCreateTime.getTime());
+        researchProject.setRegulatoryDesignation(ResearchProject.RegulatoryDesignation.CLINICAL_DIAGNOSTICS);
 
-        resetRowCounter();
         manifestSessionI = new ManifestSession(researchProject, "BUICK-TEST", testUser);
         manifestRecordI = createManifestRecord(Metadata.Key.PATIENT_ID, PATIENT_1, Metadata.Key.GENDER, GENDER_MALE,
                 Metadata.Key.SAMPLE_ID, SAMPLE_ID_1);
@@ -155,7 +153,6 @@ public class ManifestSessionContainerTest extends Arquillian {
                 createManifestRecord(Metadata.Key.SAMPLE_ID, SAMPLE_ID_6, Metadata.Key.GENDER, GENDER_MALE,
                         Metadata.Key.PATIENT_ID, PATIENT_1 + "6"));
 
-        resetRowCounter();
         manifestSessionII = new ManifestSession(researchProject, "BUICK-TEST2", testUser);
 
         manifestSessionII.addRecord(
@@ -197,13 +194,9 @@ public class ManifestSessionContainerTest extends Arquillian {
         }
     }
 
-    private void resetRowCounter() {
-        rowCounter = 2;
-    }
-
     private ManifestRecord createManifestRecord(Metadata.Key key1, String value1, Metadata.Key key2, String value2,
                                                 Metadata.Key key3, String value3) {
-        return new ManifestRecord(rowCounter++, new Metadata(key1, value1), new Metadata(key2, value2),
+        return new ManifestRecord(new Metadata(key1, value1), new Metadata(key2, value2),
                 new Metadata(key3, value3));
     }
 

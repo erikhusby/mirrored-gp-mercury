@@ -58,9 +58,6 @@ public class ManifestRecord implements HasUpdateData {
             inverseJoinColumns = @JoinColumn(name = "METADATA_ID"))
     private Set<Metadata> metadata = new HashSet<>();
 
-    @Column(name = "SPREADSHEET_ROW")
-    private int spreadsheetRow;
-
     @Transient
     private Map<Metadata.Key, Metadata> metadataMap;
 
@@ -74,8 +71,11 @@ public class ManifestRecord implements HasUpdateData {
     private List<ManifestEvent> manifestEvents = new ArrayList<>();
 
     @ManyToOne(cascade = CascadeType.PERSIST)
-    @JoinColumn(name = "manifest_session_id")
+    @JoinColumn(name = "MANIFEST_SESSION_ID", insertable = false, updatable = false)
     private ManifestSession manifestSession;
+
+    @Column(name = "SPREADSHEET_ROW", insertable = false, updatable = false, nullable = false)
+    private Integer spreadsheetRow;
 
     @Embedded
     private UpdateData updateData = new UpdateData();
@@ -86,8 +86,7 @@ public class ManifestRecord implements HasUpdateData {
     protected ManifestRecord() {
     }
 
-    public ManifestRecord(int spreadsheetRow, Metadata... metadata) {
-        this.spreadsheetRow = spreadsheetRow;
+    public ManifestRecord(Metadata... metadata) {
         this.metadata.addAll(Arrays.asList(metadata));
     }
 
@@ -161,16 +160,6 @@ public class ManifestRecord implements HasUpdateData {
         return false;
     }
 
-    public Set<String> getQuarantinedRecordMessages() {
-        Set<String> quarantinedMessages = new HashSet<>();
-        for (ManifestEvent manifestEvent : getManifestEvents()) {
-            if (manifestEvent.getSeverity() == ManifestEvent.Severity.QUARANTINED) {
-                quarantinedMessages.add(manifestEvent.getMessage());
-            }
-        }
-        return quarantinedMessages;
-    }
-
     public UpdateData getUpdateData() {
         return updateData;
     }
@@ -179,7 +168,6 @@ public class ManifestRecord implements HasUpdateData {
      * Scan the sample corresponding to this ManifestRecord as part of accessioning.
      */
     public void accessionScan() {
-
         if (isQuarantined()) {
             throw new InformaticsServiceException(
                     ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID
@@ -192,6 +180,10 @@ public class ManifestRecord implements HasUpdateData {
         }
 
         setStatus(ManifestRecord.Status.SCANNED);
+    }
+
+    public void setSpreadsheetRow(int spreadsheetRow) {
+        this.spreadsheetRow = spreadsheetRow;
     }
 
     /**
@@ -307,9 +299,5 @@ public class ManifestRecord implements HasUpdateData {
 
     public static String key(Metadata.Key key) {
         return key.name();
-    }
-
-    public int getSpreadsheetRow() {
-        return spreadsheetRow;
     }
 }

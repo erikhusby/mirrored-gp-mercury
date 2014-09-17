@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 import org.jvnet.inflector.Noun;
 
@@ -35,6 +36,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.OrderColumn;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.util.ArrayList;
@@ -72,14 +74,15 @@ public class ManifestSession implements HasUpdateData {
     @Enumerated(EnumType.STRING)
     private SessionStatus status = SessionStatus.OPEN;
 
-    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "manifestSession", orphanRemoval = true)
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    @JoinColumn(name = "MANIFEST_SESSION_ID", nullable = false)
+    @OrderColumn(name = "SPREADSHEET_ROW", nullable = false)
+    @AuditJoinTable(name = "MANIFEST_RECORD_JOIN_AUD")
     private List<ManifestRecord> records = new ArrayList<>();
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "manifestSession", orphanRemoval = true)
     private List<ManifestEvent> manifestEvents = new ArrayList<>();
 
-    // IntelliJ claims this is unused.
-    @SuppressWarnings("UnusedDeclaration")
     @Embedded
     private UpdateData updateData = new UpdateData();
 
@@ -122,6 +125,9 @@ public class ManifestSession implements HasUpdateData {
     }
 
     public void addRecord(ManifestRecord record) {
+        // Spreadsheet row is a zero-based index, so set the spreadsheet row index to the number of records
+        // before adding this record.
+        record.setSpreadsheetRow(records.size());
         records.add(record);
         record.setManifestSession(this);
     }

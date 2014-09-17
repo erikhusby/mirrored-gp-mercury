@@ -60,7 +60,7 @@ public class ManifestRecordTest {
 
         // Test with no specified Status or ErrorStatus.
         ManifestSession sessionIn = new ManifestSession();
-        ManifestRecord testRecord = new ManifestRecord(ROW_NUMBER,
+        ManifestRecord testRecord = new ManifestRecord(
                 new Metadata(Metadata.Key.SAMPLE_ID, COLLABORATOR_SAMPLE_ID_1),
                 new Metadata(Metadata.Key.GENDER, VALUE_2), new Metadata(Metadata.Key.PATIENT_ID, VALUE_3));
         sessionIn.addRecord(testRecord);
@@ -190,7 +190,7 @@ public class ManifestRecordTest {
     }
 
     private ManifestRecord buildManifestRecord(Map<Metadata.Key, String> metadata) {
-        return new ManifestRecord(ROW_NUMBER, ManifestTestFactory.buildMetadata(metadata));
+        return new ManifestRecord(ManifestTestFactory.buildMetadata(metadata));
     }
 
     public void mixedValidationErrorTest() throws Exception {

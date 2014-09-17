@@ -50,9 +50,7 @@ public class ManifestTestFactory {
     }
 
     public static ManifestRecord buildManifestRecord(int recordNumber, Map<Metadata.Key, String> initialData) {
-        ManifestRecord manifestRecord;
-
-        manifestRecord = new ManifestRecord(recordNumber + NUM_HEADER_ROWS);
+        ManifestRecord manifestRecord = new ManifestRecord();
 
         for (Metadata.Key key : Metadata.Key.values()) {
             String value;

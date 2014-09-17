@@ -9,7 +9,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProje
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
-import org.hamcrest.Matchers;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
@@ -82,7 +81,7 @@ public class ManifestSessionTest {
     }
 
     private ManifestRecord buildManifestRecord(ManifestSession manifestSession, String sampleId) {
-        ManifestRecord manifestRecord = new ManifestRecord(ROW_NUMBER, ManifestTestFactory.buildMetadata(ImmutableMap.of(
+        ManifestRecord manifestRecord = new ManifestRecord(ManifestTestFactory.buildMetadata(ImmutableMap.of(
                 Metadata.Key.SAMPLE_ID, sampleId,
                 Metadata.Key.SAMPLE_TYPE, "value1",
                 Metadata.Key.TUMOR_NORMAL, "value2",
