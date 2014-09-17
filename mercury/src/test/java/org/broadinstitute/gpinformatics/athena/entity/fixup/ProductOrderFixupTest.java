@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
@@ -22,6 +23,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueL
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -38,9 +40,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -76,6 +80,9 @@ public class ProductOrderFixupTest extends Arquillian {
 
     @Inject
     private ResearchProjectDao projectDao;
+
+    @Inject
+    private UserBean userBean;
 
     // When you run this on prod, change to PROD and prod.
     @Deployment
@@ -468,5 +475,31 @@ public class ProductOrderFixupTest extends Arquillian {
     public void gplim2893ManuallyCompletePDO() throws ProductOrderEjb.NoSuchPDOException, IOException {
         MessageReporter.LogReporter reporter = new MessageReporter.LogReporter(log);
         productOrderEjb.updateOrderStatus("PDO-2635", reporter);
+    }
+
+    @Test(enabled = false)
+    public void gplim2969UpdatePriceItemType() {
+        userBean.loginOSUser();
+        Set<String> samples = new HashSet<>();
+        samples.add("SM-2CCZM");
+        samples.add("SM-2CD1I");
+        ProductOrder order = productOrderDao.findByBusinessKey("PDO-3475");
+
+        for (ProductOrderSample productOrderSample : order.getSamples()) {
+            if (samples.contains(productOrderSample.getSampleKey())) {
+                for (LedgerEntry ledgerEntry : productOrderSample.getLedgerItems()) {
+                    if (ledgerEntry.getBillingSession().getBillingSessionId() == 3728) {
+                        if (ledgerEntry.getPriceItemType() == LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM) {
+                            ledgerEntry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
+                            samples.remove(productOrderSample.getSampleKey());
+                            System.out.println("Updated leger entry " + ledgerEntry.getLedgerId() + " for " + productOrderSample.getSampleKey());
+                        }
+                    }
+                }
+            }
+        }
+
+        productOrderDao.flush();
+        Assert.assertTrue(samples.isEmpty());
     }
 }

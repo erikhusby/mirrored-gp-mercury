@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.vessel;
 
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun_;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -11,4 +13,8 @@ import javax.enterprise.context.RequestScoped;
 @Stateful
 @RequestScoped
 public class LabMetricRunDao extends GenericDao {
+
+    public LabMetricRun findByName(String runName) {
+        return findSingle(LabMetricRun.class, LabMetricRun_.runName, runName);
+    }
 }

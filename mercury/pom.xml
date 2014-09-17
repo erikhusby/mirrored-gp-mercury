@@ -2422,6 +2422,7 @@
                 <filtering>true</filtering>
                 <excludes>
                     <exclude>**/*.xlsx</exclude>
+                    <exclude>**/*.xls</exclude>
                 </excludes>
             </testResource>
             <testResource>
@@ -2429,6 +2430,7 @@
                 <filtering>false</filtering>
                 <includes>
                     <include>**/*.xlsx</include>
+                    <include>**/*.xls</include>
                 </includes>
             </testResource>
             <testResource>
