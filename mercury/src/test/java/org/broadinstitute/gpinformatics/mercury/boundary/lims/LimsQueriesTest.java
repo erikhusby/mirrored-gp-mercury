@@ -246,12 +246,15 @@ public class LimsQueriesTest {
         BarcodedTube tube = new BarcodedTube(barcode);
         mercuryTubes.put(barcode, tube);
 
+        BigDecimal labMetricQuant = BigDecimal.valueOf(22.21);
         LabMetric quantMetric =
-                new LabMetric(new BigDecimal("22.21"), LabMetric.MetricType.INITIAL_PICO, LabMetric.LabUnit.UG_PER_ML,
+                new LabMetric(labMetricQuant, LabMetric.MetricType.INITIAL_PICO, LabMetric.LabUnit.UG_PER_ML,
                         "A02", new Date());
         tube.addMetric(quantMetric);
-        tube.setVolume(new BigDecimal("40.04"));
-        tube.setReceptacleWeight(new BigDecimal(".002"));
+        BigDecimal volume = BigDecimal.valueOf(40.04);
+        tube.setVolume(volume);
+        BigDecimal receptacleWeight = BigDecimal.valueOf(.002);
+        tube.setReceptacleWeight(receptacleWeight);
 
         Map<String, ConcentrationAndVolumeAndWeightType> concentrationAndVolumeTypeMap =
                 limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(mercuryTubes);
@@ -259,9 +262,9 @@ public class LimsQueriesTest {
         ConcentrationAndVolumeAndWeightType concentrationAndVolumeType = concentrationAndVolumeTypeMap.get(barcode);
         assertThat(concentrationAndVolumeType.isWasFound(), equalTo(true));
         assertThat(concentrationAndVolumeType.getTubeBarcode(), equalTo(barcode));
-        assertThat(concentrationAndVolumeType.getConcentration(), equalTo(22.21));
-        assertThat(concentrationAndVolumeType.getVolume(), equalTo(40.04));
-        assertThat(concentrationAndVolumeType.getWeight(), equalTo(.002));
+        assertThat(concentrationAndVolumeType.getConcentration(), equalTo(labMetricQuant));
+        assertThat(concentrationAndVolumeType.getVolume(), equalTo(volume));
+        assertThat(concentrationAndVolumeType.getWeight(), equalTo(receptacleWeight));
         assertThat(concentrationAndVolumeType.getConcentrationUnits(),
                 equalTo(LabMetric.LabUnit.UG_PER_ML.getDisplayName()));
     }

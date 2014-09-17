@@ -299,13 +299,13 @@ public class LimsQueries {
             } else {
                 concentrationAndVolumeAndWeightType.setWasFound(true);
                 if (labVessel.getReceptacleWeight() != null) {
-                    concentrationAndVolumeAndWeightType.setWeight(labVessel.getReceptacleWeight().doubleValue());
+                    concentrationAndVolumeAndWeightType.setWeight(labVessel.getReceptacleWeight());
                 }
                 if (labVessel.getVolume() != null) {
-                    concentrationAndVolumeAndWeightType.setVolume(labVessel.getVolume().doubleValue());
+                    concentrationAndVolumeAndWeightType.setVolume(labVessel.getVolume());
                 }
                 if (labVessel.getConcentration() != null) {
-                    concentrationAndVolumeAndWeightType.setConcentration(labVessel.getConcentration().doubleValue());
+                    concentrationAndVolumeAndWeightType.setConcentration(labVessel.getConcentration());
                 } else {
                     Set<LabMetric> metrics = labVessel.getMetrics();
                     if (metrics != null) {
@@ -321,8 +321,7 @@ public class LimsQueries {
                             }
                         }
                         LabMetric labMetric = metricList.get(0);
-                        double quant = labMetric.getValue().doubleValue();
-                        concentrationAndVolumeAndWeightType.setConcentration(quant);
+                        concentrationAndVolumeAndWeightType.setConcentration(labMetric.getValue());
                         concentrationAndVolumeAndWeightType
                                 .setConcentrationUnits(labMetric.getUnits().getDisplayName());
                     }

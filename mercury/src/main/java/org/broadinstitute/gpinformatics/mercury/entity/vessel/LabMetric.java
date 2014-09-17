@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
-import clover.org.apache.commons.collections.comparators.NullComparator;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.hibernate.envers.Audited;
 

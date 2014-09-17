@@ -131,11 +131,12 @@ public class LimsQueryResourceResponseFactory {
 
     public ConcentrationAndVolumeAndWeightType makeConcentrationAndVolumeAndWeight(ConcentrationAndVolume data) {
         ConcentrationAndVolumeAndWeightType concentrationAndVolumeType = new ConcentrationAndVolumeAndWeightType();
-        concentrationAndVolumeType.setConcentration(data.getConcentration());
+        concentrationAndVolumeType.setConcentration(BigDecimal.valueOf(data.getConcentration()));
         concentrationAndVolumeType.setConcentrationUnits(data.getConcentrationUnits());
         concentrationAndVolumeType.setTubeBarcode(data.getTubeBarcode());
-        concentrationAndVolumeType.setVolume(data.getVolume());
+        concentrationAndVolumeType.setVolume(BigDecimal.valueOf(data.getVolume()));
         concentrationAndVolumeType.setVolumeUnits(data.getVolumeUnits());
+        concentrationAndVolumeType.setWasFound(true);
         return concentrationAndVolumeType;
     }
 }
