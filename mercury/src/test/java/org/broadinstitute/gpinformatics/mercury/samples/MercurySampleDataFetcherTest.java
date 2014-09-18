@@ -19,8 +19,10 @@ import org.testng.annotations.Test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -29,6 +31,12 @@ import static org.hamcrest.Matchers.equalTo;
 public class MercurySampleDataFetcherTest {
 
     private static final String SM_MERC1 = "SM-MERC1";
+    private static final String GENDER = "Male";
+    private static final String PATIENT_ID = "PATIENT_ID_1234";
+    private static final String SAMPLE_TYPE = "DNA";
+    private static final String TUMOR_NORMAL = "TUMOR";
+    private static final String COLLECTION_DATE = "1/1/2014";
+    private static final String BUICK_VISIT = "1";
     private MercurySampleDataFetcher mercurySampleDataFetcher;
 
     @BeforeMethod
@@ -53,15 +61,26 @@ public class MercurySampleDataFetcherTest {
     }
 
     public void testFetchMercurySampleHasSampleData() {
-        List<Metadata> metadataList = Arrays.asList(
-                new Metadata(Metadata.Key.SAMPLE_ID, SM_MERC1),
-                new Metadata(Metadata.Key.GENDER, "Male"),
-                new Metadata(Metadata.Key.PATIENT_ID, "PATIENT_ID_1234"),
-                new Metadata(Metadata.Key.SAMPLE_TYPE, "DNA"),
-                new Metadata(Metadata.Key.TUMOR_NORMAL, "TUMOR"),
-                new Metadata(Metadata.Key.BUICK_COLLECTION_DATE, "1/1/2014"),
-                new Metadata(Metadata.Key.BUICK_VISIT, "1")
-        );
-        assertThat(1, equalTo(2));
+        Set<Metadata> metaData = new HashSet<>(
+                Arrays.asList(
+                        new Metadata(Metadata.Key.SAMPLE_ID, SM_MERC1),
+                        new Metadata(Metadata.Key.GENDER, GENDER),
+                        new Metadata(Metadata.Key.PATIENT_ID, PATIENT_ID),
+                        new Metadata(Metadata.Key.SAMPLE_TYPE, SAMPLE_TYPE),
+                        new Metadata(Metadata.Key.TUMOR_NORMAL, TUMOR_NORMAL),
+                        new Metadata(Metadata.Key.BUICK_COLLECTION_DATE, COLLECTION_DATE),
+                        new Metadata(Metadata.Key.BUICK_VISIT, BUICK_VISIT)
+                ));
+        MercurySample mercurySample = new MercurySample(SM_MERC1, MercurySample.MetadataSource.MERCURY);
+        mercurySample.addMetadata(metaData);
+        MercurySampleData mercurySampleData = new MercurySampleData(mercurySample);
+
+        assertThat(mercurySampleData.getSampleId(), equalTo(SM_MERC1));
+        assertThat(mercurySampleData.getGender(), equalTo(GENDER));
+        assertThat(mercurySampleData.getPatientId(), equalTo(PATIENT_ID));
+        assertThat(mercurySampleData.getMaterialType(), equalTo(SAMPLE_TYPE));
+        assertThat(mercurySampleData.getSampleType(), equalTo(TUMOR_NORMAL));
+        assertThat(mercurySampleData.getCollectionDate(), equalTo(COLLECTION_DATE));
+        assertThat(mercurySampleData.getVisit(), equalTo(BUICK_VISIT));
     }
 }
