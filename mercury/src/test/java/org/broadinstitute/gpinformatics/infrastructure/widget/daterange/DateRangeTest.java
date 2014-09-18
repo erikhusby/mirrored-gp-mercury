@@ -23,8 +23,9 @@ import static org.hamcrest.Matchers.equalTo;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class DateRangeTest {
-    Calendar beginningOfQuarter;
-    Calendar endOfQuarter;
+
+    private static final Calendar BEGINNING_OF_QUARTER1 = new GregorianCalendar(2014, Calendar.JANUARY, 1, 0, 0, 0);
+    private static final Calendar END_OF_QUARTER_1 = new GregorianCalendar(2014, Calendar.MARCH, 31, 23, 59, 59);
 
     public void testNewVersionSameResultAsOld() {
         Date[] newDates = DateRange.ThisQuarter.startAndStopDate();
@@ -54,39 +55,43 @@ public class DateRangeTest {
         // assertThat(newDates[1], equalTo(oldStyleStartAndStopDate[1]));
     }
 
-    private void setupCalendar(int startMonth, int endMonth) {
-        beginningOfQuarter = new GregorianCalendar(2014, startMonth, 1, 0, 0, 0);
-        beginningOfQuarter.set(Calendar.MILLISECOND, 0);
-
-        endOfQuarter =
-                new GregorianCalendar(2014, endMonth, beginningOfQuarter.getActualMaximum(Calendar.DAY_OF_MONTH), 23,
-                        59, 59);
-        endOfQuarter.set(Calendar.MILLISECOND, 999);
-    }
-
     public void testFirstDayOfQuarter1() throws Exception {
-        setupCalendar(Calendar.JANUARY, Calendar.MARCH);
+        BEGINNING_OF_QUARTER1.set(Calendar.MILLISECOND, 0);
+        END_OF_QUARTER_1.set(Calendar.MILLISECOND, 999);
 
-        OneQuarterDateRange dateRange = new OneQuarterDateRange(beginningOfQuarter.getTime());
-        validateDateRange(dateRange, beginningOfQuarter.getTime(), endOfQuarter.getTime());
+        OneQuarterDateRange dateRange = new OneQuarterDateRange(BEGINNING_OF_QUARTER1.getTime());
+        validateDateRange(dateRange, BEGINNING_OF_QUARTER1.getTime(), END_OF_QUARTER_1.getTime());
     }
-
 
     public void testLastDayOfQuarter1() throws Exception {
-        setupCalendar(Calendar.JANUARY, Calendar.MARCH);
+        Calendar beginningOfQuarter = new GregorianCalendar(2014, Calendar.JANUARY, 1, 0, 0, 0);
+        Calendar endOfQuarter = new GregorianCalendar(2014, Calendar.MARCH, 31, 23, 59, 59);
+
+        beginningOfQuarter.set(Calendar.MILLISECOND, 0);
+        endOfQuarter.set(Calendar.MILLISECOND, 999);
 
         OneQuarterDateRange dateRange = new OneQuarterDateRange(beginningOfQuarter.getTime());
         validateDateRange(dateRange, beginningOfQuarter.getTime(), endOfQuarter.getTime());
     }
 
     public void testFirstDayOfQuarter2() throws Exception {
-        setupCalendar(Calendar.APRIL, Calendar.JUNE);
+        Calendar beginningOfQuarter = new GregorianCalendar(2014, Calendar.APRIL, 1, 0, 0, 0);
+        Calendar endOfQuarter = new GregorianCalendar(2014, Calendar.JUNE, 30, 23, 59, 59);
+
+        beginningOfQuarter.set(Calendar.MILLISECOND, 0);
+        endOfQuarter.set(Calendar.MILLISECOND, 999);
+
         OneQuarterDateRange dateRange = new OneQuarterDateRange(beginningOfQuarter.getTime());
         validateDateRange(dateRange, beginningOfQuarter.getTime(), endOfQuarter.getTime());
     }
 
     public void testLastDayOfQuarter2() throws Exception {
-        setupCalendar(Calendar.APRIL, Calendar.JUNE);
+        Calendar beginningOfQuarter = new GregorianCalendar(2014, Calendar.APRIL, 1, 0, 0, 0);
+        Calendar endOfQuarter = new GregorianCalendar(2014, Calendar.JUNE, 30, 23, 59, 59);
+
+        beginningOfQuarter.set(Calendar.MILLISECOND, 0);
+        endOfQuarter.set(Calendar.MILLISECOND, 999);
+
         OneQuarterDateRange dateRange = new OneQuarterDateRange(beginningOfQuarter.getTime());
         validateDateRange(dateRange, beginningOfQuarter.getTime(), endOfQuarter.getTime());
     }
@@ -144,11 +149,10 @@ public class DateRangeTest {
         assertThat(datesNoArg[1], equalTo(datesFromArg[1]));
     }
 
-    private void validateDateRange(OneQuarterDateRange calculatedDateRange, Date expectedStartDate,
-                                   Date expectedEndDate) {
-        Date[] dates = calculatedDateRange.startAndStopDate();
+    private void validateDateRange(OneQuarterDateRange calculated, Date expectedStart, Date expectedEnd) {
+        Date[] dates = calculated.startAndStopDate();
 
-        assertThat(dates[0], equalTo(expectedStartDate));
-        assertThat(dates[1], equalTo(expectedEndDate));
+        assertThat(dates[0], equalTo(expectedStart));
+        assertThat(dates[1], equalTo(expectedEnd));
     }
 }
