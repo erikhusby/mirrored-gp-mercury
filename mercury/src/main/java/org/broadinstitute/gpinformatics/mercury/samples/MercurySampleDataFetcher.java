@@ -41,4 +41,13 @@ public class MercurySampleDataFetcher {
 
         return results;
     }
+
+    public String getStockIdForAliquotId(String aliquotId) {
+        return null;
+//        return aliquotId; // TODO: use this instead after adding a test in MercurySampleDataFetcherTest
+    }
+
+    public Map<String, String> getStockIdByAliquotId(Collection<String> aliquotIds) {
+        return null;
+    }
 }

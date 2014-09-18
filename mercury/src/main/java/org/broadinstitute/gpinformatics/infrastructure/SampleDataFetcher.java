@@ -88,12 +88,13 @@ public class SampleDataFetcher {
      * @return Mapping of sample id to its bsp data
      */
     public Map<String, SampleData> fetchSampleData(@Nonnull Collection<String> sampleNames) {
-        Map<String, MercurySample.MetadataSource> metadataSource = determineMetadataSource(sampleNames);
+        Map<String, MercurySample.MetadataSource> metadataSources = determineMetadataSource(sampleNames);
 
         List<String> bspSamples = new ArrayList<>();
         List<String> mercurySamples = new ArrayList<>();
         for (String sampleName : sampleNames) {
-            switch (metadataSource.get(sampleName)) {
+            MercurySample.MetadataSource metadataSource = metadataSources.get(sampleName);
+            switch (metadataSource) {
             case BSP:
                 if (BSPUtil.isInBspFormat(sampleName)) {
                     bspSamples.add(sampleName);
@@ -101,6 +102,9 @@ public class SampleDataFetcher {
                 break;
             case MERCURY:
                 mercurySamples.add(sampleName);
+                break;
+            default:
+                throw new IllegalStateException("Unknown sample data source: " + metadataSource);
             }
         }
         Map<String, SampleData> sampleData = new HashMap<>();
@@ -139,7 +143,7 @@ public class SampleDataFetcher {
         case BSP:
             return bspSampleDataFetcher.getStockIdForAliquotId(aliquotId);
         case MERCURY:
-            return aliquotId;
+            return mercurySampleDataFetcher.getStockIdForAliquotId(aliquotId);
         default:
             throw new IllegalStateException("Unknown sample data source: " + metadataSource);
         }
@@ -168,9 +172,8 @@ public class SampleDataFetcher {
         }
 
         // Handle Mercury samples.
-        for (String sampleId : sampleIdsByMetadataSource.get(MercurySample.MetadataSource.MERCURY)) {
-            stockIdByAliquotId.put(sampleId, sampleId);
-        }
+        stockIdByAliquotId.putAll(mercurySampleDataFetcher
+                .getStockIdByAliquotId(sampleIdsByMetadataSource.get(MercurySample.MetadataSource.MERCURY)));
 
         return stockIdByAliquotId;
     }
@@ -195,28 +198,24 @@ public class SampleDataFetcher {
         for (String sampleName : sampleNames) {
             Multiset<MercurySample.MetadataSource> metadataSources = HashMultiset.create();
 
-             List<MercurySample> mercurySamples = allMercurySamples.get(sampleName);
+            List<MercurySample> mercurySamples = allMercurySamples.get(sampleName);
             MercurySample.MetadataSource metadataSource;
-            if (mercurySamples == null) {
-                metadataSource = MercurySample.MetadataSource.BSP;
-            } else {
-                for (MercurySample mercurySample : mercurySamples) {
-                    metadataSources.add(mercurySample.getMetadataSource());
-                }
+            for (MercurySample mercurySample : mercurySamples) {
+                metadataSources.add(mercurySample.getMetadataSource());
+            }
 
-                if (metadataSources.isEmpty()) {
-                    metadataSource = MercurySample.MetadataSource.BSP;
-                } else if (metadataSources.size() > 1) {
-                    String metadataSourceCounts = "";
-                    for (MercurySample.MetadataSource source : metadataSources) {
-                        metadataSourceCounts += String.format("%s: %d", source, metadataSources.count(source));
-                    }
-                    throw new RuntimeException(
-                            String.format("There are MercurySamples for %s that disagree on the sample data source: %s",
-                                    sampleName, metadataSourceCounts));
-                } else {
-                    metadataSource = metadataSources.iterator().next();
+            if (metadataSources.isEmpty()) {
+                metadataSource = MercurySample.MetadataSource.BSP;
+            } else if (metadataSources.size() > 1) {
+                String metadataSourceCounts = "";
+                for (MercurySample.MetadataSource source : metadataSources) {
+                    metadataSourceCounts += String.format("%s: %d", source, metadataSources.count(source));
                 }
+                throw new RuntimeException(
+                        String.format("There are MercurySamples for %s that disagree on the sample data source: %s",
+                                sampleName, metadataSourceCounts));
+            } else {
+                metadataSource = metadataSources.iterator().next();
             }
             results.put(sampleName, metadataSource);
         }
