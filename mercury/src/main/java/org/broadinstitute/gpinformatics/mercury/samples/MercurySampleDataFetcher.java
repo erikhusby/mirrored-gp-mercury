@@ -22,6 +22,10 @@ public class MercurySampleDataFetcher {
     public MercurySampleDataFetcher() {
     }
 
+    public Map<String, MercurySampleData> fetchSampleDataForSamples(Collection<MercurySample> mercurySamples) {
+        return null;
+    }
+
     public Map<String, MercurySampleData> fetchSampleData(Collection<String> sampleIds) {
         Map<String, MercurySampleData> results = new HashMap<>();
         for (MercurySample mercurySample : mercurySampleDao.findBySampleKeys(sampleIds)) {

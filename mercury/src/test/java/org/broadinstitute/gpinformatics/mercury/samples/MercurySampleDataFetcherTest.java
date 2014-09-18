@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.mercury.samples;
 
+import com.google.common.collect.ImmutableSet;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -32,6 +33,7 @@ import static org.hamcrest.Matchers.equalTo;
 public class MercurySampleDataFetcherTest {
 
     private static final String SM_MERC1 = "SM-MERC1";
+    private static final String SM_MERC2 = "SM-MERC2";
     private static final String GENDER = "Male";
     private static final String PATIENT_ID = "PATIENT_ID_1234";
     private static final String TUMOR_NORMAL = "TUMOR";
@@ -61,15 +63,14 @@ public class MercurySampleDataFetcherTest {
     }
 
     public void testFetchMercurySampleHasSampleData() {
-        Set<Metadata> metaData = new HashSet<>(
-                Arrays.asList(
+        Set<Metadata> metaData = ImmutableSet.of(
                         new Metadata(Metadata.Key.SAMPLE_ID, SM_MERC1),
                         new Metadata(Metadata.Key.GENDER, GENDER),
                         new Metadata(Metadata.Key.PATIENT_ID, PATIENT_ID),
                         new Metadata(Metadata.Key.TUMOR_NORMAL, TUMOR_NORMAL),
                         new Metadata(Metadata.Key.BUICK_COLLECTION_DATE, COLLECTION_DATE),
                         new Metadata(Metadata.Key.BUICK_VISIT, BUICK_VISIT)
-                ));
+                );
         MercurySample mercurySample = new MercurySample(SM_MERC1, MercurySample.MetadataSource.MERCURY, metaData);
         MercurySampleData mercurySampleData = mercurySampleDataFetcher.fetchSampleData(mercurySample);
 
@@ -79,5 +80,17 @@ public class MercurySampleDataFetcherTest {
         assertThat(mercurySampleData.getSampleType(), equalTo(TUMOR_NORMAL));
         assertThat(mercurySampleData.getCollectionDate(), equalTo(COLLECTION_DATE));
         assertThat(mercurySampleData.getVisit(), equalTo(BUICK_VISIT));
+    }
+
+    public void testFetchForClinicalSamples() {
+        Set<Metadata> metadata1 = ImmutableSet.of(new Metadata(Metadata.Key.SAMPLE_ID, SM_MERC1));
+        Set<Metadata> metadata2 = ImmutableSet.of(new Metadata(Metadata.Key.SAMPLE_ID, SM_MERC2));
+        MercurySample mercurySample1 = new MercurySample(SM_MERC1, MercurySample.MetadataSource.MERCURY, metadata1);
+        MercurySample mercurySample2 = new MercurySample(SM_MERC2, MercurySample.MetadataSource.MERCURY, metadata2);
+
+        Map<String, MercurySampleData> sampleDatas =
+                mercurySampleDataFetcher.fetchSampleDataForSamples(Arrays.asList(mercurySample1, mercurySample2));
+
+        assertThat(sampleDatas.size(), equalTo(2));
     }
 }
