@@ -14,7 +14,7 @@ import java.util.List;
 public class MercurySampleData implements SampleData {
     private String visit;
     private String collectionDate;
-    private String sampleType;
+    private String tumorNormal;
     private String materialType;
     private String patientId;
     private String gender;
@@ -34,11 +34,12 @@ public class MercurySampleData implements SampleData {
             case PATIENT_ID:
                 this.patientId = metadata.getValue();
                 break;
-            case SAMPLE_TYPE:
-                this.materialType = metadata.getValue();
-                break;
+            // TODO: are we interested in SAMPLE_TYPE???
+//            case SAMPLE_TYPE:
+//                this.materialType = metadata.getValue();
+//                break;
             case TUMOR_NORMAL:
-                this.sampleType = metadata.getValue();
+                this.tumorNormal = metadata.getValue();
                 break;
             case BUICK_COLLECTION_DATE:
                 this.collectionDate = metadata.getValue();
@@ -155,7 +156,11 @@ public class MercurySampleData implements SampleData {
 
     @Override
     public String getSampleType() {
-        return sampleType;
+        return tumorNormal;
+    }
+
+    public String getTumorNormal() {
+        return tumorNormal;
     }
 
     @Override

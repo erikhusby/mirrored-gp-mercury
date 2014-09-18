@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 
 import javax.inject.Inject;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,13 +25,13 @@ public class MercurySampleDataFetcher {
     public Map<String, MercurySampleData> fetchSampleData(Collection<String> sampleIds) {
         Map<String, MercurySampleData> results = new HashMap<>();
         for (MercurySample mercurySample : mercurySampleDao.findBySampleKeys(sampleIds)) {
-            results.put(mercurySample.getSampleKey(), fetchSampleData(mercurySample.getSampleKey()));
+            results.put(mercurySample.getSampleKey(), fetchSampleData(mercurySample));
         }
         return results;
     }
 
-    public MercurySampleData fetchSampleData(String sampleName) {
-        return null;
+    public MercurySampleData fetchSampleData(MercurySample sample) {
+        return fetchFromMercurySamples(Collections.singleton(sample)).get(sample.getSampleKey());
     }
 
     public Map<String, MercurySampleData> fetchFromMercurySamples(Collection<MercurySample> mercurySamples) {
