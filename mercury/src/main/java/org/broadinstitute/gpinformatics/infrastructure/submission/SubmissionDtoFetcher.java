@@ -83,11 +83,11 @@ public class SubmissionDtoFetcher {
         for (final ProductOrderSample sample : samples) {
             SampleData sampleData = bulkInfo.get(sample.getName());
             if (sampleData != null) {
-                sample.setBspSampleDTO(sampleData);
+                sample.setSampleData(sampleData);
                 // In non-production environments bogus samples are often created so we will
                 // only create a new BSPSampleDTO in those cases
             } else if (bspConfig.getMercuryDeployment() != Deployment.PROD) {
-                sample.setBspSampleDTO(new BSPSampleDTO(new HashMap<BSPSampleSearchColumn, String>() {{
+                sample.setSampleData(new BSPSampleDTO(new HashMap<BSPSampleSearchColumn, String>() {{
                     put(BSPSampleSearchColumn.SAMPLE_ID, sample.getName());
                 }}));
             }

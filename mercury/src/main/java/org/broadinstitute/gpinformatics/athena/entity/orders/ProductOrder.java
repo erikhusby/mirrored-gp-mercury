@@ -341,7 +341,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
             // If the DTO is null, we do not need to set it because it defaults to DUMMY inside sample.
             if (sampleData != null) {
-                sample.setBspSampleDTO(sampleData);
+                sample.setSampleData(sampleData);
                 nonNullDTOs.add(sampleData);
             }
         }

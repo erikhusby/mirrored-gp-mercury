@@ -79,7 +79,7 @@ public class SampleSearchActionBean extends SearchActionBean {
                     mercurySampleToVessels.put(sample, allVessels);
                     SampleData sampleData = sampleDTOMap.get(sample.getSampleKey());
                     if (sampleData != null) {
-                        sample.setBspSampleDTO(sampleData);
+                        sample.setSampleData(sampleData);
                     }
                     foundSampleNames.add(sample.getSampleKey());
                 }
