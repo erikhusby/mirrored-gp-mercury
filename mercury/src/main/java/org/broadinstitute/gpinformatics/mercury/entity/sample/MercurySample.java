@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.RapSheet;
+import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
@@ -79,6 +80,11 @@ public class MercurySample extends AbstractSample {
         this.metadataSource = MetadataSource.BSP;
     }
 
+    public MercurySample(String sampleKey, MetadataSource metadataSource, Set<Metadata> metadata) {
+        this(sampleKey, metadataSource);
+        addMetadata(metadata);
+    }
+
     public RapSheet getRapSheet() {
         if (rapSheet == null) {
             rapSheet = new RapSheet(this);
@@ -110,6 +116,13 @@ public class MercurySample extends AbstractSample {
 
     public void addMetadata(Set<Metadata> metadata) {
         this.metadata.addAll(metadata);
+        switch (metadataSource){
+            case BSP:
+                break;
+            case MERCURY:
+                setSampleData(new MercurySampleData(this));
+                break;
+        }
     }
 
     public Set<Metadata> getMetadata() {

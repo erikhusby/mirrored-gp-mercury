@@ -31,7 +31,7 @@ public abstract class AbstractSample {
     }
 
     public AbstractSample(@Nonnull SampleData sampleData) {
-        setBspSampleDTO(sampleData);
+        setSampleData(sampleData);
     }
 
     /**
@@ -84,7 +84,7 @@ public abstract class AbstractSample {
      *
      * @param sampleData the data to set
      */
-    public void setBspSampleDTO(@Nonnull SampleData sampleData) {
+    public void setSampleData(@Nonnull SampleData sampleData) {
         //noinspection ConstantConditions
         if (sampleData == null) {
             throw new NullPointerException("BSP Sample DTO cannot be null");

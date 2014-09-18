@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.mercury.samples;
 
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.testng.annotations.BeforeMethod;
@@ -27,7 +28,7 @@ import java.util.Set;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
-@Test(enabled = true)
+@Test(groups = TestGroups.DATABASE_FREE)
 public class MercurySampleDataFetcherTest {
 
     private static final String SM_MERC1 = "SM-MERC1";
@@ -71,9 +72,8 @@ public class MercurySampleDataFetcherTest {
                         new Metadata(Metadata.Key.BUICK_COLLECTION_DATE, COLLECTION_DATE),
                         new Metadata(Metadata.Key.BUICK_VISIT, BUICK_VISIT)
                 ));
-        MercurySample mercurySample = new MercurySample(SM_MERC1, MercurySample.MetadataSource.MERCURY);
-        mercurySample.addMetadata(metaData);
-        MercurySampleData mercurySampleData = new MercurySampleData(mercurySample);
+        MercurySample mercurySample = new MercurySample(SM_MERC1, MercurySample.MetadataSource.MERCURY, metaData);
+        MercurySampleData mercurySampleData = (MercurySampleData) mercurySample.getBspSampleDTO();
 
         assertThat(mercurySampleData.getSampleId(), equalTo(SM_MERC1));
         assertThat(mercurySampleData.getGender(), equalTo(GENDER));
