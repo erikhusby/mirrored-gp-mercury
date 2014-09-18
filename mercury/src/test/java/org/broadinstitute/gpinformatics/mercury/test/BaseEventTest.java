@@ -8,7 +8,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentration;
@@ -799,10 +798,10 @@ public class BaseEventTest {
         ProductOrderDao productOrderDao = Mockito.mock(ProductOrderDao.class);
         Mockito.when(productOrderDao.findByBusinessKey(Mockito.anyString())).thenReturn(productOrder);
         return new ZimsIlluminaRunFactory(
-                new SampleDataFetcher(new BSPSampleDataFetcher() {
+                new SampleDataFetcher() {
                     @Override
-                    public Map<String, BSPSampleDTO> fetchSamplesFromBSP(@Nonnull Collection<String> sampleNames) {
-                        Map<String, BSPSampleDTO> mapSampleIdToDto = new HashMap<>();
+                    public Map<String, SampleData> fetchSampleData(@Nonnull Collection<String> sampleNames) {
+                        Map<String, SampleData> mapSampleIdToDto = new HashMap<>();
                         Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>() {{
                             put(BSPSampleSearchColumn.PRIMARY_DISEASE, "Cancer");
                             put(BSPSampleSearchColumn.LSID, "org.broad:SM-1234");
@@ -818,7 +817,7 @@ public class BaseEventTest {
                         }
                         return mapSampleIdToDto;
                     }
-                }),
+                },
                 new ControlDao() {
                     @Override
                     public List<Control> findAllActive() {
