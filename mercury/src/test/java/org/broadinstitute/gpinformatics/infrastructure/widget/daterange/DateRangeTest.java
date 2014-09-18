@@ -80,23 +80,13 @@ public class DateRangeTest {
     }
 
     public void testFirstDayOfQuarter2() throws Exception {
-        Calendar beginningOfQuarter = new GregorianCalendar(2014, Calendar.APRIL, 1, 0, 0, 0);
-        Calendar endOfQuarter = new GregorianCalendar(2014, Calendar.JUNE, 30, 23, 59, 59);
-
-        beginningOfQuarter.set(Calendar.MILLISECOND, 0);
-        endOfQuarter.set(Calendar.MILLISECOND, 999);
-
+        setupCalendar(Calendar.APRIL, Calendar.JUNE);
         OneQuarterDateRange dateRange = new OneQuarterDateRange(beginningOfQuarter.getTime());
         validateDateRange(dateRange, beginningOfQuarter.getTime(), endOfQuarter.getTime());
     }
 
     public void testLastDayOfQuarter2() throws Exception {
-        Calendar beginningOfQuarter = new GregorianCalendar(2014, Calendar.APRIL, 1, 0, 0, 0);
-        Calendar endOfQuarter = new GregorianCalendar(2014, Calendar.JUNE, 30, 23, 59, 59);
-
-        beginningOfQuarter.set(Calendar.MILLISECOND, 0);
-        endOfQuarter.set(Calendar.MILLISECOND, 999);
-
+        setupCalendar(Calendar.APRIL, Calendar.JUNE);
         OneQuarterDateRange dateRange = new OneQuarterDateRange(beginningOfQuarter.getTime());
         validateDateRange(dateRange, beginningOfQuarter.getTime(), endOfQuarter.getTime());
     }
