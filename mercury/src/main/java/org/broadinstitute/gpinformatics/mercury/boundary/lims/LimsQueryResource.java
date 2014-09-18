@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
+import edu.mit.broad.prodinfo.thrift.lims.ConcentrationAndVolume;
 import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
 import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
 import edu.mit.broad.prodinfo.thrift.lims.PlateTransfer;
@@ -13,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.control.lims.LimsQueryResourceRe
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ConcentrationAndVolumeAndWeightType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.FlowcellDesignationType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LibraryDataType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
@@ -30,6 +32,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -97,7 +100,26 @@ public class LimsQueryResource {
         }
     }
 
-    // TODO round 3: map<string,ConcentrationAndVolume> fetchConcentrationAndVolumeForTubeBarcodes(1:list<string> tubeBarcodes)
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/fetchConcentrationAndVolumeAndWeightForTubeBarcodes")
+    public Map<String,ConcentrationAndVolumeAndWeightType> fetchConcentrationAndVolumeAndWeightForTubeBarcodes(
+            @QueryParam("q") List<String> tubeBarcodes) {
+        switch (systemRouter.getSystemOfRecordForVesselBarcodes(tubeBarcodes)) {
+        case MERCURY:
+            return limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(tubeBarcodes);
+        case SQUID:
+            Map<String, ConcentrationAndVolume> concentrationAndVolumeMap =
+                    thriftService.fetchConcentrationAndVolumeForTubeBarcodes(tubeBarcodes);
+            Map<String, ConcentrationAndVolumeAndWeightType> result = new HashMap<>();
+            for (Map.Entry<String, ConcentrationAndVolume> data : concentrationAndVolumeMap.entrySet()) {
+                result.put(data.getKey(), responseFactory.makeConcentrationAndVolumeAndWeight(data.getValue()));
+            }
+            return result;
+        default:
+            throw new RuntimeException("Unable to route fetchConcentrationAndVolumeAndWeightForTubeBarcodes for tubes: " + tubeBarcodes);
+        }
+    }
 
     // TODO round 3: bool areLibrariesAllTheSameType(1:list<string> tubeBarcodes) throws (1:NotFoundException details)
 

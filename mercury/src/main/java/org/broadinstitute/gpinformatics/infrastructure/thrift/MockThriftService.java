@@ -121,5 +121,10 @@ public class MockThriftService implements ThriftService {
         return null;
     }
 
+    @Override
+    public Map<String, ConcentrationAndVolume> fetchConcentrationAndVolumeForTubeBarcodes(List<String> tubeBarcodes) {
+        return null;
+    }
+
 
 }

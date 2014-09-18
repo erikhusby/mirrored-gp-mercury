@@ -76,23 +76,36 @@ public class Metadata {
         return new HashCodeBuilder().append(key).append(value).hashCode();
     }
 
-    /**
-     * Valid keys for Metadata records.
-     */
+    public enum Category {
+        SAMPLE,
+        LAB_METRIC_RUN
+    }
+
     public enum Key {
-        /* These keys are currently all used for uploads of the "modified" (edited) manifest during Buick sample
-         * registration. */
-        GENDER("Gender"),
-        PATIENT_ID("Patient ID"),
-        SAMPLE_TYPE("Sample Type"),
-        TUMOR_NORMAL("Tumor/Normal"),
-        BUICK_COLLECTION_DATE("Collection Date"),
-        SAMPLE_ID("Sample ID"),
-        BUICK_VISIT("Visit");
+        // The Category.SAMPLE keys are currently all used for uploads of the "modified" (edited) manifest during
+        // Buick sample registration.
+        GENDER(Category.SAMPLE, "Gender"),
+        PATIENT_ID(Category.SAMPLE, "Patient ID"),
+        SAMPLE_TYPE(Category.SAMPLE, "Sample Type"),
+        TUMOR_NORMAL(Category.SAMPLE, "Tumor/Normal"),
+        BUICK_COLLECTION_DATE(Category.SAMPLE, "Collection Date"),
+        SAMPLE_ID(Category.SAMPLE, "Sample ID"),
+        BUICK_VISIT(Category.SAMPLE, "Visit"),
+
+        CORRELATION_COEFFICIENT_R2(Category.LAB_METRIC_RUN, "R Squared Correlation Coefficient"),
+        INSTRUMENT_NAME(Category.LAB_METRIC_RUN, "Instrument Name"),
+        INSTRUMENT_SERIAL_NUMBER(Category.LAB_METRIC_RUN, "Serial Number");
+
+        private final Category category;
         private final String displayName;
 
-        Key(String displayName) {
+        Key(Category category, String displayName) {
+            this.category = category;
             this.displayName = displayName;
+        }
+
+        public Category getCategory() {
+            return category;
         }
 
         public String getDisplayName() {
