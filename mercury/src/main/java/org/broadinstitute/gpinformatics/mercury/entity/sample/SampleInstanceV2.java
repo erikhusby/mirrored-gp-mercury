@@ -346,6 +346,10 @@ todo jmt not sure if this applies.
         }
     }
 
+    public Set<MercurySample> getRootMercurySamples() {
+        return rootMercurySamples;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {

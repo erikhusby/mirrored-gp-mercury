@@ -168,9 +168,10 @@ public class SearchInstance implements Serializable {
             if (!evaluatedConstrainedValues) {
                 Map<String, Object> context = new HashMap<>();
                 context.put(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_VALUE, this);
-                context.putAll(getSearchInstance().getEvalContext());
+                if( getSearchInstance().getEvalContext() != null ) {
+                    context.putAll(getSearchInstance().getEvalContext());
+                }
                 constrainedValues = searchTerm.evalConstrainedValues(context);
-
                 evaluatedConstrainedValues = true;
             }
             return constrainedValues;

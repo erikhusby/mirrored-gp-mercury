@@ -31,6 +31,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.OneQuarterDateRange;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -170,20 +171,31 @@ public class ProductPdfFactory {
     }
 
     static class PdfHeaderFooter extends PdfPageEventHelper {
-        private static final String formattedDate = FastDateFormat.getInstance("MM/dd/yyyy").format(new Date());
+        private Date now = new Date();
+        private final String formattedDate = formatDate(now);
+        private final OneQuarterDateRange oneQuarter = new OneQuarterDateRange(now);
+        private final String formattedEndOfQuarter=formatDate(oneQuarter.startAndStopDate()[1]);
 
         @Override
         public void onEndPage(PdfWriter writer, Document document) {
             Rectangle rect = writer.getBoxSize("art");
-            float textHorizontalPosition = (rect.getLeft() + rect.getRight()) / 2;
+            float textHorizontalPosition = rect.getRight() - rect.getLeft();
             float textVerticalPosition = rect.getBottom() - 18;
+
             try {
-                ColumnText.showTextAligned(writer.getDirectContent(), Element.ALIGN_CENTER, new Phrase(
-                        String.format("Genomics Platform Product Descriptions - Downloaded on %s", formattedDate),
+                ColumnText.showTextAligned(writer.getDirectContent(), Element.ALIGN_LEFT,
+                        new Phrase(String.format("Page %d", document.getPageNumber()),
+                        regularFont()), rect.getLeft(), textVerticalPosition, 0);
+                ColumnText.showTextAligned(writer.getDirectContent(), Element.ALIGN_RIGHT, new Phrase(
+                        String.format("Genomics Platform Product Descriptions - Downloaded on %s, valid until %s",
+                                formattedDate, formattedEndOfQuarter),
                         regularFont()), textHorizontalPosition, textVerticalPosition, 0);
             } catch (DocumentException | IOException e) {
                 log.error("Could not create footer for document.");
             }
         }
+    }
+    private static String formatDate(Date date) {
+        return FastDateFormat.getInstance("MM/dd/yyyy").format(date);
     }
 }

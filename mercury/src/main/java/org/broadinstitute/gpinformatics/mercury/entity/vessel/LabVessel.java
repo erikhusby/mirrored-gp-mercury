@@ -1069,6 +1069,7 @@ public abstract class LabVessel implements Serializable {
              */
             throw new RuntimeException("Vessel already contains an entry equal to: " + bucketEntry);
         }
+        clearCaches();
     }
 
     public void addNonReworkLabBatch(LabBatch labBatch) {
@@ -1830,6 +1831,21 @@ public abstract class LabVessel implements Serializable {
             containerRole.clearCaches();
         }
     }
+
+    /** Looks up the most recent lab metric using the lab metric's created date. */
+    public LabMetric findMostRecentLabMetric(LabMetric.MetricType metricType) {
+        LabMetric latestLabMetric = null;
+        for (LabMetric labMetric : getMetrics()) {
+            if (labMetric.getName().equals(metricType) &&
+                (latestLabMetric == null || latestLabMetric.getCreatedDate() == null ||
+                 (labMetric.getCreatedDate() != null &&
+                  labMetric.getCreatedDate().after(latestLabMetric.getCreatedDate())))) {
+                latestLabMetric = labMetric;
+            }
+        }
+        return latestLabMetric;
+    }
+
 
     /**
      * Allows the caller to determine if the current vessel or any of its ancestors have been involved in a tube

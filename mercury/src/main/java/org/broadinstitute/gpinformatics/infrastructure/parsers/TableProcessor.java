@@ -42,6 +42,10 @@ public abstract class TableProcessor implements Serializable {
         return 1;
     }
 
+    public int getHeaderRowIndex() {
+        return 0;
+    }
+
     /**
      * Header method used by all parsers to get the names that will be used to map values to the appropriate columns.
      *

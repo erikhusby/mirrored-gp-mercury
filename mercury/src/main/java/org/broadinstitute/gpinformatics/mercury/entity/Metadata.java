@@ -76,10 +76,32 @@ public class Metadata {
         return new HashCodeBuilder().append(key).append(value).hashCode();
     }
 
-    /**
-     * Valid keys for Metadata records.
-     */
+    public enum Category {
+        SAMPLE,
+        LAB_METRIC_RUN
+    }
+
     public enum Key {
+        GENDER(Category.SAMPLE, "Gender"),
+        PATIENT_ID(Category.SAMPLE, "Patient ID"),
+        SAMPLE_TYPE(Category.SAMPLE, "Sample Type"),
+        TUMOR_NORMAL(Category.SAMPLE, "Tumor/Normal"),
+        BUICK_COLLECTION_DATE(Category.SAMPLE, "Collection Date"),
+        SAMPLE_ID(Category.SAMPLE, "Sample ID"),
+        BUICK_VISIT(Category.SAMPLE, "Visit"),
+
+        CORRELATION_COEFFICIENT_R2(Category.LAB_METRIC_RUN, "R squared correlataion coefficient"),
+        INSTRUMENT_NAME(Category.LAB_METRIC_RUN, "Instrument Name"),
+        INSTRUMENT_SERIAL_NUMBER(Category.LAB_METRIC_RUN, "Serial Number");
+
+        private Category category;
+
+        Key(Category labMetricRun, String s) {
+        }
+
+        public Category getCategory() {
+            return category;
+        }
         /* These keys are currently all used for uploads of the "modified" (edited) manifest during Buick sample
          * registration. */
         GENDER("Gender"),
