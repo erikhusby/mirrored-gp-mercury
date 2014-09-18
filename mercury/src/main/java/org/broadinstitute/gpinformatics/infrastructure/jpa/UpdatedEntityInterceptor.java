@@ -28,9 +28,9 @@ public class UpdatedEntityInterceptor {
     @PreUpdate
     @PrePersist
     public void preUpdateOrPersist(Object object) {
-        if (OrmUtil.proxySafeIsInstance(object, HasUpdateData.class)) {
-            HasUpdateData objectWithUpdateData = OrmUtil.proxySafeCast(object, HasUpdateData.class);
-            UpdateData updateData = objectWithUpdateData.getUpdateData();
+        if (OrmUtil.proxySafeIsInstance(object, Updatable.class)) {
+            Updatable updatable = OrmUtil.proxySafeCast(object, Updatable.class);
+            UpdateData updateData = updatable.getUpdateData();
 
             Date now = new Date();
             updateData.setModifiedDate(now);

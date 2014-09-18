@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Maps;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.HasUpdateData;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.Updatable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.UpdatedEntityInterceptor;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
@@ -43,7 +43,7 @@ import java.util.Set;
 @EntityListeners(UpdatedEntityInterceptor.class)
 @Audited
 @Table(schema = "mercury", name = "MANIFEST_RECORD")
-public class ManifestRecord implements HasUpdateData {
+public class ManifestRecord implements Updatable {
 
     @Id
     @Column(name = "MANIFEST_RECORD_ID")
@@ -151,10 +151,6 @@ public class ManifestRecord implements HasUpdateData {
             }
         }
         return false;
-    }
-
-    public UpdateData getUpdateData() {
-        return updateData;
     }
 
     /**
@@ -283,5 +279,9 @@ public class ManifestRecord implements HasUpdateData {
             return sampleMetadata.getValue();
         }
         return null;
+    }
+
+    public UpdateData getUpdateData() {
+        return updateData;
     }
 }

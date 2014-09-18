@@ -10,7 +10,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.HasUpdateData;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.Updatable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.UpdatedEntityInterceptor;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
@@ -53,9 +53,8 @@ import java.util.Set;
 @EntityListeners(UpdatedEntityInterceptor.class)
 @Audited
 @Table(schema = "mercury", name = "MANIFEST_SESSION")
-public class ManifestSession implements HasUpdateData {
+public class ManifestSession implements Updatable {
 
-    public static final String SAMPLE_ID_KEY = "Sample ID";
     public static final String VESSEL_LABEL = "Vessel barcode";
 
     @Id
@@ -79,8 +78,6 @@ public class ManifestSession implements HasUpdateData {
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "manifestSession", orphanRemoval = true)
     private List<ManifestEvent> manifestEvents = new ArrayList<>();
 
-    // IntelliJ claims this is unused.
-    @SuppressWarnings("UnusedDeclaration")
     @Embedded
     private UpdateData updateData = new UpdateData();
 
@@ -94,7 +91,7 @@ public class ManifestSession implements HasUpdateData {
         this.researchProject = researchProject;
         researchProject.addManifestSession(this);
         sessionPrefix = FilenameUtils.getBaseName(pathToManifestFile);
-        updateData.setCreatedBy(createdBy.getUserId());
+        getUpdateData().setCreatedBy(createdBy.getUserId());
     }
 
     public ResearchProject getResearchProject() {

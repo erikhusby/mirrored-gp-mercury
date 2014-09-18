@@ -30,6 +30,5 @@ public class TubeTransferException extends RuntimeException {
 
         super(errorStatus.formatMessage(dataType, dataValue) + (StringUtils.isBlank(message) ? "": " " + message));
         logger.error(getMessage());
-
     }
 }
