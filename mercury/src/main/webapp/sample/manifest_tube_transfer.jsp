@@ -4,19 +4,51 @@
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.ManifestTubeTransferActionBean"/>
 
 <stripes:layout-render name="/layout.jsp" pageTitle="" sectionTitle="" showCreate="">
-
     <stripes:layout-component name="extraHead">
+        <script type="text/javascript">
+            $j(document).ready(function () {
+
+                $j('#sessionList').dataTable({
+                    "oTableTools": ttExportDefines,
+                    "aaSorting": [
+                        [2, 'desc']
+                    ],
+                    "asStripeClasses": [ '' ],
+                    "aoColumns": [
+                        {"bSortable": true}, // RP Key
+                        {"bSortable": true}, // Name
+                        {"bSortable": true}, // Creator
+                        {"bSortable": true, "sType": "date"}, // Creation Date
+                        {"bSortable": true}, // Modified by
+                        {"bSortable": true, "sType": "date"} // Modified Date
+                    ] // Modified Date
+                }).fnSetFilteringDelay(300);
+
+                $j('#sessionList').on('click', 'tbody tr', function(event) {
+                    $(this).addClass('highlighted').siblings().removeClass('highlighted');
+                    var rowSessionId = $(this).children().find('input[name=sessionId]').val();
+                    $j("#activeSessionId").val(rowSessionId);
+                });
+
+                var activeSession = $j("#activeSessionId").val();
+
+                $("tr").filter(function(index){
+                    return $('input[type="hidden"]').val() == activeSession;
+                }).addClass('highlighted').siblings().removeClass('highlighted');
+
+            });
+        </script>
+
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
         <span>Choose an existing session to complete accessioning</span>
         <stripes:form beanclass="${actionBean.class.name}" id="startNewSessionForm">
-
+            <stripes:hidden name="activeSessionId" id="activeSessionId" />
         <div id="chooseExistingSession">
             <table id="sessionList" class="table simple">
                 <thead>
                 <tr>
-                    <th></th>
                     <th>Research Project</th>
                     <th>Session Name</th>
                     <th>Creator</th>
@@ -28,25 +60,22 @@
                 <tbody>
                 <c:forEach items="${actionBean.availableSessions}" var="closedSession">
                     <tr>
-                        <td>
-                            <stripes:radio value="${closedSession.manifestSessionId}" name="activeSessionId" />
-                        </td>
-                        <td>
+                        <td name="researchProjectColumn" width="120px">
                                 ${closedSession.researchProject.businessKey}
                         </td>
-                        <td>
-                                ${closedSession.sessionName}
+                        <td name="sessionNameColumn">
+                                ${closedSession.sessionName}<stripes:hidden name="sessionId" value="${closedSession.manifestSessionId}" />
                         </td>
-                        <td>
+                        <td name="createdByColumn">
                                 ${actionBean.getUserFullName(closedSession.updateData.createdBy)}
                         </td>
-                        <td>
+                        <td name="createdDateColumn" width="80px">
                             <fmt:formatDate value="${closedSession.updateData.createdDate}" pattern="${actionBean.datePattern}"/>
                         </td>
-                        <td>
+                        <td name="modifiedByColumn">
                                 ${actionBean.getUserFullName(closedSession.updateData.modifiedBy)}
                         </td>
-                        <td>
+                        <td name="modifiedDateColumn" width="80px">
                             <fmt:formatDate value="${closedSession.updateData.modifiedDate}" pattern="${actionBean.datePattern}"/>
                         </td>
                     </tr>
