@@ -655,9 +655,11 @@ public enum LabEventType {
      */
     SHEARING_BUCKET("ShearingBucket", ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY,
             CreateSources.FALSE, PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE),
-//    SHEARING_BUCKET_ENTRY ("ShearingBucketEntry", ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY),
+    //    SHEARING_BUCKET_ENTRY ("ShearingBucketEntry", ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY),
 //    SHEARING_BUCKET_EXIT ("ShearingBucketExit", ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY),
-    ;
+    COLLABORATOR_TRANSFER("CollaboratorTransfer", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE,
+            SystemOfRecord.MERCURY, CreateSources.FALSE, PlasticToValidate.TARGET, PipelineTransformation.NONE,
+            SendToBsp.FALSE),;
 
     private final String name;
 
@@ -769,7 +771,9 @@ public enum LabEventType {
         }
     }
 
-    /** Whether to send this event message to BSP. */
+    /**
+     * Whether to send this event message to BSP.
+     */
     private enum SendToBsp {
         TRUE(true),
         FALSE(false);

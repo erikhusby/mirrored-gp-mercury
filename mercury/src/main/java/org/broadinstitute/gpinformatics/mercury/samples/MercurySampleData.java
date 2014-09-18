@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.samples;
 
 import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 
 import java.text.ParseException;
@@ -11,10 +12,42 @@ import java.util.List;
 /**
  */
 public class MercurySampleData implements SampleData {
+    private String visit;
+    private String collectionDate;
+    private String sampleType;
+    private String materialType;
+    private String patientId;
+    private String gender;
     private String sampleId;
 
     public MercurySampleData(MercurySample mercurySample) {
-        this.sampleId=mercurySample.getSampleKey();
+        extractMetadataFromSample(mercurySample);
+    }
+
+    private void extractMetadataFromSample(MercurySample mercurySample) {
+        this.sampleId = mercurySample.getSampleKey();
+        for (Metadata metadata : mercurySample.getMetadata()) {
+            switch (metadata.getKey()) {
+            case GENDER:
+                this.gender = metadata.getValue();
+                break;
+            case PATIENT_ID:
+                this.patientId = metadata.getValue();
+                break;
+            case SAMPLE_TYPE:
+                this.materialType = metadata.getValue();
+                break;
+            case TUMOR_NORMAL:
+                this.sampleType = metadata.getValue();
+                break;
+            case BUICK_COLLECTION_DATE:
+                this.collectionDate = metadata.getValue();
+                break;
+            case BUICK_VISIT:
+                this.visit = metadata.getValue();
+                break;
+            }
+        }
     }
 
     public MercurySampleData() {
@@ -87,7 +120,7 @@ public class MercurySampleData implements SampleData {
 
     @Override
     public String getPatientId() {
-        return null;
+        return patientId;
     }
 
     @Override
@@ -112,7 +145,7 @@ public class MercurySampleData implements SampleData {
 
     @Override
     public String getMaterialType() {
-        return null;
+        return materialType;
     }
 
     @Override
@@ -122,7 +155,7 @@ public class MercurySampleData implements SampleData {
 
     @Override
     public String getSampleType() {
-        return null;
+        return sampleType;
     }
 
     @Override
@@ -132,7 +165,7 @@ public class MercurySampleData implements SampleData {
 
     @Override
     public String getGender() {
-        return null;
+        return gender;
     }
 
     @Override
@@ -193,5 +226,13 @@ public class MercurySampleData implements SampleData {
     @Override
     public String getBarcodeForLabVessel() {
         return null;
+    }
+
+    public String getCollectionDate() {
+        return collectionDate;
+    }
+
+    public String getVisit() {
+        return visit;
     }
 }

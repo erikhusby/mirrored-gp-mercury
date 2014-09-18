@@ -12,7 +12,7 @@
         <security>
             <user-name>mercury</user-name>
             <password>mercury_dev</password>
-             <!--<password>mercury_local</password>-->
+            <!--<password>mercury_local</password>-->
         </security>
         <validation>
             <background-validation>true</background-validation>
