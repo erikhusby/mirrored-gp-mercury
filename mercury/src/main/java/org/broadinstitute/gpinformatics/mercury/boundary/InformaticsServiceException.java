@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary;
 
+import javax.annotation.Nonnull;
 import javax.ejb.ApplicationException;
 
 /**
@@ -20,15 +21,15 @@ import javax.ejb.ApplicationException;
 @ApplicationException(rollback = true)
 public class InformaticsServiceException extends RuntimeException {
 
-    public InformaticsServiceException ( String s ) {
-        super(s);
+    public InformaticsServiceException(@Nonnull String template, Object... args) {
+        super(args.length == 0 ? template : String.format(template, args));
     }
 
-    public InformaticsServiceException ( String s, Throwable throwableIn ) {
-        super(s, throwableIn);
+    public InformaticsServiceException(@Nonnull String template, Throwable cause, Object... args) {
+        super(args.length == 0 ? template : String.format(template, args), cause);
     }
 
-    public InformaticsServiceException ( Throwable throwableIn ) {
+    public InformaticsServiceException(Throwable throwableIn) {
         super(throwableIn);
     }
 }

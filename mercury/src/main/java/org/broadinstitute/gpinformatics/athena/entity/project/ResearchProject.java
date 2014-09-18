@@ -12,6 +12,8 @@ import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
@@ -193,7 +195,14 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
             orphanRemoval = true)
     private List<SubmissionTracker> submissionTrackers = new ArrayList<>();
-// todo: we can cache the submissiontrackers in a static map
+
+    /**
+     * The Buick ManifestSessions linked to this ResearchProject.
+     */
+    @OneToMany(mappedBy = "researchProject", cascade = CascadeType.PERSIST)
+    private Set<ManifestSession> manifestSessions = new HashSet<>();
+
+    // todo: we can cache the submissiontrackers in a static map
     public SubmissionTracker getSubmissionTracker(SubmissionTuple tuple){
         Set<SubmissionTracker> foundSubmissionTrackers = new HashSet<>();
         for (SubmissionTracker submissionTracker : getSubmissionTrackers()) {
@@ -228,7 +237,7 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
      * @param title         The title (name) of the project
      * @param synopsis      A description of the project
      * @param irbNotEngaged Is this project set up for NO IRB?
-     * @param regulatoryDesignation
+     * @param regulatoryDesignation The regulatory designation for this research project
      */
     public ResearchProject(Long createdBy, String title, String synopsis, boolean irbNotEngaged,
                            RegulatoryDesignation regulatoryDesignation) {
@@ -863,6 +872,31 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         for(SubmissionTracker tracker:submissionTracker) {
             tracker.setResearchProject(this);
         }
+    }
+
+    public Set<ManifestSession> getManifestSessions() {
+        return manifestSessions;
+    }
+
+    public void addManifestSession(ManifestSession manifestSession) {
+        this.manifestSessions.add(manifestSession);
+    }
+
+
+    /**
+     * Helper method to extract all manifest records eligible for validation.  Records for which validation has been
+     * run and has found errors are not eligible for validation.
+     *
+     * @return A list of all Manifest record
+     */
+    public List<ManifestRecord> collectNonQuarantinedManifestRecords() {
+        List<ManifestRecord> allRecords = new ArrayList<>();
+
+        for (ManifestSession manifestSession : getManifestSessions()) {
+            allRecords.addAll(manifestSession.getNonQuarantinedRecords());
+        }
+
+        return allRecords;
     }
 
     public enum Status implements StatusType {

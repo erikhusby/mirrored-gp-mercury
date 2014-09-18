@@ -138,7 +138,7 @@
                     <c:choose>
                         <c:when test="${actionBean.creating}">
                             <div class="control-group">
-                                <label class="control-label" for="regulatoryDesignation">Regulatory Designation</label>
+                                <label class="control-label" for="regulatoryDesignation">Regulatory Designation *</label>
                                 <div class="controls">
                                     <stripes:select id="regulatoryDesignation" name="editResearchProject.regulatoryDesignation">
                                         <stripes:option value="">Select One</stripes:option>

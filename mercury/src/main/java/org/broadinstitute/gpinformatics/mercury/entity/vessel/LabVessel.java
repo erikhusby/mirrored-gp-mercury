@@ -1831,4 +1831,27 @@ public abstract class LabVessel implements Serializable {
         }
     }
 
+    /**
+     * Allows the caller to determine if the current vessel or any of its ancestors have been involved in a tube
+     * transfer for clinical work
+     * @return true if the vessel is affiliated with clinical work
+     * @param labEventType
+     */
+    public boolean doesChainOfCostodyInclude(LabEventType labEventType) {
+
+        if (LabEvent.isEventPresent(getEvents(), labEventType)) {
+            return true;
+        }
+
+        TransferTraverserCriteria.LabEventDescendantCriteria eventTraversalCriteria =
+                new TransferTraverserCriteria.LabEventDescendantCriteria();
+        evaluateCriteria(eventTraversalCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+
+        if (LabEvent.isEventPresent(eventTraversalCriteria.getAllEvents(), LabEventType.COLLABORATOR_TRANSFER)) {
+            return true;
+        }
+
+        return false;
+    }
+
 }
