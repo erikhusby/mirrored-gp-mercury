@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
 import com.google.common.collect.Sets;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -27,6 +28,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
@@ -202,6 +204,13 @@ public class VesselEjb {
                 messageCollection.addWarning("This run has been uploaded previously.");
                 return labMetricRun;
             }
+            // Run date must be unique so that a search can reveal the latest quant.
+            List<LabMetricRun> sameDateRuns = labMetricRunDao.findList(LabMetricRun.class, LabMetricRun_.runDate,
+                    parseRunDate(mapNameValueToValue));
+            if (CollectionUtils.isNotEmpty(sameDateRuns)) {
+                messageCollection.addWarning("A previous upload has the same Run Started timestamp.");
+                return sameDateRuns.iterator().next();
+            }
 
             VarioskanPlateProcessor varioskanPlateProcessor = new VarioskanPlateProcessor(
                     VarioskanRowParser.QUANTITATIVE_CURVE_FIT1_TAB);
@@ -245,14 +254,7 @@ public class VesselEjb {
         Map<LabVessel, VesselPosition> mapTubeToPosition = new HashMap<>();
 
         // Create the run
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(
-                VarioskanRowParser.NameValue.RUN_STARTED.getDateFormat());
-        Date runStarted;
-        try {
-            runStarted = simpleDateFormat.parse(mapNameValueToValue.get(VarioskanRowParser.NameValue.RUN_STARTED));
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
-        }
+        Date runStarted = parseRunDate(mapNameValueToValue);
         LabMetricRun labMetricRun = new LabMetricRun(mapNameValueToValue.get(VarioskanRowParser.NameValue.RUN_NAME),
                 runStarted, metricType);
 
@@ -329,5 +331,16 @@ public class VesselEjb {
         }
 
         return labMetricRun;
+    }
+
+    // Returns the quant spreadsheet's run started value as a Date.
+    private Date parseRunDate(Map<VarioskanRowParser.NameValue, String> mapNameValueToValue) {
+        SimpleDateFormat simpleDateFormat =
+                new SimpleDateFormat(VarioskanRowParser.NameValue.RUN_STARTED.getDateFormat());
+        try {
+            return simpleDateFormat.parse(mapNameValueToValue.get(VarioskanRowParser.NameValue.RUN_STARTED));
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

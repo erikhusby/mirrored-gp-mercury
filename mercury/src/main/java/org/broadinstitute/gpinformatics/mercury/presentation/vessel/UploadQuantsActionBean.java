@@ -10,6 +10,7 @@ import net.sourceforge.stripes.validation.SimpleError;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationErrors;
 import net.sourceforge.stripes.validation.ValidationMethod;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
@@ -22,12 +23,16 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric_;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.sample.PicoDispositionActionBean;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -73,6 +78,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
     private List<Long> selectedMetrics = new ArrayList<>();
     private String overrideReason;
     private LabMetricDecision.Decision overrideDecision;
+    private String tubeFormationLabel;
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -108,6 +114,19 @@ public class UploadQuantsActionBean extends CoreActionBean {
                 MessageCollection messageCollection = new MessageCollection();
                 labMetricRun = vesselEjb.createVarioskanRun(quantStream, getQuantType(),
                         userBean.getBspUser().getUserId(), messageCollection);
+                // Finds the tubeFormationLabel using the metric on a barcoded tube.
+                for (LabMetric labMetric : labMetricRun.getLabMetrics()) {
+                    if (labMetric.getLabVessel().getType() == LabVessel.ContainerType.TUBE) {
+                        Set<VesselContainer<?>> vesselContainers = labMetric.getLabVessel().getContainers();
+                        if (CollectionUtils.isNotEmpty(vesselContainers)) {
+                            LabVessel tubeFormation = vesselContainers.iterator().next().getEmbedder();
+                            if (tubeFormation != null) {
+                                tubeFormationLabel = tubeFormation.getLabel();
+                                break;
+                            }
+                        }
+                    }
+                }
                 addMessages(messageCollection);
                 break;
             case GENERIC:
@@ -234,4 +253,15 @@ public class UploadQuantsActionBean extends CoreActionBean {
         return LabMetricDecision.Decision.getEditableDecisions();
     }
 
+    public String getPicoDispositionActionBeanUrl() {
+        return PicoDispositionActionBean.ACTION_BEAN_URL;
+    }
+
+    public String getTubeFormationLabel() {
+        return tubeFormationLabel;
+    }
+
+    public void setTubeFormationLabel(String tubeFormationLabel) {
+        this.tubeFormationLabel = tubeFormationLabel;
+    }
 }
