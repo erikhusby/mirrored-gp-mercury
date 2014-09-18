@@ -82,6 +82,8 @@ public class Metadata {
     }
 
     public enum Key {
+        // The Category.SAMPLE keys are currently all used for uploads of the "modified" (edited) manifest during
+        // Buick sample registration.
         GENDER(Category.SAMPLE, "Gender"),
         PATIENT_ID(Category.SAMPLE, "Patient ID"),
         SAMPLE_TYPE(Category.SAMPLE, "Sample Type"),
@@ -90,31 +92,20 @@ public class Metadata {
         SAMPLE_ID(Category.SAMPLE, "Sample ID"),
         BUICK_VISIT(Category.SAMPLE, "Visit"),
 
-        CORRELATION_COEFFICIENT_R2(Category.LAB_METRIC_RUN, "R squared correlataion coefficient"),
+        CORRELATION_COEFFICIENT_R2(Category.LAB_METRIC_RUN, "R Squared Correlation Coefficient"),
         INSTRUMENT_NAME(Category.LAB_METRIC_RUN, "Instrument Name"),
         INSTRUMENT_SERIAL_NUMBER(Category.LAB_METRIC_RUN, "Serial Number");
 
-        private Category category;
+        private final Category category;
+        private final String displayName;
 
-        Key(Category labMetricRun, String s) {
+        Key(Category category, String displayName) {
+            this.category = category;
+            this.displayName = displayName;
         }
 
         public Category getCategory() {
             return category;
-        }
-        /* These keys are currently all used for uploads of the "modified" (edited) manifest during Buick sample
-         * registration. */
-        GENDER("Gender"),
-        PATIENT_ID("Patient ID"),
-        SAMPLE_TYPE("Sample Type"),
-        TUMOR_NORMAL("Tumor/Normal"),
-        BUICK_COLLECTION_DATE("Collection Date"),
-        SAMPLE_ID("Sample ID"),
-        BUICK_VISIT("Visit");
-        private final String displayName;
-
-        Key(String displayName) {
-            this.displayName = displayName;
         }
 
         public String getDisplayName() {

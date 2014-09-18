@@ -746,7 +746,7 @@ public enum LabEventType {
 //    SHEARING_BUCKET_EXIT ("ShearingBucketExit", ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY),
     COLLABORATOR_TRANSFER("CollaboratorTransfer", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE,
             SystemOfRecord.MERCURY, CreateSources.FALSE, PlasticToValidate.TARGET, PipelineTransformation.NONE,
-            SendToBsp.FALSE),;
+            SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY);
 
     private final String name;
 
