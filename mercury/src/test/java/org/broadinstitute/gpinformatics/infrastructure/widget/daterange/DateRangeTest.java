@@ -12,7 +12,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.widget.daterange;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.util.Calendar;
@@ -24,6 +23,9 @@ import static org.hamcrest.Matchers.equalTo;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class DateRangeTest {
+    Calendar beginningOfQuarter;
+    Calendar endOfQuarter;
+
     public void testNewVersionSameResultAsOld() {
         Date[] newDates = DateRange.ThisQuarter.startAndStopDate();
 
@@ -52,55 +54,104 @@ public class DateRangeTest {
         // assertThat(newDates[1], equalTo(oldStyleStartAndStopDate[1]));
     }
 
-    @DataProvider(name = "quarterValuesDataProvider")
-    public static Object[][] quarterValuesDataProvider() {
-        return new Object[][]{
-                new Object[]{
-                        new GregorianCalendar(2014, Calendar.JANUARY, 1, 0, 0, 0),
-                        new GregorianCalendar(2014, Calendar.MARCH, 31, 23, 59, 59),
-                },
-                new Object[]{
-                        new GregorianCalendar(2014, Calendar.APRIL, 1, 0, 0, 0),
-                        new GregorianCalendar(2014, Calendar.JUNE, 30, 23, 59, 59),
-                },
-                new Object[]{
-                        new GregorianCalendar(2014, Calendar.JULY, 1, 0, 0, 0),
-                        new GregorianCalendar(2014, Calendar.SEPTEMBER, 30, 23, 59, 59),
-                },
-                new Object[]{
-                        new GregorianCalendar(2014, Calendar.OCTOBER, 1, 0, 0, 0),
-                        new GregorianCalendar(2014, Calendar.DECEMBER, 31, 23, 59, 59),
-                },
-        };
+    private void setupCalendar(int startMonth, int endMonth) {
+        beginningOfQuarter = new GregorianCalendar(2014, startMonth, 1, 0, 0, 0);
+        beginningOfQuarter.set(Calendar.MILLISECOND, 0);
+
+        endOfQuarter =
+                new GregorianCalendar(2014, endMonth, beginningOfQuarter.getActualMaximum(Calendar.DAY_OF_MONTH), 23,
+                        59, 59);
+        endOfQuarter.set(Calendar.MILLISECOND, 999);
     }
 
-    @Test(dataProvider = "quarterValuesDataProvider")
-    public void testFirstDayOfQuarter(Calendar beginningOfQuarter, Calendar endOfQuarter) throws Exception {
+    public void testFirstDayOfQuarter1() throws Exception {
+        setupCalendar(Calendar.JANUARY, Calendar.MARCH);
+
+        OneQuarterDateRange dateRange = new OneQuarterDateRange(beginningOfQuarter.getTime());
+        validateDateRange(dateRange, beginningOfQuarter.getTime(), endOfQuarter.getTime());
+    }
+
+
+    public void testLastDayOfQuarter1() throws Exception {
+        setupCalendar(Calendar.JANUARY, Calendar.MARCH);
+
+        OneQuarterDateRange dateRange = new OneQuarterDateRange(beginningOfQuarter.getTime());
+        validateDateRange(dateRange, beginningOfQuarter.getTime(), endOfQuarter.getTime());
+    }
+
+    public void testFirstDayOfQuarter2() throws Exception {
+        Calendar beginningOfQuarter = new GregorianCalendar(2014, Calendar.APRIL, 1, 0, 0, 0);
+        Calendar endOfQuarter = new GregorianCalendar(2014, Calendar.JUNE, 30, 23, 59, 59);
+
         beginningOfQuarter.set(Calendar.MILLISECOND, 0);
         endOfQuarter.set(Calendar.MILLISECOND, 999);
 
         OneQuarterDateRange dateRange = new OneQuarterDateRange(beginningOfQuarter.getTime());
         validateDateRange(dateRange, beginningOfQuarter.getTime(), endOfQuarter.getTime());
-
     }
 
-    @Test(dataProvider = "quarterValuesDataProvider")
-    public void testLastDayOfQuarter(Calendar beginningOfQuarter, Calendar endOfQuarter) throws Exception {
+    public void testLastDayOfQuarter2() throws Exception {
+        Calendar beginningOfQuarter = new GregorianCalendar(2014, Calendar.APRIL, 1, 0, 0, 0);
+        Calendar endOfQuarter = new GregorianCalendar(2014, Calendar.JUNE, 30, 23, 59, 59);
+
         beginningOfQuarter.set(Calendar.MILLISECOND, 0);
         endOfQuarter.set(Calendar.MILLISECOND, 999);
 
-        OneQuarterDateRange dateRange = new OneQuarterDateRange(endOfQuarter.getTime());
+        OneQuarterDateRange dateRange = new OneQuarterDateRange(beginningOfQuarter.getTime());
         validateDateRange(dateRange, beginningOfQuarter.getTime(), endOfQuarter.getTime());
     }
 
-    public void testEqualDatesRanges(){
+    public void testFirstDayOfQuarter3() throws Exception {
+        Calendar beginningOfQuarter = new GregorianCalendar(2014, Calendar.JULY, 1, 0, 0, 0);
+        Calendar endOfQuarter = new GregorianCalendar(2014, Calendar.SEPTEMBER, 30, 23, 59, 59);
+
+        beginningOfQuarter.set(Calendar.MILLISECOND, 0);
+        endOfQuarter.set(Calendar.MILLISECOND, 999);
+
+        OneQuarterDateRange dateRange = new OneQuarterDateRange(beginningOfQuarter.getTime());
+        validateDateRange(dateRange, beginningOfQuarter.getTime(), endOfQuarter.getTime());
+    }
+
+    public void testLastDayOfQuarter3() throws Exception {
+        Calendar beginningOfQuarter = new GregorianCalendar(2014, Calendar.JULY, 1, 0, 0, 0);
+        Calendar endOfQuarter = new GregorianCalendar(2014, Calendar.SEPTEMBER, 30, 23, 59, 59);
+
+        beginningOfQuarter.set(Calendar.MILLISECOND, 0);
+        endOfQuarter.set(Calendar.MILLISECOND, 999);
+
+        OneQuarterDateRange dateRange = new OneQuarterDateRange(beginningOfQuarter.getTime());
+        validateDateRange(dateRange, beginningOfQuarter.getTime(), endOfQuarter.getTime());
+    }
+
+    public void testFirstDayOfQuarter4() throws Exception {
+        Calendar beginningOfQuarter = new GregorianCalendar(2014, Calendar.OCTOBER, 1, 0, 0, 0);
+        Calendar endOfQuarter = new GregorianCalendar(2014, Calendar.DECEMBER, 31, 23, 59, 59);
+
+        beginningOfQuarter.set(Calendar.MILLISECOND, 0);
+        endOfQuarter.set(Calendar.MILLISECOND, 999);
+
+        OneQuarterDateRange dateRange = new OneQuarterDateRange(beginningOfQuarter.getTime());
+        validateDateRange(dateRange, beginningOfQuarter.getTime(), endOfQuarter.getTime());
+    }
+
+    public void testLastDayOfQuarter4() throws Exception {
+        Calendar beginningOfQuarter = new GregorianCalendar(2014, Calendar.OCTOBER, 1, 0, 0, 0);
+        Calendar endOfQuarter = new GregorianCalendar(2014, Calendar.DECEMBER, 31, 23, 59, 59);
+
+        beginningOfQuarter.set(Calendar.MILLISECOND, 0);
+        endOfQuarter.set(Calendar.MILLISECOND, 999);
+
+        OneQuarterDateRange dateRange = new OneQuarterDateRange(beginningOfQuarter.getTime());
+        validateDateRange(dateRange, beginningOfQuarter.getTime(), endOfQuarter.getTime());
+    }
+
+    public void testEqualDatesRanges() {
         OneQuarterDateRange dateRangeNoArg = new OneQuarterDateRange();
         Date[] datesNoArg = dateRangeNoArg.startAndStopDate();
         OneQuarterDateRange dateRangeWithArg = new OneQuarterDateRange(datesNoArg[0]);
         Date[] datesFromArg = dateRangeWithArg.startAndStopDate();
         assertThat(datesNoArg[0], equalTo(datesFromArg[0]));
         assertThat(datesNoArg[1], equalTo(datesFromArg[1]));
-
     }
 
     private void validateDateRange(OneQuarterDateRange calculatedDateRange, Date expectedStartDate,
