@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
@@ -81,7 +82,7 @@ public class Metadata {
         LAB_METRIC_RUN
     }
 
-    public enum Key {
+    public enum Key implements Displayable {
         // The Category.SAMPLE keys are currently all used for uploads of the "modified" (edited) manifest during
         // Buick sample registration.
         GENDER(Category.SAMPLE, "Gender"),

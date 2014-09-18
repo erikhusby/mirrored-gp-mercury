@@ -8,5 +8,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
  */
 public interface HasUpdateData {
 
+    /**
+     * Return the {@code UpdateData} for this object.
+     */
     UpdateData getUpdateData();
 }

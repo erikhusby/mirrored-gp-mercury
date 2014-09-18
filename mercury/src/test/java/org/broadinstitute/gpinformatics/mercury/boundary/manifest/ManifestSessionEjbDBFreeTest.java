@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import org.broadinstitute.gpinformatics.FormatStringMatcher;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -35,11 +36,11 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.broadinstitute.gpinformatics.FormatStringMatcher.matchesFormatString;
 import static org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestStatusErrorMatcher.hasError;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -455,8 +456,8 @@ public class ManifestSessionEjbDBFreeTest {
         try {
             ejb.acceptManifestUpload(ARBITRARY_MANIFEST_SESSION_ID);
             Assert.fail();
-        } catch (InformaticsServiceException ignored) {
-            assertThat(ignored.getMessage(), containsString("not found"));
+        } catch (InformaticsServiceException e) {
+            assertThat(e.getMessage(), matchesFormatString(ManifestSessionEjb.MANIFEST_SESSION_NOT_FOUND));
         }
     }
 
@@ -908,8 +909,8 @@ public class ManifestSessionEjbDBFreeTest {
         try {
             holder.ejb.validateSourceTubeForTransfer(ARBITRARY_MANIFEST_SESSION_ID, sourceForTransfer);
             Assert.fail();
-        } catch (Exception ignored) {
-            assertThat(ignored.getMessage(), is(equalTo(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE
+        } catch (Exception e) {
+            assertThat(e.getMessage(), is(equalTo(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE
                     .formatMessage(Metadata.Key.SAMPLE_ID, sourceForTransfer))));
         }
     }
@@ -920,8 +921,8 @@ public class ManifestSessionEjbDBFreeTest {
         try {
             holder.ejb.validateSourceTubeForTransfer(ARBITRARY_MANIFEST_SESSION_ID, sourceForTransfer);
             Assert.fail();
-        } catch (Exception ignored) {
-            assertThat(ignored.getMessage(),
+        } catch (Exception e) {
+            assertThat(e.getMessage(),
                     is(equalTo(ManifestRecord.ErrorStatus.NOT_IN_MANIFEST.formatMessage(Metadata.Key.SAMPLE_ID,
                             sourceForTransfer))));
         }
@@ -950,8 +951,8 @@ public class ManifestSessionEjbDBFreeTest {
         try {
             holder.ejb.validateSourceTubeForTransfer(ARBITRARY_MANIFEST_SESSION_ID, sourceForTransfer);
             Assert.fail();
-        } catch (Exception ignored) {
-            assertThat(ignored.getMessage(), is(equalTo(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE
+        } catch (Exception e) {
+            assertThat(e.getMessage(), is(equalTo(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE
                     .formatMessage(Metadata.Key.SAMPLE_ID, sourceForTransfer))));
         }
     }

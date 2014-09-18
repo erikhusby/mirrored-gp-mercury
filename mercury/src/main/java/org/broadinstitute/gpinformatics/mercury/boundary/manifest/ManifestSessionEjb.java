@@ -9,7 +9,6 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
@@ -49,6 +48,11 @@ public class ManifestSessionEjb {
     static final String VESSEL_NOT_FOUND_MESSAGE = "::  The target vessel is not found";
     static final String VESSEL_USED_FOR_PREVIOUS_TRANSFER =
             ":: the target vessel has already been used for a tube transfer";
+
+    static final String MANIFEST_SESSION_NOT_FOUND = "Manifest Session '%s' not found";
+
+    static final String RESEARCH_PROJECT_NOT_FOUND = "Research Project '%s' not found";
+
     private ManifestSessionDao manifestSessionDao;
 
     private ResearchProjectDao researchProjectDao;
@@ -140,7 +144,7 @@ public class ManifestSessionEjb {
     private ResearchProject findResearchProject(String researchProjectKey) {
         ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
         if (researchProject == null) {
-            throw new InformaticsServiceException(String.format("Research Project '%s' not found", researchProjectKey));
+            throw new InformaticsServiceException(String.format(RESEARCH_PROJECT_NOT_FOUND, researchProjectKey));
         }
         return researchProject;
     }
@@ -148,7 +152,7 @@ public class ManifestSessionEjb {
     private ManifestSession findManifestSession(long manifestSessionId) {
         ManifestSession manifestSession = manifestSessionDao.find(manifestSessionId);
         if (manifestSession == null) {
-            throw new InformaticsServiceException(String.format("Manifest Session '%s' not found", manifestSessionId));
+            throw new InformaticsServiceException(String.format(MANIFEST_SESSION_NOT_FOUND, manifestSessionId));
         }
         return manifestSession;
     }
@@ -272,7 +276,7 @@ public class ManifestSessionEjb {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
                     targetVesselLabel, VESSEL_NOT_FOUND_MESSAGE);
         }
-        if (foundVessel.doesChainOfCostodyInclude(LabEventType.COLLABORATOR_TRANSFER)) {
+        if (foundVessel.doesChainOfCustodyInclude(LabEventType.COLLABORATOR_TRANSFER)) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
                     targetVesselLabel, VESSEL_USED_FOR_PREVIOUS_TRANSFER);
         }

@@ -21,6 +21,10 @@ public class UpdatedEntityInterceptor {
 
     private static final Log logger = LogFactory.getLog(UpdatedEntityInterceptor.class);
 
+    /**
+     * Update the created/last updated data within the {@code UpdateData} of an object implementing
+     * {@code HasUpdateData} and annotated with {@code @EntityListeners(UpdatedEntityInterceptor.class)}.
+     */
     @PreUpdate
     @PrePersist
     public void preUpdateOrPersist(Object object) {
@@ -37,7 +41,7 @@ public class UpdatedEntityInterceptor {
             UserBean userBean = ServiceAccessUtility.getBean(UserBean.class);
 
             if (userBean == null) {
-                logger.info("Unable to determine the current user because User bean is null");
+                logger.error("Unable to determine the current user because User bean is null");
                 throw new InformaticsServiceException("Unable to determine an existing user to record who " +
                                                       "is modifying data");
             } else {

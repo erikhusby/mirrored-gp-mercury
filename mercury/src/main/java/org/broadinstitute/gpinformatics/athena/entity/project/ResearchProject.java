@@ -884,10 +884,8 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
 
 
     /**
-     * Helper method to extract all manifest records eligible for validation.  Records for which validation has been
+     * Collects all manifest records eligible for validation.  Records for which validation has been
      * run and has found errors are not eligible for validation.
-     *
-     * @return A list of all Manifest record
      */
     public List<ManifestRecord> collectNonQuarantinedManifestRecords() {
         List<ManifestRecord> allRecords = new ArrayList<>();

@@ -30,7 +30,6 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +50,6 @@ public class ManifestRecord implements HasUpdateData {
     @SequenceGenerator(name = "SEQ_MANIFEST_RECORD", schema = "mercury", sequenceName = "SEQ_MANIFEST_RECORD")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MANIFEST_RECORD")
     /** JPA ID field */
-    @SuppressWarnings("UnusedDeclaration")
     private Long manifestRecordId;
 
     @ManyToMany(cascade = CascadeType.PERSIST)
@@ -76,13 +74,11 @@ public class ManifestRecord implements HasUpdateData {
     @JoinColumn(name = "manifest_session_id")
     private ManifestSession manifestSession;
 
-    // IntelliJ claims this is unused.
-    @SuppressWarnings("UnusedDeclaration")
     @Embedded
     private UpdateData updateData = new UpdateData();
 
     /**
-     * For JPA
+     * For JPA.
      */
     protected ManifestRecord() {
     }
@@ -157,16 +153,6 @@ public class ManifestRecord implements HasUpdateData {
         return false;
     }
 
-    public Set<String> getQuarantinedRecordMessages() {
-        Set<String> quarantinedMessages = new HashSet<>();
-        for (ManifestEvent manifestEvent : getManifestEvents()) {
-            if (manifestEvent.getSeverity() == ManifestEvent.Severity.QUARANTINED) {
-                quarantinedMessages.add(manifestEvent.getMessage());
-            }
-        }
-        return quarantinedMessages;
-    }
-
     public UpdateData getUpdateData() {
         return updateData;
     }
@@ -178,16 +164,14 @@ public class ManifestRecord implements HasUpdateData {
 
         if (isQuarantined()) {
             throw new InformaticsServiceException(
-                    ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID
-                            .formatMessage(Metadata.Key.SAMPLE_ID, getSampleId()));
+                    ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage(Metadata.Key.SAMPLE_ID, getSampleId()));
         }
-        if (getStatus() == ManifestRecord.Status.SCANNED) {
+        if (status == Status.SCANNED) {
             throw new InformaticsServiceException(
-                    ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_SCAN
-                            .formatMessage(Metadata.Key.SAMPLE_ID, getSampleId()));
+                    ErrorStatus.DUPLICATE_SAMPLE_SCAN.formatMessage(Metadata.Key.SAMPLE_ID, getSampleId()));
         }
 
-        setStatus(ManifestRecord.Status.SCANNED);
+        status = Status.SCANNED;
     }
 
     /**
