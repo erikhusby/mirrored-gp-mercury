@@ -10,6 +10,7 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
@@ -34,17 +35,16 @@ public class ManifestTubeTransferActionBean extends CoreActionBean {
     public static final String SCAN_TARGET_VESSEL_AND_SAMPLE_ACTION = "scanTargetVessel";
     public static final String RECORD_TRANSFER_ACTION = "recordTransfer";
 
-    @Validate(required = true, on = {RECORD_TRANSFER_ACTION, SCAN_SOURCE_TUBE_ACTION})
+    @Validate(required = true, on = {RECORD_TRANSFER_ACTION})
     private String sourceTube;
 
-    @Validate(required = true, on = {SCAN_TARGET_VESSEL_AND_SAMPLE_ACTION, SCAN_TARGET_SAMPLE_ACTION,
-            RECORD_TRANSFER_ACTION})
+    @Validate(required = true, on = {RECORD_TRANSFER_ACTION})
     private String targetSample;
 
-    @Validate(required = true, on = {SCAN_TARGET_VESSEL_AND_SAMPLE_ACTION, RECORD_TRANSFER_ACTION})
+    @Validate(required = true, on = {RECORD_TRANSFER_ACTION})
     private String targetVessel;
 
-    @Validate(required = true, on = {"!"+VIEW_ACTION})
+    @Validate(required = true, on = {RECORD_TRANSFER_ACTION})
     private Long activeSessionId;
     private ManifestSession activeSession;
     private List<ManifestSession> availableSessions;
@@ -62,8 +62,12 @@ public class ManifestTubeTransferActionBean extends CoreActionBean {
         super();
     }
 
-    @Before(stages = LifecycleStage.EventHandling, on = {"!"+VIEW_ACTION})
+    @Before(stages = LifecycleStage.EventHandling, on = {RECORD_TRANSFER_ACTION})
     public void init() {
+        findActiveSession();
+    }
+
+    private void findActiveSession() {
         activeSession = manifestSessionDao.find(activeSessionId);
     }
 
@@ -91,6 +95,16 @@ public class ManifestTubeTransferActionBean extends CoreActionBean {
     @HandlesEvent(SCAN_SOURCE_TUBE_ACTION)
     public Resolution scanSource() {
         String message = "";
+        if(activeSessionId == null) {
+            return createTextResolution("You must select a session to continue");
+        }
+        if(StringUtils.isBlank(sourceTube)) {
+            return createTextResolution("You must enter a value for the source Tube");
+        }
+        findActiveSession();
+        if(activeSession == null) {
+            return createTextResolution("The selected session could not be found");
+        }
         try {
             manifestSessionEjb.validateSourceTubeForTransfer(activeSessionId, sourceTube);
         } catch (Exception e) {
