@@ -141,11 +141,13 @@
         function updateScanResults(resultsMessage) {
 
             $j("#scanResults").empty();
+
             var message = "Scan Successful";
             if (resultsMessage) {
-                message = resultsMessage;
+                $j("#scanResults").append('<div class="alert alert-error" style="font-size: 14px;margin-left:20%;margin-right:20%">'+resultsMessage+"</div>");
+            } else {
+                $j("#scanResults").append('<div class="alert alert-error" style="font-size: 14px;margin-left:20%;margin-right:20%">'+message+"</div>");
             }
-            $j("#scanResults").append(message);
         }
     </script>
 
@@ -200,7 +202,6 @@
 
         <div id="startNewSession">
             <div class="form-horizontal span6">
-                <div id="scanResults" > </div>
                 <div class="control-group">
                     <stripes:label for="source" class="control-label">
                         Step 1
@@ -246,6 +247,8 @@
                     <stripes:submit name="recordTransfer" value="Record Transfer" class="btn" tabindex="4"/>
                 </div>
             </div>
+
+            <div id="scanResults" class="help-block span4"> </div>
         </div>
     </stripes:form>
 
