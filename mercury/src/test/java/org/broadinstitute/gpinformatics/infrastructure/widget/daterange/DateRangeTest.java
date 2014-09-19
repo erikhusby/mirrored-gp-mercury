@@ -12,6 +12,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.widget.daterange;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.util.Calendar;
@@ -41,6 +42,17 @@ public class DateRangeTest {
                     new GregorianCalendar(2014, Calendar.OCTOBER, 1, 0, 0, 0),
                     new GregorianCalendar(2014, Calendar.DECEMBER, 31, 23, 59, 59)
             }};
+
+    @BeforeClass(groups = TestGroups.DATABASE_FREE)
+    public void beforeClass() {
+        for (Object[] dates : QUARTER_DATE_RANGES) {
+            GregorianCalendar beginningOfQuarter = (GregorianCalendar) dates[0];
+            GregorianCalendar endOfQuarter = (GregorianCalendar) dates[1];
+
+            beginningOfQuarter.set(Calendar.MILLISECOND, 0);
+            endOfQuarter.set(Calendar.MILLISECOND, 999);
+        }
+    }
 
     public void testNewVersionSameResultAsOld() {
         Date[] newDates = DateRange.ThisQuarter.startAndStopDate();
@@ -75,9 +87,6 @@ public class DateRangeTest {
             GregorianCalendar beginningOfQuarter = (GregorianCalendar) dates[0];
             GregorianCalendar endOfQuarter = (GregorianCalendar) dates[1];
 
-            beginningOfQuarter.set(Calendar.MILLISECOND, 0);
-            endOfQuarter.set(Calendar.MILLISECOND, 999);
-
             OneQuarterDateRange dateRange = new OneQuarterDateRange(beginningOfQuarter.getTime());
             validateDateRange(dateRange, beginningOfQuarter.getTime(), endOfQuarter.getTime());
         }
@@ -87,8 +96,6 @@ public class DateRangeTest {
         for (Object[] dates : QUARTER_DATE_RANGES) {
             GregorianCalendar beginningOfQuarter = (GregorianCalendar) dates[0];
             GregorianCalendar endOfQuarter = (GregorianCalendar) dates[1];
-            beginningOfQuarter.set(Calendar.MILLISECOND, 0);
-            endOfQuarter.set(Calendar.MILLISECOND, 999);
 
             OneQuarterDateRange dateRange = new OneQuarterDateRange(endOfQuarter.getTime());
             validateDateRange(dateRange, beginningOfQuarter.getTime(), endOfQuarter.getTime());
@@ -102,7 +109,6 @@ public class DateRangeTest {
         Date[] datesFromArg = dateRangeWithArg.startAndStopDate();
         assertThat(datesNoArg[0], equalTo(datesFromArg[0]));
         assertThat(datesNoArg[1], equalTo(datesFromArg[1]));
-
     }
 
     private void validateDateRange(OneQuarterDateRange calculatedDateRange, Date expectedStartDate,
