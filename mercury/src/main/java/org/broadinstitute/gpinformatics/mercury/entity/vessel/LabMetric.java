@@ -73,7 +73,7 @@ public class LabMetric implements Comparable<LabMetric> {
     }
 
     public enum MetricType {
-        INITIAL_PICO("Initial Pico", true, new Decider() {
+        INITIAL_PICO("Initial Pico", true, Category.CONCENTRATION, new Decider() {
             @Override
             public LabMetricDecision.Decision makeDecision(LabVessel labVessel, LabMetric labMetric) {
                 if (labVessel.getVolume() != null) {
@@ -84,7 +84,7 @@ public class LabMetric implements Comparable<LabMetric> {
                 return LabMetricDecision.Decision.FAIL;
             }
         }),
-        FINGERPRINT_PICO("Fingerprint Pico", true, new Decider() {
+        FINGERPRINT_PICO("Fingerprint Pico", true, Category.CONCENTRATION, new Decider() {
             @Override
             public LabMetricDecision.Decision makeDecision(LabVessel labVessel, LabMetric labMetric) {
                 if (labMetric.getValue().compareTo(new BigDecimal("9.99")) == 1 &&
@@ -94,7 +94,7 @@ public class LabMetric implements Comparable<LabMetric> {
                 return LabMetricDecision.Decision.FAIL;
             }
         }),
-        SHEARING_PICO("Shearing Pico", true, new Decider() {
+        SHEARING_PICO("Shearing Pico", true, Category.CONCENTRATION, new Decider() {
             @Override
             public LabMetricDecision.Decision makeDecision(LabVessel labVessel, LabMetric labMetric) {
                 if (labMetric.getValue().compareTo(new BigDecimal("1.49")) == 1 &&
@@ -104,7 +104,7 @@ public class LabMetric implements Comparable<LabMetric> {
                 return LabMetricDecision.Decision.FAIL;
             }
         }),
-        POND_PICO("Pond Pico", true, new Decider() {
+        POND_PICO("Pond Pico", true, Category.CONCENTRATION, new Decider() {
             @Override
             public LabMetricDecision.Decision makeDecision(LabVessel labVessel, LabMetric labMetric) {
                 if (labMetric.getValue().compareTo(new BigDecimal("25")) == 1) {
@@ -113,7 +113,7 @@ public class LabMetric implements Comparable<LabMetric> {
                 return LabMetricDecision.Decision.FAIL;
             }
         }),
-        CATCH_PICO("Catch Pico", true, new Decider() {
+        CATCH_PICO("Catch Pico", true, Category.CONCENTRATION, new Decider() {
             @Override
             public LabMetricDecision.Decision makeDecision(LabVessel labVessel, LabMetric labMetric) {
                 if (labMetric.getValue().compareTo(new BigDecimal("2")) == 1) {
@@ -122,12 +122,13 @@ public class LabMetric implements Comparable<LabMetric> {
                 return LabMetricDecision.Decision.FAIL;
             }
         }),
-        FINAL_LIBRARY_SIZE("Final Library Size", false, null),
-        ECO_QPCR("ECO QPCR", true, null);
+        FINAL_LIBRARY_SIZE("Final Library Size", false, Category.DNA_LENGTH, null),
+        ECO_QPCR("ECO QPCR", true, Category.CONCENTRATION, null);
 
         private String displayName;
         private boolean uploadEnabled;
         private static final Map<String, MetricType> mapNameToType = new HashMap<>();
+        private Category category;
         private Decider decider;
 
         static {
@@ -136,9 +137,10 @@ public class LabMetric implements Comparable<LabMetric> {
             }
         }
 
-        MetricType(String displayName, boolean uploadEnabled, Decider decider) {
+        MetricType(String displayName, boolean uploadEnabled, Category category, Decider decider) {
             this.displayName = displayName;
             this.uploadEnabled = uploadEnabled;
+            this.category = category;
             this.decider = decider;
         }
 
@@ -168,6 +170,18 @@ public class LabMetric implements Comparable<LabMetric> {
             }
 
             return metricTypes;
+        }
+
+        public Category getCategory() {
+            return category;
+        }
+
+        /**
+         * Whether this MetricType represents a concentration
+         */
+        public enum Category {
+            CONCENTRATION,
+            DNA_LENGTH
         }
     }
 
