@@ -228,7 +228,7 @@ public class ManifestRecord implements HasUpdateData {
          * At some time before the current sample was scanned, another with the exact same
          * sample id and also connected to the current research project was scanned.
          */
-        DUPLICATE_SAMPLE_ID("The given sample ID is a duplicate of another.", ManifestEvent.Severity.QUARANTINED),
+        DUPLICATE_SAMPLE_ID("The specified sample ID is duplicated within this Research Project.", ManifestEvent.Severity.QUARANTINED),
         /**
          * Another record in the system associated with the same research project and same patient
          * ID has a different value for gender.
@@ -326,5 +326,13 @@ public class ManifestRecord implements HasUpdateData {
 
     public static String key(Metadata.Key key) {
         return key.name();
+    }
+
+    /**
+     * Return the spreadsheet row number of the record corresponding to this {@code ManifestRecord}.
+     */
+    public int getSpreadsheetRowNumber() {
+        final int INDEX_TO_SPREADSHEET_ROW_NUMBER_CONVERSION = 2;
+        return manifestRecordIndex + INDEX_TO_SPREADSHEET_ROW_NUMBER_CONVERSION;
     }
 }
