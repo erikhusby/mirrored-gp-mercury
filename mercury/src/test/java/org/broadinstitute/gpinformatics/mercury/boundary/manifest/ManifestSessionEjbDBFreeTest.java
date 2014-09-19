@@ -35,7 +35,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -143,9 +142,7 @@ public class ManifestSessionEjbDBFreeTest {
      * Worker method for manifest upload testing.
      */
     private ManifestSession uploadManifest(String pathToManifestFile) throws Exception {
-        ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(
-                TEST_RESEARCH_PROJECT_KEY);
-        return uploadManifest(pathToManifestFile, researchProject);
+        return uploadManifest(pathToManifestFile, createTestResearchProject());
     }
 
     private ManifestSession uploadManifest(ManifestSessionEjb manifestSessionEjb, String pathToManifestFile,
@@ -204,9 +201,7 @@ public class ManifestSessionEjbDBFreeTest {
     private ManifestSessionAndEjbHolder buildHolderForSession(ManifestRecord.Status initialStatus, int numberOfRecords)
             throws Exception {
 
-        ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(
-                TEST_RESEARCH_PROJECT_KEY);
-        return buildHolderForSession(initialStatus, numberOfRecords, researchProject);
+        return buildHolderForSession(initialStatus, numberOfRecords, createTestResearchProject());
     }
 
     /**
@@ -336,8 +331,7 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     public void uploadManifestThatDuplicatesSampleIdInAnotherManifest() throws Exception {
-        ResearchProject researchProject =
-                ResearchProjectTestFactory.createTestResearchProject(TEST_RESEARCH_PROJECT_KEY);
+        ResearchProject researchProject = createTestResearchProject();
 
         ManifestSession manifestSession1 =
                 uploadManifest("manifest-upload/duplicates/good-manifest-1.xlsx", researchProject);
@@ -364,6 +358,12 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
+    private ResearchProject createTestResearchProject() {
+        ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(TEST_RESEARCH_PROJECT_KEY);
+        researchProject.setRegulatoryDesignation(ResearchProject.RegulatoryDesignation.CLINICAL_DIAGNOSTICS);
+        return researchProject;
+    }
+
     public void uploadManifestThatMismatchesGenderInSameManifest() throws Exception {
         ManifestSession manifestSession = uploadManifest(MANIFEST_FILE_MISMATCHED_GENDERS_SAME_SESSION);
         assertThat(manifestSession, is(notNullValue()));
@@ -385,8 +385,7 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     public void uploadManifestThatMismatchesGenderInAnotherManifest() throws Exception {
-        ResearchProject researchProject =
-                ResearchProjectTestFactory.createTestResearchProject(TEST_RESEARCH_PROJECT_KEY);
+        ResearchProject researchProject = createTestResearchProject();
 
         ManifestSession manifestSession1 =
                 uploadManifest("manifest-upload/gender-mismatches-across-sessions/good-manifest-1.xlsx",
