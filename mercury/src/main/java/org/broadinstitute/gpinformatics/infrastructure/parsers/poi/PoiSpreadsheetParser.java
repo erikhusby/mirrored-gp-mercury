@@ -83,10 +83,14 @@ public final class PoiSpreadsheetParser {
      * @param rows The row iterator.
      */
     private static void processHeaders(TableProcessor processor, Iterator<Row> rows) throws ValidationException {
-        int headerRowIndex = 0;
+        int headerRowIndex = processor.getHeaderRowIndex();
+        int headerRowNum = 0;
         int numHeaderRows = processor.getNumHeaderRows();
-        while (rows.hasNext() && headerRowIndex < numHeaderRows) {
+        while (rows.hasNext() && headerRowNum < numHeaderRows) {
             Row headerRow = rows.next();
+            if (headerRow.getRowNum() < headerRowIndex) {
+                continue;
+            }
 
             List<String> headers = new ArrayList<>();
             Iterator<Cell> cellIterator = headerRow.cellIterator();
@@ -104,7 +108,7 @@ public final class PoiSpreadsheetParser {
             }
 
             // Turn the header strings for this row into whatever objects are needed to continue on.
-            processor.processHeader(headers, headerRowIndex++);
+            processor.processHeader(headers, headerRowNum++);
         }
     }
 
@@ -166,24 +170,27 @@ public final class PoiSpreadsheetParser {
      * We leave all parsing and validating up to the caller by turning everything into a string. We might want to
      * let POI turn things into real objects in the map in the future, but for now this was what callers were
      * expecting.
+     * <p/>
+     * <b>Note, if your cell contains a formula, this method will return not the calculated value, nor the formula
+     * but an empty string instead.</b>
      *
      * @param cell The cell data.
      *
      * @return A string representation of the cell.
      */
-    private static String getCellValues(Cell cell, boolean isDate, boolean isString) {
+    public static String getCellValues(Cell cell, boolean isDate, boolean isString) {
         if (cell != null) {
             switch (cell.getCellType()) {
             case Cell.CELL_TYPE_BOOLEAN:
                 return String.valueOf(cell.getBooleanCellValue());
             case Cell.CELL_TYPE_NUMERIC:
-                if (isDate) {
-                    return DATE_FORMATTER.format(cell.getDateCellValue());
-                }
+            if (isDate) {
+                return DATE_FORMATTER.format(cell.getDateCellValue());
+            }
                 if (isString) {
-                    cell.setCellType(Cell.CELL_TYPE_STRING);
-                    return cell.getStringCellValue();
-                }
+            cell.setCellType(Cell.CELL_TYPE_STRING);
+            return cell.getStringCellValue();
+        }
                 return String.valueOf(cell.getNumericCellValue());
             case Cell.CELL_TYPE_STRING:
                 return cell.getStringCellValue();
@@ -241,15 +248,14 @@ public final class PoiSpreadsheetParser {
      */
     public static List<String> processSingleWorksheet(InputStream spreadsheet, TableProcessor processor)
             throws InvalidFormatException, IOException, ValidationException {
-
         PoiSpreadsheetParser parser = new PoiSpreadsheetParser(Collections.<String, TableProcessor>emptyMap());
-
         try {
-            parser.processRows(WorkbookFactory.create(spreadsheet).getSheetAt(0), processor);
+            Workbook workbook = WorkbookFactory.create(spreadsheet);
+            processor.validateNumberOfWorksheets(workbook.getNumberOfSheets());
+            parser.processRows(workbook.getSheetAt(0), processor);
+            return processor.getMessages();
         } finally {
             processor.close();
         }
-
-        return parser.validationMessages;
     }
 }

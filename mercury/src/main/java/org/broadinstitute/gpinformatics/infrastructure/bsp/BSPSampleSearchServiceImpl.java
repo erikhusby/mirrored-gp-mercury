@@ -5,6 +5,7 @@ import com.sun.jersey.api.client.ClientHandlerException;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
+import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 
 import javax.inject.Inject;
@@ -89,9 +90,15 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
                 }
             });
         } catch (ClientHandlerException clientException) {
-            throw new RuntimeException("Error connecting to BSP", clientException);
+            throw new BSPLookupException("Error connecting to BSP", clientException);
         } catch (UnsupportedEncodingException uex) {
             throw new RuntimeException(uex);
+        }
+
+        // Sample IDs were provided, BSP service should at minimum return the same set of IDs with blank data.
+        // An empty return set represents a service failure
+        if(ret.isEmpty()) {
+            throw new BSPLookupException("BSP sample service failed");
         }
 
         return ret;

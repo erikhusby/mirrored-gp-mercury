@@ -73,8 +73,8 @@ public class SampleVesselProcessor extends TableProcessor {
     private enum Headers implements ColumnHeader {
         SAMPLE_ID("Sample ID", 0, REQUIRED_HEADER, REQUIRED_VALUE),
         MANUFACTURER_TUBE_BARCODE("Manufacturer Tube Barcode", 1, REQUIRED_HEADER, REQUIRED_VALUE),
-        CONTAINER_BARCODE("Container", 1, REQUIRED_HEADER, REQUIRED_VALUE),
-        POSITION("Position", 1, REQUIRED_HEADER, REQUIRED_VALUE),
+        CONTAINER_BARCODE("Container", 2, REQUIRED_HEADER, REQUIRED_VALUE),
+        POSITION("Position", 3, REQUIRED_HEADER, REQUIRED_VALUE),
         ;
 
         private final String text;

@@ -44,6 +44,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
@@ -311,6 +313,32 @@ public class LabEventFactory implements Serializable {
     }
 
     /**
+     * Determines whether volume / concentration etc. should be updated in BSP.
+     */
+    public boolean isUpdateVolConcInBsp(LabEvent labEvent) {
+        LabEventType labEventType = labEvent.getLabEventType();
+        LabVessel labVessel = labEvent.getInPlaceLabVessel();
+        if (labVessel == null) {
+            labVessel = labEvent.getSourceLabVessels().iterator().next();
+        }
+        if (labEventType.getVolumeConcUpdate() == LabEventType.VolumeConcUpdate.BSP_AND_MERCURY) {
+            if (labVessel.getContainerRole() != null) {
+                labVessel = labVessel.getContainerRole().getContainedVessels().iterator().next();
+            }
+            Set<SampleInstanceV2> sampleInstances = labVessel.getSampleInstancesV2();
+            if (!sampleInstances.isEmpty()) {
+                Set<MercurySample> mercurySamples = sampleInstances.iterator().next().getRootMercurySamples();
+                if (!mercurySamples.isEmpty()) {
+                    if (mercurySamples.iterator().next().getMetadataSource() == MercurySample.MetadataSource.BSP) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      * Builds one or more lab event entities from a JAXB message bean that contains one or more event beans
      *
      * @param bettaLIMSMessage JAXB bean
@@ -329,8 +357,10 @@ public class LabEventFactory implements Serializable {
             eventHandlerSelector.applyEventSpecificHandling(labEvent, plateCherryPickEvent);
             persistLabEvent(uniqueEvents, labEvent, true);
             labEvents.add(labEvent);
-            for (PositionMapType positionMapType : plateCherryPickEvent.getPositionMap()) {
-                updateReceptacles.addAll(positionMapType.getReceptacle());
+            if (isUpdateVolConcInBsp(labEvent)) {
+                for (PositionMapType positionMapType : plateCherryPickEvent.getPositionMap()) {
+                    updateReceptacles.addAll(positionMapType.getReceptacle());
+                }
             }
         }
         for (PlateEventType plateEventType : bettaLIMSMessage.getPlateEvent()) {
@@ -338,8 +368,10 @@ public class LabEventFactory implements Serializable {
             eventHandlerSelector.applyEventSpecificHandling(labEvent, plateEventType);
             persistLabEvent(uniqueEvents, labEvent, true);
             labEvents.add(labEvent);
-            if (plateEventType.getPositionMap() != null) {
-                updateReceptacles.addAll(plateEventType.getPositionMap().getReceptacle());
+            if (isUpdateVolConcInBsp(labEvent)) {
+                if (plateEventType.getPositionMap() != null) {
+                    updateReceptacles.addAll(plateEventType.getPositionMap().getReceptacle());
+                }
             }
         }
         for (PlateTransferEventType plateTransferEventType : bettaLIMSMessage.getPlateTransferEvent()) {
@@ -347,8 +379,10 @@ public class LabEventFactory implements Serializable {
             eventHandlerSelector.applyEventSpecificHandling(labEvent, plateTransferEventType);
             persistLabEvent(uniqueEvents, labEvent, true);
             labEvents.add(labEvent);
-            if (plateTransferEventType.getPositionMap() != null) {
-                updateReceptacles.addAll(plateTransferEventType.getPositionMap().getReceptacle());
+            if (isUpdateVolConcInBsp(labEvent)) {
+                if (plateTransferEventType.getPositionMap() != null) {
+                    updateReceptacles.addAll(plateTransferEventType.getPositionMap().getReceptacle());
+                }
             }
         }
         for (ReceptaclePlateTransferEvent receptaclePlateTransferEvent :
@@ -357,8 +391,10 @@ public class LabEventFactory implements Serializable {
             eventHandlerSelector.applyEventSpecificHandling(labEvent, receptaclePlateTransferEvent);
             persistLabEvent(uniqueEvents, labEvent, true);
             labEvents.add(labEvent);
-            for (PositionMapType positionMapType : receptaclePlateTransferEvent.getDestinationPositionMap()) {
-                updateReceptacles.addAll(positionMapType.getReceptacle());
+            if (isUpdateVolConcInBsp(labEvent)) {
+                for (PositionMapType positionMapType : receptaclePlateTransferEvent.getDestinationPositionMap()) {
+                    updateReceptacles.addAll(positionMapType.getReceptacle());
+                }
             }
         }
         for (ReceptacleEventType receptacleEventType : bettaLIMSMessage.getReceptacleEvent()) {
@@ -366,7 +402,9 @@ public class LabEventFactory implements Serializable {
             eventHandlerSelector.applyEventSpecificHandling(labEvent, receptacleEventType);
             persistLabEvent(uniqueEvents, labEvent, true);
             labEvents.add(labEvent);
-            updateReceptacles.add(receptacleEventType.getReceptacle());
+            if (isUpdateVolConcInBsp(labEvent)) {
+                updateReceptacles.add(receptacleEventType.getReceptacle());
+            }
         }
 
         updateVolumeConcentration(updateReceptacles.toArray(new ReceptacleType[updateReceptacles.size()]));

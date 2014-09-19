@@ -264,6 +264,20 @@ public abstract class LabVessel implements Serializable {
         return labMetrics;
     }
 
+    public Set<LabMetric> getConcentrationMetrics() {
+        if(labMetrics != null) {
+            Set<LabMetric> concentrationLabMetrics = new HashSet<>();
+            for (LabMetric labMetric: labMetrics) {
+                if(labMetric.getName().getCategory() == LabMetric.MetricType.Category.CONCENTRATION) {
+                    concentrationLabMetrics.add(labMetric);
+                }
+            }
+            return concentrationLabMetrics;
+        }
+
+        return null;
+    }
+
     @SuppressWarnings("unused")
     public Map<String, Set<LabMetric>> getMetricMap() {
         return metricMap;
@@ -1069,6 +1083,7 @@ public abstract class LabVessel implements Serializable {
              */
             throw new RuntimeException("Vessel already contains an entry equal to: " + bucketEntry);
         }
+        clearCaches();
     }
 
     public void addNonReworkLabBatch(LabBatch labBatch) {
@@ -1830,5 +1845,20 @@ public abstract class LabVessel implements Serializable {
             containerRole.clearCaches();
         }
     }
+
+    /** Looks up the most recent lab metric using the lab metric's created date. */
+    public LabMetric findMostRecentLabMetric(LabMetric.MetricType metricType) {
+        LabMetric latestLabMetric = null;
+        for (LabMetric labMetric : getMetrics()) {
+            if (labMetric.getName().equals(metricType) &&
+                (latestLabMetric == null || latestLabMetric.getCreatedDate() == null ||
+                 (labMetric.getCreatedDate() != null &&
+                  labMetric.getCreatedDate().after(latestLabMetric.getCreatedDate())))) {
+                latestLabMetric = labMetric;
+            }
+        }
+        return latestLabMetric;
+    }
+
 
 }

@@ -3,6 +3,8 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.hibernate.envers.Audited;
 
+import javax.annotation.Nullable;
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -15,6 +17,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -65,20 +68,68 @@ public class LabMetric implements Comparable<LabMetric> {
         }
     }
 
+    public interface Decider {
+        LabMetricDecision.Decision makeDecision(LabVessel labVessel, LabMetric labMetric);
+    }
+
     public enum MetricType {
-        BSP_PICO("BSP Pico", false),
-        PRE_FLIGHT_PRE_NORM_PICO("Pre Flight Pre Norm Pico", false),
-        PRE_FLIGHT_POST_NORM_PICO("Pre Flight Post Norm Pico", false),
-        POND_PICO("Pond Pico", true),
-        CATCH_PICO("Catch Pico", true),
-        FINAL_LIBRARY_SIZE("Final Library Size", false),
-        POST_NORMALIZATION_PICO("Post-Normalization Pico", false),
-        TSCA_PICO("TSCA Pico", false),
-        ECO_QPCR("ECO QPCR", true);
+        INITIAL_PICO("Initial Pico", true, Category.CONCENTRATION, new Decider() {
+            @Override
+            public LabMetricDecision.Decision makeDecision(LabVessel labVessel, LabMetric labMetric) {
+                if (labVessel.getVolume() != null) {
+                    if (labMetric.getValue().multiply(labVessel.getVolume()).compareTo(new BigDecimal("250")) == 1) {
+                        return LabMetricDecision.Decision.PASS;
+                    }
+                }
+                return LabMetricDecision.Decision.FAIL;
+            }
+        }),
+        FINGERPRINT_PICO("Fingerprint Pico", true, Category.CONCENTRATION, new Decider() {
+            @Override
+            public LabMetricDecision.Decision makeDecision(LabVessel labVessel, LabMetric labMetric) {
+                if (labMetric.getValue().compareTo(new BigDecimal("9.99")) == 1 &&
+                        labMetric.getValue().compareTo(new BigDecimal("60.01")) == -1) {
+                    return LabMetricDecision.Decision.PASS;
+                }
+                return LabMetricDecision.Decision.FAIL;
+            }
+        }),
+        SHEARING_PICO("Shearing Pico", true, Category.CONCENTRATION, new Decider() {
+            @Override
+            public LabMetricDecision.Decision makeDecision(LabVessel labVessel, LabMetric labMetric) {
+                if (labMetric.getValue().compareTo(new BigDecimal("1.49")) == 1 &&
+                        labMetric.getValue().compareTo(new BigDecimal("5.01")) == -1) {
+                    return LabMetricDecision.Decision.PASS;
+                }
+                return LabMetricDecision.Decision.FAIL;
+            }
+        }),
+        POND_PICO("Pond Pico", true, Category.CONCENTRATION, new Decider() {
+            @Override
+            public LabMetricDecision.Decision makeDecision(LabVessel labVessel, LabMetric labMetric) {
+                if (labMetric.getValue().compareTo(new BigDecimal("25")) == 1) {
+                    return LabMetricDecision.Decision.PASS;
+                }
+                return LabMetricDecision.Decision.FAIL;
+            }
+        }),
+        CATCH_PICO("Catch Pico", true, Category.CONCENTRATION, new Decider() {
+            @Override
+            public LabMetricDecision.Decision makeDecision(LabVessel labVessel, LabMetric labMetric) {
+                if (labMetric.getValue().compareTo(new BigDecimal("2")) == 1) {
+                    return LabMetricDecision.Decision.PASS;
+                }
+                return LabMetricDecision.Decision.FAIL;
+            }
+        }),
+        FINAL_LIBRARY_SIZE("Final Library Size", false, Category.DNA_LENGTH, null),
+        ECO_QPCR("ECO QPCR", true, Category.CONCENTRATION, null);
 
         private String displayName;
         private boolean uploadEnabled;
         private static final Map<String, MetricType> mapNameToType = new HashMap<>();
+        private Category category;
+        private Decider decider;
 
         static {
             for (MetricType metricType : MetricType.values()) {
@@ -86,13 +137,20 @@ public class LabMetric implements Comparable<LabMetric> {
             }
         }
 
-        MetricType(String displayName, boolean uploadEnabled) {
+        MetricType(String displayName, boolean uploadEnabled, Category category, Decider decider) {
             this.displayName = displayName;
             this.uploadEnabled = uploadEnabled;
+            this.category = category;
+            this.decider = decider;
         }
 
         public String getDisplayName() {
             return displayName;
+        }
+
+        @Nullable
+        public Decider getDecider() {
+            return decider;
         }
 
         public static MetricType getByDisplayName(String displayName) {
@@ -113,9 +171,20 @@ public class LabMetric implements Comparable<LabMetric> {
 
             return metricTypes;
         }
+
+        public Category getCategory() {
+            return category;
+        }
+
+        /**
+         * Whether this MetricType represents a concentration
+         */
+        public enum Category {
+            CONCENTRATION,
+            DNA_LENGTH
+        }
     }
 
-    @SuppressWarnings("UnusedDeclaration")
     @SequenceGenerator(name = "SEQ_LAB_METRIC", schema = "mercury", sequenceName = "SEQ_LAB_METRIC")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LAB_METRIC")
     @Id
@@ -148,10 +217,14 @@ public class LabMetric implements Comparable<LabMetric> {
     @ManyToOne(fetch = FetchType.LAZY)
     private LabVessel labVessel;
 
-
+    //todo jmt convert to enum?
     private String vesselPosition;
 
     private Date createdDate;
+
+    /** This is actually OneToOne, but using ManyToOne to avoid N+1 selects */
+    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
+    private LabMetricDecision labMetricDecision;
 
     /**
      * For JPA
@@ -166,6 +239,13 @@ public class LabMetric implements Comparable<LabMetric> {
         this.labUnit = labUnit;
         this.vesselPosition = vesselPosition;
         this.createdDate = createdDate;
+    }
+
+    public BigDecimal getTotalNg() {
+        if (labVessel.getVolume() != null) {
+            return value.multiply(labVessel.getVolume());
+        }
+        return null;
     }
 
     public Long getLabMetricId() {
@@ -219,6 +299,14 @@ public class LabMetric implements Comparable<LabMetric> {
         this.createdDate = createdDate;
     }
 
+    public LabMetricDecision getLabMetricDecision() {
+        return labMetricDecision;
+    }
+
+    public void setLabMetricDecision(LabMetricDecision labMetricDecision) {
+        this.labMetricDecision = labMetricDecision;
+    }
+
     @Override
     public int compareTo(LabMetric labMetric) {
         CompareToBuilder compareToBuilder = new CompareToBuilder();
@@ -228,5 +316,33 @@ public class LabMetric implements Comparable<LabMetric> {
             compareToBuilder.append(getLabMetricId(), labMetric.getLabMetricId());
         }
         return compareToBuilder.build();
+    }
+
+    /** These define the concentration range in ug/ml (ng/ul) for acceptable fingerprinting. */
+    public static final BigDecimal INITIAL_PICO_LOW_THRESHOLD = new BigDecimal("3.4");
+    public static final BigDecimal INITIAL_PICO_HIGH_THRESHOLD = new BigDecimal("60.0");
+
+    /**
+     * Determines initial pico disposition from the sample's quant.
+     *
+     * @return  -1, 0, or +1 indicating that concentration is
+     *          below range, in range, or above range, respectively.
+     */
+    public int initialPicoDispositionRange() {
+        if (value == null || value.compareTo(INITIAL_PICO_LOW_THRESHOLD) < 0) {
+            return -1;
+        } else if (value.compareTo(INITIAL_PICO_HIGH_THRESHOLD) > 0) {
+            return 1;
+        }
+        return 0;
+    }
+
+    public static class LabMetricRunDateComparator
+            implements Comparator<LabMetric> {
+        @Override
+        public int compare(LabMetric labMetric1, LabMetric labMetric2) {
+            return labMetric2.getLabMetricRun().getRunDate()
+                    .compareTo(labMetric1.getLabMetricRun().getRunDate());
+        }
     }
 }

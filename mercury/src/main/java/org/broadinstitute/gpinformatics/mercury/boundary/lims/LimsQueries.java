@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ConcentrationAndVolumeAndWeightType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LibraryDataType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SampleInfoType;
@@ -23,9 +24,11 @@ import org.broadinstitute.gpinformatics.mercury.limsquery.generated.WellAndSourc
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Mercury-based implementations of services provided by LimsQueryResource.
@@ -265,5 +268,67 @@ public class LimsQueries {
         }
         throw new RuntimeException(
                 "Tube or quant not found for barcode: " + tubeBarcode + ", quant type: " + quantType);
+    }
+
+    /**
+     * This method returns a mapping from tube barcode to the concentration and volume
+     * for each tube barcode specified.
+     *
+     * @param tubeBarcodes The barcodes of the tubes to up concentration and volume for.
+     *
+     * @return Map of barcode to Concentration and Volume of the quant we are looking for.
+     */
+    public Map<String, ConcentrationAndVolumeAndWeightType> fetchConcentrationAndVolumeAndWeightForTubeBarcodes(
+            List<String> tubeBarcodes) {
+        Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(tubeBarcodes);
+        return fetchConcentrationAndVolumeAndWeightForTubeBarcodes(mapBarcodeToVessel);
+    }
+
+    @DaoFree
+    public Map<String, ConcentrationAndVolumeAndWeightType> fetchConcentrationAndVolumeAndWeightForTubeBarcodes(
+            Map<String, LabVessel> mapBarcodeToVessel) {
+        Map<String, ConcentrationAndVolumeAndWeightType> concentrationAndVolumeAndWeightTypeMap = new HashMap<>();
+        for (Map.Entry<String, LabVessel> entry: mapBarcodeToVessel.entrySet()) {
+            String tubeBarcode = entry.getKey();
+            LabVessel labVessel = entry.getValue();
+            ConcentrationAndVolumeAndWeightType concentrationAndVolumeAndWeightType =
+                    new ConcentrationAndVolumeAndWeightType();
+            concentrationAndVolumeAndWeightType.setTubeBarcode(tubeBarcode);
+            if (entry.getValue() == null) {
+                concentrationAndVolumeAndWeightType.setWasFound(false);
+            } else {
+                concentrationAndVolumeAndWeightType.setWasFound(true);
+                if (labVessel.getReceptacleWeight() != null) {
+                    concentrationAndVolumeAndWeightType.setWeight(labVessel.getReceptacleWeight());
+                }
+                if (labVessel.getVolume() != null) {
+                    concentrationAndVolumeAndWeightType.setVolume(labVessel.getVolume());
+                }
+
+                Set<LabMetric> metrics = labVessel.getConcentrationMetrics();
+                if (metrics != null) {
+                    if(!metrics.isEmpty()) {
+                        List<LabMetric> metricList = new ArrayList<>(metrics);
+                        Collections.sort(metricList, new LabMetric.LabMetricRunDateComparator());
+                        LabMetric.MetricType metricType = metricList.get(0).getName();
+                        for (LabMetric labMetric : metricList) {
+                            if (labMetric.getName() != metricType) {
+                                throw new RuntimeException(
+                                        "Got more than one quant for barcode:" + tubeBarcode);
+                            }
+                        }
+                        LabMetric labMetric = metricList.get(0);
+                        concentrationAndVolumeAndWeightType.setConcentration(labMetric.getValue());
+                        concentrationAndVolumeAndWeightType
+                                .setConcentrationUnits(labMetric.getUnits().getDisplayName());
+                    }
+                } else if (labVessel.getConcentration() != null) {
+                    concentrationAndVolumeAndWeightType.setConcentration(labVessel.getConcentration());
+                }
+            }
+            concentrationAndVolumeAndWeightTypeMap.put(tubeBarcode, concentrationAndVolumeAndWeightType);
+        }
+
+        return concentrationAndVolumeAndWeightTypeMap;
     }
 }
