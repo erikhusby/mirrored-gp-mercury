@@ -248,17 +248,14 @@ public final class PoiSpreadsheetParser {
      */
     public static List<String> processSingleWorksheet(InputStream spreadsheet, TableProcessor processor)
             throws InvalidFormatException, IOException, ValidationException {
-
         PoiSpreadsheetParser parser = new PoiSpreadsheetParser(Collections.<String, TableProcessor>emptyMap());
-        List<String> messages=new ArrayList<>();
         try {
             Workbook workbook = WorkbookFactory.create(spreadsheet);
             processor.validateNumberOfWorksheets(workbook.getNumberOfSheets());
             parser.processRows(workbook.getSheetAt(0), processor);
-            messages=processor.getMessages();
+            return processor.getMessages();
         } finally {
             processor.close();
         }
-        return messages;
     }
 }

@@ -246,6 +246,18 @@ public class LimsQueriesTest {
         BarcodedTube tube = new BarcodedTube(barcode);
         mercuryTubes.put(barcode, tube);
 
+        //Should not find Final Library Size since its not a concentration
+        LabMetric finalLibrarySizeMetric =
+                new LabMetric(new BigDecimal(224), LabMetric.MetricType.FINAL_LIBRARY_SIZE, LabMetric.LabUnit.UG_PER_ML,
+                        "A01", new Date());
+        tube.addMetric(finalLibrarySizeMetric);
+        Map<String, ConcentrationAndVolumeAndWeightType> concentrationAndVolumeTypeMap =
+                limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(mercuryTubes);
+        assertThat(concentrationAndVolumeTypeMap.size(), equalTo(1));
+        ConcentrationAndVolumeAndWeightType concentrationAndVolumeType = concentrationAndVolumeTypeMap.get(barcode);
+        assertThat(concentrationAndVolumeType.isWasFound(), equalTo(true));
+        assertThat(concentrationAndVolumeType.getConcentration(), equalTo(null));
+
         BigDecimal labMetricQuant = BigDecimal.valueOf(22.21);
         LabMetric quantMetric =
                 new LabMetric(labMetricQuant, LabMetric.MetricType.INITIAL_PICO, LabMetric.LabUnit.UG_PER_ML,
@@ -256,10 +268,10 @@ public class LimsQueriesTest {
         BigDecimal receptacleWeight = BigDecimal.valueOf(.002);
         tube.setReceptacleWeight(receptacleWeight);
 
-        Map<String, ConcentrationAndVolumeAndWeightType> concentrationAndVolumeTypeMap =
+        concentrationAndVolumeTypeMap =
                 limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(mercuryTubes);
         assertThat(concentrationAndVolumeTypeMap.size(), equalTo(1));
-        ConcentrationAndVolumeAndWeightType concentrationAndVolumeType = concentrationAndVolumeTypeMap.get(barcode);
+        concentrationAndVolumeType = concentrationAndVolumeTypeMap.get(barcode);
         assertThat(concentrationAndVolumeType.isWasFound(), equalTo(true));
         assertThat(concentrationAndVolumeType.getTubeBarcode(), equalTo(barcode));
         assertThat(concentrationAndVolumeType.getConcentration(), equalTo(labMetricQuant));
