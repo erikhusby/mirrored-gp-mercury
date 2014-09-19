@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Maps;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.Updatable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.UpdatedEntityInterceptor;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
@@ -283,5 +284,13 @@ public class ManifestRecord implements Updatable {
 
     public UpdateData getUpdateData() {
         return updateData;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("manifestRecordId", manifestRecordId)
+                .append("status", status)
+                .toString();
     }
 }

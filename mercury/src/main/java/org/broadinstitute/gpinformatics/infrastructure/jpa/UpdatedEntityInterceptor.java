@@ -41,9 +41,9 @@ public class UpdatedEntityInterceptor {
             UserBean userBean = ServiceAccessUtility.getBean(UserBean.class);
 
             if (userBean == null) {
-                logger.error("Unable to determine the current user because User bean is null");
+                logger.error("Unable to determine the current user because User bean is null, not updating " + object);
                 throw new InformaticsServiceException("Unable to determine an existing user to record who " +
-                                                      "is modifying data");
+                                                      "is modifying data for " + object);
             } else {
                 BspUser bspUser = userBean.getBspUser();
                 updateData.setModifiedBy(bspUser);

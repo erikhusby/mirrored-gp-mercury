@@ -8,6 +8,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.Updatable;
@@ -555,5 +556,14 @@ public class ManifestSession implements Updatable {
 
     public UpdateData getUpdateData() {
         return updateData;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("manifestSessionId", manifestSessionId)
+                .append("sessionPrefix", sessionPrefix)
+                .append("status", status)
+                .toString();
     }
 }

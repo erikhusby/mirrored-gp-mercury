@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.Updatable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.UpdatedEntityInterceptor;
 import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
@@ -122,10 +123,11 @@ public class ManifestEvent implements Updatable {
 
     @Override
     public String toString() {
-        return "ManifestEvent{" +
-               "message='" + message + '\'' +
-               ", severity=" + severity +
-               '}';
+        return new ToStringBuilder(this)
+                .append("manifestEventId", manifestEventId)
+                .append("message", message)
+                .append("severity", severity)
+                .toString();
     }
 
     public UpdateData getUpdateData() {
