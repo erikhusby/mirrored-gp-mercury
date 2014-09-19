@@ -27,7 +27,6 @@ public class ManifestRecordTest {
     private static final String VALUE_2 = "value2";
     private static final String VALUE_3 = "value3";
     private static final ManifestRecord.Status NEW_STATUS = ManifestRecord.Status.ABANDONED;
-    private static final ManifestRecord.ErrorStatus NEW_ERROR_STATUS = ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID;
 
     private ManifestRecord testRecord;
     private ManifestSession testSession;

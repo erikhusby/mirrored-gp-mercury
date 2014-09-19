@@ -882,7 +882,6 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         this.manifestSessions.add(manifestSession);
     }
 
-
     /**
      * Collects all manifest records eligible for validation.  Records for which validation has been
      * run and has found errors are not eligible for validation.

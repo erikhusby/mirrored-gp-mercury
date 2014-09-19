@@ -3,8 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -36,8 +34,6 @@ import java.util.List;
  * EJB for Buick manifest sessions used to manage sample registration.
  */
 public class ManifestSessionEjb {
-
-    private static final Log logger = LogFactory.getLog(ManifestSessionEjb.class);
 
     static final String UNASSOCIATED_TUBE_SAMPLE_MESSAGE =
             "The given target sample id is not associated with the given target vessel";

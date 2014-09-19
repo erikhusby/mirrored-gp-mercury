@@ -28,10 +28,6 @@ public class ManifestTestFactory {
         return metadataList.toArray(new Metadata[metadataList.size()]);
     }
 
-    public static ManifestSession buildManifestSession(String researchProjectKey, String sessionPrefix, BspUser user) {
-        return buildManifestSession(researchProjectKey, sessionPrefix, user, 0, ManifestRecord.Status.SCANNED);
-    }
-
     public static ManifestSession buildManifestSession(String researchProjectKey, String sessionPrefix,
                                                        BspUser createdBy, int numberOfRecords,
                                                        ManifestRecord.Status defaultStatus) {
