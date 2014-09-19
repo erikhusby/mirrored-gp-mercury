@@ -260,16 +260,16 @@ public class ManifestRecord implements Updatable {
             return baseMessage;
         }
 
-        public String formatMessage(Metadata.Key entityType, String value) {
-            return formatMessage(entityType.getDisplayName(), value);
+        public String formatMessage(Metadata.Key key, String value) {
+            return formatMessage(key.getDisplayName(), value);
         }
 
         public ManifestEvent.Severity getSeverity() {
             return severity;
         }
 
-        public String formatMessage(String typeString, String value) {
-            return String.format("For %s %s: %s", typeString, value, baseMessage);
+        public String formatMessage(String keyString, String value) {
+            return String.format("For %s %s: %s", keyString, value, baseMessage);
         }
     }
 
