@@ -23,15 +23,15 @@ public class MercurySampleDataFetcher {
     }
 
     public Map<String, MercurySampleData> fetchSampleDataForSamples(Collection<MercurySample> mercurySamples) {
-        return null;
-    }
-
-    public Map<String, MercurySampleData> fetchSampleData(Collection<String> sampleIds) {
         Map<String, MercurySampleData> results = new HashMap<>();
-        for (MercurySample mercurySample : mercurySampleDao.findBySampleKeys(sampleIds)) {
+        for (MercurySample mercurySample : mercurySamples) {
             results.put(mercurySample.getSampleKey(), fetchSampleData(mercurySample));
         }
         return results;
+    }
+
+    public Map<String, MercurySampleData> fetchSampleData(Collection<String> sampleIds) {
+        return fetchSampleDataForSamples(mercurySampleDao.findBySampleKeys(sampleIds));
     }
 
     public MercurySampleData fetchSampleData(MercurySample sample) {
