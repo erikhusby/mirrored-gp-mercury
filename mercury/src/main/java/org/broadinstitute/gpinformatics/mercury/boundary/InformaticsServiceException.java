@@ -23,18 +23,24 @@ import java.util.IllegalFormatException;
 public class InformaticsServiceException extends RuntimeException {
 
     /**
-     * Exception with a template String and variable number of arguments.
+     * Exception with a template String and a variable number of arguments.
      */
     public InformaticsServiceException(@Nonnull String template, Object... args) {
         super(safeStringFormat(template, args));
     }
 
+    /**
+     * Exception with a Throwable, a template String, and a variable number of arguments.
+     */
     public InformaticsServiceException(Throwable cause, @Nonnull String template, Object... args) {
         super(safeStringFormat(template, args), cause);
     }
 
-    public InformaticsServiceException(Throwable throwableIn) {
-        super(throwableIn);
+    /**
+     * Exception with only a Throwable cause.
+     */
+    public InformaticsServiceException(Throwable cause) {
+        super(cause);
     }
 
     /**
