@@ -1529,7 +1529,7 @@
     <changeSet id="GPLIM-2885-add-manifest-record-index" author="mcovarr">
         <preConditions onFail="MARK_RAN">
             <not>
-                <columnExists tableName="manifest_record" columnName="spreadsheet_row" schemaName="mercury"/>
+                <columnExists tableName="manifest_record" columnName="manifest_record_index" schemaName="mercury"/>
             </not>
         </preConditions>
         <addColumn tableName="manifest_record" schemaName="mercury">
@@ -1540,7 +1540,7 @@
     <changeSet id="GPLIM-2885-add-manifest-record-index-aud" author="mcovarr">
         <preConditions onFail="MARK_RAN">
             <not>
-                <columnExists tableName="manifest_record_aud" columnName="spreadsheet_row" schemaName="mercury"/>
+                <columnExists tableName="manifest_record_aud" columnName="manifest_record_index" schemaName="mercury"/>
             </not>
         </preConditions>
         <addColumn tableName="manifest_record_aud" schemaName="mercury">
@@ -1571,10 +1571,10 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-        <addPrimaryKey schemaName="mercury" tableName="manifest_record_join_aud" columnNames="rev, manifest_record_id, manifest_session_id, spreadsheet_row"/>
+        <addPrimaryKey schemaName="mercury" tableName="manifest_record_join_aud" columnNames="rev, manifest_record_id, manifest_session_id, manifest_record_index"/>
     </changeSet>
 
-    <changeSet id="GPLIM-2885-spreadsheet-row-backfill" author="mcovarr">
+    <changeSet id="GPLIM-2885-manifest_record_index-backfill" author="mcovarr">
         <comment>
           Update to backfill manifest record indexes in manifest records where the manifest record index is currently
           null.  Manifest record indexes are assigned starting at 0 for the manifest record with the smallest ID within
@@ -1585,7 +1585,7 @@
             update manifest_record mr set manifest_record_index = (
                 select row_num - 1 from (
                     select manifest_record_id, row_number() over (partition by manifest_session_id order by manifest_record_id) row_num from manifest_record
-            ) sub where sub.manifest_record_id = mr.manifest_record_id) where spreadsheet_row is null
+            ) sub where sub.manifest_record_id = mr.manifest_record_id) where manifest_record_index is null
         </sql>
     </changeSet>
 
