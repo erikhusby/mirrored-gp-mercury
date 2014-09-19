@@ -500,10 +500,20 @@ public class ManifestSession implements HasUpdateData {
      */
     public ManifestRecord findRecordForTransfer(String sourceForTransfer) {
 
+        if(StringUtils.isBlank(sourceForTransfer)) {
+            throw new TubeTransferException("An identifier for the collaborator sample is required for " +
+                                            "requiring the transfer to a lab vessel");
+        }
+
         ManifestRecord recordForTransfer = findRecordByCollaboratorId(sourceForTransfer);
 
         if (recordForTransfer.isQuarantined()) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE,
+                    Metadata.Key.SAMPLE_ID, sourceForTransfer);
+        }
+
+        if (recordForTransfer.getStatus().ordinal() > ManifestRecord.Status.ACCESSIONED.ordinal()) {
+            throw new TubeTransferException(ManifestRecord.ErrorStatus.SOURCE_ALREADY_TRANSFERRED,
                     Metadata.Key.SAMPLE_ID, sourceForTransfer);
         }
 

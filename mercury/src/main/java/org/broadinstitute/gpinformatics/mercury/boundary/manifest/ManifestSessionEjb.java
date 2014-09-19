@@ -42,7 +42,7 @@ public class ManifestSessionEjb {
 
     static final String UNASSOCIATED_TUBE_SAMPLE_MESSAGE =
             "The given target sample id is not associated with the given target vessel";
-    static final String SAMPLE_NOT_FOUND_MESSAGE = ":: This sample ID is not found.";
+    static final String SAMPLE_NOT_FOUND_MESSAGE = ":: You must provide a target sample key.";
     private static final String SAMPLE_NOT_UNIQUE_MESSAGE = ":: This sample ID is not unique in Mercury";
     static final String SAMPLE_NOT_ELIGIBLE_FOR_CLINICAL_MESSAGE =
             ":: The sample found is not eligible for clinical work";
@@ -228,16 +228,16 @@ public class ManifestSessionEjb {
         // There should be one and only one target sample.
         if (CollectionUtils.isEmpty(targetSamples)) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET,
-                    Metadata.Key.SAMPLE_ID, targetSampleKey, SAMPLE_NOT_FOUND_MESSAGE);
+                    "Mercury sample key", targetSampleKey, SAMPLE_NOT_FOUND_MESSAGE);
         }
         if (targetSamples.size() > 1) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET,
-                    Metadata.Key.SAMPLE_ID, targetSampleKey, SAMPLE_NOT_UNIQUE_MESSAGE);
+                    "Mercury sample key", targetSampleKey, SAMPLE_NOT_UNIQUE_MESSAGE);
         }
         MercurySample foundTarget = targetSamples.iterator().next();
 
         if (foundTarget.getMetadataSource() != MercurySample.MetadataSource.MERCURY) {
-            throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, Metadata.Key.SAMPLE_ID,
+            throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, "Mercury sample key",
                     targetSampleKey, SAMPLE_NOT_ELIGIBLE_FOR_CLINICAL_MESSAGE);
         }
 

@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Maps;
+import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.HasUpdateData;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.UpdatedEntityInterceptor;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
@@ -197,8 +198,24 @@ public class ManifestRecord implements HasUpdateData {
     /**
      * Status represents the states that a manifest record can be in during the registration workflow.
      */
-    public enum Status {
-        UPLOADED, ABANDONED, UPLOAD_ACCEPTED, SCANNED, ACCESSIONED, SAMPLE_TRANSFERRED_TO_TUBE
+    public enum Status implements Displayable{
+        UPLOADED("Uploaded"),
+        ABANDONED("Abandoned"),
+        UPLOAD_ACCEPTED("Upload Accepted"),
+        SCANNED("Scanned"),
+        ACCESSIONED("Accessioned"),
+        SAMPLE_TRANSFERRED_TO_TUBE("Sample has been transferred");
+
+        private final String displayName;
+
+        Status(String displayName) {
+            this.displayName = displayName;
+        }
+
+        @Override
+        public String getDisplayName() {
+            return displayName;
+        }
     }
 
     /**
@@ -231,7 +248,7 @@ public class ManifestRecord implements HasUpdateData {
          * This cannot directly apply to an actual record.  Represents a sample tube that is
          * received for which there is no previously uploaded manifest record.
          */
-        NOT_IN_MANIFEST("The scanned sample is not found in any manifest.", ManifestEvent.Severity.ERROR),
+        NOT_IN_MANIFEST("The scanned source sample is not found in any manifest.", ManifestEvent.Severity.ERROR),
         /**
          * Encapsulates the error message to indicate to the user that they have already scanned the tube
          */
@@ -266,7 +283,9 @@ public class ManifestRecord implements HasUpdateData {
 
         PREVIOUS_ERRORS_UNABLE_TO_CONTINUE("Due to errors previously found, this sample is unable to continue.",
                 ManifestEvent.Severity.ERROR),
-        INVALID_TARGET("The Target sample or vessel appears to be invalid.", ManifestEvent.Severity.ERROR);
+        INVALID_TARGET("The Target sample or vessel appears to be invalid.", ManifestEvent.Severity.ERROR),
+        SOURCE_ALREADY_TRANSFERRED("The source sample has already been transferred to a tube",
+                ManifestEvent.Severity.ERROR);
 
         private final String baseMessage;
         private final ManifestEvent.Severity severity;

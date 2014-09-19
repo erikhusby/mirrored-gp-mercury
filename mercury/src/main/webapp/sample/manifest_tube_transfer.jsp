@@ -146,7 +146,7 @@
             if (resultsMessage) {
                 $j("#scanResults").append('<div class="alert alert-error" style="font-size: 14px;margin-left:20%;margin-right:20%">'+resultsMessage+"</div>");
             } else {
-                $j("#scanResults").append('<div class="alert alert-error" style="font-size: 14px;margin-left:20%;margin-right:20%">'+message+"</div>");
+                $j("#scanResults").append('<div class="alert alert-success" style="font-size: 14px;margin-left:20%;margin-right:20%">'+message+"</div>");
             }
         }
     </script>
@@ -205,7 +205,7 @@
                 <div class="control-group">
                     <stripes:label for="source" class="control-label">
                         Step 1
-                        (Source Tube) *
+                        (Source sample) *
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="source" name="sourceTube"
@@ -215,7 +215,7 @@
                 </div>
                 <div class="control-group">
                     <stripes:label for="mercurySample" class="control-label">
-                        Step 2 (Sample Key) *
+                        Step 2 (Sample key) *
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="mercurySample" name="targetSample" class="defaultText input-xlarge"
@@ -225,7 +225,7 @@
 
                 <div class="control-group">
                     <stripes:label for="mercuryLabVessel" class="control-label">
-                        Step 3 (Lab Vessel) *
+                        Step 3 (Lab vessel) *
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="mercuryLabVessel" name="targetVessel" class="defaultText input-xlarge"

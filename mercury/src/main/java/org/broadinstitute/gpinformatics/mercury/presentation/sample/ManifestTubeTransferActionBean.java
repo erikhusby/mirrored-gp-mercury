@@ -78,18 +78,25 @@ public class ManifestTubeTransferActionBean extends CoreActionBean {
 
     @DefaultHandler
     public Resolution view() {
-        return new RedirectResolution(TUBE_TRANSFER_PAGE);
+        return new ForwardResolution(TUBE_TRANSFER_PAGE);
     }
 
     @HandlesEvent(RECORD_TRANSFER_ACTION)
     public Resolution recordTransfer() {
+
+        Resolution resolution;
+
         try {
             manifestSessionEjb.transferSample(activeSessionId, sourceTube, targetSample, targetVessel,
                     userBean.getBspUser());
+            addMessage("Collaborator sample {0} has been successfully recorded as transferred to vessel " +
+                       "{1} with a sample of {2}", sourceTube, targetVessel, targetSample);
+            resolution = new RedirectResolution(getClass(), VIEW_ACTION).addParameter("activeSessionId", activeSessionId);
         } catch (Exception e) {
             addGlobalValidationError(e.getMessage());
+            resolution = getContext().getSourcePageResolution();
         }
-        return new ForwardResolution(getClass(), VIEW_ACTION);
+        return resolution;
     }
 
     @HandlesEvent(SCAN_SOURCE_TUBE_ACTION)
@@ -101,7 +108,9 @@ public class ManifestTubeTransferActionBean extends CoreActionBean {
         if(StringUtils.isBlank(sourceTube)) {
             return createTextResolution("You must enter a value for the source Tube");
         }
+
         findActiveSession();
+
         if(activeSession == null) {
             return createTextResolution("The selected session could not be found");
         }

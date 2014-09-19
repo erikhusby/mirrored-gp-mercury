@@ -15,15 +15,19 @@ public class TubeTransferException extends RuntimeException {
 
 
     private static final long serialVersionUID = 1355836331464448642L;
-    private ManifestRecord.ErrorStatus errorStatus;
+//    private ManifestRecord.ErrorStatus errorStatus;
 
     public TubeTransferException(@Nonnull ManifestRecord.ErrorStatus errorStatus, @Nonnull Metadata.Key metaDataType,
                                  @Nonnull String metaDataValue, @Nonnull Throwable cause) {
         super(errorStatus.formatMessage(metaDataType, metaDataValue), cause);
-        this.errorStatus = errorStatus;
+//        this.errorStatus = errorStatus;
         logger.error(getMessage());
     }
 
+    public TubeTransferException(String message) {
+        super(message);
+        logger.error(getMessage());
+    }
 
     public TubeTransferException(@Nonnull ManifestRecord.ErrorStatus errorStatus, @Nonnull Metadata.Key metaDataType,
                                  @Nonnull String metaDataValue) {
@@ -39,12 +43,11 @@ public class TubeTransferException extends RuntimeException {
                                  String dataValue, String message) {
 
         super(StringUtils.trim(errorStatus.formatMessage(dataType, dataValue) + " " + message));
-        this.errorStatus = errorStatus;
+//        this.errorStatus = errorStatus;
         logger.error(getMessage());
-
     }
 
-    public ManifestRecord.ErrorStatus getErrorStatus() {
-        return errorStatus;
-    }
+//    public ManifestRecord.ErrorStatus getErrorStatus() {
+//        return errorStatus;
+//    }
 }

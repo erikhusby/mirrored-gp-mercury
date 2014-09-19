@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.hamcrest.Matchers;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -55,18 +56,7 @@ public class ManifestSessionContainerTest extends Arquillian {
 
     private static final String GENDER_MALE = "Male";
     private static final String GENDER_FEMALE = "Female";
-    private static final String SAMPLE_ID_1 = "2482938";
-    private static final String SAMPLE_ID_2 = "2342332";
-    private static final String SAMPLE_ID_3 = "8482833";
-    private static final String SAMPLE_ID_4 = "8284233";
-    private static final String SAMPLE_ID_5 = "4772733";
-    private static final String SAMPLE_ID_6 = "2244838";
-    private static final String SAMPLE_ID_7 = "24829338";
-    private static final String SAMPLE_ID_8 = "23423232";
-    private static final String SAMPLE_ID_9 = "84821833";
-    private static final String SAMPLE_ID_10 = "82844233";
-    private static final String SAMPLE_ID_11 = "47732733";
-    private static final String SAMPLE_ID_12 = "22424838";
+    private static final String COLLAB_PREFIX = "collab_";
     public static final int NUM_RECORDS_IN_SPREADSHEET = 23;
 
     private ResearchProject researchProject;
@@ -122,7 +112,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         if (userBean == null) {
             return;
         }
-
+        Date today = new Date();
         userBean.loginTestUser();
 
         Date researchProjectCreateTime = new Date();
@@ -131,6 +121,20 @@ public class ManifestSessionContainerTest extends Arquillian {
                         .createTestResearchProject(ResearchProject.PREFIX + researchProjectCreateTime.getTime());
         researchProject.setTitle("Buick test Project" + researchProjectCreateTime.getTime());
         researchProject.setRegulatoryDesignation(ResearchProject.RegulatoryDesignation.CLINICAL_DIAGNOSTICS);
+
+        String SAMPLE_ID_1 = COLLAB_PREFIX + today.getTime() + "1";
+        String SAMPLE_ID_2 = COLLAB_PREFIX + today.getTime() + "2";
+        String SAMPLE_ID_3 = COLLAB_PREFIX + today.getTime() + "3";
+        String SAMPLE_ID_4 = COLLAB_PREFIX + today.getTime() + "4";
+        String SAMPLE_ID_5 = COLLAB_PREFIX + today.getTime() + "5";
+        String SAMPLE_ID_6 = COLLAB_PREFIX + today.getTime() + "6";
+        String SAMPLE_ID_7 = COLLAB_PREFIX + today.getTime() + "7";
+        String SAMPLE_ID_8 = COLLAB_PREFIX + today.getTime() + "8";
+        String SAMPLE_ID_9 = COLLAB_PREFIX + today.getTime() + "9";
+        String SAMPLE_ID_10 = COLLAB_PREFIX + today.getTime() + "10";
+        String SAMPLE_ID_11 = COLLAB_PREFIX + today.getTime() + "11";
+        String SAMPLE_ID_12 = COLLAB_PREFIX + today.getTime() + "12";
+
 
         manifestSessionI = new ManifestSession(researchProject, "BUICK-TEST", testUser);
         manifestRecordI = createManifestRecord(Metadata.Key.PATIENT_ID, PATIENT_1, Metadata.Key.GENDER, GENDER_MALE,
@@ -174,8 +178,6 @@ public class ManifestSessionContainerTest extends Arquillian {
                 createManifestRecord(Metadata.Key.SAMPLE_ID, SAMPLE_ID_12, Metadata.Key.GENDER, GENDER_MALE,
                         Metadata.Key.PATIENT_ID, PATIENT_1 + "12"));
 
-        Date today = new Date();
-
         sourceSampleToMercurySample = new HashMap<>();
         sourceSampleToTargetVessel = new HashMap<>();
 
@@ -183,7 +185,9 @@ public class ManifestSessionContainerTest extends Arquillian {
         @SuppressWarnings("unchecked")
         Iterable<String> allSourceSamples = Iterables
                 .concat(firstUploadedScannedSamples, secondUploadedSamplesDupes, secondUploadedSamplesGood,
-                        secondUploadPatientsWithMismatchedGender, Collections.singleton(firstUploadedOmittedScan));
+                        secondUploadPatientsWithMismatchedGender, Collections.singleton(firstUploadedOmittedScan),
+                        Arrays.asList(SAMPLE_ID_1, SAMPLE_ID_2, SAMPLE_ID_3, SAMPLE_ID_4, SAMPLE_ID_5, SAMPLE_ID_6,
+                                SAMPLE_ID_7, SAMPLE_ID_8, SAMPLE_ID_9, SAMPLE_ID_10, SAMPLE_ID_11, SAMPLE_ID_12));
 
         for (String sourceSample : allSourceSamples) {
             sourceSampleToMercurySample.put(sourceSample, new MercurySample("SM_" + sourceSample + today.getTime(),
@@ -272,7 +276,6 @@ public class ManifestSessionContainerTest extends Arquillian {
             assertThat(manifestRecord.getUpdateData().getCreatedDate(),
                     is(not(equalTo(manifestRecord.getUpdateData().getModifiedDate()))));
         }
-
     }
 
     @Test(groups = TestGroups.STANDARD)
@@ -717,5 +720,40 @@ public class ManifestSessionContainerTest extends Arquillian {
                         ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE.getBaseMessage()));
             }
         }
+    }
+
+    @Test(groups = TestGroups.STANDARD)
+    public void setupTestDataForTestCases() throws Exception {
+        // Persist everything.
+        manifestSessionDao.persist(manifestSessionI);
+        manifestSessionDao.flush();
+
+        assertThat(manifestSessionI, is(Matchers.notNullValue()));
+
+        logInfo("The session ID is %d with a name of %s", manifestSessionI.getManifestSessionId(),
+                manifestSessionI.getSessionName());
+        for (ManifestRecord manifestRecord : manifestSessionI.getRecords()) {
+            logInfo("For session, Record %d has a sample ID of %s with available Mercury Sample of %s and " +
+                    "available lab vessel of %s", manifestRecord.getManifestRecordId(),
+                    manifestRecord.getSampleId(),
+                    sourceSampleToMercurySample.get(manifestRecord.getSampleId()).getSampleKey(),
+                    sourceSampleToTargetVessel.get(manifestRecord.getSampleId()).getLabel());
+        }
+
+        manifestSessionEjb.acceptManifestUpload(manifestSessionI.getManifestSessionId());
+        for (ManifestRecord manifestRecord : manifestSessionI.getRecords()) {
+            manifestSessionEjb.accessionScan(manifestSessionI.getManifestSessionId(), manifestRecord.getSampleId());
+        }
+
+        manifestSessionEjb.closeSession(manifestSessionI.getManifestSessionId());
+
+        for (LabVessel vessel : sourceSampleToTargetVessel.values()) {
+            labVesselDao.persist(vessel);
+            labVesselDao.flush();
+        }
+    }
+
+    private void logInfo(String message, Object... parameters) {
+        System.out.println(String.format(message, parameters));
     }
 }
