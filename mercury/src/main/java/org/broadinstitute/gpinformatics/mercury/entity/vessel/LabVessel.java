@@ -264,6 +264,20 @@ public abstract class LabVessel implements Serializable {
         return labMetrics;
     }
 
+    public Set<LabMetric> getConcentrationMetrics() {
+        if(labMetrics != null) {
+            Set<LabMetric> concentrationLabMetrics = new HashSet<>();
+            for (LabMetric labMetric: labMetrics) {
+                if(labMetric.getName().getCategory() == LabMetric.MetricType.Category.CONCENTRATION) {
+                    concentrationLabMetrics.add(labMetric);
+                }
+            }
+            return concentrationLabMetrics;
+        }
+
+        return null;
+    }
+
     @SuppressWarnings("unused")
     public Map<String, Set<LabMetric>> getMetricMap() {
         return metricMap;
