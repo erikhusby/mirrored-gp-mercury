@@ -129,9 +129,6 @@ public class ManifestSession implements HasUpdateData {
     }
 
     public void addRecord(ManifestRecord record) {
-        // Manifest record index is a zero-based index, so set the index to the number of records before adding
-        // this record.
-        record.setManifestRecordIndex(records.size());
         records.add(record);
         record.setManifestSession(this);
     }

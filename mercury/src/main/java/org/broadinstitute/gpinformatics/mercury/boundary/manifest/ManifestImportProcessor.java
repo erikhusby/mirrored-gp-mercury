@@ -75,13 +75,15 @@ public class ManifestImportProcessor extends TableProcessor {
         }
     }
 
-
     /**
      * Iterate through the data and add it to the list of ManifestRecords.
      */
     @Override
     public void processRowDetails(Map<String, String> dataRow, int dataRowIndex) {
-        manifestRecords.add(new ManifestRecord(ManifestHeader.toMetadata(dataRow)));
+        ManifestRecord manifestRecord = new ManifestRecord(ManifestHeader.toMetadata(dataRow));
+        // The dataRowIndex is 1-based, but the manifest index is 0-based.
+        manifestRecord.setManifestRecordIndex(dataRowIndex - 1);
+        manifestRecords.add(manifestRecord);
     }
 
     /**
