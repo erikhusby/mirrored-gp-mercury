@@ -29,13 +29,13 @@ public enum ManifestHeader implements ColumnHeader {
     COLLECTION_DATE("Collection_Date", 3, Metadata.Key.BUICK_COLLECTION_DATE, ColumnHeader.OPTIONAL_VALUE),
     VISIT("Visit", 4, Metadata.Key.BUICK_VISIT, ColumnHeader.OPTIONAL_VALUE),
     TUMOR_OR_NORMAL("SAMPLE_TYPE", 5, Metadata.Key.TUMOR_NORMAL, ColumnHeader.REQUIRED_VALUE);
-    private final String text;
+    private final String columnName;
     private final int index;
     private final Metadata.Key metadataKey;
     private final boolean requiredValue;
 
-    ManifestHeader(String text, int index, Metadata.Key metadataKey, boolean requiredValue) {
-        this.text = text;
+    ManifestHeader(String columnName, int index, Metadata.Key metadataKey, boolean requiredValue) {
+        this.columnName = columnName;
         this.index = index;
         this.metadataKey = metadataKey;
         this.requiredValue = requiredValue;
@@ -62,11 +62,11 @@ public enum ManifestHeader implements ColumnHeader {
 
     @Override
     public String getText() {
-        return text;
+        return getColumnName();
     }
 
     public String getColumnName() {
-        return text;
+        return columnName;
     }
 
     @Override
