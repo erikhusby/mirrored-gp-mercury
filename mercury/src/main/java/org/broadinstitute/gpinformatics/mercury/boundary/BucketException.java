@@ -18,7 +18,7 @@ public class BucketException extends InformaticsServiceException {
     }
 
     public BucketException(String s, Throwable throwableIn) {
-        super(s, throwableIn);
+        super(throwableIn, s);
     }
 
     public BucketException(Throwable throwableIn) {

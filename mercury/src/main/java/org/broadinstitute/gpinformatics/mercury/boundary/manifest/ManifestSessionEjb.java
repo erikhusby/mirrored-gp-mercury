@@ -119,8 +119,8 @@ public class ManifestSessionEjb {
             throw new InformaticsServiceException(e);
         } catch (Exception e) {
             throw new InformaticsServiceException(
-                    "Error reading manifest file '%s'.  Manifest files must be in the proper Excel format.",
-                    e, FilenameUtils.getName(pathToFile));
+                    e, "Error reading manifest file '%s'.  Manifest files must be in the proper Excel format.",
+                    FilenameUtils.getName(pathToFile));
         }
         Collection<ManifestRecord> manifestRecords;
         try {

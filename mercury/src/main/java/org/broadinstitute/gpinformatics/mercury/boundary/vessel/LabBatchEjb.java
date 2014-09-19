@@ -314,7 +314,7 @@ public class LabBatchEjb {
             batchObject.setJiraTicket(ticket);
         } catch (IOException ioe) {
             logger.error("Error attempting to create Lab Batch in Jira", ioe);
-            throw new InformaticsServiceException("Error attempting to create Lab Batch in Jira", ioe);
+            throw new InformaticsServiceException(ioe, "Error attempting to create Lab Batch in Jira");
         }
     }
 
@@ -355,7 +355,7 @@ public class LabBatchEjb {
             }
         } catch (IOException ioe) {
             logger.error("Error attempting to create a lab batch in JIRA", ioe);
-            throw new InformaticsServiceException("Error attempting to create a lab batch in JIRA", ioe);
+            throw new InformaticsServiceException(ioe, "Error attempting to create a lab batch in JIRA");
         }
     }
 
