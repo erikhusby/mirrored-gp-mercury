@@ -76,7 +76,11 @@ public class ManifestSession implements HasUpdateData {
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "MANIFEST_SESSION_ID", nullable = false)
-    @OrderColumn(name = "SPREADSHEET_ROW", nullable = false)
+    @OrderColumn(name = "MANIFEST_RECORD_INDEX", nullable = false)
+    // Envers insists on auditing a relation with a specified @OrderColumn in a special table, although this seems
+    // redundant to the auditing that is already in place for ManifestRecord.  In the absence of a specified
+    // @AuditJoinTable, Envers would use a default join table name that exceeds the Oracle 30 character identifier
+    // limit, so this specifies a shorter name.
     @AuditJoinTable(name = "MANIFEST_RECORD_JOIN_AUD")
     private List<ManifestRecord> records = new ArrayList<>();
 
@@ -125,9 +129,9 @@ public class ManifestSession implements HasUpdateData {
     }
 
     public void addRecord(ManifestRecord record) {
-        // Spreadsheet row is a zero-based index, so set the spreadsheet row index to the number of records
-        // before adding this record.
-        record.setSpreadsheetRow(records.size());
+        // Manifest record index is a zero-based index, so set the index to the number of records before adding
+        // this record.
+        record.setManifestRecordIndex(records.size());
         records.add(record);
         record.setManifestSession(this);
     }

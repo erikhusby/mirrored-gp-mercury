@@ -74,8 +74,16 @@ public class ManifestRecord implements HasUpdateData {
     @JoinColumn(name = "MANIFEST_SESSION_ID", insertable = false, updatable = false)
     private ManifestSession manifestSession;
 
-    @Column(name = "SPREADSHEET_ROW", insertable = false, updatable = false, nullable = false)
-    private Integer spreadsheetRow;
+    /**
+     * The index of this ManifestRecord within the ManifestSession, this is referenced by the containing ManifestSession
+     * to preserve the order of ManifestRecords to facilitate review between manifest upload and acceptance.
+     * This index value relates to the row number of the corresponding record in the manifest spreadsheet, but while the
+     * spreadsheet data rows start at 2 (there is a single header row), these indexes start at 0.  The deprecated
+     * Hibernate IndexColumn annotation (now removed in the latest version of Hibernate) used to allow for specification
+     * of a base value for this index, but JPA requires ordered elements to start with an index of 0.
+     */
+    @Column(name = "MANIFEST_RECORD_INDEX", insertable = false, updatable = false, nullable = false)
+    private Integer manifestRecordIndex;
 
     @Embedded
     private UpdateData updateData = new UpdateData();
@@ -182,8 +190,8 @@ public class ManifestRecord implements HasUpdateData {
         setStatus(ManifestRecord.Status.SCANNED);
     }
 
-    public void setSpreadsheetRow(int spreadsheetRow) {
-        this.spreadsheetRow = spreadsheetRow;
+    public void setManifestRecordIndex(int spreadsheetRow) {
+        this.manifestRecordIndex = spreadsheetRow;
     }
 
     /**
