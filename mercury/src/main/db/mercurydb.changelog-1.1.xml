@@ -945,6 +945,9 @@
             <column name="status" type="varchar(30)">
                 <constraints nullable="false" />
             </column>
+            <column name="research_project_id" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
             <column name="created_by" type="numeric(15, 0)">
                 <constraints nullable="false"/>
             </column>
@@ -962,6 +965,18 @@
                        constraintName="PK_MANIFEST_SESSION" />
     </changeSet>
 
+    <changeSet id="GPLIM-2885-6-RPFK" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="FK_MANIFEST_SESSION_RP" schemaName="mercury" foreignKeyTableName="manifest_session" />
+            </not>
+        </preConditions>
+        <addForeignKeyConstraint baseTableName="manifest_session" baseColumnNames="research_project_id"
+                                 constraintName="FK_MANIFEST_SESSION_RP" referencedTableName="research_project"
+                                 referencedColumnNames="research_project_id" baseTableSchemaName="mercury"
+                                 referencedTableSchemaName="athena" />
+    </changeSet>
+
     <changeSet author="mcovarr" id="GPLIM-2885-7">
         <createTable tableName="manifest_session_aud" schemaName="mercury">
             <column name="rev" type="number(19,0)">
@@ -973,6 +988,7 @@
             </column>
             <column name="session_prefix" type="varchar2(255)"/>
             <column name="status" type="varchar(30)"/>
+            <column name="research_project_id" type="number(19,0)" />
             <column name="created_by" type="numeric(15, 0)"/>
             <column name="modified_by" type="numeric(15, 0)"/>
             <column name="created_date" type="timestamp(6)"/>
@@ -1001,7 +1017,7 @@
             <column name="status" type="varchar2(30)">
                 <constraints nullable="false"/>
             </column>
-            <column name="errorStatus" type="varchar2(30)"/>
+            <column name="error_status" type="varchar2(30)"/>
         </createTable>
         <addPrimaryKey schemaName="mercury" tableName="manifest_record" columnNames="manifest_record_id"
                 constraintName="PK_MANIFEST_RECORD"/>
@@ -1021,7 +1037,7 @@
             </column>
             <column name="manifest_session_id" type="number(19,0)"/>
             <column name="status" type="varchar2(30)"/>
-            <column name="errorStatus" type="varchar2(30)"/>
+            <column name="error_status" type="varchar2(30)"/>
         </createTable>
         <addPrimaryKey schemaName="mercury" tableName="manifest_record_aud" columnNames="rev, manifest_record_id"
                 constraintName="PK_MANIFEST_RECORD_AUD"/>
@@ -1097,6 +1113,10 @@
         <addForeignKeyConstraint constraintName="FK_MANLOG_MANREC_ID"
                                  baseTableSchemaName="mercury" baseTableName="manifest_event" baseColumnNames="manifest_record_id"
                                  referencedTableSchemaName="mercury" referencedTableName="manifest_record" referencedColumnNames="manifest_record_id"/>
+        <addForeignKeyConstraint baseTableName="manifest_event" baseColumnNames="manifest_session_id"
+                                 constraintName="FK_MANLOG_MANSESS" referencedTableName="manifest_session"
+                                 referencedColumnNames="manifest_session_id" baseTableSchemaName="mercury"
+                                 referencedTableSchemaName="mercury" />
     </changeSet>
 
     <changeSet author="mcovarr" id="GPLIM-2885-15">
@@ -1108,6 +1128,8 @@
             <column name="manifest_event_id" type="number(19,0)">
                 <constraints nullable="false"/>
             </column>
+
+            <column name="manifest_session_id" type="number(19,0)"/>
             <column name="message" type="varchar2(255)"/>
             <column name="manifest_record_id" type="number(19,0)"/>
             <column name="log_type" type="varchar(30)" />

@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.test;
 
 import org.apache.commons.io.FileUtils;
+import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.DeploymentProducer;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
@@ -61,7 +62,7 @@ public class DeploymentBuilder {
                 .addPackages(true, "edu.mit.broad.prodinfo.bean.generated")
                 .addAsWebInfResource(new StringAsset(DeploymentProducer.MERCURY_DEPLOYMENT + "=" + deployment.name()),
                         "classes/jndi.properties");
-        addWebResourcesTo(war, "src/test/resources/testdata");
+        addWebResourcesTo(war, TestUtils.TEST_DATA_LOCATION);
         war = addWarDependencies(war);
         return war;
     }
