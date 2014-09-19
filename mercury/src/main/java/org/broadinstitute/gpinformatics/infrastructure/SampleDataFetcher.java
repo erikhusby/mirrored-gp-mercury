@@ -91,7 +91,7 @@ public class SampleDataFetcher {
         Map<String, MercurySample.MetadataSource> metadataSources = determineMetadataSource(sampleNames);
 
         List<String> bspSamples = new ArrayList<>();
-        List<String> mercurySamples = new ArrayList<>();
+        List<String> mercurySampleIds = new ArrayList<>();
         for (String sampleName : sampleNames) {
             MercurySample.MetadataSource metadataSource = metadataSources.get(sampleName);
             switch (metadataSource) {
@@ -101,7 +101,7 @@ public class SampleDataFetcher {
                 }
                 break;
             case MERCURY:
-                mercurySamples.add(sampleName);
+                mercurySampleIds.add(sampleName);
                 break;
             default:
                 throw new IllegalStateException("Unknown sample data source: " + metadataSource);
@@ -112,6 +112,7 @@ public class SampleDataFetcher {
             Map<String, BSPSampleDTO> bspSampleData = bspSampleDataFetcher.fetchSamplesFromBSP(bspSamples);
             sampleData.putAll(bspSampleData);
         }
+        List<MercurySample> mercurySamples = mercurySampleDao.findBySampleKeys(mercurySampleIds);
         sampleData.putAll(mercurySampleDataFetcher.fetchSampleData(mercurySamples));
         return sampleData;
     }

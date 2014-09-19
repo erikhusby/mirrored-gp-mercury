@@ -1,9 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.samples;
 
-import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 
-import javax.inject.Inject;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -12,40 +10,19 @@ import java.util.Map;
 /**
  */
 public class MercurySampleDataFetcher {
-    private MercurySampleDao mercurySampleDao;
-
-    @Inject
-    public MercurySampleDataFetcher(MercurySampleDao mercurySampleDao) {
-        this.mercurySampleDao = mercurySampleDao;
-    }
-
-    public MercurySampleDataFetcher() {
-    }
-
-    public Map<String, MercurySampleData> fetchSampleDataForSamples(Collection<MercurySample> mercurySamples) {
+    public Map<String, MercurySampleData> fetchSampleData(Collection<MercurySample> mercurySamples) {
         Map<String, MercurySampleData> results = new HashMap<>();
-        for (MercurySample mercurySample : mercurySamples) {
-            results.put(mercurySample.getSampleKey(), fetchSampleData(mercurySample));
-        }
-        return results;
-    }
-
-    public Map<String, MercurySampleData> fetchSampleData(Collection<String> sampleIds) {
-        return fetchSampleDataForSamples(mercurySampleDao.findBySampleKeys(sampleIds));
-    }
-
-    public MercurySampleData fetchSampleData(MercurySample sample) {
-        return fetchFromMercurySamples(Collections.singleton(sample)).get(sample.getSampleKey());
-    }
-
-    public Map<String, MercurySampleData> fetchFromMercurySamples(Collection<MercurySample> mercurySamples) {
-        Map<String,MercurySampleData> results = new HashMap<>();
         for (MercurySample mercurySample : mercurySamples) {
             results.put(mercurySample.getSampleKey(), new MercurySampleData(mercurySample));
         }
-
         return results;
     }
+
+    public MercurySampleData fetchSampleData(MercurySample sample) {
+        return fetchSampleData(Collections.singleton(sample)).get(sample.getSampleKey());
+    }
+
+
 
     public String getStockIdForAliquotId(String aliquotId) {
         return null;

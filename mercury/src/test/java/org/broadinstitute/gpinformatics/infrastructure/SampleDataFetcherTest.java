@@ -172,7 +172,7 @@ public class SampleDataFetcherTest {
 
     public void fetch_single_clinical_sample_with_MercurySample_should_query_Mercury() {
         configureMercurySampleDao(CLINICAL_SAMPLE_ID, clinicalMercurySample);
-        configureMercurySampleDataFetcher(CLINICAL_SAMPLE_ID, clinicalSampleData);
+        configureMercurySampleDataFetcher(clinicalSampleData);
 
         SampleData sampleData = sampleDataFetcher.fetchSampleData(CLINICAL_SAMPLE_ID);
 
@@ -230,7 +230,7 @@ public class SampleDataFetcherTest {
 
     public void fetch_clinical_samples_with_MercurySample_should_query_Mercury() {
         configureMercurySampleDao(CLINICAL_SAMPLE_ID, clinicalMercurySample);
-        configureMercurySampleDataFetcher(CLINICAL_SAMPLE_ID, clinicalSampleData);
+        configureMercurySampleDataFetcher(clinicalSampleData);
 
         Map<String, SampleData> sampleData =
                 sampleDataFetcher.fetchSampleData(Collections.singleton(CLINICAL_SAMPLE_ID));
@@ -255,7 +255,8 @@ public class SampleDataFetcherTest {
         when(mockBspSampleDataFetcher
                 .fetchSamplesFromBSP(argThat(containsInAnyOrder(BSP_ONLY_SAMPLE_ID, BSP_SAMPLE_ID))))
                 .thenReturn(ImmutableMap.of(BSP_ONLY_SAMPLE_ID, bspOnlySampleData, BSP_SAMPLE_ID, bspSampleData));
-        configureMercurySampleDataFetcher(CLINICAL_SAMPLE_ID, clinicalSampleData);
+        configureMercurySampleDao(CLINICAL_SAMPLE_ID, clinicalMercurySample);
+        configureMercurySampleDataFetcher(clinicalSampleData);
 
         Map<String, SampleData> sampleData = sampleDataFetcher.fetchSampleData(Arrays.asList(
                 GSSR_ONLY_SAMPLE_ID, GSSR_SAMPLE_ID, BSP_ONLY_SAMPLE_ID, BSP_SAMPLE_ID, CLINICAL_SAMPLE_ID));
@@ -411,6 +412,8 @@ public class SampleDataFetcherTest {
     private void configureMercurySampleDao(String sampleId, MercurySample mercurySample) {
         when(mockMercurySampleDao.findMapIdToListMercurySample(argThat(contains(sampleId))))
                 .thenReturn(ImmutableMap.of(sampleId, Collections.singletonList(mercurySample)));
+        when(mockMercurySampleDao.findBySampleKeys(argThat(contains(sampleId))))
+                .thenReturn(Collections.singletonList(mercurySample));
     }
 
     private void configureBspFetcher(String sampleId, BSPSampleDTO sampleData) {
@@ -418,8 +421,8 @@ public class SampleDataFetcherTest {
                 .thenReturn(ImmutableMap.of(sampleId, sampleData));
     }
 
-    private void configureMercurySampleDataFetcher(String sampleId, MercurySampleData sampleData) {
-        when(mockMercurySampleDataFetcher.fetchSampleData(argThat(contains(sampleId))))
+    private void configureMercurySampleDataFetcher(MercurySampleData sampleData) {
+        when(mockMercurySampleDataFetcher.fetchSampleData(argThat(contains(clinicalMercurySample))))
                 .thenReturn(ImmutableMap.of(CLINICAL_SAMPLE_ID, sampleData));
     }
 

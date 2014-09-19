@@ -20,14 +20,13 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class MercurySampleDataFetcherTest {
@@ -49,17 +48,15 @@ public class MercurySampleDataFetcherTest {
     public void testFetchNothingReturnsNothing() throws Exception {
         List<MercurySample> mercurySamples = new ArrayList<>();
         Map<String, MercurySampleData>
-                mercurySampleData = mercurySampleDataFetcher.fetchFromMercurySamples(mercurySamples);
+                mercurySampleData = mercurySampleDataFetcher.fetchSampleData(mercurySamples);
         assertThat(mercurySampleData.size(), equalTo(0));
     }
 
     public void testFetchOneMercurySampleReturnsOneResult() {
-        List<MercurySample> mercurySamples =
-                Collections.singletonList(new MercurySample(SM_MERC1, MercurySample.MetadataSource.MERCURY));
-        Map<String, MercurySampleData>
-                mercurySampleData = mercurySampleDataFetcher.fetchFromMercurySamples(mercurySamples);
-        assertThat(mercurySampleData.size(), equalTo(1));
-        assertThat(mercurySampleData.get(SM_MERC1).getSampleId(), equalTo(SM_MERC1));
+        MercurySample mercurySample = new MercurySample(SM_MERC1, MercurySample.MetadataSource.MERCURY);
+        MercurySampleData mercurySampleData = mercurySampleDataFetcher.fetchSampleData(mercurySample);
+        assertThat(mercurySampleData, notNullValue());
+        assertThat(mercurySampleData.getSampleId(), equalTo(SM_MERC1));
     }
 
     public void testFetchMercurySampleHasSampleData() {
@@ -89,7 +86,7 @@ public class MercurySampleDataFetcherTest {
         MercurySample mercurySample2 = new MercurySample(SM_MERC2, MercurySample.MetadataSource.MERCURY, metadata2);
 
         Map<String, MercurySampleData> sampleDatas =
-                mercurySampleDataFetcher.fetchSampleDataForSamples(Arrays.asList(mercurySample1, mercurySample2));
+                mercurySampleDataFetcher.fetchSampleData(Arrays.asList(mercurySample1, mercurySample2));
 
         assertThat(sampleDatas.size(), equalTo(2));
     }
