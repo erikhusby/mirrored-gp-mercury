@@ -41,7 +41,6 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -290,32 +289,17 @@ public class ManifestSession implements HasUpdateData {
 
             StringBuilder messageBuilder = new StringBuilder();
 
-            // Describe how many duplicates were found in a particular manifest session.
             int numInstances = entry.getValue().size();
             messageBuilder.append(numInstances).append(" ");
             messageBuilder.append(Noun.pluralOf("instance", numInstances));
-            messageBuilder.append(" found at ");
-            messageBuilder.append(Noun.pluralOf("row", numInstances));
-            messageBuilder.append(" ");
+            messageBuilder.append(" found in ");
 
-            // Collect the spreadsheet row numbers at which the duplicates can be found.
-            List<Integer> rowNumbers = new ArrayList<>();
-            for (ManifestRecord manifestRecord : entry.getValue()) {
-                rowNumbers.add(manifestRecord.getSpreadsheetRowNumber());
-            }
-            // Sort the spreadsheet row numbers, join with commas and append to the message string.
-            Collections.sort(rowNumbers);
-            messageBuilder.append(StringUtils.join(rowNumbers, ", "));
-
-            messageBuilder.append(" of ");
             String sessionName = entry.getKey();
             String thisSessionName = thisRecord.getManifestSession().getSessionName();
             messageBuilder.append(
-                    sessionName.equals(thisSessionName) ? "this manifest session" : "manifest session '" + sessionName + "'");
-
+                    sessionName.equals(thisSessionName) ? "this manifest session" : "manifest session " + sessionName);
             messages.add(messageBuilder.toString());
         }
-        // Join the messages for all the manifests containing duplicates.
         return StringUtils.join(messages, ", ") + ".";
     }
 
