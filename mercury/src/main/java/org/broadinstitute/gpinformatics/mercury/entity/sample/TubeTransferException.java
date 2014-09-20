@@ -11,21 +11,13 @@ import javax.ejb.ApplicationException;
 @ApplicationException(rollback = true)
 public class TubeTransferException extends RuntimeException {
 
-    private static final Log logger = LogFactory.getLog(TubeTransferException.class);
+    private static final Log log = LogFactory.getLog(TubeTransferException.class);
 
     private static final long serialVersionUID = 1355836331464448642L;
-//    private ManifestRecord.ErrorStatus errorStatus;
-
-    public TubeTransferException(@Nonnull ManifestRecord.ErrorStatus errorStatus, @Nonnull Metadata.Key metaDataType,
-                                 @Nonnull String metaDataValue, @Nonnull Throwable cause) {
-        super(errorStatus.formatMessage(metaDataType, metaDataValue), cause);
-//        this.errorStatus = errorStatus;
-        logger.error(getMessage());
-    }
 
     public TubeTransferException(String message) {
         super(message);
-        logger.error(getMessage());
+        log.error(getMessage());
     }
 
     public TubeTransferException(@Nonnull ManifestRecord.ErrorStatus errorStatus, @Nonnull Metadata.Key metaDataType,
@@ -42,11 +34,6 @@ public class TubeTransferException extends RuntimeException {
                                  String dataValue, String message) {
 
         super(StringUtils.trim(errorStatus.formatMessage(dataType, dataValue) + " " + message));
-//        this.errorStatus = errorStatus;
-        logger.error(getMessage());
+        log.error(getMessage());
     }
-
-//    public ManifestRecord.ErrorStatus getErrorStatus() {
-//        return errorStatus;
-//    }
 }
