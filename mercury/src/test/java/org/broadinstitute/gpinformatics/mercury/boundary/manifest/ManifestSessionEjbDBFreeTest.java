@@ -335,7 +335,8 @@ public class ManifestSessionEjbDBFreeTest {
             Collection<ManifestRecord> duplicates = filterThisRecord(record,
                     sampleIdToRecordMultimap.get(record.getValueByKey(Metadata.Key.SAMPLE_ID)));
             assertThat(manifestEvent.getMessage(),
-                    containsString(record.buildMessageForDuplicate(manifestSession.getSessionName(), duplicates)));
+                    containsString(record.buildMessageForConflictingRecords(manifestSession.getSessionName(),
+                            duplicates)));
         }
     }
 
@@ -376,7 +377,7 @@ public class ManifestSessionEjbDBFreeTest {
                 ManifestRecord duplicateRecord = session1RecordsBySampleId.get(record.getValueByKey(
                         Metadata.Key.SAMPLE_ID)).iterator().next();
                 assertThat(manifestEvent.getMessage(),
-                        containsString(record.buildMessageForDuplicate(manifestSession1.getSessionName(),
+                        containsString(record.buildMessageForConflictingRecords(manifestSession1.getSessionName(),
                                 Collections.singleton(duplicateRecord))));
             } else {
                 assertThat(record.getManifestEvents(), is(empty()));
@@ -404,6 +405,9 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(manifestSession, is(notNullValue()));
         assertThat(manifestSession.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
 
+        ImmutableListMultimap<String, ManifestRecord> patientIdToManifestRecords =
+                buildPatientIdToManifestRecordsMultimap(manifestSession);
+
         // The assert below is for size * 2 since all manifest records in question are in this manifest session.
         assertThat(manifestSession.getManifestEvents(),
                 hasSize(PATIENT_IDS_FOR_SAME_MANIFEST_GENDER_MISMATCHES.size() * 2));
@@ -411,10 +415,15 @@ public class ManifestSessionEjbDBFreeTest {
             assertThat(manifestRecord.isQuarantined(), is(false));
             Metadata patientIdMetadata = manifestRecord.getMetadataByKey(Metadata.Key.PATIENT_ID);
             if (PATIENT_IDS_FOR_SAME_MANIFEST_GENDER_MISMATCHES.contains(patientIdMetadata.getValue())) {
+                Collection<ManifestRecord> allMatchingPatientIdRecordsExceptThisOne =
+                        filterThisRecord(manifestRecord, patientIdToManifestRecords.get(manifestRecord.getValueByKey(
+                                Metadata.Key.PATIENT_ID)));
                 assertThat(manifestRecord.getManifestEvents(), hasSize(1));
                 ManifestEvent manifestEvent = manifestRecord.getManifestEvents().get(0);
                 assertThat(manifestEvent.getSeverity(), is(ManifestEvent.Severity.ERROR));
-                assertThat(manifestEvent.getMessage(), containsString("1 instance found in this manifest session"));
+                assertThat(manifestEvent.getMessage(), containsString(manifestRecord
+                        .buildMessageForConflictingRecords(manifestSession.getSessionName(),
+                                allMatchingPatientIdRecordsExceptThisOne)));
             }
         }
     }
@@ -428,6 +437,9 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(manifestSession1, is(notNullValue()));
         assertThat(manifestSession1.getManifestEvents(), is(empty()));
         assertThat(manifestSession1.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
+
+        ImmutableListMultimap<String, ManifestRecord> session1RecordsByPatientId =
+                buildPatientIdToManifestRecordsMultimap(manifestSession1);
 
         ManifestSession manifestSession2 =
                 uploadManifest("manifest-upload/gender-mismatches-across-sessions/good-manifest-2.xlsx",
@@ -444,12 +456,25 @@ public class ManifestSessionEjbDBFreeTest {
                 assertThat(manifestRecord.getManifestEvents(), hasSize(1));
                 ManifestEvent manifestEvent = manifestRecord.getManifestEvents().get(0);
                 assertThat(manifestEvent.getSeverity(), is(ManifestEvent.Severity.ERROR));
+                ImmutableList<ManifestRecord> mismatchedRecords =
+                        session1RecordsByPatientId.get(manifestRecord.getValueByKey(Metadata.Key.PATIENT_ID));
                 assertThat(manifestEvent.getMessage(),
-                        containsString("1 instance found in manifest session " + manifestSession1.getSessionName()));
+                        containsString(manifestRecord.buildMessageForConflictingRecords(
+                                manifestSession1.getSessionName(), mismatchedRecords)));
                 observedMismatches++;
             }
         }
         assertThat(observedMismatches, is(equalTo(expectedPatientIds.size())));
+    }
+
+    private ImmutableListMultimap<String, ManifestRecord> buildPatientIdToManifestRecordsMultimap(
+            ManifestSession manifestSession) {
+        return Multimaps.index(manifestSession.getRecords(), new Function<ManifestRecord, String>() {
+            @Override
+            public String apply(ManifestRecord manifestRecord) {
+                return manifestRecord.getValueByKey(Metadata.Key.PATIENT_ID);
+            }
+        });
     }
 
     /********************************************************************/

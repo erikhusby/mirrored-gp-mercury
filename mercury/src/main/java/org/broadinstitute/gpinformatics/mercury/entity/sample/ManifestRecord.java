@@ -2,9 +2,12 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 
 import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimaps;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.Updatable;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.UpdatedEntityInterceptor;
@@ -14,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
 import org.hibernate.envers.Audited;
 import org.jvnet.inflector.Noun;
 
+import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Embedded;
@@ -202,7 +206,8 @@ public class ManifestRecord implements Updatable {
      * Build an error message for duplicate samples found in the session having name {@code otherSessionName} with
      * the duplicate {@code ManifestRecord}s contained in {@code duplicateRecords}.
      */
-    public String buildMessageForDuplicate(String otherSessionName, Collection<ManifestRecord> duplicateRecords) {
+    public String buildMessageForConflictingRecords(String otherSessionName,
+                                                    Collection<ManifestRecord> duplicateRecords) {
         StringBuilder messageBuilder = new StringBuilder();
 
         // Describe how many duplicates were found in a particular manifest session.
@@ -227,6 +232,40 @@ public class ManifestRecord implements Updatable {
         messageBuilder.append(
                 otherSessionName.equals(thisSessionName) ? "this manifest session" : "manifest session '" + otherSessionName + "'");
         return messageBuilder.toString();
+    }
+
+    /**
+     * Create a presentable description of where the duplicates of {@code thisDuplicate} can be found.
+     *
+     * @param allDuplicateRecords  All ManifestRecords matching this ManifestRecord (same patient ID or sample ID,
+     *                             depending on the validation being performed).
+     */
+    public String describeOtherManifestSessionsWithMatchingRecords(Collection<ManifestRecord> allDuplicateRecords) {
+
+        // Filter 'thisRecord' from consideration as a duplicate of itself.
+        Iterable<ManifestRecord> allButThisRecord = Iterables.filter(allDuplicateRecords, new Predicate<ManifestRecord>() {
+            @Override
+            public boolean apply(@Nullable ManifestRecord record) {
+                return record != ManifestRecord.this;
+            }
+        });
+
+        // Group manifest records by manifest session name.
+        ImmutableListMultimap<String, ManifestRecord> recordsBySessionName =
+                Multimaps.index(allButThisRecord, new Function<ManifestRecord, String>() {
+                    @Override
+                    public String apply(ManifestRecord record) {
+                        return record.getManifestSession().getSessionName();
+                    }
+                });
+
+        List<String> messages = new ArrayList<>();
+        // Add an appropriate message for each record to messages.
+        for (Map.Entry<String, Collection<ManifestRecord>> entry : recordsBySessionName.asMap().entrySet()) {
+            messages.add(buildMessageForConflictingRecords(entry.getKey(), entry.getValue()));
+        }
+        // Join the messages for all the manifests containing duplicates.
+        return StringUtils.join(messages, ", ") + ".";
     }
 
     /**

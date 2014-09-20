@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
@@ -22,7 +21,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 
-import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Embedded;
@@ -190,7 +188,7 @@ public class ManifestSession implements Updatable {
                                     .formatMessage(Metadata.Key.PATIENT_ID, entry.getKey());
 
                     String otherSessionsWithSamePatientId =
-                            describeOtherManifestSessionsWithMatchingRecords(record, entry.getValue());
+                            record.describeOtherManifestSessionsWithMatchingRecords(entry.getValue());
 
                     addManifestEvent(new ManifestEvent(ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
                             message + "  " + otherSessionsWithSamePatientId, record));
@@ -251,45 +249,13 @@ public class ManifestSession implements Updatable {
                             ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage(Metadata.Key.SAMPLE_ID,
                                     entry.getKey());
                     String sessionsWithDuplicates =
-                            describeOtherManifestSessionsWithMatchingRecords(duplicatedRecord, entry.getValue());
+                            duplicatedRecord.describeOtherManifestSessionsWithMatchingRecords(entry.getValue());
                     addManifestEvent(
                             new ManifestEvent(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
                                     message + "  " + sessionsWithDuplicates, duplicatedRecord));
                 }
             }
         }
-    }
-
-    /**
-     * Create a presentable description of where the duplicates of {@code thisDuplicate} can be found.
-     */
-    private String describeOtherManifestSessionsWithMatchingRecords(final ManifestRecord thisRecord,
-                                                                    Collection<ManifestRecord> allRecords) {
-
-        // Filter 'thisRecord' from consideration as a duplicate of itself.
-        Iterable<ManifestRecord> allButThisRecord = Iterables.filter(allRecords, new Predicate<ManifestRecord>() {
-            @Override
-            public boolean apply(@Nullable ManifestRecord record) {
-                return record != thisRecord;
-            }
-        });
-
-        // Group manifest records by manifest session name.
-        ImmutableListMultimap<String, ManifestRecord> recordsBySessionName =
-                Multimaps.index(allButThisRecord, new Function<ManifestRecord, String>() {
-                    @Override
-                    public String apply(ManifestRecord record) {
-                        return record.getManifestSession().getSessionName();
-                    }
-                });
-
-        List<String> messages = new ArrayList<>();
-        // Add an appropriate message for each record to messages.
-        for (Map.Entry<String, Collection<ManifestRecord>> entry : recordsBySessionName.asMap().entrySet()) {
-            messages.add(thisRecord.buildMessageForDuplicate(entry.getKey(), entry.getValue()));
-        }
-        // Join the messages for all the manifests containing duplicates.
-        return StringUtils.join(messages, ", ") + ".";
     }
 
     /**
