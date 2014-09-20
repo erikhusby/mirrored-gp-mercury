@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Maps;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.Updatable;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
@@ -11,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceExcep
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
 import org.hibernate.envers.Audited;
+import org.jvnet.inflector.Noun;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -32,6 +34,8 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -190,8 +194,39 @@ public class ManifestRecord implements Updatable {
         status = Status.SCANNED;
     }
 
-    public void setManifestRecordIndex(int spreadsheetRow) {
-        this.manifestRecordIndex = spreadsheetRow;
+    public void setManifestRecordIndex(int manifestRecordIndex) {
+        this.manifestRecordIndex = manifestRecordIndex;
+    }
+
+    /**
+     * Build an error message for duplicate samples found in the session having name {@code otherSessionName} with
+     * the duplicate {@code ManifestRecord}s contained in {@code duplicateRecords}.
+     */
+    public String buildMessageForDuplicate(String otherSessionName, Collection<ManifestRecord> duplicateRecords) {
+        StringBuilder messageBuilder = new StringBuilder();
+
+        // Describe how many duplicates were found in a particular manifest session.
+        int numInstances = duplicateRecords.size();
+        messageBuilder.append(numInstances).append(" ");
+        messageBuilder.append(Noun.pluralOf("instance", numInstances));
+        messageBuilder.append(" found at ");
+        messageBuilder.append(Noun.pluralOf("row", numInstances));
+        messageBuilder.append(" ");
+
+        // Collect the spreadsheet row numbers at which the duplicates can be found.
+        List<Integer> rowNumbers = new ArrayList<>();
+        for (ManifestRecord manifestRecord : duplicateRecords) {
+            rowNumbers.add(manifestRecord.getSpreadsheetRowNumber());
+        }
+        // Sort the spreadsheet row numbers, join with commas and append to the message string.
+        Collections.sort(rowNumbers);
+        messageBuilder.append(StringUtils.join(rowNumbers, ", "));
+
+        messageBuilder.append(" of ");
+        String thisSessionName = getManifestSession().getSessionName();
+        messageBuilder.append(
+                otherSessionName.equals(thisSessionName) ? "this manifest session" : "manifest session '" + otherSessionName + "'");
+        return messageBuilder.toString();
     }
 
     /**

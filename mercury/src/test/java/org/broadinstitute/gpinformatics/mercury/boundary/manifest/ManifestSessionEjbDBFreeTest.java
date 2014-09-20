@@ -1,7 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
+import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Multimaps;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -33,6 +39,7 @@ import org.testng.annotations.Test;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -309,6 +316,9 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(manifestSession, is(notNullValue()));
         assertThat(manifestSession.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
         assertThat(manifestSession.hasErrors(), is(true));
+
+        ImmutableListMultimap<String, ManifestRecord> sampleIdToRecordMultimap =
+                buildSampleIdToRecordMultimap(manifestSession);
         List<ManifestRecord> quarantinedRecords = new ArrayList<>();
 
         for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
@@ -322,17 +332,26 @@ public class ManifestSessionEjbDBFreeTest {
         for (ManifestRecord record : quarantinedRecords) {
             assertThat(record.getManifestEvents(), hasSize(1));
             ManifestEvent manifestEvent = record.getManifestEvents().iterator().next();
-            String sampleId = record.getValueByKey(Metadata.Key.SAMPLE_ID);
-            // -1 to account for the number of copies to number of duplicates conversion.
-            int expectedNumberOfDuplicates = SAMPLE_ID_TO_NUMBER_OF_COPIES_FOR_DUPLICATE_TESTS.get(sampleId) - 1;
-
-            String expectedText = "instance" + (expectedNumberOfDuplicates == 1 ? "" : "s");
-            assertThat(manifestEvent.getMessage(), containsString(expectedText + " found in this manifest session"));
+            Collection<ManifestRecord> duplicates = filterThisRecord(record,
+                    sampleIdToRecordMultimap.get(record.getValueByKey(Metadata.Key.SAMPLE_ID)));
+            assertThat(manifestEvent.getMessage(),
+                    containsString(record.buildMessageForDuplicate(manifestSession.getSessionName(), duplicates)));
         }
+    }
+
+    private Collection<ManifestRecord> filterThisRecord(final ManifestRecord record,
+                                                      ImmutableList<ManifestRecord> manifestRecords) {
+        return Collections2.filter(manifestRecords, new Predicate<ManifestRecord>() {
+            @Override
+            public boolean apply(ManifestRecord localRecord) {
+                return localRecord != record;
+            }
+        });
     }
 
     public void uploadManifestThatDuplicatesSampleIdInAnotherManifest() throws Exception {
         ResearchProject researchProject = createTestResearchProject();
+        Set<String> duplicatedSampleIds = ImmutableSet.of("03101231193", "03101752020");
 
         ManifestSession manifestSession1 =
                 uploadManifest("manifest-upload/duplicates/good-manifest-1.xlsx", researchProject);
@@ -340,23 +359,38 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(manifestSession1.getManifestEvents(), is(empty()));
         assertThat(manifestSession1.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
 
+        ImmutableListMultimap<String, ManifestRecord> session1RecordsBySampleId = buildSampleIdToRecordMultimap(
+                manifestSession1);
+
         ManifestSession manifestSession2 =
                 uploadManifest("manifest-upload/duplicates/good-manifest-2.xlsx", researchProject);
         assertThat(manifestSession2, is(notNullValue()));
         assertThat(manifestSession2.getManifestEvents(), hasSize(2));
         assertThat(manifestSession2.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
 
-        Set<String> duplicatedSampleIds = ImmutableSet.of("03101231193", "03101752020");
-
         for (ManifestRecord record : manifestSession2.getRecords()) {
             if (duplicatedSampleIds.contains(record.getValueByKey(Metadata.Key.SAMPLE_ID))) {
                 assertThat(record.getManifestEvents(), hasSize(1));
                 ManifestEvent manifestEvent = record.getManifestEvents().iterator().next();
-                assertThat(manifestEvent.getMessage(), containsString("1 instance found in manifest session " + manifestSession1.getSessionName()));
+                // Only one duplicate in this Multimap for each of these.
+                ManifestRecord duplicateRecord = session1RecordsBySampleId.get(record.getValueByKey(
+                        Metadata.Key.SAMPLE_ID)).iterator().next();
+                assertThat(manifestEvent.getMessage(),
+                        containsString(record.buildMessageForDuplicate(manifestSession1.getSessionName(),
+                                Collections.singleton(duplicateRecord))));
             } else {
                 assertThat(record.getManifestEvents(), is(empty()));
             }
         }
+    }
+
+    private ImmutableListMultimap<String, ManifestRecord> buildSampleIdToRecordMultimap(ManifestSession manifestSession) {
+        return Multimaps.index(manifestSession.getRecords(), new Function<ManifestRecord, String>() {
+            @Override
+            public String apply(ManifestRecord manifestRecord) {
+                return manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID);
+            }
+        });
     }
 
     private ResearchProject createTestResearchProject() {
