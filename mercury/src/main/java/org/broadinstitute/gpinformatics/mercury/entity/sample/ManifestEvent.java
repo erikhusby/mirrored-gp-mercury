@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
-import org.broadinstitute.gpinformatics.infrastructure.jpa.HasUpdateData;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.Updatable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.UpdatedEntityInterceptor;
 import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
 import org.hibernate.envers.Audited;
@@ -30,9 +31,8 @@ import java.util.Set;
 @EntityListeners(UpdatedEntityInterceptor.class)
 @Audited
 @Table(schema = "mercury", name = "MANIFEST_EVENT")
-public class ManifestEvent implements HasUpdateData {
+public class ManifestEvent implements Updatable {
 
-    @SuppressWarnings("UnusedDeclaration")
     @Id
     @SequenceGenerator(name = "SEQ_MANIFEST_EVENT", schema = "mercury", sequenceName = "SEQ_MANIFEST_EVENT")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MANIFEST_EVENT")
@@ -41,8 +41,6 @@ public class ManifestEvent implements HasUpdateData {
 
     private String message;
 
-    // IntelliJ wants to convert this to a local, not one of its better suggestions.
-    @SuppressWarnings("FieldCanBeLocal")
     @ManyToOne(cascade = CascadeType.PERSIST, optional = true)
     @JoinColumn(name = "manifest_record_id")
     private ManifestRecord manifestRecord;
@@ -54,19 +52,13 @@ public class ManifestEvent implements HasUpdateData {
     @JoinColumn(name = "manifest_session_id")
     private ManifestSession manifestSession;
 
-    // IntelliJ claims this is unused.
-    @SuppressWarnings("UnusedDeclaration")
     @Embedded
     private UpdateData updateData = new UpdateData();
 
     /**
-     * For JPA
+     * For JPA.
      */
     protected ManifestEvent() {
-    }
-
-    public ManifestEvent(ManifestRecord.ErrorStatus severityError, String message) {
-        this(severityError, message, null);
     }
 
     public ManifestEvent(ManifestRecord.ErrorStatus severityError, String message, ManifestRecord record) {
@@ -113,16 +105,8 @@ public class ManifestEvent implements HasUpdateData {
         return message;
     }
 
-    public ManifestSession getManifestSession() {
-        return manifestSession;
-    }
-
     public void setManifestSession(ManifestSession session) {
         this.manifestSession = session;
-    }
-
-    public UpdateData getUpdateData() {
-        return updateData;
     }
 
     public enum Severity {
@@ -139,9 +123,14 @@ public class ManifestEvent implements HasUpdateData {
 
     @Override
     public String toString() {
-        return "ManifestEvent{" +
-               "message='" + message + '\'' +
-               ", severity=" + severity +
-               '}';
+        return new ToStringBuilder(this)
+                .append("manifestEventId", manifestEventId)
+                .append("message", message)
+                .append("severity", severity)
+                .toString();
+    }
+
+    public UpdateData getUpdateData() {
+        return updateData;
     }
 }

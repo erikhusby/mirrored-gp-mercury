@@ -8,9 +8,10 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.HasUpdateData;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.Updatable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.UpdatedEntityInterceptor;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
@@ -55,7 +56,7 @@ import java.util.Set;
 @EntityListeners(UpdatedEntityInterceptor.class)
 @Audited
 @Table(schema = "mercury", name = "MANIFEST_SESSION")
-public class ManifestSession implements HasUpdateData {
+public class ManifestSession implements Updatable {
 
     public static final String VESSEL_LABEL = "Vessel barcode";
 
@@ -100,7 +101,7 @@ public class ManifestSession implements HasUpdateData {
         this.researchProject = researchProject;
         researchProject.addManifestSession(this);
         sessionPrefix = FilenameUtils.getBaseName(pathToManifestFile);
-        updateData.setCreatedBy(createdBy.getUserId());
+        getUpdateData().setCreatedBy(createdBy.getUserId());
     }
 
     public ResearchProject getResearchProject() {
@@ -544,8 +545,8 @@ public class ManifestSession implements HasUpdateData {
         sourceRecord.setStatus(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
 
         LabEvent collaboratorTransferEvent =
-                new LabEvent(LabEventType.COLLABORATOR_TRANSFER, new Date(), LabEvent.UI_EVENT_LOCATION, 1L,
-                        user.getUserId(), LabEvent.UI_PROGRAM_NAME);
+                new LabEvent(LabEventType.COLLABORATOR_TRANSFER, new Date(), LabEvent.UI_EVENT_LOCATION,
+                        LabEvent.DEFAULT_DISAMBIGUATOR, user.getUserId(), LabEvent.UI_PROGRAM_NAME);
         targetVessel.addInPlaceEvent(collaboratorTransferEvent);
     }
 
@@ -575,5 +576,14 @@ public class ManifestSession implements HasUpdateData {
 
     public UpdateData getUpdateData() {
         return updateData;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("manifestSessionId", manifestSessionId)
+                .append("sessionPrefix", sessionPrefix)
+                .append("status", status)
+                .toString();
     }
 }

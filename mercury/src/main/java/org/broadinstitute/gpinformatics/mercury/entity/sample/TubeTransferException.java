@@ -13,7 +13,6 @@ public class TubeTransferException extends RuntimeException {
 
     private static final Log logger = LogFactory.getLog(TubeTransferException.class);
 
-
     private static final long serialVersionUID = 1355836331464448642L;
 //    private ManifestRecord.ErrorStatus errorStatus;
 

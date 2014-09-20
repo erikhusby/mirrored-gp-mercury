@@ -3,13 +3,10 @@ package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
@@ -38,8 +35,6 @@ import java.util.List;
  */
 public class ManifestSessionEjb {
 
-    private static final Log logger = LogFactory.getLog(ManifestSessionEjb.class);
-
     static final String UNASSOCIATED_TUBE_SAMPLE_MESSAGE =
             "The given target sample id is not associated with the given target vessel";
     static final String SAMPLE_NOT_FOUND_MESSAGE = ":: You must provide a target sample key.";
@@ -49,6 +44,11 @@ public class ManifestSessionEjb {
     static final String VESSEL_NOT_FOUND_MESSAGE = "::  The target vessel is not found";
     static final String VESSEL_USED_FOR_PREVIOUS_TRANSFER =
             ":: the target vessel has already been used for a tube transfer";
+
+    static final String MANIFEST_SESSION_NOT_FOUND = "Manifest Session '%s' not found";
+
+    static final String RESEARCH_PROJECT_NOT_FOUND = "Research Project '%s' not found";
+
     private ManifestSessionDao manifestSessionDao;
 
     private ResearchProjectDao researchProjectDao;
@@ -119,8 +119,8 @@ public class ManifestSessionEjb {
             throw new InformaticsServiceException(e);
         } catch (Exception e) {
             throw new InformaticsServiceException(
-                    "Error reading manifest file '%s'.  Manifest files must be in the proper Excel format.",
-                    e, FilenameUtils.getName(pathToFile));
+                    e, "Error reading manifest file '%s'.  Manifest files must be in the proper Excel format.",
+                    FilenameUtils.getName(pathToFile));
         }
         Collection<ManifestRecord> manifestRecords;
         try {
@@ -153,7 +153,7 @@ public class ManifestSessionEjb {
     private ManifestSession findManifestSession(long manifestSessionId) {
         ManifestSession manifestSession = manifestSessionDao.find(manifestSessionId);
         if (manifestSession == null) {
-            throw new InformaticsServiceException(String.format("Manifest Session '%s' not found", manifestSessionId));
+            throw new InformaticsServiceException(String.format(MANIFEST_SESSION_NOT_FOUND, manifestSessionId));
         }
         return manifestSession;
     }
@@ -277,7 +277,7 @@ public class ManifestSessionEjb {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
                     targetVesselLabel, VESSEL_NOT_FOUND_MESSAGE);
         }
-        if (foundVessel.doesChainOfCostodyInclude(LabEventType.COLLABORATOR_TRANSFER)) {
+        if (foundVessel.doesChainOfCustodyInclude(LabEventType.COLLABORATOR_TRANSFER)) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
                     targetVesselLabel, VESSEL_USED_FOR_PREVIOUS_TRANSFER);
         }

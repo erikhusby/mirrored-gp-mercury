@@ -9,16 +9,16 @@ import java.util.Date;
 @Embeddable
 public class UpdateData {
 
-    @Column(name="CREATED_DATE")
+    @Column(name = "CREATED_DATE")
     private Date createdDate;
 
-    @Column(name="CREATED_BY")
+    @Column(name = "CREATED_BY")
     private Long createdBy;
 
-    @Column(name="MODIFIED_DATE")
+    @Column(name = "MODIFIED_DATE")
     private Date modifiedDate;
 
-    @Column(name="MODIFIED_BY")
+    @Column(name = "MODIFIED_BY")
     private Long modifiedBy;
 
     public Date getCreatedDate() {
@@ -53,13 +53,6 @@ public class UpdateData {
         this.modifiedBy = modifiedBy.getUserId();
     }
 
-    /**
-     * TODO This setter is needed only for cases where the current user is null in the UpdatedEntityInterceptor.
-     * TODO This should not be the case in a quality system!
-     */
-    public void setModifiedBy(Long modifiedBy) {
-        this.modifiedBy = modifiedBy;
-    }
 
     public void setCreatedBy(Long createdBy) {
         this.createdBy = createdBy;

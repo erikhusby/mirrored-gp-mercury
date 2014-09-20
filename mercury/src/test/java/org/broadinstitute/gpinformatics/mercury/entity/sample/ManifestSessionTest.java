@@ -20,7 +20,6 @@ import java.util.List;
 import static org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestStatusErrorMatcher.hasError;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.not;
@@ -68,7 +67,10 @@ public class ManifestSessionTest {
         UpdateData updateData = session.getUpdateData();
         Assert.assertEquals(updateData.getCreatedBy(), testUser.getUserId());
 
-        BSPUserList.QADudeUser modifyUser = new BSPUserList.QADudeUser("LM", 43L);
+        String LAB_MANAGER = "LM";
+        long ARBITRARY_QA_DUDE_LM_USER_ID = 43L;
+
+        BSPUserList.QADudeUser modifyUser = new BSPUserList.QADudeUser(LAB_MANAGER, ARBITRARY_QA_DUDE_LM_USER_ID);
         updateData.setModifiedBy(modifyUser);
 
         Assert.assertEquals(updateData.getModifiedBy(), modifyUser.getUserId());

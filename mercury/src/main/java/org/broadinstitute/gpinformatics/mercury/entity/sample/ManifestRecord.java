@@ -3,8 +3,9 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Maps;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.Updatable;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.HasUpdateData;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.UpdatedEntityInterceptor;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
@@ -44,7 +45,7 @@ import java.util.Set;
 @EntityListeners(UpdatedEntityInterceptor.class)
 @Audited
 @Table(schema = "mercury", name = "MANIFEST_RECORD")
-public class ManifestRecord implements HasUpdateData {
+public class ManifestRecord implements Updatable {
 
     @Id
     @Column(name = "MANIFEST_RECORD_ID")
@@ -90,7 +91,7 @@ public class ManifestRecord implements HasUpdateData {
     private UpdateData updateData = new UpdateData();
 
     /**
-     * For JPA
+     * For JPA.
      */
     protected ManifestRecord() {
     }
@@ -179,16 +180,14 @@ public class ManifestRecord implements HasUpdateData {
     public void accessionScan() {
         if (isQuarantined()) {
             throw new InformaticsServiceException(
-                    ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID
-                            .formatMessage(Metadata.Key.SAMPLE_ID, getSampleId()));
+                    ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage(Metadata.Key.SAMPLE_ID, getSampleId()));
         }
-        if (getStatus() == ManifestRecord.Status.SCANNED) {
+        if (status == Status.SCANNED) {
             throw new InformaticsServiceException(
-                    ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_SCAN
-                            .formatMessage(Metadata.Key.SAMPLE_ID, getSampleId()));
+                    ErrorStatus.DUPLICATE_SAMPLE_SCAN.formatMessage(Metadata.Key.SAMPLE_ID, getSampleId()));
         }
 
-        setStatus(ManifestRecord.Status.SCANNED);
+        status = Status.SCANNED;
     }
 
     public void setManifestRecordIndex(int spreadsheetRow) {
@@ -303,16 +302,16 @@ public class ManifestRecord implements HasUpdateData {
             return baseMessage;
         }
 
-        public String formatMessage(Metadata.Key entityType, String value) {
-            return formatMessage(entityType.getDisplayName(), value);
+        public String formatMessage(Metadata.Key key, String value) {
+            return formatMessage(key.getDisplayName(), value);
         }
 
         public ManifestEvent.Severity getSeverity() {
             return severity;
         }
 
-        public String formatMessage(String typeString, String value) {
-            return String.format("For %s %s: %s", typeString, value, baseMessage);
+        public String formatMessage(String keyString, String value) {
+            return String.format("For %s %s: %s", keyString, value, baseMessage);
         }
     }
 
