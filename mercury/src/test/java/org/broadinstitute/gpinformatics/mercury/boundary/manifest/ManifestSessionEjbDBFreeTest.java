@@ -977,7 +977,7 @@ public class ManifestSessionEjbDBFreeTest {
             Assert.fail();
         } catch (Exception e) {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
-                    .formatMessage(Metadata.Key.SAMPLE_ID, BSP_TEST_SAMPLE_KEY)));
+                    .formatMessage(ManifestSessionEjb.MERCURY_SAMPLE_KEY, BSP_TEST_SAMPLE_KEY)));
             assertThat(e.getMessage(), containsString(ManifestSessionEjb.SAMPLE_NOT_ELIGIBLE_FOR_CLINICAL_MESSAGE));
         }
     }
@@ -990,7 +990,7 @@ public class ManifestSessionEjbDBFreeTest {
             Assert.fail();
         } catch (Exception e) {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
-                    .formatMessage(Metadata.Key.SAMPLE_ID, TEST_SAMPLE_KEY + "BAD")));
+                    .formatMessage(ManifestSessionEjb.MERCURY_SAMPLE_KEY, TEST_SAMPLE_KEY + "BAD")));
             assertThat(e.getMessage(), containsString(ManifestSessionEjb.SAMPLE_NOT_FOUND_MESSAGE));
         }
     }
@@ -1032,7 +1032,7 @@ public class ManifestSessionEjbDBFreeTest {
             Assert.fail();
         } catch (Exception e) {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
-                    .formatMessage(Metadata.Key.SAMPLE_ID, TEST_SAMPLE_KEY + "BAD")));
+                    .formatMessage(ManifestSessionEjb.MERCURY_SAMPLE_KEY, TEST_SAMPLE_KEY + "BAD")));
             assertThat(e.getMessage(), containsString(ManifestSessionEjb.SAMPLE_NOT_FOUND_MESSAGE));
         }
     }
@@ -1130,7 +1130,7 @@ public class ManifestSessionEjbDBFreeTest {
             Assert.fail();
         } catch (Exception e) {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
-                    .formatMessage(Metadata.Key.SAMPLE_ID, TEST_SAMPLE_KEY + "BAD")));
+                    .formatMessage(ManifestSessionEjb.MERCURY_SAMPLE_KEY, TEST_SAMPLE_KEY + "BAD")));
             assertThat(e.getMessage(), containsString(ManifestSessionEjb.SAMPLE_NOT_FOUND_MESSAGE));
         }
     }

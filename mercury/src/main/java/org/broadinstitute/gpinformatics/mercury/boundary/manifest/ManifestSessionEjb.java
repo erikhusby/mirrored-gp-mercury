@@ -12,7 +12,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceExcep
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
@@ -47,12 +46,14 @@ public class ManifestSessionEjb {
 
     static final String MANIFEST_SESSION_NOT_FOUND = "Manifest Session '%s' not found";
 
-    static final String RESEARCH_PROJECT_NOT_FOUND = "Research Project '%s' not found";
+    static final String MERCURY_SAMPLE_KEY = "Mercury sample key";
 
     private ManifestSessionDao manifestSessionDao;
 
     private ResearchProjectDao researchProjectDao;
+
     private MercurySampleDao mercurySampleDao;
+
     private LabVesselDao labVesselDao;
 
     /**
@@ -228,16 +229,16 @@ public class ManifestSessionEjb {
         // There should be one and only one target sample.
         if (CollectionUtils.isEmpty(targetSamples)) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET,
-                    "Mercury sample key", targetSampleKey, SAMPLE_NOT_FOUND_MESSAGE);
+                    MERCURY_SAMPLE_KEY, targetSampleKey, SAMPLE_NOT_FOUND_MESSAGE);
         }
         if (targetSamples.size() > 1) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET,
-                    "Mercury sample key", targetSampleKey, SAMPLE_NOT_UNIQUE_MESSAGE);
+                    MERCURY_SAMPLE_KEY, targetSampleKey, SAMPLE_NOT_UNIQUE_MESSAGE);
         }
         MercurySample foundTarget = targetSamples.iterator().next();
 
         if (foundTarget.getMetadataSource() != MercurySample.MetadataSource.MERCURY) {
-            throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, "Mercury sample key",
+            throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, MERCURY_SAMPLE_KEY,
                     targetSampleKey, SAMPLE_NOT_ELIGIBLE_FOR_CLINICAL_MESSAGE);
         }
 
