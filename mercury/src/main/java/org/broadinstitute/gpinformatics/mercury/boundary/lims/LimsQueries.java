@@ -306,22 +306,20 @@ public class LimsQueries {
                 }
 
                 Set<LabMetric> metrics = labVessel.getConcentrationMetrics();
-                if (metrics != null) {
-                    if(!metrics.isEmpty()) {
-                        List<LabMetric> metricList = new ArrayList<>(metrics);
-                        Collections.sort(metricList, new LabMetric.LabMetricRunDateComparator());
-                        LabMetric.MetricType metricType = metricList.get(0).getName();
-                        for (LabMetric labMetric : metricList) {
-                            if (labMetric.getName() != metricType) {
-                                throw new RuntimeException(
-                                        "Got more than one quant for barcode:" + tubeBarcode);
-                            }
+                if (metrics != null && !metrics.isEmpty()) {
+                    List<LabMetric> metricList = new ArrayList<>(metrics);
+                    Collections.sort(metricList, new LabMetric.LabMetricRunDateComparator());
+                    LabMetric.MetricType metricType = metricList.get(0).getName();
+                    for (LabMetric labMetric : metricList) {
+                        if (labMetric.getName() != metricType) {
+                            throw new RuntimeException(
+                                    "Got more than one quant for barcode:" + tubeBarcode);
                         }
-                        LabMetric labMetric = metricList.get(0);
-                        concentrationAndVolumeAndWeightType.setConcentration(labMetric.getValue());
-                        concentrationAndVolumeAndWeightType
-                                .setConcentrationUnits(labMetric.getUnits().getDisplayName());
                     }
+                    LabMetric labMetric = metricList.get(0);
+                    concentrationAndVolumeAndWeightType.setConcentration(labMetric.getValue());
+                    concentrationAndVolumeAndWeightType
+                            .setConcentrationUnits(labMetric.getUnits().getDisplayName());
                 } else if (labVessel.getConcentration() != null) {
                     concentrationAndVolumeAndWeightType.setConcentration(labVessel.getConcentration());
                 }

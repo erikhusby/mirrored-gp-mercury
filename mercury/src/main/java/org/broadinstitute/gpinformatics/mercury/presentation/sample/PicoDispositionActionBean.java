@@ -198,15 +198,19 @@ public class PicoDispositionActionBean extends RackScanActionBean {
         /**
          * Returns the NextStep based on quant range comparison and at risk override.
          * @param rangeComparison  +, -, or 0  indicating quant is above, below, or in range.
-         * @param override   true if user accepted this sample despite its low quant.
+         * @param decision         the pass/fail/risk status of this sample.
          */
-        public static NextStep calculateNextStep(int rangeComparison, boolean override) {
-            if (rangeComparison < 0) {
-                return override ? SHEARING_DAUGHTER_AT_RISK : EXCLUDE;
-            } else if (rangeComparison == 0) {
-                return SHEARING_DAUGHTER;
+        public static NextStep calculateNextStep(int rangeComparison, LabMetricDecision.Decision decision) {
+            switch (decision) {
+            case PASS:
+                return (rangeComparison <= 0) ? SHEARING_DAUGHTER : FP_DAUGHTER;
+            case RISK:
+                return SHEARING_DAUGHTER_AT_RISK;
+            case FAIL:
+                return EXCLUDE;
+            default:
+                throw new RuntimeException("Unknown lab metric decision: " + decision);
             }
-            return FP_DAUGHTER;
         }
 
         public static NextStep getNextStep(String stepName) {
@@ -344,11 +348,11 @@ public class PicoDispositionActionBean extends RackScanActionBean {
             LabMetric labMetric = tube.findMostRecentLabMetric(LabMetric.MetricType.INITIAL_PICO);
             if (labMetric != null) {
                 BigDecimal concentration = labMetric.getValue();
-                boolean riskOverride =
-                        labMetric.getLabMetricDecision().getDecision().equals(LabMetricDecision.Decision.RISK);
+                LabMetricDecision.Decision decision = labMetric.getLabMetricDecision().getDecision();
                 int rangeCompare = labMetric.initialPicoDispositionRange();
                 listItems.add(new ListItem(vesselPosition.name(), tube.getLabel(), concentration,
-                        NextStep.calculateNextStep(rangeCompare, riskOverride), riskOverride));
+                        NextStep.calculateNextStep(rangeCompare, decision),
+                        decision.equals(LabMetricDecision.Decision.RISK)));
             } else {
                 listItems.add(new ListItem(vesselPosition.name(), tube.getLabel(), null, null, false));
             }
