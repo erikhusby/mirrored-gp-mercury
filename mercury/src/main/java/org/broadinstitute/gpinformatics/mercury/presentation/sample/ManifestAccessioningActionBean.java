@@ -17,6 +17,8 @@ import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessio
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestStatus;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.TubeTransferException;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
@@ -42,7 +44,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     public static final String EXIT_SESSION_ACTION = "exitSession";
     public static final String VIEW_ACCESSION_SCAN_ACTION = "viewAccessionScan";
     public static final String SCAN_ACCESSION_SOURCE_ACTION = "scanAccessionSource";
-    public static final String PREVIEW_SESSION_ACTION = "previewSession";
+    public static final String PREVIEW_SESSION_CLOSE_ACTION = "previewSessionClose";
     public static final String CLOSE_SESSION_ACTION = "closeSession";
     public static final String BEGIN_ACCESSION_ACTION = "beginAccession";
 
@@ -58,7 +60,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     private ManifestSession selectedSession;
 
     @Validate(required = true, on = {LOAD_SESSION_ACTION, ACCEPT_UPLOAD_ACTION,
-            EXIT_SESSION_ACTION, SCAN_ACCESSION_SOURCE_ACTION, PREVIEW_SESSION_ACTION, CLOSE_SESSION_ACTION})
+            EXIT_SESSION_ACTION, SCAN_ACCESSION_SOURCE_ACTION, PREVIEW_SESSION_CLOSE_ACTION, CLOSE_SESSION_ACTION})
     private Long selectedSessionId;
 
     @Validate(required = true, on = UPLOAD_MANIFEST_ACTION)
@@ -67,8 +69,13 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     @Validate(required = true, on = UPLOAD_MANIFEST_ACTION)
     private FileBean manifestFile;
 
+    @Validate(required = true, on = SCAN_ACCESSION_SOURCE_ACTION, label = "Source sample is required for accessioning")
+    private String accessionSource;
+
     private List<ManifestSession> openSessions;
     private List<ManifestSession> closedSessions;
+
+    private ManifestStatus statusValues;
 
     public ManifestAccessioningActionBean() {
         super();
@@ -83,7 +90,23 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
 
     @HandlesEvent(LOAD_SESSION_ACTION)
     public Resolution loadSession() {
-        return new ForwardResolution(getClass(), VIEW_UPLOAD_ACTION);
+        Resolution direction;
+        switch (selectedSession.getStatus()) {
+        case OPEN:
+            direction = new ForwardResolution(getClass(), VIEW_UPLOAD_ACTION);
+        break;
+        case ACCESSIONING:
+            direction = new ForwardResolution(getClass(), VIEW_ACCESSION_SCAN_ACTION);
+        break;
+        case COMPLETED:
+            direction = new ForwardResolution(getClass(), VIEW_UPLOAD_ACTION);
+        break;
+        default:
+            addGlobalValidationError("Unable to determine the what to do with this session");
+            direction = new RedirectResolution(getClass(), VIEW_UPLOAD_ACTION);
+        }
+
+        return direction;
     }
 
     @HandlesEvent(VIEW_UPLOAD_ACTION)
@@ -91,6 +114,14 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
         addErrorMessages();
 
         return new ForwardResolution(REVIEW_UPLOAD_PAGE);
+    }
+
+    @HandlesEvent(VIEW_ACCESSION_SCAN_ACTION)
+    public Resolution viewAccessionScan() {
+
+        statusValues = manifestSessionEjb.getSessionStatus(selectedSessionId);
+
+        return new ForwardResolution(ACCESSION_SAMPLE_PAGE);
     }
 
     private void addErrorMessages() {
@@ -110,6 +141,8 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     @HandlesEvent(UPLOAD_MANIFEST_ACTION)
     public Resolution uploadManifest() {
 
+        Resolution result =  new ForwardResolution(getClass(), LOAD_SESSION_ACTION);;
+
         try {
             selectedSession =
                     manifestSessionEjb.uploadManifest(researchProjectKey, manifestFile.getInputStream(),
@@ -117,13 +150,74 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
 
         } catch (IOException | InformaticsServiceException e) {
             addGlobalValidationError("Unable to upload the manifest file: {2}", e.getMessage());
-            return new RedirectResolution(getClass(), BEGIN_ACCESSION_ACTION)
-                    .addParameter("researchProjectKey", researchProjectKey);
+            result = getContext().getSourcePageResolution();
         }
         addErrorMessages();
-        return new ForwardResolution(REVIEW_UPLOAD_PAGE);
+        return result;
     }
 
+    @HandlesEvent(ACCEPT_UPLOAD_ACTION)
+    public Resolution acceptUpload() {
+
+        Resolution result =  new ForwardResolution(getClass(), LOAD_SESSION_ACTION);;
+
+        try {
+            manifestSessionEjb.acceptManifestUpload(selectedSession.getManifestSessionId());
+        } catch (TubeTransferException | InformaticsServiceException e) {
+            addGlobalValidationError(e.getMessage());
+            result = getContext().getSourcePageResolution();
+        }
+
+        return result;
+    }
+
+    @HandlesEvent(SCAN_ACCESSION_SOURCE_ACTION)
+    public Resolution scanAccessionSource() {
+
+        Resolution result = new ForwardResolution(getClass(), LOAD_SESSION_ACTION);
+
+        try {
+            manifestSessionEjb.accessionScan(selectedSessionId,accessionSource);
+        } catch (Exception e) {
+            addGlobalValidationError(e.getMessage());
+            result = getContext().getSourcePageResolution();
+        }
+
+        return result;
+    }
+
+    /**
+     * TODO  Perhaps make a template page for this and have the ajax return the HTML
+     *
+     * Use ResearchProjectActionBean.queryRegulatoryInfoReturnHtmlSnippet as a guide
+     * lines 115-130 on projects/view.jsp is the AJAX call
+     *
+     * @return
+     */
+    @HandlesEvent(PREVIEW_SESSION_CLOSE_ACTION)
+    public Resolution previewSessionClose() {
+
+        ManifestStatus sessionStatus = manifestSessionEjb.getSessionStatus(selectedSessionId);
+
+        return null;
+
+
+    }
+
+    @HandlesEvent(CLOSE_SESSION_ACTION)
+    public Resolution closeSession() {
+
+        Resolution result = new ForwardResolution(getClass(), LOAD_SESSION_ACTION);
+
+        try {
+            manifestSessionEjb.closeSession(selectedSessionId);
+            addMessage("The session {0} has successfully been marked as completed", selectedSession.getSessionName());
+        } catch (Exception e) {
+            addGlobalValidationError(e.getMessage());
+            result = getContext().getSourcePageResolution();
+        }
+        return result;
+    }
 
     public Long getSelectedSessionId() {
         return selectedSessionId;
@@ -167,5 +261,21 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
 
     public ManifestSession getSelectedSession() {
         return selectedSession;
+    }
+
+    public String getAccessionSource() {
+        return accessionSource;
+    }
+
+    public void setAccessionSource(String accessionSource) {
+        this.accessionSource = accessionSource;
+    }
+
+    public ManifestStatus getStatusValues() {
+        return statusValues;
+    }
+
+    public void setStatusValues(ManifestStatus statusValues) {
+        this.statusValues = statusValues;
     }
 }

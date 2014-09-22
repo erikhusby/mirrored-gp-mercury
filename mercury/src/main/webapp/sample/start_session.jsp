@@ -27,7 +27,7 @@
                 <c:forEach items="${actionBean.openSessions}" var="openSession">
                     <tr>
                         <td>
-                            <stripes:link beanclass="${actionBean.class.name}" event="viewUpload">
+                            <stripes:link beanclass="${actionBean.class.name}" event="loadSession">
                             <stripes:param name="selectedSessionId" value="${openSession.manifestSessionId}"/>
                                 ${openSession.sessionName}
                             </stripes:link>

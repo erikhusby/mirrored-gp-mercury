@@ -8,6 +8,8 @@ import javax.ejb.Stateful;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
+import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 
 /**
@@ -23,7 +25,8 @@ public class ManifestSessionDao extends GenericDao {
     }
 
     public List<ManifestSession> findOpenSessions() {
-        return findList(ManifestSession.class, ManifestSession_.status, ManifestSession.SessionStatus.OPEN);
+        return findListByList(ManifestSession.class, ManifestSession_.status, EnumSet.of(
+                ManifestSession.SessionStatus.OPEN, ManifestSession.SessionStatus.ACCESSIONING));
     }
 
     public List<ManifestSession> findClosedSessions() {

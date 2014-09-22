@@ -334,6 +334,7 @@ public class ManifestSession implements Updatable {
         for (ManifestRecord record : getNonQuarantinedRecords()) {
             record.setStatus(ManifestRecord.Status.UPLOAD_ACCEPTED);
         }
+        setStatus(SessionStatus.ACCESSIONING);
     }
 
     /**
@@ -513,7 +514,7 @@ public class ManifestSession implements Updatable {
      * process.
      */
     public enum SessionStatus {
-        OPEN, COMPLETED
+        OPEN, ACCESSIONING, COMPLETED
     }
 
     public UpdateData getUpdateData() {
