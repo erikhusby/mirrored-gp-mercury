@@ -4,6 +4,7 @@ import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 
+import javax.annotation.Nonnull;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
@@ -12,15 +13,20 @@ import java.util.Set;
 /**
  */
 public class MercurySampleData implements SampleData {
-    private String visit;
-    private String collectionDate;
-    private String tumorNormal;
-    private String materialType;
+
+    private String sampleId;
+    private String collaboratorSampleId;
     private String patientId;
     private String gender;
-    private String sampleId;
+    private String tumorNormal;
 
-    public MercurySampleData(Set<Metadata> metadata) {
+    private String collectionDate;
+    private String visit;
+
+    private String materialType;
+
+    public MercurySampleData(@Nonnull String sampleId, Set<Metadata> metadata) {
+        this.sampleId = sampleId;
         extractMetadataFromSample(metadata);
     }
 
@@ -29,7 +35,7 @@ public class MercurySampleData implements SampleData {
             String value = data.getValue();
             switch (data.getKey()) {
             case SAMPLE_ID:
-                this.sampleId = value;
+                this.collaboratorSampleId = value;
                 break;
             case GENDER:
                 this.gender = value;
@@ -52,9 +58,6 @@ public class MercurySampleData implements SampleData {
                 break;
             }
         }
-    }
-
-    public MercurySampleData() {
     }
 
     @Override
@@ -114,7 +117,7 @@ public class MercurySampleData implements SampleData {
 
     @Override
     public String getCollaboratorsSampleName() {
-        return null;
+        return collaboratorSampleId;
     }
 
     @Override
@@ -159,10 +162,6 @@ public class MercurySampleData implements SampleData {
 
     @Override
     public String getSampleType() {
-        return tumorNormal;
-    }
-
-    public String getTumorNormal() {
         return tumorNormal;
     }
 
@@ -236,6 +235,7 @@ public class MercurySampleData implements SampleData {
         return null;
     }
 
+    // TODO: decide whether to keep these methods or implement a general get(Metadata.Key)
     public String getCollectionDate() {
         return collectionDate;
     }
