@@ -68,7 +68,7 @@ public class MercurySampleDataFetcherTest {
         MercurySampleData mercurySampleData = mercurySampleDataFetcher.fetchSampleData(mercurySample);
 
         assertThat(mercurySampleData, notNullValue());
-        assertThat(mercurySampleData.getSampleId(), equalTo(collaboratorSampleId));
+        assertThat(mercurySampleData.getCollaboratorsSampleName(), equalTo(collaboratorSampleId));
     }
 
     public void testFetchMercurySampleHasSampleData() {
@@ -107,6 +107,21 @@ public class MercurySampleDataFetcherTest {
         assertThat(sampleDatas.size(), equalTo(2));
         assertThat(sampleDatas.get(SM_MERC1), is(sampleWithPatientId(patientId1)));
         assertThat(sampleDatas.get(SM_MERC2), is(sampleWithPatientId(patientId2)));
+    }
+
+    public void testGetStockIdForAliquotIdReturnsMercurySample() {
+        String stockId = mercurySampleDataFetcher
+                .getStockIdForAliquotId(new MercurySample(SM_MERC1, MercurySample.MetadataSource.MERCURY));
+
+        assertThat(stockId, equalTo(SM_MERC1));
+    }
+
+    public void testGetStockIdNyAliquotIdReturnsMercurySample() {
+        Map<String, String> stockId = mercurySampleDataFetcher
+                .getStockIdByAliquotId(
+                        Collections.singleton(new MercurySample(SM_MERC1, MercurySample.MetadataSource.MERCURY)));
+
+        assertThat(stockId.size(), equalTo(1));
     }
 
     public static class SampleDataPatientIdMatcher extends TypeSafeMatcher<SampleData> {

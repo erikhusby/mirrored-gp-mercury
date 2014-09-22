@@ -140,13 +140,17 @@ public class SampleDataFetcher {
      * Given an aliquot ID, return its stock sample ID.
      */
     public String getStockIdForAliquotId(@Nonnull String aliquotId) {
-        MercurySample.MetadataSource metadataSource = determineMetadataSource(aliquotId);
+        Collection<String> sampleNames = Collections.singleton(aliquotId);
+        Map<String, List<MercurySample>> allMercurySamples = mercurySampleDao.findMapIdToListMercurySample(sampleNames);
+        MercurySample.MetadataSource metadataSource =
+                determineMetadataSource(sampleNames, allMercurySamples).get(aliquotId);
 
         switch (metadataSource) {
         case BSP:
             return bspSampleDataFetcher.getStockIdForAliquotId(aliquotId);
         case MERCURY:
-            return mercurySampleDataFetcher.getStockIdForAliquotId(aliquotId);
+            // Even if there is > 1 MercurySample in the result of findMapIdToList the sample id will still be the same.
+            return mercurySampleDataFetcher.getStockIdForAliquotId(allMercurySamples.get(aliquotId).get(0));
         default:
             throw new IllegalStateException("Unknown sample data source: " + metadataSource);
         }
@@ -158,8 +162,12 @@ public class SampleDataFetcher {
     public Map<String, String> getStockIdByAliquotId(Collection<String> aliquotIds) {
         List<MercurySample> mercurySamples = mercurySampleDao.findBySampleKeys(aliquotIds);
         Multimap<MercurySample.MetadataSource, String> sampleIdsByMetadataSource = ArrayListMultimap.create();
+        Collection<MercurySample> mercuryOnlySamples=new ArrayList<>();
         for (MercurySample mercurySample : mercurySamples) {
             sampleIdsByMetadataSource.put(mercurySample.getMetadataSource(), mercurySample.getSampleKey());
+            if (mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
+                mercuryOnlySamples.add(mercurySample);
+            }
         }
 
         // Assume that BSP is the owner of samples data for sample IDs with no MercurySample.
@@ -173,10 +181,10 @@ public class SampleDataFetcher {
             Collection<String> bspSampleIds = sampleIdsByMetadataSource.get(MercurySample.MetadataSource.BSP);
             stockIdByAliquotId.putAll(bspSampleDataFetcher.getStockIdByAliquotId(bspSampleIds));
         }
-
         // Handle Mercury samples.
-        stockIdByAliquotId.putAll(mercurySampleDataFetcher
-                .getStockIdByAliquotId(sampleIdsByMetadataSource.get(MercurySample.MetadataSource.MERCURY)));
+        if (! mercuryOnlySamples.isEmpty()) {
+            stockIdByAliquotId.putAll(mercurySampleDataFetcher.getStockIdByAliquotId(mercuryOnlySamples));
+        }
 
         return stockIdByAliquotId;
     }
@@ -227,9 +235,4 @@ public class SampleDataFetcher {
     }
 
 
-    private MercurySample.MetadataSource determineMetadataSource(String sampleName) {
-        Collection<String> sampleNames = Collections.singleton(sampleName);
-        Map<String, List<MercurySample>> allMercurySamples = mercurySampleDao.findMapIdToListMercurySample(sampleNames);
-        return determineMetadataSource(sampleNames, allMercurySamples).get(sampleName);
-    }
 }

@@ -328,7 +328,7 @@ public class SampleDataFetcherTest {
 
     public void test_getStockIdForAliquotId_for_clinical_sample_should_return_itself() {
         configureMercurySampleDao(clinicalMercurySample);
-        when(mockMercurySampleDataFetcher.getStockIdForAliquotId(CLINICAL_SAMPLE_ID)).thenReturn(CLINICAL_SAMPLE_ID);
+        when(mockMercurySampleDataFetcher.getStockIdForAliquotId(clinicalMercurySample)).thenReturn(CLINICAL_SAMPLE_ID);
 
         String stockId = sampleDataFetcher.getStockIdForAliquotId(CLINICAL_SAMPLE_ID);
 
@@ -395,7 +395,7 @@ public class SampleDataFetcherTest {
     public void test_getStockIdByAliquotId_for_clinical_sample_should_return_itself() {
         when(mockMercurySampleDao.findBySampleKeys(argThat(contains(CLINICAL_SAMPLE_ID))))
                 .thenReturn(Collections.singletonList(clinicalMercurySample));
-        when(mockMercurySampleDataFetcher.getStockIdByAliquotId(argThat(contains(CLINICAL_SAMPLE_ID))))
+        when(mockMercurySampleDataFetcher.getStockIdByAliquotId(argThat(contains(clinicalMercurySample))))
                 .thenReturn(ImmutableMap.of(CLINICAL_SAMPLE_ID, CLINICAL_SAMPLE_ID));
 
         Map<String, String> stockIdByAliquotId =
