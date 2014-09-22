@@ -30,7 +30,141 @@
             showJiraInfo();
         }
 
+        function isBucketEmpty() {
+            return $j('#bucketEntryView tbody tr td').not('.dataTables_empty').length == 0;
+        }
+
+        function addAmbiguousBucketEntryError(barcode) {
+            // todo avoid showing duplicate strings
+            $j('#AmbiguousBucketEntries tbody').append(
+                "<tr><td>" + barcode + "</td></tr>"
+            );
+        }
+
+        function addBarcodeNotFoundError(barcode) {
+            // todo avoid showing duplicate strings
+            $j('#NoBucketEntries tbody').append(
+                    "<tr><td>" + barcode + "</td></tr>"
+            );
+        }
+
+        function showBarcodeErrors() {
+            $j('#BarcodeErrors').show();
+        }
+
+        function showNoBucketEntriesErrors() {
+            showBarcodeErrors();
+            $j('#NoBucketEntriesErrors').show();
+        }
+
+        function showAmbiguousBucketEntryErrors() {
+            showBarcodeErrors();
+            $j('#AmbiguousBucketEntriesErrors').show();
+        }
+
+        function clearBarcodesDialogErrors() {
+            $j('#NoBucketEntries tbody tr').remove();
+            $j('#AmbiguousBucketEntries tbody tr').remove();
+
+            $j('#NoBucketEntriesErrors').hide();
+            $j('#AmbiguousBucketEntriesErrors').hide();
+        }
+
+        function clearBarcodesDialog() {
+            $j('#barcodes').val('');
+            $j('#BarcodeErrors').hide();
+            clearBarcodesDialogErrors();
+        }
+
+        function applyBarcodes() {
+            clearBarcodesDialogErrors();
+
+            var hasBarcodes = barcodes.value.trim().length > 0;
+            var splitBarcodes = barcodes.value.trim().split(/\s+/);
+            var hasAmbiguousBucketEntryErrors = false;
+            var hasBarcodesNotFoundErrors = false;
+
+            if (!hasBarcodes) {
+                alert("No barcodes were entered.");
+                return;
+            }
+
+            for (var i = 0; i < splitBarcodes.length; i++) {
+                var barcode = splitBarcodes[i];
+                var numMatchingRows = $j('[data-vessel-label="' + barcode + '"]>>input[type="checkbox"]').length;
+
+                if (numMatchingRows > 1) {
+                    hasAmbiguousBucketEntryErrors = true;
+                    addAmbiguousBucketEntryError(barcode);
+                }
+                else if (numMatchingRows == 0) {
+                    hasBarcodesNotFoundErrors = true;
+                    addBarcodeNotFoundError(barcode);
+                }
+            }
+
+            if (!hasAmbiguousBucketEntryErrors && !hasBarcodesNotFoundErrors) {
+                for (var i = 0; i < splitBarcodes.length; i++) {
+                    var barcode = splitBarcodes[i];
+                    var numMatchingRows = $j('[data-vessel-label="' + barcode + '"]>>input[type="checkbox"]').length;
+
+                    if (numMatchingRows == 1) {
+                        // todo does not uptick the # in the upper left hand corner of the datatable,
+                        // click() does not work either
+                        // todo event handler for enter
+                        $j('[data-vessel-label="' + barcode + '"]>>input[type="checkbox"]').prop('checked',true);
+                    }
+                }
+                dialog.dialog("close");
+                alert("Successfully chose " + splitBarcodes.length + " bucket entries");
+            }
+            else {
+                if (hasAmbiguousBucketEntryErrors) {
+                    showAmbiguousBucketEntryErrors();
+                }
+                if (hasBarcodesNotFoundErrors) {
+                    showNoBucketEntriesErrors();
+                }
+            }
+        }
+
+
+        function hideBarcodeEntryDialog() {
+            $j('#BarcodeErrors').hide();
+            $j('#NoBucketEntriesErrors').hide();
+            $j('#AmbiguousBucketEntriesErrors').hide();
+        }
+
+        function initializeBarcodeEntryDialog() {
+            dialog = $j( "#ListOfBarcodesForm" ).dialog({
+                autoOpen: false,
+                height: 400,
+                width: 250,
+                modal: true,
+                buttons: {
+                    "Apply barcodes": applyBarcodes,
+                    Cancel: function() {
+                        dialog.dialog( "close" );
+                    }
+                }
+            });
+
+            $j( "#PasteBarcodesList").on( "click", function() {
+                if (!isBucketEmpty()) {
+                    clearBarcodesDialog();
+                    dialog.dialog( "open" );
+                }
+                else {
+                    alert("There are no samples in the bucket.");
+                }
+            });
+
+            hideBarcodeEntryDialog();
+        }
+
         $j(document).ready(function () {
+            initializeBarcodeEntryDialog();
+
             var columnsEditable=false;
             <security:authorizeBlock roles="<%= roles(LabManager, PDM, PM, Developer) %>">
                 columnsEditable=true;
@@ -212,6 +346,7 @@
             <stripes:submit name="createBatch" value="Create Batch" class="btn"/>
             <stripes:submit name="addToBatch" value="Add to Batch" class="btn"/>
             <stripes:submit name="removeFromBucket" value="Remove From Bucket" class="btn"/>
+            <a href="javascript:void(0)" id="PasteBarcodesList" title="Use a pasted-in list of tube barcodes to select samples">Choose via list of barcodes...</a>
         </div>
         <table id="bucketEntryView" class="table simple">
             <thead>
@@ -236,7 +371,7 @@
             </thead>
             <tbody>
             <c:forEach items="${actionBean.collectiveEntries}" var="entry">
-                <tr id="${entry.bucketEntryId}">
+                <tr id="${entry.bucketEntryId}" data-vessel-label="${entry.labVessel.label}">
                     <td>
                         <stripes:checkbox class="bucket-checkbox" name="selectedEntryIds"
                                           value="${entry.bucketEntryId}"/>
@@ -300,5 +435,36 @@
             </tbody>
         </table>
     </stripes:form>
+
 </stripes:layout-component>
 </stripes:layout-render>
+
+<div id="ListOfBarcodesForm">
+    <form>
+        <div class="control-group">
+            <label for="barcodes" class="control-label">Enter 2D Barcodes, one per line</label>
+            <textarea name="barcodes" id="barcodes" class="defaultText" cols="12" rows="5"></textarea>
+        </div>
+        <div id="BarcodeErrors">
+            <p>We're sorry, but Mercury could not automatically choose bucket entries
+               because of the following errors.</p>
+            <div id="NoBucketEntriesErrors">
+                <table id="NoBucketEntries">
+                    <thead>
+                        <tr><th>No bucket entries</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div id="AmbiguousBucketEntriesErrors">
+                <table id="AmbiguousBucketEntries">
+                    <thead>
+                    <tr><th>Ambiguous bucket entries</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </form>
+</div>
+
