@@ -722,7 +722,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         }
     }
 
-    @Test(groups = TestGroups.STANDARD)
+    @Test(groups = TestGroups.STANDARD, enabled = false)
     public void setupTestDataForTestCases() throws Exception {
         // Persist everything.
         manifestSessionDao.persist(manifestSessionI);
