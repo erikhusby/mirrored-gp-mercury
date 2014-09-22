@@ -7,6 +7,7 @@ import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimaps;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.Updatable;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
@@ -203,15 +204,15 @@ public class ManifestRecord implements Updatable {
     }
 
     /**
-     * Build an error message for duplicate samples found in the session having name {@code otherSessionName} with
-     * the duplicate {@code ManifestRecord}s contained in {@code duplicateRecords}.
+     * Build an error message for duplicate or gender mismatched samples.  All records in {@code conflictingRecords}
+     * are expected to belong to the same manifest session.
      */
-    public String buildMessageForConflictingRecords(String otherSessionName,
-                                                    Collection<ManifestRecord> duplicateRecords) {
+    public String buildMessageForConflictingRecords(Collection<ManifestRecord> conflictingRecords) {
+        String otherSessionName = getOtherSessionName(conflictingRecords);
         StringBuilder messageBuilder = new StringBuilder();
 
         // Describe how many duplicates were found in a particular manifest session.
-        int numInstances = duplicateRecords.size();
+        int numInstances = conflictingRecords.size();
         messageBuilder.append(numInstances).append(" ");
         messageBuilder.append(Noun.pluralOf("instance", numInstances));
         messageBuilder.append(" found at ");
@@ -220,7 +221,7 @@ public class ManifestRecord implements Updatable {
 
         // Collect the spreadsheet row numbers at which the duplicates can be found.
         List<Integer> rowNumbers = new ArrayList<>();
-        for (ManifestRecord manifestRecord : duplicateRecords) {
+        for (ManifestRecord manifestRecord : conflictingRecords) {
             rowNumbers.add(manifestRecord.getSpreadsheetRowNumber());
         }
         // Sort the spreadsheet row numbers, join with commas and append to the message string.
@@ -230,20 +231,33 @@ public class ManifestRecord implements Updatable {
         messageBuilder.append(" of ");
         String thisSessionName = getManifestSession().getSessionName();
         messageBuilder.append(
-                otherSessionName.equals(thisSessionName) ? "this manifest session" : "manifest session '" + otherSessionName + "'");
+                otherSessionName.equals(thisSessionName) ? "this manifest session" :
+                        "manifest session '" + otherSessionName + "'");
         return messageBuilder.toString();
     }
 
     /**
-     * Create a presentable description of where the duplicates of {@code thisDuplicate} can be found.
+     * All specified records should be part of the same manifest session, extract the manifest session name from one
+     * of them.
+     */
+    private String getOtherSessionName(Collection<ManifestRecord> records) {
+        if (CollectionUtils.isEmpty(records)) {
+            throw new InformaticsServiceException("records expected to be non-empty");
+        }
+        return records.iterator().next().getManifestSession().getSessionName();
+    }
+
+    /**
+     * Create a presentable description of where the specified manifest records conflicting with this record
+     * can be found.
      *
-     * @param allDuplicateRecords  All ManifestRecords matching this ManifestRecord (same patient ID or sample ID,
+     * @param allConflictingRecords  All ManifestRecords matching this ManifestRecord (same patient ID or sample ID,
      *                             depending on the validation being performed).
      */
-    public String describeOtherManifestSessionsWithMatchingRecords(Collection<ManifestRecord> allDuplicateRecords) {
+    private String describeOtherManifestSessionsWithMatchingRecords(Collection<ManifestRecord> allConflictingRecords) {
 
-        // Filter 'thisRecord' from consideration as a duplicate of itself.
-        Iterable<ManifestRecord> allButThisRecord = Iterables.filter(allDuplicateRecords, new Predicate<ManifestRecord>() {
+        // Filter 'thisRecord' from consideration as being in conflict with itself.
+        Iterable<ManifestRecord> allButThisRecord = Iterables.filter(allConflictingRecords, new Predicate<ManifestRecord>() {
             @Override
             public boolean apply(@Nullable ManifestRecord record) {
                 return record != ManifestRecord.this;
@@ -262,10 +276,42 @@ public class ManifestRecord implements Updatable {
         List<String> messages = new ArrayList<>();
         // Add an appropriate message for each record to messages.
         for (Map.Entry<String, Collection<ManifestRecord>> entry : recordsBySessionName.asMap().entrySet()) {
-            messages.add(buildMessageForConflictingRecords(entry.getKey(), entry.getValue()));
+            messages.add(buildMessageForConflictingRecords(entry.getValue()));
         }
+
         // Join the messages for all the manifests containing duplicates.
         return StringUtils.join(messages, ", ") + ".";
+    }
+
+    /**
+     * Build an error message for manifest records where the sample id specified is duplicated
+     * across one or more records within the same research project.
+     */
+    public String buildMessageForDuplicateSamples(Collection<ManifestRecord> allRecordsWithTheSameSampleId) {
+        String duplicateSamplesMessage =
+                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage(Metadata.Key.SAMPLE_ID, getValueByKey(
+                        Metadata.Key.SAMPLE_ID));
+        String sessionsWithDuplicates = describeOtherManifestSessionsWithMatchingRecords(allRecordsWithTheSameSampleId);
+        return buildSpreadsheetRowMessage() + duplicateSamplesMessage + "  " + sessionsWithDuplicates;
+    }
+
+    /**
+     * Build a simple spreadsheet row message prefix.
+     */
+    private String buildSpreadsheetRowMessage() {
+        return "At row " + getSpreadsheetRowNumber() + ": ";
+    }
+
+    /**
+     * Build an error message for manifest records where the gender specified for a particular patient ID is mismatched
+     * across one or more records within the same research project.
+     */
+    public String buildMessageForMismatchedGenders(Collection<ManifestRecord> allRecordsWithSamePatientId) {
+        String mismatchedGendersMessage =
+                ErrorStatus.MISMATCHED_GENDER.formatMessage(Metadata.Key.PATIENT_ID, getValueByKey(
+                        Metadata.Key.PATIENT_ID));
+        String sessionsWithMismatchedGenders = describeOtherManifestSessionsWithMatchingRecords(allRecordsWithSamePatientId);
+        return buildSpreadsheetRowMessage() + mismatchedGendersMessage + "  " + sessionsWithMismatchedGenders;
     }
 
     /**

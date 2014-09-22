@@ -182,16 +182,9 @@ public class ManifestSession implements Updatable {
                 // Ignore ManifestSessions that are not this ManifestSession, they will not have errors added by
                 // this logic.
                 if (this.equals(record.getManifestSession())) {
-
-                    String message =
-                            ManifestRecord.ErrorStatus.MISMATCHED_GENDER
-                                    .formatMessage(Metadata.Key.PATIENT_ID, entry.getKey());
-
-                    String otherSessionsWithSamePatientId =
-                            record.describeOtherManifestSessionsWithMatchingRecords(entry.getValue());
-
-                    addManifestEvent(new ManifestEvent(ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
-                            message + "  " + otherSessionsWithSamePatientId, record));
+                    String message = record.buildMessageForMismatchedGenders(entry.getValue());
+                    addManifestEvent(new ManifestEvent(
+                            ManifestRecord.ErrorStatus.MISMATCHED_GENDER, message, record));
                 }
             }
         }
@@ -245,14 +238,9 @@ public class ManifestSession implements Updatable {
                 // Ignore ManifestSessions that are not this ManifestSession, they will not have errors added by
                 // this logic.
                 if (this.equals(duplicatedRecord.getManifestSession())) {
-                    String message =
-                            ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage(Metadata.Key.SAMPLE_ID,
-                                    entry.getKey());
-                    String sessionsWithDuplicates =
-                            duplicatedRecord.describeOtherManifestSessionsWithMatchingRecords(entry.getValue());
-                    addManifestEvent(
-                            new ManifestEvent(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
-                                    message + "  " + sessionsWithDuplicates, duplicatedRecord));
+                    String message = duplicatedRecord.buildMessageForDuplicateSamples(entry.getValue());
+                    addManifestEvent(new ManifestEvent(
+                            ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, message, duplicatedRecord));
                 }
             }
         }

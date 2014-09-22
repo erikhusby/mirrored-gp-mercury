@@ -335,8 +335,7 @@ public class ManifestSessionEjbDBFreeTest {
             Collection<ManifestRecord> duplicates = filterThisRecord(record,
                     sampleIdToRecordMultimap.get(record.getValueByKey(Metadata.Key.SAMPLE_ID)));
             assertThat(manifestEvent.getMessage(),
-                    containsString(record.buildMessageForConflictingRecords(manifestSession.getSessionName(),
-                            duplicates)));
+                    containsString(record.buildMessageForConflictingRecords(duplicates)));
         }
     }
 
@@ -377,8 +376,7 @@ public class ManifestSessionEjbDBFreeTest {
                 ManifestRecord duplicateRecord = session1RecordsBySampleId.get(record.getValueByKey(
                         Metadata.Key.SAMPLE_ID)).iterator().next();
                 assertThat(manifestEvent.getMessage(),
-                        containsString(record.buildMessageForConflictingRecords(manifestSession1.getSessionName(),
-                                Collections.singleton(duplicateRecord))));
+                        containsString(record.buildMessageForConflictingRecords(Collections.singleton(duplicateRecord))));
             } else {
                 assertThat(record.getManifestEvents(), is(empty()));
             }
@@ -422,8 +420,7 @@ public class ManifestSessionEjbDBFreeTest {
                 ManifestEvent manifestEvent = manifestRecord.getManifestEvents().get(0);
                 assertThat(manifestEvent.getSeverity(), is(ManifestEvent.Severity.ERROR));
                 assertThat(manifestEvent.getMessage(), containsString(manifestRecord
-                        .buildMessageForConflictingRecords(manifestSession.getSessionName(),
-                                allMatchingPatientIdRecordsExceptThisOne)));
+                        .buildMessageForConflictingRecords(allMatchingPatientIdRecordsExceptThisOne)));
             }
         }
     }
@@ -460,7 +457,7 @@ public class ManifestSessionEjbDBFreeTest {
                         session1RecordsByPatientId.get(manifestRecord.getValueByKey(Metadata.Key.PATIENT_ID));
                 assertThat(manifestEvent.getMessage(),
                         containsString(manifestRecord.buildMessageForConflictingRecords(
-                                manifestSession1.getSessionName(), mismatchedRecords)));
+                                mismatchedRecords)));
                 observedMismatches++;
             }
         }
