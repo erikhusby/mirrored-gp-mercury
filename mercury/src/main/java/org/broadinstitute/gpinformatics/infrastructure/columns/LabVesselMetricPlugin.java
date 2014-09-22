@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -17,221 +18,133 @@ public class LabVesselMetricPlugin implements ListPlugin {
 
     public LabVesselMetricPlugin() {}
 
+    /**
+     * Gathers metric data of interest and associates with LabVessel row in search results.
+     * @param entityList  List of LabVessel entities for which to return LabMetrics data
+     * @param headerGroup List of headers associated with columns selected by user.  This plugin appends column headers
+     *                    for LabMetrics and Decisions of interest.
+     * @return A list of rows, each corresponding to a LabVessel row in search results.
+     */
     @Override
     public List<ConfigurableList.Row> getData(List<?> entityList, ConfigurableList.HeaderGroup headerGroup) {
         List<LabVessel> labVesselList = (List<LabVessel>) entityList;
         List<ConfigurableList.Row> metricRows = new ArrayList<>();
 
-        /*
-         * Build headers and declare cell variables only for metrics data of interest.
-         */
+        // Build and append headers for metric data of interest.
+        // Each header is associated with applicable column value
         ConfigurableList.Header hdrInitPico =
                 new ConfigurableList.Header(LabMetric.MetricType.INITIAL_PICO.getDisplayName(), "", "", "");
-        ConfigurableList.Cell cellInitPico;
         headerGroup.addHeader(hdrInitPico);
 
         ConfigurableList.Header hdrInitPicoDec =
                 new ConfigurableList.Header(LabMetric.MetricType.INITIAL_PICO.getDisplayName() + " Decision", "", "", "");
-        ConfigurableList.Cell cellInitPicoDec;
         headerGroup.addHeader(hdrInitPicoDec);
 
         ConfigurableList.Header hdrFingPico =
                 new ConfigurableList.Header(LabMetric.MetricType.FINGERPRINT_PICO.getDisplayName(), "", "", "");
-        ConfigurableList.Cell cellFingPico;
         headerGroup.addHeader(hdrFingPico);
 
         ConfigurableList.Header hdrFingPicoDec =
                 new ConfigurableList.Header(LabMetric.MetricType.FINGERPRINT_PICO.getDisplayName() + " Decision", "", "", "");
-        ConfigurableList.Cell cellFingPicoDec;
         headerGroup.addHeader(hdrFingPicoDec);
 
         ConfigurableList.Header hdrShearPico =
                 new ConfigurableList.Header(LabMetric.MetricType.SHEARING_PICO.getDisplayName(), "", "", "");
-        ConfigurableList.Cell cellShearPico;
         headerGroup.addHeader(hdrShearPico);
 
         ConfigurableList.Header hdrShearPicoDec =
                 new ConfigurableList.Header(LabMetric.MetricType.SHEARING_PICO.getDisplayName() + " Decision", "", "", "");
-        ConfigurableList.Cell cellShearPicoDec;
         headerGroup.addHeader(hdrShearPicoDec);
 
         ConfigurableList.Header hdrPondPico =
                 new ConfigurableList.Header(LabMetric.MetricType.POND_PICO.getDisplayName(), "", "", "");
-        ConfigurableList.Cell cellPondPico;
         headerGroup.addHeader(hdrPondPico);
 
         ConfigurableList.Header hdrPondPicoDec =
                 new ConfigurableList.Header(LabMetric.MetricType.POND_PICO.getDisplayName() + " Decision", "", "", "");
-        ConfigurableList.Cell cellPondPicoDec;
         headerGroup.addHeader(hdrPondPicoDec);
 
         ConfigurableList.Header hdrCatchPico =
                 new ConfigurableList.Header(LabMetric.MetricType.CATCH_PICO.getDisplayName(), "", "", "");
-        ConfigurableList.Cell cellCatchPico;
         headerGroup.addHeader(hdrCatchPico);
 
         ConfigurableList.Header hdrCatchPicoDec =
                 new ConfigurableList.Header(LabMetric.MetricType.CATCH_PICO.getDisplayName() + " Decision", "", "", "");
-        ConfigurableList.Cell cellCatchPicoDec;
-        headerGroup.addHeader(hdrCatchPicoDec);
+        headerGroup.addHeader( hdrCatchPicoDec );
 
         ConfigurableList.Header hdrQpcr =
                 new ConfigurableList.Header(LabMetric.MetricType.ECO_QPCR.getDisplayName(), "", "", "");
-        ConfigurableList.Cell cellQpcr;
         headerGroup.addHeader(hdrQpcr);
 
         ConfigurableList.Header hdrQpcrDec =
                 new ConfigurableList.Header(LabMetric.MetricType.ECO_QPCR.getDisplayName() + " Decision", "", "", "");
-        ConfigurableList.Cell cellQpcrDec;
-        headerGroup.addHeader(hdrQpcrDec);
+        headerGroup.addHeader( hdrQpcrDec );
 
-
-        /*
-         * Populate rows with any available metrics data.
-         */
+        // Populate rows with any available metrics data.
         for( LabVessel labVessel : labVesselList ) {
-            ConfigurableList.Row row = new ConfigurableList.Row( labVessel.getLabVesselId().toString() );
+            ConfigurableList.Row row = new ConfigurableList.Row( labVessel.getLabel() );
 
             Map<String, Set<LabMetric>> metricGroups = labVessel.getMetricsForVesselAndDescendants();
 
-            for( Set<LabMetric> metrics : metricGroups.values() ) {
-
-                if( metrics.isEmpty() ) {
-                    continue;
-                }
-
-                cellCatchPico = cellCatchPicoDec = cellFingPico = cellFingPicoDec = cellInitPico
-                        = cellInitPicoDec = cellPondPico = cellPondPicoDec = cellShearPico
-                        = cellShearPicoDec = cellQpcr = cellQpcrDec = null;
-
-                // Metrics are identical type in each set
-                for( LabMetric metric : metrics ) {
-
-                    String value = "";
-                    LabMetricDecision decision;
-                    switch (metric.getName()){
-                        case CATCH_PICO:
-                            value = value + metric.getValue().toPlainString() + " " + metric.getUnits().getDisplayName() + " ";
-                            cellCatchPico = new ConfigurableList.Cell(hdrCatchPico, value, value);
-                            decision = metric.getLabMetricDecision();
-                            if (decision != null) {
-                                cellCatchPicoDec =
-                                        new ConfigurableList.Cell(hdrCatchPicoDec, decision.getDecision().toString(),
-                                                decision.getDecision().toString());
-                            } else {
-                                cellCatchPicoDec = new ConfigurableList.Cell(hdrCatchPicoDec, "(None)", "(None)");
-                            }
-                            break;
-                        case FINGERPRINT_PICO:
-                            value = value + metric.getValue().toPlainString() + " " + metric.getUnits().getDisplayName() + " ";
-                            cellFingPico = new ConfigurableList.Cell(hdrFingPico, value, value);
-                            decision = metric.getLabMetricDecision();
-                            if (decision != null) {
-                                cellFingPicoDec =
-                                        new ConfigurableList.Cell(hdrFingPicoDec, decision.getDecision().toString(),
-                                                decision.getDecision().toString());
-                            } else {
-                                cellFingPicoDec = new ConfigurableList.Cell(hdrFingPicoDec, "(None)", "(None)");
-                            }
-                            break;
-                        case INITIAL_PICO:
-                            value = value + metric.getValue().toPlainString() + " " + metric.getUnits().getDisplayName() + " ";
-                            cellInitPico = new ConfigurableList.Cell(hdrInitPico, value, value);
-                            decision = metric.getLabMetricDecision();
-                            if (decision != null) {
-                                cellInitPicoDec =
-                                        new ConfigurableList.Cell(hdrInitPicoDec, decision.getDecision().toString(),
-                                                decision.getDecision().toString());
-                            } else {
-                                cellInitPicoDec = new ConfigurableList.Cell(hdrInitPicoDec, "(None)", "(None)");
-                            }
-                            break;
-                        case POND_PICO:
-                            value = value + metric.getValue().toPlainString() + " " + metric.getUnits().getDisplayName() + " ";
-                            cellPondPico = new ConfigurableList.Cell(hdrPondPico, value, value);
-                            decision = metric.getLabMetricDecision();
-                            if (decision != null) {
-                                cellPondPicoDec =
-                                        new ConfigurableList.Cell(hdrPondPicoDec, decision.getDecision().toString(),
-                                                decision.getDecision().toString());
-                            } else {
-                                cellPondPicoDec = new ConfigurableList.Cell(hdrPondPicoDec, "(None)", "(None)");
-                            }
-                            break;
-                        case SHEARING_PICO:
-                            value = value + metric.getValue().toPlainString() + " " + metric.getUnits().getDisplayName() + " ";
-                            cellShearPico = new ConfigurableList.Cell(hdrShearPico, value, value);
-                            decision = metric.getLabMetricDecision();
-                            if (decision != null) {
-                                cellShearPicoDec =
-                                        new ConfigurableList.Cell(hdrShearPicoDec, decision.getDecision().toString(),
-                                                decision.getDecision().toString());
-                            } else {
-                                cellShearPicoDec = new ConfigurableList.Cell(hdrShearPicoDec, "(None)", "(None)");
-                            }
-                            break;
-                        case ECO_QPCR:
-                            value = value + metric.getValue().toPlainString() + " " + metric.getUnits().getDisplayName() + " ";
-                            cellQpcr = new ConfigurableList.Cell(hdrQpcr, value, value);
-                            decision = metric.getLabMetricDecision();
-                            if (decision != null) {
-                                cellQpcrDec =
-                                        new ConfigurableList.Cell(hdrQpcrDec, decision.getDecision().toString(),
-                                                decision.getDecision().toString());
-                            } else {
-                                cellQpcrDec = new ConfigurableList.Cell(hdrQpcrDec, "(None)", "(None)");
-                            }
-                            break;
-                        default:
-                            // Ignore any metrics data we're not interested in.
-                    }
-                }
-
-                // Fill in null data
-                if( cellCatchPico == null ) {
-                    cellCatchPico = new ConfigurableList.Cell(hdrCatchPico, "", "");
-                    cellCatchPicoDec = new ConfigurableList.Cell(hdrCatchPicoDec, "", "");
-                }
-                if( cellFingPico == null ) {
-                    cellFingPico = new ConfigurableList.Cell(hdrFingPico, "", "");
-                    cellFingPicoDec = new ConfigurableList.Cell(hdrFingPicoDec, "", "");
-                }
-                if( cellInitPico == null ) {
-                    cellInitPico = new ConfigurableList.Cell(hdrInitPico, "", "");
-                    cellInitPicoDec = new ConfigurableList.Cell(hdrInitPicoDec, "", "");
-                }
-                if( cellPondPico == null ) {
-                    cellPondPico = new ConfigurableList.Cell(hdrPondPico, "", "");
-                    cellPondPicoDec = new ConfigurableList.Cell(hdrPondPicoDec, "", "");
-                }
-                if( cellShearPico == null ) {
-                    cellShearPico = new ConfigurableList.Cell(hdrShearPico, "", "");
-                    cellShearPicoDec = new ConfigurableList.Cell(hdrShearPicoDec, "", "");
-                }
-                if( cellQpcr == null ) {
-                    cellQpcr = new ConfigurableList.Cell(hdrQpcr, "", "");
-                    cellQpcrDec = new ConfigurableList.Cell(hdrQpcrDec, "", "");
-                }
-
-
-                row.addCell(cellInitPico);
-                row.addCell(cellInitPicoDec);
-                row.addCell(cellFingPico);
-                row.addCell(cellFingPicoDec);
-                row.addCell(cellShearPico);
-                row.addCell(cellShearPicoDec);
-                row.addCell(cellPondPico);
-                row.addCell(cellPondPicoDec);
-                row.addCell(cellCatchPico);
-                row.addCell(cellCatchPicoDec);
-                row.addCell(cellQpcr);
-                row.addCell(cellQpcrDec);
-            }
+            addMetricsToRow(metricGroups, LabMetric.MetricType.INITIAL_PICO, row, hdrInitPico, hdrInitPicoDec );
+            addMetricsToRow(metricGroups, LabMetric.MetricType.FINGERPRINT_PICO, row, hdrFingPico, hdrFingPicoDec );
+            addMetricsToRow(metricGroups, LabMetric.MetricType.SHEARING_PICO, row, hdrShearPico, hdrShearPicoDec );
+            addMetricsToRow(metricGroups, LabMetric.MetricType.POND_PICO, row, hdrPondPico, hdrPondPicoDec );
+            addMetricsToRow(metricGroups, LabMetric.MetricType.CATCH_PICO, row, hdrCatchPico, hdrCatchPicoDec );
+            addMetricsToRow(metricGroups, LabMetric.MetricType.ECO_QPCR, row, hdrQpcr, hdrQpcrDec );
 
             metricRows.add(row);
         }
 
         return metricRows;
+    }
+
+    /**
+     * Adds latest metric of type specified to the plugin row. Framework quietly ignores empty cells.
+     * Uses the last metric with a non-null decision after sorting by date and id.
+     * If all metrics have a null decision, use the last after sorting.
+     * @param metricGroups Metrics data structure as supplied from LabVessel
+     * @param metricType The type of metric to search for
+     * @param row Reference to the current plugin row
+     * @param valueHeader Maps cell to it's related header
+     * @param decisionHeader Maps associated decision cell to it's related header
+     *                       @see org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel#getMetricsForVesselAndDescendants()
+     */
+    private void addMetricsToRow( Map<String, Set<LabMetric>> metricGroups, LabMetric.MetricType metricType
+            , ConfigurableList.Row row, ConfigurableList.Header valueHeader, ConfigurableList.Header decisionHeader ) {
+        Set<LabMetric> metrics;
+        LabMetric metric = null;
+        LabMetricDecision decision;
+        ConfigurableList.Cell valueCell, decisionCell;
+        String value;
+
+        metrics = metricGroups.get( metricType.getDisplayName() );
+        if( metrics != null && !metrics.isEmpty() ) {
+            // Metrics are sorted by date (and optionally, id)..
+            Iterator<LabMetric> iter = metrics.iterator();
+            while( iter.hasNext() ) {
+                LabMetric latestMetric = iter.next();
+                if( latestMetric.getLabMetricDecision() != null ) {
+                    // Use latest with a decision
+                    metric = latestMetric;
+                } else if( metric == null && !iter.hasNext() ) {
+                    // We're at last metric and none have a decision, use the last metric
+                    metric = latestMetric;
+                }
+            }
+            value = metric.getValue().toPlainString() + " " + metric.getUnits().getDisplayName();
+            valueCell = new ConfigurableList.Cell(valueHeader, value, value);
+            decision = metric.getLabMetricDecision();
+            if (decision != null) {
+                decisionCell =
+                        new ConfigurableList.Cell(decisionHeader, decision.getDecision().toString(),
+                                decision.getDecision().toString());
+            } else {
+                decisionCell = new ConfigurableList.Cell(decisionHeader, "(None)", "(None)");
+            }
+            row.addCell(valueCell);
+            row.addCell(decisionCell);
+        }
     }
 
     @Override

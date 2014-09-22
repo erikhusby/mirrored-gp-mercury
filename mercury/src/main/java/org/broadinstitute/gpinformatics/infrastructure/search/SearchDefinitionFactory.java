@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.BspSampleSearchAddRowsListener;
 import org.broadinstitute.gpinformatics.infrastructure.columns.EventVesselSourcePositionPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.EventVesselTargetPositionPlugin;
+import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetricPlugin;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -72,10 +73,6 @@ public class SearchDefinitionFactory {
         // Due date - LabBatch.dueDate is transient!
         searchTerms = buildLabVesselBsp();
         mapGroupSearchTerms.put("BSP", searchTerms);
-
-        // TODO:  JMS Wait for other group to get Mercury sample metada more stable
-        // searchTerms = buildLabVesselMetadata();
-        // mapGroupSearchTerms.put("Mercury Metadata", null);
 
         searchTerms = buildLabVesselBuckets();
         mapGroupSearchTerms.put("Buckets", searchTerms);
@@ -226,6 +223,12 @@ public class SearchDefinitionFactory {
             }
         });
         searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Lab Metrics");
+        searchTerm.setPluginClass(LabVesselMetricPlugin.class);
+        searchTerms.add(searchTerm);
+
         return searchTerms;
     }
 

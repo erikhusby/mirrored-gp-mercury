@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
-import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nullable;
@@ -307,15 +306,21 @@ public class LabMetric implements Comparable<LabMetric> {
         this.labMetricDecision = labMetricDecision;
     }
 
+    /**
+     * Provides sorting based upon create date, and in the case of duplicate dates, id
+     * @param labMetric
+     * @return
+     */
     @Override
     public int compareTo(LabMetric labMetric) {
-        CompareToBuilder compareToBuilder = new CompareToBuilder();
+        int result = 0;
         if (getCreatedDate() != null) {
-            compareToBuilder.append(getCreatedDate(), labMetric.getCreatedDate());
-        } else {
-            compareToBuilder.append(getLabMetricId(), labMetric.getLabMetricId());
+            result = getCreatedDate().compareTo( labMetric.getCreatedDate() );
         }
-        return compareToBuilder.build();
+        if( result == 0 ) {
+            result = getLabMetricId().compareTo( labMetric.getLabMetricId() );
+        }
+        return result;
     }
 
     /** These define the concentration range in ug/ml (ng/ul) for acceptable fingerprinting. */
