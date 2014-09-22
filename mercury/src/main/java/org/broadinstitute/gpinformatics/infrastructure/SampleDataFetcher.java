@@ -90,14 +90,14 @@ public class SampleDataFetcher {
     public Map<String, SampleData> fetchSampleData(@Nonnull Collection<String> sampleNames) {
         Map<String, MercurySample.MetadataSource> metadataSources = determineMetadataSource(sampleNames);
 
-        List<String> bspSamples = new ArrayList<>();
+        List<String> bspSampleIds = new ArrayList<>();
         List<String> mercurySampleIds = new ArrayList<>();
         for (String sampleName : sampleNames) {
             MercurySample.MetadataSource metadataSource = metadataSources.get(sampleName);
             switch (metadataSource) {
             case BSP:
                 if (BSPUtil.isInBspFormat(sampleName)) {
-                    bspSamples.add(sampleName);
+                    bspSampleIds.add(sampleName);
                 }
                 break;
             case MERCURY:
@@ -108,8 +108,8 @@ public class SampleDataFetcher {
             }
         }
         Map<String, SampleData> sampleData = new HashMap<>();
-        if (!bspSamples.isEmpty()) {
-            Map<String, BSPSampleDTO> bspSampleData = bspSampleDataFetcher.fetchSamplesFromBSP(bspSamples);
+        if (!bspSampleIds.isEmpty()) {
+            Map<String, BSPSampleDTO> bspSampleData = bspSampleDataFetcher.fetchSamplesFromBSP(bspSampleIds);
             sampleData.putAll(bspSampleData);
         }
         List<MercurySample> mercurySamples = mercurySampleDao.findBySampleKeys(mercurySampleIds);
