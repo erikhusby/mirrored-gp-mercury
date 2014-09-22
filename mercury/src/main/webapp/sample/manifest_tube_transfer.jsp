@@ -7,8 +7,6 @@
 <stripes:layout-component name="extraHead">
     <script type="text/javascript">
 
-        var performValidation = false;
-
         $j(document).ready(function () {
 
             $j('#sessionList').dataTable({
@@ -47,19 +45,16 @@
             $j("#source").blur(function () {
                 if ($j("#source").val()) {
                     validateSource();
-                    performValidation = false;
                 }
             });
             $j("#mercurySample").blur(function () {
                 if ($j("#mercurySample").val()) {
                     validateSample();
-                    performValidation = false;
                 }
             });
             $j("#mercuryLabVessel").blur(function () {
                 if ($j("#mercuryLabVessel").val()) {
                     validateVessel();
-                    performValidation = false;
                 }
             });
         });
