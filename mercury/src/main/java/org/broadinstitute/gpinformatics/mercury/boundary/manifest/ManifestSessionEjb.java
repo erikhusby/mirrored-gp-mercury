@@ -36,7 +36,7 @@ public class ManifestSessionEjb {
 
     static final String UNASSOCIATED_TUBE_SAMPLE_MESSAGE =
             "The given target sample id is not associated with the given target vessel";
-    static final String SAMPLE_NOT_FOUND_MESSAGE = ":: You must provide a target sample key.";
+    static final String SAMPLE_NOT_FOUND_MESSAGE = ":: You must provide a valid target sample key.";
     private static final String SAMPLE_NOT_UNIQUE_MESSAGE = ":: This sample ID is not unique in Mercury";
     static final String SAMPLE_NOT_ELIGIBLE_FOR_CLINICAL_MESSAGE =
             ":: The sample found is not eligible for clinical work";

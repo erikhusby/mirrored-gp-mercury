@@ -18,6 +18,7 @@
                 ],
                 "asStripeClasses": [ '' ],
                 "aoColumns": [
+                    {"bSortable": true}, // Rado Button
                     {"bSortable": true}, // RP Key
                     {"bSortable": true}, // Name
                     {"bSortable": true}, // Creator
@@ -35,42 +36,28 @@
 
             var activeSession = $j("#activeSessionId").val();
 
-            $("tr").filter(function (index) {
-                return $('input[type="hidden"]').val() == activeSession;
-            }).addClass('highlighted').siblings().removeClass('highlighted');
-
-//            $j("#source").change(function() {
-//                if($j("#source").val()) {
-//                    performValidation = true;
-//                }
-//            });
+//            $j('input[type="hidden"]').filter(function(index) {
+//                return $(this).val() == activeSession;
+//            }).parentsUntil("tr").addClass('highlighted').siblings().removeClass('highlighted');
 //
-//            $j("#mercurySample").change(function() {
-//                if($j("#mercurySample").val()) {
-//                    performValidation = true;
-//                }
-//            });
-//
-//            $j("#mercuryLabVessel").change(function() {
-//                if($j("#mercuryLabVessel").val()) {
-//                    performValidation = true;
-//                }
-//            });
+//            $("tr").filter(function (index) {
+//                return $('input[type="hidden"]').val() == activeSession;
+//            }).addClass('highlighted').siblings().removeClass('highlighted');
 
             $j("#source").blur(function () {
-                if($j("#source").val()) {
+                if ($j("#source").val()) {
                     validateSource();
                     performValidation = false;
                 }
             });
             $j("#mercurySample").blur(function () {
-                if($j("#mercurySample").val()) {
+                if ($j("#mercurySample").val()) {
                     validateSample();
                     performValidation = false;
                 }
             });
             $j("#mercuryLabVessel").blur(function () {
-                if($j("#mercuryLabVessel").val()) {
+                if ($j("#mercuryLabVessel").val()) {
                     validateVessel();
                     performValidation = false;
                 }
@@ -144,9 +131,9 @@
 
             var message = "Scan Successful";
             if (resultsMessage) {
-                $j("#scanResults").append('<div class="alert alert-error" style="font-size: 14px;margin-left:20%;margin-right:20%">'+resultsMessage+"</div>");
+                $j("#scanResults").append('<div class="alert alert-error" style="font-size: 14px;margin-left:20%;margin-right:20%">' + resultsMessage + "</div>");
             } else {
-                $j("#scanResults").append('<div class="alert alert-success" style="font-size: 14px;margin-left:20%;margin-right:20%">'+message+"</div>");
+                $j("#scanResults").append('<div class="alert alert-success" style="font-size: 14px;margin-left:20%;margin-right:20%">' + message + "</div>");
             }
         }
     </script>
@@ -161,6 +148,7 @@
             <table id="sessionList" class="table simple">
                 <thead>
                 <tr>
+                    <th></th>
                     <th>Research Project</th>
                     <th>Session Name</th>
                     <th>Creator</th>
@@ -172,6 +160,9 @@
                 <tbody>
                 <c:forEach items="${actionBean.availableSessions}" var="closedSession">
                     <tr>
+                        <td name="selection">
+                            <stripes:radio name="activeSessionId" value="${closedSession.manifestSessionId}" />
+                        </td>
                         <td name="researchProjectColumn" width="120px">
                                 ${closedSession.researchProject.businessKey}
                         </td>
@@ -248,7 +239,7 @@
                 </div>
             </div>
 
-            <div id="scanResults" class="help-block span4"> </div>
+            <div id="scanResults" class="help-block span4"></div>
         </div>
     </stripes:form>
 

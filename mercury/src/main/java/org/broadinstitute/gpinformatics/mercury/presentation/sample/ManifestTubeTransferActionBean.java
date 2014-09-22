@@ -10,6 +10,7 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
+import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -25,27 +26,31 @@ import java.util.List;
 @SuppressWarnings("unused")
 @UrlBinding(ManifestTubeTransferActionBean.ACTIONBEAN_URL_BINDING)
 public class ManifestTubeTransferActionBean extends CoreActionBean {
-    private static Log logger = LogFactory.getLog(ManifestTubeTransferActionBean.class);
 
     public static final String ACTIONBEAN_URL_BINDING = "/sample/manifestTubeTransfer.action";
+    private static Log logger = LogFactory.getLog(ManifestTubeTransferActionBean.class);
+
+    // Helping constants
+    private static final String STEP_1_SOURCE_SAMPLE_IS_REQUIRED = "Step 1 (Source Sample) is required";
+    private static final String STEP_2_SAMPLE_KEY_IS_REQUIRED = "Step 2 (Sample Key) is required";
+    private static final String STEP_3_LAB_VESSEL_IS_REQUIRED = "Step 3 (Lab vessel) is required";
+    private static final String SELECT_A_SESSION = "You must select a session to continue";
+
+    // Page Definition(s)
     public static final String TUBE_TRANSFER_PAGE = "/sample/manifest_tube_transfer.jsp";
 
+    // Actions
     public static final String SCAN_SOURCE_TUBE_ACTION = "scanSource";
     public static final String SCAN_TARGET_SAMPLE_ACTION = "scanTargetSample";
     public static final String SCAN_TARGET_VESSEL_AND_SAMPLE_ACTION = "scanTargetVessel";
     public static final String RECORD_TRANSFER_ACTION = "recordTransfer";
 
-    @Validate(required = true, on = {RECORD_TRANSFER_ACTION})
     private String sourceTube;
-
-    @Validate(required = true, on = {RECORD_TRANSFER_ACTION})
     private String targetSample;
-
-    @Validate(required = true, on = {RECORD_TRANSFER_ACTION})
     private String targetVessel;
 
-    @Validate(required = true, on = {RECORD_TRANSFER_ACTION})
-    private Long activeSessionId;
+    @Validate(required = true, on = {RECORD_TRANSFER_ACTION}, label = SELECT_A_SESSION)
+    private String activeSessionId;
     private ManifestSession activeSession;
     private List<ManifestSession> availableSessions;
 
@@ -62,36 +67,87 @@ public class ManifestTubeTransferActionBean extends CoreActionBean {
         super();
     }
 
+    /**
+     * Define validations to be used for page submissions.  Grouped them all here to allow user to see mixture of
+     * requirement validations (for empty fields) and validation errors (for invalid input).
+     */
+    @ValidationMethod(on = RECORD_TRANSFER_ACTION)
+    public void validateInput() {
+
+        if (StringUtils.isBlank(sourceTube)) {
+            addGlobalValidationError(STEP_1_SOURCE_SAMPLE_IS_REQUIRED);
+        } else {
+            String message = validateSource();
+            if (StringUtils.isNotBlank(message)) {
+                addGlobalValidationError(message);
+            }
+        }
+
+        if (StringUtils.isBlank(targetSample)) {
+            addGlobalValidationError(STEP_2_SAMPLE_KEY_IS_REQUIRED);
+        } else {
+            String message = validateTargetSample();
+            if (StringUtils.isNotBlank(message)) {
+                addGlobalValidationError(message);
+            }
+        }
+        if (StringUtils.isBlank(targetVessel)) {
+            addGlobalValidationError(STEP_3_LAB_VESSEL_IS_REQUIRED);
+        } else {
+            if (StringUtils.isNotBlank(targetSample)) {
+                String message = validateTargetVessel();
+                if (StringUtils.isNotBlank(message)) {
+                    addGlobalValidationError(message);
+                }
+            }
+        }
+    }
+
+    /**
+     * initialize required values to process submission
+     */
     @Before(stages = LifecycleStage.EventHandling, on = {RECORD_TRANSFER_ACTION})
     public void init() {
         findActiveSession();
     }
 
+    /**
+     * Find the session based on the selected session
+     */
     private void findActiveSession() {
-        activeSession = manifestSessionDao.find(activeSessionId);
+        activeSession = manifestSessionDao.find(Long.valueOf(activeSessionId));
     }
 
-    @After(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION})
+    @After(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, RECORD_TRANSFER_ACTION})
     public void initSessionChoices() {
         availableSessions = manifestSessionDao.findClosedSessions();
     }
 
+    /**
+     * handles viewing the page
+     * @return
+     */
     @DefaultHandler
     public Resolution view() {
         return new ForwardResolution(TUBE_TRANSFER_PAGE);
     }
 
+    /**
+     * Handles recording the actual transfer from the collaborator source tube to mercury vessel
+     * @return
+     */
     @HandlesEvent(RECORD_TRANSFER_ACTION)
     public Resolution recordTransfer() {
 
         Resolution resolution;
 
         try {
-            manifestSessionEjb.transferSample(activeSessionId, sourceTube, targetSample, targetVessel,
+            manifestSessionEjb.transferSample(Long.valueOf(activeSessionId), sourceTube, targetSample, targetVessel,
                     userBean.getBspUser());
             addMessage("Collaborator sample {0} has been successfully recorded as transferred to vessel " +
                        "{1} with a sample of {2}", sourceTube, targetVessel, targetSample);
-            resolution = new RedirectResolution(getClass(), VIEW_ACTION).addParameter("activeSessionId", activeSessionId);
+            resolution =
+                    new RedirectResolution(getClass(), VIEW_ACTION).addParameter("activeSessionId", activeSessionId);
         } catch (Exception e) {
             addGlobalValidationError(e.getMessage());
             resolution = getContext().getSourcePageResolution();
@@ -99,32 +155,79 @@ public class ManifestTubeTransferActionBean extends CoreActionBean {
         return resolution;
     }
 
+    /**
+     * Handles the AJAX call to validate the collaborator source tube.
+     * @return
+     */
     @HandlesEvent(SCAN_SOURCE_TUBE_ACTION)
     public Resolution scanSource() {
-        String message = "";
-        if(activeSessionId == null) {
-            return createTextResolution("You must select a session to continue");
+        if (activeSessionId == null) {
+            return createTextResolution(SELECT_A_SESSION);
         }
-        if(StringUtils.isBlank(sourceTube)) {
-            return createTextResolution("You must enter a value for the source Tube");
+        if (StringUtils.isBlank(sourceTube)) {
+            return createTextResolution(STEP_1_SOURCE_SAMPLE_IS_REQUIRED);
         }
 
         findActiveSession();
 
-        if(activeSession == null) {
+        if (activeSession == null) {
             return createTextResolution("The selected session could not be found");
         }
-        try {
-            manifestSessionEjb.validateSourceTubeForTransfer(activeSessionId, sourceTube);
-        } catch (Exception e) {
-            message = e.getMessage();
-        }
+        String message = validateSource();
 
         return createTextResolution(message);
     }
 
+    /**
+     * Handles the AJAX call to validate the value input for Mercury sample
+     * @return
+     */
     @HandlesEvent(SCAN_TARGET_SAMPLE_ACTION)
     public Resolution scanTargetSample() {
+
+        if (StringUtils.isBlank(targetSample)) {
+            return createTextResolution(STEP_2_SAMPLE_KEY_IS_REQUIRED);
+        }
+
+        String message = validateTargetSample();
+
+        return createTextResolution(message);
+    }
+
+    /**
+     * Handles the AJAX call to validate the Lab Vessel selected as well as the Mercury Sample
+     * @return
+     */
+    @HandlesEvent(SCAN_TARGET_VESSEL_AND_SAMPLE_ACTION)
+    public Resolution scanTargetVessel() {
+
+        if (StringUtils.isBlank(targetSample)) {
+            return createTextResolution(STEP_2_SAMPLE_KEY_IS_REQUIRED);
+        }
+
+        if (StringUtils.isBlank(targetVessel)) {
+            return createTextResolution(STEP_3_LAB_VESSEL_IS_REQUIRED);
+        }
+
+        String message = validateTargetVessel();
+        return createTextResolution(message);
+    }
+
+    /**
+     * actually scans
+     * @return
+     */
+    private String validateSource() {
+        String message = "";
+        try {
+            manifestSessionEjb.validateSourceTubeForTransfer(Long.valueOf(activeSessionId), sourceTube);
+        } catch (Exception e) {
+            message = e.getMessage();
+        }
+        return message;
+    }
+
+    private String validateTargetSample() {
 
         String message = "";
         try {
@@ -132,12 +235,10 @@ public class ManifestTubeTransferActionBean extends CoreActionBean {
         } catch (Exception e) {
             message = e.getMessage();
         }
-
-        return createTextResolution(message);
+        return message;
     }
 
-    @HandlesEvent(SCAN_TARGET_VESSEL_AND_SAMPLE_ACTION)
-    public Resolution scanTargetVessel() {
+    private String validateTargetVessel() {
         String message = "";
 
         try {
@@ -145,10 +246,12 @@ public class ManifestTubeTransferActionBean extends CoreActionBean {
         } catch (Exception e) {
             message = e.getMessage();
         }
-        return createTextResolution(message);
+        return message;
     }
 
-    // Getters and Setters
+    //  *********************************************************
+    //  Getters and Setters
+    //  *********************************************************s
     public String getSourceTube() {
         return sourceTube;
     }
@@ -173,11 +276,11 @@ public class ManifestTubeTransferActionBean extends CoreActionBean {
         this.targetVessel = targetVessel;
     }
 
-    public Long getActiveSessionId() {
+    public String getActiveSessionId() {
         return activeSessionId;
     }
 
-    public void setActiveSessionId(Long activeSessionId) {
+    public void setActiveSessionId(String activeSessionId) {
         this.activeSessionId = activeSessionId;
     }
 
