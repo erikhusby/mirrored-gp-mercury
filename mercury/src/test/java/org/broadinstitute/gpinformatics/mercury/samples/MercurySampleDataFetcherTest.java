@@ -12,20 +12,28 @@
 package org.broadinstitute.gpinformatics.mercury.samples;
 
 import com.google.common.collect.ImmutableSet;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.hamcrest.Description;
+import org.hamcrest.Factory;
+import org.hamcrest.Matcher;
+import org.hamcrest.TypeSafeMatcher;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.broadinstitute.gpinformatics.mercury.samples.MercurySampleDataFetcherTest.SampleDataPatientIdMatcher.sampleWithPatientId;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
 @Test(groups = TestGroups.DATABASE_FREE)
@@ -53,10 +61,14 @@ public class MercurySampleDataFetcherTest {
     }
 
     public void testFetchOneMercurySampleReturnsOneResult() {
-        MercurySample mercurySample = new MercurySample(SM_MERC1, MercurySample.MetadataSource.MERCURY);
+        String collaboratorSampleId = "Sample-1";
+        MercurySample mercurySample = new MercurySample(SM_MERC1, MercurySample.MetadataSource.MERCURY,
+                Collections.singleton(new Metadata(Metadata.Key.SAMPLE_ID, collaboratorSampleId)));
+
         MercurySampleData mercurySampleData = mercurySampleDataFetcher.fetchSampleData(mercurySample);
+
         assertThat(mercurySampleData, notNullValue());
-        assertThat(mercurySampleData.getSampleId(), equalTo(SM_MERC1));
+        assertThat(mercurySampleData.getSampleId(), equalTo(collaboratorSampleId));
     }
 
     public void testFetchMercurySampleHasSampleData() {
@@ -80,8 +92,12 @@ public class MercurySampleDataFetcherTest {
     }
 
     public void testFetchForClinicalSamples() {
-        Set<Metadata> metadata1 = ImmutableSet.of(new Metadata(Metadata.Key.SAMPLE_ID, SM_MERC1));
-        Set<Metadata> metadata2 = ImmutableSet.of(new Metadata(Metadata.Key.SAMPLE_ID, SM_MERC2));
+        String patientId1 = "Patient-1";
+        Set<Metadata> metadata1 = ImmutableSet.of(new Metadata(Metadata.Key.SAMPLE_ID, SM_MERC1),
+                new Metadata(Metadata.Key.PATIENT_ID, patientId1));
+        String patientId2 = "Patient-2";
+        Set<Metadata> metadata2 = ImmutableSet.of(new Metadata(Metadata.Key.SAMPLE_ID, SM_MERC2),
+                new Metadata(Metadata.Key.PATIENT_ID, patientId2));
         MercurySample mercurySample1 = new MercurySample(SM_MERC1, MercurySample.MetadataSource.MERCURY, metadata1);
         MercurySample mercurySample2 = new MercurySample(SM_MERC2, MercurySample.MetadataSource.MERCURY, metadata2);
 
@@ -89,5 +105,31 @@ public class MercurySampleDataFetcherTest {
                 mercurySampleDataFetcher.fetchSampleData(Arrays.asList(mercurySample1, mercurySample2));
 
         assertThat(sampleDatas.size(), equalTo(2));
+        assertThat(sampleDatas.get(SM_MERC1), is(sampleWithPatientId(patientId1)));
+        assertThat(sampleDatas.get(SM_MERC2), is(sampleWithPatientId(patientId2)));
+    }
+
+    public static class SampleDataPatientIdMatcher extends TypeSafeMatcher<SampleData> {
+
+        private String patientId;
+
+        private SampleDataPatientIdMatcher(String patientId) {
+            this.patientId = patientId;
+        }
+
+        @Override
+        protected boolean matchesSafely(SampleData sampleData) {
+            return sampleData.getPatientId().equals(patientId);
+        }
+
+        @Override
+        public void describeTo(Description description) {
+            description.appendText(String.format("SampleData with patient ID of %s", patientId));
+        }
+
+        @Factory
+        public static Matcher<SampleData> sampleWithPatientId(String patientId) {
+            return new SampleDataPatientIdMatcher(patientId);
+        }
     }
 }

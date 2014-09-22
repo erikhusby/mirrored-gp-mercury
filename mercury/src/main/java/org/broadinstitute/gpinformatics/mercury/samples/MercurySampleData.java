@@ -3,11 +3,11 @@ package org.broadinstitute.gpinformatics.mercury.samples;
 import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 
 import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 /**
  */
@@ -20,32 +20,35 @@ public class MercurySampleData implements SampleData {
     private String gender;
     private String sampleId;
 
-    public MercurySampleData(MercurySample mercurySample) {
-        extractMetadataFromSample(mercurySample);
+    public MercurySampleData(Set<Metadata> metadata) {
+        extractMetadataFromSample(metadata);
     }
 
-    private void extractMetadataFromSample(MercurySample mercurySample) {
-        this.sampleId = mercurySample.getSampleKey();
-        for (Metadata metadata : mercurySample.getMetadata()) {
-            switch (metadata.getKey()) {
+    private void extractMetadataFromSample(Set<Metadata> metadata) {
+        for (Metadata data : metadata) {
+            String value = data.getValue();
+            switch (data.getKey()) {
+            case SAMPLE_ID:
+                this.sampleId = value;
+                break;
             case GENDER:
-                this.gender = metadata.getValue();
+                this.gender = value;
                 break;
             case PATIENT_ID:
-                this.patientId = metadata.getValue();
+                this.patientId = value;
                 break;
             // TODO: are we interested in SAMPLE_TYPE???
 //            case SAMPLE_TYPE:
-//                this.materialType = metadata.getValue();
+//                this.materialType = data.getValue();
 //                break;
             case TUMOR_NORMAL:
-                this.tumorNormal = metadata.getValue();
+                this.tumorNormal = value;
                 break;
             case BUICK_COLLECTION_DATE:
-                this.collectionDate = metadata.getValue();
+                this.collectionDate = value;
                 break;
             case BUICK_VISIT:
-                this.visit = metadata.getValue();
+                this.visit = value;
                 break;
             }
         }

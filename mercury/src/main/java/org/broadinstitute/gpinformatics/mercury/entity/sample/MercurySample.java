@@ -115,13 +115,12 @@ public class MercurySample extends AbstractSample {
     }
 
     public void addMetadata(Set<Metadata> metadata) {
-        this.metadata.addAll(metadata);
-        switch (metadataSource){
-            case BSP:
-                break;
-            case MERCURY:
-                setSampleData(new MercurySampleData(this));
-                break;
+        if (metadataSource == MetadataSource.MERCURY) {
+            this.metadata.addAll(metadata);
+            setSampleData(new MercurySampleData(this.metadata));
+        } else {
+            throw new IllegalStateException(String.format(
+                    "MercurySamples with metadata source of %s cannot have Mercury metadata", metadataSource));
         }
     }
 

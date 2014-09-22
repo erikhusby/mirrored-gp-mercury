@@ -413,8 +413,6 @@ public class SampleDataFetcherTest {
         String sampleKey = mercurySample.getSampleKey();
         when(mockMercurySampleDao.findMapIdToListMercurySample(argThat(contains(sampleKey))))
                 .thenReturn(ImmutableMap.of(sampleKey, Collections.singletonList(mercurySample)));
-        when(mockMercurySampleDao.findBySampleKeys(argThat(contains(sampleKey))))
-                .thenReturn(Collections.singletonList(mercurySample));
     }
 
     private void configureBspFetcher(String sampleId, BSPSampleDTO sampleData) {

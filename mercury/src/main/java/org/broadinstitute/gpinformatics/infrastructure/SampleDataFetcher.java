@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleDataFetcher;
@@ -88,10 +89,12 @@ public class SampleDataFetcher {
      * @return Mapping of sample id to its bsp data
      */
     public Map<String, SampleData> fetchSampleData(@Nonnull Collection<String> sampleNames) {
-        Map<String, MercurySample.MetadataSource> metadataSources = determineMetadataSource(sampleNames);
+        Map<String, List<MercurySample>> allMercurySamples = mercurySampleDao.findMapIdToListMercurySample(sampleNames);
+        Map<String, MercurySample.MetadataSource> metadataSources =
+                determineMetadataSource(sampleNames, allMercurySamples);
 
         List<String> bspSampleIds = new ArrayList<>();
-        List<String> mercurySampleIds = new ArrayList<>();
+        Collection<MercurySample> mercurySamples = new ArrayList<>();
         for (String sampleName : sampleNames) {
             MercurySample.MetadataSource metadataSource = metadataSources.get(sampleName);
             switch (metadataSource) {
@@ -101,7 +104,7 @@ public class SampleDataFetcher {
                 }
                 break;
             case MERCURY:
-                mercurySampleIds.add(sampleName);
+                mercurySamples.addAll(allMercurySamples.get(sampleName));
                 break;
             default:
                 throw new IllegalStateException("Unknown sample data source: " + metadataSource);
@@ -112,7 +115,6 @@ public class SampleDataFetcher {
             Map<String, BSPSampleDTO> bspSampleData = bspSampleDataFetcher.fetchSamplesFromBSP(bspSampleIds);
             sampleData.putAll(bspSampleData);
         }
-        List<MercurySample> mercurySamples = mercurySampleDao.findBySampleKeys(mercurySampleIds);
         sampleData.putAll(mercurySampleDataFetcher.fetchSampleData(mercurySamples));
         return sampleData;
     }
@@ -192,8 +194,9 @@ public class SampleDataFetcher {
         return bspSampleDataFetcher.fetchSampleDetailsByBarcode(barcodes);
     }
 
-    private Map<String, MercurySample.MetadataSource> determineMetadataSource(Collection<String> sampleNames) {
-        Map<String, List<MercurySample>> allMercurySamples = mercurySampleDao.findMapIdToListMercurySample(sampleNames);
+    @DaoFree
+    private Map<String, MercurySample.MetadataSource> determineMetadataSource(Collection<String> sampleNames,
+                                                                              Map<String, List<MercurySample>> allMercurySamples) {
         Map<String, MercurySample.MetadataSource> results = new HashMap<>();
 
         for (String sampleName : sampleNames) {
@@ -225,6 +228,8 @@ public class SampleDataFetcher {
 
 
     private MercurySample.MetadataSource determineMetadataSource(String sampleName) {
-        return determineMetadataSource(Collections.singleton(sampleName)).get(sampleName);
+        Collection<String> sampleNames = Collections.singleton(sampleName);
+        Map<String, List<MercurySample>> allMercurySamples = mercurySampleDao.findMapIdToListMercurySample(sampleNames);
+        return determineMetadataSource(sampleNames, allMercurySamples).get(sampleName);
     }
 }
