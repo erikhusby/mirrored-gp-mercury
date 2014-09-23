@@ -1,24 +1,55 @@
+<%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.sample.ManifestAccessioningActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.ManifestAccessioningActionBean"/>
 
 <c:set var="session" value="${actionBean.selectedSession}"/>
-<stripes:layout-render name="/layout.jsp" pageTitle="${session.researchProject.businessKey}: Buick Sample Accessioning: ${session.sessionName}"
-                       sectionTitle="${session.researchProject.businessKey}: Buick Sample Accessioning: ${session.sessionName}" showCreate="false">
+<stripes:layout-render name="/layout.jsp"
+                       pageTitle="${session.researchProject.businessKey}: Buick Sample Accessioning: ${session.sessionName}"
+                       sectionTitle="${session.researchProject.businessKey}: Buick Sample Accessioning: ${session.sessionName}"
+                       showCreate="false">
 
     <stripes:layout-component name="extraHead">
+        <script type="text/javascript">
+
+            $j(document).ready(function () {
+                $j("#accessionSourceText").blur(function () {
+                    performAccessionScan();
+                });
+            });
+
+            function performAccessionScan() {
+                $j.ajax({
+                    url: '${ctxpath}/sample/accessioning.action',
+                    data: {
+                        '<%= ManifestAccessioningActionBean.SCAN_ACCESSION_SOURCE_ACTION %>': '',
+                        '<%= ManifestAccessioningActionBean.SELECTED_SESSION_ID %>': '${actionBean.selectedSessionId}',
+                        accessionSource: $j("#accessionSourceText").val()
+                    },
+                    datatype: 'html',
+                    success: function (html) {
+                        $j('#scanResults').html(html);
+                    }
+                });
+            }
+
+        </script>
+
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
 
-        <fieldset>
-            <legend>Scan Summary</legend>
-            Samples successfully scanned: ${actionBean.statusValues.samplesSuccessfullyScanned}
-            Samples eligible in manifest: ${actionBean.statusValues.samplesEligibleInManifest}
-            Samples in manifest: ${actionBean.statusValues.samplesInManifest}
-        </fieldset>
-
+        <div id="scanResults" width="300px">
+            <fieldset width="300px">
+                <legend>Scan Summary</legend>
+                <div style="margin-left: 20px">
+                    <p>Samples successfully scanned: ${actionBean.statusValues.samplesSuccessfullyScanned}
+                    <p>Samples eligible in manifest: ${actionBean.statusValues.samplesEligibleInManifest}
+                    <p>Samples in manifest: ${actionBean.statusValues.samplesInManifest}
+                </div>
+            </fieldset>
+        </div>
         <stripes:form beanclass="${actionBean.class.name}" id="accessionSampleForm">
             <div class="form-horizontal span6">
                 <div class="control-group">
@@ -26,7 +57,7 @@
                         Scan or input specimen number *
                     </stripes:label>
                     <div class="controls">
-                        <stripes:text id="accessionSource" name="accessionSource"
+                        <stripes:text id="accessionSourceText" name="accessionSource"
                                       class="defaultText input-xlarge"
                                       maxlength="255" title="Enter the clinical sample ID"/>
                     </div>

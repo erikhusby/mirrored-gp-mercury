@@ -30,12 +30,13 @@ import java.util.List;
 @UrlBinding(ManifestAccessioningActionBean.ACTIONBEAN_URL_BINDING)
 public class ManifestAccessioningActionBean extends CoreActionBean {
     public static final String ACTIONBEAN_URL_BINDING = "/sample/accessioning.action";
-    private static final String SELECTED_SESSION_ID = "selectedSessionId";
+    public static final String SELECTED_SESSION_ID = "selectedSessionId";
     private static Log logger = LogFactory.getLog(ManifestAccessioningActionBean.class);
 
     public static final String START_SESSION_PAGE = "/sample/start_session.jsp";
     public static final String REVIEW_UPLOAD_PAGE = "/sample/review_manifest_upload.jsp";
     public static final String ACCESSION_SAMPLE_PAGE = "/sample/accession_sample.jsp";
+    public static final String SCAN_SAMPLE_RESULTS_PAGE = "/sample/manifest_status_insert.jsp";
 
     public static final String START_A_SESSION_ACTION = "startASession";
     public static final String UPLOAD_MANIFEST_ACTION = "uploadManifest";
@@ -77,7 +78,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     private List<ManifestSession> closedSessions;
 
     private ManifestStatus statusValues;
-    private boolean scanErrors;
+    private String scanErrors;
     private String scanMessages;
 
     public ManifestAccessioningActionBean() {
@@ -99,6 +100,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
             direction = new ForwardResolution(REVIEW_UPLOAD_PAGE);
         break;
         case ACCESSIONING:
+            statusValues = manifestSessionEjb.getSessionStatus(selectedSessionId);
             direction = new ForwardResolution(getClass(), VIEW_ACCESSION_SCAN_ACTION);
         break;
         case COMPLETED:
@@ -176,16 +178,14 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     @HandlesEvent(SCAN_ACCESSION_SOURCE_ACTION)
     public Resolution scanAccessionSource() {
 
-        Resolution result = new ForwardResolution(getClass(), LOAD_SESSION_ACTION);
-
         try {
-            manifestSessionEjb.accessionScan(selectedSessionId,accessionSource);
+            manifestSessionEjb.accessionScan(selectedSessionId, accessionSource);
+            scanMessages = String.format("Sample %s scanned successfully", accessionSource);
         } catch (Exception e) {
-            addGlobalValidationError(e.getMessage());
-            result = getContext().getSourcePageResolution();
+            scanErrors = e.getMessage();
         }
-
-        return result;
+        statusValues = manifestSessionEjb.getSessionStatus(selectedSessionId);
+        return new ForwardResolution(SCAN_SAMPLE_RESULTS_PAGE).addParameter(SELECTED_SESSION_ID, selectedSessionId);
     }
 
     /**
@@ -198,7 +198,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     @HandlesEvent(PREVIEW_SESSION_CLOSE_ACTION)
     public Resolution previewSessionClose() {
 
-        ManifestStatus sessionStatus = manifestSessionEjb.getSessionStatus(selectedSessionId);
+        statusValues = manifestSessionEjb.getSessionStatus(selectedSessionId);
 
         return null;
 
@@ -280,7 +280,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
         this.statusValues = statusValues;
     }
 
-    public boolean isScanErrors() {
+    public String getScanErrors() {
         return scanErrors;
     }
 
