@@ -65,6 +65,7 @@
             <jsp:include page="<%= ManifestAccessioningActionBean.SCAN_SAMPLE_RESULTS_PAGE%>" />
         </div>
         <stripes:form beanclass="${actionBean.class.name}" id="accessionSampleForm">
+            <stripes:hidden name="selectedSessionId" id="selectedSessionId"/>
             <div class="form-horizontal span6">
                 <div class="control-group">
                     <stripes:label for="accessionSource" class="control-label">

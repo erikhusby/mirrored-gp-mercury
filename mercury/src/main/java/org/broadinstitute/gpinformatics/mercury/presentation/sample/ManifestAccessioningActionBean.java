@@ -90,6 +90,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     public void init() {
         if (selectedSessionId != null) {
             selectedSession = manifestSessionDao.find(selectedSessionId);
+            statusValues = manifestSessionEjb.getSessionStatus(selectedSessionId);
         }
     }
 
@@ -109,7 +110,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
         break;
         default:
             addGlobalValidationError("Unable to determine the what to do with this session");
-            direction = new RedirectResolution(getClass(), VIEW_UPLOAD_ACTION);
+            direction = new RedirectResolution(VIEW_UPLOAD_ACTION);
         }
         direction.addParameter(SELECTED_SESSION_ID, selectedSession.getManifestSessionId());
 
@@ -125,9 +126,6 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
 
     @HandlesEvent(VIEW_ACCESSION_SCAN_ACTION)
     public Resolution viewAccessionScan() {
-
-        statusValues = manifestSessionEjb.getSessionStatus(selectedSessionId);
-
         return new ForwardResolution(ACCESSION_SAMPLE_PAGE);
     }
 
