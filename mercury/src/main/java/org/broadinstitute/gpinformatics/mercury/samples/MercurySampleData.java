@@ -42,7 +42,7 @@ public class MercurySampleData implements SampleData {
             case PATIENT_ID:
                 this.patientId = value;
                 break;
-            // TODO: are we interested in SAMPLE_TYPE???
+//      SAMPLE_TYPE is not present in the imported manifest. Do we need to handle this case?
 //            case SAMPLE_TYPE:
 //                this.materialType = data.getValue();
 //                break;
