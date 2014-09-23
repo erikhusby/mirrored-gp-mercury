@@ -44,7 +44,7 @@
         <table id="sampleList" class="table simple">
             <thead>
             <tr>
-                <th width="20px"></th>
+                <th width="20px">Has Error?</th>
                 <th Width="50px">Manifest Row Number</th>
                 <th width="120px">Sample ID</th>
                 <th width="75px">Patient ID</th>

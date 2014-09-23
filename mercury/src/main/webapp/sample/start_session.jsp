@@ -16,6 +16,7 @@
                 <thead>
                 <tr>
                     <th>Session Name</th>
+                    <th>Session Status</th>
                     <th>Research Project</th>
                     <th>Created By</th>
                     <th>Created Time</th>
@@ -31,6 +32,9 @@
                             <stripes:param name="selectedSessionId" value="${openSession.manifestSessionId}"/>
                                 ${openSession.sessionName}
                             </stripes:link>
+                        </td>
+                        <td>
+                            ${openSession.status}
                         </td>
                         <td>
                                 ${openSession.researchProject.businessKey}
