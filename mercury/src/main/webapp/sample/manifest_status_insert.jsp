@@ -2,7 +2,6 @@
 
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.ManifestAccessioningActionBean"/>
-<stripes:layout-render name="/layout.jsp"
 
 <c:choose>
     <c:when test="${actionBean.scanErrors != null}">

@@ -95,22 +95,23 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
 
     @HandlesEvent(LOAD_SESSION_ACTION)
     public Resolution loadSession() {
-        Resolution direction;
+        RedirectResolution direction;
         switch (selectedSession.getStatus()) {
         case OPEN:
-            direction = new ForwardResolution(REVIEW_UPLOAD_PAGE);
+            direction = new RedirectResolution(REVIEW_UPLOAD_PAGE);
         break;
         case ACCESSIONING:
-            statusValues = manifestSessionEjb.getSessionStatus(selectedSessionId);
-            direction = new ForwardResolution(getClass(), VIEW_ACCESSION_SCAN_ACTION);
+            direction = new RedirectResolution(ACCESSION_SAMPLE_PAGE);
         break;
         case COMPLETED:
-            direction = new ForwardResolution(getClass(), VIEW_UPLOAD_ACTION);
+            // TODO this needs to be changed to the appropriate PAGE
+            direction = new RedirectResolution(VIEW_UPLOAD_ACTION);
         break;
         default:
             addGlobalValidationError("Unable to determine the what to do with this session");
             direction = new RedirectResolution(getClass(), VIEW_UPLOAD_ACTION);
         }
+        direction.addParameter(SELECTED_SESSION_ID, selectedSession.getManifestSessionId());
 
         return direction;
     }
@@ -198,12 +199,9 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
      */
     @HandlesEvent(PREVIEW_SESSION_CLOSE_ACTION)
     public Resolution previewSessionClose() {
-
         statusValues = manifestSessionEjb.getSessionStatus(selectedSessionId);
 
         return null;
-
-
     }
 
     @HandlesEvent(CLOSE_SESSION_ACTION)
