@@ -37,6 +37,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     public static final String REVIEW_UPLOAD_PAGE = "/sample/review_manifest_upload.jsp";
     public static final String ACCESSION_SAMPLE_PAGE = "/sample/accession_sample.jsp";
     public static final String SCAN_SAMPLE_RESULTS_PAGE = "/sample/manifest_status_insert.jsp";
+    public static final String PREVIEW_CLOSE_SESSION_PAGE = "/sample/preview_close_session.jsp";
 
     public static final String START_A_SESSION_ACTION = "startASession";
     public static final String UPLOAD_MANIFEST_ACTION = "uploadManifest";
@@ -197,9 +198,8 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
      */
     @HandlesEvent(PREVIEW_SESSION_CLOSE_ACTION)
     public Resolution previewSessionClose() {
-        statusValues = manifestSessionEjb.getSessionStatus(selectedSessionId);
-
-        return null;
+        return new RedirectResolution(PREVIEW_CLOSE_SESSION_PAGE)
+                .addParameter(SELECTED_SESSION_ID, selectedSession.getManifestSessionId());
     }
 
     @HandlesEvent(CLOSE_SESSION_ACTION)
