@@ -20,7 +20,7 @@
                 $j('#sampleList').dataTable({
                     "oTableTools": ttExportDefines,
                     "aaSorting": [
-                        [2, 'desc']
+                        [1, 'asc']
                     ],
                     "asStripeClasses": [ '' ],
                     "aoColumns": [

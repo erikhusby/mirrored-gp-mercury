@@ -30,6 +30,7 @@ import java.util.List;
 @UrlBinding(ManifestAccessioningActionBean.ACTIONBEAN_URL_BINDING)
 public class ManifestAccessioningActionBean extends CoreActionBean {
     public static final String ACTIONBEAN_URL_BINDING = "/sample/accessioning.action";
+    private static final String SELECTED_SESSION_ID = "selectedSessionId";
     private static Log logger = LogFactory.getLog(ManifestAccessioningActionBean.class);
 
     public static final String START_SESSION_PAGE = "/sample/start_session.jsp";
@@ -76,6 +77,8 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     private List<ManifestSession> closedSessions;
 
     private ManifestStatus statusValues;
+    private boolean scanErrors;
+    private String scanMessages;
 
     public ManifestAccessioningActionBean() {
         super();
@@ -93,7 +96,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
         Resolution direction;
         switch (selectedSession.getStatus()) {
         case OPEN:
-            direction = new ForwardResolution(getClass(), VIEW_UPLOAD_ACTION);
+            direction = new ForwardResolution(REVIEW_UPLOAD_PAGE);
         break;
         case ACCESSIONING:
             direction = new ForwardResolution(getClass(), VIEW_ACCESSION_SCAN_ACTION);
@@ -141,8 +144,6 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     @HandlesEvent(UPLOAD_MANIFEST_ACTION)
     public Resolution uploadManifest() {
 
-        Resolution result =  new ForwardResolution(getClass(), LOAD_SESSION_ACTION);;
-
         try {
             selectedSession =
                     manifestSessionEjb.uploadManifest(researchProjectKey, manifestFile.getInputStream(),
@@ -150,16 +151,17 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
 
         } catch (IOException | InformaticsServiceException e) {
             addGlobalValidationError("Unable to upload the manifest file: {2}", e.getMessage());
-            result = getContext().getSourcePageResolution();
+            return getContext().getSourcePageResolution();
         }
         addErrorMessages();
-        return result;
+        return new RedirectResolution(getClass(), LOAD_SESSION_ACTION).addParameter(
+                SELECTED_SESSION_ID, selectedSession.getManifestSessionId());
     }
 
     @HandlesEvent(ACCEPT_UPLOAD_ACTION)
     public Resolution acceptUpload() {
 
-        Resolution result =  new ForwardResolution(getClass(), LOAD_SESSION_ACTION);;
+        Resolution result =  new ForwardResolution(getClass(), LOAD_SESSION_ACTION);
 
         try {
             manifestSessionEjb.acceptManifestUpload(selectedSession.getManifestSessionId());
@@ -192,7 +194,6 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
      * Use ResearchProjectActionBean.queryRegulatoryInfoReturnHtmlSnippet as a guide
      * lines 115-130 on projects/view.jsp is the AJAX call
      *
-     * @return
      */
     @HandlesEvent(PREVIEW_SESSION_CLOSE_ACTION)
     public Resolution previewSessionClose() {
@@ -277,5 +278,13 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
 
     public void setStatusValues(ManifestStatus statusValues) {
         this.statusValues = statusValues;
+    }
+
+    public boolean isScanErrors() {
+        return scanErrors;
+    }
+
+    public String getScanMessages() {
+        return scanMessages;
     }
 }

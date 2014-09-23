@@ -1589,4 +1589,18 @@
         </sql>
     </changeSet>
 
+    <changeSet id="GPLIM-2885-manifest-event-msg-bigger" author="scottmat">
+        <preConditions>
+            <columnExists tableName="manifest_event" columnName="message" schemaName="mercury"/>
+        </preConditions>
+        <modifyDataType tableName="manifest_event" columnName="message" newDataType="varchar(4000)"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-manifest-event-aud-msg-bigger-too" author="mcovarr">
+        <preConditions>
+            <columnExists tableName="manifest_event_aud" columnName="message" schemaName="mercury"/>
+        </preConditions>
+        <modifyDataType tableName="manifest_event_aud" columnName="message" newDataType="varchar(4000)"/>
+    </changeSet>
+
 </databaseChangeLog>
