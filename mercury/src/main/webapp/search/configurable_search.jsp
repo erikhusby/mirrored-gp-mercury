@@ -204,12 +204,7 @@ function addTerm() {
         dataType: 'html',
         data: parameters,
         success: function (returnData) {
-            var domFragment = $j.parseHTML(returnData);
-            if( $j( "#mercury_login", domFragment).length > 0 ) {
-                window.location = "${ctxpath}";
-            } else {
-                $("#searchInstanceDiv").append(domFragment);
-            }
+            $("#searchInstanceDiv").append(returnData);
         }
     });
 }

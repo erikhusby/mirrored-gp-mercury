@@ -16,7 +16,7 @@
         </script>
     </stripes:layout-component>
     <stripes:layout-component name="content">
-        <div class="row-fluid" id="mercury_login">
+        <div class="row-fluid" id="timeout_page_flag">
             <div class="span3">
                 <img src="${ctxpath}/images/mercury_logo.png" alt="Broad Institute" style="float: left;"/>
             </div>
