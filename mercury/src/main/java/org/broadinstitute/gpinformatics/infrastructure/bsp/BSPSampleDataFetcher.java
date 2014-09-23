@@ -241,8 +241,7 @@ public class BSPSampleDataFetcher extends BSPJerseyClient implements Serializabl
         MultivaluedMap<String, String> formData = new MultivaluedMapImpl();
         formData.add("barcodes", StringUtils.join(barcodes, ","));
         GetSampleDetails.Details details = resource.accept(MediaType.TEXT_XML).post(
-                new GenericType<GetSampleDetails.Details>() {
-                }, formData);
+                new GenericType<GetSampleDetails.Details>() {}, formData);
 
         // Fills in the map values using SampleDetails that were found in BSP.
         if (details.getSampleDetails().getSampleInfo() != null) {

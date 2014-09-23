@@ -138,7 +138,6 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
      */
     private static final Map<String, Map<BSPSampleSearchColumn, String>> samples = new HashMap<>();
 
-//    public BSPSampleSearchServiceStub() {
     static {
         addToMap(SM_12CO4, new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
             put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_12CO4_PATIENT_ID);
