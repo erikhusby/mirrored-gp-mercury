@@ -69,7 +69,7 @@ public abstract class AbstractSample {
 
                 // If there is no DTO, create one with no data populated.
                 if (sampleData == null) {
-                    sampleData = new BSPSampleDTO();
+                    sampleData = makeSampleData();
                 }
             }
 
@@ -77,6 +77,10 @@ public abstract class AbstractSample {
         }
 
         return sampleData;
+    }
+
+    protected SampleData makeSampleData() {
+        return new BSPSampleDTO();
     }
 
     /**

@@ -24,7 +24,7 @@ public class MercurySampleData implements SampleData {
     private String collectionDate;
     private String visit;
 
-    public MercurySampleData(@Nonnull String sampleId, Set<Metadata> metadata) {
+    public MercurySampleData(@Nonnull String sampleId, @Nonnull Set<Metadata> metadata) {
         this.sampleId = sampleId;
         extractMetadataFromSample(metadata);
     }

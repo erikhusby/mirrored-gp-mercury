@@ -4,6 +4,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.RapSheet;
@@ -24,6 +25,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -130,6 +132,18 @@ public class MercurySample extends AbstractSample {
 
     public Long getMercurySampleId() {
         return mercurySampleId;
+    }
+
+    @Override
+    protected SampleData makeSampleData() {
+        switch (metadataSource) {
+        case BSP:
+            return new BSPSampleDTO();
+        case MERCURY:
+            return new MercurySampleData(sampleKey, Collections.<Metadata>emptySet());
+        default:
+            throw new IllegalStateException("Unknown sample data source: " + metadataSource);
+        }
     }
 
     @Override
