@@ -17,6 +17,15 @@
                 $j("#accessionSourceText").blur(function () {
                     performAccessionScan();
                 });
+
+
+                $j("#preCloseDialog").dialog({
+                    modal: true,
+                    autoOpen: false,
+                    width: 600
+                });
+
+
             });
 
             function performAccessionScan() {
@@ -40,15 +49,20 @@
 
     <stripes:layout-component name="content">
 
+        <div id="preCloseDialog"  style="width:600px;display:none;"></div>
+
+
         <div id="scanResults" width="300px">
-            <fieldset width="300px">
-                <legend>Scan Summary</legend>
-                <div style="margin-left: 20px">
-                    <p>Samples successfully scanned: ${actionBean.statusValues.samplesSuccessfullyScanned}
-                    <p>Samples eligible in manifest: ${actionBean.statusValues.samplesEligibleInManifest}
-                    <p>Samples in manifest: ${actionBean.statusValues.samplesInManifest}
-                </div>
-            </fieldset>
+
+            <%--<fieldset width="300px">--%>
+                <%--<legend>Scan Summary</legend>--%>
+                <%--<div style="margin-left: 20px">--%>
+                    <%--<p>Samples successfully scanned: ${actionBean.statusValues.samplesSuccessfullyScanned}--%>
+                    <%--<p>Samples eligible in manifest: ${actionBean.statusValues.samplesEligibleInManifest}--%>
+                    <%--<p>Samples in manifest: ${actionBean.statusValues.samplesInManifest}--%>
+                <%--</div>--%>
+            <%--</fieldset>--%>
+            <jsp:include page="<%= ManifestAccessioningActionBean.SCAN_SAMPLE_RESULTS_PAGE%>" />
         </div>
         <stripes:form beanclass="${actionBean.class.name}" id="accessionSampleForm">
             <div class="form-horizontal span6">
@@ -60,11 +74,17 @@
                         <stripes:text id="accessionSourceText" name="accessionSource"
                                       class="defaultText input-xlarge"
                                       maxlength="255" title="Enter the clinical sample ID"/>
+                        <a href="javascript:performAccessionScan()">Scan</a>
                     </div>
                 </div>
             </div>
 
+            <div class="actionButtons">
+                <stripes:submit name="<%= ManifestAccessioningActionBean.PREVIEW_SESSION_CLOSE_ACTION %>" value="Submit Session" class="btn"/>
+                <stripes:link beanclass="${actionBean.class.name}">
+                    Exit Session
+                </stripes:link>
+            </div>
         </stripes:form>
-
     </stripes:layout-component>
 </stripes:layout-render>    

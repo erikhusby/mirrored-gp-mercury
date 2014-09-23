@@ -80,6 +80,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     private ManifestStatus statusValues;
     private String scanErrors;
     private String scanMessages;
+    private List<ManifestEvent> manifestErrors;
 
     public ManifestAccessioningActionBean() {
         super();
@@ -286,5 +287,9 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
 
     public String getScanMessages() {
         return scanMessages;
+    }
+
+    public List<ManifestEvent> getManifestErrors() {
+        return manifestErrors;
     }
 }
