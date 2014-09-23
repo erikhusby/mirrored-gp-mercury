@@ -211,7 +211,7 @@ public class IlluminaRunResource implements Serializable {
         }
 
         Set<String> sampleNames = new HashSet<>();
-        for (Map.Entry<String, String> lsIdToBareId : BSPLSIDUtil.lsidsToBareIds(sampleLsids).entrySet()) {
+        for (Map.Entry<String, String> lsIdToBareId : BSPLSIDUtil.lsidsToBspSampleIds(sampleLsids).entrySet()) {
             if (lsIdToBareId.getValue() == null) {
                 throw new RuntimeException("Could not map lsid " + lsIdToBareId.getKey() + " to a bsp id.");
             } else {

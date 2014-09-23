@@ -198,6 +198,13 @@ public class SampleDataFetcherTest {
         verifyZeroInteractions(mockBspSampleDataFetcher);
     }
 
+    public void test_BSP_bare_sample_should_query_BSP_and_return_nothing() {
+        configureMercurySampleDao(new MercurySample(BSP_BARE_SAMPLE_ID, MercurySample.MetadataSource.BSP));
+        Map<String, SampleData> sampleDataBySampleId =
+                sampleDataFetcher.fetchSampleData(Collections.singleton(BSP_BARE_SAMPLE_ID));
+        assertThat(sampleDataBySampleId.size(), equalTo(0));
+    }
+
     public void fetch_GSSR_samples_with_MercurySample_should_query_nothing() {
         configureMercurySampleDao(gssrMercurySample);
 

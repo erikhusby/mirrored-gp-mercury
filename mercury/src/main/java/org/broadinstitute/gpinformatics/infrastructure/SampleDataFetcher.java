@@ -84,8 +84,7 @@ public class SampleDataFetcher implements Serializable {
     /**
      * Fetch the data from bsp for multiple samples.
      *
-     * @param sampleNames The sample names, which can be short barcodes such as SM-4FHTK,
-     *                    or bare ids such as 4FHTK.
+     * @param sampleNames The sample names, which should be short barcodes such as SM-4FHTK
      *
      * @return Mapping of sample id to its bsp data
      */
