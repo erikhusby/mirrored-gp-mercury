@@ -6,6 +6,7 @@
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function() {
+
                 if ($j('#username').val() == '') {
                     $j('#username').focus();
                 } else {
@@ -15,7 +16,7 @@
         </script>
     </stripes:layout-component>
     <stripes:layout-component name="content">
-        <div class="row-fluid">
+        <div class="row-fluid" id="mercury_login">
             <div class="span3">
                 <img src="${ctxpath}/images/mercury_logo.png" alt="Broad Institute" style="float: left;"/>
             </div>
