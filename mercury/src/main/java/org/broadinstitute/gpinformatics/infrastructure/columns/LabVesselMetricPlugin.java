@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -17,6 +18,20 @@ import java.util.Set;
 public class LabVesselMetricPlugin implements ListPlugin {
 
     public LabVesselMetricPlugin() {}
+
+    // Build headers for metric data of interest.
+    private static Map<LabMetric.MetricType, ConfigurableList.Header> QUANT_VALUE_HEADERS = new LinkedHashMap<>();
+    private static Map<LabMetric.MetricType, ConfigurableList.Header> QUANT_DECISION_HEADERS = new LinkedHashMap<>();
+    static {
+        for( LabMetric.MetricType metricType : LabMetric.MetricType.values() ) {
+            if(metricType.getCategory() == LabMetric.MetricType.Category.CONCENTRATION ) {
+                QUANT_VALUE_HEADERS
+                        .put(metricType, new ConfigurableList.Header(metricType.getDisplayName(), "", "", ""));
+                QUANT_DECISION_HEADERS.put(metricType,
+                        new ConfigurableList.Header(metricType.getDisplayName() + " Decision", "", "", ""));
+            }
+        }
+    }
 
     /**
      * Gathers metric data of interest and associates with LabVessel row in search results.
@@ -30,68 +45,22 @@ public class LabVesselMetricPlugin implements ListPlugin {
         List<LabVessel> labVesselList = (List<LabVessel>) entityList;
         List<ConfigurableList.Row> metricRows = new ArrayList<>();
 
-        // Build and append headers for metric data of interest.
-        // Each header is associated with applicable column value
-        ConfigurableList.Header hdrInitPico =
-                new ConfigurableList.Header(LabMetric.MetricType.INITIAL_PICO.getDisplayName(), "", "", "");
-        headerGroup.addHeader(hdrInitPico);
-
-        ConfigurableList.Header hdrInitPicoDec =
-                new ConfigurableList.Header(LabMetric.MetricType.INITIAL_PICO.getDisplayName() + " Decision", "", "", "");
-        headerGroup.addHeader(hdrInitPicoDec);
-
-        ConfigurableList.Header hdrFingPico =
-                new ConfigurableList.Header(LabMetric.MetricType.FINGERPRINT_PICO.getDisplayName(), "", "", "");
-        headerGroup.addHeader(hdrFingPico);
-
-        ConfigurableList.Header hdrFingPicoDec =
-                new ConfigurableList.Header(LabMetric.MetricType.FINGERPRINT_PICO.getDisplayName() + " Decision", "", "", "");
-        headerGroup.addHeader(hdrFingPicoDec);
-
-        ConfigurableList.Header hdrShearPico =
-                new ConfigurableList.Header(LabMetric.MetricType.SHEARING_PICO.getDisplayName(), "", "", "");
-        headerGroup.addHeader(hdrShearPico);
-
-        ConfigurableList.Header hdrShearPicoDec =
-                new ConfigurableList.Header(LabMetric.MetricType.SHEARING_PICO.getDisplayName() + " Decision", "", "", "");
-        headerGroup.addHeader(hdrShearPicoDec);
-
-        ConfigurableList.Header hdrPondPico =
-                new ConfigurableList.Header(LabMetric.MetricType.POND_PICO.getDisplayName(), "", "", "");
-        headerGroup.addHeader(hdrPondPico);
-
-        ConfigurableList.Header hdrPondPicoDec =
-                new ConfigurableList.Header(LabMetric.MetricType.POND_PICO.getDisplayName() + " Decision", "", "", "");
-        headerGroup.addHeader(hdrPondPicoDec);
-
-        ConfigurableList.Header hdrCatchPico =
-                new ConfigurableList.Header(LabMetric.MetricType.CATCH_PICO.getDisplayName(), "", "", "");
-        headerGroup.addHeader(hdrCatchPico);
-
-        ConfigurableList.Header hdrCatchPicoDec =
-                new ConfigurableList.Header(LabMetric.MetricType.CATCH_PICO.getDisplayName() + " Decision", "", "", "");
-        headerGroup.addHeader( hdrCatchPicoDec );
-
-        ConfigurableList.Header hdrQpcr =
-                new ConfigurableList.Header(LabMetric.MetricType.ECO_QPCR.getDisplayName(), "", "", "");
-        headerGroup.addHeader(hdrQpcr);
-
-        ConfigurableList.Header hdrQpcrDec =
-                new ConfigurableList.Header(LabMetric.MetricType.ECO_QPCR.getDisplayName() + " Decision", "", "", "");
-        headerGroup.addHeader( hdrQpcrDec );
+        // Append headers for metric data of interest.
+        for(Map.Entry<LabMetric.MetricType, ConfigurableList.Header> valueHeaderEntry: QUANT_VALUE_HEADERS.entrySet() ){
+            headerGroup.addHeader(valueHeaderEntry.getValue());
+            headerGroup.addHeader(QUANT_DECISION_HEADERS.get(valueHeaderEntry.getKey()));
+        }
 
         // Populate rows with any available metrics data.
         for( LabVessel labVessel : labVesselList ) {
             ConfigurableList.Row row = new ConfigurableList.Row( labVessel.getLabel() );
 
             Map<String, Set<LabMetric>> metricGroups = labVessel.getMetricsForVesselAndDescendants();
-
-            addMetricsToRow(metricGroups, LabMetric.MetricType.INITIAL_PICO, row, hdrInitPico, hdrInitPicoDec );
-            addMetricsToRow(metricGroups, LabMetric.MetricType.FINGERPRINT_PICO, row, hdrFingPico, hdrFingPicoDec );
-            addMetricsToRow(metricGroups, LabMetric.MetricType.SHEARING_PICO, row, hdrShearPico, hdrShearPicoDec );
-            addMetricsToRow(metricGroups, LabMetric.MetricType.POND_PICO, row, hdrPondPico, hdrPondPicoDec );
-            addMetricsToRow(metricGroups, LabMetric.MetricType.CATCH_PICO, row, hdrCatchPico, hdrCatchPicoDec );
-            addMetricsToRow(metricGroups, LabMetric.MetricType.ECO_QPCR, row, hdrQpcr, hdrQpcrDec );
+            for(Set<LabMetric> metrics : metricGroups.values()) {
+                if( metrics != null && !metrics.isEmpty() ) {
+                    addMetricsToRow(metrics, row);
+                }
+            }
 
             metricRows.add(row);
         }
@@ -101,50 +70,51 @@ public class LabVesselMetricPlugin implements ListPlugin {
 
     /**
      * Adds latest metric of type specified to the plugin row. Framework quietly ignores empty cells.
-     * Uses the last metric with a non-null decision after sorting by date and id.
-     * If all metrics have a null decision, use the last after sorting.
-     * @param metricGroups Metrics data structure as supplied from LabVessel
-     * @param metricType The type of metric to search for
+     * Uses the last metric with a non-null decision after sorting by date and id due to duplicate Pico entries
+     *   for descendant lab vessels:  Transfers are done from a rack of tubes to two plates.
+     *   The raw values are stored on the plate wells, with no decision, and the average values are stored on the tube,
+     *   with a decision.  If all metrics have a null decision, use the last metric after sorting.
+     * @param metrics Metrics data of a single type as supplied from LabVessel
      * @param row Reference to the current plugin row
-     * @param valueHeader Maps cell to it's related header
-     * @param decisionHeader Maps associated decision cell to it's related header
-     *                       @see org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel#getMetricsForVesselAndDescendants()
+     *        @see org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel#getMetricsForVesselAndDescendants()
      */
-    private void addMetricsToRow( Map<String, Set<LabMetric>> metricGroups, LabMetric.MetricType metricType
-            , ConfigurableList.Row row, ConfigurableList.Header valueHeader, ConfigurableList.Header decisionHeader ) {
-        Set<LabMetric> metrics;
+    private void addMetricsToRow( Set<LabMetric> metrics, ConfigurableList.Row row ) {
         LabMetric metric = null;
         LabMetricDecision decision;
         ConfigurableList.Cell valueCell, decisionCell;
         String value;
 
-        metrics = metricGroups.get( metricType.getDisplayName() );
-        if( metrics != null && !metrics.isEmpty() ) {
-            // Metrics are sorted by date (and optionally, id)..
-            Iterator<LabMetric> iter = metrics.iterator();
-            while( iter.hasNext() ) {
-                LabMetric latestMetric = iter.next();
-                if( latestMetric.getLabMetricDecision() != null ) {
-                    // Use latest with a decision
-                    metric = latestMetric;
-                } else if( metric == null && !iter.hasNext() ) {
-                    // We're at last metric and none have a decision, use the last metric
-                    metric = latestMetric;
-                }
+        // Metrics are sorted by date (and optionally, id)..
+        Iterator<LabMetric> iter = metrics.iterator();
+        while( iter.hasNext() ) {
+            LabMetric latestMetric = iter.next();
+
+            // Bail out if we aren't interested in this metric.
+            if( !QUANT_VALUE_HEADERS.containsKey(latestMetric.getName()) ) {
+                return;
             }
-            value = metric.getValue().toPlainString() + " " + metric.getUnits().getDisplayName();
-            valueCell = new ConfigurableList.Cell(valueHeader, value, value);
-            decision = metric.getLabMetricDecision();
-            if (decision != null) {
-                decisionCell =
-                        new ConfigurableList.Cell(decisionHeader, decision.getDecision().toString(),
-                                decision.getDecision().toString());
-            } else {
-                decisionCell = new ConfigurableList.Cell(decisionHeader, "(None)", "(None)");
+
+            if( latestMetric.getLabMetricDecision() != null ) {
+                // Use latest with a decision
+                metric = latestMetric;
+            } else if( metric == null && !iter.hasNext() ) {
+                // We're at last metric and none have a decision, use the last metric
+                metric = latestMetric;
             }
-            row.addCell(valueCell);
-            row.addCell(decisionCell);
         }
+        value = metric.getValue().toPlainString() + " " + metric.getUnits().getDisplayName();
+        valueCell = new ConfigurableList.Cell(QUANT_VALUE_HEADERS.get(metric.getName()), value, value);
+        decision = metric.getLabMetricDecision();
+        if (decision != null) {
+            decisionCell =
+                    new ConfigurableList.Cell(QUANT_DECISION_HEADERS.get(metric.getName()), decision.getDecision().toString(),
+                            decision.getDecision().toString());
+        } else {
+            decisionCell = new ConfigurableList.Cell(QUANT_DECISION_HEADERS.get(metric.getName()), "(None)", "(None)");
+        }
+
+        row.addCell(valueCell);
+        row.addCell(decisionCell);
     }
 
     @Override
