@@ -27,10 +27,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Wrapper around {@link BSPSampleSearchService} that
- * does a bit more object-ifying and type-safety.
- */
 public class SampleDataFetcher implements Serializable {
 
     @Inject
@@ -71,7 +67,7 @@ public class SampleDataFetcher implements Serializable {
     }
 
     /**
-     * Fetch the data from BSP for the given sample.
+     * Fetch the data for the given sample.
      *
      * @param sampleName The sample name.
      *
@@ -82,11 +78,11 @@ public class SampleDataFetcher implements Serializable {
     }
 
     /**
-     * Fetch the data from bsp for multiple samples.
+     * Fetch the data for multiple samples.
      *
      * @param sampleNames The sample names, which should be short barcodes such as SM-4FHTK
      *
-     * @return Mapping of sample id to its bsp data
+     * @return Mapping of sample id to its sample data
      */
     public Map<String, SampleData> fetchSampleData(@Nonnull Collection<String> sampleNames) {
         Map<String, List<MercurySample>> allMercurySamples = mercurySampleDao.findMapIdToListMercurySample(sampleNames);

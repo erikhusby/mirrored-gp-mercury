@@ -25,6 +25,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Wrapper around {@link BSPSampleSearchService} that
+ * does a bit more object-ifying and type-safety.
+ */
 public class BSPSampleDataFetcher extends BSPJerseyClient implements Serializable {
     static final long serialVersionUID = -1432207534876411738L;
 // Many versions of this service written only for tests are considered as options by IntelliJ.
