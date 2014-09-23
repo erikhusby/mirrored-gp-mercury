@@ -127,6 +127,7 @@ public class ManifestEvent implements Updatable {
                 .append("manifestEventId", manifestEventId)
                 .append("message", message)
                 .append("severity", severity)
+                .append("sessionName", manifestSession.getSessionName())
                 .toString();
     }
 

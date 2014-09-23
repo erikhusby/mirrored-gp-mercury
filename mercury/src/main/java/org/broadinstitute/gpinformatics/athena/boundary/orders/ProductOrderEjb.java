@@ -966,7 +966,7 @@ public class ProductOrderEjb {
 
         } catch (IOException e) {
             log.error("An exception occurred attempting to create a Product Order in Jira", e);
-            throw new InformaticsServiceException(e, "Unable to create the Product Order in Jira");
+            throw new InformaticsServiceException("Unable to create the Product Order in Jira", e);
         }
 
         // This checks if there is a product order kit defined, which will let ANY PDO define the kit work request.

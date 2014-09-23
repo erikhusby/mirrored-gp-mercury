@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
 import org.hibernate.envers.Audited;
 
+import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Embedded;
@@ -274,7 +275,7 @@ public class ManifestRecord implements Updatable {
         }
     }
 
-    public String getSampleId() {
+    @Nullable public String getSampleId() {
         Metadata sampleMetadata = getMetadataByKey(Metadata.Key.SAMPLE_ID);
         if (sampleMetadata != null) {
             return sampleMetadata.getValue();
@@ -290,6 +291,7 @@ public class ManifestRecord implements Updatable {
     public String toString() {
         return new ToStringBuilder(this)
                 .append("manifestRecordId", manifestRecordId)
+                .append("collaboratorSampleId", getSampleId())
                 .append("status", status)
                 .toString();
     }

@@ -109,6 +109,7 @@ public class Metadata {
             return category;
         }
 
+        @Override
         public String getDisplayName() {
             return displayName;
         }
