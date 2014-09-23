@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleDataFetcher
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -30,7 +31,7 @@ import java.util.Map;
  * Wrapper around {@link BSPSampleSearchService} that
  * does a bit more object-ifying and type-safety.
  */
-public class SampleDataFetcher {
+public class SampleDataFetcher implements Serializable {
 
     @Inject
     private BSPSampleDataFetcher bspSampleDataFetcher;
