@@ -28,7 +28,7 @@ public class ProductOrderSampleJsonFactory {
     }
 
     private void populateBspValues(JSONObject jsonObject, ProductOrderSample productOrderSample) throws JSONException {
-        SampleData sampleData = productOrderSample.getBspSampleDTO();
+        SampleData sampleData = productOrderSample.getSampleData();
         setCollaboratorSampleId(jsonObject, sampleData.getCollaboratorsSampleName());
         setPatientId(jsonObject, sampleData.getPatientId());
     }
@@ -47,7 +47,7 @@ public class ProductOrderSampleJsonFactory {
     }
 
     public static void setupSampleDTOItems(ProductOrderSample sample, JSONObject item) throws JSONException {
-        SampleData sampleData = sample.getBspSampleDTO();
+        SampleData sampleData = sample.getSampleData();
 
         item.put(BSPSampleDTO.SAMPLE_ID, sample.getProductOrderSampleId());
         item.put(BSPSampleDTO.COLLABORATOR_SAMPLE_ID, sampleData.getCollaboratorsSampleName());

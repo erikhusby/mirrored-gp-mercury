@@ -546,7 +546,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         for (ProductOrderSample pdoSample : pdoSamples) {
             if (pdoSample.isInBspFormat() && !pdoSample.canRinScoreBeUsedForOnRiskCalculation()) {
                 addGlobalValidationError(
-                        "RIN '" + pdoSample.getBspSampleDTO().getRawRin() + "' for " + pdoSample.getName() +
+                        "RIN '" + pdoSample.getSampleData().getRawRin() + "' for " + pdoSample.getName() +
                         " isn't a number." + "  Please correct this by going to BSP -> Utilities -> Upload Sample " +
                         "Annotation and updating the 'RIN Number' annotation for this sample.");
             }

@@ -1384,7 +1384,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                         if (sample.bspMetaDataMissing()) {
                             missingBspMetaDataCount++;
                         } else {
-                            updateDTOCounts(participantSet, sample.getBspSampleDTO());
+                            updateDTOCounts(participantSet, sample.getSampleData());
                         }
                     }
                 }

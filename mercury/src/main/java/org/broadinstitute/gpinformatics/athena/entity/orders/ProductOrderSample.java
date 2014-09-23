@@ -201,11 +201,11 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     }
 
     private boolean hasRin() {
-        return isInBspFormat() && getBspSampleDTO().getRin() != null;
+        return isInBspFormat() && getSampleData().getRin() != null;
     }
 
     private boolean hasRqs() {
-        return isInBspFormat() && getBspSampleDTO().getRqs() != null;
+        return isInBspFormat() && getSampleData().getRqs() != null;
     }
 
     public void setManualOnRisk(RiskCriterion criterion, String comment) {
@@ -225,9 +225,9 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     public boolean canRinScoreBeUsedForOnRiskCalculation() {
         boolean canRinScoreBeUsed = false;
         if (isInBspFormat()) {
-            SampleData bspDto = getBspSampleDTO();
+            SampleData bspDto = getSampleData();
             if (bspDto != null) {
-                canRinScoreBeUsed = getBspSampleDTO().canRinScoreBeUsedForOnRiskCalculation();
+                canRinScoreBeUsed = getSampleData().canRinScoreBeUsedForOnRiskCalculation();
             }
         }
         return canRinScoreBeUsed;
@@ -426,7 +426,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         List<PriceItem> items = new ArrayList<>();
         items.add(getProductOrder().getProduct().getPrimaryPriceItem());
         org.broadinstitute.bsp.client.sample.MaterialType materialTypeObject =
-                getBspSampleDTO().getMaterialTypeObject();
+                getSampleData().getMaterialTypeObject();
         Set<Product> productAddOns = productOrder.getProduct().getAddOns();
         if (materialTypeObject != null && !productAddOns.isEmpty()) {
             MaterialType sampleMaterialType =

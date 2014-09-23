@@ -201,7 +201,7 @@ public class SubmissionDtoFetcher {
         updateBulkBspSampleInfo(productOrderSamples);
         Map<String, Set<ProductOrder>> sampleNameToPdos = new HashMap<>();
         for (ProductOrderSample productOrderSample : productOrderSamples) {
-            String pdoSampleName = productOrderSample.getBspSampleDTO().getCollaboratorsSampleName();
+            String pdoSampleName = productOrderSample.getSampleData().getCollaboratorsSampleName();
             if (!pdoSampleName.isEmpty()) {
                 if (sampleNameToPdos.get(pdoSampleName) == null) {
                     sampleNameToPdos.put(pdoSampleName, new HashSet<ProductOrder>());

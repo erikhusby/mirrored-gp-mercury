@@ -149,7 +149,7 @@ public class RiskCriterion implements Serializable {
 
             @Override
             public String getValue(ProductOrderSample sample) {
-                return String.valueOf(sample.getBspSampleDTO().getVolume());
+                return String.valueOf(sample.getSampleData().getVolume());
             }
         }),
         CONCENTRATION("Concentration", Operator.OperatorType.NUMERIC, new ValueProvider() {
@@ -157,7 +157,7 @@ public class RiskCriterion implements Serializable {
 
             @Override
             public String getValue(ProductOrderSample sample) {
-                return String.valueOf(sample.getBspSampleDTO().getConcentration());
+                return String.valueOf(sample.getSampleData().getConcentration());
             }
         }),
         WGA("Is WGA", Operator.OperatorType.BOOLEAN, new ValueProvider() {
@@ -165,7 +165,7 @@ public class RiskCriterion implements Serializable {
 
             @Override
             public String getValue(ProductOrderSample sample) {
-                return String.valueOf(sample.getBspSampleDTO().getMaterialType().contains("WGA"));
+                return String.valueOf(sample.getSampleData().getMaterialType().contains("WGA"));
             }
         }),
         FFPE("Is FFPE", Operator.OperatorType.BOOLEAN, new ValueProvider() {
@@ -173,7 +173,7 @@ public class RiskCriterion implements Serializable {
 
             @Override
             public String getValue(ProductOrderSample sample) {
-                return String.valueOf(sample.getBspSampleDTO().getFfpeStatus());
+                return String.valueOf(sample.getSampleData().getFfpeStatus());
             }
         }),
         MANUAL("Manual", Operator.OperatorType.BOOLEAN, new ValueProvider() {
@@ -196,7 +196,7 @@ public class RiskCriterion implements Serializable {
 
             @Override
             public String getValue(ProductOrderSample sample) {
-                return String.valueOf(sample.getBspSampleDTO().getTotal());
+                return String.valueOf(sample.getSampleData().getTotal());
             }
         }),
         PICO_AGE("Last Pico over a year ago", Operator.OperatorType.BOOLEAN, new ValueProvider() {
@@ -204,7 +204,7 @@ public class RiskCriterion implements Serializable {
 
             @Override
             public String getValue(ProductOrderSample sample) {
-                SampleData sampleDTO = sample.getBspSampleDTO();
+                SampleData sampleDTO = sample.getSampleData();
 
                 // On risk if there is no pico date or if the run date is older than one year ago.
                 return String.valueOf(((sampleDTO.getPicoRunDate() == null) ||
@@ -217,13 +217,13 @@ public class RiskCriterion implements Serializable {
 
             @Override
             public String getValue(ProductOrderSample sample) {
-                return getStringValueOfOrNull(sample.getBspSampleDTO().getRin());
+                return getStringValueOfOrNull(sample.getSampleData().getRin());
             }
         }),
         RQS("RQS", Operator.OperatorType.NUMERIC, new ValueProvider() {
             @Override
             public String getValue(ProductOrderSample sample) {
-                return getStringValueOfOrNull(sample.getBspSampleDTO().getRqs());
+                return getStringValueOfOrNull(sample.getSampleData().getRqs());
             }
         });
 

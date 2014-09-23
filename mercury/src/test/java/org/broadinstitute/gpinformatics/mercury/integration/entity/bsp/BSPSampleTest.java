@@ -16,7 +16,7 @@ public class BSPSampleTest {
         String sampleName = BSPSampleSearchServiceStub.SM_12CO4;
         MercurySample bspSample = new MercurySample(sampleName,
                 new BSPSampleDTO(BSPSampleSearchServiceStub.getSamples().get(sampleName)));
-        String patientId = bspSample.getBspSampleDTO().getPatientId();
+        String patientId = bspSample.getSampleData().getPatientId();
 
         Assert.assertNotNull(patientId);
         Assert.assertEquals(BSPSampleSearchServiceStub.SM_12CO4_PATIENT_ID, patientId);

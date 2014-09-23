@@ -85,7 +85,7 @@ public class AddEntriesToPicoBucketTest extends Arquillian {
                 for (ProductOrderSample sample : order.getSamples()) {
 
                     MercurySample mercurySample = new MercurySample(sample.getName(), MercurySample.MetadataSource.BSP);
-                    String tubeBarcode = sample.getBspSampleDTO().getBarcodeForLabVessel();
+                    String tubeBarcode = sample.getSampleData().getBarcodeForLabVessel();
                     if (tubeBarcode != null) {
                         //lookup the vessel... if it doesn't exist create one
                         LabVessel vessel = labVesselDao.findByIdentifier(tubeBarcode);

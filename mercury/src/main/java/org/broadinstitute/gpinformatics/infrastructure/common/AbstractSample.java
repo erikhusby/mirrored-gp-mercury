@@ -57,7 +57,7 @@ public abstract class AbstractSample {
      * @return the BSP sample data for this sample
      */
     @Nonnull
-    public SampleData getBspSampleDTO() {
+    public SampleData getSampleData() {
         if (!hasBspDTOBeenInitialized) {
             // We allow non-BSP samples through for test cases only.
             // FIXME: update tests to produce BSP sample names so this check is unnecessary.
