@@ -4,7 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.sample.MaterialType;
-import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 
 import javax.annotation.Nonnull;
@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
  * <li>boolean - false</li>
  * </ul>
  */
-public class BSPSampleDTO implements org.broadinstitute.gpinformatics.infrastructure.SampleData {
+public class BSPSampleDTO implements SampleData {
 
     private static final Log logger = LogFactory.getLog(BSPSampleDTO.class);
 
