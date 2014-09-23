@@ -170,7 +170,6 @@ public class BSPSampleDataFetcher extends BSPJerseyClient implements Serializabl
         }
     }
 
-    // TODO: make bspSampleDTOs a Collection<BSPSampleDTO>?
     public void fetchSamplePlastic(@Nonnull Collection<BSPSampleDTO> bspSampleDTOs) {
         if (bspSampleDTOs.isEmpty()) {
             return;
