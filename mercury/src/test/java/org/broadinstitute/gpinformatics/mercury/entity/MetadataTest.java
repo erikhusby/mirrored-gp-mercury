@@ -52,9 +52,4 @@ public class MetadataTest {
         assertThat("Different key same value match failed", metadataSet, not(hasItem(new Metadata(Metadata.Key.GENDER, VALUE))));
         assertThat("Same key different value match failed", metadataSet, not(hasItem(new Metadata(Metadata.Key.SAMPLE_ID, "M"))));
     }
-
-    public void testBasicConstructorMetadata() {
-        // Cover the no-arg constructor.
-        new Metadata();
-    }
 }

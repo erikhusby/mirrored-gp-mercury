@@ -11,11 +11,15 @@
 
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
+import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -130,4 +134,11 @@ public class ManifestImportProcessor extends TableProcessor {
         }
     }
 
+    /**
+     * Read a single worksheet from the specified InputStream using this ManifestImportProcessor.
+     */
+    public List<String> processSingleWorksheet(InputStream inputStream)
+            throws InvalidFormatException, IOException, ValidationException {
+        return PoiSpreadsheetParser.processSingleWorksheet(inputStream, this);
+    }
 }
