@@ -99,7 +99,14 @@ public class BSPSampleDataFetcher extends BSPJerseyClient implements Serializabl
      */
     public Map<String, BSPSampleDTO> fetchSamplesFromBSP(@Nonnull Collection<String> sampleNames,
                                                          BSPSampleSearchColumn... bspSampleSearchColumns) {
-        if (sampleNames.isEmpty()) {
+        Collection<String> filteredSampleNames = new HashSet<>();
+        for (String sampleName : sampleNames) {
+            if (BSPUtil.isInBspFormat(sampleName)) {
+                filteredSampleNames.add(sampleName);
+            }
+        }
+
+        if (filteredSampleNames.isEmpty()) {
             return Collections.emptyMap();
         }
 
@@ -107,7 +114,7 @@ public class BSPSampleDataFetcher extends BSPJerseyClient implements Serializabl
                 new HashSet<>(Arrays.asList(bspSampleSearchColumns));
         searchColumns.add(BSPSampleSearchColumn.SAMPLE_ID);
         Map<String, BSPSampleDTO> sampleNameToDTO = new HashMap<>();
-        List<Map<BSPSampleSearchColumn, String>> results = service.runSampleSearch(sampleNames,
+        List<Map<BSPSampleSearchColumn, String>> results = service.runSampleSearch(filteredSampleNames,
                 searchColumns.toArray(new BSPSampleSearchColumn[searchColumns.size()]));
         for (Map<BSPSampleSearchColumn, String> result : results) {
             BSPSampleDTO bspDTO = new BSPSampleDTO(result);

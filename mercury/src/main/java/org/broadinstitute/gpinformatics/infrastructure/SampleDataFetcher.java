@@ -95,9 +95,7 @@ public class SampleDataFetcher implements Serializable {
             MercurySample.MetadataSource metadataSource = metadataSources.get(sampleName);
             switch (metadataSource) {
             case BSP:
-                if (BSPUtil.isInBspFormat(sampleName)) {
-                    bspSampleIds.add(sampleName);
-                }
+                bspSampleIds.add(sampleName);
                 break;
             case MERCURY:
                 mercurySamples.addAll(allMercurySamples.get(sampleName));
