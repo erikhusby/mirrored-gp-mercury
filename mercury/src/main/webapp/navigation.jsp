@@ -130,6 +130,11 @@
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.UploadQuantsActionBean"
                                           event="view">Upload Quant</stripes:link>
                         </li>
+                        <li>
+                            <stripes:link id="nextStepsAfterInitialPico"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.PicoDispositionActionBean"
+                                          event="view">Pico Next Steps</stripes:link>
+                        </li>
                         <security:authorizeBlock roles="<%= roles(LabUser, LabManager, PDM, Developer) %>">
                             <li>
                                 <stripes:link id="listWorkflows"

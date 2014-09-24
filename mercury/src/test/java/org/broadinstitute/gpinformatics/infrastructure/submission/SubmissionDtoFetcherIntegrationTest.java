@@ -64,22 +64,32 @@ public class SubmissionDtoFetcherIntegrationTest extends Arquillian {
         }
     }
     public void testFetch() throws Exception {
-        double contamination = 0.0002d;
-        LevelOfDetection fingerprintLod = new LevelOfDetection(RESEARCH_PROJECT_ID, COLLABORATOR_SAMPLE_ID, 1, 53.437256, 55.771678);
-
+        double contamination = 0.0003d;
+        double lodMin = 17.926603;
+        double lodMax = 55.771678;
+        int version = 2;
+        LevelOfDetection fingerprintLod =
+                new LevelOfDetection(RESEARCH_PROJECT_ID, COLLABORATOR_SAMPLE_ID, version, lodMin, lodMax);
         ResearchProject researchProject = researchProjectDao.findByBusinessKey(RESEARCH_PROJECT_ID);
 
         List<SubmissionDto> submissionDtoList = submissionDtoFetcher.fetch(researchProject);
 
         assertThat(submissionDtoList, is(not(empty())));
         for (SubmissionDto submissionDto : submissionDtoList) {
+            assertThat(submissionDto.getVersion(), equalTo(version));
             assertThat(submissionDto.getSampleName(), equalTo(COLLABORATOR_SAMPLE_ID));
             assertThat(submissionDto.getAggregationProject(), equalTo(RESEARCH_PROJECT_ID));
             assertThat(submissionDto.getDataType(), equalTo(BassDTO.DATA_TYPE_EXOME));
             assertThat(submissionDto.getContamination(), equalTo(contamination));
             assertThat(submissionDto.getResearchProject(), equalTo(RESEARCH_PROJECT_ID));
+            assertThat(String.format("expected LOD min to be %f but was %f", lodMin,
+                    submissionDto.getFingerprintLOD().getMin()),
+                    submissionDto.getFingerprintLOD().getMin(), equalTo(lodMin));
+            assertThat(String.format("expected LOD max to be %f but was %f", lodMax,
+                            submissionDto.getFingerprintLOD().getMax()),
+                    submissionDto.getFingerprintLOD().getMax(), equalTo(lodMax));
             assertThat(submissionDto.getFingerprintLOD(), equalTo(fingerprintLod));
-            assertThat(submissionDto.getLanesInAggregation(), equalTo(2));
+            assertThat(submissionDto.getLanesInAggregation(), equalTo(22));
         }
     }
 }

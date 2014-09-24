@@ -82,22 +82,7 @@ public enum DateRange {
             stopCalendar.add(Calendar.DAY_OF_MONTH, -1);
         }
     }),
-    ThisQuarter("This Quarter", new ComputeStartAndStopDate() {
-        @Override
-        public void calcDate(Calendar startCalendar, Calendar stop) {
-            int month = startCalendar.get(Calendar.MONTH);
-            if ((month >= Calendar.JANUARY) && (month <= Calendar.MARCH)) {
-                startCalendar.set(Calendar.MONTH, Calendar.JANUARY);
-            } else if ((month >= Calendar.APRIL) && (month <= Calendar.JUNE)) {
-                startCalendar.set(Calendar.MONTH, Calendar.APRIL);
-            } else if ((month >= Calendar.JULY) && (month <= Calendar.SEPTEMBER)) {
-                startCalendar.set(Calendar.MONTH, Calendar.JULY);
-            } else {
-                startCalendar.set(Calendar.MONTH, Calendar.OCTOBER);
-            }
-            startCalendar.set(Calendar.DAY_OF_MONTH, 1);
-        }
-    }),
+    ThisQuarter("This Quarter", new OneQuarterDateRange()),
     Last90Days("Last 90 Days", new ComputeStartAndStopDate() {
         @Override
         public void calcDate(Calendar startCalendar, Calendar stopCalendar) {
@@ -162,16 +147,24 @@ public enum DateRange {
     });
 
     public static abstract class ComputeStartAndStopDate {
+        private Calendar startCalendar=Calendar.getInstance();
+        private Calendar stopCalendar=Calendar.getInstance();
 
         abstract public void calcDate(Calendar start, Calendar stop);
 
         public Date[] startAndStopDate() {
-            Calendar startCalendar = Calendar.getInstance();
-            Calendar stopCalendar = Calendar.getInstance();
-            startCalendar.setTime(DateUtils.getStartOfDay());
-            stopCalendar.setTime(DateUtils.getEndOfDay());
+            startCalendar.setTime(DateUtils.getStartOfDay(startCalendar.getTime()));
+            stopCalendar.setTime(DateUtils.getEndOfDay(stopCalendar.getTime()));
             calcDate(startCalendar, stopCalendar);
             return new Date[] { startCalendar.getTime(), stopCalendar.getTime() };
+        }
+
+        protected void setStartCalendar(Calendar startCalendar) {
+            this.startCalendar = startCalendar;
+        }
+
+        protected void setStopCalendar(Calendar stopCalendar) {
+            this.stopCalendar = stopCalendar;
         }
     }
 

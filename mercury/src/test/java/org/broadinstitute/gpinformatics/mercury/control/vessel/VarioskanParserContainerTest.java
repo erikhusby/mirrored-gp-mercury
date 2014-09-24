@@ -102,7 +102,8 @@ public class VarioskanParserContainerTest extends Arquillian {
             labVesselDao.persistAll(mapPositionToTube.values());
             MessageCollection messageCollection = new MessageCollection();
             LabMetricRun labMetricRun = vesselEjb.createVarioskanRun(new FileInputStream(tempFile),
-                    LabMetric.MetricType.INITIAL_PICO, BSPManagerFactoryStub.QA_DUDE_USER_ID, messageCollection);
+                    LabMetric.MetricType.INITIAL_PICO, BSPManagerFactoryStub.QA_DUDE_USER_ID, messageCollection)
+                    .getLeft();
 
             Assert.assertFalse(messageCollection.hasErrors());
             Assert.assertEquals(labMetricRun.getLabMetrics().size(), 96 * 3);

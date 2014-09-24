@@ -264,6 +264,20 @@ public abstract class LabVessel implements Serializable {
         return labMetrics;
     }
 
+    public Set<LabMetric> getConcentrationMetrics() {
+        if(labMetrics != null) {
+            Set<LabMetric> concentrationLabMetrics = new HashSet<>();
+            for (LabMetric labMetric: labMetrics) {
+                if(labMetric.getName().getCategory() == LabMetric.MetricType.Category.CONCENTRATION) {
+                    concentrationLabMetrics.add(labMetric);
+                }
+            }
+            return concentrationLabMetrics;
+        }
+
+        return null;
+    }
+
     @SuppressWarnings("unused")
     public Map<String, Set<LabMetric>> getMetricMap() {
         return metricMap;
@@ -1069,6 +1083,7 @@ public abstract class LabVessel implements Serializable {
              */
             throw new RuntimeException("Vessel already contains an entry equal to: " + bucketEntry);
         }
+        clearCaches();
     }
 
     public void addNonReworkLabBatch(LabBatch labBatch) {
@@ -1846,4 +1861,22 @@ public abstract class LabVessel implements Serializable {
     }
 
 
+    /**
+     * Allows the caller to determine if the current vessel or any of its ancestors have been involved in a tube
+     * transfer for clinical work.
+     *
+     * @return true if the vessel is affiliated with clinical work
+     */
+    public boolean doesChainOfCustodyInclude(LabEventType labEventType) {
+
+        if (LabEvent.isEventPresent(getEvents(), labEventType)) {
+            return true;
+        }
+
+        TransferTraverserCriteria.LabEventDescendantCriteria eventTraversalCriteria =
+                new TransferTraverserCriteria.LabEventDescendantCriteria();
+        evaluateCriteria(eventTraversalCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+
+        return LabEvent.isEventPresent(eventTraversalCriteria.getAllEvents(), LabEventType.COLLABORATOR_TRANSFER);
+    }
 }

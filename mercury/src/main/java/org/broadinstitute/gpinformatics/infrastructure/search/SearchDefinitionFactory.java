@@ -238,22 +238,18 @@ public class SearchDefinitionFactory {
 
     private List<SearchTerm> buildLabVesselBsp() {
         List<SearchTerm> searchTerms = new ArrayList<>();
-
-        // Stock sample ID - from BSP, not searchable
+        // Non-searchable data from BSP
         searchTerms.add(buildLabVesselBspTerm(BSPSampleSearchColumn.STOCK_SAMPLE, "Stock Sample ID"));
-        // Collaborator sample ID - from BSP
-        searchTerms.add(buildLabVesselBspTerm(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "Collaborator Sample ID"));
-        // Collaborator Participant ID - from BSP
-        searchTerms.add(buildLabVesselBspTerm(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID,
-                "Collaborator Participant ID"));
-        // Tumor / Normal - from BSP
-        searchTerms.add(buildLabVesselBspTerm(BSPSampleSearchColumn.TUMOR_NORMAL, "Tumor / Normal"));
-        // Collection - from BSP
-        searchTerms.add(buildLabVesselBspTerm(BSPSampleSearchColumn.COLLECTION, "Collection"));
-        // Original Material Type - from BSP
-        searchTerms.add(buildLabVesselBspTerm(BSPSampleSearchColumn.ORIGINAL_MATERIAL_TYPE, "Original Material Type"));
-        // todo Stock Sample Initial ng - from BSP?
+        searchTerms.add(buildLabVesselBspTerm(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID));
+        searchTerms.add(buildLabVesselBspTerm(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID ));
+        searchTerms.add(buildLabVesselBspTerm(BSPSampleSearchColumn.SAMPLE_TYPE, "Tumor / Normal"));
+        searchTerms.add(buildLabVesselBspTerm(BSPSampleSearchColumn.COLLECTION));
+        searchTerms.add(buildLabVesselBspTerm(BSPSampleSearchColumn.ORIGINAL_MATERIAL_TYPE));
         return searchTerms;
+    }
+
+    private SearchTerm buildLabVesselBspTerm(final BSPSampleSearchColumn bspSampleSearchColumn) {
+        return buildLabVesselBspTerm(bspSampleSearchColumn, bspSampleSearchColumn.columnName());
     }
 
     private SearchTerm buildLabVesselBspTerm(final BSPSampleSearchColumn bspSampleSearchColumn, String name) {
@@ -813,6 +809,12 @@ public class SearchDefinitionFactory {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Reagent Expiration");
+        searchTerm.setTypeExpression(new SearchTerm.Evaluator<String>() {
+            @Override
+            public String evaluate(Object entity, Map<String, Object> context) {
+                return "Date";
+            }
+        });
         criteriaPaths = new ArrayList<>();
         criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setCriteria(Arrays.asList("reagent", "reagents"));
