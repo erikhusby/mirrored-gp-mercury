@@ -5,6 +5,7 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -302,6 +303,10 @@ public class ManifestSession implements Updatable {
         return allRecords;
     }
 
+    private Collection<ManifestRecord> getQuarantinedRecords() {
+        return CollectionUtils.subtract(getRecords(), getNonQuarantinedRecords());
+    }
+
     /**
      * hasErrors is used to determine if any manifest event entries exist that can be considered errors
      *
@@ -362,7 +367,8 @@ public class ManifestSession implements Updatable {
 
 
         ManifestStatus sessionStatus = new ManifestStatus(getRecords().size(), eligibleSize,
-                getRecordsByStatus(ManifestRecord.Status.SCANNED).size(), manifestMessages);
+                getRecordsByStatus(ManifestRecord.Status.SCANNED).size(), manifestMessages,
+                getQuarantinedRecords().size());
 
         for (ManifestRecord manifestRecord : nonQuarantinedRecords) {
             ManifestRecord.Status manifestRecordStatus = manifestRecord.getStatus();

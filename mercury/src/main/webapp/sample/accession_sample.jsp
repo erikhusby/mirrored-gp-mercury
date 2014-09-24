@@ -78,14 +78,14 @@
                         <a href="javascript:performAccessionScan()">Scan</a>
                     </div>
                 </div>
+                <div class="actionButtons">
+                    <stripes:submit name="<%= ManifestAccessioningActionBean.PREVIEW_SESSION_CLOSE_ACTION %>" value="Submit Session" class="btn"/>
+                    <stripes:link beanclass="${actionBean.class.name}">
+                        Exit Session
+                    </stripes:link>
+                </div>
             </div>
 
-            <div class="actionButtons">
-                <stripes:submit name="<%= ManifestAccessioningActionBean.PREVIEW_SESSION_CLOSE_ACTION %>" value="Submit Session" class="btn"/>
-                <stripes:link beanclass="${actionBean.class.name}">
-                    Exit Session
-                </stripes:link>
-            </div>
         </stripes:form>
     </stripes:layout-component>
 </stripes:layout-render>    

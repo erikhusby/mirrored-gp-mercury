@@ -11,14 +11,16 @@ public class ManifestStatus {
     private final int samplesInManifest;
     private final int samplesEligibleInManifest;
     private final int samplesSuccessfullyScanned;
+    private final int samplesQuarantined;
 
     private final Set<String> errorMessages = new HashSet<>();
 
     public ManifestStatus(int samplesInManifest, int samplesEligibleInManifest, int samplesSuccessfullyScanned,
-                          Collection<String> errorMessages) {
+                          Collection<String> errorMessages, int samplesQuarantined) {
         this.samplesInManifest = samplesInManifest;
         this.samplesEligibleInManifest = samplesEligibleInManifest;
         this.samplesSuccessfullyScanned = samplesSuccessfullyScanned;
+        this.samplesQuarantined = samplesQuarantined;
         this.errorMessages.addAll(errorMessages);
     }
 
@@ -32,6 +34,10 @@ public class ManifestStatus {
 
     public int getSamplesSuccessfullyScanned() {
         return samplesSuccessfullyScanned;
+    }
+
+    public int getSamplesQuarantined() {
+        return samplesQuarantined;
     }
 
     public void addError(String errorMessage) {

@@ -24,6 +24,7 @@
     <div style="margin-left: 20px">
     <p>Samples successfully scanned: ${actionBean.statusValues.samplesSuccessfullyScanned}
     <p>Samples eligible in manifest: ${actionBean.statusValues.samplesEligibleInManifest}
+        <p>Samples quarantined: ${actionBean.statusValues.samplesQuarantined}</p>
     <p>Samples in manifest: ${actionBean.statusValues.samplesInManifest}
     </div>
 </fieldset>
