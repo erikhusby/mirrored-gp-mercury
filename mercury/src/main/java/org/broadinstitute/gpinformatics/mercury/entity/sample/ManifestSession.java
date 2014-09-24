@@ -352,7 +352,16 @@ public class ManifestSession implements Updatable {
             manifestMessages.add(manifestEvent.getMessage());
         }
 
-        ManifestStatus sessionStatus = new ManifestStatus(getRecords().size(), nonQuarantinedRecords.size(),
+        int eligibleSize = 0;
+
+        for(ManifestRecord candidateRecord:nonQuarantinedRecords) {
+            if(candidateRecord.getStatus() == ManifestRecord.Status.UPLOAD_ACCEPTED) {
+                eligibleSize++;
+            }
+        }
+
+
+        ManifestStatus sessionStatus = new ManifestStatus(getRecords().size(), eligibleSize,
                 getRecordsByStatus(ManifestRecord.Status.SCANNED).size(), manifestMessages);
 
         for (ManifestRecord manifestRecord : nonQuarantinedRecords) {
@@ -456,13 +465,13 @@ public class ManifestSession implements Updatable {
                     Metadata.Key.SAMPLE_ID, sourceForTransfer);
         }
 
-        if (!EnumSet.of(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE)
-                .contains(recordForTransfer.getStatus())) {
+        if (ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE == recordForTransfer.getStatus()) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.SOURCE_ALREADY_TRANSFERRED,
                     Metadata.Key.SAMPLE_ID, sourceForTransfer);
         }
 
-        if (recordForTransfer.getStatus() != ManifestRecord.Status.ACCESSIONED) {
+        if (!EnumSet.of(ManifestRecord.Status.ACCESSIONED,
+                ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE).contains(recordForTransfer.getStatus())) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.NOT_READY_FOR_TUBE_TRANSFER,
                     Metadata.Key.SAMPLE_ID, sourceForTransfer);
         }

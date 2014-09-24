@@ -383,7 +383,8 @@ public class ManifestSessionContainerTest extends Arquillian {
         assertThat(sessionStatus.getSamplesInManifest(), is(NUM_RECORDS_IN_SPREADSHEET));
         // Deliberately missed one scan.
         assertThat(sessionStatus.getSamplesSuccessfullyScanned(), is(NUM_RECORDS_IN_SPREADSHEET - 1));
-        assertThat(sessionStatus.getSamplesEligibleInManifest(), is(NUM_RECORDS_IN_SPREADSHEET));
+        // All records (except for one) have been scanned so there is only 1 considered eligible for scanning
+        assertThat(sessionStatus.getSamplesEligibleInManifest(), is(1));
         assertThat(sessionStatus.getErrorMessages(), is(not(empty())));
         assertThat(sessionStatus.getErrorMessages(), hasItem(ManifestRecord.ErrorStatus.MISSING_SAMPLE
                 .formatMessage(Metadata.Key.SAMPLE_ID, firstUploadedOmittedScan)));
@@ -629,8 +630,8 @@ public class ManifestSessionContainerTest extends Arquillian {
         assertThat(sessionStatus2.getSamplesInManifest(), is(NUM_RECORDS_IN_SPREADSHEET));
         assertThat(sessionStatus2.getSamplesSuccessfullyScanned(),
                 is(NUM_RECORDS_IN_SPREADSHEET - NUM_DUPLICATES_IN_SESSION_2));
-        assertThat(sessionStatus2.getSamplesEligibleInManifest(),
-                is(NUM_RECORDS_IN_SPREADSHEET - NUM_DUPLICATES_IN_SESSION_2));
+        // All records have been scanned so there are none currently eligible for scanning
+        assertThat(sessionStatus2.getSamplesEligibleInManifest(), is(0));
         assertThat(sessionStatus2.getErrorMessages(),
                 hasSize(NUM_DUPLICATES_IN_SESSION_2 + NUM_MISMATCHED_GENDERS_IN_SESSION_2));
 
@@ -676,7 +677,8 @@ public class ManifestSessionContainerTest extends Arquillian {
 
             ManifestRecord manifestRecord = manifestSessionEjb
                     .validateSourceTubeForTransfer(closedSession2.getManifestSessionId(), sourceSampleToTest);
-            assertThat(manifestRecord.getManifestSession(), is(closedSession2));
+            assertThat(manifestRecord.getManifestSession().getManifestSessionId(),
+                    is(closedSession2.getManifestSessionId()));
 
             String sourceSampleKey = sourceSampleToMercurySample.get(sourceSampleToTest).getSampleKey();
             MercurySample targetSample = manifestSessionEjb.validateTargetSample(sourceSampleKey);
@@ -691,12 +693,21 @@ public class ManifestSessionContainerTest extends Arquillian {
                     sourceSampleKey, sourceSampleLabel, testUser);
 
             assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE));
+
+            try {
+                manifestSessionEjb.transferSample(closedSession2.getManifestSessionId(), sourceSampleToTest,
+                        sourceSampleKey, sourceSampleLabel, testUser);
+                Assert.fail();
+            } catch (TubeTransferException e) {
+                assertThat(e.getMessage(), Matchers.containsString(ManifestRecord.ErrorStatus.INVALID_TARGET.getBaseMessage()));
+            }
         }
 
         for (String sourceSampleToTest : secondUploadPatientsWithMismatchedGender) {
             ManifestRecord manifestRecord = manifestSessionEjb
                     .validateSourceTubeForTransfer(closedSession2.getManifestSessionId(), sourceSampleToTest);
-            assertThat(manifestRecord.getManifestSession(), is(closedSession2));
+            assertThat(manifestRecord.getManifestSession().getManifestSessionId(),
+                    is(closedSession2.getManifestSessionId()));
 
             String sourceSampleKey = sourceSampleToMercurySample.get(sourceSampleToTest).getSampleKey();
             MercurySample targetSample = manifestSessionEjb.validateTargetSample(sourceSampleKey);
@@ -710,6 +721,13 @@ public class ManifestSessionContainerTest extends Arquillian {
                     sourceSampleKey, sourceSampleLabel, testUser);
 
             assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE));
+            try {
+                manifestSessionEjb.transferSample(closedSession2.getManifestSessionId(), sourceSampleToTest,
+                        sourceSampleKey, sourceSampleLabel, testUser);
+                Assert.fail();
+            } catch (TubeTransferException e) {
+                assertThat(e.getMessage(), Matchers.containsString(ManifestRecord.ErrorStatus.INVALID_TARGET.getBaseMessage()));
+            }
         }
 
         /*

@@ -9,6 +9,9 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProje
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.hamcrest.Matchers;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
@@ -19,6 +22,7 @@ import java.util.List;
 
 import static org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestStatusErrorMatcher.hasError;
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
@@ -38,7 +42,6 @@ public class ManifestSessionTest {
     private static final String SAMPLE_ID_3 = "SM-3";
     private static final List<String> SAMPLES_IN_MANIFEST = Arrays.asList(SAMPLE_ID_1, SAMPLE_ID_2, SAMPLE_ID_3);
     private static final int NUM_SAMPLES_IN_MANIFEST = SAMPLES_IN_MANIFEST.size();
-    private static final int ROW_NUMBER = 2;
     private ManifestSession session;
     private ResearchProject testRp;
     private String sessionPrefix;
@@ -117,7 +120,7 @@ public class ManifestSessionTest {
         ManifestStatus manifestStatus = session.generateSessionStatusForClose();
         assertThat(manifestStatus.getErrorMessages(), is(empty()));
         assertThat(manifestStatus.getSamplesSuccessfullyScanned(), is(3));
-        assertThat(manifestStatus.getSamplesEligibleInManifest(), is(3));
+        assertThat(manifestStatus.getSamplesEligibleInManifest(), is(0));
         assertThat(manifestStatus.getSamplesInManifest(), is(3));
     }
 
@@ -130,7 +133,7 @@ public class ManifestSessionTest {
         assertThat(manifestStatus, hasError(ManifestRecord.ErrorStatus.MISSING_SAMPLE));
 
         assertThat(manifestStatus.getSamplesSuccessfullyScanned(), is(2));
-        assertThat(manifestStatus.getSamplesEligibleInManifest(), is(3));
+        assertThat(manifestStatus.getSamplesEligibleInManifest(), is(0));
         assertThat(manifestStatus.getSamplesInManifest(), is(3));
     }
 
@@ -145,7 +148,7 @@ public class ManifestSessionTest {
     public void testPrepareForCloseOnCleanSession() {
         ManifestStatus manifestStatus = session.generateSessionStatusForClose();
         assertThat(manifestStatus.getSamplesInManifest(), is(NUM_SAMPLES_IN_MANIFEST));
-        assertThat(manifestStatus.getSamplesEligibleInManifest(), is(NUM_SAMPLES_IN_MANIFEST));
+        assertThat(manifestStatus.getSamplesEligibleInManifest(), is(0));
         assertThat(manifestStatus.getSamplesSuccessfullyScanned(), is(NUM_SAMPLES_IN_MANIFEST));
 
         Assert.assertTrue(manifestStatus.getErrorMessages().isEmpty(),
@@ -166,7 +169,11 @@ public class ManifestSessionTest {
         ManifestStatus manifestStatus = session.generateSessionStatusForClose();
 
         assertThat(manifestStatus.getSamplesInManifest(), is(NUM_SAMPLES_IN_MANIFEST));
-        assertThat(manifestStatus.getSamplesEligibleInManifest(), is(NUM_SAMPLES_IN_MANIFEST));
+        if(status == ManifestRecord.Status.UPLOADED) {
+            assertThat(manifestStatus.getSamplesEligibleInManifest(), is(0));
+        } else {
+            assertThat(manifestStatus.getSamplesEligibleInManifest(), is(1));
+        }
         assertThat(manifestStatus.getSamplesSuccessfullyScanned(), is(NUM_SAMPLES_IN_MANIFEST - 1));
 
         assertThat(manifestStatus.getErrorMessages(), hasSize(1));
@@ -179,7 +186,7 @@ public class ManifestSessionTest {
         ManifestStatus manifestStatus = session.generateSessionStatusForClose();
 
         assertThat(manifestStatus.getSamplesInManifest(), is(NUM_SAMPLES_IN_MANIFEST + 1));
-        assertThat(manifestStatus.getSamplesEligibleInManifest(), is(NUM_SAMPLES_IN_MANIFEST));
+        assertThat(manifestStatus.getSamplesEligibleInManifest(), is(0));
         assertThat(manifestStatus.getSamplesSuccessfullyScanned(), is(NUM_SAMPLES_IN_MANIFEST));
 
         assertThat(manifestStatus.getErrorMessages(), hasSize(1));
@@ -192,7 +199,7 @@ public class ManifestSessionTest {
         ManifestStatus manifestStatus = session.generateSessionStatusForClose();
 
         assertThat(manifestStatus.getSamplesInManifest(), is(NUM_SAMPLES_IN_MANIFEST + 1));
-        assertThat(manifestStatus.getSamplesEligibleInManifest(), is(NUM_SAMPLES_IN_MANIFEST + 1));
+        assertThat(manifestStatus.getSamplesEligibleInManifest(), is(0));
         assertThat(manifestStatus.getSamplesSuccessfullyScanned(), is(NUM_SAMPLES_IN_MANIFEST + 1));
 
         assertThat(manifestStatus.getErrorMessages(), hasSize(1));
@@ -211,7 +218,7 @@ public class ManifestSessionTest {
         ManifestStatus manifestStatus = session.generateSessionStatusForClose();
 
         assertThat(manifestStatus.getSamplesInManifest(), is(NUM_SAMPLES_IN_MANIFEST + 2));
-        assertThat(manifestStatus.getSamplesEligibleInManifest(), is(NUM_SAMPLES_IN_MANIFEST + 1));
+        assertThat(manifestStatus.getSamplesEligibleInManifest(), is(1));
         assertThat(manifestStatus.getSamplesSuccessfullyScanned(), is(NUM_SAMPLES_IN_MANIFEST));
 
         assertThat(manifestStatus.getErrorMessages(), hasSize(2));
@@ -227,7 +234,7 @@ public class ManifestSessionTest {
         ManifestStatus manifestStatus = session.generateSessionStatusForClose();
 
         assertThat(manifestStatus.getSamplesInManifest(), is(NUM_SAMPLES_IN_MANIFEST + 3));
-        assertThat(manifestStatus.getSamplesEligibleInManifest(), is(NUM_SAMPLES_IN_MANIFEST + 2));
+        assertThat(manifestStatus.getSamplesEligibleInManifest(), is(1));
         assertThat(manifestStatus.getSamplesSuccessfullyScanned(), is(NUM_SAMPLES_IN_MANIFEST + 1));
 
         assertThat(manifestStatus.getErrorMessages(), hasSize(3));
@@ -235,6 +242,47 @@ public class ManifestSessionTest {
         assertThat(manifestStatus, hasError(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID));
         assertThat(manifestStatus, hasError(ManifestRecord.ErrorStatus.MISMATCHED_GENDER));
 
+    }
+
+    public void testValidationForUplaodAccepted() {
+        setAllManifestRecordStatus(ManifestRecord.Status.UPLOAD_ACCEPTED);
+
+        ManifestStatus maniStatus = session.generateSessionStatusForClose();
+
+        assertThat(maniStatus.getErrorMessages(), Matchers.hasSize(3));
+        assertThat(maniStatus.getSamplesInManifest(), is(NUM_SAMPLES_IN_MANIFEST));
+        assertThat(maniStatus.getSamplesSuccessfullyScanned(), is(0));
+        assertThat(maniStatus.getSamplesEligibleInManifest(), is(NUM_SAMPLES_IN_MANIFEST));
+    }
+
+    public void testTransferUnUsedSample() throws Exception {
+
+        session.setStatus(ManifestSession.SessionStatus.COMPLETED);
+        for (ManifestRecord manifestRecord : session.getRecords()) {
+            manifestRecord.setStatus(ManifestRecord.Status.ACCESSIONED);
+        }
+
+        ManifestRecord testRecord = session.getRecords().iterator().next();
+        ManifestRecord recordForTransfer = session.findRecordForTransfer(testRecord.getSampleId());
+
+        assertThat(testRecord, is(equalTo(recordForTransfer)));
+
+    }
+
+    public void testTransferUsedSample() throws Exception {
+
+        session.setStatus(ManifestSession.SessionStatus.COMPLETED);
+        for (ManifestRecord manifestRecord : session.getRecords()) {
+            manifestRecord.setStatus(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
+        }
+
+        ManifestRecord testRecord = session.getRecords().iterator().next();
+        try {
+            ManifestRecord recordForTransfer = session.findRecordForTransfer(testRecord.getSampleId());
+            Assert.fail();
+        } catch (Exception e) {
+            assertThat(e.getMessage(), Matchers.containsString(ManifestRecord.ErrorStatus.SOURCE_ALREADY_TRANSFERRED.getBaseMessage()));
+        }
     }
 
     private void addDuplicateManifestRecord() {
@@ -248,5 +296,11 @@ public class ManifestSessionTest {
 
     private void setManifestRecordStatus(ManifestRecord.Status status) {
         session.getRecords().iterator().next().setStatus(status);
+    }
+
+    private void setAllManifestRecordStatus(ManifestRecord.Status status) {
+        for (ManifestRecord manifestRecord : session.getRecords()) {
+            manifestRecord.setStatus(status);
+        }
     }
 }
