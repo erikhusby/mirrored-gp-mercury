@@ -456,7 +456,7 @@ public class ManifestSession implements Updatable {
                     Metadata.Key.SAMPLE_ID, sourceForTransfer);
         }
 
-        if (!EnumSet.of(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE, ManifestRecord.Status.ACCESSIONED)
+        if (!EnumSet.of(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE)
                 .contains(recordForTransfer.getStatus())) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.SOURCE_ALREADY_TRANSFERRED,
                     Metadata.Key.SAMPLE_ID, sourceForTransfer);
