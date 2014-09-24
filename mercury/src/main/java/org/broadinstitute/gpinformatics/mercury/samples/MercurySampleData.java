@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * This class holds sample data specific to MercurySamples who's MetadataSource == MERCURY.
+ * This class holds sample data specific to MercurySamples whose MetadataSource == MERCURY.
  */
 public class MercurySampleData implements SampleData {
 
