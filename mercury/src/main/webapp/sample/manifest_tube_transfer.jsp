@@ -3,7 +3,8 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.ManifestTubeTransferActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="" sectionTitle="" showCreate="">
+<stripes:layout-render name="/layout.jsp" pageTitle="${actionBean.activeSession.researchProject.businessKey}: Buick Sample Tube Transfer: ${actionBean.activeSession.sessionName}"
+                       sectionTitle="${actionBean.activeSession.researchProject.businessKey}: Buick Sample Tube Transfer: ${actionBean.activeSession.sessionName}" showCreate="false">
 <stripes:layout-component name="extraHead">
     <script type="text/javascript">
 
@@ -16,7 +17,7 @@
                 ],
                 "asStripeClasses": [ '' ],
                 "aoColumns": [
-                    {"bSortable": true}, // Rado Button
+                    {"bSortable": true}, // Radio Button
                     {"bSortable": true}, // RP Key
                     {"bSortable": true}, // Name
                     {"bSortable": true}, // Creator
@@ -25,22 +26,6 @@
                     {"bSortable": true, "sType": "date"} // Modified Date
                 ] // Modified Date
             }).fnSetFilteringDelay(300);
-
-            $j('#sessionList').on('click', 'tbody tr', function (event) {
-                $(this).addClass('highlighted').siblings().removeClass('highlighted');
-                var rowSessionId = $(this).children().find('input[name=sessionId]').val();
-                $j("#activeSessionId").val(rowSessionId);
-            });
-
-            var activeSession = $j("#activeSessionId").val();
-
-//            $j('input[type="hidden"]').filter(function(index) {
-//                return $(this).val() == activeSession;
-//            }).parentsUntil("tr").addClass('highlighted').siblings().removeClass('highlighted');
-//
-//            $("tr").filter(function (index) {
-//                return $('input[type="hidden"]').val() == activeSession;
-//            }).addClass('highlighted').siblings().removeClass('highlighted');
 
             $j("#source").blur(function () {
                 if ($j("#source").val()) {
@@ -59,8 +44,10 @@
             });
         });
 
+        /**
+         * Makes an Ajax call to the action bean to execute the validation on the entered source sample
+         */
         function validateSource() {
-            var activeSession = $j("#activeSessionId").val();
 
             $j.ajax({
                 url: "${ctxpath}/sample/manifestTubeTransfer.action",
@@ -80,6 +67,9 @@
             })
         }
 
+        /**
+         * Makes an Ajax call to the action bean in order to execute the validation on the entered target sample name
+         */
         function validateSample() {
 
             $j.ajax({
@@ -99,8 +89,13 @@
             })
         }
 
+        /**
+         * Makes an Ajax call to the action bean in order to execute the validation on the entered lab vessel.
+         * While the intention of this is to validate the Vessel, part of that validation is to ensure that the given
+         * target sample is actually affiliated with the given vessel.  Since the user is instructed to enter the
+         * sample before the vessel, we should have both at this time.
+         */
         function validateVessel() {
-            var activeSession = $j("#activeSessionId").val();
 
             $j.ajax({
                 url: "${ctxpath}/sample/manifestTubeTransfer.action",
@@ -136,7 +131,7 @@
 </stripes:layout-component>
 
 <stripes:layout-component name="content">
-    <span>Choose an existing session to complete accessioning</span>
+    <span>Choose an existing session to record a tube transfer</span>
     <stripes:form beanclass="${actionBean.class.name}" id="startNewSessionForm">
         <stripes:hidden name="activeSessionId" id="activeSessionId"/>
         <div id="chooseExistingSession">
@@ -153,7 +148,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                <c:forEach items="${actionBean.availableSessions}" var="closedSession">
+                <c:forEach items="${actionBean.closedSessions}" var="closedSession">
                     <tr>
                         <td name="selection">
                             <stripes:radio name="activeSessionId" value="${closedSession.manifestSessionId}" />
@@ -201,7 +196,7 @@
                 </div>
                 <div class="control-group">
                     <stripes:label for="mercurySample" class="control-label">
-                        Step 2 (Sample key) *
+                        Step 2 (Mercury sample key) *
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="mercurySample" name="targetSample" class="defaultText input-xlarge"

@@ -49,7 +49,7 @@ public class ManifestTubeTransferActionBean extends CoreActionBean {
     private String targetSample;
     private String targetVessel;
 
-    @Validate(required = true, on = {RECORD_TRANSFER_ACTION}, label = SELECT_A_SESSION)
+    @Validate(required = true, on = {RECORD_TRANSFER_ACTION}, label = "Session")
     private String activeSessionId;
     private ManifestSession activeSession;
     private List<ManifestSession> availableSessions;
@@ -125,6 +125,7 @@ public class ManifestTubeTransferActionBean extends CoreActionBean {
 
     /**
      * handles viewing the page
+     *
      * @return
      */
     @DefaultHandler
@@ -134,6 +135,7 @@ public class ManifestTubeTransferActionBean extends CoreActionBean {
 
     /**
      * Handles recording the actual transfer from the collaborator source tube to mercury vessel
+     *
      * @return
      */
     @HandlesEvent(RECORD_TRANSFER_ACTION)
@@ -144,12 +146,15 @@ public class ManifestTubeTransferActionBean extends CoreActionBean {
         try {
             manifestSessionEjb.transferSample(Long.valueOf(activeSessionId), sourceTube, targetSample, targetVessel,
                     userBean.getBspUser());
-            addMessage("Collaborator sample {0} has been successfully recorded as transferred to vessel " +
+            addMessage("Sample ID {0} has been successfully recorded as transferred to vessel " +
                        "{1} with a sample of {2}", sourceTube, targetVessel, targetSample);
             resolution =
                     new RedirectResolution(getClass(), VIEW_ACTION).addParameter("activeSessionId", activeSessionId);
         } catch (Exception e) {
             addGlobalValidationError(e.getMessage());
+            logger.error(String.format(
+                    "Could not record a transfer of sample %s from source vessel %s to destination %s",
+                    sourceTube, targetVessel, targetSample), e);
             resolution = getContext().getSourcePageResolution();
         }
         return resolution;
@@ -157,6 +162,7 @@ public class ManifestTubeTransferActionBean extends CoreActionBean {
 
     /**
      * Handles the AJAX call to validate the collaborator source tube.
+     *
      * @return
      */
     @HandlesEvent(SCAN_SOURCE_TUBE_ACTION)
@@ -180,6 +186,7 @@ public class ManifestTubeTransferActionBean extends CoreActionBean {
 
     /**
      * Handles the AJAX call to validate the value input for Mercury sample
+     *
      * @return
      */
     @HandlesEvent(SCAN_TARGET_SAMPLE_ACTION)
@@ -196,6 +203,7 @@ public class ManifestTubeTransferActionBean extends CoreActionBean {
 
     /**
      * Handles the AJAX call to validate the Lab Vessel selected as well as the Mercury Sample
+     *
      * @return
      */
     @HandlesEvent(SCAN_TARGET_VESSEL_AND_SAMPLE_ACTION)
@@ -214,8 +222,9 @@ public class ManifestTubeTransferActionBean extends CoreActionBean {
     }
 
     /**
-     * actually scans
-     * @return
+     * validateSource contains the code for executing and handling the source tube validation
+     *
+     * @return any error messages if an exception occurs
      */
     private String validateSource() {
         String message = "";
@@ -223,10 +232,15 @@ public class ManifestTubeTransferActionBean extends CoreActionBean {
             manifestSessionEjb.validateSourceTubeForTransfer(Long.valueOf(activeSessionId), sourceTube);
         } catch (Exception e) {
             message = e.getMessage();
+            logger.error("Could not validate source " + sourceTube, e);
         }
         return message;
     }
 
+    /**
+     * validateTargetSample contains the code for executing and handling the target sample validation
+     * @return any error messages if an exception occurs
+     */
     private String validateTargetSample() {
 
         String message = "";
@@ -234,10 +248,16 @@ public class ManifestTubeTransferActionBean extends CoreActionBean {
             manifestSessionEjb.validateTargetSample(targetSample);
         } catch (Exception e) {
             message = e.getMessage();
+            logger.error("Could not validate target sample " + targetSample, e);
         }
         return message;
     }
 
+    /**
+     * validateTargetSampleAndVessel contains the code for executing and handling the target vessel and sample
+     * validation
+     * @return any error messages if an exception occurs
+     */
     private String validateTargetVessel() {
         String message = "";
 
@@ -245,6 +265,7 @@ public class ManifestTubeTransferActionBean extends CoreActionBean {
             manifestSessionEjb.validateTargetSampleAndVessel(targetSample, targetVessel);
         } catch (Exception e) {
             message = e.getMessage();
+            logger.error(String.format("Could not validate target vessel %s and sample %s", targetVessel, targetSample), e);
         }
         return message;
     }
@@ -288,7 +309,7 @@ public class ManifestTubeTransferActionBean extends CoreActionBean {
         return activeSession;
     }
 
-    public List<ManifestSession> getAvailableSessions() {
+    public List<ManifestSession> getClosedSessions() {
         return availableSessions;
     }
 

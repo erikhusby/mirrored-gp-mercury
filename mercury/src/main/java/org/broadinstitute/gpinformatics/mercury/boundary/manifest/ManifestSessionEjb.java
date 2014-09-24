@@ -144,8 +144,8 @@ public class ManifestSessionEjb {
             throw new InformaticsServiceException("Research Project '%s' not found", researchProjectKey);
         }
         if (researchProject.getRegulatoryDesignation() == ResearchProject.RegulatoryDesignation.RESEARCH_ONLY) {
-            throw new InformaticsServiceException("The selected Research Project cannot have a regulatory " +
-                                                  "designation of %s",
+            throw new InformaticsServiceException("The selected Research Project cannot be used for accessioning " +
+                                                  "because its regulatory designation is %s.",
                     ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
         }
         return researchProject;

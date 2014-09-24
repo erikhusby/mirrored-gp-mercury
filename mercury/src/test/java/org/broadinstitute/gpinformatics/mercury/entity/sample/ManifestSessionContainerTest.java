@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import com.google.common.collect.Iterables;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -51,6 +53,8 @@ import static org.hamcrest.Matchers.is;
  */
 @Test(groups = TestGroups.STANDARD)
 public class ManifestSessionContainerTest extends Arquillian {
+
+    private static Log logger = LogFactory.getLog(ManifestSessionContainerTest.class);
 
     private static final String PATIENT_1 = "PATIENT 1";
 
@@ -722,6 +726,11 @@ public class ManifestSessionContainerTest extends Arquillian {
         }
     }
 
+    /**
+     * Creates useful test data for manual UI testing.
+     * Keep it disabled in source control.
+     * @throws Exception
+     */
     @Test(groups = TestGroups.STANDARD, enabled = false)
     public void setupTestDataForTestCases() throws Exception {
         // Persist everything.
@@ -730,14 +739,14 @@ public class ManifestSessionContainerTest extends Arquillian {
 
         assertThat(manifestSessionI, is(Matchers.notNullValue()));
 
-        logInfo("The session ID is %d with a name of %s", manifestSessionI.getManifestSessionId(),
-                manifestSessionI.getSessionName());
+        logger.info(String.format("The session ID is %d with a name of %s", manifestSessionI.getManifestSessionId(),
+                manifestSessionI.getSessionName()));
         for (ManifestRecord manifestRecord : manifestSessionI.getRecords()) {
-            logInfo("For session, Record %d has a sample ID of %s with available Mercury Sample of %s and " +
+            logger.info(String.format("For session, Record %d has a sample ID of %s with available Mercury Sample of %s and " +
                     "available lab vessel of %s", manifestRecord.getManifestRecordId(),
                     manifestRecord.getSampleId(),
                     sourceSampleToMercurySample.get(manifestRecord.getSampleId()).getSampleKey(),
-                    sourceSampleToTargetVessel.get(manifestRecord.getSampleId()).getLabel());
+                    sourceSampleToTargetVessel.get(manifestRecord.getSampleId()).getLabel()));
         }
 
         manifestSessionEjb.acceptManifestUpload(manifestSessionI.getManifestSessionId());
@@ -751,9 +760,5 @@ public class ManifestSessionContainerTest extends Arquillian {
             labVesselDao.persist(vessel);
             labVesselDao.flush();
         }
-    }
-
-    private void logInfo(String message, Object... parameters) {
-        System.out.println(String.format(message, parameters));
     }
 }
