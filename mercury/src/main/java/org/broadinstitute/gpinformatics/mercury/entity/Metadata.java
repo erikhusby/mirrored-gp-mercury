@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
@@ -81,27 +82,36 @@ public class Metadata {
         LAB_METRIC_RUN
     }
 
-    public enum Key {
-        GENDER(Category.SAMPLE),
-        PATIENT_ID(Category.SAMPLE),
-        SAMPLE_TYPE(Category.SAMPLE),
-        TUMOR_NORMAL(Category.SAMPLE),
-        BUICK_COLLECTION_DATE(Category.SAMPLE),
-        SAMPLE_ID(Category.SAMPLE),
-        BUICK_VISIT(Category.SAMPLE),
+    public enum Key implements Displayable {
+        // The Category.SAMPLE keys are currently all used for uploads of the "modified" (edited) manifest during
+        // Buick sample registration.
+        GENDER(Category.SAMPLE, "Gender"),
+        PATIENT_ID(Category.SAMPLE, "Patient ID"),
+        SAMPLE_TYPE(Category.SAMPLE, "Sample Type"),
+        TUMOR_NORMAL(Category.SAMPLE, "Tumor/Normal"),
+        BUICK_COLLECTION_DATE(Category.SAMPLE, "Collection Date"),
+        SAMPLE_ID(Category.SAMPLE, "Sample ID"),
+        BUICK_VISIT(Category.SAMPLE, "Visit"),
 
-        CORRELATION_COEFFICIENT_R2(Category.LAB_METRIC_RUN),
-        INSTRUMENT_NAME(Category.LAB_METRIC_RUN),
-        INSTRUMENT_SERIAL_NUMBER(Category.LAB_METRIC_RUN);
+        CORRELATION_COEFFICIENT_R2(Category.LAB_METRIC_RUN, "R Squared Correlation Coefficient"),
+        INSTRUMENT_NAME(Category.LAB_METRIC_RUN, "Instrument Name"),
+        INSTRUMENT_SERIAL_NUMBER(Category.LAB_METRIC_RUN, "Serial Number");
 
-        private Category category;
+        private final Category category;
+        private final String displayName;
 
-        Key(Category category) {
+        Key(Category category, String displayName) {
             this.category = category;
+            this.displayName = displayName;
         }
 
         public Category getCategory() {
             return category;
+        }
+
+        @Override
+        public String getDisplayName() {
+            return displayName;
         }
     }
 }
