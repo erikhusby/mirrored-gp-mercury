@@ -115,20 +115,11 @@ public class SampleDataFetcher implements Serializable {
         return sampleData;
     }
 
-    /**
-     * There is much copying and pasting of code from BSPSampleSearchServiceImpl into here -- a refactoring is needed.
-     *
-     * @param sampleDatas BSP DTOs whose sampleID field will be referenced for the barcode value, and which will
-     *                    be filled with the ffpeDerived value returned by the FFPE webservice
-     */
     public void fetchFFPEDerived(@Nonnull Collection<SampleData> sampleDatas) {
-
-        // Check to see if BSP is supported before trying to get data.
         bspSampleDataFetcher.fetchFFPEDerived(BSPSampleDataFetcher.convertToBSPSampleDTOCollection(sampleDatas));
     }
 
     public void fetchSamplePlastic(@Nonnull Collection<SampleData> sampleDatas) {
-
         bspSampleDataFetcher.fetchSamplePlastic(BSPSampleDataFetcher.convertToBSPSampleDTOCollection(sampleDatas));
     }
 
@@ -190,11 +181,6 @@ public class SampleDataFetcher implements Serializable {
      * or SM-id barcode.
      */
     public Map<String, GetSampleDetails.SampleInfo> fetchSampleDetailsByBarcode(@Nonnull Collection<String> barcodes) {
-
-        // Use POST, rather than GET, to allow large number of barcodes without hitting 8K limit on URL.
-
-        // Fills in the map values using SampleDetails that were found in BSP.
-
         return bspSampleDataFetcher.fetchSampleDetailsByBarcode(barcodes);
     }
 
@@ -229,6 +215,4 @@ public class SampleDataFetcher implements Serializable {
         }
         return results;
     }
-
-
 }
