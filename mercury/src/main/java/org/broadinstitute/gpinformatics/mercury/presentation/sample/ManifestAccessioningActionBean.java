@@ -81,7 +81,6 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     private ManifestStatus statusValues;
     private String scanErrors;
     private String scanMessages;
-    private List<ManifestEvent> manifestErrors;
 
     public ManifestAccessioningActionBean() {
         super();
@@ -189,17 +188,9 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
         return new ForwardResolution(SCAN_SAMPLE_RESULTS_PAGE).addParameter(SELECTED_SESSION_ID, selectedSessionId);
     }
 
-    /**
-     * TODO  Perhaps make a template page for this and have the ajax return the HTML
-     *
-     * Use ResearchProjectActionBean.queryRegulatoryInfoReturnHtmlSnippet as a guide
-     * lines 115-130 on projects/view.jsp is the AJAX call
-     *
-     */
     @HandlesEvent(PREVIEW_SESSION_CLOSE_ACTION)
     public Resolution previewSessionClose() {
-        return new RedirectResolution(PREVIEW_CLOSE_SESSION_PAGE)
-                .addParameter(SELECTED_SESSION_ID, selectedSession.getManifestSessionId());
+        return new ForwardResolution(PREVIEW_CLOSE_SESSION_PAGE);
     }
 
     @HandlesEvent(CLOSE_SESSION_ACTION)
@@ -283,9 +274,5 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
 
     public String getScanMessages() {
         return scanMessages;
-    }
-
-    public List<ManifestEvent> getManifestErrors() {
-        return manifestErrors;
     }
 }
