@@ -79,7 +79,6 @@ public class LabEvent {
 
     public static final String UI_EVENT_LOCATION = "User Interface";
     public static final String UI_PROGRAM_NAME = "Mercury";
-    public static final Long DEFAULT_DISAMBIGUATOR = 1L;
 
     public static final Comparator<LabEvent> BY_EVENT_DATE = new Comparator<LabEvent>() {
         @Override

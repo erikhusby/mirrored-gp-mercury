@@ -435,7 +435,7 @@ public class ManifestRecord implements Updatable {
         }
     }
 
-    public String getSampleId() {
+    @Nullable public String getSampleId() {
         Metadata sampleMetadata = getMetadataByKey(Metadata.Key.SAMPLE_ID);
         if (sampleMetadata != null) {
             return sampleMetadata.getValue();
@@ -453,5 +453,12 @@ public class ManifestRecord implements Updatable {
     public int getSpreadsheetRowNumber() {
         final int INDEX_TO_SPREADSHEET_ROW_NUMBER_CONVERSION = 2;
         return manifestRecordIndex + INDEX_TO_SPREADSHEET_ROW_NUMBER_CONVERSION;
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("manifestRecordId", manifestRecordId)
+                .append("collaboratorSampleId", getSampleId())
+                .append("status", status)
+                .toString();
     }
 }

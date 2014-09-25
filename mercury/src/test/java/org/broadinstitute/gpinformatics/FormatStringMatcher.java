@@ -12,8 +12,8 @@
 
 package org.broadinstitute.gpinformatics;
 
-import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
+import org.hamcrest.TypeSafeMatcher;
 
 import javax.annotation.Nonnull;
 
@@ -21,7 +21,7 @@ import javax.annotation.Nonnull;
  * Hamcrest matcher that replaces all '%s' format string directives with regular expression wildcards for comparison
  * with a query string.
  */
-public class FormatStringMatcher extends BaseMatcher<String> {
+public class FormatStringMatcher extends TypeSafeMatcher<String> {
 
     private final String formatString;
 
@@ -30,10 +30,10 @@ public class FormatStringMatcher extends BaseMatcher<String> {
     }
 
     @Override
-    public boolean matches(Object o) {
+    public boolean matchesSafely(String text) {
         // Replace occurrences of the '%s' in the template with '.*' and attempt a regular
         // expression match between the template and the actual message.
-        return ((String) o).matches(formatString.replaceAll("%s", ".*"));
+        return text.matches(formatString.replaceAll("%s", ".*"));
     }
 
     @Override

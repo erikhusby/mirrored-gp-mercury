@@ -31,7 +31,6 @@ public enum BSPSampleSearchColumn {
     RQS("RNA Quality Score (RQS)"),
     PICO_RUN_DATE("Pico Run Date"),
     RECEIPT_DATE("Receipt Date"),
-    TUMOR_NORMAL("Sample Type"),
     ORIGINAL_MATERIAL_TYPE("Original Material Type");
 
     private final String columnName;

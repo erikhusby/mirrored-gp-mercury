@@ -99,7 +99,7 @@ public class ManifestSession implements Updatable {
         this.researchProject = researchProject;
         researchProject.addManifestSession(this);
         sessionPrefix = FilenameUtils.getBaseName(pathToManifestFile);
-        getUpdateData().setCreatedBy(createdBy.getUserId());
+        updateData.setCreatedBy(createdBy.getUserId());
     }
 
     public ResearchProject getResearchProject() {
@@ -503,7 +503,7 @@ public class ManifestSession implements Updatable {
 
         LabEvent collaboratorTransferEvent =
                 new LabEvent(LabEventType.COLLABORATOR_TRANSFER, new Date(), LabEvent.UI_EVENT_LOCATION,
-                        LabEvent.DEFAULT_DISAMBIGUATOR, user.getUserId(), LabEvent.UI_PROGRAM_NAME);
+                        1L, user.getUserId(), LabEvent.UI_PROGRAM_NAME);
         targetVessel.addInPlaceEvent(collaboratorTransferEvent);
     }
 

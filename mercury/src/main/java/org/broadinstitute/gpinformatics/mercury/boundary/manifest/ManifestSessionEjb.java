@@ -114,14 +114,15 @@ public class ManifestSessionEjb {
 
             if (!messages.isEmpty()) {
                 String messageText = StringUtils.join(messages, ", ");
-                throw new InformaticsServiceException("Error reading manifest file: %s", messageText);
+                throw new InformaticsServiceException("Error reading manifest file: " + messageText);
             }
         } catch (ValidationException e) {
             throw new InformaticsServiceException(e);
         } catch (Exception e) {
             throw new InformaticsServiceException(
-                    e, "Error reading manifest file '%s'.  Manifest files must be in the proper Excel format.",
-                    FilenameUtils.getName(pathToFile));
+                    String.format(
+                    "Error reading manifest file '%s'.  Manifest files must be in the proper Excel format.",
+                    FilenameUtils.getName(pathToFile)), e);
         }
         Collection<ManifestRecord> manifestRecords;
         try {
