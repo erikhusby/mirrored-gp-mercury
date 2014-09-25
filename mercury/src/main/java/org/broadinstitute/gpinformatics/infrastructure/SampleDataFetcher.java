@@ -9,7 +9,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
@@ -106,7 +105,7 @@ public class SampleDataFetcher implements Serializable {
         }
         Map<String, SampleData> sampleData = new HashMap<>();
         if (!bspSampleIds.isEmpty()) {
-            Map<String, BSPSampleDTO> bspSampleData = bspSampleDataFetcher.fetchSamplesFromBSP(bspSampleIds);
+            Map<String, BSPSampleDTO> bspSampleData = bspSampleDataFetcher.fetchSampleData(bspSampleIds);
             sampleData.putAll(bspSampleData);
         }
         sampleData.putAll(mercurySampleDataFetcher.fetchSampleData(mercurySamples));

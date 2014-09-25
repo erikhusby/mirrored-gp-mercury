@@ -50,7 +50,7 @@ public class BSPSampleDataFetcherTest {
 
         //Now this checks all of the roots
         String[] sampleIds = bspSampleDTO.getRootSample().split(" ");
-        Map<String, BSPSampleDTO> roots = fetcher.fetchSamplesFromBSP(Arrays.asList(sampleIds));
+        Map<String, BSPSampleDTO> roots = fetcher.fetchSampleData(Arrays.asList(sampleIds));
         for (SampleData sampleDTO : roots.values()) {
             assertTrue(sampleDTO.isSampleReceived());
         }
@@ -59,7 +59,7 @@ public class BSPSampleDataFetcherTest {
     public void testFetchSingleColumn()  {
         BSPSampleDataFetcher fetcher = new BSPSampleDataFetcher(sampleSearchService);
         String sampleName = "SM-1T7HE";
-        Map<String, ? extends SampleData> bspSampleDTO = fetcher.fetchSamplesFromBSP(Arrays.asList(sampleName),
+        Map<String, ? extends SampleData> bspSampleDTO = fetcher.fetchSampleData(Arrays.asList(sampleName),
                 BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID);
         Assert.assertEquals(bspSampleDTO.keySet().size(), 1);
         BSPSampleDTO bspSample = (BSPSampleDTO) bspSampleDTO.get(sampleName);

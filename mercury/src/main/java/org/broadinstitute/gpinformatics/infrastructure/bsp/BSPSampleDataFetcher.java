@@ -74,7 +74,7 @@ public class BSPSampleDataFetcher extends BSPJerseyClient implements Serializabl
         if (service == null) {
             throw new RuntimeException("No BSP service has been declared.");
         } else {
-            Map<String, BSPSampleDTO> sampleNameToDTO = fetchSamplesFromBSP(Collections.singleton(sampleName));
+            Map<String, BSPSampleDTO> sampleNameToDTO = fetchSampleData(Collections.singleton(sampleName));
 
             if (sampleNameToDTO.isEmpty()) {
                 return null;
@@ -97,8 +97,8 @@ public class BSPSampleDataFetcher extends BSPJerseyClient implements Serializabl
      *
      * @return Mapping of sample id to its bsp data
      */
-    public Map<String, BSPSampleDTO> fetchSamplesFromBSP(@Nonnull Collection<String> sampleNames,
-                                                         BSPSampleSearchColumn... bspSampleSearchColumns) {
+    public Map<String, BSPSampleDTO> fetchSampleData(@Nonnull Collection<String> sampleNames,
+                                                     BSPSampleSearchColumn... bspSampleSearchColumns) {
         Collection<String> filteredSampleNames = new HashSet<>();
         for (String sampleName : sampleNames) {
             if (BSPUtil.isInBspFormat(sampleName)) {
@@ -132,8 +132,8 @@ public class BSPSampleDataFetcher extends BSPJerseyClient implements Serializabl
      *
      * @return Mapping of sample id to its bsp data
      */
-    public Map<String, BSPSampleDTO> fetchSamplesFromBSP(@Nonnull Collection<String> sampleNames) {
-        return fetchSamplesFromBSP(sampleNames, BSPSampleSearchColumn.PDO_SEARCH_COLUMNS);
+    public Map<String, BSPSampleDTO> fetchSampleData(@Nonnull Collection<String> sampleNames) {
+        return fetchSampleData(sampleNames, BSPSampleSearchColumn.PDO_SEARCH_COLUMNS);
     }
 
     public static Collection<BSPSampleDTO> convertToBSPSampleDTOCollection(Collection<? extends SampleData> sampleDatas) {

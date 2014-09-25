@@ -59,13 +59,13 @@ public class BSPSampleDataFetcherUnitTest {
     }
 
     public void fetchSamplesFromBspWithOnlyNonBspFormatSamplesDoesNotQueryBsp() {
-        bspSampleDataFetcher.fetchSamplesFromBSP(ImmutableList.of("111.0"));
+        bspSampleDataFetcher.fetchSampleData(ImmutableList.of("111.0"));
 
         verifyZeroInteractions(mockBspSampleSearchService);
     }
 
     public void fetchSamplesFromBspFiltersNonBspFormatSamples() {
-        bspSampleDataFetcher.fetchSamplesFromBSP(ImmutableList.of("SM-1234", "111.0"));
+        bspSampleDataFetcher.fetchSampleData(ImmutableList.of("SM-1234", "111.0"));
 
         verify(mockBspSampleSearchService)
                 .runSampleSearch(argThat(contains("SM-1234")), Matchers.<BSPSampleSearchColumn[]>anyVararg());

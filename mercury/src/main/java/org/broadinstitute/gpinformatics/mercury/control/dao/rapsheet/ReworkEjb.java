@@ -200,7 +200,7 @@ public class ReworkEjb {
         for (ProductOrderSample sample : samplesById) {
             sampleIDs.add(sample.getName());
         }
-        Map<String, BSPSampleDTO> bspResult = sampleDataFetcher.fetchSamplesFromBSP(sampleIDs);
+        Map<String, BSPSampleDTO> bspResult = sampleDataFetcher.fetchSampleData(sampleIDs);
         sampleDataFetcher.fetchSamplePlastic(bspResult.values());
         for (ProductOrderSample sample : samplesById) {
             Workflow workflow = sample.getProductOrder().getProduct().getWorkflow();

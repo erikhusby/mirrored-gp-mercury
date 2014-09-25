@@ -78,7 +78,7 @@ public class SubmissionDtoFetcher {
         }
 
         Map<String, BSPSampleDTO> bulkInfo =
-                bspSampleDataFetcher.fetchSamplesFromBSP(sampleList, BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID);
+                bspSampleDataFetcher.fetchSampleData(sampleList, BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID);
 
         for (final ProductOrderSample sample : samples) {
             SampleData sampleData = bulkInfo.get(sample.getName());

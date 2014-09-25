@@ -15,7 +15,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTrackerTest;
-import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDtoTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassSearchService;
@@ -88,7 +87,8 @@ public class SubmissionDtoFetcherTest {
         BSPSampleDataFetcher bspSampleDataFetcher = Mockito.mock(BSPSampleDataFetcher.class);
         bspSampleDTOMap.put(TEST_SAMPLE, new BSPSampleDTO(dataMap));
 
-        Mockito.when(bspSampleDataFetcher.fetchSamplesFromBSP(Mockito.anyCollectionOf(String.class), Mockito.any(BSPSampleSearchColumn.class))).thenReturn(
+        Mockito.when(bspSampleDataFetcher.fetchSampleData(Mockito.anyCollectionOf(String.class),
+                Mockito.any(BSPSampleSearchColumn.class))).thenReturn(
                 bspSampleDTOMap);
 
         BSPConfig testBspConfig = new BSPConfig(Deployment.STUBBY);

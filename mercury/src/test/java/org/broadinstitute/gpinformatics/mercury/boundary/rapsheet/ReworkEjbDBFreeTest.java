@@ -169,7 +169,7 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
 
 
         BSPSampleDataFetcher mockFetcher = Mockito.mock(BSPSampleDataFetcher.class);
-        Mockito.when(mockFetcher.fetchSamplesFromBSP(Mockito.anyCollectionOf(String.class))).then(new Answer<Object>() {
+        Mockito.when(mockFetcher.fetchSampleData(Mockito.anyCollectionOf(String.class))).then(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 Collection<String> sampleIds = (Collection<String>) invocationOnMock.getArguments()[0];
@@ -230,7 +230,7 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
         productOrderSampleSet.add(nonExomesample);
 
         BSPSampleDataFetcher mockFetcher = Mockito.mock(BSPSampleDataFetcher.class);
-        Mockito.when(mockFetcher.fetchSamplesFromBSP(Mockito.anyCollectionOf(String.class))).then(new Answer<Object>() {
+        Mockito.when(mockFetcher.fetchSampleData(Mockito.anyCollectionOf(String.class))).then(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 Collection<String> sampleIds = (Collection<String>) invocationOnMock.getArguments()[0];
