@@ -1526,4 +1526,16 @@
     <changeSet id="GPLIM-2879-7" author="thompson">
         <createSequence sequenceName="SEQ_LAB_METRIC_DECISION" incrementBy="50"/>
     </changeSet>
+    <changeSet id="GPLIM-2959-1" author="jsacco">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists schemaName="MERCURY" indexName="IDX_MERCURY_SAMPLES_LAB_VESSEL"/>
+            </not>
+        </preConditions>
+        <createIndex indexName="IDX_MERCURY_SAMPLES_LAB_VESSEL"
+                     schemaName="MERCURY" tableName="LAB_VESSEL_MERCURY_SAMPLES" unique="true">
+            <column name="MERCURY_SAMPLES"/>
+            <column name="LAB_VESSEL"/>
+        </createIndex>
+    </changeSet>
 </databaseChangeLog>

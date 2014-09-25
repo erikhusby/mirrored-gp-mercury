@@ -6,7 +6,9 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.BspSampleSearchAddRowsListener;
 import org.broadinstitute.gpinformatics.infrastructure.columns.EventVesselSourcePositionPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.EventVesselTargetPositionPlugin;
+import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetadataPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetricPlugin;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -1086,6 +1088,63 @@ public class SearchDefinitionFactory {
             vesselTypeName = vessel.getType()==null?"":vessel.getType().getName();
         }
         return vesselTypeName;
+    }
+
+
+    /**
+     * Build sample metadata nested search terms for lab vessels.
+     * @return List of search terms/column definitions for lab vessel sample metadata
+     */
+    private List<SearchTerm> buildLabVesselMetadata() {
+        List<SearchTerm> searchTerms = new ArrayList<>();
+        List<SearchTerm> childSearchTerms = new ArrayList<>();
+
+        // The parent term is the metadata name
+        SearchTerm searchTerm = new SearchTerm();
+        searchTerm.setName("Sample Metadata");
+        // Presentation is via a plugin which builds a horizontal list of all metadata sample keys
+        searchTerm.setPluginClass(LabVesselMetadataPlugin.class);
+        searchTerm.setValuesExpression(new SearchTerm.Evaluator<List<ConstrainedValue>>() {
+            @Override
+            public List<ConstrainedValue> evaluate(Object entity, Map<String, Object> context) {
+                List<ConstrainedValue> constrainedValues = new ArrayList<>();
+                for (Metadata.Key meta : Metadata.Key.values()) {
+                    if (meta.getCategory() == Metadata.Category.SAMPLE) {
+                        constrainedValues.add(new ConstrainedValue(meta.toString(), meta.getDisplayName()));
+                    }
+                }
+                Collections.sort(constrainedValues);
+                return constrainedValues;
+            }
+        });
+        searchTerm.setValueConversionExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                return Enum.valueOf(Metadata.Key.class, (String) context.get(CONTEXT_KEY_SEARCH_STRING));
+            }
+        });
+        searchTerm.setDependentSearchTerms(childSearchTerms);
+        searchTerm.setAddConstrainedValuesToSearchTermList(true);
+        List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
+        SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList( "mercurySample", "mercurySamples", "metadata" ));
+        criteriaPath.setPropertyName("key");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerms.add(searchTerm);
+
+        // The child term is the metadata value
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Metadata Value");
+        criteriaPaths = new ArrayList<>();
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList( "mercurySample", "mercurySamples", "metadata" ));
+        criteriaPath.setPropertyName("value");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        childSearchTerms.add(searchTerm);
+
+        return searchTerms;
     }
 
 }
