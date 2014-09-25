@@ -3,8 +3,8 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.ManifestTubeTransferActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="${actionBean.activeSession.researchProject.businessKey}: Buick Sample Tube Transfer: ${actionBean.activeSession.sessionName}"
-                       sectionTitle="${actionBean.activeSession.researchProject.businessKey}: Buick Sample Tube Transfer: ${actionBean.activeSession.sessionName}" showCreate="false">
+<stripes:layout-render name="/layout.jsp" pageTitle="Buick Sample Tube Transfer"
+                       sectionTitle="Buick Sample Tube Transfer" showCreate="false">
 <stripes:layout-component name="extraHead">
     <script type="text/javascript">
 
@@ -13,7 +13,7 @@
             $j('#sessionList').dataTable({
                 "oTableTools": ttExportDefines,
                 "aaSorting": [
-                    [2, 'desc']
+                    [6, 'desc']
                 ],
                 "asStripeClasses": [ '' ],
                 "aoColumns": [
@@ -24,7 +24,7 @@
                     {"bSortable": true, "sType": "date"}, // Creation Date
                     {"bSortable": true}, // Modified by
                     {"bSortable": true, "sType": "date"} // Modified Date
-                ] // Modified Date
+                ]
             }).fnSetFilteringDelay(300);
 
             $j("#source").blur(function () {
@@ -67,13 +67,7 @@
                     sourceTube: $j("#source").val()
                 },
                 dataType: 'text',
-                success: updateScanResults,
-                error: function (jqXHR, textStatus, errorThrown) {
-                    var message = "An error occurred attempting to validate the source tube.  Please try " +
-                            "again or create a Jira ticket: " + textStatus;
-
-                    updateScanResults(message);
-                }
+                success: updateScanResults
             })
         }
 
@@ -89,13 +83,7 @@
                     targetSample: $j("#mercurySample").val()
                 },
                 dataType: 'text',
-                success: updateScanResults,
-                error: function (jqXHR, textStatus, errorThrown) {
-                    var message = "An error occurred attempting to validate the target sample.  Please try " +
-                            "again or create a Jira ticket: " + textStatus;
-
-                    updateScanResults(message);
-                }
+                success: updateScanResults
             })
         }
 
@@ -115,13 +103,7 @@
                     targetVessel: $j("#mercuryLabVessel").val()
                 },
                 dataType: 'text',
-                success: updateScanResults,
-                error: function (jqXHR, textStatus, errorThrown) {
-                    var message = "An error occurred attempting to validate the target vessel and sample.  " +
-                            "Please try again or create a Jira ticket: " + textStatus;
-
-                    updateScanResults(message);
-                }
+                success: updateScanResults
             })
         }
 

@@ -35,14 +35,14 @@ import java.util.List;
 public class ManifestSessionEjb {
 
     static final String UNASSOCIATED_TUBE_SAMPLE_MESSAGE =
-            "The given target sample id is not associated with the given target vessel";
-    static final String SAMPLE_NOT_FOUND_MESSAGE = ":: You must provide a valid target sample key.";
-    private static final String SAMPLE_NOT_UNIQUE_MESSAGE = ":: This sample ID is not unique in Mercury";
+            "The given target sample id is not associated with the given target vessel.";
+    static final String SAMPLE_NOT_FOUND_MESSAGE = "You must provide a valid target sample key.";
+    private static final String SAMPLE_NOT_UNIQUE_MESSAGE = "This sample ID is not unique in Mercury.";
     static final String SAMPLE_NOT_ELIGIBLE_FOR_CLINICAL_MESSAGE =
-            ":: The sample found is not eligible for clinical work";
-    static final String VESSEL_NOT_FOUND_MESSAGE = "::  The target vessel is not found";
+            "The sample found is not eligible for clinical work.";
+    static final String VESSEL_NOT_FOUND_MESSAGE = "The target vessel was not found.";
     static final String VESSEL_USED_FOR_PREVIOUS_TRANSFER =
-            ":: the target vessel has already been used for a tube transfer";
+            "The target vessel has already been used for a tube transfer.";
 
     static final String MANIFEST_SESSION_NOT_FOUND = "Manifest Session '%s' not found";
 
@@ -292,7 +292,7 @@ public class ManifestSessionEjb {
             }
         }
         throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
-                targetVesselLabel, "::\n" + UNASSOCIATED_TUBE_SAMPLE_MESSAGE);
+                targetVesselLabel, " " + UNASSOCIATED_TUBE_SAMPLE_MESSAGE);
     }
 
     /**

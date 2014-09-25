@@ -157,7 +157,7 @@
                         <li>
                             <stripes:link id="accessioning"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.ManifestAccessioningActionBean">
-                                Upload / Accept Manifest
+                                Accession Manifest
                             </stripes:link>
                         </li>
                         <li>
