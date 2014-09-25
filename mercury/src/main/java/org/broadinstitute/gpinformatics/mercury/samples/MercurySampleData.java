@@ -7,7 +7,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import javax.annotation.Nonnull;
 import java.text.ParseException;
 import java.util.Date;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -217,16 +216,6 @@ public class MercurySampleData implements SampleData {
 
     @Override
     public Boolean getFfpeStatus() {
-        return null;
-    }
-
-    @Override
-    public List<String> getPlasticBarcodes() {
-        return null;
-    }
-
-    @Override
-    public String getBarcodeForLabVessel() {
         return null;
     }
 

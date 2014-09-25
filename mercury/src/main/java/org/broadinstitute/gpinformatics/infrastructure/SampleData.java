@@ -4,7 +4,6 @@ import org.broadinstitute.bsp.client.sample.MaterialType;
 
 import java.text.ParseException;
 import java.util.Date;
-import java.util.List;
 
 /**
  */
@@ -74,8 +73,4 @@ public interface SampleData {
     String getRace();
 
     Boolean getFfpeStatus();
-
-    List<String> getPlasticBarcodes();
-
-    String getBarcodeForLabVessel();
 }

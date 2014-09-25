@@ -10,8 +10,6 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.infrastructure.SampleData;
-import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -431,7 +429,7 @@ public class BucketEjb {
         List<String> cannotAddToBucket = new ArrayList<>();
 
         for (String sampleName : samplesWithoutVessel) {
-            SampleData bspDto = bspDtoMap.get(sampleName);
+            BSPSampleDTO bspDto = bspDtoMap.get(sampleName);
 
             if (bspDto != null &&
                 StringUtils.isNotBlank(bspDto.getBarcodeForLabVessel())) {

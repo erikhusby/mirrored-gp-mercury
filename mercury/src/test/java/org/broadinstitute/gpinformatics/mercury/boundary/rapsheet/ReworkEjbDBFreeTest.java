@@ -5,7 +5,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
@@ -44,6 +44,7 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
     private List<ProductOrderSample> sampleList4;
     private ProductOrder draftPDO;
 
+    @Override
     @BeforeMethod
     public void setUp() {
 
@@ -167,18 +168,18 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
         productOrderSampleSet.add(poSample4);
 
 
-        SampleDataFetcher mockFetcher = Mockito.mock(SampleDataFetcher.class);
-        Mockito.when(mockFetcher.fetchSampleData(Mockito.anyCollectionOf(String.class))).then(new Answer<Object>() {
+        BSPSampleDataFetcher mockFetcher = Mockito.mock(BSPSampleDataFetcher.class);
+        Mockito.when(mockFetcher.fetchSamplesFromBSP(Mockito.anyCollectionOf(String.class))).then(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 Collection<String> sampleIds = (Collection<String>) invocationOnMock.getArguments()[0];
 
                 Map<String, SampleData> sampleIdDataMap = new HashMap<>();
 
-                for(String sampleId:sampleIds) {
+                for (String sampleId : sampleIds) {
 
                     sampleIdDataMap.put(sampleId,
-                            new BSPSampleDTOStub(Collections.singletonMap(BSPSampleSearchColumn.SAMPLE_ID,sampleId)));
+                            new BSPSampleDTOStub(Collections.singletonMap(BSPSampleSearchColumn.SAMPLE_ID, sampleId)));
 
                 }
 
@@ -228,9 +229,8 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
 
         productOrderSampleSet.add(nonExomesample);
 
-
-        SampleDataFetcher mockFetcher = Mockito.mock(SampleDataFetcher.class);
-        Mockito.when(mockFetcher.fetchSampleData(Mockito.anyCollectionOf(String.class))).then(new Answer<Object>() {
+        BSPSampleDataFetcher mockFetcher = Mockito.mock(BSPSampleDataFetcher.class);
+        Mockito.when(mockFetcher.fetchSamplesFromBSP(Mockito.anyCollectionOf(String.class))).then(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 Collection<String> sampleIds = (Collection<String>) invocationOnMock.getArguments()[0];
@@ -267,7 +267,7 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
     }
 
 
-    private class BSPSampleDTOStub extends BSPSampleDTO{
+    private class BSPSampleDTOStub extends BSPSampleDTO {
 
         public BSPSampleDTOStub() {
             super();

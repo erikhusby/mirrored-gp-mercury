@@ -424,7 +424,6 @@ public class BSPSampleDTO implements SampleData {
         this.ffpeStatus = FFPEStatus.fromBoolean(ffpeStatus);
     }
 
-    @Override
     public List<String> getPlasticBarcodes() {
         if (plasticBarcodes == null) {
             BSPSampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
@@ -449,7 +448,6 @@ public class BSPSampleDTO implements SampleData {
      *
      * @return the appropriate barcode for a Mercury LabVessel
      */
-    @Override
     public String getBarcodeForLabVessel() {
         String manufacturerBarcode = null;
         String bspLabelBarcode = null;
