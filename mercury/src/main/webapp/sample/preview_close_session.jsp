@@ -7,6 +7,32 @@
 <c:set var="session" value="${actionBean.selectedSession}"/>
 <jsp:include page="<%= ManifestAccessioningActionBean.SCAN_SAMPLE_RESULTS_PAGE%>"/>
 
+<script type="text/javascript">
+    $j(document).ready(function () {
+
+        $j('#errorList').dataTable({
+            "oTableTools": ttExportDefines,
+            "aaSorting": [
+                [1, 'asc']
+            ],
+            "asStripeClasses": [ '' ],
+            "aoColumns": [
+                {"bSortable": true}, // Error
+                {"bSortable": true, "sType": "date"} // Date
+            ]
+        }).fnSetFilteringDelay(300);
+
+        $j('#messageList').dataTable({
+            "oTableTools": ttExportDefines,
+            "asStripeClasses": [ '' ],
+            "aoColumns": [
+                {"bSortable": false} // Message
+            ]
+        }).fnSetFilteringDelay(300);
+    });
+
+</script>
+
 <div id="chooseExistingSession">
     <%-- Manifest errors --%>
     <c:choose>
