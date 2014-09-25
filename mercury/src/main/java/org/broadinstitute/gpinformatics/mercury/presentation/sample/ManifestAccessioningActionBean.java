@@ -5,6 +5,7 @@ import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.FileBean;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
+import net.sourceforge.stripes.action.OnwardResolution;
 import net.sourceforge.stripes.action.RedirectResolution;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
@@ -96,21 +97,20 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
 
     @HandlesEvent(LOAD_SESSION_ACTION)
     public Resolution loadSession() {
-        RedirectResolution direction;
+        OnwardResolution direction;
         switch (selectedSession.getStatus()) {
         case OPEN:
             direction = new RedirectResolution(REVIEW_UPLOAD_PAGE);
-        break;
+            break;
         case ACCESSIONING:
             direction = new RedirectResolution(ACCESSION_SAMPLE_PAGE);
-        break;
+            break;
         case COMPLETED:
-            // TODO this needs to be changed to the appropriate PAGE
-            direction = new RedirectResolution(VIEW_UPLOAD_ACTION);
-        break;
+            direction = new ForwardResolution(getClass(), START_A_SESSION_ACTION);
+            break;
         default:
-            addGlobalValidationError("Unable to determine the what to do with this session");
-            direction = new RedirectResolution(VIEW_UPLOAD_ACTION);
+            addGlobalValidationError("Unable to determine what to do with this session");
+            direction = new RedirectResolution(REVIEW_UPLOAD_PAGE);
         }
         direction.addParameter(SELECTED_SESSION_ID, selectedSession.getManifestSessionId());
 
@@ -196,16 +196,14 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     @HandlesEvent(CLOSE_SESSION_ACTION)
     public Resolution closeSession() {
 
-        Resolution result = new ForwardResolution(getClass(), LOAD_SESSION_ACTION);
-
         try {
             manifestSessionEjb.closeSession(selectedSessionId);
             addMessage("The session {0} has successfully been marked as completed", selectedSession.getSessionName());
         } catch (Exception e) {
             addGlobalValidationError(e.getMessage());
-            result = getContext().getSourcePageResolution();
+            return getContext().getSourcePageResolution();
         }
-        return result;
+        return new ForwardResolution(getClass(), LOAD_SESSION_ACTION);
     }
 
     public Long getSelectedSessionId() {

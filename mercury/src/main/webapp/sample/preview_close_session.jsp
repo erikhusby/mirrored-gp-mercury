@@ -72,8 +72,9 @@
 
 </div>
 
-<stripes:form beanclass="${actionBean.class.name}" partial="true">
+<stripes:form beanclass="${actionBean.class.name}">
     <div class="actionButtons">
+        <stripes:hidden name="selectedSessionId" id="selectedSessionId"/>
         <stripes:submit name="<%= ManifestAccessioningActionBean.CLOSE_SESSION_ACTION %>"
                         value="Complete Session" class="btn"/>
         <stripes:link beanclass="${actionBean.class.name}">
