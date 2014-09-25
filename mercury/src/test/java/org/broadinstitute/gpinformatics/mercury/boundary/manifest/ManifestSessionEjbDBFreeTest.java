@@ -753,7 +753,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestStatus sessionStatus = holder.ejb.getSessionStatus(ARBITRARY_MANIFEST_SESSION_ID);
 
         assertThat(sessionStatus.getErrorMessages(), is(empty()));
-        assertThat(sessionStatus.getSamplesEligibleInManifest(), is(20));
+        assertThat(sessionStatus.getSamplesEligibleForAccessioningInManifest(), is(20));
         assertThat(sessionStatus.getSamplesSuccessfullyScanned(), is(20));
         assertThat(sessionStatus.getSamplesInManifest(), is(20));
     }
@@ -769,7 +769,7 @@ public class ManifestSessionEjbDBFreeTest {
 
         assertThat(sessionStatus.getErrorMessages(), hasSize(1));
         assertThat(sessionStatus, hasError(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID));
-        assertThat(sessionStatus.getSamplesEligibleInManifest(), is(20));
+        assertThat(sessionStatus.getSamplesEligibleForAccessioningInManifest(), is(20));
         assertThat(sessionStatus.getSamplesSuccessfullyScanned(), is(20));
         assertThat(sessionStatus.getSamplesInManifest(), is(21));
     }
@@ -784,7 +784,7 @@ public class ManifestSessionEjbDBFreeTest {
 
         assertThat(sessionStatus.getErrorMessages(), hasSize(1));
         assertThat(sessionStatus, hasError(ManifestRecord.ErrorStatus.MISSING_SAMPLE));
-        assertThat(sessionStatus.getSamplesEligibleInManifest(), is(21));
+        assertThat(sessionStatus.getSamplesEligibleForAccessioningInManifest(), is(21));
         assertThat(sessionStatus.getSamplesSuccessfullyScanned(), is(20));
         assertThat(sessionStatus.getSamplesInManifest(), is(21));
     }
@@ -803,7 +803,7 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(sessionStatus.getErrorMessages(), hasSize(2));
         assertThat(sessionStatus, hasError(ManifestRecord.ErrorStatus.MISSING_SAMPLE));
         assertThat(sessionStatus, hasError(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID));
-        assertThat(sessionStatus.getSamplesEligibleInManifest(), is(21));
+        assertThat(sessionStatus.getSamplesEligibleForAccessioningInManifest(), is(21));
         assertThat(sessionStatus.getSamplesSuccessfullyScanned(), is(20));
         assertThat(sessionStatus.getSamplesInManifest(), is(22));
     }
@@ -819,7 +819,7 @@ public class ManifestSessionEjbDBFreeTest {
 
         assertThat(sessionStatus.getErrorMessages(), hasSize(1));
         assertThat(sessionStatus, hasError(ManifestRecord.ErrorStatus.MISMATCHED_GENDER));
-        assertThat(sessionStatus.getSamplesEligibleInManifest(), is(21));
+        assertThat(sessionStatus.getSamplesEligibleForAccessioningInManifest(), is(21));
         assertThat(sessionStatus.getSamplesSuccessfullyScanned(), is(21));
         assertThat(sessionStatus.getSamplesInManifest(), is(21));
     }

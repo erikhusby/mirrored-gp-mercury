@@ -35,8 +35,8 @@ import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.broadinstitute.gpinformatics.infrastructure.matchers.ExceptionMessageMatcher.containsMessage;
 import static org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestEventMatcher.hasEventError;
-import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -383,7 +383,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         // Deliberately missed one scan.
         assertThat(sessionStatus.getSamplesSuccessfullyScanned(), is(NUM_RECORDS_IN_SPREADSHEET - 1));
         // All records (except for one) have been scanned so there is only 1 considered eligible for scanning
-        assertThat(sessionStatus.getSamplesEligibleInManifest(), is(1));
+        assertThat(sessionStatus.getSamplesEligibleForAccessioningInManifest(), is(1));
         assertThat(sessionStatus.getErrorMessages(), is(not(empty())));
         assertThat(sessionStatus.getErrorMessages(), hasItem(ManifestRecord.ErrorStatus.MISSING_SAMPLE
                 .formatMessage(Metadata.Key.SAMPLE_ID, firstUploadedOmittedScan)));
@@ -465,8 +465,8 @@ public class ManifestSessionContainerTest extends Arquillian {
                     .validateSourceTubeForTransfer(closedSession.getManifestSessionId(), firstUploadedOmittedScan);
             Assert.fail();
         } catch (Exception e) {
-            assertThat(e.getMessage(),
-                    containsString(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE.getBaseMessage()));
+            assertThat(e,
+                    containsMessage(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE.getBaseMessage()));
         }
         String omittedScanSampleKey = sourceSampleToMercurySample.get(firstUploadedOmittedScan).getSampleKey();
         String omittedScanSampleLabel = sourceSampleToTargetVessel.get(firstUploadedOmittedScan).getLabel();
@@ -483,8 +483,8 @@ public class ManifestSessionContainerTest extends Arquillian {
             manifestSessionEjb.transferSample(closedSession.getManifestSessionId(), firstUploadedOmittedScan,
                     omittedScanSampleKey, omittedScanSampleLabel, testUser);
         } catch (Exception e) {
-            assertThat(e.getMessage(),
-                    containsString(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE.getBaseMessage()));
+            assertThat(e,
+                    containsMessage(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE.getBaseMessage()));
         }
 
         /*
@@ -598,8 +598,7 @@ public class ManifestSessionContainerTest extends Arquillian {
                 manifestSessionEjb.accessionScan(sessionOfScan2.getManifestSessionId(), sampleId);
                 Assert.fail();
             } catch (Exception e) {
-                assertThat(e.getMessage(), containsString(
-                        ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getBaseMessage()));
+                assertThat(e, containsMessage(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getBaseMessage()));
             }
         }
 
@@ -630,7 +629,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         assertThat(sessionStatus2.getSamplesSuccessfullyScanned(),
                 is(NUM_RECORDS_IN_SPREADSHEET - NUM_DUPLICATES_IN_SESSION_2));
         // All records have been scanned so there are none currently eligible for scanning
-        assertThat(sessionStatus2.getSamplesEligibleInManifest(), is(0));
+        assertThat(sessionStatus2.getSamplesEligibleForAccessioningInManifest(), is(0));
         assertThat(sessionStatus2.getErrorMessages(),
                 hasSize(NUM_DUPLICATES_IN_SESSION_2 + NUM_MISMATCHED_GENDERS_IN_SESSION_2));
 
@@ -698,7 +697,7 @@ public class ManifestSessionContainerTest extends Arquillian {
                         sourceSampleKey, sourceSampleLabel, testUser);
                 Assert.fail();
             } catch (TubeTransferException e) {
-                assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET.getBaseMessage()));
+                assertThat(e, containsMessage(ManifestRecord.ErrorStatus.INVALID_TARGET.getBaseMessage()));
             }
         }
 
@@ -725,7 +724,7 @@ public class ManifestSessionContainerTest extends Arquillian {
                         sourceSampleKey, sourceSampleLabel, testUser);
                 Assert.fail();
             } catch (TubeTransferException e) {
-                assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET.getBaseMessage()));
+                assertThat(e, containsMessage(ManifestRecord.ErrorStatus.INVALID_TARGET.getBaseMessage()));
             }
         }
 
@@ -737,8 +736,8 @@ public class ManifestSessionContainerTest extends Arquillian {
                 manifestSessionEjb
                         .validateSourceTubeForTransfer(closedSession2.getManifestSessionId(), sourceSampleToTest);
             } catch (Exception e) {
-                assertThat(e.getMessage(), containsString(
-                        ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE.getBaseMessage()));
+                assertThat(e, containsMessage(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE
+                        .getBaseMessage()));
             }
         }
     }

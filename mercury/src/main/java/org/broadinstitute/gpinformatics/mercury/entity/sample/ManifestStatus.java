@@ -28,7 +28,7 @@ public class ManifestStatus {
         return samplesInManifest;
     }
 
-    public int getSamplesEligibleInManifest() {
+    public int getSamplesEligibleForAccessioningInManifest() {
         return samplesEligibleInManifest;
     }
 

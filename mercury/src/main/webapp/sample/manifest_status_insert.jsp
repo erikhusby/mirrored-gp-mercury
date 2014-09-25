@@ -7,7 +7,7 @@
     <c:when test="${actionBean.scanErrors != null}">
 
         <div id="scanErrorsBlock" class="alert alert-error">
-            ${actionBean.scanErrors}
+                ${actionBean.scanErrors}
         </div>
     </c:when>
     <c:otherwise>
@@ -22,9 +22,9 @@
 <fieldset width="300px">
     <legend>Scan Summary</legend>
     <div style="margin-left: 20px">
-    <p>Samples successfully scanned: ${actionBean.statusValues.samplesSuccessfullyScanned}
-    <p>Samples eligible in manifest: ${actionBean.statusValues.samplesEligibleInManifest}
+        <p>Samples successfully scanned: ${actionBean.statusValues.samplesSuccessfullyScanned}</p>
+        <p>Samples eligible for accessioning in manifest: ${actionBean.statusValues.samplesEligibleForAccessioningInManifest}</p>
         <p>Samples quarantined: ${actionBean.statusValues.samplesQuarantined}</p>
-    <p>Samples in manifest: ${actionBean.statusValues.samplesInManifest}
+        <p>Samples in manifest: ${actionBean.statusValues.samplesInManifest}</p>
     </div>
 </fieldset>
