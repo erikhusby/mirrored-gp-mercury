@@ -353,32 +353,24 @@ public class ManifestSession implements Updatable {
         List<ManifestRecord> nonQuarantinedRecords = getNonQuarantinedRecords();
 
         Set<String> manifestMessages = new HashSet<>();
-        for (ManifestEvent manifestEvent : getManifestEvents()) {
-            manifestMessages.add(manifestEvent.getMessage());
-        }
 
+        for (ManifestRecord manifestRecord : nonQuarantinedRecords) {
+            if (manifestRecord.getStatus() != ManifestRecord.Status.SCANNED) {
+                manifestMessages.add(ManifestRecord.ErrorStatus.MISSING_SAMPLE
+                        .formatMessage(Metadata.Key.SAMPLE_ID, manifestRecord.getSampleId()));
+            }
+        }
         int eligibleSize = 0;
 
-        for(ManifestRecord candidateRecord:nonQuarantinedRecords) {
-            if(candidateRecord.getStatus() == ManifestRecord.Status.UPLOAD_ACCEPTED) {
+        for (ManifestRecord candidateRecord : nonQuarantinedRecords) {
+            if (candidateRecord.getStatus() == ManifestRecord.Status.UPLOAD_ACCEPTED) {
                 eligibleSize++;
             }
         }
 
-
-        ManifestStatus sessionStatus = new ManifestStatus(getRecords().size(), eligibleSize,
+        return new ManifestStatus(getRecords().size(), eligibleSize,
                 getRecordsByStatus(ManifestRecord.Status.SCANNED).size(), manifestMessages,
                 getQuarantinedRecords().size());
-
-        for (ManifestRecord manifestRecord : nonQuarantinedRecords) {
-            ManifestRecord.Status manifestRecordStatus = manifestRecord.getStatus();
-
-            if (manifestRecordStatus != ManifestRecord.Status.SCANNED) {
-                sessionStatus.addError(ManifestRecord.ErrorStatus.MISSING_SAMPLE
-                        .formatMessage(Metadata.Key.SAMPLE_ID, manifestRecord.getSampleId()));
-            }
-        }
-        return sessionStatus;
     }
 
     /**

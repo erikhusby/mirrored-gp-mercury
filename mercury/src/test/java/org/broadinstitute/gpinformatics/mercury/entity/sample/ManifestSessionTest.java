@@ -187,8 +187,7 @@ public class ManifestSessionTest {
         assertThat(manifestStatus.getSamplesEligibleForAccessioningInManifest(), is(0));
         assertThat(manifestStatus.getSamplesSuccessfullyScanned(), is(NUM_SAMPLES_IN_MANIFEST));
 
-        assertThat(manifestStatus.getErrorMessages(), hasSize(1));
-        assertThat(manifestStatus, hasError(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID));
+        assertThat(manifestStatus.getErrorMessages(), hasSize(0));
     }
 
     public void testValidationForGenderMismatchSample() {
@@ -200,8 +199,7 @@ public class ManifestSessionTest {
         assertThat(manifestStatus.getSamplesEligibleForAccessioningInManifest(), is(0));
         assertThat(manifestStatus.getSamplesSuccessfullyScanned(), is(NUM_SAMPLES_IN_MANIFEST + 1));
 
-        assertThat(manifestStatus.getErrorMessages(), hasSize(1));
-        assertThat(manifestStatus, hasError(ManifestRecord.ErrorStatus.MISMATCHED_GENDER));
+        assertThat(manifestStatus.getErrorMessages(), hasSize(0));
     }
 
     private static void addRecord(ManifestSession session, ManifestRecord.ErrorStatus errorStatus,
@@ -219,9 +217,8 @@ public class ManifestSessionTest {
         assertThat(manifestStatus.getSamplesEligibleForAccessioningInManifest(), is(1));
         assertThat(manifestStatus.getSamplesSuccessfullyScanned(), is(NUM_SAMPLES_IN_MANIFEST));
 
-        assertThat(manifestStatus.getErrorMessages(), hasSize(2));
+        assertThat(manifestStatus.getErrorMessages(), hasSize(1));
         assertThat(manifestStatus, hasError(ManifestRecord.ErrorStatus.MISSING_SAMPLE));
-        assertThat(manifestStatus, hasError(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID));
     }
 
     public void testValidationForUnscannedAndDuplicatesAndMismatchedGender() {
@@ -235,11 +232,8 @@ public class ManifestSessionTest {
         assertThat(manifestStatus.getSamplesEligibleForAccessioningInManifest(), is(1));
         assertThat(manifestStatus.getSamplesSuccessfullyScanned(), is(NUM_SAMPLES_IN_MANIFEST + 1));
 
-        assertThat(manifestStatus.getErrorMessages(), hasSize(3));
+        assertThat(manifestStatus.getErrorMessages(), hasSize(1));
         assertThat(manifestStatus, hasError(ManifestRecord.ErrorStatus.MISSING_SAMPLE));
-        assertThat(manifestStatus, hasError(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID));
-        assertThat(manifestStatus, hasError(ManifestRecord.ErrorStatus.MISMATCHED_GENDER));
-
     }
 
     public void testValidationForUploadAccepted() {

@@ -40,10 +40,6 @@ public class ManifestStatus {
         return samplesQuarantined;
     }
 
-    public void addError(String errorMessage) {
-        errorMessages.add(errorMessage);
-    }
-
     public Set<String> getErrorMessages() {
         return errorMessages;
     }

@@ -34,6 +34,38 @@
 </script>
 
 <div id="chooseExistingSession">
+
+    <%-- ManifestStatus error messages, these will become quarantine ManifestEvents if the user proceeds to close
+         the session without resolving them. --%>
+    <c:choose>
+        <c:when test="${not empty actionBean.statusValues.errorMessages}">
+            <div id="">
+                If the following messages are not resolved before clicking Complete Session, these samples will
+                be quarantined and a deviation will need to be created before any further work will be possible.
+            </div>
+            <table id="messageList" class="table simple">
+                <thead>
+                <tr>
+                    <th>Messages</th>
+                </tr>
+                </thead>
+                <tbody>
+                <c:forEach items="${actionBean.statusValues.errorMessages}" var="message">
+                <tr>
+                    <td>
+                            ${message}
+                    </td>
+                </tr>
+                </c:forEach>
+            </table>
+        </c:when>
+        <c:otherwise>
+            <div id="no_manifest_status_warnings">
+                No warnings found.
+            </div>
+        </c:otherwise>
+    </c:choose>
+
     <%-- Manifest errors --%>
     <c:choose>
         <c:when test="${not empty actionBean.selectedSession.manifestEvents}">
@@ -64,37 +96,6 @@
         </c:otherwise>
     </c:choose>
 
-    <%-- ManifestStatus error messages, these will become quarantine ManifestEvents if the user proceeds to close
-         the session without resolving them. --%>
-    <c:choose>
-        <c:when test="${not empty actionBean.statusValues.errorMessages}">
-            <div id="">
-                If the following messages are not resolved before clicking Complete Session, these samples will
-                be quarantined and a deviation will need to be created before any further work will be possible
-                with these samples.
-            </div>
-            <table id="messageList" class="table simple">
-                <thead>
-                <tr>
-                    <th>Messages</th>
-                </tr>
-                </thead>
-                <tbody>
-                <c:forEach items="${actionBean.statusValues.errorMessages}" var="message">
-                <tr>
-                    <td>
-                            ${message}
-                    </td>
-                </tr>
-                </c:forEach>
-            </table>
-        </c:when>
-        <c:otherwise>
-            <div id="no_manifest_status_warnings">
-                No warnings found.
-            </div>
-        </c:otherwise>
-    </c:choose>
 
 </div>
 
