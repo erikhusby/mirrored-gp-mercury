@@ -37,7 +37,8 @@ public class IceJaxbBuilder {
     private String catchCleanupPlateBarcode;
     private String catchEnrichRackBarcode;
     private List<String> catchEnrichTubeBarcodes = new ArrayList<>();
-    private String catchPicoBarcode;
+    private String catchPico1Barcode;
+    private String catchPico2Barcode;
     private PlateCherryPickEvent icePoolingTransfer;
     private PlateTransferEventType iceSPRIConcentration;
     private PlateTransferEventType ice1stHybridization;
@@ -49,7 +50,8 @@ public class IceJaxbBuilder {
     private PlateTransferEventType iceCatchCleanup;
     private PlateEventType iceCatchEnrichmentSetup;
     private PlateTransferEventType iceCatchEnrichmentCleanup;
-    private PlateTransferEventType iceCatchPico;
+    private PlateTransferEventType iceCatchPico1;
+    private PlateTransferEventType iceCatchPico2;
     private PlateCherryPickEvent icePoolTest;
 
     public IceJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory, String testPrefix,
@@ -169,10 +171,15 @@ public class IceJaxbBuilder {
         bettaLimsMessageTestFactory.addMessage(messageList, iceCatchEnrichmentCleanup);
 
         // IceCatchPico
-        catchPicoBarcode = testPrefix + "IcePico";
-        iceCatchPico = bettaLimsMessageTestFactory.buildRackToPlate("IceCatchPico",
-                catchEnrichRackBarcode, catchEnrichSparseTubeBarcodes, catchPicoBarcode);
-        bettaLimsMessageTestFactory.addMessage(messageList, iceCatchPico);
+        // Pico plate barcodes must be all numeric to be accepted by the Varioskan parser
+        catchPico1Barcode = testPrefix + "881";
+        iceCatchPico1 = bettaLimsMessageTestFactory.buildRackToPlate("IceCatchPico",
+                catchEnrichRackBarcode, catchEnrichSparseTubeBarcodes, catchPico1Barcode);
+        bettaLimsMessageTestFactory.addMessage(messageList, iceCatchPico1);
+        catchPico2Barcode = testPrefix + "882";
+        iceCatchPico2 = bettaLimsMessageTestFactory.buildRackToPlate("IceCatchPico",
+                catchEnrichRackBarcode, catchEnrichSparseTubeBarcodes, catchPico2Barcode);
+        bettaLimsMessageTestFactory.addMessage(messageList, iceCatchPico2);
 
         return this;
     }
@@ -221,8 +228,12 @@ public class IceJaxbBuilder {
         return catchEnrichTubeBarcodes;
     }
 
-    public String getCatchPicoBarcode() {
-        return catchPicoBarcode;
+    public String getCatchPico1Barcode() {
+        return catchPico1Barcode;
+    }
+
+    public String getCatchPico2Barcode() {
+        return catchPico2Barcode;
     }
 
     public PlateCherryPickEvent getIcePoolingTransfer() {
@@ -273,8 +284,8 @@ public class IceJaxbBuilder {
         return iceCatchEnrichmentCleanup;
     }
 
-    public PlateTransferEventType getIceCatchPico() {
-        return iceCatchPico;
+    public PlateTransferEventType getIceCatchPico1() {
+        return iceCatchPico1;
     }
 
     public String getBaitTube1Barcode() {
