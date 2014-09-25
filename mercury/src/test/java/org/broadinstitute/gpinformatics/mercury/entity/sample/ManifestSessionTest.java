@@ -242,12 +242,12 @@ public class ManifestSessionTest {
 
     }
 
-    public void testValidationForUplaodAccepted() {
+    public void testValidationForUploadAccepted() {
         setAllManifestRecordStatus(ManifestRecord.Status.UPLOAD_ACCEPTED);
 
         ManifestStatus maniStatus = session.generateSessionStatusForClose();
 
-        assertThat(maniStatus.getErrorMessages(), Matchers.hasSize(3));
+        assertThat(maniStatus.getErrorMessages(), hasSize(3));
         assertThat(maniStatus.getSamplesInManifest(), is(NUM_SAMPLES_IN_MANIFEST));
         assertThat(maniStatus.getSamplesSuccessfullyScanned(), is(0));
         assertThat(maniStatus.getSamplesEligibleForAccessioningInManifest(), is(NUM_SAMPLES_IN_MANIFEST));
@@ -279,7 +279,7 @@ public class ManifestSessionTest {
             ManifestRecord recordForTransfer = session.findRecordForTransfer(testRecord.getSampleId());
             Assert.fail();
         } catch (Exception e) {
-            assertThat(e.getMessage(), Matchers.containsString(ManifestRecord.ErrorStatus.SOURCE_ALREADY_TRANSFERRED.getBaseMessage()));
+            assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.SOURCE_ALREADY_TRANSFERRED.getBaseMessage()));
         }
     }
 
