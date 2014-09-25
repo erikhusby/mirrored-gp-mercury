@@ -125,8 +125,6 @@ public class ManifestTubeTransferActionBean extends CoreActionBean {
 
     /**
      * handles viewing the page
-     *
-     * @return
      */
     @DefaultHandler
     public Resolution view() {
@@ -135,8 +133,6 @@ public class ManifestTubeTransferActionBean extends CoreActionBean {
 
     /**
      * Handles recording the actual transfer from the collaborator source tube to mercury vessel
-     *
-     * @return
      */
     @HandlesEvent(RECORD_TRANSFER_ACTION)
     public Resolution recordTransfer() {

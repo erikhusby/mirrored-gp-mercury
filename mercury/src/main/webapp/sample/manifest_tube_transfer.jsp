@@ -29,25 +29,35 @@
 
             $j("#source").blur(function () {
                 if ($j("#source").val()) {
+                    clearErrorsAndMessages();
                     validateSource();
                 }
             });
             $j("#mercurySample").blur(function () {
                 if ($j("#mercurySample").val()) {
+                    clearErrorsAndMessages();
                     validateSample();
                 }
             });
             $j("#mercuryLabVessel").blur(function () {
                 if ($j("#mercuryLabVessel").val()) {
+                    clearErrorsAndMessages();
                     validateVessel();
                 }
             });
         });
 
+        // Clear out global errors and warnings after blurring one of the sample id or vessel input fields.
+        function clearErrorsAndMessages() {
+            $j(".alert, .alert-error").removeClass("alert alert-error").empty();
+        }
+
         /**
          * Makes an Ajax call to the action bean to execute the validation on the entered source sample
          */
         function validateSource() {
+            // Select the selected radio button.
+            var activeSession = $j("input[name='activeSessionId']:checked").val();
 
             $j.ajax({
                 url: "${ctxpath}/sample/manifestTubeTransfer.action",
@@ -133,7 +143,6 @@
 <stripes:layout-component name="content">
     <span>Choose an existing session to record a tube transfer</span>
     <stripes:form beanclass="${actionBean.class.name}" id="startNewSessionForm">
-        <stripes:hidden name="activeSessionId" id="activeSessionId"/>
         <div id="chooseExistingSession">
             <table id="sessionList" class="table simple">
                 <thead>
