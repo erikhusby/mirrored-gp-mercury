@@ -77,27 +77,6 @@
 
     <security-constraint>
         <web-resource-collection>
-            <!-- mlc this is a straight up hack to force JBoss 7.1.1 to create a SecurityConstraint so
-                 we can do programmatic authentication.  The url-pattern is a dummy that we intend never to
-                 match.  see
-
-                 https://community.jboss.org/thread/161511
-            -->
-            <web-resource-name>SecuredArea</web-resource-name>
-            <url-pattern>/dummy-url/*</url-pattern>
-        </web-resource-collection>
-        <!--  for SSL forwarding, we could have done it using the forwarding that is specified in the JBoss
-            configuration.  If we did, we would have to specify the roles for auth constraint (all applicable roles) and
-            implement a user-data-constraint tag in here with a transport guarantee of CONFIDENTIAL.  Since CLIA needs
-            the SSL forwarding but research (currently) does not, utilizing this approach would have been an
-            unnecessary impact to the research implementation.  To get around this, a Security filter was added
-            to redirect unsecured traffic to the SSL port-->
-        <auth-constraint>
-        </auth-constraint>
-    </security-constraint>
-
-    <security-constraint>
-        <web-resource-collection>
             <web-resource-name>SecuredRestArea</web-resource-name>
             <url-pattern>/rest/crspinfo/*</url-pattern>
             <http-method>GET</http-method>
