@@ -18,7 +18,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
-import org.hamcrest.Matchers;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -699,7 +698,7 @@ public class ManifestSessionContainerTest extends Arquillian {
                         sourceSampleKey, sourceSampleLabel, testUser);
                 Assert.fail();
             } catch (TubeTransferException e) {
-                assertThat(e.getMessage(), Matchers.containsString(ManifestRecord.ErrorStatus.INVALID_TARGET.getBaseMessage()));
+                assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET.getBaseMessage()));
             }
         }
 
@@ -726,7 +725,7 @@ public class ManifestSessionContainerTest extends Arquillian {
                         sourceSampleKey, sourceSampleLabel, testUser);
                 Assert.fail();
             } catch (TubeTransferException e) {
-                assertThat(e.getMessage(), Matchers.containsString(ManifestRecord.ErrorStatus.INVALID_TARGET.getBaseMessage()));
+                assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET.getBaseMessage()));
             }
         }
 
@@ -747,6 +746,7 @@ public class ManifestSessionContainerTest extends Arquillian {
     /**
      * Creates useful test data for manual UI testing.
      * Keep it disabled in source control.
+     *
      * @throws Exception
      */
     @Test(groups = TestGroups.STANDARD, enabled = false)
@@ -755,12 +755,13 @@ public class ManifestSessionContainerTest extends Arquillian {
         manifestSessionDao.persist(manifestSessionI);
         manifestSessionDao.flush();
 
-        assertThat(manifestSessionI, is(Matchers.notNullValue()));
+        assertThat(manifestSessionI, is(notNullValue()));
 
         logger.info(String.format("The session ID is %d with a name of %s", manifestSessionI.getManifestSessionId(),
                 manifestSessionI.getSessionName()));
         for (ManifestRecord manifestRecord : manifestSessionI.getRecords()) {
-            logger.info(String.format("For session, Record %d has a sample ID of %s with available Mercury Sample of %s and " +
+            logger.info(String.format(
+                    "For session, Record %d has a sample ID of %s with available Mercury Sample of %s and " +
                     "available lab vessel of %s", manifestRecord.getManifestRecordId(),
                     manifestRecord.getSampleId(),
                     sourceSampleToMercurySample.get(manifestRecord.getSampleId()).getSampleKey(),

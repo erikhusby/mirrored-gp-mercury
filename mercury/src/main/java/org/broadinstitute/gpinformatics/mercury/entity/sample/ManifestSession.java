@@ -460,8 +460,7 @@ public class ManifestSession implements Updatable {
     public ManifestRecord findRecordForTransfer(String sourceForTransfer) {
 
         if (StringUtils.isBlank(sourceForTransfer)) {
-            throw new TubeTransferException("An identifier for the sample ID is required for " +
-                                            "the transfer to a lab vessel");
+            throw new TubeTransferException("A collaborator sample ID is required for the transfer to a lab vessel");
         }
 
         ManifestRecord recordForTransfer = findRecordByCollaboratorId(sourceForTransfer);
@@ -476,8 +475,7 @@ public class ManifestSession implements Updatable {
                     Metadata.Key.SAMPLE_ID, sourceForTransfer);
         }
 
-        if (!EnumSet.of(ManifestRecord.Status.ACCESSIONED,
-                ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE).contains(recordForTransfer.getStatus())) {
+        if (ManifestRecord.Status.ACCESSIONED != recordForTransfer.getStatus()) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.NOT_READY_FOR_TUBE_TRANSFER,
                     Metadata.Key.SAMPLE_ID, sourceForTransfer);
         }

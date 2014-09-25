@@ -222,7 +222,7 @@ public class ManifestTubeTransferActionBean extends CoreActionBean {
     }
 
     /**
-     * validateSource contains the code for executing and handling the source tube validation
+     * Handles source tube validation
      *
      * @return any error messages if an exception occurs
      */
