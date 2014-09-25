@@ -22,7 +22,7 @@
                     modal: true,
                     autoOpen: false,
                     width: 600,
-                    position: {my: "center top", at: "center top", of: windowGPLI}
+                    position: {my: "center top", at: "center top", of: window}
                 });
 
                 $j('#previewSessionClose').click(function (event) {
@@ -30,7 +30,6 @@
                     showPreviewSessionCloseDialog();
                     $j('#previewSessionCloseDialog').dialog("open");
                 });
-
             });
 
             function performAccessionScan() {
@@ -44,6 +43,7 @@
                     datatype: 'html',
                     success: function (html) {
                         $j('#scanResults').html(html);
+                        $j('#accessionSourceText').val('')
                     }
                 });
             }
@@ -87,7 +87,6 @@
                         <stripes:text id="accessionSourceText" name="accessionSource"
                                       class="defaultText input-xlarge"
                                       maxlength="255" title="Enter the clinical sample ID"/>
-                        <a href="javascript:performAccessionScan()">Scan</a>
                     </div>
                 </div>
                 <div class="actionButtons">
