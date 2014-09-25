@@ -800,21 +800,7 @@ public class BaseEventTest {
                 new BSPSampleDataFetcher() {
                     @Override
                     public Map<String, BSPSampleDTO> fetchSamplesFromBSP(@Nonnull Collection<String> sampleNames) {
-                        Map<String, BSPSampleDTO> mapSampleIdToDto = new HashMap<>();
-                        Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>() {{
-                            put(BSPSampleSearchColumn.PRIMARY_DISEASE, "Cancer");
-                            put(BSPSampleSearchColumn.LSID, "org.broad:SM-1234");
-                            put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA Genomic");
-                            put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "4321");
-                            put(BSPSampleSearchColumn.SPECIES, "Homo Sapiens");
-                            put(BSPSampleSearchColumn.PARTICIPANT_ID, "PT-1234");
-                        }};
-                        for (String sampleName : sampleNames) {
-                            Map<BSPSampleSearchColumn, String> dataMapCopy = new HashMap<>(dataMap);
-                            dataMapCopy.put(BSPSampleSearchColumn.SAMPLE_ID, sampleName);
-                            mapSampleIdToDto.put(sampleName, new BSPSampleDTO(dataMapCopy));
-                        }
-                        return mapSampleIdToDto;
+                       return mapSampleNameToDto;
                     }
                 },
                 new ControlDao() {
@@ -824,7 +810,8 @@ public class BaseEventTest {
                     }
                 },
                 new SequencingTemplateFactory(),
-                productOrderDao
+                productOrderDao,
+                new CrspControlsTestUtils().getMockResearchProjectDao()
         );
     }
 }
