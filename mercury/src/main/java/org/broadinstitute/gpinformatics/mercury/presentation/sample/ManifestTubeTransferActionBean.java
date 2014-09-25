@@ -120,7 +120,7 @@ public class ManifestTubeTransferActionBean extends CoreActionBean {
 
     @After(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, RECORD_TRANSFER_ACTION})
     public void initSessionChoices() {
-        availableSessions = manifestSessionDao.findClosedSessions();
+        availableSessions = manifestSessionDao.findSessionsEligibleForTubeTransfer();
     }
 
     /**

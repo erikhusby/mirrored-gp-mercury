@@ -19,8 +19,10 @@ import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.hibernate.annotations.Formula;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -88,6 +90,11 @@ public class ManifestSession implements Updatable {
 
     @Embedded
     private UpdateData updateData = new UpdateData();
+
+    @NotAudited
+    @Formula("(select count(*) from mercury.manifest_record where manifest_record.status != 'SAMPLE_TRANSFERRED_TO_TUBE'" +
+             " and manifest_record.manifest_session_id = manifest_session_id)")
+    private int tubesRemainingToBeTransferred;
 
     /**
      * For JPA.

@@ -320,7 +320,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         List<ManifestSession> openSessions = manifestSessionDao.findOpenSessions();
 
         assertThat(openSessions, hasItem(uploadedSession));
-        assertThat(manifestSessionDao.findClosedSessions(), not(hasItem(uploadedSession)));
+        assertThat(manifestSessionDao.findSessionsEligibleForTubeTransfer(), not(hasItem(uploadedSession)));
 
         String UPLOADED_COLLABORATOR_SESSION_1 = "03101067213";
         String UPLOADED_PATIENT_ID_SESSION_1 = "001-001";
@@ -419,7 +419,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         /*
          * Validate that the session is in the list of closed sessions.
          */
-        List<ManifestSession> closedSessions = manifestSessionDao.findClosedSessions();
+        List<ManifestSession> closedSessions = manifestSessionDao.findSessionsEligibleForTubeTransfer();
         assertThat(closedSessions, hasItem(closedSession));
 
         /*
@@ -534,7 +534,7 @@ public class ManifestSessionContainerTest extends Arquillian {
          * Check that the new upload is in the list of uploaded sessions and not in the list of closed sessions
          */
         List<ManifestSession> checkOpenSessions = manifestSessionDao.findOpenSessions();
-        List<ManifestSession> checkClosedSessions = manifestSessionDao.findClosedSessions();
+        List<ManifestSession> checkClosedSessions = manifestSessionDao.findSessionsEligibleForTubeTransfer();
 
         assertThat(checkOpenSessions, hasItem(uploadedSession2));
         assertThat(checkClosedSessions, not(hasItem(uploadedSession2)));
@@ -630,8 +630,7 @@ public class ManifestSessionContainerTest extends Arquillian {
                 is(NUM_RECORDS_IN_SPREADSHEET - NUM_DUPLICATES_IN_SESSION_2));
         // All records have been scanned so there are none currently eligible for scanning
         assertThat(sessionStatus2.getSamplesEligibleForAccessioningInManifest(), is(0));
-        assertThat(sessionStatus2.getErrorMessages(),
-                hasSize(NUM_DUPLICATES_IN_SESSION_2 + NUM_MISMATCHED_GENDERS_IN_SESSION_2));
+        assertThat(sessionStatus2.getErrorMessages(), is(empty()));
 
         /*
          * Mimic the user closing the session
@@ -664,7 +663,7 @@ public class ManifestSessionContainerTest extends Arquillian {
             }
         }
 
-        List<ManifestSession> closedSessions2 = manifestSessionDao.findClosedSessions();
+        List<ManifestSession> closedSessions2 = manifestSessionDao.findSessionsEligibleForTubeTransfer();
 
         assertThat(closedSessions2, hasItem(closedSession2));
 
