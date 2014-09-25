@@ -79,7 +79,7 @@ public class SystemRouter implements Serializable {
     private LabVesselDao         labVesselDao;
     private ControlDao           controlDao;
     private WorkflowLoader       workflowLoader;
-    private SampleDataFetcher sampleDataFetcher;
+    private SampleDataFetcher    sampleDataFetcher;
     private BSPExportsService    bspExportsService;
 
     SystemRouter() {
@@ -253,19 +253,19 @@ public class SystemRouter implements Serializable {
 
         List<String> controlCollaboratorSampleIds = new ArrayList<>();
         Collection<String> sampleNames = new ArrayList<>();
-        Map<String, SampleData> mapSampleNameToDto = null;
+        Map<String, SampleData> mapSampleNameToSampleData = null;
         if (!possibleControls.isEmpty()) {
             for (SampleInstanceV2 sampleInstance : possibleControls) {
                 sampleNames.add(sampleInstance.getEarliestMercurySampleName());
             }
-            mapSampleNameToDto = sampleDataFetcher.fetchSampleData(sampleNames);
+            mapSampleNameToSampleData = sampleDataFetcher.fetchSampleData(sampleNames);
 
             List<Control> controls = controlDao.findAllActive();
             for (Control control : controls) {
                 controlCollaboratorSampleIds.add(control.getCollaboratorSampleId());
             }
         }
-        System system = routeForVessels(labVessels, controlCollaboratorSampleIds, mapSampleNameToDto, intent);
+        System system = routeForVessels(labVessels, controlCollaboratorSampleIds, mapSampleNameToSampleData, intent);
         if (system != null) {
             routingOptions.add(system);
         }
@@ -288,14 +288,14 @@ public class SystemRouter implements Serializable {
      *
      * @param vessels a collection of LabVessels for which system routing is to be determined
      * @param controlCollaboratorSampleIds list of collaborator IDs for controls
-     * @param mapSampleNameToDto map from sample name to BSP sample DTO
+     * @param mapSampleNameToSampleData map from sample name to SampleData (from BSP or Mercury)
      * @param intent whether to return one routing option, or multiple
      * @return An instance of a MercuryOrSquid enum that will assist in determining to which system requests should be
      *         routed.
      */
     @DaoFree
     public System routeForVessels(Collection<LabVessel> vessels, List<String> controlCollaboratorSampleIds,
-                                         Map<String, SampleData> mapSampleNameToDto, Intent intent) {
+                                         Map<String, SampleData> mapSampleNameToSampleData, Intent intent) {
         Set<System> routingOptions = EnumSet.noneOf(System.class);
         for (LabVessel vessel : vessels) {
             if (vessel == null) {
@@ -360,13 +360,13 @@ public class SystemRouter implements Serializable {
                         } else {
                             for (SampleInstanceV2 possibleControl : possibleControls) {
                                 String sampleKey = possibleControl.getEarliestMercurySampleName();
-                                SampleData sampleDTO = mapSampleNameToDto.get(sampleKey);
-                                if (sampleDTO == null) {
+                                SampleData sampleData = mapSampleNameToSampleData.get(sampleKey);
+                                if (sampleData == null) {
                                     // Don't know what this is, but it isn't for Mercury.
                                     badCrspRouting();
                                     routingOptions.add(SQUID);
                                 } else {
-                                    if (controlCollaboratorSampleIds.contains(sampleDTO.getCollaboratorsSampleName())) {
+                                    if (controlCollaboratorSampleIds.contains(sampleData.getCollaboratorsSampleName())) {
 
                                         /*
                                          * It's a control, but only give it a vote if we can pin it to a workflow. It

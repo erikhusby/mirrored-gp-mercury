@@ -225,9 +225,9 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     public boolean canRinScoreBeUsedForOnRiskCalculation() {
         boolean canRinScoreBeUsed = false;
         if (isInBspFormat()) {
-            SampleData bspDto = getSampleData();
-            if (bspDto != null) {
-                canRinScoreBeUsed = getSampleData().canRinScoreBeUsedForOnRiskCalculation();
+            SampleData sampleData = getSampleData();
+            if (sampleData != null) {
+                canRinScoreBeUsed = sampleData.canRinScoreBeUsedForOnRiskCalculation();
             }
         }
         return canRinScoreBeUsed;
@@ -314,7 +314,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      * TEST-ONLY delegating constructor that also sets the entity's primary key.
      *
      * @param sampleName      the sample ID
-     * @param sampleData    the sample data from BSP
+     * @param sampleData      the sample data
      * @param primaryKey      the primary key
      *
      * @see #ProductOrderSample(String, SampleData)

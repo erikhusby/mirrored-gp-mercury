@@ -116,7 +116,7 @@ public class MercurySampleDataFetcherTest {
         assertThat(stockId, equalTo(SM_MERC1));
     }
 
-    public void testGetStockIdNyAliquotIdReturnsMercurySample() {
+    public void testGetStockIdByAliquotIdReturnsMercurySample() {
         Map<String, String> stockId = mercurySampleDataFetcher
                 .getStockIdByAliquotId(
                         Collections.singleton(new MercurySample(SM_MERC1, MercurySample.MetadataSource.MERCURY)));

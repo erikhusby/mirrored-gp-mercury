@@ -26,10 +26,10 @@ public class MercurySampleData implements SampleData {
 
     public MercurySampleData(@Nonnull String sampleId, @Nonnull Set<Metadata> metadata) {
         this.sampleId = sampleId;
-        extractMetadataFromSample(metadata);
+        extractSampleDataFromMetadata(metadata);
     }
 
-    private void extractMetadataFromSample(Set<Metadata> metadata) {
+    private void extractSampleDataFromMetadata(Set<Metadata> metadata) {
         for (Metadata data : metadata) {
             String value = data.getValue();
             switch (data.getKey()) {
@@ -42,10 +42,6 @@ public class MercurySampleData implements SampleData {
             case PATIENT_ID:
                 this.patientId = value;
                 break;
-//      SAMPLE_TYPE is not present in the imported manifest. Do we need to handle this case?
-//            case SAMPLE_TYPE:
-//                this.materialType = data.getValue();
-//                break;
             case TUMOR_NORMAL:
                 this.tumorNormal = value;
                 break;

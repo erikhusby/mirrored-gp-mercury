@@ -47,7 +47,7 @@ public class SampleDataFetcherTest {
     public static final String GSSR_ONLY_SAMPLE_ID = "123.0";
 
     /**
-     * A non-BSP sample (e.g., GSSR) for which there is not a {@link MercurySample}.
+     * A non-BSP sample (e.g., GSSR) for which there is a {@link MercurySample}.
      */
     public static final String GSSR_SAMPLE_ID = "456.0";
 
@@ -63,13 +63,13 @@ public class SampleDataFetcherTest {
     private static final String BSP_ONLY_BARE_SAMPLE_ID = "BSP1";
 
     /**
-     * A sample for which BSP is the metadata source for.
+     * A sample for which BSP is the metadata source.
      */
     private static final String BSP_SAMPLE_ID = "SM-BSP2";
     private static final String BSP_BARE_SAMPLE_ID = "BSP2";
 
     /**
-     * A sample that was exported from BSP for which Mercury is the metadata source for.
+     * A sample that was exported from BSP for which Mercury is the metadata source.
      */
     private static final String CLINICAL_SAMPLE_ID = "SM-MERC1";
     private static final String FUBAR_SAMPLE_ID = "SM-FUBAR";
