@@ -9,8 +9,9 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Multimaps;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.Updatable;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.Updatable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.UpdatedEntityInterceptor;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
@@ -453,6 +454,8 @@ public class ManifestRecord implements Updatable {
     public int getSpreadsheetRowNumber() {
         final int INDEX_TO_SPREADSHEET_ROW_NUMBER_CONVERSION = 2;
         return manifestRecordIndex + INDEX_TO_SPREADSHEET_ROW_NUMBER_CONVERSION;
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this)
@@ -462,3 +465,4 @@ public class ManifestRecord implements Updatable {
                 .toString();
     }
 }
+

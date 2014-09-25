@@ -142,12 +142,13 @@ public class ManifestSessionEjb {
     private ResearchProject findResearchProject(String researchProjectKey) {
         ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
         if (researchProject == null) {
-            throw new InformaticsServiceException("Research Project '%s' not found", researchProjectKey);
+            throw new InformaticsServiceException(String.format("Research Project '%s' not found", researchProjectKey));
         }
         if (researchProject.getRegulatoryDesignation() == ResearchProject.RegulatoryDesignation.RESEARCH_ONLY) {
-            throw new InformaticsServiceException("The selected Research Project cannot be used for accessioning " +
-                                                  "because its regulatory designation is %s.",
-                    ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
+            throw new InformaticsServiceException(
+                    String.format("The selected Research Project cannot be used for accessioning " +
+                                  "because its regulatory designation is %s.",
+                            ResearchProject.RegulatoryDesignation.RESEARCH_ONLY));
         }
         return researchProject;
     }
