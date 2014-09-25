@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.hamcrest.Matchers;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -739,6 +740,32 @@ public class ManifestSessionContainerTest extends Arquillian {
                         .getBaseMessage()));
             }
         }
+    }
+
+    @Test(groups = TestGroups.STANDARD)
+    public void testFindClosedSessionQuery() throws Exception {
+
+        for (LabVessel targetVessel : sourceSampleToTargetVessel.values()) {
+            labVesselDao.persist(targetVessel);
+        }
+        researchProjectDao.persist(researchProject);
+
+        manifestSessionI.setStatus(ManifestSession.SessionStatus.COMPLETED);
+
+        manifestSessionDao.persist(manifestSessionI);
+
+        List<ManifestSession> closedSessions = manifestSessionDao.findSessionsEligibleForTubeTransfer();
+
+        assertThat(closedSessions, hasItem(manifestSessionI));
+
+        for (ManifestRecord manifestRecord : manifestSessionI.getRecords()) {
+            manifestRecord.setStatus(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
+        }
+        manifestSessionDao.persist(manifestSessionI);
+
+
+        List<ManifestSession> closedSessions2 = manifestSessionDao.findSessionsEligibleForTubeTransfer();
+        assertThat(closedSessions2, not(hasItem(manifestSessionI)));
     }
 
     /**
