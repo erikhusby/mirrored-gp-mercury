@@ -3,7 +3,7 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.ManifestAccessioningActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="" sectionTitle="" showCreate="false">
+<stripes:layout-render name="/layout.jsp" pageTitle="List Open Manifest Sessions" sectionTitle="List Open Manifest Sessions" showCreate="false">
 
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
@@ -19,6 +19,23 @@
                             preventDuplicates: true
                         }
                 );
+
+                $j('#sessionList').dataTable({
+                    "oTableTools": ttExportDefines,
+                    "aaSorting": [
+                        [6, 'desc']
+                    ],
+                    "asStripeClasses": [ '' ],
+                    "aoColumns": [
+                        {"bSortable": true}, // Session Name
+                        {"bSortable": true}, // Session Status
+                        {"bSortable": true}, // Research Project
+                        {"bSortable": true}, // Created By
+                        {"bSortable": true, "sType": "date"}, // Creation Time
+                        {"bSortable": true}, // Last Modified By
+                        {"bSortable": true, "sType": "date"} // Last Modified Time
+                    ]
+                }).fnSetFilteringDelay(300);
             });
             function formatInput(item) {
                 var extraCount = (item.extraCount == undefined) ? "" : item.extraCount;
@@ -30,8 +47,6 @@
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
-        <span>Choose an existing session to complete accessioning</span>
-
         <div id="chooseExistingSession">
             <table id="sessionList" class="table simple">
                 <thead>
