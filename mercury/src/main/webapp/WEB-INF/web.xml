@@ -77,11 +77,16 @@
 
     <security-constraint>
         <web-resource-collection>
-            <web-resource-name>SecuredRestArea</web-resource-name>
+            <web-resource-name>AuthenticatedRestArea</web-resource-name>
             <url-pattern>/rest/crspinfo/*</url-pattern>
             <http-method>GET</http-method>
             <http-method>POST</http-method>
         </web-resource-collection>
+        <!--  By defining the user-data-constraint, we make use of the redirect setting on JBOSS.  With out this,
+          we would have to redirect the request utilizing the SecurityFilter -->
+        <user-data-constraint>
+            <transport-guarantee>CONFIDENTIAL</transport-guarantee>
+        </user-data-constraint>
     </security-constraint>
 
     <security-constraint>
@@ -89,6 +94,8 @@
             <web-resource-name>SECURE</web-resource-name>
             <url-pattern>/*</url-pattern>
         </web-resource-collection>
+        <!--  By defining the user-data-constraint, we make use of the redirect setting on JBOSS.  With out this,
+          we would have to redirect the request utilizing the SecurityFilter -->
         <user-data-constraint>
             <transport-guarantee>CONFIDENTIAL</transport-guarantee>
         </user-data-constraint>

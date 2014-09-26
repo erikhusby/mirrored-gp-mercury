@@ -46,7 +46,7 @@
             <!-- Defined back during the CRSP project, this separate web.xml and security constraint allows the rest
             of Mercury to force authentication over HTTPS while allowing the rest services to not have authentication
             -->
-            <web-resource-name>SecuredRestArea</web-resource-name>
+            <web-resource-name>UnauthenticatedRestArea</web-resource-name>
             <url-pattern>/rest/*</url-pattern>
             <http-method>GET</http-method>
             <http-method>POST</http-method>
