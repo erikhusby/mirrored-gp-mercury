@@ -15,7 +15,9 @@
 
             $j(document).ready(function () {
                 $j("#accessionSourceText").blur(function () {
-                    performAccessionScan();
+                    if ($(this).val() != '') {
+                        performAccessionScan();
+                    }
                 });
 
                 $j("#previewSessionCloseDialog").dialog({
@@ -43,7 +45,8 @@
                     datatype: 'html',
                     success: function (html) {
                         $j('#scanResults').html(html);
-                        $j('#accessionSourceText').val('')
+                        $j('#accessionSourceText').val('');
+                        $j('#accessionSourceText').focus();
                     }
                 });
             }
@@ -80,13 +83,10 @@
             <stripes:hidden name="selectedSessionId" id="selectedSessionId"/>
             <div class="form-horizontal span6">
                 <div class="control-group">
-                    <stripes:label for="accessionSource" class="control-label">
-                        Scan or input specimen number *
-                    </stripes:label>
+                    <label class="control-label" for="accessionSourceText">Scan or input specimen number *</label>
                     <div class="controls">
-                        <stripes:text id="accessionSourceText" name="accessionSource"
-                                      class="defaultText input-xlarge"
-                                      maxlength="255" title="Enter the clinical sample ID"/>
+                        <input type="text" class="input-xlarge" name="accessionSource" maxlength="255"
+                               placeholder="Enter the clinical sample ID" id="accessionSourceText">
                     </div>
                 </div>
                 <div class="actionButtons">

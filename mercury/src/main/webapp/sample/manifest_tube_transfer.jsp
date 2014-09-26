@@ -45,6 +45,8 @@
                     validateVessel();
                 }
             });
+
+            $j("#source").focus();
         });
 
         // Clear out global errors and warnings after blurring one of the sample id or vessel input fields.
