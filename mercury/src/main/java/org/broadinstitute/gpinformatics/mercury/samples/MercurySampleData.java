@@ -71,7 +71,7 @@ public class MercurySampleData implements SampleData {
 
     @Override
     public String getRawRin() {
-        return null;
+        return "";
     }
 
     @Override
@@ -96,17 +96,17 @@ public class MercurySampleData implements SampleData {
 
     @Override
     public String getRootSample() {
-        return null;
+        return "";
     }
 
     @Override
     public String getStockSample() {
-        return null;
+        return "";
     }
 
     @Override
     public String getCollection() {
-        return null;
+        return "";
     }
 
     @Override
@@ -116,7 +116,7 @@ public class MercurySampleData implements SampleData {
 
     @Override
     public String getContainerId() {
-        return null;
+        return "";
     }
 
     @Override
@@ -126,7 +126,7 @@ public class MercurySampleData implements SampleData {
 
     @Override
     public String getOrganism() {
-        return null;
+        return "";
     }
 
     @Override
@@ -136,17 +136,17 @@ public class MercurySampleData implements SampleData {
 
     @Override
     public String getSampleLsid() {
-        return null;
+        return "";
     }
 
     @Override
     public String getCollaboratorParticipantId() {
-        return null;
+        return "";
     }
 
     @Override
     public String getMaterialType() {
-        return null;
+        return "";
     }
 
     @Override
@@ -161,7 +161,7 @@ public class MercurySampleData implements SampleData {
 
     @Override
     public String getPrimaryDisease() {
-        return null;
+        return "";
     }
 
     @Override
@@ -171,7 +171,7 @@ public class MercurySampleData implements SampleData {
 
     @Override
     public String getStockType() {
-        return null;
+        return "";
     }
 
     @Override
@@ -201,17 +201,17 @@ public class MercurySampleData implements SampleData {
 
     @Override
     public String getCollaboratorName() {
-        return null;
+        return "";
     }
 
     @Override
     public String getEthnicity() {
-        return null;
+        return "";
     }
 
     @Override
     public String getRace() {
-        return null;
+        return "";
     }
 
     @Override

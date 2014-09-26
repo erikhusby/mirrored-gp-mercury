@@ -176,15 +176,14 @@ public class OnRiskCriteriaTest {
     }
 
     @Test
-    public void testWGAOnRiskMercurySample() {
-
+    public void testWGAOnRiskMercurySampleDoestThrowNPE() {
         SampleData hasWgaDummy = new MercurySampleData(SM_1234, Collections.<Metadata>emptySet());
 
         ProductOrderSample productOrderSample = new ProductOrderSample(SM_1234, hasWgaDummy);
         ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(1);
         productOrder.getProduct().addRiskCriteria(new RiskCriterion(RiskCriterion.RiskCriteriaType.WGA, Operator.IS, null));
         productOrder.addSample(productOrderSample);
-        productOrderSample.calculateRisk();
+        Assert.assertTrue(productOrderSample.calculateRisk());
     }
 
     /**
