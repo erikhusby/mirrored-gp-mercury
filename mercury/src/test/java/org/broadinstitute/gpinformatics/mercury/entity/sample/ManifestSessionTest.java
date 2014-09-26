@@ -9,7 +9,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProje
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
-import org.hamcrest.Matchers;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
@@ -156,22 +155,18 @@ public class ManifestSessionTest {
     @DataProvider(name = DATA_PROVIDER_RECORD_STATUS)
     private Object[][] statusForValidationErrorProvider() {
         return new Object[][]{
-                {ManifestRecord.Status.UPLOADED},
-                {ManifestRecord.Status.UPLOAD_ACCEPTED}};
+                {ManifestRecord.Status.UPLOADED, 0},
+                {ManifestRecord.Status.UPLOAD_ACCEPTED, 1}};
     }
 
     @Test(dataProvider = DATA_PROVIDER_RECORD_STATUS)
-    public void testValidationError(ManifestRecord.Status status) {
+    public void testValidationError(ManifestRecord.Status status, int numElligibleForaccessioning) {
         setManifestRecordStatus(status);
 
         ManifestStatus manifestStatus = session.generateSessionStatusForClose();
 
         assertThat(manifestStatus.getSamplesInManifest(), is(NUM_SAMPLES_IN_MANIFEST));
-        if(status == ManifestRecord.Status.UPLOADED) {
-            assertThat(manifestStatus.getSamplesEligibleForAccessioningInManifest(), is(0));
-        } else {
-            assertThat(manifestStatus.getSamplesEligibleForAccessioningInManifest(), is(1));
-        }
+        assertThat(manifestStatus.getSamplesEligibleForAccessioningInManifest(), is(numElligibleForaccessioning));
         assertThat(manifestStatus.getSamplesSuccessfullyScanned(), is(NUM_SAMPLES_IN_MANIFEST - 1));
 
         assertThat(manifestStatus.getErrorMessages(), hasSize(1));
@@ -273,7 +268,8 @@ public class ManifestSessionTest {
             ManifestRecord recordForTransfer = session.findRecordForTransfer(testRecord.getSampleId());
             Assert.fail();
         } catch (Exception e) {
-            assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.SOURCE_ALREADY_TRANSFERRED.getBaseMessage()));
+            assertThat(e.getMessage(),
+                    containsString(ManifestRecord.ErrorStatus.SOURCE_ALREADY_TRANSFERRED.getBaseMessage()));
         }
     }
 
