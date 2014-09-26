@@ -10,7 +10,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.codehaus.jackson.annotate.JsonProperty;
 
 import java.util.ArrayList;
@@ -260,8 +260,8 @@ public class LibraryBean {
      * @param lcSet The LC Set.
      * @param sampleData trumps all other sample-related fields.  Other sample
      *                     related fields (such as inidividual, organism, etc.) are here
-     *                     for GSSR samples.  If bspSampleDTO is non-null, all sample
-     *                     information is derived from bspSampleDTO; otherwise individual
+     *                     for GSSR samples.  If bspSampleData is non-null, all sample
+     *                     information is derived from bspSampleData; otherwise individual
      *                     sample fields are pulled from their constructor counterparts
      * @param productOrderSample the product order sample name (key).
      * @param workRequestType squid work request type name
@@ -346,10 +346,9 @@ public class LibraryBean {
     }
 
     /**
-     * Set various sample related fields to whatever the
-     * {@link BSPSampleDTO} says.  In other words,
-     * ignore any GSSR parameters and overwrite them
-     * with what BSP says.
+     * Set various sample related fields to whatever the {@link BspSampleData} says.  In other words, ignore any
+     * GSSR parameters and overwrite them with what BSP says.
+     *
      * @param sampleData BSP data for sample
      */
     private void overrideSampleFieldsFromBSP(SampleData sampleData) {

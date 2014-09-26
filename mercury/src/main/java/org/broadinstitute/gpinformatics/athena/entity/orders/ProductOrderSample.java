@@ -11,7 +11,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.athena.entity.samples.SampleReceiptValidation;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
@@ -63,11 +63,11 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      * Count shown when no billing has occurred.
      */
     public static final double NO_BILL_COUNT = 0;
-    public static final String TUMOR_IND = BSPSampleDTO.TUMOR_IND;
-    public static final String NORMAL_IND = BSPSampleDTO.NORMAL_IND;
-    public static final String FEMALE_IND = BSPSampleDTO.FEMALE_IND;
-    public static final String MALE_IND = BSPSampleDTO.MALE_IND;
-    public static final String ACTIVE_IND = BSPSampleDTO.ACTIVE_IND;
+    public static final String TUMOR_IND = BspSampleData.TUMOR_IND;
+    public static final String NORMAL_IND = BspSampleData.NORMAL_IND;
+    public static final String FEMALE_IND = BspSampleData.FEMALE_IND;
+    public static final String MALE_IND = BspSampleData.MALE_IND;
+    public static final String ACTIVE_IND = BspSampleData.ACTIVE_IND;
 
     @Id
     @SequenceGenerator(name = "SEQ_ORDER_SAMPLE", schema = "athena", sequenceName = "SEQ_ORDER_SAMPLE")

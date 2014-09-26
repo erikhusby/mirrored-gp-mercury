@@ -7,8 +7,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.MockThriftService;
@@ -25,7 +24,6 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -130,7 +128,7 @@ public class DbFreeIlluminaRunResourceTest {
             @Override
             public SampleData fetchSampleData(String sampleName) {
                 Assert.assertEquals(sampleName, BSPSampleSearchServiceStub.SM_12CO4);
-                return new BSPSampleDTO(BSPSampleSearchServiceStub.getSamples().get(sampleName));
+                return new BspSampleData(BSPSampleSearchServiceStub.getSamples().get(sampleName));
             }
         };
         String sample = BSPSampleSearchServiceStub.SM_12CO4;

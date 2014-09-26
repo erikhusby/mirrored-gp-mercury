@@ -9,49 +9,49 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Test(groups = TestGroups.DATABASE_FREE)
-public class BSPSampleDTOTest {
+public class BspSampleDataTest {
 
     // Tests for getVolume()
 
     public void testGetVolumeWhenNotSet() {
-        SampleData bspSampleDTO = new BSPSampleDTO(new HashMap<BSPSampleSearchColumn, String>());
-        Assert.assertEquals(bspSampleDTO.getVolume(), 0.0, 0.001);
+        SampleData bspSampleData = new BspSampleData(new HashMap<BSPSampleSearchColumn, String>());
+        Assert.assertEquals(bspSampleData.getVolume(), 0.0, 0.001);
     }
 
     public void testGetVolumeWhenSet() {
         Map<BSPSampleSearchColumn, String> data = new HashMap<>();
         data.put(BSPSampleSearchColumn.VOLUME, "1.0");
-        SampleData bspSampleDTO = new BSPSampleDTO(data);
-        Assert.assertEquals(bspSampleDTO.getVolume(), 1.0, 0.001);
+        SampleData bspSampleData = new BspSampleData(data);
+        Assert.assertEquals(bspSampleData.getVolume(), 1.0, 0.001);
     }
 
     // Tests for getRin()
 
     public void testGetRinReturnsNullWhenNotSet() {
-        SampleData bspSampleDTO = new BSPSampleDTO(new HashMap<BSPSampleSearchColumn, String>());
-        Assert.assertNull(bspSampleDTO.getRin());
+        SampleData bspSampleData = new BspSampleData(new HashMap<BSPSampleSearchColumn, String>());
+        Assert.assertNull(bspSampleData.getRin());
     }
 
     public void testGetRinWhenSetWithSingleValue() {
         Map<BSPSampleSearchColumn, String> data = new HashMap<>();
         data.put(BSPSampleSearchColumn.RIN, "1.0");
-        SampleData bspSampleDTO = new BSPSampleDTO(data);
-        Assert.assertEquals(bspSampleDTO.getRin(), 1.0, 0.001);
+        SampleData bspSampleData = new BspSampleData(data);
+        Assert.assertEquals(bspSampleData.getRin(), 1.0, 0.001);
     }
 
     @Test(expectedExceptions = NumberFormatException.class)
     public void testGetRinWhenNotANumber() {
         Map<BSPSampleSearchColumn, String> data = new HashMap<>();
         data.put(BSPSampleSearchColumn.RIN, "1,0");
-        SampleData bspSampleDTO = new BSPSampleDTO(data);
-        bspSampleDTO.getRin();
+        SampleData bspSampleData = new BspSampleData(data);
+        bspSampleData.getRin();
     }
 
     public void testGetRinWhenSetWithValueRange() {
         Map<BSPSampleSearchColumn, String> data = new HashMap<>();
         data.put(BSPSampleSearchColumn.RIN, "1.2-3.4");
-        SampleData bspSampleDTO = new BSPSampleDTO(data);
-        Assert.assertEquals(bspSampleDTO.getRin(), 1.2, 0.001);
+        SampleData bspSampleData = new BspSampleData(data);
+        Assert.assertEquals(bspSampleData.getRin(), 1.2, 0.001);
     }
 
     // Tests for getRawRin()
@@ -61,50 +61,50 @@ public class BSPSampleDTOTest {
      */
 
     public void testGetRawRinWhenNotSet() {
-        SampleData bspSampleDTO = new BSPSampleDTO(new HashMap<BSPSampleSearchColumn, String>());
-        Assert.assertEquals(bspSampleDTO.getRawRin(), "");
+        SampleData bspSampleData = new BspSampleData(new HashMap<BSPSampleSearchColumn, String>());
+        Assert.assertEquals(bspSampleData.getRawRin(), "");
     }
 
     public void testGetRawRinWhenSingleNumber() {
         Map<BSPSampleSearchColumn, String> data = new HashMap<>();
         data.put(BSPSampleSearchColumn.RIN, "1.0");
-        SampleData bspSampleDTO = new BSPSampleDTO(data);
-        Assert.assertEquals(bspSampleDTO.getRawRin(), "1.0");
+        SampleData bspSampleData = new BspSampleData(data);
+        Assert.assertEquals(bspSampleData.getRawRin(), "1.0");
     }
 
     public void testGetRawRinWhenNotANumber() {
         Map<BSPSampleSearchColumn, String> data = new HashMap<>();
         data.put(BSPSampleSearchColumn.RIN, "1,0");
-        SampleData bspSampleDTO = new BSPSampleDTO(data);
-        Assert.assertEquals(bspSampleDTO.getRawRin(), "1,0");
+        SampleData bspSampleData = new BspSampleData(data);
+        Assert.assertEquals(bspSampleData.getRawRin(), "1,0");
     }
 
     public void testGetRawRinWhenSetWithValueRange() {
         Map<BSPSampleSearchColumn, String> data = new HashMap<>();
         data.put(BSPSampleSearchColumn.RIN, "1.2-3.4");
-        SampleData bspSampleDTO = new BSPSampleDTO(data);
-        Assert.assertEquals(bspSampleDTO.getRawRin(), "1.2-3.4");
+        SampleData bspSampleData = new BspSampleData(data);
+        Assert.assertEquals(bspSampleData.getRawRin(), "1.2-3.4");
     }
 
     // Tests for getRqs()
 
     public void testGetRqsReturnsNullWhenNotSet() {
-        SampleData bspSampleDTO = new BSPSampleDTO(new HashMap<BSPSampleSearchColumn, String>());
-        Assert.assertNull(bspSampleDTO.getRqs());
+        SampleData bspSampleData = new BspSampleData(new HashMap<BSPSampleSearchColumn, String>());
+        Assert.assertNull(bspSampleData.getRqs());
     }
 
     public void testGetRqsWhenSetWithNumber() {
         Map<BSPSampleSearchColumn, String> data = new HashMap<>();
         data.put(BSPSampleSearchColumn.RQS, "1.0");
-        SampleData bspSampleDTO = new BSPSampleDTO(data);
-        Assert.assertEquals(bspSampleDTO.getRqs(), 1.0, 0.001);
+        SampleData bspSampleData = new BspSampleData(data);
+        Assert.assertEquals(bspSampleData.getRqs(), 1.0, 0.001);
     }
 
     @Test(expectedExceptions = NumberFormatException.class)
     public void testGetRqsWhenNotANumber() {
         Map<BSPSampleSearchColumn, String> data = new HashMap<>();
         data.put(BSPSampleSearchColumn.RQS, "1,0");
-        SampleData bspSampleDTO = new BSPSampleDTO(data);
-        bspSampleDTO.getRqs();
+        SampleData bspSampleData = new BspSampleData(data);
+        bspSampleData.getRqs();
     }
 }

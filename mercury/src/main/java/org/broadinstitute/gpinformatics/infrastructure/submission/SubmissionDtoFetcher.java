@@ -24,7 +24,7 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
@@ -77,7 +77,7 @@ public class SubmissionDtoFetcher {
             }
         }
 
-        Map<String, BSPSampleDTO> bulkInfo =
+        Map<String, BspSampleData> bulkInfo =
                 bspSampleDataFetcher.fetchSampleData(sampleList, BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID);
 
         for (final ProductOrderSample sample : samples) {
@@ -85,9 +85,9 @@ public class SubmissionDtoFetcher {
             if (sampleData != null) {
                 sample.setSampleData(sampleData);
                 // In non-production environments bogus samples are often created so we will
-                // only create a new BSPSampleDTO in those cases
+                // only create a new BspSampleData in those cases
             } else if (bspConfig.getMercuryDeployment() != Deployment.PROD) {
-                sample.setSampleData(new BSPSampleDTO(new HashMap<BSPSampleSearchColumn, String>() {{
+                sample.setSampleData(new BspSampleData(new HashMap<BSPSampleSearchColumn, String>() {{
                     put(BSPSampleSearchColumn.SAMPLE_ID, sample.getName());
                 }}));
             }

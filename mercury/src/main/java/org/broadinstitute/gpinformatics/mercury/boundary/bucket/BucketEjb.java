@@ -10,7 +10,7 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
@@ -424,17 +424,17 @@ public class BucketEjb {
      * @return the created LabVessels
      */
     public Collection<LabVessel> createInitialVessels(Collection<String> samplesWithoutVessel, String username) {
-        Map<String, BSPSampleDTO> bspDtoMap = bspSampleDataFetcher.fetchSampleData(samplesWithoutVessel);
+        Map<String, BspSampleData> bspSampleDataMap = bspSampleDataFetcher.fetchSampleData(samplesWithoutVessel);
         Collection<LabVessel> vessels = new ArrayList<>();
         List<String> cannotAddToBucket = new ArrayList<>();
 
         for (String sampleName : samplesWithoutVessel) {
-            BSPSampleDTO bspDto = bspDtoMap.get(sampleName);
+            BspSampleData bspSampleData = bspSampleDataMap.get(sampleName);
 
-            if (bspDto != null &&
-                StringUtils.isNotBlank(bspDto.getBarcodeForLabVessel())) {
-                if (bspDto.isSampleReceived()) {
-                    vessels.addAll(labVesselFactory.buildInitialLabVessels(sampleName, bspDto.getBarcodeForLabVessel(),
+            if (bspSampleData != null &&
+                StringUtils.isNotBlank(bspSampleData.getBarcodeForLabVessel())) {
+                if (bspSampleData.isSampleReceived()) {
+                    vessels.addAll(labVesselFactory.buildInitialLabVessels(sampleName, bspSampleData.getBarcodeForLabVessel(),
                             username, new Date(), MercurySample.MetadataSource.BSP));
                 }
             } else {

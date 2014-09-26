@@ -15,7 +15,7 @@ public class BSPSampleTest {
     public void test_patient_id_integration() {
         String sampleName = BSPSampleSearchServiceStub.SM_12CO4;
         MercurySample bspSample = new MercurySample(sampleName,
-                new BSPSampleDTO(BSPSampleSearchServiceStub.getSamples().get(sampleName)));
+                new BspSampleData(BSPSampleSearchServiceStub.getSamples().get(sampleName)));
         String patientId = bspSample.getSampleData().getPatientId();
 
         Assert.assertNotNull(patientId);

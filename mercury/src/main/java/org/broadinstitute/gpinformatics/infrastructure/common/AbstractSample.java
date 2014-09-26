@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.common;
 
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
@@ -22,10 +22,10 @@ public abstract class AbstractSample {
 
     // TODO: replace BSP specific sample data support with a generic API that can support other platforms.
     @Transient
-    private SampleData sampleData = new BSPSampleDTO();
+    private SampleData sampleData = new BspSampleData();
 
     @Transient
-    private boolean hasBspDTOBeenInitialized;
+    private boolean hasBspSampleDataBeenInitialized;
 
     public AbstractSample() {
     }
@@ -43,14 +43,14 @@ public abstract class AbstractSample {
      * @return true if sample may have BSP data that hasn't been fetched yet
      */
     public boolean needsBspMetaData() {
-        return isInBspFormat() && !hasBspDTOBeenInitialized;
+        return isInBspFormat() && !hasBspSampleDataBeenInitialized;
     }
 
     /**
      * @return true if sample is a loaded BSP sample but BSP didn't have any data for it.
      */
     public boolean bspMetaDataMissing() {
-        return isInBspFormat() && hasBspDTOBeenInitialized && !sampleData.hasData();
+        return isInBspFormat() && hasBspSampleDataBeenInitialized && !sampleData.hasData();
     }
 
     /**
@@ -58,7 +58,7 @@ public abstract class AbstractSample {
      */
     @Nonnull
     public SampleData getSampleData() {
-        if (!hasBspDTOBeenInitialized) {
+        if (!hasBspSampleDataBeenInitialized) {
             // We allow non-BSP samples through for test cases only.
             // FIXME: update tests to produce BSP sample names so this check is unnecessary.
             if (isInBspFormat() ||
@@ -73,14 +73,14 @@ public abstract class AbstractSample {
                 }
             }
 
-            hasBspDTOBeenInitialized = true;
+            hasBspSampleDataBeenInitialized = true;
         }
 
         return sampleData;
     }
 
     protected SampleData makeSampleData() {
-        return new BSPSampleDTO();
+        return new BspSampleData();
     }
 
     /**
@@ -95,7 +95,7 @@ public abstract class AbstractSample {
         }
 
         this.sampleData = sampleData;
-        hasBspDTOBeenInitialized = true;
+        hasBspSampleDataBeenInitialized = true;
     }
 
     /**

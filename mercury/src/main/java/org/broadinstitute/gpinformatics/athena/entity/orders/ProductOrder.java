@@ -1421,38 +1421,38 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
          * Update all the counts related to BSP information.
          *
          * @param participantSet The unique collection of participants by Id.
-         * @param bspDTO         The BSP DTO.
+         * @param bspSampleData         The BSP DTO.
          */
-        private void updateDTOCounts(Set<String> participantSet, SampleData bspDTO) {
-            if (bspDTO.isSampleReceived()) {
+        private void updateDTOCounts(Set<String> participantSet, SampleData bspSampleData) {
+            if (bspSampleData.isSampleReceived()) {
                 receivedSampleCount++;
             }
 
-            if (bspDTO.isActiveStock()) {
+            if (bspSampleData.isActiveStock()) {
                 activeSampleCount++;
             }
 
             // If the pico has never been run then it is not warned in the last pico date highlighting.
-            Date picoRunDate = bspDTO.getPicoRunDate();
+            Date picoRunDate = bspSampleData.getPicoRunDate();
             if ((picoRunDate == null) || picoRunDate.before(oneYearAgo)) {
                 lastPicoCount++;
             }
 
-            stockTypeCounter.increment(bspDTO.getStockType());
+            stockTypeCounter.increment(bspSampleData.getStockType());
 
-            String participantId = bspDTO.getPatientId();
+            String participantId = bspSampleData.getPatientId();
             if (StringUtils.isNotBlank(participantId)) {
                 participantSet.add(participantId);
             }
 
-            primaryDiseaseCounter.increment(bspDTO.getPrimaryDisease());
-            genderCounter.increment(bspDTO.getGender());
+            primaryDiseaseCounter.increment(bspSampleData.getPrimaryDisease());
+            genderCounter.increment(bspSampleData.getGender());
 
-            if (bspDTO.getHasSampleKitUploadRackscanMismatch()) {
+            if (bspSampleData.getHasSampleKitUploadRackscanMismatch()) {
                 hasSampleKitUploadRackscanMismatch++;
             }
 
-            sampleTypeCounter.increment(bspDTO.getSampleType());
+            sampleTypeCounter.increment(bspSampleData.getSampleType());
         }
 
         /**

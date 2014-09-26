@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
-import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
@@ -16,14 +15,14 @@ public class BSPSampleDataFetcherContainerTest {
     private BSPSampleDataFetcher bspSampleDataFetcher =
             new BSPSampleDataFetcher(BSPSampleSearchServiceProducer.testInstance(), bspConfig);
     public void testFFPE() {
-        BSPSampleDTO ffpe = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-16BL4");
-        BSPSampleDTO paraffin = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-2UVBU");
-        BSPSampleDTO notFFPE = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-3HM8");
+        BspSampleData ffpe = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-16BL4");
+        BspSampleData paraffin = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-2UVBU");
+        BspSampleData notFFPE = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-3HM8");
 
         Assert.assertNotNull(ffpe);
         Assert.assertNotNull(paraffin);
         Assert.assertNotNull(notFFPE);
-        List<BSPSampleDTO> dtoList = Arrays.asList(ffpe, paraffin, notFFPE);
+        List<BspSampleData> dtoList = Arrays.asList(ffpe, paraffin, notFFPE);
 
         bspSampleDataFetcher.fetchFFPEDerived(dtoList);
 
@@ -33,12 +32,12 @@ public class BSPSampleDataFetcherContainerTest {
     }
 
     public void testSamplePlastic() {
-        BSPSampleDTO rootSample = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-12LY");
-        BSPSampleDTO aliquotSample = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-3HM8");
+        BspSampleData rootSample = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-12LY");
+        BspSampleData aliquotSample = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-3HM8");
 
         Assert.assertNotNull(rootSample);
         Assert.assertNotNull(aliquotSample);
-        List<BSPSampleDTO> dtoList = Arrays.asList(rootSample, aliquotSample);
+        List<BspSampleData> dtoList = Arrays.asList(rootSample, aliquotSample);
 
         bspSampleDataFetcher.fetchSamplePlastic(dtoList);
 

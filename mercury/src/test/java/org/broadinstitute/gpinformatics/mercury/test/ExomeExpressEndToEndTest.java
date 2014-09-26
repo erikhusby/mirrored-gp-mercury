@@ -537,11 +537,11 @@ public class ExomeExpressEndToEndTest {
             Assert.assertNotNull(illuminaSequencingRun.getSampleCartridge(),
                                  "No registered flowcell");
 
-            // We're container-free, so we have to populate the BSPSampleDTO ourselves
+            // We're container-free, so we have to populate the BspSampleData ourselves
             //            for (Starter starter : projectPlan.getStarters()) {
             //                BSPSampleAuthorityTube aliquot = (BSPSampleAuthorityTube) projectPlan.getAliquotForStarter(starter);
             //                BSPStartingSample bspStartingSample = (BSPStartingSample) aliquot.getAliquot();
-            //                bspStartingSample.setBspDTO(new BSPSampleDTO("1", "", "", "", "", "", "", "", "", "", "lsid:" + bspStartingSample.getSampleName(),
+            //                bspStartingSample.setBspDTO(newbspSampleDataO("1", "", "", "", "", "", "", "", "", "", "lsid:" + bspStartingSample.getSampleName(),
             //                        "", "", "","", "", "", "",""));
             //            }
 
@@ -563,7 +563,7 @@ public class ExomeExpressEndToEndTest {
                                                                                        productOrderDao);
             ZimsIlluminaRun zimsRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);
 
-            // how to populate BSPSampleDTO?  Ease of use from EL suggests an entity that can load itself, but this
+            // how to populate bspSampleData?  Ease of use from EL suggests an entity that can load itself, but this
             // would require injecting a service, or using a singleton
 
             Assert.assertNotNull(zimsRun);

@@ -11,5 +11,5 @@ import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
  */
 public interface ThriftLibraryConverter {
 
-    public LibraryBean convertLibrary(TZamboniLibrary zamboniLibrary,SampleData bspDTO,ProductOrder pdo);
+    public LibraryBean convertLibrary(TZamboniLibrary zamboniLibrary, SampleData sampleData, ProductOrder pdo);
 }

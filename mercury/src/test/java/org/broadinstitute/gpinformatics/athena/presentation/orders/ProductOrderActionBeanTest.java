@@ -28,7 +28,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo_;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.StripesMockTestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
@@ -159,8 +159,8 @@ public class ProductOrderActionBeanTest {
      * @throws JSONException
      */
     public void testNonNumericRinScore() throws JSONException {
-        jsonObject.put(BSPSampleDTO.JSON_RIN_KEY, getSamplDTOWithBadRinScore().getRawRin());
-        Assert.assertEquals(jsonObject.get(BSPSampleDTO.JSON_RIN_KEY), expectedNonNumericRinScore);
+        jsonObject.put(BspSampleData.JSON_RIN_KEY, getSamplDTOWithBadRinScore().getRawRin());
+        Assert.assertEquals(jsonObject.get(BspSampleData.JSON_RIN_KEY), expectedNonNumericRinScore);
     }
 
     /**
@@ -170,30 +170,30 @@ public class ProductOrderActionBeanTest {
      * @throws JSONException
      */
     public void testNumericRinScore() throws JSONException {
-        jsonObject.put(BSPSampleDTO.JSON_RIN_KEY, getSampleDTOWithGoodRinScore().getRawRin());
-        Assert.assertEquals(Double.parseDouble((String) jsonObject.get(BSPSampleDTO.JSON_RIN_KEY)),
+        jsonObject.put(BspSampleData.JSON_RIN_KEY, getSampleDTOWithGoodRinScore().getRawRin());
+        Assert.assertEquals(Double.parseDouble((String) jsonObject.get(BspSampleData.JSON_RIN_KEY)),
                 expectedNumericValue);
     }
 
     public void testNoRinScore() throws JSONException {
         Map<BSPSampleSearchColumn, String> data = new EnumMap<>(BSPSampleSearchColumn.class);
         data.put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1234");
-        SampleData bspSampleDTO = new BSPSampleDTO(data);
+        SampleData bspSampleData = new BspSampleData(data);
 
-        jsonObject.put(BSPSampleDTO.JSON_RIN_KEY, bspSampleDTO.getRawRin());
+        jsonObject.put(BspSampleData.JSON_RIN_KEY, bspSampleData.getRawRin());
 
-        Assert.assertEquals(jsonObject.get(BSPSampleDTO.JSON_RIN_KEY), "");
+        Assert.assertEquals(jsonObject.get(BspSampleData.JSON_RIN_KEY), "");
     }
 
     public void testRinRange() throws JSONException {
         Map<BSPSampleSearchColumn, String> data = new EnumMap<>(BSPSampleSearchColumn.class);
         data.put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1234");
         data.put(BSPSampleSearchColumn.RIN, "1.2-3.4");
-        SampleData bspSampleDTO = new BSPSampleDTO(data);
+        SampleData bspSampleData = new BspSampleData(data);
 
-        jsonObject.put(BSPSampleDTO.JSON_RIN_KEY, bspSampleDTO.getRawRin());
+        jsonObject.put(BspSampleData.JSON_RIN_KEY, bspSampleData.getRawRin());
 
-        Assert.assertEquals(jsonObject.get(BSPSampleDTO.JSON_RIN_KEY), "1.2-3.4");
+        Assert.assertEquals(jsonObject.get(BspSampleData.JSON_RIN_KEY), "1.2-3.4");
     }
 
     public void testValidateRinScoresWhenProductHasRinRisk() {
@@ -305,7 +305,7 @@ public class ProductOrderActionBeanTest {
             put(BSPSampleSearchColumn.RIN, expectedNonNumericRinScore);
             put(BSPSampleSearchColumn.SAMPLE_ID, "SM-49M5N");
         }};
-        return new BSPSampleDTO(dataMap);
+        return new BspSampleData(dataMap);
     }
 
     private SampleData getSampleDTOWithGoodRinScore() {
@@ -314,7 +314,7 @@ public class ProductOrderActionBeanTest {
             put(BSPSampleSearchColumn.RIN, String.valueOf(expectedNumericValue));
             put(BSPSampleSearchColumn.SAMPLE_ID, "SM-99D2A");
         }};
-        return new BSPSampleDTO(dataMap);
+        return new BspSampleData(dataMap);
     }
 
     private Product createSimpleProduct(String productPartNumber, String family) {

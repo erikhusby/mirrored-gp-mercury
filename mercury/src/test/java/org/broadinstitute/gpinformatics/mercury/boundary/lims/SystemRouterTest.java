@@ -6,7 +6,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.BSPExportsService;
@@ -179,7 +179,7 @@ public class SystemRouterTest extends BaseEventTest {
                     put(MERCURY_TUBE_1, tube1);
                 }});
         when(mockSampleDataFetcher.fetchSampleData(Arrays.asList("SM-1")))
-                .thenReturn(Collections.singletonMap("SM-1", makeBspSampleDTO("Sample1")));
+                .thenReturn(Collections.singletonMap("SM-1", makeBspSampleData("Sample1")));
 
         tube2 = new BarcodedTube(MERCURY_TUBE_2);
         when(mockLabVesselDao.findByBarcodes(new ArrayList<String>() {{
@@ -238,7 +238,7 @@ public class SystemRouterTest extends BaseEventTest {
         when(mockControlDao.findAllActive())
                 .thenReturn(Arrays.asList(new Control(NA12878, Control.ControlType.POSITIVE)));
         when(mockSampleDataFetcher.fetchSampleData(Arrays.asList(CONTROL_SAMPLE_ID)))
-                .thenReturn(Collections.singletonMap(CONTROL_SAMPLE_ID, makeBspSampleDTO(NA12878)));
+                .thenReturn(Collections.singletonMap(CONTROL_SAMPLE_ID, makeBspSampleData(NA12878)));
 
         plate = new StaticPlate(MERCURY_PLATE, Eppendorf96);
         when(mockLabVesselDao.findByBarcodes(new ArrayList<String>() {{
@@ -263,10 +263,10 @@ public class SystemRouterTest extends BaseEventTest {
         picoBucket = new Bucket("Pico/Plating Bucket");
     }
 
-    private static SampleData makeBspSampleDTO(String collaboratorSampleId) {
+    private static SampleData makeBspSampleData(String collaboratorSampleId) {
         Map<BSPSampleSearchColumn, String> dataMap = new EnumMap<>(BSPSampleSearchColumn.class);
         dataMap.put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, collaboratorSampleId);
-        return new BSPSampleDTO(dataMap);
+        return new BspSampleData(dataMap);
     }
 
     /*

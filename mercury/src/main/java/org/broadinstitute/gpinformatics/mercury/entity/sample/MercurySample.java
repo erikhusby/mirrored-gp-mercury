@@ -4,7 +4,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.RapSheet;
@@ -138,7 +138,7 @@ public class MercurySample extends AbstractSample {
     protected SampleData makeSampleData() {
         switch (metadataSource) {
         case BSP:
-            return new BSPSampleDTO();
+            return new BspSampleData();
         case MERCURY:
             return new MercurySampleData(sampleKey, Collections.<Metadata>emptySet());
         default:

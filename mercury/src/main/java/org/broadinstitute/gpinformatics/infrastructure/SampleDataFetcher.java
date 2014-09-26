@@ -6,7 +6,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
@@ -105,7 +105,7 @@ public class SampleDataFetcher implements Serializable {
         }
         Map<String, SampleData> sampleData = new HashMap<>();
         if (!bspSampleIds.isEmpty()) {
-            Map<String, BSPSampleDTO> bspSampleData = bspSampleDataFetcher.fetchSampleData(bspSampleIds);
+            Map<String, BspSampleData> bspSampleData = bspSampleDataFetcher.fetchSampleData(bspSampleIds);
             sampleData.putAll(bspSampleData);
         }
         sampleData.putAll(mercurySampleDataFetcher.fetchSampleData(mercurySamples));
@@ -113,11 +113,11 @@ public class SampleDataFetcher implements Serializable {
     }
 
     public void fetchFFPEDerived(@Nonnull Collection<SampleData> sampleDatas) {
-        bspSampleDataFetcher.fetchFFPEDerived(BSPSampleDataFetcher.convertToBSPSampleDTOCollection(sampleDatas));
+        bspSampleDataFetcher.fetchFFPEDerived(BSPSampleDataFetcher.convertToBspSampleDataCollection(sampleDatas));
     }
 
     public void fetchSamplePlastic(@Nonnull Collection<SampleData> sampleDatas) {
-        bspSampleDataFetcher.fetchSamplePlastic(BSPSampleDataFetcher.convertToBSPSampleDTOCollection(sampleDatas));
+        bspSampleDataFetcher.fetchSamplePlastic(BSPSampleDataFetcher.convertToBspSampleDataCollection(sampleDatas));
     }
 
     /**

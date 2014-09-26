@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
@@ -29,12 +29,12 @@ public class OnRiskCriteriaTest {
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_1234);
         }};
 
-        SampleData lowNumSample = new BSPSampleDTO(dataMap);
+        SampleData lowNumSample = new BspSampleData(dataMap);
         dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.CONCENTRATION, HIGH_NUMBER);
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_1234);
         }};
-        SampleData highNumSample = new BSPSampleDTO(dataMap);
+        SampleData highNumSample = new BspSampleData(dataMap);
 
         handleNumericOnRisk(lowNumSample, highNumSample, RiskCriterion.RiskCriteriaType.CONCENTRATION);
     }
@@ -49,14 +49,14 @@ public class OnRiskCriteriaTest {
             put(BSPSampleSearchColumn.VOLUME, LOW_NUMBER);
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_1234);
         }};
-        SampleData lowNumSample = new BSPSampleDTO(dataMap);
+        SampleData lowNumSample = new BspSampleData(dataMap);
 
         dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.VOLUME, HIGH_NUMBER);
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_1235);
         }};
 
-        SampleData highNumSample =  new BSPSampleDTO(dataMap);
+        SampleData highNumSample =  new BspSampleData(dataMap);
         handleNumericOnRisk(lowNumSample, highNumSample, RiskCriterion.RiskCriteriaType.VOLUME);
     }
 
@@ -69,13 +69,13 @@ public class OnRiskCriteriaTest {
             put(BSPSampleSearchColumn.RIN, LOW_NUMBER);
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_1234);
         }};
-        SampleData lowNumSample = new BSPSampleDTO(dataMap);
+        SampleData lowNumSample = new BspSampleData(dataMap);
 
         dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.RIN, HIGH_NUMBER);
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_1235);
         }};
-        SampleData highNumSample =  new BSPSampleDTO(dataMap);
+        SampleData highNumSample =  new BspSampleData(dataMap);
 
         handleNumericOnRisk(lowNumSample, highNumSample, RiskCriterion.RiskCriteriaType.RIN);
 
@@ -84,14 +84,14 @@ public class OnRiskCriteriaTest {
             put(BSPSampleSearchColumn.RIN, LOW_NUMBER + " - " + HIGH_NUMBER);
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_1234);
         }};
-        lowNumSample = new BSPSampleDTO(dataMap);
+        lowNumSample = new BspSampleData(dataMap);
 
         // Putting the high number in twice should effectively give the high number.
         dataMap = new HashMap<BSPSampleSearchColumn, String>() {{
             put(BSPSampleSearchColumn.RIN, HIGH_NUMBER + " - " + HIGH_NUMBER);
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_1234);
         }};
-        highNumSample = new BSPSampleDTO(dataMap);
+        highNumSample = new BspSampleData(dataMap);
 
         handleNumericOnRisk(lowNumSample, highNumSample, RiskCriterion.RiskCriteriaType.RIN);
 
@@ -124,7 +124,7 @@ public class OnRiskCriteriaTest {
         if (rqs != null) {
             data.put(BSPSampleSearchColumn.RQS, rqs);
         }
-        SampleData sampleData = new BSPSampleDTO(data);
+        SampleData sampleData = new BspSampleData(data);
         return new ProductOrderSample("SM-1234", sampleData);
     }
 
@@ -137,13 +137,13 @@ public class OnRiskCriteriaTest {
             put(BSPSampleSearchColumn.TOTAL_DNA, LOW_NUMBER);
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_1234);
         }};
-        SampleData lowNumSample = new BSPSampleDTO(dataMap);
+        SampleData lowNumSample = new BspSampleData(dataMap);
 
         dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.TOTAL_DNA, HIGH_NUMBER);
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_1235);
         }};
-        SampleData highNumSample =  new BSPSampleDTO(dataMap);
+        SampleData highNumSample =  new BspSampleData(dataMap);
 
         handleNumericOnRisk(lowNumSample, highNumSample, RiskCriterion.RiskCriteriaType.TOTAL_DNA);
     }
@@ -159,13 +159,13 @@ public class OnRiskCriteriaTest {
             put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA WGA Cleaned");
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_1234);
         }};
-        SampleData hasWgaDummy = new BSPSampleDTO(dataMap);
+        SampleData hasWgaDummy = new BspSampleData(dataMap);
 
         dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA Genomic");
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_1235);
         }};
-        SampleData nonWgaDummy = new BSPSampleDTO(dataMap);
+        SampleData nonWgaDummy = new BspSampleData(dataMap);
 
         handleBooleanOnRisk(hasWgaDummy, nonWgaDummy, RiskCriterion.RiskCriteriaType.WGA);
     }
@@ -180,14 +180,14 @@ public class OnRiskCriteriaTest {
             put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA WGA Cleaned");
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_1234);
         }};
-        BSPSampleDTO hasWgaDummy = new BSPSampleDTO(dataMap);
+        BspSampleData hasWgaDummy = new BspSampleData(dataMap);
         hasWgaDummy.setFfpeStatus(true);
 
         dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.TOTAL_DNA, "DNA:DNA WGA Cleaned");
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_1235);
         }};
-        BSPSampleDTO nonWgaDummy =  new BSPSampleDTO(dataMap);
+        BspSampleData nonWgaDummy =  new BspSampleData(dataMap);
         nonWgaDummy.setFfpeStatus(false);
 
         // Create one sample with FFPE status of true, and one FFPE status of false
@@ -291,7 +291,7 @@ public class OnRiskCriteriaTest {
 
         Map<BSPSampleSearchColumn, String> data = new HashMap<>();
         data.put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1234");
-        SampleData missingNumSample = new BSPSampleDTO(data);
+        SampleData missingNumSample = new BspSampleData(data);
         ProductOrderSample missingNumberPOSample = new ProductOrderSample("SM-1234", missingNumSample);
 
         //  EXPECT TO BE ON RISK START.

@@ -8,7 +8,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -160,7 +160,7 @@ public class ZimsIlluminaRunFactoryTest {
                 put(BSPSampleSearchColumn.RACKSCAN_MISMATCH, "false");
                 put(BSPSampleSearchColumn.RIN, "8.4");
             }};
-            mapSampleIdToDto.put(sampleId, new BSPSampleDTO(dataMap));
+            mapSampleIdToDto.put(sampleId, new BspSampleData(dataMap));
         }
 
         mapKeyToProductOrder.clear();
