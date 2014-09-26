@@ -1,13 +1,18 @@
 package org.broadinstitute.gpinformatics.athena.entity.products;
 
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -168,6 +173,18 @@ public class OnRiskCriteriaTest {
         SampleData nonWgaDummy = new BspSampleData(dataMap);
 
         handleBooleanOnRisk(hasWgaDummy, nonWgaDummy, RiskCriterion.RiskCriteriaType.WGA);
+    }
+
+    @Test
+    public void testWGAOnRiskMercurySample() {
+
+        SampleData hasWgaDummy = new MercurySampleData(SM_1234, Collections.<Metadata>emptySet());
+
+        ProductOrderSample productOrderSample = new ProductOrderSample(SM_1234, hasWgaDummy);
+        ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(1);
+        productOrder.getProduct().addRiskCriteria(new RiskCriterion(RiskCriterion.RiskCriteriaType.WGA, Operator.IS, null));
+        productOrder.addSample(productOrderSample);
+        productOrderSample.calculateRisk();
     }
 
     /**

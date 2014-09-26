@@ -53,13 +53,14 @@ public class RiskCriterion implements Serializable {
      * This provides a way to create a fully specified criterion. On the product page, the user adds to a criteria
      * list and specifies all of this information.
      *
-     * @param type The type of criterion from the RiskCriteriaType enum.
+     * @param type     The type of criterion from the RiskCriteriaType enum.
      * @param operator The operator that will be used to make the comparison.
-     * @param value The value.
+     * @param value    The value.
      */
     public RiskCriterion(@Nonnull RiskCriteriaType type, @Nonnull Operator operator, @Nullable String value) {
         if (!type.getOperators().contains(operator)) {
-            throw new RuntimeException("operator: " + operator.getLabel() + " is not allowed on type: " + type.getLabel());
+            throw new RuntimeException(
+                    "operator: " + operator.getLabel() + " is not allowed on type: " + type.getLabel());
         }
 
         this.type = type;
@@ -105,8 +106,8 @@ public class RiskCriterion implements Serializable {
 
     public boolean isSame(String criteriaName, String operator, String value) {
         return criteriaName.equals(type.getLabel()) &&
-            operator.equals(this.operator.getLabel()) &&
-            value.equals(this.value);
+               operator.equals(this.operator.getLabel()) &&
+               value.equals(this.value);
     }
 
     public ValueProvider getValueProvider() {
@@ -160,14 +161,7 @@ public class RiskCriterion implements Serializable {
                 return String.valueOf(sample.getSampleData().getConcentration());
             }
         }),
-        WGA("Is WGA", Operator.OperatorType.BOOLEAN, new ValueProvider() {
-            private static final long serialVersionUID = -4849732345451486536L;
-
-            @Override
-            public String getValue(ProductOrderSample sample) {
-                return String.valueOf(sample.getSampleData().getMaterialType().contains("WGA"));
-            }
-        }),
+        WGA("Is WGA", Operator.OperatorType.BOOLEAN, new WgaValueProvider()),
         FFPE("Is FFPE", Operator.OperatorType.BOOLEAN, new ValueProvider() {
             private static final long serialVersionUID = -8406086522548244907L;
 
@@ -208,7 +202,7 @@ public class RiskCriterion implements Serializable {
 
                 // On risk if there is no pico date or if the run date is older than one year ago.
                 return String.valueOf(((sampleDTO.getPicoRunDate() == null) ||
-                        sampleDTO.getPicoRunDate().before(sample.getProductOrder().getOneYearAgo())));
+                                       sampleDTO.getPicoRunDate().before(sample.getProductOrder().getOneYearAgo())));
             }
         }),
         RIN("RIN", Operator.OperatorType.NUMERIC, new ValueProvider() {
@@ -279,6 +273,19 @@ public class RiskCriterion implements Serializable {
             }
 
             return null;
+        }
+    }
+
+    public static class WgaValueProvider extends ValueProvider {
+        private static final long serialVersionUID = -4849732345451486536L;
+
+        @Override
+        public String getValue(ProductOrderSample sample) {
+            String materialType = sample.getSampleData().getMaterialType();
+            if (materialType == null) {
+                return "";
+            }
+            return String.valueOf(materialType.contains("WGA"));
         }
     }
 
