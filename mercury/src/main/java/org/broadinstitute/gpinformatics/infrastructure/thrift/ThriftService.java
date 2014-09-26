@@ -53,4 +53,6 @@ public interface ThriftService extends Serializable {
     public List<PlateTransfer> fetchTransfersForPlate(String plateBarcode, short depth);
 
     public List<PoolGroup> fetchPoolGroups(List<String> tubeBarcoces);
+
+    public Map<String,ConcentrationAndVolume> fetchConcentrationAndVolumeForTubeBarcodes(List<String> tubeBarcodes);
 }

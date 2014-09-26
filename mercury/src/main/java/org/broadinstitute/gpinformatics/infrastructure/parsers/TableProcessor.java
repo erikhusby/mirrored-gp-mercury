@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.parsers;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -19,6 +20,7 @@ import java.util.Set;
 public abstract class TableProcessor implements Serializable {
 
     private static final long serialVersionUID = 8122298462727182883L;
+    public static final String REQUIRED_VALUE_IS_MISSING = "Required value for %s is missing";
 
     private final List<String> validationMessages = new ArrayList<>();
 
@@ -114,7 +116,7 @@ public abstract class TableProcessor implements Serializable {
         for (ColumnHeader header : getColumnHeaders()) {
             if (header.isRequiredValue() &&
                 (!dataRow.containsKey(header.getText()) || StringUtils.isBlank(dataRow.get(header.getText())))) {
-                addDataMessage("Required value for " + header.getText() + " is missing", dataRowIndex);
+                addDataMessage(String.format(REQUIRED_VALUE_IS_MISSING, header.getText()), dataRowIndex);
                 hasValue = false;
             }
         }
@@ -176,4 +178,16 @@ public abstract class TableProcessor implements Serializable {
 
         return null;
     }
+
+
+    /**
+     * If your requirements state that a workbook must have a certain amount of worksheets you can override
+     * to include that logic.
+     *
+     * @param actualNumberOfSheets number of sheets in workbook
+     *
+     * @throws ValidationException if the actual number of worksheets differs from your requirements.
+     */
+    public void validateNumberOfWorksheets(int actualNumberOfSheets) throws ValidationException {    }
+
 }

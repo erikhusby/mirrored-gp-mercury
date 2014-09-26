@@ -2147,11 +2147,9 @@ public class ProductOrderActionBean extends CoreActionBean {
                             .findListByList(RegulatoryInfo.class, RegulatoryInfo_.regulatoryInfoId, selectedRegulatoryIds);
 
                     Set<String> missingRegulatoryRequirements = new HashSet<>();
-
                     for (RegulatoryInfo chosenInfo : selectedRegulatoryInfos) {
-                        if (!chosenInfo.getResearchProjects().contains(editOrder.getResearchProject())) {
+                        if (!chosenInfo.getResearchProjectsIncludingChildren().contains(editOrder.getResearchProject())) {
                             missingRegulatoryRequirements.add(chosenInfo.getName());
-
                         }
                     }
 

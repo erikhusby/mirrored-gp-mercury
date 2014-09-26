@@ -28,11 +28,25 @@
                         {"bSortable": true},  // user
                         {"bSortable": true},  // date
                         {"bSortable": true},  // reason
-                        {"bSortable": false},  // checkbox
+                        {"bSortable": false}  // checkbox
                     ]
-                })
+                });
+                <%-- Clears all checkboxes. --%>
+                $j('input.overrideCheckboxClass').prop('checked',false);
+
+                <%-- Hooks any override checkbox change and hides/shows the NextSteps button. --%>
+                $j('input.overrideCheckboxClass').change(function() {
+                    var isChecked = $j('input.overrideCheckboxClass:checked');
+                    if (isChecked.length) {
+                        $j("#viewNextStepsBtn").attr("disabled", "disabled");
+                    } else {
+                        $j("#viewNextStepsBtn").removeAttr("disabled");
+                    }
+                });
 
             });
+
+
         </script>
     </stripes:layout-component>
     <stripes:layout-component name="content">
@@ -137,7 +151,8 @@
                                 </td>
                                 <td>
                                     <c:if test="${labMetric.labMetricDecision.decision.editable}">
-                                        <stripes:checkbox name="selectedMetrics" value="${labMetric.labMetricId}"/>
+                                        <stripes:checkbox name="selectedMetrics" value="${labMetric.labMetricId}"
+                                                class="overrideCheckboxClass"/>
                                     </c:if>
                                 </td>
                             </tr>
@@ -146,6 +161,7 @@
                     </tbody>
                 </table>
                 <stripes:hidden name="labMetricRunId" value="${actionBean.labMetricRun.labMetricRunId}"/>
+                <stripes:hidden name="tubeFormationLabel" value="${actionBean.tubeFormationLabel}"/>
                 <stripes:label for="overrideDecision" class="control-label">Override Decision</stripes:label>
                 <div class="controls">
                     <stripes:select name="overrideDecision">
@@ -157,7 +173,14 @@
                     <stripes:text name="overrideReason"/>
                 </div>
                 <stripes:submit name="saveMetrics" value="Save" class="btn btn-primary"/>
+
             </stripes:form>
+
+            <stripes:form action="${actionBean.picoDispositionActionBeanUrl}" id="nextStepsForm" class="form-horizontal">
+                <stripes:hidden name="tubeFormationLabel" value="${actionBean.tubeFormationLabel}"/>
+                <stripes:submit name="view" value="View Next Steps" class="btn btn-primary" id="viewNextStepsBtn"/>
+            </stripes:form>
+
         </c:if>
     </stripes:layout-component>
 </stripes:layout-render>
