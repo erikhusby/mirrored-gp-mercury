@@ -186,7 +186,7 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
                 return sampleIdDataMap;
             }
         });
-        reworkEjb.setSampleDataFetcher(mockFetcher);
+        reworkEjb.setBspSampleDataFetcher(mockFetcher);
 
 
         Collection<ReworkEjb.BucketCandidate> candidates =
@@ -247,7 +247,7 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
                 return sampleIdDataMap;
             }
         });
-        reworkEjb.setSampleDataFetcher(mockFetcher);
+        reworkEjb.setBspSampleDataFetcher(mockFetcher);
 
         Collection<ReworkEjb.BucketCandidate> candidates =
                 reworkEjb.collectBucketCandidatesThatHaveBSPVessels(productOrderSampleSet);

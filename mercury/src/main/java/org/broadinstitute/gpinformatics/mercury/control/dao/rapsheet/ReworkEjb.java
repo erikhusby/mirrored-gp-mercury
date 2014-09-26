@@ -84,7 +84,7 @@ public class ReworkEjb {
     @Inject
     private LabVesselDao labVesselDao;
 
-    private BSPSampleDataFetcher sampleDataFetcher;
+    private BSPSampleDataFetcher bspSampleDataFetcher;
 
     @Inject
     private BucketEjb bucketEjb;
@@ -175,7 +175,20 @@ public class ReworkEjb {
             bucketCandidates.addAll(collectBucketCandidatesForAMercuryVessel(vessel, mapBySamples));
         }
 
-        // TODO: be smarter about which inputs produced results and query BSP for any that had no results from Mercury
+        /*
+         * For any sample whose sample data lives in Mercury, a bucket candidate will already have been found.
+         * Therefore, there is no risk of querying BSP for these samples from here.
+         *
+         * If there are only BSP-sample-data samples in the query that Mercury does not know about, then
+         *      bucketCandidates will be empty and the query will extend to search in BSP.
+         * If there are only Mercury-sample-data samples in the query, bucketCandidates will not be empty.
+         * If there are a mix of samples in the query, some subset may have been found and bucketCandidates created for
+         *      them, in which case BSP will not be queried.
+         *
+         * TODO: Filter out of the user's query samples for which we've found candidates in Mercury rather than querying BSP for all samples.
+         * The above scenarios need to be taken into account when doing this to avoid querying BSP for samples whose
+         * sample data is in Mercury, especially those that are BSP tubes that have been exported to CRSP!
+         */
         if (bucketCandidates.isEmpty()) {
             Collection<ProductOrderSample> sampleCollection = productOrderSampleDao.findBySamples(query);
             bucketCandidates.addAll(collectBucketCandidatesThatHaveBSPVessels(sampleCollection));
@@ -200,8 +213,8 @@ public class ReworkEjb {
         for (ProductOrderSample sample : samplesById) {
             sampleIDs.add(sample.getName());
         }
-        Map<String, BSPSampleDTO> bspResult = sampleDataFetcher.fetchSampleData(sampleIDs);
-        sampleDataFetcher.fetchSamplePlastic(bspResult.values());
+        Map<String, BSPSampleDTO> bspResult = bspSampleDataFetcher.fetchSampleData(sampleIDs);
+        bspSampleDataFetcher.fetchSamplePlastic(bspResult.values());
         for (ProductOrderSample sample : samplesById) {
             Workflow workflow = sample.getProductOrder().getProduct().getWorkflow();
 
@@ -481,8 +494,8 @@ public class ReworkEjb {
     }
 
     @Inject
-    public void setSampleDataFetcher(BSPSampleDataFetcher sampleDataFetcher) {
-        this.sampleDataFetcher = sampleDataFetcher;
+    public void setBspSampleDataFetcher(BSPSampleDataFetcher bspSampleDataFetcher) {
+        this.bspSampleDataFetcher = bspSampleDataFetcher;
     }
 
     /**
