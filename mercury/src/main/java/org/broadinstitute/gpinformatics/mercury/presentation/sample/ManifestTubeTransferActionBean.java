@@ -218,7 +218,7 @@ public class ManifestTubeTransferActionBean extends CoreActionBean {
     }
 
     /**
-     * Handles source tube validation
+     * Validates source tube
      *
      * @return any error messages if an exception occurs
      */
@@ -234,7 +234,7 @@ public class ManifestTubeTransferActionBean extends CoreActionBean {
     }
 
     /**
-     * validateTargetSample contains the code for executing and handling the target sample validation
+     * Validates target sample
      * @return any error messages if an exception occurs
      */
     private String validateTargetSample() {
@@ -250,7 +250,7 @@ public class ManifestTubeTransferActionBean extends CoreActionBean {
     }
 
     /**
-     * validateTargetSampleAndVessel contains the code for executing and handling the target vessel and sample
+     * Validates target vessel and sample
      * validation
      * @return any error messages if an exception occurs
      */
