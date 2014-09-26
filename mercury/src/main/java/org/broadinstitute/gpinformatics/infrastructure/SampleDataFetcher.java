@@ -116,10 +116,6 @@ public class SampleDataFetcher implements Serializable {
         bspSampleDataFetcher.fetchFFPEDerived(BSPSampleDataFetcher.convertToBspSampleDataCollection(sampleDatas));
     }
 
-    public void fetchSamplePlastic(@Nonnull Collection<SampleData> sampleDatas) {
-        bspSampleDataFetcher.fetchSamplePlastic(BSPSampleDataFetcher.convertToBspSampleDataCollection(sampleDatas));
-    }
-
     /**
      * Given an aliquot ID, return its stock sample ID.
      */
