@@ -36,7 +36,12 @@ public class MercurySampleDataFetcher {
     }
 
     /**
-     * Find the StockID for a MercurySample
+     * Find the StockID for a MercurySample.
+     *
+     * The usage of this method is to find the PDO sample given an aliquot sample ID from the pipeline. For workflows
+     * where the PDO is created prior to plating and the samples are coming from BSP, finding the stock ID for the
+     * aliquot ID is the right thing to do. For workflows where the PDO is created for samples that have already been
+     * plated and the sample data is stored in Mercury, the aliquot and the "stock" are the same sample.
      *
      * @param mercurySample Sample to get the stockId from;
      *
@@ -47,11 +52,11 @@ public class MercurySampleDataFetcher {
     }
 
     /**
-     * Find the StockID for a collection of MercurySamples
+     * Find the StockID for a collection of MercurySamples.
      *
      * @param mercurySamples Sample to get the stockId from;
-     *
      * @return a map from sampleId to stockId
+     * @see #getStockIdForAliquotId(MercurySample)
      */
     public Map<String, String> getStockIdByAliquotId(@Nonnull Collection<MercurySample> mercurySamples) {
         Map<String, String> results = new HashMap<>();
