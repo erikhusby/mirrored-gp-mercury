@@ -22,9 +22,9 @@ public class BSPSampleDataFetcherContainerTest {
         Assert.assertNotNull(ffpe);
         Assert.assertNotNull(paraffin);
         Assert.assertNotNull(notFFPE);
-        List<BspSampleData> dtoList = Arrays.asList(ffpe, paraffin, notFFPE);
+        List<BspSampleData> sampleDataList = Arrays.asList(ffpe, paraffin, notFFPE);
 
-        bspSampleDataFetcher.fetchFFPEDerived(dtoList);
+        bspSampleDataFetcher.fetchFFPEDerived(sampleDataList);
 
         Assert.assertTrue(ffpe.getFfpeStatus());
         Assert.assertTrue(paraffin.getFfpeStatus());
@@ -37,9 +37,9 @@ public class BSPSampleDataFetcherContainerTest {
 
         Assert.assertNotNull(rootSample);
         Assert.assertNotNull(aliquotSample);
-        List<BspSampleData> dtoList = Arrays.asList(rootSample, aliquotSample);
+        List<BspSampleData> sampleDataList = Arrays.asList(rootSample, aliquotSample);
 
-        bspSampleDataFetcher.fetchSamplePlastic(dtoList);
+        bspSampleDataFetcher.fetchSamplePlastic(sampleDataList);
 
         Assert.assertNotNull(rootSample.getPlasticBarcodes());
         Assert.assertNotNull(aliquotSample.getPlasticBarcodes());

@@ -1261,7 +1261,7 @@ public class LabEventTest extends BaseEventTest {
             }
             Map<BSPSampleSearchColumn, String> dataMap = new HashMap<>();
             dataMap.put(BSPSampleSearchColumn.SAMPLE_ID, poSample.getName());
-            mapSampleNameToDto.put(poSample.getName(), new BspSampleData(dataMap));
+            nameToSampleData.put(poSample.getName(), new BspSampleData(dataMap));
 
             rackPosition++;
         }

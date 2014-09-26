@@ -142,7 +142,7 @@ public class BaseEventTest {
      */
     public static final GregorianCalendar EX_EX_IN_MERCURY_CALENDAR = new GregorianCalendar(2013, 6, 26);
 
-    protected static Map<String, SampleData> mapSampleNameToDto = new HashMap<>();
+    protected static Map<String, SampleData> nameToSampleData = new HashMap<>();
 
     protected final LabEventRefDataFetcher labEventRefDataFetcher =
             new LabEventRefDataFetcher() {
@@ -226,7 +226,7 @@ public class BaseEventTest {
             mapBarcodeToTube.put(barcode, bspAliquot);
             Map<BSPSampleSearchColumn, String> dataMap = new HashMap<>();
             dataMap.put(BSPSampleSearchColumn.SAMPLE_ID, poSample.getName());
-            mapSampleNameToDto.put(poSample.getName(), new BspSampleData(dataMap));
+            nameToSampleData.put(poSample.getName(), new BspSampleData(dataMap));
             if (rackPosition > NUM_POSITIONS_IN_RACK) {
                 log.error(
                         "More product order samples than allowed in a single rack. " + productOrder.getSamples().size()
@@ -609,7 +609,7 @@ public class BaseEventTest {
                     put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, POSITIVE_CONTROL);
                 }});
         posControlTube.addSample(new MercurySample(POSITIVE_CONTROL, bspSampleDataPos));
-        mapSampleNameToDto.put(POSITIVE_CONTROL, bspSampleDataPos);
+        nameToSampleData.put(POSITIVE_CONTROL, bspSampleDataPos);
         mapBarcodeToDaughterTube.put(VesselPosition.H11, posControlTube);
 
         BarcodedTube negControlTube = new BarcodedTube("C2");
@@ -618,7 +618,7 @@ public class BaseEventTest {
                     put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, NEGATIVE_CONTROL);
                 }});
         negControlTube.addSample(new MercurySample(NEGATIVE_CONTROL, bspSampleDataNeg));
-        mapSampleNameToDto.put(NEGATIVE_CONTROL, bspSampleDataNeg);
+        nameToSampleData.put(NEGATIVE_CONTROL, bspSampleDataNeg);
         mapBarcodeToDaughterTube.put(VesselPosition.H12, negControlTube);
 
         return new TubeFormation(mapBarcodeToDaughterTube, RackOfTubes.RackType.Matrix96);
@@ -697,7 +697,7 @@ public class BaseEventTest {
                     put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, POSITIVE_CONTROL);
                 }});
         posControlTube.addSample(new MercurySample(POSITIVE_CONTROL, bspSampleDataPos));
-        mapSampleNameToDto.put(POSITIVE_CONTROL, bspSampleDataPos);
+        nameToSampleData.put(POSITIVE_CONTROL, bspSampleDataPos);
         mapBarcodeToDaughterTube.put(VesselPosition.H11, posControlTube);
 
         BarcodedTube negControlTube = new BarcodedTube("C2");
@@ -706,7 +706,7 @@ public class BaseEventTest {
                     put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, NEGATIVE_CONTROL);
                 }});
         negControlTube.addSample(new MercurySample(NEGATIVE_CONTROL, bspSampleDataNeg));
-        mapSampleNameToDto.put(NEGATIVE_CONTROL, bspSampleDataNeg);
+        nameToSampleData.put(NEGATIVE_CONTROL, bspSampleDataNeg);
         mapBarcodeToDaughterTube.put(VesselPosition.H12, negControlTube);
 
         return new TubeFormation(mapBarcodeToDaughterTube, RackOfTubes.RackType.Matrix96);
@@ -767,7 +767,7 @@ public class BaseEventTest {
     public static void validateWorkflow(String nextEventTypeName, List<LabVessel> labVessels) {
         SystemRouter systemRouter = new SystemRouter(null, null, new WorkflowLoader(), null, null);
         SystemRouter.System system = systemRouter.routeForVessels(labVessels,
-                controlCollaboratorIdList, mapSampleNameToDto,
+                controlCollaboratorIdList, nameToSampleData,
                 SystemRouter.Intent.ROUTE);
         Assert.assertEquals(system, expectedRouting);
 
@@ -801,7 +801,7 @@ public class BaseEventTest {
                 new SampleDataFetcher() {
                     @Override
                     public Map<String, SampleData> fetchSampleData(@Nonnull Collection<String> sampleNames) {
-                        Map<String, SampleData> mapSampleIdToDto = new HashMap<>();
+                        Map<String, SampleData> sampleIdToSampleData = new HashMap<>();
                         Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>() {{
                             put(BSPSampleSearchColumn.PRIMARY_DISEASE, "Cancer");
                             put(BSPSampleSearchColumn.LSID, "org.broad:SM-1234");
@@ -813,9 +813,9 @@ public class BaseEventTest {
                         for (String sampleName : sampleNames) {
                             Map<BSPSampleSearchColumn, String> dataMapCopy = new HashMap<>(dataMap);
                             dataMapCopy.put(BSPSampleSearchColumn.SAMPLE_ID, sampleName);
-                            mapSampleIdToDto.put(sampleName, new BspSampleData(dataMapCopy));
+                            sampleIdToSampleData.put(sampleName, new BspSampleData(dataMapCopy));
                         }
-                        return mapSampleIdToDto;
+                        return sampleIdToSampleData;
                     }
                 },
                 new ControlDao() {

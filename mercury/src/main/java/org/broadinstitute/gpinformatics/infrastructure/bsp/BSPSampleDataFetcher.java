@@ -68,20 +68,20 @@ public class BSPSampleDataFetcher extends BSPJerseyClient implements Serializabl
      *
      * @param sampleName The sample name.
      *
-     * @return The sample DTO that was fetched.
+     * @return The sample data that was fetched.
      */
     public BspSampleData fetchSingleSampleFromBSP(String sampleName) {
         if (service == null) {
             throw new RuntimeException("No BSP service has been declared.");
         } else {
-            Map<String, BspSampleData> sampleNameToDTO = fetchSampleData(Collections.singleton(sampleName));
+            Map<String, BspSampleData> nameToSampleData = fetchSampleData(Collections.singleton(sampleName));
 
-            if (sampleNameToDTO.isEmpty()) {
+            if (nameToSampleData.isEmpty()) {
                 return null;
-            } else if (sampleNameToDTO.size() > 1) {
-                throw new RuntimeException("Found " + sampleNameToDTO.size() + " possible matches in bsp.");
+            } else if (nameToSampleData.size() > 1) {
+                throw new RuntimeException("Found " + nameToSampleData.size() + " possible matches in bsp.");
             } else {
-                return sampleNameToDTO.entrySet().iterator().next().getValue();
+                return nameToSampleData.entrySet().iterator().next().getValue();
             }
         }
     }
@@ -113,15 +113,15 @@ public class BSPSampleDataFetcher extends BSPJerseyClient implements Serializabl
         Set<BSPSampleSearchColumn> searchColumns =
                 new HashSet<>(Arrays.asList(bspSampleSearchColumns));
         searchColumns.add(BSPSampleSearchColumn.SAMPLE_ID);
-        Map<String, BspSampleData> sampleNameToDTO = new HashMap<>();
+        Map<String, BspSampleData> nameToSampleData = new HashMap<>();
         List<Map<BSPSampleSearchColumn, String>> results = service.runSampleSearch(filteredSampleNames,
                 searchColumns.toArray(new BSPSampleSearchColumn[searchColumns.size()]));
         for (Map<BSPSampleSearchColumn, String> result : results) {
             BspSampleData bspSampleData = new BspSampleData(result);
-            sampleNameToDTO.put(bspSampleData.getSampleId(), bspSampleData);
+            nameToSampleData.put(bspSampleData.getSampleId(), bspSampleData);
         }
 
-        return sampleNameToDTO;
+        return nameToSampleData;
     }
 
     /**
@@ -148,7 +148,7 @@ public class BSPSampleDataFetcher extends BSPJerseyClient implements Serializabl
     /**
      * There is much copying and pasting of code from BSPSampleSearchServiceImpl into here -- a refactoring is needed.
      *
-     * @param bspSampleDatas BSP DTOs whose sampleID field will be referenced for the barcode value, and which will
+     * @param bspSampleDatas BSP Sample Data whose sampleID field will be referenced for the barcode value, and which will
      *                      be filled with the ffpeDerived value returned by the FFPE webservice
      */
     public void fetchFFPEDerived(@Nonnull Collection<BspSampleData> bspSampleDatas) {
@@ -156,22 +156,22 @@ public class BSPSampleDataFetcher extends BSPJerseyClient implements Serializabl
             return;
         }
 
-        final Map<String, BspSampleData> barcodeToDTOMap = new HashMap<>();
+        final Map<String, BspSampleData> barcodeToSampleDataMap = new HashMap<>();
         for (BspSampleData bspSampleData : bspSampleDatas) {
-            barcodeToDTOMap.put(bspSampleData.getSampleId(), bspSampleData);
+            barcodeToSampleDataMap.put(bspSampleData.getSampleId(), bspSampleData);
         }
 
         // Check to see if BSP is supported before trying to get data.
         if (AbstractConfig.isSupported(getBspConfig())) {
             String urlString = getUrl(WS_FFPE_DERIVED);
-            String queryString = makeQueryString("barcodes", barcodeToDTOMap.keySet());
+            String queryString = makeQueryString("barcodes", barcodeToSampleDataMap.keySet());
             final int SAMPLE_BARCODE = 0;
             final int FFPE = 1;
 
             post(urlString, queryString, ExtraTab.FALSE, new AbstractJerseyClientService.PostCallback() {
                 @Override
                 public void callback(String[] bspOutput) {
-                    BspSampleData bspSampleData = barcodeToDTOMap.get(bspOutput[SAMPLE_BARCODE]);
+                    BspSampleData bspSampleData = barcodeToSampleDataMap.get(bspOutput[SAMPLE_BARCODE]);
                     if (bspSampleData == null) {
                         throw new RuntimeException("Unrecognized return barcode: " + bspOutput[SAMPLE_BARCODE]);
                     }
@@ -187,19 +187,19 @@ public class BSPSampleDataFetcher extends BSPJerseyClient implements Serializabl
             return;
         }
 
-        final Map<String, BspSampleData> lsidToDTOMap = new HashMap<>();
+        final Map<String, BspSampleData> lsidToSampleDataMap = new HashMap<>();
         for (BspSampleData bspSampleData : bspSampleDatas) {
-            lsidToDTOMap.put(bspSampleData.getSampleLsid(), bspSampleData);
+            lsidToSampleDataMap.put(bspSampleData.getSampleLsid(), bspSampleData);
         }
 
         String urlString = getUrl(WS_DETAILS);
-        String queryString = makeQueryString("sample_lsid", lsidToDTOMap.keySet());
+        String queryString = makeQueryString("sample_lsid", lsidToSampleDataMap.keySet());
         final int LSID = 1;
         final int PLASTIC_BARCODE = 16;
         post(urlString, queryString, ExtraTab.FALSE, new AbstractJerseyClientService.PostCallback() {
             @Override
             public void callback(String[] bspOutput) {
-                BspSampleData bspSampleData = lsidToDTOMap.get(bspOutput[LSID]);
+                BspSampleData bspSampleData = lsidToSampleDataMap.get(bspOutput[LSID]);
                 if (bspSampleData == null) {
                     throw new RuntimeException("Unrecognized return lsid: " + bspOutput[LSID]);
                 }

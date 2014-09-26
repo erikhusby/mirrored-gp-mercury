@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPLSIDUtil;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
@@ -194,7 +195,7 @@ public class IlluminaRunResource implements Serializable {
     }
 
     /**
-     * Fetches all BSP data for the run in one shot, returning a Map from the LSID to the {@link org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData}.
+     * Fetches all BSP data for the run in one shot, returning a Map from the LSID to the {@link BspSampleData}.
      *
      * @param run from Thrift
      * @return map lsid to DTO

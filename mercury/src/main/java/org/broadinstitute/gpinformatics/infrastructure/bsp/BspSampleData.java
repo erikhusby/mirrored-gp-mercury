@@ -109,7 +109,7 @@ public class BspSampleData implements SampleData {
     // tissueType?
 
     /**
-     * This constructor creates a dto with no values. This is mainly for tests that don't care about the DTO
+     * This constructor creates an empty BspSampleData. This is mainly for appeasing tests.
      */
     @SuppressWarnings("unchecked")
     public BspSampleData() {

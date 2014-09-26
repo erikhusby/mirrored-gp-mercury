@@ -53,9 +53,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.queue.AliquotParameters;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
@@ -541,7 +541,7 @@ public class ExomeExpressEndToEndTest {
             //            for (Starter starter : projectPlan.getStarters()) {
             //                BSPSampleAuthorityTube aliquot = (BSPSampleAuthorityTube) projectPlan.getAliquotForStarter(starter);
             //                BSPStartingSample bspStartingSample = (BSPStartingSample) aliquot.getAliquot();
-            //                bspStartingSample.setBspDTO(newbspSampleDataO("1", "", "", "", "", "", "", "", "", "", "lsid:" + bspStartingSample.getSampleName(),
+            //                bspStartingSample.setBspDTO(new BspSampleData("1", "", "", "", "", "", "", "", "", "", "lsid:" + bspStartingSample.getSampleName(),
             //                        "", "", "","", "", "", "",""));
             //            }
 
@@ -563,7 +563,7 @@ public class ExomeExpressEndToEndTest {
                                                                                        productOrderDao);
             ZimsIlluminaRun zimsRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);
 
-            // how to populate bspSampleData?  Ease of use from EL suggests an entity that can load itself, but this
+            // how to populate BspSampleData?  Ease of use from EL suggests an entity that can load itself, but this
             // would require injecting a service, or using a singleton
 
             Assert.assertNotNull(zimsRun);

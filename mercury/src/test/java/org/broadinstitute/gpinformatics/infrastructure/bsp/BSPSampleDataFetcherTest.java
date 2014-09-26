@@ -51,8 +51,8 @@ public class BSPSampleDataFetcherTest {
         //Now this checks all of the roots
         String[] sampleIds = bspSampleData.getRootSample().split(" ");
         Map<String, BspSampleData> roots = fetcher.fetchSampleData(Arrays.asList(sampleIds));
-        for (SampleData sampleDTO : roots.values()) {
-            assertTrue(sampleDTO.isSampleReceived());
+        for (SampleData sampleData : roots.values()) {
+            assertTrue(sampleData.isSampleReceived());
         }
     }
 

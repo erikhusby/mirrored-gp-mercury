@@ -1421,7 +1421,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
          * Update all the counts related to BSP information.
          *
          * @param participantSet The unique collection of participants by Id.
-         * @param bspSampleData         The BSP DTO.
+         * @param bspSampleData         The BSP Sample Data.
          */
         private void updateDTOCounts(Set<String> participantSet, SampleData bspSampleData) {
             if (bspSampleData.isSampleReceived()) {
