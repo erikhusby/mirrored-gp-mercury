@@ -128,7 +128,7 @@ public class DbFreeIlluminaRunResourceTest {
             @Override
             public SampleData fetchSampleData(String sampleName) {
                 Assert.assertEquals(sampleName, BSPSampleSearchServiceStub.SM_12CO4);
-                return new BspSampleData(BSPSampleSearchServiceStub.getSamples().get(sampleName));
+                return new BspSampleData(new BSPSampleSearchServiceStub().getSamples().get(sampleName));
             }
         };
         String sample = BSPSampleSearchServiceStub.SM_12CO4;

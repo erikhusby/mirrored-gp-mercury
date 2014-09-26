@@ -134,11 +134,12 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
     public static final String CANINE_SPECIES = "Canine";
 
     /**
-     * Samples that this service stub knows about and can return.
+     * Samples that this service stub knows about and can return. This collection is NOT static to avoid the possibility
+     * of tests running in parallel side-effecting each other.
      */
-    private static final Map<String, Map<BSPSampleSearchColumn, String>> samples = new HashMap<>();
+    private final Map<String, Map<BSPSampleSearchColumn, String>> samples = new HashMap<>();
 
-    static {
+    public BSPSampleSearchServiceStub() {
         addToMap(SM_12CO4, new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
             put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_12CO4_PATIENT_ID);
             put(BSPSampleSearchColumn.ROOT_SAMPLE, SM_12CO4_ROOT_SAMP);
@@ -275,7 +276,7 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
      *
      * @throws RuntimeException if the sampleName is already configured for this stub
      */
-    public static void addToMap(String sampleName, Map<BSPSampleSearchColumn, String> attributes) {
+    public void addToMap(String sampleName, Map<BSPSampleSearchColumn, String> attributes) {
         if (samples.containsKey(sampleName)) {
             throw new RuntimeException("The mock BSP service already contains " + sampleName);
         }
@@ -296,7 +297,7 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
         return sampleAttributes;
     }
 
-    public static Map<String, Map<BSPSampleSearchColumn, String>> getSamples() {
+    public Map<String, Map<BSPSampleSearchColumn, String>> getSamples() {
         return samples;
     }
 }
