@@ -4,7 +4,6 @@ import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.testng.annotations.Test;
@@ -80,8 +79,14 @@ public class LibraryBeanTest {
      */
     @Test(groups = DATABASE_FREE)
     public void testBspFields() {
-        SampleData sampleDTO =
-                new BspSampleData(BSPSampleSearchServiceStub.getSamples().get(BSPSampleSearchServiceStub.SM_12CO4));
+        Map<BSPSampleSearchColumn, String> sampleAttributes = new HashMap<>();
+        sampleAttributes.put(BSPSampleSearchColumn.GENDER, BspSampleData.FEMALE_IND);
+        sampleAttributes.put(BSPSampleSearchColumn.LSID, "broadinstitute.org:bsp.prod.sample:1234");
+        sampleAttributes.put(BSPSampleSearchColumn.COLLECTION, "LibraryBeanTest Collection");
+        sampleAttributes.put(BSPSampleSearchColumn.ROOT_SAMPLE, "ABC");
+        sampleAttributes.put(BSPSampleSearchColumn.SPECIES, "Test Species");
+        sampleAttributes.put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1234");
+        SampleData sampleDTO = new BspSampleData(sampleAttributes);
 
         LibraryBean libraryBean = new LibraryBean(null, null, null, null, null, null, null, sampleDTO, null,
                 LibraryBean.NO_PDO_SAMPLE, null);

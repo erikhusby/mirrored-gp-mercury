@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
+import com.google.common.collect.ImmutableMap;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
@@ -10,6 +11,13 @@ import java.util.Map;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class BspSampleDataTest {
+
+    public void testGetPatientIdReturnsParticipantIdFromBspSampleSearch() {
+        String participantId = "PT-1";
+        BspSampleData bspSampleData =
+                new BspSampleData(ImmutableMap.of(BSPSampleSearchColumn.PARTICIPANT_ID, participantId));
+        Assert.assertEquals(bspSampleData.getPatientId(), participantId);
+    }
 
     // Tests for getVolume()
 
