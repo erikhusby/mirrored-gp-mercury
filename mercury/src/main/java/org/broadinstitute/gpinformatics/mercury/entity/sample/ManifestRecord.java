@@ -403,7 +403,7 @@ public class ManifestRecord implements Updatable {
 
         PREVIOUS_ERRORS_UNABLE_TO_CONTINUE("Due to errors previously found, this sample is unable to continue.",
                 ManifestEvent.Severity.ERROR),
-        INVALID_TARGET("The Target sample or vessel appears to be invalid.", ManifestEvent.Severity.ERROR),
+        INVALID_TARGET("The target sample or vessel is invalid.", ManifestEvent.Severity.ERROR),
         SOURCE_ALREADY_TRANSFERRED("The source sample has already been transferred to a tube",
                 ManifestEvent.Severity.ERROR);
 

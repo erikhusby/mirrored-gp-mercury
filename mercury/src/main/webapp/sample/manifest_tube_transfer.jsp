@@ -20,15 +20,15 @@
                     {"bSortable": true}, // Radio Button
                     {"bSortable": true}, // RP Key
                     {"bSortable": true}, // Name
-                    {"bSortable": true}, // Creator
+                    {"bSortable": true}, // Created By
                     {"bSortable": true, "sType": "date"}, // Creation Date
-                    {"bSortable": true}, // Modified by
+                    {"bSortable": true}, // Last Modified By
                     {"bSortable": true, "sType": "date"} // Modified Date
                 ]
             }).fnSetFilteringDelay(300);
 
-            $j("#source").blur(function () {
-                if ($j("#source").val()) {
+            $j("#sourceTube").blur(function () {
+                if ($j("#sourceTube").val()) {
                     clearErrorsAndMessages();
                     validateSource();
                 }
@@ -46,7 +46,29 @@
                 }
             });
 
-            $j("#source").focus();
+            $j("#sourceTube").focus();
+
+            // Prevent posting the form for an enter key press in the input text fields.  Also
+            // blur out of the current text field so an enter key press essentially behaves the
+            // same as a blurring tab.
+            $('#sourceTube, #mercurySample, #mercuryLabVessel').keydown(function(event) {
+                if (event.keyCode == 13) {
+                    event.preventDefault();
+
+                    // Do not do any tabindex traversal if the current input is blank.
+                    if ($(this).val()) {
+
+                        // Traverse to the next input in tabindex order.
+                        var next_idx = parseInt($(':focus').attr('tabindex'), 10) + 1;
+                        var $next_input = $('form [tabindex=' + next_idx + ']');
+                        if ($next_input.length)
+                            $next_input.focus();
+                        else
+                            $('form [tabindex]:first').focus();
+                    }
+                    return false;
+                }
+            });
         });
 
         // Clear out global errors and warnings after blurring one of the sample id or vessel input fields.
@@ -66,7 +88,7 @@
                 data: {
                     scanSource: '',
                     activeSessionId: activeSession,
-                    sourceTube: $j("#source").val()
+                    sourceTube: $j("#sourceTube").val()
                 },
                 dataType: 'text',
                 success: updateScanResults
@@ -176,49 +198,41 @@
 
         <div id="startNewSession">
             <div class="form-horizontal span6">
+
                 <div class="control-group">
-                    <stripes:label for="source" class="control-label">
-                        Step 1
-                        (Source sample) *
-                    </stripes:label>
+                    <label class="control-label" for="sourceTube">Step 1</label>
                     <div class="controls">
-                        <stripes:text id="source" name="sourceTube"
-                                      class="defaultText input-xlarge"
-                                      maxlength="255" value="" tabindex="1"/>
-                    </div>
-                </div>
-                <div class="control-group">
-                    <stripes:label for="mercurySample" class="control-label">
-                        Step 2 (Mercury sample key) *
-                    </stripes:label>
-                    <div class="controls">
-                        <stripes:text id="mercurySample" name="targetSample" class="defaultText input-xlarge"
-                                      maxlength="255" value="" tabindex="2"/><br/>
+                        <input type="text" id="sourceTube" name="sourceTube" class="input-xlarge"
+                               maxlength="255" value="" placeholder="Scan collaborator tube" tabindex="1"/>
                     </div>
                 </div>
 
                 <div class="control-group">
-                    <stripes:label for="mercuryLabVessel" class="control-label">
-                        Step 3 (Lab vessel) *
-                    </stripes:label>
+                    <label class="control-label" for="mercurySample">Step 2</label>
                     <div class="controls">
-                        <stripes:text id="mercuryLabVessel" name="targetVessel" class="defaultText input-xlarge"
-                                      maxlength="255" value="" tabindex="3"/><br/>
+                        <input type="text" id="mercurySample" name="targetSample" class="input-xlarge"
+                                      maxlength="255" value="" placeholder="Scan target tube linear barcode" tabindex="2"/><br/>
                     </div>
                 </div>
 
+                <div class="control-group">
+                    <label class="control-label" for="mercuryLabVessel">Step 3</label>
+                    <div class="controls">
+                        <input type="text" id="mercuryLabVessel" name="targetVessel" class="input-xlarge"
+                               maxlength="255" value="" placeholder="Scan target tube 2D barcode" tabindex="3"/><br/>
+                    </div>
+                </div>
 
                 <div class="control-group">
-                    <stripes:label for="mercuryLabVessel" class="control-label">
-                        Step 4
-                    </stripes:label>
+                    <label class="control-label" for="mercuryLabVessel">Step 4</label>
                     <div class="controls">
                         Execute tube transfer. Informatics has validated that these selections are valid. Perform
                         the tube transfer and then click the "Record Transfer" button.
                     </div>
                 </div>
+
                 <div class="actionButtons">
-                    <stripes:submit name="recordTransfer" value="Record Transfer" class="btn" tabindex="4"/>
+                    <stripes:submit name="recordTransfer" value="Record Transfer" class="btn"/>
                 </div>
             </div>
 
