@@ -79,7 +79,8 @@ public class Metadata {
 
     public enum Category {
         SAMPLE,
-        LAB_METRIC_RUN
+        LAB_METRIC_RUN,
+        LAB_METRIC
     }
 
     public enum Key implements Displayable {
@@ -95,7 +96,9 @@ public class Metadata {
 
         CORRELATION_COEFFICIENT_R2(Category.LAB_METRIC_RUN, "R Squared Correlation Coefficient"),
         INSTRUMENT_NAME(Category.LAB_METRIC_RUN, "Instrument Name"),
-        INSTRUMENT_SERIAL_NUMBER(Category.LAB_METRIC_RUN, "Serial Number");
+        INSTRUMENT_SERIAL_NUMBER(Category.LAB_METRIC_RUN, "Serial Number"),
+
+        TOTAL_NG(Category.LAB_METRIC, "Total ng");
 
         private final Category category;
         private final String displayName;

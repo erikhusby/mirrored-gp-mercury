@@ -111,8 +111,10 @@ public class UploadQuantsActionBean extends CoreActionBean {
                 MessageCollection messageCollection = new MessageCollection();
                 Pair<LabMetricRun, String> pair = vesselEjb.createVarioskanRun(quantStream, getQuantType(),
                         userBean.getBspUser().getUserId(), messageCollection);
-                labMetricRun = pair.getLeft();
-                tubeFormationLabel = pair.getRight();
+                if (pair != null) {
+                    labMetricRun = pair.getLeft();
+                    tubeFormationLabel = pair.getRight();
+                }
                 addMessages(messageCollection);
                 break;
             case GENERIC:
