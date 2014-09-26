@@ -32,6 +32,17 @@
                     showPreviewSessionCloseDialog();
                     $j('#previewSessionCloseDialog').dialog("open");
                 });
+
+                // Prevent posting the form for an enter key press in the accession source field.  Also
+                // blur out of the accession source field so an enter key press essentially behaves the
+                // same as a blurring tab.
+                $('#accessionSourceText').keydown(function(event) {
+                    if (event.keyCode == 13) {
+                        event.preventDefault();
+                        $(this).blur();
+                        return false;
+                    }
+                });
             });
 
             function performAccessionScan() {
