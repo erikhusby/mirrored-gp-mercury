@@ -76,7 +76,7 @@ public class SampleLibrariesActionBean extends CoreActionBean {
     }
 
     /**
-     * Create the cache of sample names to BSPSampleDTO objects.
+     * Create the cache of sample names to BspSampleData objects.
      */
     private void generateBspPicoMap() {
         Set<String> sampleNames = new HashSet<>();

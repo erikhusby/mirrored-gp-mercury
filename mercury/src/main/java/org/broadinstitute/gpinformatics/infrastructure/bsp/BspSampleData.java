@@ -29,9 +29,9 @@ import java.util.regex.Pattern;
  * <li>boolean - false</li>
  * </ul>
  */
-public class BSPSampleDTO implements SampleData {
+public class BspSampleData implements SampleData {
 
-    private static final Log logger = LogFactory.getLog(BSPSampleDTO.class);
+    private static final Log logger = LogFactory.getLog(BspSampleData.class);
 
     public static final String TUMOR_IND = "Tumor";
     public static final String NORMAL_IND = "Normal";
@@ -112,7 +112,7 @@ public class BSPSampleDTO implements SampleData {
      * This constructor creates a dto with no values. This is mainly for tests that don't care about the DTO
      */
     @SuppressWarnings("unchecked")
-    public BSPSampleDTO() {
+    public BspSampleData() {
         columnToValue = Collections.emptyMap();
     }
 
@@ -122,7 +122,7 @@ public class BSPSampleDTO implements SampleData {
      * @param dataMap The BSP Sample Search results mapped by the columns
      */
     @SuppressWarnings("unchecked")
-    public BSPSampleDTO(Map<BSPSampleSearchColumn, String> dataMap) {
+    public BspSampleData(Map<BSPSampleSearchColumn, String> dataMap) {
         columnToValue = dataMap;
     }
 
@@ -440,7 +440,7 @@ public class BSPSampleDTO implements SampleData {
     }
 
     /**
-     * Finds the most appropriate label/barcode for a Mercury LabVessel. BSPSampleDTO has a notion of potentially having
+     * Finds the most appropriate label/barcode for a Mercury LabVessel. BspSampleData has a notion of potentially having
      * more than one "plastic barcode". Not all receptacles in BSP have a manufacturer barcode, in which case the
      * barcode on the label (which resolves to the sample ID) is the best we can do. This utility looks through all of
      * the candidate barcodes and chooses the "best" fit for a Mercury LabVessel, preferring something that does not

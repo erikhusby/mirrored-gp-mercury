@@ -61,7 +61,7 @@
                 <!-- todo jmt what if there's a mix of material types? -->
                 <entryExpression>
                     foreach (iSampleInstance : labVessel.getSampleInstances()) {
-                    if (iSampleInstance.getStartingSample().getBspSampleDTO().getMaterialType() contains "DNA:") {
+                    if (iSampleInstance.getStartingSample().getBspSampleData().getMaterialType() contains "DNA:") {
                     return true;
                     }
                     }

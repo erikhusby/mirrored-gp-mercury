@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure;
 
 import com.google.common.collect.ImmutableMap;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
@@ -74,8 +74,8 @@ public class SampleDataFetcherTest {
     private static final String CLINICAL_SAMPLE_ID = "SM-MERC1";
     private static final String FUBAR_SAMPLE_ID = "SM-FUBAR";
 
-    private BSPSampleDTO bspOnlySampleData;
-    private BSPSampleDTO bspSampleData;
+    private BspSampleData bspOnlySampleData;
+    private BspSampleData bspSampleData;
     private MercurySampleData clinicalSampleData;
 
     private MercurySampleDao mockMercurySampleDao;
@@ -92,8 +92,8 @@ public class SampleDataFetcherTest {
         gssrMercurySample = new MercurySample(GSSR_SAMPLE_ID, MercurySample.MetadataSource.BSP);
         bspMercurySample = new MercurySample(BSP_SAMPLE_ID, MercurySample.MetadataSource.BSP);
         clinicalMercurySample = new MercurySample(CLINICAL_SAMPLE_ID, MercurySample.MetadataSource.MERCURY);
-        bspOnlySampleData = new BSPSampleDTO();
-        bspSampleData = new BSPSampleDTO();
+        bspOnlySampleData = new BspSampleData();
+        bspSampleData = new BspSampleData();
         clinicalSampleData = new MercurySampleData(CLINICAL_SAMPLE_ID, Collections.<Metadata>emptySet());
 
         mockMercurySampleDao = Mockito.mock(MercurySampleDao.class);
@@ -193,7 +193,7 @@ public class SampleDataFetcherTest {
 
     public void fetch_GSSR_samples_without_MercurySample_should_query_nothing() {
         when(mockBspSampleDataFetcher.fetchSampleData(argThat(contains(GSSR_ONLY_SAMPLE_ID)))).thenReturn(
-                Collections.<String, BSPSampleDTO>emptyMap());
+                Collections.<String, BspSampleData>emptyMap());
 
         Map<String, SampleData> sampleDataBySampleId =
                 sampleDataFetcher.fetchSampleData(Collections.singleton(GSSR_ONLY_SAMPLE_ID));
@@ -205,7 +205,7 @@ public class SampleDataFetcherTest {
     public void fetch_GSSR_samples_with_MercurySample_should_query_nothing() {
         configureMercurySampleDao(gssrMercurySample);
         when(mockBspSampleDataFetcher.fetchSampleData(argThat(contains(GSSR_SAMPLE_ID)))).thenReturn(
-                Collections.<String, BSPSampleDTO>emptyMap());
+                Collections.<String, BspSampleData>emptyMap());
 
         Map<String, SampleData> sampleDataBySampleId =
                 sampleDataFetcher.fetchSampleData(Collections.singleton(GSSR_SAMPLE_ID));
@@ -432,7 +432,7 @@ public class SampleDataFetcherTest {
                 .thenReturn(ImmutableMap.of(sampleKey, Collections.singletonList(mercurySample)));
     }
 
-    private void configureBspFetcher(String sampleId, BSPSampleDTO sampleData) {
+    private void configureBspFetcher(String sampleId, BspSampleData sampleData) {
         when(mockBspSampleDataFetcher.fetchSampleData(argThat(contains(sampleId))))
                 .thenReturn(ImmutableMap.of(sampleId, sampleData));
     }

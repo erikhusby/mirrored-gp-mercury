@@ -2,8 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.zims;
 
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -20,11 +19,11 @@ import static org.testng.Assert.*;
 public class LibraryBeanTest {
 
     /**
-     * Verifies that when a {@link BSPSampleDTO} is passed into a {@link LibraryBean}, the bsp fields take priority
+     * Verifies that when a {@link BspSampleData} is passed into a {@link LibraryBean}, the bsp fields take priority
      * over their gssr counterparts.
      */
     @Test(groups = DATABASE_FREE)
-    public void testBspDtoOverride() {
+    public void testBspSampleOverride() {
         final String gssrLsid = "gssr:lsid";
         final String bspLsid = "bsp:lsid";
         final String disease = "cancer";
@@ -49,22 +48,22 @@ public class LibraryBeanTest {
             put(BSPSampleSearchColumn.PARTICIPANT_ID, bspParticipant);
         }};
 
-        SampleData bspDto = new BSPSampleDTO(dataMap);
+        SampleData sampleData = new BspSampleData(dataMap);
 
         // send in some GSSR sample attributes in addition to bsp DTO to verify GSSR override.
         LibraryBean libraryBean = new LibraryBean(gssrLsid, gssrMaterialType, gssrCollabSampleId, gssrOrganism,
-                gssrSpecies, gssrStrain, gssrParticipant, bspDto, Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(),
+                gssrSpecies, gssrStrain, gssrParticipant, sampleData, Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(),
                 LibraryBean.NO_PDO_SAMPLE, libraryCreationDate);
 
-        assertEquals(libraryBean.getPrimaryDisease(),bspDto.getPrimaryDisease());
-        assertEquals(libraryBean.getLsid(),bspDto.getSampleLsid());
+        assertEquals(libraryBean.getPrimaryDisease(), sampleData.getPrimaryDisease());
+        assertEquals(libraryBean.getLsid(),sampleData.getSampleLsid());
         assertFalse(libraryBean.getIsGssrSample());
-        assertEquals(libraryBean.getMaterialType(),bspDto.getMaterialType());
-        assertEquals(libraryBean.getCollaboratorSampleId(),bspCollabSampleId);
-        assertEquals(libraryBean.getSpecies(),bspDto.getOrganism());
-        assertEquals(libraryBean.getParticipantId(),bspDto.getPatientId());
+        assertEquals(libraryBean.getMaterialType(),sampleData.getMaterialType());
+        assertEquals(libraryBean.getCollaboratorSampleId(), bspCollabSampleId);
+        assertEquals(libraryBean.getSpecies(), sampleData.getOrganism());
+        assertEquals(libraryBean.getParticipantId(),sampleData.getPatientId());
 
-        // new up sans bsp DTO to confirm gssr fields work.
+        // new up sans bspSampleData to confirm gssr fields work.
         libraryBean = new LibraryBean(gssrLsid, gssrMaterialType, gssrCollabSampleId, gssrOrganism, gssrSpecies,
                 gssrStrain, gssrParticipant, null, Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(),
                 LibraryBean.NO_PDO_SAMPLE, libraryCreationDate);
@@ -82,7 +81,7 @@ public class LibraryBeanTest {
     @Test(groups = DATABASE_FREE)
     public void testBspFields() {
         SampleData sampleDTO =
-                new BSPSampleDTO(BSPSampleSearchServiceStub.getSamples().get(BSPSampleSearchServiceStub.SM_12CO4));
+                new BspSampleData(BSPSampleSearchServiceStub.getSamples().get(BSPSampleSearchServiceStub.SM_12CO4));
 
         LibraryBean libraryBean = new LibraryBean(null, null, null, null, null, null, null, sampleDTO, null,
                 LibraryBean.NO_PDO_SAMPLE, null);

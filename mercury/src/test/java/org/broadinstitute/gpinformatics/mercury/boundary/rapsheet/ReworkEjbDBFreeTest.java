@@ -4,7 +4,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -179,7 +179,7 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
                 for (String sampleId : sampleIds) {
 
                     sampleIdDataMap.put(sampleId,
-                            new BSPSampleDTOStub(Collections.singletonMap(BSPSampleSearchColumn.SAMPLE_ID, sampleId)));
+                            new BspSampleDataStub(Collections.singletonMap(BSPSampleSearchColumn.SAMPLE_ID, sampleId)));
 
                 }
 
@@ -240,7 +240,7 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
                 for (String sampleId : sampleIds) {
 
                     sampleIdDataMap.put(sampleId,
-                            new BSPSampleDTOStub(Collections.singletonMap(BSPSampleSearchColumn.SAMPLE_ID, sampleId)));
+                            new BspSampleDataStub(Collections.singletonMap(BSPSampleSearchColumn.SAMPLE_ID, sampleId)));
 
                 }
 
@@ -267,13 +267,13 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
     }
 
 
-    private class BSPSampleDTOStub extends BSPSampleDTO {
+    private class BspSampleDataStub extends BspSampleData {
 
-        public BSPSampleDTOStub() {
+        public BspSampleDataStub() {
             super();
         }
 
-        public BSPSampleDTOStub(Map<BSPSampleSearchColumn, String> dataMap) {
+        public BspSampleDataStub(Map<BSPSampleSearchColumn, String> dataMap) {
             super(dataMap);
         }
 

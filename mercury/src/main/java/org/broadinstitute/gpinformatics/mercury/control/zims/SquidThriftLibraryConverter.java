@@ -15,7 +15,7 @@ public class SquidThriftLibraryConverter implements ThriftLibraryConverter {
     }
 
     @Override
-    public LibraryBean convertLibrary(TZamboniLibrary zamboniLibrary, SampleData bspDTO, ProductOrder pdo) {
+    public LibraryBean convertLibrary(TZamboniLibrary zamboniLibrary, SampleData sampleData, ProductOrder pdo) {
         // todo arz extract more fields from bsp here.
 
         // todo arz test with all bsp data, some bsp samples and some gssr samples
@@ -55,7 +55,7 @@ public class SquidThriftLibraryConverter implements ThriftLibraryConverter {
                 zamboniLibrary.getCustomAmpliconSetNames(),
                 pdo,
                 zamboniLibrary.getLcset(),
-                bspDTO,
+                sampleData,
                 zamboniLibrary.getLabWorkflow(),
                 zamboniLibrary.getPdoSample(),
                 zamboniLibrary.getLibraryCreationDate(),
