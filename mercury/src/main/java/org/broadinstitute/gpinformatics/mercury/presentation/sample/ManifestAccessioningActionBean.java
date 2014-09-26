@@ -13,6 +13,8 @@ import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
@@ -61,14 +63,14 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     @Inject
     private UserBean userBean;
 
+    @Inject
+    private ProjectTokenInput projectTokenInput;
+
     private ManifestSession selectedSession;
 
     @Validate(required = true, on = {LOAD_SESSION_ACTION, ACCEPT_UPLOAD_ACTION,
             EXIT_SESSION_ACTION, SCAN_ACCESSION_SOURCE_ACTION, PREVIEW_SESSION_CLOSE_ACTION, CLOSE_SESSION_ACTION})
     private Long selectedSessionId;
-
-    @Validate(required = true, on = UPLOAD_MANIFEST_ACTION)
-    private String researchProjectKey;
 
     @Validate(required = true, on = UPLOAD_MANIFEST_ACTION)
     private FileBean manifestFile;
@@ -83,6 +85,13 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     private String scanErrors;
     private String scanMessages;
 
+    /*
+     * The search query.
+     */
+    private String q;
+
+
+
     public ManifestAccessioningActionBean() {
         super();
     }
@@ -92,6 +101,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
         if (selectedSessionId != null) {
             selectedSession = manifestSessionDao.find(selectedSessionId);
             statusValues = manifestSessionEjb.getSessionStatus(selectedSessionId);
+            projectTokenInput.setup(selectedSession.getResearchProject().getBusinessKey());
         }
     }
 
@@ -147,8 +157,15 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     public Resolution uploadManifest() {
 
         try {
+            ResearchProject researchProject = projectTokenInput.getTokenObject();
+
+            if(researchProject == null){
+                addGlobalValidationError("a Research Project is required to upload manifest");
+                return getContext().getSourcePageResolution();
+            }
+
             selectedSession =
-                    manifestSessionEjb.uploadManifest(researchProjectKey, manifestFile.getInputStream(),
+                    manifestSessionEjb.uploadManifest(researchProject.getBusinessKey(), manifestFile.getInputStream(),
                             manifestFile.getFileName(), userBean.getBspUser());
 
         } catch (IOException | InformaticsServiceException e) {
@@ -206,20 +223,18 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
         return new ForwardResolution(getClass(), LOAD_SESSION_ACTION);
     }
 
+    @HandlesEvent("projectAutocomplete")
+    public Resolution projectAutocomplete() throws Exception {
+        return createTextResolution(projectTokenInput.getJsonString(getQ()));
+    }
+
+
     public Long getSelectedSessionId() {
         return selectedSessionId;
     }
 
     public void setSelectedSessionId(Long selectedSessionId) {
         this.selectedSessionId = selectedSessionId;
-    }
-
-    public String getResearchProjectKey() {
-        return researchProjectKey;
-    }
-
-    public void setResearchProjectKey(String researchProjectKey) {
-        this.researchProjectKey = researchProjectKey;
     }
 
     public FileBean getManifestFile() {
@@ -272,5 +287,13 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
 
     public String getScanMessages() {
         return scanMessages;
+    }
+
+    public String getQ() {
+        return q;
+    }
+
+    public ProjectTokenInput getProjectTokenInput() {
+        return projectTokenInput;
     }
 }

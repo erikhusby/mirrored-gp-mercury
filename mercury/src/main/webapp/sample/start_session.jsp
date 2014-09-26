@@ -6,6 +6,27 @@
 <stripes:layout-render name="/layout.jsp" pageTitle="" sectionTitle="" showCreate="false">
 
     <stripes:layout-component name="extraHead">
+        <script type="text/javascript">
+
+            $j(document).ready(function () {
+                $j("#researchProjectKey").tokenInput(
+                        "${ctxpath}/orders/order.action?projectAutocomplete=", {
+                            hintText: "Type a project name",
+                            prePopulate: ${actionBean.ensureStringResult(actionBean.projectTokenInput.completeData)},
+                            resultsFormatter: formatInput,
+                            tokenDelimiter: "${actionBean.projectTokenInput.separator}",
+                            tokenLimit: 1,
+                            preventDuplicates: true
+                        }
+                );
+            });
+            function formatInput(item) {
+                var extraCount = (item.extraCount == undefined) ? "" : item.extraCount;
+                return "<li>" + item.dropdownItem + extraCount + '</li>';
+            }
+
+
+        </script>
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
@@ -29,12 +50,12 @@
                     <tr>
                         <td>
                             <stripes:link beanclass="${actionBean.class.name}" event="loadSession">
-                            <stripes:param name="selectedSessionId" value="${openSession.manifestSessionId}"/>
+                                <stripes:param name="selectedSessionId" value="${openSession.manifestSessionId}"/>
                                 ${openSession.sessionName}
                             </stripes:link>
                         </td>
                         <td>
-                            ${openSession.status}
+                                ${openSession.status}
                         </td>
                         <td>
                                 ${openSession.researchProject.businessKey}
@@ -43,13 +64,15 @@
                                 ${actionBean.getUserFullName(openSession.updateData.createdBy)}
                         </td>
                         <td>
-                            <fmt:formatDate value="${openSession.updateData.createdDate}" pattern="${actionBean.dateTimePattern}"/>
+                            <fmt:formatDate value="${openSession.updateData.createdDate}"
+                                            pattern="${actionBean.dateTimePattern}"/>
                         </td>
                         <td>
                                 ${actionBean.getUserFullName(openSession.updateData.modifiedBy)}
                         </td>
                         <td>
-                            <fmt:formatDate value="${openSession.updateData.modifiedDate}" pattern="${actionBean.dateTimePattern}"/>
+                            <fmt:formatDate value="${openSession.updateData.modifiedDate}"
+                                            pattern="${actionBean.dateTimePattern}"/>
                         </td>
                     </tr>
                 </c:forEach>
@@ -67,7 +90,7 @@
                             Research Project *
                         </stripes:label>
                         <div class="controls">
-                            <stripes:text id="researchProjectKey" name="researchProjectKey"
+                            <stripes:text id="researchProjectKey" name="projectTokenInput.listOfKeys"
                                           class="defaultText input-xlarge"
                                           maxlength="255" title="Enter the JIRA ticket of the Research Project"/>
                         </div>

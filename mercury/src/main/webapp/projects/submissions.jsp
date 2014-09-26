@@ -6,7 +6,7 @@
 <head>
     <style type="text/css">
         .columnCheckbox { width: 3em; }
-        .columnDataType { width: 4em; }
+        .columnDataType { width: 4em; }            `
         .columnPDOs { width: 12em; }
         .columnAggregationProject { width: 5em; }
         .columnFileType { width: 5em; }
