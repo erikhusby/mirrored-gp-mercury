@@ -86,6 +86,7 @@ public class SampleLedgerExporterFactory {
      */
     public List<SampleLedgerRow> gatherSampleRowData(ProductOrder productOrder) {
         ArrayList<SampleLedgerRow> sampleRowData = new ArrayList<>();
+        productOrder.loadBspData();
         for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
             sampleRowData.add(new SampleLedgerRow(productOrderSample,
                     bspUserList.getUserFullName(productOrderSample.getProductOrder().getCreatedBy())));

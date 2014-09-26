@@ -198,7 +198,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
             List<SampleLedgerRow> sampleLedgerRows = sampleRowData.get(currentProduct);
             for (SampleLedgerRow sampleLedgerRow : sampleLedgerRows) {
                 ProductOrder productOrder = sampleLedgerRow.getProductOrderSample().getProductOrder();
-                productOrder.loadBspData();
                 writeRow(sortedPriceItems, sortedAddOns, historicalPriceItems, sampleLedgerRow.getProductOrderSample(),
                         sortOrder++, getWorkCompleteMessageBySample(productOrder), sampleLedgerRow);
             }
