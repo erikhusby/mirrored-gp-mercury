@@ -998,7 +998,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      */
     public String getRegulatoryDesignationCodeForPipeline() {
         if (researchProject == null) {
-            return null;
+            return ResearchProject.RegulatoryDesignation.RESEARCH_ONLY.name();
         }
         return researchProject.getRegulatoryDesignationCodeForPipeline();
     }

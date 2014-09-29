@@ -86,7 +86,7 @@ public class ZimsIlluminaRunFactory {
     private SequencingTemplateFactory sequencingTemplateFactory;
     private ProductOrderDao productOrderDao;
     private ResearchProjectDao researchProjectDao;
-    private CrspPipelineUtils CrspPipelineAPIUtils = new CrspPipelineUtils();
+    private CrspPipelineUtils crspPipelineUtils = new CrspPipelineUtils();
 
     private static final Log log = LogFactory.getLog(ZimsIlluminaRunFactory.class);
 
@@ -105,7 +105,7 @@ public class ZimsIlluminaRunFactory {
     public ZimsIlluminaRun makeZimsIlluminaRun(IlluminaSequencingRun illuminaRun) {
         RunCartridge flowcell = illuminaRun.getSampleCartridge();
         ResearchProject crspPositiveControlsProject = researchProjectDao.findByBusinessKey(
-                CrspPipelineAPIUtils.getResearchProjectForCrspPositiveControls()
+                crspPipelineUtils.getResearchProjectForCrspPositiveControls()
         );
 
         List<List<SampleInstanceDto>> perLaneSampleInstanceDtos = new ArrayList<>();
@@ -156,7 +156,7 @@ public class ZimsIlluminaRunFactory {
                     sampleIds.add(sampleId);
                     LabVessel libraryVessel = flowcell.getNearestTubeAncestorsForLanes().get(vesselPosition);
 
-                    boolean isCrspLane = CrspPipelineAPIUtils.areAllSamplesForCrsp(
+                    boolean isCrspLane = crspPipelineUtils.areAllSamplesForCrsp(
                             libraryVessel.getSampleInstancesV2());
 
                     String libraryName = libraryVessel.getLabel();
@@ -434,7 +434,7 @@ public class ZimsIlluminaRunFactory {
                 catNames, productOrder, lcSet, bspSampleDTO, labWorkflow, libraryCreationDate, pdoSampleName,metadataSourceForPipelineAPI);
 
         if (isCrspLane) {
-            CrspPipelineAPIUtils.setFieldsForCrsp(libraryBean, bspSampleDTO, CrspPositiveControlsProject, lcSet);
+            crspPipelineUtils.setFieldsForCrsp(libraryBean, bspSampleDTO, CrspPositiveControlsProject, lcSet);
         }
         return libraryBean;
     }

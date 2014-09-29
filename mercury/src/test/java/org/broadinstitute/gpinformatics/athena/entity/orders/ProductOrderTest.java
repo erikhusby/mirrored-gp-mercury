@@ -246,4 +246,9 @@ public class ProductOrderTest {
         assertThat(productOrder.getResearchProject(), nullValue());
         assertThat(researchProject.getProductOrders(), not(hasItem(productOrder)));
     }
+
+    public void testNullRegulatoryDesignationIsInterpretedAsResearch() {
+        Assert.assertEquals(new ProductOrder("Foo","Bar","Baz").getRegulatoryDesignationCodeForPipeline(),
+                            "RESEARCH_ONLY");
+    }
 }
