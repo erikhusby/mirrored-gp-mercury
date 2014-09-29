@@ -18,14 +18,14 @@
 
         $j('#errorList').dataTable({
             "oTableTools": ttExportDefines,
-            "bfiltering": false,
             "aaSorting": [
                 [1, 'asc']
             ],
             "asStripeClasses": [ '' ],
             "aoColumns": [
                 {"bSortable": true}, // Error
-                {"bSortable": true, "sType": "date"} // Date
+                {"bSortable": true, "sType": "date"}, // Date
+                {"bSortable": true} // User name
             ]
         }).fnSetFilteringDelay(300);
 
@@ -81,6 +81,7 @@
                 <tr>
                     <th>Errors</th>
                     <th>Date</th>
+                    <th>User</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -91,6 +92,9 @@
                     </td>
                     <td>
                             ${event.updateData.createdDate}
+                    </td>
+                    <td>
+                        ${actionBean.getUserFullName(event.updateData.createdBy)}
                     </td>
                 </tr>
                 </c:forEach>

@@ -13,13 +13,15 @@
             $j('#sessionList').dataTable({
                 "oTableTools": ttExportDefines,
                 "aaSorting": [
-                    [6, 'desc']
+                    [8, 'desc']
                 ],
                 "asStripeClasses": [ '' ],
                 "aoColumns": [
                     {"bSortable": true}, // Radio Button
                     {"bSortable": true}, // RP Key
                     {"bSortable": true}, // Name
+                    {"bSortable": true}, // Tubes Transferred
+                    {"bSortable": true}, // Total Tubes for transfer
                     {"bSortable": true}, // Created By
                     {"bSortable": true, "sType": "date"}, // Creation Date
                     {"bSortable": true}, // Last Modified By
@@ -156,6 +158,8 @@
                     <th></th>
                     <th>Research Project</th>
                     <th>Session Name</th>
+                    <th>Tubes Transferred</th>
+                    <th>Total Tubes to be Transferred</th>
                     <th>Creator</th>
                     <th>Creation Date</th>
                     <th>Last Modified By</th>
@@ -169,11 +173,17 @@
                             <stripes:radio name="activeSessionId" value="${closedSession.manifestSessionId}" />
                         </td>
                         <td name="researchProjectColumn" width="120px">
-                                ${closedSession.researchProject.businessKey}
+                                ${closedSession.researchProject.businessKey} - ${closedSession.researchProject.name}
                         </td>
                         <td name="sessionNameColumn">
                                 ${closedSession.sessionName}
                             <input type="hidden" name="sessionId" value="${closedSession.manifestSessionId}"/>
+                        </td>
+                        <td name="tubesXferred">
+                            ${closedSession.numberOfTubesTransferred}
+                        </td>
+                        <td name="tubesForXfer">
+                            ${closedSession.numberOfTubesAvailableForTransfer}
                         </td>
                         <td name="createdByColumn">
                                 ${actionBean.getUserFullName(closedSession.updateData.createdBy)}

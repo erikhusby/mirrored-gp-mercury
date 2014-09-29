@@ -39,7 +39,6 @@
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
-        <div>${session.researchProject.businessKey}: Buick Sample Accessioning: ${session.sessionName}</div>
 
         <table id="sampleList" class="table simple">
             <thead>

@@ -90,8 +90,6 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
      */
     private String q;
 
-
-
     public ManifestAccessioningActionBean() {
         super();
     }
@@ -110,10 +108,10 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
         OnwardResolution direction;
         switch (selectedSession.getStatus()) {
         case OPEN:
-            direction = new RedirectResolution(REVIEW_UPLOAD_PAGE);
+            direction = new ForwardResolution(getClass(), VIEW_UPLOAD_ACTION);
             break;
         case ACCESSIONING:
-            direction = new RedirectResolution(ACCESSION_SAMPLE_PAGE);
+            direction = new ForwardResolution(getClass(), VIEW_ACCESSION_SCAN_ACTION);
             break;
         case COMPLETED:
             direction = new ForwardResolution(getClass(), START_A_SESSION_ACTION);
@@ -172,8 +170,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
             addGlobalValidationError("Unable to upload the manifest file: {2}", e.getMessage());
             return getContext().getSourcePageResolution();
         }
-        addErrorMessages();
-        return new RedirectResolution(getClass(), LOAD_SESSION_ACTION).addParameter(
+        return new RedirectResolution(getClass(), VIEW_UPLOAD_ACTION).addParameter(
                 SELECTED_SESSION_ID, selectedSession.getManifestSessionId());
     }
 

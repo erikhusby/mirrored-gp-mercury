@@ -367,17 +367,32 @@ public class ManifestSession implements Updatable {
                         .formatMessage(Metadata.Key.SAMPLE_ID, manifestRecord.getSampleId()));
             }
         }
-        int eligibleSize = 0;
-
-        for (ManifestRecord candidateRecord : nonQuarantinedRecords) {
-            if (candidateRecord.getStatus() == ManifestRecord.Status.UPLOAD_ACCEPTED) {
-                eligibleSize++;
-            }
-        }
+        int eligibleSize = eligibleRecordsBasedOnStatus(nonQuarantinedRecords, ManifestRecord.Status.UPLOAD_ACCEPTED);
 
         return new ManifestStatus(getRecords().size(), eligibleSize,
                 getRecordsByStatus(ManifestRecord.Status.SCANNED).size(), manifestMessages,
                 getQuarantinedRecords().size());
+    }
+
+    public int getNumberOfTubesTransferred() {
+        return eligibleRecordsBasedOnStatus(getNonQuarantinedRecords(),
+                ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
+    }
+
+    public int getNumberOfTubesAvailableForTransfer() {
+        return getNonQuarantinedRecords().size();
+    }
+
+    private static int eligibleRecordsBasedOnStatus(List<ManifestRecord> nonQuarantinedRecords,
+                                                    ManifestRecord.Status statusOfEligibility) {
+        int eligibleSize = 0;
+
+        for (ManifestRecord candidateRecord : nonQuarantinedRecords) {
+            if (candidateRecord.getStatus() == statusOfEligibility) {
+                eligibleSize++;
+            }
+        }
+        return eligibleSize;
     }
 
     /**
