@@ -135,6 +135,11 @@
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.PicoDispositionActionBean"
                                           event="view">Pico Next Steps</stripes:link>
                         </li>
+                        <li>
+                            <stripes:link id="fingerprintSpreadsheet"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.FingerprintingSpreadsheetActionBean"
+                                          event="view">Create Fingerprinting Spreadsheet</stripes:link>
+                        </li>
                         <security:authorizeBlock roles="<%= roles(LabUser, LabManager, PDM, Developer) %>">
                             <li>
                                 <stripes:link id="listWorkflows"
