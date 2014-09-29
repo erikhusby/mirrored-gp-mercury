@@ -23,6 +23,8 @@ public class LibraryConstructionJaxbBuilder {
     private final String p5IndexPlateBarcode;
     private String pondRegRackBarcode;
     private List<String> pondRegTubeBarcodes;
+    private String pondPico1Barcode;
+    private String pondPico2Barcode;
 
     private PlateEventType endRepairJaxb;
     private PlateEventType endRepairCleanupJaxb;
@@ -123,6 +125,14 @@ public class LibraryConstructionJaxbBuilder {
         return postPondEnrichmentThermoCyclerLoadedJaxb;
     }
 
+    public String getPondPico1Barcode() {
+        return pondPico1Barcode;
+    }
+
+    public String getPondPico2Barcode() {
+        return pondPico2Barcode;
+    }
+
     public LibraryConstructionJaxbBuilder invoke() {
         endRepairJaxb = bettaLimsMessageTestFactory.buildPlateEvent("EndRepair", shearCleanPlateBarcode);
         bettaLimsMessageTestFactory.addMessage(messageList, endRepairJaxb);
@@ -183,6 +193,16 @@ public class LibraryConstructionJaxbBuilder {
         pondRegistrationJaxb = bettaLimsMessageTestFactory.buildPlateToRack("PondRegistration", pondCleanupBarcode,
                 pondRegRackBarcode, pondRegTubeBarcodes);
         bettaLimsMessageTestFactory.addMessage(messageList, pondRegistrationJaxb);
+
+        // Pico plate barcodes must be all numeric to be accepted by the Varioskan parser
+        pondPico1Barcode = "771" + testPrefix;
+        PlateTransferEventType pondPico1Jaxb = bettaLimsMessageTestFactory.buildRackToPlate("PondPico",
+                pondRegRackBarcode, pondRegTubeBarcodes, pondPico1Barcode);
+        bettaLimsMessageTestFactory.addMessage(messageList, pondPico1Jaxb);
+        pondPico2Barcode = "772" + testPrefix;
+        PlateTransferEventType pondPico2Jaxb = bettaLimsMessageTestFactory.buildRackToPlate("PondPico",
+                pondRegRackBarcode, pondRegTubeBarcodes, pondPico2Barcode);
+        bettaLimsMessageTestFactory.addMessage(messageList, pondPico2Jaxb);
 
         return this;
     }
