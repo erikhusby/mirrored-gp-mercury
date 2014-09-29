@@ -7,11 +7,18 @@
 <c:set var="session" value="${actionBean.selectedSession}"/>
 <jsp:include page="<%= ManifestAccessioningActionBean.SCAN_SAMPLE_RESULTS_PAGE%>"/>
 
+<style type="text/css">
+    .dataTables_filter input {
+        width: 300px;
+    }
+
+</style>
 <script type="text/javascript">
     $j(document).ready(function () {
 
         $j('#errorList').dataTable({
             "oTableTools": ttExportDefines,
+            "bfiltering": false,
             "aaSorting": [
                 [1, 'asc']
             ],
