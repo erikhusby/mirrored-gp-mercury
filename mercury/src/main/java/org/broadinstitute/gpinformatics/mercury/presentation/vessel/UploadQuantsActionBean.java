@@ -95,7 +95,9 @@ public class UploadQuantsActionBean extends CoreActionBean {
             quantEJB.storeQuants(labMetrics);
             break;
         }
-        addMessage("Successfully uploaded quant.");
+        if (getValidationErrors().isEmpty()) {
+            addMessage("Successfully uploaded quant.");
+        }
         return new ForwardResolution(VIEW_PAGE);
     }
 
