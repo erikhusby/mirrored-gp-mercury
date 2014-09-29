@@ -537,14 +537,6 @@ public class ExomeExpressEndToEndTest {
             Assert.assertNotNull(illuminaSequencingRun.getSampleCartridge(),
                                  "No registered flowcell");
 
-            // We're container-free, so we have to populate the BspSampleData ourselves
-            //            for (Starter starter : projectPlan.getStarters()) {
-            //                BSPSampleAuthorityTube aliquot = (BSPSampleAuthorityTube) projectPlan.getAliquotForStarter(starter);
-            //                BSPStartingSample bspStartingSample = (BSPStartingSample) aliquot.getAliquot();
-            //                bspStartingSample.setBspDTO(new BspSampleData("1", "", "", "", "", "", "", "", "", "", "lsid:" + bspStartingSample.getSampleName(),
-            //                        "", "", "","", "", "", "",""));
-            //            }
-
             // ZIMS
             ProductOrderDao productOrderDao = Mockito.mock(ProductOrderDao.class);
             Mockito.when(productOrderDao.findByBusinessKey(Mockito.anyString())).then(new Answer<Object>() {
