@@ -1,7 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.samples;
 
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.util.Collections;
@@ -75,4 +78,11 @@ public class MercurySampleDataTest {
                 new MercurySampleData(SAMPLE_ID, Collections.singleton(new Metadata(Metadata.Key.BUICK_VISIT, visit)));
         assertThat(data.getVisit(), equalTo(visit));
     }
+
+    public void testGetMaterialTypeReturnsEmptyString() {
+        SampleData hasWgaDummy = new MercurySampleData(SAMPLE_ID, Collections.<Metadata>emptySet());
+        ProductOrderSample productOrderSample = new ProductOrderSample(SAMPLE_ID, hasWgaDummy);
+        Assert.assertEquals(productOrderSample.getSampleData().getMaterialType(), "");
+    }
+
 }
