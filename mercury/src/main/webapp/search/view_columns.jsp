@@ -143,7 +143,10 @@ buttons to move columns from one to the other --%>
                     <c:forEach items="${availableMapGroupToColumnNames}" var="entry">
                         <optgroup label="${entry.key}">
                             <c:forEach items="${entry.value}" var="columnConfig">
-                                <option ondblclick="chooseColumns($j('#sourceColumnDefNames')[0], $j('#selectedColumnDefNames')[0]);">${columnConfig.name}</option>
+                                <%-- Some criteria terms are excluded from result selection --%>
+                                <c:if test="${not columnConfig.isExcludedFromResultColumns()}">
+                                    <option ondblclick="chooseColumns($j('#sourceColumnDefNames')[0], $j('#selectedColumnDefNames')[0]);">${columnConfig.name}</option>
+                                </c:if>
                             </c:forEach>
                         </optgroup>
                     </c:forEach>

@@ -132,10 +132,8 @@
                 <c:choose>
                     <c:when test="${not empty searchValue.operator && (searchValue.operator.name == 'IN' || searchValue.operator.name == 'NOT_IN')}">
                         <!-- IN = list of text values -->
-                        <!-- The c:forEach tags aren't indented, because indentation would lead to spurious whitespace in the textarea -->
                         <textarea rows="4" cols="10" class="termvalue"><c:forEach items="${searchValue.values}"
-                                                                                  var="value">${value}
-                        </c:forEach></textarea>
+                                                                                  var="value">${value}<%= '\n' %></c:forEach></textarea>
                     </c:when>
                     <c:when test="${not empty searchValue.operator && searchValue.operator.name == 'BETWEEN'}">
                         <!-- BETWEEN = Pair of text boxes. Add invented attributes, between1 and between2,

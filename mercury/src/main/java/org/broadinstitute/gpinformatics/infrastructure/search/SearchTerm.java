@@ -216,6 +216,12 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     private Boolean isNestedParent = Boolean.FALSE;
 
     /**
+     * Flag this for search criteria only, do not display as column option.
+     * (Don't want parent term to show up in columns list)
+     */
+    private Boolean isExcludedFromResultColumns = Boolean.FALSE;
+
+    /**
      * Evaluate the expression that returns constrained values, e.g. list of phenotypes
      *
      * @param context any additional entities referred to by the expression
@@ -300,6 +306,18 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     @Override
     public void setIsNestedParent(Boolean isNestedParent) {
         this.isNestedParent = isNestedParent;
+    }
+
+    /**
+     * In certain cases, terms usable as search criteria need to be excluded from result column list.
+     * @return
+     */
+    public Boolean isExcludedFromResultColumns(){
+        return  isExcludedFromResultColumns;
+    }
+
+    public void setIsExcludedFromResultColumns(Boolean isExcludedFromResultColumns) {
+        this.isExcludedFromResultColumns = isExcludedFromResultColumns;
     }
 
     @Override
@@ -440,8 +458,13 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     public Object evalViewHeaderExpression(Object entity, Map<String, Object> context) {
         if (getViewHeader() == null) {
             return getName();
+        } else {
+            if( context == null ) {
+                context = new HashMap<>();
+            }
+            context.put(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_VALUE, this);
+            return getViewHeader().evaluate(entity, context);
         }
-        return getViewHeader().evaluate(entity, context);
     }
 
     /**

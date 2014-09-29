@@ -85,6 +85,9 @@ public class SearchDefinitionFactory {
         searchTerms = buildLabVesselEvent();
         mapGroupSearchTerms.put("Events", searchTerms);
 
+        searchTerms = buildLabVesselMultiCols();
+        mapGroupSearchTerms.put("Multi-Columns", searchTerms);
+
         // Raising volume to 65ul - sample annotation?
         // Billing Risk - from PDO
         // Kapa QC Score - uploaded
@@ -235,11 +238,6 @@ public class SearchDefinitionFactory {
                 return findVesselType(labVessel);
             }
         });
-        searchTerms.add(searchTerm);
-
-        searchTerm = new SearchTerm();
-        searchTerm.setName("Lab Metrics");
-        searchTerm.setPluginClass(LabVesselMetricPlugin.class);
         searchTerms.add(searchTerm);
 
         return searchTerms;
@@ -1096,14 +1094,60 @@ public class SearchDefinitionFactory {
      * @return List of search terms/column definitions for lab vessel sample metadata
      */
     private List<SearchTerm> buildLabVesselMetadata() {
-        List<SearchTerm> searchTerms = new ArrayList<>();
-        List<SearchTerm> childSearchTerms = new ArrayList<>();
 
-        // The parent term is the metadata name
+        // Build child search term (the metadata value)
+        List<SearchTerm> childSearchTerms = new ArrayList<>();
         SearchTerm searchTerm = new SearchTerm();
+        searchTerm.setName("Metadata Value");
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                String values = "";
+
+                SearchInstance.SearchValue searchValue = (SearchInstance.SearchValue) context.get(CONTEXT_KEY_SEARCH_VALUE);
+                String header = searchValue.getParent().getValues().get(0);
+                Metadata.Key key = Metadata.Key.valueOf(header);
+
+                LabVessel labVessel = (LabVessel) entity;
+                Set<MercurySample> samples = labVessel.getMercurySamples();
+                for(MercurySample sample : samples) {
+                    Set<Metadata> metadataSet = sample.getMetadata();
+                    for( Metadata meta : metadataSet ) {
+                        if( meta.getKey() == key ) {
+                            values += meta.getValue();
+                            break;
+                        }
+                    }
+                }
+                return values;
+            }
+        });
+        searchTerm.setViewHeader(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                String header;
+                SearchInstance.SearchValue searchValue = (SearchInstance.SearchValue) context.get(CONTEXT_KEY_SEARCH_VALUE);
+                header = searchValue.getParent().getValues().get(0);
+                Metadata.Key key = Metadata.Key.valueOf(header);
+                if( key != null ) {
+                    return key.getDisplayName();
+                } else {
+                    return header;
+                }
+            }
+        });
+        List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
+        SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList( "mercurySample", "mercurySamples", "metadata" ));
+        criteriaPath.setPropertyName("value");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        childSearchTerms.add(searchTerm);
+
+        // Build parent search term (the metadata name)
+        List<SearchTerm> searchTerms = new ArrayList<>();
+        searchTerm = new SearchTerm();
         searchTerm.setName("Sample Metadata");
-        // Presentation is via a plugin which builds a horizontal list of all metadata sample keys
-        searchTerm.setPluginClass(LabVesselMetadataPlugin.class);
         searchTerm.setValuesExpression(new SearchTerm.Evaluator<List<ConstrainedValue>>() {
             @Override
             public List<ConstrainedValue> evaluate(Object entity, Map<String, Object> context) {
@@ -1123,26 +1167,37 @@ public class SearchDefinitionFactory {
                 return Enum.valueOf(Metadata.Key.class, (String) context.get(CONTEXT_KEY_SEARCH_STRING));
             }
         });
+        // Don't want this option in selectable columns
+        searchTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
         searchTerm.setDependentSearchTerms(childSearchTerms);
         searchTerm.setAddConstrainedValuesToSearchTermList(true);
-        List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
-        SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPaths = new ArrayList<>();
+        criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setCriteria(Arrays.asList( "mercurySample", "mercurySamples", "metadata" ));
         criteriaPath.setPropertyName("key");
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerms.add(searchTerm);
 
-        // The child term is the metadata value
+        return searchTerms;
+    }
+
+    /**
+     * Build multi column search terms for lab vessels.
+     * @return List of search terms/column definitions for lab vessel multi-column data sets
+     */
+    private List<SearchTerm> buildLabVesselMultiCols() {
+        List<SearchTerm> searchTerms = new ArrayList<>();
+
+        SearchTerm searchTerm = new SearchTerm();
+        searchTerm.setName("All Sample Metadata");
+        searchTerm.setPluginClass(LabVesselMetadataPlugin.class);
+        searchTerms.add(searchTerm);
+
         searchTerm = new SearchTerm();
-        searchTerm.setName("Metadata Value");
-        criteriaPaths = new ArrayList<>();
-        criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setCriteria(Arrays.asList( "mercurySample", "mercurySamples", "metadata" ));
-        criteriaPath.setPropertyName("value");
-        criteriaPaths.add(criteriaPath);
-        searchTerm.setCriteriaPaths(criteriaPaths);
-        childSearchTerms.add(searchTerm);
+        searchTerm.setName("Vessel Concentrations");
+        searchTerm.setPluginClass(LabVesselMetricPlugin.class);
+        searchTerms.add(searchTerm);
 
         return searchTerms;
     }
