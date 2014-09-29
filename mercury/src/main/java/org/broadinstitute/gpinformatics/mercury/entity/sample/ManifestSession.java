@@ -374,20 +374,33 @@ public class ManifestSession implements Updatable {
                 getQuarantinedRecords().size());
     }
 
+    /**
+     * Finds the total number of records that have been transferred to a mercury vessel
+     */
     public int getNumberOfTubesTransferred() {
         return eligibleRecordsBasedOnStatus(getNonQuarantinedRecords(),
                 ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
     }
 
+    /**
+     * finds the total number of records that can be transferred to a mercury vessel
+     * @return
+     */
     public int getNumberOfTubesAvailableForTransfer() {
         return getNonQuarantinedRecords().size();
     }
 
-    private static int eligibleRecordsBasedOnStatus(List<ManifestRecord> nonQuarantinedRecords,
+    /**
+     * finds the total number of records that match a given status
+     * @param totalRecords          a collection of records within which to search for records of the given status
+     * @param statusOfEligibility   status of records to consider in the count
+     * @return
+     */
+    private static int eligibleRecordsBasedOnStatus(Collection<ManifestRecord> totalRecords,
                                                     ManifestRecord.Status statusOfEligibility) {
         int eligibleSize = 0;
 
-        for (ManifestRecord candidateRecord : nonQuarantinedRecords) {
+        for (ManifestRecord candidateRecord : totalRecords) {
             if (candidateRecord.getStatus() == statusOfEligibility) {
                 eligibleSize++;
             }
