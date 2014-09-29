@@ -55,13 +55,12 @@ public class DbFreeSquidThriftLibraryConverterTest {
         Assert.assertNull(lib.getResearchProjectName());
         Assert.assertEquals(lib.getMetadataSource(), MercurySample.GSSR_METADATA_SOURCE);
 
-        pdo.setResearchProject(null);
         lib = converter.convertLibrary(zamboniLibrary, null, pdo);
         Assert.assertEquals(lib.getMetadataSource(), MercurySample.GSSR_METADATA_SOURCE);
         Assert.assertEquals(pdo.getBusinessKey(), lib.getProductOrderKey());
         Assert.assertEquals(pdo.getTitle(), lib.getProductOrderTitle());
-        Assert.assertNull(lib.getResearchProjectId());
-        Assert.assertNull(lib.getResearchProjectName());
+        Assert.assertEquals(lib.getResearchProjectId(),project.getBusinessKey());
+        Assert.assertEquals(lib.getResearchProjectName(),project.getTitle());
 
         Assert.assertEquals("Mashed Potatoes", lib.getProduct());
         Assert.assertEquals("with gravy", lib.getDataType());

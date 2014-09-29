@@ -247,8 +247,8 @@ public class ProductOrderTest {
         assertThat(researchProject.getProductOrders(), not(hasItem(productOrder)));
     }
 
-    public void testNullRegulatoryDesignationIsInterpretedAsResearch() {
-        Assert.assertEquals(new ProductOrder("Foo","Bar","Baz").getRegulatoryDesignationCodeForPipeline(),
-                            "RESEARCH_ONLY");
+    @Test(expectedExceptions = RuntimeException.class)
+    public void testNullRegulatoryDesignationThrowsException() {
+        new ProductOrder("Foo","Bar","Baz").getRegulatoryDesignationCodeForPipeline();
     }
 }

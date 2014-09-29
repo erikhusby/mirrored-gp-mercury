@@ -998,7 +998,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      */
     public String getRegulatoryDesignationCodeForPipeline() {
         if (researchProject == null) {
-            return ResearchProject.RegulatoryDesignation.RESEARCH_ONLY.name();
+            throw new RuntimeException("No research project for PDO " + getTitle() + ".  Cannot determine regulatory designation.");
         }
         return researchProject.getRegulatoryDesignationCodeForPipeline();
     }
