@@ -83,6 +83,10 @@ public class AddEntriesToPicoBucketTest extends Arquillian {
                 }
                 for (ProductOrderSample sample : order.getSamples()) {
 
+/*
+The following code is commented out because it no longer compiles. It was originally was part of a fixup test which
+is now disabled. The date it was disabled was 2/7/13 with the comment "Disable fixup test."
+*/
 //                    MercurySample mercurySample = new MercurySample(sample.getName(), MercurySample.MetadataSource.BSP);
 //                    String tubeBarcode = sample.getSampleData().getBarcodeForLabVessel();
 //                    if (tubeBarcode != null) {
