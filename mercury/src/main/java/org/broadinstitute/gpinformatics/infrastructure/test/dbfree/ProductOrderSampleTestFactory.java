@@ -37,8 +37,6 @@ public class ProductOrderSampleTestFactory {
             productOrderSample.setSampleComment("athenaComment");
             productOrderSample.getLedgerItems().addAll(billableItems);
             productOrderSamples.add(productOrderSample);
-        //    MercurySample mercurySample = new MercurySample(sampleName, MercurySample.MetadataSource.BSP);
-        //    productOrderSample.setMercurySample(mercurySample);
         }
         return productOrderSamples;
     }
