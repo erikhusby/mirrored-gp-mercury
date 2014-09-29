@@ -57,7 +57,7 @@ public class SampleDataFetcherTest {
     private static final String BSP_STOCK_ID = "SM-BSP0";
 
     /**
-     * A sample for which BSP is the metadata source for.
+     * A sample for which BSP is the metadata source.
      */
     private static final String BSP_ONLY_SAMPLE_ID = "SM-BSP1";
     private static final String BSP_ONLY_BARE_SAMPLE_ID = "BSP1";
