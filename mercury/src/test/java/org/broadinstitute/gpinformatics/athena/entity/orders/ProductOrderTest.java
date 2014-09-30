@@ -246,4 +246,9 @@ public class ProductOrderTest {
         assertThat(productOrder.getResearchProject(), nullValue());
         assertThat(researchProject.getProductOrders(), not(hasItem(productOrder)));
     }
+
+    @Test(expectedExceptions = RuntimeException.class)
+    public void testNullRegulatoryDesignationThrowsException() {
+        new ProductOrder("Foo","Bar","Baz").getRegulatoryDesignationCodeForPipeline();
+    }
 }

@@ -350,6 +350,25 @@ todo jmt not sure if this applies.
         return rootMercurySamples;
     }
 
+    /**
+     * Returns a text description of the source
+     * of the metadata.  Do not alter this string
+     * without consulting the pipeline team.
+     */
+    public String getMetadataSourceForPipelineAPI() {
+        Set<String> metadataSources = new HashSet<>();
+        for (MercurySample mercurySample : getRootMercurySamples()) {
+            metadataSources.add(mercurySample.getMetadataSourceForPipelineAPI());
+        }
+        if (metadataSources.isEmpty()) {
+            throw new RuntimeException("Could not determine metadata source");
+        }
+        else if (metadataSources.size() > 1) {
+            throw new RuntimeException(String.format("Found %s metadata sources",metadataSources.size()));
+        }
+        return metadataSources.iterator().next();
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -380,4 +399,5 @@ todo jmt not sure if this applies.
         result = 31 * result + (molecularIndexingScheme != null ? molecularIndexingScheme.hashCode() : 0);
         return result;
     }
+
 }

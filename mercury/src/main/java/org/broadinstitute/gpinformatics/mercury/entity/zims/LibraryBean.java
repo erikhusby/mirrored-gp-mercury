@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.codehaus.jackson.annotate.JsonProperty;
 
 import java.util.ArrayList;
@@ -24,6 +25,9 @@ import java.util.List;
 
 public class LibraryBean {
     public static final String NO_PDO_SAMPLE = null;
+
+    @JsonProperty("metadataSource")
+    private String metadataSource;
 
     @JsonProperty("library")
     private String library;
@@ -83,10 +87,10 @@ public class LibraryBean {
     private Double labMeasuredInsertSize; // Squid only (for now)
 
     @JsonProperty("positiveControl")
-    private Boolean isPositiveControl; // Squid only
+    private Boolean isPositiveControl;
 
     @JsonProperty("negativeControl")
-    private Boolean isNegativeControl; // Squid only
+    private Boolean isNegativeControl;
 
     @JsonProperty("devExperimentData")
     private DevExperimentDataBean devExperimentData; // Squid only
@@ -179,7 +183,7 @@ public class LibraryBean {
     private String workRequestDomain;
 
     @JsonProperty("regulatoryDesignation")
-    private String regulatoryDesignation;
+    private String regulatoryDesignation = ResearchProject.RegulatoryDesignation.RESEARCH_ONLY.name();
 
     private String stockSample;
 
@@ -214,14 +218,14 @@ public class LibraryBean {
             TZDevExperimentData devExperimentData, Collection<String> gssrBarcodes, String gssrSampleType,
             Boolean doAggregation, Collection<String> customAmpliconSetNames, ProductOrder productOrder,
             String lcSet, BSPSampleDTO bspSampleDTO, String labWorkflow, String libraryCreationDate,
-            String productOrderSample) {
+            String productOrderSample,String metadataSource) {
 
         // project was always null in the calls here, so don't send it through. Can add back later.
         this(library, null, initiative, workRequest, indexingScheme, hasIndexingRead, expectedInsertSize,
              analysisType, referenceSequence, referenceSequenceVersion, null, organism, species, strain, null,
              aligner, rrbsSizeRange, restrictionEnzyme, bait, null, labMeasuredInsertSize, positiveControl,
              negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation, customAmpliconSetNames,
-             productOrder, lcSet, bspSampleDTO, labWorkflow, productOrderSample, libraryCreationDate, null, null);
+             productOrder, lcSet, bspSampleDTO, labWorkflow, productOrderSample, libraryCreationDate, null, null,metadataSource);
     }
 
     /**
@@ -275,7 +279,7 @@ public class LibraryBean {
             TZDevExperimentData devExperimentData, Collection<String> gssrBarcodes, String gssrSampleType,
             Boolean doAggregation, Collection<String> customAmpliconSetNames, ProductOrder productOrder,
             String lcSet, BSPSampleDTO bspSampleDTO, String labWorkflow, String productOrderSample,
-            String libraryCreationDate, String workRequestType, String workRequestDomain) {
+            String libraryCreationDate, String workRequestType, String workRequestDomain,String metadataSource) {
 
         this(sampleLSID, gssrSampleType, collaboratorSampleId, organism, species, strain, individual, bspSampleDTO,
                 labWorkflow, productOrderSample, libraryCreationDate);
@@ -304,8 +308,12 @@ public class LibraryBean {
         this.gssrBarcodes = gssrBarcodes;
         this.doAggregation = doAggregation;
         this.customAmpliconSetNames = customAmpliconSetNames;
+        if (metadataSource != null) {
+            this.metadataSource = metadataSource;
+        }
 
         if (productOrder != null) {
+            this.regulatoryDesignation = productOrder.getRegulatoryDesignationCodeForPipeline();
             productOrderKey = productOrder.getBusinessKey();
             productOrderTitle = productOrder.getTitle();
             ResearchProject mercuryProject = productOrder.getResearchProject();
@@ -339,9 +347,6 @@ public class LibraryBean {
         this.lcSet = lcSet;
         this.workRequestType = workRequestType;
         this.workRequestDomain = workRequestDomain;
-        if (productOrder != null) {
-            this.regulatoryDesignation = productOrder.getRegulatoryDesignationCodeForPipeline();
-        }
     }
 
     /**
@@ -364,7 +369,6 @@ public class LibraryBean {
             sampleLSID = StringUtils.trimToNull(bspSampleDTO.getSampleLsid());
             sampleId = StringUtils.trimToNull(bspSampleDTO.getSampleId());
             gender = StringUtils.trimToNull(bspSampleDTO.getGender());
-            // todo arz pop/ethnicity,
             collection = StringUtils.trimToNull(bspSampleDTO.getCollection());
             collaboratorSampleId = StringUtils.trimToNull(bspSampleDTO.getCollaboratorsSampleName());
             materialType = StringUtils.trimToNull(bspSampleDTO.getMaterialType());
@@ -373,8 +377,10 @@ public class LibraryBean {
             race = StringUtils.trimToNull(bspSampleDTO.getRace());
             collaboratorParticipantId = StringUtils.trimToNull(bspSampleDTO.getCollaboratorParticipantId());
             isGssrSample = false;
+            metadataSource = MercurySample.BSP_METADATA_SOURCE;
         } else {
             isGssrSample = true;
+            metadataSource = MercurySample.GSSR_METADATA_SOURCE;
         }
     }
 
@@ -390,8 +396,16 @@ public class LibraryBean {
         return collaboratorSampleId;
     }
 
+    public void setCollaboratorSampleId(String collaboratorSampleId) {
+        this.collaboratorSampleId = collaboratorSampleId;
+    }
+
     public String getLsid() {
         return sampleLSID;
+    }
+
+    public void setLsid(String sampleLSID) {
+        this.sampleLSID = sampleLSID;
     }
 
     public String getParticipantId() {
@@ -498,8 +512,16 @@ public class LibraryBean {
         return researchProjectId;
     }
 
+    public void setResearchProjectId(String researchProjectId) {
+        this.researchProjectId = researchProjectId;
+    }
+
     public String getResearchProjectName() {
         return researchProjectName;
+    }
+
+    public void setResearchProjectName(String researchProjectName) {
+        this.researchProjectName = researchProjectName;
     }
 
     public String getProduct() {
@@ -516,6 +538,10 @@ public class LibraryBean {
 
     public String getRootSample() {
         return rootSample;
+    }
+
+    public void setRootSample(String rootSample) {
+        this.rootSample = rootSample;
     }
 
     public String getGender() {
@@ -551,6 +577,11 @@ public class LibraryBean {
         return collaboratorParticipantId;
     }
 
+    public void setCollaboratorParticipantId(String collaboratorParticipantId) {
+        this.collaboratorParticipantId = collaboratorParticipantId;
+    }
+
+
     public String getRace() {
         return race;
     }
@@ -573,6 +604,10 @@ public class LibraryBean {
 
     public String getRegulatoryDesignation() {
         return regulatoryDesignation;
+    }
+
+    public String getMetadataSource() {
+        return metadataSource;
     }
 
     public static final Comparator<LibraryBean> BY_SAMPLE_ID = new Comparator<LibraryBean> () {

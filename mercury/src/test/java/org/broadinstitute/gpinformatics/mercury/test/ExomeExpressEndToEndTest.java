@@ -560,7 +560,8 @@ public class ExomeExpressEndToEndTest {
             ZimsIlluminaRunFactory zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(new BSPSampleDataFetcher(),
                                                                                        null,
                                                                                        new SequencingTemplateFactory(),
-                                                                                       productOrderDao);
+                                                                                       productOrderDao,
+                                                                                       null);
             ZimsIlluminaRun zimsRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);
 
             // how to populate BSPSampleDTO?  Ease of use from EL suggests an entity that can load itself, but this
