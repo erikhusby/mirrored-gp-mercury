@@ -234,20 +234,18 @@ public class ManifestSessionTest {
     public void testValidationForUploadAccepted() {
         setAllManifestRecordStatus(ManifestRecord.Status.UPLOAD_ACCEPTED);
 
-        ManifestStatus maniStatus = session.generateSessionStatusForClose();
+        ManifestStatus manifestStatus = session.generateSessionStatusForClose();
 
-        assertThat(maniStatus.getErrorMessages(), hasSize(3));
-        assertThat(maniStatus.getSamplesInManifest(), is(NUM_SAMPLES_IN_MANIFEST));
-        assertThat(maniStatus.getSamplesSuccessfullyScanned(), is(0));
-        assertThat(maniStatus.getSamplesEligibleForAccessioningInManifest(), is(NUM_SAMPLES_IN_MANIFEST));
+        assertThat(manifestStatus.getErrorMessages(), hasSize(3));
+        assertThat(manifestStatus.getSamplesInManifest(), is(NUM_SAMPLES_IN_MANIFEST));
+        assertThat(manifestStatus.getSamplesSuccessfullyScanned(), is(0));
+        assertThat(manifestStatus.getSamplesEligibleForAccessioningInManifest(), is(NUM_SAMPLES_IN_MANIFEST));
     }
 
     public void testTransferUnUsedSample() throws Exception {
 
         session.setStatus(ManifestSession.SessionStatus.COMPLETED);
-        for (ManifestRecord manifestRecord : session.getRecords()) {
-            manifestRecord.setStatus(ManifestRecord.Status.ACCESSIONED);
-        }
+        setAllManifestRecordStatus(ManifestRecord.Status.ACCESSIONED);
 
         ManifestRecord testRecord = session.getRecords().iterator().next();
         ManifestRecord recordForTransfer = session.findRecordForTransfer(testRecord.getSampleId());
@@ -259,13 +257,11 @@ public class ManifestSessionTest {
     public void testTransferUsedSample() throws Exception {
 
         session.setStatus(ManifestSession.SessionStatus.COMPLETED);
-        for (ManifestRecord manifestRecord : session.getRecords()) {
-            manifestRecord.setStatus(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
-        }
+        setAllManifestRecordStatus(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
 
         ManifestRecord testRecord = session.getRecords().iterator().next();
         try {
-            ManifestRecord recordForTransfer = session.findRecordForTransfer(testRecord.getSampleId());
+            session.findRecordForTransfer(testRecord.getSampleId());
             Assert.fail();
         } catch (Exception e) {
             assertThat(e.getMessage(),
