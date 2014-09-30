@@ -176,7 +176,7 @@ public class OnRiskCriteriaTest {
     }
 
     @Test
-    public void testWGAOnRiskMercurySampleDoeNotThrowNPE() {
+    public void testWGAOnRiskMercurySampleDoesNotThrowNPE() {
         SampleData hasWgaDummy = new MercurySampleData(SM_1234, Collections.<Metadata>emptySet());
 
         ProductOrderSample productOrderSample = new ProductOrderSample(SM_1234, hasWgaDummy);
