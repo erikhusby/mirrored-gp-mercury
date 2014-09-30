@@ -115,7 +115,7 @@ public class ManifestRecord implements Updatable {
     }
 
     public String getValueByKey(Metadata.Key key) {
-        return getMetadataByKey(key).getStringValue();
+        return getMetadataByKey(key).getValue();
     }
 
     public Status getStatus() {
@@ -278,7 +278,7 @@ public class ManifestRecord implements Updatable {
     @Nullable public String getSampleId() {
         Metadata sampleMetadata = getMetadataByKey(Metadata.Key.SAMPLE_ID);
         if (sampleMetadata != null) {
-            return sampleMetadata.getStringValue();
+            return sampleMetadata.getValue();
         }
         return null;
     }

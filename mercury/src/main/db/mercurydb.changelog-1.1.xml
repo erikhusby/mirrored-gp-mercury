@@ -1570,4 +1570,16 @@
                 baseTableName="lab_metric_metadata_aud" baseColumnNames="rev"
                 referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
     </changeSet>
+    <changeSet id="GPLIM-2996-6" author="thompson">
+        <addColumn schemaName="mercury" tableName="metadata">
+            <column name="date_value" type="timestamp"/>
+            <column name="number_value" type="number(19,2)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2996-7" author="thompson">
+        <addColumn schemaName="mercury" tableName="metadata_aud">
+            <column name="date_value" type="timestamp"/>
+            <column name="number_value" type="number(19,2)"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

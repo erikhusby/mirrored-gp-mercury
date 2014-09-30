@@ -240,7 +240,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         ManifestRecord manifestRecordOut = manifestSessionOut.getRecords().get(0);
         assertThat(manifestRecordOut.getMetadata(), hasSize(equalTo(manifestRecordI.getMetadata().size())));
         for (Metadata metadata : manifestRecordI.getMetadata()) {
-            String inValue = metadata.getStringValue();
+            String inValue = metadata.getValue();
             String outValue = manifestRecordOut.getValueByKey(metadata.getKey());
             assertThat(inValue, is(equalTo(outValue)));
         }

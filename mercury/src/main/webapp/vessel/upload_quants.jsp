@@ -98,7 +98,7 @@
                 <c:forEach items="${actionBean.labMetricRun.metadata}" var="metadata">
                     <tr>
                         <td>${metadata.key}</td>
-                        <td>${metadata.stringValue}</td>
+                        <td>${metadata.value}</td>
                     </tr>
                 </c:forEach>
             </table>

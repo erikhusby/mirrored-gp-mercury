@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.hibernate.envers.Audited;
 
@@ -16,6 +17,7 @@ import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.math.BigDecimal;
+import java.text.Format;
 import java.util.Date;
 
 /**
@@ -25,6 +27,7 @@ import java.util.Date;
 @Audited
 @Table(schema = "mercury", name = "METADATA")
 public class Metadata {
+    public static final Format DATE_FORMAT = FastDateFormat.getInstance("yyyy-MM-dd-HH:mm:ss");
 
     @Id
     @SequenceGenerator(name = "SEQ_METADATA", schema = "mercury", sequenceName = "SEQ_METADATA")
@@ -80,6 +83,18 @@ public class Metadata {
     @Nonnull
     public Key getKey() {
         return key;
+    }
+
+    public String getValue() {
+        switch (key.getDataType()) {
+        case STRING:
+            return stringValue;
+        case NUMBER:
+            return numberValue.toString();
+        case DATE:
+            return DATE_FORMAT.format(dateValue);
+        }
+        throw new RuntimeException("Unhandled data type " + key.getDataType());
     }
 
     public String getStringValue() {
