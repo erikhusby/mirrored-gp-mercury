@@ -11,20 +11,20 @@ import java.util.Map;
 
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class BSPSampleDataFetcherContainerTest {
-    private BSPConfig bspConfig=BSPConfig.produce(Deployment.DEV);
-    private BSPSampleDataFetcher bspSampleDataFetcher=new BSPSampleDataFetcher(
-            BSPSampleSearchServiceProducer.testInstance(), bspConfig);
+    private BSPConfig bspConfig = BSPConfig.produce(Deployment.DEV);
+    private BSPSampleDataFetcher bspSampleDataFetcher =
+            new BSPSampleDataFetcher(BSPSampleSearchServiceProducer.testInstance(), bspConfig);
     public void testFFPE() {
-        BSPSampleDTO ffpe = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-16BL4");
-        BSPSampleDTO paraffin = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-2UVBU");
-        BSPSampleDTO notFFPE = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-3HM8");
+        BspSampleData ffpe = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-16BL4");
+        BspSampleData paraffin = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-2UVBU");
+        BspSampleData notFFPE = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-3HM8");
 
         Assert.assertNotNull(ffpe);
         Assert.assertNotNull(paraffin);
         Assert.assertNotNull(notFFPE);
-        List<BSPSampleDTO> dtoList = Arrays.asList(ffpe, paraffin, notFFPE);
+        List<BspSampleData> sampleDataList = Arrays.asList(ffpe, paraffin, notFFPE);
 
-        bspSampleDataFetcher.fetchFFPEDerived(dtoList);
+        bspSampleDataFetcher.fetchFFPEDerived(sampleDataList);
 
         Assert.assertTrue(ffpe.getFfpeStatus());
         Assert.assertTrue(paraffin.getFfpeStatus());
@@ -32,14 +32,14 @@ public class BSPSampleDataFetcherContainerTest {
     }
 
     public void testSamplePlastic() {
-        BSPSampleDTO rootSample = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-12LY");
-        BSPSampleDTO aliquotSample = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-3HM8");
+        BspSampleData rootSample = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-12LY");
+        BspSampleData aliquotSample = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-3HM8");
 
         Assert.assertNotNull(rootSample);
         Assert.assertNotNull(aliquotSample);
-        List<BSPSampleDTO> dtoList = Arrays.asList(rootSample, aliquotSample);
+        List<BspSampleData> sampleDataList = Arrays.asList(rootSample, aliquotSample);
 
-        bspSampleDataFetcher.fetchSamplePlastic(dtoList);
+        bspSampleDataFetcher.fetchSamplePlastic(sampleDataList);
 
         Assert.assertNotNull(rootSample.getPlasticBarcodes());
         Assert.assertNotNull(aliquotSample.getPlasticBarcodes());
