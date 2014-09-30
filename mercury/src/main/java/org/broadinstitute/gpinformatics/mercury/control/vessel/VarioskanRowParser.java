@@ -9,7 +9,6 @@ import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadshee
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -90,7 +89,7 @@ public class VarioskanRowParser {
                 // todo jmt accumulate errors?
                 throw new RuntimeException("Expected " + nameValue.getFieldName() + ", found " + name);
             }
-            String cellValue = PoiSpreadsheetParser.getCellValues(row.getCell(VALUE_COLUMN), false, false);
+            String cellValue = PoiSpreadsheetParser.getCellValues(row.getCell(VALUE_COLUMN));
             mapNameValueToValue.put(nameValue, cellValue);
         }
         return mapNameValueToValue;

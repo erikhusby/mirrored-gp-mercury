@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.parsers.poi;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.time.FastDateFormat;
+import org.apache.poi.hssf.usermodel.HSSFDataFormatter;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -16,7 +16,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.Format;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -28,8 +27,6 @@ import java.util.Map;
  * Handle the processing of a stream of table data using POI to parse an excel file.
  */
 public final class PoiSpreadsheetParser {
-
-    private static final Format DATE_FORMATTER = FastDateFormat.getInstance("MM/dd/yyyy");
 
     protected List<String> validationMessages = new ArrayList<>();
 
@@ -67,8 +64,7 @@ public final class PoiSpreadsheetParser {
             Map<String, String> dataByHeader = new HashMap<>();
             for (int i = 0; i < processor.getHeaderNames().size(); i++) {
                 String headerName = processor.getHeaderNames().get(i);
-                dataByHeader.put(headerName,
-                        extractCellContent(row, headerName, i, processor.isDateColumn(i), processor.isStringColumn(i)));
+                dataByHeader.put(headerName, extractCellContent(row, headerName, i));
             }
 
             // Take the map and turn it into objects and process the data appropriately.
@@ -97,7 +93,7 @@ public final class PoiSpreadsheetParser {
             while (cellIterator.hasNext()) {
                 // Headers are always strings, so the false is for the date and the true is in case the header looks
                 // like a number to excel
-                headers.add(getCellValues(cellIterator.next(), false, true));
+                headers.add(getCellValues(cellIterator.next()));
             }
 
             // The primary header row is the one that needs to be generally validated.
@@ -154,11 +150,11 @@ public final class PoiSpreadsheetParser {
      *
      * @return A string representation of the data in the cell indicated by the given row/column (header) combination
      */
-    protected String extractCellContent(Row row, String headerName, int columnIndex, boolean isDate, boolean isString) {
+    protected String extractCellContent(Row row, String headerName, int columnIndex) {
 
         Cell cell = row.getCell(columnIndex);
 
-        String result = getCellValues(cell, isDate, isString);
+        String result = getCellValues(cell);
         if (StringUtils.isBlank(result)) {
             validationMessages.add("Row # " + row.getRowNum() + ": Unable to determine cell type for " + headerName);
         }
@@ -178,26 +174,8 @@ public final class PoiSpreadsheetParser {
      *
      * @return A string representation of the cell.
      */
-    public static String getCellValues(Cell cell, boolean isDate, boolean isString) {
-        if (cell != null) {
-            switch (cell.getCellType()) {
-            case Cell.CELL_TYPE_BOOLEAN:
-                return String.valueOf(cell.getBooleanCellValue());
-            case Cell.CELL_TYPE_NUMERIC:
-                if (isDate) {
-                    return DATE_FORMATTER.format(cell.getDateCellValue());
-                }
-                if (isString) {
-                    cell.setCellType(Cell.CELL_TYPE_STRING);
-                    return cell.getStringCellValue();
-                }
-                return String.valueOf(cell.getNumericCellValue());
-            case Cell.CELL_TYPE_STRING:
-                return cell.getStringCellValue();
-            }
-        }
-
-        return "";
+    public static String getCellValues(Cell cell) {
+        return new HSSFDataFormatter().formatCellValue(cell);
     }
 
     /**
