@@ -77,28 +77,33 @@
 
     <security-constraint>
         <web-resource-collection>
-            <web-resource-name>AuthenticatedRestArea</web-resource-name>
+            <!-- mlc this is a straight up hack to force JBoss 7.1.1 to create a SecurityConstraint so
+                 we can do programmatic authentication.  The url-pattern is a dummy that we intend never to
+                 match.  see
+
+                 https://community.jboss.org/thread/161511
+            -->
+            <web-resource-name>SecuredArea</web-resource-name>
+            <url-pattern>/dummy-url/*</url-pattern>
+        </web-resource-collection>
+        <!--  for SSL forwarding, we could have done it using the forwarding that is specified in the JBoss
+            configuration.  If we did, we would have to specify the roles for auth constraint (all applicable roles) and
+            implement a user-data-constraint tag in here with a transport guarantee of CONFIDENTIAL.  Since CLIA needs
+            the SSL forwarding but research (currently) does not, utilizing this approach would have been an
+            unnecessary impact to the research implementation.  To get around this, a Security filter was added
+            to redirect unsecured traffic to the SSL port-->
+        <auth-constraint>
+        </auth-constraint>
+    </security-constraint>
+
+    <security-constraint>
+
+        <web-resource-collection>
+            <web-resource-name>SecuredRestArea</web-resource-name>
             <url-pattern>/rest/crspinfo/*</url-pattern>
             <http-method>GET</http-method>
             <http-method>POST</http-method>
         </web-resource-collection>
-        <!--  By defining the user-data-constraint, we make use of the redirect setting on JBOSS.  With out this,
-          we would have to redirect the request utilizing the SecurityFilter -->
-        <user-data-constraint>
-            <transport-guarantee>CONFIDENTIAL</transport-guarantee>
-        </user-data-constraint>
-    </security-constraint>
-
-    <security-constraint>
-        <web-resource-collection>
-            <web-resource-name>SECURE</web-resource-name>
-            <url-pattern>/*</url-pattern>
-        </web-resource-collection>
-        <!--  By defining the user-data-constraint, we make use of the redirect setting on JBOSS.  With out this,
-          we would have to redirect the request utilizing the SecurityFilter -->
-        <user-data-constraint>
-            <transport-guarantee>CONFIDENTIAL</transport-guarantee>
-        </user-data-constraint>
     </security-constraint>
 
     <welcome-file-list>
@@ -114,6 +119,21 @@
         </form-login-config>
     </login-config>
 
+    <!-- jsp-config>
+        <taglib>
+            <taglib-uri>http://mercury.broadinstitute.org/authorization</taglib-uri>
+            <taglib-location>/WEB-INF/classes/META-INF/mercurysecurity.tld</taglib-location>
+        </taglib>
+    </jsp-config -->
+
+    <filter>
+        <filter-name>SecurityFilter</filter-name>
+        <filter-class>org.broadinstitute.gpinformatics.mercury.presentation.security.SecurityFilter</filter-class>
+        <init-param>
+            <param-name>securePort</param-name>
+            <param-value>8443</param-value>
+        </init-param>
+    </filter>
     <filter>
         <filter-name>CacheFilter</filter-name>
         <filter-class>org.broadinstitute.gpinformatics.athena.presentation.filters.CacheFilter</filter-class>
@@ -220,6 +240,11 @@
     <filter-mapping>
         <filter-name>AuthorizationFilter</filter-name>
         <url-pattern>*.jsp</url-pattern>
+        <dispatcher>REQUEST</dispatcher>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>SecurityFilter</filter-name>
+        <url-pattern>/*</url-pattern>
         <dispatcher>REQUEST</dispatcher>
     </filter-mapping>
 
