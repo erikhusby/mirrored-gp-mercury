@@ -16,15 +16,6 @@ public class SquidThriftLibraryConverter implements ThriftLibraryConverter {
 
     @Override
     public LibraryBean convertLibrary(TZamboniLibrary zamboniLibrary, BSPSampleDTO bspDTO, ProductOrder pdo) {
-        // todo arz extract more fields from bsp here.
-
-        // todo arz test with all bsp data, some bsp samples and some gssr samples
-        // test with null PDO and real PDOs
-        // test flowcell query method
-        // benchmark performance
-
-        // todo arz figure out integration test w/ bsp service, get rid of EverythingYouAskForAndItsHuman mock
-
         return new LibraryBean(zamboniLibrary.getLibrary(),
                 zamboniLibrary.getProject(),
                 zamboniLibrary.getInitiative(),
@@ -60,6 +51,7 @@ public class SquidThriftLibraryConverter implements ThriftLibraryConverter {
                 zamboniLibrary.getPdoSample(),
                 zamboniLibrary.getLibraryCreationDate(),
                 zamboniLibrary.getWorkRequestType(),
-                zamboniLibrary.getWorkRequestDomain());
+                zamboniLibrary.getWorkRequestDomain(),
+                null);
     }
 }

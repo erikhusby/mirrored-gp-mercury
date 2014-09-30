@@ -95,6 +95,13 @@
 
                 // add clear box to filter
                 $j('.dataTables_filter input').clearable();
+
+                // Capture session timeouts in ajax calls
+                $j(document).ajaxSuccess(function(evt, request, settings){
+                    if (request.responseText.indexOf('timeout_page_flag') != -1)
+                        location.href = "${ctxpath}";
+                });
+
                 setupMercuryMessage();
             });
 

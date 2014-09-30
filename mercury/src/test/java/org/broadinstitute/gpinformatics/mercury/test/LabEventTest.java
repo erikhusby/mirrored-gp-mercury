@@ -310,14 +310,20 @@ public class LabEventTest extends BaseEventTest {
         Assert.assertEquals(zimsIlluminaRun.getLanesSequenced(), "1,4");
         LabVessel denatureTube = illuminaFlowcell.getNearestTubeAncestorsForLanes().values().iterator().next();
         Assert.assertEquals(zimsIlluminaChamber.getSequencedLibrary(), denatureTube.getLabel());
+        int positiveControlCount = 0;
+        int negativeControlCount = 0;
         for (LibraryBean bean : zimsIlluminaChamber.getLibraries()) {
             // Every library should have an LCSET, even controls.
             Assert.assertEquals(bean.getLcSet(), workflowBatch.getBatchName());
-//            if (!((libraryBean.isPositiveControl() != null && libraryBean.isPositiveControl()) ||
-//                  (libraryBean.isNegativeControl() != null && libraryBean.isNegativeControl()))) {
-//                Assert.assertEquals(bean.getProductOrderKey(), productOrder.getBusinessKey());
-//            }
+            if (bean.isPositiveControl() != null && bean.isPositiveControl()) {
+                positiveControlCount++;
+            }
+            if (bean.isNegativeControl() != null && bean.isNegativeControl()) {
+                negativeControlCount++;
+            }
         }
+        Assert.assertEquals(positiveControlCount, 1);
+        Assert.assertEquals(negativeControlCount, 1);
 
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
         BarcodedTube startingTube = mapBarcodeToTube.entrySet().iterator().next().getValue();

@@ -307,14 +307,18 @@ public class LabMetric implements Comparable<LabMetric> {
         this.labMetricDecision = labMetricDecision;
     }
 
+    /**
+     * Provides sorting based upon create date, and in the case of duplicate dates, id
+     * @param labMetric
+     * @return
+     */
     @Override
     public int compareTo(LabMetric labMetric) {
         CompareToBuilder compareToBuilder = new CompareToBuilder();
         if (getCreatedDate() != null) {
             compareToBuilder.append(getCreatedDate(), labMetric.getCreatedDate());
-        } else {
-            compareToBuilder.append(getLabMetricId(), labMetric.getLabMetricId());
         }
+        compareToBuilder.append(getLabMetricId(), labMetric.getLabMetricId());
         return compareToBuilder.build();
     }
 
