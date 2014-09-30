@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.zims;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.MockThriftService;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftFileAccessor;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
@@ -13,7 +14,6 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 
-import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
 
 @Test(groups = TestGroups.ALTERNATIVES)
@@ -31,7 +31,7 @@ public class EmptyBSPSampleMapPipelineAPITest extends Arquillian {
     }
 
     @Test(groups = TestGroups.ALTERNATIVES)
-    public void testNullBspDtos() throws Exception {
+    public void testNullBspSamples() throws Exception {
         ZimsIlluminaRun run = runLaneResource.getRun(IlluminaRunResourceTest.RUN_NAME);
         Assert.assertNotNull(run.getError());
         Assert.assertTrue(run.getError().contains("BSP"));

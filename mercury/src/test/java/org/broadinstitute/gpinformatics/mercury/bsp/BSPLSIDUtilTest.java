@@ -56,4 +56,26 @@ public class BSPLSIDUtilTest {
             Assert.assertEquals(ids[i], map.get(lsids[i]));
         }
     }
+
+    @Test(groups = DATABASE_FREE)
+    public void testLsidsToBspIds() {
+        String [] lsids = {
+                "broadinstitute.org:bsp.prod.sample:UP6R",
+                "broad.mit.edu:bsp.prod.sample:192P",
+        };
+
+        String [] ids = {
+                "SM-UP6R",
+                "SM-192P"
+        };
+
+        Map<String, String> map = BSPLSIDUtil.lsidsToBspSampleIds(Arrays.asList(lsids));
+
+        Assert.assertEquals(2, map.size());
+
+        for (int i = 0; i < lsids.length; i++) {
+            Assert.assertTrue(map.containsKey(lsids[i]));
+            Assert.assertEquals(ids[i], map.get(lsids[i]));
+        }
+    }
 }

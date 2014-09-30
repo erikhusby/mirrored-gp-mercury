@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
+import com.google.common.collect.ImmutableList;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
@@ -10,11 +11,14 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.broadinstitute.gpinformatics.Matchers.argThat;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Matchers.anyCollectionOf;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -52,5 +56,18 @@ public class BSPSampleDataFetcherUnitTest {
 
         assertThat("Should have 1 result", result.size(), equalTo(1));
         assertThat(result.get("SM-1234"), equalTo("SM-1230"));
+    }
+
+    public void fetchSamplesFromBspWithOnlyNonBspFormatSamplesDoesNotQueryBsp() {
+        bspSampleDataFetcher.fetchSampleData(ImmutableList.of("111.0"));
+
+        verifyZeroInteractions(mockBspSampleSearchService);
+    }
+
+    public void fetchSamplesFromBspFiltersNonBspFormatSamples() {
+        bspSampleDataFetcher.fetchSampleData(ImmutableList.of("SM-1234", "111.0"));
+
+        verify(mockBspSampleSearchService)
+                .runSampleSearch(argThat(contains("SM-1234")), Matchers.<BSPSampleSearchColumn[]>anyVararg());
     }
 }

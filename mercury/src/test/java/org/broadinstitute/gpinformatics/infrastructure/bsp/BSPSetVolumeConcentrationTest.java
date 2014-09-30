@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -19,7 +21,7 @@ public class BSPSetVolumeConcentrationTest  {
     private BSPSampleSearchService bspSampleSearchService=new BSPSampleSearchServiceImpl(bspConfig);
 
     public void testSetVolumeAndConcentration() {
-        BSPSampleDataFetcher dataFetcher = new BSPSampleDataFetcher(bspSampleSearchService, bspConfig);
+        SampleDataFetcher dataFetcher = new SampleDataFetcher(bspSampleSearchService, bspConfig);
         BSPSetVolumeConcentrationImpl bspSetVolumeConcentration = new BSPSetVolumeConcentrationImpl(bspConfig);
 
         String testSampleId = "SM-1234";
@@ -32,9 +34,9 @@ public class BSPSetVolumeConcentrationTest  {
                     testSampleId, newVolume[i], newConcentration[i], newReceptacleWeight[i]);
             Assert.assertEquals(result, BSPSetVolumeConcentration.RESULT_OK);
 
-            BSPSampleDTO bspSampleDTO = dataFetcher.fetchSingleSampleFromBSP(testSampleId);
-            Double currentVolume = bspSampleDTO.getVolume();
-            Double currentConcentration = bspSampleDTO.getConcentration();
+            SampleData bspSampleData = dataFetcher.fetchSampleData(testSampleId);
+            Double currentVolume = bspSampleData.getVolume();
+            Double currentConcentration = bspSampleData.getConcentration();
 
             String errorString = "%s differs from expected value of %f by %f (original value was %f).";
 
