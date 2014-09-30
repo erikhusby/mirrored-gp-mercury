@@ -53,20 +53,20 @@
             // Prevent posting the form for an enter key press in the input text fields.  Also
             // blur out of the current text field so an enter key press essentially behaves the
             // same as a blurring tab.
-            $('#sourceTube, #mercurySample, #mercuryLabVessel').keydown(function(event) {
-                if (event.keyCode == 13) {
+            $j('#sourceTube, #mercurySample, #mercuryLabVessel').keydown(function(event) {
+                if (event.which == 13) {
                     event.preventDefault();
 
                     // Do not do any tabindex traversal if the current input is blank.
-                    if ($(this).val()) {
+                    if ($j(this).val()) {
 
                         // Traverse to the next input in tabindex order.
-                        var next_idx = parseInt($(':focus').attr('tabindex'), 10) + 1;
-                        var $next_input = $('form [tabindex=' + next_idx + ']');
+                        var next_idx = parseInt($j(':focus').attr('tabindex'), 10) + 1;
+                        var $next_input = $j('form [tabindex=' + next_idx + ']');
                         if ($next_input.length)
                             $next_input.focus();
                         else
-                            $('form [tabindex]:first').focus();
+                            $j('form [tabindex]:first').focus();
                     }
                     return false;
                 }

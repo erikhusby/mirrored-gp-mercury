@@ -98,7 +98,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     public void init() {
         if (selectedSessionId != null) {
             selectedSession = manifestSessionDao.find(selectedSessionId);
-            statusValues = manifestSessionEjb.getSessionStatus(selectedSessionId);
+            statusValues = selectedSession.generateSessionStatusForClose();
             projectTokenInput.setup(selectedSession.getResearchProject().getBusinessKey());
         }
     }
@@ -157,7 +157,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
         try {
             ResearchProject researchProject = projectTokenInput.getTokenObject();
 
-            if(researchProject == null){
+            if (researchProject == null) {
                 addGlobalValidationError("a Research Project is required to upload manifest");
                 return getContext().getSourcePageResolution();
             }
@@ -177,7 +177,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     @HandlesEvent(ACCEPT_UPLOAD_ACTION)
     public Resolution acceptUpload() {
 
-        Resolution result =  new ForwardResolution(getClass(), LOAD_SESSION_ACTION);
+        Resolution result = new ForwardResolution(getClass(), LOAD_SESSION_ACTION);
 
         try {
             manifestSessionEjb.acceptManifestUpload(selectedSession.getManifestSessionId());

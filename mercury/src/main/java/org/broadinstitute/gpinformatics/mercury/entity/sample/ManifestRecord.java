@@ -93,6 +93,8 @@ public class ManifestRecord implements Updatable {
      * spreadsheet data rows start at 2 (there is a single header row), these indexes start at 0.  The deprecated
      * Hibernate IndexColumn annotation (now removed in the latest version of Hibernate) used to allow for specification
      * of a base value for this index, but JPA requires ordered elements to start with an index of 0.
+     *
+     * {@see #getSpreadsheetRowNumber}
      */
     @Column(name = "MANIFEST_RECORD_INDEX", insertable = false, updatable = false, nullable = false)
     private Integer manifestRecordIndex;
@@ -276,11 +278,11 @@ public class ManifestRecord implements Updatable {
 
         List<String> messages = new ArrayList<>();
         // Add an appropriate message for each record to messages.
-        for (Map.Entry<String, Collection<ManifestRecord>> entry : recordsBySessionName.asMap().entrySet()) {
-            messages.add(buildMessageForConflictingRecords(entry.getValue()));
+        for (Collection<ManifestRecord> conflictingRecords : recordsBySessionName.asMap().values()) {
+            messages.add(buildMessageForConflictingRecords(conflictingRecords));
         }
 
-        // Join the messages for all the manifests containing duplicates.
+        // Join the messages for all the manifests containing conflicting records.
         return StringUtils.join(messages, ", ") + ".";
     }
 
@@ -442,10 +444,6 @@ public class ManifestRecord implements Updatable {
             return sampleMetadata.getValue();
         }
         return null;
-    }
-
-    public static String key(Metadata.Key key) {
-        return key.name();
     }
 
     /**

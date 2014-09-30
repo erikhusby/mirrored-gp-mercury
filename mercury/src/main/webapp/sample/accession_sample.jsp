@@ -15,7 +15,7 @@
 
             $j(document).ready(function () {
                 $j("#accessionSourceText").blur(function () {
-                    if ($(this).val() != '') {
+                    if ($j(this).val() != '') {
                         performAccessionScan();
                     }
                 });
@@ -36,10 +36,10 @@
                 // Prevent posting the form for an enter key press in the accession source field.  Also
                 // blur out of the accession source field so an enter key press essentially behaves the
                 // same as a blurring tab.
-                $('#accessionSourceText').keydown(function(event) {
-                    if (event.keyCode == 13) {
+                $j('#accessionSourceText').keydown(function(event) {
+                    if (event.which == 13) {
                         event.preventDefault();
-                        $(this).blur();
+                        $j(this).blur();
                         return false;
                     }
                 });

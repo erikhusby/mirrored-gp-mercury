@@ -1575,11 +1575,19 @@
     </changeSet>
 
     <changeSet id="GPLIM-2885-manifest_record_index-backfill" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+                select decode(count(*), 0, 0, 1) from manifest_record where manifest_record_index is null;
+            </sqlCheck>
+        </preConditions>
         <comment>
           Update to backfill manifest record indexes in manifest records where the manifest record index is currently
           null.  Manifest record indexes are assigned starting at 0 for the manifest record with the smallest ID within
           a manifest session and increasing monotonically to N - 1 for the manifest record with the largest ID within a
           manifest session.
+
+          The precondition above will return 1 if there are any records with null manifest_record_indexes.  It will
+          return 0 otherwise.
         </comment>
         <sql>
             update manifest_record mr set manifest_record_index = (

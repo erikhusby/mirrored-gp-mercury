@@ -45,6 +45,9 @@ public class ManifestRecordTest {
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, sampleId,
                         Metadata.Key.GENDER, VALUE_2, Metadata.Key.PATIENT_ID, VALUE_3));
         manifestSession.addRecord(manifestRecord);
+        // ManifestRecords use a zero-based offset.  Normally the spreadsheet parser assigns these but this
+        // code is not using the parser.
+        manifestRecord.setManifestRecordIndex(manifestSession.getRecords().size() - 1);
         return manifestRecord;
     }
 
@@ -111,6 +114,9 @@ public class ManifestRecordTest {
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, COLLABORATOR_SAMPLE_ID_1,
                         Metadata.Key.GENDER, VALUE_2, Metadata.Key.PATIENT_ID, VALUE_3));
         testSession.addRecord(testRecordWithDupe);
+        // Zero-based offset.
+        testRecordWithDupe.setManifestRecordIndex(testSession.getRecords().size() - 1);
+
         testSession.validateManifest();
 
         assertThat(testSession.hasErrors(), is(true));
@@ -180,17 +186,15 @@ public class ManifestRecordTest {
         ManifestRecord manifestRecord = buildManifestRecord(testSession, ImmutableMap.of(
                 Metadata.Key.SAMPLE_ID, "989282484", Metadata.Key.GENDER, "M", Metadata.Key.PATIENT_ID, VALUE_3));
         testSession.addRecord(manifestRecord);
+        // Zero-based offset.
+        manifestRecord.setManifestRecordIndex(testSession.getRecords().size() - 1);
         testSession.validateManifest();
         assertThat(testSession.hasErrors(), is(true));
     }
 
-    private int getNextSpreadsheetRowNumber(ManifestSession manifestSession) {
-        return manifestSession.getRecords().size() + 1;
-    }
-
     private ManifestRecord buildManifestRecord(ManifestSession manifestSession, Map<Metadata.Key, String> metadata) {
         ManifestRecord manifestRecord = new ManifestRecord(ManifestTestFactory.buildMetadata(metadata));
-        manifestRecord.setManifestRecordIndex(getNextSpreadsheetRowNumber(manifestSession));
+        manifestRecord.setManifestSession(manifestSession);
         return manifestRecord;
     }
 
@@ -200,11 +204,14 @@ public class ManifestRecordTest {
             ImmutableMap.of(Metadata.Key.SAMPLE_ID, COLLABORATOR_SAMPLE_ID_1,
                     Metadata.Key.GENDER, VALUE_2, Metadata.Key.PATIENT_ID, "PI-3234"));
         testSession.addRecord(duplicateSampleRecord);
+        // Zero-based offsets for manifest records.
+        duplicateSampleRecord.setManifestRecordIndex(testSession.getRecords().size() - 1);
 
         ManifestRecord genderMisMatch = buildManifestRecord(testSession,
                 ImmutableMap.of(Metadata.Key.SAMPLE_ID, "229249239",
                                 Metadata.Key.GENDER, "M", Metadata.Key.PATIENT_ID, "PI-3234"));
         testSession.addRecord(genderMisMatch);
+        genderMisMatch.setManifestRecordIndex(testSession.getRecords().size() - 1);
         testSession.validateManifest();
 
         assertThat(testSession.hasErrors(), is(true));
