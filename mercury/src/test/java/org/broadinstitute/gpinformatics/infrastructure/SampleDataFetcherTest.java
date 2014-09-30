@@ -41,6 +41,7 @@ import static org.mockito.Mockito.when;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class SampleDataFetcherTest {
 
+
     /**
      * A non-BSP sample (e.g., GSSR) for which there is not a {@link MercurySample}.
      */
@@ -445,4 +446,5 @@ public class SampleDataFetcherTest {
     private void configureBspFetcher(String aliquotId, String stockId) {
         when(mockBspSampleDataFetcher.getStockIdForAliquotId(aliquotId)).thenReturn(stockId);
     }
+
 }
