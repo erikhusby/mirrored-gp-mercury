@@ -349,7 +349,7 @@ public class VesselEjb {
                 messageCollection.addError("No volume for tube " + tube.getLabel());
             } else {
                 labMetric.getMetadataSet().add(new Metadata(Metadata.Key.TOTAL_NG,
-                        labMetric.getValue().multiply(tube.getVolume()).toString()));
+                        labMetric.getValue().multiply(tube.getVolume())));
             }
             LabMetric.Decider decider = metricType.getDecider();
             LabMetricDecision.Decision decision = null;

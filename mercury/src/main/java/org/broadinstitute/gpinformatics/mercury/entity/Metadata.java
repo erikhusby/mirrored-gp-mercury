@@ -15,6 +15,8 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import java.math.BigDecimal;
+import java.util.Date;
 
 /**
  * Generic metadata storage class with String keys and values.
@@ -37,7 +39,13 @@ public class Metadata {
     private Key key;
 
     @Column(name = "value")
-    private String value;
+    private String stringValue;
+
+    @Column(name = "number_value")
+    private BigDecimal numberValue;
+
+    @Column(name = "date_value")
+    private Date dateValue;
 
     /**
      * For JPA
@@ -45,17 +53,45 @@ public class Metadata {
     protected Metadata() {
     }
 
-    public Metadata(@Nonnull Key key, String value) {
+    public Metadata(@Nonnull Key key, String stringValue) {
         this.key = key;
-        this.value = value;
+        this.stringValue = stringValue;
+        if (key.getDataType() != DataType.STRING) {
+            throw new RuntimeException("String value passed to " + key.toString());
+        }
     }
 
-    public @Nonnull Key getKey() {
+    public Metadata(@Nonnull Key key, BigDecimal numberValue) {
+        this.key = key;
+        this.numberValue = numberValue;
+        if (key.getDataType() != DataType.NUMBER) {
+            throw new RuntimeException("Number value passed to " + key.toString());
+        }
+    }
+
+    public Metadata(@Nonnull Key key, Date dateValue) {
+        this.key = key;
+        this.dateValue = dateValue;
+        if (key.getDataType() != DataType.DATE) {
+            throw new RuntimeException("Date value passed to " + key.toString());
+        }
+    }
+
+    @Nonnull
+    public Key getKey() {
         return key;
     }
 
-    public String getValue() {
-        return value;
+    public String getStringValue() {
+        return stringValue;
+    }
+
+    public BigDecimal getNumberValue() {
+        return numberValue;
+    }
+
+    public Date getDateValue() {
+        return dateValue;
     }
 
     @Override
@@ -69,12 +105,42 @@ public class Metadata {
 
         Metadata metadata = (Metadata) o;
 
-        return new EqualsBuilder().append(key, metadata.getKey()).append(value, metadata.getValue()).isEquals();
+        EqualsBuilder equalsBuilder = new EqualsBuilder().append(key, metadata.getKey());
+        switch (key.getDataType()) {
+        case STRING:
+            equalsBuilder.append(stringValue, metadata.getStringValue());
+            break;
+        case NUMBER:
+            equalsBuilder.append(numberValue, metadata.getNumberValue());
+            break;
+        case DATE:
+            equalsBuilder.append(dateValue, metadata.getDateValue());
+            break;
+        }
+        return equalsBuilder.isEquals();
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(key).append(value).hashCode();
+        HashCodeBuilder hashCodeBuilder = new HashCodeBuilder().append(key);
+        switch (key.getDataType()) {
+        case STRING:
+            hashCodeBuilder.append(stringValue);
+            break;
+        case NUMBER:
+            hashCodeBuilder.append(numberValue);
+            break;
+        case DATE:
+            hashCodeBuilder.append(dateValue);
+            break;
+        }
+        return hashCodeBuilder.hashCode();
+    }
+
+    public enum DataType {
+        STRING,
+        NUMBER,
+        DATE
     }
 
     public enum Category {
@@ -86,30 +152,36 @@ public class Metadata {
     public enum Key implements Displayable {
         // The Category.SAMPLE keys are currently all used for uploads of the "modified" (edited) manifest during
         // Buick sample registration.
-        GENDER(Category.SAMPLE, "Gender"),
-        PATIENT_ID(Category.SAMPLE, "Patient ID"),
-        SAMPLE_TYPE(Category.SAMPLE, "Sample Type"),
-        TUMOR_NORMAL(Category.SAMPLE, "Tumor/Normal"),
-        BUICK_COLLECTION_DATE(Category.SAMPLE, "Collection Date"),
-        SAMPLE_ID(Category.SAMPLE, "Sample ID"),
-        BUICK_VISIT(Category.SAMPLE, "Visit"),
+        GENDER(Category.SAMPLE, DataType.STRING, "Gender"),
+        PATIENT_ID(Category.SAMPLE, DataType.STRING, "Patient ID"),
+        SAMPLE_TYPE(Category.SAMPLE, DataType.STRING, "Sample Type"),
+        TUMOR_NORMAL(Category.SAMPLE, DataType.STRING, "Tumor/Normal"),
+        BUICK_COLLECTION_DATE(Category.SAMPLE, DataType.STRING, "Collection Date"),
+        SAMPLE_ID(Category.SAMPLE, DataType.STRING, "Sample ID"),
+        BUICK_VISIT(Category.SAMPLE, DataType.STRING, "Visit"),
 
-        CORRELATION_COEFFICIENT_R2(Category.LAB_METRIC_RUN, "R Squared Correlation Coefficient"),
-        INSTRUMENT_NAME(Category.LAB_METRIC_RUN, "Instrument Name"),
-        INSTRUMENT_SERIAL_NUMBER(Category.LAB_METRIC_RUN, "Serial Number"),
+        CORRELATION_COEFFICIENT_R2(Category.LAB_METRIC_RUN, DataType.STRING, "R Squared Correlation Coefficient"),
+        INSTRUMENT_NAME(Category.LAB_METRIC_RUN, DataType.STRING, "Instrument Name"),
+        INSTRUMENT_SERIAL_NUMBER(Category.LAB_METRIC_RUN, DataType.STRING, "Serial Number"),
 
-        TOTAL_NG(Category.LAB_METRIC, "Total ng");
+        TOTAL_NG(Category.LAB_METRIC, DataType.NUMBER, "Total ng");
 
         private final Category category;
+        private final DataType dataType;
         private final String displayName;
 
-        Key(Category category, String displayName) {
+        Key(Category category, DataType dataType, String displayName) {
             this.category = category;
+            this.dataType = dataType;
             this.displayName = displayName;
         }
 
         public Category getCategory() {
             return category;
+        }
+
+        public DataType getDataType() {
+            return dataType;
         }
 
         @Override

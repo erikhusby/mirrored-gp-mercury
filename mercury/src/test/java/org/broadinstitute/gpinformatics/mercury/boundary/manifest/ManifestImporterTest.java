@@ -156,7 +156,7 @@ public class ManifestImporterTest {
         for (ManifestRecord manifestRecord : manifestRecords) {
             for (Metadata metadata : manifestRecord.getMetadata()) {
                 ManifestHeader header = ManifestHeader.fromMetadataKey(metadata.getKey());
-                manifestRow.put(header.getColumnName(), metadata.getValue());
+                manifestRow.put(header.getColumnName(), metadata.getStringValue());
             }
             PoiSpreadsheetValidator.validateSpreadsheetRow(manifestRow, ManifestHeader.class);
             for (Map.Entry<String, String> manifestCell : manifestRow.entrySet()) {

@@ -256,7 +256,7 @@ public class LabMetric implements Comparable<LabMetric> {
     public BigDecimal getTotalNg() {
         for (Metadata metadata : metadataSet) {
             if (metadata.getKey() == Metadata.Key.TOTAL_NG) {
-                return new BigDecimal(metadata.getValue());
+                return metadata.getNumberValue();
             }
         }
         return null;

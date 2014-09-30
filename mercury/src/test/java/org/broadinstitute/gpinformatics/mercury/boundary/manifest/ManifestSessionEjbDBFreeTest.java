@@ -375,7 +375,7 @@ public class ManifestSessionEjbDBFreeTest {
         for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
             assertThat(manifestRecord.isQuarantined(), is(false));
             Metadata patientIdMetadata = manifestRecord.getMetadataByKey(Metadata.Key.PATIENT_ID);
-            if (PATIENT_IDS_FOR_SAME_MANIFEST_GENDER_MISMATCHES.contains(patientIdMetadata.getValue())) {
+            if (PATIENT_IDS_FOR_SAME_MANIFEST_GENDER_MISMATCHES.contains(patientIdMetadata.getStringValue())) {
                 assertThat(manifestRecord.getManifestEvents(), hasSize(1));
                 ManifestEvent manifestEvent = manifestRecord.getManifestEvents().get(0);
                 assertThat(manifestEvent.getSeverity(), is(ManifestEvent.Severity.ERROR));

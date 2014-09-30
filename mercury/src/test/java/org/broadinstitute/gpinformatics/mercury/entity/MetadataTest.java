@@ -34,7 +34,7 @@ public class MetadataTest {
 
     public void basics() {
         assertThat(metadata.getKey(), is(equalTo(KEY)));
-        assertThat(metadata.getValue(), is(equalTo(VALUE)));
+        assertThat(metadata.getStringValue(), is(equalTo(VALUE)));
     }
 
     public void hashCodeAndEquals() {
