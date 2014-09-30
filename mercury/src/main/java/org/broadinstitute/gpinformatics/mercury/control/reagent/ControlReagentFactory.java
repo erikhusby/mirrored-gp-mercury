@@ -1,6 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.control.reagent;
 
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
+import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ControlReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
@@ -9,6 +13,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 
 import javax.inject.Inject;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,12 +36,40 @@ public class ControlReagentFactory {
     @Inject
     private ControlReagentDao controlReagentDao;
 
-    List<BarcodedTube> make(Map<String, ControlReagentProcessor.ControlDto> mapTubeBarcodeToControl,
+    List<BarcodedTube> make(InputStream spreadsheetStream,
             MessageCollection messageCollection) {
-        List<BarcodedTube> controlTubes = new ArrayList<>();
+        try {
+            ControlReagentProcessor controlReagentProcessor = new ControlReagentProcessor("Sheet1");
+            messageCollection.addErrors(PoiSpreadsheetParser.processSingleWorksheet(spreadsheetStream,
+                    controlReagentProcessor));
+            Map<String, ControlReagentProcessor.ControlDto> mapTubeBarcodeToControl =
+                    controlReagentProcessor.getMapTubeBarcodeToControl();
 
-        // verify controls exist
-        List<Control> controls = controlDao.findAllActive();
+            List<Control> controls = controlDao.findAllActive();
+            Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(mapTubeBarcodeToControl.keySet());
+            Set<ControlReagentProcessor.ControlDto> controlDtoSet = new HashSet<>(mapTubeBarcodeToControl.values());
+            List<String> lots = new ArrayList<>();
+            for (ControlReagentProcessor.ControlDto controlDto : controlDtoSet) {
+                lots.add(controlDto.getLot());
+            }
+            Map<String, ControlReagent> mapLotToControl = controlReagentDao.fetchMapLotToControl(lots);
+
+            return getBarcodedTubes(mapTubeBarcodeToControl, messageCollection, controls, mapBarcodeToTube,
+                    mapLotToControl);
+        } catch (InvalidFormatException | IOException | ValidationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @DaoFree
+    private List<BarcodedTube> getBarcodedTubes(
+            Map<String, ControlReagentProcessor.ControlDto> mapTubeBarcodeToControl,
+            MessageCollection messageCollection,
+            List<Control> controls,
+            Map<String, BarcodedTube> mapBarcodeToTube,
+            Map<String, ControlReagent> mapLotToControl) {
+
+        List<BarcodedTube> controlTubes = new ArrayList<>();
         Map<String, Control> mapCollabSampleIdToControl = new HashMap<>();
         for (Control control : controls) {
             mapCollabSampleIdToControl.put(control.getCollaboratorSampleId(), control);
@@ -46,30 +80,23 @@ public class ControlReagentFactory {
             }
         }
 
-        Map<ControlReagentProcessor.ControlDto, ControlReagent> mapControlDtoToEntity = new HashMap<>();
-        // fetch or create control reagent
-        Set<ControlReagentProcessor.ControlDto> controlDtoSet = new HashSet<>(mapTubeBarcodeToControl.values());
-        for (ControlReagentProcessor.ControlDto controlDto : controlDtoSet) {
-            // What's the unique constraint for control reagents?  Control + Lot?
-            List<ControlReagent> controlReagents = controlReagentDao.fetchByLot(controlDto.getLot());
-            if (controlReagents.isEmpty()) {
-                mapControlDtoToEntity.put(controlDto, new ControlReagent(controlDto.getControl(), controlDto.getLot(),
-                        controlDto.getExpiration(), mapCollabSampleIdToControl.get(controlDto.getControl())));
-            }
-        }
-
         // create tubes, associate with reagents
-        Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(mapTubeBarcodeToControl.keySet());
         for (Map.Entry<String, ControlReagentProcessor.ControlDto> stringControlDtoEntry :
                 mapTubeBarcodeToControl.entrySet()) {
             String tubeBarcode = stringControlDtoEntry.getKey();
+            ControlReagentProcessor.ControlDto controlDto = stringControlDtoEntry.getValue();
+
             if (mapBarcodeToTube.get(tubeBarcode) != null) {
                 messageCollection.addError("Tube is already in the database: " + tubeBarcode);
                 continue;
             }
             BarcodedTube barcodedTube = new BarcodedTube(tubeBarcode);
-            ControlReagentProcessor.ControlDto controlDto = stringControlDtoEntry.getValue();
-            barcodedTube.addReagent(mapControlDtoToEntity.get(controlDto));
+            ControlReagent controlReagent = mapLotToControl.get(controlDto.getLot());
+            if (controlReagent == null) {
+                controlReagent = new ControlReagent(controlDto.getControl(), controlDto.getLot(),
+                        controlDto.getExpiration(), mapCollabSampleIdToControl.get(controlDto.getControl()));
+            }
+            barcodedTube.addReagent(controlReagent);
             controlTubes.add(barcodedTube);
         }
         return controlTubes;

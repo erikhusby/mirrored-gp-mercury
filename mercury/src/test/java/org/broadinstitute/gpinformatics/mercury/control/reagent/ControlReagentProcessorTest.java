@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -17,8 +18,7 @@ import java.util.Collections;
 public class ControlReagentProcessorTest {
 
     public void testBasic() {
-        InputStream testSpreadSheetInputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                "testdata/ControlReagents.xlsx");
+        InputStream testSpreadSheetInputStream = VarioskanParserTest.getTestResource("ControlReagents.xlsx");
         Assert.assertNotNull(testSpreadSheetInputStream);
         ControlReagentProcessor controlReagentProcessor = new ControlReagentProcessor("Sheet1");
         PoiSpreadsheetParser parser = new PoiSpreadsheetParser(Collections.<String, TableProcessor>emptyMap());
