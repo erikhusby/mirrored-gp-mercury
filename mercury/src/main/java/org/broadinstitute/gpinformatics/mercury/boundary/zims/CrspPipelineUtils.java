@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.zims;
 
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
@@ -42,11 +42,11 @@ public class CrspPipelineUtils {
      * Overrides various fields with CRSP-specific values
      */
     public void setFieldsForCrsp(LibraryBean libraryBean,
-                                 BSPSampleDTO bspSampleDTO,
+                                 SampleData sampleData,
                                  ResearchProject positiveControlsProject,
                                  String lcSet) {
-        if (BSPUtil.isInBspFormat(bspSampleDTO.getSampleId())) {
-            libraryBean.setLsid(getCrspLSIDForBSPSampleId(bspSampleDTO.getSampleId()));
+        if (BSPUtil.isInBspFormat(sampleData.getSampleId())) {
+            libraryBean.setLsid(getCrspLSIDForBSPSampleId(sampleData.getSampleId()));
         }
         libraryBean.setRootSample(libraryBean.getSampleId());
 

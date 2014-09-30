@@ -384,8 +384,8 @@ public class ZimsIlluminaRunFactoryTest {
         controlMap = new HashMap<>();
         for (String sampleId : testSampleIds) {
             if (sampleId.equals(BSP_SM_ID_FOR_POSITIVE_CONTROL)) {
-                BSPSampleDTO sampleDTO = mapSampleIdToDto.get(sampleId);
-                String collaboratorSampleName = sampleDTO.getCollaboratorsSampleName();
+                SampleData sampleData = mapSampleIdToDto.get(sampleId);
+                String collaboratorSampleName = sampleData.getCollaboratorsSampleName();
                 controlMap.put(collaboratorSampleName,new Control(collaboratorSampleName, Control.ControlType.POSITIVE));
             }
         }

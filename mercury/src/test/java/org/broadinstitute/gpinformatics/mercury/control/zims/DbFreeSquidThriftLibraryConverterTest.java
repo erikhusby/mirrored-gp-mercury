@@ -7,7 +7,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftFileAccessor;
@@ -68,7 +68,7 @@ public class DbFreeSquidThriftLibraryConverterTest {
 
         Assert.assertEquals(lib.getLcSet(), zamboniLibrary.getLcset());
 
-        lib = converter.convertLibrary(zamboniLibrary,new BSPSampleDTO(),pdo);
+        lib = converter.convertLibrary(zamboniLibrary,new BspSampleData(),pdo);
         Assert.assertEquals(lib.getMetadataSource(), MercurySample.BSP_METADATA_SOURCE);
     }
 
