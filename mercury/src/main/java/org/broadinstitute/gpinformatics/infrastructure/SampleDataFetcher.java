@@ -6,9 +6,9 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
@@ -193,10 +193,10 @@ public class SampleDataFetcher implements Serializable {
 
             if (metadataSources.isEmpty()) {
                 metadataSource = MercurySample.MetadataSource.BSP;
-            } else if (metadataSources.size() > 1) {
+            } else if (metadataSources.elementSet().size() > 1) {
                 String metadataSourceCounts = "";
                 for (MercurySample.MetadataSource source : metadataSources) {
-                    metadataSourceCounts += String.format("%s: %d", source, metadataSources.count(source));
+                    metadataSourceCounts += String.format("%s: %d ", source, metadataSources.count(source));
                 }
                 throw new RuntimeException(
                         String.format("There are MercurySamples for %s that disagree on the sample data source: %s",
