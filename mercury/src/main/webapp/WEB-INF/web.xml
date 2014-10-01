@@ -107,7 +107,6 @@
     <security-constraint>
         <web-resource-collection>
             <!-- https://issues.jboss.org/browse/ARQ-1426
-
                 Unable to force Arquillian tests to redirect to ssl, so we are creating a hole to allow arquillian
                 tests to still utilize http when initiating.
             -->
@@ -117,7 +116,6 @@
         <!--  By defining the user-data-constraint, we make use of the redirect setting on JBOSS.  With out this,
               we can guarantee that Arquillian supported tests will not redirect to the SSL port-->
     </security-constraint>
-
 
 
     <welcome-file-list>
@@ -170,7 +168,8 @@
         </init-param>
         <init-param>
             <param-name>Extension.Packages</param-name>
-            <param-value>com.samaxes.stripes.inject,org.broadinstitute.gpinformatics.infrastructure.presentation</param-value>
+            <param-value>com.samaxes.stripes.inject,org.broadinstitute.gpinformatics.infrastructure.presentation
+            </param-value>
         </init-param>
         <init-param>
             <param-name>ActionBeanContext.Class</param-name>
