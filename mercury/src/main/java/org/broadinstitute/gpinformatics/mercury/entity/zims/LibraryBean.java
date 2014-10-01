@@ -608,6 +608,10 @@ public class LibraryBean {
         return regulatoryDesignation;
     }
 
+    public void setRegulatoryDesignation(String regulatoryDesignation) {
+        this.regulatoryDesignation = regulatoryDesignation;
+    }
+
     public String getMetadataSource() {
         return metadataSource;
     }

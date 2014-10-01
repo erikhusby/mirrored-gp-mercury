@@ -44,6 +44,18 @@ public class MercurySampleDataTest {
         assertThat(data.getCollaboratorsSampleName(), equalTo(collaboratorSampleId));
     }
 
+    public void testGetRootSampleIdReturnsSampleId() {
+        MercurySampleData data = new MercurySampleData(SAMPLE_ID, Collections.<Metadata>emptySet());
+        assertThat(data.getRootSample(), equalTo(SAMPLE_ID));
+    }
+
+    public void testGetCollaboratorParticipantIdReturnsPatientId() {
+        String patientId = "Patient-1";
+        MercurySampleData data = new MercurySampleData(SAMPLE_ID,
+                                                       Collections.singleton(new Metadata(Metadata.Key.PATIENT_ID, patientId)));
+        assertThat(data.getCollaboratorParticipantId(), equalTo(patientId));
+    }
+
     public void testGetPatientIdReturnsPatientId() {
         String patientId = "Patient-1";
         MercurySampleData data = new MercurySampleData(SAMPLE_ID,
