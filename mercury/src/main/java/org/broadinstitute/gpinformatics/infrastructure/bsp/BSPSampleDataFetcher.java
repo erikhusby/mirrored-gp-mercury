@@ -5,7 +5,9 @@ import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.mercury.BSPJerseyClient;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 
@@ -101,7 +103,9 @@ public class BSPSampleDataFetcher extends BSPJerseyClient implements Serializabl
                                                      BSPSampleSearchColumn... bspSampleSearchColumns) {
         Collection<String> filteredSampleNames = new HashSet<>();
         for (String sampleName : sampleNames) {
-            if (BSPUtil.isInBspFormat(sampleName)) {
+            if (BSPUtil.isInBspFormat(sampleName) ||
+                ServiceAccessUtility.getBean(BSPConfig.class).getMercuryDeployment() != Deployment.PROD) {
+
                 filteredSampleNames.add(sampleName);
             }
         }
