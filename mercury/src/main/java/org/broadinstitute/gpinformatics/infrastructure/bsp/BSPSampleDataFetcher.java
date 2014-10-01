@@ -104,7 +104,7 @@ public class BSPSampleDataFetcher extends BSPJerseyClient implements Serializabl
         Collection<String> filteredSampleNames = new HashSet<>();
         for (String sampleName : sampleNames) {
             if (BSPUtil.isInBspFormat(sampleName) ||
-                ServiceAccessUtility.getBean(BSPConfig.class).getMercuryDeployment() != Deployment.PROD) {
+                getBspConfig().getMercuryDeployment() != Deployment.PROD) {
 
                 filteredSampleNames.add(sampleName);
             }
