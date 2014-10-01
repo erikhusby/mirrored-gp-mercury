@@ -12,7 +12,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceExcep
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
@@ -36,23 +35,25 @@ import java.util.List;
 public class ManifestSessionEjb {
 
     static final String UNASSOCIATED_TUBE_SAMPLE_MESSAGE =
-            "The given target sample id is not associated with the given target vessel";
-    static final String SAMPLE_NOT_FOUND_MESSAGE = ":: This sample ID is not found.";
-    private static final String SAMPLE_NOT_UNIQUE_MESSAGE = ":: This sample ID is not unique in Mercury";
+            "The given target sample id is not associated with the given target vessel.";
+    static final String SAMPLE_NOT_FOUND_MESSAGE = "You must provide a valid target sample key.";
+    private static final String SAMPLE_NOT_UNIQUE_MESSAGE = "This sample ID is not unique in Mercury.";
     static final String SAMPLE_NOT_ELIGIBLE_FOR_CLINICAL_MESSAGE =
-            ":: The sample found is not eligible for clinical work";
-    static final String VESSEL_NOT_FOUND_MESSAGE = "::  The target vessel is not found";
+            "The sample found is not eligible for clinical work.";
+    static final String VESSEL_NOT_FOUND_MESSAGE = "The target vessel was not found.";
     static final String VESSEL_USED_FOR_PREVIOUS_TRANSFER =
-            ":: the target vessel has already been used for a tube transfer";
+            "The target vessel has already been used for a tube transfer.";
 
     static final String MANIFEST_SESSION_NOT_FOUND = "Manifest Session '%s' not found";
 
-    static final String RESEARCH_PROJECT_NOT_FOUND = "Research Project '%s' not found";
+    static final String MERCURY_SAMPLE_KEY = "Mercury sample key";
 
     private ManifestSessionDao manifestSessionDao;
 
     private ResearchProjectDao researchProjectDao;
+
     private MercurySampleDao mercurySampleDao;
+
     private LabVesselDao labVesselDao;
 
     /**
@@ -141,7 +142,13 @@ public class ManifestSessionEjb {
     private ResearchProject findResearchProject(String researchProjectKey) {
         ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
         if (researchProject == null) {
-            throw new InformaticsServiceException(String.format(RESEARCH_PROJECT_NOT_FOUND, researchProjectKey));
+            throw new InformaticsServiceException(String.format("Research Project '%s' not found", researchProjectKey));
+        }
+        if (researchProject.getRegulatoryDesignation() == ResearchProject.RegulatoryDesignation.RESEARCH_ONLY) {
+            throw new InformaticsServiceException(
+                    String.format("The selected Research Project cannot be used for accessioning " +
+                                  "because its regulatory designation is %s.",
+                            ResearchProject.RegulatoryDesignation.RESEARCH_ONLY));
         }
         return researchProject;
     }
@@ -224,16 +231,16 @@ public class ManifestSessionEjb {
         // There should be one and only one target sample.
         if (CollectionUtils.isEmpty(targetSamples)) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET,
-                    Metadata.Key.SAMPLE_ID, targetSampleKey, SAMPLE_NOT_FOUND_MESSAGE);
+                    MERCURY_SAMPLE_KEY, targetSampleKey, SAMPLE_NOT_FOUND_MESSAGE);
         }
         if (targetSamples.size() > 1) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET,
-                    Metadata.Key.SAMPLE_ID, targetSampleKey, SAMPLE_NOT_UNIQUE_MESSAGE);
+                    MERCURY_SAMPLE_KEY, targetSampleKey, SAMPLE_NOT_UNIQUE_MESSAGE);
         }
         MercurySample foundTarget = targetSamples.iterator().next();
 
         if (foundTarget.getMetadataSource() != MercurySample.MetadataSource.MERCURY) {
-            throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, Metadata.Key.SAMPLE_ID,
+            throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, MERCURY_SAMPLE_KEY,
                     targetSampleKey, SAMPLE_NOT_ELIGIBLE_FOR_CLINICAL_MESSAGE);
         }
 
@@ -285,7 +292,7 @@ public class ManifestSessionEjb {
             }
         }
         throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
-                targetVesselLabel, "::\n" + UNASSOCIATED_TUBE_SAMPLE_MESSAGE);
+                targetVesselLabel, " " + UNASSOCIATED_TUBE_SAMPLE_MESSAGE);
     }
 
     /**
