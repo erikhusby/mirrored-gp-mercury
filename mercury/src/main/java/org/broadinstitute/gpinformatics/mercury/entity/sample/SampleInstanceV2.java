@@ -357,7 +357,7 @@ todo jmt not sure if this applies.
      */
     public String getMetadataSourceForPipelineAPI() {
         Set<String> metadataSources = new HashSet<>();
-        for (MercurySample mercurySample : getRootMercurySamples()) {
+        for (MercurySample mercurySample : mercurySamples) {
             metadataSources.add(mercurySample.getMetadataSourceForPipelineAPI());
         }
         if (metadataSources.isEmpty()) {
