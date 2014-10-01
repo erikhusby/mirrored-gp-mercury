@@ -48,7 +48,7 @@ public class MercurySampleDataFetcher {
      * @return stockId for the MercurySample, which is the sampleKey()
      */
     public String getStockIdForAliquotId(@Nonnull MercurySample mercurySample) {
-        return mercurySample.getSampleKey();
+        return fetchSampleData(mercurySample).getRootSample();
     }
 
     /**
