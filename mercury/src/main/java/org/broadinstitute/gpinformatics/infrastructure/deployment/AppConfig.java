@@ -33,7 +33,7 @@ public class AppConfig extends AbstractConfig implements Serializable {
         if (!StringUtils.isBlank(port)) {
             return getHttpScheme() + host + ":" + port + "/Mercury/";
         }
-        return getHttpScheme() + host + ((ApplicationInstance.CRSP.isCurrent()) ? ":8443" : "") + "/Mercury/";
+        return getHttpScheme() + host + ":8443" + "/Mercury/";
     }
 
     public void setHost(String host) {

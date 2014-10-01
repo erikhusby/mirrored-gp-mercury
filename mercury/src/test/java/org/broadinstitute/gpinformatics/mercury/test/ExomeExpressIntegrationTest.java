@@ -44,7 +44,7 @@ public class ExomeExpressIntegrationTest {
     @SuppressWarnings("FeatureEnvy")
     public void testAll(String sampleFileName) {
         try {
-            URL baseUrl = new URL("http", "localhost", 8080, "/Mercury");
+            URL baseUrl = new URL("https", "localhost", 8443, "/Mercury");
             String testSuffix = testSuffixDateFormat.format(new Date());
 
             // load reagents with ImportFromSquidTest.
