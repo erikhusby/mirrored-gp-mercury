@@ -21,7 +21,7 @@ public class BSPSetVolumeConcentrationTest  {
     private BSPSampleSearchService bspSampleSearchService=new BSPSampleSearchServiceImpl(bspConfig);
 
     public void testSetVolumeAndConcentration() {
-        SampleDataFetcher dataFetcher = new SampleDataFetcher(bspSampleSearchService, bspConfig);
+        BSPSampleDataFetcher dataFetcher = new BSPSampleDataFetcher(bspSampleSearchService, bspConfig);
         BSPSetVolumeConcentrationImpl bspSetVolumeConcentration = new BSPSetVolumeConcentrationImpl(bspConfig);
 
         String testSampleId = "SM-1234";
@@ -34,7 +34,7 @@ public class BSPSetVolumeConcentrationTest  {
                     testSampleId, newVolume[i], newConcentration[i], newReceptacleWeight[i]);
             Assert.assertEquals(result, BSPSetVolumeConcentration.RESULT_OK);
 
-            SampleData bspSampleData = dataFetcher.fetchSampleData(testSampleId);
+            SampleData bspSampleData = dataFetcher.fetchSingleSampleFromBSP(testSampleId);
             Double currentVolume = bspSampleData.getVolume();
             Double currentConcentration = bspSampleData.getConcentration();
 
