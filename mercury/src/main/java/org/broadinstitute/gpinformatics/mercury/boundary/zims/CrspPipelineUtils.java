@@ -45,9 +45,7 @@ public class CrspPipelineUtils {
                                  SampleData sampleData,
                                  ResearchProject positiveControlsProject,
                                  String lcSet) {
-        if (BSPUtil.isInBspFormat(sampleData.getSampleId())) {
-            libraryBean.setLsid(getCrspLSIDForBSPSampleId(sampleData.getSampleId()));
-        }
+        libraryBean.setLsid(getCrspLSIDForBSPSampleId(sampleData.getSampleId()));
         libraryBean.setRootSample(libraryBean.getSampleId());
 
         if (Boolean.TRUE.equals(libraryBean.isPositiveControl())) {
@@ -62,10 +60,11 @@ public class CrspPipelineUtils {
 
     /**
      * Generates a synthetic CRSP lsid because the CRSP pipeline
-     * needs the LSID in this format
+     * needs the LSID in this format.  No explicit BSP format check
+     * is done here to allow for flexibility in test data.
      */
     public String getCrspLSIDForBSPSampleId(@Nonnull String bspSampleId) {
-        if (!BSPUtil.isInBspFormat(bspSampleId)) {
+        if (bspSampleId.length() < 3) {
             throw new RuntimeException("Cannot transform non-BSP sample id " + bspSampleId + " into CRSP lsid format");
         }
         return "org.broadinstitute:crsp:" + bspSampleId.substring(3);
