@@ -113,7 +113,7 @@ public class CrspPipelineUtilsTest {
     }
 
     public void testGetCrspLSIDForNonSampleIdThrowsException() {
-        String nonBspSampleId = "Not a bsp sample";
+        String nonBspSampleId = "b";
         try {
             crspPipelineAPIUtils.getCrspLSIDForBSPSampleId(nonBspSampleId);
         }
