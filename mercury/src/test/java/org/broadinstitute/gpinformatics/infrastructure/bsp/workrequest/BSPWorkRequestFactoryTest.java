@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest;
 
+import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.MaterialInfo;
 import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -8,7 +9,7 @@ import org.broadinstitute.bsp.client.collection.SampleCollection;
 import org.broadinstitute.bsp.client.sample.MaterialInfoDto;
 import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
-import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequestDefinitionInfo;
+import org.broadinstitute.bsp.client.workrequest.kit.KitTypeAllowanceSpecification;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.annotations.Test;
@@ -31,7 +32,7 @@ public class BSPWorkRequestFactoryTest {
 
     public static final Site TEST_SITE = new Site(4, "site", "", "", "", false, false);
     public static final long PRIMARY_INVESTIGATOR_ID = 1L;
-    public static final Pair<Long, String> HUMAN_ORGANISM = new ImmutablePair(1L, "Animalia : Homo : Homo sapiens");
+    public static final Pair<Long, String> HUMAN_ORGANISM = new ImmutablePair<>(1L, "Animalia : Homo : Homo sapiens");
     public static final SampleCollection TEST_COLLECTION =
             new SampleCollection(6L, "", new Group(PRIMARY_INVESTIGATOR_ID, "", "", false), "", "", false,
                     Collections.singletonList(HUMAN_ORGANISM));
@@ -50,15 +51,17 @@ public class BSPWorkRequestFactoryTest {
 
     @Test
     public void testBuildBspKitWorkRequest() throws Exception {
-        MaterialInfoDto MaterialInfoDto =
-                new MaterialInfoDto("DNA Matrix Kit", "DNA Derived from Bucal Cell Tissue and/or Saliva");
+        MaterialInfoDto materialInfoDto =
+                new MaterialInfoDto(KitTypeAllowanceSpecification.DNA_MATRIX_KIT.getText(),
+                        MaterialInfo.DNA_DERIVED_FROM_BUCAL_CELLS_OR_SALIVA.getText());
         SampleKitWorkRequest workRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(WORK_REQUEST_NAME, REQUEST_USER,
                 ProductOrderTest.PDO_JIRA_KEY, PRIMARY_INVESTIGATOR_ID,
                 PROJECT_MANAGER_ID, EXTERNAL_COLLABORATOR_ID,
                 TEST_SITE.getId(),
                 TEST_COLLECTION.getCollectionId(), NOTIFICATION_LIST,
                 COMMENTS, IS_EX_EX, TRANSFER_METHOD,
-                Collections.singletonList(BSPWorkRequestFactory.buildBspKitWRDefinitionInfo(NUMBER_OF_SAMPLES, MaterialInfoDto, HUMAN_ORGANISM.getLeft(),SELECTED_POST_RECEIVE_OPTIONS,SampleKitWorkRequest.MoleculeType.DNA))
+                Collections.singletonList(BSPWorkRequestFactory.buildBspKitWRDefinitionInfo(NUMBER_OF_SAMPLES,
+                        materialInfoDto, HUMAN_ORGANISM.getLeft(),SELECTED_POST_RECEIVE_OPTIONS,SampleKitWorkRequest.MoleculeType.DNA))
         );
 
         assertThat(workRequest.getPrimaryInvestigatorId(), equalTo(PRIMARY_INVESTIGATOR_ID));
@@ -81,6 +84,5 @@ public class BSPWorkRequestFactoryTest {
         assertThat(workRequest.getNotes(), equalTo(COMMENTS));
         assertThat(workRequest.isExExKit(), equalTo(IS_EX_EX));
         assertThat(workRequest.getTransferMethod(), equalTo(TRANSFER_METHOD));
-
     }
 }

@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
@@ -132,12 +133,18 @@ public class SearchDefinitionFactory {
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("bucketEntries", "labVesselId",
                 "labVessel", BucketEntry.class.getName()));
 
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("labMetric", "labVesselId",
+                "labMetrics", LabVessel.class.getName()));
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("labMetrics", "labMetrics",
+                "labMetricId", LabMetric.class.getName()));
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("labMetricId", "labMetrics",
+                "id", Metadata.class.getName()));
+
+
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("mercurySample", "labVesselId",
                 "mercurySamples", LabVessel.class.getName()));
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("mercurySamples", "mercurySamples",
                 "mercurySampleId", MercurySample.class.getName()));
-//        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("mercurySamples", "mercurySamples",
-//                "mercurySampleId", Meta.class.getName()));
 
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
                 "LabVessel", LabVessel.class.getName(), "label", 100, criteriaProjections, mapGroupSearchTerms);
@@ -171,6 +178,7 @@ public class SearchDefinitionFactory {
                 "labVessel", BucketEntry.class.getName()));
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection( "labBatch", "bucketEntries",
                 "bucketEntry", LabBatch.class.getName()));
+
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection( "productOrderId", "bucketEntries",
                 "bucketEntry", LabBatch.class.getName()));
 
@@ -239,7 +247,6 @@ public class SearchDefinitionFactory {
             }
         });
         searchTerms.add(searchTerm);
-
         return searchTerms;
     }
 
@@ -1086,6 +1093,50 @@ public class SearchDefinitionFactory {
             vesselTypeName = vessel.getType()==null?"":vessel.getType().getName();
         }
         return vesselTypeName;
+    }
+
+    /**
+     * Build sample metadata nested search terms for lab vessels.
+     * @return List of search terms/column definitions for lab vessel sample metadata
+     */
+    private List<SearchTerm> buildLabVesselMetadata() {
+        List<SearchTerm> searchTerms = new ArrayList<>();
+
+        SearchTerm searchTerm = new SearchTerm();
+        searchTerm.setName("Total ng at Initial Pico");
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                String value = "";
+                LabVessel labVessel = (LabVessel) entity;
+                Set<LabMetric> labMetrics = labVessel.getMetrics();
+                for (LabMetric labMetric : labMetrics) {
+                    BigDecimal ng = labMetric.getTotalNg();
+                    if (ng != null) {
+                        value = ng.toPlainString();
+                        break;
+                    }
+                }
+                return value;
+
+            }
+        });
+        searchTerm.setValueConversionExpression( new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                return new BigDecimal( (String) context.get(CONTEXT_KEY_SEARCH_STRING));
+            }
+        });
+        List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
+        SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList( "labMetric" /* LabVessel */, "labMetrics" /* LabMetric */, "metadataSet" /* Metadata */ ));
+        criteriaPath.setPropertyName("numberValue");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+
+        searchTerms.add(searchTerm);
+
+        return searchTerms;
     }
 
 

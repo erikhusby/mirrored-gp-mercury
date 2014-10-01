@@ -53,14 +53,16 @@ public class ManifestTestFactory {
         manifestRecord = new ManifestRecord();
 
         for (Metadata.Key key : Metadata.Key.values()) {
-            String value;
-            if (initialData != null && initialData.containsKey(key)) {
-                value = initialData.get(key);
-            } else {
-                value = key.name() + "_" + i;
+            if (key.getCategory() == Metadata.Category.SAMPLE) {
+                String value;
+                if (initialData != null && initialData.containsKey(key)) {
+                    value = initialData.get(key);
+                } else {
+                    value = key.name() + "_" + i;
+                }
+                Metadata metadata = new Metadata(key, value);
+                manifestRecord.getMetadata().add(metadata);
             }
-            Metadata metadata = new Metadata(key, value);
-            manifestRecord.getMetadata().add(metadata);
         }
         return manifestRecord;
     }
