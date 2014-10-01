@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import com.google.common.collect.ImmutableList;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
@@ -32,7 +33,12 @@ public class BSPSampleDataFetcherUnitTest {
     @BeforeMethod
     public void setUp() {
         mockBspSampleSearchService = Mockito.mock(BSPSampleSearchService.class);
-        bspSampleDataFetcher = new BSPSampleDataFetcher(mockBspSampleSearchService);
+        /*
+         * This is not an actual PROD BSPConfig, so there's no danger using it in tests. It is simply acting like PROD
+         * to make BSPSampleDataFetcher more stringent about what it considers a valid BSP sample ID.
+         */
+        BSPConfig bspConfig = new BSPConfig(Deployment.PROD);
+        bspSampleDataFetcher = new BSPSampleDataFetcher(mockBspSampleSearchService, bspConfig);
     }
 
     @Test

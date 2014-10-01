@@ -18,6 +18,8 @@ import java.util.Map;
  */
 public class ManifestTestFactory {
 
+    private static final int NUM_HEADER_ROWS = 1;
+
     public static Metadata[] buildMetadata(Map<Metadata.Key, String> metadataContents) {
         List<Metadata> metadataList = new ArrayList<>();
 
@@ -43,21 +45,19 @@ public class ManifestTestFactory {
         return manifestSession;
     }
 
-    public static ManifestRecord buildManifestRecord(int i) {
-        return buildManifestRecord(i, null);
+    public static ManifestRecord buildManifestRecord(int recordNumber) {
+        return buildManifestRecord(recordNumber, null);
     }
 
-    public static ManifestRecord buildManifestRecord(int i, Map<Metadata.Key, String> initialData) {
-        ManifestRecord manifestRecord;
-
-        manifestRecord = new ManifestRecord();
+    public static ManifestRecord buildManifestRecord(int recordNumber, Map<Metadata.Key, String> initialData) {
+        ManifestRecord manifestRecord = new ManifestRecord();
 
         for (Metadata.Key key : Metadata.Key.values()) {
             String value;
             if (initialData != null && initialData.containsKey(key)) {
                 value = initialData.get(key);
             } else {
-                value = key.name() + "_" + i;
+                value = key.name() + "_" + recordNumber;
             }
             Metadata metadata = new Metadata(key, value);
             manifestRecord.getMetadata().add(metadata);

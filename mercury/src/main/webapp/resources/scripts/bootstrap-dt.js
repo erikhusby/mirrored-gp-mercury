@@ -19,7 +19,7 @@ var sDomNoTableToolsButtons = "lfrtip";
  *  Set the defaults for DataTables initialization
  */
 $j.extend( true, $j.fn.dataTable.defaults, {
-    "sDom": "<'row-fluid'<'span6'f><'span6'T>r>t<'row-fluid'<'span6'i><'span6'p>>",
+    "sDom": "<'row-fluid'<'span8'f><'span4'T>r>t<'row-fluid'<'span6'i><'span6'p>>",
     "bAutoWidth": false,
     "bInfo": false,
     "bStateSave": true,
