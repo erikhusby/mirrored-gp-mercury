@@ -51,6 +51,10 @@
             <http-method>GET</http-method>
             <http-method>POST</http-method>
         </web-resource-collection>
+        <auth-constraint>
+            <description>User must be logged in</description>
+            <role-name>CRSP-Mercury-WebServiceUser</role-name>
+        </auth-constraint>
         <!--  By defining the user-data-constraint, we make use of the redirect setting on JBOSS.  With out this,
           we would have to redirect the request utilizing the SecurityFilter -->
         <user-data-constraint>
@@ -69,6 +73,12 @@
         <filter-name>CacheFilter</filter-name>
         <filter-class>org.broadinstitute.gpinformatics.athena.presentation.filters.CacheFilter</filter-class>
     </filter>
+
+    <!--<filter-mapping>-->
+        <!--<filter-name>SecurityFilter</filter-name>-->
+        <!--<url-pattern>/rest/*</url-pattern>-->
+    <!--</filter-mapping>-->
+
 
     <session-config>
         <session-timeout>60</session-timeout>

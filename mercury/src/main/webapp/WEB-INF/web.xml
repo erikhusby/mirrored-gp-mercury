@@ -62,8 +62,7 @@
             org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource,
             org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventResource,
             org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunResource,
-            org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselResource,
-            org.broadinstitute.gpinformatics.mercury.boundary.sample.CrspInfoResource
+            org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselResource
         </param-value>
     </context-param>
     <context-param>
@@ -77,22 +76,31 @@
 
     <security-constraint>
         <web-resource-collection>
-            <!-- Defined back during the CRSP project, this separate web.xml and security constraint allows the rest
-            of Mercury to force authentication over HTTPS while allowing the rest services to not have authentication
+            <!--
+            This block helps enforce that all rest calls are expected as either a GET or a POST request.
             -->
             <web-resource-name>UnAuthenticatedRestArea</web-resource-name>
             <url-pattern>/rest/*</url-pattern>
             <http-method>GET</http-method>
             <http-method>POST</http-method>
         </web-resource-collection>
-        <!--  By defining the user-data-constraint, we make use of the redirect setting on JBOSS.  With out this,
-          we would have to redirect the request utilizing the SecurityFilter -->
+        <!--
+            By defining the user-data-constraint, we make use of the redirect setting on JBOSS, reducing the chance
+            that a request may be rendered over an non secure port.  With out this, we would have to redirect the
+            request utilizing the SecurityFilter which would be a bit too late if security is truly a concern
+          -->
         <user-data-constraint>
             <transport-guarantee>CONFIDENTIAL</transport-guarantee>
         </user-data-constraint>
     </security-constraint>
 
     <security-constraint>
+        <!--
+           This constraint is meant to represent all traffic coming into the Mercury application.  We define this to
+           not only assist us in retrieving a principle (User login info) during authentication, but also to assist
+           the configuration of a server side redirect for HTTPS.  The User data Constraint is necessary for JBOSS
+           to successfully redirect a non secure request to a secure request and have the application retrieve it.
+        -->
         <web-resource-collection>
             <web-resource-name>SECURE</web-resource-name>
             <url-pattern>/*</url-pattern>
