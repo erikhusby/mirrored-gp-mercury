@@ -14,8 +14,9 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
@@ -91,8 +92,8 @@ public class SampleLedgerExporterTest {
         HashMap<BSPSampleSearchColumn, String> bspData = new HashMap<>();
         bspData.put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "Sample1");
         bspData.put(BSPSampleSearchColumn.MATERIAL_TYPE, "Test Type");
-        BSPSampleDTO bspSampleDTO = new BSPSampleDTO(bspData);
-        ProductOrderSample productOrderSample = new ProductOrderSample("SM-1234", bspSampleDTO);
+        SampleData sampleData = new BspSampleData(bspData);
+        ProductOrderSample productOrderSample = new ProductOrderSample("SM-1234", sampleData);
         productOrderSample.setManualOnRisk(RiskCriterion.createManual(), "Test risk");
         productOrderSample.setDeliveryStatus(ProductOrderSample.DeliveryStatus.DELIVERED);
 
@@ -101,8 +102,8 @@ public class SampleLedgerExporterTest {
          */
         Map<BSPSampleSearchColumn, String> bspData2 = new HashMap<>();
         bspData2.put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "Sample2");
-        BSPSampleDTO bspSampleDTO2 = new BSPSampleDTO(bspData2);
-        ProductOrderSample productOrderSample2 = new ProductOrderSample("SM-5678", bspSampleDTO2);
+        SampleData sampleDTO2 = new BspSampleData(bspData2);
+        ProductOrderSample productOrderSample2 = new ProductOrderSample("SM-5678", sampleDTO2);
 
         /*
          * Create a product order with a JIRA ticket (submitted) and requested lane count (generally for seq-only PDOs).
@@ -133,7 +134,7 @@ public class SampleLedgerExporterTest {
         WorkCompleteMessageDao mockWorkCompleteMessageDao = Mockito.mock(WorkCompleteMessageDao.class);
         SampleLedgerExporterFactory factory = new SampleLedgerExporterFactory(null, mockBspUserList,
                 new PriceListCache(new ArrayList<QuotePriceItem>()), mockWorkCompleteMessageDao,
-                Mockito.mock(BSPSampleDataFetcher.class), new AppConfig(Deployment.DEV),
+                Mockito.mock(SampleDataFetcher.class), new AppConfig(Deployment.DEV),
                 new TableauConfig(Deployment.DEV), mockWriter);
         SampleLedgerExporter exporter = factory.makeExporter(Collections.singletonList(productOrder));
 

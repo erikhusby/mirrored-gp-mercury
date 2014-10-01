@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.control.zims;
 
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniLibrary;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 
 /**
@@ -15,7 +15,7 @@ public class SquidThriftLibraryConverter implements ThriftLibraryConverter {
     }
 
     @Override
-    public LibraryBean convertLibrary(TZamboniLibrary zamboniLibrary, BSPSampleDTO bspDTO, ProductOrder pdo) {
+    public LibraryBean convertLibrary(TZamboniLibrary zamboniLibrary, SampleData sampleData, ProductOrder pdo) {
         return new LibraryBean(zamboniLibrary.getLibrary(),
                 zamboniLibrary.getProject(),
                 zamboniLibrary.getInitiative(),
@@ -46,7 +46,7 @@ public class SquidThriftLibraryConverter implements ThriftLibraryConverter {
                 zamboniLibrary.getCustomAmpliconSetNames(),
                 pdo,
                 zamboniLibrary.getLcset(),
-                bspDTO,
+                sampleData,
                 zamboniLibrary.getLabWorkflow(),
                 zamboniLibrary.getPdoSample(),
                 zamboniLibrary.getLibraryCreationDate(),

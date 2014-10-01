@@ -5,8 +5,9 @@ import edu.mit.broad.prodinfo.thrift.lims.TZamboniLibrary;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.MockThriftService;
@@ -61,7 +62,7 @@ public class DbFreeIlluminaRunResourceTest {
 
         ZimsIlluminaRun runBean = new IlluminaRunResource(
                 brokenThrift,
-                new BSPSampleDataFetcher(new BSPSampleSearchServiceStub()),
+                new SampleDataFetcher(new BSPSampleSearchServiceStub()),
                 illuminaSequencingRunDao
         ).getRun("whatever");
 
@@ -88,7 +89,7 @@ public class DbFreeIlluminaRunResourceTest {
 
         ZimsIlluminaRun runBean = new IlluminaRunResource(
                 brokenThrift,
-                new BSPSampleDataFetcher(new BSPSampleSearchServiceStub()),
+                new SampleDataFetcher(new BSPSampleSearchServiceStub()),
                 illuminaSequencingRunDao
         ).getMercuryRun("whatever");
 
@@ -113,9 +114,9 @@ public class DbFreeIlluminaRunResourceTest {
         System.out.println("----DBFree IRR test : " + thriftRun.getImagedAreaPerLaneMM2());
         ZimsIlluminaRun runBean = new IlluminaRunResource(
                 new MockThriftService(),
-                new BSPSampleDataFetcher(new BSPSampleSearchServiceStub()),
+                new SampleDataFetcher(new BSPSampleSearchServiceStub()),
                 illuminaSequencingRunDao
-        ).getRun(thriftRun, new HashMap<String, BSPSampleDTO>(), new SquidThriftLibraryConverter(), getMockDao()
+        ).getRun(thriftRun, new HashMap<String, SampleData>(), new SquidThriftLibraryConverter(), getMockDao()
         );
         IlluminaRunResourceTest.doAssertions(thriftRun, runBean, new HashMap<Long, ProductOrder>());
     }
@@ -123,10 +124,16 @@ public class DbFreeIlluminaRunResourceTest {
     @Test(groups = DATABASE_FREE)
     public void test_known_good_bsp_sample_run() throws Exception {
         TZamboniRun thriftRun = ThriftFileAccessor.deserializeRun();
-        BSPSampleDataFetcher sampleDataFetcher = new BSPSampleDataFetcher(new BSPSampleSearchServiceStub());
+        SampleDataFetcher sampleDataFetcher = new SampleDataFetcher() {
+            @Override
+            public SampleData fetchSampleData(String sampleName) {
+                Assert.assertEquals(sampleName, BSPSampleSearchServiceStub.SM_12CO4);
+                return new BspSampleData(new BSPSampleSearchServiceStub().getSamples().get(sampleName));
+            }
+        };
         String sample = BSPSampleSearchServiceStub.SM_12CO4;
-        BSPSampleDTO sampleDTO = sampleDataFetcher.fetchSingleSampleFromBSP(sample);
-        Map<String, BSPSampleDTO> lsidToSampleDTO = new HashMap<>();
+        SampleData sampleDTO = sampleDataFetcher.fetchSampleData(sample);
+        Map<String, SampleData> lsidToSampleDTO = new HashMap<>();
         lsidToSampleDTO.put(sampleDTO.getSampleLsid(), sampleDTO);
 
         IlluminaSequencingRunDao illuminaSequencingRunDao = EasyMock.createMock(IlluminaSequencingRunDao.class);

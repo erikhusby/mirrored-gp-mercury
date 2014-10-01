@@ -13,7 +13,7 @@ import edu.mit.broad.prodinfo.thrift.lims.TZamboniRead;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.MockThriftService;
@@ -186,7 +186,7 @@ public class IlluminaRunResourceTest extends Arquillian {
                     }
                     if ("broadinstitute.org:bsp.prod.sample:12MD2".equals(libraryBean.getLsid())) {
                         foundTumor = true;
-                        Assert.assertEquals(libraryBean.getSampleType(), BSPSampleDTO.TUMOR_IND);
+                        Assert.assertEquals(libraryBean.getSampleType(), BspSampleData.TUMOR_IND);
                     }
                     if (libraryBean.getLcSet() != null) {
                         foundLcSet = true;

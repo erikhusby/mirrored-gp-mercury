@@ -5,7 +5,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.work.WorkCompleteMess
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
@@ -32,7 +32,7 @@ public class SampleLedgerExporterFactory {
     private final BSPUserList bspUserList;
     private final PriceListCache priceListCache;
     private final WorkCompleteMessageDao workCompleteMessageDao;
-    private final BSPSampleDataFetcher sampleDataFetcher;
+    private final SampleDataFetcher sampleDataFetcher;
     private final AppConfig appConfig;
     private final TableauConfig tableauConfig;
     private final SampleLedgerSpreadSheetWriter spreadSheetWriter;
@@ -43,7 +43,7 @@ public class SampleLedgerExporterFactory {
             BSPUserList bspUserList,
             PriceListCache priceListCache,
             WorkCompleteMessageDao workCompleteMessageDao,
-            BSPSampleDataFetcher sampleDataFetcher,
+            SampleDataFetcher sampleDataFetcher,
             AppConfig appConfig,
             TableauConfig tableauConfig,
             SampleLedgerSpreadSheetWriter spreadSheetWriter) {

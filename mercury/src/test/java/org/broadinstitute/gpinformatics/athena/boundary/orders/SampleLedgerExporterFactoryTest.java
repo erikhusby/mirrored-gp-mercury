@@ -7,7 +7,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -68,7 +68,7 @@ public class SampleLedgerExporterFactoryTest {
 
     public void gatherSampleFromProductOrderWithOneSample() {
         String sampleId = "SM-1234";
-        productOrder.addSample(new ProductOrderSample(sampleId, new BSPSampleDTO()));
+        productOrder.addSample(new ProductOrderSample(sampleId, new BspSampleData()));
 
         List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
         assertThat(data.size(), equalTo(1));
@@ -78,8 +78,8 @@ public class SampleLedgerExporterFactoryTest {
     public void gatherSamplesFromProductOrderWithTwoSamples() {
         String sampleId1 = "SM-1234";
         String sampleId2 = "SM-5678";
-        productOrder.addSample(new ProductOrderSample(sampleId1, new BSPSampleDTO()));
-        productOrder.addSample(new ProductOrderSample(sampleId2, new BSPSampleDTO()));
+        productOrder.addSample(new ProductOrderSample(sampleId1, new BspSampleData()));
+        productOrder.addSample(new ProductOrderSample(sampleId2, new BspSampleData()));
 
         List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
         assertThat(data.size(), equalTo(2));
@@ -89,7 +89,7 @@ public class SampleLedgerExporterFactoryTest {
 
     public void gatherCollaboratorSampleId() {
         String collaboratorSampleId = "Sample1";
-        productOrder.addSample(new ProductOrderSample("SM-1234", new BSPSampleDTO(Collections.singletonMap(
+        productOrder.addSample(new ProductOrderSample("SM-1234", new BspSampleData(Collections.singletonMap(
                 BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, collaboratorSampleId))));
 
         List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
@@ -99,21 +99,21 @@ public class SampleLedgerExporterFactoryTest {
     public void gatherMaterialType() {
         String materialType = "Test material";
         productOrder.addSample(new ProductOrderSample("SM-1234",
-                new BSPSampleDTO(Collections.singletonMap(BSPSampleSearchColumn.MATERIAL_TYPE, materialType))));
+                new BspSampleData(Collections.singletonMap(BSPSampleSearchColumn.MATERIAL_TYPE, materialType))));
 
         List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
         assertThat(data.get(0).getMaterialType(), equalTo(materialType));
     }
 
     public void gatherRiskWhenNoRisk() {
-        productOrder.addSample(new ProductOrderSample("SM-1234", new BSPSampleDTO()));
+        productOrder.addSample(new ProductOrderSample("SM-1234", new BspSampleData()));
 
         List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
         assertThat(data.get(0).getRiskText(), equalTo(""));
     }
 
     public void gatherRiskWhenOnRisk() {
-        ProductOrderSample sample = new ProductOrderSample("SM-1234", new BSPSampleDTO());
+        ProductOrderSample sample = new ProductOrderSample("SM-1234", new BspSampleData());
         sample.setManualOnRisk(RiskCriterion.createManual(), "Test risk");
         productOrder.addSample(sample);
 
@@ -123,7 +123,7 @@ public class SampleLedgerExporterFactoryTest {
     }
 
     public void gatherDeliveryStatus() {
-        ProductOrderSample sample = new ProductOrderSample("SM-1234", new BSPSampleDTO());
+        ProductOrderSample sample = new ProductOrderSample("SM-1234", new BspSampleData());
         sample.setDeliveryStatus(ProductOrderSample.DeliveryStatus.DELIVERED);
         productOrder.addSample(sample);
 
@@ -133,14 +133,14 @@ public class SampleLedgerExporterFactoryTest {
     }
 
     public void gatherProductName() {
-        productOrder.addSample(new ProductOrderSample("SM-1234", new BSPSampleDTO()));
+        productOrder.addSample(new ProductOrderSample("SM-1234", new BspSampleData()));
 
         List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
         assertThat(data.get(0).getProductName(), equalTo(TEST_PRODUCT_NAME));
     }
 
     public void gatherProductOrderKey() {
-        productOrder.addSample(new ProductOrderSample("SM-1234", new BSPSampleDTO()));
+        productOrder.addSample(new ProductOrderSample("SM-1234", new BspSampleData()));
         String jiraTicketKey = "PDO-123";
         productOrder.setJiraTicketKey(jiraTicketKey);
 
@@ -149,21 +149,21 @@ public class SampleLedgerExporterFactoryTest {
     }
 
     public void gatherProductOrderTitle() {
-        productOrder.addSample(new ProductOrderSample("SM-1234", new BSPSampleDTO()));
+        productOrder.addSample(new ProductOrderSample("SM-1234", new BspSampleData()));
 
         List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
         assertThat(data.get(0).getProductOrderTitle(), equalTo(TEST_PRODUCT_ORDER_TITLE));
     }
 
     public void gatherProjectManager() {
-        productOrder.addSample(new ProductOrderSample("SM-1234", new BSPSampleDTO()));
+        productOrder.addSample(new ProductOrderSample("SM-1234", new BspSampleData()));
 
         List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
         assertThat(data.get(0).getProjectManagerName(), equalTo(productOrderCreator.getFullName()));
     }
 
     public void gatherNumberOfLanes() {
-        productOrder.addSample(new ProductOrderSample("SM-1234", new BSPSampleDTO()));
+        productOrder.addSample(new ProductOrderSample("SM-1234", new BspSampleData()));
         productOrder.setLaneCount(8);
 
         List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
@@ -171,7 +171,7 @@ public class SampleLedgerExporterFactoryTest {
     }
 
     public void gatherAutoLedgerDate() {
-        ProductOrderSample sample = new ProductOrderSample("SM-1234", new BSPSampleDTO());
+        ProductOrderSample sample = new ProductOrderSample("SM-1234", new BspSampleData());
         productOrder.addSample(sample);
         Date workCompleteDate = new Date(1);
         Date autoLedgerDate = new Date(2);
@@ -183,7 +183,7 @@ public class SampleLedgerExporterFactoryTest {
     }
 
     public void gatherWorkCompleteDate() {
-        ProductOrderSample sample = new ProductOrderSample("SM-1234", new BSPSampleDTO());
+        ProductOrderSample sample = new ProductOrderSample("SM-1234", new BspSampleData());
         productOrder.addSample(sample);
         Date workCompleteDate = new Date(1);
         Date autoLedgerDate = new Date(2);

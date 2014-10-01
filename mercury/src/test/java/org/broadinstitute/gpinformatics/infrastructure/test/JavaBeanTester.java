@@ -123,9 +123,9 @@ public class JavaBeanTester {
 
 		} else if (clazz == char.class || clazz == Character.class) {
 			return 'Y';
-            //TODO PMB need to refactor BSPSampleDTO_PMB out
-//        } else if ( clazz == BSPSampleDTO.class) {
-//            return new BSPSampleDTO("containerId","stockSample","rootSample","null","patientId","organism","collaboratorSampleId","collection",new BigDecimal("1"),new BigDecimal("2"));
+            //TODO PMB need to refactor BspSampleData_PMB out
+//        } else if ( clazz == BspSampleData.class) {
+//            return new BspSampleData("containerId","stockSample","rootSample","null","patientId","organism","collaboratorSampleId","collection",new BigDecimal("1"),new BigDecimal("2"));
 
 	 // Add your own rules here
 
