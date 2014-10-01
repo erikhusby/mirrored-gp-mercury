@@ -125,9 +125,9 @@ public class ControlReagentProcessor extends TableProcessor {
     }
 
     private enum Headers implements ColumnHeader {
-        TUBE_BARCODE("tube barcode", 0, REQUIRED_HEADER, REQUIRED_VALUE),
-        CONTROL("control", 1, REQUIRED_HEADER, REQUIRED_VALUE),
-        LOT("lot", 2, REQUIRED_HEADER, REQUIRED_VALUE),
+        TUBE_BARCODE("tube barcode", 0, REQUIRED_HEADER, REQUIRED_VALUE, IS_STRING, NON_DATE),
+        CONTROL("control", 1, REQUIRED_HEADER, REQUIRED_VALUE, IS_STRING, NON_DATE),
+        LOT("lot", 2, REQUIRED_HEADER, REQUIRED_VALUE, IS_STRING, NON_DATE),
         EXPIRATION("expiration", 3, REQUIRED_HEADER, REQUIRED_VALUE, NON_STRING, IS_DATE),
         ;
 

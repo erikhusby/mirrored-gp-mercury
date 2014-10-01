@@ -36,15 +36,23 @@ public class ControlReagentFactory {
     @Inject
     private ControlReagentDao controlReagentDao;
 
-    List<BarcodedTube> make(InputStream spreadsheetStream,
+    /**
+     * From a spreadsheet, creates tubes and associates them with control reagents.
+     * @param spreadsheetStream spreadsheet with tube barcodes
+     * @param messageCollection errors are added to this
+     * @return list of entities
+     */
+    List<BarcodedTube> buildTubesFromSpreadsheet(InputStream spreadsheetStream,
             MessageCollection messageCollection) {
         try {
+            // Parse spreadsheet to get DTOs.
             ControlReagentProcessor controlReagentProcessor = new ControlReagentProcessor("Sheet1");
             messageCollection.addErrors(PoiSpreadsheetParser.processSingleWorksheet(spreadsheetStream,
                     controlReagentProcessor));
             Map<String, ControlReagentProcessor.ControlDto> mapTubeBarcodeToControl =
                     controlReagentProcessor.getMapTubeBarcodeToControl();
 
+            // Fetch existing entities from database.
             List<Control> controls = controlDao.findAllActive();
             Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(mapTubeBarcodeToControl.keySet());
             Set<ControlReagentProcessor.ControlDto> controlDtoSet = new HashSet<>(mapTubeBarcodeToControl.values());
@@ -54,15 +62,25 @@ public class ControlReagentFactory {
             }
             Map<String, ControlReagent> mapLotToControl = controlReagentDao.fetchMapLotToControl(lots);
 
-            return getBarcodedTubes(mapTubeBarcodeToControl, messageCollection, controls, mapBarcodeToTube,
+            // Make tube entities.
+            return buildTubes(mapTubeBarcodeToControl, messageCollection, controls, mapBarcodeToTube,
                     mapLotToControl);
         } catch (InvalidFormatException | IOException | ValidationException e) {
             throw new RuntimeException(e);
         }
     }
 
+    /**
+     * Builds tube entities.
+     * @param mapTubeBarcodeToControl DTOs from spreadsheet
+     * @param messageCollection errors are added to this
+     * @param controls from database, must exist
+     * @param mapBarcodeToTube from database, error if they exist
+     * @param mapLotToControl from database, created if they don't exist
+     * @return list of entities
+     */
     @DaoFree
-    private List<BarcodedTube> getBarcodedTubes(
+    List<BarcodedTube> buildTubes(
             Map<String, ControlReagentProcessor.ControlDto> mapTubeBarcodeToControl,
             MessageCollection messageCollection,
             List<Control> controls,
@@ -95,6 +113,9 @@ public class ControlReagentFactory {
             if (controlReagent == null) {
                 controlReagent = new ControlReagent(controlDto.getControl(), controlDto.getLot(),
                         controlDto.getExpiration(), mapCollabSampleIdToControl.get(controlDto.getControl()));
+                mapLotToControl.put(controlDto.getLot(), controlReagent);
+            } else if (!controlReagent.getControl().getCollaboratorSampleId().equals(controlDto.getControl())) {
+                messageCollection.addError("Mismatch between lot and control: " + tubeBarcode);
             }
             barcodedTube.addReagent(controlReagent);
             controlTubes.add(barcodedTube);
