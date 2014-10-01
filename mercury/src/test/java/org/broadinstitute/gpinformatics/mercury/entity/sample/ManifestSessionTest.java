@@ -18,6 +18,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestStatusErrorMatcher.hasError;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
@@ -58,7 +60,8 @@ public class ManifestSessionTest {
 
     public void basicProperties() throws Exception {
         Assert.assertEquals(session.getResearchProject(), testRp);
-        Assert.assertEquals(session.getSessionName(), sessionPrefix + session.getManifestSessionId());
+        assertThat(session.getSessionName(), containsString(sessionPrefix));
+        assertThat(session.getSessionName(), containsString(String.valueOf(session.getManifestSessionId())));
         Assert.assertEquals(session.getStatus(), ManifestSession.SessionStatus.OPEN);
 
         UpdateData updateData = session.getUpdateData();
@@ -114,20 +117,20 @@ public class ManifestSessionTest {
         ManifestStatus manifestStatus = session.generateSessionStatusForClose();
         assertThat(manifestStatus.getErrorMessages(), is(empty()));
         assertThat(manifestStatus.getSamplesSuccessfullyScanned(), is(3));
-        assertThat(manifestStatus.getSamplesEligibleInManifest(), is(3));
+        assertThat(manifestStatus.getSamplesEligibleForAccessioningInManifest(), is(0));
         assertThat(manifestStatus.getSamplesInManifest(), is(3));
     }
 
 
     public void missingSample() {
-        setSampleStatus(SAMPLE_ID_1, ManifestRecord.Status.UPLOADED);
+        setSampleStatus(SAMPLE_ID_1, ManifestRecord.Status.UPLOAD_ACCEPTED);
         assertThat(session.hasErrors(), is(false));
         ManifestStatus manifestStatus = session.generateSessionStatusForClose();
         assertThat(manifestStatus.getErrorMessages(), is(not(empty())));
         assertThat(manifestStatus, hasError(ManifestRecord.ErrorStatus.MISSING_SAMPLE));
 
         assertThat(manifestStatus.getSamplesSuccessfullyScanned(), is(2));
-        assertThat(manifestStatus.getSamplesEligibleInManifest(), is(3));
+        assertThat(manifestStatus.getSamplesEligibleForAccessioningInManifest(), is(1));
         assertThat(manifestStatus.getSamplesInManifest(), is(3));
     }
 
@@ -142,7 +145,7 @@ public class ManifestSessionTest {
     public void testPrepareForCloseOnCleanSession() {
         ManifestStatus manifestStatus = session.generateSessionStatusForClose();
         assertThat(manifestStatus.getSamplesInManifest(), is(NUM_SAMPLES_IN_MANIFEST));
-        assertThat(manifestStatus.getSamplesEligibleInManifest(), is(NUM_SAMPLES_IN_MANIFEST));
+        assertThat(manifestStatus.getSamplesEligibleForAccessioningInManifest(), is(0));
         assertThat(manifestStatus.getSamplesSuccessfullyScanned(), is(NUM_SAMPLES_IN_MANIFEST));
 
         Assert.assertTrue(manifestStatus.getErrorMessages().isEmpty(),
@@ -152,18 +155,18 @@ public class ManifestSessionTest {
     @DataProvider(name = DATA_PROVIDER_RECORD_STATUS)
     private Object[][] statusForValidationErrorProvider() {
         return new Object[][]{
-                {ManifestRecord.Status.UPLOADED},
-                {ManifestRecord.Status.UPLOAD_ACCEPTED}};
+                {ManifestRecord.Status.UPLOADED, 0},
+                {ManifestRecord.Status.UPLOAD_ACCEPTED, 1}};
     }
 
     @Test(dataProvider = DATA_PROVIDER_RECORD_STATUS)
-    public void testValidationError(ManifestRecord.Status status) {
+    public void testValidationError(ManifestRecord.Status status, int numElligibleForaccessioning) {
         setManifestRecordStatus(status);
 
         ManifestStatus manifestStatus = session.generateSessionStatusForClose();
 
         assertThat(manifestStatus.getSamplesInManifest(), is(NUM_SAMPLES_IN_MANIFEST));
-        assertThat(manifestStatus.getSamplesEligibleInManifest(), is(NUM_SAMPLES_IN_MANIFEST));
+        assertThat(manifestStatus.getSamplesEligibleForAccessioningInManifest(), is(numElligibleForaccessioning));
         assertThat(manifestStatus.getSamplesSuccessfullyScanned(), is(NUM_SAMPLES_IN_MANIFEST - 1));
 
         assertThat(manifestStatus.getErrorMessages(), hasSize(1));
@@ -176,11 +179,10 @@ public class ManifestSessionTest {
         ManifestStatus manifestStatus = session.generateSessionStatusForClose();
 
         assertThat(manifestStatus.getSamplesInManifest(), is(NUM_SAMPLES_IN_MANIFEST + 1));
-        assertThat(manifestStatus.getSamplesEligibleInManifest(), is(NUM_SAMPLES_IN_MANIFEST));
+        assertThat(manifestStatus.getSamplesEligibleForAccessioningInManifest(), is(0));
         assertThat(manifestStatus.getSamplesSuccessfullyScanned(), is(NUM_SAMPLES_IN_MANIFEST));
 
-        assertThat(manifestStatus.getErrorMessages(), hasSize(1));
-        assertThat(manifestStatus, hasError(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID));
+        assertThat(manifestStatus.getErrorMessages(), hasSize(0));
     }
 
     public void testValidationForGenderMismatchSample() {
@@ -189,11 +191,10 @@ public class ManifestSessionTest {
         ManifestStatus manifestStatus = session.generateSessionStatusForClose();
 
         assertThat(manifestStatus.getSamplesInManifest(), is(NUM_SAMPLES_IN_MANIFEST + 1));
-        assertThat(manifestStatus.getSamplesEligibleInManifest(), is(NUM_SAMPLES_IN_MANIFEST + 1));
+        assertThat(manifestStatus.getSamplesEligibleForAccessioningInManifest(), is(0));
         assertThat(manifestStatus.getSamplesSuccessfullyScanned(), is(NUM_SAMPLES_IN_MANIFEST + 1));
 
-        assertThat(manifestStatus.getErrorMessages(), hasSize(1));
-        assertThat(manifestStatus, hasError(ManifestRecord.ErrorStatus.MISMATCHED_GENDER));
+        assertThat(manifestStatus.getErrorMessages(), hasSize(0));
     }
 
     private static void addRecord(ManifestSession session, ManifestRecord.ErrorStatus errorStatus,
@@ -208,12 +209,11 @@ public class ManifestSessionTest {
         ManifestStatus manifestStatus = session.generateSessionStatusForClose();
 
         assertThat(manifestStatus.getSamplesInManifest(), is(NUM_SAMPLES_IN_MANIFEST + 2));
-        assertThat(manifestStatus.getSamplesEligibleInManifest(), is(NUM_SAMPLES_IN_MANIFEST + 1));
+        assertThat(manifestStatus.getSamplesEligibleForAccessioningInManifest(), is(1));
         assertThat(manifestStatus.getSamplesSuccessfullyScanned(), is(NUM_SAMPLES_IN_MANIFEST));
 
-        assertThat(manifestStatus.getErrorMessages(), hasSize(2));
+        assertThat(manifestStatus.getErrorMessages(), hasSize(1));
         assertThat(manifestStatus, hasError(ManifestRecord.ErrorStatus.MISSING_SAMPLE));
-        assertThat(manifestStatus, hasError(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID));
     }
 
     public void testValidationForUnscannedAndDuplicatesAndMismatchedGender() {
@@ -224,14 +224,49 @@ public class ManifestSessionTest {
         ManifestStatus manifestStatus = session.generateSessionStatusForClose();
 
         assertThat(manifestStatus.getSamplesInManifest(), is(NUM_SAMPLES_IN_MANIFEST + 3));
-        assertThat(manifestStatus.getSamplesEligibleInManifest(), is(NUM_SAMPLES_IN_MANIFEST + 2));
+        assertThat(manifestStatus.getSamplesEligibleForAccessioningInManifest(), is(1));
         assertThat(manifestStatus.getSamplesSuccessfullyScanned(), is(NUM_SAMPLES_IN_MANIFEST + 1));
 
-        assertThat(manifestStatus.getErrorMessages(), hasSize(3));
+        assertThat(manifestStatus.getErrorMessages(), hasSize(1));
         assertThat(manifestStatus, hasError(ManifestRecord.ErrorStatus.MISSING_SAMPLE));
-        assertThat(manifestStatus, hasError(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID));
-        assertThat(manifestStatus, hasError(ManifestRecord.ErrorStatus.MISMATCHED_GENDER));
+    }
 
+    public void testValidationForUploadAccepted() {
+        setAllManifestRecordStatus(ManifestRecord.Status.UPLOAD_ACCEPTED);
+
+        ManifestStatus manifestStatus = session.generateSessionStatusForClose();
+
+        assertThat(manifestStatus.getErrorMessages(), hasSize(3));
+        assertThat(manifestStatus.getSamplesInManifest(), is(NUM_SAMPLES_IN_MANIFEST));
+        assertThat(manifestStatus.getSamplesSuccessfullyScanned(), is(0));
+        assertThat(manifestStatus.getSamplesEligibleForAccessioningInManifest(), is(NUM_SAMPLES_IN_MANIFEST));
+    }
+
+    public void testTransferUnUsedSample() throws Exception {
+
+        session.setStatus(ManifestSession.SessionStatus.COMPLETED);
+        setAllManifestRecordStatus(ManifestRecord.Status.ACCESSIONED);
+
+        ManifestRecord testRecord = session.getRecords().iterator().next();
+        ManifestRecord recordForTransfer = session.findRecordForTransfer(testRecord.getSampleId());
+
+        assertThat(testRecord, is(equalTo(recordForTransfer)));
+
+    }
+
+    public void testTransferUsedSample() throws Exception {
+
+        session.setStatus(ManifestSession.SessionStatus.COMPLETED);
+        setAllManifestRecordStatus(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
+
+        ManifestRecord testRecord = session.getRecords().iterator().next();
+        try {
+            session.findRecordForTransfer(testRecord.getSampleId());
+            Assert.fail();
+        } catch (Exception e) {
+            assertThat(e.getMessage(),
+                    containsString(ManifestRecord.ErrorStatus.SOURCE_ALREADY_TRANSFERRED.getBaseMessage()));
+        }
     }
 
     private void addDuplicateManifestRecord() {
@@ -245,5 +280,11 @@ public class ManifestSessionTest {
 
     private void setManifestRecordStatus(ManifestRecord.Status status) {
         session.getRecords().iterator().next().setStatus(status);
+    }
+
+    private void setAllManifestRecordStatus(ManifestRecord.Status status) {
+        for (ManifestRecord manifestRecord : session.getRecords()) {
+            manifestRecord.setStatus(status);
+        }
     }
 }

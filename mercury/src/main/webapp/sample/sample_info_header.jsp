@@ -9,11 +9,11 @@
         <div>
             Material Type:
             <c:choose>
-                <c:when test="${sample.bspSampleDTO == null}">
+                <c:when test="${sample.sampleData == null}">
                     <td>Sample not found in BSP</td>
                 </c:when>
                 <c:otherwise>
-                    <td>${sample.bspSampleDTO.materialType}</td>
+                    <td>${sample.sampleData.materialType}</td>
                 </c:otherwise>
             </c:choose>
 

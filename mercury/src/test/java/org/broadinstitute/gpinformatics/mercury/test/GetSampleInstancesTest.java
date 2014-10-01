@@ -29,6 +29,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
@@ -53,11 +54,21 @@ public class GetSampleInstancesTest {
     public static final String LCSET_1 = "LCSET-1";
     public static final String LCSET_2 = "LCSET-2";
 
+
     /** date for LabEVents */
     private long now = System.currentTimeMillis();
     private StaticPlate indexPlateP7;
     private StaticPlate indexPlateP5;
     private BarcodedTube baitTube;
+
+    private SampleInstanceV2 createSampleInstanceForPipelineAPIMetadataTesting(MercurySample.MetadataSource metadataSource,
+                                                                        String sampleName) {
+        LabVessel tube = new BarcodedTube("barcde");
+        MercurySample bspSample = new MercurySample(sampleName, metadataSource);
+        tube.addSample(bspSample);
+        return new SampleInstanceV2(tube);
+
+    }
 
     /**
      * Moves 3 samples through initiation and extraction; makes an LCSET with tubes 1 and 2; reworks tube 2 in
@@ -454,5 +465,16 @@ public class GetSampleInstancesTest {
 
         Assert.assertEquals(labEvent2.getComputedLcSets().size(), 1);
         Assert.assertEquals(labEvent2.getComputedLcSets().iterator().next(), lcSet2);
+    }
+
+    public void testGetMetadataSourceForPipeline() {
+        Assert.assertEquals(createSampleInstanceForPipelineAPIMetadataTesting(MercurySample.MetadataSource.BSP,"sample").getMetadataSourceForPipelineAPI(),
+                                                                              MercurySample.BSP_METADATA_SOURCE);
+        Assert.assertEquals(createSampleInstanceForPipelineAPIMetadataTesting(MercurySample.MetadataSource.MERCURY,"sample").getMetadataSourceForPipelineAPI(),
+                            MercurySample.MERCURY_METADATA_SOURCE);
+        Assert.assertEquals(createSampleInstanceForPipelineAPIMetadataTesting(null,"123.5").getMetadataSourceForPipelineAPI(),
+                            MercurySample.GSSR_METADATA_SOURCE);
+        Assert.assertEquals(createSampleInstanceForPipelineAPIMetadataTesting(null,"samples from outer space").getMetadataSourceForPipelineAPI(),
+                            MercurySample.OTHER_METADATA_SOURCE);
     }
 }

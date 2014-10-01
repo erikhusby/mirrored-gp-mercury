@@ -41,8 +41,8 @@ public class SampleLedgerRow {
         this.productOrderSample = productOrderSample;
 
         sampleId = productOrderSample.getSampleKey();
-        collaboratorSampleId = productOrderSample.getBspSampleDTO().getCollaboratorsSampleName();
-        materialType = productOrderSample.getBspSampleDTO().getMaterialType();
+        collaboratorSampleId = productOrderSample.getSampleData().getCollaboratorsSampleName();
+        materialType = productOrderSample.getSampleData().getMaterialType();
         riskText = productOrderSample.getRiskString();
         deliveryStatus = productOrderSample.getDeliveryStatus().getDisplayName();
         productName = productOrderSample.getProductOrder().getProduct().getProductName();

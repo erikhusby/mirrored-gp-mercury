@@ -2,7 +2,8 @@ package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.json.JSONException;
@@ -17,7 +18,7 @@ public class ProductOrderSampleJsonFactory {
 
     public JSONObject toJson(ProductOrderSample productOrderSample) throws JSONException {
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put(BSPSampleDTO.SAMPLE_ID, productOrderSample.getSampleKey());
+        jsonObject.put(BspSampleData.SAMPLE_ID, productOrderSample.getSampleKey());
         if (productOrderSample.isInBspFormat()) {
             setupSampleDTOItems(productOrderSample, jsonObject);
         } else {
@@ -27,9 +28,9 @@ public class ProductOrderSampleJsonFactory {
     }
 
     private void populateBspValues(JSONObject jsonObject, ProductOrderSample productOrderSample) throws JSONException {
-        BSPSampleDTO bspSampleDTO = productOrderSample.getBspSampleDTO();
-        setCollaboratorSampleId(jsonObject, bspSampleDTO.getCollaboratorsSampleName());
-        setPatientId(jsonObject, bspSampleDTO.getPatientId());
+        SampleData sampleData = productOrderSample.getSampleData();
+        setCollaboratorSampleId(jsonObject, sampleData.getCollaboratorsSampleName());
+        setPatientId(jsonObject, sampleData.getPatientId());
     }
 
     private void populateEmptyValues(JSONObject jsonObject) throws JSONException {
@@ -38,38 +39,38 @@ public class ProductOrderSampleJsonFactory {
     }
 
     private void setCollaboratorSampleId(JSONObject jsonObject, String value) throws JSONException {
-        jsonObject.put(BSPSampleDTO.COLLABORATOR_SAMPLE_ID, value);
+        jsonObject.put(BspSampleData.COLLABORATOR_SAMPLE_ID, value);
     }
 
     private void setPatientId(JSONObject jsonObject, String value) throws JSONException {
-        jsonObject.put(BSPSampleDTO.PATIENT_ID, value);
+        jsonObject.put(BspSampleData.PATIENT_ID, value);
     }
 
     public static void setupSampleDTOItems(ProductOrderSample sample, JSONObject item) throws JSONException {
-        BSPSampleDTO bspSampleDTO = sample.getBspSampleDTO();
+        SampleData sampleData = sample.getSampleData();
 
-        item.put(BSPSampleDTO.SAMPLE_ID, sample.getProductOrderSampleId());
-        item.put(BSPSampleDTO.COLLABORATOR_SAMPLE_ID, bspSampleDTO.getCollaboratorsSampleName());
-        item.put(BSPSampleDTO.PATIENT_ID, bspSampleDTO.getPatientId());
-        item.put(BSPSampleDTO.COLLABORATOR_PARTICIPANT_ID, bspSampleDTO.getCollaboratorParticipantId());
-        item.put(BSPSampleDTO.VOLUME, bspSampleDTO.getVolume());
-        item.put(BSPSampleDTO.CONCENTRATION, bspSampleDTO.getConcentration());
-        item.put(BSPSampleDTO.JSON_RIN_KEY, bspSampleDTO.getRawRin());
-        item.put(BSPSampleDTO.JSON_RQS_KEY, bspSampleDTO.getRqs());
-        item.put(BSPSampleDTO.PICO_DATE, formatPicoRunDate(bspSampleDTO.getPicoRunDate(), "No Pico"));
-        item.put(BSPSampleDTO.TOTAL, bspSampleDTO.getTotal());
-        item.put(BSPSampleDTO.HAS_SAMPLE_KIT_UPLOAD_RACKSCAN_MISMATCH,
-                bspSampleDTO.getHasSampleKitUploadRackscanMismatch());
-        item.put(BSPSampleDTO.COMPLETELY_BILLED, sample.isCompletelyBilled());
+        item.put(BspSampleData.SAMPLE_ID, sample.getProductOrderSampleId());
+        item.put(BspSampleData.COLLABORATOR_SAMPLE_ID, sampleData.getCollaboratorsSampleName());
+        item.put(BspSampleData.PATIENT_ID, sampleData.getPatientId());
+        item.put(BspSampleData.COLLABORATOR_PARTICIPANT_ID, sampleData.getCollaboratorParticipantId());
+        item.put(BspSampleData.VOLUME, sampleData.getVolume());
+        item.put(BspSampleData.CONCENTRATION, sampleData.getConcentration());
+        item.put(BspSampleData.JSON_RIN_KEY, sampleData.getRawRin());
+        item.put(BspSampleData.JSON_RQS_KEY, sampleData.getRqs());
+        item.put(BspSampleData.PICO_DATE, formatPicoRunDate(sampleData.getPicoRunDate(), "No Pico"));
+        item.put(BspSampleData.TOTAL, sampleData.getTotal());
+        item.put(BspSampleData.HAS_SAMPLE_KIT_UPLOAD_RACKSCAN_MISMATCH,
+                sampleData.getHasSampleKitUploadRackscanMismatch());
+        item.put(BspSampleData.COMPLETELY_BILLED, sample.isCompletelyBilled());
 
         LabEventSampleDTO labEventSampleDTO = sample.getLabEventSampleDTO();
 
         if (labEventSampleDTO != null) {
-            item.put(BSPSampleDTO.PACKAGE_DATE, labEventSampleDTO.getSamplePackagedDate());
-            item.put(BSPSampleDTO.RECEIPT_DATE, labEventSampleDTO.getSampleReceiptDate());
+            item.put(BspSampleData.PACKAGE_DATE, labEventSampleDTO.getSamplePackagedDate());
+            item.put(BspSampleData.RECEIPT_DATE, labEventSampleDTO.getSampleReceiptDate());
         } else {
-            item.put(BSPSampleDTO.PACKAGE_DATE, "");
-            item.put(BSPSampleDTO.RECEIPT_DATE, "");
+            item.put(BspSampleData.PACKAGE_DATE, "");
+            item.put(BspSampleData.RECEIPT_DATE, "");
         }
     }
 
@@ -84,18 +85,18 @@ public class ProductOrderSampleJsonFactory {
     }
 
     public static void setupEmptyItems(ProductOrderSample sample, JSONObject item) throws JSONException {
-        item.put(BSPSampleDTO.SAMPLE_ID, sample.getProductOrderSampleId());
-        item.put(BSPSampleDTO.COLLABORATOR_SAMPLE_ID, "");
-        item.put(BSPSampleDTO.PATIENT_ID, "");
-        item.put(BSPSampleDTO.COLLABORATOR_PARTICIPANT_ID, "");
-        item.put(BSPSampleDTO.VOLUME, "");
-        item.put(BSPSampleDTO.CONCENTRATION, "");
-        item.put(BSPSampleDTO.JSON_RIN_KEY, "");
-        item.put(BSPSampleDTO.JSON_RQS_KEY, "");
-        item.put(BSPSampleDTO.PICO_DATE, "");
-        item.put(BSPSampleDTO.TOTAL, "");
-        item.put(BSPSampleDTO.HAS_SAMPLE_KIT_UPLOAD_RACKSCAN_MISMATCH, "");
-        item.put(BSPSampleDTO.PACKAGE_DATE, "");
-        item.put(BSPSampleDTO.RECEIPT_DATE, "");
+        item.put(BspSampleData.SAMPLE_ID, sample.getProductOrderSampleId());
+        item.put(BspSampleData.COLLABORATOR_SAMPLE_ID, "");
+        item.put(BspSampleData.PATIENT_ID, "");
+        item.put(BspSampleData.COLLABORATOR_PARTICIPANT_ID, "");
+        item.put(BspSampleData.VOLUME, "");
+        item.put(BspSampleData.CONCENTRATION, "");
+        item.put(BspSampleData.JSON_RIN_KEY, "");
+        item.put(BspSampleData.JSON_RQS_KEY, "");
+        item.put(BspSampleData.PICO_DATE, "");
+        item.put(BspSampleData.TOTAL, "");
+        item.put(BspSampleData.HAS_SAMPLE_KIT_UPLOAD_RACKSCAN_MISMATCH, "");
+        item.put(BspSampleData.PACKAGE_DATE, "");
+        item.put(BspSampleData.RECEIPT_DATE, "");
     }
 }

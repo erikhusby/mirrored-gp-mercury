@@ -6,7 +6,7 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntryTest;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
@@ -111,12 +111,12 @@ public class ProductOrderSampleTest {
             Map<BSPSampleSearchColumn, String> dataMap = new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
                 put(BSPSampleSearchColumn.MATERIAL_TYPE, BSP_MATERIAL_TYPE.getFullName());
             }};
-            sample1 = new ProductOrderSample("Sample1", new BSPSampleDTO(dataMap));
+            sample1 = new ProductOrderSample("Sample1", new BspSampleData(dataMap));
 
             dataMap = new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
                 put(BSPSampleSearchColumn.MATERIAL_TYPE, "XXX:XXX");
             }};
-            sample2 = new ProductOrderSample("Sample2", new BSPSampleDTO(dataMap));
+            sample2 = new ProductOrderSample("Sample2", new BspSampleData(dataMap));
 
             List<ProductOrderSample> samples = new ArrayList<>();
             samples.add(sample1);
