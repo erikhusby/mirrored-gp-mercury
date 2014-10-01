@@ -55,6 +55,7 @@ public class CrspPipelineUtils {
 
             libraryBean.setResearchProjectId(positiveControlsProject.getBusinessKey());
             libraryBean.setResearchProjectName(positiveControlsProject.getTitle());
+            libraryBean.setRegulatoryDesignation(positiveControlsProject.getRegulatoryDesignationCodeForPipeline());
         }
     }
 
@@ -76,6 +77,6 @@ public class CrspPipelineUtils {
      */
     public String getResearchProjectForCrspPositiveControls() {
         // have michael or cassie make an RP, then hardcode it here
-        return "RP-229";
+        return "RP-1205";
     }
 }
