@@ -177,6 +177,9 @@ public class SampleDataFetcher implements Serializable {
         return bspSampleDataFetcher.fetchSampleDetailsByBarcode(barcodes);
     }
 
+    /**
+     * Given a Collection of sampleIds, return a Map of MercurySamples keyed on MetadataSource.
+     */
     Map<MercurySample.MetadataSource, Collection<MercurySample>> determineMetadataSource(Collection<String> sampleIds) {
         Map<String, List<MercurySample>> mercurySamples = mercurySampleDao.findMapIdToListMercurySample(sampleIds);
         Map<String, MercurySample.MetadataSource> metadataSourceMap =
