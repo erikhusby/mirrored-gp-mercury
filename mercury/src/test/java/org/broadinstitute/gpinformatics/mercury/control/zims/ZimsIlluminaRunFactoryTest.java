@@ -8,8 +8,9 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
@@ -60,7 +61,7 @@ public class ZimsIlluminaRunFactoryTest {
 
     private static final String POSITIVE_CONTROL_SAMPLE_COLLABORATOR_ID = "NA12878";
     private static final String BSP_SM_ID_FOR_POSITIVE_CONTROL = "SM-59YAY";
-    private static final BSPSampleDTO POSITIVE_CONTROL_SAMPLE_DTO = new BSPSampleDTO(new HashMap<BSPSampleSearchColumn, String>() {{
+    private static final SampleData POSITIVE_CONTROL_SAMPLE_DTO = new BspSampleData(new HashMap<BSPSampleSearchColumn, String>() {{
         put(BSPSampleSearchColumn.STOCK_SAMPLE, BSP_SM_ID_FOR_POSITIVE_CONTROL);
         put(BSPSampleSearchColumn.ROOT_SAMPLE, BSP_SM_ID_FOR_POSITIVE_CONTROL);
         put(BSPSampleSearchColumn.SAMPLE_ID, BSP_SM_ID_FOR_POSITIVE_CONTROL);
@@ -71,12 +72,12 @@ public class ZimsIlluminaRunFactoryTest {
     private ResearchProjectDao mockResearchProjectDao;
     private static final String PRODUCT_ORDER_KEY = "TestPDO-1";
     private static final short LANE_NUMBER = 1;
-    private final Map<String, BSPSampleDTO> mapSampleIdToDto = new HashMap<>();
+    private final Map<String, SampleData> mapSampleIdToDto = new HashMap<>();
     private final Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<>();
     private final List<String> testSampleIds = new ArrayList<>();
     private ZimsIlluminaRunFactory zimsIlluminaRunFactory;
     private IlluminaFlowcell flowcell;
-    private BSPSampleDataFetcher mockBSPSampleDataFetcher;
+    private SampleDataFetcher mockSampleDataFetcher;
     private ControlDao mockControlDao;
     private ProductOrder testProductOrder;
     private JiraService mockJiraService;
@@ -102,7 +103,7 @@ public class ZimsIlluminaRunFactoryTest {
         testSampleIds.add("SM-59HLX");
         testSampleIds.add(BSP_SM_ID_FOR_POSITIVE_CONTROL);
 
-        mockBSPSampleDataFetcher = Mockito.mock(BSPSampleDataFetcher.class);
+        mockSampleDataFetcher = Mockito.mock(SampleDataFetcher.class);
         mockControlDao = Mockito.mock(ControlDao.class);
 
         mockJiraService = Mockito.mock(JiraService.class);
@@ -115,8 +116,8 @@ public class ZimsIlluminaRunFactoryTest {
                                           "P-TEST-1", new Date(), new Date(), 0, 0, 0, 0, "Test samples only", "None",
                                           true, Workflow.AGILENT_EXOME_EXPRESS, false, "agg type");
 
-        zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(mockBSPSampleDataFetcher, mockControlDao,
-                new SequencingTemplateFactory(), productOrderDao,mockResearchProjectDao);
+        zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(mockSampleDataFetcher, mockControlDao,
+                new SequencingTemplateFactory(), productOrderDao, mockResearchProjectDao);
         LabEventFactory labEventFactory = new LabEventFactory(null, null);
         labEventFactory.setLabEventRefDataFetcher(new LabEventRefDataFetcher() {
             @Override
@@ -162,35 +163,34 @@ public class ZimsIlluminaRunFactoryTest {
         for (int i = 0; i < testSampleIds.size(); ++i) {
             final String sampleId = testSampleIds.get(i);
             if (isPositiveControl(sampleId)) {
-                mapSampleIdToDto.put(sampleId,POSITIVE_CONTROL_SAMPLE_DTO);
-            }
-            else {
-                Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>() {{
-                    put(BSPSampleSearchColumn.CONTAINER_ID, "BspContainer");
-                    put(BSPSampleSearchColumn.STOCK_SAMPLE, sampleId + "stock");
-                    put(BSPSampleSearchColumn.ROOT_SAMPLE, sampleId + "root");
-                    put(BSPSampleSearchColumn.SAMPLE_ID, sampleId);
-                    put(BSPSampleSearchColumn.PARTICIPANT_ID, "Spencer");
-                    put(BSPSampleSearchColumn.SPECIES, "Hamster");
-                    put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, sampleId + "collaborator");
-                    put(BSPSampleSearchColumn.COLLECTION, "collection1");
-                    put(BSPSampleSearchColumn.VOLUME, "7");
-                    put(BSPSampleSearchColumn.CONCENTRATION, "9");
-                    put(BSPSampleSearchColumn.LSID, "ZimsIlluminaRunFactoryTest.testMakeLibraryBean.sampleDTO");
-                    put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, sampleId + "participant");
-                    put(BSPSampleSearchColumn.MATERIAL_TYPE, "Test Material");
-                    put(BSPSampleSearchColumn.TOTAL_DNA, "42");
-                    put(BSPSampleSearchColumn.SAMPLE_TYPE, "Test Sample");
-                    put(BSPSampleSearchColumn.PRIMARY_DISEASE, "Test failure");
-                    put(BSPSampleSearchColumn.GENDER, "M");
-                    put(BSPSampleSearchColumn.STOCK_TYPE, "Stock Type");
-                    put(BSPSampleSearchColumn.SAMPLE_TYPE, "ZimsIlluminaRunFactoryTest");
-                    put(BSPSampleSearchColumn.RACE, "N/A");
-                    put(BSPSampleSearchColumn.ETHNICITY, "unknown");
-                    put(BSPSampleSearchColumn.RACKSCAN_MISMATCH, "false");
-                    put(BSPSampleSearchColumn.RIN, "8.4");
-                }};
-                mapSampleIdToDto.put(sampleId, new BSPSampleDTO(dataMap));
+                mapSampleIdToDto.put(sampleId, POSITIVE_CONTROL_SAMPLE_DTO);
+            } else {
+            Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>() {{
+                put(BSPSampleSearchColumn.CONTAINER_ID, "BspContainer");
+                put(BSPSampleSearchColumn.STOCK_SAMPLE, sampleId + "stock");
+                put(BSPSampleSearchColumn.ROOT_SAMPLE, sampleId + "root");
+                put(BSPSampleSearchColumn.SAMPLE_ID, sampleId);
+                put(BSPSampleSearchColumn.PARTICIPANT_ID, "Spencer");
+                put(BSPSampleSearchColumn.SPECIES, "Hamster");
+                put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, sampleId + "collaborator");
+                put(BSPSampleSearchColumn.COLLECTION, "collection1");
+                put(BSPSampleSearchColumn.VOLUME, "7");
+                put(BSPSampleSearchColumn.CONCENTRATION, "9");
+                put(BSPSampleSearchColumn.LSID, "ZimsIlluminaRunFactoryTest.testMakeLibraryBean.sampleDTO");
+                put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, sampleId + "participant");
+                put(BSPSampleSearchColumn.MATERIAL_TYPE, "Test Material");
+                put(BSPSampleSearchColumn.TOTAL_DNA, "42");
+                put(BSPSampleSearchColumn.SAMPLE_TYPE, "Test Sample");
+                put(BSPSampleSearchColumn.PRIMARY_DISEASE, "Test failure");
+                put(BSPSampleSearchColumn.GENDER, "M");
+                put(BSPSampleSearchColumn.STOCK_TYPE, "Stock Type");
+                put(BSPSampleSearchColumn.SAMPLE_TYPE, "ZimsIlluminaRunFactoryTest");
+                put(BSPSampleSearchColumn.RACE, "N/A");
+                put(BSPSampleSearchColumn.ETHNICITY, "unknown");
+                put(BSPSampleSearchColumn.RACKSCAN_MISMATCH, "false");
+                put(BSPSampleSearchColumn.RIN, "8.4");
+            }};
+            mapSampleIdToDto.put(sampleId, new BspSampleData(dataMap));
             }
         }
 
@@ -384,8 +384,8 @@ public class ZimsIlluminaRunFactoryTest {
         controlMap = new HashMap<>();
         for (String sampleId : testSampleIds) {
             if (sampleId.equals(BSP_SM_ID_FOR_POSITIVE_CONTROL)) {
-                BSPSampleDTO sampleDTO = mapSampleIdToDto.get(sampleId);
-                String collaboratorSampleName = sampleDTO.getCollaboratorsSampleName();
+                SampleData sampleData = mapSampleIdToDto.get(sampleId);
+                String collaboratorSampleName = sampleData.getCollaboratorsSampleName();
                 controlMap.put(collaboratorSampleName,new Control(collaboratorSampleName, Control.ControlType.POSITIVE));
             }
         }

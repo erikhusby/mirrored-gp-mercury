@@ -31,7 +31,7 @@ public class NullBSPValuesPipelineAPITest extends Arquillian {
     }
 
     @Test(groups = TestGroups.ALTERNATIVES)
-    public void testNullBspDtos() throws Exception {
+    public void testNullBspSampleData() throws Exception {
         ZimsIlluminaRun run = runLaneResource.getRun(IlluminaRunResourceTest.RUN_NAME);
         Assert.assertNotNull(run.getError());
         Assert.assertTrue(run.getError().contains("BSP returned no"));

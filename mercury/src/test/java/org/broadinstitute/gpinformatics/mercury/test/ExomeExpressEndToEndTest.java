@@ -7,7 +7,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestOptions;
@@ -53,9 +53,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.queue.AliquotParameters;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
@@ -164,7 +164,7 @@ public class ExomeExpressEndToEndTest {
                 Temporarily adding from ProjectPlanFromPassTest to move test case content along.
              */
 
-            BSPSampleDataFetcher bspDataFetcher = new BSPSampleDataFetcher(new EverythingYouAskForYouGetAndItsHuman());
+            SampleDataFetcher bspDataFetcher = new SampleDataFetcher(new EverythingYouAskForYouGetAndItsHuman());
             //            BaitSetListResult baitsCache = new BaitSetListResult();
             //            BaitSet baitSet = new BaitSet();
             //            baitSet.setDesignName(BAIT_DESIGN_NAME);
@@ -537,14 +537,6 @@ public class ExomeExpressEndToEndTest {
             Assert.assertNotNull(illuminaSequencingRun.getSampleCartridge(),
                                  "No registered flowcell");
 
-            // We're container-free, so we have to populate the BSPSampleDTO ourselves
-            //            for (Starter starter : projectPlan.getStarters()) {
-            //                BSPSampleAuthorityTube aliquot = (BSPSampleAuthorityTube) projectPlan.getAliquotForStarter(starter);
-            //                BSPStartingSample bspStartingSample = (BSPStartingSample) aliquot.getAliquot();
-            //                bspStartingSample.setBspDTO(new BSPSampleDTO("1", "", "", "", "", "", "", "", "", "", "lsid:" + bspStartingSample.getSampleName(),
-            //                        "", "", "","", "", "", "",""));
-            //            }
-
             // ZIMS
             ProductOrderDao productOrderDao = Mockito.mock(ProductOrderDao.class);
             Mockito.when(productOrderDao.findByBusinessKey(Mockito.anyString())).then(new Answer<Object>() {
@@ -557,14 +549,14 @@ public class ExomeExpressEndToEndTest {
                 }
             });
 
-            ZimsIlluminaRunFactory zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(new BSPSampleDataFetcher(),
+            ZimsIlluminaRunFactory zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(new SampleDataFetcher(),
                                                                                        null,
                                                                                        new SequencingTemplateFactory(),
                                                                                        productOrderDao,
                                                                                        null);
             ZimsIlluminaRun zimsRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);
 
-            // how to populate BSPSampleDTO?  Ease of use from EL suggests an entity that can load itself, but this
+            // how to populate BspSampleData?  Ease of use from EL suggests an entity that can load itself, but this
             // would require injecting a service, or using a singleton
 
             Assert.assertNotNull(zimsRun);

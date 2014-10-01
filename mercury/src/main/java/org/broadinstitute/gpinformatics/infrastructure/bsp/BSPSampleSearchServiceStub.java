@@ -134,7 +134,8 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
     public static final String CANINE_SPECIES = "Canine";
 
     /**
-     * Samples that this service stub knows about and can return.
+     * Samples that this service stub knows about and can return. This collection is NOT static to avoid the possibility
+     * of tests running in parallel side-effecting each other.
      */
     private final Map<String, Map<BSPSampleSearchColumn, String>> samples = new HashMap<>();
 
@@ -152,9 +153,9 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
             put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, SM_12CO4_COLLAB_PID);
             put(BSPSampleSearchColumn.MATERIAL_TYPE, SM_12CO4_MAT_TYPE);
             put(BSPSampleSearchColumn.TOTAL_DNA, SM_12CO4_DNA);
-            put(BSPSampleSearchColumn.SAMPLE_TYPE, BSPSampleDTO.TUMOR_IND);
+            put(BSPSampleSearchColumn.SAMPLE_TYPE, BspSampleData.TUMOR_IND);
             put(BSPSampleSearchColumn.PRIMARY_DISEASE, SM_12CO4_DISEASE);
-            put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.FEMALE_IND);
+            put(BSPSampleSearchColumn.GENDER, BspSampleData.FEMALE_IND);
             put(BSPSampleSearchColumn.STOCK_TYPE, "");
             put(BSPSampleSearchColumn.CONTAINER_ID, SM_12CO4_CONTAINER_ID);
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_12CO4);
@@ -173,10 +174,10 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
             put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, SM_1P3WY_COLLAB_PID);
             put(BSPSampleSearchColumn.MATERIAL_TYPE, SM_1P3WY_MAT_TYPE);
             put(BSPSampleSearchColumn.TOTAL_DNA, SM_1P3WY_DNA);
-            put(BSPSampleSearchColumn.SAMPLE_TYPE, BSPSampleDTO.NORMAL_IND);
+            put(BSPSampleSearchColumn.SAMPLE_TYPE, BspSampleData.NORMAL_IND);
             put(BSPSampleSearchColumn.PRIMARY_DISEASE, SM_1P3WY_DISEASE);
-            put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.MALE_IND);
-            put(BSPSampleSearchColumn.STOCK_TYPE, BSPSampleDTO.ACTIVE_IND);
+            put(BSPSampleSearchColumn.GENDER, BspSampleData.MALE_IND);
+            put(BSPSampleSearchColumn.STOCK_TYPE, BspSampleData.ACTIVE_IND);
             put(BSPSampleSearchColumn.CONTAINER_ID, SM_1P3WY_CONTAINER_ID);
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_1P3WY);
         }});
@@ -194,10 +195,10 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
             put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, SM_1P3XN_COLLAB_PID);
             put(BSPSampleSearchColumn.MATERIAL_TYPE, SM_1P3XN_MAT_TYPE);
             put(BSPSampleSearchColumn.TOTAL_DNA, SM_1P3XN_DNA);
-            put(BSPSampleSearchColumn.SAMPLE_TYPE, BSPSampleDTO.NORMAL_IND);
+            put(BSPSampleSearchColumn.SAMPLE_TYPE, BspSampleData.NORMAL_IND);
             put(BSPSampleSearchColumn.PRIMARY_DISEASE, SM_1P3XN_DISEASE);
-            put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.MALE_IND);
-            put(BSPSampleSearchColumn.STOCK_TYPE, BSPSampleDTO.ACTIVE_IND);
+            put(BSPSampleSearchColumn.GENDER, BspSampleData.MALE_IND);
+            put(BSPSampleSearchColumn.STOCK_TYPE, BspSampleData.ACTIVE_IND);
             put(BSPSampleSearchColumn.CONTAINER_ID, SM_1P3XN_CONTAINER_ID);
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_1P3XN);
         }});
@@ -215,10 +216,10 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
             put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, SM_12FO4_COLLAB_PID);
             put(BSPSampleSearchColumn.MATERIAL_TYPE, SM_12FO4_MAT_TYPE);
             put(BSPSampleSearchColumn.TOTAL_DNA, SM_12FO4_DNA);
-            put(BSPSampleSearchColumn.SAMPLE_TYPE, BSPSampleDTO.NORMAL_IND);
+            put(BSPSampleSearchColumn.SAMPLE_TYPE, BspSampleData.NORMAL_IND);
             put(BSPSampleSearchColumn.PRIMARY_DISEASE, SM_12FO4_DISEASE);
-            put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.MALE_IND);
-            put(BSPSampleSearchColumn.STOCK_TYPE, BSPSampleDTO.ACTIVE_IND);
+            put(BSPSampleSearchColumn.GENDER, BspSampleData.MALE_IND);
+            put(BSPSampleSearchColumn.STOCK_TYPE, BspSampleData.ACTIVE_IND);
             put(BSPSampleSearchColumn.CONTAINER_ID, SM_12FO4_CONTAINER_ID);
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_12FO4);
         }});
@@ -236,10 +237,10 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
             put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, SM_12DW4_COLLAB_PID);
             put(BSPSampleSearchColumn.MATERIAL_TYPE, SM_12DW4_MAT_TYPE);
             put(BSPSampleSearchColumn.TOTAL_DNA, SM_12DW4_DNA);
-            put(BSPSampleSearchColumn.SAMPLE_TYPE, BSPSampleDTO.NORMAL_IND);
+            put(BSPSampleSearchColumn.SAMPLE_TYPE, BspSampleData.NORMAL_IND);
             put(BSPSampleSearchColumn.PRIMARY_DISEASE, SM_12DW4_DISEASE);
-            put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.MALE_IND);
-            put(BSPSampleSearchColumn.STOCK_TYPE, BSPSampleDTO.ACTIVE_IND);
+            put(BSPSampleSearchColumn.GENDER, BspSampleData.MALE_IND);
+            put(BSPSampleSearchColumn.STOCK_TYPE, BspSampleData.ACTIVE_IND);
             put(BSPSampleSearchColumn.CONTAINER_ID, SM_12DW4_CONTAINER_ID);
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_12DW4);
         }});
@@ -257,10 +258,10 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
             put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, SM_12MD2_COLLAB_PID);
             put(BSPSampleSearchColumn.MATERIAL_TYPE, SM_12MD2_MAT_TYPE);
             put(BSPSampleSearchColumn.TOTAL_DNA, SM_12MD2_DNA);
-            put(BSPSampleSearchColumn.SAMPLE_TYPE, BSPSampleDTO.NORMAL_IND);
+            put(BSPSampleSearchColumn.SAMPLE_TYPE, BspSampleData.NORMAL_IND);
             put(BSPSampleSearchColumn.PRIMARY_DISEASE, SM_12MD2_DISEASE);
-            put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.FEMALE_IND);
-            put(BSPSampleSearchColumn.STOCK_TYPE, BSPSampleDTO.ACTIVE_IND);
+            put(BSPSampleSearchColumn.GENDER, BspSampleData.FEMALE_IND);
+            put(BSPSampleSearchColumn.STOCK_TYPE, BspSampleData.ACTIVE_IND);
             put(BSPSampleSearchColumn.CONTAINER_ID, SM_12MD2_CONTAINER_ID);
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_12MD2);
         }});
@@ -294,5 +295,9 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
         }
 
         return sampleAttributes;
+    }
+
+    public Map<String, Map<BSPSampleSearchColumn, String>> getSamples() {
+        return samples;
     }
 }
