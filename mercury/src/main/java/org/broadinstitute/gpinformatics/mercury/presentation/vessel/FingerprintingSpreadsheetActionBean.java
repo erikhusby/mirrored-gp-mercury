@@ -21,16 +21,19 @@ import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.SimpleError;
 import net.sourceforge.stripes.validation.ValidationErrors;
 import net.sourceforge.stripes.validation.ValidationMethod;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.SpreadsheetCreator;
 import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.StreamCreatedSpreadsheetUtil;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -64,7 +67,8 @@ import java.util.logging.Logger;
 public class FingerprintingSpreadsheetActionBean extends CoreActionBean {
     private static final Logger logger = Logger.getLogger(FingerprintingSpreadsheetActionBean.class.getName());
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("M-d-yy");
-    private static final String NA12878 = "NA12878";
+    static final String NA12878 = "NA12878";
+    static final String NEGATIVE_CONTROL = "negative control";
 
     public static final String ACTION_BEAN_URL = "/vessel/FingerprintingSpreadsheet.action";
     private static final String CREATE_PAGE = "/vessel/create_fingerprint_spreadsheet.jsp";
@@ -78,6 +82,13 @@ public class FingerprintingSpreadsheetActionBean extends CoreActionBean {
 
     @Inject
     private StaticPlateDao staticPlateDao;
+
+    @Inject
+    private ControlDao controlDao;
+
+    void setControlDao(ControlDao controlDao) {
+        this.controlDao = controlDao;
+    }
 
     public String getPlateBarcode() {
         return plateBarcode;
@@ -131,7 +142,7 @@ public class FingerprintingSpreadsheetActionBean extends CoreActionBean {
     private List<FpSpreadsheetRow> makeSampleDtos(StaticPlate plate) {
         List<FpSpreadsheetRow> dtos = new ArrayList<>();
 
-        // Only keeps on sample tube per position.  Prefer tubes having FP pico or secondarily Initial pico.
+        // Only keeps one sample tube per position.  Prefer tubes having FP pico or secondarily Initial pico.
         Map<VesselPosition, Pair<LabVessel, LabMetric>> positionMap = new HashMap<>();
         for (VesselAndPosition vesselAndPosition : plate.getNearestTubeAncestors()) {
             LabVessel labVessel = vesselAndPosition.getVessel();
@@ -163,18 +174,32 @@ public class FingerprintingSpreadsheetActionBean extends CoreActionBean {
 
             FpSpreadsheetRow dto = new FpSpreadsheetRow(position.name());
             for (SampleInstanceV2 sampleInstance : tube.getSampleInstancesV2()) {
-                if (!sampleInstance.isReagentOnly()) {
-                    String sampleName = sampleInstance.getMercuryRootSampleName();
-                    if (StringUtils.isBlank(sampleName)) {
+                String sampleName = "";
+                Control control = sampleInstance.getControl(controlDao);
+
+                if (CollectionUtils.isEmpty(sampleInstance.getRootMercurySamples()) &&
+                    StringUtils.isBlank(sampleInstance.getEarliestMercurySampleName()) &&
+                    control == null) {
+                    // If no sample and not a registered control, assume it is a NA12878 filler tube
+                    // which gets labeled on the spreadsheet as NA12878.
+                    sampleName = NA12878;
+                } else if (control != null && control.getType() == Control.ControlType.NEGATIVE) {
+                    // If it's a negative control it gets labeled on the spreadsheet as NEGATIVE_CONTROL.
+                    sampleName = NEGATIVE_CONTROL;
+                } else {
+                    // Registered positive controls and ordinary samples are labeled by their sample name.
+                    sampleName = sampleInstance.getMercuryRootSampleName();
+                    if (sampleName == null) {
                         sampleName = sampleInstance.getEarliestMercurySampleName();
                     }
-                    dto.setRootSampleId(sampleName);
-                    dto.setSampleAliquotId(sampleName);
-                    dto.setParticipantId(sampleName);
-                    dto.setConcentration(labMetric != null ? labMetric.getValue() : BigDecimal.ZERO);
-                    dto.setVolume(wellVolume);
-                    dtos.add(dto);
                 }
+
+                dto.setRootSampleId(sampleName);
+                dto.setSampleAliquotId(sampleName);
+                dto.setParticipantId(sampleName);
+                dto.setConcentration(labMetric != null ? labMetric.getValue() : BigDecimal.ZERO);
+                dto.setVolume(wellVolume != null ? wellVolume : BigDecimal.ZERO);
+                dtos.add(dto);
             }
         }
         Collections.sort(dtos, BY_POSITION_THEN_ROOT);
@@ -190,14 +215,15 @@ public class FingerprintingSpreadsheetActionBean extends CoreActionBean {
             // Finds the volume metadata and ignores events that don't have it.
             for (LabEventMetadata metadata : event.getLabEventMetadatas()) {
                 if (metadata.getLabEventMetadataType().equals(LabEventMetadata.LabEventMetadataType.Volume)) {
-                    // If event filled this position, volume is relevant.
-                    for (CherryPickTransfer cherryPick : event.getCherryPickTransfers()) {
-                        if (position.name().equals(cherryPick.getTargetPosition().name())) {
+                    // If event filled this position, volume is relevant.  Currently a "stamp" is used, i.e.
+                    // a full plate section transfer from rack to plate.
+                    for (SectionTransfer sectionTransfer : event.getSectionTransfers()) {
+                        if (sectionTransfer.getTargetVesselContainer().getPositions().contains(position)) {
                             return new BigDecimal(metadata.getValue());
                         }
                     }
-                    for (SectionTransfer sectionTransfer : event.getSectionTransfers()) {
-                        if (sectionTransfer.getTargetVesselContainer().getPositions().contains(position)) {
+                    for (CherryPickTransfer cherryPick : event.getCherryPickTransfers()) {
+                        if (position.name().equals(cherryPick.getTargetPosition().name())) {
                             return new BigDecimal(metadata.getValue());
                         }
                     }
@@ -227,7 +253,8 @@ public class FingerprintingSpreadsheetActionBean extends CoreActionBean {
 
         // Fills in the data.
         for (FpSpreadsheetRow dto : dtos) {
-            participantsCells[rowIndex] = new String[] {dto.getParticipantId(), "", "", "", "", "", ""};
+            // gender=0 means "unspecified"
+            participantsCells[rowIndex] = new String[] {dto.getParticipantId(), "0", "", "", "", "", ""};
             plateCells[rowIndex] = new String[] {dto.getPosition(), dto.getParticipantId(), dto.getRootSampleId(),
                     dto.getSampleAliquotId(), String.valueOf(dto.getVolume()), String.valueOf(dto.getConcentration())};
             ++rowIndex;

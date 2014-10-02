@@ -1,18 +1,25 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
+import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleDataFetcher;
 
 import javax.annotation.Nullable;
+import javax.persistence.Transient;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -367,6 +374,25 @@ todo jmt not sure if this applies.
             throw new RuntimeException(String.format("Found %s metadata sources",metadataSources.size()));
         }
         return metadataSources.iterator().next();
+    }
+
+    /**
+     * Returns the mercury control for this sample instance, or null if not a control.
+     * @param controlDao is passed in to keep this class db free.
+     */
+    public Control getControl(ControlDao controlDao) {
+        MercurySample mercurySample = rootMercurySamples.size() > 0 ? rootMercurySamples.iterator().next() :
+                mercurySamples.size() > 0 ? mercurySamples.iterator().next() : null;
+        if (mercurySample != null) {
+            SampleData sampleData = new MercurySampleDataFetcher().fetchSampleData(mercurySample);
+            if (sampleData != null) {
+                String collaboratorSampleName = sampleData.getCollaboratorsSampleName();
+                if (collaboratorSampleName != null) {
+                    return controlDao.findBySampleId(collaboratorSampleName);
+                }
+            }
+        }
+        return null;
     }
 
     @Override
