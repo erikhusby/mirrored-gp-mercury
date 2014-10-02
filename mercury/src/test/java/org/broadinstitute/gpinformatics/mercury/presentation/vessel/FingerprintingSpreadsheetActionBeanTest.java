@@ -262,13 +262,4 @@ public class FingerprintingSpreadsheetActionBeanTest extends TestCase {
         }};
     }
 
-    /** Creates a control sample. */
-    private BarcodedTube makeControl(String sampleId, Control control) {
-        MercurySample mercurySample = new MercurySample(sampleId, MercurySample.MetadataSource.MERCURY);
-        mercurySample.addMetadata(collaboratorSampleIdMetadata(control.getCollaboratorSampleId()));
-        BarcodedTube controlTube = new BarcodedTube("CONTROL_TUBE" + System.currentTimeMillis());
-        controlTube.addSample(mercurySample);
-        return controlTube;
-    }
-
 }
