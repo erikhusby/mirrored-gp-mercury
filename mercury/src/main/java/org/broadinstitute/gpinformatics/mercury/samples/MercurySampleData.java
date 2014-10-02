@@ -94,9 +94,13 @@ public class MercurySampleData implements SampleData {
         return null;
     }
 
+    /**
+     * For mercury samples, the root id is considered
+     * the same thing as the sample id.
+     */
     @Override
     public String getRootSample() {
-        return "";
+        return sampleId;
     }
 
     @Override
@@ -139,9 +143,15 @@ public class MercurySampleData implements SampleData {
         return "";
     }
 
+    /**
+     * For mercury samples, the patient id is the
+     * collaborator patient id because the only
+     * patient id we know is the one given to us
+     * by the collaborator.
+     */
     @Override
     public String getCollaboratorParticipantId() {
-        return "";
+        return patientId;
     }
 
     @Override

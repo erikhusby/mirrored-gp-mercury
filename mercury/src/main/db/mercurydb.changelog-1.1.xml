@@ -1611,4 +1611,60 @@
         <modifyDataType tableName="manifest_event_aud" columnName="message" newDataType="varchar(4000)"/>
     </changeSet>
 
+    
+    <changeSet id="GPLIM-2996-1" author="thompson">
+        <createTable schemaName="mercury" tableName="lab_metric_metadata">
+            <column name="lab_metric_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="metadata_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey constraintName="pk_lab_metric_metadata" tableName="lab_metric_metadata"
+                columnNames="lab_metric_id, metadata_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-2996-2" author="thompson">
+        <createTable schemaName="mercury" tableName="lab_metric_metadata_aud">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="lab_metric_id" type="number(19,0)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="metadata_id" type="number(19,0)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="revtype" type="number(3,0)"/>
+        </createTable>
+        <addPrimaryKey constraintName="pk_lab_metric_metadata_aud" tableName="lab_metric_metadata_aud"
+                columnNames="rev, lab_metric_id, metadata_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-2996-3" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_LMM_LAB_METRIC"
+                baseTableName="lab_metric_metadata" baseColumnNames="lab_metric_id"
+                referencedTableName="lab_metric" referencedColumnNames="lab_metric_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-2996-4" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_LMM_METADATA"
+                baseTableName="lab_metric_metadata" baseColumnNames="metadata_id"
+                referencedTableName="metadata" referencedColumnNames="metadata_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-2996-5" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_LMMA_REV_INFO"
+                baseTableName="lab_metric_metadata_aud" baseColumnNames="rev"
+                referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-2996-6" author="thompson">
+        <addColumn schemaName="mercury" tableName="metadata">
+            <column name="date_value" type="timestamp"/>
+            <column name="number_value" type="number(19,2)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2996-7" author="thompson">
+        <addColumn schemaName="mercury" tableName="metadata_aud">
+            <column name="date_value" type="timestamp"/>
+            <column name="number_value" type="number(19,2)"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>
