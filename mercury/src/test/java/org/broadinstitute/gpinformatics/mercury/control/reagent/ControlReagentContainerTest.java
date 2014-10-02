@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.reagent;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -16,8 +17,15 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -37,6 +45,12 @@ public class ControlReagentContainerTest extends Arquillian {
 
     public void testBasic() {
         InputStream testSpreadSheetInputStream = VarioskanParserTest.getTestResource("ControlReagents.xlsx");
+        Assert.assertNotNull(testSpreadSheetInputStream);
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+        String timestamp = simpleDateFormat.format(new Date());
+        Map<String, String> mapControlToLot = new HashMap<>();
+        mapControlToLot.put("NA12878", "SK-P" + timestamp);
+        mapControlToLot.put("NO_TEMPLATE_CONTROL", "SK-N" + timestamp);
         // replace tube barcode and lot with timestamps, to avoid unique constraint
         try {
             Workbook workbook = WorkbookFactory.create(testSpreadSheetInputStream);
@@ -44,12 +58,18 @@ public class ControlReagentContainerTest extends Arquillian {
             for (int i = 1; i < sheet.getLastRowNum(); i++) {
                 Row row = sheet.getRow(i);
                 if (row != null) {
-                    row.getCell(0);
+                    Cell tubeCell = row.getCell(0);
+                    tubeCell.setCellValue("CR" + timestamp + i);
+
+                    Cell controlCell = row.getCell(1);
+                    String controlCellValue = controlCell.getStringCellValue();
+                    Cell lotCell = row.getCell(2);
+                    lotCell.setCellValue(mapControlToLot.get(controlCellValue));
                 }
             }
-
-            Assert.assertNotNull(testSpreadSheetInputStream);
-            controlReagentFactory.buildTubesFromSpreadsheet(testSpreadSheetInputStream, new MessageCollection());
+            File tempFile = File.createTempFile("ControlReagents", ".xlsx");
+            workbook.write(new FileOutputStream(tempFile));
+            controlReagentFactory.buildTubesFromSpreadsheet(new FileInputStream(tempFile), new MessageCollection());
         } catch (IOException | InvalidFormatException e) {
             throw new RuntimeException(e);
         }

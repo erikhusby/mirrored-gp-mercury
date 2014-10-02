@@ -63,8 +63,12 @@ public class ControlReagentFactory {
             Map<String, ControlReagent> mapLotToControl = controlReagentDao.fetchMapLotToControl(lots);
 
             // Make tube entities.
-            return buildTubes(mapTubeBarcodeToControl, messageCollection, controls, mapBarcodeToTube,
-                    mapLotToControl);
+            List<BarcodedTube> barcodedTubes = buildTubes(mapTubeBarcodeToControl, messageCollection, controls,
+                    mapBarcodeToTube, mapLotToControl);
+            if (!messageCollection.hasErrors()) {
+                barcodedTubeDao.persistAll(barcodedTubes);
+            }
+            return barcodedTubes;
         } catch (InvalidFormatException | IOException | ValidationException e) {
             throw new RuntimeException(e);
         }
