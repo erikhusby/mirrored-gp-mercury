@@ -68,7 +68,7 @@ public class CrspPipelineUtils {
         if (bspSampleId.length() < 3) {
             throw new RuntimeException("Cannot transform non-BSP sample id " + bspSampleId + " into CRSP lsid format");
         }
-        return "org.broadinstitute:crsp:" + bspSampleId.substring(3);
+        return bspSampleId.replaceFirst("S[MP]-", "org.broadinstitute:crsp:");
     }
 
     /**
