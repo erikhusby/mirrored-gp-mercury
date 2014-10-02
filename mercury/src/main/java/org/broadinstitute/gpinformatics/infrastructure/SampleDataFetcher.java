@@ -5,9 +5,7 @@ import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
 import org.apache.commons.collections4.CollectionUtils;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
@@ -16,7 +14,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleDataFetcher;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -41,28 +38,27 @@ public class SampleDataFetcher implements Serializable {
     }
 
     /**
-     * Container free constructor, need to initialize all dependencies explicitly.
+     * Container free test constructor, needed to initialize dependency explicitly.
      *
-     * @param bspSampleDataFetcher fetcher for fetching sample data from BSP
+     * @param bspSampleDataFetcher  fetcher for fetching sample data from BSP
      */
     public SampleDataFetcher(@Nonnull BSPSampleDataFetcher bspSampleDataFetcher) {
         this.bspSampleDataFetcher = bspSampleDataFetcher;
     }
 
+    /**
+     * Container free test constructor, needed to initialize all dependencies explicitly.
+     *
+     * @param mercurySampleDao          the DAO for MercurySamples
+     * @param bspSampleDataFetcher      fetcher for fetching sample data from BSP
+     * @param mercurySampleDataFetcher  fetcher for fetching sample data from Mercury
+     */
     public SampleDataFetcher(@Nonnull MercurySampleDao mercurySampleDao,
                              @Nonnull BSPSampleDataFetcher bspSampleDataFetcher,
                              @Nonnull MercurySampleDataFetcher mercurySampleDataFetcher) {
         this.mercurySampleDao = mercurySampleDao;
         this.bspSampleDataFetcher = bspSampleDataFetcher;
         this.mercurySampleDataFetcher = mercurySampleDataFetcher;
-    }
-
-    public SampleDataFetcher(@Nonnull BSPSampleSearchService service) {
-        this(service, null);
-    }
-
-    public SampleDataFetcher(@Nonnull BSPSampleSearchService service, @Nullable BSPConfig bspConfig) {
-        this(new BSPSampleDataFetcher(service, bspConfig));
     }
 
     /**

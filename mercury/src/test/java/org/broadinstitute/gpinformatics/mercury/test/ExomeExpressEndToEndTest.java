@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestOptions;
@@ -164,7 +165,8 @@ public class ExomeExpressEndToEndTest {
                 Temporarily adding from ProjectPlanFromPassTest to move test case content along.
              */
 
-            SampleDataFetcher bspDataFetcher = new SampleDataFetcher(new EverythingYouAskForYouGetAndItsHuman());
+            SampleDataFetcher bspDataFetcher =
+                    new SampleDataFetcher(new BSPSampleDataFetcher(new EverythingYouAskForYouGetAndItsHuman()));
             //            BaitSetListResult baitsCache = new BaitSetListResult();
             //            BaitSet baitSet = new BaitSet();
             //            baitSet.setDesignName(BAIT_DESIGN_NAME);
