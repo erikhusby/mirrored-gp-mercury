@@ -159,6 +159,17 @@
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.SampleVesselActionBean"
                                           event="view">Upload Sample Vessels</stripes:link>
                         </li>
+                        <li>
+                            <stripes:link id="accessioning"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.ManifestAccessioningActionBean">
+                                Accession Manifest
+                            </stripes:link>
+                        </li>
+                        <li>
+                            <stripes:link id="manifestTubeTransfer"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.ManifestTubeTransferActionBean">
+                            Transfer Tubes from Manifest
+                            </stripes:link>
                     </ul>
                 </li>
             </security:authorizeBlock>

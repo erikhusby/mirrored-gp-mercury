@@ -95,7 +95,9 @@ public class UploadQuantsActionBean extends CoreActionBean {
             quantEJB.storeQuants(labMetrics);
             break;
         }
-        addMessage("Successfully uploaded quant.");
+        if (getValidationErrors().isEmpty()) {
+            addMessage("Successfully uploaded quant.");
+        }
         return new ForwardResolution(VIEW_PAGE);
     }
 
@@ -111,8 +113,10 @@ public class UploadQuantsActionBean extends CoreActionBean {
                 MessageCollection messageCollection = new MessageCollection();
                 Pair<LabMetricRun, String> pair = vesselEjb.createVarioskanRun(quantStream, getQuantType(),
                         userBean.getBspUser().getUserId(), messageCollection);
-                labMetricRun = pair.getLeft();
-                tubeFormationLabel = pair.getRight();
+                if (pair != null) {
+                    labMetricRun = pair.getLeft();
+                    tubeFormationLabel = pair.getRight();
+                }
                 addMessages(messageCollection);
                 break;
             case GENERIC:

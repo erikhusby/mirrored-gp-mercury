@@ -212,37 +212,47 @@ public class VesselEjb {
 
             // Fetch the plates
             Map<String, StaticPlate> mapBarcodeToPlate = new HashMap<>();
-            for (VarioskanPlateProcessor.PlateWellResult plateWellResult :
-                    varioskanPlateProcessor.getPlateWellResults()) {
-                StaticPlate staticPlate = mapBarcodeToPlate.get(plateWellResult.getPlateBarcode());
-                if (staticPlate == null) {
-                    staticPlate = staticPlateDao.findByBarcode(plateWellResult.getPlateBarcode());
+            if (varioskanPlateProcessor.getPlateWellResults().isEmpty()) {
+                messageCollection.addError("Didn't find any plate barcodes in the spreadsheet.");
+            } else {
+                for (VarioskanPlateProcessor.PlateWellResult plateWellResult :
+                        varioskanPlateProcessor.getPlateWellResults()) {
+                    StaticPlate staticPlate = mapBarcodeToPlate.get(plateWellResult.getPlateBarcode());
                     if (staticPlate == null) {
-                        throw new RuntimeException("Failed to find plate " + plateWellResult.getPlateBarcode());
+                        staticPlate = staticPlateDao.findByBarcode(plateWellResult.getPlateBarcode());
+                        if (staticPlate == null) {
+                            messageCollection.addError("Failed to find plate " + plateWellResult.getPlateBarcode());
+                        } else {
+                            mapBarcodeToPlate.put(plateWellResult.getPlateBarcode(), staticPlate);
+                        }
                     }
-                    mapBarcodeToPlate.put(plateWellResult.getPlateBarcode(), staticPlate);
                 }
             }
+            Pair<LabMetricRun, String> pair = null;
 
-            // Run name must be unique.
-            String runName = mapNameValueToValue.get(VarioskanRowParser.NameValue.RUN_NAME);
-            LabMetricRun labMetricRun = labMetricRunDao.findByName(runName);
-            if (labMetricRun != null) {
-                messageCollection.addWarning("This run has been uploaded previously.");
-                return Pair.of(labMetricRun, getFirstTubeFormationLabelFromPlates(mapBarcodeToPlate.values()));
-            }
-            // Run date must be unique so that a search can reveal the latest quant.
-            List<LabMetricRun> sameDateRuns = labMetricRunDao.findList(LabMetricRun.class, LabMetricRun_.runDate,
-                    parseRunDate(mapNameValueToValue));
-            if (CollectionUtils.isNotEmpty(sameDateRuns)) {
-                messageCollection.addWarning("A previous upload has the same Run Started timestamp.");
-                return Pair.of(sameDateRuns.iterator().next(),
-                        getFirstTubeFormationLabelFromPlates(mapBarcodeToPlate.values()));
-            }
+            if (!messageCollection.hasErrors()) {
+                // Run name must be unique.
+                String runName = mapNameValueToValue.get(VarioskanRowParser.NameValue.RUN_NAME);
+                LabMetricRun labMetricRun = labMetricRunDao.findByName(runName);
+                if (labMetricRun != null) {
+                    messageCollection.addError("This run has been uploaded previously.");
+                    return Pair.of(labMetricRun, getFirstTubeFormationLabelFromPlates(mapBarcodeToPlate.values()));
+                }
+                // Run date must be unique so that a search can reveal the latest quant.
+                List<LabMetricRun> sameDateRuns = labMetricRunDao.findList(LabMetricRun.class, LabMetricRun_.runDate,
+                        parseRunDate(mapNameValueToValue));
+                if (CollectionUtils.isNotEmpty(sameDateRuns)) {
+                    messageCollection.addError("A previous upload has the same Run Started timestamp.");
+                    return Pair.of(sameDateRuns.iterator().next(),
+                            getFirstTubeFormationLabelFromPlates(mapBarcodeToPlate.values()));
+                }
 
-            Pair<LabMetricRun, String> pair = createVarioskanRunDaoFree(mapNameValueToValue, metricType,
-                    varioskanPlateProcessor, mapBarcodeToPlate, decidingUser);
-            labMetricRunDao.persist(pair.getLeft());
+                pair = createVarioskanRunDaoFree(mapNameValueToValue, metricType,
+                        varioskanPlateProcessor, mapBarcodeToPlate, decidingUser, messageCollection);
+                if (!messageCollection.hasErrors()) {
+                    labMetricRunDao.persist(pair.getLeft());
+                }
+            }
             return pair;
         } catch (IOException | InvalidFormatException | ValidationException e) {
             throw new RuntimeException(e);
@@ -257,7 +267,7 @@ public class VesselEjb {
     public Pair<LabMetricRun, String> createVarioskanRunDaoFree(
             Map<VarioskanRowParser.NameValue, String> mapNameValueToValue, LabMetric.MetricType metricType,
             VarioskanPlateProcessor varioskanPlateProcessor, Map<String, StaticPlate> mapBarcodeToPlate,
-            Long decidingUser) {
+            Long decidingUser, MessageCollection messageCollection) {
 
         Map<LabVessel, List<BigDecimal>> mapTubeToListValues = new HashMap<>();
         Map<LabVessel, VesselPosition> mapTubeToPosition = new HashMap<>();
@@ -294,6 +304,7 @@ public class VesselEjb {
             }
             plateWell.addMetric(labMetric);
 
+            LabVessel sourceTube = null;
             for (SectionTransfer sectionTransfer : staticPlate.getContainerRole().getSectionTransfersTo()) {
                 int sectionIndex = sectionTransfer.getTargetSection().getWells().indexOf(
                         plateWellResult.getVesselPosition());
@@ -303,7 +314,7 @@ public class VesselEjb {
                     if (tubeFormationLabel == null) {
                         tubeFormationLabel = vesselContainer.getEmbedder().getLabel();
                     }
-                    LabVessel sourceTube = vesselContainer.getVesselAtPosition(sourcePosition);
+                    sourceTube = vesselContainer.getVesselAtPosition(sourcePosition);
                     if (sourceTube != null) {
                         mapTubeToPosition.put(sourceTube, sourcePosition);
                         List<BigDecimal> valuesList = mapTubeToListValues.get(sourceTube);
@@ -314,6 +325,10 @@ public class VesselEjb {
                         valuesList.add(plateWellResult.getResult());
                     }
                 }
+            }
+            if (sourceTube == null) {
+                messageCollection.addError("Failed to find source tube for " + plateWellResult.getPlateBarcode() +
+                    " " + plateWellResult.getVesselPosition());
             }
         }
 
@@ -329,6 +344,13 @@ public class VesselEjb {
                     BigDecimal.ROUND_HALF_UP);
             LabMetric labMetric = new LabMetric(average, metricType, LabMetric.LabUnit.NG_PER_UL,
                     mapTubeToPosition.get(tube).name(), runStarted);
+
+            if (tube.getVolume() == null) {
+                messageCollection.addError("No volume for tube " + tube.getLabel());
+            } else {
+                labMetric.getMetadataSet().add(new Metadata(Metadata.Key.TOTAL_NG,
+                        labMetric.getValue().multiply(tube.getVolume())));
+            }
             LabMetric.Decider decider = metricType.getDecider();
             LabMetricDecision.Decision decision = null;
             if (runFailed) {

@@ -89,6 +89,11 @@ public class VarioskanParserContainerTest extends Arquillian {
                             VarioskanRowParser.NameValue.RUN_NAME.getFieldName())) {
                         Cell valueCell = row.getCell(VarioskanRowParser.VALUE_COLUMN);
                         valueCell.setCellValue(simpleDateFormat.format(new Date()) + " Mike Test");
+                    } else if (nameCell != null && nameCell.getStringCellValue().equals(
+                            VarioskanRowParser.NameValue.RUN_STARTED.getFieldName())) {
+                        Cell valueCell = row.getCell(VarioskanRowParser.VALUE_COLUMN);
+                        valueCell.setCellValue(new SimpleDateFormat(
+                                VarioskanRowParser.NameValue.RUN_STARTED.getDateFormat()).format(new Date()));
                     }
                 }
             }
@@ -106,6 +111,7 @@ public class VarioskanParserContainerTest extends Arquillian {
                     .getLeft();
 
             Assert.assertFalse(messageCollection.hasErrors());
+            Assert.assertFalse(messageCollection.hasWarnings());
             Assert.assertEquals(labMetricRun.getLabMetrics().size(), 96 * 3);
         } catch (InvalidFormatException | IOException e) {
             throw new RuntimeException(e);
