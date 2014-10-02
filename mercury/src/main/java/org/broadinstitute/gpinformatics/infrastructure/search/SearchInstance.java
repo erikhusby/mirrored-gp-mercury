@@ -17,6 +17,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -349,10 +350,8 @@ public class SearchInstance implements Serializable {
                     } else {
                         if (getDataType().equals("String")) {
                             propertyValues.add(value);
-                        } else if (getDataType().equals("Float")) {
-                            propertyValues.add(new Float(value));
-                        } else if (getDataType().equals("Double")) {
-                            propertyValues.add(new Double(value));
+                        } else if (getDataType().equals("BigDecimal")) {
+                            propertyValues.add(new BigDecimal(value));
                         } else if (getDataType().equals("Long")) {
                             propertyValues.add(new Long(value));
                         } else if (getDataType().equals("Date")) {

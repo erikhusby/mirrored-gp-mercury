@@ -26,6 +26,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -1096,7 +1097,7 @@ public class SearchDefinitionFactory {
     }
 
     /**
-     * Build sample metadata nested search terms for lab vessels.
+     * Build sample metadata search terms for lab vessels.
      * @return List of search terms/column definitions for lab vessel sample metadata
      */
     private List<SearchTerm> buildLabVesselMetadata() {
@@ -1136,35 +1137,26 @@ public class SearchDefinitionFactory {
 
         searchTerms.add(searchTerm);
 
-        return searchTerms;
-    }
-
-
-    /**
-     * Build sample metadata nested search terms for lab vessels.
-     * @return List of search terms/column definitions for lab vessel sample metadata
-     */
-    private List<SearchTerm> buildLabVesselMetadata() {
-
-        // Build child search term (the metadata value)
+        // Build sample metadata child search term (the metadata value)
         List<SearchTerm> childSearchTerms = new ArrayList<>();
-        SearchTerm searchTerm = new SearchTerm();
+        searchTerm = new SearchTerm();
         searchTerm.setName("Metadata Value");
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
                 String values = "";
 
-                SearchInstance.SearchValue searchValue = (SearchInstance.SearchValue) context.get(CONTEXT_KEY_SEARCH_VALUE);
+                SearchInstance.SearchValue searchValue =
+                        (SearchInstance.SearchValue) context.get(CONTEXT_KEY_SEARCH_VALUE);
                 String header = searchValue.getParent().getValues().get(0);
                 Metadata.Key key = Metadata.Key.valueOf(header);
 
                 LabVessel labVessel = (LabVessel) entity;
                 Set<MercurySample> samples = labVessel.getMercurySamples();
-                for(MercurySample sample : samples) {
+                for (MercurySample sample : samples) {
                     Set<Metadata> metadataSet = sample.getMetadata();
-                    for( Metadata meta : metadataSet ) {
-                        if( meta.getKey() == key ) {
+                    for (Metadata meta : metadataSet) {
+                        if (meta.getKey() == key) {
                             values += meta.getValue();
                             break;
                         }
@@ -1187,16 +1179,50 @@ public class SearchDefinitionFactory {
                 }
             }
         });
-        List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
-        SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setCriteria(Arrays.asList( "mercurySample", "mercurySamples", "metadata" ));
-        criteriaPath.setPropertyName("value");
+        searchTerm.setTypeExpression(new SearchTerm.Evaluator<String>() {
+            @Override
+            public String evaluate(Object entity, Map<String, Object> context) {
+                SearchInstance.SearchValue searchValue = (SearchInstance.SearchValue) context.get(CONTEXT_KEY_SEARCH_VALUE);
+                String metaName = searchValue.getParent().getValues().get(0);
+                Metadata.Key key = Metadata.Key.valueOf(metaName);
+                switch (key.getDataType()) {
+                case STRING:
+                    return String.class.getSimpleName();
+                case NUMBER:
+                    return BigDecimal.class.getSimpleName();
+                case DATE:
+                    return Date.class.getSimpleName();
+                }
+                throw new RuntimeException("Unhandled data type " + key.getDataType());
+            }
+        });
+        criteriaPaths = new ArrayList<>();
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("mercurySample", "mercurySamples", "metadata" /* Metadata */));
+        criteriaPath.setPropertyNameExpression(new SearchTerm.Evaluator<String>() {
+            @Override
+            // Defensive coding
+            //   - as of 10/02/2014 sample metadata values are stored in value column (JPA aliased as "stringValue").
+            public String evaluate(Object entity, Map<String, Object> context) {
+                SearchInstance.SearchValue searchValue = (SearchInstance.SearchValue) context.get(CONTEXT_KEY_SEARCH_VALUE);
+                String metaName = searchValue.getParent().getValues().get(0);
+                Metadata.Key key = Metadata.Key.valueOf(metaName);
+                switch (key.getDataType()) {
+                case STRING:
+                    return "stringValue";
+                case NUMBER:
+                    return "numberValue";
+                case DATE:
+                    return "dateValue";
+                }
+                throw new RuntimeException("Unhandled data type " + key.getDataType());
+            }
+        });
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
         childSearchTerms.add(searchTerm);
 
         // Build parent search term (the metadata name)
-        List<SearchTerm> searchTerms = new ArrayList<>();
         searchTerm = new SearchTerm();
         searchTerm.setName("Sample Metadata");
         searchTerm.setValuesExpression(new SearchTerm.Evaluator<List<ConstrainedValue>>() {
