@@ -10,7 +10,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 
 import javax.annotation.Nonnull;
@@ -52,7 +52,7 @@ public class ProductOrderTestFactory {
         for (int sampleIndex = 1; sampleIndex <= sampleCount; sampleIndex++) {
             String bspStock = "SM-" + String.valueOf(sampleIndex) + String.valueOf(sampleIndex + 1) +
                               String.valueOf(sampleIndex + 3) + String.valueOf(sampleIndex + 2) + sampleSuffix;
-            productOrderSamples.add(new ProductOrderSample(bspStock, new BSPSampleDTO()));
+            productOrderSamples.add(new ProductOrderSample(bspStock, new BspSampleData()));
         }
 
         ResearchProject researchProject = ResearchProjectTestFactory.createDummyResearchProject(

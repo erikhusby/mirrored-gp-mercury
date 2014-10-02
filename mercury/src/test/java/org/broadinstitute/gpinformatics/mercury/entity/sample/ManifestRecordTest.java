@@ -11,6 +11,8 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.util.Map;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
@@ -34,19 +36,18 @@ public class ManifestRecordTest {
     @BeforeMethod
     public void setUp() throws Exception {
         testSession = buildTestSession();
-        testRecord = buildManifestRecord(COLLABORATOR_SAMPLE_ID_1);
+
+        testRecord = buildManifestRecord(testSession, COLLABORATOR_SAMPLE_ID_1);
     }
 
-    private ManifestRecord buildManifestRecord(String sampleId) {
-        ManifestSession testSession1 = testSession;
-        return buildManifestRecord(sampleId, testSession1);
-    }
-
-    private ManifestRecord buildManifestRecord(String sampleId, ManifestSession testSession) {
-        ManifestRecord manifestRecord = new ManifestRecord(ManifestTestFactory.buildMetadata(
-                ImmutableMap.of(Metadata.Key.SAMPLE_ID, sampleId, Metadata.Key.GENDER, VALUE_2, Metadata.Key.PATIENT_ID,
-                        VALUE_3)));
-        testSession.addRecord(manifestRecord);
+    private ManifestRecord buildManifestRecord(ManifestSession manifestSession, String sampleId) {
+        ManifestRecord manifestRecord = buildManifestRecord(manifestSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, sampleId,
+                        Metadata.Key.GENDER, VALUE_2, Metadata.Key.PATIENT_ID, VALUE_3));
+        manifestSession.addRecord(manifestRecord);
+        // ManifestRecords use a zero-based offset.  Normally the spreadsheet parser assigns these but this
+        // code is not using the parser.
+        manifestRecord.setManifestRecordIndex(manifestSession.getRecords().size() - 1);
         return manifestRecord;
     }
 
@@ -57,7 +58,8 @@ public class ManifestRecordTest {
 
         // Test with no specified Status or ErrorStatus.
         ManifestSession sessionIn = new ManifestSession();
-        ManifestRecord testRecord = new ManifestRecord(new Metadata(Metadata.Key.SAMPLE_ID, COLLABORATOR_SAMPLE_ID_1),
+        ManifestRecord testRecord = new ManifestRecord(
+                new Metadata(Metadata.Key.SAMPLE_ID, COLLABORATOR_SAMPLE_ID_1),
                 new Metadata(Metadata.Key.GENDER, VALUE_2), new Metadata(Metadata.Key.PATIENT_ID, VALUE_3));
         sessionIn.addRecord(testRecord);
 
@@ -87,7 +89,7 @@ public class ManifestRecordTest {
         ManifestSession secondSession = buildTestSession(testSession.getResearchProject(),"COLLABORATOR_SAMPLE_ID_3");
 
         String COLLABORATOR_SAMPLE_ID_2 = "COLLABORATOR_SAMPLE_ID_2";
-        ManifestRecord secondManifestRecord = buildManifestRecord(COLLABORATOR_SAMPLE_ID_2);
+        ManifestRecord secondManifestRecord = buildManifestRecord(secondSession, COLLABORATOR_SAMPLE_ID_2);
 
         testSession.validateManifest();
         assertThat(testSession.hasErrors(), is(false));
@@ -108,11 +110,13 @@ public class ManifestRecordTest {
 
     public void duplicateInManifest() throws Exception {
 
-        ManifestRecord testRecordWithDupe =
-                new ManifestRecord(ManifestTestFactory.buildMetadata(ImmutableMap.of(Metadata.Key.SAMPLE_ID,
-                                COLLABORATOR_SAMPLE_ID_1,
-                                Metadata.Key.GENDER, VALUE_2, Metadata.Key.PATIENT_ID, VALUE_3)));
+        ManifestRecord testRecordWithDupe = buildManifestRecord(testSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, COLLABORATOR_SAMPLE_ID_1,
+                        Metadata.Key.GENDER, VALUE_2, Metadata.Key.PATIENT_ID, VALUE_3));
         testSession.addRecord(testRecordWithDupe);
+        // Zero-based offset.
+        testRecordWithDupe.setManifestRecordIndex(testSession.getRecords().size() - 1);
+
         testSession.validateManifest();
 
         assertThat(testSession.hasErrors(), is(true));
@@ -179,27 +183,35 @@ public class ManifestRecordTest {
     }
 
     public void mismatchedGenderTest() throws Exception {
-        ManifestRecord manifestRecord = new ManifestRecord(ManifestTestFactory.buildMetadata(ImmutableMap.of(
-                Metadata.Key.SAMPLE_ID, "989282484", Metadata.Key.GENDER, "M", Metadata.Key.PATIENT_ID,
-                VALUE_3)));
+        ManifestRecord manifestRecord = buildManifestRecord(testSession, ImmutableMap.of(
+                Metadata.Key.SAMPLE_ID, "989282484", Metadata.Key.GENDER, "M", Metadata.Key.PATIENT_ID, VALUE_3));
         testSession.addRecord(manifestRecord);
+        // Zero-based offset.
+        manifestRecord.setManifestRecordIndex(testSession.getRecords().size() - 1);
         testSession.validateManifest();
         assertThat(testSession.hasErrors(), is(true));
     }
 
+    private ManifestRecord buildManifestRecord(ManifestSession manifestSession, Map<Metadata.Key, String> metadata) {
+        ManifestRecord manifestRecord = new ManifestRecord(ManifestTestFactory.buildMetadata(metadata));
+        manifestRecord.setManifestSession(manifestSession);
+        return manifestRecord;
+    }
+
     public void mixedValidationErrorTest() throws Exception {
 
-        ManifestRecord duplicateSampleRecord =
-                new ManifestRecord(
-                        ManifestTestFactory.buildMetadata(ImmutableMap.of(Metadata.Key.SAMPLE_ID,
-                                COLLABORATOR_SAMPLE_ID_1, Metadata.Key.GENDER, VALUE_2, Metadata.Key.PATIENT_ID,
-                                "PI-3234")));
+        ManifestRecord duplicateSampleRecord = buildManifestRecord(testSession,
+            ImmutableMap.of(Metadata.Key.SAMPLE_ID, COLLABORATOR_SAMPLE_ID_1,
+                    Metadata.Key.GENDER, VALUE_2, Metadata.Key.PATIENT_ID, "PI-3234"));
         testSession.addRecord(duplicateSampleRecord);
-        ManifestRecord genderMisMatch =
-                new ManifestRecord(
-                        ManifestTestFactory.buildMetadata(ImmutableMap.of(Metadata.Key.SAMPLE_ID, "229249239",
-                                Metadata.Key.GENDER, "M", Metadata.Key.PATIENT_ID, "PI-3234")));
+        // Zero-based offsets for manifest records.
+        duplicateSampleRecord.setManifestRecordIndex(testSession.getRecords().size() - 1);
+
+        ManifestRecord genderMisMatch = buildManifestRecord(testSession,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, "229249239",
+                                Metadata.Key.GENDER, "M", Metadata.Key.PATIENT_ID, "PI-3234"));
         testSession.addRecord(genderMisMatch);
+        genderMisMatch.setManifestRecordIndex(testSession.getRecords().size() - 1);
         testSession.validateManifest();
 
         assertThat(testSession.hasErrors(), is(true));
@@ -226,10 +238,8 @@ public class ManifestRecordTest {
         ManifestSession newTestSession =
                 new ManifestSession(testProject, "DUPLICATE_TEST", new BSPUserList.QADudeUser("LU", 33L));
         for (String recordSampleId : testRecords) {
-            buildManifestRecord(recordSampleId, newTestSession);
+            buildManifestRecord(newTestSession, recordSampleId);
         }
-
         return newTestSession;
     }
-
 }

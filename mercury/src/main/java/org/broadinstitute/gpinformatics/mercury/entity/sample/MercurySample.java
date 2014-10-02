@@ -3,13 +3,16 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.RapSheet;
+import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
+import javax.annotation.Nonnull;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -23,6 +26,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -34,6 +38,11 @@ import java.util.Set;
 @Audited
 @Table(schema = "mercury")
 public class MercurySample extends AbstractSample {
+
+    public static final String OTHER_METADATA_SOURCE = "OTHER";
+    public static final String BSP_METADATA_SOURCE = "BSP";
+    public static final String MERCURY_METADATA_SOURCE = "MERCURY";
+    public static final String GSSR_METADATA_SOURCE = "GSSR";
 
     /** Determines from which system Mercury gets metadata, e.g. collaborator sample ID */
     public enum MetadataSource {
@@ -73,10 +82,15 @@ public class MercurySample extends AbstractSample {
         this.metadataSource = metadataSource;
     }
 
-    public MercurySample(String sampleKey, BSPSampleDTO bspSampleDTO) {
-        super(bspSampleDTO);
+    public MercurySample(String sampleKey, SampleData sampleData) {
+        super(sampleData);
         this.sampleKey = sampleKey;
         this.metadataSource = MetadataSource.BSP;
+    }
+
+    public MercurySample(String sampleKey, MetadataSource metadataSource, Set<Metadata> metadata) {
+        this(sampleKey, metadataSource);
+        addMetadata(metadata);
     }
 
     public RapSheet getRapSheet() {
@@ -109,7 +123,13 @@ public class MercurySample extends AbstractSample {
     }
 
     public void addMetadata(Set<Metadata> metadata) {
-        this.metadata.addAll(metadata);
+        if (metadataSource == MetadataSource.MERCURY) {
+            this.metadata.addAll(metadata);
+            setSampleData(new MercurySampleData(sampleKey, this.metadata));
+        } else {
+            throw new IllegalStateException(String.format(
+                    "MercurySamples with metadata source of %s cannot have Mercury metadata", metadataSource));
+        }
     }
 
     public Set<Metadata> getMetadata() {
@@ -118,6 +138,48 @@ public class MercurySample extends AbstractSample {
 
     public Long getMercurySampleId() {
         return mercurySampleId;
+    }
+
+    /**
+     * Returns the text that the pipeline uses to figure out
+     * where to go for more sample metadata.  Do not alter
+     * these values without consulting the pipeline team.
+     */
+    public String getMetadataSourceForPipelineAPI() {
+        MercurySample.MetadataSource metadataSource = getMetadataSource();
+        String metadataSourceString;
+
+        if (metadataSource == MercurySample.MetadataSource.BSP) {
+            metadataSourceString = BSP_METADATA_SOURCE;
+        }
+        else if (metadataSource == MercurySample.MetadataSource.MERCURY) {
+            metadataSourceString = MERCURY_METADATA_SOURCE;
+        }
+        else {
+            if (isInGSSRFormat(getSampleKey())) {
+                metadataSourceString = GSSR_METADATA_SOURCE;
+            }
+            else {
+                metadataSourceString = OTHER_METADATA_SOURCE;
+            }
+        }
+        return metadataSourceString;
+    }
+
+    private boolean isInGSSRFormat(@Nonnull String sampleId) {
+        return sampleId.matches("\\d+\\.\\d+");
+    }
+
+    @Override
+    protected SampleData makeSampleData() {
+        switch (metadataSource) {
+        case BSP:
+            return new BspSampleData();
+        case MERCURY:
+            return new MercurySampleData(sampleKey, Collections.<Metadata>emptySet());
+        default:
+            throw new IllegalStateException("Unknown sample data source: " + metadataSource);
+        }
     }
 
     @Override

@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.sample.MaterialType;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 
 import javax.annotation.Nonnull;
@@ -28,9 +29,9 @@ import java.util.regex.Pattern;
  * <li>boolean - false</li>
  * </ul>
  */
-public class BSPSampleDTO {
+public class BspSampleData implements SampleData {
 
-    private static final Log logger = LogFactory.getLog(BSPSampleDTO.class);
+    private static final Log logger = LogFactory.getLog(BspSampleData.class);
 
     public static final String TUMOR_IND = "Tumor";
     public static final String NORMAL_IND = "Normal";
@@ -72,6 +73,7 @@ public class BSPSampleDTO {
     // This is the BSP sample receipt date format string. (ex. 11/18/2010)
     public static final String BSP_DATE_FORMAT_STRING = "MM/dd/yyyy";
 
+    @Override
     public boolean hasData() {
         return !columnToValue.isEmpty();
     }
@@ -107,10 +109,10 @@ public class BSPSampleDTO {
     // tissueType?
 
     /**
-     * This constructor creates a dto with no values. This is mainly for tests that don't care about the DTO
+     * This constructor creates an empty BspSampleData. This is mainly for appeasing tests.
      */
     @SuppressWarnings("unchecked")
-    public BSPSampleDTO() {
+    public BspSampleData() {
         columnToValue = Collections.emptyMap();
     }
 
@@ -120,7 +122,7 @@ public class BSPSampleDTO {
      * @param dataMap The BSP Sample Search results mapped by the columns
      */
     @SuppressWarnings("unchecked")
-    public BSPSampleDTO(Map<BSPSampleSearchColumn, String> dataMap) {
+    public BspSampleData(Map<BSPSampleSearchColumn, String> dataMap) {
         columnToValue = dataMap;
     }
 
@@ -180,6 +182,7 @@ public class BSPSampleDTO {
      * that can be converted to a number.  Otherwise,
      * returns false.
      */
+    @Override
     public boolean canRinScoreBeUsedForOnRiskCalculation() {
         boolean isOkay = true;
         try {
@@ -212,6 +215,7 @@ public class BSPSampleDTO {
         return Boolean.parseBoolean(getValue(column));
     }
 
+    @Override
     public Date getPicoRunDate() {
         return getDate(BSPSampleSearchColumn.PICO_RUN_DATE);
     }
@@ -221,6 +225,7 @@ public class BSPSampleDTO {
      * annotation from BSP.
      * @see #getRin()
      */
+    @Override
     public String getRawRin() {
         return getValue(BSPSampleSearchColumn.RIN);
     }
@@ -235,6 +240,7 @@ public class BSPSampleDTO {
      *
      * @see #getRawRin() to get the unmodified rin value as a string.
      */
+    @Override
     public Double getRin() {
         Double rin = null;
         String rawRin = getRawRin();
@@ -250,78 +256,97 @@ public class BSPSampleDTO {
         return rin;
     }
 
+    @Override
     public Double getRqs() {
         return getDoubleOrNull(BSPSampleSearchColumn.RQS);
     }
 
+    @Override
     public double getVolume() {
         return getDouble(BSPSampleSearchColumn.VOLUME);
     }
 
+    @Override
     public Double getConcentration() {
         return getDouble(BSPSampleSearchColumn.CONCENTRATION);
     }
 
+    @Override
     public String getRootSample() {
         return getValue(BSPSampleSearchColumn.ROOT_SAMPLE);
     }
 
+    @Override
     public String getStockSample() {
         return getValue(BSPSampleSearchColumn.STOCK_SAMPLE);
     }
 
+    @Override
     public String getCollection() {
         return getValue(BSPSampleSearchColumn.COLLECTION);
     }
 
+    @Override
     public String getCollaboratorsSampleName() {
         return getValue(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID);
     }
 
+    @Override
     public String getContainerId() {
         return getValue(BSPSampleSearchColumn.CONTAINER_ID);
     }
 
+    @Override
     public String getPatientId() {
         return getValue(BSPSampleSearchColumn.PARTICIPANT_ID);
     }
 
+    @Override
     public String getOrganism() {
         return getValue(BSPSampleSearchColumn.SPECIES);
     }
 
+    @Override
     public boolean getHasSampleKitUploadRackscanMismatch() {
         return getBoolean(BSPSampleSearchColumn.RACKSCAN_MISMATCH);
     }
 
+    @Override
     public String getSampleLsid() {
         return getValue(BSPSampleSearchColumn.LSID);
     }
 
+    @Override
     public String getCollaboratorParticipantId() {
         return getValue(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID);
     }
 
+    @Override
     public String getMaterialType() {
         return getValue(BSPSampleSearchColumn.MATERIAL_TYPE);
     }
 
+    @Override
     public double getTotal() {
         return getDouble(BSPSampleSearchColumn.TOTAL_DNA);
     }
 
+    @Override
     public String getSampleType() {
         return getValue(BSPSampleSearchColumn.SAMPLE_TYPE);
     }
 
+    @Override
     public String getPrimaryDisease() {
         return getValue(BSPSampleSearchColumn.PRIMARY_DISEASE);
     }
 
+    @Override
     public String getGender() {
         return getValue(BSPSampleSearchColumn.GENDER);
     }
 
+    @Override
     public String getStockType() {
         return getValue(BSPSampleSearchColumn.STOCK_TYPE);
     }
@@ -336,6 +361,7 @@ public class BSPSampleDTO {
      *
      * @return A boolean that determines if this sample has been received or not.
      */
+    @Override
     public boolean isSampleReceived() {
         try {
             return !getRootSample().equals(getSampleId()) || getReceiptDate() != null;
@@ -347,41 +373,49 @@ public class BSPSampleDTO {
         }
     }
 
+    @Override
     public Date getReceiptDate() throws ParseException {
         return getDate(BSPSampleSearchColumn.RECEIPT_DATE);
     }
 
 
+    @Override
     public boolean isActiveStock() {
         String stockType = getStockType();
         return (stockType != null) && (stockType.equals(ACTIVE_IND));
     }
 
+    @Override
     public String getSampleId() {
         return getValue(BSPSampleSearchColumn.SAMPLE_ID);
     }
 
+    @Override
     public MaterialType getMaterialTypeObject() {
         String materialType = getMaterialType();
         return StringUtils.isBlank(materialType) ? null : new MaterialType(materialType);
     }
 
+    @Override
     public String getCollaboratorName() {
         return getValue(BSPSampleSearchColumn.COLLABORATOR_NAME);
     }
 
+    @Override
     public String getEthnicity() {
         return getValue(BSPSampleSearchColumn.ETHNICITY);
     }
 
+    @Override
     public String getRace() {
         return getValue(BSPSampleSearchColumn.RACE);
     }
 
+    @Override
     public Boolean getFfpeStatus() {
         if (ffpeStatus == FFPEStatus.UNKNOWN) {
-            BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
-            bspSampleDataFetcher.fetchFFPEDerived(Collections.singletonList(this));
+            BSPSampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
+            sampleDataFetcher.fetchFFPEDerived(Collections.singletonList(this));
         }
         return ffpeStatus.derived;
     }
@@ -392,8 +426,8 @@ public class BSPSampleDTO {
 
     public List<String> getPlasticBarcodes() {
         if (plasticBarcodes == null) {
-            BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
-            bspSampleDataFetcher.fetchSamplePlastic(Collections.singletonList(this));
+            BSPSampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
+            sampleDataFetcher.fetchSamplePlastic(Collections.singletonList(this));
         }
         return plasticBarcodes;
     }
@@ -406,7 +440,7 @@ public class BSPSampleDTO {
     }
 
     /**
-     * Finds the most appropriate label/barcode for a Mercury LabVessel. BSPSampleDTO has a notion of potentially having
+     * Finds the most appropriate label/barcode for a Mercury LabVessel. BspSampleData has a notion of potentially having
      * more than one "plastic barcode". Not all receptacles in BSP have a manufacturer barcode, in which case the
      * barcode on the label (which resolves to the sample ID) is the best we can do. This utility looks through all of
      * the candidate barcodes and chooses the "best" fit for a Mercury LabVessel, preferring something that does not

@@ -1526,18 +1526,91 @@
     <changeSet id="GPLIM-2879-7" author="thompson">
         <createSequence sequenceName="SEQ_LAB_METRIC_DECISION" incrementBy="50"/>
     </changeSet>
-    <changeSet id="GPLIM-2959-1" author="jsacco">
+    <changeSet id="GPLIM-2885-add-manifest-record-index" author="mcovarr">
         <preConditions onFail="MARK_RAN">
             <not>
-                <indexExists schemaName="MERCURY" indexName="IDX_MERCURY_SAMPLES_LAB_VESSEL"/>
+                <columnExists tableName="manifest_record" columnName="manifest_record_index" schemaName="mercury"/>
             </not>
         </preConditions>
-        <createIndex indexName="IDX_MERCURY_SAMPLES_LAB_VESSEL"
-                     schemaName="MERCURY" tableName="LAB_VESSEL_MERCURY_SAMPLES" unique="true">
-            <column name="MERCURY_SAMPLES"/>
-            <column name="LAB_VESSEL"/>
-        </createIndex>
+        <addColumn tableName="manifest_record" schemaName="mercury">
+            <column name="manifest_record_index" type="integer"/>
+        </addColumn>
     </changeSet>
+
+    <changeSet id="GPLIM-2885-add-manifest-record-index-aud" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="manifest_record_aud" columnName="manifest_record_index" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="manifest_record_aud" schemaName="mercury">
+            <column name="manifest_record_index" type="integer"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-manifest-record-audit-join-table" author="mcovarr">
+        <preConditions>
+            <not>
+                <tableExists tableName="manifest_record_join_aud" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <createTable tableName="manifest_record_join_aud" schemaName="mercury">
+            <column name="rev" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="manifest_session_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="manifest_record_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="manifest_record_index" type="integer">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="manifest_record_join_aud" columnNames="rev, manifest_record_id, manifest_session_id, manifest_record_index"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-manifest_record_index-backfill" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+                select decode(count(*), 0, 0, 1) from manifest_record where manifest_record_index is null;
+            </sqlCheck>
+        </preConditions>
+        <comment>
+          Update to backfill manifest record indexes in manifest records where the manifest record index is currently
+          null.  Manifest record indexes are assigned starting at 0 for the manifest record with the smallest ID within
+          a manifest session and increasing monotonically to N - 1 for the manifest record with the largest ID within a
+          manifest session.
+
+          The precondition above will return 1 if there are any records with null manifest_record_indexes.  It will
+          return 0 otherwise.
+        </comment>
+        <sql>
+            update manifest_record mr set manifest_record_index = (
+                select row_num - 1 from (
+                    select manifest_record_id, row_number() over (partition by manifest_session_id order by manifest_record_id) row_num from manifest_record
+            ) sub where sub.manifest_record_id = mr.manifest_record_id) where manifest_record_index is null
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-manifest-event-msg-bigger" author="scottmat">
+        <preConditions>
+            <columnExists tableName="manifest_event" columnName="message" schemaName="mercury"/>
+        </preConditions>
+        <modifyDataType tableName="manifest_event" columnName="message" newDataType="varchar(4000)"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-manifest-event-aud-msg-bigger-too" author="mcovarr">
+        <preConditions>
+            <columnExists tableName="manifest_event_aud" columnName="message" schemaName="mercury"/>
+        </preConditions>
+        <modifyDataType tableName="manifest_event_aud" columnName="message" newDataType="varchar(4000)"/>
+    </changeSet>
+
     
     <changeSet id="GPLIM-2996-1" author="thompson">
         <createTable schemaName="mercury" tableName="lab_metric_metadata">
@@ -1593,5 +1666,17 @@
             <column name="date_value" type="timestamp"/>
             <column name="number_value" type="number(19,2)"/>
         </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2959-1" author="jsacco">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists schemaName="MERCURY" indexName="IDX_MERCURY_SAMPLES_LAB_VESSEL"/>
+            </not>
+        </preConditions>
+        <createIndex indexName="IDX_MERCURY_SAMPLES_LAB_VESSEL"
+                     schemaName="MERCURY" tableName="LAB_VESSEL_MERCURY_SAMPLES" unique="true">
+            <column name="MERCURY_SAMPLES"/>
+            <column name="LAB_VESSEL"/>
+        </createIndex>
     </changeSet>
 </databaseChangeLog>

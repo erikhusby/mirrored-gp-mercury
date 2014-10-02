@@ -11,7 +11,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.work.MessageDataValue;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPLSIDUtil;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
@@ -84,7 +84,7 @@ public class BillingEjb {
 
     private LedgerEntryDao ledgerEntryDao;
 
-    BSPSampleDataFetcher sampleDataFetcher;
+    SampleDataFetcher sampleDataFetcher;
 
     public BillingEjb() {
         this(null, null, null, null, null);
@@ -95,7 +95,7 @@ public class BillingEjb {
                       BillingSessionDao billingSessionDao,
                       ProductOrderDao productOrderDao,
                       LedgerEntryDao ledgerEntryDao,
-                      BSPSampleDataFetcher sampleDataFetcher) {
+                      SampleDataFetcher sampleDataFetcher) {
 
         this.priceListCache = priceListCache;
         this.billingSessionDao = billingSessionDao;
