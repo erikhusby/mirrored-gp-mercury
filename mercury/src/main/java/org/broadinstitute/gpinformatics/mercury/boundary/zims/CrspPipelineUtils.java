@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.zims;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 
@@ -44,7 +45,9 @@ public class CrspPipelineUtils {
     public void setFieldsForCrsp(LibraryBean libraryBean,
                                  SampleData sampleData,
                                  ResearchProject positiveControlsProject,
-                                 String lcSet) {
+                                 String lcSet,
+                                 Deployment deployment) {
+        throwExceptionIfInProductionAndSampleIsNotABSPSample(sampleData.getSampleId(),deployment);
         libraryBean.setLsid(getCrspLSIDForBSPSampleId(sampleData.getSampleId()));
         libraryBean.setRootSample(libraryBean.getSampleId());
 
@@ -59,15 +62,22 @@ public class CrspPipelineUtils {
         }
     }
 
+    private void throwExceptionIfInProductionAndSampleIsNotABSPSample(@Nonnull String sampleId,Deployment deployment) {
+        if (deployment != null) {
+            if (deployment == Deployment.PROD) {
+                if (!BSPUtil.isInBspFormat(sampleId)) {
+                    throw new RuntimeException("Sample " + sampleId + " does not appear to be a BSP sample.  The pipeline's fingerprint validation can only handle BSP samples.");
+                }
+            }
+        }
+    }
+
     /**
      * Generates a synthetic CRSP lsid because the CRSP pipeline
      * needs the LSID in this format.  No explicit BSP format check
      * is done here to allow for flexibility in test data.
      */
     public String getCrspLSIDForBSPSampleId(@Nonnull String bspSampleId) {
-        if (bspSampleId.length() < 3) {
-            throw new RuntimeException("Cannot transform non-BSP sample id " + bspSampleId + " into CRSP lsid format");
-        }
         return bspSampleId.replaceFirst("S[MP]-", "org.broadinstitute:crsp:");
     }
 

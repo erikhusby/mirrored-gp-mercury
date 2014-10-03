@@ -3,16 +3,23 @@ package org.broadinstitute.gpinformatics.mercury.boundary.zims;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
+import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -28,6 +35,8 @@ public class CrspPipelineUtilsTest {
     private ProductOrderSample nonCrspSampleWithBSPMetadata;
 
     private CrspPipelineUtils crspPipelineAPIUtils = new CrspPipelineUtils();
+
+    private SampleData sampleDataWithNonBspSample = new MercurySampleData("Not from BSP", Collections.<Metadata>emptySet());
 
     private ProductOrderSample createPdoSample(MercurySample.MetadataSource metadataSource,
                                                String sampleName) {
@@ -112,16 +121,18 @@ public class CrspPipelineUtilsTest {
                             crspPipelineAPIUtils.getCrspLSIDForBSPSampleId("SM-5FGZM"));
     }
 
-    public void testGetCrspLSIDForNonSampleIdThrowsException() {
-        String nonBspSampleId = "b";
+    public void testSetFieldsForCrspThrowsExceptionForNonBspSampleInProduction() {
         try {
-            crspPipelineAPIUtils.getCrspLSIDForBSPSampleId(nonBspSampleId);
+            crspPipelineAPIUtils.setFieldsForCrsp(new LibraryBean(), sampleDataWithNonBspSample,null,null, Deployment.PROD);
+            Assert.fail("Should have thrown an exception because " + sampleDataWithNonBspSample.getSampleId() + " is not a bsp sample");
         }
-        catch(RuntimeException e) {
-            Assert.assertTrue(e.getMessage().contains("Cannot transform non-BSP sample id"));
-            Assert.assertTrue(e.getMessage().contains(nonBspSampleId));
-        }
+        catch(RuntimeException ignored) {}
     }
+
+    public void testSetFieldsForCrspDoesNotThrowExceptionForNonBspSampleInDevelopment() {
+        crspPipelineAPIUtils.setFieldsForCrsp(new LibraryBean(),sampleDataWithNonBspSample,null,null, Deployment.DEV);
+    }
+
 
     private class TestSampleInstance {
 

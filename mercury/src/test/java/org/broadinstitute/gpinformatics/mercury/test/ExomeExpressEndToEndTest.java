@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingReq
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.ControlWell;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraCustomFieldsUtil;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
@@ -553,7 +554,8 @@ public class ExomeExpressEndToEndTest {
                                                                                        null,
                                                                                        new SequencingTemplateFactory(),
                                                                                        productOrderDao,
-                                                                                       null);
+                                                                                       null,
+                                                                                       Deployment.DEV);
             ZimsIlluminaRun zimsRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);
 
             // how to populate BspSampleData?  Ease of use from EL suggests an entity that can load itself, but this

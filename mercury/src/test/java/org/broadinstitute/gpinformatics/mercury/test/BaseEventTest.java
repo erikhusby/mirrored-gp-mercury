@@ -812,7 +812,8 @@ public class BaseEventTest {
                 },
                 new SequencingTemplateFactory(),
                 productOrderDao,
-                new CrspControlsTestUtils().getMockResearchProjectDao()
+                new CrspControlsTestUtils().getMockResearchProjectDao(),
+                Deployment.DEV
         );
     }
 }
