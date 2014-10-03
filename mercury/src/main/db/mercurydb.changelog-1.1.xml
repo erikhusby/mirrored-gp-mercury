@@ -1247,4 +1247,19 @@
     <changeSet id="GPLIM-2879-7" author="thompson">
         <createSequence sequenceName="SEQ_LAB_METRIC_DECISION" incrementBy="50"/>
     </changeSet>
+
+    <changeSet id="GPLIM-2980-1" author="thompson">
+        <addColumn schemaName="mercury" tableName="reagent">
+            <column name="control" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2980-2" author="thompson">
+        <addColumn schemaName="mercury" tableName="reagent_aud">
+            <column name="control" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2980-3" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_R_MERCURY_CONTROL" baseTableName="reagent" baseColumnNames="control"
+                referencedTableName="mercury_control" referencedColumnNames="mercury_control_id"/>
+    </changeSet>
 </databaseChangeLog>

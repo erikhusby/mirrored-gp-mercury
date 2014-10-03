@@ -10,6 +10,7 @@ import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -25,6 +26,7 @@ import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
@@ -69,7 +71,10 @@ public class ControlReagentContainerTest extends Arquillian {
             }
             File tempFile = File.createTempFile("ControlReagents", ".xlsx");
             workbook.write(new FileOutputStream(tempFile));
-            controlReagentFactory.buildTubesFromSpreadsheet(new FileInputStream(tempFile), new MessageCollection());
+            MessageCollection messageCollection = new MessageCollection();
+            List<BarcodedTube> barcodedTubes = controlReagentFactory.buildTubesFromSpreadsheet(
+                    new FileInputStream(tempFile), messageCollection);
+            Assert.assertFalse(messageCollection.hasErrors());
         } catch (IOException | InvalidFormatException e) {
             throw new RuntimeException(e);
         }
