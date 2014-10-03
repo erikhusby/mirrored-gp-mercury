@@ -72,11 +72,12 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Produ
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
+import org.broadinstitute.gpinformatics.infrastructure.common.MercuryEnumUtils;
 import org.broadinstitute.gpinformatics.infrastructure.common.MercuryStringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
@@ -809,12 +810,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         definitionValue.put(PRODUCT, productTokenInput.getBusinessKeyList());
 
-        List<String> statusStrings = ProductOrder.OrderStatus.getStrings(selectedStatuses);
-        List<String> ledgerStatusStrings = ProductOrder.LedgerStatus.getStrings(selectedLedgerStatuses);
+        definitionValue.put(STATUS, MercuryEnumUtils.convertToStrings(selectedStatuses));
 
-        definitionValue.put(STATUS, statusStrings);
-
-        definitionValue.put(LEDGER_STATUS, ledgerStatusStrings);
+        definitionValue.put(LEDGER_STATUS, MercuryEnumUtils.convertToStrings(selectedLedgerStatuses));
 
         definitionValue.put(DATE, getDateRange().createDateStrings());
 
@@ -839,12 +837,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         int detailIndex = 0;
         initializeKitDetails();
         for (ProductOrderKitDetail kitDetail : kitDetails) {
-            List<String> postReceiveOptions = new ArrayList<>();
-            for (PostReceiveOption postReceiveOption : kitDetail.getPostReceiveOptions()) {
-                postReceiveOptions.add(postReceiveOption.name());
-            }
-            postReceiveOptionKeys.put(detailIndex, postReceiveOptions);
-            detailIndex++;
+            postReceiveOptionKeys.put(detailIndex++,
+                    MercuryEnumUtils.convertToStrings(kitDetail.getPostReceiveOptions()));
         }
     }
 

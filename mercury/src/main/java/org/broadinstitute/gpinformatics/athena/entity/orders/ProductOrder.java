@@ -331,8 +331,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
         // This gets all the sample names. We could get unique sample names from BSP as a future optimization.
         SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
-        Map<String, SampleData> bspSampleMetaData = sampleDataFetcher.fetchSampleData(
-                (Collection<String>) bspSampleNames);
+        Map<String, SampleData> bspSampleMetaData = sampleDataFetcher.fetchSampleData(bspSampleNames);
 
         // The non-null DTOs which we use to look up FFPE status.
         List<SampleData> nonNullDTOs = new ArrayList<>();
@@ -1107,13 +1106,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         SUMMARY("Summary");
 
         private final String fieldName;
-        private boolean nullable;
+        private final boolean nullable;
 
         JiraField(String fieldName) {
             this(fieldName, false);
         }
 
-        private JiraField(String fieldName, boolean nullable) {
+        JiraField(String fieldName, boolean nullable) {
             this.fieldName = fieldName;
             this.nullable = nullable;
         }
@@ -1157,26 +1156,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             return statuses;
         }
 
-        /**
-         * This is a utility function to pull out the names of the statuses so that items can be used in queries.
-         *
-         * @param statuses The status enums that were selected.
-         *
-         * @return The string list.
-         */
-        public static List<String> getStrings(List<OrderStatus> statuses) {
-            if (CollectionUtils.isEmpty(statuses)) {
-                return Collections.emptyList();
-            }
-
-            List<String> statusStrings = new ArrayList<>(statuses.size());
-            for (ProductOrder.OrderStatus status : statuses) {
-                statusStrings.add(status.name());
-            }
-
-            return statusStrings;
-        }
-
         @Override
         public String getDisplayName() {
             return name();
@@ -1201,7 +1180,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         READY_FOR_REVIEW("Review"),
         READY_TO_BILL("Ready to Bill"),
         BILLING("Billing Started");
-        private String displayName;
+
+        private final String displayName;
 
         LedgerStatus(String displayName) {
             this.displayName = displayName;
@@ -1215,36 +1195,12 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
          * @return The statuses that are listed.
          */
         public static List<LedgerStatus> getFromNames(@Nonnull List<String> statusStrings) {
-            if (CollectionUtils.isEmpty(statusStrings)) {
-                return Collections.emptyList();
-            }
-
             List<LedgerStatus> statuses = new ArrayList<>();
             for (String statusString : statusStrings) {
                 statuses.add(LedgerStatus.valueOf(statusString));
             }
 
             return statuses;
-        }
-
-        /**
-         * Get the status item names from the ledger statuses.
-         *
-         * @param statuses The statuses
-         *
-         * @return The list of strings
-         */
-        public static List<String> getStrings(List<LedgerStatus> statuses) {
-            if (CollectionUtils.isEmpty(statuses)) {
-                return Collections.emptyList();
-            }
-
-            List<String> statusStrings = new ArrayList<>();
-            for (ProductOrder.LedgerStatus status : statuses) {
-                statusStrings.add(status.name());
-            }
-
-            return statusStrings;
         }
 
         public static void addEntryBasedOnStatus(

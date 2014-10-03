@@ -141,9 +141,6 @@ public class ProductOrderEjb {
         editedProductOrder.prepareToSave(userBean.getBspUser(), saveType);
 
         if (editedProductOrder.isDraft()) {
-            // mlc isDraft checks if the status is Draft and if so, we set it to Draft again?
-            editedProductOrder.setOrderStatus(OrderStatus.Draft);
-
             if (editedProductOrder.isSampleInitiation()) {
                 Map<Long, ProductOrderKitDetail> mapKitDetailsByIDs = new HashMap<>();
                 Iterator<ProductOrderKitDetail> kitDetailIterator =
