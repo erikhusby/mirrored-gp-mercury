@@ -2,13 +2,15 @@ package org.broadinstitute.gpinformatics.mercury.control.zims;
 
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
@@ -24,6 +26,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexRea
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -33,6 +36,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
+import org.broadinstitute.gpinformatics.mercury.test.CrspControlsTestUtils;
 import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -55,14 +59,25 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ZimsIlluminaRunFactoryTest {
 
+    private static final String POSITIVE_CONTROL_SAMPLE_COLLABORATOR_ID = "NA12878";
+    private static final String BSP_SM_ID_FOR_POSITIVE_CONTROL = "SM-59YAY";
+    private static final SampleData POSITIVE_CONTROL_SAMPLE_DTO = new BspSampleData(new HashMap<BSPSampleSearchColumn, String>() {{
+        put(BSPSampleSearchColumn.STOCK_SAMPLE, BSP_SM_ID_FOR_POSITIVE_CONTROL);
+        put(BSPSampleSearchColumn.ROOT_SAMPLE, BSP_SM_ID_FOR_POSITIVE_CONTROL);
+        put(BSPSampleSearchColumn.SAMPLE_ID, BSP_SM_ID_FOR_POSITIVE_CONTROL);
+        put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, POSITIVE_CONTROL_SAMPLE_COLLABORATOR_ID);
+    }});
+
+    private ResearchProject crspPositiveControlsResearchProject;
+    private ResearchProjectDao mockResearchProjectDao;
     private static final String PRODUCT_ORDER_KEY = "TestPDO-1";
     private static final short LANE_NUMBER = 1;
-    private final Map<String, BSPSampleDTO> mapSampleIdToDto = new HashMap<>();
+    private final Map<String, SampleData> mapSampleIdToDto = new HashMap<>();
     private final Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<>();
     private final List<String> testSampleIds = new ArrayList<>();
     private ZimsIlluminaRunFactory zimsIlluminaRunFactory;
     private IlluminaFlowcell flowcell;
-    private BSPSampleDataFetcher mockBSPSampleDataFetcher;
+    private SampleDataFetcher mockSampleDataFetcher;
     private ControlDao mockControlDao;
     private ProductOrder testProductOrder;
     private JiraService mockJiraService;
@@ -70,19 +85,30 @@ public class ZimsIlluminaRunFactoryTest {
     private List<MolecularIndexReagent> reagents;
     private static final ResearchProject.RegulatoryDesignation
             REGULATORY_DESIGNATION = ResearchProject.RegulatoryDesignation.CLINICAL_DIAGNOSTICS;
+    private Map<String, Control> controlMap;
+
+    private void setupCrsp() {
+        CrspControlsTestUtils crspControlsTestUtils = new CrspControlsTestUtils();
+        crspPositiveControlsResearchProject = crspControlsTestUtils.getMockCrspControlsProject();
+        mockResearchProjectDao = crspControlsTestUtils.getMockResearchProjectDao();
+    }
+
 
     @BeforeMethod(groups = DATABASE_FREE)
     public void setUp() {
+        setupCrsp();
         testSampleIds.clear();
-        testSampleIds.add("TestSM-0");
-        testSampleIds.add("TestSM-1");
-        testSampleIds.add("TestSM-2");
+        testSampleIds.add("SM-59HLV");
+        testSampleIds.add("SM-59HLW");
+        testSampleIds.add("SM-59HLX");
+        testSampleIds.add(BSP_SM_ID_FOR_POSITIVE_CONTROL);
 
-        mockBSPSampleDataFetcher = Mockito.mock(BSPSampleDataFetcher.class);
+        mockSampleDataFetcher = Mockito.mock(SampleDataFetcher.class);
         mockControlDao = Mockito.mock(ControlDao.class);
 
         mockJiraService = Mockito.mock(JiraService.class);
         productOrderDao = Mockito.mock(ProductOrderDao.class);
+
         Mockito.when(mockJiraService.createTicketUrl(Mockito.anyString())).thenReturn("jira://LCSET-1");
 
         // Create a test product
@@ -90,8 +116,8 @@ public class ZimsIlluminaRunFactoryTest {
                                           "P-TEST-1", new Date(), new Date(), 0, 0, 0, 0, "Test samples only", "None",
                                           true, Workflow.AGILENT_EXOME_EXPRESS, false, "agg type");
 
-        zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(mockBSPSampleDataFetcher, mockControlDao,
-                new SequencingTemplateFactory(), productOrderDao);
+        zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(mockSampleDataFetcher, mockControlDao,
+                new SequencingTemplateFactory(), productOrderDao, mockResearchProjectDao);
         LabEventFactory labEventFactory = new LabEventFactory(null, null);
         labEventFactory.setLabEventRefDataFetcher(new LabEventRefDataFetcher() {
             @Override
@@ -119,7 +145,9 @@ public class ZimsIlluminaRunFactoryTest {
         // Create a test product order
         List<ProductOrderSample> pdoSamples = new ArrayList<>();
         for (String testSampleId : testSampleIds) {
-            pdoSamples.add(new ProductOrderSample(testSampleId));
+            if (!testSampleId.equals(BSP_SM_ID_FOR_POSITIVE_CONTROL)) {
+                pdoSamples.add(new ProductOrderSample(testSampleId));
+            }
         }
         testProductOrder =
                 new ProductOrder(101L, "Test Order", pdoSamples, "Quote-1", testProduct, testResearchProject);
@@ -134,6 +162,9 @@ public class ZimsIlluminaRunFactoryTest {
         // Makes BSP data for each sample.
         for (int i = 0; i < testSampleIds.size(); ++i) {
             final String sampleId = testSampleIds.get(i);
+            if (isPositiveControl(sampleId)) {
+                mapSampleIdToDto.put(sampleId, POSITIVE_CONTROL_SAMPLE_DTO);
+            } else {
             Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>() {{
                 put(BSPSampleSearchColumn.CONTAINER_ID, "BspContainer");
                 put(BSPSampleSearchColumn.STOCK_SAMPLE, sampleId + "stock");
@@ -159,67 +190,99 @@ public class ZimsIlluminaRunFactoryTest {
                 put(BSPSampleSearchColumn.RACKSCAN_MISMATCH, "false");
                 put(BSPSampleSearchColumn.RIN, "8.4");
             }};
-            mapSampleIdToDto.put(sampleId, new BSPSampleDTO(dataMap));
+            mapSampleIdToDto.put(sampleId, new BspSampleData(dataMap));
+            }
         }
 
         mapKeyToProductOrder.clear();
         mapKeyToProductOrder.put(PRODUCT_ORDER_KEY, testProductOrder);
 
         flowcell = new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.HiSeqFlowcell, "testFlowcell");
-
+        setupPositiveControlMap();
     }
 
     /** Creates multiple dtos, one for each combination of testSampleId and testLabBatchType. */
     private List<ZimsIlluminaRunFactory.SampleInstanceDto> createSampleInstanceDto(
-            LabBatch.LabBatchType... testLabBatchTypes) {
+            boolean areCrspSamples, LabBatch.LabBatchType... testLabBatchTypes) {
         List<ZimsIlluminaRunFactory.SampleInstanceDto> sampleInstanceDtoList = new ArrayList<>();
+        String metadataSourceForPipeline = MercurySample.BSP_METADATA_SOURCE;
+        if (areCrspSamples) {
+            metadataSourceForPipeline = MercurySample.MERCURY_METADATA_SOURCE;
+        }
 
         for (int sampleIdx = 0; sampleIdx < testSampleIds.size(); ++sampleIdx) {
             String sourceTubeBarcode = "testTube" + sampleIdx;
             BarcodedTube testTube = new BarcodedTube(sourceTubeBarcode);
 
-            MercurySample mercurySample = new MercurySample(testSampleIds.get(sampleIdx),
+            String sampleId = testSampleIds.get(sampleIdx);
+            MercurySample mercurySample = new MercurySample(sampleId,
                     MercurySample.MetadataSource.BSP);
             testTube.addSample(mercurySample);
 
-            BucketEntry bucketEntry =
-                    new BucketEntry(testTube, testProductOrder, BucketEntry.BucketEntryType.PDO_ENTRY);
+            if (!isPositiveControl(sampleId)) {
+                BucketEntry bucketEntry =
+                        new BucketEntry(testTube, testProductOrder, BucketEntry.BucketEntryType.PDO_ENTRY);
 
-            for (int batchTypeIdx = 0; batchTypeIdx < testLabBatchTypes.length; batchTypeIdx++) {
-                LabBatch.LabBatchType testLabBatchType = testLabBatchTypes[batchTypeIdx];
-                int suffix = batchTypeIdx + 1;
-                String batchName = testLabBatchType.name() + "-" + suffix;
-                if (testLabBatchType == LabBatch.LabBatchType.WORKFLOW) {
-                    batchName = "LCSET-" + suffix;
+                for (int batchTypeIdx = 0; batchTypeIdx < testLabBatchTypes.length; batchTypeIdx++) {
+                    LabBatch.LabBatchType testLabBatchType = testLabBatchTypes[batchTypeIdx];
+                    int suffix = batchTypeIdx + 1;
+                    String batchName = testLabBatchType.name() + "-" + suffix;
+                    if (testLabBatchType == LabBatch.LabBatchType.WORKFLOW) {
+                        batchName = "LCSET-" + suffix;
+                    }
+                    LabBatch batch = new LabBatch(batchName, Collections.<LabVessel>singleton(testTube), testLabBatchType);
+
+                    SampleInstanceV2 instance = new SampleInstanceV2(testTube);
+                    instance.addReagent(reagents.get(sampleIdx));
+
+                    if (testLabBatchType == LabBatch.LabBatchType.WORKFLOW) {
+                        JiraTicket lcSetTicket = new JiraTicket(mockJiraService, batchName);
+                        batch.setJiraTicket(lcSetTicket);
+                        batch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
+                        batch.addBucketEntry(bucketEntry);
+                        bucketEntry.setLabBatch(batch);
+                    }
+                    sampleInstanceDtoList.add(new ZimsIlluminaRunFactory.SampleInstanceDto(LANE_NUMBER, testTube, instance,
+                                                                                           sampleId, getPdoKeyForSample(sampleId), null, null, mercurySample.getSampleKey(),
+                                                                                           areCrspSamples,metadataSourceForPipeline));
                 }
-                LabBatch batch = new LabBatch(batchName, Collections.<LabVessel>singleton(testTube), testLabBatchType);
-
+            }
+            else {
                 SampleInstanceV2 instance = new SampleInstanceV2(testTube);
                 instance.addReagent(reagents.get(sampleIdx));
-
-                if (testLabBatchType == LabBatch.LabBatchType.WORKFLOW) {
-                    JiraTicket lcSetTicket = new JiraTicket(mockJiraService, batchName);
-                    batch.setJiraTicket(lcSetTicket);
-                    batch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
-                    batch.addBucketEntry(bucketEntry);
-                    bucketEntry.setLabBatch(batch);
-                }
                 sampleInstanceDtoList.add(new ZimsIlluminaRunFactory.SampleInstanceDto(LANE_NUMBER, testTube, instance,
-                        testSampleIds.get(sampleIdx), PRODUCT_ORDER_KEY, null, null, mercurySample.getSampleKey()));
+                                                                                       sampleId, getPdoKeyForSample(sampleId), null, null, mercurySample.getSampleKey(),
+                                                                                       areCrspSamples,metadataSourceForPipeline));
             }
+
+
+
         }
         return sampleInstanceDtoList;
+    }
+
+    private String getPdoKeyForSample(String sampleId) {
+        String pdoKey = PRODUCT_ORDER_KEY;
+        if (isPositiveControl(sampleId)) {
+            pdoKey = null;
+        }
+        return pdoKey;
+    }
+
+    private boolean isPositiveControl(String sampleId) {
+        return BSP_SM_ID_FOR_POSITIVE_CONTROL.equals(sampleId);
     }
 
 
     @Test(groups = DATABASE_FREE)
     public void testGetLibraryTwoLcSetBatches() {
         List<ZimsIlluminaRunFactory.SampleInstanceDto> instanceDtoList =
-                createSampleInstanceDto(LabBatch.LabBatchType.WORKFLOW, LabBatch.LabBatchType.WORKFLOW,
+                createSampleInstanceDto(false, LabBatch.LabBatchType.WORKFLOW, LabBatch.LabBatchType.WORKFLOW,
                                         LabBatch.LabBatchType.BSP);
         try {
             List<LibraryBean> zimsIlluminaRuns = zimsIlluminaRunFactory.makeLibraryBeans(
-                    instanceDtoList, mapSampleIdToDto, mapKeyToProductOrder, Collections.EMPTY_MAP);
+                    instanceDtoList, mapSampleIdToDto, mapKeyToProductOrder, Collections.EMPTY_MAP,
+                    crspPositiveControlsResearchProject);
 
         } catch (RuntimeException r) {
             assertThat(r.getLocalizedMessage(), equalTo("Expected one LabBatch but found 2."));
@@ -259,12 +322,16 @@ public class ZimsIlluminaRunFactoryTest {
     public void testMakeLibraryBean() {
         final int numberOfBatchTypeParameters = 2;
         List<ZimsIlluminaRunFactory.SampleInstanceDto> instanceDtoList =
-                createSampleInstanceDto(LabBatch.LabBatchType.WORKFLOW, LabBatch.LabBatchType.BSP);
-        assertThat(instanceDtoList.size(), equalTo(testSampleIds.size() * numberOfBatchTypeParameters));
+                createSampleInstanceDto(false, LabBatch.LabBatchType.WORKFLOW, LabBatch.LabBatchType.BSP);
+        int numSampleInstancesExpected = (testSampleIds.size() * numberOfBatchTypeParameters) - 1; // subtract out the control since it's not in a batch
+        assertThat(instanceDtoList.size(), equalTo(numSampleInstancesExpected));
 
         List<LibraryBean>  zimsIlluminaRuns = zimsIlluminaRunFactory.makeLibraryBeans(
-                instanceDtoList, mapSampleIdToDto, mapKeyToProductOrder, Collections.EMPTY_MAP);
+                instanceDtoList, mapSampleIdToDto, mapKeyToProductOrder, Collections.EMPTY_MAP,
+                crspPositiveControlsResearchProject);
 
+        int numPositiveControls = 0;
+        boolean foundNonControlSamples = false;
         for (LibraryBean libraryBean : zimsIlluminaRuns) {
             String sampleId = libraryBean.getSampleId();
             int testSampleIdsIndex = findSampleIndex(sampleId);
@@ -273,35 +340,80 @@ public class ZimsIlluminaRunFactoryTest {
             Assert.assertNotNull(reagentIndexName, "no index for " + sampleId);
             String tubeBarcode = "testTube" + testSampleIdsIndex;
 
-            assertThat(libraryBean.getLibrary(), equalTo(tubeBarcode + "_" + reagentIndexName));
-            assertThat(libraryBean.getProject(), nullValue());
-            assertThat(libraryBean.getMolecularIndexingScheme().getName(), equalTo(reagentIndexName));
-            assertThat(libraryBean.getSpecies(), equalTo("Hamster"));
-            assertThat(libraryBean.getLsid(), equalTo("ZimsIlluminaRunFactoryTest.testMakeLibraryBean.sampleDTO"));
-            assertThat(libraryBean.getParticipantId(), equalTo("Spencer"));
-//xxx            assertThat(libraryBean.getLcSet(), equalTo("LCSET-1"));
-            assertThat(libraryBean.getProductOrderTitle(), equalTo("Test Order"));
-            assertThat(libraryBean.getProductOrderKey(), equalTo("TestPDO-1"));
-            assertThat(libraryBean.getResearchProjectName(), equalTo("Test Project"));
-            assertThat(libraryBean.getResearchProjectId(), equalTo("TestRP-1"));
-            assertThat(libraryBean.getProduct(), equalTo("Test Product"));
-            assertThat(libraryBean.getDataType(), equalTo("agg type"));
-            assertThat(libraryBean.getProductFamily(), equalTo("Test Product Family"));
-            assertThat(libraryBean.getRootSample(), equalTo(sampleId + "root"));
-            assertThat(libraryBean.getGender(), equalTo("M"));
-            assertThat(libraryBean.getCollection(), equalTo("collection1"));
-            assertThat(libraryBean.getPrimaryDisease(), equalTo("Test failure"));
-            assertThat(libraryBean.getCollaboratorSampleId(), equalTo(sampleId + "collaborator"));
-            assertThat(libraryBean.getCollaboratorParticipantId(), equalTo(sampleId + "participant"));
-            assertThat(libraryBean.getMaterialType(), equalTo("Test Material"));
-            assertThat(libraryBean.getIsGssrSample(), equalTo(false));
-            assertThat(libraryBean.getPopulation(), equalTo("unknown"));
-            assertThat(libraryBean.getRace(), equalTo("N/A"));
-            // in mercury, pipeline should always be told to aggregate
-            assertThat(libraryBean.doAggregation(), equalTo(true));
-            assertThat(libraryBean.getProductOrderSample(), equalTo(sampleId));
-            assertThat("The pipeline API expects enum names for regulatory designations",libraryBean.getRegulatoryDesignation(),equalTo(REGULATORY_DESIGNATION.name()));
+            if (!isPositiveControl(sampleId)) {
+                foundNonControlSamples = true;
+                assertThat(libraryBean.getLibrary(), equalTo(tubeBarcode + "_" + reagentIndexName));
+                assertThat(libraryBean.getProject(), nullValue());
+                assertThat(libraryBean.getMolecularIndexingScheme().getName(), equalTo(reagentIndexName));
+                assertThat(libraryBean.getSpecies(), equalTo("Hamster"));
+                assertThat(libraryBean.getLsid(), equalTo("ZimsIlluminaRunFactoryTest.testMakeLibraryBean.sampleDTO"));
+                assertThat(libraryBean.getParticipantId(), equalTo("Spencer"));
+    //xxx            assertThat(libraryBean.getLcSet(), equalTo("LCSET-1"));
+                assertThat(libraryBean.getProductOrderTitle(), equalTo("Test Order"));
+                assertThat(libraryBean.getProductOrderKey(), equalTo("TestPDO-1"));
+                assertThat(libraryBean.getResearchProjectName(), equalTo("Test Project"));
+                assertThat(libraryBean.getResearchProjectId(), equalTo("TestRP-1"));
+                assertThat(libraryBean.getProduct(), equalTo("Test Product"));
+                assertThat(libraryBean.getDataType(), equalTo("agg type"));
+                assertThat(libraryBean.getProductFamily(), equalTo("Test Product Family"));
+                assertThat(libraryBean.getRootSample(), equalTo(sampleId + "root"));
+                assertThat(libraryBean.getGender(), equalTo("M"));
+                assertThat(libraryBean.getCollection(), equalTo("collection1"));
+                assertThat(libraryBean.getPrimaryDisease(), equalTo("Test failure"));
+                assertThat(libraryBean.getCollaboratorSampleId(), equalTo(sampleId + "collaborator"));
+                assertThat(libraryBean.getCollaboratorParticipantId(), equalTo(sampleId + "participant"));
+                assertThat(libraryBean.getMaterialType(), equalTo("Test Material"));
+                assertThat(libraryBean.getIsGssrSample(), equalTo(false));
+                assertThat(libraryBean.getPopulation(), equalTo("unknown"));
+                assertThat(libraryBean.getRace(), equalTo("N/A"));
+                // in mercury, pipeline should always be told to aggregate
+                assertThat(libraryBean.doAggregation(), equalTo(true));
+                assertThat(libraryBean.getProductOrderSample(), equalTo(sampleId));
+                assertThat("The pipeline API expects enum names for regulatory designations",libraryBean.getRegulatoryDesignation(),equalTo(REGULATORY_DESIGNATION.name()));
+                assertThat(libraryBean.getMetadataSource(),equalTo(MercurySample.BSP_METADATA_SOURCE));
+            }
+            else {
+                numPositiveControls++;
+            }
         }
+        Assert.assertEquals(numPositiveControls,1);
+        Assert.assertTrue(foundNonControlSamples);
+    }
+
+    private void setupPositiveControlMap() {
+        controlMap = new HashMap<>();
+        for (String sampleId : testSampleIds) {
+            if (sampleId.equals(BSP_SM_ID_FOR_POSITIVE_CONTROL)) {
+                SampleData sampleData = mapSampleIdToDto.get(sampleId);
+                String collaboratorSampleName = sampleData.getCollaboratorsSampleName();
+                controlMap.put(collaboratorSampleName,new Control(collaboratorSampleName, Control.ControlType.POSITIVE));
+            }
+        }
+    }
+
+    @Test(groups = DATABASE_FREE)
+    public void testCrspPositiveControls() {
+        testProductOrder.getResearchProject().setRegulatoryDesignation(ResearchProject.RegulatoryDesignation.GENERAL_CLIA_CAP);
+
+        List<ZimsIlluminaRunFactory.SampleInstanceDto> instanceDtoList =
+                createSampleInstanceDto(true, LabBatch.LabBatchType.WORKFLOW);
+
+        List<LibraryBean>  libraryBeans = zimsIlluminaRunFactory.makeLibraryBeans(
+                instanceDtoList, mapSampleIdToDto, mapKeyToProductOrder, controlMap,
+                crspPositiveControlsResearchProject);
+
+        boolean hasPositiveControl = false;
+        for (LibraryBean libraryBean : libraryBeans) {
+            Assert.assertEquals(libraryBean.getRootSample(),libraryBean.getSampleId());
+            Assert.assertEquals(libraryBean.getMetadataSource(), MercurySample.MERCURY_METADATA_SOURCE);
+
+            if (Boolean.TRUE.equals(libraryBean.isPositiveControl())) {
+                hasPositiveControl = true;
+                Assert.assertTrue(libraryBean.getLsid().startsWith("org.broadinstitute:crsp:"));
+                Assert.assertEquals(libraryBean.getCollaboratorParticipantId(),libraryBean.getCollaboratorSampleId());
+            }
+        }
+        Assert.assertTrue(hasPositiveControl);
     }
 
     /**
@@ -311,7 +423,7 @@ public class ZimsIlluminaRunFactoryTest {
     @Test(groups = DATABASE_FREE)
     public void testSplitRejoinWorkflowConsolidation() {
         List<ZimsIlluminaRunFactory.SampleInstanceDto> dtoList1 =
-                createSampleInstanceDto(LabBatch.LabBatchType.WORKFLOW);
+                createSampleInstanceDto(false, LabBatch.LabBatchType.WORKFLOW);
         // Hacks the dtos so all have the same molecular index name.
         for (ZimsIlluminaRunFactory.SampleInstanceDto dto : dtoList1) {
             dto.getSampleInstance().getReagents().clear();
@@ -320,7 +432,7 @@ public class ZimsIlluminaRunFactoryTest {
 
         // First tests that no consolidation happens, because the sample names are different.
         List<LibraryBean> unconsolidatedBeans1 = zimsIlluminaRunFactory.makeLibraryBeans(dtoList1,
-                mapSampleIdToDto, mapKeyToProductOrder, Collections.EMPTY_MAP);
+                mapSampleIdToDto, mapKeyToProductOrder, Collections.EMPTY_MAP, crspPositiveControlsResearchProject);
         assertThat(unconsolidatedBeans1.size(), equalTo(testSampleIds.size()));
 
 
@@ -328,11 +440,11 @@ public class ZimsIlluminaRunFactoryTest {
         testSampleIds.remove(1);
         testSampleIds.add(testSampleIds.get(0));
         List<ZimsIlluminaRunFactory.SampleInstanceDto> dtoList2 =
-                createSampleInstanceDto(LabBatch.LabBatchType.WORKFLOW);
+                createSampleInstanceDto(false, LabBatch.LabBatchType.WORKFLOW);
 
         // Second tests no consolidation of same sample, different molecular name dtos.
         List<LibraryBean> unconsolidatedBeans2 = zimsIlluminaRunFactory.makeLibraryBeans(dtoList2,
-                mapSampleIdToDto, mapKeyToProductOrder, Collections.EMPTY_MAP);
+                mapSampleIdToDto, mapKeyToProductOrder, Collections.EMPTY_MAP, crspPositiveControlsResearchProject);
         assertThat(unconsolidatedBeans2.size(), equalTo(testSampleIds.size()));
 
         // Using the dto list with first two dtos having same sampleId, make all the molecular index names the same.
@@ -343,7 +455,7 @@ public class ZimsIlluminaRunFactoryTest {
 
         // Tests consolidation of the first two dtos.
         List<LibraryBean> consolidatedBeans = zimsIlluminaRunFactory.makeLibraryBeans(dtoList2,
-                mapSampleIdToDto, mapKeyToProductOrder, Collections.EMPTY_MAP);
+                mapSampleIdToDto, mapKeyToProductOrder, Collections.EMPTY_MAP, crspPositiveControlsResearchProject);
         assertThat(consolidatedBeans.size(), equalTo(testSampleIds.size() - 1));
     }
 

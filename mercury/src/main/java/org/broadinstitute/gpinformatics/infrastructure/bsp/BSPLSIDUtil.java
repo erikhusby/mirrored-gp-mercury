@@ -19,6 +19,10 @@ public class BSPLSIDUtil {
         return lsid.substring(lsid.lastIndexOf(':') + 1);
     }
 
+    public static String lsidToBspSampleId(String lsid) {
+        return "SM-" + lsidToBareId(lsid);
+    }
+
     /**
      * Return a mapping from each LSID in the input collection to a bare Sample ID
      * (ID without an SM- or SP- prefix) suitable for feeding to the runSampleSearch method
@@ -26,7 +30,6 @@ public class BSPLSIDUtil {
      * @param lsids LSIDs to map
      *
      * @return mapping from LSIDs to samples
-     *
      */
     public static Map<String, String> lsidsToBareIds(Collection<String> lsids) {
         Map<String, String> ret = new HashMap<>();
@@ -36,5 +39,13 @@ public class BSPLSIDUtil {
         }
 
         return ret;
+    }
+
+    public static Map<String, String> lsidsToBspSampleIds(Collection<String> lsids) {
+        Map<String, String> result=new HashMap<>();
+        for (String lsid : lsids) {
+            result.put(lsid, lsidToBspSampleId(lsid));
+        }
+        return result;
     }
 }

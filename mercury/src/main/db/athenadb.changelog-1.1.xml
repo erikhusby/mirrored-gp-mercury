@@ -1182,5 +1182,12 @@
         <addNotNullConstraint tableName="RESEARCH_PROJECT" columnName="REGULATORY_DESIGNATION" defaultNullValue="RESEARCH_ONLY"/>
     </changeSet>
 
+    <changeSet id="GPLIM-2888-set-rp805-clia-cap" author="andrew">
+        <!-- Data updates should be done via a fixup script, not via direct SQL in liquibase! -->
+        <sql>
+            update research_project set regulatory_designation = 'GENERAL_CLIA_CAP' where jira_ticket_key = 'RP-805'
+        </sql>
+    </changeSet>
+
 
 </databaseChangeLog>

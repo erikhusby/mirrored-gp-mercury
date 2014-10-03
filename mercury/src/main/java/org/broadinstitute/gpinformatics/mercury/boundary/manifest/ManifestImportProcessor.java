@@ -11,11 +11,15 @@
 
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
+import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -32,7 +36,7 @@ import java.util.Map;
 public class ManifestImportProcessor extends TableProcessor {
     private static final int ALLOWABLE_NUMBER_OF_SHEETS = 1;
     private ColumnHeader[] columnHeaders;
-    private Collection<ManifestRecord> manifestRecords = new ArrayList<>();
+    private List<ManifestRecord> manifestRecords = new ArrayList<>();
     static final String UNKNOWN_HEADER_FORMAT = "Unknown header(s) '%s'.";
     static final String DUPLICATE_HEADER_FORMAT = "Duplicate header found: %s";
 
@@ -71,13 +75,15 @@ public class ManifestImportProcessor extends TableProcessor {
         }
     }
 
-
     /**
      * Iterate through the data and add it to the list of ManifestRecords.
      */
     @Override
     public void processRowDetails(Map<String, String> dataRow, int dataRowIndex) {
-        manifestRecords.add(new ManifestRecord(ManifestHeader.toMetadata(dataRow)));
+        ManifestRecord manifestRecord = new ManifestRecord(ManifestHeader.toMetadata(dataRow));
+        // The dataRowIndex is 1-based, but the manifest index is 0-based.
+        manifestRecord.setManifestRecordIndex(dataRowIndex - 1);
+        manifestRecords.add(manifestRecord);
     }
 
     /**
@@ -87,7 +93,7 @@ public class ManifestImportProcessor extends TableProcessor {
      *
      * @throws ValidationException if there were any errors.
      */
-    public Collection<ManifestRecord> getManifestRecords() throws ValidationException {
+    public List<ManifestRecord> getManifestRecords() throws ValidationException {
         if (!getMessages().isEmpty()) {
             throw new ValidationException("There was an error importing the Manifest.", getMessages());
         }
@@ -130,4 +136,11 @@ public class ManifestImportProcessor extends TableProcessor {
         }
     }
 
+    /**
+     * Read a single worksheet from the specified InputStream using this ManifestImportProcessor.
+     */
+    public List<String> processSingleWorksheet(InputStream inputStream)
+            throws InvalidFormatException, IOException, ValidationException {
+        return PoiSpreadsheetParser.processSingleWorksheet(inputStream, this);
+    }
 }

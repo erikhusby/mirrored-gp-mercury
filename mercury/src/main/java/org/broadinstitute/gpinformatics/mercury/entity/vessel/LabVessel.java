@@ -223,7 +223,7 @@ public abstract class LabVessel implements Serializable {
 
     public boolean isDNA() {
         for (SampleInstance si : getSampleInstances()) {
-            if (!si.getStartingSample().getBspSampleDTO().getMaterialType().startsWith("DNA:")) {
+            if (!si.getStartingSample().getSampleData().getMaterialType().startsWith("DNA:")) {
                 return false;
             }
         }
@@ -1751,7 +1751,6 @@ public abstract class LabVessel implements Serializable {
 
     /**
      * This method gets a map of all of the metrics from this vessel and all ancestor/descendant vessels.
-     * TODO jac should this be a traversal criteria?
      *
      * @return Returns a map of lab metrics keyed by the metric display name.
      */
@@ -1760,7 +1759,7 @@ public abstract class LabVessel implements Serializable {
         if (metricMap == null) {
             metricMap = new HashMap<>();
             allMetrics.addAll(getMetrics());
-            for (LabVessel curVessel : getAncestorAndDescendantVessels()) {
+            for (LabVessel curVessel : getDescendantVessels()) {
                 allMetrics.addAll(curVessel.getMetrics());
             }
             Set<LabMetric> metricSet;
@@ -1861,4 +1860,22 @@ public abstract class LabVessel implements Serializable {
     }
 
 
+    /**
+     * Allows the caller to determine if the current vessel or any of its ancestors have been involved in a tube
+     * transfer for clinical work.
+     *
+     * @return true if the vessel is affiliated with clinical work
+     */
+    public boolean doesChainOfCustodyInclude(LabEventType labEventType) {
+
+        if (LabEvent.isEventPresent(getEvents(), labEventType)) {
+            return true;
+        }
+
+        TransferTraverserCriteria.LabEventDescendantCriteria eventTraversalCriteria =
+                new TransferTraverserCriteria.LabEventDescendantCriteria();
+        evaluateCriteria(eventTraversalCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+
+        return LabEvent.isEventPresent(eventTraversalCriteria.getAllEvents(), LabEventType.COLLABORATOR_TRANSFER);
+    }
 }
