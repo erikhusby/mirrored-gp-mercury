@@ -248,12 +248,6 @@ public class SearchDefinitionFactory {
             }
         });
         searchTerms.add(searchTerm);
-
-        searchTerm = new SearchTerm();
-        searchTerm.setName("Lab Metrics");
-        searchTerm.setPluginClass(LabVesselMetricPlugin.class);
-        searchTerms.add(searchTerm);
-
         return searchTerms;
     }
 
