@@ -18,27 +18,27 @@ import java.util.List;
 public class ControlDao extends GenericDao {
 
     /**
-     * Finds an <u>active</u> control entity based on the sample ID
+     * Finds an <u>active</u> control entity based on the participant ID
      *
-     * @param sampleId collaborator sample ID associated with the control that we wish to find.
+     * @param participantId collaborator participant ID associated with the control that we wish to find.
      *
      * @return a single {@link org.broadinstitute.gpinformatics.mercury.entity.sample.Control} instance that relates to the query
      */
-    public Control findBySampleId(String sampleId) {
+    public Control findByParticipantId(String participantId) {
         return findSingle(Control.class, new ControlIdCallback(this, Control.ControlState.ACTIVE,
-                                                                                    sampleId));
+                                                                                    participantId));
     }
 
     /**
      * Finds an <u>inactive</u> control entity based on the sample ID
      *
-     * @param sampleId collaborator sample ID associated with the control that we wish to find.
+     * @param participantId collaborator participant ID associated with the control that we wish to find.
      *
      * @return a single {@link org.broadinstitute.gpinformatics.mercury.entity.sample.Control} instance that relates to the query
      */
-    public Control findInactiveBySampleId(String sampleId) {
+    public Control findInactiveByParticipantId(String participantId) {
         return findSingle(Control.class, new ControlIdCallback(this, Control.ControlState.INACTIVE,
-                                                                                    sampleId));
+                                                                                    participantId));
     }
 
 

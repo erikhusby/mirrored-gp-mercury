@@ -59,13 +59,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ZimsIlluminaRunFactoryTest {
 
-    private static final String POSITIVE_CONTROL_SAMPLE_COLLABORATOR_ID = "NA12878";
+    private static final String POSITIVE_CONTROL_SAMPLE_PARTICIPANT_ID = "NA12878";
     private static final String BSP_SM_ID_FOR_POSITIVE_CONTROL = "SM-59YAY";
     private static final SampleData POSITIVE_CONTROL_SAMPLE_DTO = new BspSampleData(new HashMap<BSPSampleSearchColumn, String>() {{
         put(BSPSampleSearchColumn.STOCK_SAMPLE, BSP_SM_ID_FOR_POSITIVE_CONTROL);
         put(BSPSampleSearchColumn.ROOT_SAMPLE, BSP_SM_ID_FOR_POSITIVE_CONTROL);
         put(BSPSampleSearchColumn.SAMPLE_ID, BSP_SM_ID_FOR_POSITIVE_CONTROL);
-        put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, POSITIVE_CONTROL_SAMPLE_COLLABORATOR_ID);
+        put(BSPSampleSearchColumn.PARTICIPANT_ID, POSITIVE_CONTROL_SAMPLE_PARTICIPANT_ID);
     }});
 
     private ResearchProject crspPositiveControlsResearchProject;
@@ -385,8 +385,8 @@ public class ZimsIlluminaRunFactoryTest {
         for (String sampleId : testSampleIds) {
             if (sampleId.equals(BSP_SM_ID_FOR_POSITIVE_CONTROL)) {
                 SampleData sampleData = mapSampleIdToDto.get(sampleId);
-                String collaboratorSampleName = sampleData.getCollaboratorsSampleName();
-                controlMap.put(collaboratorSampleName,new Control(collaboratorSampleName, Control.ControlType.POSITIVE));
+                String collaboratorParticipantId = sampleData.getCollaboratorParticipantId();
+                controlMap.put(collaboratorParticipantId,new Control(collaboratorParticipantId, Control.ControlType.POSITIVE));
             }
         }
     }

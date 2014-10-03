@@ -179,7 +179,7 @@ public class ZimsIlluminaRunFactory {
         List<Control> activeControls = controlDao.findAllActive();
         Map<String, Control> mapNameToControl = new HashMap<>();
         for (Control activeControl : activeControls) {
-            mapNameToControl.put(activeControl.getCollaboratorSampleId(), activeControl);
+            mapNameToControl.put(activeControl.getCollaboratorParticipantId(), activeControl);
         }
 
         Format dateFormat = FastDateFormat.getInstance(ZimsIlluminaRun.DATE_FORMAT);
@@ -376,7 +376,7 @@ public class ZimsIlluminaRunFactory {
         Boolean doAggregation = Boolean.TRUE;
 
         if (sampleData != null && productOrder == null) {
-            Control control = mapNameToControl.get(sampleData.getCollaboratorsSampleName());
+            Control control = mapNameToControl.get(sampleData.getCollaboratorParticipantId());
             if (control != null) {
                 switch (control.getType()) {
                 case POSITIVE:

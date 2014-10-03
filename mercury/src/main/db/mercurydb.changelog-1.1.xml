@@ -1679,4 +1679,22 @@
             <column name="LAB_VESSEL"/>
         </createIndex>
     </changeSet>
+    <changeSet author="scottmat" id="GPLIM-3028-control-uses-prod">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="mercury_control" columnName="collaborator_participant_id" schemaName="mercury" />
+            </not>
+        </preConditions>
+        <renameColumn tableName="mercury_control" oldColumnName="collaborator_sample_id"
+                      newColumnName="collaborator_participant_id" schemaName="mercury" />
+    </changeSet>
+    <changeSet author="scottmat" id="GPLIM-3028-control-aud-uses-prod">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="mercury_control_aud" columnName="collaborator_participant_id" schemaName="mercury" />
+            </not>
+        </preConditions>
+        <renameColumn tableName="mercury_control_aud" oldColumnName="collaborator_sample_id"
+                      newColumnName="collaborator_participant_id" schemaName="mercury" />
+    </changeSet>
 </databaseChangeLog>
