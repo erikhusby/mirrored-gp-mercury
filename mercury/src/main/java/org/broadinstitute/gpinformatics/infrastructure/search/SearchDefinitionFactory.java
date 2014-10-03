@@ -78,12 +78,9 @@ public class SearchDefinitionFactory {
         searchTerms = buildLabVesselBsp();
         mapGroupSearchTerms.put("BSP", searchTerms);
 
-<<<<<<< Temporary merge branch 1
         searchTerms = buildLabVesselMetadata();
         mapGroupSearchTerms.put("Mercury Metadata", searchTerms);
 
-=======
->>>>>>> Temporary merge branch 2
         searchTerms = buildLabVesselBuckets();
         mapGroupSearchTerms.put("Buckets", searchTerms);
 
