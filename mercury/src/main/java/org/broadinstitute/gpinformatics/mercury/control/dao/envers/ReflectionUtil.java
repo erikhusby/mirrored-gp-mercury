@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.net.URL;
@@ -55,10 +56,13 @@ public class ReflectionUtil {
                         StaticMetamodel  annotation  = (StaticMetamodel) aClass.getAnnotation(StaticMetamodel.class);
                         if (annotation != null) {
                             Class entityClass = annotation.value();
-                            mercuryAthenaEntityClassnameToClass.put(entityClass.getCanonicalName(), entityClass);
-                            entityClassnameToGeneratedClass.put(entityClass.getCanonicalName(), aClass);
-                            if (entityClass.getAnnotation(Embeddable.class) != null) {
-                                embeddableEntities.add(entityClass);
+                            // Due to a bug in Hibernate we need to exclude abstract entity classes (see GPLIM-3011)
+                            if (!Modifier.isAbstract(entityClass.getModifiers())) {
+                                mercuryAthenaEntityClassnameToClass.put(entityClass.getCanonicalName(), entityClass);
+                                entityClassnameToGeneratedClass.put(entityClass.getCanonicalName(), aClass);
+                                if (entityClass.getAnnotation(Embeddable.class) != null) {
+                                    embeddableEntities.add(entityClass);
+                                }
                             }
                         }
                     }
