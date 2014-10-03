@@ -78,9 +78,12 @@ public class SearchDefinitionFactory {
         searchTerms = buildLabVesselBsp();
         mapGroupSearchTerms.put("BSP", searchTerms);
 
+<<<<<<< Temporary merge branch 1
         searchTerms = buildLabVesselMetadata();
         mapGroupSearchTerms.put("Mercury Metadata", searchTerms);
 
+=======
+>>>>>>> Temporary merge branch 2
         searchTerms = buildLabVesselBuckets();
         mapGroupSearchTerms.put("Buckets", searchTerms);
 
@@ -248,6 +251,12 @@ public class SearchDefinitionFactory {
             }
         });
         searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Lab Metrics");
+        searchTerm.setPluginClass(LabVesselMetricPlugin.class);
+        searchTerms.add(searchTerm);
+
         return searchTerms;
     }
 
