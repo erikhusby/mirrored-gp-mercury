@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.hamcrest.CoreMatchers;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -765,6 +766,43 @@ public class ManifestSessionContainerTest extends Arquillian {
 
         List<ManifestSession> closedSessions2 = manifestSessionDao.findSessionsEligibleForTubeTransfer();
         assertThat(closedSessions2, not(hasItem(manifestSessionI)));
+    }
+
+    public void testNonQuarantineRecordCount() throws Exception {
+
+        researchProjectDao.persist(researchProject);
+        int counter = 0;
+        manifestSessionDao.clear();
+        ManifestSession retrievedSession = manifestSessionDao.find(manifestSessionI.getManifestSessionId());
+
+        int totalRecords = retrievedSession.getRecords().size();
+
+        for (ManifestRecord manifestRecord : retrievedSession.getRecords()) {
+
+            assertThat(retrievedSession.getNumberOfTubesAvailableForTransfer(), is(equalTo(totalRecords-counter++)));
+            retrievedSession.addManifestEvent(
+                    new ManifestEvent(ManifestEvent.Severity.QUARANTINED, "testing Formula", manifestRecord));
+
+            manifestSessionDao.flush();
+            manifestSessionDao.clear();
+            retrievedSession = manifestSessionDao.find(retrievedSession.getManifestSessionId());
+            retrievedSession.getRecords();
+        }
+        assertThat(retrievedSession.getNumberOfTubesAvailableForTransfer(), is(equalTo(totalRecords-counter)));
+    }
+
+    public void testNumberTubesTransferred() throws Exception {
+        researchProjectDao.persist(researchProject);
+        int counter = 1;
+
+        int totalRecords = manifestSessionI.getRecords().size();
+        for (ManifestRecord manifestRecord : manifestSessionI.getRecords()) {
+            assertThat(manifestSessionI.getNumberOfTubesAvailableForTransfer(), is(equalTo(totalRecords)));
+            manifestRecord.setStatus(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
+            manifestSessionDao.flush();
+            assertThat(manifestSessionI.getNumberOfTubesAvailableForTransfer(), is(equalTo(totalRecords-counter++)));
+        }
+
     }
 
     /**
