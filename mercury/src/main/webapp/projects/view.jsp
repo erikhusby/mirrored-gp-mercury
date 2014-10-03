@@ -1,5 +1,3 @@
-<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
-<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
@@ -88,11 +86,13 @@
                             text: "OK",
                             click: function () {
                                 $j(this).dialog("close");
+                                <% // This sets  up the hidden fields with the values from the dialog. %>
                                 $j("#confirmOkButton").attr("disabled", "disabled");
                                 $j("#selectedCollaborator").attr("value", $j("#collaboratorId").val());
                                 $j("#specifiedCollaborator").attr("value", $j("#emailTextId").val());
                                 $j("#collaborationMessage").attr("value", $j("#collaborationMessageId").val());
                                 $j("#collaborationQuoteId").attr("value", $j("#collaborationQuoteIdId").val());
+                                $j("#sampleKitShipping").attr("value", $j("#sampleKitShippingId").val());
                                 $j("#projectForm").submit();
                             }
                         },
@@ -195,6 +195,16 @@
                         </div>
                     </div>
 
+                    <div class="control-group">
+                        <stripes:label style="width:80px" class="control-label" for="sampleKitShippingId">Send Kits To *</stripes:label>
+                        <div class="controls" style="margin-left:90px">
+                            <stripes:select id="sampleKitShippingId" name="sampleKitShippingMethod">
+                                <stripes:options-enumeration label="displayName"
+                                        enum="org.broadinstitute.gpinformatics.athena.boundary.projects.SampleKitShippingMethod"/>
+                            </stripes:select>
+                        </div>
+                    </div>
+
                     <p style="clear:both">
                         <label for="collaborationMessageId">Optional message to send to collaborator</label>
                     </p>
@@ -216,48 +226,49 @@
                                     ${actionBean.editResearchProject.title}
                             </div>
 
-                            <security:authorizeBlock roles="<%= roles(Developer) %>">
-                                <c:if test="${actionBean.validCollaborationPortal}">
-                                    <c:choose>
-                                        <c:when test="${actionBean.invitationPending}">
-                                            <div class="notificationText">
-                                                <stripes:link style="font-size:x-small;" href="${actionBean.collaborationData.viewCollaborationUrl}">
-                                                    Collaboration Portal
-                                                </stripes:link>
-                                                invitation sent to ${actionBean.getUserFullName(actionBean.collaborationData.collaboratorId)}, expires on
-                                                <fmt:formatDate value="${actionBean.collaborationData.expirationDate}" pattern="${actionBean.datePattern}"/>
+                            <c:if test="${actionBean.validCollaborationPortal}">
+                                <c:choose>
+                                    <c:when test="${actionBean.invitationPending}">
+                                        <div class="notificationText">
+                                            <stripes:link style="font-size:x-small;" href="${actionBean.collaborationData.viewCollaborationUrl}">
+                                                Collaboration Portal
+                                            </stripes:link>
+                                            invitation sent to ${actionBean.getUserFullName(actionBean.collaborationData.collaboratorId)}, expires on
+                                            <fmt:formatDate value="${actionBean.collaborationData.expirationDate}" pattern="${actionBean.datePattern}"/>
+                                            <c:if test="${actionBean.canBeginCollaborations}">
                                                 (<stripes:link beanclass="${actionBean.class.name}" style="font-size: x-small; font-weight: normal;">
-                                                <stripes:param name="researchProject" value="${actionBean.researchProject}"/>
-                                                <stripes:param name="resendInvitation" value=""/>
-                                                Resend Invitation
-                                            </stripes:link>)
-                                            </div>
-                                        </c:when>
-                                        <c:when test="${actionBean.collaborationData != null}">
-                                            <div class="notificationText">
-                                                <stripes:link style="font-size:x-small;" href="${actionBean.collaborationData.viewCollaborationUrl}">
-                                                    Collaborating on Portal
-                                                </stripes:link>
-                                                with ${actionBean.getUserFullName(actionBean.collaborationData.collaboratorId)}
-                                            </div>
-                                        </c:when>
-                                        <c:otherwise>
+                                                    <stripes:param name="researchProject" value="${actionBean.researchProject}"/>
+                                                    <stripes:param name="resendInvitation" value=""/>
+                                                    Resend Invitation
+                                                </stripes:link>)
+                                            </c:if>
+                                        </div>
+                                    </c:when>
+                                    <c:when test="${actionBean.collaborationData != null}">
+                                        <div class="notificationText">
+                                            <stripes:link style="font-size:x-small;" href="${actionBean.collaborationData.viewCollaborationUrl}">
+                                                Collaborating on Portal
+                                            </stripes:link>
+                                            with ${actionBean.getUserFullName(actionBean.collaborationData.collaboratorId)}
+                                        </div>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <c:if test="${actionBean.canBeginCollaborations}">
                                             <div style="float:left">
                                                 <stripes:hidden id="dialogAction" name="" value=""/>
                                                 <stripes:hidden id="selectedCollaborator" name="selectedCollaborator" value=""/>
                                                 <stripes:hidden id="specifiedCollaborator" name="specifiedCollaborator" value=""/>
                                                 <stripes:hidden id="collaborationMessage" name="collaborationMessage" value=""/>
                                                 <stripes:hidden id="collaborationQuoteId" name="collaborationQuoteId" value=""/>
+                                                <stripes:hidden id="sampleKitShipping" name="sampleKitShippingMethod" value=""/>
 
-                                                <security:authorizeBlock roles="<%= roles(Developer, PM) %>">
-                                                    <stripes:button name="collaborate" value="Begin Collaboration" class="btn-mini"
-                                                                    style="margin-left: 10px;" onclick="showBeginCollaboration()"/>
-                                                </security:authorizeBlock>
+                                                <stripes:button name="collaborate" value="Begin Collaboration" class="btn-mini"
+                                                                style="margin-left: 10px;" onclick="showBeginCollaboration()"/>
                                             </div>
-                                        </c:otherwise>
-                                    </c:choose>
-                                </c:if>
-                            </security:authorizeBlock>
+                                        </c:if>
+                                    </c:otherwise>
+                                </c:choose>
+                            </c:if>
                         </div>
                     </div>
                 </div>

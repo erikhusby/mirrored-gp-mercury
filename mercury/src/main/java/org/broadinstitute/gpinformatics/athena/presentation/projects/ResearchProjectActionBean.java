@@ -23,6 +23,7 @@ import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusF
 import org.broadinstitute.gpinformatics.athena.boundary.projects.CollaborationService;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.RegulatoryInfoEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectEjb;
+import org.broadinstitute.gpinformatics.athena.boundary.projects.SampleKitShippingMethod;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryInfoDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
@@ -144,7 +145,16 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private Long selectedCollaborator;
     private String specifiedCollaborator;
     private String collaborationMessage;
+
+    @Validate(required = true, on = {BEGIN_COLLABORATION_ACTION})
     private String collaborationQuoteId;
+
+    /**
+     * This defines to whom kits will be sent. This is stored in the collaboration portal and
+     * then sent to the PDO create page to be used for shipping kits.
+     */
+    @Validate(required = true, on = {BEGIN_COLLABORATION_ACTION})
+    private SampleKitShippingMethod sampleKitShippingMethod = SampleKitShippingMethod.COLLABORATOR;
 
     @ValidateNestedProperties({
             @Validate(field = "title", label = "Project", required = true, maxlength = 4000, on = {SAVE_ACTION}),
@@ -484,7 +494,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public Resolution beginCollaboration() throws Exception {
         try {
             collaborationService.beginCollaboration(editResearchProject, selectedCollaborator, specifiedCollaborator,
-                    collaborationQuoteId, collaborationMessage);
+                    collaborationQuoteId, sampleKitShippingMethod, collaborationMessage);
             addMessage("Collaboration created successfully");
         } catch (Exception e) {
             addGlobalValidationError("Could not begin the Collaboration: {2}", e.getMessage());
@@ -1101,6 +1111,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
         return bioProjectTokenInput;
     }
 
+
     public void setBioProjectTokenInput(BioProjectTokenInput bioProjectTokenInput) {
         this.bioProjectTokenInput = bioProjectTokenInput;
     }
@@ -1121,4 +1132,25 @@ public class ResearchProjectActionBean extends CoreActionBean {
         this.rpSelectedTab = rpSelectedTab;
     }
 
+    /**
+     * A collaboration with the portal can only be started by PMs or Developers for research projects.
+     *
+     * @return True if you can start a collaboration.
+     */
+    public boolean isCanBeginCollaborations() {
+        return isResearchOnly() && (getUserBean().isDeveloperUser() || getUserBean().isPMUser());
+    }
+
+    private boolean isResearchOnly() {
+        return ((editResearchProject != null) &&
+               (editResearchProject.getRegulatoryDesignation() == ResearchProject.RegulatoryDesignation.RESEARCH_ONLY));
+    }
+
+    public SampleKitShippingMethod getSampleKitShippingMethod() {
+        return sampleKitShippingMethod;
+    }
+
+    public void setSampleKitShippingMethod(SampleKitShippingMethod sampleKitShippingMethod) {
+        this.sampleKitShippingMethod = sampleKitShippingMethod;
+    }
 }

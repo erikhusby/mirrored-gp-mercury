@@ -30,6 +30,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.work.WorkCompleteMessage;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPGroupCollectionList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSiteList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
@@ -125,6 +126,9 @@ public class ProductOrderResource {
     private BSPGroupCollectionList bspGroupCollectionList;
 
     @Inject
+    private BSPSiteList bspSiteList;
+
+    @Inject
     private BillingEjb billingEjb;
 
     @Inject
@@ -161,9 +165,10 @@ public class ProductOrderResource {
         ResearchProject researchProject =
                 researchProjectDao.findByBusinessKey(productOrderData.getResearchProjectId());
 
-        // Get the collection id from the research project so that we can get the site id.
         SampleCollection sampleCollection = getFirstCollection(researchProject);
-        Site site = getSiteId(sampleCollection.getCollectionId());
+
+        // If we have a valid site, we can set up the product order kit.
+        Site site = bspSiteList.getById(productOrderData.getSiteId());
         if (site != null) {
             boolean isExomeExpress = productOrder.getProduct().isExomeExpress();
             productOrder.setProductOrderKit(createOrderKit(isExomeExpress,

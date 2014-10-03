@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
+import org.broadinstitute.gpinformatics.athena.boundary.projects.SampleKitShippingMethod;
+
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.Date;
 
@@ -15,6 +17,9 @@ import java.util.Date;
 @SuppressWarnings("UnusedDeclaration")
 @XmlRootElement
 public class CollaborationData {
+
+    // The person to send sample kits to.
+    private SampleKitShippingMethod sampleKitShippingMethod;
 
     // The name of the collaboration space (mercury will send this from the research project).
     private String name;
@@ -55,7 +60,8 @@ public class CollaborationData {
      * @param emailMessage The email message to the collaborator
      */
     public CollaborationData(String name, String description, String researchProjectKey, Long collaboratorId,
-                             Long projectManagerId, String quoteId, String emailMessage) {
+                             Long projectManagerId, String quoteId, SampleKitShippingMethod sampleKitShippingMethod,
+                             String emailMessage) {
         this.name = name;
         this.description = description;
         this.researchProjectKey = researchProjectKey;
@@ -63,6 +69,7 @@ public class CollaborationData {
         this.projectManagerId = projectManagerId;
         this.quoteId = quoteId;
         this.emailMessage = emailMessage;
+        this.sampleKitShippingMethod = sampleKitShippingMethod;
     }
 
     public String getName() {
@@ -135,5 +142,13 @@ public class CollaborationData {
 
     public void setQuoteId(String quoteId) {
         this.quoteId = quoteId;
+    }
+
+    public SampleKitShippingMethod getSampleKitShippingMethod() {
+        return sampleKitShippingMethod;
+    }
+
+    public void setSampleKitShippingMethod(SampleKitShippingMethod sampleKitShippingMethod) {
+        this.sampleKitShippingMethod = sampleKitShippingMethod;
     }
 }
