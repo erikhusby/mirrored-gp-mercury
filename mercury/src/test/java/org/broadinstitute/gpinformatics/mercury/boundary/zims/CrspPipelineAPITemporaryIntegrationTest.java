@@ -167,7 +167,9 @@ public class CrspPipelineAPITemporaryIntegrationTest extends Arquillian {
                 String sampleId = result.get(BSPSampleSearchColumn.SAMPLE_ID);
                 if (FAKE_POSITIVE_CONTROLS.contains(sampleId)) {
                     result.remove(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID);
+                    result.remove(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID);
                     result.put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID,"NA12878");
+                    result.put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID,"NA12878");
                 }
             }
             return results;
