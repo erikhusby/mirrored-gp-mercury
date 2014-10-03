@@ -89,8 +89,7 @@ public class ZimsIlluminaRunFactory {
     private SequencingTemplateFactory sequencingTemplateFactory;
     private ProductOrderDao productOrderDao;
     private ResearchProjectDao researchProjectDao;
-    private CrspPipelineUtils crspPipelineUtils = new CrspPipelineUtils();
-    private Deployment deployment;
+    private final CrspPipelineUtils crspPipelineUtils;
 
     private static final Log log = LogFactory.getLog(ZimsIlluminaRunFactory.class);
 
@@ -105,7 +104,7 @@ public class ZimsIlluminaRunFactory {
         this.sequencingTemplateFactory = sequencingTemplateFactory;
         this.productOrderDao = productOrderDao;
         this.researchProjectDao = researchProjectDao;
-        this.deployment = deployment;
+        crspPipelineUtils = new CrspPipelineUtils(deployment);
     }
 
     public ZimsIlluminaRun makeZimsIlluminaRun(IlluminaSequencingRun illuminaRun) {
@@ -439,7 +438,7 @@ public class ZimsIlluminaRunFactory {
                 positiveControl, negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation,
                 catNames, productOrder, lcSet, sampleData, labWorkflow, libraryCreationDate, pdoSampleName, metadataSourceForPipelineAPI);
         if (isCrspLane) {
-            crspPipelineUtils.setFieldsForCrsp(libraryBean, sampleData, CrspPositiveControlsProject, lcSet,deployment);
+            crspPipelineUtils.setFieldsForCrsp(libraryBean, sampleData, CrspPositiveControlsProject, lcSet);
         }
         return libraryBean;        
     }

@@ -34,7 +34,7 @@ public class CrspPipelineUtilsTest {
 
     private ProductOrderSample nonCrspSampleWithBSPMetadata;
 
-    private CrspPipelineUtils crspPipelineAPIUtils = new CrspPipelineUtils();
+    private CrspPipelineUtils crspPipelineAPIUtils = new CrspPipelineUtils(Deployment.DEV);
 
     private SampleData sampleDataWithNonBspSample = new MercurySampleData("Not from BSP", Collections.<Metadata>emptySet());
 
@@ -92,14 +92,14 @@ public class CrspPipelineUtilsTest {
     }
 
     public void testAllSamplesAreForCrsp() {
-        boolean hasAllCrspSamples = new CrspPipelineUtils().areAllSamplesForCrsp(createSampleInstances(
+        boolean hasAllCrspSamples = crspPipelineAPIUtils.areAllSamplesForCrsp(createSampleInstances(
                 CrspSample));
 
         Assert.assertTrue(hasAllCrspSamples);
     }
 
     public void testNoSamplesAreForCrsp() {
-        boolean hasAllCrspSamples = new CrspPipelineUtils().areAllSamplesForCrsp(createSampleInstances(
+        boolean hasAllCrspSamples = crspPipelineAPIUtils.areAllSamplesForCrsp(createSampleInstances(
                 nonCrspSampleWithGSSRMetadata));
 
         Assert.assertFalse(hasAllCrspSamples);
@@ -108,7 +108,7 @@ public class CrspPipelineUtilsTest {
     public void testMixOfCrspAndNonCrspSamplesShouldThrowException() {
         Set<SampleInstanceV2> sampleInstances = createSampleInstances(nonCrspSampleWithGSSRMetadata, CrspSample);
         try {
-            new CrspPipelineUtils().areAllSamplesForCrsp(sampleInstances);
+            crspPipelineAPIUtils.areAllSamplesForCrsp(sampleInstances);
             Assert.fail("Mixture of samples");
         }
         catch(RuntimeException e) {
@@ -123,14 +123,14 @@ public class CrspPipelineUtilsTest {
 
     public void testSetFieldsForCrspThrowsExceptionForNonBspSampleInProduction() {
         try {
-            crspPipelineAPIUtils.setFieldsForCrsp(new LibraryBean(), sampleDataWithNonBspSample,null,null, Deployment.PROD);
+            new CrspPipelineUtils(Deployment.PROD).setFieldsForCrsp(new LibraryBean(), sampleDataWithNonBspSample, null, null);
             Assert.fail("Should have thrown an exception because " + sampleDataWithNonBspSample.getSampleId() + " is not a bsp sample");
         }
         catch(RuntimeException ignored) {}
     }
 
     public void testSetFieldsForCrspDoesNotThrowExceptionForNonBspSampleInDevelopment() {
-        crspPipelineAPIUtils.setFieldsForCrsp(new LibraryBean(),sampleDataWithNonBspSample,null,null, Deployment.DEV);
+        new CrspPipelineUtils(Deployment.DEV).setFieldsForCrsp(new LibraryBean(),sampleDataWithNonBspSample,null,null);
     }
 
 

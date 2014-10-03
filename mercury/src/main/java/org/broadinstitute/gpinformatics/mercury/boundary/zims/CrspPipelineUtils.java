@@ -8,9 +8,17 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 
 import javax.annotation.Nonnull;
+import javax.inject.Inject;
 import java.util.Set;
 
 public class CrspPipelineUtils {
+
+    private Deployment deployment;
+
+    @Inject
+    public CrspPipelineUtils(@Nonnull Deployment deployment) {
+        this.deployment = deployment;
+    }
 
     /**
      * Returns true if all samples are considered
@@ -45,9 +53,8 @@ public class CrspPipelineUtils {
     public void setFieldsForCrsp(LibraryBean libraryBean,
                                  SampleData sampleData,
                                  ResearchProject positiveControlsProject,
-                                 String lcSet,
-                                 Deployment deployment) {
-        throwExceptionIfInProductionAndSampleIsNotABSPSample(sampleData.getSampleId(),deployment);
+                                 String lcSet) {
+        throwExceptionIfInProductionAndSampleIsNotABSPSample(sampleData.getSampleId());
         libraryBean.setLsid(getCrspLSIDForBSPSampleId(sampleData.getSampleId()));
         libraryBean.setRootSample(libraryBean.getSampleId());
 
@@ -62,7 +69,7 @@ public class CrspPipelineUtils {
         }
     }
 
-    private void throwExceptionIfInProductionAndSampleIsNotABSPSample(@Nonnull String sampleId,Deployment deployment) {
+    private void throwExceptionIfInProductionAndSampleIsNotABSPSample(@Nonnull String sampleId) {
         if (deployment != null) {
             if (deployment == Deployment.PROD) {
                 if (!BSPUtil.isInBspFormat(sampleId)) {
