@@ -90,7 +90,8 @@ public class VarioskanRowParser {
                 // todo jmt accumulate errors?
                 throw new RuntimeException("Expected " + nameValue.getFieldName() + ", found " + name);
             }
-            String cellValue = PoiSpreadsheetParser.getCellValues(row.getCell(VALUE_COLUMN), false, false);
+            String cellValue = PoiSpreadsheetParser.getCellValues(row.getCell(VALUE_COLUMN),
+                    nameValue.getDateFormat() != null, true);
             mapNameValueToValue.put(nameValue, cellValue);
         }
         return mapNameValueToValue;

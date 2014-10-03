@@ -19,9 +19,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
-
-//import org.apache.poi.ss.usermodel.Workbook;
 
 /**
  * <p>
@@ -299,18 +296,13 @@ public class ConfigurableList {
 
     /**
      * Each column definition has its own HeaderGroup, because plugins and some
-     * expressions (e.g. phenotypes with intervals) yield multiple columns. Headers within
-     * a group are sorted alphabetically.
+     * expressions (e.g. phenotypes with intervals) yield multiple columns.
+     * Headers within a group are sorted based upon the order they are added.
      */
     static class HeaderGroup {
         private final String name;
 
-        private final TreeMap<String, Header> headerMap = new TreeMap<>(new Comparator<String>() {
-            @Override
-            public int compare(String o1, String o2) {
-                return o1.compareTo(o2);
-            }
-        });
+        private final Map<String, Header> headerMap = new LinkedHashMap<>();
 
         HeaderGroup(String name) {
             this.name = name;
@@ -324,7 +316,7 @@ public class ConfigurableList {
             return name;
         }
 
-        public TreeMap<String, Header> getHeaderMap() {
+        public Map<String, Header> getHeaderMap() {
             return headerMap;
         }
     }

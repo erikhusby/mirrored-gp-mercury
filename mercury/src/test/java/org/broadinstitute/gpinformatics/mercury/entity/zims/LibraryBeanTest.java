@@ -1,10 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.entity.zims;
 
 import org.apache.commons.lang.StringUtils;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.testng.annotations.Test;
@@ -19,11 +18,11 @@ import static org.testng.Assert.*;
 public class LibraryBeanTest {
 
     /**
-     * Verifies that when a {@link BSPSampleDTO} is passed into a {@link LibraryBean}, the bsp fields take priority
+     * Verifies that when a {@link BspSampleData} is passed into a {@link LibraryBean}, the bsp fields take priority
      * over their gssr counterparts.
      */
     @Test(groups = DATABASE_FREE)
-    public void testBspDtoOverride() {
+    public void testBspSampleOverride() {
         final String gssrLsid = "gssr:lsid";
         final String bspLsid = "bsp:lsid";
         final String disease = "cancer";
@@ -48,22 +47,22 @@ public class LibraryBeanTest {
             put(BSPSampleSearchColumn.PARTICIPANT_ID, bspParticipant);
         }};
 
-        BSPSampleDTO bspDto = new BSPSampleDTO(dataMap);
+        SampleData sampleData = new BspSampleData(dataMap);
 
-        // send in some GSSR sample attributes in addition to bsp DTO to verify GSSR override.
+        // send in some GSSR sample attributes in addition to bsp sample data to verify GSSR override.
         LibraryBean libraryBean = new LibraryBean(gssrLsid, gssrMaterialType, gssrCollabSampleId, gssrOrganism,
-                gssrSpecies, gssrStrain, gssrParticipant, bspDto, Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(),
+                gssrSpecies, gssrStrain, gssrParticipant, sampleData, Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(),
                 LibraryBean.NO_PDO_SAMPLE, libraryCreationDate);
 
-        assertEquals(libraryBean.getPrimaryDisease(),bspDto.getPrimaryDisease());
-        assertEquals(libraryBean.getLsid(),bspDto.getSampleLsid());
+        assertEquals(libraryBean.getPrimaryDisease(), sampleData.getPrimaryDisease());
+        assertEquals(libraryBean.getLsid(),sampleData.getSampleLsid());
         assertFalse(libraryBean.getIsGssrSample());
-        assertEquals(libraryBean.getMaterialType(),bspDto.getMaterialType());
-        assertEquals(libraryBean.getCollaboratorSampleId(),bspCollabSampleId);
-        assertEquals(libraryBean.getSpecies(),bspDto.getOrganism());
-        assertEquals(libraryBean.getParticipantId(),bspDto.getPatientId());
+        assertEquals(libraryBean.getMaterialType(),sampleData.getMaterialType());
+        assertEquals(libraryBean.getCollaboratorSampleId(), bspCollabSampleId);
+        assertEquals(libraryBean.getSpecies(), sampleData.getOrganism());
+        assertEquals(libraryBean.getParticipantId(),sampleData.getPatientId());
 
-        // new up sans bsp DTO to confirm gssr fields work.
+        // new up sans bspSampleData to confirm gssr fields work.
         libraryBean = new LibraryBean(gssrLsid, gssrMaterialType, gssrCollabSampleId, gssrOrganism, gssrSpecies,
                 gssrStrain, gssrParticipant, null, Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(),
                 LibraryBean.NO_PDO_SAMPLE, libraryCreationDate);
@@ -80,19 +79,23 @@ public class LibraryBeanTest {
      */
     @Test(groups = DATABASE_FREE)
     public void testBspFields() {
-        BSPSampleSearchServiceStub bspSampleSearchServiceStub = new BSPSampleSearchServiceStub();
-        BSPSampleDTO sampleDTO =
-            new BSPSampleDataFetcher(
-                bspSampleSearchServiceStub).fetchSingleSampleFromBSP(BSPSampleSearchServiceStub.SM_12CO4);
+        Map<BSPSampleSearchColumn, String> sampleAttributes = new HashMap<>();
+        sampleAttributes.put(BSPSampleSearchColumn.GENDER, BspSampleData.FEMALE_IND);
+        sampleAttributes.put(BSPSampleSearchColumn.LSID, "broadinstitute.org:bsp.prod.sample:1234");
+        sampleAttributes.put(BSPSampleSearchColumn.COLLECTION, "LibraryBeanTest Collection");
+        sampleAttributes.put(BSPSampleSearchColumn.ROOT_SAMPLE, "ABC");
+        sampleAttributes.put(BSPSampleSearchColumn.SPECIES, "Test Species");
+        sampleAttributes.put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1234");
+        SampleData sampleData = new BspSampleData(sampleAttributes);
 
-        LibraryBean libraryBean = new LibraryBean(null, null, null, null, null, null, null, sampleDTO, null,
+        LibraryBean libraryBean = new LibraryBean(null, null, null, null, null, null, null, sampleData, null,
                 LibraryBean.NO_PDO_SAMPLE, null);
 
-        assertEquals(libraryBean.getGender(), StringUtils.trimToNull(sampleDTO.getGender()));
-        assertEquals(libraryBean.getLsid(), StringUtils.trimToNull(sampleDTO.getSampleLsid()));
-        assertEquals(libraryBean.getCollection(), StringUtils.trimToNull(sampleDTO.getCollection()));
-        assertEquals(libraryBean.getRootSample(), StringUtils.trimToNull(sampleDTO.getRootSample()));
-        assertEquals(libraryBean.getSpecies(), StringUtils.trimToNull(sampleDTO.getOrganism()));
-        assertEquals(libraryBean.getSampleId(), StringUtils.trimToNull(sampleDTO.getSampleId()));
+        assertEquals(libraryBean.getGender(), StringUtils.trimToNull(sampleData.getGender()));
+        assertEquals(libraryBean.getLsid(), StringUtils.trimToNull(sampleData.getSampleLsid()));
+        assertEquals(libraryBean.getCollection(), StringUtils.trimToNull(sampleData.getCollection()));
+        assertEquals(libraryBean.getRootSample(), StringUtils.trimToNull(sampleData.getRootSample()));
+        assertEquals(libraryBean.getSpecies(), StringUtils.trimToNull(sampleData.getOrganism()));
+        assertEquals(libraryBean.getSampleId(), StringUtils.trimToNull(sampleData.getSampleId()));
     }
 }

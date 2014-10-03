@@ -2,14 +2,22 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 
 import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimaps;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.Updatable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.UpdatedEntityInterceptor;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
 import org.hibernate.envers.Audited;
+import org.jvnet.inflector.Noun;
 
 import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
@@ -32,6 +40,8 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -73,8 +83,21 @@ public class ManifestRecord implements Updatable {
     private List<ManifestEvent> manifestEvents = new ArrayList<>();
 
     @ManyToOne(cascade = CascadeType.PERSIST)
-    @JoinColumn(name = "manifest_session_id")
+    @JoinColumn(name = "MANIFEST_SESSION_ID", insertable = false, updatable = false)
     private ManifestSession manifestSession;
+
+    /**
+     * The index of this ManifestRecord within the ManifestSession, this is referenced by the containing ManifestSession
+     * to preserve the order of ManifestRecords to facilitate review between manifest upload and acceptance.
+     * This index value relates to the row number of the corresponding record in the manifest spreadsheet, but while the
+     * spreadsheet data rows start at 2 (there is a single header row), these indexes start at 0.  The deprecated
+     * Hibernate IndexColumn annotation (now removed in the latest version of Hibernate) used to allow for specification
+     * of a base value for this index, but JPA requires ordered elements to start with an index of 0.
+     *
+     * {@see #getSpreadsheetRowNumber}
+     */
+    @Column(name = "MANIFEST_RECORD_INDEX", insertable = false, updatable = false, nullable = false)
+    private Integer manifestRecordIndex;
 
     @Embedded
     private UpdateData updateData = new UpdateData();
@@ -115,7 +138,11 @@ public class ManifestRecord implements Updatable {
     }
 
     public String getValueByKey(Metadata.Key key) {
-        return getMetadataByKey(key).getValue();
+        Metadata metadata = getMetadataByKey(key);
+        if (metadata != null) {
+            return metadata.getValue();
+        }
+        return null;
     }
 
     public Status getStatus() {
@@ -155,11 +182,14 @@ public class ManifestRecord implements Updatable {
         return false;
     }
 
+    public UpdateData getUpdateData() {
+        return updateData;
+    }
+
     /**
      * Scan the sample corresponding to this ManifestRecord as part of accessioning.
      */
     public void accessionScan() {
-
         if (isQuarantined()) {
             throw new InformaticsServiceException(
                     ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage(Metadata.Key.SAMPLE_ID, getSampleId()));
@@ -172,11 +202,142 @@ public class ManifestRecord implements Updatable {
         status = Status.SCANNED;
     }
 
+    public void setManifestRecordIndex(int manifestRecordIndex) {
+        this.manifestRecordIndex = manifestRecordIndex;
+    }
+
+    /**
+     * Build an error message for duplicate or gender mismatched samples.  All records in {@code conflictingRecords}
+     * are expected to belong to the same manifest session.
+     */
+    public String buildMessageForConflictingRecords(Collection<ManifestRecord> conflictingRecords) {
+        String otherSessionName = getOtherSessionName(conflictingRecords);
+        StringBuilder messageBuilder = new StringBuilder();
+
+        // Describe how many duplicates were found in a particular manifest session.
+        int numInstances = conflictingRecords.size();
+        messageBuilder.append(numInstances).append(" ");
+        messageBuilder.append(Noun.pluralOf("instance", numInstances));
+        messageBuilder.append(" found at ");
+        messageBuilder.append(Noun.pluralOf("row", numInstances));
+        messageBuilder.append(" ");
+
+        // Collect the spreadsheet row numbers at which the duplicates can be found.
+        List<Integer> rowNumbers = new ArrayList<>();
+        for (ManifestRecord manifestRecord : conflictingRecords) {
+            rowNumbers.add(manifestRecord.getSpreadsheetRowNumber());
+        }
+        // Sort the spreadsheet row numbers, join with commas and append to the message string.
+        Collections.sort(rowNumbers);
+        messageBuilder.append(StringUtils.join(rowNumbers, ", "));
+
+        messageBuilder.append(" of ");
+        String thisSessionName = getManifestSession().getSessionName();
+        messageBuilder.append(
+                otherSessionName.equals(thisSessionName) ? "this manifest session" :
+                        "manifest session '" + otherSessionName + "'");
+        return messageBuilder.toString();
+    }
+
+    /**
+     * All specified records should be part of the same manifest session, extract the manifest session name from one
+     * of them.
+     */
+    private String getOtherSessionName(Collection<ManifestRecord> records) {
+        if (CollectionUtils.isEmpty(records)) {
+            throw new InformaticsServiceException("records expected to be non-empty");
+        }
+        return records.iterator().next().getManifestSession().getSessionName();
+    }
+
+    /**
+     * Create a presentable description of where the specified manifest records conflicting with this record
+     * can be found.
+     *
+     * @param allConflictingRecords  All ManifestRecords matching this ManifestRecord (same patient ID or sample ID,
+     *                             depending on the validation being performed).
+     */
+    private String describeOtherManifestSessionsWithMatchingRecords(Collection<ManifestRecord> allConflictingRecords) {
+
+        // Filter 'thisRecord' from consideration as being in conflict with itself.
+        Iterable<ManifestRecord> allButThisRecord = Iterables.filter(allConflictingRecords, new Predicate<ManifestRecord>() {
+            @Override
+            public boolean apply(@Nullable ManifestRecord record) {
+                return record != ManifestRecord.this;
+            }
+        });
+
+        // Group manifest records by manifest session name.
+        ImmutableListMultimap<String, ManifestRecord> recordsBySessionName =
+                Multimaps.index(allButThisRecord, new Function<ManifestRecord, String>() {
+                    @Override
+                    public String apply(ManifestRecord record) {
+                        return record.getManifestSession().getSessionName();
+                    }
+                });
+
+        List<String> messages = new ArrayList<>();
+        // Add an appropriate message for each record to messages.
+        for (Collection<ManifestRecord> conflictingRecords : recordsBySessionName.asMap().values()) {
+            messages.add(buildMessageForConflictingRecords(conflictingRecords));
+        }
+
+        // Join the messages for all the manifests containing conflicting records.
+        return StringUtils.join(messages, ", ") + ".";
+    }
+
+    /**
+     * Build an error message for manifest records where the sample id specified is duplicated
+     * across one or more records within the same research project.
+     */
+    public String buildMessageForDuplicateSamples(Collection<ManifestRecord> allRecordsWithTheSameSampleId) {
+        String duplicateSamplesMessage =
+                ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage(Metadata.Key.SAMPLE_ID, getValueByKey(
+                        Metadata.Key.SAMPLE_ID));
+        String sessionsWithDuplicates = describeOtherManifestSessionsWithMatchingRecords(allRecordsWithTheSameSampleId);
+        return buildSpreadsheetRowMessage() + duplicateSamplesMessage + "  " + sessionsWithDuplicates;
+    }
+
+    /**
+     * Build a simple spreadsheet row message prefix.
+     */
+    private String buildSpreadsheetRowMessage() {
+        return "At row " + getSpreadsheetRowNumber() + ": ";
+    }
+
+    /**
+     * Build an error message for manifest records where the gender specified for a particular patient ID is mismatched
+     * across one or more records within the same research project.
+     */
+    public String buildMessageForMismatchedGenders(Collection<ManifestRecord> allRecordsWithSamePatientId) {
+        String mismatchedGendersMessage =
+                ErrorStatus.MISMATCHED_GENDER.formatMessage(Metadata.Key.PATIENT_ID, getValueByKey(
+                        Metadata.Key.PATIENT_ID));
+        String sessionsWithMismatchedGenders = describeOtherManifestSessionsWithMatchingRecords(allRecordsWithSamePatientId);
+        return buildSpreadsheetRowMessage() + mismatchedGendersMessage + "  " + sessionsWithMismatchedGenders;
+    }
+
     /**
      * Status represents the states that a manifest record can be in during the registration workflow.
      */
-    public enum Status {
-        UPLOADED, ABANDONED, UPLOAD_ACCEPTED, SCANNED, ACCESSIONED, SAMPLE_TRANSFERRED_TO_TUBE
+    public enum Status implements Displayable{
+        UPLOADED("Uploaded"),
+        ABANDONED("Abandoned"),
+        UPLOAD_ACCEPTED("Upload Accepted"),
+        SCANNED("Scanned"),
+        ACCESSIONED("Accessioned"),
+        SAMPLE_TRANSFERRED_TO_TUBE("Sample has been transferred");
+
+        private final String displayName;
+
+        Status(String displayName) {
+            this.displayName = displayName;
+        }
+
+        @Override
+        public String getDisplayName() {
+            return displayName;
+        }
     }
 
     /**
@@ -189,7 +350,7 @@ public class ManifestRecord implements Updatable {
          * At some time before the current sample was scanned, another with the exact same
          * sample id and also connected to the current research project was scanned.
          */
-        DUPLICATE_SAMPLE_ID("The given sample ID is a duplicate of another.", ManifestEvent.Severity.QUARANTINED),
+        DUPLICATE_SAMPLE_ID("The specified sample ID is duplicated within this Research Project.", ManifestEvent.Severity.QUARANTINED),
         /**
          * Another record in the system associated with the same research project and same patient
          * ID has a different value for gender.
@@ -209,7 +370,7 @@ public class ManifestRecord implements Updatable {
          * This cannot directly apply to an actual record.  Represents a sample tube that is
          * received for which there is no previously uploaded manifest record.
          */
-        NOT_IN_MANIFEST("The scanned sample is not found in any manifest.", ManifestEvent.Severity.ERROR),
+        NOT_IN_MANIFEST("The scanned source sample is not found in any manifest.", ManifestEvent.Severity.ERROR),
         /**
          * Encapsulates the error message to indicate to the user that they have already scanned the tube
          */
@@ -244,7 +405,9 @@ public class ManifestRecord implements Updatable {
 
         PREVIOUS_ERRORS_UNABLE_TO_CONTINUE("Due to errors previously found, this sample is unable to continue.",
                 ManifestEvent.Severity.ERROR),
-        INVALID_TARGET("The Target sample or vessel appears to be invalid.", ManifestEvent.Severity.ERROR);
+        INVALID_TARGET("The target sample or vessel is invalid.", ManifestEvent.Severity.ERROR),
+        SOURCE_ALREADY_TRANSFERRED("The source sample has already been transferred to a tube",
+                ManifestEvent.Severity.ERROR);
 
         private final String baseMessage;
         private final ManifestEvent.Severity severity;
@@ -283,8 +446,12 @@ public class ManifestRecord implements Updatable {
         return null;
     }
 
-    public UpdateData getUpdateData() {
-        return updateData;
+    /**
+     * Return the spreadsheet row number of the record corresponding to this {@code ManifestRecord}.
+     */
+    public int getSpreadsheetRowNumber() {
+        final int INDEX_TO_SPREADSHEET_ROW_NUMBER_CONVERSION = 2;
+        return manifestRecordIndex + INDEX_TO_SPREADSHEET_ROW_NUMBER_CONVERSION;
     }
 
     @Override
@@ -296,3 +463,4 @@ public class ManifestRecord implements Updatable {
                 .toString();
     }
 }
+

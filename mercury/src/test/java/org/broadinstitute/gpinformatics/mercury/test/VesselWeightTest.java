@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.test;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -46,7 +46,7 @@ public class VesselWeightTest extends Arquillian {
     private BettaLimsMessageResource bettaLimsMessageResource;
 
     @Inject
-    private BSPSampleDataFetcher bspSampleDataFetcher;
+    private SampleDataFetcher sampleDataFetcher;
 
     @Inject
     private BarcodedTubeDao barcodedTubeDao;
@@ -117,7 +117,7 @@ public class VesselWeightTest extends Arquillian {
 
         // Verify that BSP volume is set
         Map<String, GetSampleDetails.SampleInfo> mapBarcodeToSampleInfo =
-                bspSampleDataFetcher.fetchSampleDetailsByBarcode(tubeBarcodes);
+                sampleDataFetcher.fetchSampleDetailsByBarcode(tubeBarcodes);
         Assert.assertEquals(mapBarcodeToSampleInfo.get(tubeBarcodes.get(0)).getVolume(), tube1Volume.floatValue());
     }
 }

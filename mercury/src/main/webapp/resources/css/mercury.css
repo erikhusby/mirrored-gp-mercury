@@ -145,6 +145,7 @@ textarea.controlledText { width: 550px; }
 input.search-input { width: auto; }
 .search-checkbox-label { float: left; font-weight: bold; }
 input.search-checkbox { float: left; margin-right: 3px; }
+.searchterm { background-color: #f2f2f2 }
 
 .search-horizontal .control-group { margin-bottom: 3px; *zoom: 1; }
 .search-horizontal .control-group:before,

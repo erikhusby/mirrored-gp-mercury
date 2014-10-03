@@ -1,7 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
+import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Multimaps;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -33,6 +39,7 @@ import org.testng.annotations.Test;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -143,9 +150,7 @@ public class ManifestSessionEjbDBFreeTest {
      * Worker method for manifest upload testing.
      */
     private ManifestSession uploadManifest(String pathToManifestFile) throws Exception {
-        ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(
-                TEST_RESEARCH_PROJECT_KEY);
-        return uploadManifest(pathToManifestFile, researchProject);
+        return uploadManifest(pathToManifestFile, createTestResearchProject());
     }
 
     private ManifestSession uploadManifest(ManifestSessionEjb manifestSessionEjb, String pathToManifestFile,
@@ -204,9 +209,7 @@ public class ManifestSessionEjbDBFreeTest {
     private ManifestSessionAndEjbHolder buildHolderForSession(ManifestRecord.Status initialStatus, int numberOfRecords)
             throws Exception {
 
-        ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(
-                TEST_RESEARCH_PROJECT_KEY);
-        return buildHolderForSession(initialStatus, numberOfRecords, researchProject);
+        return buildHolderForSession(initialStatus, numberOfRecords, createTestResearchProject());
     }
 
     /**
@@ -313,6 +316,9 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(manifestSession, is(notNullValue()));
         assertThat(manifestSession.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
         assertThat(manifestSession.hasErrors(), is(true));
+
+        ImmutableListMultimap<String, ManifestRecord> sampleIdToRecordMultimap =
+                buildSampleIdToRecordMultimap(manifestSession);
         List<ManifestRecord> quarantinedRecords = new ArrayList<>();
 
         for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
@@ -326,18 +332,26 @@ public class ManifestSessionEjbDBFreeTest {
         for (ManifestRecord record : quarantinedRecords) {
             assertThat(record.getManifestEvents(), hasSize(1));
             ManifestEvent manifestEvent = record.getManifestEvents().iterator().next();
-            String sampleId = record.getValueByKey(Metadata.Key.SAMPLE_ID);
-            // -1 to account for the number of copies to number of duplicates conversion.
-            int expectedNumberOfDuplicates = SAMPLE_ID_TO_NUMBER_OF_COPIES_FOR_DUPLICATE_TESTS.get(sampleId) - 1;
-
-            String expectedText = "instance" + (expectedNumberOfDuplicates == 1 ? "" : "s");
-            assertThat(manifestEvent.getMessage(), containsString(expectedText + " found in this manifest session"));
+            Collection<ManifestRecord> duplicates = filterThisRecord(record,
+                    sampleIdToRecordMultimap.get(record.getValueByKey(Metadata.Key.SAMPLE_ID)));
+            assertThat(manifestEvent.getMessage(),
+                    containsString(record.buildMessageForConflictingRecords(duplicates)));
         }
     }
 
+    private Collection<ManifestRecord> filterThisRecord(final ManifestRecord record,
+                                                      ImmutableList<ManifestRecord> manifestRecords) {
+        return Collections2.filter(manifestRecords, new Predicate<ManifestRecord>() {
+            @Override
+            public boolean apply(ManifestRecord localRecord) {
+                return localRecord != record;
+            }
+        });
+    }
+
     public void uploadManifestThatDuplicatesSampleIdInAnotherManifest() throws Exception {
-        ResearchProject researchProject =
-                ResearchProjectTestFactory.createTestResearchProject(TEST_RESEARCH_PROJECT_KEY);
+        ResearchProject researchProject = createTestResearchProject();
+        Set<String> duplicatedSampleIds = ImmutableSet.of("03101231193", "03101752020");
 
         ManifestSession manifestSession1 =
                 uploadManifest("manifest-upload/duplicates/good-manifest-1.xlsx", researchProject);
@@ -345,29 +359,52 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(manifestSession1.getManifestEvents(), is(empty()));
         assertThat(manifestSession1.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
 
+        ImmutableListMultimap<String, ManifestRecord> session1RecordsBySampleId = buildSampleIdToRecordMultimap(
+                manifestSession1);
+
         ManifestSession manifestSession2 =
                 uploadManifest("manifest-upload/duplicates/good-manifest-2.xlsx", researchProject);
         assertThat(manifestSession2, is(notNullValue()));
         assertThat(manifestSession2.getManifestEvents(), hasSize(2));
         assertThat(manifestSession2.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
 
-        Set<String> duplicatedSampleIds = ImmutableSet.of("03101231193", "03101752020");
-
         for (ManifestRecord record : manifestSession2.getRecords()) {
             if (duplicatedSampleIds.contains(record.getValueByKey(Metadata.Key.SAMPLE_ID))) {
                 assertThat(record.getManifestEvents(), hasSize(1));
                 ManifestEvent manifestEvent = record.getManifestEvents().iterator().next();
-                assertThat(manifestEvent.getMessage(), containsString("1 instance found in manifest session " + manifestSession1.getSessionName()));
+                // Only one duplicate in this Multimap for each of these.
+                ManifestRecord duplicateRecord = session1RecordsBySampleId.get(record.getValueByKey(
+                        Metadata.Key.SAMPLE_ID)).iterator().next();
+                assertThat(manifestEvent.getMessage(),
+                        containsString(record.buildMessageForConflictingRecords(Collections.singleton(duplicateRecord))));
             } else {
                 assertThat(record.getManifestEvents(), is(empty()));
             }
         }
     }
 
+    private ImmutableListMultimap<String, ManifestRecord> buildSampleIdToRecordMultimap(ManifestSession manifestSession) {
+        return Multimaps.index(manifestSession.getRecords(), new Function<ManifestRecord, String>() {
+            @Override
+            public String apply(ManifestRecord manifestRecord) {
+                return manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID);
+            }
+        });
+    }
+
+    private ResearchProject createTestResearchProject() {
+        ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(TEST_RESEARCH_PROJECT_KEY);
+        researchProject.setRegulatoryDesignation(ResearchProject.RegulatoryDesignation.CLINICAL_DIAGNOSTICS);
+        return researchProject;
+    }
+
     public void uploadManifestThatMismatchesGenderInSameManifest() throws Exception {
         ManifestSession manifestSession = uploadManifest(MANIFEST_FILE_MISMATCHED_GENDERS_SAME_SESSION);
         assertThat(manifestSession, is(notNullValue()));
         assertThat(manifestSession.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
+
+        ImmutableListMultimap<String, ManifestRecord> patientIdToManifestRecords =
+                buildPatientIdToManifestRecordsMultimap(manifestSession);
 
         // The assert below is for size * 2 since all manifest records in question are in this manifest session.
         assertThat(manifestSession.getManifestEvents(),
@@ -376,17 +413,20 @@ public class ManifestSessionEjbDBFreeTest {
             assertThat(manifestRecord.isQuarantined(), is(false));
             Metadata patientIdMetadata = manifestRecord.getMetadataByKey(Metadata.Key.PATIENT_ID);
             if (PATIENT_IDS_FOR_SAME_MANIFEST_GENDER_MISMATCHES.contains(patientIdMetadata.getValue())) {
+                Collection<ManifestRecord> allMatchingPatientIdRecordsExceptThisOne =
+                        filterThisRecord(manifestRecord, patientIdToManifestRecords.get(manifestRecord.getValueByKey(
+                                Metadata.Key.PATIENT_ID)));
                 assertThat(manifestRecord.getManifestEvents(), hasSize(1));
                 ManifestEvent manifestEvent = manifestRecord.getManifestEvents().get(0);
                 assertThat(manifestEvent.getSeverity(), is(ManifestEvent.Severity.ERROR));
-                assertThat(manifestEvent.getMessage(), containsString("1 instance found in this manifest session"));
+                assertThat(manifestEvent.getMessage(), containsString(manifestRecord
+                        .buildMessageForConflictingRecords(allMatchingPatientIdRecordsExceptThisOne)));
             }
         }
     }
 
     public void uploadManifestThatMismatchesGenderInAnotherManifest() throws Exception {
-        ResearchProject researchProject =
-                ResearchProjectTestFactory.createTestResearchProject(TEST_RESEARCH_PROJECT_KEY);
+        ResearchProject researchProject = createTestResearchProject();
 
         ManifestSession manifestSession1 =
                 uploadManifest("manifest-upload/gender-mismatches-across-sessions/good-manifest-1.xlsx",
@@ -394,6 +434,9 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(manifestSession1, is(notNullValue()));
         assertThat(manifestSession1.getManifestEvents(), is(empty()));
         assertThat(manifestSession1.getRecords(), hasSize(NUM_RECORDS_IN_GOOD_MANIFEST));
+
+        ImmutableListMultimap<String, ManifestRecord> session1RecordsByPatientId =
+                buildPatientIdToManifestRecordsMultimap(manifestSession1);
 
         ManifestSession manifestSession2 =
                 uploadManifest("manifest-upload/gender-mismatches-across-sessions/good-manifest-2.xlsx",
@@ -410,12 +453,25 @@ public class ManifestSessionEjbDBFreeTest {
                 assertThat(manifestRecord.getManifestEvents(), hasSize(1));
                 ManifestEvent manifestEvent = manifestRecord.getManifestEvents().get(0);
                 assertThat(manifestEvent.getSeverity(), is(ManifestEvent.Severity.ERROR));
+                ImmutableList<ManifestRecord> mismatchedRecords =
+                        session1RecordsByPatientId.get(manifestRecord.getValueByKey(Metadata.Key.PATIENT_ID));
                 assertThat(manifestEvent.getMessage(),
-                        containsString("1 instance found in manifest session " + manifestSession1.getSessionName()));
+                        containsString(manifestRecord.buildMessageForConflictingRecords(
+                                mismatchedRecords)));
                 observedMismatches++;
             }
         }
         assertThat(observedMismatches, is(equalTo(expectedPatientIds.size())));
+    }
+
+    private ImmutableListMultimap<String, ManifestRecord> buildPatientIdToManifestRecordsMultimap(
+            ManifestSession manifestSession) {
+        return Multimaps.index(manifestSession.getRecords(), new Function<ManifestRecord, String>() {
+            @Override
+            public String apply(ManifestRecord manifestRecord) {
+                return manifestRecord.getValueByKey(Metadata.Key.PATIENT_ID);
+            }
+        });
     }
 
     /********************************************************************/
@@ -697,7 +753,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestStatus sessionStatus = holder.ejb.getSessionStatus(ARBITRARY_MANIFEST_SESSION_ID);
 
         assertThat(sessionStatus.getErrorMessages(), is(empty()));
-        assertThat(sessionStatus.getSamplesEligibleInManifest(), is(20));
+        assertThat(sessionStatus.getSamplesEligibleForAccessioningInManifest(), is(0));
         assertThat(sessionStatus.getSamplesSuccessfullyScanned(), is(20));
         assertThat(sessionStatus.getSamplesInManifest(), is(20));
     }
@@ -711,9 +767,8 @@ public class ManifestSessionEjbDBFreeTest {
 
         ManifestStatus sessionStatus = holder.ejb.getSessionStatus(ARBITRARY_MANIFEST_SESSION_ID);
 
-        assertThat(sessionStatus.getErrorMessages(), hasSize(1));
-        assertThat(sessionStatus, hasError(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID));
-        assertThat(sessionStatus.getSamplesEligibleInManifest(), is(20));
+        assertThat(sessionStatus.getErrorMessages(), hasSize(0));
+        assertThat(sessionStatus.getSamplesEligibleForAccessioningInManifest(), is(0));
         assertThat(sessionStatus.getSamplesSuccessfullyScanned(), is(20));
         assertThat(sessionStatus.getSamplesInManifest(), is(21));
     }
@@ -728,7 +783,7 @@ public class ManifestSessionEjbDBFreeTest {
 
         assertThat(sessionStatus.getErrorMessages(), hasSize(1));
         assertThat(sessionStatus, hasError(ManifestRecord.ErrorStatus.MISSING_SAMPLE));
-        assertThat(sessionStatus.getSamplesEligibleInManifest(), is(21));
+        assertThat(sessionStatus.getSamplesEligibleForAccessioningInManifest(), is(1));
         assertThat(sessionStatus.getSamplesSuccessfullyScanned(), is(20));
         assertThat(sessionStatus.getSamplesInManifest(), is(21));
     }
@@ -744,10 +799,9 @@ public class ManifestSessionEjbDBFreeTest {
 
         ManifestStatus sessionStatus = holder.ejb.getSessionStatus(ARBITRARY_MANIFEST_SESSION_ID);
 
-        assertThat(sessionStatus.getErrorMessages(), hasSize(2));
+        assertThat(sessionStatus.getErrorMessages(), hasSize(1));
         assertThat(sessionStatus, hasError(ManifestRecord.ErrorStatus.MISSING_SAMPLE));
-        assertThat(sessionStatus, hasError(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID));
-        assertThat(sessionStatus.getSamplesEligibleInManifest(), is(21));
+        assertThat(sessionStatus.getSamplesEligibleForAccessioningInManifest(), is(1));
         assertThat(sessionStatus.getSamplesSuccessfullyScanned(), is(20));
         assertThat(sessionStatus.getSamplesInManifest(), is(22));
     }
@@ -761,9 +815,8 @@ public class ManifestSessionEjbDBFreeTest {
 
         ManifestStatus sessionStatus = holder.ejb.getSessionStatus(ARBITRARY_MANIFEST_SESSION_ID);
 
-        assertThat(sessionStatus.getErrorMessages(), hasSize(1));
-        assertThat(sessionStatus, hasError(ManifestRecord.ErrorStatus.MISMATCHED_GENDER));
-        assertThat(sessionStatus.getSamplesEligibleInManifest(), is(21));
+        assertThat(sessionStatus.getErrorMessages(), hasSize(0));
+        assertThat(sessionStatus.getSamplesEligibleForAccessioningInManifest(), is(0));
         assertThat(sessionStatus.getSamplesSuccessfullyScanned(), is(21));
         assertThat(sessionStatus.getSamplesInManifest(), is(21));
     }
@@ -977,7 +1030,7 @@ public class ManifestSessionEjbDBFreeTest {
             Assert.fail();
         } catch (Exception e) {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
-                    .formatMessage(Metadata.Key.SAMPLE_ID, BSP_TEST_SAMPLE_KEY)));
+                    .formatMessage(ManifestSessionEjb.MERCURY_SAMPLE_KEY, BSP_TEST_SAMPLE_KEY)));
             assertThat(e.getMessage(), containsString(ManifestSessionEjb.SAMPLE_NOT_ELIGIBLE_FOR_CLINICAL_MESSAGE));
         }
     }
@@ -990,7 +1043,7 @@ public class ManifestSessionEjbDBFreeTest {
             Assert.fail();
         } catch (Exception e) {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
-                    .formatMessage(Metadata.Key.SAMPLE_ID, TEST_SAMPLE_KEY + "BAD")));
+                    .formatMessage(ManifestSessionEjb.MERCURY_SAMPLE_KEY, TEST_SAMPLE_KEY + "BAD")));
             assertThat(e.getMessage(), containsString(ManifestSessionEjb.SAMPLE_NOT_FOUND_MESSAGE));
         }
     }
@@ -1032,7 +1085,7 @@ public class ManifestSessionEjbDBFreeTest {
             Assert.fail();
         } catch (Exception e) {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
-                    .formatMessage(Metadata.Key.SAMPLE_ID, TEST_SAMPLE_KEY + "BAD")));
+                    .formatMessage(ManifestSessionEjb.MERCURY_SAMPLE_KEY, TEST_SAMPLE_KEY + "BAD")));
             assertThat(e.getMessage(), containsString(ManifestSessionEjb.SAMPLE_NOT_FOUND_MESSAGE));
         }
     }
@@ -1130,7 +1183,7 @@ public class ManifestSessionEjbDBFreeTest {
             Assert.fail();
         } catch (Exception e) {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
-                    .formatMessage(Metadata.Key.SAMPLE_ID, TEST_SAMPLE_KEY + "BAD")));
+                    .formatMessage(ManifestSessionEjb.MERCURY_SAMPLE_KEY, TEST_SAMPLE_KEY + "BAD")));
             assertThat(e.getMessage(), containsString(ManifestSessionEjb.SAMPLE_NOT_FOUND_MESSAGE));
         }
     }

@@ -198,6 +198,7 @@ public final class PoiSpreadsheetParser {
         }
 
         return "";
+        // todo jmt this could all be replaced with return new HSSFDataFormatter().formatCellValue( cell );
     }
 
     /**
