@@ -76,7 +76,6 @@ public class CrspPipelineUtils {
      * used for aggregating positive controls for CRSP
      */
     public String getResearchProjectForCrspPositiveControls() {
-        // have michael or cassie make an RP, then hardcode it here
-        return "RP-1205";
+        return "RP-805";
     }
 }

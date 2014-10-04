@@ -123,6 +123,10 @@ public class CrspPipelineUtilsTest {
         }
     }
 
+    public void testControlsProjectIsRP805() {
+        Assert.assertEquals(crspPipelineAPIUtils.getResearchProjectForCrspPositiveControls(),"RP-805");
+    }
+
     private class TestSampleInstance {
 
         private final ProductOrderSample pdoSample;
