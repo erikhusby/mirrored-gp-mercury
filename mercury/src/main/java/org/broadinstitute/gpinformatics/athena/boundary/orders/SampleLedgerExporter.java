@@ -251,7 +251,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
             for (WorkCompleteMessage workCompleteMessage : workCompleteMessages) {
                 String aliquotId = workCompleteMessage.getAliquotId();
                 if (BSPLSIDUtil.isBspLsid(aliquotId)) {
-                    aliquotId = BSPLSIDUtil.lsidToBspSampleId(aliquotId);
+                    aliquotId = BSPLSIDUtil.lsidToBareId(aliquotId);
                     String stockId = stockIdByAliquotId.get(aliquotId);
                     if (stockId != null) {
                         workCompleteMessageBySample.put(stockId, workCompleteMessage);
