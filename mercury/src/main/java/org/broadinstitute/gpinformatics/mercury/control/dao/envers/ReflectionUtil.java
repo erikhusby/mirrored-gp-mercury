@@ -38,6 +38,8 @@ public class ReflectionUtil {
     private static final Map<Class, List<Field>> mapClassToPersistedFields = new HashMap<>();
     private static final Map<String, Class> entityClassnameToGeneratedClass = new HashMap<>();
     private static final List<Class> embeddableEntities = new ArrayList<>();
+    private static final List<Class> abstractEntities = new ArrayList<>();
+    private static final List<String> abstractEntityClassnames = new ArrayList<>();
 
     static {
         // Finds all the classes that will have Mercury audit data, their associated JPA generated classes,
@@ -56,13 +58,14 @@ public class ReflectionUtil {
                         StaticMetamodel  annotation  = (StaticMetamodel) aClass.getAnnotation(StaticMetamodel.class);
                         if (annotation != null) {
                             Class entityClass = annotation.value();
-                            // Due to a bug in Hibernate we need to exclude abstract entity classes (see GPLIM-3011)
-                            if (!Modifier.isAbstract(entityClass.getModifiers())) {
-                                mercuryAthenaEntityClassnameToClass.put(entityClass.getCanonicalName(), entityClass);
-                                entityClassnameToGeneratedClass.put(entityClass.getCanonicalName(), aClass);
-                                if (entityClass.getAnnotation(Embeddable.class) != null) {
-                                    embeddableEntities.add(entityClass);
-                                }
+                            mercuryAthenaEntityClassnameToClass.put(entityClass.getCanonicalName(), entityClass);
+                            entityClassnameToGeneratedClass.put(entityClass.getCanonicalName(), aClass);
+                            if (entityClass.getAnnotation(Embeddable.class) != null) {
+                                embeddableEntities.add(entityClass);
+                            }
+                            if (Modifier.isAbstract(entityClass.getModifiers())) {
+                                abstractEntities.add(entityClass);
+                                abstractEntityClassnames.add(entityClass.getCanonicalName());
                             }
                         }
                     }
@@ -91,6 +94,14 @@ public class ReflectionUtil {
 
     public static List<Class> getEmbeddableEntities() {
         return embeddableEntities;
+    }
+
+    public static List<Class> getAbstractEntities() {
+        return abstractEntities;
+    }
+
+    public static List<String> getAbstractEntityClassnames() {
+        return abstractEntityClassnames;
     }
 
     // Returns the fields that get persisted for the given entity class.
