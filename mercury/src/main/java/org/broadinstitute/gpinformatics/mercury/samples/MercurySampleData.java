@@ -1,7 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.samples;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
@@ -107,7 +105,7 @@ public class MercurySampleData implements SampleData {
 
     @Override
     public String getStockSample() {
-        return "";
+        return sampleId;
     }
 
     @Override
@@ -238,30 +236,5 @@ public class MercurySampleData implements SampleData {
 
     public String getVisit() {
         return visit;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-
-        MercurySampleData that = (MercurySampleData) o;
-        return new EqualsBuilder()
-                .append(this.sampleId, that.sampleId)
-                .append(this.collaboratorSampleId, that.collaboratorSampleId)
-                .append(this.patientId, that.patientId)
-                .append(this.tumorNormal, that.tumorNormal)
-                .append(this.collectionDate, that.collectionDate)
-                .append(this.visit, that.visit).build();
-    }
-
-    @Override
-    public int hashCode() {
-        return new HashCodeBuilder().append(sampleId).append(collaboratorSampleId).append(patientId).append(tumorNormal)
-                .append(collectionDate).append(visit).build();
     }
 }
