@@ -1679,4 +1679,16 @@
             <column name="LAB_VESSEL"/>
         </createIndex>
     </changeSet>
+    <changeSet id="GPLIM-3029-1" author="jsacco">
+        <!-- Support user defined search queries by lab event type -->
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists schemaName="MERCURY" indexName="IDX_LAB_EVENT_TYPE"/>
+            </not>
+        </preConditions>
+        <createIndex indexName="IDX_LAB_EVENT_TYPE"
+                     schemaName="MERCURY" tableName="LAB_EVENT" unique="false">
+            <column name="LAB_EVENT_TYPE"/>
+        </createIndex>
+    </changeSet>
 </databaseChangeLog>
