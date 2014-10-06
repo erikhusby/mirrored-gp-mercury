@@ -386,9 +386,9 @@ todo jmt not sure if this applies.
         if (mercurySample != null) {
             SampleData sampleData = new MercurySampleDataFetcher().fetchSampleData(mercurySample);
             if (sampleData != null) {
-                String collaboratorSampleName = sampleData.getCollaboratorsSampleName();
-                if (collaboratorSampleName != null) {
-                    return controlDao.findBySampleId(collaboratorSampleName);
+                String collaboratorParticipantId = sampleData.getCollaboratorParticipantId();
+                if (collaboratorParticipantId != null) {
+                    return controlDao.findByParticipantId(collaboratorParticipantId);
                 }
             }
         }

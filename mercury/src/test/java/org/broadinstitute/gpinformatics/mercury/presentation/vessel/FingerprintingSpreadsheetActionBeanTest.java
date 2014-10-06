@@ -66,8 +66,8 @@ public class FingerprintingSpreadsheetActionBeanTest extends TestCase {
             String idValue = String.valueOf(100 + i);
             MercurySample mercurySample = new MercurySample("SM-" + idValue, MercurySample.MetadataSource.MERCURY);
             String collaboratorSampleId =
-                    (i == 0) ? negativeControl.getCollaboratorSampleId() :
-                    (i == 1) ? positiveControl.getCollaboratorSampleId() :
+                    (i == 0) ? negativeControl.getCollaboratorParticipantId() :
+                    (i == 1) ? positiveControl.getCollaboratorParticipantId() :
                     "Patient-" + idValue;
             mercurySample.addMetadata(collaboratorSampleIdMetadata(collaboratorSampleId));
             BarcodedTube tube = new BarcodedTube("tube" + idValue);
@@ -123,9 +123,9 @@ public class FingerprintingSpreadsheetActionBeanTest extends TestCase {
     }
 
     public void testBarcodeSubmit() throws Exception {
-        EasyMock.expect(controlDao.findBySampleId(negativeControl.getCollaboratorSampleId())).andReturn(negativeControl).anyTimes();
-        EasyMock.expect(controlDao.findBySampleId(positiveControl.getCollaboratorSampleId())).andReturn(positiveControl).anyTimes();
-        EasyMock.expect(controlDao.findBySampleId(EasyMock.anyObject(String.class))).andReturn(null).anyTimes();
+        EasyMock.expect(controlDao.findByParticipantId(negativeControl.getCollaboratorParticipantId())).andReturn(negativeControl).anyTimes();
+        EasyMock.expect(controlDao.findByParticipantId(positiveControl.getCollaboratorParticipantId())).andReturn(positiveControl).anyTimes();
+        EasyMock.expect(controlDao.findByParticipantId(EasyMock.anyObject(String.class))).andReturn(null).anyTimes();
         EasyMock.replay(controlDao);
 
         // Generates a spreadsheet.
@@ -200,7 +200,7 @@ public class FingerprintingSpreadsheetActionBeanTest extends TestCase {
     }
 
     public void test48SampleCount() throws Exception {
-        EasyMock.expect(controlDao.findBySampleId(EasyMock.anyObject(String.class))).andReturn(null).anyTimes();
+        EasyMock.expect(controlDao.findByParticipantId(EasyMock.anyObject(String.class))).andReturn(null).anyTimes();
         EasyMock.replay(controlDao);
 
         final int fullPlateSampleCount = 96;
@@ -237,7 +237,7 @@ public class FingerprintingSpreadsheetActionBeanTest extends TestCase {
     }
 
     public void test95SampleCount() throws Exception {
-        EasyMock.expect(controlDao.findBySampleId(EasyMock.anyObject(String.class))).andReturn(null).anyTimes();
+        EasyMock.expect(controlDao.findByParticipantId(EasyMock.anyObject(String.class))).andReturn(null).anyTimes();
         EasyMock.replay(controlDao);
 
         // Removes two tubes and the action bean should make a validation error.
