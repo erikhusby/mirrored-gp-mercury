@@ -61,7 +61,7 @@ public class CollaboratorControlsActionBean extends CoreActionBean {
         controlReference = getContext().getRequest().getParameter(controlParameter);
 
         if (StringUtils.isNotBlank(controlReference)) {
-            workingControl = controlDao.findByParticipantId(controlReference);
+            workingControl = controlDao.findByCollaboratorParticipantId(controlReference);
         } else {
             workingControl = new Control();
         }
@@ -117,11 +117,11 @@ public class CollaboratorControlsActionBean extends CoreActionBean {
     @ValidationMethod(on = SAVE_ACTION)
     public void makeControlInactiveValidation() {
 
-        Control inactiveVersion = controlDao.findInactiveByParticipantId(controlReference);
+        Control inactiveVersion = controlDao.findInactiveByCollaboratorParticipantId(controlReference);
 
 
         if (isCreating()) {
-            Control existingVersion = controlDao.findByParticipantId(workingControl.getBusinessKey());
+            Control existingVersion = controlDao.findByCollaboratorParticipantId(workingControl.getBusinessKey());
 
             if (existingVersion != null) {
                 addValidationError("controlName", "An active control with this name already exists.  Please either " +

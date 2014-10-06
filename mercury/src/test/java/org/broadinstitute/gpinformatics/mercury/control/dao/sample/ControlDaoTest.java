@@ -66,7 +66,7 @@ public class ControlDaoTest extends ContainerTest {
         controlDao.flush();
         controlDao.clear();
 
-        Control newTestCtrl = controlDao.findByParticipantId(testId);
+        Control newTestCtrl = controlDao.findByCollaboratorParticipantId(testId);
 
         Assert.assertNotNull(newTestCtrl);
 
@@ -102,11 +102,11 @@ public class ControlDaoTest extends ContainerTest {
         controlDao.flush();
         controlDao.clear();
 
-        Control newTestCtrl = controlDao.findByParticipantId(testId);
+        Control newTestCtrl = controlDao.findByCollaboratorParticipantId(testId);
 
         Assert.assertNull(newTestCtrl);
 
-        newTestCtrl = controlDao.findInactiveByParticipantId(testId);
+        newTestCtrl = controlDao.findInactiveByCollaboratorParticipantId(testId);
         Assert.assertNotNull(newTestCtrl);
 
         List<Control> listOfOne = controlDao.findAllActive();
@@ -144,7 +144,7 @@ public class ControlDaoTest extends ContainerTest {
         controlDao.flush();
         controlDao.clear();
 
-        Control newTestCtrl = controlDao.findByParticipantId(testId1);
+        Control newTestCtrl = controlDao.findByCollaboratorParticipantId(testId1);
 
         Assert.assertNotNull(newTestCtrl);
 
@@ -172,7 +172,7 @@ public class ControlDaoTest extends ContainerTest {
         controlDao.flush();
         controlDao.clear();
 
-        Control newTestCtrl = controlDao.findByParticipantId(testId);
+        Control newTestCtrl = controlDao.findByCollaboratorParticipantId(testId);
 
         Assert.assertNull(newTestCtrl);
 
@@ -182,7 +182,7 @@ public class ControlDaoTest extends ContainerTest {
         controlDao.flush();
         controlDao.clear();
 
-        Control newTestCtrlDupe = controlDao.findByParticipantId(testId);
+        Control newTestCtrlDupe = controlDao.findByCollaboratorParticipantId(testId);
         Assert.assertNotNull(newTestCtrlDupe);
 
         List<Control> listOfOne = controlDao.findAllActive();

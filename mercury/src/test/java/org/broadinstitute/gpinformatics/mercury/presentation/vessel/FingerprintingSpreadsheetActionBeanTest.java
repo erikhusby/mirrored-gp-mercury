@@ -1,8 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.vessel;
 
 import freemarker.template.utility.StringUtil;
-import junit.framework.Assert;
-import junit.framework.TestCase;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.poi.ss.usermodel.Row;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -19,6 +17,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBeanContext;
 import org.easymock.EasyMock;
+import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
@@ -39,7 +39,7 @@ import static org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate
  * Tests the action bean.
  */
 @Test(groups = TestGroups.DATABASE_FREE)
-public class FingerprintingSpreadsheetActionBeanTest extends TestCase {
+public class FingerprintingSpreadsheetActionBeanTest {
     private Map<VesselPosition, BarcodedTube> initialPicoMap;
     private Map<VesselPosition, BarcodedTube> rearrayMap;
     private TubeFormation initialPicoRack;
@@ -53,8 +53,8 @@ public class FingerprintingSpreadsheetActionBeanTest extends TestCase {
     private Control negativeControl = new Control("WATER_CONTROL", Control.ControlType.NEGATIVE);
     private Control positiveControl = new Control("NA12878", Control.ControlType.POSITIVE);
 
+    @BeforeMethod
     public void setUp() throws Exception {
-        super.setUp();
         Date now = new Date();
         Date later = new Date(now.getTime() + 10000L);
 
@@ -123,9 +123,9 @@ public class FingerprintingSpreadsheetActionBeanTest extends TestCase {
     }
 
     public void testBarcodeSubmit() throws Exception {
-        EasyMock.expect(controlDao.findByParticipantId(negativeControl.getCollaboratorParticipantId())).andReturn(negativeControl).anyTimes();
-        EasyMock.expect(controlDao.findByParticipantId(positiveControl.getCollaboratorParticipantId())).andReturn(positiveControl).anyTimes();
-        EasyMock.expect(controlDao.findByParticipantId(EasyMock.anyObject(String.class))).andReturn(null).anyTimes();
+        EasyMock.expect(controlDao.findByCollaboratorParticipantId(negativeControl.getCollaboratorParticipantId())).andReturn(negativeControl).anyTimes();
+        EasyMock.expect(controlDao.findByCollaboratorParticipantId(positiveControl.getCollaboratorParticipantId())).andReturn(positiveControl).anyTimes();
+        EasyMock.expect(controlDao.findByCollaboratorParticipantId(EasyMock.anyObject(String.class))).andReturn(null).anyTimes();
         EasyMock.replay(controlDao);
 
         // Generates a spreadsheet.
@@ -145,11 +145,11 @@ public class FingerprintingSpreadsheetActionBeanTest extends TestCase {
                 ++smCount;
             }
             participantIds.add(participantId);
-            Assert.assertEquals("0", row.getCell(1).getStringCellValue());
+            Assert.assertEquals(row.getCell(1).getStringCellValue(), "0");
         }
         Assert.assertTrue(participantIds.contains(FingerprintingSpreadsheetActionBean.NEGATIVE_CONTROL));
         Assert.assertTrue(participantIds.contains(FingerprintingSpreadsheetActionBean.NA12878));
-        Assert.assertEquals(90, smCount);
+        Assert.assertEquals(smCount, 90);
 
         // Checks the data on the second sheet against the tubes in rearray rack.
         Set<String> tubePrefixes = new HashSet<>();
@@ -168,21 +168,21 @@ public class FingerprintingSpreadsheetActionBeanTest extends TestCase {
             String conc = row.getCell(5).getStringCellValue();
 
             // Checks the participantId matches across sheets, and column consistency.
-            Assert.assertEquals(participantIdsIter.next(), participantId);
-            Assert.assertEquals(participantId, rootId);
-            Assert.assertEquals(participantId, sampleId);
-            Assert.assertEquals("22.2", volume);
+            Assert.assertEquals(participantId, participantIdsIter.next());
+            Assert.assertEquals(rootId, participantId);
+            Assert.assertEquals(sampleId, participantId);
+            Assert.assertEquals(volume, "22.2");
 
             // The tube to check against.
             BarcodedTube tube = rearrayMap.get(VesselPosition.getByName(position));
             tubePrefixes.add(tube.getLabel().substring(0, 5));
             if (tube.getLabel().substring(0, 5).endsWith("3")) {
-                Assert.assertEquals(FingerprintingSpreadsheetActionBean.NA12878, participantId);
-                Assert.assertEquals(0, tube.getMetrics().size());
-                Assert.assertEquals(conc, "0");
+                Assert.assertEquals(participantId, FingerprintingSpreadsheetActionBean.NA12878);
+                Assert.assertEquals(tube.getMetrics().size(), 0);
+                Assert.assertEquals("0", conc);
             } else {
-                Assert.assertEquals(1, tube.getMetrics().size());
-                Assert.assertEquals(conc, tube.getMetrics().iterator().next().getValue().toString());
+                Assert.assertEquals(tube.getMetrics().size(), 1);
+                Assert.assertEquals(tube.getMetrics().iterator().next().getValue().toString(), conc);
             }
 
         }
@@ -194,13 +194,13 @@ public class FingerprintingSpreadsheetActionBeanTest extends TestCase {
 
         // Checks row counts.
         Assert.assertFalse(participantIdsIter.hasNext());
-        Assert.assertEquals(Matrix96.getVesselGeometry().getVesselPositions().length, participantIds.size());
+        Assert.assertEquals(participantIds.size(), Matrix96.getVesselGeometry().getVesselPositions().length);
 
         EasyMock.verify(controlDao);
     }
 
     public void test48SampleCount() throws Exception {
-        EasyMock.expect(controlDao.findByParticipantId(EasyMock.anyObject(String.class))).andReturn(null).anyTimes();
+        EasyMock.expect(controlDao.findByCollaboratorParticipantId(EasyMock.anyObject(String.class))).andReturn(null).anyTimes();
         EasyMock.replay(controlDao);
 
         final int fullPlateSampleCount = 96;
@@ -210,7 +210,7 @@ public class FingerprintingSpreadsheetActionBeanTest extends TestCase {
         for (VesselPosition position : positions.subList(halfPlateSampleCount, fullPlateSampleCount)) {
             rearrayMap.remove(position);
         }
-        Assert.assertEquals(halfPlateSampleCount, rearrayMap.size());
+        Assert.assertEquals(rearrayMap.size(), halfPlateSampleCount);
         rearrayRack = new TubeFormation(rearrayMap, Matrix96);
         fpPlate = new StaticPlate("fpPlate48", Eppendorf96);
         LabEvent rearrayTransfer = doSectionTransfer(rearrayRack, fpPlate);
@@ -220,7 +220,7 @@ public class FingerprintingSpreadsheetActionBeanTest extends TestCase {
         actionBean.barcodeSubmit();
 
         // No validation errors.
-        Assert.assertEquals(0, actionBean.getContext().getValidationErrors().size());
+        Assert.assertEquals(actionBean.getContext().getValidationErrors().size(), 0);
         // 48 sample rows in the spreadsheet.
         int rowCount = 0;
         for (Row row : actionBean.workbook.getSheet("Plate")) {
@@ -229,15 +229,15 @@ public class FingerprintingSpreadsheetActionBeanTest extends TestCase {
                 continue;
             }
             String volume = row.getCell(4).getStringCellValue();
-            Assert.assertEquals("0", volume);
+            Assert.assertEquals(volume,"0");
             ++rowCount;
         }
-        Assert.assertEquals(halfPlateSampleCount, rowCount);
+        Assert.assertEquals(rowCount, halfPlateSampleCount);
         EasyMock.verify(controlDao);
     }
 
     public void test95SampleCount() throws Exception {
-        EasyMock.expect(controlDao.findByParticipantId(EasyMock.anyObject(String.class))).andReturn(null).anyTimes();
+        EasyMock.expect(controlDao.findByCollaboratorParticipantId(EasyMock.anyObject(String.class))).andReturn(null).anyTimes();
         EasyMock.replay(controlDao);
 
         // Removes two tubes and the action bean should make a validation error.
@@ -250,7 +250,7 @@ public class FingerprintingSpreadsheetActionBeanTest extends TestCase {
 
         actionBean.staticPlate = fpPlate;
         actionBean.barcodeSubmit();
-        Assert.assertEquals(1, actionBean.getContext().getValidationErrors().size());
+        Assert.assertEquals(actionBean.getContext().getValidationErrors().size(), 1);
         Assert.assertNull(actionBean.workbook);
         EasyMock.verify(controlDao);
     }
@@ -259,6 +259,7 @@ public class FingerprintingSpreadsheetActionBeanTest extends TestCase {
     private Set<Metadata> collaboratorSampleIdMetadata(final String collaboratorSampleId) {
         return new HashSet<Metadata>() {{
             add(new Metadata(Metadata.Key.SAMPLE_ID, collaboratorSampleId));
+            add(new Metadata(Metadata.Key.PATIENT_ID, collaboratorSampleId));
         }};
     }
 

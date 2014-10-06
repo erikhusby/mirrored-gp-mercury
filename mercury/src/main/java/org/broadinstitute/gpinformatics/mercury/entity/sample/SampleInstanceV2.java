@@ -1,17 +1,14 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
-import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -19,7 +16,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStarting
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleDataFetcher;
 
 import javax.annotation.Nullable;
-import javax.persistence.Transient;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -388,7 +384,7 @@ todo jmt not sure if this applies.
             if (sampleData != null) {
                 String collaboratorParticipantId = sampleData.getCollaboratorParticipantId();
                 if (collaboratorParticipantId != null) {
-                    return controlDao.findByParticipantId(collaboratorParticipantId);
+                    return controlDao.findByCollaboratorParticipantId(collaboratorParticipantId);
                 }
             }
         }

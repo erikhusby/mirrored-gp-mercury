@@ -608,7 +608,6 @@ public class BaseEventTest {
         BarcodedTube posControlTube = new BarcodedTube("C1");
         SampleData bspSampleDataPos = new BspSampleData(
                 new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
-                    put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, POSITIVE_CONTROL);
                     put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, POSITIVE_CONTROL);
                 }});
         posControlTube.addSample(new MercurySample(POSITIVE_CONTROL, bspSampleDataPos));
@@ -618,7 +617,6 @@ public class BaseEventTest {
         BarcodedTube negControlTube = new BarcodedTube("C2");
         SampleData bspSampleDataNeg = new BspSampleData(
                 new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
-                    put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, NEGATIVE_CONTROL);
                     put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, NEGATIVE_CONTROL);
                 }});
         negControlTube.addSample(new MercurySample(NEGATIVE_CONTROL, bspSampleDataNeg));
