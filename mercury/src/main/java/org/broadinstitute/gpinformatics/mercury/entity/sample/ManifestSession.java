@@ -103,6 +103,14 @@ public class ManifestSession implements Updatable {
              + "record.manifest_session_id = manifest_session_id "
              + "and evt.manifest_event_id is null)")
     private int numberOfNonQuarantinedRecords;
+
+    @NotAudited
+    @Formula("(select count(*) from mercury.manifest_record record "
+             + "left join mercury.manifest_event evt on evt.MANIFEST_RECORD_ID = record.MANIFEST_RECORD_ID and evt.SEVERITY = 'QUARANTINED' "
+             + "where "
+             + "record.manifest_session_id = manifest_session_id "
+             + "and evt.SEVERITY = 'QUARANTINED')")
+    private int numberOfQuarantinedRecords;
     /**
      * For JPA.
      */
@@ -394,6 +402,10 @@ public class ManifestSession implements Updatable {
      */
     public int getNumberOfTubesAvailableForTransfer() {
         return this.numberOfNonQuarantinedRecords;
+    }
+
+    public int getNumberOfQuarantinedRecords() {
+        return numberOfQuarantinedRecords;
     }
 
     /**
