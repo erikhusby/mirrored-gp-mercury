@@ -61,6 +61,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -185,7 +186,7 @@ public class ProductOrderResource {
     public ProductOrderKit createOrderKit(boolean isExomeExpress, List<ProductOrderKitDetailData> kitDetailsData,
                                           SampleCollection sampleCollection, Site site) {
 
-        List<ProductOrderKitDetail> kitDetails = new ArrayList<>();
+        List<ProductOrderKitDetail> kitDetails = new ArrayList<>(kitDetailsData.size());
         for (ProductOrderKitDetailData kitDetailData : kitDetailsData) {
             SampleKitWorkRequest.MoleculeType moleculeType = kitDetailData.getMoleculeType();
 
@@ -198,31 +199,27 @@ public class ProductOrderResource {
     }
 
     private ProductOrderKitDetail createKitDetail(long numberOfSamples, SampleKitWorkRequest.MoleculeType moleculeType,
-                                                  MaterialInfoDto materialInfoDto) {
-        ProductOrderKitDetail kitDetail =
-                new ProductOrderKitDetail(numberOfSamples, KitType.DNA_MATRIX, HUMAN, materialInfoDto);
+                                                  MaterialInfoDto materialInfo) {
+        Set<PostReceiveOption> postReceiveOptions = EnumSet.noneOf(PostReceiveOption.class);
 
-        kitDetail.getPostReceiveOptions().add(PostReceiveOption.FLUIDIGM_FINGERPRINTING);
         if (moleculeType == SampleKitWorkRequest.MoleculeType.DNA) {
-            kitDetail.getPostReceiveOptions().add(PostReceiveOption.PICO_RECEIVED);
+            postReceiveOptions.add(PostReceiveOption.PICO_RECEIVED);
         } else {
-            kitDetail.getPostReceiveOptions().add(PostReceiveOption.BIOANALYZER);
+            postReceiveOptions.add(PostReceiveOption.BIOANALYZER);
         }
 
-        return kitDetail;
+        return new ProductOrderKitDetail(numberOfSamples, KitType.DNA_MATRIX, HUMAN, materialInfo, postReceiveOptions);
     }
 
     private MaterialInfoDto createMaterialInfoDTO(MaterialInfo materialInfo,
                                                   SampleKitWorkRequest.MoleculeType moleculeType) {
-        MaterialInfoDto materialInfoDto;
+        KitTypeAllowanceSpecification kitType;
         if (moleculeType == SampleKitWorkRequest.MoleculeType.DNA) {
-            materialInfoDto = new MaterialInfoDto(
-                    KitTypeAllowanceSpecification.DNA_MATRIX_KIT.getText(), materialInfo.getText());
+            kitType = KitTypeAllowanceSpecification.DNA_MATRIX_KIT;
         } else {
-            materialInfoDto = new MaterialInfoDto(
-                    KitTypeAllowanceSpecification.RNA_MATRIX_KIT.getText(), materialInfo.getText());
+            kitType = KitTypeAllowanceSpecification.RNA_MATRIX_KIT;
         }
-        return materialInfoDto;
+        return new MaterialInfoDto(kitType.getText(), materialInfo.getText());
     }
 
     /**
