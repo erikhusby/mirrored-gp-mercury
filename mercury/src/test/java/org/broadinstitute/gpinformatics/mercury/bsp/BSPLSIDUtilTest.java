@@ -50,4 +50,14 @@ public class BSPLSIDUtilTest {
             Assert.assertEquals(ids[i], map.get(lsids[i]));
         }
     }
+
+    public void testLsidToBspSampleId() {
+        String  lsid = "broad.mit.edu:bsp.prod.sample:UP6R";
+
+        String bspId = "SM-UP6R";
+
+        String resultId = BSPLSIDUtil.lsidToBspSampleId(lsid);
+
+        Assert.assertEquals(bspId, resultId);
+    }
 }
