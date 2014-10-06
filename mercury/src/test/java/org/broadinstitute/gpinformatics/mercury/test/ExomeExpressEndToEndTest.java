@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingReq
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.ControlWell;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraCustomFieldsUtil;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
@@ -32,6 +33,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderT
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bsp.BSPSampleFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
@@ -100,6 +102,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DA
 public class ExomeExpressEndToEndTest {
 
 
+    private final CrspPipelineUtils crspPipelineUtils = new CrspPipelineUtils(Deployment.DEV);
     // if this bombs because of a jira refresh, just switch it to JiraServiceProducer.stubInstance();
     // for integration test fun where we post things back to a real jira, try JiraServiceProducer.testInstance();
     private JiraService jiraService = JiraServiceProducer.stubInstance();
@@ -553,7 +556,8 @@ public class ExomeExpressEndToEndTest {
                                                                                        null,
                                                                                        new SequencingTemplateFactory(),
                                                                                        productOrderDao,
-                                                                                       null);
+                                                                                       null,
+                                                                                       crspPipelineUtils);
             ZimsIlluminaRun zimsRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);
 
             // how to populate BspSampleData?  Ease of use from EL suggests an entity that can load itself, but this
