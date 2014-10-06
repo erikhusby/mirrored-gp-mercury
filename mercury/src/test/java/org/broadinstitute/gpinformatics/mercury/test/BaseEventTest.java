@@ -35,6 +35,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferEntityGrapher;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizer;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
@@ -112,6 +113,7 @@ public class BaseEventTest {
      * Referenced in validation of routing.
      */
     protected static SystemRouter.System expectedRouting = SystemRouter.System.MERCURY;
+    private final CrspPipelineUtils crspPipelineUtils = new CrspPipelineUtils(Deployment.DEV);
 
     private BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
 
@@ -812,7 +814,8 @@ public class BaseEventTest {
                 },
                 new SequencingTemplateFactory(),
                 productOrderDao,
-                new CrspControlsTestUtils().getMockResearchProjectDao()
+                new CrspControlsTestUtils().getMockResearchProjectDao(),
+                crspPipelineUtils
         );
     }
 }

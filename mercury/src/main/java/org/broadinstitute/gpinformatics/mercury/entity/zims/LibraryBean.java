@@ -27,6 +27,7 @@ import java.util.List;
 
 public class LibraryBean {
     public static final String NO_PDO_SAMPLE = null;
+    public static final String CRSP_SOMATIC_TEST_TYPE = "Somatic";
 
     @JsonProperty("metadataSource")
     private String metadataSource;
@@ -188,6 +189,9 @@ public class LibraryBean {
     private String regulatoryDesignation = ResearchProject.RegulatoryDesignation.RESEARCH_ONLY.name();
 
     private String stockSample;
+
+    @JsonProperty("testType")
+    private String testType;
 
 
     public LibraryBean() {}
@@ -622,4 +626,12 @@ public class LibraryBean {
             return new CompareToBuilder().append(libraryBean1.getSampleId(), libraryBean2.getSampleId()).toComparison();
         }
     };
+
+    public void setTestType(String testType) {
+        this.testType = testType;
+    }
+
+    public String getTestType() {
+        return testType;
+    }
 }

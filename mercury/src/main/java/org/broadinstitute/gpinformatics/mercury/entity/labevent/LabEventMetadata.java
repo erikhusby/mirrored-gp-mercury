@@ -25,7 +25,8 @@ import java.util.Map;
 public class LabEventMetadata {
 
     public enum LabEventMetadataType {
-        DilutionFactor("DilutionFactor");
+        DilutionFactor("DilutionFactor"),
+        Volume("Volume");
 
         private static final Map<String, LabEventMetadataType> MAP_NAME_TO_METADATA_TYPE =
                 new HashMap<>(LabEventMetadataType.values().length);
@@ -36,8 +37,8 @@ public class LabEventMetadata {
         }
 
         static {
-            for (LabEventMetadataType rackType : LabEventMetadataType.values()) {
-                MAP_NAME_TO_METADATA_TYPE.put(rackType.name(), rackType);
+            for (LabEventMetadataType metadataType : LabEventMetadataType.values()) {
+                MAP_NAME_TO_METADATA_TYPE.put(metadataType.name(), metadataType);
             }
         }
 
