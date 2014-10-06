@@ -98,13 +98,13 @@ public class ZimsIlluminaRunFactory {
                                   ControlDao controlDao, SequencingTemplateFactory sequencingTemplateFactory,
                                   ProductOrderDao productOrderDao,
                                   ResearchProjectDao researchProjectDao,
-                                  Deployment deployment) {
+                                  CrspPipelineUtils crspPipelineUtils) {
         this.sampleDataFetcher = sampleDataFetcher;
         this.controlDao = controlDao;
         this.sequencingTemplateFactory = sequencingTemplateFactory;
         this.productOrderDao = productOrderDao;
         this.researchProjectDao = researchProjectDao;
-        crspPipelineUtils = new CrspPipelineUtils(deployment);
+        this.crspPipelineUtils = crspPipelineUtils;
     }
 
     public ZimsIlluminaRun makeZimsIlluminaRun(IlluminaSequencingRun illuminaRun) {

@@ -70,11 +70,9 @@ public class CrspPipelineUtils {
     }
 
     private void throwExceptionIfInProductionAndSampleIsNotABSPSample(@Nonnull String sampleId) {
-        if (deployment != null) {
-            if (deployment == Deployment.PROD) {
-                if (!BSPUtil.isInBspFormat(sampleId)) {
-                    throw new RuntimeException("Sample " + sampleId + " does not appear to be a BSP sample.  The pipeline's fingerprint validation can only handle BSP samples.");
-                }
+        if (deployment == Deployment.PROD) {
+            if (!BSPUtil.isInBspFormat(sampleId)) {
+                throw new RuntimeException("Sample " + sampleId + " does not appear to be a BSP sample.  The pipeline's fingerprint validation can only handle BSP samples.");
             }
         }
     }
