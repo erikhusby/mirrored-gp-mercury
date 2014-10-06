@@ -15,6 +15,14 @@ JSP to allow upload of vessels of reagents.
         <stripes:form beanclass="${actionBean.class.name}" id="reagentForm">
             <div class="form-horizontal">
                 <div class="control-group">
+                    <stripes:label for="reagentFormat" class="control-label">File Format</stripes:label>
+                    <div class="controls">
+                        <stripes:select name="reagentFormat">
+                            <stripes:options-enumeration
+                                    enum="org.broadinstitute.gpinformatics.mercury.presentation.reagent.ReagentActionBean.ReagentFormat"
+                                    label="displayName"/>
+                        </stripes:select>
+                    </div>
                     <stripes:label for="reagentsFile" class="control-label">
                         Reagents File
                     </stripes:label>

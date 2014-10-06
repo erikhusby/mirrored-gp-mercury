@@ -22,15 +22,30 @@ import java.util.List;
 @UrlBinding("/reagent/reagent.action")
 public class ReagentActionBean extends CoreActionBean {
 
+    public enum ReagentFormat {
+        CONTROLS("Control tubes");
+        private String displayName;
+
+        ReagentFormat(String displayName) {
+
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+    }
+
     public static final String UPLOAD_ACTION = "upload";
 
     public static final String REAGENT_UPLOAD_PAGE = "/reagent/reagent_upload.jsp";
 
-    @Inject
-    private ControlReagentFactory controlReagentFactory;
-
     @Validate(required = true, on = UPLOAD_ACTION)
     private FileBean reagentsFile;
+    private ReagentFormat reagentFormat;
+
+    @Inject
+    private ControlReagentFactory controlReagentFactory;
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -42,8 +57,15 @@ public class ReagentActionBean extends CoreActionBean {
     public Resolution upload() {
         try {
             MessageCollection messageCollection = new MessageCollection();
-            List<BarcodedTube> barcodedTubes = controlReagentFactory.buildTubesFromSpreadsheet(
-                    reagentsFile.getInputStream(), messageCollection);
+            List<BarcodedTube> barcodedTubes;
+            switch (reagentFormat) {
+            case CONTROLS:
+                barcodedTubes = controlReagentFactory.buildTubesFromSpreadsheet(
+                        reagentsFile.getInputStream(), messageCollection);
+                break;
+            default:
+                throw new RuntimeException("Unexpected reagent format " + reagentFormat);
+            }
             addMessages(messageCollection);
             if (!messageCollection.hasErrors()) {
                 addMessage("Uploaded {0} tubes.", barcodedTubes.size());
@@ -52,6 +74,14 @@ public class ReagentActionBean extends CoreActionBean {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public ReagentFormat getReagentFormat() {
+        return reagentFormat;
+    }
+
+    public void setReagentFormat(ReagentFormat reagentFormat) {
+        this.reagentFormat = reagentFormat;
     }
 
     public void setReagentsFile(FileBean reagentsFile) {
