@@ -1,8 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.vessel;
 
 import freemarker.template.utility.StringUtil;
-import junit.framework.Assert;
-import junit.framework.TestCase;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.poi.ss.usermodel.Row;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -19,6 +17,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBeanContext;
 import org.easymock.EasyMock;
+import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
@@ -39,7 +39,7 @@ import static org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate
  * Tests the action bean.
  */
 @Test(groups = TestGroups.DATABASE_FREE)
-public class FingerprintingSpreadsheetActionBeanTest extends TestCase {
+public class FingerprintingSpreadsheetActionBeanTest {
     private Map<VesselPosition, BarcodedTube> initialPicoMap;
     private Map<VesselPosition, BarcodedTube> rearrayMap;
     private TubeFormation initialPicoRack;
@@ -53,8 +53,8 @@ public class FingerprintingSpreadsheetActionBeanTest extends TestCase {
     private Control negativeControl = new Control("WATER_CONTROL", Control.ControlType.NEGATIVE);
     private Control positiveControl = new Control("NA12878", Control.ControlType.POSITIVE);
 
+    @BeforeMethod
     public void setUp() throws Exception {
-        super.setUp();
         Date now = new Date();
         Date later = new Date(now.getTime() + 10000L);
 
