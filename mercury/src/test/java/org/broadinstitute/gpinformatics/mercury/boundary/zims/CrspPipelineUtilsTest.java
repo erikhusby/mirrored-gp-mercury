@@ -3,16 +3,21 @@ package org.broadinstitute.gpinformatics.mercury.boundary.zims;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
+import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -121,6 +126,15 @@ public class CrspPipelineUtilsTest {
             Assert.assertTrue(e.getMessage().contains("Cannot transform non-BSP sample id"));
             Assert.assertTrue(e.getMessage().contains(nonBspSampleId));
         }
+    }
+
+    public void testSetFieldsSetsTestTypeToSomatic() {
+        LibraryBean libraryBean = new LibraryBean();
+        SampleData sampleData = new MercurySampleData("sampleId", Collections.<Metadata>emptySet());
+
+        crspPipelineAPIUtils.setFieldsForCrsp(libraryBean,sampleData,null,null);
+
+        Assert.assertEquals(libraryBean.getTestType(),"Somatic");
     }
 
     public void testControlsProjectIsRP805() {

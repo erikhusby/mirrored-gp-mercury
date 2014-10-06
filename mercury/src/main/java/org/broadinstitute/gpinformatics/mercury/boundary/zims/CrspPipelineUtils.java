@@ -47,6 +47,7 @@ public class CrspPipelineUtils {
                                  String lcSet) {
         libraryBean.setLsid(getCrspLSIDForBSPSampleId(sampleData.getSampleId()));
         libraryBean.setRootSample(libraryBean.getSampleId());
+        libraryBean.setTestType(LibraryBean.CRSP_SOMATIC_TEST_TYPE);
 
         if (Boolean.TRUE.equals(libraryBean.isPositiveControl())) {
             String mungedSampleName = libraryBean.getCollaboratorSampleId() + "_" + lcSet;
