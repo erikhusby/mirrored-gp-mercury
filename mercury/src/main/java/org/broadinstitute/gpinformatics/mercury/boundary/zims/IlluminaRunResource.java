@@ -12,7 +12,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPLSIDUtil;
-import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
@@ -58,7 +58,7 @@ public class IlluminaRunResource implements Serializable {
     private static final Log LOG = LogFactory.getLog(IlluminaRunResource.class);
 
     @Inject
-    private SampleDataFetcher sampleDataFetcher;
+    private BSPSampleDataFetcher sampleDataFetcher;
 
     @Inject
     private ThriftService thriftService;
@@ -79,7 +79,7 @@ public class IlluminaRunResource implements Serializable {
     }
 
     public IlluminaRunResource(ThriftService thriftService,
-            SampleDataFetcher sampleDataFetcher,
+            BSPSampleDataFetcher sampleDataFetcher,
             IlluminaSequencingRunDao illuminaSequencingRunDao) {
         this.thriftService = thriftService;
         this.sampleDataFetcher = sampleDataFetcher;
@@ -200,7 +200,7 @@ public class IlluminaRunResource implements Serializable {
      * @param run from Thrift
      * @return map lsid to DTO
      */
-    private Map<String, SampleData> fetchAllBSPDataAtOnce(TZamboniRun run) {
+    Map<String, SampleData> fetchAllBSPDataAtOnce(TZamboniRun run) {
         Set<String> sampleLsids = new HashSet<>();
         for (TZamboniLane zamboniLane : run.getLanes()) {
             for (TZamboniLibrary zamboniLibrary : zamboniLane.getLibraries()) {
@@ -218,10 +218,10 @@ public class IlluminaRunResource implements Serializable {
                 sampleNames.add(lsIdToBareId.getValue());
             }
         }
-        Map<String, SampleData> sampleDataByName = sampleDataFetcher.fetchSampleData(sampleNames);
+        Map<String, BspSampleData> sampleDataByName = sampleDataFetcher.fetchSampleData(sampleNames);
 
         Map<String, SampleData> lsidToSampleData = new HashMap<>();
-        for (Map.Entry<String, SampleData> bspSampleDataEntry : sampleDataByName.entrySet()) {
+        for (Map.Entry<String, BspSampleData> bspSampleDataEntry : sampleDataByName.entrySet()) {
             SampleData sampleData = bspSampleDataEntry.getValue();
             // Make sure we get something out of BSP.  If we don't, consider it a
             // catastrophe, especially for the pipeline.
