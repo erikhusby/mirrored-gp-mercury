@@ -42,7 +42,7 @@ public class ControlReagentFactory {
      * @param messageCollection errors are added to this
      * @return list of entities
      */
-    List<BarcodedTube> buildTubesFromSpreadsheet(InputStream spreadsheetStream,
+    public List<BarcodedTube> buildTubesFromSpreadsheet(InputStream spreadsheetStream,
             MessageCollection messageCollection) {
         try {
             // Parse spreadsheet to get DTOs.

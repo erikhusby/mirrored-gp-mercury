@@ -154,6 +154,11 @@
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.SampleVesselActionBean"
                                           event="view">Upload Sample Vessels</stripes:link>
                         </li>
+                        <li>
+                            <stripes:link id="uploadReagents"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.ReagentActionBean"
+                                          event="view">Upload Reagents</stripes:link>
+                        </li>
                     </ul>
                 </li>
             </security:authorizeBlock>
