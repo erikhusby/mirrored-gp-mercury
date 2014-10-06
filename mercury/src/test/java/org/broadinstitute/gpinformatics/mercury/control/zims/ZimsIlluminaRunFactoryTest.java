@@ -13,9 +13,11 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventRefDataFetcher;
@@ -68,6 +70,7 @@ public class ZimsIlluminaRunFactoryTest {
         put(BSPSampleSearchColumn.PARTICIPANT_ID, POSITIVE_CONTROL_SAMPLE_PARTICIPANT_ID);
     }});
 
+    private CrspPipelineUtils crspPipelineUtils = new CrspPipelineUtils(Deployment.DEV);
     private ResearchProject crspPositiveControlsResearchProject;
     private ResearchProjectDao mockResearchProjectDao;
     private static final String PRODUCT_ORDER_KEY = "TestPDO-1";
@@ -117,7 +120,7 @@ public class ZimsIlluminaRunFactoryTest {
                                           true, Workflow.AGILENT_EXOME_EXPRESS, false, "agg type");
 
         zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(mockSampleDataFetcher, mockControlDao,
-                new SequencingTemplateFactory(), productOrderDao, mockResearchProjectDao);
+                new SequencingTemplateFactory(), productOrderDao, mockResearchProjectDao, crspPipelineUtils);
         LabEventFactory labEventFactory = new LabEventFactory(null, null);
         labEventFactory.setLabEventRefDataFetcher(new LabEventRefDataFetcher() {
             @Override

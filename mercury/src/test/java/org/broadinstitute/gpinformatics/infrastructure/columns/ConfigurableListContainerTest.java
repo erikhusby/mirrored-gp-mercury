@@ -59,7 +59,11 @@ public class ConfigurableListContainerTest extends Arquillian {
         for (Map.Entry<String, List<ColumnTabulation>> groupListSearchTermEntry :
                 configurableSearchDefinition.getMapGroupToColumnTabulations().entrySet()) {
             for (ColumnTabulation searchTerm : groupListSearchTermEntry.getValue()) {
-                columnTabulations.add(searchTerm);
+                // Some search terms are not available for selection in result list
+                // TODO Push method from SearchTerm to ColumnTabulation superclass (or consolidate)
+                if( !((SearchTerm) searchTerm).isExcludedFromResultColumns() ) {
+                    columnTabulations.add(searchTerm);
+                }
             }
         }
 
