@@ -130,11 +130,7 @@ public class CrspPipelineUtilsTest {
             new CrspPipelineUtils(Deployment.PROD).setFieldsForCrsp(new LibraryBean(), sampleDataWithNonBspSample, null, null);
             Assert.fail("Should have thrown an exception because " + sampleDataWithNonBspSample.getSampleId() + " is not a bsp sample");
         }
-        catch(RuntimeException ignored) {}
-        catch(RuntimeException e) {
-            Assert.assertTrue(e.getMessage().contains("Cannot transform non-BSP sample id"));
-            Assert.assertTrue(e.getMessage().contains(nonBspSampleId));
-        }
+        catch(RuntimeException ignored){}
     }
 
     public void testSetFieldsSetsTestTypeToSomatic() {

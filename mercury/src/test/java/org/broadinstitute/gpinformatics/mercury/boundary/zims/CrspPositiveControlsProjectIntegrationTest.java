@@ -15,7 +15,8 @@ public class CrspPositiveControlsProjectIntegrationTest extends ContainerTest {
     @Inject
     private ResearchProjectDao researchProjectDao;
 
-    private CrspPipelineUtils crspPipelineUtils = new CrspPipelineUtils();
+    @Inject
+    private CrspPipelineUtils crspPipelineUtils;
 
     public void testVerifyThatBuickPositiveControlsProjectHasCliaCapRegulatoryDesignation() {
         ResearchProject positiveControlsProject = researchProjectDao.findByBusinessKey(crspPipelineUtils.getResearchProjectForCrspPositiveControls());
