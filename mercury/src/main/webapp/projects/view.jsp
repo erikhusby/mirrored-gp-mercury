@@ -198,9 +198,9 @@
                     <div class="control-group">
                         <stripes:label style="width:80px" class="control-label" for="sampleKitShippingId">Send Kits To *</stripes:label>
                         <div class="controls" style="margin-left:90px">
-                            <stripes:select id="sampleKitShippingId" name="sampleKitShippingMethod">
+                            <stripes:select id="sampleKitShippingId" name="sampleKitRecipient">
                                 <stripes:options-enumeration label="displayName"
-                                        enum="org.broadinstitute.gpinformatics.athena.boundary.projects.SampleKitShippingMethod"/>
+                                        enum="org.broadinstitute.gpinformatics.athena.boundary.projects.SampleKitRecipient"/>
                             </stripes:select>
                         </div>
                     </div>
@@ -260,7 +260,7 @@
                                                 <stripes:hidden id="specifiedCollaborator" name="specifiedCollaborator" value=""/>
                                                 <stripes:hidden id="collaborationMessage" name="collaborationMessage" value=""/>
                                                 <stripes:hidden id="collaborationQuoteId" name="collaborationQuoteId" value=""/>
-                                                <stripes:hidden id="sampleKitShipping" name="sampleKitShippingMethod" value=""/>
+                                                <stripes:hidden id="sampleKitShipping" name="sampleKitRecipient" value=""/>
 
                                                 <stripes:button name="collaborate" value="Begin Collaboration" class="btn-mini"
                                                                 style="margin-left: 10px;" onclick="showBeginCollaboration()"/>

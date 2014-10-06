@@ -23,7 +23,7 @@ import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusF
 import org.broadinstitute.gpinformatics.athena.boundary.projects.CollaborationService;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.RegulatoryInfoEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectEjb;
-import org.broadinstitute.gpinformatics.athena.boundary.projects.SampleKitShippingMethod;
+import org.broadinstitute.gpinformatics.athena.boundary.projects.SampleKitRecipient;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryInfoDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
@@ -154,7 +154,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
      * then sent to the PDO create page to be used for shipping kits.
      */
     @Validate(required = true, on = {BEGIN_COLLABORATION_ACTION})
-    private SampleKitShippingMethod sampleKitShippingMethod = SampleKitShippingMethod.COLLABORATOR;
+    private SampleKitRecipient sampleKitRecipient = SampleKitRecipient.COLLABORATOR;
 
     @ValidateNestedProperties({
             @Validate(field = "title", label = "Project", required = true, maxlength = 4000, on = {SAVE_ACTION}),
@@ -494,7 +494,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public Resolution beginCollaboration() throws Exception {
         try {
             collaborationService.beginCollaboration(editResearchProject, selectedCollaborator, specifiedCollaborator,
-                    collaborationQuoteId, sampleKitShippingMethod, collaborationMessage);
+                    collaborationQuoteId, sampleKitRecipient, collaborationMessage);
             addMessage("Collaboration created successfully");
         } catch (Exception e) {
             addGlobalValidationError("Could not begin the Collaboration: {2}", e.getMessage());
@@ -1146,11 +1146,11 @@ public class ResearchProjectActionBean extends CoreActionBean {
                (editResearchProject.getRegulatoryDesignation() == ResearchProject.RegulatoryDesignation.RESEARCH_ONLY));
     }
 
-    public SampleKitShippingMethod getSampleKitShippingMethod() {
-        return sampleKitShippingMethod;
+    public SampleKitRecipient getSampleKitRecipient() {
+        return sampleKitRecipient;
     }
 
-    public void setSampleKitShippingMethod(SampleKitShippingMethod sampleKitShippingMethod) {
-        this.sampleKitShippingMethod = sampleKitShippingMethod;
+    public void setSampleKitRecipient(SampleKitRecipient sampleKitRecipient) {
+        this.sampleKitRecipient = sampleKitRecipient;
     }
 }

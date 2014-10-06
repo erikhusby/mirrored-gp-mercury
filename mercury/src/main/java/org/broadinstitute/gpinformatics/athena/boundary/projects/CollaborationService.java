@@ -84,12 +84,12 @@ public class CollaborationService {
      * @param selectedCollaborator The bsp user id for an external collaborator that was specified
      * @param collaboratorEmail The email of a collaborator that was specifically specified
      * @param quoteId the collaboration's quote ID
-     * @param sampleKitShippingMethod The person to send kits to for fulfilling the order.
+     * @param sampleKitRecipient The person to send kits to for fulfilling the order.
      * @param collaborationMessage The optional extra message from the project manager
      */
     public void beginCollaboration(@Nonnull ResearchProject researchProject, @Nullable Long selectedCollaborator,
                                    @Nullable String collaboratorEmail, @Nonnull String quoteId,
-                                   SampleKitShippingMethod sampleKitShippingMethod,
+                                   SampleKitRecipient sampleKitRecipient,
                                    @Nullable String collaborationMessage)
             throws CollaborationNotFoundException, CollaborationPortalException {
 
@@ -131,7 +131,7 @@ public class CollaborationService {
         // Now tell the portal to create this collaborator.
         String collaborationId =
                 collaborationPortalService.beginCollaboration(researchProject, bspUser, quoteId,
-                        sampleKitShippingMethod, collaborationMessage);
+                        sampleKitRecipient, collaborationMessage);
         if (StringUtils.isBlank(collaborationId)) {
             throw new RuntimeException("Could not create a Collaboration");
         }
