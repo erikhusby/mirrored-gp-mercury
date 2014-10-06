@@ -150,10 +150,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private String collaborationQuoteId;
 
     /**
-     * This defines to whom kits will be sent. This is stored in the collaboration portal and
-     * then sent to the PDO create page to be used for shipping kits.
+     * This defines where kits will be sent for orders placed from the collaboration portal.
      */
-    @Validate(required = true, on = {BEGIN_COLLABORATION_ACTION})
+    @Validate(required = true, on = BEGIN_COLLABORATION_ACTION)
     private SampleKitRecipient sampleKitRecipient = SampleKitRecipient.COLLABORATOR;
 
     @ValidateNestedProperties({

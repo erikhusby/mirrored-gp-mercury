@@ -73,7 +73,7 @@ public class CollaborationPortalService extends AbstractJerseyClientService {
      * @param researchProject The research project.
      * @param collaborator The collaborator.
      * @param sampleKitRecipient The person to send kits to for fulfilling the order.
-     *@param collaborationMessage The optional message from the PM to the collaborator.
+     * @param collaborationMessage The optional message from the PM to the collaborator.
      *  @return The collaboration id
      */
     public String beginCollaboration(@Nonnull ResearchProject researchProject, @Nonnull BspUser collaborator,
