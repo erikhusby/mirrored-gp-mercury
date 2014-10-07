@@ -165,6 +165,14 @@ public abstract class LabVessel implements Serializable {
     @BatchSize(size = 100)
     private Set<BucketEntry> bucketEntries = new HashSet<>();
 
+    /**
+     * Counts the number of bucketEntries this vessel is assigned to.
+     * Primary use-case to ID samples that have been transferred from collaborator tubes, but not added to a product order.
+     */
+    @NotAudited
+    @Formula("(select count(*) from bucket_entry where bucket_entry.lab_vessel_id = lab_vessel_id)")
+    private Integer bucketEntriesCount = 0;
+
     @Embedded
     private UserRemarks userRemarks;
 
@@ -1064,6 +1072,10 @@ public abstract class LabVessel implements Serializable {
 
     public Set<BucketEntry> getBucketEntries() {
         return Collections.unmodifiableSet(bucketEntries);
+    }
+
+    public Integer getBucketEntriesCount(){
+        return bucketEntriesCount;
     }
 
     /** For fixups only. */
