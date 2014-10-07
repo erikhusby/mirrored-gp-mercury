@@ -146,13 +146,13 @@ public class SampleDataFetcher implements Serializable {
         for (Map.Entry<MercurySample.MetadataSource, Collection<MercurySample>> entry : samplesBySource.entrySet()) {
             MercurySample.MetadataSource metadataSource = entry.getKey();
             if (metadataSource == MercurySample.MetadataSource.BSP) {
-                for (MercurySample mercurySample : samplesBySource.get(MercurySample.MetadataSource.BSP)) {
+                for (MercurySample mercurySample : entry.getValue()) {
                     bspSampleIds.add(mercurySample.getSampleKey());
                 }
                 stockIdByAliquotId.putAll(bspSampleDataFetcher.getStockIdByAliquotId(bspSampleIds));
             } else if (samplesBySource.containsKey(MercurySample.MetadataSource.MERCURY)) {
                 List<MercurySample> mercurySamples = new ArrayList<>();
-                for (MercurySample mercurySample : samplesBySource.get(MercurySample.MetadataSource.MERCURY)) {
+                for (MercurySample mercurySample : entry.getValue()) {
                     mercurySamples.add(mercurySample);
                 }
                 stockIdByAliquotId.putAll(mercurySampleDataFetcher.getStockIdByAliquotId(mercurySamples));
