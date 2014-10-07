@@ -5,6 +5,9 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProje
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 @Test(groups = TestGroups.DATABASE_FREE)
 public class SubmissionTrackerTest {
 
@@ -14,6 +17,7 @@ public class SubmissionTrackerTest {
     public static String testVersion = "v1";
 
     public void testBuildSubmissionTracker() {
+        Date testStartDate = new Date();
 
         SubmissionTrackerStub tracker = new SubmissionTrackerStub(testAccessionID, testFileName, testVersion);
 
@@ -22,13 +26,20 @@ public class SubmissionTrackerTest {
         Assert.assertEquals(tracker.getSubmittedSampleName(), testAccessionID);
         Assert.assertEquals(tracker.getFileName(), testFileName);
 
-        Assert.assertEquals(tracker.getVersion() , testVersion);
+        Assert.assertEquals(tracker.getVersion(), testVersion);
+
+        Assert.assertTrue(tracker.getRequestDate().getTime() >= testStartDate.getTime(),
+                "SubmissionTracker's requestDate should be after the time that the test method started");
+        Assert.assertTrue(tracker.getRequestDate().getTime() <= new Date().getTime(),
+                "SubmissionTracker's requestDate should be before the time of this assert");
 
         Assert.assertNull(tracker.createSubmissionIdentifier());
 
         tracker.setSubmissionTrackerId(345L);
 
-        Assert.assertEquals(tracker.createSubmissionIdentifier(), SubmissionTracker.MERCURY_SUBMISSION_ID_PREFIX +345L);
+        Assert.assertEquals(tracker.createSubmissionIdentifier(),
+                SubmissionTracker.MERCURY_SUBMISSION_ID_PREFIX + new SimpleDateFormat("YYYYMMdd").format(testStartDate)
+                + 345L);
 
         Assert.assertNull(tracker.getResearchProject());
 

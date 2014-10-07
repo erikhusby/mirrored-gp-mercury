@@ -88,7 +88,7 @@ public class ControlReagentContainerTest extends Arquillian {
             BarcodedTube barcodedTube = barcodedTubeDao.findByBarcode(barcodedTubes.get(0).getLabel());
             Assert.assertEquals(barcodedTube.getReagentContents().size(), 1);
             ControlReagent controlReagent = (ControlReagent) barcodedTube.getReagentContents().iterator().next();
-            Assert.assertEquals(controlReagent.getControl().getCollaboratorSampleId(), BaseEventTest.POSITIVE_CONTROL);
+            Assert.assertEquals(controlReagent.getControl().getCollaboratorParticipantId(), BaseEventTest.POSITIVE_CONTROL);
         } catch (IOException | InvalidFormatException e) {
             throw new RuntimeException(e);
         }

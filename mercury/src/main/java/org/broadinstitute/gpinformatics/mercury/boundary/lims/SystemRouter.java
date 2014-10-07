@@ -37,10 +37,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter.System.BOTH;
-import static org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter.System.MERCURY;
-import static org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter.System.SQUID;
-
 /**
  * Utility for routing messages and queries to Mercury or Squid as determined by the supplied sample containers.
  * Defines the notion of a vessel belonging to either Mercury or Squid.
@@ -285,7 +281,7 @@ public class SystemRouter implements Serializable {
 
             List<Control> controls = controlDao.findAllActive();
             for (Control control : controls) {
-                controlCollaboratorSampleIds.add(control.getCollaboratorSampleId());
+                controlCollaboratorSampleIds.add(control.getCollaboratorParticipantId());
             }
         }
         System system = routeForVessels(labVessels, controlCollaboratorSampleIds, mapSampleNameToSampleData, intent);
@@ -389,7 +385,7 @@ public class SystemRouter implements Serializable {
                                     badCrspRouting();
                                     routingOptions.add(System.SQUID);
                                 } else {
-                                    if (controlCollaboratorSampleIds.contains(sampleData.getCollaboratorsSampleName())) {
+                                    if (controlCollaboratorSampleIds.contains(sampleData.getCollaboratorParticipantId())) {
 
                                         /*
                                          * It's a control, but only give it a vote if we can pin it to a workflow. It

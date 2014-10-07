@@ -36,7 +36,7 @@ import java.util.Map;
 /**
  * Control class supporting FingerprintingSpreadsheetActionBean
  */
-public class FingerprintingPlateProcessor {
+public class FingerprintingPlateFactory {
     public static final String NA12878 = "NA12878";
     public static final String NEGATIVE_CONTROL = "negative control";
 
@@ -160,16 +160,12 @@ public class FingerprintingPlateProcessor {
 
             SampleData sampleData = new MercurySampleDataFetcher().fetchSampleData(mercurySample);
             if (sampleData != null) {
-                // Control name may be found as one of two sample metadata.
-                for (String controlName : new String[]{
-                        sampleData.getCollaboratorsSampleName(),
-                        sampleData.getCollaboratorParticipantId()}) {
-
-                    if (controlName != null) {
-                        Control control = controlDao.findBySampleId(controlName);
-                        if (control != null) {
-                            return control.getType() == Control.ControlType.NEGATIVE;
-                        }
+                // Control name will be found in sample metadata.
+                String controlName = sampleData.getCollaboratorParticipantId();
+                if (controlName != null) {
+                    Control control = controlDao.findByCollaboratorParticipantId(controlName);
+                    if (control != null) {
+                        return control.getType() == Control.ControlType.NEGATIVE;
                     }
                 }
             }

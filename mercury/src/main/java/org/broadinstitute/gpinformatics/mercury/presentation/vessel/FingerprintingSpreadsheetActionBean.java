@@ -27,7 +27,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.StreamCreatedSpreadsheetUtil;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
-import org.broadinstitute.gpinformatics.mercury.control.vessel.FingerprintingPlateProcessor;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.FingerprintingPlateFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
@@ -64,10 +64,10 @@ public class FingerprintingSpreadsheetActionBean extends CoreActionBean {
     @Inject
     private StaticPlateDao staticPlateDao;
 
-    private FingerprintingPlateProcessor fingerprintingPlateProcessor = new FingerprintingPlateProcessor();
+    private FingerprintingPlateFactory FingerprintingPlateFactory = new FingerprintingPlateFactory();
 
     void setControlDao(ControlDao controlDao) {
-        fingerprintingPlateProcessor.setControlDao(controlDao);
+        FingerprintingPlateFactory.setControlDao(controlDao);
     }
 
     public String getPlateBarcode() {
@@ -85,11 +85,12 @@ public class FingerprintingSpreadsheetActionBean extends CoreActionBean {
 
     @HandlesEvent(SUBMIT_ACTION)
     public Resolution barcodeSubmit() {
-        List<FingerprintingPlateProcessor.FpSpreadsheetRow> dtos;
+        clearValidationErrors();
+        List<FingerprintingPlateFactory.FpSpreadsheetRow> dtos;
         try {
 
             // Makes a dto for each plate well.
-            dtos = fingerprintingPlateProcessor.makeSampleDtos(staticPlate);
+            dtos = FingerprintingPlateFactory.makeSampleDtos(staticPlate);
             if (CollectionUtils.isEmpty(dtos)) {
                 addMessage("No samples found.");
                 return new ForwardResolution(CREATE_PAGE);
@@ -103,7 +104,7 @@ public class FingerprintingSpreadsheetActionBean extends CoreActionBean {
             }
 
             // Makes the spreadsheet.
-            workbook = fingerprintingPlateProcessor.makeSpreadsheet(dtos);
+            workbook = FingerprintingPlateFactory.makeSpreadsheet(dtos);
 
             // Sets the default filename.
             String filename = DATE_FORMAT.format(new Date()) + "_FP_" + plateBarcode + ".xls";

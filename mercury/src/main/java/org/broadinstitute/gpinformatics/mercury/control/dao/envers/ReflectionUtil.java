@@ -223,8 +223,13 @@ public class ReflectionUtil {
                     list.addAll(makeEntityField(field.getName(), fieldClass, fieldObj));
                 }
             } catch (IllegalAccessException e) {
-                throw new RuntimeException("Reflection cannot access field " + field.getName() +
-                                           " on class " + entityClass.getCanonicalName());
+                logger.log(Level.WARNING, "Reflection cannot access field " + field.getName() +
+                                          " on class " + entityClass.getSimpleName(), e);
+                list.add(new EntityField(field.getName(), "[cannot access]"));
+            } catch (Exception e) {
+                logger.log(Level.WARNING, "Cannot render " + field.getName() + " on " + entityClass.getSimpleName() +
+                                   " id=" + getEntityId(entity, entityClass), e);
+                list.add(new EntityField(field.getName(), "[cannot render]"));
             }
         }
 
