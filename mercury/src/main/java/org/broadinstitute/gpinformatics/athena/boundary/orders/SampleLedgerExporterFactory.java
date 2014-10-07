@@ -72,7 +72,7 @@ public class SampleLedgerExporterFactory {
                 sampleRowDataForProduct = new ArrayList<>();
                 sampleRowDataByProduct.put(product, sampleRowDataForProduct);
             }
-            sampleRowDataForProduct.addAll(gatherSampleRowData(productOrder));
+            gatherSampleRowData(productOrder, sampleRowDataForProduct);
         }
         return new SampleLedgerExporter(priceItemDao, priceListCache, productOrders, workCompleteMessageDao,
                 sampleDataFetcher, appConfig, tableauConfig, spreadSheetWriter, sampleRowDataByProduct);
@@ -82,14 +82,12 @@ public class SampleLedgerExporterFactory {
      * Gathers the data for the samples in the given product order.
      *
      * @param productOrder    the product order to gather sample data for
-     * @return a list of row data
+     * @param result the output list of row data
      */
-    public List<SampleLedgerRow> gatherSampleRowData(ProductOrder productOrder) {
-        ArrayList<SampleLedgerRow> sampleRowData = new ArrayList<>();
+    public void gatherSampleRowData(ProductOrder productOrder, List<SampleLedgerRow> result) {
         for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
-            sampleRowData.add(new SampleLedgerRow(productOrderSample,
+            result.add(new SampleLedgerRow(productOrderSample,
                     bspUserList.getUserFullName(productOrderSample.getProductOrder().getCreatedBy())));
         }
-        return sampleRowData;
     }
 }

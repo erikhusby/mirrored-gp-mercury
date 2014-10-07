@@ -72,12 +72,12 @@ public abstract class AbstractSpreadsheetExporter<T extends AbstractSpreadsheetE
     /**
      * Creates a cell style for a header with text wrapping and the given background color.
      *
-     * @param rgbColor    the background color for the style
+     * @param color    the background color for the style
      * @return the cell style
      */
-    protected CellStyle getWrappedHeaderStyle(byte[] rgbColor) {
+    protected CellStyle getWrappedHeaderStyle(XSSFColor color) {
         CellStyle style = buildWrappedHeaderStyle();
-        ((XSSFCellStyle) style).setFillForegroundColor(new XSSFColor(rgbColor));
+        ((XSSFCellStyle) style).setFillForegroundColor(color);
         return style;
     }
 
@@ -256,7 +256,7 @@ public abstract class AbstractSpreadsheetExporter<T extends AbstractSpreadsheetE
          * Sets the height of the current spreadsheet row. Height is specified in "twips" or 1/20th of a point.
          *
          * @param height the height
-         * @see org.apache.poi.ss.usermodel.Row#setHeight(short)
+         * @see Row#setHeight(short)
          */
         public void setRowHeight(short height) {
             currentCell.getRow().setHeight(height);
