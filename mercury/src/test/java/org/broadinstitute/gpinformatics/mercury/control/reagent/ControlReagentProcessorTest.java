@@ -61,7 +61,7 @@ public class ControlReagentProcessorTest {
             Assert.assertEquals(tube1.getLabel(), TUBE1_BARCODE);
             Assert.assertEquals(tube1.getReagentContents().size(), 1);
             ControlReagent positiveControl = (ControlReagent) tube1.getReagentContents().iterator().next();
-            Assert.assertEquals(positiveControl.getControl().getCollaboratorSampleId(), POSITIVE_CONTROL_ID);
+            Assert.assertEquals(positiveControl.getControl().getCollaboratorParticipantId(), POSITIVE_CONTROL_ID);
             Assert.assertEquals(positiveControl.getLot(), "SK-1234");
             Assert.assertEquals(positiveControl.getExpiration(), new GregorianCalendar(2014, 11, 31).getTime());
 
@@ -74,7 +74,7 @@ public class ControlReagentProcessorTest {
             Assert.assertEquals(tube3.getLabel(), TUBE3_BARCODE);
             Assert.assertEquals(tube2.getReagentContents().size(), 1);
             ControlReagent negativeControl = (ControlReagent) tube3.getReagentContents().iterator().next();
-            Assert.assertEquals(negativeControl.getControl().getCollaboratorSampleId(), NEGATIVE_CONTROL_ID);
+            Assert.assertEquals(negativeControl.getControl().getCollaboratorParticipantId(), NEGATIVE_CONTROL_ID);
             Assert.assertEquals(negativeControl.getLot(), "SK-2345");
 
         } catch (ValidationException | IOException | InvalidFormatException e) {

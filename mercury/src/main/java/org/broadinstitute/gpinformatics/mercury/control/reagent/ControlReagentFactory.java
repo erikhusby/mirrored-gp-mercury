@@ -94,7 +94,7 @@ public class ControlReagentFactory {
         List<BarcodedTube> controlTubes = new ArrayList<>();
         Map<String, Control> mapCollabSampleIdToControl = new HashMap<>();
         for (Control control : controls) {
-            mapCollabSampleIdToControl.put(control.getCollaboratorSampleId(), control);
+            mapCollabSampleIdToControl.put(control.getCollaboratorParticipantId(), control);
         }
         for (ControlReagentProcessor.ControlDto controlDto : mapTubeBarcodeToControl.values()) {
             if (!mapCollabSampleIdToControl.containsKey(controlDto.getControl())) {
@@ -118,7 +118,7 @@ public class ControlReagentFactory {
                 controlReagent = new ControlReagent(controlDto.getControl(), controlDto.getLot(),
                         controlDto.getExpiration(), mapCollabSampleIdToControl.get(controlDto.getControl()));
                 mapLotToControl.put(controlDto.getLot(), controlReagent);
-            } else if (!controlReagent.getControl().getCollaboratorSampleId().equals(controlDto.getControl())) {
+            } else if (!controlReagent.getControl().getCollaboratorParticipantId().equals(controlDto.getControl())) {
                 messageCollection.addError("Mismatch between lot and control: " + tubeBarcode);
             }
             barcodedTube.addReagent(controlReagent);
