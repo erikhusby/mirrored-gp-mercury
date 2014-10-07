@@ -1679,7 +1679,6 @@
             <column name="LAB_VESSEL"/>
         </createIndex>
     </changeSet>
-
     <changeSet id="GPLIM-2980-1" author="thompson">
         <addColumn schemaName="mercury" tableName="reagent">
             <column name="control" type="number(19,0)"/>
@@ -1693,6 +1692,18 @@
     <changeSet id="GPLIM-2980-3" author="thompson">
         <addForeignKeyConstraint constraintName="FK_R_MERCURY_CONTROL" baseTableName="reagent" baseColumnNames="control"
                 referencedTableName="mercury_control" referencedColumnNames="mercury_control_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-3029-1" author="jsacco">
+        <!-- Support user defined search queries by lab event type -->
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists schemaName="MERCURY" indexName="IDX_LAB_EVENT_TYPE"/>
+            </not>
+        </preConditions>
+        <createIndex indexName="IDX_LAB_EVENT_TYPE"
+                     schemaName="MERCURY" tableName="LAB_EVENT" unique="false">
+            <column name="LAB_EVENT_TYPE"/>
+        </createIndex>
     </changeSet>
     <changeSet author="scottmat" id="GPLIM-3028-control-uses-prod">
         <preConditions onFail="MARK_RAN">
