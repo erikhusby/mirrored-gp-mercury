@@ -47,7 +47,6 @@ public class CrspPipelineAPITemporaryIntegrationTest extends Arquillian {
 
     private static final String TEST_LANE = "2";
 
-    private CrspPipelineUtils crspPipelineAPIUtils = new CrspPipelineUtils();
 
     @Inject IlluminaRunResource illuminaRunResource;
 
@@ -113,7 +112,7 @@ public class CrspPipelineAPITemporaryIntegrationTest extends Arquillian {
 
         boolean foundPositiveControl = false;
         ResearchProject controlsResearchProject = researchProjectDao.findByBusinessKey(
-                crspPipelineAPIUtils.getResearchProjectForCrspPositiveControls());
+                new CrspPipelineUtils(Deployment.DEV).getResearchProjectForCrspPositiveControls());
         Assert.assertNotNull(controlsResearchProject);
 
         for (ZimsIlluminaChamber lane : runWithCrspLane.getLanes()) {

@@ -37,6 +37,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Resource;
+import javax.ejb.EJBContext;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -77,6 +79,9 @@ public class VesselEjb {
 
     @Inject
     private LabMetricRunDao labMetricRunDao;
+
+    @Resource
+    private EJBContext ejbContext;
 
     /**
      * Registers {@code BarcodedTube}s for all specified {@param tubeBarcodes} as well as
@@ -249,7 +254,9 @@ public class VesselEjb {
 
                 pair = createVarioskanRunDaoFree(mapNameValueToValue, metricType,
                         varioskanPlateProcessor, mapBarcodeToPlate, decidingUser, messageCollection);
-                if (!messageCollection.hasErrors()) {
+                if (messageCollection.hasErrors()) {
+                    ejbContext.setRollbackOnly();
+                } else {
                     labMetricRunDao.persist(pair.getLeft());
                 }
             }

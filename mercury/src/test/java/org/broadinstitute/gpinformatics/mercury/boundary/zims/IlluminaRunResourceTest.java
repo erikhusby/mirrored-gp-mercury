@@ -164,6 +164,7 @@ public class IlluminaRunResourceTest extends Arquillian {
         Assert.assertTrue(rawJson.contains("\"workRequestDomain\""));
         Assert.assertTrue(rawJson.contains("\"metadataSource\""));
         Assert.assertTrue(rawJson.contains("\"regulatoryDesignation\""));
+        Assert.assertTrue(rawJson.contains("\"testType"));
 
         Assert.assertNotNull(run);
         Assert.assertEquals(run.getName(),RUN_NAME);
@@ -195,6 +196,7 @@ public class IlluminaRunResourceTest extends Arquillian {
                         foundPdo = true;
                     }
                     Assert.assertEquals(libraryBean.getMetadataSource(), MercurySample.BSP_METADATA_SOURCE);
+                    Assert.assertNull(libraryBean.getTestType());
                 }
             }
         }
