@@ -5,9 +5,11 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.poi.ss.usermodel.Row;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.FingerprintingPlateProcessor;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.ControlReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
@@ -46,12 +48,13 @@ public class FingerprintingSpreadsheetActionBeanTest {
     private TubeFormation rearrayRack;
     private StaticPlate initalPicoPlate;
     private StaticPlate fpPlate;
-    private static final BigDecimal BD_60 = new BigDecimal("60.0");
     private ControlDao controlDao = EasyMock.createNiceMock(ControlDao.class);
     private FingerprintingSpreadsheetActionBean actionBean;
     // These controls do not have to match the actual control names found in the Mercury db.
     private Control negativeControl = new Control("WATER_CONTROL", Control.ControlType.NEGATIVE);
     private Control positiveControl = new Control("NA12878", Control.ControlType.POSITIVE);
+    private ControlReagent fillerReagent = new ControlReagent("NA12878", "nolot", new Date(),
+            new Control("NA12878", Control.ControlType.POSITIVE));
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -103,6 +106,7 @@ public class FingerprintingSpreadsheetActionBeanTest {
             } else {
                 // Fills empty positions with non-control NA12878, which has no sample, no SM-id, no quant value.
                 rearrayTube = new BarcodedTube("tube" + (300 + i));
+                rearrayTube.addReagent(fillerReagent);
             }
             rearrayMap.put(position, rearrayTube);
             ++i;
@@ -147,8 +151,8 @@ public class FingerprintingSpreadsheetActionBeanTest {
             participantIds.add(participantId);
             Assert.assertEquals("0", row.getCell(1).getStringCellValue());
         }
-        Assert.assertTrue(participantIds.contains(FingerprintingSpreadsheetActionBean.NEGATIVE_CONTROL));
-        Assert.assertTrue(participantIds.contains(FingerprintingSpreadsheetActionBean.NA12878));
+        Assert.assertTrue(participantIds.contains(FingerprintingPlateProcessor.NEGATIVE_CONTROL));
+        Assert.assertTrue(participantIds.contains(FingerprintingPlateProcessor.NA12878));
         Assert.assertEquals(90, smCount);
 
         // Checks the data on the second sheet against the tubes in rearray rack.
@@ -177,7 +181,7 @@ public class FingerprintingSpreadsheetActionBeanTest {
             BarcodedTube tube = rearrayMap.get(VesselPosition.getByName(position));
             tubePrefixes.add(tube.getLabel().substring(0, 5));
             if (tube.getLabel().substring(0, 5).endsWith("3")) {
-                Assert.assertEquals(FingerprintingSpreadsheetActionBean.NA12878, participantId);
+                Assert.assertEquals(FingerprintingPlateProcessor.NA12878, participantId);
                 Assert.assertEquals(0, tube.getMetrics().size());
                 Assert.assertEquals(conc, "0");
             } else {
