@@ -96,6 +96,21 @@ public class ManifestSession implements Updatable {
              " and manifest_record.manifest_session_id = manifest_session_id)")
     private int tubesRemainingToBeTransferred;
 
+    @NotAudited
+    @Formula("(select count(*) from mercury.manifest_record record "
+             + "left join mercury.manifest_event evt on evt.MANIFEST_RECORD_ID = record.MANIFEST_RECORD_ID and evt.SEVERITY = 'QUARANTINED' "
+             + "where "
+             + "record.manifest_session_id = manifest_session_id "
+             + "and evt.manifest_event_id is null)")
+    private int numberOfNonQuarantinedRecords;
+
+    @NotAudited
+    @Formula("(select count(*) from mercury.manifest_record record "
+             + "left join mercury.manifest_event evt on evt.MANIFEST_RECORD_ID = record.MANIFEST_RECORD_ID and evt.SEVERITY = 'QUARANTINED' "
+             + "where "
+             + "record.manifest_session_id = manifest_session_id "
+             + "and evt.SEVERITY = 'QUARANTINED')")
+    private int numberOfQuarantinedRecords;
     /**
      * For JPA.
      */
@@ -378,8 +393,7 @@ public class ManifestSession implements Updatable {
      * Finds the total number of records that have been transferred to a mercury vessel
      */
     public int getNumberOfTubesTransferred() {
-        return eligibleRecordsBasedOnStatus(getNonQuarantinedRecords(),
-                ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
+        return numberOfNonQuarantinedRecords - tubesRemainingToBeTransferred;
     }
 
     /**
@@ -387,7 +401,11 @@ public class ManifestSession implements Updatable {
      * @return
      */
     public int getNumberOfTubesAvailableForTransfer() {
-        return getNonQuarantinedRecords().size();
+        return this.numberOfNonQuarantinedRecords;
+    }
+
+    public int getNumberOfQuarantinedRecords() {
+        return numberOfQuarantinedRecords;
     }
 
     /**
