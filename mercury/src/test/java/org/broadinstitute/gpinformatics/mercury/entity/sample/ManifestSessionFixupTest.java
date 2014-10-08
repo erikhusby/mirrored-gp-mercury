@@ -32,6 +32,7 @@ public class ManifestSessionFixupTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
+    @Test(groups = TestGroups.FIXUP, enabled = false)
     public void fixupGPLIM3031CleanLingeringSessions() {
 
         userBean.loginTestUser();
