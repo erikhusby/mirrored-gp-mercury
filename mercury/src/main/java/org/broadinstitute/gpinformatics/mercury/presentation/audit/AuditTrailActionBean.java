@@ -5,7 +5,6 @@ import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
-import net.sourceforge.stripes.validation.ValidationMethod;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditedRevDto;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.ReflectionUtil;
@@ -21,9 +20,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.logging.Logger;
 
 @UrlBinding(AuditTrailActionBean.ACTIONBEAN_URL)
 public class AuditTrailActionBean extends CoreActionBean {
+    private static Logger logger = Logger.getLogger(AuditTrailActionBean.class.getName());
     static final String ACTIONBEAN_URL = "/audit/auditTrail.action";
     static final String AUDIT_TRAIL_ENTRY_ACTIONBEAN_URL = "/audit/auditTrailEntry.action";
     // Jsp pages
@@ -132,18 +133,22 @@ public class AuditTrailActionBean extends CoreActionBean {
             displayToCanonicalClassnames.clear();
             canonicalToDisplayClassnames.clear();
             for (String classname : ReflectionUtil.getMercuryAthenaEntityClassnames()) {
-                // Makes display names from the ending of canonical classname, but disambiguates
-                // it if necessary by including more of the canonical classname.
-                for (int idx = classname.lastIndexOf('.'); idx >= 0; idx = classname.lastIndexOf('.', idx)) {
-                    String displayName = classname.substring(idx + 1);
-                    if (excludedEntityTypes.contains(displayName)) {
-                        break;
-                    }
-                    if (!entityDisplayNames.contains(displayName)) {
-                        entityDisplayNames.add(displayName);
-                        displayToCanonicalClassnames.put(displayName, classname);
-                        canonicalToDisplayClassnames.put(classname, displayName);
-                        break;
+                // Due to a bug in Hibernate we need to exclude abstract entity classes from
+                // being exposed in the UI as if they were realizable entities (see GPLIM-3011).
+                if (!ReflectionUtil.getAbstractEntityClassnames().contains(classname)) {
+                    // Makes display names from the ending of canonical classname, but disambiguates
+                    // it if necessary by including more of the canonical classname.
+                    for (int idx = classname.lastIndexOf('.'); idx >= 0; idx = classname.lastIndexOf('.', idx)) {
+                        String displayName = classname.substring(idx + 1);
+                        if (excludedEntityTypes.contains(displayName)) {
+                            break;
+                        }
+                        if (!entityDisplayNames.contains(displayName)) {
+                            entityDisplayNames.add(displayName);
+                            displayToCanonicalClassnames.put(displayName, classname);
+                            canonicalToDisplayClassnames.put(classname, displayName);
+                            break;
+                        }
                     }
                 }
             }
@@ -169,7 +174,13 @@ public class AuditTrailActionBean extends CoreActionBean {
         for (AuditedRevDto auditedRevDto : auditTrailList) {
             List<String> displayNames = new ArrayList<>();
             for (String canonicalName : auditedRevDto.getEntityTypeNames()) {
-                displayNames.add(canonicalToDisplayClassnames.get(canonicalName));
+                // Hibernate may return an abstract class (see GPLIM-3011) which should not be shown.
+                if (canonicalToDisplayClassnames.containsKey(canonicalName)) {
+                    displayNames.add(canonicalToDisplayClassnames.get(canonicalName));
+                } else {
+                    logger.info("AuditReader found an unexpected class " + canonicalName +
+                                " at revision id " + auditedRevDto.getRevId());
+                }
             }
             auditedRevDto.getEntityTypeNames().clear();
             auditedRevDto.getEntityTypeNames().addAll(displayNames);
@@ -185,10 +196,6 @@ public class AuditTrailActionBean extends CoreActionBean {
             }
         }
         Collections.sort(auditTrailList, AuditedRevDto.BY_REV_ID);
-    }
-
-    @ValidationMethod(on = LIST_AUDIT_TRAILS)
-    public void validateSelection() {
     }
 
 }

@@ -46,8 +46,9 @@ public class ManifestSessionDao extends GenericDao {
 
         Predicate completedStatus =
                 criteriaBuilder.equal(root.get(ManifestSession_.status), ManifestSession.SessionStatus.COMPLETED);
-        Predicate tubesRemainingToBeTransferred = criteriaBuilder.notEqual(
-                root.get(ManifestSession_.tubesRemainingToBeTransferred), 0);
+        Predicate tubesRemainingToBeTransferred =
+                criteriaBuilder.notEqual(root.get(ManifestSession_.tubesRemainingToBeTransferred),
+                        root.get(ManifestSession_.numberOfQuarantinedRecords));
 
         query.where(completedStatus, tubesRemainingToBeTransferred);
 

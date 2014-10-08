@@ -131,9 +131,9 @@ public class VarioskanPlateProcessor extends TableProcessor {
     }
 
     private enum Headers implements ColumnHeader {
-        PLATE("Plate", 0, REQUIRED_HEADER, OPTIONAL_VALUE),
-        WELL("Well", 1, REQUIRED_HEADER, OPTIONAL_VALUE),
-        SAMPLE("Sample", 2, REQUIRED_HEADER, OPTIONAL_VALUE),
+        PLATE("Plate", 0, REQUIRED_HEADER, OPTIONAL_VALUE, IS_STRING),
+        WELL("Well", 1, REQUIRED_HEADER, OPTIONAL_VALUE, IS_STRING),
+        SAMPLE("Sample", 2, REQUIRED_HEADER, OPTIONAL_VALUE, IS_STRING),
         VALUE("Value", 3, REQUIRED_HEADER, OPTIONAL_VALUE),
         RESULT("Result", 4, REQUIRED_HEADER, OPTIONAL_VALUE);
 

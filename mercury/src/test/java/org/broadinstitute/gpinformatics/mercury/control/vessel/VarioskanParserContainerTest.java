@@ -67,14 +67,14 @@ public class VarioskanParserContainerTest extends Arquillian {
             for (int i = 0; i < curveSheet.getLastRowNum(); i++) {
                 Row row = curveSheet.getRow(i);
                 if (row != null) {
-                    for (int j = 0; j < row.getLastCellNum(); j++) {
-                        Cell cell = row.getCell(j);
-                        if (cell != null) {
-                            if (cell.toString().equals(VarioskanParserTest.PLATE1_BARCODE_IN_SS)) {
-                                cell.setCellValue(plate1Barcode);
-                            } else if (cell.toString().equals(VarioskanParserTest.PLATE2_BARCODE_IN_SS)) {
-                                cell.setCellValue(plate2Barcode);
-                            }
+                    Cell cell = row.getCell(0);
+                    if (cell != null) {
+                        cell.setCellType(Cell.CELL_TYPE_STRING);
+                        String cellValue = cell.getStringCellValue();
+                        if (cellValue.equals(VarioskanParserTest.PLATE1_BARCODE_IN_SS)) {
+                            cell.setCellValue(plate1Barcode);
+                        } else if (cellValue.equals(VarioskanParserTest.PLATE2_BARCODE_IN_SS)) {
+                            cell.setCellValue(plate2Barcode);
                         }
                     }
                 }

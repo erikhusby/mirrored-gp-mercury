@@ -48,7 +48,7 @@ class ControlIdCallback implements GenericDao.GenericDaoCallback<Control> {
         Predicate clause = null;
         if (id != null) {
             clause = cbuilder.and(cbuilder.equal(controlRoot.get(Control_.state), state),
-                                         cbuilder.equal(controlRoot.get(Control_.collaboratorSampleId),
+                                         cbuilder.equal(controlRoot.get(Control_.collaboratorParticipantId),
                                                                id));
         } else {
             clause = cbuilder.equal(controlRoot.get(Control_.state), state);

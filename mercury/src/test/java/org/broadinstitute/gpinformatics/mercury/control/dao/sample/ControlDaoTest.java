@@ -66,11 +66,11 @@ public class ControlDaoTest extends ContainerTest {
         controlDao.flush();
         controlDao.clear();
 
-        Control newTestCtrl = controlDao.findBySampleId(testId);
+        Control newTestCtrl = controlDao.findByCollaboratorParticipantId(testId);
 
         Assert.assertNotNull(newTestCtrl);
 
-        Assert.assertEquals(testId, newTestCtrl.getCollaboratorSampleId());
+        Assert.assertEquals(testId, newTestCtrl.getCollaboratorParticipantId());
         Assert.assertEquals(testId, newTestCtrl.getBusinessKey());
 
         Assert.assertEquals(Control.ControlType.POSITIVE, newTestCtrl.getType());
@@ -102,11 +102,11 @@ public class ControlDaoTest extends ContainerTest {
         controlDao.flush();
         controlDao.clear();
 
-        Control newTestCtrl = controlDao.findBySampleId(testId);
+        Control newTestCtrl = controlDao.findByCollaboratorParticipantId(testId);
 
         Assert.assertNull(newTestCtrl);
 
-        newTestCtrl = controlDao.findInactiveBySampleId(testId);
+        newTestCtrl = controlDao.findInactiveByCollaboratorParticipantId(testId);
         Assert.assertNotNull(newTestCtrl);
 
         List<Control> listOfOne = controlDao.findAllActive();
@@ -144,7 +144,7 @@ public class ControlDaoTest extends ContainerTest {
         controlDao.flush();
         controlDao.clear();
 
-        Control newTestCtrl = controlDao.findBySampleId(testId1);
+        Control newTestCtrl = controlDao.findByCollaboratorParticipantId(testId1);
 
         Assert.assertNotNull(newTestCtrl);
 
@@ -172,7 +172,7 @@ public class ControlDaoTest extends ContainerTest {
         controlDao.flush();
         controlDao.clear();
 
-        Control newTestCtrl = controlDao.findBySampleId(testId);
+        Control newTestCtrl = controlDao.findByCollaboratorParticipantId(testId);
 
         Assert.assertNull(newTestCtrl);
 
@@ -182,7 +182,7 @@ public class ControlDaoTest extends ContainerTest {
         controlDao.flush();
         controlDao.clear();
 
-        Control newTestCtrlDupe = controlDao.findBySampleId(testId);
+        Control newTestCtrlDupe = controlDao.findByCollaboratorParticipantId(testId);
         Assert.assertNotNull(newTestCtrlDupe);
 
         List<Control> listOfOne = controlDao.findAllActive();

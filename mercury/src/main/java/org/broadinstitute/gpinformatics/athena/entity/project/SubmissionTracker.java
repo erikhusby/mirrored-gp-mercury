@@ -14,6 +14,8 @@ import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.beans.Transient;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * Represents the association between a submitted sample and its' submission identifier.  This will aid the system
@@ -61,6 +63,8 @@ public class SubmissionTracker {
     @JoinColumn(name = "RESEARCH_PROJECT_ID")
     private ResearchProject researchProject;
 
+    private Date requestDate;
+
     protected SubmissionTracker() {
     }
 
@@ -69,6 +73,7 @@ public class SubmissionTracker {
         this.submittedSampleName = submittedSampleName;
         this.fileName = fileName;
         this.version = version;
+        requestDate = new Date();
     }
 
     public SubmissionTracker(String submittedSampleName, String fileName, String version) {
@@ -82,7 +87,20 @@ public class SubmissionTracker {
      * @return  A string that is used to identify the submission request
      */
     public String createSubmissionIdentifier() {
-        return (submissionTrackerId != null) ? (MERCURY_SUBMISSION_ID_PREFIX + submissionTrackerId) : null;
+        String id = null;
+        if (submissionTrackerId != null) {
+            String date = "";
+            /*
+             * requestDate didn't exist initially, so it may be null, in which case only the ID should be used for
+             * backwards compatibility with the implementation of createSubmissionIdentifier() from before requestDate
+             * was added.
+             */
+            if (requestDate != null) {
+                date = new SimpleDateFormat("YYYYMMdd").format(requestDate);
+            }
+            id = MERCURY_SUBMISSION_ID_PREFIX + date + submissionTrackerId;
+        }
+        return id;
     }
 
 
@@ -113,6 +131,10 @@ public class SubmissionTracker {
 
     public void setResearchProject(ResearchProject researchProject) {
         this.researchProject = researchProject;
+    }
+
+    public Date getRequestDate() {
+        return requestDate;
     }
 
     // todo: should be in interface?
