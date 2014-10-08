@@ -15,6 +15,7 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFColor;
 
+import java.math.BigInteger;
 import java.text.Format;
 import java.util.Date;
 import java.util.Iterator;
@@ -278,9 +279,18 @@ public abstract class AbstractSpreadsheetExporter<T extends AbstractSpreadsheetE
             currentCell.setCellValue(value);
         }
 
-        public void writeCell(double value, CellStyle cellStyle) {
+        public void writeCell(BigInteger value) {
             nextCell();
-            currentCell.setCellValue(value);
+            if (value != null) {
+                currentCell.setCellValue(value.doubleValue());
+            }
+        }
+
+        public void writeCell(Double value, CellStyle cellStyle) {
+            nextCell();
+            if (value != null) {
+                currentCell.setCellValue(value);
+            }
             currentCell.setCellStyle(cellStyle);
         }
 

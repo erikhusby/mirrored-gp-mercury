@@ -292,111 +292,104 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
                           Collection<PriceItem> historicalPriceItems, ProductOrderSample sample,
                           int sortOrder, Map<String, WorkCompleteMessage> workCompleteMessageBySample,
                           SampleLedgerRow sampleData) {
-        getWriter().nextRow();
-        Product product = sample.getProductOrder().getProduct();
+        SampleLedgerSpreadSheetWriter writer = getWriter();
+        ProductOrder productOrder = sample.getProductOrder();
+        Product product = productOrder.getProduct();
+
+        writer.nextRow();
 
         // sample name.
-        getWriter().writeCell(sampleData.getSampleId());
+        writer.writeCell(sampleData.getSampleId());
 
         // collaborator sample ID, looks like this is properly initialized.
-        getWriter().writeCell(sampleData.getCollaboratorSampleId());
+        writer.writeCell(sampleData.getCollaboratorSampleId());
 
         // Material type.
-        getWriter().writeCell(sampleData.getMaterialType());
+        writer.writeCell(sampleData.getMaterialType());
 
         // Risk Information.
         String riskString = sampleData.getRiskText();
         if (StringUtils.isBlank(riskString)) {
-            getWriter().nextCell();
+            writer.nextCell();
         } else {
-            getWriter().writeCell(riskString, getRiskStyle());
+            writer.writeCell(riskString, getRiskStyle());
         }
 
         // Sample Delivery Status.
-        String deliveryStatus = sampleData.getDeliveryStatus();
-        getWriter().writeCell(deliveryStatus);
+        writer.writeCell(sampleData.getDeliveryStatus());
 
         // product name.
-        getWriter().writeCell(sampleData.getProductName());
+        writer.writeCell(sampleData.getProductName());
 
         // Product Order ID.
         String pdoKey = sampleData.getProductOrderKey();
-        getWriter().writeCellLink(pdoKey, ProductOrderActionBean.getProductOrderLink(pdoKey, appConfig));
+        writer.writeCellLink(pdoKey, ProductOrderActionBean.getProductOrderLink(pdoKey, appConfig));
 
         // Product Order Name (actually this concept is called 'Title' in PDO world).
-        getWriter().writeCell(sampleData.getProductOrderTitle());
+        writer.writeCell(sampleData.getProductOrderTitle());
 
         // Project Manager - need to turn this into a user name.
-        getWriter().writeCell(sampleData.getProjectManagerName());
+        writer.writeCell(sampleData.getProjectManagerName());
 
         // Lane Count
         if (BillingTrackerHeader.LANE_COUNT.shouldShow(product)) {
-            getWriter().writeCell(sampleData.getNumberOfLanes());
+            writer.writeCell(sampleData.getNumberOfLanes());
         }
 
-        // auto bill date is the date of any ledger items were auto billed by external messages.
-        getWriter().writeCell(sampleData.getAutoLedgerDate(), getDateStyle());
+        // Auto bill date is the date of any ledger items were auto billed by external messages.
+        writer.writeCell(sampleData.getAutoLedgerDate(), getDateStyle());
 
-        // work complete date is the date of any ledger items that are ready to be billed.
-        getWriter().writeCell(sampleData.getWorkCompleteDate(), getDateStyle());
+        // Work complete date is the date of any ledger items that are ready to be billed.
+        writer.writeCell(sampleData.getWorkCompleteDate(), getDateStyle());
 
         // Picard metrics
         BigInteger pfReads = null;
         BigInteger pfAlignedGb = null;
         BigInteger pfReadsAlignedInPairs = null;
         Double percentCoverageAt20x = null;
+        Double percentCoverageAt100x = null;
         WorkCompleteMessage workCompleteMessage = workCompleteMessageBySample.get(sample.getSampleKey());
         if (workCompleteMessage != null) {
             pfReads = workCompleteMessage.getPfReads();
             pfAlignedGb = workCompleteMessage.getAlignedGb();
             pfReadsAlignedInPairs = workCompleteMessage.getPfReadsAlignedInPairs();
             percentCoverageAt20x = workCompleteMessage.getPercentCoverageAt20X();
+            percentCoverageAt100x = workCompleteMessage.getPercentCoverageAt100X();
         }
 
         // PF Reads
-        if (pfReads != null) {
-            getWriter().writeCell(pfReads.doubleValue());
-        } else {
-            getWriter().writeCell("");
-        }
+        writer.writeCell(pfReads);
 
         // PF Aligned GB
-        if (pfAlignedGb != null) {
-            getWriter().writeCell(pfAlignedGb.doubleValue());
-        } else {
-            getWriter().writeCell("");
-        }
+        writer.writeCell(pfAlignedGb);
 
         // PF Reads Aligned in Pairs
-        if (pfReadsAlignedInPairs != null) {
-            getWriter().writeCell(pfReadsAlignedInPairs.doubleValue());
-        } else {
-            getWriter().writeCell("");
-        }
+        writer.writeCell(pfReadsAlignedInPairs);
 
         // % coverage at 20x
         if (BillingTrackerHeader.PERCENT_COVERAGE_AT_20X.shouldShow(product)) {
-            if (percentCoverageAt20x != null) {
-                getWriter().writeCell(percentCoverageAt20x, getPercentageStyle());
-            } else {
-                getWriter().writeCell("");
-            }
+            writer.writeCell(percentCoverageAt20x, getPercentageStyle());
+        }
+
+        // % coverage at 100x
+        if (BillingTrackerHeader.TARGET_BASES_100X_PERCENT.shouldShow(product)) {
+            writer.writeCell(percentCoverageAt100x, getPercentageStyle());
         }
 
         // Tableau link
-        getWriter().writeCellLink(TableauRedirectActionBean.getPdoSequencingSampleDashboardUrl(pdoKey, tableauConfig),
+        writer.writeCellLink(TableauRedirectActionBean.getPdoSequencingSampleDashboardUrl(pdoKey, tableauConfig),
                 TableauRedirectActionBean.getPdoSequencingSamplesDashboardRedirectUrl(pdoKey, appConfig));
 
         // Quote ID.
-        getWriter().writeCell(sample.getProductOrder().getQuoteId());
+        writer.writeCell(productOrder.getQuoteId());
 
-        // sort order to be able to reconstruct the originally sorted sample list.
-        getWriter().writeCell(sortOrder);
+        // The sort order column allows users to reconstruct the original spreadsheet row order.
+        writer.writeCell(sortOrder);
 
         // The ledger amounts.
         Map<PriceItem, ProductOrderSample.LedgerQuantities> billCounts = sample.getLedgerQuantities();
 
-        // write out for the price item columns.
+        // Write out for the price item columns.
         for (PriceItem priceItem : historicalPriceItems) {
             writeCountForHistoricalPriceItem(billCounts, priceItem);
         }
@@ -407,40 +400,39 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
 
         // And for add-ons.
         for (Product addOn : sortedAddOns) {
-            List<PriceItem> sortedAddOnPriceItems = getPriceItems(addOn, priceItemDao, priceListCache);
-            for (PriceItem item : sortedAddOnPriceItems) {
+            for (PriceItem item : getPriceItems(addOn, priceItemDao, priceListCache)) {
                 writeCountsForPriceItems(billCounts, item);
             }
         }
 
         // write the comments.
         String theComment = "";
-        if (!StringUtils.isBlank(sample.getProductOrder().getComments())) {
-            theComment += sample.getProductOrder().getComments();
+        if (!StringUtils.isBlank(productOrder.getComments())) {
+            theComment += productOrder.getComments();
         }
 
         if (!StringUtils.isBlank(sample.getSampleComment())) {
             theComment += "--" + sample.getSampleComment();
         }
-        getWriter().writeCell(theComment);
+        writer.writeCell(theComment);
 
         // Any messages for items that are not billed yet.
         String billingError = sample.getUnbilledLedgerItemMessages();
 
         if (StringUtils.isBlank(billingError)) {
             // no value, so just empty a blank line.
-            getWriter().nextCell();
+            writer.nextCell();
         } else if (billingError.endsWith(BillingSession.SUCCESS)) {
             // Give the success message with no special style.
-            getWriter().writeCell(billingError);
+            writer.writeCell(billingError);
         } else {
             // Only use error style when there is an error in the string.
-            getWriter().writeCell(billingError, getErrorMessageStyle());
+            writer.writeCell(billingError, getErrorMessageStyle());
         }
 
-        if (deliveryStatus.equals(ProductOrderSample.DeliveryStatus.ABANDONED.getDisplayName())) {
+        if (sampleData.getDeliveryStatus().equals(ProductOrderSample.DeliveryStatus.ABANDONED.getDisplayName())) {
             // Set the row style last, so all columns are affected.
-            getWriter().setRowStyle(getAbandonedStyle());
+            writer.setRowStyle(getAbandonedStyle());
         }
     }
     private static final XSSFColor HISTORICAL_PRICE_ITEM_COLOR = new XSSFColor(new Color(204, 204, 204));

@@ -35,12 +35,15 @@ public enum BillingTrackerHeader implements ColumnHeader {
             return product.isSameProductFamily(ProductFamily.ProductFamilyName.EXOME);
         }
     },
-    TARGET_BASES_100X_PERCENT("Target Bases 100x %", ColumnHeader.OPTIONAL_HEADER),
+    TARGET_BASES_100X_PERCENT("Target Bases 100x %", ColumnHeader.OPTIONAL_HEADER) {
+        @Override public boolean shouldShow(Product product) {
+            return product.isSameProductFamily(ProductFamily.ProductFamilyName.EXOME);
+        }
+    },
     SAMPLE_TYPE("Sample Type", ColumnHeader.OPTIONAL_HEADER),
     TABLEAU_LINK("Tableau", ColumnHeader.OPTIONAL_HEADER),
     QUOTE_ID("Quote ID", ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_VALUE),
     SORT_COLUMN("Sort Column", ColumnHeader.REQUIRED_HEADER);
-
 
     private enum IsDate {
         YES, NO
