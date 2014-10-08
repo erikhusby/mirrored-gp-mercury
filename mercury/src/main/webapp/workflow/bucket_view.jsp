@@ -142,10 +142,15 @@
                 width: 250,
                 modal: true,
                 buttons: {
-                    "Apply barcodes": applyBarcodes,
+                    "ApplyBarcodesButton": {
+                        id: "applyBarcodes",
+                        text: "Apply barcodes",
+                        click: applyBarcodes
+                    },
                     Cancel: function() {
                         dialog.dialog( "close" );
                     }
+
                 }
             });
 
