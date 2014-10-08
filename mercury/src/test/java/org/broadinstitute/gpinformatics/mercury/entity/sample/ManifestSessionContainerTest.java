@@ -23,6 +23,7 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -89,6 +90,8 @@ public class ManifestSessionContainerTest extends Arquillian {
     private Map<String, LabVessel> sourceSampleToTargetVessel;
     @Inject
     private MercurySampleDao mercurySampleDao;
+    public ManifestSession uploadedSession;
+    public ManifestSession uploadedSession2;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -202,6 +205,53 @@ public class ManifestSessionContainerTest extends Arquillian {
         }
     }
 
+    @AfterMethod
+    public void tearDown() throws Exception {
+        if(userBean == null) {
+            return;
+        }
+
+        if (manifestSessionI != null && manifestSessionI.getManifestSessionId() != null) {
+            manifestSessionI = manifestSessionDao.find(manifestSessionI.getManifestSessionId());
+            manifestSessionI.setStatus(ManifestSession.SessionStatus.COMPLETED);
+            for (ManifestRecord manifestRecord : manifestSessionI.getNonQuarantinedRecords()) {
+                manifestRecord.setStatus(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
+            }
+            manifestSessionDao.persist(manifestSessionI);
+            manifestSessionDao.flush();
+        }
+
+        if (manifestSessionII != null && manifestSessionII.getManifestSessionId() != null) {
+            manifestSessionII = manifestSessionDao.find(manifestSessionII.getManifestSessionId());
+            manifestSessionII.setStatus(ManifestSession.SessionStatus.COMPLETED);
+            for (ManifestRecord manifestRecord : manifestSessionII.getNonQuarantinedRecords()) {
+                manifestRecord.setStatus(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
+            }
+            manifestSessionDao.persist(manifestSessionII);
+            manifestSessionDao.flush();
+        }
+
+        if (uploadedSession != null && uploadedSession.getManifestSessionId() != null) {
+            uploadedSession = manifestSessionDao.find(uploadedSession.getManifestSessionId());
+            uploadedSession.setStatus(ManifestSession.SessionStatus.COMPLETED);
+            for (ManifestRecord manifestRecord : uploadedSession.getNonQuarantinedRecords()) {
+                manifestRecord.setStatus(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
+            }
+            manifestSessionDao.persist(uploadedSession);
+            manifestSessionDao.flush();
+        }
+
+        if (uploadedSession2 != null && uploadedSession2.getManifestSessionId() != null) {
+            uploadedSession2 = manifestSessionDao.find(uploadedSession2.getManifestSessionId());
+            uploadedSession2.setStatus(ManifestSession.SessionStatus.COMPLETED);
+            for (ManifestRecord manifestRecord : uploadedSession2.getNonQuarantinedRecords()) {
+                manifestRecord.setStatus(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
+            }
+            manifestSessionDao.persist(uploadedSession2);
+            manifestSessionDao.flush();
+        }
+    }
+
     private ManifestRecord createManifestRecord(Metadata.Key key1, String value1, Metadata.Key key2, String value2,
                                                 Metadata.Key key3, String value3) {
         return new ManifestRecord(new Metadata(key1, value1), new Metadata(key2, value2),
@@ -298,9 +348,8 @@ public class ManifestSessionContainerTest extends Arquillian {
         String excelFilePath = "manifest-upload/duplicates/good-manifest-1.xlsx";
         InputStream testStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(excelFilePath);
 
-        ManifestSession uploadedSession =
-                manifestSessionEjb.uploadManifest(researchProject.getBusinessKey(), testStream, excelFilePath,
-                        testUser);
+        uploadedSession = manifestSessionEjb.uploadManifest(researchProject.getBusinessKey(), testStream, excelFilePath,
+                testUser);
         UpdateData updateData = uploadedSession.getUpdateData();
         assertThat(updateData.getModifiedBy(), is(not(equalTo(updateData.getCreatedBy()))));
         assertThat(updateData.getModifiedDate(), is(equalTo(updateData.getCreatedDate())));
@@ -505,7 +554,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         String pathToTestFile2 = "manifest-upload/duplicates/good-manifest-3.xlsx";
         InputStream testStream2 = Thread.currentThread().getContextClassLoader().getResourceAsStream(pathToTestFile2);
         ResearchProject rpSecondUpload = researchProjectDao.findByBusinessKey(researchProject.getBusinessKey());
-        ManifestSession uploadedSession2 =
+        uploadedSession2 =
                 manifestSessionEjb.uploadManifest(rpSecondUpload.getBusinessKey(), testStream2, pathToTestFile2,
                         testUser);
 
@@ -777,11 +826,12 @@ public class ManifestSessionContainerTest extends Arquillian {
 
         int totalRecords = retrievedSession.getRecords().size();
 
-        while(counter <retrievedSession.getRecords().size()) {
+        while(counter < retrievedSession.getRecords().size()) {
 
             assertThat(retrievedSession.getNumberOfTubesAvailableForTransfer(), is(equalTo(totalRecords-counter)));
             retrievedSession.addManifestEvent(
-                    new ManifestEvent(ManifestEvent.Severity.QUARANTINED, "testing Formula", retrievedSession.getRecords().get(counter)));
+                    new ManifestEvent(ManifestEvent.Severity.QUARANTINED, "testing Formula",
+                            retrievedSession.getRecords().get(counter)));
 
             manifestSessionDao.flush();
             manifestSessionDao.clear();
@@ -797,8 +847,6 @@ public class ManifestSessionContainerTest extends Arquillian {
         int counter = 0;
         manifestSessionDao.clear();
         ManifestSession retrievedSession = manifestSessionDao.find(manifestSessionI.getManifestSessionId());
-
-        int totalRecords = retrievedSession.getRecords().size();
 
         while(counter <retrievedSession.getRecords().size()) {
 
