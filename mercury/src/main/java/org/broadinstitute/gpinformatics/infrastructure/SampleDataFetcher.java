@@ -123,7 +123,7 @@ public class SampleDataFetcher implements Serializable {
                 bspSampleDatas.add((BspSampleData) sampleData);
             }
         }
-        bspSampleDataFetcher.fetchFFPEDerived(BSPSampleDataFetcher.convertToBspSampleDataCollection(bspSampleDatas));
+        bspSampleDataFetcher.fetchFFPEDerived(bspSampleDatas);
     }
 
     /**
