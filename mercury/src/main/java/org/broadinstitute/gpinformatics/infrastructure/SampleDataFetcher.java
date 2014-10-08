@@ -131,7 +131,8 @@ public class SampleDataFetcher implements Serializable {
     public Map<String, String> getStockIdByAliquotId(Collection<String> aliquotIds) {
         Collection<String> allMercurySamples = new ArrayList<>();
 
-        Map<MercurySample.MetadataSource, Collection<MercurySample>> samplesBySource = determineMetadataSource(aliquotIds);
+        Map<MercurySample.MetadataSource, Collection<MercurySample>> samplesBySource =
+                determineMetadataSource(aliquotIds);
         for (Collection<MercurySample> mercurySamples : samplesBySource.values()) {
             for (MercurySample mercurySample : mercurySamples) {
                 allMercurySamples.add(mercurySample.getSampleKey());
@@ -150,12 +151,8 @@ public class SampleDataFetcher implements Serializable {
                     bspSampleIds.add(mercurySample.getSampleKey());
                 }
                 stockIdByAliquotId.putAll(bspSampleDataFetcher.getStockIdByAliquotId(bspSampleIds));
-            } else if (samplesBySource.containsKey(MercurySample.MetadataSource.MERCURY)) {
-                List<MercurySample> mercurySamples = new ArrayList<>();
-                for (MercurySample mercurySample : entry.getValue()) {
-                    mercurySamples.add(mercurySample);
-                }
-                stockIdByAliquotId.putAll(mercurySampleDataFetcher.getStockIdByAliquotId(mercurySamples));
+            } else if (metadataSource == MercurySample.MetadataSource.MERCURY) {
+                stockIdByAliquotId.putAll(mercurySampleDataFetcher.getStockIdByAliquotId(entry.getValue()));
             } else {
                 throw new IllegalStateException("Unknown sample data source: " + samplesBySource.keySet());
             }

@@ -468,7 +468,7 @@ public class SampleDataFetcherTest {
 
     private void configureMercuryFetcher(MercurySample mercurySample, MercurySampleData sampleData) {
         when(mockMercurySampleDataFetcher.fetchSampleData(argThat(contains(mercurySample))))
-                .thenReturn(ImmutableMap.of(CLINICAL_SAMPLE_ID, sampleData));
+                .thenReturn(ImmutableMap.of(mercurySample.getSampleKey(), sampleData));
     }
 
     private void configureBspFetcher(String aliquotId, String stockId) {
