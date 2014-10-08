@@ -129,7 +129,7 @@ public enum DateRange {
             startCalendar.set(Calendar.MONTH, Calendar.JANUARY);
             startCalendar.set(Calendar.DAY_OF_MONTH, 1);
             stopCalendar.set(Calendar.MONTH, Calendar.DECEMBER);
-            stopCalendar.set(Calendar.DAY_OF_MONTH, 31);
+            stopCalendar.set(Calendar.DAY_OF_MONTH, stopCalendar.getActualMaximum(Calendar.DAY_OF_MONTH));
         }
     }),
     OneYear("One Year", new ComputeStartAndStopDate() {
