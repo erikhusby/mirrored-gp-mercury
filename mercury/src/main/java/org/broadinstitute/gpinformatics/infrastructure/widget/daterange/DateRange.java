@@ -20,28 +20,28 @@ import java.util.Date;
  */
 public enum DateRange {
 
-    Today("Today", new ComputeStartAndStopDate() {
+    Today("Today") {
         @Override
         public void calcDate(Calendar startCalendar, Calendar stopCalendar) {
             Date now = new Date();
             startCalendar.setTime(now);
             stopCalendar.setTime(now);
         }
-    }),
-    Last24Hours("Last 24 Hours", new ComputeStartAndStopDate() {
+    },
+    Last24Hours("Last 24 Hours") {
         @Override
         public void calcDate(Calendar startCalendar, Calendar stopCalendar) {
             startCalendar.add(Calendar.HOUR, -24);
 
             // This is one day back from today, so can rely on getInstance using today for stop date.
-        }}),
-    Yesterday("Yesterday", new ComputeStartAndStopDate() {
+        }},
+    Yesterday("Yesterday") {
         @Override
         public void calcDate(Calendar startCalendar, Calendar stopCalendar) {
             startCalendar.add(Calendar.DATE, -1);
             stopCalendar.add(Calendar.DATE, -1);
-        }}),
-    ThisWeek("This Week", new ComputeStartAndStopDate() {
+        }},
+    ThisWeek("This Week") {
         @Override
         public void calcDate(Calendar startCalendar, Calendar stopCalendar) {
             int currentDayOfWeek = startCalendar.get(Calendar.DAY_OF_WEEK);
@@ -49,40 +49,40 @@ public enum DateRange {
 
             // This is one week back from today, so can rely on getInstance using today for stop date.
         }
-    }),
-    Last7Days("Last 7 Days", new ComputeStartAndStopDate() {
+    },
+    Last7Days("Last 7 Days") {
         @Override
         public void calcDate(Calendar startCalendar, Calendar stopCalendar) {
             startCalendar.add(Calendar.DATE, -7);
 
             // This is seven days back from today, so can rely on getInstance using today for stop date.
         }
-    }),
-    LastWeek("Last Week", new ComputeStartAndStopDate() {
+    },
+    LastWeek("Last Week") {
         @Override
         public void calcDate(Calendar startCalendar, Calendar stopCalendar) {
             int currentDayOfWeek = startCalendar.get(Calendar.DAY_OF_WEEK);
             startCalendar.add(Calendar.DAY_OF_WEEK, Calendar.SUNDAY - currentDayOfWeek - 7);
             stopCalendar.add(Calendar.DAY_OF_WEEK, -currentDayOfWeek);
         }
-    }),
-    ThisMonth("This Month", new ComputeStartAndStopDate() {
+    },
+    ThisMonth("This Month") {
         @Override
         public void calcDate(Calendar startCalendar, Calendar stopCalendar) {
             startCalendar.set(Calendar.DAY_OF_MONTH, 1);
             stopCalendar.add(Calendar.MONTH, 1);
             stopCalendar.add(Calendar.DATE, -1);
         }
-    }),
-    Last30Days("Last 30 Days", new ComputeStartAndStopDate() {
+    },
+    Last30Days("Last 30 Days") {
         @Override
         public void calcDate(Calendar startCalendar, Calendar stopCalendar) {
             startCalendar.add(Calendar.DATE, -30);
 
             // This is one year back from today, so can rely on getInstance using today.
         }
-    }),
-    LastMonth("Last Month", new ComputeStartAndStopDate() {
+    },
+    LastMonth("Last Month") {
         @Override
         public void calcDate(Calendar startCalendar, Calendar stopCalendar) {
             startCalendar.add(Calendar.MONTH, -1);
@@ -91,17 +91,37 @@ public enum DateRange {
             stopCalendar.set(Calendar.DAY_OF_MONTH, 1);
             stopCalendar.add(Calendar.DATE, -1);
         }
-    }),
-    ThisQuarter("This Quarter", new OneQuarterDateRange()),
-    Last90Days("Last 90 Days", new ComputeStartAndStopDate() {
+    },
+    ThisQuarter("This Quarter") {
+        @Override
+        public void calcDate(Calendar startCalendar, Calendar stopCalendar) {
+            int month = startCalendar.get(Calendar.MONTH);
+            if ((month >= Calendar.JANUARY) && (month <= Calendar.MARCH)) {
+                startCalendar.set(Calendar.MONTH, Calendar.JANUARY);
+            } else if ((month >= Calendar.APRIL) && (month <= Calendar.JUNE)) {
+                startCalendar.set(Calendar.MONTH, Calendar.APRIL);
+            } else if ((month >= Calendar.JULY) && (month <= Calendar.SEPTEMBER)) {
+                startCalendar.set(Calendar.MONTH, Calendar.JULY);
+            } else {
+                startCalendar.set(Calendar.MONTH, Calendar.OCTOBER);
+            }
+            startCalendar.set(Calendar.DAY_OF_MONTH, 1);
+            startCalendar.setTime(DateUtils.getStartOfDay(startCalendar.getTime()));
+
+            stopCalendar.set(Calendar.MONTH, startCalendar.get(Calendar.MONTH) + 2);
+            stopCalendar.set(Calendar.DAY_OF_MONTH, stopCalendar.getActualMaximum(Calendar.DAY_OF_MONTH));
+            stopCalendar.setTime(DateUtils.getEndOfDay(stopCalendar.getTime()));
+        }
+    },
+    Last90Days("Last 90 Days") {
         @Override
         public void calcDate(Calendar startCalendar, Calendar stopCalendar) {
             startCalendar.add(Calendar.DATE, -90);
 
             // This is 90 days back from today, so can rely on getInstance using today.
         }
-    }),
-    LastQuarter("Last Quarter", new ComputeStartAndStopDate() {
+    },
+    LastQuarter("Last Quarter") {
         @Override
         public void calcDate(Calendar startCalendar, Calendar stopCalendar) {
 
@@ -122,8 +142,8 @@ public enum DateRange {
             stopCalendar.add(Calendar.MONTH, 2);
             stopCalendar.set(Calendar.DAY_OF_MONTH, stopCalendar.getActualMaximum(Calendar.DAY_OF_MONTH));
         }
-    }),
-    ThisYear("This Year", new ComputeStartAndStopDate() {
+    },
+    ThisYear("This Year") {
         @Override
         public void calcDate(Calendar startCalendar, Calendar stopCalendar) {
             startCalendar.set(Calendar.MONTH, Calendar.JANUARY);
@@ -131,16 +151,16 @@ public enum DateRange {
             stopCalendar.set(Calendar.MONTH, Calendar.DECEMBER);
             stopCalendar.set(Calendar.DAY_OF_MONTH, stopCalendar.getActualMaximum(Calendar.DAY_OF_MONTH));
         }
-    }),
-    OneYear("One Year", new ComputeStartAndStopDate() {
+    },
+    OneYear("One Year") {
         @Override
         public void calcDate(Calendar startCalendar, Calendar stopCalendar) {
             startCalendar.set(Calendar.YEAR, -1);
 
             // This is one year back from today, so can rely on getInstance using today.
         }
-    }),
-    LastYear("Last Year", new ComputeStartAndStopDate() {
+    },
+    LastYear("Last Year") {
         @Override
         public void calcDate(Calendar startCalendar, Calendar stopCalendar) {
             startCalendar.add(Calendar.YEAR, -1);
@@ -151,39 +171,41 @@ public enum DateRange {
             stopCalendar.set(Calendar.MONTH, Calendar.DECEMBER);
             stopCalendar.set(Calendar.DAY_OF_MONTH, stopCalendar.getActualMaximum(Calendar.DAY_OF_MONTH));
         }
-    }),
-    All("All Time", new ComputeStartAndStopDate() {
+    },
+    All("All Time") {
         @Override
         public void calcDate(Calendar startCalendar, Calendar stopCalendar) {
             startCalendar.set(Calendar.YEAR, 1970);
             startCalendar.set(Calendar.MONTH, Calendar.JANUARY);
             startCalendar.set(Calendar.DAY_OF_MONTH, 1);
         }
-    });
+    };
 
-    public static abstract class ComputeStartAndStopDate {
+    abstract protected void calcDate(Calendar start, Calendar stop);
 
-        abstract protected void calcDate(Calendar start, Calendar stop);
-
-        public Date[] startAndStopDate() {
-            Calendar startCalendar = Calendar.getInstance();
-            Calendar stopCalendar = Calendar.getInstance();
-            startCalendar.setTime(DateUtils.getStartOfDay(startCalendar.getTime()));
-            stopCalendar.setTime(DateUtils.getEndOfDay(stopCalendar.getTime()));
-            calcDate(startCalendar, stopCalendar);
-            return new Date[] { startCalendar.getTime(), stopCalendar.getTime() };
-        }
+    /**
+     * This method returns a two element array with the 1st
+     * element set to the appropriate start date, and the second to the appropriate end
+     * date
+     *
+     * @return Two element array with start and end dates populated.
+     */
+    public Date[] startAndStopDate() {
+        Calendar startCalendar = Calendar.getInstance();
+        Calendar stopCalendar = Calendar.getInstance();
+        startCalendar.setTime(DateUtils.getStartOfDay(startCalendar.getTime()));
+        stopCalendar.setTime(DateUtils.getEndOfDay(stopCalendar.getTime()));
+        calcDate(startCalendar, stopCalendar);
+        return new Date[] { startCalendar.getTime(), stopCalendar.getTime() };
     }
 
     /** Stores a user-friendly version of the enum name. */
     private final String description;
 
-    private final ComputeStartAndStopDate computeStartAndStopDate;
 
     /** Constructor which accepts the description. */
-    private DateRange(String description, ComputeStartAndStopDate computeStartAndStopDate) {
+    private DateRange(String description) {
         this.description = description;
-        this.computeStartAndStopDate = computeStartAndStopDate;
     }
 
     /** Gets the user friendly description of the category. */
@@ -194,16 +216,5 @@ public enum DateRange {
     /** Delegates to name() to allow javabean compliant access. */
     public String getName() {
         return name();
-    }
-
-    /**
-     * This method returns a two element array with the 1st
-     * element set to the appropriate start date, and the second to the appropriate end
-     * date
-     *
-     * @return Two element array with start and end dates populated.
-     */
-    public Date[] startAndStopDate() {
-        return computeStartAndStopDate.startAndStopDate();
     }
 }
