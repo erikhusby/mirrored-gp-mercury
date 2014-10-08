@@ -787,7 +787,6 @@ public class ProductOrderActionBean extends CoreActionBean {
                         productFamilyId, productTokenInput.getBusinessKeyList(), selectedStatuses, getDateRange(),
                         owner.getOwnerIds(), selectedLedgerStatuses);
 
-
         progressFetcher.loadProgress(productOrderDao,
                 ProductOrderListEntry.getProductOrderIDs(displayedProductOrderListEntries));
 

@@ -26,14 +26,13 @@ import java.util.GregorianCalendar;
  * </ul>
  */
 public class OneQuarterDateRange extends DateRange.ComputeStartAndStopDate {
-    public OneQuarterDateRange() {
+    protected OneQuarterDateRange() {
         this(new Date());
     }
 
     public OneQuarterDateRange(Date currentDate) {
         Calendar calendar = GregorianCalendar.getInstance();
         calendar.setTime(DateUtils.getStartOfDay(currentDate));
-        setStartCalendar(calendar);
     }
 
     @Override
@@ -54,7 +53,6 @@ public class OneQuarterDateRange extends DateRange.ComputeStartAndStopDate {
         stop.set(Calendar.MONTH, startCalendar.get(Calendar.MONTH) + 2);
         stop.set(Calendar.DAY_OF_MONTH, stop.getActualMaximum(Calendar.DAY_OF_MONTH));
         stop.setTime(DateUtils.getEndOfDay(stop.getTime()));
-        setStopCalendar(stop);
     }
 
 }
