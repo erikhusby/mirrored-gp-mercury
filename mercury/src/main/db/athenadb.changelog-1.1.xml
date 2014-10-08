@@ -1189,5 +1189,16 @@
         </sql>
     </changeSet>
 
+    <changeSet id="GPLIM-3030-add-request-date-to-submission-tracker" author="breilly">
+        <addColumn tableName="SUBMISSION_TRACKER" schemaName="athena">
+            <column name="REQUEST_DATE" type="timestamp"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-3030-add-request-date-to-submission-tracker-aud" author="breilly">
+        <addColumn tableName="SUBMISSION_TRACKER_AUD" schemaName="athena">
+            <column name="REQUEST_DATE" type="timestamp"/>
+        </addColumn>
+    </changeSet>
 
 </databaseChangeLog>

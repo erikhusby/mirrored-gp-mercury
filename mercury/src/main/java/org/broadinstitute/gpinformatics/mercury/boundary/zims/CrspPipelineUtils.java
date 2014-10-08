@@ -60,9 +60,9 @@ public class CrspPipelineUtils {
         libraryBean.setTestType(LibraryBean.CRSP_SOMATIC_TEST_TYPE);
 
         if (Boolean.TRUE.equals(libraryBean.isPositiveControl())) {
-            String mungedSampleName = libraryBean.getCollaboratorSampleId() + "_" + lcSet;
-            libraryBean.setCollaboratorSampleId(mungedSampleName);
-            libraryBean.setCollaboratorParticipantId(mungedSampleName);
+            String participantWithLcSetName = libraryBean.getCollaboratorParticipantId() + "_" + lcSet;
+            libraryBean.setCollaboratorSampleId(participantWithLcSetName);
+            libraryBean.setCollaboratorParticipantId(participantWithLcSetName);
 
             libraryBean.setResearchProjectId(positiveControlsProject.getBusinessKey());
             libraryBean.setResearchProjectName(positiveControlsProject.getTitle());
