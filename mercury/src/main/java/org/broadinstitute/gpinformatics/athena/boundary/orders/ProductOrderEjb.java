@@ -172,12 +172,6 @@ public class ProductOrderEjb {
         productOrderDao.persist(editedProductOrder);
     }
 
-    private void validateUniqueProjectTitle(ProductOrder productOrder) throws DuplicateTitleException {
-        if (productOrderDao.findByTitle(productOrder.getTitle()) != null) {
-            throw new DuplicateTitleException();
-        }
-    }
-
     /**
      * Looks up the quote for the pdo (if the pdo has one) in the
      * quote server.
@@ -191,27 +185,6 @@ public class ProductOrderEjb {
             }
         }
     }
-
-    // Could be static, but EJB spec does not like it.
-    private void setSamples(ProductOrder productOrder, List<String> sampleIds) throws NoSamplesException {
-        if (sampleIds.isEmpty()) {
-            throw new NoSamplesException();
-        }
-
-        List<ProductOrderSample> orderSamples = new ArrayList<>(sampleIds.size());
-        for (String sampleId : sampleIds) {
-            orderSamples.add(new ProductOrderSample(sampleId));
-        }
-        productOrder.setSamples(orderSamples);
-    }
-
-    private void setAddOnProducts(ProductOrder productOrder, List<String> addOnPartNumbers) {
-        List<Product> addOns =
-                addOnPartNumbers.isEmpty() ? new ArrayList<Product>() : productDao.findByPartNumbers(addOnPartNumbers);
-
-        productOrder.updateAddOnProducts(addOns);
-    }
-
 
     /**
      * Calculate the risk for all samples on the product order specified by business key.
