@@ -131,16 +131,22 @@ public class VarioskanPlateProcessor extends TableProcessor {
     }
 
     private enum Headers implements ColumnHeader {
-        PLATE("Plate"),
-        WELL("Well"),
-        SAMPLE("Sample"),
+        PLATE("Plate", IS_STRING),
+        WELL("Well", IS_STRING),
+        SAMPLE("Sample", IS_STRING),
         VALUE("Value"),
         RESULT("Result");
 
         private final String text;
+        private final boolean isString;
+
+        Headers(String text, boolean isString) {
+            this.text = text;
+            this.isString = isString;
+        }
 
         Headers(String text) {
-            this.text = text;
+            this(text, false);
         }
 
         @Override
@@ -165,7 +171,7 @@ public class VarioskanPlateProcessor extends TableProcessor {
 
         @Override
         public boolean isStringColumn() {
-            return false;
+            return isString;
         }
     }
 }

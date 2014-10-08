@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
@@ -16,6 +17,8 @@ import static org.testng.Assert.*;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class LibraryBeanTest {
+
+    private String testType;
 
     /**
      * Verifies that when a {@link BspSampleData} is passed into a {@link LibraryBean}, the bsp fields take priority
@@ -61,6 +64,7 @@ public class LibraryBeanTest {
         assertEquals(libraryBean.getCollaboratorSampleId(), bspCollabSampleId);
         assertEquals(libraryBean.getSpecies(), sampleData.getOrganism());
         assertEquals(libraryBean.getParticipantId(),sampleData.getPatientId());
+        assertNull(libraryBean.getTestType());
 
         // new up sans bspSampleData to confirm gssr fields work.
         libraryBean = new LibraryBean(gssrLsid, gssrMaterialType, gssrCollabSampleId, gssrOrganism, gssrSpecies,
@@ -72,6 +76,12 @@ public class LibraryBeanTest {
         assertEquals(libraryBean.getCollaboratorSampleId(),gssrCollabSampleId);
         assertEquals(libraryBean.getSpecies(),gssrOrganism + ":" + gssrSpecies + ":" + gssrStrain);
         assertEquals(libraryBean.getCollaboratorParticipantId(),gssrParticipant);
+        assertNull(libraryBean.getTestType());
+    }
+
+    @Test(groups = DATABASE_FREE)
+    public void testTestTypeIsNullForEmptyConstructor() {
+        Assert.assertEquals(new LibraryBean().getTestType(), null);
     }
 
     /**
@@ -97,5 +107,10 @@ public class LibraryBeanTest {
         assertEquals(libraryBean.getRootSample(), StringUtils.trimToNull(sampleData.getRootSample()));
         assertEquals(libraryBean.getSpecies(), StringUtils.trimToNull(sampleData.getOrganism()));
         assertEquals(libraryBean.getSampleId(), StringUtils.trimToNull(sampleData.getSampleId()));
+        assertNull(libraryBean.getTestType());
+    }
+
+    public String getTestType() {
+        return testType;
     }
 }
