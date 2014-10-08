@@ -77,38 +77,38 @@ public class PoiSpreadsheetParserTest {
         assertThat(testProcessor.getWarnings(), emptyCollectionOf(String.class));
     }
 
+    private static final boolean IS_DATE = true;
+    private static final boolean NON_DATE = false;
+
     enum TestHeaders implements ColumnHeader {
-        testname(0, ColumnHeader.NON_DATE, ColumnHeader.IS_STRING, ColumnHeader.REQUIRED_VALUE),
-        stringData1(1, ColumnHeader.NON_DATE, ColumnHeader.IS_STRING, ColumnHeader.OPTIONAL_VALUE),
-        stringData2(2, ColumnHeader.NON_DATE, ColumnHeader.IS_STRING, ColumnHeader.OPTIONAL_VALUE),
-        numericData1(3, ColumnHeader.NON_DATE, ColumnHeader.NON_STRING, ColumnHeader.OPTIONAL_VALUE),
-        numericData2(4, ColumnHeader.NON_DATE, ColumnHeader.NON_STRING, ColumnHeader.OPTIONAL_VALUE),
-        calculated(5, ColumnHeader.NON_DATE, ColumnHeader.IS_STRING, ColumnHeader.OPTIONAL_VALUE),
-        expected(6, ColumnHeader.NON_DATE, ColumnHeader.IS_STRING, ColumnHeader.OPTIONAL_VALUE),
-        aBoolean(7, ColumnHeader.NON_DATE, ColumnHeader.NON_STRING, ColumnHeader.OPTIONAL_VALUE),
-        aDate(8, ColumnHeader.IS_DATE, ColumnHeader.NON_STRING, ColumnHeader.OPTIONAL_VALUE);
-        private final int index;
+        testname(NON_DATE, ColumnHeader.IS_STRING, ColumnHeader.REQUIRED_VALUE),
+        stringData1(NON_DATE, ColumnHeader.IS_STRING),
+        stringData2(NON_DATE, ColumnHeader.IS_STRING),
+        numericData1(NON_DATE, ColumnHeader.NON_STRING),
+        numericData2(NON_DATE, ColumnHeader.NON_STRING),
+        calculated(NON_DATE, ColumnHeader.IS_STRING),
+        expected(NON_DATE, ColumnHeader.IS_STRING),
+        aBoolean(NON_DATE, ColumnHeader.NON_STRING),
+        aDate(IS_DATE, ColumnHeader.NON_STRING);
         private final boolean isDateColumn;
         private final boolean isStringColumn;
         private final boolean requiredValue;
         private final String text;
 
-        TestHeaders(int index, boolean isDateColumn, boolean isStringColumn, boolean requiredValue) {
-            this.index = index;
+        TestHeaders(boolean isDateColumn, boolean isStringColumn) {
+            this(isDateColumn, isStringColumn, ColumnHeader.OPTIONAL_VALUE);
+        }
+
+        TestHeaders(boolean isDateColumn, boolean isStringColumn, boolean requiredValue) {
             this.isDateColumn = isDateColumn;
             this.isStringColumn = isStringColumn;
             this.requiredValue = requiredValue;
-            this.text = name();
+            text = name();
         }
 
         @Override
         public String getText() {
             return text;
-        }
-
-        @Override
-        public int getIndex() {
-            return index;
         }
 
         @Override
@@ -133,8 +133,8 @@ public class PoiSpreadsheetParserTest {
 
     }
 
-    private class TestProcessor extends TableProcessor {
-        private List<Map<String, String>> spreadsheetValues = new ArrayList<>();
+    private static class TestProcessor extends TableProcessor {
+        private final List<Map<String, String>> spreadsheetValues = new ArrayList<>();
 
         private TestProcessor() {
             super(null);

@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerHeader;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
@@ -13,8 +14,8 @@ import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.work.WorkCompleteMessage;
 import org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPLSIDUtil;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPLSIDUtil;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
@@ -22,6 +23,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.tableau.TableauConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.TableauRedirectActionBean;
 
+import java.awt.Color;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
@@ -133,17 +135,16 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
         return allPriceItems;
     }
 
-    private void writePriceItemProductHeaders(PriceItem priceItem, Product product, byte[] rgbColor) {
-        getWriter().writeCell(BillingTrackerHeader.getPriceItemNameHeader(priceItem), getWrappedHeaderStyle(rgbColor));
+    private void writePriceItemProductHeaders(PriceItem priceItem, Product product, XSSFColor color) {
+        getWriter().writeCell(BillingTrackerHeader.getPriceItemNameHeader(priceItem), getWrappedHeaderStyle(color));
         getWriter().setColumnWidth(VALUE_WIDTH);
-        getWriter().writeCell(BillingTrackerHeader.getPriceItemPartNumberHeader(product), getWrappedHeaderStyle(
-                rgbColor));
+        getWriter().writeCell(BillingTrackerHeader.getPriceItemPartNumberHeader(product), getWrappedHeaderStyle(color));
         getWriter().setColumnWidth(VALUE_WIDTH);
     }
 
-    private void writeHistoricalPriceItemProductHeader(PriceItem priceItem, byte[] rgbColor) {
+    private void writeHistoricalPriceItemProductHeader(PriceItem priceItem, XSSFColor color) {
         getWriter().writeCell(BillingTrackerHeader.getHistoricalPriceItemNameHeader(priceItem),
-                getWrappedHeaderStyle(rgbColor));
+                getWrappedHeaderStyle(color));
         getWriter().setColumnWidth(VALUE_WIDTH);
     }
 
@@ -292,6 +293,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
                           int sortOrder, Map<String, WorkCompleteMessage> workCompleteMessageBySample,
                           SampleLedgerRow sampleData) {
         getWriter().nextRow();
+        Product product = sample.getProductOrder().getProduct();
 
         // sample name.
         getWriter().writeCell(sampleData.getSampleId());
@@ -328,7 +330,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
         getWriter().writeCell(sampleData.getProjectManagerName());
 
         // Lane Count
-        if (BillingTrackerHeader.LANE_COUNT.shouldShow(sample.getProductOrder().getProduct())) {
+        if (BillingTrackerHeader.LANE_COUNT.shouldShow(product)) {
             getWriter().writeCell(sampleData.getNumberOfLanes());
         }
 
@@ -373,7 +375,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
         }
 
         // % coverage at 20x
-        if (BillingTrackerHeader.PERCENT_COVERAGE_AT_20X.shouldShow(sample.getProductOrder().getProduct())) {
+        if (BillingTrackerHeader.PERCENT_COVERAGE_AT_20X.shouldShow(product)) {
             if (percentCoverageAt20x != null) {
                 getWriter().writeCell(percentCoverageAt20x, getPercentageStyle());
             } else {
@@ -441,38 +443,46 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
             getWriter().setRowStyle(getAbandonedStyle());
         }
     }
+    private static final XSSFColor HISTORICAL_PRICE_ITEM_COLOR = new XSSFColor(new Color(204, 204, 204));
 
-    private static byte[][] PRICE_ITEM_COLORS = {
-            { (byte) 255, (byte) 255, (byte) 204 },
-            { (byte) 255, (byte) 204, (byte) 255 },
-            { (byte) 204, (byte) 236, (byte) 255 },
-            { (byte) 204, (byte) 255, (byte) 204 },
-            { (byte) 204, (byte) 153, (byte) 255 },
-            { (byte) 255, (byte) 102, (byte) 204 },
-            { (byte) 255, (byte) 255, (byte) 153 },
-            { (byte)   0, (byte) 255, (byte) 255 },
-            { (byte) 102, (byte) 255, (byte) 153 },
-    };
+    private static class PriceItemColor {
+
+        private static final XSSFColor[] COLORS = {
+                new XSSFColor(new Color(255, 255, 204)),
+                new XSSFColor(new Color(255, 204, 255)),
+                new XSSFColor(new Color(204, 236, 255)),
+                new XSSFColor(new Color(204, 255, 204)),
+                new XSSFColor(new Color(204, 153, 255)),
+                new XSSFColor(new Color(255, 102, 204)),
+                new XSSFColor(new Color(255, 255, 153)),
+                new XSSFColor(new Color(0, 255, 255)),
+                new XSSFColor(new Color(102, 255, 153))
+        };
+
+        private int index;
+
+        private XSSFColor getNext() {
+            return COLORS[index++ % COLORS.length];
+        }
+    }
 
     private void writeHeaders(Product currentProduct, List<PriceItem> sortedPriceItems, List<Product> sortedAddOns,
                               Collection<PriceItem> historicalPriceItems) {
-        int colorIndex = 0;
-
         for (PriceItem priceItem : historicalPriceItems) {
-            writeHistoricalPriceItemProductHeader(priceItem, new byte[]{(byte) 204, (byte) 204, (byte) 204});
+            writeHistoricalPriceItemProductHeader(priceItem, HISTORICAL_PRICE_ITEM_COLOR);
         }
 
+        PriceItemColor itemColor = new PriceItemColor();
+
         for (PriceItem priceItem : sortedPriceItems) {
-            writePriceItemProductHeaders(priceItem, currentProduct,
-                    PRICE_ITEM_COLORS[colorIndex++ % PRICE_ITEM_COLORS.length]);
+            writePriceItemProductHeaders(priceItem, currentProduct, itemColor.getNext());
         }
 
         // Repeat the process for add ons
         for (Product addOn : sortedAddOns) {
             List<PriceItem> sortedAddOnPriceItems = getPriceItems(addOn, priceItemDao, priceListCache);
             for (PriceItem priceItem : sortedAddOnPriceItems) {
-                writePriceItemProductHeaders(priceItem, addOn,
-                        PRICE_ITEM_COLORS[colorIndex++ % PRICE_ITEM_COLORS.length]);
+                writePriceItemProductHeaders(priceItem, addOn, itemColor.getNext());
             }
         }
 

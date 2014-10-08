@@ -37,11 +37,11 @@ public class BillingTrackerProcessor extends TableProcessor {
     private final ProductOrderDao productOrderDao;
     private final LedgerEntryDao ledgerEntryDao;
 
-    private ProductOrder currentProductOrder = null;
-    private Product currentProduct = null;
+    private ProductOrder currentProductOrder;
+    private final Product currentProduct;
     private List<ProductOrderSample> currentSamples = new ArrayList<>();
-    private int sampleIndexInOrder = 0;
-    private List<BillableRef> currentBillableRefs = null;
+    private int sampleIndexInOrder;
+    private final List<BillableRef> currentBillableRefs;
     private final Map<String, PriceItem> currentPriceItemsByName;
     private final List<ProductOrder> productOrders = new ArrayList<>();
 
@@ -69,36 +69,30 @@ public class BillingTrackerProcessor extends TableProcessor {
 
         // The price items for the product, in order that they appear in the spreadsheet. Populate the price item cache.
         currentPriceItemsByName = new HashMap<>();
-        currentBillableRefs = getBillableRefList(currentProduct, priceItemDao, priceListCache, currentPriceItemsByName);
+        currentBillableRefs = new ArrayList<>();
+        collectBillableRefs(currentProduct, priceItemDao, priceListCache, currentPriceItemsByName, currentBillableRefs);
         for (Product addOn : currentProduct.getAddOns()) {
-            currentBillableRefs.addAll(getBillableRefList(addOn, priceItemDao, priceListCache, currentPriceItemsByName));
+            collectBillableRefs(addOn, priceItemDao, priceListCache, currentPriceItemsByName, currentBillableRefs);
         }
 
         this.doPersist = doPersist;
     }
 
-    private List<BillableRef> getBillableRefList(Product product, PriceItemDao priceItemDao,
-                                                 PriceListCache priceListCache,
-                                                 Map<String, PriceItem> currentPriceItemsByName) {
+    private static void collectBillableRefs(Product product, PriceItemDao priceItemDao,
+                                            PriceListCache priceListCache,
+                                            Map<String, PriceItem> currentPriceItemsByName,
+                                            List<BillableRef> billableRefs) {
 
-        List<BillableRef> billableRefs = new ArrayList<>();
         List<PriceItem> priceItems = SampleLedgerExporter.getPriceItems(product, priceItemDao, priceListCache);
         for (PriceItem priceItem : priceItems) {
             currentPriceItemsByName.put(priceItem.getName(), priceItem);
             billableRefs.add(new BillableRef(product.getPartNumber(), priceItem.getName()));
         }
-
-        return billableRefs;
     }
 
     @Override
     public List<String> getHeaderNames() {
         return headerValues;
-    }
-
-    @Override
-    public int getNumHeaderRows() {
-        return 1;
     }
 
     @Override
