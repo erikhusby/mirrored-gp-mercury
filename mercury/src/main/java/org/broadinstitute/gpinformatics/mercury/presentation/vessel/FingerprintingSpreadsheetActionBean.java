@@ -100,7 +100,7 @@ public class FingerprintingSpreadsheetActionBean extends CoreActionBean {
             if (!ACCEPTABLE_SAMPLE_COUNTS.contains(dtos.size())) {
                 addGlobalValidationError("Plate has a pico'd sample count of " + dtos.size() + " and it must be " +
                                          StringUtils.join(ACCEPTABLE_SAMPLE_COUNTS, " or "));
-                return new ForwardResolution(CREATE_PAGE);
+//                return new ForwardResolution(CREATE_PAGE);
             }
 
             // Makes the spreadsheet.
