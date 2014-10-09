@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 
 import javax.annotation.Nonnull;
 import javax.persistence.Transient;
@@ -33,6 +34,8 @@ public abstract class AbstractSample {
     public AbstractSample(@Nonnull SampleData sampleData) {
         setSampleData(sampleData);
     }
+
+    public abstract MercurySample.MetadataSource getMetadataSource();
 
     /**
      * @return the unique key for this sample, can be user visible
