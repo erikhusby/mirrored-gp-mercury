@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.SpreadsheetCreator;
@@ -24,97 +23,106 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleDataFetcher;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Control class supporting FingerprintingSpreadsheetActionBean
  */
 public class FingerprintingPlateFactory {
+    /** String for the FP spreadsheet that identifies a filler tube. */
     public static final String NA12878 = "NA12878";
+    /** String for the FP spreadsheet that identifies a negative control tube. */
     public static final String NEGATIVE_CONTROL = "negative control";
-
+    @Inject
     private ControlDao controlDao;
+    public FingerprintingPlateFactory() {
+    }
+
+    public FingerprintingPlateFactory(ControlDao controlDao) {
+        this.controlDao = controlDao;
+    }
 
     /**
      * Makes spreadsheet row dtos from the static plate.
+     * Puts any error/info messages in the list of errorMessages.
      */
-    public List<FpSpreadsheetRow> makeSampleDtos(StaticPlate plate) throws Exception {
+    public List<FpSpreadsheetRow> makeSampleDtos(StaticPlate plate, List<String> errorMessages) throws Exception {
         List<FpSpreadsheetRow> dtos = new ArrayList<>();
 
-        // Only keeps one sample tube per position.  Prefer tubes having FP pico or secondarily Initial pico.
-        Map<VesselPosition, Pair<LabVessel, LabMetric>> positionMap = new HashMap<>();
+        // Takes the pico value from the nearest upstream tube.
+        Set<VesselPosition> positionsFound = new HashSet<>();
         for (VesselAndPosition vesselAndPosition : plate.getNearestTubeAncestors()) {
-            LabVessel labVessel = vesselAndPosition.getVessel();
+            LabVessel tube = vesselAndPosition.getVessel();
             VesselPosition position = vesselAndPosition.getPosition();
-
-            // Always prefers the latest FP pico.
-            LabMetric labMetric = labVessel.findMostRecentLabMetric(LabMetric.MetricType.FINGERPRINT_PICO);
-            if (labMetric == null && !positionMap.containsKey(position)) {
-                labMetric = labVessel.findMostRecentLabMetric(LabMetric.MetricType.INITIAL_PICO);
+            if (!positionsFound.add(position)) {
+                errorMessages.add(position.name() + " has multiple immediate upstream tubes.");
+                continue;
+            }
+            // Prefers FP pico over Initial pico.
+            LabMetric labMetric = tube.findMostRecentLabMetric(LabMetric.MetricType.FINGERPRINT_PICO);
+            if (labMetric == null) {
+                labMetric = tube.findMostRecentLabMetric(LabMetric.MetricType.INITIAL_PICO);
+            }
+            // Validates the units of measure.
+            if (labMetric != null && labMetric.getUnits() != LabMetric.LabUnit.UG_PER_ML &&
+                labMetric.getUnits() != LabMetric.LabUnit.NG_PER_UL) {
+                errorMessages.add(position.name() + " has incompatible unit of measure for the concentration.");
+                continue;
             }
 
-            if (labMetric != null) {
-                if (labMetric.getUnits() != LabMetric.LabUnit.UG_PER_ML &&
-                    labMetric.getUnits() != LabMetric.LabUnit.NG_PER_UL) {
-                    throw new Exception(position.name() + " has incompatible unit of measure for the concentration.");
-                }
-                positionMap.put(position, Pair.of(labVessel, labMetric));
-            } else if (!positionMap.containsKey(position)) {
-                positionMap.put(position, Pair.of(labVessel, (LabMetric)null));
-            }
-        }
-
-        for (VesselPosition position : positionMap.keySet()) {
-            LabVessel tube = positionMap.get(position).getLeft();
-            LabMetric labMetric = positionMap.get(position).getRight();
             // Volume applies to all samples on the plate.
             BigDecimal wellVolume = getFpVolume(plate, position);
 
-            FpSpreadsheetRow dto = new FpSpreadsheetRow(position.name());
-            for (SampleInstanceV2 sampleInstance : tube.getSampleInstancesV2()) {
-                String sampleName = null;
+            if (CollectionUtils.isEmpty(errorMessages)) {
+                FpSpreadsheetRow dto = new FpSpreadsheetRow(position.name());
+                for (SampleInstanceV2 sampleInstance : tube.getSampleInstancesV2()) {
+                    String sampleName = null;
 
-                // Sets the sample name for these cases:
-                // - Reagent-only tubes are labeled as NA12878 filler tubes.
-                // - Negative controls are labeled NEGATIVE_CONTROL.
-                // - Positive controls and samples get the root/earliest sample name.
-                if (sampleInstance.isReagentOnly()) {
-                    for (Reagent reagent :sampleInstance.getReagents()) {
-                        if (OrmUtil.proxySafeIsInstance(reagent, ControlReagent.class)) {
-                            ControlReagent controlReagent = OrmUtil.proxySafeCast(reagent, ControlReagent.class);
-                            if (controlReagent.getControl().getType() == Control.ControlType.POSITIVE) {
-                                sampleName = NA12878;
-                            } else if (controlReagent.getControl().getType() == Control.ControlType.NEGATIVE) {
-                                sampleName = NEGATIVE_CONTROL;
+                    // Sets the sample name for these cases:
+                    // - Reagent-only tubes are labeled as NA12878 filler tubes.
+                    // - Negative controls are labeled NEGATIVE_CONTROL.
+                    // - Positive controls and samples get the root/earliest sample name.
+                    if (sampleInstance.isReagentOnly()) {
+                        for (Reagent reagent :sampleInstance.getReagents()) {
+                            if (OrmUtil.proxySafeIsInstance(reagent, ControlReagent.class)) {
+                                ControlReagent controlReagent = OrmUtil.proxySafeCast(reagent, ControlReagent.class);
+                                if (controlReagent.getControl().getType() == Control.ControlType.POSITIVE) {
+                                    sampleName = NA12878;
+                                } else if (controlReagent.getControl().getType() == Control.ControlType.NEGATIVE) {
+                                    sampleName = NEGATIVE_CONTROL;
+                                }
                             }
                         }
+                        if (sampleName == null) {
+                            throw new Exception(position.name() +
+                                                " is reagent-only but neither positive nor negative control.");
+                        }
+                    } else if (isNegativeControl(sampleInstance)) {
+                        sampleName = NEGATIVE_CONTROL;
+                    } else {
+                        sampleName = sampleInstance.getRootOrEarliestMercurySampleName();
+                        if (StringUtils.isBlank(sampleName)) {
+                            sampleName = "[no sample id]";
+                        }
                     }
-                    if (sampleName == null) {
-                        throw new Exception(position.name() +
-                                            " is reagent-only but neither positive nor negative control.");
-                    }
-                } else if (isNegativeControl(sampleInstance)) {
-                    sampleName = NEGATIVE_CONTROL;
-                } else {
-                    sampleName = sampleInstance.getRootOrEarliestMercurySampleName();
-                    if (StringUtils.isBlank(sampleName)) {
-                        sampleName = "[no sample id]";
-                    }
-                }
 
-                dto.setRootSampleId(sampleName);
-                dto.setSampleAliquotId(sampleName);
-                dto.setParticipantId(sampleName);
-                dto.setConcentration(labMetric != null ? labMetric.getValue() : BigDecimal.ZERO);
-                dto.setVolume(wellVolume != null ? wellVolume : BigDecimal.ZERO);
-                dtos.add(dto);
+                    dto.setRootSampleId(sampleName);
+                    dto.setSampleAliquotId(sampleName);
+                    dto.setParticipantId(sampleName);
+                    dto.setConcentration(labMetric != null ? labMetric.getValue() : BigDecimal.ZERO);
+                    dto.setVolume(wellVolume != null ? wellVolume : BigDecimal.ZERO);
+                    dtos.add(dto);
+                }
             }
         }
         Collections.sort(dtos, BY_POSITION_THEN_ROOT);
@@ -306,10 +314,5 @@ public class FingerprintingPlateFactory {
             return key1.compareTo(key2);
         }
     };
-
-    public void setControlDao(ControlDao controlDao) {
-        this.controlDao = controlDao;
-    }
-
 
 }
