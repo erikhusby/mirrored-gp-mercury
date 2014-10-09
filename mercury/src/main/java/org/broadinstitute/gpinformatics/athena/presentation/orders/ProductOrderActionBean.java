@@ -338,16 +338,19 @@ public class ProductOrderActionBean extends CoreActionBean {
     private String[] deletedKits = new String[0];
 
     /**
-     * For use with the Ajax to indicate and pass back which kit definition is being searched for
+     * For use with the Ajax to indicate and pass back which kit definition is being searched for.
      */
     private String kitDefinitionQueryIndex;
     private String prePopulatedOrganismId;
     private String prepopulatePostReceiveOptions;
 
-    public static String getProductOrderLink(String productOrderKey, AppConfig appConfig) {
+    /**
+     * Given a product order, create an external link back to the application's View Details page for that order.
+     */
+    public static String getProductOrderLink(ProductOrder productOrder, AppConfig appConfig) {
         List<NameValuePair> parameters = new ArrayList<>();
         parameters.add(new BasicNameValuePair(CoreActionBean.VIEW_ACTION, ""));
-        parameters.add(new BasicNameValuePair(PRODUCT_ORDER_PARAMETER, productOrderKey));
+        parameters.add(new BasicNameValuePair(PRODUCT_ORDER_PARAMETER, productOrder.getBusinessKey()));
         return appConfig.getUrl() + ACTIONBEAN_URL_BINDING + "?" + URLEncodedUtils
                 .format(parameters, CharEncoding.UTF_8);
     }
