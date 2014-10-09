@@ -6,8 +6,9 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentration;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentrationProducer;
@@ -34,6 +35,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferEntityGrapher;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizer;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
@@ -111,6 +113,7 @@ public class BaseEventTest {
      * Referenced in validation of routing.
      */
     protected static SystemRouter.System expectedRouting = SystemRouter.System.MERCURY;
+    private final CrspPipelineUtils crspPipelineUtils = new CrspPipelineUtils(Deployment.DEV);
 
     private BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
 
@@ -131,7 +134,7 @@ public class BaseEventTest {
         controlList.add(new Control("WATER_CONTROL", Control.ControlType.NEGATIVE));
 
         for (Control control : controlList) {
-            controlCollaboratorIdList.add(control.getCollaboratorSampleId());
+            controlCollaboratorIdList.add(control.getCollaboratorParticipantId());
         }
     }
 
@@ -141,7 +144,7 @@ public class BaseEventTest {
      */
     public static final GregorianCalendar EX_EX_IN_MERCURY_CALENDAR = new GregorianCalendar(2013, 6, 26);
 
-    protected static Map<String, BSPSampleDTO> mapSampleNameToDto = new HashMap<>();
+    protected static Map<String, SampleData> nameToSampleData = new HashMap<>();
 
     protected final LabEventRefDataFetcher labEventRefDataFetcher =
             new LabEventRefDataFetcher() {
@@ -225,7 +228,7 @@ public class BaseEventTest {
             mapBarcodeToTube.put(barcode, bspAliquot);
             Map<BSPSampleSearchColumn, String> dataMap = new HashMap<>();
             dataMap.put(BSPSampleSearchColumn.SAMPLE_ID, poSample.getName());
-            mapSampleNameToDto.put(poSample.getName(), new BSPSampleDTO(dataMap));
+            nameToSampleData.put(poSample.getName(), new BspSampleData(dataMap));
             if (rackPosition > NUM_POSITIONS_IN_RACK) {
                 log.error(
                         "More product order samples than allowed in a single rack. " + productOrder.getSamples().size()
@@ -603,21 +606,21 @@ public class BaseEventTest {
 
         // Controls are added in a re-array
         BarcodedTube posControlTube = new BarcodedTube("C1");
-        BSPSampleDTO bspSampleDtoPos = new BSPSampleDTO(
+        SampleData bspSampleDataPos = new BspSampleData(
                 new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
-                    put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, POSITIVE_CONTROL);
+                    put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, POSITIVE_CONTROL);
                 }});
-        posControlTube.addSample(new MercurySample(POSITIVE_CONTROL, bspSampleDtoPos));
-        mapSampleNameToDto.put(POSITIVE_CONTROL, bspSampleDtoPos);
+        posControlTube.addSample(new MercurySample(POSITIVE_CONTROL, bspSampleDataPos));
+        nameToSampleData.put(POSITIVE_CONTROL, bspSampleDataPos);
         mapBarcodeToDaughterTube.put(VesselPosition.H11, posControlTube);
 
         BarcodedTube negControlTube = new BarcodedTube("C2");
-        BSPSampleDTO bspSampleDtoNeg = new BSPSampleDTO(
+        SampleData bspSampleDataNeg = new BspSampleData(
                 new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
-                    put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, NEGATIVE_CONTROL);
+                    put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, NEGATIVE_CONTROL);
                 }});
-        negControlTube.addSample(new MercurySample(NEGATIVE_CONTROL, bspSampleDtoNeg));
-        mapSampleNameToDto.put(NEGATIVE_CONTROL, bspSampleDtoNeg);
+        negControlTube.addSample(new MercurySample(NEGATIVE_CONTROL, bspSampleDataNeg));
+        nameToSampleData.put(NEGATIVE_CONTROL, bspSampleDataNeg);
         mapBarcodeToDaughterTube.put(VesselPosition.H12, negControlTube);
 
         return new TubeFormation(mapBarcodeToDaughterTube, RackOfTubes.RackType.Matrix96);
@@ -691,21 +694,23 @@ public class BaseEventTest {
 
         // Controls are added in a re-array
         BarcodedTube posControlTube = new BarcodedTube("C1");
-        BSPSampleDTO bspSampleDtoPos = new BSPSampleDTO(
+        SampleData bspSampleDataPos = new BspSampleData(
                 new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
                     put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, POSITIVE_CONTROL);
+                    put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, POSITIVE_CONTROL);
                 }});
-        posControlTube.addSample(new MercurySample(POSITIVE_CONTROL, bspSampleDtoPos));
-        mapSampleNameToDto.put(POSITIVE_CONTROL, bspSampleDtoPos);
+        posControlTube.addSample(new MercurySample(POSITIVE_CONTROL, bspSampleDataPos));
+        nameToSampleData.put(POSITIVE_CONTROL, bspSampleDataPos);
         mapBarcodeToDaughterTube.put(VesselPosition.H11, posControlTube);
 
         BarcodedTube negControlTube = new BarcodedTube("C2");
-        BSPSampleDTO bspSampleDtoNeg = new BSPSampleDTO(
+        SampleData bspSampleDataNeg = new BspSampleData(
                 new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
                     put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, NEGATIVE_CONTROL);
+                    put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, NEGATIVE_CONTROL);
                 }});
-        negControlTube.addSample(new MercurySample(NEGATIVE_CONTROL, bspSampleDtoNeg));
-        mapSampleNameToDto.put(NEGATIVE_CONTROL, bspSampleDtoNeg);
+        negControlTube.addSample(new MercurySample(NEGATIVE_CONTROL, bspSampleDataNeg));
+        nameToSampleData.put(NEGATIVE_CONTROL, bspSampleDataNeg);
         mapBarcodeToDaughterTube.put(VesselPosition.H12, negControlTube);
 
         return new TubeFormation(mapBarcodeToDaughterTube, RackOfTubes.RackType.Matrix96);
@@ -766,7 +771,7 @@ public class BaseEventTest {
     public static void validateWorkflow(String nextEventTypeName, List<LabVessel> labVessels) {
         SystemRouter systemRouter = new SystemRouter(null, null, new WorkflowLoader(), null, null);
         SystemRouter.System system = systemRouter.routeForVessels(labVessels,
-                controlCollaboratorIdList, mapSampleNameToDto,
+                controlCollaboratorIdList, nameToSampleData,
                 SystemRouter.Intent.ROUTE);
         Assert.assertEquals(system, expectedRouting);
 
@@ -797,24 +802,10 @@ public class BaseEventTest {
         ProductOrderDao productOrderDao = Mockito.mock(ProductOrderDao.class);
         Mockito.when(productOrderDao.findByBusinessKey(Mockito.anyString())).thenReturn(productOrder);
         return new ZimsIlluminaRunFactory(
-                new BSPSampleDataFetcher() {
+                new SampleDataFetcher() {
                     @Override
-                    public Map<String, BSPSampleDTO> fetchSamplesFromBSP(@Nonnull Collection<String> sampleNames) {
-                        Map<String, BSPSampleDTO> mapSampleIdToDto = new HashMap<>();
-                        Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>() {{
-                            put(BSPSampleSearchColumn.PRIMARY_DISEASE, "Cancer");
-                            put(BSPSampleSearchColumn.LSID, "org.broad:SM-1234");
-                            put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA Genomic");
-                            put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "4321");
-                            put(BSPSampleSearchColumn.SPECIES, "Homo Sapiens");
-                            put(BSPSampleSearchColumn.PARTICIPANT_ID, "PT-1234");
-                        }};
-                        for (String sampleName : sampleNames) {
-                            Map<BSPSampleSearchColumn, String> dataMapCopy = new HashMap<>(dataMap);
-                            dataMapCopy.put(BSPSampleSearchColumn.SAMPLE_ID, sampleName);
-                            mapSampleIdToDto.put(sampleName, new BSPSampleDTO(dataMapCopy));
-                        }
-                        return mapSampleIdToDto;
+                    public Map<String, SampleData> fetchSampleData(@Nonnull Collection<String> sampleNames) {
+                       return nameToSampleData;
                     }
                 },
                 new ControlDao() {
@@ -824,7 +815,9 @@ public class BaseEventTest {
                     }
                 },
                 new SequencingTemplateFactory(),
-                productOrderDao
+                productOrderDao,
+                new CrspControlsTestUtils().getMockResearchProjectDao(),
+                crspPipelineUtils
         );
     }
 }

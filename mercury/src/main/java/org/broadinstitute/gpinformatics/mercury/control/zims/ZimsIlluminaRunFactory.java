@@ -11,14 +11,18 @@ import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
+import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -52,6 +56,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.text.Format;
@@ -79,25 +84,34 @@ import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTra
 @SuppressWarnings("FeatureEnvy")
 public class ZimsIlluminaRunFactory {
 
-    private BSPSampleDataFetcher bspSampleDataFetcher;
+    private SampleDataFetcher sampleDataFetcher;
     private ControlDao controlDao;
     private SequencingTemplateFactory sequencingTemplateFactory;
     private ProductOrderDao productOrderDao;
+    private ResearchProjectDao researchProjectDao;
+    private final CrspPipelineUtils crspPipelineUtils;
 
     private static final Log log = LogFactory.getLog(ZimsIlluminaRunFactory.class);
 
     @Inject
-    public ZimsIlluminaRunFactory(BSPSampleDataFetcher bspSampleDataFetcher,
+    public ZimsIlluminaRunFactory(SampleDataFetcher sampleDataFetcher,
                                   ControlDao controlDao, SequencingTemplateFactory sequencingTemplateFactory,
-                                  ProductOrderDao productOrderDao) {
-        this.bspSampleDataFetcher = bspSampleDataFetcher;
+                                  ProductOrderDao productOrderDao,
+                                  ResearchProjectDao researchProjectDao,
+                                  CrspPipelineUtils crspPipelineUtils) {
+        this.sampleDataFetcher = sampleDataFetcher;
         this.controlDao = controlDao;
         this.sequencingTemplateFactory = sequencingTemplateFactory;
         this.productOrderDao = productOrderDao;
+        this.researchProjectDao = researchProjectDao;
+        this.crspPipelineUtils = crspPipelineUtils;
     }
 
     public ZimsIlluminaRun makeZimsIlluminaRun(IlluminaSequencingRun illuminaRun) {
         RunCartridge flowcell = illuminaRun.getSampleCartridge();
+        ResearchProject crspPositiveControlsProject = researchProjectDao.findByBusinessKey(
+                crspPipelineUtils.getResearchProjectForCrspPositiveControls()
+        );
 
         List<List<SampleInstanceDto>> perLaneSampleInstanceDtos = new ArrayList<>();
         Set<String> sampleIds = new HashSet<>();
@@ -146,16 +160,22 @@ public class ZimsIlluminaRunFactory {
                     }
                     sampleIds.add(sampleId);
                     LabVessel libraryVessel = flowcell.getNearestTubeAncestorsForLanes().get(vesselPosition);
+
+                    boolean isCrspLane = crspPipelineUtils.areAllSamplesForCrsp(
+                            libraryVessel.getSampleInstancesV2());
+
                     String libraryName = libraryVessel.getLabel();
+                    String metadataSource = laneSampleInstance.getMetadataSourceForPipelineAPI();
+
                     sampleInstanceDtos
                             .add(new SampleInstanceDto(laneNum, labVessel, laneSampleInstance, sampleId, productOrderKey,
-                                                       libraryName, libraryVessel.getCreatedOn(), pdoSampleName));
+                                                       libraryName, libraryVessel.getCreatedOn(), pdoSampleName,isCrspLane,metadataSource));
                 }
             }
         }
         int numberOfLanes = laneNum;
 
-        Map<String, BSPSampleDTO> mapSampleIdToDto = bspSampleDataFetcher.fetchSamplesFromBSP(sampleIds);
+        Map<String, SampleData> mapSampleIdToDto = sampleDataFetcher.fetchSampleData(sampleIds);
         Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<>();
         for (String productOrderKey : productOrderKeys) {
             mapKeyToProductOrder.put(productOrderKey, productOrderDao.findByBusinessKey(productOrderKey));
@@ -164,7 +184,7 @@ public class ZimsIlluminaRunFactory {
         List<Control> activeControls = controlDao.findAllActive();
         Map<String, Control> mapNameToControl = new HashMap<>();
         for (Control activeControl : activeControls) {
-            mapNameToControl.put(activeControl.getCollaboratorSampleId(), activeControl);
+            mapNameToControl.put(activeControl.getCollaboratorParticipantId(), activeControl);
         }
 
         Format dateFormat = FastDateFormat.getInstance(ZimsIlluminaRun.DATE_FORMAT);
@@ -201,7 +221,7 @@ public class ZimsIlluminaRunFactory {
                 SampleInstanceDto sampleInstanceDto = sampleInstanceDtos.get(0);
                 short laneNumber = sampleInstanceDto.getLaneNumber();
                 libraryBeans.addAll(
-                        makeLibraryBeans(sampleInstanceDtos, mapSampleIdToDto, mapKeyToProductOrder, mapNameToControl));
+                        makeLibraryBeans(sampleInstanceDtos, mapSampleIdToDto, mapKeyToProductOrder, mapNameToControl,crspPositiveControlsProject));
                 String sequencedLibraryName = sampleInstanceDto.getSequencedLibraryName();
                 Date sequencedLibraryDate = sampleInstanceDto.getSequencedLibraryDate();
 
@@ -228,11 +248,12 @@ public class ZimsIlluminaRunFactory {
 
     @DaoFree
     public List<LibraryBean> makeLibraryBeans(List<SampleInstanceDto> sampleInstanceDtos,
-                                              Map<String, BSPSampleDTO> mapSampleIdToDto,
+                                              Map<String, SampleData> mapSampleIdToDto,
                                               Map<String, ProductOrder> mapKeyToProductOrder,
-                                              Map<String, Control> mapNameToControl) {
+                                              Map<String, Control> mapNameToControl,
+                                              ResearchProject CrspPositiveControlProject) {
         List<LibraryBean> libraryBeans = new ArrayList<>();
-        Map<String, LibraryBean> mapSampleAndIndexToBean = new HashMap<>();
+
         for (SampleInstanceDto sampleInstanceDto : sampleInstanceDtos) {
             SampleInstanceV2 sampleInstance = sampleInstanceDto.getSampleInstance();
             ProductOrder productOrder = (sampleInstanceDto.getProductOrderKey() != null) ?
@@ -298,13 +319,16 @@ public class ZimsIlluminaRunFactory {
                         indexingSchemeEntity.getName(), positionSequenceMap);
             }
 
-            BSPSampleDTO bspSampleDTO = mapSampleIdToDto.get(sampleInstanceDto.getSampleId());
+            SampleData sampleData = mapSampleIdToDto.get(sampleInstanceDto.getSampleId());
 
             libraryBeans.add(
-                    createLibraryBean(sampleInstanceDto.getLabVessel(), productOrder, bspSampleDTO, lcSet, baitName,
+                    createLibraryBean(sampleInstanceDto.getLabVessel(), productOrder, sampleData, lcSet, baitName,
                                       indexingSchemeEntity, catNames,
                                       sampleInstanceDto.getSampleInstance().getWorkflowName(),
-                                      indexingSchemeDto, mapNameToControl, sampleInstanceDto.getPdoSampleName()));
+                                      indexingSchemeDto, mapNameToControl, sampleInstanceDto.getPdoSampleName(),
+                                      sampleInstanceDto.isCrspLane(),
+                                      CrspPositiveControlProject,
+                                      sampleInstanceDto.getMetadataSourceForPipelineAPI()));
         }
 
         // Make order predictable
@@ -328,10 +352,12 @@ public class ZimsIlluminaRunFactory {
     }
 
     private LibraryBean createLibraryBean(
-            LabVessel labVessel, ProductOrder productOrder, BSPSampleDTO bspSampleDTO, String lcSet, String baitName,
+            LabVessel labVessel, ProductOrder productOrder, SampleData sampleData, String lcSet, String baitName,
             MolecularIndexingScheme indexingSchemeEntity, List<String> catNames, String labWorkflow,
             edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme indexingSchemeDto,
-            Map<String, Control> mapNameToControl, String pdoSampleName) {
+            Map<String, Control> mapNameToControl, String pdoSampleName,
+            boolean isCrspLane, ResearchProject CrspPositiveControlsProject,
+            String metadataSourceForPipelineAPI) {
 
         Format dateFormat = FastDateFormat.getInstance(ZimsIlluminaRun.DATE_FORMAT);
 
@@ -354,8 +380,8 @@ public class ZimsIlluminaRunFactory {
         String gssrSampleType = null;
         Boolean doAggregation = Boolean.TRUE;
 
-        if (bspSampleDTO != null && productOrder == null) {
-            Control control = mapNameToControl.get(bspSampleDTO.getCollaboratorsSampleName());
+        if (sampleData != null && productOrder == null) {
+            Control control = mapNameToControl.get(sampleData.getCollaboratorParticipantId());
             if (control != null) {
                 switch (control.getType()) {
                 case POSITIVE:
@@ -405,12 +431,16 @@ public class ZimsIlluminaRunFactory {
         }
         String libraryCreationDate = dateFormat.format(labVessel.getCreatedOn());
 
-        return new LibraryBean(
+        LibraryBean libraryBean = new LibraryBean(
                 library, initiative, workRequest, indexingSchemeDto, hasIndexingRead, expectedInsertSize,
                 analysisType, referenceSequence, referenceSequenceVersion, organism, species,
                 strain, aligner, rrbsSizeRange, restrictionEnzyme, bait, labMeasuredInsertSize,
                 positiveControl, negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation,
-                catNames, productOrder, lcSet, bspSampleDTO, labWorkflow, libraryCreationDate, pdoSampleName);
+                catNames, productOrder, lcSet, sampleData, labWorkflow, libraryCreationDate, pdoSampleName, metadataSourceForPipelineAPI);
+        if (isCrspLane) {
+            crspPipelineUtils.setFieldsForCrsp(libraryBean, sampleData, CrspPositiveControlsProject, lcSet);
+        }
+        return libraryBean;        
     }
 
     private static class PipelineTransformationCriteria implements TransferTraverserCriteria {
@@ -482,10 +512,13 @@ public class ZimsIlluminaRunFactory {
         private String sequencedLibraryName;
         private Date sequencedLibraryDate;
         private String pdoSampleName;
+        private final boolean isCrspLane;
+        private final String metadataSource;
 
-        public SampleInstanceDto(short laneNumber, LabVessel labVessel, SampleInstanceV2 sampleInstance, String sampleId,
+        public SampleInstanceDto(short laneNumber, LabVessel labVessel, SampleInstanceV2 sampleInstance,
+                                 String sampleId,
                                  String productOrderKey, String sequencedLibraryName, Date sequencedLibraryDate,
-                                 String pdoSampleName) {
+                                 String pdoSampleName, boolean isCrspLane, String metadataSource) {
             this.laneNumber = laneNumber;
             this.labVessel = labVessel;
             this.sampleInstance = sampleInstance;
@@ -494,6 +527,15 @@ public class ZimsIlluminaRunFactory {
             this.sequencedLibraryName = sequencedLibraryName;
             this.sequencedLibraryDate = sequencedLibraryDate;
             this.pdoSampleName = pdoSampleName;
+            this.isCrspLane = isCrspLane;
+            this.metadataSource = metadataSource;
+        }
+
+        /**
+         * True if the data is being used for CRSP
+         */
+        public boolean isCrspLane() {
+            return isCrspLane;
         }
 
         public short getLaneNumber() {
@@ -526,6 +568,10 @@ public class ZimsIlluminaRunFactory {
 
         String getPdoSampleName() {
             return pdoSampleName;
+        }
+
+        public String getMetadataSourceForPipelineAPI() {
+            return metadataSource;
         }
 
         @Override

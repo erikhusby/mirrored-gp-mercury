@@ -20,9 +20,11 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassSearchService;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
@@ -48,17 +50,21 @@ public class SubmissionDtoFetcher {
     private BSPSampleDataFetcher bspSampleDataFetcher;
     private SubmissionsService submissionsService;
 
+    // TODO: fix tests so that this isn't needed
+    private BSPConfig bspConfig;
+
     public SubmissionDtoFetcher() {
     }
 
     @Inject
     public SubmissionDtoFetcher(AggregationMetricsFetcher aggregationMetricsFetcher,
                                 BassSearchService bassSearchService, BSPSampleDataFetcher bspSampleDataFetcher,
-                                SubmissionsService submissionsService) {
+                                SubmissionsService submissionsService, BSPConfig bspConfig) {
         this.aggregationMetricsFetcher = aggregationMetricsFetcher;
         this.bassSearchService = bassSearchService;
         this.bspSampleDataFetcher = bspSampleDataFetcher;
         this.submissionsService = submissionsService;
+        this.bspConfig = bspConfig;
     }
 
     private void updateBulkBspSampleInfo(Collection<ProductOrderSample> samples) {
@@ -71,17 +77,17 @@ public class SubmissionDtoFetcher {
             }
         }
 
-        Map<String, BSPSampleDTO> bulkInfo =
-                bspSampleDataFetcher.fetchSamplesFromBSP(sampleList, BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID);
+        Map<String, BspSampleData> bulkInfo =
+                bspSampleDataFetcher.fetchSampleData(sampleList, BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID);
 
         for (final ProductOrderSample sample : samples) {
-            BSPSampleDTO bspSampleDTO = bulkInfo.get(sample.getName());
-            if (bspSampleDTO != null) {
-                sample.setBspSampleDTO(bspSampleDTO);
+            SampleData sampleData = bulkInfo.get(sample.getName());
+            if (sampleData != null) {
+                sample.setSampleData(sampleData);
                 // In non-production environments bogus samples are often created so we will
-                // only create a new BSPSampleDTO in those cases
-            } else if (bspSampleDataFetcher.getBspConfig().getMercuryDeployment() != Deployment.PROD) {
-                sample.setBspSampleDTO(new BSPSampleDTO(new HashMap<BSPSampleSearchColumn, String>() {{
+                // only create a new BspSampleData in those cases
+            } else if (bspConfig.getMercuryDeployment() != Deployment.PROD) {
+                sample.setSampleData(new BspSampleData(new HashMap<BSPSampleSearchColumn, String>() {{
                     put(BSPSampleSearchColumn.SAMPLE_ID, sample.getName());
                 }}));
             }
@@ -195,7 +201,7 @@ public class SubmissionDtoFetcher {
         updateBulkBspSampleInfo(productOrderSamples);
         Map<String, Set<ProductOrder>> sampleNameToPdos = new HashMap<>();
         for (ProductOrderSample productOrderSample : productOrderSamples) {
-            String pdoSampleName = productOrderSample.getBspSampleDTO().getCollaboratorsSampleName();
+            String pdoSampleName = productOrderSample.getSampleData().getCollaboratorsSampleName();
             if (!pdoSampleName.isEmpty()) {
                 if (sampleNameToPdos.get(pdoSampleName) == null) {
                     sampleNameToPdos.put(pdoSampleName, new HashSet<ProductOrder>());

@@ -14,7 +14,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.work.WorkCompleteMessage;
 import org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPLSIDUtil;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
@@ -57,7 +57,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
     private final PriceItemDao priceItemDao;
     private final PriceListCache priceListCache;
     private final WorkCompleteMessageDao workCompleteMessageDao;
-    private final BSPSampleDataFetcher sampleDataFetcher;
+    private final SampleDataFetcher sampleDataFetcher;
     private final AppConfig appConfig;
     private final TableauConfig tableauConfig;
     private final Map<Product, List<SampleLedgerRow>> sampleRowData;
@@ -68,7 +68,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
             PriceListCache priceListCache,
             List<ProductOrder> productOrders,
             WorkCompleteMessageDao workCompleteMessageDao,
-            BSPSampleDataFetcher sampleDataFetcher,
+            SampleDataFetcher sampleDataFetcher,
             AppConfig appConfig,
             TableauConfig tableauConfig,
             SampleLedgerSpreadSheetWriter writer,
@@ -250,7 +250,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
             for (WorkCompleteMessage workCompleteMessage : workCompleteMessages) {
                 String aliquotId = workCompleteMessage.getAliquotId();
                 if (BSPLSIDUtil.isBspLsid(aliquotId)) {
-                    aliquotId = "SM-" + BSPLSIDUtil.lsidToBareId(aliquotId);
+                    aliquotId = BSPLSIDUtil.lsidToBspSampleId(aliquotId);
                     String stockId = stockIdByAliquotId.get(aliquotId);
                     if (stockId != null) {
                         workCompleteMessageBySample.put(stockId, workCompleteMessage);

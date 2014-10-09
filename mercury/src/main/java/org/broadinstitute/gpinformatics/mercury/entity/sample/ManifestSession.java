@@ -2,10 +2,10 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -19,10 +19,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.hibernate.annotations.Formula;
+import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
-import org.jvnet.inflector.Noun;
+import org.hibernate.envers.NotAudited;
 
-import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Embedded;
@@ -36,6 +37,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.OrderColumn;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.util.ArrayList;
@@ -73,7 +75,14 @@ public class ManifestSession implements Updatable {
     @Enumerated(EnumType.STRING)
     private SessionStatus status = SessionStatus.OPEN;
 
-    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "manifestSession", orphanRemoval = true)
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    @JoinColumn(name = "MANIFEST_SESSION_ID", nullable = false)
+    @OrderColumn(name = "MANIFEST_RECORD_INDEX", nullable = false)
+    // Envers insists on auditing a relation with a specified @OrderColumn in a special table, although this seems
+    // redundant to the auditing that is already in place for ManifestRecord.  In the absence of a specified
+    // @AuditJoinTable, Envers would use a default join table name that exceeds the Oracle 30 character identifier
+    // limit, so this specifies a shorter name.
+    @AuditJoinTable(name = "MANIFEST_RECORD_JOIN_AUD")
     private List<ManifestRecord> records = new ArrayList<>();
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "manifestSession", orphanRemoval = true)
@@ -82,6 +91,26 @@ public class ManifestSession implements Updatable {
     @Embedded
     private UpdateData updateData = new UpdateData();
 
+    @NotAudited
+    @Formula("(select count(*) from mercury.manifest_record where manifest_record.status != 'SAMPLE_TRANSFERRED_TO_TUBE'" +
+             " and manifest_record.manifest_session_id = manifest_session_id)")
+    private int tubesRemainingToBeTransferred;
+
+    @NotAudited
+    @Formula("(select count(*) from mercury.manifest_record record "
+             + "left join mercury.manifest_event evt on evt.MANIFEST_RECORD_ID = record.MANIFEST_RECORD_ID and evt.SEVERITY = 'QUARANTINED' "
+             + "where "
+             + "record.manifest_session_id = manifest_session_id "
+             + "and evt.manifest_event_id is null)")
+    private int numberOfNonQuarantinedRecords;
+
+    @NotAudited
+    @Formula("(select count(*) from mercury.manifest_record record "
+             + "left join mercury.manifest_event evt on evt.MANIFEST_RECORD_ID = record.MANIFEST_RECORD_ID and evt.SEVERITY = 'QUARANTINED' "
+             + "where "
+             + "record.manifest_session_id = manifest_session_id "
+             + "and evt.SEVERITY = 'QUARANTINED')")
+    private int numberOfQuarantinedRecords;
     /**
      * For JPA.
      */
@@ -103,12 +132,13 @@ public class ManifestSession implements Updatable {
         return manifestSessionId;
     }
 
+    /**
+     * Calculate and return the session name.  Note this is a function of the Hibernate-assigned ID and the result of
+     * this method is not cached.  If this is called before this ManifestSession is assigned an ID it will produce a
+     * different result than after an ID is assigned.
+     */
     public String getSessionName() {
-        return getSessionPrefix() + getManifestSessionId();
-    }
-
-    protected String getSessionPrefix() {
-        return sessionPrefix;
+        return sessionPrefix.trim() + "-" + manifestSessionId;
     }
 
     public SessionStatus getStatus() {
@@ -175,16 +205,9 @@ public class ManifestSession implements Updatable {
                 // Ignore ManifestSessions that are not this ManifestSession, they will not have errors added by
                 // this logic.
                 if (this.equals(record.getManifestSession())) {
-
-                    String message =
-                            ManifestRecord.ErrorStatus.MISMATCHED_GENDER
-                                    .formatMessage(Metadata.Key.PATIENT_ID, entry.getKey());
-
-                    String otherSessionsWithSamePatientId =
-                            describeOtherManifestSessionsWithMatchingRecords(record, entry.getValue());
-
-                    addManifestEvent(new ManifestEvent(ManifestRecord.ErrorStatus.MISMATCHED_GENDER,
-                            message + "  " + otherSessionsWithSamePatientId, record));
+                    String message = record.buildMessageForMismatchedGenders(entry.getValue());
+                    addManifestEvent(new ManifestEvent(
+                            ManifestRecord.ErrorStatus.MISMATCHED_GENDER, message, record));
                 }
             }
         }
@@ -238,60 +261,12 @@ public class ManifestSession implements Updatable {
                 // Ignore ManifestSessions that are not this ManifestSession, they will not have errors added by
                 // this logic.
                 if (this.equals(duplicatedRecord.getManifestSession())) {
-                    String message =
-                            ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage(Metadata.Key.SAMPLE_ID,
-                                    entry.getKey());
-                    String sessionsWithDuplicates =
-                            describeOtherManifestSessionsWithMatchingRecords(duplicatedRecord, entry.getValue());
-                    addManifestEvent(
-                            new ManifestEvent(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID,
-                                    message + "  " + sessionsWithDuplicates, duplicatedRecord));
+                    String message = duplicatedRecord.buildMessageForDuplicateSamples(entry.getValue());
+                    addManifestEvent(new ManifestEvent(
+                            ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, message, duplicatedRecord));
                 }
             }
         }
-    }
-
-    /**
-     * Create a presentable description of where the duplicates of {@code thisDuplicate} can be found.
-     */
-    private String describeOtherManifestSessionsWithMatchingRecords(final ManifestRecord thisRecord,
-                                                                    Collection<ManifestRecord> allRecords) {
-
-        // Filter 'thisRecord' from consideration as a duplicate of itself.
-        Iterable<ManifestRecord> allButThisRecord = Iterables.filter(allRecords, new Predicate<ManifestRecord>() {
-            @Override
-            public boolean apply(@Nullable ManifestRecord record) {
-                return record != thisRecord;
-            }
-        });
-
-        // Group manifest records by manifest session name.
-        ImmutableListMultimap<String, ManifestRecord> recordsBySessionName =
-                Multimaps.index(allButThisRecord, new Function<ManifestRecord, String>() {
-                    @Override
-                    public String apply(ManifestRecord record) {
-                        return record.getManifestSession().getSessionName();
-                    }
-                });
-
-        List<String> messages = new ArrayList<>();
-        // Add an appropriate message for each record to messages.
-        for (Map.Entry<String, Collection<ManifestRecord>> entry : recordsBySessionName.asMap().entrySet()) {
-
-            StringBuilder messageBuilder = new StringBuilder();
-
-            int numInstances = entry.getValue().size();
-            messageBuilder.append(numInstances).append(" ");
-            messageBuilder.append(Noun.pluralOf("instance", numInstances));
-            messageBuilder.append(" found in ");
-
-            String sessionName = entry.getKey();
-            String thisSessionName = thisRecord.getManifestSession().getSessionName();
-            messageBuilder.append(
-                    sessionName.equals(thisSessionName) ? "this manifest session" : "manifest session " + sessionName);
-            messages.add(messageBuilder.toString());
-        }
-        return StringUtils.join(messages, ", ") + ".";
     }
 
     /**
@@ -350,6 +325,10 @@ public class ManifestSession implements Updatable {
         return allRecords;
     }
 
+    private Collection<ManifestRecord> getQuarantinedRecords() {
+        return CollectionUtils.subtract(getRecords(), getNonQuarantinedRecords());
+    }
+
     /**
      * hasErrors is used to determine if any manifest event entries exist that can be considered errors
      *
@@ -382,6 +361,7 @@ public class ManifestSession implements Updatable {
         for (ManifestRecord record : getNonQuarantinedRecords()) {
             record.setStatus(ManifestRecord.Status.UPLOAD_ACCEPTED);
         }
+        setStatus(SessionStatus.ACCESSIONING);
     }
 
     /**
@@ -395,22 +375,55 @@ public class ManifestSession implements Updatable {
         List<ManifestRecord> nonQuarantinedRecords = getNonQuarantinedRecords();
 
         Set<String> manifestMessages = new HashSet<>();
-        for (ManifestEvent manifestEvent : getManifestEvents()) {
-            manifestMessages.add(manifestEvent.getMessage());
-        }
-
-        ManifestStatus sessionStatus = new ManifestStatus(getRecords().size(), nonQuarantinedRecords.size(),
-                getRecordsByStatus(ManifestRecord.Status.SCANNED).size(), manifestMessages);
 
         for (ManifestRecord manifestRecord : nonQuarantinedRecords) {
-            ManifestRecord.Status manifestRecordStatus = manifestRecord.getStatus();
-
-            if (manifestRecordStatus != ManifestRecord.Status.SCANNED) {
-                sessionStatus.addError(ManifestRecord.ErrorStatus.MISSING_SAMPLE
+            if (manifestRecord.getStatus() != ManifestRecord.Status.SCANNED) {
+                manifestMessages.add(ManifestRecord.ErrorStatus.MISSING_SAMPLE
                         .formatMessage(Metadata.Key.SAMPLE_ID, manifestRecord.getSampleId()));
             }
         }
-        return sessionStatus;
+        int eligibleSize = eligibleRecordsBasedOnStatus(nonQuarantinedRecords, ManifestRecord.Status.UPLOAD_ACCEPTED);
+
+        return new ManifestStatus(getRecords().size(), eligibleSize,
+                getRecordsByStatus(ManifestRecord.Status.SCANNED).size(), manifestMessages,
+                getQuarantinedRecords().size());
+    }
+
+    /**
+     * Finds the total number of records that have been transferred to a mercury vessel
+     */
+    public int getNumberOfTubesTransferred() {
+        return numberOfNonQuarantinedRecords - tubesRemainingToBeTransferred;
+    }
+
+    /**
+     * finds the total number of records that can be transferred to a mercury vessel
+     * @return
+     */
+    public int getNumberOfTubesAvailableForTransfer() {
+        return this.numberOfNonQuarantinedRecords;
+    }
+
+    public int getNumberOfQuarantinedRecords() {
+        return numberOfQuarantinedRecords;
+    }
+
+    /**
+     * finds the total number of records that match a given status
+     * @param totalRecords          a collection of records within which to search for records of the given status
+     * @param statusOfEligibility   status of records to consider in the count
+     * @return
+     */
+    private static int eligibleRecordsBasedOnStatus(Collection<ManifestRecord> totalRecords,
+                                                    ManifestRecord.Status statusOfEligibility) {
+        int eligibleSize = 0;
+
+        for (ManifestRecord candidateRecord : totalRecords) {
+            if (candidateRecord.getStatus() == statusOfEligibility) {
+                eligibleSize++;
+            }
+        }
+        return eligibleSize;
     }
 
     /**
@@ -491,6 +504,10 @@ public class ManifestSession implements Updatable {
      */
     public ManifestRecord findRecordForTransfer(String sourceForTransfer) {
 
+        if (StringUtils.isBlank(sourceForTransfer)) {
+            throw new TubeTransferException("A collaborator sample ID is required for the transfer to a lab vessel");
+        }
+
         ManifestRecord recordForTransfer = findRecordByCollaboratorId(sourceForTransfer);
 
         if (recordForTransfer.isQuarantined()) {
@@ -498,7 +515,12 @@ public class ManifestSession implements Updatable {
                     Metadata.Key.SAMPLE_ID, sourceForTransfer);
         }
 
-        if (recordForTransfer.getStatus() != ManifestRecord.Status.ACCESSIONED) {
+        if (ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE == recordForTransfer.getStatus()) {
+            throw new TubeTransferException(ManifestRecord.ErrorStatus.SOURCE_ALREADY_TRANSFERRED,
+                    Metadata.Key.SAMPLE_ID, sourceForTransfer);
+        }
+
+        if (ManifestRecord.Status.ACCESSIONED != recordForTransfer.getStatus()) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.NOT_READY_FOR_TUBE_TRANSFER,
                     Metadata.Key.SAMPLE_ID, sourceForTransfer);
         }
@@ -551,7 +573,7 @@ public class ManifestSession implements Updatable {
      * process.
      */
     public enum SessionStatus {
-        OPEN, COMPLETED
+        OPEN, ACCESSIONING, COMPLETED
     }
 
     public UpdateData getUpdateData() {

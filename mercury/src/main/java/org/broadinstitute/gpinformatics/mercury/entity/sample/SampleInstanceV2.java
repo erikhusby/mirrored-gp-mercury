@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -95,11 +96,22 @@ public class SampleInstanceV2 {
      * Returns the earliest Mercury sample.  Tolerates unknown root sample.
      */
     public String getEarliestMercurySampleName() {
-        String sampleName = null;
-        if (!mercurySamples.isEmpty()) {
-            sampleName = mercurySamples.get(0).getSampleKey();
-        }
-        return sampleName;
+        return mercurySamples.isEmpty() ? null : mercurySamples.get(0).getSampleKey();
+    }
+
+    /**
+     * Returns the root sample or if none, the earliest Mercury sample.
+     */
+    public MercurySample getRootOrEarliestMercurySample() {
+        return CollectionUtils.isNotEmpty(rootMercurySamples) ?
+                rootMercurySamples.iterator().next() : (mercurySamples.isEmpty() ? null : mercurySamples.get(0));
+    }
+
+    /** Returns the name of the root sample or if none, the earliest Mercury sample. */
+    public String getRootOrEarliestMercurySampleName() {
+        return CollectionUtils.isNotEmpty(rootMercurySamples) ?
+                rootMercurySamples.iterator().next().getSampleKey() :
+                (mercurySamples.isEmpty() ? null : mercurySamples.get(0).getSampleKey());
     }
 
     /**
@@ -350,6 +362,25 @@ todo jmt not sure if this applies.
         return rootMercurySamples;
     }
 
+    /**
+     * Returns a text description of the source
+     * of the metadata.  Do not alter this string
+     * without consulting the pipeline team.
+     */
+    public String getMetadataSourceForPipelineAPI() {
+        Set<String> metadataSources = new HashSet<>();
+        for (MercurySample mercurySample : mercurySamples) {
+            metadataSources.add(mercurySample.getMetadataSourceForPipelineAPI());
+        }
+        if (metadataSources.isEmpty()) {
+            throw new RuntimeException("Could not determine metadata source");
+        }
+        else if (metadataSources.size() > 1) {
+            throw new RuntimeException(String.format("Found %s metadata sources",metadataSources.size()));
+        }
+        return metadataSources.iterator().next();
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -380,4 +411,5 @@ todo jmt not sure if this applies.
         result = 31 * result + (molecularIndexingScheme != null ? molecularIndexingScheme.hashCode() : 0);
         return result;
     }
+
 }

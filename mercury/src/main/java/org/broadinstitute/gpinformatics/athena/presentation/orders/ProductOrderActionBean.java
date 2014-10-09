@@ -72,7 +72,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Produ
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
@@ -546,7 +546,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         for (ProductOrderSample pdoSample : pdoSamples) {
             if (pdoSample.isInBspFormat() && !pdoSample.canRinScoreBeUsedForOnRiskCalculation()) {
                 addGlobalValidationError(
-                        "RIN '" + pdoSample.getBspSampleDTO().getRawRin() + "' for " + pdoSample.getName() +
+                        "RIN '" + pdoSample.getSampleData().getRawRin() + "' for " + pdoSample.getName() +
                         " isn't a number." + "  Please correct this by going to BSP -> Utilities -> Upload Sample " +
                         "Annotation and updating the 'RIN Number' annotation for this sample.");
             }
@@ -1368,7 +1368,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             supportsNumberOfLanes = productDao.findByBusinessKey(product).getSupportsNumberOfLanes();
         }
 
-        item.put(BSPSampleDTO.SUPPORTS_NUMBER_OF_LANES, supportsNumberOfLanes);
+        item.put(BspSampleData.SUPPORTS_NUMBER_OF_LANES, supportsNumberOfLanes);
 
         return createTextResolution(item.toString());
     }

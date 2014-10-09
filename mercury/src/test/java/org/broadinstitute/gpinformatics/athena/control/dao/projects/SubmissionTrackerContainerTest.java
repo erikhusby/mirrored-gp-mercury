@@ -11,6 +11,8 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class SubmissionTrackerContainerTest extends ContainerTest {
@@ -53,8 +55,10 @@ public class SubmissionTrackerContainerTest extends ContainerTest {
         Assert.assertNotNull(tracker.createSubmissionIdentifier());
         Assert.assertNotNull(tracker.getSubmissionTrackerId());
 
+        int dateLength = new SimpleDateFormat("YYYYMMdd").format(new Date()).length();
         Assert.assertEquals(String.valueOf(tracker.getSubmissionTrackerId()),
-                tracker.createSubmissionIdentifier().substring(SubmissionTracker.MERCURY_SUBMISSION_ID_PREFIX.length()));
+                tracker.createSubmissionIdentifier()
+                        .substring(SubmissionTracker.MERCURY_SUBMISSION_ID_PREFIX.length() + dateLength));
     }
 
 }
