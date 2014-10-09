@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.athena.presentation.tokenimporters;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
-import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.json.JSONException;
 
 import javax.annotation.Nonnull;
@@ -18,14 +17,6 @@ import java.util.Collections;
  *
  */
 public class ProjectTokenInput extends TokenInput<ResearchProject> {
-
-    /**
-     * The attribute by which to search Research Projects.
-     */
-    public enum SearchBy {
-        TITLE,
-        BUSINESS_KEY
-    }
 
     @Inject
     private ResearchProjectDao researchProjectDao;
@@ -43,38 +34,24 @@ public class ProjectTokenInput extends TokenInput<ResearchProject> {
      * Get a list of all research projects.
      *
      * @param query the search text string
-     * @param searchBy The attribute of the Research Project by which to search
      * @return list of research projects
      * @throws JSONException
      */
-    public String getJsonString(String query, SearchBy searchBy) throws JSONException {
-        return getJsonString(query, searchBy, Collections.<ResearchProject>emptySet());
+    public String getJsonString(String query) throws JSONException {
+        return getJsonString(query, Collections.<ResearchProject>emptySet());
     }
 
     /**
      * Get the list of all research projects minus the list of projects to omit.
      *
      * @param query the search text string
-     * @param searchBy The attribute of the Research Project by which to search
      * @param omitProjects list of projects to remove from the returned project list
      * @return list of research projects
      * @throws JSONException
      */
-    public String getJsonString(String query, @Nonnull SearchBy searchBy,
-                                @Nonnull Collection<ResearchProject> omitProjects) throws JSONException {
+    public String getJsonString(String query, @Nonnull Collection<ResearchProject> omitProjects) throws JSONException {
 
-        Collection<ResearchProject> projects;
-        switch (searchBy) {
-        case TITLE:
-            projects = researchProjectDao.searchProjectsByTitle(query);
-            break;
-        case BUSINESS_KEY:
-            projects = researchProjectDao.searchProjectsByBusinessKey(query);
-            break;
-        default:
-            throw new InformaticsServiceException("Unknown means of searching for Research Projects: " + searchBy);
-        }
-
+        Collection<ResearchProject> projects = researchProjectDao.searchProjects(query);
         projects.removeAll(omitProjects);
 
         return createItemListString(new ArrayList<>(projects));

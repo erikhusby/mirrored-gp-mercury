@@ -583,7 +583,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     @HandlesEvent("projectAutocomplete")
     public Resolution projectAutocomplete() throws Exception {
-        return createTextResolution(projectTokenInput.getJsonString(getQ(), ProjectTokenInput.SearchBy.TITLE));
+        return createTextResolution(projectTokenInput.getJsonString(getQ()));
     }
 
     @HandlesEvent("bioProjectAutocomplete")
@@ -603,8 +603,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
         editResearchProject = researchProjectDao.findByBusinessKey(researchProject);
         Collection<ResearchProject> childResearchProjects = editResearchProject.getAllChildren();
         childResearchProjects.add(editResearchProject);
-        return createTextResolution(projectTokenInput.getJsonString(getQ(), ProjectTokenInput.SearchBy.TITLE,
-                childResearchProjects));
+        return createTextResolution(projectTokenInput.getJsonString(getQ(), childResearchProjects));
     }
 
     /**
