@@ -41,7 +41,7 @@ public class ManifestImportProcessor extends TableProcessor {
     static final String DUPLICATE_HEADER_FORMAT = "Duplicate header found: %s";
 
     protected ManifestImportProcessor() {
-        super(null);
+        super(null, TolerateBlankLines.YES);
     }
 
     @Override

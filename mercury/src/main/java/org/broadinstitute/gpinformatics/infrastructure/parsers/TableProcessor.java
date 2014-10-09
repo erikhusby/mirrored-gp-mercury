@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.parsers;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 
+import javax.annotation.Nonnull;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -12,12 +13,20 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- *
  * This abstract class provides spreadsheet/table parsers with the logic for turning rows of data into objects and
  * processing these into actions that can be communicated, whether it is a preview of what was built or actually
  * saving information into the database. This processes headers and data specific to the import desired.
  */
 public abstract class TableProcessor implements Serializable {
+
+    /**
+     * If a TableProcessor is constructed with TolerateBlankLines.YES, it will silently ignore rows of all-blank cells.
+     * Otherwise rows of all-blank cells will generate errors.
+     */
+    protected enum TolerateBlankLines {
+        YES,
+        NO
+    }
 
     private static final long serialVersionUID = 8122298462727182883L;
     public static final String REQUIRED_VALUE_IS_MISSING = "Required value for %s is missing";
@@ -28,8 +37,22 @@ public abstract class TableProcessor implements Serializable {
 
     private final String sheetName;
 
+    private final TolerateBlankLines tolerateBlankLines;
+
+    /**
+     * Legacy constructor that creates a TableProcessor with TolerateBlankLines.NO, so blank lines in the
+     * spreadsheet will generate errors.
+     */
     protected TableProcessor(String sheetName) {
+        this(sheetName, TolerateBlankLines.NO);
+    }
+
+    /**
+     * Constructor that allows for the explicit specification of blank line tolerance.
+     */
+    protected TableProcessor(String sheetName, @Nonnull TolerateBlankLines tolerateBlankLines) {
         this.sheetName = sheetName;
+        this.tolerateBlankLines = tolerateBlankLines;
     }
 
     /**
@@ -59,7 +82,7 @@ public abstract class TableProcessor implements Serializable {
      * header enums. We often have columns that are data specific (Like price items on products in the tracker).
      *
      * @param headers The header strings in this row
-     * @param row The row
+     * @param row     The row
      */
     public abstract void processHeader(List<String> headers, int row);
 
@@ -83,7 +106,7 @@ public abstract class TableProcessor implements Serializable {
      * This method defines the specific logic necessary to parse the data in the given table.  The concrete parser will
      * be responsible for constructing any  necessary entities to represent the data found in this table row.
      *
-     * @param dataRow The row of data mapped by header name.
+     * @param dataRow      The row of data mapped by header name.
      * @param dataRowIndex The current row of data we are working with.
      */
     public abstract void processRowDetails(Map<String, String> dataRow, int dataRowIndex);
@@ -104,14 +127,22 @@ public abstract class TableProcessor implements Serializable {
      * This method makes sure that all values in the row that are deemed 'required' have values. This means that
      * subclasses need not litter their code with these easy validations.
      *
-     * @param dataRow The row of data
+     * @param dataRow      The row of data
      * @param dataRowIndex The index into the row
      *
      * @return Is the required value there?
      */
     private boolean hasRequiredValues(Map<String, String> dataRow, int dataRowIndex) {
-        boolean hasValue = true;
 
+        // If this TableProcessor is constructed to tolerate blank lines without error, check for blank lines.
+        // If a blank line is found, return false so as not to process this row, but don't generate an error.
+        if (tolerateBlankLines == TolerateBlankLines.YES) {
+            if (representsBlankLine(dataRow.values())) {
+                return false;
+            }
+        }
+
+        boolean hasValue = true;
         // If any of the required values are empty or missing in the data row, return false.
         for (ColumnHeader header : getColumnHeaders()) {
             if (header.isRequiredValue() &&
@@ -122,6 +153,18 @@ public abstract class TableProcessor implements Serializable {
         }
 
         return hasValue;
+    }
+
+    /**
+     * If all values in this row are blank return true, otherwise false.
+     */
+    private boolean representsBlankLine(Collection<String> values) {
+        for (String value : values) {
+            if (!StringUtils.isBlank(value)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     protected abstract ColumnHeader[] getColumnHeaders();
@@ -168,7 +211,7 @@ public abstract class TableProcessor implements Serializable {
         ColumnHeader columnHeader = findColumnHeaderByName(headerNameAtIndex);
         return columnHeader != null && columnHeader.isStringColumn();
     }
-    
+
     private ColumnHeader findColumnHeaderByName(String headerName) {
         for (ColumnHeader columnHeader : getColumnHeaders()) {
             if (headerName.equals(columnHeader.getText())) {
