@@ -43,8 +43,10 @@ public class FingerprintingPlateFactory {
     public static final String NA12878 = "NA12878";
     /** String for the FP spreadsheet that identifies a negative control tube. */
     public static final String NEGATIVE_CONTROL = "negative control";
+
     @Inject
     private ControlDao controlDao;
+
     public FingerprintingPlateFactory() {
     }
 

@@ -59,17 +59,18 @@ public class FingerprintingSpreadsheetActionBean extends CoreActionBean {
     private static final List<Integer> ACCEPTABLE_SAMPLE_COUNTS = Arrays.asList(new Integer[]{48, 96});
 
     private String plateBarcode;
-    StaticPlate staticPlate;
-    Workbook workbook;
-    List<String> errorMessages = new ArrayList<>();
+    private StaticPlate staticPlate;
+    private Workbook workbook;
+    private List<String> errorMessages = new ArrayList<>();
 
     @Inject
     private StaticPlateDao staticPlateDao;
 
     @Inject
     private ControlDao controlDao;
+
     @Inject
-    private FingerprintingPlateFactory fingerprintingPlateFactory; // = new FingerprintingPlateFactory(controlDao);
+    private FingerprintingPlateFactory fingerprintingPlateFactory;
 
     /** Allows unit test to be db free by mocking the control dao. */
     void setControlDao(ControlDao controlDao) {
@@ -165,4 +166,19 @@ public class FingerprintingSpreadsheetActionBean extends CoreActionBean {
         }
     }
 
+    public StaticPlate getStaticPlate() {
+        return staticPlate;
+    }
+
+    public void setStaticPlate(StaticPlate staticPlate) {
+        this.staticPlate = staticPlate;
+    }
+
+    public Workbook getWorkbook() {
+        return workbook;
+    }
+
+    public List<String> getErrorMessages() {
+        return errorMessages;
+    }
 }

@@ -162,17 +162,17 @@ public class FingerprintingSpreadsheetActionBeanTest {
         EasyMock.replay(controlDao);
 
         // Generates a spreadsheet.
-        actionBean.staticPlate = fpPlate;
+        actionBean.setStaticPlate(fpPlate);
         actionBean.barcodeSubmit();
 
         // Should have no validation errors and a workbook.
-        Assert.assertEquals(actionBean.errorMessages.size(), 0, StringUtils.join(actionBean.errorMessages, "; "));
-        Assert.assertNotNull(actionBean.workbook);
+        Assert.assertEquals(actionBean.getErrorMessages().size(), 0, StringUtils.join(actionBean.getErrorMessages(), "; "));
+        Assert.assertNotNull(actionBean.getWorkbook());
 
         // Collects the participant ids from the first sheet.
         List<String> participantIds = new ArrayList<>();
         int smCount = 0;
-        for (Row row : actionBean.workbook.getSheet("Participants")) {
+        for (Row row : actionBean.getWorkbook().getSheet("Participants")) {
             // Skips the header row and last row that has nulls.
             if (row.getCell(0) == null || row.getCell(0).getStringCellValue().startsWith("Participant")) {
                 continue;
@@ -191,7 +191,7 @@ public class FingerprintingSpreadsheetActionBeanTest {
         // Checks the data on the second sheet against the tubes in rearray rack.
         Set<String> tubePrefixes = new HashSet<>();
         Iterator<String> participantIdsIter = participantIds.iterator();
-        for (Row row : actionBean.workbook.getSheet("Plate")) {
+        for (Row row : actionBean.getWorkbook().getSheet("Plate")) {
             // Skips the header row and last row that has nulls.
             if (row.getCell(0) == null || row.getCell(0).getStringCellValue().startsWith("Well Position")) {
                 continue;
@@ -253,16 +253,16 @@ public class FingerprintingSpreadsheetActionBeanTest {
         LabEvent rearrayTransfer = doSectionTransfer(rearrayRack, fpPlate);
         // Provide no volume information as lab event metadata.
 
-        actionBean.staticPlate = fpPlate;
+        actionBean.setStaticPlate(fpPlate);
         actionBean.barcodeSubmit();
 
         // Should have no errors and a workbook.
-       Assert.assertEquals(actionBean.errorMessages.size(), 0, StringUtils.join(actionBean.errorMessages, "; "));
-        Assert.assertNotNull(actionBean.workbook);
+        Assert.assertEquals(actionBean.getErrorMessages().size(), 0, StringUtils.join(actionBean.getErrorMessages(), "; "));
+        Assert.assertNotNull(actionBean.getWorkbook());
 
         // 48 sample rows in the spreadsheet.
         int rowCount = 0;
-        for (Row row : actionBean.workbook.getSheet("Plate")) {
+        for (Row row : actionBean.getWorkbook().getSheet("Plate")) {
             // Skips the header row and last row that has nulls.
             if (row.getCell(0) == null || row.getCell(0).getStringCellValue().startsWith("Well Position")) {
                 continue;
@@ -288,12 +288,12 @@ public class FingerprintingSpreadsheetActionBeanTest {
         LabEvent rearrayTransfer = doSectionTransfer(rearrayRack, fpPlate);
         rearrayTransfer.addMetadata(new LabEventMetadata(LabEventMetadata.LabEventMetadataType.Volume, "33.3"));
 
-        actionBean.staticPlate = fpPlate;
+        actionBean.setStaticPlate(fpPlate);
         actionBean.barcodeSubmit();
         // Should have no creation errors, one validation error, and no workbook.
-        Assert.assertEquals(actionBean.errorMessages.size(), 0, StringUtils.join(actionBean.errorMessages, "; "));
+        Assert.assertEquals(actionBean.getErrorMessages().size(), 0, StringUtils.join(actionBean.getErrorMessages(), "; "));
         Assert.assertEquals(actionBean.getContext().getValidationErrors().size(), 1);
-        Assert.assertNull(actionBean.workbook);
+        Assert.assertNull(actionBean.getWorkbook());
         EasyMock.verify(controlDao);
     }
 
