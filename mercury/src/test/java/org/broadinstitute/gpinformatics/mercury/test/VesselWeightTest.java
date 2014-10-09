@@ -1,9 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
 import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.config.ClientConfig;
+import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -14,6 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessa
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -84,7 +87,10 @@ public class VesselWeightTest extends Arquillian {
         // Verify that BSP Tare Weight annotation is set
         // http://bsp/ws/bsp/sample/gettareweight?manufacturer_barcodes=1082117278
         String getTareWeightUrl = bspConfig.getWSUrl("sample/gettareweight");
-        Client client = Client.create();
+        ClientConfig clientConfig = new DefaultClientConfig();
+        RestServiceContainerTest.acceptAllServerCertificates(clientConfig);
+
+        Client client = Client.create(clientConfig);
         client.addFilter(new HTTPBasicAuthFilter(bspConfig.getLogin(), bspConfig.getPassword()));
         String response = client.resource(getTareWeightUrl)
                 .queryParam("manufacturer_barcodes", tubeBarcodes.get(0))

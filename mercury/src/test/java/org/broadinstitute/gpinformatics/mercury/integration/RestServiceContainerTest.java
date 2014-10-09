@@ -6,10 +6,18 @@ import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
+import com.sun.jersey.client.urlconnection.HTTPSProperties;
 import org.jboss.arquillian.testng.Arquillian;
 import org.testng.annotations.BeforeMethod;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import java.net.URL;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
 import java.util.List;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
@@ -51,6 +59,7 @@ public abstract class RestServiceContainerTest extends Arquillian {
     public void setUp() throws Exception {
         clientConfig = new DefaultClientConfig();
         clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
+        acceptAllServerCertificates(clientConfig);
     }
 
     /**
@@ -60,19 +69,65 @@ public abstract class RestServiceContainerTest extends Arquillian {
      * effectively the value of the resource method's @Path annotation (with
      * leading/trailing slashes removed).
      *
-     * @param baseUrl       the base URL of the deployed application
-     * @param serviceUrl    the relative URL of the service method
+     * @param baseUrl    the base URL of the deployed application
+     * @param serviceUrl the relative URL of the service method
+     *
      * @return a configured WebResource for the service method
      */
     protected WebResource makeWebResource(URL baseUrl, String serviceUrl) {
-        return Client.create(clientConfig).resource(baseUrl + SERVLET_MAPPING_PREFIX + "/" + getResourcePath() + "/" + serviceUrl);
+        return Client.create(clientConfig).resource(
+                baseUrl + SERVLET_MAPPING_PREFIX + "/" + getResourcePath() + "/" + serviceUrl);
+    }
+
+    /**
+     * Subclasses can call this to trust all server certificates (Quote service).
+     * <p/>
+     * Code pulled from http://stackoverflow.com/questions/6047996/ignore-self-signed-ssl-cert-using-jersey-client
+     * <p/>
+     * This code is trusting ALL certificates.  This might be made more specific and secure,
+     * but we are currently only applying it to the Jersey ClientConfig pointed at the Quote server so
+     * this is probably okay.
+     */
+    public static void acceptAllServerCertificates(ClientConfig config) {
+        try {
+            // Create a trust manager that does not validate certificate chains
+            TrustManager[] trustAllCerts = new TrustManager[]{
+                    new X509TrustManager() {
+                        @Override
+                        public X509Certificate[] getAcceptedIssuers() {
+                            return null;
+                        }
+
+                        @Override
+                        public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                        }
+
+                        @Override
+                        public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                        }
+                    }};
+            SSLContext sc = SSLContext.getInstance("TLS");
+            sc.init(null, trustAllCerts, new SecureRandom());
+
+            config.getProperties().put(HTTPSProperties.PROPERTY_HTTPS_PROPERTIES, new HTTPSProperties(
+                    new HostnameVerifier() {
+                        @Override
+                        public boolean verify(String s, SSLSession sslSession) {
+                            return true;
+                        }
+                    }, sc
+            ));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
      * Performs a GET on the given WebResource. Automatically throws an
      * assertion failure if the call results in a UniformInterfaceException.
      *
-     * @param resource    the web resource to GET
+     * @param resource the web resource to GET
+     *
      * @return the response content
      */
     protected String get(WebResource resource) {
@@ -90,7 +145,8 @@ public abstract class RestServiceContainerTest extends Arquillian {
      * returning the UniformInterfaceException. Throws an assertion failure if
      * the call does NOT result in a UniformInterfaceException.
      *
-     * @param resource    the web resource to GET
+     * @param resource the web resource to GET
+     *
      * @return the caught UniformInterfaceException
      */
     protected UniformInterfaceException getWithError(WebResource resource) {
@@ -109,9 +165,9 @@ public abstract class RestServiceContainerTest extends Arquillian {
      * UniformInterfaceException. Throws and assertion failure if there is a
      * mismatch.
      *
-     * @param caught     the caught UniformInterfaceException
-     * @param status     the expected status code
-     * @param content    the expected response content
+     * @param caught  the caught UniformInterfaceException
+     * @param status  the expected status code
+     * @param content the expected response content
      */
     protected void assertErrorResponse(UniformInterfaceException caught, int status, String content) {
         assertThat(caught.getResponse().getStatus(), equalTo(status));
@@ -123,8 +179,9 @@ public abstract class RestServiceContainerTest extends Arquillian {
      * Automatically throws an assertion failure if the call results in a
      * UniformInterfaceException.
      *
-     * @param resource    the web resource to POST to
-     * @param request     the request to post
+     * @param resource the web resource to POST to
+     * @param request  the request to post
+     *
      * @return the response content
      */
     protected String post(WebResource resource, String request) {

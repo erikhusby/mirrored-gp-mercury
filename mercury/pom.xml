@@ -539,24 +539,24 @@
             </dependencies>
             <build>
                 <plugins>
-                      <plugin>
+                    <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>build-helper-maven-plugin</artifactId>
                         <executions>
-                          <execution>
-                            <id>add-test-source</id>
-                            <phase>generate-test-sources</phase>
-                            <goals>
-                              <goal>add-test-source</goal>
-                            </goals>
-                            <configuration>
-                              <sources>
-                                <source>src/test/arquillianSuiteExtension</source>
-                              </sources>
-                            </configuration>
-                          </execution>
+                            <execution>
+                                <id>add-test-source</id>
+                                <phase>generate-test-sources</phase>
+                                <goals>
+                                    <goal>add-test-source</goal>
+                                </goals>
+                                <configuration>
+                                    <sources>
+                                        <source>src/test/arquillianSuiteExtension</source>
+                                    </sources>
+                                </configuration>
+                            </execution>
                         </executions>
-                      </plugin>
+                    </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
@@ -587,22 +587,22 @@
             <build>
                 <plugins>
                     <plugin>
-                      <groupId>org.codehaus.mojo</groupId>
-                      <artifactId>build-helper-maven-plugin</artifactId>
-                      <executions>
-                        <execution>
-                          <id>add-test-source</id>
-                          <phase>generate-test-sources</phase>
-                          <goals>
-                            <goal>add-test-source</goal>
-                          </goals>
-                          <configuration>
-                            <sources>
-                              <source>src/test/arquillianSuiteExtension</source>
-                            </sources>
-                          </configuration>
-                        </execution>
-                      </executions>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>build-helper-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>add-test-source</id>
+                                <phase>generate-test-sources</phase>
+                                <goals>
+                                    <goal>add-test-source</goal>
+                                </goals>
+                                <configuration>
+                                    <sources>
+                                        <source>src/test/arquillianSuiteExtension</source>
+                                    </sources>
+                                </configuration>
+                            </execution>
+                        </executions>
                     </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
@@ -1330,12 +1330,12 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-                <dependency>
-                    <groupId>org.eu.ingwar.tools</groupId>
-                    <artifactId>arquillian-suite-extension</artifactId>
-                    <version>1.1.1</version>
-                    <scope>test</scope>
-                </dependency>
+            <dependency>
+                <groupId>org.eu.ingwar.tools</groupId>
+                <artifactId>arquillian-suite-extension</artifactId>
+                <version>1.1.1</version>
+                <scope>test</scope>
+            </dependency>
 
             <!-- this is needed for any seam 3 dependencies to work -->
             <!--
@@ -1350,8 +1350,8 @@
         </dependencies>
     </dependencyManagement>
 
-   <dependencies>
-       <dependency>
+    <dependencies>
+        <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
             <version>6.1.1</version>
@@ -1575,9 +1575,9 @@
         </dependency>
 
         <dependency>
-        	<groupId>commons-validator</groupId>
-        	<artifactId>commons-validator</artifactId>
-        	<version>1.4.0</version>
+            <groupId>commons-validator</groupId>
+            <artifactId>commons-validator</artifactId>
+            <version>1.4.0</version>
         </dependency>
 
         <dependency>
@@ -1828,11 +1828,17 @@
             <scope>test</scope>
         </dependency>
 
-       <dependency>
-           <groupId>org.jboss</groupId>
-           <artifactId>jboss-vfs</artifactId>
-           <version>3.2.2.Final</version>
-       </dependency>
+        <dependency>
+            <groupId>org.jboss</groupId>
+            <artifactId>jboss-vfs</artifactId>
+            <version>3.2.2.Final</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.aerogear.test.arquillian</groupId>
+            <artifactId>arquillian-smart-url</artifactId>
+            <version>0.2.0</version>
+        </dependency>
 
     </dependencies>
 
@@ -1924,9 +1930,9 @@
                     <version>2.1</version>
                 </plugin>
                 <plugin>
-                  <groupId>org.codehaus.mojo</groupId>
-                  <artifactId>build-helper-maven-plugin</artifactId>
-                  <version>1.9</version>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>build-helper-maven-plugin</artifactId>
+                    <version>1.9</version>
                 </plugin>
                 <!--
                                 <plugin>
@@ -2163,7 +2169,8 @@
                             <!-- each execution needs to specify the schemaFile(s) to use -->
                             <schemaFiles>VesselRegistration.xsd</schemaFiles>
                             <schemaDirectory>src/main/webapp/xsd</schemaDirectory>
-                            <packageName>org.broadinstitute.gpinformatics.mercury.boundary.vessel.generated</packageName>
+                            <packageName>org.broadinstitute.gpinformatics.mercury.boundary.vessel.generated
+                            </packageName>
                             <!-- each execution must have a unique staleFile -->
                             <staleFile>${project.build.directory}/jaxb2/.VesselRegistrationXjcStaleFlag</staleFile>
                             <!-- all executions, except the first, need clearOutputDir set to false -->

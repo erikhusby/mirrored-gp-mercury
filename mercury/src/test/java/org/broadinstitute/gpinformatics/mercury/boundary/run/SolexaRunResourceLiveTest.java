@@ -9,9 +9,12 @@ import org.broadinstitute.gpinformatics.mercury.boundary.zims.IlluminaRunResourc
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchDbTest;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
+import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LaneReadStructure;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
+import org.jboss.aerogear.arquillian.test.smarturl.SchemeName;
+import org.jboss.aerogear.arquillian.test.smarturl.UriScheme;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -41,7 +44,7 @@ public class SolexaRunResourceLiveTest extends Arquillian {
 
     @Test(groups = STANDARD, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = true)
     @RunAsClient
-    public void testSquidLanes(@ArquillianResource URL baseUrl) {
+    public void testSquidLanes(@ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = 8443) URL baseUrl) {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(LabBatchDbTest.XML_DATE_FORMAT);
         String timeStamp = simpleDateFormat.format(new Date());
         String wsUrl = baseUrl.toExternalForm() + "rest/solexarun/storeRunReadStructure";
@@ -62,6 +65,7 @@ public class SolexaRunResourceLiveTest extends Arquillian {
 
         ClientConfig clientConfig = new DefaultClientConfig();
         clientConfig.getClasses().add(JacksonJsonProvider.class);
+        RestServiceContainerTest.acceptAllServerCertificates(clientConfig);
 
         ReadStructureRequest returnedReadStructureRequest = Client.create(clientConfig).resource(wsUrl).
                 type(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).entity(readStructureData).

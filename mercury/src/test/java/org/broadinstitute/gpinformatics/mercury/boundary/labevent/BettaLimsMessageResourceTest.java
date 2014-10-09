@@ -3,6 +3,8 @@ package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 //import com.jprofiler.api.agent.Controller;
 
 import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.config.ClientConfig;
+import com.sun.jersey.api.client.config.DefaultClientConfig;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
@@ -30,8 +32,8 @@ import org.broadinstitute.gpinformatics.mercury.boundary.zims.IlluminaRunResourc
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.IndexedPlateFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -42,14 +44,15 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.ImportFromSquidTe
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
+import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.broadinstitute.gpinformatics.mercury.test.BaseEventTest;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500JaxbBuilder;
@@ -61,6 +64,8 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.QtpJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingJaxbBuilder;
 import org.broadinstitute.gpinformatics.mocks.EverythingYouAskForYouGetAndItsHuman;
 import org.easymock.EasyMock;
+import org.jboss.aerogear.arquillian.test.smarturl.SchemeName;
+import org.jboss.aerogear.arquillian.test.smarturl.UriScheme;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -220,7 +225,8 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         Iterator<Map.Entry<String, BarcodedTube>> iterator = mapBarcodeToTube.entrySet().iterator();
         Map.Entry<String, BarcodedTube> barcodeTubeEntry = iterator.next();
         reworkEjb.addAndValidateCandidates(
-                Collections.singleton(new ReworkEjb.BucketCandidate(barcodeTubeEntry.getValue().getLabel(), productOrder1)),
+                Collections.singleton(
+                        new ReworkEjb.BucketCandidate(barcodeTubeEntry.getValue().getLabel(), productOrder1)),
                 ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue(), "Pico/Plating Bucket", "Test",
                 "jowalsh");
         mapBarcodeToTube2.put(barcodeTubeEntry.getKey(), barcodeTubeEntry.getValue());
@@ -228,7 +234,8 @@ public class BettaLimsMessageResourceTest extends Arquillian {
 
         barcodeTubeEntry = iterator.next();
         reworkEjb.addAndValidateCandidates(
-                Collections.singleton(new ReworkEjb.BucketCandidate(barcodeTubeEntry.getValue().getLabel(), productOrder1)),
+                Collections.singleton(
+                        new ReworkEjb.BucketCandidate(barcodeTubeEntry.getValue().getLabel(), productOrder1)),
                 ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue(), "Pico/Plating Bucket", "Test",
                 "jowalsh");
         mapBarcodeToTube2.put(barcodeTubeEntry.getKey(), barcodeTubeEntry.getValue());
@@ -329,8 +336,8 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                     getBucketEntries().iterator().next().getLabBatch().getBatchName());
         }
 
-        for (BarcodedTube tube:mapBarcodeToTube.values()) {
-            for (BucketEntry entry:tube.getBucketEntries()) {
+        for (BarcodedTube tube : mapBarcodeToTube.values()) {
+            for (BucketEntry entry : tube.getBucketEntries()) {
                 entry.setStatus(BucketEntry.Status.Archived);
             }
         }
@@ -451,7 +458,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
      * @return map from tube barcode to sample tube
      */
     private Map<String, BarcodedTube> buildSamplesInPdo(String testPrefix, int numberOfSamples,
-                                                            Workflow workflow) {
+                                                        Workflow workflow) {
         ProductOrder productOrder = buildProductOrder(testPrefix, numberOfSamples, workflow);
         Map<String, BarcodedTube> mapBarcodeToTube = buildSampleTubes(testPrefix, numberOfSamples,
                 barcodedTubeDao);
@@ -483,7 +490,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         ResearchProject researchProject = researchProjectDao.findByBusinessKey("RP-19");
         if (researchProject == null) {
             researchProject = new ResearchProject(10950L, "SIGMA Sarcoma", "SIGMA Sarcoma", false,
-                                                  ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
+                    ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
             researchProjectDao.persist(researchProject);
         }
 
@@ -499,7 +506,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         productOrder.prepareToSave(bspUserList.getByUsername("jowalsh"));
         productOrderDao.persist(productOrder);
         try {
-            ProductOrderJiraUtil.placeOrder(productOrder,jiraService);
+            ProductOrderJiraUtil.placeOrder(productOrder, jiraService);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -509,15 +516,14 @@ public class BettaLimsMessageResourceTest extends Arquillian {
     /**
      * Build samples and tubes
      *
-     *
      * @param testPrefix      make unique
      * @param numberOfSamples how many samples
-     *
      * @param barcodedTubeDao
+     *
      * @return map from tube barcode to tube
      */
     public static Map<String, BarcodedTube> buildSampleTubes(String testPrefix, int numberOfSamples,
-                                                                 BarcodedTubeDao barcodedTubeDao) {
+                                                             BarcodedTubeDao barcodedTubeDao) {
         Map<String, BarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
         for (int rackPosition = 1; rackPosition <= numberOfSamples; rackPosition++) {
             String barcode = "R" + testPrefix + rackPosition;
@@ -601,8 +607,9 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         Assert.assertEquals(zimsIlluminaRun.getLanes().size(), 8, "Wrong number of lanes");
     }
 
-    public static String sendMessage(BettaLIMSMessage bettaLIMSMessage, BettaLimsMessageResource bettalimsMessageResource,
-            String testMercuryUrl) {
+    public static String sendMessage(BettaLIMSMessage bettaLIMSMessage,
+                                     BettaLimsMessageResource bettalimsMessageResource,
+                                     String testMercuryUrl) {
         String response = null;
         if (true) {
             // In JVM
@@ -611,7 +618,10 @@ public class BettaLimsMessageResourceTest extends Arquillian {
 
         if (false) {
             // JAX-RS
-            response = Client.create().resource(testMercuryUrl + "/rest/bettalimsmessage")
+            ClientConfig clientConfig = new DefaultClientConfig();
+            RestServiceContainerTest.acceptAllServerCertificates(clientConfig);
+
+            response = Client.create(clientConfig).resource(testMercuryUrl + "/rest/bettalimsmessage")
                     .type(MediaType.APPLICATION_XML_TYPE)
                     .accept(MediaType.APPLICATION_XML)
                     .entity(bettaLIMSMessage)
@@ -638,7 +648,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
      */
     @Test(enabled = false, groups = ALTERNATIVES, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testHttp(@ArquillianResource URL baseUrl) {
+    public void testHttp(@ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = 8443) URL baseUrl) {
         File inboxDirectory = new File("C:/Temp/seq/lims/bettalims/production/inbox");
         List<String> dayDirectoryNames = Arrays.asList(inboxDirectory.list());
         Collections.sort(dayDirectoryNames);
@@ -666,7 +676,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
      */
     @Test(enabled = false, groups = ALTERNATIVES, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testSingleFile(@ArquillianResource URL baseUrl) {
+    public void testSingleFile(@ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = 8443) URL baseUrl) {
         File file = new File(
                 "c:/Temp/seq/lims/bettalims/production/inbox/20120103/20120103_101119570_localhost_9998_ws.xml");
         sendFile(baseUrl, file);
@@ -674,7 +684,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
 
     @Test(enabled = false, groups = ALTERNATIVES, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testFileList(@ArquillianResource URL baseUrl) {
+    public void testFileList(@ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = 8443) URL baseUrl) {
         try {
             BufferedReader bufferedReader = new BufferedReader(new FileReader("c:/temp/PdoLcSetMessageList.txt"));
             String line;
@@ -696,7 +706,11 @@ public class BettaLimsMessageResourceTest extends Arquillian {
      */
     private void sendFile(URL baseUrl, File file) {
         try {
-            String response = Client.create().resource(baseUrl.toExternalForm() + "rest/bettalimsmessage")
+
+            ClientConfig clientConfig = new DefaultClientConfig();
+            RestServiceContainerTest.acceptAllServerCertificates(clientConfig);
+
+            String response = Client.create(clientConfig).resource(baseUrl.toExternalForm() + "rest/bettalimsmessage")
                     .type(MediaType.APPLICATION_XML_TYPE)
                     .accept(MediaType.APPLICATION_XML)
                     .entity(file)

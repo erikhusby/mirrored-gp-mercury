@@ -5,6 +5,8 @@ import com.sun.jersey.api.client.WebResource;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
+import org.jboss.aerogear.arquillian.test.smarturl.SchemeName;
+import org.jboss.aerogear.arquillian.test.smarturl.UriScheme;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -43,7 +45,7 @@ public class ExtractTransformResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testAnalyze(@ArquillianResource URL baseUrl) {
+    public void testAnalyze(@ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = 8443) URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "analyze/sequencingRun/1");
         ClientResponse response = resource.type("text/html").get(ClientResponse.class);
         Assert.assertEquals(response.getClientResponseStatus(), ClientResponse.Status.OK);
@@ -59,7 +61,8 @@ public class ExtractTransformResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testIncrementalAndBackup(@ArquillianResource URL baseUrl) {
+    public void testIncrementalAndBackup(
+            @ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = 8443) URL baseUrl) {
 
         // Tests incremental.
         WebResource resource = makeWebResource(baseUrl, "incremental/20121120000000/20121120000001");

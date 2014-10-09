@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.entity.reagent;
 
 import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.config.ClientConfig;
+import com.sun.jersey.api.client.config.DefaultClientConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
@@ -11,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.TubeBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselMetricBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselMetricRunBean;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.testng.annotations.Test;
 
 import javax.persistence.EntityManager;
@@ -174,7 +177,10 @@ public class ImportFromBspTest extends ContainerTest {
     }
 
     private void createBatch(LabBatchBean labBatchBean) {
-        String response = Client.create().resource(ImportFromSquidTest.TEST_MERCURY_URL + "/rest/labbatch")
+        ClientConfig clientConfig = new DefaultClientConfig();
+        RestServiceContainerTest.acceptAllServerCertificates(clientConfig);
+
+        String response = Client.create(clientConfig).resource(ImportFromSquidTest.TEST_MERCURY_URL + "/rest/labbatch")
                 .type(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)
                 .entity(labBatchBean)
@@ -183,21 +189,29 @@ public class ImportFromBspTest extends ContainerTest {
     }
 
     public static String recordMetrics(VesselMetricRunBean vesselMetricRunBean) {
-        String response = Client.create().resource(ImportFromSquidTest.TEST_MERCURY_URL + "/rest/vesselmetric")
-                .type(MediaType.APPLICATION_XML_TYPE)
-                .accept(MediaType.APPLICATION_XML)
-                .entity(vesselMetricRunBean)
-                .post(String.class);
+        ClientConfig clientConfig = new DefaultClientConfig();
+        RestServiceContainerTest.acceptAllServerCertificates(clientConfig);
+
+        String response =
+                Client.create(clientConfig).resource(ImportFromSquidTest.TEST_MERCURY_URL + "/rest/vesselmetric")
+                        .type(MediaType.APPLICATION_XML_TYPE)
+                        .accept(MediaType.APPLICATION_XML)
+                        .entity(vesselMetricRunBean)
+                        .post(String.class);
         System.out.println(response);
         return response;
     }
 
     private void sendMessage(BettaLIMSMessage bettaLIMSMessage) {
-        String response = Client.create().resource(ImportFromSquidTest.TEST_MERCURY_URL + "/rest/bettalimsmessage")
-                .type(MediaType.APPLICATION_XML_TYPE)
-                .accept(MediaType.APPLICATION_XML)
-                .entity(bettaLIMSMessage)
-                .post(String.class);
+        ClientConfig clientConfig = new DefaultClientConfig();
+        RestServiceContainerTest.acceptAllServerCertificates(clientConfig);
+
+        String response =
+                Client.create(clientConfig).resource(ImportFromSquidTest.TEST_MERCURY_URL + "/rest/bettalimsmessage")
+                        .type(MediaType.APPLICATION_XML_TYPE)
+                        .accept(MediaType.APPLICATION_XML)
+                        .entity(bettaLIMSMessage)
+                        .post(String.class);
         System.out.println(response);
     }
 }
