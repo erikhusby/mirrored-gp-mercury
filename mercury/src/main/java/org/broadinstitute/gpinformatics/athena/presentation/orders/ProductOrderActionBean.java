@@ -1616,7 +1616,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("projectAutocomplete")
     public Resolution projectAutocomplete() throws Exception {
-        return createTextResolution(projectTokenInput.getJsonString(getQ()));
+        return createTextResolution(projectTokenInput.getJsonString(getQ(), ProjectTokenInput.SearchBy.TITLE));
     }
 
     @HandlesEvent("productAutocomplete")

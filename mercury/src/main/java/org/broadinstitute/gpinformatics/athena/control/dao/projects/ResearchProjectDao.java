@@ -22,6 +22,7 @@ import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
 import javax.persistence.criteria.SetJoin;
+import javax.persistence.metamodel.SingularAttribute;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -190,9 +191,27 @@ public class ResearchProjectDao extends GenericDao {
         return projectOrderCounts;
     }
 
-    public Collection<ResearchProject> searchProjects(String searchText) {
+    /**
+     * Search Research Projects by title.
+     */
+    public Collection<ResearchProject> searchProjectsByTitle(String searchText) {
+        return searchProjects(searchText, ResearchProject_.title);
+    }
+
+    /**
+     * Search Research Projects by JIRA ticket (business key).
+     */
+    public Collection<ResearchProject> searchProjectsByBusinessKey(String searchText) {
+        return searchProjects(searchText, ResearchProject_.jiraTicketKey);
+    }
+
+    /**
+     * Search Research Projects by the specified attribute.
+     */
+    private Collection<ResearchProject> searchProjects(String searchText,
+                                                       SingularAttribute<ResearchProject, String> searchAttribute) {
         String[] searchWords = searchText.split("\\s");
-        return findListWithWildcardList(ResearchProject.class, Arrays.asList(searchWords), true, ResearchProject_.title);
+        return findListWithWildcardList(ResearchProject.class, Arrays.asList(searchWords), true, searchAttribute);
     }
 
     /**

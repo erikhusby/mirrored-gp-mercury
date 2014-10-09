@@ -222,9 +222,8 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
 
     @HandlesEvent("projectAutocomplete")
     public Resolution projectAutocomplete() throws Exception {
-        return createTextResolution(projectTokenInput.getJsonString(getQ()));
+        return createTextResolution(projectTokenInput.getJsonString(getQ(), ProjectTokenInput.SearchBy.BUSINESS_KEY));
     }
-
 
     public Long getSelectedSessionId() {
         return selectedSessionId;
@@ -288,6 +287,10 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
 
     public String getQ() {
         return q;
+    }
+
+    public void setQ(String q) {
+        this.q = q;
     }
 
     public ProjectTokenInput getProjectTokenInput() {
