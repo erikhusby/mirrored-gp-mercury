@@ -325,6 +325,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     // Search uses product family list.
     private List<ProductFamily> productFamilies;
 
+
     @Inject
     private LabVesselDao labVesselDao;
 
@@ -722,6 +723,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         List<Preference> preferences =
                 preferenceEjb.getPreferences(getUserBean().getBspUser().getUserId(), PreferenceType.PDO_SEARCH);
 
+        productFamilyId = null;
+
         if (CollectionUtils.isEmpty(preferences)) {
             populateSearchDefaults();
         } else {
@@ -740,8 +743,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     private void populateSearchDefaults() {
-        productFamilyId = null;
-
         selectedStatuses = new ArrayList<>();
         selectedStatuses.add(ProductOrder.OrderStatus.Draft);
         selectedStatuses.add(ProductOrder.OrderStatus.Submitted);
@@ -761,7 +762,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         Map<String, List<String>> preferenceData = ((NameValueDefinitionValue) value).getDataMap();
 
         // The family id. By default there is no choice.
-        productFamilyId = null;
         List<String> productFamilyIds = preferenceData.get(FAMILY);
         if (!CollectionUtils.isEmpty(productFamilyIds)) {
             String familyId = preferenceData.get(FAMILY).get(0);
@@ -786,6 +786,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 orderListEntryDao.findProductOrderListEntries(
                         productFamilyId, productTokenInput.getBusinessKeyList(), selectedStatuses, getDateRange(),
                         owner.getOwnerIds(), selectedLedgerStatuses);
+
 
         progressFetcher.loadProgress(productOrderDao,
                 ProductOrderListEntry.getProductOrderIDs(displayedProductOrderListEntries));
