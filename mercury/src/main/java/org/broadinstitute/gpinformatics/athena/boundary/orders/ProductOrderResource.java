@@ -148,7 +148,7 @@ public class ProductOrderResource {
      * It would be nice to only allow Project Managers and Administrators to create PDOs.  Use same {@link Role} names
      * as defined in the class (although I can't seem to be able to use the enum for the annotation.
      *
-     * @param productOrderData the document for the construction of the new {@link ProductOrder}. This MUST include the
+     * @param productOrderData The document for the construction of the new {@link ProductOrder}. This MUST include the
      *                         site id even though it is optional for the ProductOrderData to support the other create
      *                         method here.
      *
