@@ -11,7 +11,7 @@ app:
 
     AUTO_BUILD:
       host:     mercurydev.broadinstitute.org
-      port:     8081
+      port:     8444
       jmsPort:  5446
       workflowValidationEmail:
 
@@ -23,18 +23,19 @@ app:
 
     QA:
       host:     mercuryqa.broadinstitute.org
-      port:     8081
+      port:     8444
       jmsPort:  5445
       workflowValidationEmail:
 
     RC:
       host:     mercuryrc.broadinstitute.org
-      port:     8082
+      port:     8445
       jmsPort:  5447
       workflowValidationEmail:
 
     PROD:
       host:     mercury.broadinstitute.org
+      port:     8443
       jmsPort:  5445
       workflowValidationEmail: mercury-dev@broadinstitute.org
       #limsworkflowvalidation@broadinstitute.org

@@ -31,9 +31,9 @@ public class AppConfig extends AbstractConfig implements Serializable {
 
     public String getUrl() {
         if (!StringUtils.isBlank(port)) {
-            return getHttpScheme() + host + ":" + port + "/Mercury/";
+            return "https://" + host + ":" + port + "/Mercury/";
         }
-        return getHttpScheme() + host + ":8443" + "/Mercury/";
+        return "https://" + host + ":8443" + "/Mercury/";
     }
 
     public void setHost(String host) {
@@ -79,4 +79,6 @@ public class AppConfig extends AbstractConfig implements Serializable {
     public static AppConfig produce(Deployment deployment) {
         return produce(AppConfig.class, deployment);
     }
+
+
 }

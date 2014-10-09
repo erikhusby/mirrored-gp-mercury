@@ -79,6 +79,6 @@ public abstract class AbstractConfig {
     }
 
     public static String getHttpScheme() {
-        return "https://";
+        return (ApplicationInstance.CRSP.isCurrent())?"https://":"http://";
     }
 }
