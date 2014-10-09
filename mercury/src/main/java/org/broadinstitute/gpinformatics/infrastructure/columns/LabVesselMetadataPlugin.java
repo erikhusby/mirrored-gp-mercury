@@ -24,7 +24,7 @@ public class LabVesselMetadataPlugin implements ListPlugin {
         for( Metadata.Key key : Metadata.Key.values() ) {
             if(key.getCategory() == Metadata.Category.SAMPLE ) {
                 METADATA_HEADERS
-                        .put(key, new ConfigurableList.Header(key.getDisplayName(), "", "", ""));
+                        .put(key, new ConfigurableList.Header(key.getDisplayName(), key.getDisplayName(), "", ""));
             }
         }
     }

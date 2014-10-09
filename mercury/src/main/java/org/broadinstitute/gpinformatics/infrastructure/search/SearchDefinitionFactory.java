@@ -55,6 +55,8 @@ public class SearchDefinitionFactory {
     public static final String CONTEXT_KEY_BSP_SAMPLE_SEARCH = "BSPSampleSearchService";
     public static final String CONTEXT_KEY_OPTION_VALUE_DAO = "OptionValueDao";
 
+    private static BigDecimal ROUNDING_VAL = new BigDecimal("0.005");
+
     public ConfigurableSearchDefinition getForEntity(String entity) {
         if (mapNameToDef.isEmpty()) {
             ConfigurableSearchDefinition configurableSearchDefinition = buildLabVesselSearchDef();
@@ -249,6 +251,30 @@ public class SearchDefinitionFactory {
             public Object evaluate(Object entity, Map<String, Object> context) {
                 LabVessel labVessel = (LabVessel) entity;
                 return findVesselType(labVessel);
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Vessel Volume");
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                LabVessel labVessel = (LabVessel) entity;
+                BigDecimal volume = labVessel.getVolume();
+                return formatReportDecimal(volume);
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Vessel Concentration");
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                LabVessel labVessel = (LabVessel) entity;
+                BigDecimal conc = labVessel.getConcentration();
+                return formatReportDecimal(conc);
             }
         });
         searchTerms.add(searchTerm);
@@ -1163,10 +1189,8 @@ public class SearchDefinitionFactory {
                 Set<LabMetric> labMetrics = labVessel.getMetrics();
                 for (LabMetric labMetric : labMetrics) {
                     BigDecimal ng = labMetric.getTotalNg();
-                    if (ng != null) {
-                        value = ng.toPlainString();
-                        break;
-                    }
+                    value = formatReportDecimal(ng);
+                    break;
                 }
                 return value;
 
@@ -1327,6 +1351,23 @@ public class SearchDefinitionFactory {
         searchTerms.add(searchTerm);
 
         return searchTerms;
+    }
+
+    /**
+     * Formats BigDecimal values to #0.00 for consistent report display.  Safely handles null input.
+     * @param inputValue
+     * @return
+     */
+    public static String formatReportDecimal(BigDecimal inputValue) {
+        if( inputValue == null ) {
+            return "";
+        }
+        int sign = inputValue.signum();
+        if( sign == 0 ) return "0.00";
+        BigDecimal rounded = ( sign == 1? inputValue.add(ROUNDING_VAL): inputValue.subtract(ROUNDING_VAL));
+        String bare = rounded.toPlainString();
+        int index = bare.indexOf(".");
+        return (index<=0?"0":bare.substring(0,index)) + "." + bare.substring(index+1,index+3);
     }
 
     /**

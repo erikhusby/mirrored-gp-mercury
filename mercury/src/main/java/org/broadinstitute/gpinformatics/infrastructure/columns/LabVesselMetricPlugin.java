@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -25,10 +26,12 @@ public class LabVesselMetricPlugin implements ListPlugin {
     static {
         for( LabMetric.MetricType metricType : LabMetric.MetricType.values() ) {
             if(metricType.getCategory() == LabMetric.MetricType.Category.CONCENTRATION ) {
+                String headerText = metricType.getDisplayName();
                 QUANT_VALUE_HEADERS
-                        .put(metricType, new ConfigurableList.Header(metricType.getDisplayName(), "", "", ""));
+                        .put(metricType, new ConfigurableList.Header(headerText, headerText, "", ""));
+                headerText += " Decision";
                 QUANT_DECISION_HEADERS.put(metricType,
-                        new ConfigurableList.Header(metricType.getDisplayName() + " Decision", "", "", ""));
+                        new ConfigurableList.Header(headerText, headerText, "", ""));
             }
         }
     }
@@ -102,7 +105,7 @@ public class LabVesselMetricPlugin implements ListPlugin {
                 metric = latestMetric;
             }
         }
-        value = metric.getValue().toPlainString() + " " + metric.getUnits().getDisplayName();
+        value = SearchDefinitionFactory.formatReportDecimal(metric.getValue()) + " " + metric.getUnits().getDisplayName();
         valueCell = new ConfigurableList.Cell(QUANT_VALUE_HEADERS.get(metric.getName()), value, value);
         decision = metric.getLabMetricDecision();
         if (decision != null) {
