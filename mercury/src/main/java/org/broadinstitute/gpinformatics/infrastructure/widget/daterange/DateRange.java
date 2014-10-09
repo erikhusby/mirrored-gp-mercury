@@ -69,9 +69,8 @@ public enum DateRange {
     ThisMonth("This Month") {
         @Override
         public void calcDate(Calendar startCalendar, Calendar stopCalendar) {
-            startCalendar.set(Calendar.DAY_OF_MONTH, 1);
-            stopCalendar.add(Calendar.MONTH, 1);
-            stopCalendar.add(Calendar.DATE, -1);
+            startCalendar.set(Calendar.DAY_OF_MONTH, startCalendar.getActualMinimum(Calendar.DAY_OF_MONTH));
+            stopCalendar.set(Calendar.DAY_OF_MONTH, stopCalendar.getActualMaximum(Calendar.DAY_OF_MONTH));
         }
     },
     Last30Days("Last 30 Days") {
@@ -88,8 +87,8 @@ public enum DateRange {
             startCalendar.add(Calendar.MONTH, -1);
             startCalendar.set(Calendar.DAY_OF_MONTH, 1);
 
-            stopCalendar.set(Calendar.DAY_OF_MONTH, 1);
-            stopCalendar.add(Calendar.DATE, -1);
+            stopCalendar.add(Calendar.MONTH, -1);
+            stopCalendar.set(Calendar.DAY_OF_MONTH, stopCalendar.getActualMaximum(Calendar.DAY_OF_MONTH));
         }
     },
     ThisQuarter("This Quarter") {
@@ -146,10 +145,8 @@ public enum DateRange {
     ThisYear("This Year") {
         @Override
         public void calcDate(Calendar startCalendar, Calendar stopCalendar) {
-            startCalendar.set(Calendar.MONTH, Calendar.JANUARY);
-            startCalendar.set(Calendar.DAY_OF_MONTH, 1);
-            stopCalendar.set(Calendar.MONTH, Calendar.DECEMBER);
-            stopCalendar.set(Calendar.DAY_OF_MONTH, stopCalendar.getActualMaximum(Calendar.DAY_OF_MONTH));
+            startCalendar.set(Calendar.DAY_OF_YEAR, 1);
+            stopCalendar.set(Calendar.DAY_OF_YEAR, stopCalendar.getActualMaximum(Calendar.DAY_OF_YEAR));
         }
     },
     OneYear("One Year") {
@@ -164,20 +161,17 @@ public enum DateRange {
         @Override
         public void calcDate(Calendar startCalendar, Calendar stopCalendar) {
             startCalendar.add(Calendar.YEAR, -1);
-            startCalendar.set(Calendar.MONTH, Calendar.JANUARY);
-            startCalendar.set(Calendar.DAY_OF_MONTH, 1);
-
             stopCalendar.add(Calendar.YEAR, -1);
-            stopCalendar.set(Calendar.MONTH, Calendar.DECEMBER);
-            stopCalendar.set(Calendar.DAY_OF_MONTH, stopCalendar.getActualMaximum(Calendar.DAY_OF_MONTH));
+
+            // Now that the years are back one, just use 'This Year' logic.
+            ThisYear.calcDate(startCalendar, stopCalendar);
         }
     },
     All("All Time") {
         @Override
         public void calcDate(Calendar startCalendar, Calendar stopCalendar) {
-            startCalendar.set(Calendar.YEAR, 1970);
-            startCalendar.set(Calendar.MONTH, Calendar.JANUARY);
-            startCalendar.set(Calendar.DAY_OF_MONTH, 1);
+            startCalendar.setTimeInMillis(0);
+            stopCalendar.setTimeInMillis(Long.MAX_VALUE);
         }
     };
 

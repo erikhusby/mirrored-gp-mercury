@@ -318,6 +318,7 @@ public class DateRangeSelector implements Serializable {
             this.naturalLanguageString = RangeDefinition.AllRange.naturalLanguageString;
             this.end = null;
             this.start = null;
+            break;
         case AFTER:
             this.naturalLanguageString = "After";
             this.end = null;
