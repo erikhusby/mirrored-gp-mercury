@@ -140,15 +140,6 @@ public class BSPSampleDataFetcher extends BSPJerseyClient implements Serializabl
         return fetchSampleData(sampleNames, BSPSampleSearchColumn.PDO_SEARCH_COLUMNS);
     }
 
-    public static Collection<BspSampleData> convertToBspSampleDataCollection(
-            Collection<? extends SampleData> sampleDatas) {
-        Collection<BspSampleData> result = new ArrayList<>();
-        for (SampleData sampleData : sampleDatas) {
-            result.add((BspSampleData) sampleData);
-        }
-        return result;
-    }
-
     /**
      * There is much copying and pasting of code from BSPSampleSearchServiceImpl into here -- a refactoring is needed.
      *
