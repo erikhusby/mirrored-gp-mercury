@@ -14,7 +14,7 @@
                         // RP key value will be POSTed into the ProjectTokenInput in ManifestAccessioningActionBean on
                         // form submission.
                         "${ctxpath}/projects/project.action?projectAutocomplete=", {
-                            hintText: "Type a project name",
+                            hintText: "Type a Research Project key or title",
                             prePopulate: ${actionBean.ensureStringResult(actionBean.projectTokenInput.completeData)},
                             resultsFormatter: formatInput,
                             tokenDelimiter: "${actionBean.projectTokenInput.separator}",
