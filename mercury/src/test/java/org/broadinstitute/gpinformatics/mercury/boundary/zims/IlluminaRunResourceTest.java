@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.MockThriftService;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftFileAccessor;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
+import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ImportFromSquidTest;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.DevExperimentDataBean;
@@ -127,7 +128,7 @@ public class IlluminaRunResourceTest extends Arquillian {
 
         ClientConfig clientConfig = new DefaultClientConfig();
         clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
-        RestServiceContainerTest.acceptAllServerCertificates(clientConfig);
+        JerseyUtils.acceptAllServerCertificates(clientConfig);
 
         ZimsIlluminaRun run = Client.create(clientConfig).resource(url)
                 .accept(MediaType.APPLICATION_JSON).get(ZimsIlluminaRun.class);
@@ -153,7 +154,7 @@ public class IlluminaRunResourceTest extends Arquillian {
 
         DefaultClientConfig clientConfig = new DefaultClientConfig();
         clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
-        RestServiceContainerTest.acceptAllServerCertificates(clientConfig);
+        JerseyUtils.acceptAllServerCertificates(clientConfig);
 
         ZimsIlluminaRun run = Client.create(clientConfig).resource(url)
                 .queryParam("runName", RUN_NAME)
@@ -233,7 +234,7 @@ public class IlluminaRunResourceTest extends Arquillian {
 
         ClientConfig clientConfig = new DefaultClientConfig();
         clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
-        RestServiceContainerTest.acceptAllServerCertificates(clientConfig);
+        JerseyUtils.acceptAllServerCertificates(clientConfig);
 
         ZimsIlluminaRun run = Client.create(clientConfig).resource(url)
                 .queryParam("runName", "TestRun03261516351364325439075.txt")

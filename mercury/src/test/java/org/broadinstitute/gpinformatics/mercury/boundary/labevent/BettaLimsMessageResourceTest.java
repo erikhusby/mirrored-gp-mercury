@@ -29,6 +29,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunResource;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.IlluminaRunResource;
+import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
@@ -619,7 +620,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         if (false) {
             // JAX-RS
             ClientConfig clientConfig = new DefaultClientConfig();
-            RestServiceContainerTest.acceptAllServerCertificates(clientConfig);
+            JerseyUtils.acceptAllServerCertificates(clientConfig);
 
             response = Client.create(clientConfig).resource(testMercuryUrl + "/rest/bettalimsmessage")
                     .type(MediaType.APPLICATION_XML_TYPE)
@@ -708,7 +709,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         try {
 
             ClientConfig clientConfig = new DefaultClientConfig();
-            RestServiceContainerTest.acceptAllServerCertificates(clientConfig);
+            JerseyUtils.acceptAllServerCertificates(clientConfig);
 
             String response = Client.create(clientConfig).resource(baseUrl.toExternalForm() + "rest/bettalimsmessage")
                     .type(MediaType.APPLICATION_XML_TYPE)

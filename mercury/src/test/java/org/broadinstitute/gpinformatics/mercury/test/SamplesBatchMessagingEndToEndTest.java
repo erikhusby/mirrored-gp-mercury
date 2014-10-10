@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransfe
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventResponseBean;
+import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.jboss.aerogear.arquillian.test.smarturl.SchemeName;
 import org.jboss.aerogear.arquillian.test.smarturl.UriScheme;
@@ -43,7 +44,7 @@ public class SamplesBatchMessagingEndToEndTest extends ContainerTest {
     public void testEndToEnd(@ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = 8443) URL baseUrl) {
         String timestamp = timestampFormat.format(new Date());
         ClientConfig clientConfig = new DefaultClientConfig();
-        RestServiceContainerTest.acceptAllServerCertificates(clientConfig);
+        JerseyUtils.acceptAllServerCertificates(clientConfig);
 
         Client client = Client.create(clientConfig);
         client.addFilter(new LoggingFilter(System.out));

@@ -6,6 +6,7 @@ import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.jboss.aerogear.arquillian.test.smarturl.SchemeName;
 import org.jboss.aerogear.arquillian.test.smarturl.UriScheme;
@@ -49,7 +50,7 @@ public class SampleImportResourceDbTest extends ContainerTest {
                 parentVesselBeans, "jowalsh");
 
         ClientConfig clientConfig = new DefaultClientConfig();
-        RestServiceContainerTest.acceptAllServerCertificates(clientConfig);
+        JerseyUtils.acceptAllServerCertificates(clientConfig);
 
         // POST to the resource
         WebResource resource = Client.create(clientConfig).resource(baseUrl.toExternalForm() + "rest/sampleimport");

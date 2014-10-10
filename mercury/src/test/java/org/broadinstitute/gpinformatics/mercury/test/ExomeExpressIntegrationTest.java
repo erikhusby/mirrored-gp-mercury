@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMess
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
+import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500JaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionJaxbBuilder;
@@ -165,7 +166,7 @@ public class ExomeExpressIntegrationTest {
             System.out.println("URL to preview the run will be " + baseUrl.toExternalForm()
                                + "/rest/IlluminaRun/queryMercury?runName=" + runFile.getName());
             ClientConfig clientConfig = new DefaultClientConfig();
-            RestServiceContainerTest.acceptAllServerCertificates(clientConfig);
+            JerseyUtils.acceptAllServerCertificates(clientConfig);
 
             Client.create(clientConfig).resource(baseUrl.toExternalForm() + "/rest/solexarun")
                     .type(MediaType.APPLICATION_XML_TYPE)
@@ -183,7 +184,7 @@ public class ExomeExpressIntegrationTest {
 
     private void sendMessage(URL baseUrl, BettaLIMSMessage bean) {
         ClientConfig clientConfig = new DefaultClientConfig();
-        RestServiceContainerTest.acceptAllServerCertificates(clientConfig);
+        JerseyUtils.acceptAllServerCertificates(clientConfig);
 
         Client.create(clientConfig).resource(baseUrl + "/rest/bettalimsmessage")
                 .type(MediaType.APPLICATION_XML_TYPE)

@@ -8,6 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -85,7 +86,7 @@ public class BadgesProductionTest extends Arquillian {
         BufferedReader badgesReader = new BufferedReader(new InputStreamReader(badgesList));
 
         ClientConfig clientConfig = new DefaultClientConfig();
-        RestServiceContainerTest.acceptAllServerCertificates(clientConfig);
+        JerseyUtils.acceptAllServerCertificates(clientConfig);
 
         final WebResource badgeResource =
                 Client.create(clientConfig).resource(appConfig.getUrl() + "rest/limsQuery/fetchUserIdForBadgeId");

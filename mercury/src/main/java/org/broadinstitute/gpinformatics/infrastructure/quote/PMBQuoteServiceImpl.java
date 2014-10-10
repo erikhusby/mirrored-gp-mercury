@@ -9,6 +9,7 @@ import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
+import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.w3c.dom.Document;
 
 import javax.inject.Inject;
@@ -52,7 +53,7 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
 
     @Override
     protected void customizeConfig(ClientConfig clientConfig) {
-        acceptAllServerCertificates(clientConfig);
+        JerseyUtils.acceptAllServerCertificates(clientConfig);
     }
 
     @Override

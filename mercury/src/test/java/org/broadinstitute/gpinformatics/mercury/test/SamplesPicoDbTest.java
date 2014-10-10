@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventResponseBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.TubeBean;
+import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SamplesPicoJaxbBuilder;
 import org.jboss.aerogear.arquillian.test.smarturl.SchemeName;
@@ -42,7 +43,7 @@ public class SamplesPicoDbTest extends ContainerTest {
         String timestamp = timestampFormat.format(new Date());
 
         ClientConfig clientConfig = new DefaultClientConfig();
-        RestServiceContainerTest.acceptAllServerCertificates(clientConfig);
+        JerseyUtils.acceptAllServerCertificates(clientConfig);
 
         Client client = Client.create(clientConfig);
         client.addFilter(new LoggingFilter(System.out));

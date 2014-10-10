@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventResponseBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.MetadataBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.ReagentBean;
+import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.CadencePicoJaxbBuilder;
 import org.jboss.aerogear.arquillian.test.smarturl.SchemeName;
@@ -50,7 +51,7 @@ public class CadencePicoDbTest extends ContainerTest {
         }
 
         ClientConfig clientConfig = new DefaultClientConfig();
-        RestServiceContainerTest.acceptAllServerCertificates(clientConfig);
+        JerseyUtils.acceptAllServerCertificates(clientConfig);
 
         Client client = Client.create(clientConfig);
         client.addFilter(new LoggingFilter(System.out));

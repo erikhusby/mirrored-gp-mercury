@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMess
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
+import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
@@ -88,7 +89,7 @@ public class VesselWeightTest extends Arquillian {
         // http://bsp/ws/bsp/sample/gettareweight?manufacturer_barcodes=1082117278
         String getTareWeightUrl = bspConfig.getWSUrl("sample/gettareweight");
         ClientConfig clientConfig = new DefaultClientConfig();
-        RestServiceContainerTest.acceptAllServerCertificates(clientConfig);
+        JerseyUtils.acceptAllServerCertificates(clientConfig);
 
         Client client = Client.create(clientConfig);
         client.addFilter(new HTTPBasicAuthFilter(bspConfig.getLogin(), bspConfig.getPassword()));

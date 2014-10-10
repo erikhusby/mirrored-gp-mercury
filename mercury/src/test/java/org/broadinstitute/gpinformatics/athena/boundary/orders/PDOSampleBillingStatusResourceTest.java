@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
@@ -13,6 +14,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import java.net.URL;
 import java.util.ArrayList;

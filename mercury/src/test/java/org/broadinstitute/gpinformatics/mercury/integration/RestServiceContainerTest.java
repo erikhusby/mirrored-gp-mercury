@@ -7,14 +7,18 @@ import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.client.urlconnection.HTTPSProperties;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
+import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.jboss.arquillian.testng.Arquillian;
 import org.testng.annotations.BeforeMethod;
 
+import javax.inject.Inject;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
@@ -43,6 +47,9 @@ public abstract class RestServiceContainerTest extends Arquillian {
 
     private static final String SERVLET_MAPPING_PREFIX = "rest";
 
+    @Inject
+    private AppConfig appConfig;
+
     // TODO: BEFORE COMMIT! revert to private
     protected ClientConfig clientConfig;
 
@@ -59,7 +66,7 @@ public abstract class RestServiceContainerTest extends Arquillian {
     public void setUp() throws Exception {
         clientConfig = new DefaultClientConfig();
         clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
-        acceptAllServerCertificates(clientConfig);
+        JerseyUtils.acceptAllServerCertificates(clientConfig);
     }
 
     /**
@@ -75,51 +82,11 @@ public abstract class RestServiceContainerTest extends Arquillian {
      * @return a configured WebResource for the service method
      */
     protected WebResource makeWebResource(URL baseUrl, String serviceUrl) {
+
+        String newBaseUrl = baseUrl.toString().replaceAll(String.valueOf(baseUrl.getPort()), appConfig.getPort());
+
         return Client.create(clientConfig).resource(
-                baseUrl + SERVLET_MAPPING_PREFIX + "/" + getResourcePath() + "/" + serviceUrl);
-    }
-
-    /**
-     * Subclasses can call this to trust all server certificates (Quote service).
-     * <p/>
-     * Code pulled from http://stackoverflow.com/questions/6047996/ignore-self-signed-ssl-cert-using-jersey-client
-     * <p/>
-     * This code is trusting ALL certificates.  This might be made more specific and secure,
-     * but we are currently only applying it to the Jersey ClientConfig pointed at the Quote server so
-     * this is probably okay.
-     */
-    public static void acceptAllServerCertificates(ClientConfig config) {
-        try {
-            // Create a trust manager that does not validate certificate chains
-            TrustManager[] trustAllCerts = new TrustManager[]{
-                    new X509TrustManager() {
-                        @Override
-                        public X509Certificate[] getAcceptedIssuers() {
-                            return null;
-                        }
-
-                        @Override
-                        public void checkClientTrusted(X509Certificate[] certs, String authType) {
-                        }
-
-                        @Override
-                        public void checkServerTrusted(X509Certificate[] certs, String authType) {
-                        }
-                    }};
-            SSLContext sc = SSLContext.getInstance("TLS");
-            sc.init(null, trustAllCerts, new SecureRandom());
-
-            config.getProperties().put(HTTPSProperties.PROPERTY_HTTPS_PROPERTIES, new HTTPSProperties(
-                    new HostnameVerifier() {
-                        @Override
-                        public boolean verify(String s, SSLSession sslSession) {
-                            return true;
-                        }
-                    }, sc
-            ));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+                newBaseUrl + SERVLET_MAPPING_PREFIX + "/" + getResourcePath() + "/" + serviceUrl);
     }
 
     /**

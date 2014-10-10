@@ -6,6 +6,7 @@ import com.sun.jersey.api.client.config.DefaultClientConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.IlluminaRunResourceLiveTest;
+import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchDbTest;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
@@ -65,7 +66,7 @@ public class SolexaRunResourceLiveTest extends Arquillian {
 
         ClientConfig clientConfig = new DefaultClientConfig();
         clientConfig.getClasses().add(JacksonJsonProvider.class);
-        RestServiceContainerTest.acceptAllServerCertificates(clientConfig);
+        JerseyUtils.acceptAllServerCertificates(clientConfig);
 
         ReadStructureRequest returnedReadStructureRequest = Client.create(clientConfig).resource(wsUrl).
                 type(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).entity(readStructureData).

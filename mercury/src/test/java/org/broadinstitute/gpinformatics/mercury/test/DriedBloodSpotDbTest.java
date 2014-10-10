@@ -6,6 +6,7 @@ import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.client.filter.LoggingFilter;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.DriedBloodSpotJaxbBuilder;
 import org.jboss.aerogear.arquillian.test.smarturl.SchemeName;
@@ -41,7 +42,7 @@ public class DriedBloodSpotDbTest extends ContainerTest {
         String batchId = "BP-" + timestamp;
 
         ClientConfig clientConfig = new DefaultClientConfig();
-        RestServiceContainerTest.acceptAllServerCertificates(clientConfig);
+        JerseyUtils.acceptAllServerCertificates(clientConfig);
 
         Client client = Client.create(clientConfig);
         client.addFilter(new LoggingFilter(System.out));

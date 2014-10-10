@@ -21,6 +21,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResourceTest;
 import org.broadinstitute.gpinformatics.mercury.boundary.rapsheet.ReworkEjbTest;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.IlluminaRunResourceLiveTest;
+import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
@@ -224,7 +225,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
         Assert.assertTrue(result);
 
         ClientConfig clientConfig = new DefaultClientConfig();
-        RestServiceContainerTest.acceptAllServerCertificates(clientConfig);
+        JerseyUtils.acceptAllServerCertificates(clientConfig);
 
         Response response = Client.create(clientConfig).resource(appConfig.getUrl() + "rest/solexarun")
                 .type(MediaType.APPLICATION_XML_TYPE)
@@ -255,7 +256,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
 
 
         ClientConfig clientConfig = new DefaultClientConfig();
-        RestServiceContainerTest.acceptAllServerCertificates(clientConfig);
+        JerseyUtils.acceptAllServerCertificates(clientConfig);
 
         Response response = Client.create(clientConfig).resource(appConfig.getUrl() + "rest/solexarun")
                 .type(MediaType.APPLICATION_XML_TYPE)
@@ -296,7 +297,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
 
         ClientConfig clientConfig = new DefaultClientConfig();
         clientConfig.getClasses().add(JacksonJsonProvider.class);
-        RestServiceContainerTest.acceptAllServerCertificates(clientConfig);
+        JerseyUtils.acceptAllServerCertificates(clientConfig);
 
         Response readStructureResult =
                 Client.create(clientConfig).resource(wsUrl)
@@ -334,7 +335,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
 
         ClientConfig clientConfig = new DefaultClientConfig();
         clientConfig.getClasses().add(JacksonJsonProvider.class);
-        RestServiceContainerTest.acceptAllServerCertificates(clientConfig);
+        JerseyUtils.acceptAllServerCertificates(clientConfig);
 
         ReadStructureRequest returnedReadStructureRequest = Client.create(clientConfig).resource(wsUrl).
                 type(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).entity(readStructureData).

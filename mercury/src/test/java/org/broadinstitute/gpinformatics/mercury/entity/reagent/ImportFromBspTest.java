@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.TubeBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselMetricBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselMetricRunBean;
+import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.testng.annotations.Test;
@@ -178,7 +179,7 @@ public class ImportFromBspTest extends ContainerTest {
 
     private void createBatch(LabBatchBean labBatchBean) {
         ClientConfig clientConfig = new DefaultClientConfig();
-        RestServiceContainerTest.acceptAllServerCertificates(clientConfig);
+        JerseyUtils.acceptAllServerCertificates(clientConfig);
 
         String response = Client.create(clientConfig).resource(ImportFromSquidTest.TEST_MERCURY_URL + "/rest/labbatch")
                 .type(MediaType.APPLICATION_XML_TYPE)
@@ -190,7 +191,7 @@ public class ImportFromBspTest extends ContainerTest {
 
     public static String recordMetrics(VesselMetricRunBean vesselMetricRunBean) {
         ClientConfig clientConfig = new DefaultClientConfig();
-        RestServiceContainerTest.acceptAllServerCertificates(clientConfig);
+        JerseyUtils.acceptAllServerCertificates(clientConfig);
 
         String response =
                 Client.create(clientConfig).resource(ImportFromSquidTest.TEST_MERCURY_URL + "/rest/vesselmetric")
@@ -204,7 +205,7 @@ public class ImportFromBspTest extends ContainerTest {
 
     private void sendMessage(BettaLIMSMessage bettaLIMSMessage) {
         ClientConfig clientConfig = new DefaultClientConfig();
-        RestServiceContainerTest.acceptAllServerCertificates(clientConfig);
+        JerseyUtils.acceptAllServerCertificates(clientConfig);
 
         String response =
                 Client.create(clientConfig).resource(ImportFromSquidTest.TEST_MERCURY_URL + "/rest/bettalimsmessage")

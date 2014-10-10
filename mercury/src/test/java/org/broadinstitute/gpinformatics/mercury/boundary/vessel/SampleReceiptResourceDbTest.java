@@ -6,6 +6,7 @@ import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactoryTest;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.jboss.aerogear.arquillian.test.smarturl.SchemeName;
@@ -37,7 +38,7 @@ public class SampleReceiptResourceDbTest extends ContainerTest {
         // POST to the resource
 
         ClientConfig clientConfig = new DefaultClientConfig();
-        RestServiceContainerTest.acceptAllServerCertificates(clientConfig);
+        JerseyUtils.acceptAllServerCertificates(clientConfig);
 
         WebResource resource = Client.create(clientConfig).resource(baseUrl.toExternalForm() + "rest/samplereceipt");
         String response = resource.type(MediaType.APPLICATION_XML_TYPE)
