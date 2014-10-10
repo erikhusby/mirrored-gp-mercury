@@ -22,7 +22,7 @@ public class ProjectTokenInput extends TokenInput<ResearchProject> {
     private ResearchProjectDao researchProjectDao;
 
     public ProjectTokenInput() {
-        super(SINGLE_LINE_FORMAT);
+        super(DOUBLE_LINE_FORMAT);
     }
 
     @Override
@@ -69,6 +69,6 @@ public class ProjectTokenInput extends TokenInput<ResearchProject> {
 
     @Override
     protected String formatMessage(String messageString, ResearchProject project) {
-        return MessageFormat.format(messageString, project.getBusinessKey() + " - " + project.getTitle());
+        return MessageFormat.format(messageString, project.getBusinessKey(), project.getTitle());
     }
 }
