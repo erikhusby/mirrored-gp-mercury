@@ -36,6 +36,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -58,16 +59,22 @@ public class FingerprintingSpreadsheetActionBean extends CoreActionBean {
     private static final List<Integer> ACCEPTABLE_SAMPLE_COUNTS = Arrays.asList(new Integer[]{48, 96});
 
     private String plateBarcode;
-    StaticPlate staticPlate;
-    Workbook workbook;
+    private StaticPlate staticPlate;
+    private Workbook workbook;
+    private List<String> errorMessages = new ArrayList<>();
 
     @Inject
     private StaticPlateDao staticPlateDao;
 
-    private FingerprintingPlateFactory FingerprintingPlateFactory = new FingerprintingPlateFactory();
+    @Inject
+    private ControlDao controlDao;
 
+    @Inject
+    private FingerprintingPlateFactory fingerprintingPlateFactory;
+
+    /** Allows unit test to be db free by mocking the control dao. */
     void setControlDao(ControlDao controlDao) {
-        FingerprintingPlateFactory.setControlDao(controlDao);
+        fingerprintingPlateFactory = new FingerprintingPlateFactory(controlDao);
     }
 
     public String getPlateBarcode() {
@@ -85,14 +92,27 @@ public class FingerprintingSpreadsheetActionBean extends CoreActionBean {
 
     @HandlesEvent(SUBMIT_ACTION)
     public Resolution barcodeSubmit() {
-        clearValidationErrors();
+        if (getContext().getRequest() != null && getContext().getSession() != null) {
+            getContext().getMessages().clear();
+        }
+        errorMessages.clear();
+
         List<FingerprintingPlateFactory.FpSpreadsheetRow> dtos;
         try {
 
             // Makes a dto for each plate well.
-            dtos = FingerprintingPlateFactory.makeSampleDtos(staticPlate);
+            dtos = fingerprintingPlateFactory.makeSampleDtos(staticPlate, errorMessages);
+
+            if (getContext().getRequest() != null && getContext().getSession() != null) {
+                for (String msg : errorMessages) {
+                    addMessage(msg);
+                }
+            }
+
             if (CollectionUtils.isEmpty(dtos)) {
-                addMessage("No samples found.");
+                if (getContext().getRequest() != null && getContext().getSession() != null) {
+                    addMessage("No samples found.");
+                }
                 return new ForwardResolution(CREATE_PAGE);
             }
 
@@ -104,7 +124,7 @@ public class FingerprintingSpreadsheetActionBean extends CoreActionBean {
             }
 
             // Makes the spreadsheet.
-            workbook = FingerprintingPlateFactory.makeSpreadsheet(dtos);
+            workbook = fingerprintingPlateFactory.makeSpreadsheet(dtos);
 
             // Sets the default filename.
             String filename = DATE_FORMAT.format(new Date()) + "_FP_" + plateBarcode + ".xls";
@@ -135,6 +155,7 @@ public class FingerprintingSpreadsheetActionBean extends CoreActionBean {
 
     @ValidationMethod(on = SUBMIT_ACTION)
     public void validateNoPlate(ValidationErrors errors) {
+        clearValidationErrors();
         if (StringUtils.isBlank(plateBarcode)) {
             errors.add("barcodeTextbox", new SimpleError("Plate barcode is missing."));
         } else {
@@ -145,4 +166,19 @@ public class FingerprintingSpreadsheetActionBean extends CoreActionBean {
         }
     }
 
+    public StaticPlate getStaticPlate() {
+        return staticPlate;
+    }
+
+    public void setStaticPlate(StaticPlate staticPlate) {
+        this.staticPlate = staticPlate;
+    }
+
+    public Workbook getWorkbook() {
+        return workbook;
+    }
+
+    public List<String> getErrorMessages() {
+        return errorMessages;
+    }
 }
