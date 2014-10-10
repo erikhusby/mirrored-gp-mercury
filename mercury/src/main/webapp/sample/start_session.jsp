@@ -10,8 +10,8 @@
 
             $j(document).ready(function () {
                 $j("#researchProjectKey").tokenInput(
-                        "${ctxpath}/sample/accessioning.action?projectAutocomplete=", {
-                            hintText: "Type a Research Project key",
+                        "${ctxpath}/projects/project.action?projectAutocomplete=", {
+                            hintText: "Type a project name",
                             prePopulate: ${actionBean.ensureStringResult(actionBean.projectTokenInput.completeData)},
                             resultsFormatter: formatInput,
                             tokenDelimiter: "${actionBean.projectTokenInput.separator}",
