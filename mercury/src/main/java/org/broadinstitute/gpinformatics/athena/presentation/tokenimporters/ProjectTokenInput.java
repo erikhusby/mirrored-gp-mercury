@@ -64,7 +64,7 @@ public class ProjectTokenInput extends TokenInput<ResearchProject> {
 
     @Override
     protected String getTokenName(ResearchProject project) {
-        return project.getTitle();
+        return project.getBusinessKey() + " - " + project.getTitle();
     }
 
     @Override
