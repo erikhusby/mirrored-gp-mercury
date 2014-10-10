@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
+import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
@@ -105,7 +106,7 @@ public class LabVesselMetricPlugin implements ListPlugin {
                 metric = latestMetric;
             }
         }
-        value = SearchDefinitionFactory.formatReportDecimal(metric.getValue()) + " " + metric.getUnits().getDisplayName();
+        value = MathUtils.scaleTwoDecimalPlaces(metric.getValue()).toPlainString() + " " + metric.getUnits().getDisplayName();
         valueCell = new ConfigurableList.Cell(QUANT_VALUE_HEADERS.get(metric.getName()), value, value);
         decision = metric.getLabMetricDecision();
         if (decision != null) {

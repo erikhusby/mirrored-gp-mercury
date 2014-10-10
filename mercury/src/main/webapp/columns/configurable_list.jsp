@@ -172,7 +172,7 @@
                                 </c:forEach>
                             </tr>
                             <c:forEach items="${nestedTable.resultRows}" var="nestRow">
-                                <tr>
+                                <tr style="white-space: pre-line">
                                 <c:forEach items="${nestRow.renderableCells}" var="nestCell">
                                     <td>${nestCell}</td>
                                 </c:forEach>

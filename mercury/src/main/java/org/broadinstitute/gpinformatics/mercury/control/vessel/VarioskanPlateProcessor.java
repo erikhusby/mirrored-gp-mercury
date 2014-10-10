@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -108,7 +109,7 @@ public class VarioskanPlateProcessor extends TableProcessor {
                     } else {
                         bigDecimal = new BigDecimal(result);
                     }
-                    bigDecimal = bigDecimal.setScale(SCALE, BigDecimal.ROUND_HALF_UP);
+                    bigDecimal = MathUtils.scaleTwoDecimalPlaces(bigDecimal);
                     plateWellResults.add(new PlateWellResult(paddedBarcode, vesselPosition, bigDecimal));
                 } catch (NumberFormatException e) {
                     addDataMessage("Failed to find position " + well, dataRowIndex);

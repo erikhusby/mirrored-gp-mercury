@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -8,6 +9,7 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.EventVesselSource
 import org.broadinstitute.gpinformatics.infrastructure.columns.EventVesselTargetPositionPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetadataPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetricPlugin;
+import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
@@ -54,8 +56,6 @@ public class SearchDefinitionFactory {
     public static final String CONTEXT_KEY_SEARCH_STRING = "searchString";
     public static final String CONTEXT_KEY_BSP_SAMPLE_SEARCH = "BSPSampleSearchService";
     public static final String CONTEXT_KEY_OPTION_VALUE_DAO = "OptionValueDao";
-
-    private static BigDecimal ROUNDING_VAL = new BigDecimal("0.005");
 
     public ConfigurableSearchDefinition getForEntity(String entity) {
         if (mapNameToDef.isEmpty()) {
@@ -262,7 +262,11 @@ public class SearchDefinitionFactory {
             public Object evaluate(Object entity, Map<String, Object> context) {
                 LabVessel labVessel = (LabVessel) entity;
                 BigDecimal volume = labVessel.getVolume();
-                return formatReportDecimal(volume);
+                if( volume != null ) {
+                    return MathUtils.scaleTwoDecimalPlaces(volume).toPlainString();
+                } else {
+                    return "";
+                }
             }
         });
         searchTerms.add(searchTerm);
@@ -274,7 +278,11 @@ public class SearchDefinitionFactory {
             public Object evaluate(Object entity, Map<String, Object> context) {
                 LabVessel labVessel = (LabVessel) entity;
                 BigDecimal conc = labVessel.getConcentration();
-                return formatReportDecimal(conc);
+                if( conc != null ) {
+                    return MathUtils.scaleTwoDecimalPlaces(conc).toPlainString();
+                } else {
+                    return "";
+                }
             }
         });
         searchTerms.add(searchTerm);
@@ -612,10 +620,11 @@ public class SearchDefinitionFactory {
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            private FastDateFormat dateFormat = FastDateFormat.getInstance( "MM/dd/yyyy h:mm:ss a");
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
                 LabEvent labEvent = (LabEvent) entity;
-                return labEvent.getEventDate();
+                return dateFormat.format( labEvent.getEventDate());
             }
         });
         searchTerm.setTypeExpression(new SearchTerm.Evaluator<String>() {
@@ -1189,7 +1198,9 @@ public class SearchDefinitionFactory {
                 Set<LabMetric> labMetrics = labVessel.getMetrics();
                 for (LabMetric labMetric : labMetrics) {
                     BigDecimal ng = labMetric.getTotalNg();
-                    value = formatReportDecimal(ng);
+                    if( ng != null ) {
+                        value = MathUtils.scaleTwoDecimalPlaces(ng).toPlainString();
+                    }
                     break;
                 }
                 return value;
@@ -1351,23 +1362,6 @@ public class SearchDefinitionFactory {
         searchTerms.add(searchTerm);
 
         return searchTerms;
-    }
-
-    /**
-     * Formats BigDecimal values to #0.00 for consistent report display.  Safely handles null input.
-     * @param inputValue
-     * @return
-     */
-    public static String formatReportDecimal(BigDecimal inputValue) {
-        if( inputValue == null ) {
-            return "";
-        }
-        int sign = inputValue.signum();
-        if( sign == 0 ) return "0.00";
-        BigDecimal rounded = ( sign == 1? inputValue.add(ROUNDING_VAL): inputValue.subtract(ROUNDING_VAL));
-        String bare = rounded.toPlainString();
-        int index = bare.indexOf(".");
-        return (index<=0?"0":bare.substring(0,index)) + "." + bare.substring(index+1,index+3);
     }
 
     /**
