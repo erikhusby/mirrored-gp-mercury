@@ -112,18 +112,18 @@ public class SampleDataFetcher implements Serializable {
         return sampleData;
     }
 
-    public void fetchFFPEDerived(@Nonnull Collection<SampleData> sampleDatas) {
+    public void fetchFFPEDerived(@Nonnull Collection<SampleData> sampleDataCollection) {
         /*
          * FFPE is (for now) irrelevant for samples whose sample data is in Mercury. Therefore, only fetch FFPE-derived
          * for BspSampleData.
          */
-        Collection<BspSampleData> bspSampleDatas = new ArrayList<>();
-        for (SampleData sampleData : sampleDatas) {
+        Collection<BspSampleData> bspSampleDataCollection = new ArrayList<>();
+        for (SampleData sampleData : sampleDataCollection) {
             if (sampleData instanceof BspSampleData) {
-                bspSampleDatas.add((BspSampleData) sampleData);
+                bspSampleDataCollection.add((BspSampleData) sampleData);
             }
         }
-        bspSampleDataFetcher.fetchFFPEDerived(bspSampleDatas);
+        bspSampleDataFetcher.fetchFFPEDerived(bspSampleDataCollection);
     }
 
     /**
