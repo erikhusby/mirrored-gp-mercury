@@ -16,7 +16,7 @@ then
 fi
 if [ "x$BUILD_PROFILE" == "x" ]
 then
-    $BUILD_PROFILE=BUILD
+    BUILD_PROFILE=BUILD
 fi
 MAVEN_OPTS="-Xms4g -XX:MaxPermSize=1g $SSL_OPTS"
 OPTIONS="-PArquillian-JBossAS7-Remote,$BUILD_PROFILE -Djava.awt.headless=true --batch-mode -Dmaven.download.meter=silent "
