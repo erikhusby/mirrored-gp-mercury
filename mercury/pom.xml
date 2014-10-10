@@ -213,6 +213,8 @@
         <keystoreFile>../JBossConfig/src/main/resources/keystore/.keystore</keystoreFile>
         <keystorePassword>changeit</keystorePassword>
 
+        <jboss.socket.https>8443</jboss.socket.https>
+
     </properties>
 
     <profiles>
@@ -614,6 +616,10 @@
                                 <property>
                                     <name>ArqSuiteGroup</name>
                                     <value>Standard</value>
+                                </property>
+                                <property>
+                                    <name>jbossHttpsPort</name>
+                                    <value>${jboss.socket.https}</value>
                                 </property>
                             </systemProperties>
                             <groups>arquillian, Standard</groups>

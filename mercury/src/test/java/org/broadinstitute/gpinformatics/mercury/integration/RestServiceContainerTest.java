@@ -89,9 +89,10 @@ public abstract class RestServiceContainerTest extends Arquillian {
     protected WebResource makeWebResource(URL baseUrl, String serviceUrl) {
 
         Client client = Client.create(clientConfig);
-
+        String port = System.getProperty("jboss.socket.https");
+        String newUrl = baseUrl.toString().replaceAll(String.valueOf(baseUrl.getPort()),port);
         return client.resource(
-                baseUrl + SERVLET_MAPPING_PREFIX + "/" + getResourcePath() + "/" + serviceUrl);
+                newUrl + SERVLET_MAPPING_PREFIX + "/" + getResourcePath() + "/" + serviceUrl);
     }
 
     /**
