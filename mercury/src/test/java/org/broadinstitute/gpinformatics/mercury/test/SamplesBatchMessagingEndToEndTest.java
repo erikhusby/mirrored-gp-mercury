@@ -44,6 +44,7 @@ public class SamplesBatchMessagingEndToEndTest extends ContainerTest {
     public void testEndToEnd(@ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = 8443) URL baseUrl) {
         String timestamp = timestampFormat.format(new Date());
         ClientConfig clientConfig = new DefaultClientConfig();
+        clientConfig.getProperties().put(ClientConfig.PROPERTY_FOLLOW_REDIRECTS, Boolean.TRUE);
         JerseyUtils.acceptAllServerCertificates(clientConfig);
 
         Client client = Client.create(clientConfig);

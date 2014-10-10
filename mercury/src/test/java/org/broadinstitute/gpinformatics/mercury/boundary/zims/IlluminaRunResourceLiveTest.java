@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.zims;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -98,6 +99,7 @@ public class IlluminaRunResourceLiveTest extends Arquillian {
         String url = baseUrl.toExternalForm() + IlluminaRunResourceTest.WEBSERVICE_URL;
         DefaultClientConfig clientConfig = new DefaultClientConfig();
         clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
+        clientConfig.getProperties().put(ClientConfig.PROPERTY_FOLLOW_REDIRECTS, Boolean.TRUE);
         JerseyUtils.acceptAllServerCertificates(clientConfig);
         return Client.create(clientConfig).resource(url)
                 .queryParam("runName", runName)

@@ -1,10 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.integration;
 
 import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientRequest;
+import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
+import com.sun.jersey.api.client.filter.ClientFilter;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.client.urlconnection.HTTPSProperties;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
@@ -18,6 +21,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import javax.ws.rs.core.Response;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.SecureRandom;
@@ -66,6 +70,7 @@ public abstract class RestServiceContainerTest extends Arquillian {
     public void setUp() throws Exception {
         clientConfig = new DefaultClientConfig();
         clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
+        clientConfig.getProperties().put(ClientConfig.PROPERTY_FOLLOW_REDIRECTS, Boolean.TRUE);
         JerseyUtils.acceptAllServerCertificates(clientConfig);
     }
 
@@ -83,10 +88,10 @@ public abstract class RestServiceContainerTest extends Arquillian {
      */
     protected WebResource makeWebResource(URL baseUrl, String serviceUrl) {
 
-        String newBaseUrl = baseUrl.toString().replaceAll(String.valueOf(baseUrl.getPort()), appConfig.getPort());
+        Client client = Client.create(clientConfig);
 
-        return Client.create(clientConfig).resource(
-                newBaseUrl + SERVLET_MAPPING_PREFIX + "/" + getResourcePath() + "/" + serviceUrl);
+        return client.resource(
+                baseUrl + SERVLET_MAPPING_PREFIX + "/" + getResourcePath() + "/" + serviceUrl);
     }
 
     /**

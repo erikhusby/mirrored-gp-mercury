@@ -128,6 +128,7 @@ public class IlluminaRunResourceTest extends Arquillian {
 
         ClientConfig clientConfig = new DefaultClientConfig();
         clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
+        clientConfig.getProperties().put(ClientConfig.PROPERTY_FOLLOW_REDIRECTS, Boolean.TRUE);
         JerseyUtils.acceptAllServerCertificates(clientConfig);
 
         ZimsIlluminaRun run = Client.create(clientConfig).resource(url)
@@ -154,6 +155,7 @@ public class IlluminaRunResourceTest extends Arquillian {
 
         DefaultClientConfig clientConfig = new DefaultClientConfig();
         clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
+        clientConfig.getProperties().put(ClientConfig.PROPERTY_FOLLOW_REDIRECTS, Boolean.TRUE);
         JerseyUtils.acceptAllServerCertificates(clientConfig);
 
         ZimsIlluminaRun run = Client.create(clientConfig).resource(url)
