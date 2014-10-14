@@ -1,13 +1,17 @@
 package org.broadinstitute.gpinformatics.mercury.test.builders;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.LimsQueries;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ConcentrationAndVolumeAndWeightType;
+import org.testng.Assert;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -44,6 +48,7 @@ public class CrspPicoEntityBuilder {
 
     public CrspPicoEntityBuilder invoke() {
         List<String> tubeBarcodes = new ArrayList<>(mapBarcodeToTube.keySet());
+        Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
         CrspPicoJaxbBuilder crspPicoJaxbBuilder = new CrspPicoJaxbBuilder(bettaLimsMessageTestFactory, testPrefix,
                 rackBarcode, tubeBarcodes).invoke();
 
@@ -52,6 +57,15 @@ public class CrspPicoEntityBuilder {
                 null, mapBarcodeToTube, null);
         labEventHandler.processEvent(initialTareEntity);
         TubeFormation initialRack = (TubeFormation) initialTareEntity.getInPlaceLabVessel();
+
+        LimsQueries limsQueries = new LimsQueries(null, null, null);
+        mapBarcodeToVessel.putAll(mapBarcodeToTube);
+        Map<String, ConcentrationAndVolumeAndWeightType> mapBarcodeToConcVolDto =
+                limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(mapBarcodeToVessel);
+        ConcentrationAndVolumeAndWeightType concVolDto = mapBarcodeToConcVolDto.get("R1");
+        Assert.assertEquals(concVolDto.getWeight(), new BigDecimal("0.63"));
+        Assert.assertNull(concVolDto.getConcentration());
+        Assert.assertNull(concVolDto.getVolume());
 
         // WeightMeasurement
         weightMeasurementEntity = labEventFactory.buildFromBettaLimsRackEventDbFree(
@@ -71,11 +85,16 @@ public class CrspPicoEntityBuilder {
         crspPicoJaxbBuilder.getInitialPicoBufferAddition2();
 
         // FingerprintingAliquot
-        Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
+        mapBarcodeToVessel.clear();
         // todo jmt make this more selective
         mapBarcodeToVessel.putAll(mapBarcodeToTube);
         fingerprintingAliquotEntity = labEventFactory.buildFromBettaLims(
                 crspPicoJaxbBuilder.getFingerprintingAliquotJaxb(), mapBarcodeToVessel);
+        mapBarcodeToConcVolDto = limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(mapBarcodeToVessel);
+        concVolDto = mapBarcodeToConcVolDto.get("R1");
+        Assert.assertEquals(concVolDto.getWeight(), new BigDecimal("0.63"));
+        Assert.assertNull(concVolDto.getConcentration());
+        Assert.assertEquals(concVolDto.getVolume(), new BigDecimal("61"));
 
         // FingerprintingPlateSetup
         mapBarcodeToVessel.clear();
@@ -98,5 +117,9 @@ public class CrspPicoEntityBuilder {
                 mapBarcodeToVessel);
 
         return this;
+    }
+
+    public LabEvent getShearingAliquotEntity() {
+        return shearingAliquotEntity;
     }
 }

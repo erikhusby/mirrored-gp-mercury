@@ -1319,7 +1319,8 @@ public class LabEventTest extends BaseEventTest {
         expectedRouting = SystemRouter.System.MERCURY;
 
         // Use Standard Exome product, to verify that workflow is taken from LCSet, not Product
-        ProductOrder productOrder = ProductOrderTestFactory.buildIceProductOrder(NUM_POSITIONS_IN_RACK - 2);
+        int numSamples = NUM_POSITIONS_IN_RACK - 2;
+        ProductOrder productOrder = ProductOrderTestFactory.buildIceProductOrder(numSamples);
         Date runDate = new Date();
         // todo jmt create bucket, then batch, rather than rack then batch then bucket
         Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
@@ -1333,6 +1334,10 @@ public class LabEventTest extends BaseEventTest {
 
         CrspPicoEntityBuilder crspPicoEntityBuilder = new CrspPicoEntityBuilder(getBettaLimsMessageTestFactory(),
                 getLabEventFactory(), getLabEventHandler(), "", "CRSP", mapBarcodeToTube).invoke();
+
+        TubeFormation shearingTf = (TubeFormation) crspPicoEntityBuilder.getShearingAliquotEntity().
+                getTargetLabVessels().iterator().next();
+        Assert.assertEquals(shearingTf.getContainerRole().getSampleInstancesV2().size(), numSamples);
 
         runTransferVisualizer(mapBarcodeToTube.values().iterator().next());
     }
