@@ -7,6 +7,8 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransfe
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -134,10 +136,15 @@ public class LibraryConstructionJaxbBuilder {
     }
 
     public LibraryConstructionJaxbBuilder invoke() {
-        endRepairJaxb = bettaLimsMessageTestFactory.buildPlateEvent("EndRepair", shearCleanPlateBarcode);
+        endRepairJaxb = bettaLimsMessageTestFactory.buildPlateEvent("EndRepair", shearCleanPlateBarcode,
+                Arrays.asList(new BettaLimsMessageTestFactory.ReagentDto("KAPA Reagent Box", "0009753252", new Date())));
         bettaLimsMessageTestFactory.addMessage(messageList, endRepairJaxb);
 
-        endRepairCleanupJaxb = bettaLimsMessageTestFactory.buildPlateEvent("EndRepairCleanup", shearCleanPlateBarcode);
+        endRepairCleanupJaxb = bettaLimsMessageTestFactory.buildPlateEvent("EndRepairCleanup", shearCleanPlateBarcode,
+                Arrays.asList(new BettaLimsMessageTestFactory.ReagentDto("PEG", "0009753352", new Date()),
+                        new BettaLimsMessageTestFactory.ReagentDto("70% Ethanol", "LCEtohTest", new Date()),
+                        new BettaLimsMessageTestFactory.ReagentDto("EB", "0009753452", new Date()),
+                        new BettaLimsMessageTestFactory.ReagentDto("SPRI", "LCSpriTest", new Date())));
         bettaLimsMessageTestFactory.addMessage(messageList, endRepairCleanupJaxb);
 
         aBaseJaxb = bettaLimsMessageTestFactory.buildPlateEvent("ABase", shearCleanPlateBarcode);
@@ -168,7 +175,8 @@ public class LibraryConstructionJaxbBuilder {
         bettaLimsMessageTestFactory.addMessage(messageList, ligationCleanupJaxb);
 
         if (p5IndexPlateBarcode == null) {
-            pondEnrichmentJaxb = bettaLimsMessageTestFactory.buildPlateEvent("PondEnrichment", ligationCleanupBarcode);
+            pondEnrichmentJaxb = bettaLimsMessageTestFactory.buildPlateEvent("PondEnrichment", ligationCleanupBarcode,
+                    Arrays.asList(new BettaLimsMessageTestFactory.ReagentDto("KAPA Amp Kit", "0009753250", new Date())));
             bettaLimsMessageTestFactory.addMessage(messageList, pondEnrichmentJaxb);
         } else {
             indexP5PondEnrichmentJaxb = bettaLimsMessageTestFactory.buildPlateToPlate("IndexP5PondEnrichment",
