@@ -468,7 +468,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 }
 
                 kitDetails.get(kitDetailIndex)
-                          .setPostReceiveOptions(selectedOptions);
+                        .setPostReceiveOptions(selectedOptions);
             }
         }
 
@@ -629,25 +629,25 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     private void doOnRiskUpdate() {
-            try {
-                // Calculate risk here and get back any error message.
-                productOrderEjb.calculateRisk(editOrder.getBusinessKey());
+        try {
+            // Calculate risk here and get back any error message.
+            productOrderEjb.calculateRisk(editOrder.getBusinessKey());
 
-                // refetch the order to get updated risk status on the order.
-                editOrder = productOrderDao.findByBusinessKey(editOrder.getBusinessKey());
-                int numSamplesOnRisk = editOrder.countItemsOnRisk();
+            // refetch the order to get updated risk status on the order.
+            editOrder = productOrderDao.findByBusinessKey(editOrder.getBusinessKey());
+            int numSamplesOnRisk = editOrder.countItemsOnRisk();
 
-                if (numSamplesOnRisk == 0) {
-                    addMessage("None of the samples for this order are on risk");
-                } else {
-                    addMessage("{0} {1} for this order {2} on risk",
-                            numSamplesOnRisk, Noun.pluralOf("sample", numSamplesOnRisk),
-                            numSamplesOnRisk == 1 ? "is" : "are");
-                }
-            } catch (Exception e) {
-                addGlobalValidationError(e.getMessage());
+            if (numSamplesOnRisk == 0) {
+                addMessage("None of the samples for this order are on risk");
+            } else {
+                addMessage("{0} {1} for this order {2} on risk",
+                        numSamplesOnRisk, Noun.pluralOf("sample", numSamplesOnRisk),
+                        numSamplesOnRisk == 1 ? "is" : "are");
             }
+        } catch (Exception e) {
+            addGlobalValidationError(e.getMessage());
         }
+    }
 
     @ValidationMethod(on = PLACE_ORDER)
     public void validatePlacedOrder() {
@@ -1663,7 +1663,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                     .valueOf(kitDefinitionQueryIndex)) {
                 collectionAndOrganismsList.put(CHOSEN_ORGANISM,
                         kitDetails.get(Integer.valueOf(kitDefinitionQueryIndex))
-                                  .getOrganismId());
+                                .getOrganismId());
             }
 
             collectionAndOrganismsList.put("collectionName", sampleCollection.getCollectionName());
@@ -2147,11 +2147,13 @@ public class ProductOrderActionBean extends CoreActionBean {
             if (editOrder.isDraft()) {
                 if (CollectionUtils.isNotEmpty(selectedRegulatoryIds)) {
                     List<RegulatoryInfo> selectedRegulatoryInfos = regulatoryInfoDao
-                            .findListByList(RegulatoryInfo.class, RegulatoryInfo_.regulatoryInfoId, selectedRegulatoryIds);
+                            .findListByList(RegulatoryInfo.class, RegulatoryInfo_.regulatoryInfoId,
+                                    selectedRegulatoryIds);
 
                     Set<String> missingRegulatoryRequirements = new HashSet<>();
                     for (RegulatoryInfo chosenInfo : selectedRegulatoryInfos) {
-                        if (!chosenInfo.getResearchProjectsIncludingChildren().contains(editOrder.getResearchProject())) {
+                        if (!chosenInfo.getResearchProjectsIncludingChildren()
+                                .contains(editOrder.getResearchProject())) {
                             missingRegulatoryRequirements.add(chosenInfo.getName());
                         }
                     }
@@ -2246,6 +2248,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     public boolean isCollaborationKitRequest() {
-        return !StringUtils.isBlank(editOrder.getProductOrderKit().getWorkRequestId()) && !editOrder.isSampleInitiation();
+        return !StringUtils.isBlank(editOrder.getProductOrderKit().getWorkRequestId()) && !editOrder
+                .isSampleInitiation();
     }
 }

@@ -105,7 +105,7 @@ public class MercurySampleData implements SampleData {
 
     @Override
     public String getStockSample() {
-        return "";
+        return sampleId;
     }
 
     @Override

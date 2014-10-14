@@ -5,7 +5,6 @@ import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
-import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.mercury.BSPJerseyClient;
@@ -33,13 +32,13 @@ import java.util.Set;
  */
 public class BSPSampleDataFetcher extends BSPJerseyClient implements Serializable {
     static final long serialVersionUID = -1432207534876411738L;
-// Many versions of this service written only for tests are considered as options by IntelliJ.
+    // Many versions of this service written only for tests are considered as options by IntelliJ.
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     BSPSampleSearchService service;
     static final String WS_FFPE_DERIVED = "sample/ffpeDerived";
     static final String WS_DETAILS = "sample/getdetails";
-// Used for mapping Matrix barcodes to Sample short barcodes, forces xml output format.
+    // Used for mapping Matrix barcodes to Sample short barcodes, forces xml output format.
     static final String WS_SAMPLE_DETAILS = "sample/getsampledetails?format=xml";
 
     public BSPSampleDataFetcher() {
@@ -48,7 +47,7 @@ public class BSPSampleDataFetcher extends BSPJerseyClient implements Serializabl
     /**
      * Container free constructor, need to initialize all dependencies explicitly.
      *
-     * @param service The sample search service to use.
+     * @param service   The sample search service to use.
      * @param bspConfig The config object - Thi sis only nullable for tests that don't need to deal with BSP directly.
      */
     public BSPSampleDataFetcher(@Nonnull BSPSampleSearchService service, @Nullable BSPConfig bspConfig) {
@@ -100,12 +99,10 @@ public class BSPSampleDataFetcher extends BSPJerseyClient implements Serializabl
      * @return Mapping of sample id to its bsp data
      */
     public Map<String, BspSampleData> fetchSampleData(@Nonnull Collection<String> sampleNames,
-                                                     BSPSampleSearchColumn... bspSampleSearchColumns) {
+                                                      BSPSampleSearchColumn... bspSampleSearchColumns) {
         Collection<String> filteredSampleNames = new HashSet<>();
         for (String sampleName : sampleNames) {
-            if (BSPUtil.isInBspFormat(sampleName) ||
-                getBspConfig().getMercuryDeployment() != Deployment.PROD) {
-
+            if (BSPUtil.isInBspFormat(sampleName) || getBspConfig().getMercuryDeployment() != Deployment.PROD) {
                 filteredSampleNames.add(sampleName);
             }
         }
@@ -114,8 +111,7 @@ public class BSPSampleDataFetcher extends BSPJerseyClient implements Serializabl
             return Collections.emptyMap();
         }
 
-        Set<BSPSampleSearchColumn> searchColumns =
-                new HashSet<>(Arrays.asList(bspSampleSearchColumns));
+        Set<BSPSampleSearchColumn> searchColumns = new HashSet<>(Arrays.asList(bspSampleSearchColumns));
         searchColumns.add(BSPSampleSearchColumn.SAMPLE_ID);
         Map<String, BspSampleData> nameToSampleData = new HashMap<>();
         List<Map<BSPSampleSearchColumn, String>> results = service.runSampleSearch(filteredSampleNames,
@@ -144,7 +140,7 @@ public class BSPSampleDataFetcher extends BSPJerseyClient implements Serializabl
      * There is much copying and pasting of code from BSPSampleSearchServiceImpl into here -- a refactoring is needed.
      *
      * @param bspSampleDatas BSP Sample Data whose sampleID field will be referenced for the barcode value, and which will
-     *                      be filled with the ffpeDerived value returned by the FFPE webservice
+     *                       be filled with the ffpeDerived value returned by the FFPE webservice
      */
     public void fetchFFPEDerived(@Nonnull Collection<BspSampleData> bspSampleDatas) {
         if (bspSampleDatas.isEmpty()) {
@@ -244,7 +240,8 @@ public class BSPSampleDataFetcher extends BSPJerseyClient implements Serializabl
         MultivaluedMap<String, String> formData = new MultivaluedMapImpl();
         formData.add("barcodes", StringUtils.join(barcodes, ","));
         GetSampleDetails.Details details = resource.accept(MediaType.TEXT_XML).post(
-                new GenericType<GetSampleDetails.Details>() {}, formData);
+                new GenericType<GetSampleDetails.Details>() {
+                }, formData);
 
         // Fills in the map values using SampleDetails that were found in BSP.
         if (details.getSampleDetails().getSampleInfo() != null) {
