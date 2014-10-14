@@ -595,6 +595,9 @@ public enum LabEventType {
     FINGERPRINTING_ALIQUOT("FingerprintingAliquot",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+    FINGERPRINTING_PLATE_SETUP("FingerprintingPlateSetup",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
 
     // mRRBS
     MRRBS_GENOMIC_TRANSFER("mRRBSGenomicTransfer",
