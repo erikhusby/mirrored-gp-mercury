@@ -89,6 +89,7 @@ public class SampleLedgerExporterTest {
         SampleData sampleData = Mockito.mock(SampleData.class);
         when(sampleData.getCollaboratorsSampleName()).thenReturn("Sample1");
         when(sampleData.getMaterialType()).thenReturn("Test Type");
+        when(sampleData.getSampleType()).thenReturn("Sample Type");
         ProductOrderSample productOrderSample = new ProductOrderSample("SM-1234", sampleData);
         productOrderSample.setManualOnRisk(RiskCriterion.createManual(), "Test risk");
         productOrderSample.setDeliveryStatus(ProductOrderSample.DeliveryStatus.DELIVERED);
@@ -171,7 +172,7 @@ public class SampleLedgerExporterTest {
         dataOrder.verify(mockWriter).writeCell(product.getName());
         String pdoKey = productOrder.getJiraTicketKey();
         dataOrder.verify(mockWriter).writeCellLink(pdoKey,
-                ProductOrderActionBean.getProductOrderLink(pdoKey, appConfig));
+                ProductOrderActionBean.getProductOrderLink(productOrder, appConfig));
         dataOrder.verify(mockWriter).writeCell(productOrder.getName());
         dataOrder.verify(mockWriter).writeCell(user.getFullName());
         dataOrder.verify(mockWriter).writeCell(productOrder.getLaneCount());
@@ -184,6 +185,7 @@ public class SampleLedgerExporterTest {
         dataOrder.verify(mockWriter).writeCell((BigInteger) null);
         dataOrder.verify(mockWriter).writeCell(any(Double.class), any(CellStyle.class));
         dataOrder.verify(mockWriter).writeCell(any(Double.class), any(CellStyle.class));
+        dataOrder.verify(mockWriter).writeCell(eq(productOrderSample.getSampleData().getSampleType()));
         // Tableau link
         dataOrder.verify(mockWriter).writeCellLink(anyString(), anyString());
         dataOrder.verify(mockWriter).writeCell(productOrder.getQuoteId());

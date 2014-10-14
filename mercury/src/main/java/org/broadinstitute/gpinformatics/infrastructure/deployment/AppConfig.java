@@ -15,6 +15,12 @@ import java.io.Serializable;
 @ConfigKey("app")
 public class AppConfig extends AbstractConfig implements Serializable {
 
+    // Force the JVM into headless mode. This avoids creating a visible icon when running the server locally,
+    // since there are some references to awt classes in our code.
+    static {
+        System.setProperty("java.awt.headless", "true");
+    }
+
     @Inject
     public AppConfig(@Nonnull Deployment mercuryDeployment) {
         super(mercuryDeployment);

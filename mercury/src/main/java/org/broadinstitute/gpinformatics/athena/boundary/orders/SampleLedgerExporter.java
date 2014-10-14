@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.work.WorkCompleteMessage;
 import org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPLSIDUtil;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
@@ -286,29 +287,30 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
      * @param sample                         the product order sample for the row
      * @param sortOrder                      the value for the sort order column, for re-sorting the tracker before uploading
      * @param workCompleteMessageBySample    any work complete messages for the product order, by sample
-     * @param sampleData                     simple bean of sample data to be written
+     * @param sampleLedgerRow                sample data to be written
      */
     private void writeRow(List<PriceItem> sortedPriceItems, List<Product> sortedAddOns,
                           Collection<PriceItem> historicalPriceItems, ProductOrderSample sample,
                           int sortOrder, Map<String, WorkCompleteMessage> workCompleteMessageBySample,
-                          SampleLedgerRow sampleData) {
+                          SampleLedgerRow sampleLedgerRow) {
         SampleLedgerSpreadSheetWriter writer = getWriter();
         ProductOrder productOrder = sample.getProductOrder();
         Product product = productOrder.getProduct();
+        SampleData sampleData = sample.getSampleData();
 
         writer.nextRow();
 
         // sample name.
-        writer.writeCell(sampleData.getSampleId());
+        writer.writeCell(sample.getSampleKey());
 
         // collaborator sample ID, looks like this is properly initialized.
-        writer.writeCell(sampleData.getCollaboratorSampleId());
+        writer.writeCell(sampleData.getCollaboratorsSampleName());
 
         // Material type.
         writer.writeCell(sampleData.getMaterialType());
 
         // Risk Information.
-        String riskString = sampleData.getRiskText();
+        String riskString = sample.getRiskString();
         if (StringUtils.isBlank(riskString)) {
             writer.nextCell();
         } else {
@@ -316,31 +318,31 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
         }
 
         // Sample Delivery Status.
-        writer.writeCell(sampleData.getDeliveryStatus());
+        writer.writeCell(sample.getDeliveryStatus().getDisplayName());
 
         // product name.
-        writer.writeCell(sampleData.getProductName());
+        writer.writeCell(product.getProductName());
 
         // Product Order ID.
-        String pdoKey = sampleData.getProductOrderKey();
-        writer.writeCellLink(pdoKey, ProductOrderActionBean.getProductOrderLink(pdoKey, appConfig));
+        writer.writeCellLink(productOrder.getJiraTicketKey(),
+                ProductOrderActionBean.getProductOrderLink(productOrder, appConfig));
 
         // Product Order Name (actually this concept is called 'Title' in PDO world).
-        writer.writeCell(sampleData.getProductOrderTitle());
+        writer.writeCell(productOrder.getTitle());
 
         // Project Manager - need to turn this into a user name.
-        writer.writeCell(sampleData.getProjectManagerName());
+        writer.writeCell(sampleLedgerRow.getProjectManagerName());
 
         // Lane Count
         if (BillingTrackerHeader.LANE_COUNT.shouldShow(product)) {
-            writer.writeCell(sampleData.getNumberOfLanes());
+            writer.writeCell(productOrder.getLaneCount());
         }
 
         // Auto bill date is the date of any ledger items were auto billed by external messages.
-        writer.writeCell(sampleData.getAutoLedgerDate(), getDateStyle());
+        writer.writeCell(sample.getLatestAutoLedgerTimestamp(), getDateStyle());
 
         // Work complete date is the date of any ledger items that are ready to be billed.
-        writer.writeCell(sampleData.getWorkCompleteDate(), getDateStyle());
+        writer.writeCell(sample.getWorkCompleteDate(), getDateStyle());
 
         // Picard metrics
         BigInteger pfReads = null;
@@ -376,7 +378,10 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
             writer.writeCell(percentCoverageAt100x, getPercentageStyle());
         }
 
+        writer.writeCell(sample.getSampleData().getSampleType());
+
         // Tableau link
+        String pdoKey = productOrder.getJiraTicketKey();
         writer.writeCellLink(TableauRedirectActionBean.getPdoSequencingSampleDashboardUrl(pdoKey, tableauConfig),
                 TableauRedirectActionBean.getPdoSequencingSamplesDashboardRedirectUrl(pdoKey, appConfig));
 
@@ -389,7 +394,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
         // The ledger amounts.
         Map<PriceItem, ProductOrderSample.LedgerQuantities> billCounts = sample.getLedgerQuantities();
 
-        // Write out for the price item columns.
+        // Write out the price item columns.
         for (PriceItem priceItem : historicalPriceItems) {
             writeCountForHistoricalPriceItem(billCounts, priceItem);
         }
@@ -405,7 +410,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
             }
         }
 
-        // write the comments.
+        // Write the comments.
         String theComment = "";
         if (!StringUtils.isBlank(productOrder.getComments())) {
             theComment += productOrder.getComments();
@@ -420,7 +425,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
         String billingError = sample.getUnbilledLedgerItemMessages();
 
         if (StringUtils.isBlank(billingError)) {
-            // no value, so just empty a blank line.
             writer.nextCell();
         } else if (billingError.endsWith(BillingSession.SUCCESS)) {
             // Give the success message with no special style.
@@ -430,7 +434,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
             writer.writeCell(billingError, getErrorMessageStyle());
         }
 
-        if (sampleData.getDeliveryStatus().equals(ProductOrderSample.DeliveryStatus.ABANDONED.getDisplayName())) {
+        if (sample.getDeliveryStatus() == ProductOrderSample.DeliveryStatus.ABANDONED) {
             // Set the row style last, so all columns are affected.
             writer.setRowStyle(getAbandonedStyle());
         }
