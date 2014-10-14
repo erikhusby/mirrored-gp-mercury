@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.parsers.poi;
 
+import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -18,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.Format;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -54,15 +56,65 @@ public final class PoiSpreadsheetParser {
     }
 
     /**
+     * If all values in this row are blank return true, otherwise false.
+     */
+    static boolean representsBlankLine(Collection<String> values) {
+        for (String value : values) {
+            if (!StringUtils.isBlank(value)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Return a List of all blank lines seen in the input List of blank line indexes which do not represent trailing
+     * blank lines.
+     *
+     * @param allBlankLineIndexesSeen input List of blank line index numbers, in increasing order, 1-based.
+     * @param numRows The number of data rows in the spreadsheet.
+     * @return A List of non-trailing blank line indexes in increasing order, 1-based.
+     */
+    static List<Integer> findNonTrailingBlankLineIndexes(List<Integer> allBlankLineIndexesSeen, int numRows) {
+        // Trailing blank lines should all be at the end, reverse the input List and start looking for
+        // consecutive blank lines, if any.  The loop below will remove any trailing blank lines from this List,
+        // any remaining blank lines will be returned to the caller.
+        List<Integer> nonTrailingBlankLineIndexes = new ArrayList<>(Lists.reverse(allBlankLineIndexesSeen));
+        int currentLastIndex = numRows;
+
+        Iterator<Integer> iterator = nonTrailingBlankLineIndexes.iterator();
+        while (iterator.hasNext()) {
+            Integer lastIndex = iterator.next();
+            // If the trailing blank line is not where it is supposed to be, break out of the loop and
+            // report on all the blank lines remaining in the input List of blank lines.
+            if (lastIndex != currentLastIndex) {
+                break;
+            }
+            // If the trailing blank line index is where it was expected to be, remove this from the List of
+            // reported trailing blank lines.
+            currentLastIndex--;
+            iterator.remove();
+        }
+
+        return Lists.reverse(nonTrailingBlankLineIndexes);
+    }
+
+    /**
      * Process the data portion of the spreadsheet.
      *
      * @param processor The processor being used.
      * @param rows The iterator on the excel rows.
      */
     private void processData(TableProcessor processor, Iterator<Row> rows) {
+        List<Integer> allBlankLinesSeen = new ArrayList<>();
+
+        // Keep a count of the number of rows seen, this will be important for trailing blank line determination.
+        int numRows = 0;
         while (rows.hasNext()) {
             Row row = rows.next();
+            numRows++;
 
+            boolean currentLineIsBlank = false;
             // Create a mapping of the headers to the cell values. There are never date values for the header.
             Map<String, String> dataByHeader = new HashMap<>();
             for (int i = 0; i < processor.getHeaderNames().size(); i++) {
@@ -71,8 +123,28 @@ public final class PoiSpreadsheetParser {
                         extractCellContent(row, headerName, i, processor.isDateColumn(i), processor.isStringColumn(i)));
             }
 
-            // Take the map and turn it into objects and process the data appropriately.
-            processor.processRow(dataByHeader, row.getRowNum());
+            if (processor.getIgnoreTrailingBlankLines() && representsBlankLine(dataByHeader.values())) {
+                allBlankLinesSeen.add(row.getRowNum());
+                currentLineIsBlank = true;
+            }
+
+            // Process the row unless the TableProcessor is configured to ignore blank lines and the current line is
+            // blank.
+            if (!(processor.getIgnoreTrailingBlankLines() && currentLineIsBlank)) {
+                // Take the map and turn it into objects and process the data appropriately.
+                processor.processRow(dataByHeader, row.getRowNum());
+            }
+        }
+
+        // If there were any blank lines that do not represent trailing blank lines, report these to the TableProcessor
+        // implementation.  This only needs to be handled specially if the processor is configured to ignore trailing
+        // blank lines, otherwise the parser would have already been given the blank line via #processRow.
+        if (processor.getIgnoreTrailingBlankLines()) {
+            Collection<Integer> nonTrailingBlankLineIndexes =
+                    findNonTrailingBlankLineIndexes(allBlankLinesSeen, numRows);
+            if (!nonTrailingBlankLineIndexes.isEmpty()) {
+                processor.generateErrorsForNonTrailingBlankLines(nonTrailingBlankLineIndexes);
+            }
         }
     }
 

@@ -20,10 +20,15 @@ import java.util.Set;
 public abstract class TableProcessor implements Serializable {
 
     /**
-     * If a TableProcessor is constructed with TolerateBlankLines.YES, it will silently ignore rows of all-blank cells.
-     * Otherwise rows of all-blank cells will generate errors.
+     * If a TableProcessor is constructed with IgnoreTrailingBlankLines.YES, it will silently ignore trailing rows of
+     * all-blank cells.  Otherwise rows of all-blank cells are sent to the TableProcessor implementation as if they
+     * were ordinary data rows.  If a TableProcessor is configured with IgnoreTrailingBlankLines.YES and non-trailing
+     * blank lines are seen, the row numbers of these lines will be passed to
+     * {@code generateErrorsForNonTrailingBlankLines}.
+     *
+     * @see #generateErrorsForNonTrailingBlankLines(java.util.Collection)
      */
-    protected enum TolerateBlankLines {
+    public enum IgnoreTrailingBlankLines {
         YES,
         NO
     }
@@ -31,28 +36,30 @@ public abstract class TableProcessor implements Serializable {
     private static final long serialVersionUID = 8122298462727182883L;
     public static final String REQUIRED_VALUE_IS_MISSING = "Required value for %s is missing";
 
+    public static final String NON_TRAILING_BLANK_LINE = "Non-trailing blank line seen";
+
     private final List<String> validationMessages = new ArrayList<>();
 
     private final Set<String> warnings = new LinkedHashSet<>();
 
     private final String sheetName;
 
-    private final TolerateBlankLines tolerateBlankLines;
+    private final IgnoreTrailingBlankLines ignoreTrailingBlankLines;
 
     /**
      * Legacy constructor that creates a TableProcessor with TolerateBlankLines.NO, so blank lines in the
      * spreadsheet will generate errors.
      */
     protected TableProcessor(String sheetName) {
-        this(sheetName, TolerateBlankLines.NO);
+        this(sheetName, IgnoreTrailingBlankLines.NO);
     }
 
     /**
-     * Constructor that allows for the explicit specification of blank line tolerance.
+     * Constructor that allows for specification of whether trailing blank lines are ignored.
      */
-    protected TableProcessor(String sheetName, @Nonnull TolerateBlankLines tolerateBlankLines) {
+    protected TableProcessor(String sheetName, @Nonnull IgnoreTrailingBlankLines ignoreTrailingBlankLines) {
         this.sheetName = sheetName;
-        this.tolerateBlankLines = tolerateBlankLines;
+        this.ignoreTrailingBlankLines = ignoreTrailingBlankLines;
     }
 
     /**
@@ -134,14 +141,6 @@ public abstract class TableProcessor implements Serializable {
      */
     private boolean hasRequiredValues(Map<String, String> dataRow, int dataRowIndex) {
 
-        // If this TableProcessor is constructed to tolerate blank lines without error, check for blank lines.
-        // If a blank line is found, return false so as not to process this row, but don't generate an error.
-        if (tolerateBlankLines == TolerateBlankLines.YES) {
-            if (representsBlankLine(dataRow.values())) {
-                return false;
-            }
-        }
-
         boolean hasValue = true;
         // If any of the required values are empty or missing in the data row, return false.
         for (ColumnHeader header : getColumnHeaders()) {
@@ -153,18 +152,6 @@ public abstract class TableProcessor implements Serializable {
         }
 
         return hasValue;
-    }
-
-    /**
-     * If all values in this row are blank return true, otherwise false.
-     */
-    private boolean representsBlankLine(Collection<String> values) {
-        for (String value : values) {
-            if (!StringUtils.isBlank(value)) {
-                return false;
-            }
-        }
-        return true;
     }
 
     protected abstract ColumnHeader[] getColumnHeaders();
@@ -222,7 +209,6 @@ public abstract class TableProcessor implements Serializable {
         return null;
     }
 
-
     /**
      * If your requirements state that a workbook must have a certain amount of worksheets you can override
      * to include that logic.
@@ -233,4 +219,13 @@ public abstract class TableProcessor implements Serializable {
      */
     public void validateNumberOfWorksheets(int actualNumberOfSheets) throws ValidationException {    }
 
+    public boolean getIgnoreTrailingBlankLines() {
+        return ignoreTrailingBlankLines == IgnoreTrailingBlankLines.YES;
+    }
+
+    public void generateErrorsForNonTrailingBlankLines(Collection<Integer> nonTrailingBlankLineIndexes) {
+        for (Integer nonTrailingBlankLineIndex : nonTrailingBlankLineIndexes) {
+            addDataMessage(NON_TRAILING_BLANK_LINE, nonTrailingBlankLineIndex);
+        }
+    }
 }
