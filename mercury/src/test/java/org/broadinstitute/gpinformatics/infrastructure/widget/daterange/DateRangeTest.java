@@ -13,6 +13,7 @@ package org.broadinstitute.gpinformatics.infrastructure.widget.daterange;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.util.Calendar;
@@ -54,41 +55,12 @@ public class DateRangeTest {
         }
     }
 
-    public void testNewVersionSameResultAsOld() {
-        Date[] newDates = DateRange.ThisQuarter.startAndStopDate();
-
-        // This Code is a copy of the original code prior to refactoring, here only to verify new code
-        DateRange.ComputeStartAndStopDate computeStartAndStopDate = new DateRange.ComputeStartAndStopDate() {
-            @Override
-            public void calcDate(Calendar startCalendar, Calendar stop) {
-                int month = startCalendar.get(Calendar.MONTH);
-                if ((month >= Calendar.JANUARY) && (month <= Calendar.MARCH)) {
-                    startCalendar.set(Calendar.MONTH, Calendar.JANUARY);
-                } else if ((month >= Calendar.APRIL) && (month <= Calendar.JUNE)) {
-                    startCalendar.set(Calendar.MONTH, Calendar.APRIL);
-                } else if ((month >= Calendar.JULY) && (month <= Calendar.SEPTEMBER)) {
-                    startCalendar.set(Calendar.MONTH, Calendar.JULY);
-                } else {
-                    startCalendar.set(Calendar.MONTH, Calendar.OCTOBER);
-                }
-                startCalendar.set(Calendar.DAY_OF_MONTH, 1);
-            }
-        };
-
-        Date[] oldStyleStartAndStopDate = computeStartAndStopDate.startAndStopDate();
-
-        assertThat(newDates[0], equalTo(oldStyleStartAndStopDate[0]));
-        // old style didn't calculate end date!
-        // assertThat(newDates[1], equalTo(oldStyleStartAndStopDate[1]));
-    }
-
     public void testFirstDayOfQuarter() throws Exception {
         for (Object[] dates : QUARTER_DATE_RANGES) {
             GregorianCalendar beginningOfQuarter = (GregorianCalendar) dates[0];
             GregorianCalendar endOfQuarter = (GregorianCalendar) dates[1];
 
-            OneQuarterDateRange dateRange = new OneQuarterDateRange(beginningOfQuarter.getTime());
-            validateDateRange(dateRange, beginningOfQuarter.getTime(), endOfQuarter.getTime());
+            validateDateRange(DateRange.ThisQuarter, beginningOfQuarter, beginningOfQuarter, endOfQuarter);
         }
     }
 
@@ -97,25 +69,30 @@ public class DateRangeTest {
             GregorianCalendar beginningOfQuarter = (GregorianCalendar) dates[0];
             GregorianCalendar endOfQuarter = (GregorianCalendar) dates[1];
 
-            OneQuarterDateRange dateRange = new OneQuarterDateRange(endOfQuarter.getTime());
-            validateDateRange(dateRange, beginningOfQuarter.getTime(), endOfQuarter.getTime());
+            validateDateRange(DateRange.ThisQuarter, endOfQuarter, beginningOfQuarter, endOfQuarter);
         }
     }
 
     public void testEqualDatesRanges() {
-        OneQuarterDateRange dateRangeNoArg = new OneQuarterDateRange();
-        Date[] datesNoArg = dateRangeNoArg.startAndStopDate();
-        OneQuarterDateRange dateRangeWithArg = new OneQuarterDateRange(datesNoArg[0]);
-        Date[] datesFromArg = dateRangeWithArg.startAndStopDate();
-        assertThat(datesNoArg[0], equalTo(datesFromArg[0]));
-        assertThat(datesNoArg[1], equalTo(datesFromArg[1]));
+        Calendar start = Calendar.getInstance();
+        Calendar end = Calendar.getInstance();
+        DateRange.ThisQuarter.calcDate(start, end);
+
+        // calcDate above side effects the start date. We are using that for our new start date
+        Calendar start2 = (Calendar) start.clone();
+        Calendar end2 = Calendar.getInstance();
+        DateRange.ThisQuarter.calcDate(start2, end2);
+
+        assertThat(start, equalTo(start2));
+        assertThat(end, equalTo(end2));
     }
 
-    private void validateDateRange(OneQuarterDateRange calculatedDateRange, Date expectedStartDate,
-                                   Date expectedEndDate) {
-        Date[] dates = calculatedDateRange.startAndStopDate();
+    private void validateDateRange(DateRange range, Calendar startAt, Calendar expectedStartDate, Calendar expectedEndDate) {
+        Calendar start = startAt != null ? (Calendar) startAt.clone() : Calendar.getInstance();
+        Calendar end = Calendar.getInstance();
+        range.calcDate(start, end);
 
-        assertThat(dates[0], equalTo(expectedStartDate));
-        assertThat(dates[1], equalTo(expectedEndDate));
+        assertThat(start, equalTo(expectedStartDate));
+        assertThat(end, equalTo(expectedEndDate));
     }
 }

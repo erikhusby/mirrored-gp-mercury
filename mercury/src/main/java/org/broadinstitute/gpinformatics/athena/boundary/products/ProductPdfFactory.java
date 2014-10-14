@@ -31,7 +31,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.OneQuarterDateRange;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRange;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -173,8 +173,7 @@ public class ProductPdfFactory {
     static class PdfHeaderFooter extends PdfPageEventHelper {
         private Date now = new Date();
         private final String formattedDate = formatDate(now);
-        private final OneQuarterDateRange oneQuarter = new OneQuarterDateRange(now);
-        private final String formattedEndOfQuarter=formatDate(oneQuarter.startAndStopDate()[1]);
+        private final String formattedEndOfQuarter = formatDate(DateRange.ThisQuarter.startAndStopDate()[1]);
 
         @Override
         public void onEndPage(PdfWriter writer, Document document) {
