@@ -111,8 +111,8 @@
                     <c:choose>
                         <c:when test="${not empty pagination and pagination.numberPages == 1}">
                             <%-- Results with only one page are sortable in-memory --%>
-                            <th class="sortable ${resultList.resultSortColumnIndex == status.index ?
-                            (resultList.resultSortDirection == 'ASC' ? 'sorted order2' : 'sorted order1' ) : ''}"
+                            <th class="sorting ${resultList.resultSortColumnIndex == status.index ?
+                            (resultList.resultSortDirection == 'ASC' ? 'sorting_asc' : 'sorting_desc' ) : ''}"
                                     >
                                 <stripes:link
                                         href="${action}?search=&entityName=${entityName}&sessionKey=${sessionKey}&columnSetName=${columnSetName}&sortColumnIndex=${status.index}&sortDirection=${resultList.resultSortColumnIndex == status.index && resultList.resultSortDirection == 'ASC' ? 'DSC' : 'ASC'}">
@@ -123,8 +123,8 @@
                             <c:choose>
                                 <c:when test="${not empty resultListHeader.sortPath}">
                                     <%-- Multi-page results are sortable in the database, if the column has a sort path --%>
-                                    <th class="sortable ${resultListHeader.sortPath == param.dbSortPath ?
-                                    (resultList.resultSortDirection == 'ASC' ? 'sorted order2' : 'sorted order1' ) : ''}"
+                                    <th class="sorting ${resultListHeader.sortPath == param.dbSortPath ?
+                                    (resultList.resultSortDirection == 'ASC' ? 'sorting_asc' : 'sorting_desc' ) : ''}"
                                             >
                                         <stripes:link
                                                 href="${action}?search=&entityName=${entityName}&sessionKey=${sessionKey}&columnSetName=${columnSetName}&dbSortPath=${resultListHeader.sortPath}&sortDirection=${resultListHeader.sortPath == param.dbSortPath && resultList.resultSortDirection == 'ASC' ? 'DSC' : 'ASC'}">
@@ -133,7 +133,7 @@
                                 </c:when>
                                 <c:otherwise>
                                     <%-- No dbSortPath, therefore no sort link --%>
-                                    <th class="sortable">
+                                    <th>
                                         ${resultListHeader.viewHeader}
                                     </th>
                                 </c:otherwise>
