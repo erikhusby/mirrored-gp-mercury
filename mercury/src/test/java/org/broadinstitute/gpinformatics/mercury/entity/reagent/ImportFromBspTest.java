@@ -178,8 +178,7 @@ public class ImportFromBspTest extends ContainerTest {
     }
 
     private void createBatch(LabBatchBean labBatchBean) {
-        ClientConfig clientConfig = new DefaultClientConfig();
-        JerseyUtils.acceptAllServerCertificates(clientConfig);
+        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
 
         String response = Client.create(clientConfig).resource(ImportFromSquidTest.TEST_MERCURY_URL + "/rest/labbatch")
                 .type(MediaType.APPLICATION_XML_TYPE)
@@ -190,8 +189,7 @@ public class ImportFromBspTest extends ContainerTest {
     }
 
     public static String recordMetrics(VesselMetricRunBean vesselMetricRunBean) {
-        ClientConfig clientConfig = new DefaultClientConfig();
-        JerseyUtils.acceptAllServerCertificates(clientConfig);
+        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
 
         String response =
                 Client.create(clientConfig).resource(ImportFromSquidTest.TEST_MERCURY_URL + "/rest/vesselmetric")
@@ -204,8 +202,7 @@ public class ImportFromBspTest extends ContainerTest {
     }
 
     private void sendMessage(BettaLIMSMessage bettaLIMSMessage) {
-        ClientConfig clientConfig = new DefaultClientConfig();
-        JerseyUtils.acceptAllServerCertificates(clientConfig);
+        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
 
         String response =
                 Client.create(clientConfig).resource(ImportFromSquidTest.TEST_MERCURY_URL + "/rest/bettalimsmessage")

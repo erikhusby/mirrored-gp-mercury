@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * TODO scottmat fill in javadoc!!!
+ * Utility class to define common rest helper functions assist in most Jersey calls.
  */
 public class JerseyUtils {
     public static WebResource.Builder getWebResource(String squidWSUrl, MediaType mediaType) {
@@ -92,5 +92,11 @@ public class JerseyUtils {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static ClientConfig getClientConfigAcceptCertificate() {
+        ClientConfig clientConfig = new DefaultClientConfig();
+        acceptAllServerCertificates(clientConfig);
+        return clientConfig;
     }
 }

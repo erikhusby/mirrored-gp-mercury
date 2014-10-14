@@ -64,9 +64,8 @@ public class SolexaRunResourceLiveTest extends Arquillian {
             readStructureData.getLaneStructures().add(laneReadStructure);
         }
 
-        ClientConfig clientConfig = new DefaultClientConfig();
+        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
         clientConfig.getClasses().add(JacksonJsonProvider.class);
-        JerseyUtils.acceptAllServerCertificates(clientConfig);
 
         ReadStructureRequest returnedReadStructureRequest = Client.create(clientConfig).resource(wsUrl).
                 type(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).entity(readStructureData).

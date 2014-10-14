@@ -41,8 +41,7 @@ public class DriedBloodSpotDbTest extends ContainerTest {
         }
         String batchId = "BP-" + timestamp;
 
-        ClientConfig clientConfig = new DefaultClientConfig();
-        JerseyUtils.acceptAllServerCertificates(clientConfig);
+        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
 
         Client client = Client.create(clientConfig);
         client.addFilter(new LoggingFilter(System.out));

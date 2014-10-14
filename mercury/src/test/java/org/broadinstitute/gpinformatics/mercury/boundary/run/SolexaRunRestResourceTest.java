@@ -224,8 +224,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
 
         Assert.assertTrue(result);
 
-        ClientConfig clientConfig = new DefaultClientConfig();
-        JerseyUtils.acceptAllServerCertificates(clientConfig);
+        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
 
         Response response = Client.create(clientConfig).resource(appConfig.getUrl() + "rest/solexarun")
                 .type(MediaType.APPLICATION_XML_TYPE)
@@ -255,8 +254,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
         Assert.assertTrue(result);
 
 
-        ClientConfig clientConfig = new DefaultClientConfig();
-        JerseyUtils.acceptAllServerCertificates(clientConfig);
+        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
 
         Response response = Client.create(clientConfig).resource(appConfig.getUrl() + "rest/solexarun")
                 .type(MediaType.APPLICATION_XML_TYPE)
@@ -295,9 +293,8 @@ public class SolexaRunRestResourceTest extends Arquillian {
         readStructureData.setActualReadStructure("76T8B8B76T");
 
 
-        ClientConfig clientConfig = new DefaultClientConfig();
+        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
         clientConfig.getClasses().add(JacksonJsonProvider.class);
-        JerseyUtils.acceptAllServerCertificates(clientConfig);
 
         Response readStructureResult =
                 Client.create(clientConfig).resource(wsUrl)
@@ -333,9 +330,8 @@ public class SolexaRunRestResourceTest extends Arquillian {
             readStructureData.getLaneStructures().add(laneReadStructure);
         }
 
-        ClientConfig clientConfig = new DefaultClientConfig();
+        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
         clientConfig.getClasses().add(JacksonJsonProvider.class);
-        JerseyUtils.acceptAllServerCertificates(clientConfig);
 
         ReadStructureRequest returnedReadStructureRequest = Client.create(clientConfig).resource(wsUrl).
                 type(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).entity(readStructureData).

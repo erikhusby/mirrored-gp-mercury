@@ -85,8 +85,7 @@ public class BadgesProductionTest extends Arquillian {
 
         BufferedReader badgesReader = new BufferedReader(new InputStreamReader(badgesList));
 
-        ClientConfig clientConfig = new DefaultClientConfig();
-        JerseyUtils.acceptAllServerCertificates(clientConfig);
+        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
 
         final WebResource badgeResource =
                 Client.create(clientConfig).resource(appConfig.getUrl() + "rest/limsQuery/fetchUserIdForBadgeId");

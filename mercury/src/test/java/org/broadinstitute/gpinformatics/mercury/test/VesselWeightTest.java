@@ -88,8 +88,7 @@ public class VesselWeightTest extends Arquillian {
         // Verify that BSP Tare Weight annotation is set
         // http://bsp/ws/bsp/sample/gettareweight?manufacturer_barcodes=1082117278
         String getTareWeightUrl = bspConfig.getWSUrl("sample/gettareweight");
-        ClientConfig clientConfig = new DefaultClientConfig();
-        JerseyUtils.acceptAllServerCertificates(clientConfig);
+        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
 
         Client client = Client.create(clientConfig);
         client.addFilter(new HTTPBasicAuthFilter(bspConfig.getLogin(), bspConfig.getPassword()));

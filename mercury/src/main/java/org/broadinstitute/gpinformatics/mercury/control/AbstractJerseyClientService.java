@@ -92,7 +92,7 @@ public abstract class AbstractJerseyClientService implements Serializable {
     protected Client getJerseyClient() {
         if (jerseyClient == null) {
             DefaultClientConfig clientConfig = new DefaultClientConfig();
-            if(ApplicationInstance.CRSP.isCurrent() && deployment != Deployment.PROD) {
+            if(deployment != Deployment.PROD) {
                 JerseyUtils.acceptAllServerCertificates(clientConfig);
             }
             customizeConfig(clientConfig);

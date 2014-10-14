@@ -126,10 +126,9 @@ public class IlluminaRunResourceTest extends Arquillian {
             throws Exception {
         String url = baseUrl.toExternalForm() + WEBSERVICE_URL;
 
-        ClientConfig clientConfig = new DefaultClientConfig();
+        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
         clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
         clientConfig.getProperties().put(ClientConfig.PROPERTY_FOLLOW_REDIRECTS, Boolean.TRUE);
-        JerseyUtils.acceptAllServerCertificates(clientConfig);
 
         ZimsIlluminaRun run = Client.create(clientConfig).resource(url)
                 .accept(MediaType.APPLICATION_JSON).get(ZimsIlluminaRun.class);
@@ -153,10 +152,9 @@ public class IlluminaRunResourceTest extends Arquillian {
             throws Exception {
         String url = baseUrl.toExternalForm() + WEBSERVICE_URL;
 
-        DefaultClientConfig clientConfig = new DefaultClientConfig();
+        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
         clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
         clientConfig.getProperties().put(ClientConfig.PROPERTY_FOLLOW_REDIRECTS, Boolean.TRUE);
-        JerseyUtils.acceptAllServerCertificates(clientConfig);
 
         ZimsIlluminaRun run = Client.create(clientConfig).resource(url)
                 .queryParam("runName", RUN_NAME)
@@ -234,9 +232,8 @@ public class IlluminaRunResourceTest extends Arquillian {
     public void testZimsMercury() throws Exception {
         String url = ImportFromSquidTest.TEST_MERCURY_URL + "/rest/IlluminaRun/queryMercury";
 
-        ClientConfig clientConfig = new DefaultClientConfig();
+        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
         clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
-        JerseyUtils.acceptAllServerCertificates(clientConfig);
 
         ZimsIlluminaRun run = Client.create(clientConfig).resource(url)
                 .queryParam("runName", "TestRun03261516351364325439075.txt")

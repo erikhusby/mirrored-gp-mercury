@@ -3,12 +3,10 @@ package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
-import com.sun.jersey.api.client.config.DefaultClientConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactoryTest;
-import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.jboss.aerogear.arquillian.test.smarturl.SchemeName;
 import org.jboss.aerogear.arquillian.test.smarturl.UriScheme;
 import org.jboss.arquillian.container.test.api.RunAsClient;
@@ -37,8 +35,7 @@ public class SampleReceiptResourceDbTest extends ContainerTest {
         SampleReceiptBean sampleReceiptBean = LabVesselFactoryTest.buildTubes(dateFormat.format(new Date()));
         // POST to the resource
 
-        ClientConfig clientConfig = new DefaultClientConfig();
-        JerseyUtils.acceptAllServerCertificates(clientConfig);
+        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
 
         WebResource resource = Client.create(clientConfig).resource(baseUrl.toExternalForm() + "rest/samplereceipt");
         String response = resource.type(MediaType.APPLICATION_XML_TYPE)
@@ -52,4 +49,5 @@ public class SampleReceiptResourceDbTest extends ContainerTest {
         Assert.assertEquals(sampleReceiptBeanGet.getParentVesselBeans().size(),
                 sampleReceiptBean.getParentVesselBeans().size(), "Wrong number of tubes");
     }
+
 }

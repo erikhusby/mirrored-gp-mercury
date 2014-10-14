@@ -97,10 +97,9 @@ public class IlluminaRunResourceLiveTest extends Arquillian {
 
     private static WebResource.Builder getBuilder(URL baseUrl, String runName) {
         String url = baseUrl.toExternalForm() + IlluminaRunResourceTest.WEBSERVICE_URL;
-        DefaultClientConfig clientConfig = new DefaultClientConfig();
+        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
         clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
         clientConfig.getProperties().put(ClientConfig.PROPERTY_FOLLOW_REDIRECTS, Boolean.TRUE);
-        JerseyUtils.acceptAllServerCertificates(clientConfig);
         return Client.create(clientConfig).resource(url)
                 .queryParam("runName", runName)
                 .accept(MediaType.APPLICATION_JSON);

@@ -183,8 +183,7 @@ public class ExomeExpressIntegrationTest {
     }
 
     private void sendMessage(URL baseUrl, BettaLIMSMessage bean) {
-        ClientConfig clientConfig = new DefaultClientConfig();
-        JerseyUtils.acceptAllServerCertificates(clientConfig);
+        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
 
         Client.create(clientConfig).resource(baseUrl + "/rest/bettalimsmessage")
                 .type(MediaType.APPLICATION_XML_TYPE)

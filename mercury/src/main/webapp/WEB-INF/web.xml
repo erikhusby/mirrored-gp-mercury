@@ -97,7 +97,7 @@
     <security-constraint>
         <!--
            This constraint is meant to represent all traffic coming into the Mercury application.  We define this to
-           not only assist us in retrieving a principle (User login info) during authentication, but also to assist
+           not only assist us in retrieving a principal (User login info) during authentication, but also to assist
            the configuration of a server side redirect for HTTPS.  The User data Constraint is necessary for JBOSS
            to successfully redirect a non secure request to a secure request and have the application retrieve it.
         -->

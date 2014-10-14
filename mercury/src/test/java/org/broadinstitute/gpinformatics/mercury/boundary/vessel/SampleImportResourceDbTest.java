@@ -49,8 +49,7 @@ public class SampleImportResourceDbTest extends ContainerTest {
         SampleImportBean sampleImportBeanPost = new SampleImportBean("BSP", "EX-" + suffix, now,
                 parentVesselBeans, "jowalsh");
 
-        ClientConfig clientConfig = new DefaultClientConfig();
-        JerseyUtils.acceptAllServerCertificates(clientConfig);
+        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
 
         // POST to the resource
         WebResource resource = Client.create(clientConfig).resource(baseUrl.toExternalForm() + "rest/sampleimport");
