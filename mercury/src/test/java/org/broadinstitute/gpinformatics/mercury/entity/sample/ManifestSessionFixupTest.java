@@ -16,7 +16,7 @@ import java.util.List;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
 /**
- * TODO scottmat fill in javadoc!!!
+ * Fixup test to assist in all deviations Manifest session related
  */
 @Test(groups = TestGroups.FIXUP)
 public class ManifestSessionFixupTest extends Arquillian {
@@ -35,7 +35,7 @@ public class ManifestSessionFixupTest extends Arquillian {
     @Test(groups = TestGroups.FIXUP, enabled = false)
     public void fixupGPLIM3031CleanLingeringSessions() {
 
-        userBean.loginTestUser();
+        userBean.loginOSUser();
 
         List<ManifestSession> allOpenSessions = manifestSessionDao.findOpenSessions();
 

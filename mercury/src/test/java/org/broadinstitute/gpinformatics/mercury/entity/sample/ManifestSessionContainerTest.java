@@ -18,7 +18,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
-import org.hamcrest.CoreMatchers;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -205,49 +204,32 @@ public class ManifestSessionContainerTest extends Arquillian {
         }
     }
 
+    /**
+     * Previously this test would leave some sessions, and the records in them, in an uncompleted state.  This affects
+     * the front end on the mercury dev instance by building a lfong list of "to be worked on" sessions.  This clean up
+     * will ensure that the to be worked on session list does not grow.
+     * @throws Exception
+     */
     @AfterMethod
     public void tearDown() throws Exception {
         if(userBean == null) {
             return;
         }
 
-        if (manifestSessionI != null && manifestSessionI.getManifestSessionId() != null) {
-            manifestSessionI = manifestSessionDao.find(manifestSessionI.getManifestSessionId());
-            manifestSessionI.setStatus(ManifestSession.SessionStatus.COMPLETED);
-            for (ManifestRecord manifestRecord : manifestSessionI.getNonQuarantinedRecords()) {
-                manifestRecord.setStatus(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
-            }
-            manifestSessionDao.persist(manifestSessionI);
-            manifestSessionDao.flush();
+        for(ManifestSession sessionToCleanup :
+                Arrays.asList(manifestSessionI, manifestSessionII, uploadedSession, uploadedSession2)) {
+            cleanupSession(sessionToCleanup);
         }
 
-        if (manifestSessionII != null && manifestSessionII.getManifestSessionId() != null) {
-            manifestSessionII = manifestSessionDao.find(manifestSessionII.getManifestSessionId());
-            manifestSessionII.setStatus(ManifestSession.SessionStatus.COMPLETED);
-            for (ManifestRecord manifestRecord : manifestSessionII.getNonQuarantinedRecords()) {
-                manifestRecord.setStatus(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
-            }
-            manifestSessionDao.persist(manifestSessionII);
-            manifestSessionDao.flush();
-        }
+    }
 
-        if (uploadedSession != null && uploadedSession.getManifestSessionId() != null) {
-            uploadedSession = manifestSessionDao.find(uploadedSession.getManifestSessionId());
-            uploadedSession.setStatus(ManifestSession.SessionStatus.COMPLETED);
-            for (ManifestRecord manifestRecord : uploadedSession.getNonQuarantinedRecords()) {
+    private void cleanupSession(ManifestSession sessionToCleanup) {
+        if (sessionToCleanup != null && sessionToCleanup.getManifestSessionId() != null) {
+            sessionToCleanup = manifestSessionDao.find(sessionToCleanup.getManifestSessionId());
+            sessionToCleanup.setStatus(ManifestSession.SessionStatus.COMPLETED);
+            for (ManifestRecord manifestRecord : sessionToCleanup.getNonQuarantinedRecords()) {
                 manifestRecord.setStatus(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
             }
-            manifestSessionDao.persist(uploadedSession);
-            manifestSessionDao.flush();
-        }
-
-        if (uploadedSession2 != null && uploadedSession2.getManifestSessionId() != null) {
-            uploadedSession2 = manifestSessionDao.find(uploadedSession2.getManifestSessionId());
-            uploadedSession2.setStatus(ManifestSession.SessionStatus.COMPLETED);
-            for (ManifestRecord manifestRecord : uploadedSession2.getNonQuarantinedRecords()) {
-                manifestRecord.setStatus(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
-            }
-            manifestSessionDao.persist(uploadedSession2);
             manifestSessionDao.flush();
         }
     }
