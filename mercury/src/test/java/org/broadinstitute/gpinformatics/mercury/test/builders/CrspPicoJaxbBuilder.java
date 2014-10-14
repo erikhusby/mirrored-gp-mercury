@@ -44,8 +44,6 @@ public class CrspPicoJaxbBuilder {
     }
 
     public CrspPicoJaxbBuilder invoke() {
-        // todo jmt why don't InitialTare, WeightMeasurement and VolumeAddition appear in User Defined Search?
-
         // Need to test a variety of next steps: FP Daughter, Shearing Daughter, Exclude?
         // Set Pico upload values round-robin to achieve desired outcomes.
         // Re-array based on next steps.
@@ -77,12 +75,10 @@ public class CrspPicoJaxbBuilder {
                 tubeBarcodes);
         i = 1;
         for (ReceptacleType receptacleType : volumeAdditionJaxb.getPositionMap().getReceptacle()) {
-            // todo jmt include only tubes that are changed?  Why are they excluded?  Weren't they in the rack?
             if (i % 2 == 0) {
                 BigDecimal volume = new BigDecimal("65.0");
                 mapBarcodeToVolume.put(receptacleType.getBarcode(), volume);
                 receptacleType.setVolume(volume);
-                receptacleType.setConcentration(new BigDecimal("0.8")); // todo jmt how does the Janus know the concentration?
             }
         }
         bettaLimsMessageTestFactory.addMessage(messageList, volumeAdditionJaxb);
@@ -96,7 +92,6 @@ public class CrspPicoJaxbBuilder {
             volume = volume.subtract(new BigDecimal("2"));
             mapBarcodeToVolume.put(receptacleType.getBarcode(), volume);
             receptacleType.setVolume(volume);
-//            receptacleType.setConcentration(); // todo jmt conc only on VolumeAddition tubes?  Why conc at all?
         }
         String initialPico2 = "22" + testPrefix;
         initialPicoTransfer2 = bettaLimsMessageTestFactory.buildRackToPlate("PicoTransfer", rackBarcode, tubeBarcodes,
@@ -118,13 +113,14 @@ public class CrspPicoJaxbBuilder {
                 "FingerprintingAliquot", rackBarcode, fpSourceTubes, fpRackBarcode, fpTargetTubes);
         for (ReceptacleType receptacleType : fingerprintingAliquotJaxb.getSourcePositionMap().getReceptacle()) {
             BigDecimal volume = mapBarcodeToVolume.get(receptacleType.getBarcode());
-            volume = volume.subtract(new BigDecimal("12")); // todo jmt is this really 12?
+            volume = volume.subtract(new BigDecimal("12"));
             mapBarcodeToVolume.put(receptacleType.getBarcode(), volume);
             receptacleType.setVolume(volume);
-//            receptacleType.setConcentration(); todo jmt why?
         }
         for (ReceptacleType receptacleType : fingerprintingAliquotJaxb.getPositionMap().getReceptacle()) {
-            receptacleType.setVolume(new BigDecimal("40"));
+            BigDecimal volume = new BigDecimal("40");
+            mapBarcodeToVolume.put(receptacleType.getBarcode(), volume);
+            receptacleType.setVolume(volume);
             receptacleType.setConcentration(new BigDecimal("20"));
         }
         bettaLimsMessageTestFactory.addMessage(messageList, fingerprintingAliquotJaxb);
@@ -155,7 +151,6 @@ public class CrspPicoJaxbBuilder {
             volume = volume.subtract(new BigDecimal("46"));
             mapBarcodeToVolume.put(receptacleType.getBarcode(), volume);
             receptacleType.setVolume(volume);
-//            receptacleType.setConcentration(); todo jmt why?
         }
         for (ReceptacleType receptacleType : shearingAliquot.getPositionMap().getReceptacle()) {
             receptacleType.setVolume(new BigDecimal("60"));

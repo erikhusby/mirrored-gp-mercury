@@ -28,6 +28,8 @@ public class CrspPicoEntityBuilder {
     private LabEvent weightMeasurementEntity;
     private LabEvent volumeAdditionEntity;
     private LabEvent fingerprintingAliquotEntity;
+    private LabEvent fingerprintingPlateSetupEntity;
+    private LabEvent shearingAliquotEntity;
 
     public CrspPicoEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
             LabEventFactory labEventFactory, LabEventHandler labEventHandler, String testPrefix, String rackBarcode,
@@ -45,33 +47,55 @@ public class CrspPicoEntityBuilder {
         CrspPicoJaxbBuilder crspPicoJaxbBuilder = new CrspPicoJaxbBuilder(bettaLimsMessageTestFactory, testPrefix,
                 rackBarcode, tubeBarcodes).invoke();
 
+        // InitialTare
         initialTareEntity = labEventFactory.buildFromBettaLimsRackEventDbFree(crspPicoJaxbBuilder.getInitialTareJaxb(),
                 null, mapBarcodeToTube, null);
         labEventHandler.processEvent(initialTareEntity);
-        TubeFormation initialRack = (TubeFormation) initialTareEntity.getTargetLabVessels().iterator().next();
+        TubeFormation initialRack = (TubeFormation) initialTareEntity.getInPlaceLabVessel();
 
+        // WeightMeasurement
         weightMeasurementEntity = labEventFactory.buildFromBettaLimsRackEventDbFree(
                 crspPicoJaxbBuilder.getWeightMeasurementJaxb(), initialRack, mapBarcodeToTube, null);
         labEventHandler.processEvent(weightMeasurementEntity);
 
+        // VolumeAddition
         volumeAdditionEntity = labEventFactory.buildFromBettaLimsRackEventDbFree(
                 crspPicoJaxbBuilder.getVolumeAdditionJaxb(), initialRack, mapBarcodeToTube, null);
         labEventHandler.processEvent(volumeAdditionEntity);
 
+        // Initial PicoTransfer
         crspPicoJaxbBuilder.getInitialPicoTransfer1();
         crspPicoJaxbBuilder.getInitialPicoTransfer2();
 
         crspPicoJaxbBuilder.getInitialPicoBufferAddition1();
         crspPicoJaxbBuilder.getInitialPicoBufferAddition2();
 
+        // FingerprintingAliquot
         Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
-//        mapBarcodeToVessel.put();
+        // todo jmt make this more selective
+        mapBarcodeToVessel.putAll(mapBarcodeToTube);
         fingerprintingAliquotEntity = labEventFactory.buildFromBettaLims(
                 crspPicoJaxbBuilder.getFingerprintingAliquotJaxb(), mapBarcodeToVessel);
 
-        crspPicoJaxbBuilder.getFingerprintingPlateSetup();
+        // FingerprintingPlateSetup
+        mapBarcodeToVessel.clear();
+        TubeFormation fpAliquotSourceTf =
+                (TubeFormation) fingerprintingAliquotEntity.getSourceLabVessels().iterator().next();
+        TubeFormation fpAliquotTargetTf =
+                (TubeFormation) fingerprintingAliquotEntity.getTargetLabVessels().iterator().next();
+        for (BarcodedTube barcodedTube : fpAliquotTargetTf.getContainerRole().getContainedVessels()) {
+            mapBarcodeToVessel.put(barcodedTube.getLabel(), barcodedTube);
+        }
+        // todo jmt make this more selective
+        mapBarcodeToVessel.putAll(mapBarcodeToTube);
 
-        crspPicoJaxbBuilder.getShearingAliquot();
+        fingerprintingPlateSetupEntity = labEventFactory.buildFromBettaLims(
+                crspPicoJaxbBuilder.getFingerprintingPlateSetup(), mapBarcodeToVessel);
+
+        // ShearingAliquot
+//        mapBarcodeToVessel.clear();
+        shearingAliquotEntity = labEventFactory.buildFromBettaLims(crspPicoJaxbBuilder.getShearingAliquot(),
+                mapBarcodeToVessel);
 
         return this;
     }

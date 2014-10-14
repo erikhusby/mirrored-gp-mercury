@@ -1333,6 +1333,8 @@ public class LabEventTest extends BaseEventTest {
 
         CrspPicoEntityBuilder crspPicoEntityBuilder = new CrspPicoEntityBuilder(getBettaLimsMessageTestFactory(),
                 getLabEventFactory(), getLabEventHandler(), "", "CRSP", mapBarcodeToTube).invoke();
+
+        runTransferVisualizer(mapBarcodeToTube.values().iterator().next());
     }
 
     /**
