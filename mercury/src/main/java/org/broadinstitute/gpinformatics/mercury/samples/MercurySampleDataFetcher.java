@@ -29,7 +29,7 @@ public class MercurySampleDataFetcher {
     /**
      * Fetch the sample data for one MercurySample.
      *
-     * @return MercurytSampleData for the input sample.
+     * @return MercurySampleData for the input sample.
      */
     public MercurySampleData fetchSampleData(@Nonnull MercurySample sample) {
         return fetchSampleData(Collections.singleton(sample)).get(sample.getSampleKey());
@@ -48,7 +48,7 @@ public class MercurySampleDataFetcher {
      * @return stockId for the MercurySample, which is the sampleKey()
      */
     public String getStockIdForAliquotId(@Nonnull MercurySample mercurySample) {
-        return mercurySample.getSampleKey();
+        return fetchSampleData(mercurySample).getStockSample();
     }
 
     /**

@@ -7,10 +7,10 @@ import javax.persistence.*;
 import java.util.Date;
 
 /**
- * Some chemistry bits applied to Goop to help transform it into a sequenceable state.
+ * Some chemistry bits applied to a Sample to help transform it into a sequenceable state.
  * 
- * Basic rule of thumb: Things that you want to sequence are Goop.  Things that the lab consumes from other
- * vendors (IDT, Fluidigm, Illumina, etc.) are {@link Reagent}s.  Oligos like primers and baits are not Goop.
+ * Basic rule of thumb: Things that you want to sequence are Samples.  Things that the lab consumes from other
+ * vendors (IDT, Fluidigm, Illumina, etc.) are {@link Reagent}s.  Oligos like primers and baits are not Samples.
  * Although they contain DNA, they are considered {@link Reagent}s.
  */
 @Entity

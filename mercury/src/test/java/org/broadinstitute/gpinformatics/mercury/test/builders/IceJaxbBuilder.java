@@ -9,7 +9,9 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePl
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -137,8 +139,12 @@ public class IceJaxbBuilder {
         bettaLimsMessageTestFactory.addMessage(messageList, ice1stCapture);
 
         // Ice2ndHybridization
+        List<BettaLimsMessageTestFactory.ReagentDto> reagentDtos = Arrays.asList(
+                new BettaLimsMessageTestFactory.ReagentDto("CT3", "0009763452", new Date()),
+                new BettaLimsMessageTestFactory.ReagentDto("Rapid Capture Kit bait", "0009773452", new Date()),
+                new BettaLimsMessageTestFactory.ReagentDto("Rapid Capture Kit Resuspension Buffer", "0009783452", new Date()));
         ice2ndHybridization = bettaLimsMessageTestFactory.buildPlateEvent("Ice2ndHybridization",
-                firstCapturePlateBarcode);
+                firstCapturePlateBarcode, reagentDtos);
         bettaLimsMessageTestFactory.addMessage(messageList, ice2ndHybridization);
 
         ice2ndBaitAddition = bettaLimsMessageTestFactory
@@ -159,8 +165,11 @@ public class IceJaxbBuilder {
         bettaLimsMessageTestFactory.addMessage(messageList, iceCatchCleanup);
 
         // IceCatchEnrichmentSetup
+        List<BettaLimsMessageTestFactory.ReagentDto> reagentDtos1 = Arrays.asList(
+                new BettaLimsMessageTestFactory.ReagentDto("Dual Index Primers Lot", "0009764452", new Date()),
+                new BettaLimsMessageTestFactory.ReagentDto("Rapid Capture Enrichment Amp Lot Barcode", "0009765452", new Date()));
         iceCatchEnrichmentSetup = bettaLimsMessageTestFactory.buildPlateEvent("IceCatchEnrichmentSetup",
-                catchCleanupPlateBarcode);
+                catchCleanupPlateBarcode, reagentDtos1);
         bettaLimsMessageTestFactory.addMessage(messageList, iceCatchEnrichmentSetup);
 
         // IceCatchEnrichmentCleanup
