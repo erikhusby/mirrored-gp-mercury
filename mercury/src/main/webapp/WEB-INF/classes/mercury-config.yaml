@@ -35,7 +35,7 @@ app:
 
     PROD:
       host:     mercury.broadinstitute.org
-      port:     8443
+      port:     443
       jmsPort:  5445
       workflowValidationEmail: mercury-dev@broadinstitute.org
       #limsworkflowvalidation@broadinstitute.org
