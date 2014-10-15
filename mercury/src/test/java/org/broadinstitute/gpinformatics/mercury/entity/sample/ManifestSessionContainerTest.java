@@ -798,21 +798,36 @@ public class ManifestSessionContainerTest extends Arquillian {
         manifestSessionDao.clear();
         ManifestSession retrievedSession = manifestSessionDao.find(manifestSessionI.getManifestSessionId());
 
-        int totalRecords = retrievedSession.getRecords().size();
+        int numRecords = retrievedSession.getRecords().size();
+        if (numRecords < 2) {
+            throw new RuntimeException("At least 2 records required to test quarantine logic");
+        }
 
-        while(counter <retrievedSession.getRecords().size()) {
+        int indexOfRecordToQuarantine = numRecords / 2;
+        int transferredTubeCounter = 0;
 
-            assertThat(retrievedSession.getNumberOfTubesTransferred(), is(equalTo(counter)));
+        while (counter < numRecords) {
 
-            retrievedSession.getRecords().get(counter).setStatus(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
+            assertThat(retrievedSession.getNumberOfTubesTransferred(), is(equalTo(transferredTubeCounter)));
+
+            ManifestRecord manifestRecord = retrievedSession.getRecords().get(counter);
+
+            if (counter == indexOfRecordToQuarantine) {
+                retrievedSession.addManifestEvent(new ManifestEvent(ManifestEvent.Severity.QUARANTINED,
+                        "No good reason, just for testing", manifestRecord));
+            } else {
+                manifestRecord.setStatus(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
+                transferredTubeCounter++;
+            }
 
             manifestSessionDao.flush();
             manifestSessionDao.clear();
             retrievedSession = manifestSessionDao.find(retrievedSession.getManifestSessionId());
-            retrievedSession.getRecords();
             counter++;
         }
-        assertThat(retrievedSession.getNumberOfTubesTransferred(), is(equalTo(counter)));
+        assertThat(retrievedSession.getNumberOfTubesTransferred(), is(equalTo(transferredTubeCounter)));
+        // One record should have been quarantined.
+        assertThat(counter, is(equalTo(transferredTubeCounter + 1)));
     }
 
     /**
