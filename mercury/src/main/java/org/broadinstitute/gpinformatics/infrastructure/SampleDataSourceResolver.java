@@ -34,7 +34,7 @@ public class SampleDataSourceResolver {
 
     @DaoFree
     public Map<String, MercurySample.MetadataSource> resolveSampleDataSources(Collection<String> sampleNames,
-                                                                               Map<String, List<MercurySample>> allMercurySamples) {
+                Map<String, List<MercurySample>> allMercurySamples) {
         Map<String, MercurySample.MetadataSource> results = new HashMap<>();
 
         for (String sampleName : sampleNames) {
