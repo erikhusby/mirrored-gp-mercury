@@ -266,6 +266,7 @@ public class SystemRouterTest extends BaseEventTest {
     private static SampleData makeBspSampleData(String collaboratorSampleId) {
         Map<BSPSampleSearchColumn, String> dataMap = new EnumMap<>(BSPSampleSearchColumn.class);
         dataMap.put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, collaboratorSampleId);
+        dataMap.put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, collaboratorSampleId);
         return new BspSampleData(dataMap);
     }
 

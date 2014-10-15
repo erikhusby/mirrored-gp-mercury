@@ -27,6 +27,7 @@ import java.util.List;
 
 public class LibraryBean {
     public static final String NO_PDO_SAMPLE = null;
+    public static final String CRSP_SOMATIC_TEST_TYPE = "Somatic";
 
     @JsonProperty("metadataSource")
     private String metadataSource;
@@ -189,6 +190,14 @@ public class LibraryBean {
 
     private String stockSample;
 
+    @JsonProperty("testType")
+    private String testType;
+
+    @JsonProperty("buickVisit")
+    private String buickVisit;  // buick-specific field, not generally applicable to future crsp work
+
+    @JsonProperty("buickCollectionDate")
+    private String buickCollectionDate; // buick specific field, not generally applicable to future crsp work
 
     public LibraryBean() {}
 
@@ -622,4 +631,28 @@ public class LibraryBean {
             return new CompareToBuilder().append(libraryBean1.getSampleId(), libraryBean2.getSampleId()).toComparison();
         }
     };
+
+    public void setTestType(String testType) {
+        this.testType = testType;
+    }
+
+    public String getTestType() {
+        return testType;
+    }
+
+    public void setBuickVisit(String buickVisit) {
+        this.buickVisit = buickVisit;
+    }
+
+    public String getBuickVisit() {
+        return buickVisit;
+    }
+
+    public void setBuickCollectionDate(String buickCollectionDate) {
+        this.buickCollectionDate = buickCollectionDate;
+    }
+
+    public String getBuickCollectionDate() {
+        return buickCollectionDate;
+    }
 }

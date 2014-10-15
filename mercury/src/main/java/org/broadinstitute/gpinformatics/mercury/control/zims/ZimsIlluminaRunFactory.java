@@ -17,6 +17,8 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
@@ -54,6 +56,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.text.Format;
@@ -86,7 +89,7 @@ public class ZimsIlluminaRunFactory {
     private SequencingTemplateFactory sequencingTemplateFactory;
     private ProductOrderDao productOrderDao;
     private ResearchProjectDao researchProjectDao;
-    private CrspPipelineUtils crspPipelineUtils = new CrspPipelineUtils();
+    private final CrspPipelineUtils crspPipelineUtils;
 
     private static final Log log = LogFactory.getLog(ZimsIlluminaRunFactory.class);
 
@@ -94,12 +97,14 @@ public class ZimsIlluminaRunFactory {
     public ZimsIlluminaRunFactory(SampleDataFetcher sampleDataFetcher,
                                   ControlDao controlDao, SequencingTemplateFactory sequencingTemplateFactory,
                                   ProductOrderDao productOrderDao,
-                                  ResearchProjectDao researchProjectDao) {
+                                  ResearchProjectDao researchProjectDao,
+                                  CrspPipelineUtils crspPipelineUtils) {
         this.sampleDataFetcher = sampleDataFetcher;
         this.controlDao = controlDao;
         this.sequencingTemplateFactory = sequencingTemplateFactory;
         this.productOrderDao = productOrderDao;
         this.researchProjectDao = researchProjectDao;
+        this.crspPipelineUtils = crspPipelineUtils;
     }
 
     public ZimsIlluminaRun makeZimsIlluminaRun(IlluminaSequencingRun illuminaRun) {
@@ -179,7 +184,7 @@ public class ZimsIlluminaRunFactory {
         List<Control> activeControls = controlDao.findAllActive();
         Map<String, Control> mapNameToControl = new HashMap<>();
         for (Control activeControl : activeControls) {
-            mapNameToControl.put(activeControl.getCollaboratorSampleId(), activeControl);
+            mapNameToControl.put(activeControl.getCollaboratorParticipantId(), activeControl);
         }
 
         Format dateFormat = FastDateFormat.getInstance(ZimsIlluminaRun.DATE_FORMAT);
@@ -351,7 +356,7 @@ public class ZimsIlluminaRunFactory {
             MolecularIndexingScheme indexingSchemeEntity, List<String> catNames, String labWorkflow,
             edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme indexingSchemeDto,
             Map<String, Control> mapNameToControl, String pdoSampleName,
-            boolean isCrspLane, ResearchProject CrspPositiveControlsProject,
+            boolean isCrspLane, ResearchProject crspPositiveControlsProject,
             String metadataSourceForPipelineAPI) {
 
         Format dateFormat = FastDateFormat.getInstance(ZimsIlluminaRun.DATE_FORMAT);
@@ -376,7 +381,7 @@ public class ZimsIlluminaRunFactory {
         Boolean doAggregation = Boolean.TRUE;
 
         if (sampleData != null && productOrder == null) {
-            Control control = mapNameToControl.get(sampleData.getCollaboratorsSampleName());
+            Control control = mapNameToControl.get(sampleData.getCollaboratorParticipantId());
             if (control != null) {
                 switch (control.getType()) {
                 case POSITIVE:
@@ -433,7 +438,7 @@ public class ZimsIlluminaRunFactory {
                 positiveControl, negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation,
                 catNames, productOrder, lcSet, sampleData, labWorkflow, libraryCreationDate, pdoSampleName, metadataSourceForPipelineAPI);
         if (isCrspLane) {
-            crspPipelineUtils.setFieldsForCrsp(libraryBean, sampleData, CrspPositiveControlsProject, lcSet);
+            crspPipelineUtils.setFieldsForCrsp(libraryBean, sampleData, crspPositiveControlsProject, lcSet);
         }
         return libraryBean;        
     }

@@ -26,7 +26,7 @@ public class LabEventMetadata {
 
     public enum LabEventMetadataType {
         DilutionFactor("DilutionFactor"),
-        Volume("Volume");
+        Volume("Volume");  // volume is used for plate transfer because bettalims message doesn't permit well volumes.
 
         private static final Map<String, LabEventMetadataType> MAP_NAME_TO_METADATA_TYPE =
                 new HashMap<>(LabEventMetadataType.values().length);

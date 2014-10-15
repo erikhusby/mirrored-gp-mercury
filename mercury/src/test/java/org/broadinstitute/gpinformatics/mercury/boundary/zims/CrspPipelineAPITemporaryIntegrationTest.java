@@ -47,7 +47,6 @@ public class CrspPipelineAPITemporaryIntegrationTest extends Arquillian {
 
     private static final String TEST_LANE = "2";
 
-    private CrspPipelineUtils crspPipelineAPIUtils = new CrspPipelineUtils();
 
     @Inject IlluminaRunResource illuminaRunResource;
 
@@ -113,7 +112,7 @@ public class CrspPipelineAPITemporaryIntegrationTest extends Arquillian {
 
         boolean foundPositiveControl = false;
         ResearchProject controlsResearchProject = researchProjectDao.findByBusinessKey(
-                crspPipelineAPIUtils.getResearchProjectForCrspPositiveControls());
+                new CrspPipelineUtils(Deployment.DEV).getResearchProjectForCrspPositiveControls());
         Assert.assertNotNull(controlsResearchProject);
 
         for (ZimsIlluminaChamber lane : runWithCrspLane.getLanes()) {
@@ -167,7 +166,9 @@ public class CrspPipelineAPITemporaryIntegrationTest extends Arquillian {
                 String sampleId = result.get(BSPSampleSearchColumn.SAMPLE_ID);
                 if (FAKE_POSITIVE_CONTROLS.contains(sampleId)) {
                     result.remove(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID);
+                    result.remove(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID);
                     result.put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID,"NA12878");
+                    result.put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID,"NA12878");
                 }
             }
             return results;
