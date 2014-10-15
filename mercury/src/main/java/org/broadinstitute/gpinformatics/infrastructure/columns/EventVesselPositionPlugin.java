@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
-import oracle.net.aso.f;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -23,13 +22,13 @@ import java.util.Set;
  */
 public abstract class EventVesselPositionPlugin implements ListPlugin {
 
-    VesselGeometry geometry;
+    private VesselGeometry geometry;
 
     // Position-value map
     protected Map<VesselPosition,String> positionLabelMap;
 
     // Matrix of positions
-    VesselPosition[][] resultMatrix;
+    private VesselPosition[][] resultMatrix;
 
     /**
      * Not used in nested table plugins
@@ -157,7 +156,7 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
     }
 
     /**
-     * Appends any available ancestor lab vessel collaborator sample IDs to display.
+     * Appends any available ancestor lab vessel collaborator patient IDs to display.
      * @param labVessel
      * @param valueHolder
      */
@@ -176,8 +175,8 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
 
             // Find collaborator sample
             for( Metadata meta : metadata ) {
-                if( meta.getKey() == Metadata.Key.SAMPLE_ID ){
-                    valueHolder.append( (foundOne?", ":" \nCollaborator Sample ID(s): [") )
+                if( meta.getKey() == Metadata.Key.PATIENT_ID ){
+                    valueHolder.append( (foundOne?", ":" \nCollaborator Patient ID(s): [") )
                             .append(meta.getValue());
                     foundOne = true;
                 }

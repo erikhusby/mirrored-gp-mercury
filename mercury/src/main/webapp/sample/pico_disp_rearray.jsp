@@ -17,7 +17,7 @@
                     "aoColumns": [
                         {"bSortable": true, "sType": "html"},             // position
                         {"bSortable": true, "sType": "html"},             // barcode
-                        {"bSortable": true, "sType": "html"},             // collaborator sample ID
+                        {"bSortable": true, "sType": "html"},             // collaborator patient ID
                         {"bSortable": true, "sType": "numeric"},          // concentration
                         {"bSortable": true, "sType": "title-numeric"},    // expected next step
                         {"bSortable": true, "sType": "title-numeric"}     // actual next step
@@ -54,7 +54,7 @@
                         <tr>
                             <th class="columnPosition">Position</th>
                             <th class="columnBarcode">Barcode</th>
-                            <th class="columnCollabSample">Collaborator Sample ID</th>
+                            <th class="columnCollabSample">Collaborator Patient ID</th>
                             <th class="columnConcentration">Concentration</th>
                             <th class="columnExpectedNextStep">Expected Next Step</th>
                             <th class="columnActualNextStep">Actual Next Step</th>
@@ -70,7 +70,7 @@
                                         ${listItem.barcode}
                                 </td>
                                 <td class="columnCollabSample">
-                                        ${fn:join(listItem.collaboratorSampleIds, " ")}
+                                        ${fn:join(listItem.collaboratorPatientIds, " ")}
                                 </td>
                                 <td class="columnConcentration">
                                         ${listItem.concentration}

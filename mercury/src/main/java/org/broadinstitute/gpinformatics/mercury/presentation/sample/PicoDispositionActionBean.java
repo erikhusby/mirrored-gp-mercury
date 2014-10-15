@@ -131,16 +131,16 @@ public class PicoDispositionActionBean extends RackScanActionBean {
     public class ListItem {
         private String position;
         private String barcode;
-        private String[] collaboratorSampleIds;
+        private String[] collaboratorPatientIds;
         private BigDecimal concentration;
         private NextStep disposition;
         private boolean riskOverride;
 
-        public ListItem(String position, String barcode, String[] collaboratorSampleIds, BigDecimal concentration,
+        public ListItem(String position, String barcode, String[] collaboratorPatientIds, BigDecimal concentration,
                 NextStep disposition, boolean riskOverride) {
             this.position = position;
             this.barcode = barcode;
-            this.collaboratorSampleIds = collaboratorSampleIds;
+            this.collaboratorPatientIds = collaboratorPatientIds;
             // Sets the number of decimal digits to display.
             this.concentration = (concentration != null) ? MathUtils.scaleTwoDecimalPlaces(concentration) : null;
             this.disposition = disposition;
@@ -153,8 +153,8 @@ public class PicoDispositionActionBean extends RackScanActionBean {
         public String getBarcode() {
             return barcode;
         }
-        public String[] getCollaboratorSampleIds() {
-            return collaboratorSampleIds;
+        public String[] getCollaboratorPatientIds() {
+            return collaboratorPatientIds;
         }
         public BigDecimal getConcentration() {
             return concentration;
@@ -355,12 +355,12 @@ public class PicoDispositionActionBean extends RackScanActionBean {
                 LabMetricDecision.Decision decision = labMetric.getLabMetricDecision().getDecision();
                 int rangeCompare = labMetric.initialPicoDispositionRange();
                 listItems.add(new ListItem(vesselPosition.name(), tube.getLabel(),
-                        tube.getMetadataValues(Metadata.Key.SAMPLE_ID), concentration,
+                        tube.getMetadataValues(Metadata.Key.PATIENT_ID), concentration,
                         NextStep.calculateNextStep(rangeCompare, decision),
                         decision.equals(LabMetricDecision.Decision.RISK)));
             } else {
                 listItems.add(new ListItem(vesselPosition.name(), tube.getLabel(),
-                        tube.getMetadataValues(Metadata.Key.SAMPLE_ID), null, null, false));
+                        tube.getMetadataValues(Metadata.Key.PATIENT_ID), null, null, false));
             }
         }
         Collections.sort(listItems, BY_DISPOSITION_THEN_POSITION);
