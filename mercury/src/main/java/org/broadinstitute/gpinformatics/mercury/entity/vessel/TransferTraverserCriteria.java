@@ -682,14 +682,18 @@ public interface TransferTraverserCriteria {
                 }
             }
 
+            if( context.getLabVessel() != null ) {
+                for (VesselContainer containerVessel : context.getLabVessel().getContainers()) {
+                    labEvents.addAll(containerVessel.getEmbedder().getInPlaceLabEvents());
+                }
+            }
+
             // Check for in place events on vessel container (e.g. EndRepair, ABase, APWash)
             if( context.getVesselContainer() != null ) {
                 LabVessel containerVessel = context.getVesselContainer().getEmbedder();
                 if (containerVessel != null) {
-                    Set<LabEvent> inPlaceLabEvents = containerVessel.getInPlaceLabEvents();
-                    for (LabEvent inPlaceLabEvent : inPlaceLabEvents) {
-                        labEvents.add(inPlaceLabEvent);
-                    }
+                    labEvents.addAll(containerVessel.getInPlaceLabEvents());
+
                     // Look for what comes in from the side (e.g. IndexedAdapterLigation, BaitAddition)
                     for (LabEvent containerEvent : containerVessel.getTransfersTo()) {
                         labEvents.add(containerEvent);
