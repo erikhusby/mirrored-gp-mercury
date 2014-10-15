@@ -193,6 +193,11 @@ public class LibraryBean {
     @JsonProperty("testType")
     private String testType;
 
+    @JsonProperty("buickVisit")
+    private String buickVisit;  // buick-specific field, not generally applicable to future crsp work
+
+    @JsonProperty("buickCollectionDate")
+    private String buickCollectionDate; // buick specific field, not generally applicable to future crsp work
 
     public LibraryBean() {}
 
@@ -633,5 +638,21 @@ public class LibraryBean {
 
     public String getTestType() {
         return testType;
+    }
+
+    public void setBuickVisit(String buickVisit) {
+        this.buickVisit = buickVisit;
+    }
+
+    public String getBuickVisit() {
+        return buickVisit;
+    }
+
+    public void setBuickCollectionDate(String buickCollectionDate) {
+        this.buickCollectionDate = buickCollectionDate;
+    }
+
+    public String getBuickCollectionDate() {
+        return buickCollectionDate;
     }
 }

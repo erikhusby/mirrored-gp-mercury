@@ -614,7 +614,11 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         String response = null;
         if (true) {
             // In JVM
-            bettalimsMessageResource.processMessage(bettaLIMSMessage);
+            try {
+                bettalimsMessageResource.storeAndProcess(BettaLimsMessageTestFactory.marshal(bettaLIMSMessage));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
 
         if (false) {
