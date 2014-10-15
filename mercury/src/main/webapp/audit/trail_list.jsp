@@ -48,8 +48,8 @@
                     <div class="controls">
                         <div id="dateRangeDiv"
                              rangeSelector="${actionBean.dateRange.rangeSelector}"
-                             searchStartDate="${actionBean.dateRange.startTime}"
-                             searchEndDate="${actionBean.dateRange.endTime}">
+                             startString="${actionBean.dateRange.startStr}"
+                             endString="${actionBean.dateRange.endStr}">
                         </div>
                     </div>
                 </div>
