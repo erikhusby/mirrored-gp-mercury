@@ -105,11 +105,9 @@ public class ManifestSession implements Updatable {
     private int numberOfNonQuarantinedRecords;
 
     @NotAudited
-    @Formula("(select count(*) from mercury.manifest_record record "
-             + "left join mercury.manifest_event evt on evt.MANIFEST_RECORD_ID = record.MANIFEST_RECORD_ID and evt.SEVERITY = 'QUARANTINED' "
-             + "where "
-             + "record.manifest_session_id = manifest_session_id "
-             + "and evt.SEVERITY = 'QUARANTINED')")
+    @Formula("(select count(*) from mercury.manifest_record record"
+             + " join mercury.manifest_event evt on evt.MANIFEST_RECORD_ID = record.MANIFEST_RECORD_ID and evt.SEVERITY = 'QUARANTINED'"
+             + " where record.manifest_session_id = manifest_session_id)")
     private int numberOfQuarantinedRecords;
     /**
      * For JPA.
