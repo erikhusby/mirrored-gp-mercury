@@ -54,7 +54,7 @@
                         <tr>
                             <th class="columnPosition">Position</th>
                             <th class="columnBarcode">Barcode</th>
-                            <th class="columnCollabSample">Collaborator Patient ID</th>
+                            <th class="columnCollabPatient">Collaborator Patient ID</th>
                             <th class="columnConcentration">Concentration</th>
                             <th class="columnExpectedNextStep">Expected Next Step</th>
                             <th class="columnActualNextStep">Actual Next Step</th>
@@ -69,7 +69,7 @@
                                 <td class="columnBarcode">
                                         ${listItem.barcode}
                                 </td>
-                                <td class="columnCollabSample">
+                                <td class="columnCollabPatient">
                                         ${fn:join(listItem.collaboratorPatientIds, " ")}
                                 </td>
                                 <td class="columnConcentration">
