@@ -27,6 +27,9 @@ import java.util.Map;
 public class SampleDataFetcher implements Serializable {
 
     @Inject
+    private SampleDataSourceResolver sampleDataSourceResolver;
+
+    @Inject
     private BSPSampleDataFetcher bspSampleDataFetcher;
 
     @Inject
@@ -48,9 +51,11 @@ public class SampleDataFetcher implements Serializable {
     }
 
     public SampleDataFetcher(@Nonnull MercurySampleDao mercurySampleDao,
+                             @Nonnull SampleDataSourceResolver sampleDataSourceResolver,
                              @Nonnull BSPSampleDataFetcher bspSampleDataFetcher,
                              @Nonnull MercurySampleDataFetcher mercurySampleDataFetcher) {
         this.mercurySampleDao = mercurySampleDao;
+        this.sampleDataSourceResolver = sampleDataSourceResolver;
         this.bspSampleDataFetcher = bspSampleDataFetcher;
         this.mercurySampleDataFetcher = mercurySampleDataFetcher;
     }
