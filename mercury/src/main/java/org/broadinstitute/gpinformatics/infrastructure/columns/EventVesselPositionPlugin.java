@@ -82,6 +82,12 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
      */
     protected ConfigurableList.ResultList getSourceNestedTableData(LabEvent labEvent
             , @Nonnull Map<String, Object> context) {
+
+        // Ignore source vessels for in-place events
+        if( labEvent.getInPlaceLabVessel() != null ) {
+            return null;
+        }
+
         VesselContainer containerVessel = findEventSourceContainer( labEvent );
         if( containerVessel == null || containerVessel.getMapPositionToVessel().isEmpty() ) {
             return null;

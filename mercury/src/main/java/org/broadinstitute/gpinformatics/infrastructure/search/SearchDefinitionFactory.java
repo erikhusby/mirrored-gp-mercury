@@ -620,7 +620,7 @@ public class SearchDefinitionFactory {
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
-            private FastDateFormat dateFormat = FastDateFormat.getInstance( "MM/dd/yyyy h:mm:ss a");
+            private FastDateFormat dateFormat = FastDateFormat.getInstance( "MM/dd/yyyy HH:mm:ss");
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
                 LabEvent labEvent = (LabEvent) entity;
@@ -1022,9 +1022,16 @@ public class SearchDefinitionFactory {
                 List<String> results = new ArrayList<>();
                 LabEvent labEvent = (LabEvent) entity;
 
-                for (LabVessel vessel : labEvent.getSourceLabVessels()) {
-                    if( vessel instanceof TubeFormation) {
-                        TubeFormation tubes = (TubeFormation) vessel;
+                LabVessel inPlaceLabVessel = labEvent.getInPlaceLabVessel();
+
+                // Ignore source vessels for in-place events
+                if( inPlaceLabVessel != null ) {
+                    return results;
+                }
+
+                for (LabVessel vessel : labEvent.getSourceLabVessels() ) {
+                    if( OrmUtil.proxySafeIsInstance( vessel, TubeFormation.class )) {
+                        TubeFormation tubes = OrmUtil.proxySafeCast(vessel, TubeFormation.class);
                         for ( RackOfTubes rack : tubes.getRacksOfTubes()) {
                             results.add(rack.getLabel());
                         }
@@ -1032,15 +1039,6 @@ public class SearchDefinitionFactory {
                         results.add(vessel.getLabel());
                     }
                 }
-
-                if( results.isEmpty() && labEvent.getInPlaceLabVessel() != null ) {
-                    if( labEvent.getInPlaceLabVessel().getContainerRole() != null ) {
-                        results.add( labEvent.getInPlaceLabVessel().getContainerRole().getEmbedder().getLabel() );
-                    } else {
-                        results.add( labEvent.getInPlaceLabVessel().getLabel() );
-                    }
-                }
-
                 return results;
             }
         });
@@ -1064,9 +1062,22 @@ public class SearchDefinitionFactory {
                 List<String> results = new ArrayList<>();
                 LabEvent labEvent = (LabEvent) entity;
 
+                LabVessel inPlaceLabVessel = labEvent.getInPlaceLabVessel();
+                if( inPlaceLabVessel != null ) {
+                    if( OrmUtil.proxySafeIsInstance( inPlaceLabVessel, TubeFormation.class )) {
+                        TubeFormation tubes = OrmUtil.proxySafeCast(inPlaceLabVessel, TubeFormation.class);
+                        for ( RackOfTubes rack : tubes.getRacksOfTubes()) {
+                            results.add(rack.getLabel());
+                        }
+                    } else {
+                        results.add( inPlaceLabVessel.getLabel() );
+                    }
+                    return results;
+                }
+
                 for (LabVessel vessel : labEvent.getTargetLabVessels()) {
-                    if( vessel instanceof TubeFormation) {
-                        TubeFormation tubes = (TubeFormation) vessel;
+                    if( OrmUtil.proxySafeIsInstance( vessel, TubeFormation.class )) {
+                        TubeFormation tubes = OrmUtil.proxySafeCast(vessel, TubeFormation.class);
                         for ( RackOfTubes rack : tubes.getRacksOfTubes()) {
                             results.add(rack.getLabel());
                         }
@@ -1108,6 +1119,9 @@ public class SearchDefinitionFactory {
                 }
                 break;
             }
+        } else {
+            // Ignore source vessels for in-place events
+            return vesselTypeName;
         }
 
         if( vessel != null ) {
