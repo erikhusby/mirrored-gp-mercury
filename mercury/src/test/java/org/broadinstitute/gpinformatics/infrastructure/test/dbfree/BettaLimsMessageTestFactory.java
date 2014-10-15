@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventTy
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReagentType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
@@ -15,7 +16,6 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEvent
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransferEjb;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -30,6 +30,7 @@ import javax.xml.datatype.DatatypeFactory;
 import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.util.Collection;
+import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
@@ -237,6 +238,48 @@ public class BettaLimsMessageTestFactory {
         receptaclePlateTransferEvent.setDestinationPlate(plate);
 
         return receptaclePlateTransferEvent;
+    }
+
+    public static class ReagentDto {
+        private String lot;
+        private String type;
+        private Date expiration;
+
+        public ReagentDto(String type, String lot, Date expiration) {
+            this.type = type;
+            this.lot = lot;
+            this.expiration = expiration;
+        }
+
+        public String getLot() {
+            return lot;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public Date getExpiration() {
+            return expiration;
+        }
+    }
+
+    public PlateEventType buildPlateEvent(String eventType, String plateBarcode, List<ReagentDto> reagentDtos) {
+        PlateEventType plateEventType = buildPlateEvent(eventType, plateBarcode);
+        for (ReagentDto reagentDto : reagentDtos) {
+            ReagentType reagentType = new ReagentType();
+            reagentType.setBarcode(reagentDto.getLot());
+            reagentType.setKitType(reagentDto.getType());
+            GregorianCalendar gregorianCalendar = new GregorianCalendar();
+            gregorianCalendar.setTime(reagentDto.getExpiration());
+            try {
+                reagentType.setExpiration(DatatypeFactory.newInstance().newXMLGregorianCalendar(gregorianCalendar));
+            } catch (DatatypeConfigurationException e) {
+                throw new RuntimeException(e);
+            }
+            plateEventType.getReagent().add(reagentType);
+        }
+        return plateEventType;
     }
 
     public PlateEventType buildPlateEvent(String eventType, String plateBarcode) {
@@ -561,8 +604,6 @@ public class BettaLimsMessageTestFactory {
         receptacleType.setBarcode(barcode);
         receptacleType.setPosition(buildWellName(rackPosition, WellNameType.SHORT));
         receptacleType.setReceptacleType("tube");
-        receptacleType.setConcentration(BigDecimal.valueOf(12.2));
-        receptacleType.setVolume(BigDecimal.valueOf(8.3));
         targetPositionMap.getReceptacle().add(receptacleType);
     }
 

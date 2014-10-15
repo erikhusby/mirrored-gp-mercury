@@ -1,10 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.infrastructure.SampleData;
-import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
@@ -13,7 +12,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
-import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleDataFetcher;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -98,11 +96,22 @@ public class SampleInstanceV2 {
      * Returns the earliest Mercury sample.  Tolerates unknown root sample.
      */
     public String getEarliestMercurySampleName() {
-        String sampleName = null;
-        if (!mercurySamples.isEmpty()) {
-            sampleName = mercurySamples.get(0).getSampleKey();
-        }
-        return sampleName;
+        return mercurySamples.isEmpty() ? null : mercurySamples.get(0).getSampleKey();
+    }
+
+    /**
+     * Returns the root sample or if none, the earliest Mercury sample.
+     */
+    public MercurySample getRootOrEarliestMercurySample() {
+        return CollectionUtils.isNotEmpty(rootMercurySamples) ?
+                rootMercurySamples.iterator().next() : (mercurySamples.isEmpty() ? null : mercurySamples.get(0));
+    }
+
+    /** Returns the name of the root sample or if none, the earliest Mercury sample. */
+    public String getRootOrEarliestMercurySampleName() {
+        return CollectionUtils.isNotEmpty(rootMercurySamples) ?
+                rootMercurySamples.iterator().next().getSampleKey() :
+                (mercurySamples.isEmpty() ? null : mercurySamples.get(0).getSampleKey());
     }
 
     /**
@@ -370,25 +379,6 @@ todo jmt not sure if this applies.
             throw new RuntimeException(String.format("Found %s metadata sources",metadataSources.size()));
         }
         return metadataSources.iterator().next();
-    }
-
-    /**
-     * Returns the mercury control for this sample instance, or null if not a control.
-     * @param controlDao is passed in to keep this class db free.
-     */
-    public Control getControl(ControlDao controlDao) {
-        MercurySample mercurySample = rootMercurySamples.size() > 0 ? rootMercurySamples.iterator().next() :
-                mercurySamples.size() > 0 ? mercurySamples.iterator().next() : null;
-        if (mercurySample != null) {
-            SampleData sampleData = new MercurySampleDataFetcher().fetchSampleData(mercurySample);
-            if (sampleData != null) {
-                String collaboratorParticipantId = sampleData.getCollaboratorParticipantId();
-                if (collaboratorParticipantId != null) {
-                    return controlDao.findByCollaboratorParticipantId(collaboratorParticipantId);
-                }
-            }
-        }
-        return null;
     }
 
     @Override
