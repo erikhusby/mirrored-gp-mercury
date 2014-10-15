@@ -162,6 +162,7 @@
                 </table>
                 <stripes:hidden name="labMetricRunId" value="${actionBean.labMetricRun.labMetricRunId}"/>
                 <stripes:hidden name="tubeFormationLabel" value="${actionBean.tubeFormationLabel}"/>
+                <stripes:hidden name="quantType" value="${actionBean.quantType}"/>
                 <stripes:label for="overrideDecision" class="control-label">Override Decision</stripes:label>
                 <div class="controls">
                     <stripes:select name="overrideDecision">
