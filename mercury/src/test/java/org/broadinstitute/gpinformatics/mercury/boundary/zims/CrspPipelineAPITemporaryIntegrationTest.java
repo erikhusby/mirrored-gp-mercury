@@ -96,10 +96,9 @@ public class CrspPipelineAPITemporaryIntegrationTest extends Arquillian {
                 project.setRegulatoryDesignation(ResearchProject.RegulatoryDesignation.GENERAL_CLIA_CAP);
             }
             // this is necessary because of the unmodifiable nature of LabVessel.bucketEntries
-            Assert.assertTrue(bucketEntriesToDelete.isEmpty(),"Manual data change is required.  Temporarily uncomment this line and delete the bucket entires printed below.");
-            for (Long bucketEntryId : bucketEntriesToDelete) {
-                System.out.println("Delete bucket entry " + bucketEntryId);
-            }
+            Assert.assertTrue(bucketEntriesToDelete.isEmpty(),
+                    String.format("Manual data change is required. Please delete the following bucket entries: %s",
+                            bucketEntriesToDelete));
         }
     }
 
