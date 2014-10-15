@@ -195,9 +195,13 @@ public class UserBean implements Serializable {
     }
 
     private void loginDeveloper(String user) {
+        login(user);
+        roles.add(Role.Developer);
+    }
+
+    public void login(String user) {
         loginUserName = user;
         updateBspStatus();
-        roles.add(Role.Developer);
     }
 
     /**

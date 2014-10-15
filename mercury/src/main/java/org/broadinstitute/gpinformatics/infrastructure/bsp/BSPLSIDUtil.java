@@ -9,7 +9,7 @@ import java.util.Map;
  */
 public class BSPLSIDUtil {
 
-    public static final String BSP_LSID_FRAGMENT = ":bsp.";
+    private static final String BSP_LSID_FRAGMENT = ":bsp.";
 
     public static boolean isBspLsid(String id) {
         return id.contains(BSP_LSID_FRAGMENT);
@@ -19,6 +19,11 @@ public class BSPLSIDUtil {
         return lsid.substring(lsid.lastIndexOf(':') + 1);
     }
 
+    /**
+     * This method takes an LSID and prefixes it with "SM-". The assumption that all samples should be prefixed
+     * with "SM-" is incorrect, which is why this method is deprecated.
+     */
+    @Deprecated
     public static String lsidToBspSampleId(String lsid) {
         return "SM-" + lsidToBareId(lsid);
     }
@@ -39,13 +44,5 @@ public class BSPLSIDUtil {
         }
 
         return ret;
-    }
-
-    public static Map<String, String> lsidsToBspSampleIds(Collection<String> lsids) {
-        Map<String, String> result=new HashMap<>();
-        for (String lsid : lsids) {
-            result.put(lsid, lsidToBspSampleId(lsid));
-        }
-        return result;
     }
 }
