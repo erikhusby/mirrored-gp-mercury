@@ -1064,6 +1064,7 @@ public class SearchDefinitionFactory {
 
                 LabVessel inPlaceLabVessel = labEvent.getInPlaceLabVessel();
                 if( inPlaceLabVessel != null ) {
+                    // This will do for now, but looking at ancillary vessel in VesselTransfer is more reliable.
                     if( OrmUtil.proxySafeIsInstance( inPlaceLabVessel, TubeFormation.class )) {
                         TubeFormation tubes = OrmUtil.proxySafeCast(inPlaceLabVessel, TubeFormation.class);
                         for ( RackOfTubes rack : tubes.getRacksOfTubes()) {
