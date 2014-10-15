@@ -160,7 +160,7 @@
                     <th>Research Project</th>
                     <th>Session Name</th>
                     <th># Tubes Transferred</th>
-                    <th>Total Tubes to be Transferred</th>
+                    <th># Tubes Available for Transfer</th>
                     <th># Tubes Quarantined</th>
                     <th>Creator</th>
                     <th>Creation Date</th>
