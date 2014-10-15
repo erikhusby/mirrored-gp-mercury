@@ -6,6 +6,7 @@ import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.boundary.projects.SampleKitRecipient;
 import org.broadinstitute.gpinformatics.athena.entity.project.CollaborationData;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -68,14 +69,15 @@ public class CollaborationPortalService extends AbstractJerseyClientService {
      * state of the user in BSP and the Portal, te account will be created/added to the appropriate application. If
      * the user has never logged into the portal, an invitation will be sent for them to fill in all needed information.
      *
+     *
      * @param researchProject The research project.
      * @param collaborator The collaborator.
+     * @param sampleKitRecipient The person to send kits to for fulfilling the order.
      * @param collaborationMessage The optional message from the PM to the collaborator.
-     *
-     * @return The collaboration id
+     *  @return The collaboration id
      */
     public String beginCollaboration(@Nonnull ResearchProject researchProject, @Nonnull BspUser collaborator,
-                                     @Nonnull String quoteId,
+                                     @Nonnull String quoteId, @Nonnull SampleKitRecipient sampleKitRecipient,
                                      @Nullable String collaborationMessage)
             throws CollaborationNotFoundException, CollaborationPortalException {
 
@@ -93,8 +95,8 @@ public class CollaborationPortalService extends AbstractJerseyClientService {
 
         CollaborationData collaboration =
                 new CollaborationData(researchProject.getName(), researchProject.getSynopsis(),
-                        researchProject.getBusinessKey(),
-                        collaborator.getUserId(), projectManager.getUserId(), quoteId, collaborationMessage);
+                        researchProject.getBusinessKey(), collaborator.getUserId(), projectManager.getUserId(), quoteId,
+                        sampleKitRecipient, collaborationMessage);
 
         try {
             return resource.type(MediaType.APPLICATION_XML).post(String.class, collaboration);

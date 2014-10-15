@@ -488,10 +488,18 @@ public class ProductOrderActionBeanTest {
 
     }
 
+    @Test(groups = TestGroups.DATABASE_FREE)
     public void testGetProductOrderLink() {
-        AppConfig productionConfig = AppConfig.produce(Deployment.PROD);
-        Assert.assertEquals(ProductOrderActionBean.getProductOrderLink("PDO-1", productionConfig),
-                "http://mercury.broadinstitute.org/Mercury//orders/order.action?view=&productOrder=PDO-1");
+        AppConfig testConfig = new AppConfig(Deployment.STUBBY) {
+            @Override
+            public String getUrl() {
+                return "Test URL Magic String";
+            }
+        };
+        ProductOrder order = new ProductOrder();
+        order.setJiraTicketKey("PDO-1");
+        Assert.assertEquals(ProductOrderActionBean.getProductOrderLink(order, testConfig),
+                testConfig.getUrl() + "/orders/order.action?view=&productOrder=" + order.getJiraTicketKey());
     }
 
     @DataProvider(name = "regulatoryOptionsDataProvider")

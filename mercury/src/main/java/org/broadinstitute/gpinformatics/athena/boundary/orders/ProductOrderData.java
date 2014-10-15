@@ -50,8 +50,9 @@ public class ProductOrderData {
     /** Even if includeSamples == false this will still contain the number of samples in the PDO. */
     private int numberOfSamples;
 
-    // This is an "in" parameter only, used to create a PDO with sample kits.
+    // These are "in" parameters only, used to create a PDO with sample kits.
     private List<ProductOrderKitDetailData> kitDetailData = new ArrayList<>();
+    private long siteId;
 
     /**
      * This is really a list of sample IDs.
@@ -360,5 +361,13 @@ public class ProductOrderData {
 
     public void setKitDetailData(List<ProductOrderKitDetailData> kitDetailData) {
         this.kitDetailData = kitDetailData;
+    }
+
+    public long getSiteId() {
+        return siteId;
+    }
+
+    public void setSiteId(long siteId) {
+        this.siteId = siteId;
     }
 }

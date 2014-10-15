@@ -127,47 +127,35 @@ public class LabMetricProcessor extends TableProcessor {
      * sometimes looks like a numeric.
      */
     private enum LabMetricHeaders implements ColumnHeader {
-        LOCATION("Location", 0, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_VALUE),
-        BARCODE("Barcode", 1, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_VALUE, true),
-        METRIC("Quant", 2, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_VALUE);
+        LOCATION("Location"),
+        BARCODE("Barcode", true),
+        METRIC("Quant");
 
         private final String text;
-        private final int index;
-        private final boolean requredHeader;
-        private final boolean requiredValue;
-        private boolean isString;
+        private final boolean isString;
 
-        private LabMetricHeaders(String text, int index, boolean requiredHeader, boolean requiredValue) {
-            this(text, index, requiredHeader, requiredValue, false);
+        LabMetricHeaders(String text) {
+            this(text, false);
         }
 
-        private LabMetricHeaders(String text, int index, boolean requiredHeader, boolean requiredValue,
-                                 boolean isString) {
+        LabMetricHeaders(String text, boolean isString) {
             this.text = text;
-            this.index = index;
-            this.requredHeader = requiredHeader;
-            this.requiredValue = requiredValue;
             this.isString = isString;
         }
 
         @Override
         public String getText() {
-            return this.text;
-        }
-
-        @Override
-        public int getIndex() {
-            return this.index;
+            return text;
         }
 
         @Override
         public boolean isRequiredHeader() {
-            return requredHeader;
+            return true;
         }
 
         @Override
         public boolean isRequiredValue() {
-            return requiredValue;
+            return false;
         }
 
         @Override

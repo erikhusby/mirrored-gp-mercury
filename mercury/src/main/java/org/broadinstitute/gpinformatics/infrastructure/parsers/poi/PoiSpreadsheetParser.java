@@ -184,13 +184,13 @@ public final class PoiSpreadsheetParser {
             case Cell.CELL_TYPE_BOOLEAN:
                 return String.valueOf(cell.getBooleanCellValue());
             case Cell.CELL_TYPE_NUMERIC:
-            if (isDate) {
-                return DATE_FORMATTER.format(cell.getDateCellValue());
-            }
+                if (isDate) {
+                    return DATE_FORMATTER.format(cell.getDateCellValue());
+                }
                 if (isString) {
-            cell.setCellType(Cell.CELL_TYPE_STRING);
-            return cell.getStringCellValue();
-        }
+                    cell.setCellType(Cell.CELL_TYPE_STRING);
+                    return cell.getStringCellValue();
+                }
                 return String.valueOf(cell.getNumericCellValue());
             case Cell.CELL_TYPE_STRING:
                 return cell.getStringCellValue();
@@ -198,6 +198,7 @@ public final class PoiSpreadsheetParser {
         }
 
         return "";
+        // todo jmt this could all be replaced with return new HSSFDataFormatter().formatCellValue( cell );
     }
 
     /**

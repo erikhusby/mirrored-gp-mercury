@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.hamcrest.CoreMatchers;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -765,6 +766,53 @@ public class ManifestSessionContainerTest extends Arquillian {
 
         List<ManifestSession> closedSessions2 = manifestSessionDao.findSessionsEligibleForTubeTransfer();
         assertThat(closedSessions2, not(hasItem(manifestSessionI)));
+    }
+
+    public void testNonQuarantineRecordCount() throws Exception {
+
+        researchProjectDao.persist(researchProject);
+        int counter = 0;
+        manifestSessionDao.clear();
+        ManifestSession retrievedSession = manifestSessionDao.find(manifestSessionI.getManifestSessionId());
+
+        int totalRecords = retrievedSession.getRecords().size();
+
+        while(counter <retrievedSession.getRecords().size()) {
+
+            assertThat(retrievedSession.getNumberOfTubesAvailableForTransfer(), is(equalTo(totalRecords-counter)));
+            retrievedSession.addManifestEvent(
+                    new ManifestEvent(ManifestEvent.Severity.QUARANTINED, "testing Formula", retrievedSession.getRecords().get(counter)));
+
+            manifestSessionDao.flush();
+            manifestSessionDao.clear();
+            retrievedSession = manifestSessionDao.find(retrievedSession.getManifestSessionId());
+            retrievedSession.getRecords();
+            counter++;
+        }
+        assertThat(retrievedSession.getNumberOfTubesAvailableForTransfer(), is(equalTo(totalRecords - counter)));
+    }
+
+    public void testNumberTubesTransferred() throws Exception {
+        researchProjectDao.persist(researchProject);
+        int counter = 0;
+        manifestSessionDao.clear();
+        ManifestSession retrievedSession = manifestSessionDao.find(manifestSessionI.getManifestSessionId());
+
+        int totalRecords = retrievedSession.getRecords().size();
+
+        while(counter <retrievedSession.getRecords().size()) {
+
+            assertThat(retrievedSession.getNumberOfTubesTransferred(), is(equalTo(counter)));
+
+            retrievedSession.getRecords().get(counter).setStatus(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
+
+            manifestSessionDao.flush();
+            manifestSessionDao.clear();
+            retrievedSession = manifestSessionDao.find(retrievedSession.getManifestSessionId());
+            retrievedSession.getRecords();
+            counter++;
+        }
+        assertThat(retrievedSession.getNumberOfTubesTransferred(), is(equalTo(counter)));
     }
 
     /**

@@ -35,6 +35,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferEntityGrapher;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizer;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
@@ -112,6 +113,7 @@ public class BaseEventTest {
      * Referenced in validation of routing.
      */
     protected static SystemRouter.System expectedRouting = SystemRouter.System.MERCURY;
+    private final CrspPipelineUtils crspPipelineUtils = new CrspPipelineUtils(Deployment.DEV);
 
     private BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
 
@@ -132,7 +134,7 @@ public class BaseEventTest {
         controlList.add(new Control("WATER_CONTROL", Control.ControlType.NEGATIVE));
 
         for (Control control : controlList) {
-            controlCollaboratorIdList.add(control.getCollaboratorSampleId());
+            controlCollaboratorIdList.add(control.getCollaboratorParticipantId());
         }
     }
 
@@ -606,7 +608,7 @@ public class BaseEventTest {
         BarcodedTube posControlTube = new BarcodedTube("C1");
         SampleData bspSampleDataPos = new BspSampleData(
                 new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
-                    put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, POSITIVE_CONTROL);
+                    put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, POSITIVE_CONTROL);
                 }});
         posControlTube.addSample(new MercurySample(POSITIVE_CONTROL, bspSampleDataPos));
         nameToSampleData.put(POSITIVE_CONTROL, bspSampleDataPos);
@@ -615,7 +617,7 @@ public class BaseEventTest {
         BarcodedTube negControlTube = new BarcodedTube("C2");
         SampleData bspSampleDataNeg = new BspSampleData(
                 new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
-                    put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, NEGATIVE_CONTROL);
+                    put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, NEGATIVE_CONTROL);
                 }});
         negControlTube.addSample(new MercurySample(NEGATIVE_CONTROL, bspSampleDataNeg));
         nameToSampleData.put(NEGATIVE_CONTROL, bspSampleDataNeg);
@@ -695,6 +697,7 @@ public class BaseEventTest {
         SampleData bspSampleDataPos = new BspSampleData(
                 new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
                     put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, POSITIVE_CONTROL);
+                    put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, POSITIVE_CONTROL);
                 }});
         posControlTube.addSample(new MercurySample(POSITIVE_CONTROL, bspSampleDataPos));
         nameToSampleData.put(POSITIVE_CONTROL, bspSampleDataPos);
@@ -704,6 +707,7 @@ public class BaseEventTest {
         SampleData bspSampleDataNeg = new BspSampleData(
                 new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
                     put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, NEGATIVE_CONTROL);
+                    put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, NEGATIVE_CONTROL);
                 }});
         negControlTube.addSample(new MercurySample(NEGATIVE_CONTROL, bspSampleDataNeg));
         nameToSampleData.put(NEGATIVE_CONTROL, bspSampleDataNeg);
@@ -812,7 +816,8 @@ public class BaseEventTest {
                 },
                 new SequencingTemplateFactory(),
                 productOrderDao,
-                new CrspControlsTestUtils().getMockResearchProjectDao()
+                new CrspControlsTestUtils().getMockResearchProjectDao(),
+                crspPipelineUtils
         );
     }
 }

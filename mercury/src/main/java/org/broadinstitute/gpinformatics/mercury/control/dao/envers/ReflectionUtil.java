@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.net.URL;
@@ -37,6 +38,8 @@ public class ReflectionUtil {
     private static final Map<Class, List<Field>> mapClassToPersistedFields = new HashMap<>();
     private static final Map<String, Class> entityClassnameToGeneratedClass = new HashMap<>();
     private static final List<Class> embeddableEntities = new ArrayList<>();
+    private static final List<Class> abstractEntities = new ArrayList<>();
+    private static final List<String> abstractEntityClassnames = new ArrayList<>();
 
     static {
         // Finds all the classes that will have Mercury audit data, their associated JPA generated classes,
@@ -59,6 +62,10 @@ public class ReflectionUtil {
                             entityClassnameToGeneratedClass.put(entityClass.getCanonicalName(), aClass);
                             if (entityClass.getAnnotation(Embeddable.class) != null) {
                                 embeddableEntities.add(entityClass);
+                            }
+                            if (Modifier.isAbstract(entityClass.getModifiers())) {
+                                abstractEntities.add(entityClass);
+                                abstractEntityClassnames.add(entityClass.getCanonicalName());
                             }
                         }
                     }
@@ -87,6 +94,14 @@ public class ReflectionUtil {
 
     public static List<Class> getEmbeddableEntities() {
         return embeddableEntities;
+    }
+
+    public static List<Class> getAbstractEntities() {
+        return abstractEntities;
+    }
+
+    public static List<String> getAbstractEntityClassnames() {
+        return abstractEntityClassnames;
     }
 
     // Returns the fields that get persisted for the given entity class.
@@ -208,8 +223,13 @@ public class ReflectionUtil {
                     list.addAll(makeEntityField(field.getName(), fieldClass, fieldObj));
                 }
             } catch (IllegalAccessException e) {
-                throw new RuntimeException("Reflection cannot access field " + field.getName() +
-                                           " on class " + entityClass.getCanonicalName());
+                logger.log(Level.WARNING, "Reflection cannot access field " + field.getName() +
+                                          " on class " + entityClass.getSimpleName(), e);
+                list.add(new EntityField(field.getName(), "[cannot access]"));
+            } catch (Exception e) {
+                logger.log(Level.WARNING, "Cannot render " + field.getName() + " on " + entityClass.getSimpleName() +
+                                   " id=" + getEntityId(entity, entityClass), e);
+                list.add(new EntityField(field.getName(), "[cannot render]"));
             }
         }
 

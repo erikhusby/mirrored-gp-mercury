@@ -3,13 +3,22 @@ package org.broadinstitute.gpinformatics.mercury.boundary.zims;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 
 import javax.annotation.Nonnull;
+import javax.inject.Inject;
 import java.util.Set;
 
 public class CrspPipelineUtils {
+
+    private Deployment deployment;
+
+    @Inject
+    public CrspPipelineUtils(@Nonnull Deployment deployment) {
+        this.deployment = deployment;
+    }
 
     /**
      * Returns true if all samples are considered
@@ -45,17 +54,27 @@ public class CrspPipelineUtils {
                                  SampleData sampleData,
                                  ResearchProject positiveControlsProject,
                                  String lcSet) {
+        throwExceptionIfInProductionAndSampleIsNotABSPSample(sampleData.getSampleId());
         libraryBean.setLsid(getCrspLSIDForBSPSampleId(sampleData.getSampleId()));
         libraryBean.setRootSample(libraryBean.getSampleId());
+        libraryBean.setTestType(LibraryBean.CRSP_SOMATIC_TEST_TYPE);
 
         if (Boolean.TRUE.equals(libraryBean.isPositiveControl())) {
-            String mungedSampleName = libraryBean.getCollaboratorSampleId() + "_" + lcSet;
-            libraryBean.setCollaboratorSampleId(mungedSampleName);
-            libraryBean.setCollaboratorParticipantId(mungedSampleName);
+            String participantWithLcSetName = libraryBean.getCollaboratorParticipantId() + "_" + lcSet;
+            libraryBean.setCollaboratorSampleId(participantWithLcSetName);
+            libraryBean.setCollaboratorParticipantId(participantWithLcSetName);
 
             libraryBean.setResearchProjectId(positiveControlsProject.getBusinessKey());
             libraryBean.setResearchProjectName(positiveControlsProject.getTitle());
             libraryBean.setRegulatoryDesignation(positiveControlsProject.getRegulatoryDesignationCodeForPipeline());
+        }
+    }
+
+    private void throwExceptionIfInProductionAndSampleIsNotABSPSample(@Nonnull String sampleId) {
+        if (deployment == Deployment.PROD) {
+            if (!BSPUtil.isInBspFormat(sampleId)) {
+                throw new RuntimeException("Sample " + sampleId + " does not appear to be a BSP sample.  The pipeline's fingerprint validation can only handle BSP samples.");
+            }
         }
     }
 
@@ -65,10 +84,7 @@ public class CrspPipelineUtils {
      * is done here to allow for flexibility in test data.
      */
     public String getCrspLSIDForBSPSampleId(@Nonnull String bspSampleId) {
-        if (bspSampleId.length() < 3) {
-            throw new RuntimeException("Cannot transform non-BSP sample id " + bspSampleId + " into CRSP lsid format");
-        }
-        return "org.broadinstitute:crsp:" + bspSampleId.substring(3);
+        return bspSampleId.replaceFirst("S[MP]-", "org.broadinstitute:crsp:");
     }
 
     /**
@@ -76,7 +92,6 @@ public class CrspPipelineUtils {
      * used for aggregating positive controls for CRSP
      */
     public String getResearchProjectForCrspPositiveControls() {
-        // have michael or cassie make an RP, then hardcode it here
-        return "RP-1205";
+        return "RP-805";
     }
 }

@@ -11,8 +11,6 @@ public interface ColumnHeader {
     boolean OPTIONAL_HEADER = false;
     boolean REQUIRED_VALUE = true;
     boolean OPTIONAL_VALUE = false;
-    boolean IS_DATE = true;
-    boolean NON_DATE = false;
     boolean IS_STRING = true;
     boolean NON_STRING = false;
 
@@ -21,10 +19,6 @@ public interface ColumnHeader {
      *         provided to the parser.
      */
     String getText();
-
-    // Index should NOT be used for parsing. It is only available for positioning in generated files. We want to parse
-    // any file that comes with columns in any order.
-    int getIndex();
 
     boolean isRequiredHeader();
     boolean isRequiredValue();

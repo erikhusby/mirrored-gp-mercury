@@ -23,6 +23,7 @@ import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusF
 import org.broadinstitute.gpinformatics.athena.boundary.projects.CollaborationService;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.RegulatoryInfoEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectEjb;
+import org.broadinstitute.gpinformatics.athena.boundary.projects.SampleKitRecipient;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryInfoDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
@@ -144,7 +145,15 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private Long selectedCollaborator;
     private String specifiedCollaborator;
     private String collaborationMessage;
+
+    @Validate(required = true, on = {BEGIN_COLLABORATION_ACTION})
     private String collaborationQuoteId;
+
+    /**
+     * This defines where kits will be sent for orders placed from the collaboration portal.
+     */
+    @Validate(required = true, on = BEGIN_COLLABORATION_ACTION)
+    private SampleKitRecipient sampleKitRecipient = SampleKitRecipient.COLLABORATOR;
 
     @ValidateNestedProperties({
             @Validate(field = "title", label = "Project", required = true, maxlength = 4000, on = {SAVE_ACTION}),
@@ -484,7 +493,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public Resolution beginCollaboration() throws Exception {
         try {
             collaborationService.beginCollaboration(editResearchProject, selectedCollaborator, specifiedCollaborator,
-                    collaborationQuoteId, collaborationMessage);
+                    collaborationQuoteId, sampleKitRecipient, collaborationMessage);
             addMessage("Collaboration created successfully");
         } catch (Exception e) {
             addGlobalValidationError("Could not begin the Collaboration: {2}", e.getMessage());
@@ -1101,6 +1110,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
         return bioProjectTokenInput;
     }
 
+
     public void setBioProjectTokenInput(BioProjectTokenInput bioProjectTokenInput) {
         this.bioProjectTokenInput = bioProjectTokenInput;
     }
@@ -1121,4 +1131,25 @@ public class ResearchProjectActionBean extends CoreActionBean {
         this.rpSelectedTab = rpSelectedTab;
     }
 
+    /**
+     * A collaboration with the portal can only be started by PMs or Developers for research projects.
+     *
+     * @return True if you can start a collaboration.
+     */
+    public boolean isCanBeginCollaborations() {
+        return isResearchOnly() && (getUserBean().isDeveloperUser() || getUserBean().isPMUser());
+    }
+
+    private boolean isResearchOnly() {
+        return ((editResearchProject != null) &&
+               (editResearchProject.getRegulatoryDesignation() == ResearchProject.RegulatoryDesignation.RESEARCH_ONLY));
+    }
+
+    public SampleKitRecipient getSampleKitRecipient() {
+        return sampleKitRecipient;
+    }
+
+    public void setSampleKitRecipient(SampleKitRecipient sampleKitRecipient) {
+        this.sampleKitRecipient = sampleKitRecipient;
+    }
 }

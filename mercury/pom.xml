@@ -957,17 +957,8 @@
             <build>
                 <testResources>
                     <testResource>
-                        <directory>src/test/resources</directory>
-                    </testResource>
-                    <testResource>
                         <directory>src/test/resources-build</directory>
                         <filtering>true</filtering>
-                    </testResource>
-                    <testResource>
-                        <directory>src/main/webapp/WEB-INF/classes</directory>
-                        <includes>
-                            <include>mercury-config.yaml</include>
-                        </includes>
                     </testResource>
                 </testResources>
             </build>

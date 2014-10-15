@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -95,11 +96,22 @@ public class SampleInstanceV2 {
      * Returns the earliest Mercury sample.  Tolerates unknown root sample.
      */
     public String getEarliestMercurySampleName() {
-        String sampleName = null;
-        if (!mercurySamples.isEmpty()) {
-            sampleName = mercurySamples.get(0).getSampleKey();
-        }
-        return sampleName;
+        return mercurySamples.isEmpty() ? null : mercurySamples.get(0).getSampleKey();
+    }
+
+    /**
+     * Returns the root sample or if none, the earliest Mercury sample.
+     */
+    public MercurySample getRootOrEarliestMercurySample() {
+        return CollectionUtils.isNotEmpty(rootMercurySamples) ?
+                rootMercurySamples.iterator().next() : (mercurySamples.isEmpty() ? null : mercurySamples.get(0));
+    }
+
+    /** Returns the name of the root sample or if none, the earliest Mercury sample. */
+    public String getRootOrEarliestMercurySampleName() {
+        return CollectionUtils.isNotEmpty(rootMercurySamples) ?
+                rootMercurySamples.iterator().next().getSampleKey() :
+                (mercurySamples.isEmpty() ? null : mercurySamples.get(0).getSampleKey());
     }
 
     /**

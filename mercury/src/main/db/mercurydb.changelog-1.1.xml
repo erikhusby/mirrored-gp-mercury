@@ -1611,4 +1611,116 @@
         <modifyDataType tableName="manifest_event_aud" columnName="message" newDataType="varchar(4000)"/>
     </changeSet>
 
+    
+    <changeSet id="GPLIM-2996-1" author="thompson">
+        <createTable schemaName="mercury" tableName="lab_metric_metadata">
+            <column name="lab_metric_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="metadata_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey constraintName="pk_lab_metric_metadata" tableName="lab_metric_metadata"
+                columnNames="lab_metric_id, metadata_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-2996-2" author="thompson">
+        <createTable schemaName="mercury" tableName="lab_metric_metadata_aud">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="lab_metric_id" type="number(19,0)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="metadata_id" type="number(19,0)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="revtype" type="number(3,0)"/>
+        </createTable>
+        <addPrimaryKey constraintName="pk_lab_metric_metadata_aud" tableName="lab_metric_metadata_aud"
+                columnNames="rev, lab_metric_id, metadata_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-2996-3" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_LMM_LAB_METRIC"
+                baseTableName="lab_metric_metadata" baseColumnNames="lab_metric_id"
+                referencedTableName="lab_metric" referencedColumnNames="lab_metric_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-2996-4" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_LMM_METADATA"
+                baseTableName="lab_metric_metadata" baseColumnNames="metadata_id"
+                referencedTableName="metadata" referencedColumnNames="metadata_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-2996-5" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_LMMA_REV_INFO"
+                baseTableName="lab_metric_metadata_aud" baseColumnNames="rev"
+                referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-2996-6" author="thompson">
+        <addColumn schemaName="mercury" tableName="metadata">
+            <column name="date_value" type="timestamp"/>
+            <column name="number_value" type="number(19,2)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2996-7" author="thompson">
+        <addColumn schemaName="mercury" tableName="metadata_aud">
+            <column name="date_value" type="timestamp"/>
+            <column name="number_value" type="number(19,2)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2959-1" author="jsacco">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists schemaName="MERCURY" indexName="IDX_MERCURY_SAMPLES_LAB_VESSEL"/>
+            </not>
+        </preConditions>
+        <createIndex indexName="IDX_MERCURY_SAMPLES_LAB_VESSEL"
+                     schemaName="MERCURY" tableName="LAB_VESSEL_MERCURY_SAMPLES" unique="true">
+            <column name="MERCURY_SAMPLES"/>
+            <column name="LAB_VESSEL"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-2980-1" author="thompson">
+        <addColumn schemaName="mercury" tableName="reagent">
+            <column name="control" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2980-2" author="thompson">
+        <addColumn schemaName="mercury" tableName="reagent_aud">
+            <column name="control" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2980-3" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_R_MERCURY_CONTROL" baseTableName="reagent" baseColumnNames="control"
+                referencedTableName="mercury_control" referencedColumnNames="mercury_control_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-3029-1" author="jsacco">
+        <!-- Support user defined search queries by lab event type -->
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists schemaName="MERCURY" indexName="IDX_LAB_EVENT_TYPE"/>
+            </not>
+        </preConditions>
+        <createIndex indexName="IDX_LAB_EVENT_TYPE"
+                     schemaName="MERCURY" tableName="LAB_EVENT" unique="false">
+            <column name="LAB_EVENT_TYPE"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="scottmat" id="GPLIM-3028-control-uses-prod">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="mercury_control" columnName="collaborator_participant_id" schemaName="mercury" />
+            </not>
+        </preConditions>
+        <renameColumn tableName="mercury_control" oldColumnName="collaborator_sample_id"
+                      newColumnName="collaborator_participant_id" schemaName="mercury" />
+    </changeSet>
+    <changeSet author="scottmat" id="GPLIM-3028-control-aud-uses-prod">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="mercury_control_aud" columnName="collaborator_participant_id" schemaName="mercury" />
+            </not>
+        </preConditions>
+        <renameColumn tableName="mercury_control_aud" oldColumnName="collaborator_sample_id"
+                      newColumnName="collaborator_participant_id" schemaName="mercury" />
+    </changeSet>
 </databaseChangeLog>

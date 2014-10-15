@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.control.vessel;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
@@ -37,9 +38,9 @@ import java.util.Map;
 public class VarioskanParserTest {
 
     public static final String PLATE1_BARCODE = "000001234567";
-    public static final String PLATE1_BARCODE_IN_SS = "1234567.0";
+    public static final String PLATE1_BARCODE_IN_SS = "1234567";
     public static final String PLATE2_BARCODE = "000002345678";
-    public static final String PLATE2_BARCODE_IN_SS = "2345678.0";
+    public static final String PLATE2_BARCODE_IN_SS = "2345678";
 
     @Test
     public void testBasic() {
@@ -82,9 +83,11 @@ public class VarioskanParserTest {
 
             VarioskanRowParser varioskanRowParser = new VarioskanRowParser(workbook);
             Map<VarioskanRowParser.NameValue, String> mapNameValueToValue = varioskanRowParser.getValues();
+            MessageCollection messageCollection = new MessageCollection();
             LabMetricRun labMetricRun = vesselEjb.createVarioskanRunDaoFree(mapNameValueToValue,
-                    LabMetric.MetricType.INITIAL_PICO, varioskanPlateProcessor, mapBarcodeToPlate, 101L)
-                    .getLeft();
+                    LabMetric.MetricType.INITIAL_PICO, varioskanPlateProcessor, mapBarcodeToPlate, 101L,
+                    messageCollection).getLeft();
+            Assert.assertFalse(messageCollection.hasErrors());
             Assert.assertEquals(labMetricRun.getLabMetrics().size(), 3 * 96);
             Assert.assertEquals(mapPositionToTube.get(VesselPosition.A01).getMetrics().iterator().next().getValue(),
                     new BigDecimal("3.34"));

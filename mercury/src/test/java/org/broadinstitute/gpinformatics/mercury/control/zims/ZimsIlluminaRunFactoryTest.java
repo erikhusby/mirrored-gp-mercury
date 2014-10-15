@@ -13,9 +13,11 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventRefDataFetcher;
@@ -59,15 +61,16 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ZimsIlluminaRunFactoryTest {
 
-    private static final String POSITIVE_CONTROL_SAMPLE_COLLABORATOR_ID = "NA12878";
+    private static final String POSITIVE_CONTROL_SAMPLE_PARTICIPANT_ID = "NA12878";
     private static final String BSP_SM_ID_FOR_POSITIVE_CONTROL = "SM-59YAY";
     private static final SampleData POSITIVE_CONTROL_SAMPLE_DTO = new BspSampleData(new HashMap<BSPSampleSearchColumn, String>() {{
         put(BSPSampleSearchColumn.STOCK_SAMPLE, BSP_SM_ID_FOR_POSITIVE_CONTROL);
         put(BSPSampleSearchColumn.ROOT_SAMPLE, BSP_SM_ID_FOR_POSITIVE_CONTROL);
         put(BSPSampleSearchColumn.SAMPLE_ID, BSP_SM_ID_FOR_POSITIVE_CONTROL);
-        put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, POSITIVE_CONTROL_SAMPLE_COLLABORATOR_ID);
+        put(BSPSampleSearchColumn.PARTICIPANT_ID, POSITIVE_CONTROL_SAMPLE_PARTICIPANT_ID);
     }});
 
+    private CrspPipelineUtils crspPipelineUtils = new CrspPipelineUtils(Deployment.DEV);
     private ResearchProject crspPositiveControlsResearchProject;
     private ResearchProjectDao mockResearchProjectDao;
     private static final String PRODUCT_ORDER_KEY = "TestPDO-1";
@@ -117,7 +120,7 @@ public class ZimsIlluminaRunFactoryTest {
                                           true, Workflow.AGILENT_EXOME_EXPRESS, false, "agg type");
 
         zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(mockSampleDataFetcher, mockControlDao,
-                new SequencingTemplateFactory(), productOrderDao, mockResearchProjectDao);
+                new SequencingTemplateFactory(), productOrderDao, mockResearchProjectDao, crspPipelineUtils);
         LabEventFactory labEventFactory = new LabEventFactory(null, null);
         labEventFactory.setLabEventRefDataFetcher(new LabEventRefDataFetcher() {
             @Override
@@ -385,8 +388,8 @@ public class ZimsIlluminaRunFactoryTest {
         for (String sampleId : testSampleIds) {
             if (sampleId.equals(BSP_SM_ID_FOR_POSITIVE_CONTROL)) {
                 SampleData sampleData = mapSampleIdToDto.get(sampleId);
-                String collaboratorSampleName = sampleData.getCollaboratorsSampleName();
-                controlMap.put(collaboratorSampleName,new Control(collaboratorSampleName, Control.ControlType.POSITIVE));
+                String collaboratorParticipantId = sampleData.getCollaboratorParticipantId();
+                controlMap.put(collaboratorParticipantId,new Control(collaboratorParticipantId, Control.ControlType.POSITIVE));
             }
         }
     }
