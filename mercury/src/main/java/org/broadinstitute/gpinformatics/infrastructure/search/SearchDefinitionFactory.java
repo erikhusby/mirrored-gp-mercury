@@ -1,11 +1,16 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.BspSampleSearchAddRowsListener;
 import org.broadinstitute.gpinformatics.infrastructure.columns.EventVesselSourcePositionPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.EventVesselTargetPositionPlugin;
+import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetadataPlugin;
+import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetricPlugin;
+import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -14,6 +19,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
@@ -22,6 +29,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -73,15 +81,17 @@ public class SearchDefinitionFactory {
         searchTerms = buildLabVesselBsp();
         mapGroupSearchTerms.put("BSP", searchTerms);
 
-        // TODO:  JMS Wait for other group to get Mercury sample metada more stable
-        // searchTerms = buildLabVesselMetadata();
-        // mapGroupSearchTerms.put("Mercury Metadata", null);
+        searchTerms = buildLabVesselMetadata();
+        mapGroupSearchTerms.put("Mercury Metadata", searchTerms);
 
         searchTerms = buildLabVesselBuckets();
         mapGroupSearchTerms.put("Buckets", searchTerms);
 
         searchTerms = buildLabVesselEvent();
         mapGroupSearchTerms.put("Events", searchTerms);
+
+        searchTerms = buildLabVesselMultiCols();
+        mapGroupSearchTerms.put("Multi-Columns", searchTerms);
 
         // Raising volume to 65ul - sample annotation?
         // Billing Risk - from PDO
@@ -126,6 +136,23 @@ public class SearchDefinitionFactory {
         List<ConfigurableSearchDefinition.CriteriaProjection> criteriaProjections = new ArrayList<>();
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("bucketEntries", "labVesselId",
                 "labVessel", BucketEntry.class.getName()));
+
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("labMetric", "labVesselId",
+                "labMetrics", LabVessel.class.getName()));
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("labMetrics", "labMetrics",
+                "labMetricId", LabMetric.class.getName()));
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("labMetricId", "labMetrics",
+                "id", Metadata.class.getName()));
+
+
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("mercurySample", "labVesselId",
+                "mercurySamples", LabVessel.class.getName()));
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("mercurySamples", "mercurySamples",
+                "mercurySampleId", MercurySample.class.getName()));
+
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("inPlaceLabVesselId", "labVesselId",
+                "inPlaceLabVesselId", LabEvent.class.getName()));
+
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
                 "LabVessel", LabVessel.class.getName(), "label", 100, criteriaProjections, mapGroupSearchTerms);
         mapNameToDef.put(configurableSearchDefinition.getName(), configurableSearchDefinition);
@@ -158,6 +185,7 @@ public class SearchDefinitionFactory {
                 "labVessel", BucketEntry.class.getName()));
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection( "labBatch", "bucketEntries",
                 "bucketEntry", LabBatch.class.getName()));
+
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection( "productOrderId", "bucketEntries",
                 "bucketEntry", LabBatch.class.getName()));
 
@@ -226,27 +254,55 @@ public class SearchDefinitionFactory {
             }
         });
         searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Vessel Volume");
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                LabVessel labVessel = (LabVessel) entity;
+                BigDecimal volume = labVessel.getVolume();
+                if( volume != null ) {
+                    return MathUtils.scaleTwoDecimalPlaces(volume).toPlainString();
+                } else {
+                    return "";
+                }
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Vessel Concentration");
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                LabVessel labVessel = (LabVessel) entity;
+                BigDecimal conc = labVessel.getConcentration();
+                if( conc != null ) {
+                    return MathUtils.scaleTwoDecimalPlaces(conc).toPlainString();
+                } else {
+                    return "";
+                }
+            }
+        });
+        searchTerms.add(searchTerm);
         return searchTerms;
     }
 
     private List<SearchTerm> buildLabVesselBsp() {
         List<SearchTerm> searchTerms = new ArrayList<>();
-
-        // Stock sample ID - from BSP, not searchable
+        // Non-searchable data from BSP
         searchTerms.add(buildLabVesselBspTerm(BSPSampleSearchColumn.STOCK_SAMPLE, "Stock Sample ID"));
-        // Collaborator sample ID - from BSP
-        searchTerms.add(buildLabVesselBspTerm(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "Collaborator Sample ID"));
-        // Collaborator Participant ID - from BSP
-        searchTerms.add(buildLabVesselBspTerm(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID,
-                "Collaborator Participant ID"));
-        // Tumor / Normal - from BSP
-        searchTerms.add(buildLabVesselBspTerm(BSPSampleSearchColumn.TUMOR_NORMAL, "Tumor / Normal"));
-        // Collection - from BSP
-        searchTerms.add(buildLabVesselBspTerm(BSPSampleSearchColumn.COLLECTION, "Collection"));
-        // Original Material Type - from BSP
-        searchTerms.add(buildLabVesselBspTerm(BSPSampleSearchColumn.ORIGINAL_MATERIAL_TYPE, "Original Material Type"));
-        // todo Stock Sample Initial ng - from BSP?
+        searchTerms.add(buildLabVesselBspTerm(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID));
+        searchTerms.add(buildLabVesselBspTerm(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID ));
+        searchTerms.add(buildLabVesselBspTerm(BSPSampleSearchColumn.SAMPLE_TYPE, "Tumor / Normal"));
+        searchTerms.add(buildLabVesselBspTerm(BSPSampleSearchColumn.COLLECTION));
+        searchTerms.add(buildLabVesselBspTerm(BSPSampleSearchColumn.ORIGINAL_MATERIAL_TYPE));
         return searchTerms;
+    }
+
+    private SearchTerm buildLabVesselBspTerm(final BSPSampleSearchColumn bspSampleSearchColumn) {
+        return buildLabVesselBspTerm(bspSampleSearchColumn, bspSampleSearchColumn.columnName());
     }
 
     private SearchTerm buildLabVesselBspTerm(final BSPSampleSearchColumn bspSampleSearchColumn, String name) {
@@ -339,7 +395,28 @@ public class SearchDefinitionFactory {
         });
         searchTerms.add(searchTerm);
 
-        // Original LCSET - if rework, get non-rework bucket entry
+        // Count of buckets this vessel belongs to
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Bucket Count");
+        criteriaPaths = new ArrayList<>();
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setPropertyName("bucketEntriesCount");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerm.setValueConversionExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                return Integer.valueOf( (String) context.get(CONTEXT_KEY_SEARCH_STRING));
+            }
+        } );
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                LabVessel labVessel = (LabVessel) entity;
+                return labVessel.getBucketEntriesCount();
+            }
+        });
+        searchTerms.add(searchTerm);
 
         return searchTerms;
     }
@@ -348,6 +425,30 @@ public class SearchDefinitionFactory {
         List<SearchTerm> searchTerms = new ArrayList<>();
 
         SearchTerm searchTerm = new SearchTerm();
+        searchTerm.setName("In-Place Event Type");
+        List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
+        SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList( "inPlaceLabVesselId" /* LabEvent */ ));
+        criteriaPath.setPropertyName("labEventType");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                List<String> labEventNames = new ArrayList<>();
+                LabVessel labVessel = (LabVessel) entity;
+                Set<LabEvent> labVesselInPlaceLabEvents = labVessel.getInPlaceLabEvents();
+                for (LabEvent labVesselInPlaceLabEvent : labVesselInPlaceLabEvents) {
+                    labEventNames.add(labVesselInPlaceLabEvent.getLabEventType().getName());
+                }
+                return labEventNames;
+            }
+        });
+        searchTerm.setValuesExpression( new EventTypeValuesExpression() );
+        searchTerm.setValueConversionExpression( new EventTypeValueConversionExpression() );
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
         searchTerm.setName("Imported Sample Well");
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
@@ -519,10 +620,11 @@ public class SearchDefinitionFactory {
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            private FastDateFormat dateFormat = FastDateFormat.getInstance( "MM/dd/yyyy HH:mm:ss");
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
                 LabEvent labEvent = (LabEvent) entity;
-                return labEvent.getEventDate();
+                return dateFormat.format( labEvent.getEventDate());
             }
         });
         searchTerm.setTypeExpression(new SearchTerm.Evaluator<String>() {
@@ -607,23 +709,8 @@ public class SearchDefinitionFactory {
                 return labEvent.getLabEventType().getName();
             }
         });
-        searchTerm.setValuesExpression(new SearchTerm.Evaluator<List<ConstrainedValue>>() {
-            @Override
-            public List<ConstrainedValue> evaluate(Object entity, Map<String, Object> context) {
-                List<ConstrainedValue> constrainedValues = new ArrayList<>();
-                for (LabEventType labEventType : LabEventType.values()) {
-                    constrainedValues.add(new ConstrainedValue(labEventType.toString(), labEventType.getName()));
-                }
-                Collections.sort(constrainedValues);
-                return constrainedValues;
-            }
-        });
-        searchTerm.setValueConversionExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public Object evaluate(Object entity, Map<String, Object> context) {
-                return Enum.valueOf(LabEventType.class, (String) context.get(CONTEXT_KEY_SEARCH_STRING));
-            }
-        });
+        searchTerm.setValuesExpression( new EventTypeValuesExpression() );
+        searchTerm.setValueConversionExpression( new EventTypeValueConversionExpression() );
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -806,6 +893,12 @@ public class SearchDefinitionFactory {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Reagent Expiration");
+        searchTerm.setTypeExpression(new SearchTerm.Evaluator<String>() {
+            @Override
+            public String evaluate(Object entity, Map<String, Object> context) {
+                return "Date";
+            }
+        });
         criteriaPaths = new ArrayList<>();
         criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setCriteria(Arrays.asList("reagent", "reagents"));
@@ -929,9 +1022,16 @@ public class SearchDefinitionFactory {
                 List<String> results = new ArrayList<>();
                 LabEvent labEvent = (LabEvent) entity;
 
-                for (LabVessel vessel : labEvent.getSourceLabVessels()) {
-                    if( vessel instanceof TubeFormation) {
-                        TubeFormation tubes = (TubeFormation) vessel;
+                LabVessel inPlaceLabVessel = labEvent.getInPlaceLabVessel();
+
+                // Ignore source vessels for in-place events
+                if( inPlaceLabVessel != null ) {
+                    return results;
+                }
+
+                for (LabVessel vessel : labEvent.getSourceLabVessels() ) {
+                    if( OrmUtil.proxySafeIsInstance( vessel, TubeFormation.class )) {
+                        TubeFormation tubes = OrmUtil.proxySafeCast(vessel, TubeFormation.class);
                         for ( RackOfTubes rack : tubes.getRacksOfTubes()) {
                             results.add(rack.getLabel());
                         }
@@ -939,15 +1039,6 @@ public class SearchDefinitionFactory {
                         results.add(vessel.getLabel());
                     }
                 }
-
-                if( results.isEmpty() && labEvent.getInPlaceLabVessel() != null ) {
-                    if( labEvent.getInPlaceLabVessel().getContainerRole() != null ) {
-                        results.add( labEvent.getInPlaceLabVessel().getContainerRole().getEmbedder().getLabel() );
-                    } else {
-                        results.add( labEvent.getInPlaceLabVessel().getLabel() );
-                    }
-                }
-
                 return results;
             }
         });
@@ -971,9 +1062,23 @@ public class SearchDefinitionFactory {
                 List<String> results = new ArrayList<>();
                 LabEvent labEvent = (LabEvent) entity;
 
+                LabVessel inPlaceLabVessel = labEvent.getInPlaceLabVessel();
+                if( inPlaceLabVessel != null ) {
+                    // This will do for now, but looking at ancillary vessel in VesselTransfer is more reliable.
+                    if( OrmUtil.proxySafeIsInstance( inPlaceLabVessel, TubeFormation.class )) {
+                        TubeFormation tubes = OrmUtil.proxySafeCast(inPlaceLabVessel, TubeFormation.class);
+                        for ( RackOfTubes rack : tubes.getRacksOfTubes()) {
+                            results.add(rack.getLabel());
+                        }
+                    } else {
+                        results.add( inPlaceLabVessel.getLabel() );
+                    }
+                    return results;
+                }
+
                 for (LabVessel vessel : labEvent.getTargetLabVessels()) {
-                    if( vessel instanceof TubeFormation) {
-                        TubeFormation tubes = (TubeFormation) vessel;
+                    if( OrmUtil.proxySafeIsInstance( vessel, TubeFormation.class )) {
+                        TubeFormation tubes = OrmUtil.proxySafeCast(vessel, TubeFormation.class);
                         for ( RackOfTubes rack : tubes.getRacksOfTubes()) {
                             results.add(rack.getLabel());
                         }
@@ -1015,6 +1120,9 @@ public class SearchDefinitionFactory {
                 }
                 break;
             }
+        } else {
+            // Ignore source vessels for in-place events
+            return vesselTypeName;
         }
 
         if( vessel != null ) {
@@ -1070,6 +1178,230 @@ public class SearchDefinitionFactory {
             vesselTypeName = vessel.getType()==null?"":vessel.getType().getName();
         }
         return vesselTypeName;
+    }
+
+    /**
+     * Build sample metadata search terms for lab vessels.
+     * @return List of search terms/column definitions for lab vessel sample metadata
+     */
+    private List<SearchTerm> buildLabVesselMetadata() {
+        List<SearchTerm> searchTerms = new ArrayList<>();
+
+        SearchTerm searchTerm = new SearchTerm();
+        searchTerm.setName("Mercury Sample ID");
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                List<String> values = new ArrayList<String>();
+                LabVessel labVessel = (LabVessel) entity;
+                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                    values.add(sampleInstanceV2.getMercuryRootSampleName());
+                }
+                return values;
+            }
+        });
+
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Total ng at Initial Pico");
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                String value = "";
+                LabVessel labVessel = (LabVessel) entity;
+                Set<LabMetric> labMetrics = labVessel.getMetrics();
+                for (LabMetric labMetric : labMetrics) {
+                    BigDecimal ng = labMetric.getTotalNg();
+                    if( ng != null ) {
+                        value = MathUtils.scaleTwoDecimalPlaces(ng).toPlainString();
+                    }
+                    break;
+                }
+                return value;
+
+            }
+        });
+        searchTerm.setValueConversionExpression( new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                return new BigDecimal( (String) context.get(CONTEXT_KEY_SEARCH_STRING));
+            }
+        });
+        List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
+        SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList( "labMetric" /* LabVessel */, "labMetrics" /* LabMetric */, "metadataSet" /* Metadata */ ));
+        criteriaPath.setPropertyName("numberValue");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+
+        searchTerms.add(searchTerm);
+
+        // Build sample metadata child search term (the metadata value)
+        List<SearchTerm> childSearchTerms = new ArrayList<>();
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Metadata Value");
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                String values = "";
+
+                SearchInstance.SearchValue searchValue =
+                        (SearchInstance.SearchValue) context.get(CONTEXT_KEY_SEARCH_VALUE);
+                String header = searchValue.getParent().getValues().get(0);
+                Metadata.Key key = Metadata.Key.valueOf(header);
+
+                LabVessel labVessel = (LabVessel) entity;
+                Set<MercurySample> samples = labVessel.getMercurySamples();
+                for (MercurySample sample : samples) {
+                    Set<Metadata> metadataSet = sample.getMetadata();
+                    for (Metadata meta : metadataSet) {
+                        if (meta.getKey() == key) {
+                            values += meta.getValue();
+                            break;
+                        }
+                    }
+                }
+                return values;
+            }
+        });
+        searchTerm.setViewHeader(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                String header;
+                SearchInstance.SearchValue searchValue = (SearchInstance.SearchValue) context.get(CONTEXT_KEY_SEARCH_VALUE);
+                header = searchValue.getParent().getValues().get(0);
+                Metadata.Key key = Metadata.Key.valueOf(header);
+                if( key != null ) {
+                    return key.getDisplayName();
+                } else {
+                    return header;
+                }
+            }
+        });
+        searchTerm.setTypeExpression(new SearchTerm.Evaluator<String>() {
+            @Override
+            public String evaluate(Object entity, Map<String, Object> context) {
+                SearchInstance.SearchValue searchValue = (SearchInstance.SearchValue) context.get(CONTEXT_KEY_SEARCH_VALUE);
+                String metaName = searchValue.getParent().getValues().get(0);
+                Metadata.Key key = Metadata.Key.valueOf(metaName);
+                switch (key.getDataType()) {
+                case STRING:
+                    return String.class.getSimpleName();
+                case NUMBER:
+                    return BigDecimal.class.getSimpleName();
+                case DATE:
+                    return Date.class.getSimpleName();
+                }
+                throw new RuntimeException("Unhandled data type " + key.getDataType());
+            }
+        });
+        criteriaPaths = new ArrayList<>();
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("mercurySample", "mercurySamples", "metadata" /* Metadata */));
+        criteriaPath.setPropertyNameExpression(new SearchTerm.Evaluator<String>() {
+            @Override
+            // Defensive coding
+            //   - as of 10/02/2014 sample metadata values are stored in value column (JPA aliased as "stringValue").
+            public String evaluate(Object entity, Map<String, Object> context) {
+                SearchInstance.SearchValue searchValue = (SearchInstance.SearchValue) context.get(CONTEXT_KEY_SEARCH_VALUE);
+                String metaName = searchValue.getParent().getValues().get(0);
+                Metadata.Key key = Metadata.Key.valueOf(metaName);
+                switch (key.getDataType()) {
+                case STRING:
+                    return "stringValue";
+                case NUMBER:
+                    return "numberValue";
+                case DATE:
+                    return "dateValue";
+                }
+                throw new RuntimeException("Unhandled data type " + key.getDataType());
+            }
+        });
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        childSearchTerms.add(searchTerm);
+
+        // Build parent search term (the metadata name)
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Sample Metadata");
+        searchTerm.setValuesExpression(new SearchTerm.Evaluator<List<ConstrainedValue>>() {
+            @Override
+            public List<ConstrainedValue> evaluate(Object entity, Map<String, Object> context) {
+                List<ConstrainedValue> constrainedValues = new ArrayList<>();
+                for (Metadata.Key meta : Metadata.Key.values()) {
+                    if (meta.getCategory() == Metadata.Category.SAMPLE) {
+                        constrainedValues.add(new ConstrainedValue(meta.toString(), meta.getDisplayName()));
+                    }
+                }
+                Collections.sort(constrainedValues);
+                return constrainedValues;
+            }
+        });
+        searchTerm.setValueConversionExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                return Enum.valueOf(Metadata.Key.class, (String) context.get(CONTEXT_KEY_SEARCH_STRING));
+            }
+        });
+        // Don't want this option in selectable columns
+        searchTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
+        searchTerm.setDependentSearchTerms(childSearchTerms);
+        searchTerm.setAddConstrainedValuesToSearchTermList(true);
+        criteriaPaths = new ArrayList<>();
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList( "mercurySample", "mercurySamples", "metadata" ));
+        criteriaPath.setPropertyName("key");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerms.add(searchTerm);
+
+        return searchTerms;
+    }
+
+    /**
+     * Build multi column search terms for lab vessels.
+     * @return List of search terms/column definitions for lab vessel multi-column data sets
+     */
+    private List<SearchTerm> buildLabVesselMultiCols() {
+        List<SearchTerm> searchTerms = new ArrayList<>();
+
+        SearchTerm searchTerm = new SearchTerm();
+        searchTerm.setName("All Sample Metadata");
+        searchTerm.setPluginClass(LabVesselMetadataPlugin.class);
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Vessel Concentrations");
+        searchTerm.setPluginClass(LabVesselMetricPlugin.class);
+        searchTerms.add(searchTerm);
+
+        return searchTerms;
+    }
+
+    /**
+     * Shared value list of all lab event types.
+     */
+    private class EventTypeValuesExpression extends SearchTerm.Evaluator<List<ConstrainedValue>> {
+        @Override
+        public List<ConstrainedValue> evaluate(Object entity, Map<String, Object> context) {
+            List<ConstrainedValue> constrainedValues = new ArrayList<>();
+            for (LabEventType labEventType : LabEventType.values()) {
+                constrainedValues.add(new ConstrainedValue(labEventType.toString(), labEventType.getName()));
+            }
+            Collections.sort(constrainedValues);
+            return constrainedValues;
+        }
+    }
+
+    /**
+     * Shared conversion of input String to LabEventType enumeration value
+     */
+    private class EventTypeValueConversionExpression extends SearchTerm.Evaluator<Object> {
+        @Override
+        public Object evaluate(Object entity, Map<String, Object> context) {
+            return Enum.valueOf(LabEventType.class, (String) context.get(CONTEXT_KEY_SEARCH_STRING));
+        }
     }
 
 }

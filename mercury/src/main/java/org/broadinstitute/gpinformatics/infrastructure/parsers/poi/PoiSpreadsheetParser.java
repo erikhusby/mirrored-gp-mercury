@@ -170,6 +170,9 @@ public final class PoiSpreadsheetParser {
      * We leave all parsing and validating up to the caller by turning everything into a string. We might want to
      * let POI turn things into real objects in the map in the future, but for now this was what callers were
      * expecting.
+     * <p/>
+     * <b>Note, if your cell contains a formula, this method will return not the calculated value, nor the formula
+     * but an empty string instead.</b>
      *
      * @param cell The cell data.
      *
@@ -195,6 +198,7 @@ public final class PoiSpreadsheetParser {
         }
 
         return "";
+        // todo jmt this could all be replaced with return new HSSFDataFormatter().formatCellValue( cell );
     }
 
     /**
@@ -245,15 +249,14 @@ public final class PoiSpreadsheetParser {
      */
     public static List<String> processSingleWorksheet(InputStream spreadsheet, TableProcessor processor)
             throws InvalidFormatException, IOException, ValidationException {
-
         PoiSpreadsheetParser parser = new PoiSpreadsheetParser(Collections.<String, TableProcessor>emptyMap());
-
         try {
-            parser.processRows(WorkbookFactory.create(spreadsheet).getSheetAt(0), processor);
+            Workbook workbook = WorkbookFactory.create(spreadsheet);
+            processor.validateNumberOfWorksheets(workbook.getNumberOfSheets());
+            parser.processRows(workbook.getSheetAt(0), processor);
+            return processor.getMessages();
         } finally {
             processor.close();
         }
-
-        return parser.validationMessages;
     }
 }

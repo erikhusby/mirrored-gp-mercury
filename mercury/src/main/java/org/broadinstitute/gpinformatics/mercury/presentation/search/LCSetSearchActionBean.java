@@ -7,8 +7,8 @@ import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import org.apache.commons.collections4.CollectionUtils;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -36,12 +36,12 @@ public class LCSetSearchActionBean extends SearchActionBean {
     private Map<LabVessel, LabEvent> latestEventForVessel = new HashMap<>();
 
     @Inject
-    private BSPSampleDataFetcher sampleDataFetcher;
+    private SampleDataFetcher sampleDataFetcher;
 
-    private Map<String, BSPSampleDTO> sampleToBspPicoValueMap = new HashMap<>();
+    private Map<String, SampleData> sampleToBspPicoValueMap = new HashMap<>();
     private Map<LabVessel, Set<SampleInstance>> vesselToSampleInstanceMap = new HashMap<>();
 
-    public Map<String, BSPSampleDTO> getSampleToBspPicoValueMap() {
+    public Map<String, SampleData> getSampleToBspPicoValueMap() {
         return sampleToBspPicoValueMap;
     }
 
@@ -64,7 +64,7 @@ public class LCSetSearchActionBean extends SearchActionBean {
     }
 
     /**
-     * Create the cache of sample names to BSPSampleDTO objects.
+     * Create the cache of sample names to BspSampleData objects.
      */
     private void generateBspPicoMap() {
         Set<String> sampleNames = new HashSet<>();
@@ -85,7 +85,7 @@ public class LCSetSearchActionBean extends SearchActionBean {
                 }
             }
         }
-        sampleToBspPicoValueMap = sampleDataFetcher.fetchSamplesFromBSP(sampleNames);
+        sampleToBspPicoValueMap = sampleDataFetcher.fetchSampleData(sampleNames);
     }
 
     public Double getExportedSampleConcentration(LabVessel vessel) {

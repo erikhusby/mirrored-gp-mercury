@@ -19,7 +19,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDtoTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
@@ -79,21 +79,23 @@ public class SubmissionDtoFetcherTest {
         BassSearchService bassSearchService = Mockito.mock(BassSearchService.class);
         Mockito.when(bassSearchService.runSearch(Mockito.anyString())).thenReturn(Arrays.asList(bassResults));
 
-        Map<String, BSPSampleDTO> bspSampleDTOMap = new HashMap<>();
+        Map<String, BspSampleData> bspSampleDataMap = new HashMap<>();
         HashMap<BSPSampleSearchColumn, String> dataMap = new HashMap<>();
         dataMap.put(BSPSampleSearchColumn.SAMPLE_ID, TEST_SAMPLE);
         dataMap.put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, COLLABORATOR_SAMPLE_ID);
 
         BSPSampleDataFetcher bspSampleDataFetcher = Mockito.mock(BSPSampleDataFetcher.class);
-        bspSampleDTOMap.put(TEST_SAMPLE, new BSPSampleDTO(dataMap));
+        bspSampleDataMap.put(TEST_SAMPLE, new BspSampleData(dataMap));
 
-        Mockito.when(bspSampleDataFetcher.fetchSamplesFromBSP(Mockito.anyCollectionOf(String.class), Mockito.any(BSPSampleSearchColumn.class))).thenReturn( bspSampleDTOMap);
+        Mockito.when(bspSampleDataFetcher.fetchSampleData(Mockito.anyCollectionOf(String.class),
+                Mockito.any(BSPSampleSearchColumn.class))).thenReturn(
+                bspSampleDataMap);
 
         BSPConfig testBspConfig = new BSPConfig(Deployment.STUBBY);
-        Mockito.when(bspSampleDataFetcher.getBspConfig()).thenReturn(testBspConfig);
 
         SubmissionDtoFetcher submissionDtoFetcher =
-                new SubmissionDtoFetcher(aggregationMetricsFetcher, bassSearchService, bspSampleDataFetcher, submissionService);
+                new SubmissionDtoFetcher(aggregationMetricsFetcher, bassSearchService, bspSampleDataFetcher, submissionService,
+                        testBspConfig);
         List<SubmissionDto> submissionDtoList = submissionDtoFetcher.fetch(researchProject);
 
         assertThat(submissionDtoList, is(not(empty())));

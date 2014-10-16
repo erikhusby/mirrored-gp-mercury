@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -108,7 +109,7 @@ public class VarioskanPlateProcessor extends TableProcessor {
                     } else {
                         bigDecimal = new BigDecimal(result);
                     }
-                    bigDecimal = bigDecimal.setScale(SCALE, BigDecimal.ROUND_HALF_UP);
+                    bigDecimal = MathUtils.scaleTwoDecimalPlaces(bigDecimal);
                     plateWellResults.add(new PlateWellResult(paddedBarcode, vesselPosition, bigDecimal));
                 } catch (NumberFormatException e) {
                     addDataMessage("Failed to find position " + well, dataRowIndex);
@@ -131,9 +132,9 @@ public class VarioskanPlateProcessor extends TableProcessor {
     }
 
     private enum Headers implements ColumnHeader {
-        PLATE("Plate", 0, REQUIRED_HEADER, OPTIONAL_VALUE),
-        WELL("Well", 1, REQUIRED_HEADER, OPTIONAL_VALUE),
-        SAMPLE("Sample", 2, REQUIRED_HEADER, OPTIONAL_VALUE),
+        PLATE("Plate", 0, REQUIRED_HEADER, OPTIONAL_VALUE, IS_STRING),
+        WELL("Well", 1, REQUIRED_HEADER, OPTIONAL_VALUE, IS_STRING),
+        SAMPLE("Sample", 2, REQUIRED_HEADER, OPTIONAL_VALUE, IS_STRING),
         VALUE("Value", 3, REQUIRED_HEADER, OPTIONAL_VALUE),
         RESULT("Result", 4, REQUIRED_HEADER, OPTIONAL_VALUE);
 

@@ -1,0 +1,1 @@
+This is not an Excel file so the Manifest import parser should generate an error when it gets this.

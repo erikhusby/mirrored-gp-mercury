@@ -63,6 +63,12 @@ public class SecurityActionBean extends CoreActionBean {
         HttpServletRequest request = getContext().getRequest();
         if (request.getUserPrincipal() == null || request.getUserPrincipal().getName() == null) {
             // User not logged in
+
+            // If AJAX session timeout, do not forward to targeted page after sign in.
+            if( request.getParameter("ajax") != null ) {
+                request.getSession().removeAttribute(AuthorizationFilter.TARGET_PAGE_ATTRIBUTE);
+            }
+
             return new RedirectResolution(LOGIN_PAGE);
         }
 

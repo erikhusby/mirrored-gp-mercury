@@ -67,14 +67,14 @@ public class VarioskanParserContainerTest extends Arquillian {
             for (int i = 0; i < curveSheet.getLastRowNum(); i++) {
                 Row row = curveSheet.getRow(i);
                 if (row != null) {
-                    for (int j = 0; j < row.getLastCellNum(); j++) {
-                        Cell cell = row.getCell(j);
-                        if (cell != null) {
-                            if (cell.toString().equals(VarioskanParserTest.PLATE1_BARCODE_IN_SS)) {
-                                cell.setCellValue(plate1Barcode);
-                            } else if (cell.toString().equals(VarioskanParserTest.PLATE2_BARCODE_IN_SS)) {
-                                cell.setCellValue(plate2Barcode);
-                            }
+                    Cell cell = row.getCell(0);
+                    if (cell != null) {
+                        cell.setCellType(Cell.CELL_TYPE_STRING);
+                        String cellValue = cell.getStringCellValue();
+                        if (cellValue.equals(VarioskanParserTest.PLATE1_BARCODE_IN_SS)) {
+                            cell.setCellValue(plate1Barcode);
+                        } else if (cellValue.equals(VarioskanParserTest.PLATE2_BARCODE_IN_SS)) {
+                            cell.setCellValue(plate2Barcode);
                         }
                     }
                 }
@@ -89,6 +89,11 @@ public class VarioskanParserContainerTest extends Arquillian {
                             VarioskanRowParser.NameValue.RUN_NAME.getFieldName())) {
                         Cell valueCell = row.getCell(VarioskanRowParser.VALUE_COLUMN);
                         valueCell.setCellValue(simpleDateFormat.format(new Date()) + " Mike Test");
+                    } else if (nameCell != null && nameCell.getStringCellValue().equals(
+                            VarioskanRowParser.NameValue.RUN_STARTED.getFieldName())) {
+                        Cell valueCell = row.getCell(VarioskanRowParser.VALUE_COLUMN);
+                        valueCell.setCellValue(new SimpleDateFormat(
+                                VarioskanRowParser.NameValue.RUN_STARTED.getDateFormat()).format(new Date()));
                     }
                 }
             }
@@ -102,9 +107,11 @@ public class VarioskanParserContainerTest extends Arquillian {
             labVesselDao.persistAll(mapPositionToTube.values());
             MessageCollection messageCollection = new MessageCollection();
             LabMetricRun labMetricRun = vesselEjb.createVarioskanRun(new FileInputStream(tempFile),
-                    LabMetric.MetricType.INITIAL_PICO, BSPManagerFactoryStub.QA_DUDE_USER_ID, messageCollection);
+                    LabMetric.MetricType.INITIAL_PICO, BSPManagerFactoryStub.QA_DUDE_USER_ID, messageCollection)
+                    .getLeft();
 
             Assert.assertFalse(messageCollection.hasErrors());
+            Assert.assertFalse(messageCollection.hasWarnings());
             Assert.assertEquals(labMetricRun.getLabMetrics().size(), 96 * 3);
         } catch (InvalidFormatException | IOException e) {
             throw new RuntimeException(e);

@@ -132,10 +132,8 @@
                 <c:choose>
                     <c:when test="${not empty searchValue.operator && (searchValue.operator.name == 'IN' || searchValue.operator.name == 'NOT_IN')}">
                         <!-- IN = list of text values -->
-                        <!-- The c:forEach tags aren't indented, because indentation would lead to spurious whitespace in the textarea -->
                         <textarea rows="4" cols="10" class="termvalue"><c:forEach items="${searchValue.values}"
-                                                                                  var="value">${value}
-                        </c:forEach></textarea>
+                                                                                  var="value">${value}<%= '\n' %></c:forEach></textarea>
                     </c:when>
                     <c:when test="${not empty searchValue.operator && searchValue.operator.name == 'BETWEEN'}">
                         <!-- BETWEEN = Pair of text boxes. Add invented attributes, between1 and between2,
@@ -167,7 +165,7 @@
         </c:choose>
         <%-- If there are sub-terms, render a link to add them, don't bother if value is "none" --%>
         <c:if test="${not empty searchValue.searchTerm.dependentSearchTerms && empty searchValue.children && (empty searchValue.searchTerm.valuesExpression || fn:length(searchValue.constrainedValues) > 0)}">
-            <a href="#" onclick="nextTerm(this);return false;">Add sub-term</a>
+            <input type="button" id="addSubTermBtn" class="btn btn-primary" value="Add Sub-Term" onclick="nextTerm(this)" />
         </c:if>
         <%-- Recurse over sub-terms --%>
         <c:set var="searchValues" value="${searchValue.children}" scope="request"/>

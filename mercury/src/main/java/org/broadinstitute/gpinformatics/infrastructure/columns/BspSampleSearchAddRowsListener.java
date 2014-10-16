@@ -35,6 +35,7 @@ public class BspSampleSearchAddRowsListener implements ConfigurableList.AddRowsL
 
     @Override
     public void addRows(List<?> entityList, Map<String, Object> context, List<ColumnTabulation> nonPluginTabulations) {
+
         List<String> sampleIDs = new ArrayList<>();
         for (Object entity : entityList) {
             LabVessel labVessel = (LabVessel) entity;
@@ -45,8 +46,7 @@ public class BspSampleSearchAddRowsListener implements ConfigurableList.AddRowsL
             }
         }
         if (!columnsInitialized) {
-            bspSampleSearchColumns.add(BSPSampleSearchColumn.SAMPLE_ID);
-            for (ColumnTabulation nonPluginTabulation : nonPluginTabulations) {
+           for (ColumnTabulation nonPluginTabulation : nonPluginTabulations) {
                 // todo jmt avoid all this casting
                 SearchTerm searchTerm;
                 if (nonPluginTabulation instanceof SearchInstance.SearchValue) {
@@ -65,9 +65,14 @@ public class BspSampleSearchAddRowsListener implements ConfigurableList.AddRowsL
         }
 
         List<Map<BSPSampleSearchColumn, String>> listMapColumnToValue;
-        if( sampleIDs.isEmpty() ) {
+
+        // Skip BSP call if no sample IDs or no BSP column data requested
+        // TODO JMS Will new (as of 09/18/2014) sample data fetcher quietly ignore all BSP data?
+        if( sampleIDs.isEmpty() || bspSampleSearchColumns.isEmpty() ) {
             listMapColumnToValue = new ArrayList<>();
         } else {
+            // Needs sample ID in first position
+            bspSampleSearchColumns.add( 0, BSPSampleSearchColumn.SAMPLE_ID );
             listMapColumnToValue = bspSampleSearchService.runSampleSearch(
                     sampleIDs, bspSampleSearchColumns.toArray(new BSPSampleSearchColumn[bspSampleSearchColumns.size()]));
         }

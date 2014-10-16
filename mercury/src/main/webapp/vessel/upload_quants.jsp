@@ -21,6 +21,7 @@
                     "aoColumns": [
                         {"bSortable": true}, // rev id
                         {"bSortable": true}, // barcode
+                        {"bSortable": true}, // collaborator patient ID
                         {"bSortable": true, "sType": "numeric"}, // value
                         {"bSortable": true, "sType": "numeric"}, // volume
                         {"bSortable": true, "sType": "numeric"}, // total ng
@@ -28,11 +29,25 @@
                         {"bSortable": true},  // user
                         {"bSortable": true},  // date
                         {"bSortable": true},  // reason
-                        {"bSortable": false},  // checkbox
+                        {"bSortable": false}  // checkbox
                     ]
-                })
+                });
+                <%-- Clears all checkboxes. --%>
+                $j('input.overrideCheckboxClass').prop('checked',false);
+
+                <%-- Hooks any override checkbox change and hides/shows the NextSteps button. --%>
+                $j('input.overrideCheckboxClass').change(function() {
+                    var isChecked = $j('input.overrideCheckboxClass:checked');
+                    if (isChecked.length) {
+                        $j("#viewNextStepsBtn").attr("disabled", "disabled");
+                    } else {
+                        $j("#viewNextStepsBtn").removeAttr("disabled");
+                    }
+                });
 
             });
+
+
         </script>
     </stripes:layout-component>
     <stripes:layout-component name="content">
@@ -94,6 +109,7 @@
                     <tr>
                         <th>Position</th>
                         <th>Barcode</th>
+                        <th>Collaborator Patient ID</th>
                         <th>Value</th>
                         <th>Volume</th>
                         <th>Total ng</th>
@@ -113,6 +129,9 @@
                                 </td>
                                 <td>
                                     ${labMetric.labVessel.label}
+                                </td>
+                                <td>
+                                    ${fn:join(labMetric.labVessel.getMetadataValues("PATIENT_ID"), " ")}
                                 </td>
                                 <td>
                                     ${labMetric.value}
@@ -137,7 +156,8 @@
                                 </td>
                                 <td>
                                     <c:if test="${labMetric.labMetricDecision.decision.editable}">
-                                        <stripes:checkbox name="selectedMetrics" value="${labMetric.labMetricId}"/>
+                                        <stripes:checkbox name="selectedMetrics" value="${labMetric.labMetricId}"
+                                                class="overrideCheckboxClass"/>
                                     </c:if>
                                 </td>
                             </tr>
@@ -146,6 +166,8 @@
                     </tbody>
                 </table>
                 <stripes:hidden name="labMetricRunId" value="${actionBean.labMetricRun.labMetricRunId}"/>
+                <stripes:hidden name="tubeFormationLabel" value="${actionBean.tubeFormationLabel}"/>
+                <stripes:hidden name="quantType" value="${actionBean.quantType}"/>
                 <stripes:label for="overrideDecision" class="control-label">Override Decision</stripes:label>
                 <div class="controls">
                     <stripes:select name="overrideDecision">
@@ -157,7 +179,16 @@
                     <stripes:text name="overrideReason"/>
                 </div>
                 <stripes:submit name="saveMetrics" value="Save" class="btn btn-primary"/>
+
             </stripes:form>
+
+            <c:if test="${actionBean.quantType == 'INITIAL_PICO'}">
+                <stripes:form action="${actionBean.picoDispositionActionBeanUrl}" id="nextStepsForm" class="form-horizontal">
+                    <stripes:hidden name="tubeFormationLabel" value="${actionBean.tubeFormationLabel}"/>
+                    <stripes:submit name="view" value="View Next Steps" class="btn btn-primary" id="viewNextStepsBtn"/>
+                </stripes:form>
+            </c:if>
+
         </c:if>
     </stripes:layout-component>
 </stripes:layout-render>

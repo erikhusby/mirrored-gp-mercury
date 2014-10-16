@@ -7,10 +7,11 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.rackscan.ScannerException;
+import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
-import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanPlateProcessor;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
@@ -20,7 +21,6 @@ import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActi
 
 import javax.inject.Inject;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -131,17 +131,18 @@ public class PicoDispositionActionBean extends RackScanActionBean {
     public class ListItem {
         private String position;
         private String barcode;
+        private String[] collaboratorPatientIds;
         private BigDecimal concentration;
         private NextStep disposition;
         private boolean riskOverride;
 
-        public ListItem(String position, String barcode, BigDecimal concentration,  NextStep disposition,
-                        boolean riskOverride) {
+        public ListItem(String position, String barcode, String[] collaboratorPatientIds, BigDecimal concentration,
+                NextStep disposition, boolean riskOverride) {
             this.position = position;
             this.barcode = barcode;
+            this.collaboratorPatientIds = collaboratorPatientIds;
             // Sets the number of decimal digits to display.
-            this.concentration = (concentration != null) ?
-                    concentration.setScale(VarioskanPlateProcessor.SCALE, RoundingMode.HALF_EVEN) : null;
+            this.concentration = (concentration != null) ? MathUtils.scaleTwoDecimalPlaces(concentration) : null;
             this.disposition = disposition;
             this.riskOverride = riskOverride;
         }
@@ -151,6 +152,9 @@ public class PicoDispositionActionBean extends RackScanActionBean {
         }
         public String getBarcode() {
             return barcode;
+        }
+        public String[] getCollaboratorPatientIds() {
+            return collaboratorPatientIds;
         }
         public BigDecimal getConcentration() {
             return concentration;
@@ -198,15 +202,19 @@ public class PicoDispositionActionBean extends RackScanActionBean {
         /**
          * Returns the NextStep based on quant range comparison and at risk override.
          * @param rangeComparison  +, -, or 0  indicating quant is above, below, or in range.
-         * @param override   true if user accepted this sample despite its low quant.
+         * @param decision         the pass/fail/risk status of this sample.
          */
-        public static NextStep calculateNextStep(int rangeComparison, boolean override) {
-            if (rangeComparison < 0) {
-                return override ? SHEARING_DAUGHTER_AT_RISK : EXCLUDE;
-            } else if (rangeComparison == 0) {
-                return SHEARING_DAUGHTER;
+        public static NextStep calculateNextStep(int rangeComparison, LabMetricDecision.Decision decision) {
+            switch (decision) {
+            case PASS:
+                return (rangeComparison <= 0) ? SHEARING_DAUGHTER : FP_DAUGHTER;
+            case RISK:
+                return SHEARING_DAUGHTER_AT_RISK;
+            case FAIL:
+                return EXCLUDE;
+            default:
+                throw new RuntimeException("Unknown lab metric decision: " + decision);
             }
-            return FP_DAUGHTER;
         }
 
         public static NextStep getNextStep(String stepName) {
@@ -344,13 +352,15 @@ public class PicoDispositionActionBean extends RackScanActionBean {
             LabMetric labMetric = tube.findMostRecentLabMetric(LabMetric.MetricType.INITIAL_PICO);
             if (labMetric != null) {
                 BigDecimal concentration = labMetric.getValue();
-                boolean riskOverride =
-                        labMetric.getLabMetricDecision().getDecision().equals(LabMetricDecision.Decision.RISK);
+                LabMetricDecision.Decision decision = labMetric.getLabMetricDecision().getDecision();
                 int rangeCompare = labMetric.initialPicoDispositionRange();
-                listItems.add(new ListItem(vesselPosition.name(), tube.getLabel(), concentration,
-                        NextStep.calculateNextStep(rangeCompare, riskOverride), riskOverride));
+                listItems.add(new ListItem(vesselPosition.name(), tube.getLabel(),
+                        tube.getMetadataValues(Metadata.Key.PATIENT_ID), concentration,
+                        NextStep.calculateNextStep(rangeCompare, decision),
+                        decision.equals(LabMetricDecision.Decision.RISK)));
             } else {
-                listItems.add(new ListItem(vesselPosition.name(), tube.getLabel(), null, null, false));
+                listItems.add(new ListItem(vesselPosition.name(), tube.getLabel(),
+                        tube.getMetadataValues(Metadata.Key.PATIENT_ID), null, null, false));
             }
         }
         Collections.sort(listItems, BY_DISPOSITION_THEN_POSITION);

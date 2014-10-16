@@ -61,7 +61,14 @@ public class MercurySampleDao extends GenericDao {
         return findList(MercurySample.class, MercurySample_.sampleKey, sampleKey);
     }
 
-    public Map<String, List<MercurySample>> findMapIdToListMercurySample(List<String> sampleKeys) {
+    /**
+     * Finds MercurySamples for the given samples keys. Returns a map of MercurySamples indexed by sample key. The map
+     * contains empty collections if no MercurySamples are found.
+     *
+     * @param sampleKeys    the sample keys to search for
+     * @return a map of sample key to (possibly multiple) MercurySamples
+     */
+    public Map<String, List<MercurySample>> findMapIdToListMercurySample(Collection<String> sampleKeys) {
         Map<String, List<MercurySample>> mapSampleIdToListMercurySamples = new HashMap<>();
         for (String sampleKey : sampleKeys) {
             mapSampleIdToListMercurySamples.put(sampleKey, new ArrayList<MercurySample>());

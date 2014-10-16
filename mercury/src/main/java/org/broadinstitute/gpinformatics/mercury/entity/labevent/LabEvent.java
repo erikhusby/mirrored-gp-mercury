@@ -213,6 +213,21 @@ public class LabEvent {
     }
 
     /**
+     * Helper method to search a collection of events for the existence of a particular lab event
+     * @param allEvents     Collection of events in which to search for an event
+     * @param targetEvent   the specific event to look for
+     * @return  true if the event is present in the given collection
+     */
+    public static boolean isEventPresent(Collection<LabEvent> allEvents, LabEventType targetEvent) {
+        for (LabEvent labEvent : allEvents) {
+            if (labEvent.getLabEventType() == targetEvent) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * getTargetVessels will give to the caller the set of vessels that are on the receiving end of a recorded event
      *
      * @return set of LabVessels

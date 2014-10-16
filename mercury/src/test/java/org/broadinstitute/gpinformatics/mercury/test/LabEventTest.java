@@ -7,7 +7,7 @@ import org.apache.commons.collections4.map.LazySortedMap;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
@@ -68,6 +68,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
+import org.broadinstitute.gpinformatics.mercury.test.builders.CrspPicoEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
@@ -310,14 +311,20 @@ public class LabEventTest extends BaseEventTest {
         Assert.assertEquals(zimsIlluminaRun.getLanesSequenced(), "1,4");
         LabVessel denatureTube = illuminaFlowcell.getNearestTubeAncestorsForLanes().values().iterator().next();
         Assert.assertEquals(zimsIlluminaChamber.getSequencedLibrary(), denatureTube.getLabel());
+        int positiveControlCount = 0;
+        int negativeControlCount = 0;
         for (LibraryBean bean : zimsIlluminaChamber.getLibraries()) {
             // Every library should have an LCSET, even controls.
             Assert.assertEquals(bean.getLcSet(), workflowBatch.getBatchName());
-//            if (!((libraryBean.isPositiveControl() != null && libraryBean.isPositiveControl()) ||
-//                  (libraryBean.isNegativeControl() != null && libraryBean.isNegativeControl()))) {
-//                Assert.assertEquals(bean.getProductOrderKey(), productOrder.getBusinessKey());
-//            }
+            if (bean.isPositiveControl() != null && bean.isPositiveControl()) {
+                positiveControlCount++;
+            }
+            if (bean.isNegativeControl() != null && bean.isNegativeControl()) {
+                negativeControlCount++;
+            }
         }
+        Assert.assertEquals(positiveControlCount, 1);
+        Assert.assertEquals(negativeControlCount, 1);
 
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
         BarcodedTube startingTube = mapBarcodeToTube.entrySet().iterator().next().getValue();
@@ -1261,7 +1268,7 @@ public class LabEventTest extends BaseEventTest {
             }
             Map<BSPSampleSearchColumn, String> dataMap = new HashMap<>();
             dataMap.put(BSPSampleSearchColumn.SAMPLE_ID, poSample.getName());
-            mapSampleNameToDto.put(poSample.getName(), new BSPSampleDTO(dataMap));
+            nameToSampleData.put(poSample.getName(), new BspSampleData(dataMap));
 
             rackPosition++;
         }
@@ -1304,6 +1311,35 @@ public class LabEventTest extends BaseEventTest {
         runPicoPlatingProcess(mapBarcodeToDaughterTube,
                               String.valueOf(runDate.getTime()), "1", true);
 //        Controller.stopCPURecording();
+    }
+
+
+    @Test(groups = TestGroups.DATABASE_FREE)
+    public void testCrspPico() {
+        expectedRouting = SystemRouter.System.MERCURY;
+
+        // Use Standard Exome product, to verify that workflow is taken from LCSet, not Product
+        int numSamples = NUM_POSITIONS_IN_RACK - 2;
+        ProductOrder productOrder = ProductOrderTestFactory.buildIceProductOrder(numSamples);
+        Date runDate = new Date();
+        // todo jmt create bucket, then batch, rather than rack then batch then bucket
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+        LabBatch workflowBatch = new LabBatch("Exome Express Batch",
+                new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setCreatedOn(new Date());
+        workflowBatch.setWorkflow(Workflow.ICE_EXOME_EXPRESS);
+
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
+
+        CrspPicoEntityBuilder crspPicoEntityBuilder = new CrspPicoEntityBuilder(getBettaLimsMessageTestFactory(),
+                getLabEventFactory(), getLabEventHandler(), "", "CRSP", mapBarcodeToTube).invoke();
+
+        TubeFormation shearingTf = (TubeFormation) crspPicoEntityBuilder.getShearingAliquotEntity().
+                getTargetLabVessels().iterator().next();
+        Assert.assertEquals(shearingTf.getContainerRole().getSampleInstancesV2().size(), numSamples);
+
+        runTransferVisualizer(mapBarcodeToTube.values().iterator().next());
     }
 
     /**

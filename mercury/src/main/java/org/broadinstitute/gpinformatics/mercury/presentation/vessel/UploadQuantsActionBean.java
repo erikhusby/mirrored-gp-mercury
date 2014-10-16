@@ -11,6 +11,7 @@ import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationErrors;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
@@ -23,6 +24,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric_;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.sample.PicoDispositionActionBean;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -73,6 +75,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
     private List<Long> selectedMetrics = new ArrayList<>();
     private String overrideReason;
     private LabMetricDecision.Decision overrideDecision;
+    private String tubeFormationLabel;
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -92,7 +95,9 @@ public class UploadQuantsActionBean extends CoreActionBean {
             quantEJB.storeQuants(labMetrics);
             break;
         }
-        addMessage("Successfully uploaded quant.");
+        if (getValidationErrors().isEmpty()) {
+            addMessage("Successfully uploaded quant.");
+        }
         return new ForwardResolution(VIEW_PAGE);
     }
 
@@ -106,8 +111,12 @@ public class UploadQuantsActionBean extends CoreActionBean {
             switch (quantFormat) {
             case VARIOSKAN:
                 MessageCollection messageCollection = new MessageCollection();
-                labMetricRun = vesselEjb.createVarioskanRun(quantStream, getQuantType(),
+                Pair<LabMetricRun, String> pair = vesselEjb.createVarioskanRun(quantStream, getQuantType(),
                         userBean.getBspUser().getUserId(), messageCollection);
+                if (pair != null) {
+                    labMetricRun = pair.getLeft();
+                    tubeFormationLabel = pair.getRight();
+                }
                 addMessages(messageCollection);
                 break;
             case GENERIC:
@@ -234,4 +243,15 @@ public class UploadQuantsActionBean extends CoreActionBean {
         return LabMetricDecision.Decision.getEditableDecisions();
     }
 
+    public String getPicoDispositionActionBeanUrl() {
+        return PicoDispositionActionBean.ACTION_BEAN_URL;
+    }
+
+    public String getTubeFormationLabel() {
+        return tubeFormationLabel;
+    }
+
+    public void setTubeFormationLabel(String tubeFormationLabel) {
+        this.tubeFormationLabel = tubeFormationLabel;
+    }
 }
