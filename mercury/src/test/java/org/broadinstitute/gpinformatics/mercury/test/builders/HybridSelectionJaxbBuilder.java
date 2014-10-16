@@ -5,8 +5,10 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMes
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -220,8 +222,10 @@ public class HybridSelectionJaxbBuilder {
         }
         normCatchRackBarcode = "NormCatchRack";
         normCatchJaxb = bettaLimsMessageTestFactory.buildPlateToRack("NormalizedCatchRegistration",
-                catchCleanupBarcode, normCatchRackBarcode,
-                normCatchBarcodes);
+                catchCleanupBarcode, normCatchRackBarcode, normCatchBarcodes);
+        for (ReceptacleType receptacleType : normCatchJaxb.getPositionMap().getReceptacle()) {
+            receptacleType.setVolume(new BigDecimal("50"));
+        }
         bettaLimsMessageTestFactory.addMessage(messageList, normCatchJaxb);
 
         return this;
