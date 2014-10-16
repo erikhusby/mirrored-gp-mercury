@@ -125,4 +125,17 @@ public class ResearchProjectResourceTest extends ContainerTest {
 
         }
     }
+    @Test(groups = TestGroups.STUBBY)
+    public void testCreateResearchProjectNoGoodUser() throws Exception {
+        Date now = new Date();
+        ResearchProjectResource.ResearchProjectData data =
+                new ResearchProjectResource.ResearchProjectData("Test Research Project " + now.getTime(),
+                        "Small test project to test logging", "scottMatthewes");
+        try {
+            ResearchProjectResource.ResearchProjectData researchProjectData = researchProjectResource.create(data);
+            Assert.fail();
+        } catch (Exception e) {
+
+        }
+    }
 }
