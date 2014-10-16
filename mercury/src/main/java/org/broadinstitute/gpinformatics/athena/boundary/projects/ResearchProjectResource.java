@@ -245,11 +245,12 @@ public class ResearchProjectResource {
                     Response.Status.BAD_REQUEST);
         }
 
-        if(StringUtils.isBlank(data.username)) {
-            throw new ResourceException("A username is required to complete this request", Response.Status.UNAUTHORIZED);
-        }
-
         userBean.login(data.username);
+
+        if(userBean.getBspUser() == null) {
+            throw new ResourceException("A valid Username is required to complete this request",
+                    Response.Status.UNAUTHORIZED);
+        }
 
         ResearchProject project = new ResearchProject(null, data.title, data.synopsis, false,
                                                       ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);

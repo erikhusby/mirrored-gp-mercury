@@ -188,12 +188,12 @@ public class ProductOrderResource {
     }
 
     private void validateAndLoginUser(ProductOrderData productOrderData) {
-        if (StringUtils.isBlank(productOrderData.getUsername())) {
-            throw new ResourceException("A username is required to complete this request",
+        userBean.login(productOrderData.getUsername());
+
+        if(userBean.getBspUser() == null) {
+            throw new ResourceException("A valid Username is required to complete this request",
                     Response.Status.UNAUTHORIZED);
         }
-
-        userBean.login(productOrderData.getUsername());
     }
 
     public ProductOrderKit createOrderKit(boolean isExomeExpress, List<ProductOrderKitDetailData> kitDetailsData,
@@ -349,12 +349,12 @@ public class ProductOrderResource {
             throw new ApplicationValidationException("No sample ids specified");
         }
 
-        if (StringUtils.isBlank(addSamplesToPdoBean.getUsername())) {
-            throw new ResourceException("A username is required to complete this request",
+        userBean.login(addSamplesToPdoBean.getUsername());
+        if(userBean.getBspUser() == null) {
+            throw new ResourceException("A valid Username is required to complete this request",
                     Response.Status.UNAUTHORIZED);
         }
 
-        userBean.login(addSamplesToPdoBean.getUsername());
         ProductOrder order = productOrderDao.findByBusinessKey(pdoKey);
         if (order == null) {
             throw new ApplicationValidationException("No product order found for id: " + pdoKey);

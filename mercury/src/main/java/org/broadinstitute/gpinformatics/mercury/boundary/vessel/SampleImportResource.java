@@ -107,11 +107,12 @@ public class SampleImportResource {
         // todo jmt store the text of the message
         List<ParentVesselBean> parentVesselBeans = sampleImportBean.getParentVesselBeans();
 
-        if(StringUtils.isBlank(sampleImportBean.getUserName())) {
-            throw new ResourceException("A username is required to complete this request", Response.Status.UNAUTHORIZED);
-        }
-
         userBean.login(sampleImportBean.getUserName());
+
+        if(userBean.getBspUser() == null) {
+            throw new ResourceException("A valid Username is required to complete this request",
+                    Response.Status.UNAUTHORIZED);
+        }
 
         List<LabVessel> labVessels = labVesselFactory.buildLabVessels(parentVesselBeans, sampleImportBean.getUserName(),
                 sampleImportBean.getExportDate(), LabEventType.SAMPLE_IMPORT, MercurySample.MetadataSource.BSP);

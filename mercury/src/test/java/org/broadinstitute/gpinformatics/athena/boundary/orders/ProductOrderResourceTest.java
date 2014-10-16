@@ -132,7 +132,36 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
         data.setProductName("Exome Express v3");
         data.setTitle("test product name" + testDate.getTime());
         data.setQuoteId("MMMAC1");
-        data.setUsername("scottmat");
+        data.setResearchProjectId("RP-31"); //RP that has cohorts associated with it.
+
+        ProductOrderKitDetailData kitDetailData = new ProductOrderKitDetailData();
+
+        kitDetailData.setMaterialInfo(MaterialInfo.DNA_DERIVED_FROM_BLOOD);
+        kitDetailData.setMoleculeType(SampleKitWorkRequest.MoleculeType.DNA);
+        kitDetailData.setNumberOfSamples(3);
+
+        data.setKitDetailData(Collections.singletonList(kitDetailData));
+
+        WebResource resource = makeWebResource(baseUrl, "createWithKitRequest");
+
+        try {
+            resource.post(data);
+            Assert.fail();
+        } catch (UniformInterfaceException e) {
+
+        }
+    }
+
+    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
+    @RunAsClient
+    public void testCreateProductOrderWithKitNoGoodUser(@ArquillianResource URL baseUrl) {
+        Date testDate = new Date();
+
+        ProductOrderData data = new ProductOrderData();
+        data.setProductName("Exome Express v3");
+        data.setTitle("test product name" + testDate.getTime());
+        data.setQuoteId("MMMAC1");
+        data.setUsername("scottmatthewes");
         data.setResearchProjectId("RP-31"); //RP that has cohorts associated with it.
 
         ProductOrderKitDetailData kitDetailData = new ProductOrderKitDetailData();
