@@ -832,7 +832,10 @@ public class ManifestSessionContainerTest extends Arquillian {
 
         int numRecords = retrievedSession.getRecords().size();
         if (numRecords < 2) {
-            throw new RuntimeException("At least 2 records required to test quarantine logic");
+            String message =
+                    "At least 2 records required to test quarantine logic, one record will be quarantined and at" +
+                    " least one non-quarantined record is required to test tube transfer";
+            throw new RuntimeException(message);
         }
 
         int indexOfRecordToQuarantine = numRecords / 2;
