@@ -285,7 +285,8 @@ public class PicoDispositionActionBean extends RackScanActionBean {
             if (!hasErrors()) {
                 final int expectedGroup = nextStepSelect.getNextStepConfirmationGroup();
                 for (Iterator<ListItem> iter = listItems.iterator(); iter.hasNext(); ) {
-                    if (iter.next().getDisposition().getNextStepConfirmationGroup() == expectedGroup) {
+                    if (iter.next().getDisposition() != null &&
+                        iter.next().getDisposition().getNextStepConfirmationGroup() == expectedGroup) {
                         iter.remove();
                     }
                 }
