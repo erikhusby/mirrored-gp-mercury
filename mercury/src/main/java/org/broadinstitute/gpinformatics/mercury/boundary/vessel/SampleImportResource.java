@@ -109,7 +109,7 @@ public class SampleImportResource {
 
         userBean.login(sampleImportBean.getUserName());
 
-        if(userBean.getBspUser() == null) {
+        if(userBean.getBspUser() ==  UserBean.UNKNOWN) {
             throw new ResourceException("A valid Username is required to complete this request",
                     Response.Status.UNAUTHORIZED);
         }

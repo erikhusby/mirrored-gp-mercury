@@ -190,7 +190,7 @@ public class ProductOrderResource {
     private void validateAndLoginUser(ProductOrderData productOrderData) {
         userBean.login(productOrderData.getUsername());
 
-        if(userBean.getBspUser() == null) {
+        if(userBean.getBspUser() == UserBean.UNKNOWN) {
             throw new ResourceException("A valid Username is required to complete this request",
                     Response.Status.UNAUTHORIZED);
         }
@@ -350,7 +350,7 @@ public class ProductOrderResource {
         }
 
         userBean.login(addSamplesToPdoBean.getUsername());
-        if(userBean.getBspUser() == null) {
+        if(userBean.getBspUser() == UserBean.UNKNOWN) {
             throw new ResourceException("A valid Username is required to complete this request",
                     Response.Status.UNAUTHORIZED);
         }
