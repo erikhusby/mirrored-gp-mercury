@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.hamcrest.Matcher;
 import org.testng.Assert;
@@ -177,5 +178,35 @@ public class ProductOrderSampleTest {
     public void testAutoBillSample(ProductOrderSample sample, Date completedDate, Set<LedgerEntry> ledgerEntries) {
         sample.autoBillSample(completedDate, 1);
         assertThat(sample.getBillableLedgerItems(), is(equalTo(ledgerEntries)));
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void test_getMetadataSource_throws_exception_when_not_yet_set() {
+        ProductOrderSample sample = new ProductOrderSample("ABC");
+        sample.getMetadataSource();
+    }
+
+    /**
+     * The two options for handling explicit setting to null are to treat it as having not been set or to treat it as a
+     * valid value. Treating it as a valid value is currently done for 2 reasons:
+     * <ol>
+     *     <li>There is not a {@link MercurySample.MetadataSource} value for "none" or "unknown"</li>
+     *     <li>Treating null as unset would expose an implementation detail of {@link ProductOrderSample}
+     *     unnecessarily</li>
+     * </ol>
+     * This may be revisited at a later time provided that the effect on callers that depend on metadataSource being set
+     * is considered.
+     */
+    public void test_setMetadataSource_to_null_value() {
+        ProductOrderSample sample = new ProductOrderSample("ABC");
+        sample.setMetadataSource(null);
+        assertThat(sample.getMetadataSource(), nullValue());
+    }
+
+    public void test_setMetadataSource_to_nonnull_value() {
+        ProductOrderSample sample = new ProductOrderSample("ABC");
+        MercurySample.MetadataSource metadataSource = MercurySample.MetadataSource.MERCURY;
+        sample.setMetadataSource(metadataSource);
+        assertThat(sample.getMetadataSource(), equalTo(metadataSource));
     }
 }

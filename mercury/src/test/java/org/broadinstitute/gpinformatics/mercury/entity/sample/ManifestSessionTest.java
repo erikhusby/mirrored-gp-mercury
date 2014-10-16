@@ -94,19 +94,14 @@ public class ManifestSessionTest {
 
     public void addLogEntries() throws Exception {
         ManifestRecord testRecord = buildManifestRecord(session, SAMPLE_ID_1);
-        ManifestEvent manifestEventWithoutRecord = new ManifestEvent(ManifestEvent.Severity.ERROR,
-                "Failed to Upload Record in session"
-        );
-        session.addManifestEvent(manifestEventWithoutRecord);
 
-        Assert.assertEquals(session.getManifestEvents().size(), 1);
+        Assert.assertEquals(session.getManifestEvents().size(), 0);
         ManifestEvent manifestEventWithRecord = new ManifestEvent(ManifestEvent.Severity.ERROR,
-                "Failed to Upload Record in session",
-                testRecord);
+                "Failed to Upload Record in session", testRecord);
         session.addManifestEvent(manifestEventWithRecord);
 
         Assert.assertEquals(testRecord.getManifestEvents().size(), 1);
-        Assert.assertEquals(session.getManifestEvents().size(), 2);
+        Assert.assertEquals(session.getManifestEvents().size(), 1);
     }
 
     /**

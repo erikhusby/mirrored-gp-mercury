@@ -35,6 +35,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.io.Serializable;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -109,6 +110,12 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
     @ManyToOne
     private MercurySample mercurySample;
+
+    @Transient
+    private MercurySample.MetadataSource metadataSource;
+
+    @Transient
+    private boolean isMetadataSourceInitialized;
 
     /**
      * Convert a list of ProductOrderSamples into a list of sample names.
@@ -246,6 +253,19 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
             }
         }
         return false;
+    }
+
+    @Override
+    public MercurySample.MetadataSource getMetadataSource() {
+        if (!isMetadataSourceInitialized) {
+            throw new IllegalStateException("ProductOrderSample's transient metadataSource has not been initialized");
+        }
+        return metadataSource;
+    }
+
+    public void setMetadataSource(MercurySample.MetadataSource metadataSource) {
+        this.metadataSource = metadataSource;
+        this.isMetadataSourceInitialized = true;
     }
 
     public enum DeliveryStatus implements StatusType {
