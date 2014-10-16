@@ -69,8 +69,8 @@ public class ManifestEvent implements Updatable {
         this.severity = severity;
         this.message = message;
         if (record != null) {
-            this.manifestRecord = record;
-            this.manifestRecord.addManifestEvent(this);
+            manifestRecord = record;
+            manifestRecord.addManifestEvent(this);
         }
     }
 

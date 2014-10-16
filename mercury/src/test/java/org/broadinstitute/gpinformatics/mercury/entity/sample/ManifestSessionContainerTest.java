@@ -830,19 +830,39 @@ public class ManifestSessionContainerTest extends Arquillian {
         manifestSessionDao.clear();
         ManifestSession retrievedSession = manifestSessionDao.find(manifestSessionI.getManifestSessionId());
 
-        while(counter <retrievedSession.getRecords().size()) {
+        int numRecords = retrievedSession.getRecords().size();
+        if (numRecords < 2) {
+            String message =
+                    "At least 2 records required to test quarantine logic, one record will be quarantined and at" +
+                    " least one non-quarantined record is required to test tube transfer";
+            throw new RuntimeException(message);
+        }
 
-            assertThat(retrievedSession.getNumberOfTubesTransferred(), is(equalTo(counter)));
+        int indexOfRecordToQuarantine = numRecords / 2;
+        int transferredTubeCounter = 0;
 
-            retrievedSession.getRecords().get(counter).setStatus(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
+        while (counter < numRecords) {
+
+            assertThat(retrievedSession.getNumberOfTubesTransferred(), is(equalTo(transferredTubeCounter)));
+
+            ManifestRecord manifestRecord = retrievedSession.getRecords().get(counter);
+
+            if (counter == indexOfRecordToQuarantine) {
+                retrievedSession.addManifestEvent(new ManifestEvent(ManifestEvent.Severity.QUARANTINED,
+                        "No good reason, just for testing", manifestRecord));
+            } else {
+                manifestRecord.setStatus(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
+                transferredTubeCounter++;
+            }
 
             manifestSessionDao.flush();
             manifestSessionDao.clear();
             retrievedSession = manifestSessionDao.find(retrievedSession.getManifestSessionId());
-            retrievedSession.getRecords();
             counter++;
         }
-        assertThat(retrievedSession.getNumberOfTubesTransferred(), is(equalTo(counter)));
+        assertThat(retrievedSession.getNumberOfTubesTransferred(), is(equalTo(transferredTubeCounter)));
+        // One record should have been quarantined.
+        assertThat(counter, is(equalTo(transferredTubeCounter + 1)));
     }
 
     /**
