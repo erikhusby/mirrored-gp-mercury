@@ -275,14 +275,16 @@ public class FingerprintingSpreadsheetActionBeanTest {
         EasyMock.verify(controlDao);
     }
 
-    public void test94SampleCount() throws Exception {
+    public void test46SampleCount() throws Exception {
         EasyMock.expect(controlDao.findByCollaboratorParticipantId(EasyMock.anyObject(String.class))).andReturn(null)
                 .anyTimes();
         EasyMock.replay(controlDao);
 
         // Removes two tubes and the action bean should make a validation error.
-        rearrayMap.remove(VesselPosition.A01);
-        rearrayMap.remove(VesselPosition.A02);
+        List<VesselPosition> positions = new ArrayList<>(rearrayMap.keySet());
+        for (VesselPosition position : positions.subList(46, 96)) {
+            rearrayMap.remove(position);
+        }
         rearrayRack = new TubeFormation(rearrayMap, Matrix96);
         fpPlate = new StaticPlate("fpPlateBad", Eppendorf96);
         LabEvent rearrayTransfer = doSectionTransfer(rearrayRack, fpPlate);

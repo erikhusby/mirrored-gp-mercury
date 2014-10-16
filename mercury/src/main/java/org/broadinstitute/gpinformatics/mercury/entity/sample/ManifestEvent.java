@@ -74,10 +74,6 @@ public class ManifestEvent implements Updatable {
         }
     }
 
-    public ManifestEvent(Severity error, String message) {
-        this(error, message, null);
-    }
-
     /**
      * Helper method to check if there are any manifest event entries of a given type
      *

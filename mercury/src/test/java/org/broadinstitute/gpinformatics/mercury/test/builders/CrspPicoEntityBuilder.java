@@ -94,7 +94,7 @@ public class CrspPicoEntityBuilder {
         concVolDto = mapBarcodeToConcVolDto.get("R1");
         Assert.assertEquals(concVolDto.getWeight(), new BigDecimal("0.63"));
         Assert.assertNull(concVolDto.getConcentration());
-        Assert.assertEquals(concVolDto.getVolume(), new BigDecimal("61"));
+        Assert.assertEquals(concVolDto.getVolume(), new BigDecimal("61.00"));
 
         // FingerprintingPlateSetup
         mapBarcodeToVessel.clear();

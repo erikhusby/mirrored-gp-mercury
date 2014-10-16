@@ -118,6 +118,7 @@ public class MercurySample extends AbstractSample {
         productOrderSample.setMercurySample(this);
     }
 
+    @Override
     public MetadataSource getMetadataSource() {
         return metadataSource;
     }
