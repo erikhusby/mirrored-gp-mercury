@@ -24,4 +24,5 @@ BRANCH=`git branch | grep release/`
 git branch
 git status
 git commit -m "REL-714 Fixing versions of limsThrift and bspclient." pom.xml
+# BRANCH is prefixed by "* " 
 git push origin ${BRANCH:2}
