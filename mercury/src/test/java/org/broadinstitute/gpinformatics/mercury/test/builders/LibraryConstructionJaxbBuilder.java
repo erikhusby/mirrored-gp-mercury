@@ -4,8 +4,10 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMess
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -200,6 +202,9 @@ public class LibraryConstructionJaxbBuilder {
         }
         pondRegistrationJaxb = bettaLimsMessageTestFactory.buildPlateToRack("PondRegistration", pondCleanupBarcode,
                 pondRegRackBarcode, pondRegTubeBarcodes);
+        for (ReceptacleType receptacleType : pondRegistrationJaxb.getPositionMap().getReceptacle()) {
+            receptacleType.setVolume(new BigDecimal("50"));
+        }
         bettaLimsMessageTestFactory.addMessage(messageList, pondRegistrationJaxb);
 
         // Pico plate barcodes must be all numeric to be accepted by the Varioskan parser
