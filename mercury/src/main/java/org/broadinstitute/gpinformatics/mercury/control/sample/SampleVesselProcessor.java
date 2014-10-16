@@ -26,7 +26,7 @@ public class SampleVesselProcessor extends TableProcessor {
     private Set<String> sampleIds = new HashSet<>();
 
     public SampleVesselProcessor(String sheetName) {
-        super(sheetName);
+        super(sheetName, IgnoreTrailingBlankLines.YES);
     }
 
     @Override
