@@ -31,12 +31,12 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.work.WorkCompleteMessage;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPGroupCollectionList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSiteList;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
+import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
@@ -44,6 +44,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
@@ -58,6 +59,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -100,9 +102,6 @@ public class ProductOrderResource {
     private ProductOrderEjb productOrderEjb;
 
     @Inject
-    private BSPUserList bspUserList;
-
-    @Inject
     private ResearchProjectDao researchProjectDao;
 
     @Inject
@@ -135,6 +134,9 @@ public class ProductOrderResource {
     @Inject
     private WorkCompleteMessageDao workCompleteMessageDao;
 
+    @Inject
+    private UserBean userBean;
+
     /**
      * Should be used only by test code
      */
@@ -161,6 +163,9 @@ public class ProductOrderResource {
     public ProductOrderData createWithKitRequest(@Nonnull ProductOrderData productOrderData)
             throws DuplicateTitleException, ApplicationValidationException, QuoteNotFoundException, NoSamplesException,
             WorkRequestCreationException {
+
+        validateAndLoginUser(productOrderData);
+
         // This will create a product order and place it, so a JIRA ticket is created.
         ProductOrder productOrder = createProductOrder(productOrderData);
 
@@ -188,6 +193,15 @@ public class ProductOrderResource {
         }
 
         return new ProductOrderData(productOrder);
+    }
+
+    private void validateAndLoginUser(ProductOrderData productOrderData) {
+        userBean.login(productOrderData.getUsername());
+
+        if(userBean.getBspUser() == UserBean.UNKNOWN) {
+            throw new ResourceException("A valid Username is required to complete this request",
+                    Response.Status.UNAUTHORIZED);
+        }
     }
 
     public ProductOrderKit createOrderKit(boolean isExomeExpress, List<ProductOrderKitDetailData> kitDetailsData,
@@ -256,10 +270,13 @@ public class ProductOrderResource {
 
     private ProductOrder createProductOrder(ProductOrderData productOrderData)
             throws DuplicateTitleException, NoSamplesException, QuoteNotFoundException, ApplicationValidationException {
+
+        validateAndLoginUser(productOrderData);
+
         ProductOrder productOrder = productOrderData.toProductOrder(productOrderDao, researchProjectDao, productDao);
 
         // Figure out who called this so we can record the owner.
-        BspUser user = bspUserList.getByUsername(productOrderData.getUsername());
+        BspUser user = userBean.getBspUser();
         if (user == null) {
             throw new ApplicationValidationException(
                     "Problem creating the product order, cannot find the user " + productOrderData.getUsername());
@@ -336,13 +353,19 @@ public class ProductOrderResource {
             throw new ApplicationValidationException("No sample ids specified");
         }
 
+        userBean.login(addSamplesToPdoBean.getUsername());
+        if(userBean.getBspUser() == UserBean.UNKNOWN) {
+            throw new ResourceException("A valid Username is required to complete this request",
+                    Response.Status.UNAUTHORIZED);
+        }
+
         ProductOrder order = productOrderDao.findByBusinessKey(pdoKey);
         if (order == null) {
             throw new ApplicationValidationException("No product order found for id: " + pdoKey);
         }
 
         // Create the mercury vessel for the plate and each tube in the plate.
-        BspUser bspUser = bspUserList.getByUsername(addSamplesToPdoBean.getUsername());
+        BspUser bspUser = userBean.getBspUser();
         if (bspUser == null) {
             throw new ApplicationValidationException(
                     "User: " + addSamplesToPdoBean.getUsername() + " is not found in Mercury");
@@ -367,7 +390,7 @@ public class ProductOrderResource {
             // If the PDO is not a sample initiation PDO, but DOES have a sample initiation add on, then add a new
             // auto-billing message so that the billing will happen at the appropriate lock out time.
             if (!order.isSampleInitiation() && (order.hasSampleInitiationAddOn())) {
-                for (ProductOrderSample sample: samplesToAdd) {
+                for (ProductOrderSample sample : samplesToAdd) {
                     // Sample Initiation products do not have any 'risk' so there does not have to be any message data.
                     // The sample's business key IS the aliquot Id since that is the sample on the order.
                     Map<String, Object> dataMap = Collections.emptyMap();

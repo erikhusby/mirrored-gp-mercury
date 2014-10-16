@@ -27,6 +27,9 @@ import java.util.Map;
 public class SampleDataFetcher implements Serializable {
 
     @Inject
+    private SampleDataSourceResolver sampleDataSourceResolver;
+
+    @Inject
     private BSPSampleDataFetcher bspSampleDataFetcher;
 
     @Inject
@@ -48,9 +51,11 @@ public class SampleDataFetcher implements Serializable {
     }
 
     public SampleDataFetcher(@Nonnull MercurySampleDao mercurySampleDao,
+                             @Nonnull SampleDataSourceResolver sampleDataSourceResolver,
                              @Nonnull BSPSampleDataFetcher bspSampleDataFetcher,
                              @Nonnull MercurySampleDataFetcher mercurySampleDataFetcher) {
         this.mercurySampleDao = mercurySampleDao;
+        this.sampleDataSourceResolver = sampleDataSourceResolver;
         this.bspSampleDataFetcher = bspSampleDataFetcher;
         this.mercurySampleDataFetcher = mercurySampleDataFetcher;
     }
@@ -84,7 +89,7 @@ public class SampleDataFetcher implements Serializable {
     public Map<String, SampleData> fetchSampleData(@Nonnull Collection<String> sampleNames) {
         Map<String, List<MercurySample>> allMercurySamples = mercurySampleDao.findMapIdToListMercurySample(sampleNames);
         Map<String, MercurySample.MetadataSource> metadataSources =
-                determineMetadataSource(sampleNames, allMercurySamples);
+                sampleDataSourceResolver.resolveSampleDataSources(sampleNames, allMercurySamples);
 
         List<String> bspSampleIds = new ArrayList<>();
         Collection<MercurySample> mercurySamples = new ArrayList<>();
@@ -184,42 +189,11 @@ public class SampleDataFetcher implements Serializable {
      */
     Map<MercurySample.MetadataSource, Collection<MercurySample>> determineMetadataSource(Collection<String> sampleIds) {
         Map<String, List<MercurySample>> mercurySamples = mercurySampleDao.findMapIdToListMercurySample(sampleIds);
-        Map<String, MercurySample.MetadataSource> metadataSourceMap = determineMetadataSource(sampleIds, mercurySamples);
+        Map<String, MercurySample.MetadataSource> metadataSourceMap = sampleDataSourceResolver.resolveSampleDataSources(
+                sampleIds, mercurySamples);
         Map<MercurySample.MetadataSource, Collection<MercurySample>> results = new HashMap<>();
         for (Map.Entry<String, MercurySample.MetadataSource> metadataSourceEntry : metadataSourceMap.entrySet()) {
             results.put(metadataSourceEntry.getValue(), mercurySamples.get(metadataSourceEntry.getKey()));
-        }
-        return results;
-    }
-
-    @DaoFree
-    private Map<String, MercurySample.MetadataSource> determineMetadataSource(Collection<String> sampleNames,
-                                                                              Map<String, List<MercurySample>> allMercurySamples) {
-        Map<String, MercurySample.MetadataSource> results = new HashMap<>();
-
-        for (String sampleName : sampleNames) {
-            Multiset<MercurySample.MetadataSource> metadataSources = HashMultiset.create();
-
-            List<MercurySample> mercurySamples = allMercurySamples.get(sampleName);
-            MercurySample.MetadataSource metadataSource;
-            for (MercurySample mercurySample : mercurySamples) {
-                metadataSources.add(mercurySample.getMetadataSource());
-            }
-
-            if (metadataSources.isEmpty()) {
-                metadataSource = MercurySample.MetadataSource.BSP;
-            } else if (metadataSources.elementSet().size() > 1) {
-                String metadataSourceCounts = "";
-                for (MercurySample.MetadataSource source : metadataSources) {
-                    metadataSourceCounts += String.format("%s: %d ", source, metadataSources.count(source));
-                }
-                throw new RuntimeException(
-                        String.format("There are MercurySamples for %s that disagree on the sample data source: %s",
-                                sampleName, metadataSourceCounts));
-            } else {
-                metadataSource = metadataSources.iterator().next();
-            }
-            results.put(sampleName, metadataSource);
         }
         return results;
     }
