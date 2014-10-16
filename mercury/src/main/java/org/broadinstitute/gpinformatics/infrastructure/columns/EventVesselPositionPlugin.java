@@ -1,6 +1,9 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
@@ -11,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Builds a dynamically sized table of barcodes based upon lab vessel container geometry
@@ -18,13 +22,13 @@ import java.util.Map;
  */
 public abstract class EventVesselPositionPlugin implements ListPlugin {
 
-    VesselGeometry geometry;
+    private VesselGeometry geometry;
 
     // Position-value map
     protected Map<VesselPosition,String> positionLabelMap;
 
     // Matrix of positions
-    VesselPosition[][] resultMatrix;
+    private VesselPosition[][] resultMatrix;
 
     /**
      * Not used in nested table plugins
@@ -77,6 +81,12 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
      */
     protected ConfigurableList.ResultList getSourceNestedTableData(LabEvent labEvent
             , @Nonnull Map<String, Object> context) {
+
+        // Ignore source vessels for in-place events
+        if( labEvent.getInPlaceLabVessel() != null ) {
+            return null;
+        }
+
         VesselContainer containerVessel = findEventSourceContainer( labEvent );
         if( containerVessel == null || containerVessel.getMapPositionToVessel().isEmpty() ) {
             return null;
@@ -123,14 +133,17 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
 
         positionLabelMap = new HashMap<>();
         geometry = containerVessel.getEmbedder().getVesselGeometry();
+        StringBuilder valueHolder = new StringBuilder();
 
         for (VesselPosition vesselPosition : geometry.getVesselPositions()) {
             LabVessel labVessel = containerVessel.getVesselAtPosition(vesselPosition);
+            valueHolder.setLength(0);
             if( labVessel != null ) {
-                positionLabelMap.put( vesselPosition, labVessel.getLabel() );
-            } else {
-                positionLabelMap.put(vesselPosition, "");
+                valueHolder.append("Vessel Barcode: ")
+                        .append(labVessel.getLabel());
+                appendAncestorSampleData( labVessel, valueHolder );
             }
+            positionLabelMap.put(vesselPosition, valueHolder.toString() );
         }
 
         resultMatrix = new VesselPosition[geometry.getRowCount()][geometry.getColumnCount()];
@@ -140,6 +153,39 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
             resultMatrix[rowCol.getRow()-1][rowCol.getColumn()-1] = position;
         }
 
+    }
+
+    /**
+     * Appends any available ancestor lab vessel collaborator patient IDs to display.
+     * @param labVessel
+     * @param valueHolder
+     */
+    private void appendAncestorSampleData( LabVessel labVessel, StringBuilder valueHolder ) {
+        boolean foundOne = false;
+        for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+            MercurySample sample = sampleInstanceV2.getRootOrEarliestMercurySample();
+            if( sample == null ) {
+                return;
+            }
+
+            Set<Metadata> metadata = sample.getMetadata();
+            if( metadata == null || metadata.isEmpty() ) {
+                return;
+            }
+
+            // Find collaborator sample
+            for( Metadata meta : metadata ) {
+                if( meta.getKey() == Metadata.Key.PATIENT_ID ){
+                    valueHolder.append( (foundOne?", ":" \nCollaborator Patient ID(s): [") )
+                            .append(meta.getValue());
+                    foundOne = true;
+                }
+            }
+        }
+
+        if( foundOne ) {
+            valueHolder.append("]");
+        }
     }
 
 

@@ -8,6 +8,8 @@ import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -1047,7 +1049,7 @@ public abstract class LabVessel implements Serializable {
     }
 
     public BigDecimal getVolume() {
-        return volume;
+        return MathUtils.scaleTwoDecimalPlaces(volume);
     }
 
     public void setVolume(BigDecimal volume) {
@@ -1889,5 +1891,24 @@ public abstract class LabVessel implements Serializable {
         evaluateCriteria(eventTraversalCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
 
         return LabEvent.isEventPresent(eventTraversalCriteria.getAllEvents(), LabEventType.COLLABORATOR_TRANSFER);
+    }
+
+    /**
+     * Get metadata values for the given key.
+     * @param key e.g. SAMPLE_ID
+     * @return array (JSP-friendly)
+     */
+    public String[] getMetadataValues(Metadata.Key key) {
+        List<String> values = new ArrayList<>();
+        for (SampleInstanceV2 sampleInstanceV2 : getSampleInstancesV2()) {
+            for (MercurySample mercurySample : sampleInstanceV2.getRootMercurySamples()) {
+                for (Metadata metadata : mercurySample.getMetadata()) {
+                    if (metadata.getKey() == key) {
+                        values.add(metadata.getStringValue());
+                    }
+                }
+            }
+        }
+        return values.toArray(new String[values.size()]);
     }
 }

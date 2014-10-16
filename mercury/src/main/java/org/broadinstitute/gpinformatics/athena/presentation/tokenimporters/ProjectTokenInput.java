@@ -15,7 +15,6 @@ import java.util.Collections;
 /**
  * Token Input support for Research Projects.
  *
- * @author hrafal
  */
 public class ProjectTokenInput extends TokenInput<ResearchProject> {
 
@@ -23,7 +22,7 @@ public class ProjectTokenInput extends TokenInput<ResearchProject> {
     private ResearchProjectDao researchProjectDao;
 
     public ProjectTokenInput() {
-        super(SINGLE_LINE_FORMAT);
+        super(DOUBLE_LINE_FORMAT);
     }
 
     @Override
@@ -51,6 +50,7 @@ public class ProjectTokenInput extends TokenInput<ResearchProject> {
      * @throws JSONException
      */
     public String getJsonString(String query, @Nonnull Collection<ResearchProject> omitProjects) throws JSONException {
+
         Collection<ResearchProject> projects = researchProjectDao.searchProjects(query);
         projects.removeAll(omitProjects);
 
@@ -64,11 +64,11 @@ public class ProjectTokenInput extends TokenInput<ResearchProject> {
 
     @Override
     protected String getTokenName(ResearchProject project) {
-        return project.getTitle();
+        return project.getBusinessKey() + " - " + project.getTitle();
     }
 
     @Override
     protected String formatMessage(String messageString, ResearchProject project) {
-        return MessageFormat.format(messageString, project.getTitle());
+        return MessageFormat.format(messageString, project.getBusinessKey(), project.getTitle());
     }
 }
