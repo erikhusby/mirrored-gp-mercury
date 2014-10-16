@@ -219,7 +219,7 @@ public abstract class TableProcessor implements Serializable {
      */
     public void validateNumberOfWorksheets(int actualNumberOfSheets) throws ValidationException {    }
 
-    public boolean getIgnoreTrailingBlankLines() {
+    public boolean ignoreTrailingBlankLines() {
         return ignoreTrailingBlankLines == IgnoreTrailingBlankLines.YES;
     }
 

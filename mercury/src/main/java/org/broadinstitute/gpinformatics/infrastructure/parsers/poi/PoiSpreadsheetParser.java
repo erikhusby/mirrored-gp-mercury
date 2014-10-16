@@ -86,7 +86,7 @@ public final class PoiSpreadsheetParser {
         while (iterator.hasNext()) {
             Integer lastIndex = iterator.next();
             // If the trailing blank line is not where it is supposed to be, break out of the loop and
-            // report on all the blank lines remaining in the input List of blank lines.
+            // report on all the blank lines remaining in nonTrailingBlankLineIndexes.
             if (lastIndex != currentLastIndex) {
                 break;
             }
@@ -123,14 +123,14 @@ public final class PoiSpreadsheetParser {
                         extractCellContent(row, headerName, i, processor.isDateColumn(i), processor.isStringColumn(i)));
             }
 
-            if (processor.getIgnoreTrailingBlankLines() && representsBlankLine(dataByHeader.values())) {
+            if (processor.ignoreTrailingBlankLines() && representsBlankLine(dataByHeader.values())) {
                 allBlankLinesSeen.add(row.getRowNum());
                 currentLineIsBlank = true;
             }
 
             // Process the row unless the TableProcessor is configured to ignore blank lines and the current line is
             // blank.
-            if (!(processor.getIgnoreTrailingBlankLines() && currentLineIsBlank)) {
+            if (!(processor.ignoreTrailingBlankLines() && currentLineIsBlank)) {
                 // Take the map and turn it into objects and process the data appropriately.
                 processor.processRow(dataByHeader, row.getRowNum());
             }
@@ -139,7 +139,7 @@ public final class PoiSpreadsheetParser {
         // If there were any blank lines that do not represent trailing blank lines, report these to the TableProcessor
         // implementation.  This only needs to be handled specially if the processor is configured to ignore trailing
         // blank lines, otherwise the parser would have already been given the blank line via #processRow.
-        if (processor.getIgnoreTrailingBlankLines()) {
+        if (processor.ignoreTrailingBlankLines()) {
             Collection<Integer> nonTrailingBlankLineIndexes =
                     findNonTrailingBlankLineIndexes(allBlankLinesSeen, numRows);
             if (!nonTrailingBlankLineIndexes.isEmpty()) {

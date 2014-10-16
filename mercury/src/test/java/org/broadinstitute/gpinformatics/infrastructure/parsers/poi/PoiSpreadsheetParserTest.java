@@ -37,7 +37,6 @@ import static org.hamcrest.Matchers.emptyCollectionOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.notNullValue;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class PoiSpreadsheetParserTest {
@@ -152,8 +151,8 @@ public class PoiSpreadsheetParserTest {
             this(IgnoreTrailingBlankLines.NO);
         }
 
-        private TestProcessor(IgnoreTrailingBlankLines tolerateBlankLines) {
-            super(null, tolerateBlankLines);
+        private TestProcessor(IgnoreTrailingBlankLines ignoreTrailingBlankLines) {
+            super(null, ignoreTrailingBlankLines);
         }
 
         @Override
