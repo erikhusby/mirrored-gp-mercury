@@ -1,6 +1,10 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
+import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
+import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.MaterialInfo;
+import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -14,6 +18,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -23,6 +28,9 @@ import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.AUTO_BUILD;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STANDARD;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 @Test(groups = TestGroups.STANDARD)
 public class ProductOrderResourceTest extends RestServiceContainerTest {
@@ -45,22 +53,133 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
         return "productOrders";
     }
 
-    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = false)
+    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
     @RunAsClient
-    public void testFetchLibraryDetailsByTubeBarcode(@ArquillianResource URL baseUrl) {
+    public void testCreateProductOrder(@ArquillianResource URL baseUrl) {
         Date testDate = new Date();
 
         ProductOrderData data = new ProductOrderData();
-        data.setProductName("Scott Test Product" + testDate.getTime());
+        data.setProductName("Exome Express v3");
         data.setTitle("test product name" + testDate.getTime());
         data.setQuoteId("MMMAC1");
+        data.setUsername("scottmat");
+        data.setResearchProjectId("RP-32");
         List<String> sampleIds = new ArrayList<>();
-        Collections.addAll(sampleIds, "CSM-tsgm1" + testDate.getTime(), "CSM-tsgm2" + testDate.getTime());
+        Collections.addAll(sampleIds, "SM-41Q94", "SM-41Q95");
         data.setSamples(sampleIds);
 
         WebResource resource = makeWebResource(baseUrl, "create");
 
         resource.post(data);
+    }
+
+
+    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
+    @RunAsClient
+    public void testCreateProductOrderNoUser(@ArquillianResource URL baseUrl) {
+        Date testDate = new Date();
+
+        ProductOrderData data = new ProductOrderData();
+        data.setProductName("Exome Express v3");
+        data.setTitle("test product name" + testDate.getTime());
+        data.setQuoteId("MMMAC1");
+        data.setResearchProjectId("RP-32");
+        List<String> sampleIds = new ArrayList<>();
+        Collections.addAll(sampleIds, "SM-41Q94", "SM-41Q95");
+        data.setSamples(sampleIds);
+
+        WebResource resource = makeWebResource(baseUrl, "create");
+
+        try {
+            resource.post(data);
+            Assert.fail();
+        } catch (UniformInterfaceException e) {
+//            assertThat(e.getResponse().getStatus(), is(equalTo(Response.Status.UNAUTHORIZED.getStatusCode())));
+        }
+    }
+
+    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
+    @RunAsClient
+    public void testCreateProductOrderWithKit(@ArquillianResource URL baseUrl) {
+        Date testDate = new Date();
+
+        ProductOrderData data = new ProductOrderData();
+        data.setProductName("Exome Express v3");
+        data.setTitle("test product name" + testDate.getTime());
+        data.setQuoteId("MMMAC1");
+        data.setUsername("scottmat");
+        data.setResearchProjectId("RP-31"); //RP that has cohorts associated with it.
+
+        ProductOrderKitDetailData kitDetailData = new ProductOrderKitDetailData();
+
+        kitDetailData.setMaterialInfo(MaterialInfo.DNA_DERIVED_FROM_BLOOD);
+        kitDetailData.setMoleculeType(SampleKitWorkRequest.MoleculeType.DNA);
+        kitDetailData.setNumberOfSamples(3);
+
+        data.setKitDetailData(Collections.singletonList(kitDetailData));
+
+        WebResource resource = makeWebResource(baseUrl, "createWithKitRequest");
+
+        resource.post(data);
+    }
+
+    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
+    @RunAsClient
+    public void testCreateProductOrderWithKitNoUser(@ArquillianResource URL baseUrl) {
+        Date testDate = new Date();
+
+        ProductOrderData data = new ProductOrderData();
+        data.setProductName("Exome Express v3");
+        data.setTitle("test product name" + testDate.getTime());
+        data.setQuoteId("MMMAC1");
+        data.setResearchProjectId("RP-31"); //RP that has cohorts associated with it.
+
+        ProductOrderKitDetailData kitDetailData = new ProductOrderKitDetailData();
+
+        kitDetailData.setMaterialInfo(MaterialInfo.DNA_DERIVED_FROM_BLOOD);
+        kitDetailData.setMoleculeType(SampleKitWorkRequest.MoleculeType.DNA);
+        kitDetailData.setNumberOfSamples(3);
+
+        data.setKitDetailData(Collections.singletonList(kitDetailData));
+
+        WebResource resource = makeWebResource(baseUrl, "createWithKitRequest");
+
+        try {
+            resource.post(data);
+            Assert.fail();
+        } catch (UniformInterfaceException e) {
+
+        }
+    }
+
+    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
+    @RunAsClient
+    public void testCreateProductOrderWithKitNoGoodUser(@ArquillianResource URL baseUrl) {
+        Date testDate = new Date();
+
+        ProductOrderData data = new ProductOrderData();
+        data.setProductName("Exome Express v3");
+        data.setTitle("test product name" + testDate.getTime());
+        data.setQuoteId("MMMAC1");
+        data.setUsername("scottmatthewes");
+        data.setResearchProjectId("RP-31"); //RP that has cohorts associated with it.
+
+        ProductOrderKitDetailData kitDetailData = new ProductOrderKitDetailData();
+
+        kitDetailData.setMaterialInfo(MaterialInfo.DNA_DERIVED_FROM_BLOOD);
+        kitDetailData.setMoleculeType(SampleKitWorkRequest.MoleculeType.DNA);
+        kitDetailData.setNumberOfSamples(3);
+
+        data.setKitDetailData(Collections.singletonList(kitDetailData));
+
+        WebResource resource = makeWebResource(baseUrl, "createWithKitRequest");
+
+        try {
+            resource.post(data);
+            Assert.fail();
+        } catch (UniformInterfaceException e) {
+
+        }
     }
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
