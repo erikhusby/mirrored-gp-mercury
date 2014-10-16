@@ -21,6 +21,7 @@
                     "aoColumns": [
                         {"bSortable": true}, // rev id
                         {"bSortable": true}, // barcode
+                        {"bSortable": true}, // collaborator patient ID
                         {"bSortable": true, "sType": "numeric"}, // value
                         {"bSortable": true, "sType": "numeric"}, // volume
                         {"bSortable": true, "sType": "numeric"}, // total ng
@@ -108,6 +109,7 @@
                     <tr>
                         <th>Position</th>
                         <th>Barcode</th>
+                        <th>Collaborator Patient ID</th>
                         <th>Value</th>
                         <th>Volume</th>
                         <th>Total ng</th>
@@ -127,6 +129,9 @@
                                 </td>
                                 <td>
                                     ${labMetric.labVessel.label}
+                                </td>
+                                <td>
+                                    ${fn:join(labMetric.labVessel.getMetadataValues("PATIENT_ID"), " ")}
                                 </td>
                                 <td>
                                     ${labMetric.value}
@@ -162,6 +167,7 @@
                 </table>
                 <stripes:hidden name="labMetricRunId" value="${actionBean.labMetricRun.labMetricRunId}"/>
                 <stripes:hidden name="tubeFormationLabel" value="${actionBean.tubeFormationLabel}"/>
+                <stripes:hidden name="quantType" value="${actionBean.quantType}"/>
                 <stripes:label for="overrideDecision" class="control-label">Override Decision</stripes:label>
                 <div class="controls">
                     <stripes:select name="overrideDecision">
@@ -176,10 +182,12 @@
 
             </stripes:form>
 
-            <stripes:form action="${actionBean.picoDispositionActionBeanUrl}" id="nextStepsForm" class="form-horizontal">
-                <stripes:hidden name="tubeFormationLabel" value="${actionBean.tubeFormationLabel}"/>
-                <stripes:submit name="view" value="View Next Steps" class="btn btn-primary" id="viewNextStepsBtn"/>
-            </stripes:form>
+            <c:if test="${actionBean.quantType == 'INITIAL_PICO'}">
+                <stripes:form action="${actionBean.picoDispositionActionBeanUrl}" id="nextStepsForm" class="form-horizontal">
+                    <stripes:hidden name="tubeFormationLabel" value="${actionBean.tubeFormationLabel}"/>
+                    <stripes:submit name="view" value="View Next Steps" class="btn btn-primary" id="viewNextStepsBtn"/>
+                </stripes:form>
+            </c:if>
 
         </c:if>
     </stripes:layout-component>

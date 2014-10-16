@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.apache.commons.lang3.builder.CompareToBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.hibernate.envers.Audited;
 
@@ -256,7 +257,7 @@ public class LabMetric implements Comparable<LabMetric> {
     public BigDecimal getTotalNg() {
         for (Metadata metadata : metadataSet) {
             if (metadata.getKey() == Metadata.Key.TOTAL_NG) {
-                return metadata.getNumberValue();
+                return MathUtils.scaleTwoDecimalPlaces(metadata.getNumberValue());
             }
         }
         return null;

@@ -165,6 +165,8 @@ public class IlluminaRunResourceTest extends Arquillian {
         Assert.assertTrue(rawJson.contains("\"metadataSource\""));
         Assert.assertTrue(rawJson.contains("\"regulatoryDesignation\""));
         Assert.assertTrue(rawJson.contains("\"testType"));
+        Assert.assertTrue(rawJson.contains("\"buickCollectionDate"));
+        Assert.assertTrue(rawJson.contains("\"buickVisit"));
 
         Assert.assertNotNull(run);
         Assert.assertEquals(run.getName(),RUN_NAME);
@@ -178,6 +180,8 @@ public class IlluminaRunResourceTest extends Arquillian {
         for (ZimsIlluminaChamber zimsIlluminaChamber : run.getLanes()) {
             for (LibraryBean libraryBean : zimsIlluminaChamber.getLibraries()) {
                 Assert.assertEquals(libraryBean.getRegulatoryDesignation(),"RESEARCH_ONLY");
+                Assert.assertNull(libraryBean.getBuickVisit());
+                Assert.assertNull(libraryBean.getBuickCollectionDate());
                 if (libraryBean.getLsid() != null) {
                     if (libraryBean.getLsid().contains("bsp")) {
                         foundBspSample = true;

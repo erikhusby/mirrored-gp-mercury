@@ -117,20 +117,6 @@ public class LedgerEntryDaoTest extends ContainerTest {
         utx.rollback();
     }
 
-    //
-    public void testFindLedgerEntries() {
-        // In one test run, execution time without join fetch callback was 227472 ms.
-        // Execution time with join fetch callback was 51921 ms.
-        List<LedgerEntry> ledgerEntries = ledgerEntryDao.findAll(LedgerEntry.class, new GenericDao.GenericDaoCallback<LedgerEntry>() {
-            @Override
-            public void callback(CriteriaQuery<LedgerEntry> criteriaQuery, Root<LedgerEntry> root) {
-                root.fetch(LedgerEntry_.productOrderSample);
-            }
-        });
-        Assert.assertTrue(!ledgerEntries.isEmpty(), "The specified order should find at one test ledger");
-    }
-
-    //
     public void testFindLedgerEntriesForPDOs() {
         Set<LedgerEntry> ledgerEntries = ledgerEntryDao.findByOrderList(orders);
         Assert.assertEquals(1, ledgerEntries.size(), "The specified order should find one test ledger") ;

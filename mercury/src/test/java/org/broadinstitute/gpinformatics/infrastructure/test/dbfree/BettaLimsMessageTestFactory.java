@@ -604,8 +604,6 @@ public class BettaLimsMessageTestFactory {
         receptacleType.setBarcode(barcode);
         receptacleType.setPosition(buildWellName(rackPosition, WellNameType.SHORT));
         receptacleType.setReceptacleType("tube");
-        receptacleType.setConcentration(BigDecimal.valueOf(12.2));
-        receptacleType.setVolume(BigDecimal.valueOf(8.3));
         targetPositionMap.getReceptacle().add(receptacleType);
     }
 
