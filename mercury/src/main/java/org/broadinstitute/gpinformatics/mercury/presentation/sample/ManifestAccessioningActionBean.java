@@ -85,11 +85,6 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     private String scanErrors;
     private String scanMessages;
 
-    /*
-     * The search query.
-     */
-    private String q;
-
     public ManifestAccessioningActionBean() {
         super();
     }
@@ -220,12 +215,6 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
         return new ForwardResolution(getClass(), LOAD_SESSION_ACTION);
     }
 
-    @HandlesEvent("projectAutocomplete")
-    public Resolution projectAutocomplete() throws Exception {
-        return createTextResolution(projectTokenInput.getJsonString(getQ()));
-    }
-
-
     public Long getSelectedSessionId() {
         return selectedSessionId;
     }
@@ -284,10 +273,6 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
 
     public String getScanMessages() {
         return scanMessages;
-    }
-
-    public String getQ() {
-        return q;
     }
 
     public ProjectTokenInput getProjectTokenInput() {

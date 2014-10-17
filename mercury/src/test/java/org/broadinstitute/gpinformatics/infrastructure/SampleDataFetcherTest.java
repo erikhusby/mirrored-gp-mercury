@@ -137,8 +137,9 @@ public class SampleDataFetcherTest {
 
         mockBspSampleDataFetcher = Mockito.mock(BSPSampleDataFetcher.class);
         mockMercurySampleDataFetcher = Mockito.mock(MercurySampleDataFetcher.class);
+        SampleDataSourceResolver sampleDataSourceResolver = new SampleDataSourceResolver(mockMercurySampleDao);
         sampleDataFetcher =
-                new SampleDataFetcher(mockMercurySampleDao, mockBspSampleDataFetcher, mockMercurySampleDataFetcher);
+                new SampleDataFetcher(mockMercurySampleDao, sampleDataSourceResolver, mockBspSampleDataFetcher, mockMercurySampleDataFetcher);
     }
 
     /*

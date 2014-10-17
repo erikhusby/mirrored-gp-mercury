@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.presentation;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 
 import javax.inject.Inject;
 
@@ -56,7 +57,7 @@ public class SampleLink {
         }
 
         static Format fromSample(AbstractSample sample) {
-            if (sample.isInBspFormat()) {
+            if (sample.isInBspFormat() && sample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
                 if (ApplicationInstance.CRSP.isCurrent()) {
                     return Format.CRSP;
                 } else {
@@ -68,8 +69,12 @@ public class SampleLink {
     }
 
     public static class Factory {
+        private final BSPConfig bspConfig;
+
         @Inject
-        private BSPConfig bspConfig;
+        public Factory(BSPConfig bspConfig) {
+            this.bspConfig = bspConfig;
+        }
 
         public SampleLink create(AbstractSample sample) {
             return new SampleLink(bspConfig, sample);

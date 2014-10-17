@@ -11,8 +11,10 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.envers.ReflectionUti
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -39,6 +41,16 @@ public class AuditTrailActionBean extends CoreActionBean {
     private static final String ANY_USER = "Any user";
     private static final String NO_USER = "(no user)";
     private static final String ANY_ENTITY = "Any type";
+    private static final Date FIRST_AUDIT;
+    static {
+        try {
+            // Set to the earliest date of a change that can be displayed in audit trail.
+            // This is the rev_date of the earliest rev_info record that joins with REVCHANGES.
+            FIRST_AUDIT = (new SimpleDateFormat("d-MMM-yyyy hh:mm:ss")).parse("6-AUG-2014 21:35:29");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     @Inject
     private AuditReaderDao auditReaderDao;
@@ -167,8 +179,10 @@ public class AuditTrailActionBean extends CoreActionBean {
         // Search Envers using the user's criteria.
         String usernameParam =  ANY_USER.equals(searchUsername) ? AuditReaderDao.IS_ANY_USER :
                 (NO_USER.equals(searchUsername) ? AuditReaderDao.IS_NULL_USER : searchUsername);
-        Set<Long> revIds = (SortedSet)auditReaderDao.fetchAuditIds(getDateRange().getStartTime().getTime()/1000,
-                getDateRange().getEndTime().getTime()/1000, usernameParam).keySet();
+        long from = (getDateRange().getStartTime() != null ?
+                getDateRange().getStartTime() : FIRST_AUDIT).getTime()/1000;
+        long to = (getDateRange().getEndTime() != null ? getDateRange().getEndTime() : new Date()).getTime()/1000;
+        Set<Long> revIds = (SortedSet)auditReaderDao.fetchAuditIds(from, to, usernameParam).keySet();
         auditTrailList = auditReaderDao.fetchAuditedRevs(revIds);
         // Convert canonical classnames to our display names.
         for (AuditedRevDto auditedRevDto : auditTrailList) {

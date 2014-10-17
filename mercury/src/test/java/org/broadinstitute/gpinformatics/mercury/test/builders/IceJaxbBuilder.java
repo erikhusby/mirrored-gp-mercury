@@ -6,8 +6,10 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryP
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -177,6 +179,9 @@ public class IceJaxbBuilder {
         iceCatchEnrichmentCleanup = bettaLimsMessageTestFactory.buildPlateToRack(
                 "IceCatchEnrichmentCleanup", catchCleanupPlateBarcode, catchEnrichRackBarcode,
                 catchEnrichSparseTubeBarcodes);
+        for (ReceptacleType receptacleType : iceCatchEnrichmentCleanup.getPositionMap().getReceptacle()) {
+            receptacleType.setVolume(new BigDecimal("50"));
+        }
         bettaLimsMessageTestFactory.addMessage(messageList, iceCatchEnrichmentCleanup);
 
         // IceCatchPico

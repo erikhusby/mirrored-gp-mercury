@@ -71,6 +71,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.BspSh
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataSourceResolver;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
@@ -235,6 +236,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private SampleLedgerExporterFactory sampleLedgerExporterFactory;
+
+    @Inject
+    private SampleDataSourceResolver sampleDataSourceResolver;
 
     private List<ProductOrderListEntry> displayedProductOrderListEntries;
 
@@ -855,6 +859,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                     orderListEntryDao.findSingle(editOrder.getJiraTicketKey());
 
             ProductOrder.loadLabEventSampleData(editOrder.getSamples());
+
+            sampleDataSourceResolver.populateSampleDataSources(editOrder.getSamples());
         }
     }
 

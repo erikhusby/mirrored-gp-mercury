@@ -1,6 +1,9 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
+import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
+import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.MaterialInfo;
+import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -45,22 +48,95 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
         return "productOrders";
     }
 
-    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = false)
+    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
     @RunAsClient
-    public void testFetchLibraryDetailsByTubeBarcode(@ArquillianResource URL baseUrl) {
+    public void testCreateProductOrder(@ArquillianResource URL baseUrl) {
         Date testDate = new Date();
 
         ProductOrderData data = new ProductOrderData();
-        data.setProductName("Scott Test Product" + testDate.getTime());
+        data.setProductName("Exome Express v3");
         data.setTitle("test product name" + testDate.getTime());
         data.setQuoteId("MMMAC1");
+        data.setUsername("scottmat");
+        data.setResearchProjectId("RP-32");
         List<String> sampleIds = new ArrayList<>();
-        Collections.addAll(sampleIds, "CSM-tsgm1" + testDate.getTime(), "CSM-tsgm2" + testDate.getTime());
+        Collections.addAll(sampleIds, "SM-41Q94", "SM-41Q95");
         data.setSamples(sampleIds);
 
         WebResource resource = makeWebResource(baseUrl, "create");
 
         resource.post(data);
+    }
+
+
+    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
+    @RunAsClient
+    public void testCreateProductOrderNoUser(@ArquillianResource URL baseUrl) {
+        Date testDate = new Date();
+
+        ProductOrderData data = new ProductOrderData();
+        data.setProductName("Exome Express v3");
+        data.setTitle("test product name" + testDate.getTime());
+        data.setQuoteId("MMMAC1");
+        data.setResearchProjectId("RP-32");
+        List<String> sampleIds = new ArrayList<>();
+        Collections.addAll(sampleIds, "SM-41Q94", "SM-41Q95");
+        data.setSamples(sampleIds);
+
+        WebResource resource = makeWebResource(baseUrl, "create");
+
+        try {
+            resource.post(data);
+            Assert.fail();
+        } catch (UniformInterfaceException e) {
+//            assertThat(e.getResponse().getStatus(), is(equalTo(Response.Status.UNAUTHORIZED.getStatusCode())));
+        }
+    }
+
+    private static ProductOrderData createTestProductOrderData(String username) {
+        ProductOrderData data = new ProductOrderData();
+        data.setProductName("Exome Express v3");
+        data.setTitle("test product name" + new Date().getTime());
+        data.setQuoteId("MMMAC1");
+        // Need to use a research project that has a cohort associated with it.
+        data.setResearchProjectId("RP-31");
+        data.setUsername(username);
+        // This is a valid id in the BSP.BSP_SITE table.
+        data.setSiteId(1);
+        ProductOrderKitDetailData kitDetailData = createTestProductOrderKit();
+        data.setKitDetailData(Collections.singletonList(kitDetailData));
+        return data;
+    }
+
+    private static ProductOrderKitDetailData createTestProductOrderKit() {
+        ProductOrderKitDetailData kitDetailData = new ProductOrderKitDetailData();
+        kitDetailData.setMaterialInfo(MaterialInfo.DNA_DERIVED_FROM_BLOOD);
+        kitDetailData.setMoleculeType(SampleKitWorkRequest.MoleculeType.DNA);
+        kitDetailData.setNumberOfSamples(3);
+        return kitDetailData;
+    }
+
+    private void sendCreateWithKitRequest(URL baseUrl, String username) {
+        WebResource resource = makeWebResource(baseUrl, "createWithKitRequest");
+        resource.post(createTestProductOrderData(username));
+    }
+
+    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testCreateProductOrderWithKit(@ArquillianResource URL baseUrl) {
+        sendCreateWithKitRequest(baseUrl, "scottmat");
+    }
+
+    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, expectedExceptions = UniformInterfaceException.class)
+    @RunAsClient
+    public void testCreateProductOrderWithKitNoUser(@ArquillianResource URL baseUrl) {
+        sendCreateWithKitRequest(baseUrl, null);
+    }
+
+    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, expectedExceptions = UniformInterfaceException.class)
+    @RunAsClient
+    public void testCreateProductOrderWithKitNoGoodUser(@ArquillianResource URL baseUrl) {
+        sendCreateWithKitRequest(baseUrl, "invalid user name");
     }
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)

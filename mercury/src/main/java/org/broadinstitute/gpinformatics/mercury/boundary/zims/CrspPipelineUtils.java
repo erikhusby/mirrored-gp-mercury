@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
+import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -55,6 +56,8 @@ public class CrspPipelineUtils {
                                  ResearchProject positiveControlsProject,
                                  String lcSet) {
         throwExceptionIfInProductionAndSampleIsNotABSPSample(sampleData.getSampleId());
+        setBuickVisitAndCollectionDate(libraryBean, sampleData);
+
         libraryBean.setLsid(getCrspLSIDForBSPSampleId(sampleData.getSampleId()));
         libraryBean.setRootSample(libraryBean.getSampleId());
         libraryBean.setTestType(LibraryBean.CRSP_SOMATIC_TEST_TYPE);
@@ -68,6 +71,17 @@ public class CrspPipelineUtils {
             libraryBean.setResearchProjectName(positiveControlsProject.getTitle());
             libraryBean.setRegulatoryDesignation(positiveControlsProject.getRegulatoryDesignationCodeForPipeline());
         }
+    }
+
+    private void setBuickVisitAndCollectionDate(LibraryBean libraryBean, SampleData sampleData) {
+        if (sampleData instanceof MercurySampleData) {
+            MercurySampleData mercurySampleData = (MercurySampleData)sampleData;
+            libraryBean.setBuickVisit(mercurySampleData.getVisit());
+            libraryBean.setBuickCollectionDate(mercurySampleData.getCollectionDate());
+        }
+        // else don't throw an exception because it's unclear whether these
+        // fields are actually required for pipeline processing and we
+        // don't want to make the pipeline explode for no good reason
     }
 
     private void throwExceptionIfInProductionAndSampleIsNotABSPSample(@Nonnull String sampleId) {
