@@ -31,8 +31,21 @@ public class CrspPicoJaxbBuilder {
     private PlateEventType initialPicoBufferAddition1;
     private PlateEventType initialPicoBufferAddition2;
     private PlateTransferEventType fingerprintingAliquotJaxb;
+    private PlateTransferEventType fingerprintingPicoTransfer1;
+    private PlateTransferEventType fingerprintingPicoTransfer2;
+    private PlateEventType fingerprintingPicoBufferAddition1;
+    private PlateEventType fingerprintingPicoBufferAddition2;
     private PlateTransferEventType fingerprintingPlateSetup;
     private PlateTransferEventType shearingAliquot;
+    private PlateTransferEventType shearingPicoTransfer1;
+    private PlateTransferEventType shearingPicoTransfer2;
+    private PlateEventType shearingPicoBufferAddition1;
+    private PlateEventType shearingPicoBufferAddition2;
+
+    private PlateTransferEventType picoTransfer1;
+    private PlateTransferEventType picoTransfer2;
+    private PlateEventType picoBufferAddition1;
+    private PlateEventType picoBufferAddition2;
 
     public CrspPicoJaxbBuilder(
             BettaLimsMessageTestFactory bettaLimsMessageTestFactory, String testPrefix, String rackBarcode,
@@ -44,62 +57,59 @@ public class CrspPicoJaxbBuilder {
     }
 
     public CrspPicoJaxbBuilder invoke() {
-        // Need to test a variety of next steps: FP Daughter, Shearing Daughter, Exclude?
-        // Set Pico upload values round-robin to achieve desired outcomes.
-        // Re-array based on next steps.
-        // Need to keep track of changing volumes (and concentrations?) within test: map from barcode to BigDecimal
-
         Map<String, BigDecimal> mapBarcodeToVolume = new HashMap<>();
+
         // InitialTare
-        initialTareJaxb = bettaLimsMessageTestFactory.buildRackEvent("InitialTare", rackBarcode,
-                tubeBarcodes);
-        for (ReceptacleType receptacleType : initialTareJaxb.getPositionMap().getReceptacle()) {
-            receptacleType.setReceptacleWeight(new BigDecimal("0.63"));
+        List<BigDecimal> weights = new ArrayList<>(tubeBarcodes.size());
+        for (int i = 0; i < tubeBarcodes.size(); i++) {
+            weights.add(new BigDecimal("0.63"));
         }
-        bettaLimsMessageTestFactory.addMessage(messageList, initialTareJaxb);
+        initialTare(rackBarcode, tubeBarcodes, weights);
 
         // WeightMeasurement
-        weightMeasurementJaxb = bettaLimsMessageTestFactory.buildRackEvent("WeightMeasurement",
-                rackBarcode, tubeBarcodes);
-        int i = 1;
-        for (ReceptacleType receptacleType : weightMeasurementJaxb.getPositionMap().getReceptacle()) {
+        int i = 0;
+        List<BigDecimal> sourceVolumes = new ArrayList<>(tubeBarcodes.size());
+        for (String tubeBarcode : tubeBarcodes) {
             BigDecimal volume = new BigDecimal(i % 2 == 0 ? "55" : "75");
-            mapBarcodeToVolume.put(receptacleType.getBarcode(), volume);
-            receptacleType.setVolume(volume);
+            mapBarcodeToVolume.put(tubeBarcode, volume);
+            sourceVolumes.add(volume);
             i++;
         }
-        bettaLimsMessageTestFactory.addMessage(messageList, weightMeasurementJaxb);
+        weightMeasurement(rackBarcode, tubeBarcodes, sourceVolumes);
 
         // VolumeAddition, only tubes with volume < 65
-        volumeAdditionJaxb = bettaLimsMessageTestFactory.buildRackEvent("VolumeAddition", rackBarcode,
-                tubeBarcodes);
-        i = 1;
-        for (ReceptacleType receptacleType : volumeAdditionJaxb.getPositionMap().getReceptacle()) {
+        sourceVolumes.clear();
+        i = 0;
+        for (String tubeBarcode : tubeBarcodes) {
             if (i % 2 == 0) {
                 BigDecimal volume = new BigDecimal("65.0");
-                mapBarcodeToVolume.put(receptacleType.getBarcode(), volume);
-                receptacleType.setVolume(volume);
+                mapBarcodeToVolume.put(tubeBarcode, volume);
+                sourceVolumes.add(volume);
+            } else {
+                sourceVolumes.add(mapBarcodeToVolume.get(tubeBarcode));
             }
+            i++;
         }
-        bettaLimsMessageTestFactory.addMessage(messageList, volumeAdditionJaxb);
+        volumeAddition(rackBarcode, tubeBarcodes, sourceVolumes);
 
         // Initial PicoTransfer
-        String initialPico1 = "11" + testPrefix;
-        initialPicoTransfer1 = bettaLimsMessageTestFactory.buildRackToPlate("PicoTransfer", rackBarcode,
-                tubeBarcodes, initialPico1);
-        for (ReceptacleType receptacleType : initialPicoTransfer1.getSourcePositionMap().getReceptacle()) {
-            BigDecimal volume = mapBarcodeToVolume.get(receptacleType.getBarcode());
+        sourceVolumes.clear();
+        for (String tubeBarcode : tubeBarcodes) {
+            BigDecimal volume = mapBarcodeToVolume.get(tubeBarcode);
             volume = volume.subtract(new BigDecimal("2"));
-            mapBarcodeToVolume.put(receptacleType.getBarcode(), volume);
-            receptacleType.setVolume(volume);
+            mapBarcodeToVolume.put(tubeBarcode, volume);
+            sourceVolumes.add(volume);
         }
+        String initialPico1 = "11" + testPrefix;
         String initialPico2 = "22" + testPrefix;
-        initialPicoTransfer2 = bettaLimsMessageTestFactory.buildRackToPlate("PicoTransfer", rackBarcode, tubeBarcodes,
-                initialPico2);
+        picoTransfer(rackBarcode, tubeBarcodes, sourceVolumes, initialPico1, initialPico2);
+        initialPicoTransfer1 = picoTransfer1;
+        initialPicoTransfer2 = picoTransfer2;
 
         // Initial PicoBufferAddition
-        initialPicoBufferAddition1 = bettaLimsMessageTestFactory.buildPlateEvent("PicoBufferAddition", initialPico1);
-        initialPicoBufferAddition2 = bettaLimsMessageTestFactory.buildPlateEvent("PicoBufferAddition", initialPico2);
+        picoBufferAddition(initialPico1, initialPico2);
+        initialPicoBufferAddition1 = picoBufferAddition1;
+        initialPicoBufferAddition2 = picoBufferAddition2;
 
         // FingerprintingAliquot, only tubes with concentration > 60
         String fpRackBarcode = "fpr" + testPrefix;
@@ -109,58 +119,218 @@ public class CrspPicoJaxbBuilder {
         for (int rackPosition = 1; rackPosition <= fpSourceTubes.size(); rackPosition++) {
             fpTargetTubes.add("fpt" + testPrefix + rackPosition);
         }
-        fingerprintingAliquotJaxb = bettaLimsMessageTestFactory.buildRackToRack(
-                "FingerprintingAliquot", rackBarcode, fpSourceTubes, fpRackBarcode, fpTargetTubes);
-        for (ReceptacleType receptacleType : fingerprintingAliquotJaxb.getSourcePositionMap().getReceptacle()) {
-            BigDecimal volume = mapBarcodeToVolume.get(receptacleType.getBarcode());
+
+        sourceVolumes.clear();
+        for (String fpSourceTube : fpSourceTubes) {
+            BigDecimal volume = mapBarcodeToVolume.get(fpSourceTube);
             volume = volume.subtract(new BigDecimal("12"));
-            mapBarcodeToVolume.put(receptacleType.getBarcode(), volume);
-            receptacleType.setVolume(volume);
+            mapBarcodeToVolume.put(fpSourceTube, volume);
+            sourceVolumes.add(volume);
         }
-        for (ReceptacleType receptacleType : fingerprintingAliquotJaxb.getPositionMap().getReceptacle()) {
+
+        List<BigDecimal> targetVolumes = new ArrayList<>(tubeBarcodes.size());
+        List<BigDecimal> targetConcentrations = new ArrayList<>(tubeBarcodes.size());
+        for (String fpTargetTube : fpTargetTubes) {
             BigDecimal volume = new BigDecimal("40");
-            mapBarcodeToVolume.put(receptacleType.getBarcode(), volume);
-            receptacleType.setVolume(volume);
-            receptacleType.setConcentration(new BigDecimal("20"));
+            mapBarcodeToVolume.put(fpTargetTube, volume);
+            targetVolumes.add(volume);
+            targetConcentrations.add(new BigDecimal("20"));
         }
-        bettaLimsMessageTestFactory.addMessage(messageList, fingerprintingAliquotJaxb);
 
-        // todo jmt FP PicoTransfer
-        // FP PicoBufferAddition
+        fingerprintingAliquot(rackBarcode, fpSourceTubes, sourceVolumes,
+                fpRackBarcode, fpTargetTubes, targetVolumes, targetConcentrations);
 
+        // FP PicoTransfer
         List<String> postFpTubes = new ArrayList<>(tubeBarcodes.size());
         postFpTubes.addAll(fpTargetTubes);
         postFpTubes.addAll(tubeBarcodes.subList(splitPoint, tubeBarcodes.size()));
+        sourceVolumes.clear();
+        for (String tubeBarcode : postFpTubes) {
+            BigDecimal volume = mapBarcodeToVolume.get(tubeBarcode);
+            volume = volume.subtract(new BigDecimal("2"));
+            mapBarcodeToVolume.put(tubeBarcode, volume);
+            sourceVolumes.add(volume);
+        }
+        String fpPico1 = "33" + testPrefix;
+        String fpPico2 = "44" + testPrefix;
+        picoTransfer(fpRackBarcode, postFpTubes, sourceVolumes, fpPico1, fpPico2);
+        fingerprintingPicoTransfer1 = picoTransfer1;
+        fingerprintingPicoTransfer2 = picoTransfer2;
+
+        // FP PicoBufferAddition
+        picoBufferAddition(fpPico1, fpPico2);
+        fingerprintingPicoBufferAddition1 = picoBufferAddition1;
+        fingerprintingPicoBufferAddition2 = picoBufferAddition2;
+
         // FingerprintingPlateSetup
         String fpPlate = "fpp" + testPrefix;
-        fingerprintingPlateSetup = bettaLimsMessageTestFactory.buildRackToPlate("FingerprintingPlateSetup",
-                fpRackBarcode, postFpTubes, fpPlate);
-        MetadataType metadataType = new MetadataType();
-        metadataType.setName("Volume");
-        metadataType.setValue("2.5");
-        fingerprintingPlateSetup.getMetadata().add(metadataType);
-        // todo jmt should set source volume?
+        sourceVolumes.clear();
+        for (String postFpTube : postFpTubes) {
+            BigDecimal volume = mapBarcodeToVolume.get(postFpTube);
+            volume = volume.subtract(new BigDecimal("5"));
+            mapBarcodeToVolume.put(postFpTube, volume);
+            sourceVolumes.add(volume);
+        }
+        fingerprintingPlateSetup(fpRackBarcode, postFpTubes, sourceVolumes, fpPlate);
 
         // ShearingAliquot
         String shearingRackBarcode = "sr" + testPrefix;
         List<String> shearingTubes = new ArrayList<>();
-        shearingAliquot = bettaLimsMessageTestFactory.buildRackToRack("ShearingAliquot",
-                rackBarcode, postFpTubes, shearingRackBarcode, shearingTubes);
-        for (ReceptacleType receptacleType : shearingAliquot.getSourcePositionMap().getReceptacle()) {
-            BigDecimal volume = mapBarcodeToVolume.get(receptacleType.getBarcode());
+        sourceVolumes.clear();
+        for (String postFpTube : postFpTubes) {
+            BigDecimal volume = mapBarcodeToVolume.get(postFpTube);
             volume = volume.subtract(new BigDecimal("46"));
-            mapBarcodeToVolume.put(receptacleType.getBarcode(), volume);
-            receptacleType.setVolume(volume);
+            mapBarcodeToVolume.put(postFpTube, volume);
+            sourceVolumes.add(volume);
         }
-        for (ReceptacleType receptacleType : shearingAliquot.getPositionMap().getReceptacle()) {
-            receptacleType.setVolume(new BigDecimal("60"));
-            receptacleType.setConcentration(new BigDecimal("3"));
+        for (String shearingTube : shearingTubes) {
+            BigDecimal volume = new BigDecimal("60");
+            mapBarcodeToVolume.put(shearingTube, volume);
+            targetVolumes.add(volume);
+            targetConcentrations.add(new BigDecimal("3"));
         }
 
-        // todo jmt Shearing PicoTransfer
+        shearingAliquot(rackBarcode, postFpTubes, sourceVolumes,
+                shearingRackBarcode, shearingTubes, targetVolumes, targetConcentrations);
+
+        // Shearing PicoTransfer
+        sourceVolumes.clear();
+        for (String tubeBarcode : shearingTubes) {
+            BigDecimal volume = mapBarcodeToVolume.get(tubeBarcode);
+            volume = volume.subtract(new BigDecimal("2"));
+            mapBarcodeToVolume.put(tubeBarcode, volume);
+            sourceVolumes.add(volume);
+        }
+        String shearingPico1 = "55" + testPrefix;
+        String shearingPico2 = "66" + testPrefix;
+        picoTransfer(shearingRackBarcode, shearingTubes, sourceVolumes, shearingPico1, shearingPico2);
+        shearingPicoTransfer1 = picoTransfer1;
+        shearingPicoTransfer2 = picoTransfer2;
+
         // Shearing PicoBufferAddition
+        picoBufferAddition(shearingPico1, shearingPico2);
+        shearingPicoBufferAddition1 = picoBufferAddition1;
+        shearingPicoBufferAddition2 = picoBufferAddition2;
 
         return this;
+    }
+
+    /**
+     * Builds an InitialTare message.  Called from this class and from GPUI tests.
+     */
+    public BettaLIMSMessage initialTare(String rackBarcode, List<String> tubeBarcodes, List<BigDecimal> weights) {
+        initialTareJaxb = bettaLimsMessageTestFactory.buildRackEvent("InitialTare", rackBarcode, tubeBarcodes);
+        int i = 0;
+        for (ReceptacleType receptacleType : initialTareJaxb.getPositionMap().getReceptacle()) {
+            receptacleType.setReceptacleWeight(weights.get(i));
+            i++;
+        }
+        return bettaLimsMessageTestFactory.addMessage(messageList, initialTareJaxb);
+    }
+
+    private BettaLIMSMessage weightMeasurement(String rackBarcode, List<String> tubeBarcodes,
+            List<BigDecimal> volumes) {
+        weightMeasurementJaxb = bettaLimsMessageTestFactory.buildRackEvent("WeightMeasurement",
+                rackBarcode, tubeBarcodes);
+        int i = 0;
+        for (ReceptacleType receptacleType : weightMeasurementJaxb.getPositionMap().getReceptacle()) {
+            receptacleType.setVolume(volumes.get(i));
+            i++;
+        }
+        return bettaLimsMessageTestFactory.addMessage(messageList, weightMeasurementJaxb);
+    }
+
+    private BettaLIMSMessage volumeAddition(String rackBarcode, List<String> tubeBarcodes, List<BigDecimal> volumes) {
+        volumeAdditionJaxb = bettaLimsMessageTestFactory.buildRackEvent("VolumeAddition", rackBarcode,
+                tubeBarcodes);
+        int i = 0;
+        for (ReceptacleType receptacleType : volumeAdditionJaxb.getPositionMap().getReceptacle()) {
+            receptacleType.setVolume(volumes.get(i));
+            i++;
+        }
+        return bettaLimsMessageTestFactory.addMessage(messageList, volumeAdditionJaxb);
+    }
+
+    private BettaLIMSMessage picoTransfer(String rackBarcode, List<String> tubeBarcodes, List<BigDecimal> volumes,
+            String initialPico1, String initialPico2) {
+        picoTransfer1 = bettaLimsMessageTestFactory.buildRackToPlate("PicoTransfer", rackBarcode,
+                tubeBarcodes, initialPico1);
+        int i = 0;
+        for (ReceptacleType receptacleType : picoTransfer1.getSourcePositionMap().getReceptacle()) {
+            receptacleType.setVolume(volumes.get(i));
+            i++;
+        }
+        picoTransfer2 = bettaLimsMessageTestFactory.buildRackToPlate("PicoTransfer", rackBarcode,
+                tubeBarcodes, initialPico2);
+        i = 0;
+        for (ReceptacleType receptacleType : picoTransfer2.getSourcePositionMap().getReceptacle()) {
+            receptacleType.setVolume(volumes.get(i));
+            i++;
+        }
+        return bettaLimsMessageTestFactory.addMessage(messageList, picoTransfer1, picoTransfer2);
+    }
+
+    private BettaLIMSMessage picoBufferAddition(String initialPico1, String initialPico2) {
+        picoBufferAddition1 = bettaLimsMessageTestFactory.buildPlateEvent("PicoBufferAddition", initialPico1);
+        picoBufferAddition2 = bettaLimsMessageTestFactory.buildPlateEvent("PicoBufferAddition", initialPico2);
+        return bettaLimsMessageTestFactory.addMessage(messageList, picoBufferAddition1, picoBufferAddition2);
+    }
+
+    private BettaLIMSMessage fingerprintingAliquot(
+            String rackBarcode, List<String> fpSourceTubes, List<BigDecimal> sourceVolumes,
+            String fpRackBarcode, List<String> fpTargetTubes, List<BigDecimal> targetVolumes,
+            List<BigDecimal> targetConcentrations) {
+        int i;
+        fingerprintingAliquotJaxb = bettaLimsMessageTestFactory.buildRackToRack(
+                "FingerprintingAliquot", rackBarcode, fpSourceTubes, fpRackBarcode, fpTargetTubes);
+        i = 0;
+        for (ReceptacleType receptacleType : fingerprintingAliquotJaxb.getSourcePositionMap().getReceptacle()) {
+            receptacleType.setVolume(sourceVolumes.get(i));
+            i++;
+        }
+        i = 0;
+        for (ReceptacleType receptacleType : fingerprintingAliquotJaxb.getPositionMap().getReceptacle()) {
+            receptacleType.setVolume(targetVolumes.get(i));
+            receptacleType.setConcentration(targetConcentrations.get(i));
+            i++;
+        }
+        return bettaLimsMessageTestFactory.addMessage(messageList, fingerprintingAliquotJaxb);
+    }
+
+    private BettaLIMSMessage fingerprintingPlateSetup(String fpRackBarcode, List<String> postFpTubes,
+            List<BigDecimal> sourceVolumes, String fpPlate) {
+        fingerprintingPlateSetup = bettaLimsMessageTestFactory.buildRackToPlate("FingerprintingPlateSetup",
+                fpRackBarcode, postFpTubes, fpPlate);
+        int i = 0;
+        for (ReceptacleType receptacleType : fingerprintingPlateSetup.getSourcePositionMap().getReceptacle()) {
+            receptacleType.setVolume(sourceVolumes.get(i));
+            i++;
+        }
+        MetadataType metadataType = new MetadataType();
+        metadataType.setName("Volume");
+        metadataType.setValue("2.5");
+        fingerprintingPlateSetup.getMetadata().add(metadataType);
+        return bettaLimsMessageTestFactory.addMessage(messageList, fingerprintingPlateSetup);
+    }
+
+    private BettaLIMSMessage shearingAliquot(
+            String rackBarcode, List<String> postFpTubes, List<BigDecimal> sourceVolumes,
+            String shearingRackBarcode, List<String> shearingTubes, List<BigDecimal> targetVolumes,
+            List<BigDecimal> targetConcentrations) {
+        shearingAliquot = bettaLimsMessageTestFactory.buildRackToRack("ShearingAliquot",
+                rackBarcode, postFpTubes, shearingRackBarcode, shearingTubes);
+        int i = 0;
+        for (ReceptacleType receptacleType : shearingAliquot.getSourcePositionMap().getReceptacle()) {
+            receptacleType.setVolume(sourceVolumes.get(i));
+            i++;
+        }
+        i = 0;
+        for (ReceptacleType receptacleType : shearingAliquot.getPositionMap().getReceptacle()) {
+            receptacleType.setVolume(targetVolumes.get(i));
+            receptacleType.setConcentration(targetConcentrations.get(i));
+            i++;
+        }
+        return bettaLimsMessageTestFactory.addMessage(messageList, shearingAliquot);
     }
 
     public PlateEventType getInitialTareJaxb() {
@@ -195,11 +365,43 @@ public class CrspPicoJaxbBuilder {
         return fingerprintingAliquotJaxb;
     }
 
+    public PlateTransferEventType getFingerprintingPicoTransfer1() {
+        return fingerprintingPicoTransfer1;
+    }
+
+    public PlateTransferEventType getFingerprintingPicoTransfer2() {
+        return fingerprintingPicoTransfer2;
+    }
+
+    public PlateEventType getFingerprintingPicoBufferAddition1() {
+        return fingerprintingPicoBufferAddition1;
+    }
+
+    public PlateEventType getFingerprintingPicoBufferAddition2() {
+        return fingerprintingPicoBufferAddition2;
+    }
+
     public PlateTransferEventType getFingerprintingPlateSetup() {
         return fingerprintingPlateSetup;
     }
 
     public PlateTransferEventType getShearingAliquot() {
         return shearingAliquot;
+    }
+
+    public PlateTransferEventType getShearingPicoTransfer1() {
+        return shearingPicoTransfer1;
+    }
+
+    public PlateTransferEventType getShearingPicoTransfer2() {
+        return shearingPicoTransfer2;
+    }
+
+    public PlateEventType getShearingPicoBufferAddition1() {
+        return shearingPicoBufferAddition1;
+    }
+
+    public PlateEventType getShearingPicoBufferAddition2() {
+        return shearingPicoBufferAddition2;
     }
 }
