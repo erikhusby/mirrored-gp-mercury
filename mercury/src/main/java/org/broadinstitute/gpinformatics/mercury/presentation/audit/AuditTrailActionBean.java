@@ -116,9 +116,10 @@ public class AuditTrailActionBean extends CoreActionBean {
         return canonicalToDisplayClassnames.get(canonicalClassname);
     }
 
-    /** These entity classnames are removed from the Entity Type dropdown. */
-    private static final SortedSet<String> excludedEntityTypes = new TreeSet<String>(){{
+    /** These entity classnames are removed from the Entity Type dropdown and the list of modified entities. */
+    private static final SortedSet<String> excludedDisplayClassnames = new TreeSet<String>(){{
         add("RevInfo");
+        add("Preference");
     }};
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -152,7 +153,7 @@ public class AuditTrailActionBean extends CoreActionBean {
                     // it if necessary by including more of the canonical classname.
                     for (int idx = classname.lastIndexOf('.'); idx >= 0; idx = classname.lastIndexOf('.', idx)) {
                         String displayName = classname.substring(idx + 1);
-                        if (excludedEntityTypes.contains(displayName)) {
+                        if (excludedDisplayClassnames.contains(displayName)) {
                             break;
                         }
                         if (!entityDisplayNames.contains(displayName)) {
@@ -188,12 +189,16 @@ public class AuditTrailActionBean extends CoreActionBean {
         for (AuditedRevDto auditedRevDto : auditTrailList) {
             List<String> displayNames = new ArrayList<>();
             for (String canonicalName : auditedRevDto.getEntityTypeNames()) {
-                // Hibernate may return an abstract class (see GPLIM-3011) which should not be shown.
+                // Doesn't show excluded classes or abstract classes (due to a Hibernate bug) and logs the latter.
                 if (canonicalToDisplayClassnames.containsKey(canonicalName)) {
                     displayNames.add(canonicalToDisplayClassnames.get(canonicalName));
                 } else {
-                    logger.info("AuditReader found an unexpected class " + canonicalName +
-                                " at revision id " + auditedRevDto.getRevId());
+                    for (String excludedDisplayClassname : excludedDisplayClassnames) {
+                        if (!canonicalName.endsWith(excludedDisplayClassname)) {
+                            logger.info("AuditReader found an unexpected class " + canonicalName +
+                                        " at revision id " + auditedRevDto.getRevId());
+                        }
+                    }
                 }
             }
             auditedRevDto.getEntityTypeNames().clear();
@@ -212,4 +217,7 @@ public class AuditTrailActionBean extends CoreActionBean {
         Collections.sort(auditTrailList, AuditedRevDto.BY_REV_ID);
     }
 
+    public static SortedSet<String> getExcludedDisplayClassnames() {
+        return excludedDisplayClassnames;
+    }
 }
