@@ -11,7 +11,6 @@
 
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
@@ -27,7 +26,6 @@ import org.testng.annotations.Test;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
@@ -83,7 +81,7 @@ public class ManifestImporterTest {
     }
 
     @Test(dataProvider = "excelFileDataProvider")
-    public void testImport(String excelFileName) throws InvalidFormatException, IOException, ValidationException {
+    public void testImport(String excelFileName) throws Exception {
         InputStream inputStream = new FileInputStream(excelFileName);
         PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
 
@@ -92,7 +90,7 @@ public class ManifestImporterTest {
         assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
     }
 
-    public void testImportMissingRequiredSpecimen() throws InvalidFormatException, IOException, ValidationException {
+    public void testImportMissingRequiredSpecimen() throws Exception {
         InputStream inputStream = new FileInputStream(TestUtils.getTestData(MISSING_REQUIRED_SPECIMEN));
         PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
 
@@ -106,7 +104,7 @@ public class ManifestImporterTest {
         }
     }
 
-    public void testImportMissingRequiredCollectionDate() throws InvalidFormatException, IOException, ValidationException {
+    public void testImportMissingRequiredCollectionDate() throws Exception {
         InputStream inputStream = new FileInputStream(TestUtils.getTestData(MISSING_REQUIRED_COLLECTION_DATE));
         PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
 
@@ -120,7 +118,7 @@ public class ManifestImporterTest {
         }
     }
 
-    public void testImportMissingRequiredVisit() throws InvalidFormatException, IOException, ValidationException {
+    public void testImportMissingRequiredVisit() throws Exception {
         InputStream inputStream = new FileInputStream(TestUtils.getTestData(MISSING_REQUIRED_VISIT));
         PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
 
@@ -134,7 +132,7 @@ public class ManifestImporterTest {
         }
     }
 
-    public void testImportMissingRequiredSex() throws InvalidFormatException, IOException, ValidationException {
+    public void testImportMissingRequiredSex() throws Exception {
         InputStream inputStream = new FileInputStream(TestUtils.getTestData(MISSING_REQUIRED_SEX));
         PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
 
@@ -148,7 +146,7 @@ public class ManifestImporterTest {
         }
     }
 
-    public void testImportMissingRequiredTumorNormal() throws InvalidFormatException, IOException, ValidationException {
+    public void testImportMissingRequiredTumorNormal() throws Exception {
         InputStream inputStream = new FileInputStream(TestUtils.getTestData(MISSING_REQUIRED_TUMOR_NORMAL));
         PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
 
@@ -161,7 +159,7 @@ public class ManifestImporterTest {
         }
     }
 
-    public void testImportMissingRequiredPatient() throws InvalidFormatException, IOException, ValidationException {
+    public void testImportMissingRequiredPatient() throws Exception {
         InputStream inputStream = new FileInputStream(TestUtils.getTestData(MISSING_REQUIRED_PATIENT));
         PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
 
@@ -175,13 +173,13 @@ public class ManifestImporterTest {
     }
 
     @Test(expectedExceptions = ValidationException.class)
-    public void testImportTwoManyWorksheets() throws InvalidFormatException, IOException, ValidationException {
+    public void testImportTwoManyWorksheets() throws Exception {
         InputStream inputStream = new FileInputStream(TestUtils.getTestData(TOO_MANY_SHEETS));
         PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
     }
 
     @Test(expectedExceptions = ValidationException.class)
-    public void testImportExtraHeaders() throws InvalidFormatException, IOException, ValidationException {
+    public void testImportExtraHeaders() throws Exception {
         InputStream inputStream = new FileInputStream(TestUtils.getTestData(UNKNOWN_HEADERS));
         PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
 
@@ -192,7 +190,7 @@ public class ManifestImporterTest {
         assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
     }
 
-    public void testImportRearrangedColumns() throws InvalidFormatException, IOException, ValidationException {
+    public void testImportRearrangedColumns() throws Exception {
         InputStream inputStream = new FileInputStream(TestUtils.getTestData(REARRANGED_COLUMNS));
         PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
 
@@ -203,7 +201,7 @@ public class ManifestImporterTest {
 
 
     @Test(expectedExceptions = ValidationException.class)
-    public void testImportDuplicateColumns() throws InvalidFormatException, IOException, ValidationException {
+    public void testImportDuplicateColumns() throws Exception {
         InputStream inputStream = new FileInputStream(TestUtils.getTestData(DUPLICATE_COLUMNS));
         PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
 
@@ -222,8 +220,7 @@ public class ManifestImporterTest {
      *
      * @throws ValidationException for any violations of data importing rules.
      */
-    private void validateManifestRecords(ManifestImportProcessor manifestImportProcessor)
-            throws ValidationException {
+    private void validateManifestRecords(ManifestImportProcessor manifestImportProcessor) throws ValidationException {
         Collection<ManifestRecord> manifestRecords;
         try {
             manifestRecords = manifestImportProcessor.getManifestRecords();
