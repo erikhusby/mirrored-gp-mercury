@@ -7,8 +7,7 @@ import org.apache.commons.collections4.map.LazySortedMap;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
@@ -21,7 +20,6 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransfe
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.boundary.graph.Graph;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferEntityGrapher;
@@ -31,15 +29,12 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
 import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -57,7 +52,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -69,12 +63,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
+import org.broadinstitute.gpinformatics.mercury.test.builders.CrspPicoEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
@@ -96,14 +90,12 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumMap;
@@ -319,14 +311,20 @@ public class LabEventTest extends BaseEventTest {
         Assert.assertEquals(zimsIlluminaRun.getLanesSequenced(), "1,4");
         LabVessel denatureTube = illuminaFlowcell.getNearestTubeAncestorsForLanes().values().iterator().next();
         Assert.assertEquals(zimsIlluminaChamber.getSequencedLibrary(), denatureTube.getLabel());
+        int positiveControlCount = 0;
+        int negativeControlCount = 0;
         for (LibraryBean bean : zimsIlluminaChamber.getLibraries()) {
             // Every library should have an LCSET, even controls.
             Assert.assertEquals(bean.getLcSet(), workflowBatch.getBatchName());
-//            if (!((libraryBean.isPositiveControl() != null && libraryBean.isPositiveControl()) ||
-//                  (libraryBean.isNegativeControl() != null && libraryBean.isNegativeControl()))) {
-//                Assert.assertEquals(bean.getProductOrderKey(), productOrder.getBusinessKey());
-//            }
+            if (bean.isPositiveControl() != null && bean.isPositiveControl()) {
+                positiveControlCount++;
+            }
+            if (bean.isNegativeControl() != null && bean.isNegativeControl()) {
+                negativeControlCount++;
+            }
         }
+        Assert.assertEquals(positiveControlCount, 1);
+        Assert.assertEquals(negativeControlCount, 1);
 
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
         BarcodedTube startingTube = mapBarcodeToTube.entrySet().iterator().next().getValue();
@@ -1210,7 +1208,7 @@ public class LabEventTest extends BaseEventTest {
 
             String bspStock = "SM-" + rackPosition;
             BarcodedTube bspAliquot = new BarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(bspStock));
+            bspAliquot.addSample(new MercurySample(bspStock, MercurySample.MetadataSource.BSP));
             mapBarcodeToTube.put(barcode, bspAliquot);
         }
 
@@ -1261,7 +1259,7 @@ public class LabEventTest extends BaseEventTest {
         for (ProductOrderSample poSample : productOrder.getSamples()) {
             String barcode = "R" + rackPosition;
             BarcodedTube bspAliquot = new BarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(poSample.getName()));
+            bspAliquot.addSample(new MercurySample(poSample.getName(), MercurySample.MetadataSource.BSP));
 
             if (rackPosition >= 94) {
                 mapBarcodeToTube2.put(barcode, bspAliquot);
@@ -1270,7 +1268,7 @@ public class LabEventTest extends BaseEventTest {
             }
             Map<BSPSampleSearchColumn, String> dataMap = new HashMap<>();
             dataMap.put(BSPSampleSearchColumn.SAMPLE_ID, poSample.getName());
-            mapSampleNameToDto.put(poSample.getName(), new BSPSampleDTO(dataMap));
+            nameToSampleData.put(poSample.getName(), new BspSampleData(dataMap));
 
             rackPosition++;
         }
@@ -1315,6 +1313,35 @@ public class LabEventTest extends BaseEventTest {
 //        Controller.stopCPURecording();
     }
 
+
+    @Test(groups = TestGroups.DATABASE_FREE)
+    public void testCrspPico() {
+        expectedRouting = SystemRouter.System.MERCURY;
+
+        // Use Standard Exome product, to verify that workflow is taken from LCSet, not Product
+        int numSamples = NUM_POSITIONS_IN_RACK - 2;
+        ProductOrder productOrder = ProductOrderTestFactory.buildIceProductOrder(numSamples);
+        Date runDate = new Date();
+        // todo jmt create bucket, then batch, rather than rack then batch then bucket
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+        LabBatch workflowBatch = new LabBatch("Exome Express Batch",
+                new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setCreatedOn(new Date());
+        workflowBatch.setWorkflow(Workflow.ICE_EXOME_EXPRESS);
+
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
+
+        CrspPicoEntityBuilder crspPicoEntityBuilder = new CrspPicoEntityBuilder(getBettaLimsMessageTestFactory(),
+                getLabEventFactory(), getLabEventHandler(), "", "CRSP", mapBarcodeToTube).invoke();
+
+        TubeFormation shearingTf = (TubeFormation) crspPicoEntityBuilder.getShearingAliquotEntity().
+                getTargetLabVessels().iterator().next();
+        Assert.assertEquals(shearingTf.getContainerRole().getSampleInstancesV2().size(), numSamples);
+
+        runTransferVisualizer(mapBarcodeToTube.values().iterator().next());
+    }
+
     /**
      * Build object graph for Fluidigm messages
      */
@@ -1329,7 +1356,7 @@ public class LabEventTest extends BaseEventTest {
 
             String bspStock = "SM-" + rackPosition;
             BarcodedTube bspAliquot = new BarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(bspStock));
+            bspAliquot.addSample(new MercurySample(bspStock, MercurySample.MetadataSource.BSP));
             mapBarcodeToTube.put(barcode, bspAliquot);
         }
 

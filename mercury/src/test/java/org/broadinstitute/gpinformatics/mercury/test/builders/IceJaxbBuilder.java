@@ -6,10 +6,14 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryP
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -37,7 +41,8 @@ public class IceJaxbBuilder {
     private String catchCleanupPlateBarcode;
     private String catchEnrichRackBarcode;
     private List<String> catchEnrichTubeBarcodes = new ArrayList<>();
-    private String catchPicoBarcode;
+    private String catchPico1Barcode;
+    private String catchPico2Barcode;
     private PlateCherryPickEvent icePoolingTransfer;
     private PlateTransferEventType iceSPRIConcentration;
     private PlateTransferEventType ice1stHybridization;
@@ -49,7 +54,8 @@ public class IceJaxbBuilder {
     private PlateTransferEventType iceCatchCleanup;
     private PlateEventType iceCatchEnrichmentSetup;
     private PlateTransferEventType iceCatchEnrichmentCleanup;
-    private PlateTransferEventType iceCatchPico;
+    private PlateTransferEventType iceCatchPico1;
+    private PlateTransferEventType iceCatchPico2;
     private PlateCherryPickEvent icePoolTest;
 
     public IceJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory, String testPrefix,
@@ -135,8 +141,12 @@ public class IceJaxbBuilder {
         bettaLimsMessageTestFactory.addMessage(messageList, ice1stCapture);
 
         // Ice2ndHybridization
+        List<BettaLimsMessageTestFactory.ReagentDto> reagentDtos = Arrays.asList(
+                new BettaLimsMessageTestFactory.ReagentDto("CT3", "0009763452", new Date()),
+                new BettaLimsMessageTestFactory.ReagentDto("Rapid Capture Kit bait", "0009773452", new Date()),
+                new BettaLimsMessageTestFactory.ReagentDto("Rapid Capture Kit Resuspension Buffer", "0009783452", new Date()));
         ice2ndHybridization = bettaLimsMessageTestFactory.buildPlateEvent("Ice2ndHybridization",
-                firstCapturePlateBarcode);
+                firstCapturePlateBarcode, reagentDtos);
         bettaLimsMessageTestFactory.addMessage(messageList, ice2ndHybridization);
 
         ice2ndBaitAddition = bettaLimsMessageTestFactory
@@ -157,8 +167,11 @@ public class IceJaxbBuilder {
         bettaLimsMessageTestFactory.addMessage(messageList, iceCatchCleanup);
 
         // IceCatchEnrichmentSetup
+        List<BettaLimsMessageTestFactory.ReagentDto> reagentDtos1 = Arrays.asList(
+                new BettaLimsMessageTestFactory.ReagentDto("Dual Index Primers Lot", "0009764452", new Date()),
+                new BettaLimsMessageTestFactory.ReagentDto("Rapid Capture Enrichment Amp Lot Barcode", "0009765452", new Date()));
         iceCatchEnrichmentSetup = bettaLimsMessageTestFactory.buildPlateEvent("IceCatchEnrichmentSetup",
-                catchCleanupPlateBarcode);
+                catchCleanupPlateBarcode, reagentDtos1);
         bettaLimsMessageTestFactory.addMessage(messageList, iceCatchEnrichmentSetup);
 
         // IceCatchEnrichmentCleanup
@@ -166,13 +179,21 @@ public class IceJaxbBuilder {
         iceCatchEnrichmentCleanup = bettaLimsMessageTestFactory.buildPlateToRack(
                 "IceCatchEnrichmentCleanup", catchCleanupPlateBarcode, catchEnrichRackBarcode,
                 catchEnrichSparseTubeBarcodes);
+        for (ReceptacleType receptacleType : iceCatchEnrichmentCleanup.getPositionMap().getReceptacle()) {
+            receptacleType.setVolume(new BigDecimal("50"));
+        }
         bettaLimsMessageTestFactory.addMessage(messageList, iceCatchEnrichmentCleanup);
 
         // IceCatchPico
-        catchPicoBarcode = testPrefix + "IcePico";
-        iceCatchPico = bettaLimsMessageTestFactory.buildRackToPlate("IceCatchPico",
-                catchEnrichRackBarcode, catchEnrichSparseTubeBarcodes, catchPicoBarcode);
-        bettaLimsMessageTestFactory.addMessage(messageList, iceCatchPico);
+        // Pico plate barcodes must be all numeric to be accepted by the Varioskan parser
+        catchPico1Barcode = testPrefix + "881";
+        iceCatchPico1 = bettaLimsMessageTestFactory.buildRackToPlate("IceCatchPico",
+                catchEnrichRackBarcode, catchEnrichSparseTubeBarcodes, catchPico1Barcode);
+        bettaLimsMessageTestFactory.addMessage(messageList, iceCatchPico1);
+        catchPico2Barcode = testPrefix + "882";
+        iceCatchPico2 = bettaLimsMessageTestFactory.buildRackToPlate("IceCatchPico",
+                catchEnrichRackBarcode, catchEnrichSparseTubeBarcodes, catchPico2Barcode);
+        bettaLimsMessageTestFactory.addMessage(messageList, iceCatchPico2);
 
         return this;
     }
@@ -221,8 +242,12 @@ public class IceJaxbBuilder {
         return catchEnrichTubeBarcodes;
     }
 
-    public String getCatchPicoBarcode() {
-        return catchPicoBarcode;
+    public String getCatchPico1Barcode() {
+        return catchPico1Barcode;
+    }
+
+    public String getCatchPico2Barcode() {
+        return catchPico2Barcode;
     }
 
     public PlateCherryPickEvent getIcePoolingTransfer() {
@@ -273,8 +298,8 @@ public class IceJaxbBuilder {
         return iceCatchEnrichmentCleanup;
     }
 
-    public PlateTransferEventType getIceCatchPico() {
-        return iceCatchPico;
+    public PlateTransferEventType getIceCatchPico1() {
+        return iceCatchPico1;
     }
 
     public String getBaitTube1Barcode() {

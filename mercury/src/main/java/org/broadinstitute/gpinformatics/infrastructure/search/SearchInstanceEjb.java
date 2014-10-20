@@ -243,6 +243,56 @@ public class SearchInstanceEjb {
             }
         }
     }
+
+
+    /**
+     * Builds a list of all available saved search instances at USER and GLOBAL scopes
+     * TODO: Consider caching this data somewhere:
+     *       Global searches application scope, User searches session scope?
+     *       Refreshes triggered by deleteSearch and persistSearch methods
+     * @param searchInstances the target search entity type
+     *                        [LabVessel, LabEvent]
+     *                                       '-> [Global Type, User Type]
+     *                                                             '-> [Saved Search Names]
+     *
+     */
+    public void fetchAllInstances( Map<ColumnEntity, Map<PreferenceType,List<String>>> searchInstances ) throws Exception {
+
+        // Required for user defined searches
+        Long userID = userBean.getBspUser().getUserId();
+
+        for( Map.Entry<ColumnEntity,PreferenceType[]> mapEntry : mapEntityTypeToPrefType.entrySet() ) {
+            Map<PreferenceType,List<String>> typeMap = new LinkedHashMap<>();
+            for( PreferenceType preferenceType : mapEntry.getValue() ) {
+                PreferenceAccess preferenceAccess  = mapTypeToPreferenceAccess.get(preferenceType);
+
+                // An entity can only have USER and GLOBAL scope
+                List<Preference> preferences = preferenceAccess.getPreferences( userID, preferenceDao);
+                if ( preferences == null ) continue;
+                if( preferences.isEmpty() ){
+                    typeMap.put( preferenceType, new ArrayList<String>());
+                } else {
+                    for (Preference preference : preferences) {
+                        SearchInstanceList searchInstanceList;
+                        try {
+                            searchInstanceList =
+                                    (SearchInstanceList) preference.getPreferenceDefinition().getDefinitionValue();
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                        List<String> searchNames = new ArrayList<>();
+                        for (SearchInstance instance : searchInstanceList.getSearchInstances()) {
+                            searchNames.add(instance.getName());
+                        }
+                        typeMap.put(preferenceType, searchNames);
+                    }
+                }
+            }
+            searchInstances.put(mapEntry.getKey(), typeMap);
+        }
+    }
+
+
     /**
      * Save a search into a preference.
      *

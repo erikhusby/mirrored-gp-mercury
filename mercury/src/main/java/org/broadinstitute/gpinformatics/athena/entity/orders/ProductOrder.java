@@ -13,8 +13,8 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
@@ -330,24 +330,24 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         }
 
         // This gets all the sample names. We could get unique sample names from BSP as a future optimization.
-        BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
-        Map<String, BSPSampleDTO> bspSampleMetaData = bspSampleDataFetcher.fetchSamplesFromBSP(
+        SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
+        Map<String, SampleData> bspSampleMetaData = sampleDataFetcher.fetchSampleData(
                 (Collection<String>) bspSampleNames);
 
         // The non-null DTOs which we use to look up FFPE status.
-        List<BSPSampleDTO> nonNullDTOs = new ArrayList<>();
+        List<SampleData> nonNullDTOs = new ArrayList<>();
         for (ProductOrderSample sample : samples) {
-            BSPSampleDTO bspSampleDTO = bspSampleMetaData.get(sample.getName());
+            SampleData sampleData = bspSampleMetaData.get(sample.getName());
 
             // If the DTO is null, we do not need to set it because it defaults to DUMMY inside sample.
-            if (bspSampleDTO != null) {
-                sample.setBspSampleDTO(bspSampleDTO);
-                nonNullDTOs.add(bspSampleDTO);
+            if (sampleData != null) {
+                sample.setSampleData(sampleData);
+                nonNullDTOs.add(sampleData);
             }
         }
 
         // Fill out all the non-null DTOs with FFPE status in one shot.
-        bspSampleDataFetcher.fetchFFPEDerived(nonNullDTOs);
+        sampleDataFetcher.fetchFFPEDerived(nonNullDTOs);
     }
 
     // Initialize our transient data after the object has been loaded from the database.
@@ -993,6 +993,16 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         this.squidWorkRequest = squidWorkRequest;
     }
 
+    /**
+     * @see ResearchProject#getRegulatoryDesignationCodeForPipeline
+     */
+    public String getRegulatoryDesignationCodeForPipeline() {
+        if (researchProject == null) {
+            throw new RuntimeException("No research project for PDO " + getTitle() + ".  Cannot determine regulatory designation.");
+        }
+        return researchProject.getRegulatoryDesignationCodeForPipeline();
+    }
+
     @Override
     public boolean equals(Object other) {
         if (this == other) {
@@ -1374,7 +1384,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                         if (sample.bspMetaDataMissing()) {
                             missingBspMetaDataCount++;
                         } else {
-                            updateDTOCounts(participantSet, sample.getBspSampleDTO());
+                            updateDTOCounts(participantSet, sample.getSampleData());
                         }
                     }
                 }
@@ -1411,38 +1421,38 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
          * Update all the counts related to BSP information.
          *
          * @param participantSet The unique collection of participants by Id.
-         * @param bspDTO         The BSP DTO.
+         * @param bspSampleData         The BSP Sample Data.
          */
-        private void updateDTOCounts(Set<String> participantSet, BSPSampleDTO bspDTO) {
-            if (bspDTO.isSampleReceived()) {
+        private void updateDTOCounts(Set<String> participantSet, SampleData bspSampleData) {
+            if (bspSampleData.isSampleReceived()) {
                 receivedSampleCount++;
             }
 
-            if (bspDTO.isActiveStock()) {
+            if (bspSampleData.isActiveStock()) {
                 activeSampleCount++;
             }
 
             // If the pico has never been run then it is not warned in the last pico date highlighting.
-            Date picoRunDate = bspDTO.getPicoRunDate();
+            Date picoRunDate = bspSampleData.getPicoRunDate();
             if ((picoRunDate == null) || picoRunDate.before(oneYearAgo)) {
                 lastPicoCount++;
             }
 
-            stockTypeCounter.increment(bspDTO.getStockType());
+            stockTypeCounter.increment(bspSampleData.getStockType());
 
-            String participantId = bspDTO.getPatientId();
+            String participantId = bspSampleData.getPatientId();
             if (StringUtils.isNotBlank(participantId)) {
                 participantSet.add(participantId);
             }
 
-            primaryDiseaseCounter.increment(bspDTO.getPrimaryDisease());
-            genderCounter.increment(bspDTO.getGender());
+            primaryDiseaseCounter.increment(bspSampleData.getPrimaryDisease());
+            genderCounter.increment(bspSampleData.getGender());
 
-            if (bspDTO.getHasSampleKitUploadRackscanMismatch()) {
+            if (bspSampleData.getHasSampleKitUploadRackscanMismatch()) {
                 hasSampleKitUploadRackscanMismatch++;
             }
 
-            sampleTypeCounter.increment(bspDTO.getSampleType());
+            sampleTypeCounter.increment(bspSampleData.getSampleType());
         }
 
         /**

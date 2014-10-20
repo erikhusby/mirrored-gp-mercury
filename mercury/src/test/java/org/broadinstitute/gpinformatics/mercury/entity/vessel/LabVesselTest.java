@@ -7,10 +7,12 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ChildVesselBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -68,7 +70,8 @@ public class LabVesselTest {
         List<LabVessel> labVessels = labVesselFactory.buildLabVesselDaoFree(
                 mapBarcodeToVessel, new HashMap<String, List<MercurySample>>(),
                 new HashMap<String, Set<ProductOrderSample>>(), "jowalsh",
-                new Date(), Collections.singletonList(parentVesselBean), LabEventType.SAMPLE_IMPORT);
+                new Date(), Collections.singletonList(parentVesselBean), LabEventType.SAMPLE_IMPORT,
+                MercurySample.MetadataSource.BSP);
         Map<LabEvent, Set<LabVessel>> vesselsForLabEventType = sourceTube1.findVesselsForLabEventType(
                 LabEventType.SAMPLE_IMPORT);
         Assert.assertEquals(vesselsForLabEventType.size(), 1);
@@ -120,7 +123,8 @@ public class LabVesselTest {
         List<LabVessel> labVessels = labVesselFactory.buildLabVesselDaoFree(
                 mapBarcodeToVessel, new HashMap<String, List<MercurySample>>(),
                 new HashMap<String, Set<ProductOrderSample>>(), "jowalsh",
-                new Date(), Collections.singletonList(parentVesselBean), LabEventType.SAMPLE_IMPORT);
+                new Date(), Collections.singletonList(parentVesselBean), LabEventType.SAMPLE_IMPORT,
+                MercurySample.MetadataSource.BSP);
 
         BarcodedTube tube1 = (BarcodedTube)labVessels.get(0);
         Assert.assertEquals(tube1.getTubeType(), BarcodedTube.BarcodedTubeType.VacutainerBloodTubeEDTA_3);
@@ -130,4 +134,21 @@ public class LabVesselTest {
         Assert.assertEquals(vesselsForLabEventType.values().iterator().next().iterator().next().getLabel(),
                 tube1.getLabel());
     }
+
+    public void testIsDnaCanHandleNulls() {
+        LabVessel labVessel = new LabVessel() {
+            @Override
+            public VesselGeometry getVesselGeometry() {return null;}
+
+            @Override
+            public ContainerType getType() { return null; }
+        };
+
+        String sampleKey = "SM-1342";
+        labVessel.addSample(new MercurySample(
+                sampleKey, new MercurySampleData(sampleKey, Collections.<Metadata>emptySet())));
+        Assert.assertEquals(labVessel.isDNA(), false);
+    }
+
+
 }

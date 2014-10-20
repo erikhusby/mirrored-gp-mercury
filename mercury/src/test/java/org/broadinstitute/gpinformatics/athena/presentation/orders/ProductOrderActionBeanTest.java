@@ -27,7 +27,8 @@ import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo_;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.StripesMockTestUtils;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
@@ -113,8 +114,8 @@ public class ProductOrderActionBeanTest {
      */
     private Collection<ProductOrderSample> createPdoSamples() {
         List<ProductOrderSample> pdoSamples = new ArrayList<>();
-        BSPSampleDTO sampleWithGoodRin = getSampleDTOWithGoodRinScore();
-        BSPSampleDTO sampleWithBadRin = getSamplDTOWithBadRinScore();
+        SampleData sampleWithGoodRin = getSampleDTOWithGoodRinScore();
+        SampleData sampleWithBadRin = getSamplDTOWithBadRinScore();
         pdoSamples.add(new ProductOrderSample(sampleWithGoodRin.getSampleId(), sampleWithGoodRin));
         pdoSamples.add(new ProductOrderSample(sampleWithBadRin.getSampleId(), sampleWithBadRin));
         pdoSamples.add(new ProductOrderSample("123.0")); // throw in a gssr sample
@@ -158,8 +159,8 @@ public class ProductOrderActionBeanTest {
      * @throws JSONException
      */
     public void testNonNumericRinScore() throws JSONException {
-        jsonObject.put(BSPSampleDTO.JSON_RIN_KEY, getSamplDTOWithBadRinScore().getRawRin());
-        Assert.assertEquals(jsonObject.get(BSPSampleDTO.JSON_RIN_KEY), expectedNonNumericRinScore);
+        jsonObject.put(BspSampleData.JSON_RIN_KEY, getSamplDTOWithBadRinScore().getRawRin());
+        Assert.assertEquals(jsonObject.get(BspSampleData.JSON_RIN_KEY), expectedNonNumericRinScore);
     }
 
     /**
@@ -169,30 +170,30 @@ public class ProductOrderActionBeanTest {
      * @throws JSONException
      */
     public void testNumericRinScore() throws JSONException {
-        jsonObject.put(BSPSampleDTO.JSON_RIN_KEY, getSampleDTOWithGoodRinScore().getRawRin());
-        Assert.assertEquals(Double.parseDouble((String) jsonObject.get(BSPSampleDTO.JSON_RIN_KEY)),
+        jsonObject.put(BspSampleData.JSON_RIN_KEY, getSampleDTOWithGoodRinScore().getRawRin());
+        Assert.assertEquals(Double.parseDouble((String) jsonObject.get(BspSampleData.JSON_RIN_KEY)),
                 expectedNumericValue);
     }
 
     public void testNoRinScore() throws JSONException {
         Map<BSPSampleSearchColumn, String> data = new EnumMap<>(BSPSampleSearchColumn.class);
         data.put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1234");
-        BSPSampleDTO bspSampleDTO = new BSPSampleDTO(data);
+        SampleData bspSampleData = new BspSampleData(data);
 
-        jsonObject.put(BSPSampleDTO.JSON_RIN_KEY, bspSampleDTO.getRawRin());
+        jsonObject.put(BspSampleData.JSON_RIN_KEY, bspSampleData.getRawRin());
 
-        Assert.assertEquals(jsonObject.get(BSPSampleDTO.JSON_RIN_KEY), "");
+        Assert.assertEquals(jsonObject.get(BspSampleData.JSON_RIN_KEY), "");
     }
 
     public void testRinRange() throws JSONException {
         Map<BSPSampleSearchColumn, String> data = new EnumMap<>(BSPSampleSearchColumn.class);
         data.put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1234");
         data.put(BSPSampleSearchColumn.RIN, "1.2-3.4");
-        BSPSampleDTO bspSampleDTO = new BSPSampleDTO(data);
+        SampleData bspSampleData = new BspSampleData(data);
 
-        jsonObject.put(BSPSampleDTO.JSON_RIN_KEY, bspSampleDTO.getRawRin());
+        jsonObject.put(BspSampleData.JSON_RIN_KEY, bspSampleData.getRawRin());
 
-        Assert.assertEquals(jsonObject.get(BSPSampleDTO.JSON_RIN_KEY), "1.2-3.4");
+        Assert.assertEquals(jsonObject.get(BspSampleData.JSON_RIN_KEY), "1.2-3.4");
     }
 
     public void testValidateRinScoresWhenProductHasRinRisk() {
@@ -217,12 +218,12 @@ public class ProductOrderActionBeanTest {
     }
 
     public void testCanBadRinScoreBeUsedForOnRiskCalculation() {
-        BSPSampleDTO badRinScoreSample = getSamplDTOWithBadRinScore();
+        SampleData badRinScoreSample = getSamplDTOWithBadRinScore();
         Assert.assertFalse(badRinScoreSample.canRinScoreBeUsedForOnRiskCalculation());
     }
 
     public void testCanGoodRinScoreBeUsedForOnRiskCalculation() {
-        BSPSampleDTO goodRinScoreSample = getSampleDTOWithGoodRinScore();
+        SampleData goodRinScoreSample = getSampleDTOWithGoodRinScore();
         Assert.assertTrue(goodRinScoreSample.canRinScoreBeUsedForOnRiskCalculation());
     }
 
@@ -298,22 +299,22 @@ public class ProductOrderActionBeanTest {
         Assert.assertFalse(actionBean.getPostReceiveOptionKeys().isEmpty());
     }
 
-    private BSPSampleDTO getSamplDTOWithBadRinScore() {
+    private SampleData getSamplDTOWithBadRinScore() {
         Map<BSPSampleSearchColumn, String> dataMap = new EnumMap<BSPSampleSearchColumn, String>(
                 BSPSampleSearchColumn.class) {{
             put(BSPSampleSearchColumn.RIN, expectedNonNumericRinScore);
             put(BSPSampleSearchColumn.SAMPLE_ID, "SM-49M5N");
         }};
-        return new BSPSampleDTO(dataMap);
+        return new BspSampleData(dataMap);
     }
 
-    private BSPSampleDTO getSampleDTOWithGoodRinScore() {
+    private SampleData getSampleDTOWithGoodRinScore() {
         Map<BSPSampleSearchColumn, String> dataMap = new EnumMap<BSPSampleSearchColumn, String>(
                 BSPSampleSearchColumn.class) {{
             put(BSPSampleSearchColumn.RIN, String.valueOf(expectedNumericValue));
             put(BSPSampleSearchColumn.SAMPLE_ID, "SM-99D2A");
         }};
-        return new BSPSampleDTO(dataMap);
+        return new BspSampleData(dataMap);
     }
 
     private Product createSimpleProduct(String productPartNumber, String family) {
@@ -477,7 +478,8 @@ public class ProductOrderActionBeanTest {
         Assert.assertTrue(actionBean.getValidationErrors().isEmpty());
 
         Product dummyProduct =
-                ProductTestFactory.createDummyProduct(Workflow.NONE, Product.EXOME_EXPRESS_V2_PART_NUMBER, false, false);
+                ProductTestFactory
+                        .createDummyProduct(Workflow.NONE, Product.EXOME_EXPRESS_V2_PART_NUMBER, false, false);
         actionBean.getEditOrder().setProduct(dummyProduct);
         actionBean.getEditOrder().setQuoteId("");
         actionBean.validateQuoteOptions(ProductOrderActionBean.VALIDATE_ORDER);
@@ -599,7 +601,8 @@ public class ProductOrderActionBeanTest {
 
         Mockito.when(regulatoryInfoDao.findListByList(Mockito.eq(RegulatoryInfo.class),
                 Mockito.eq(RegulatoryInfo_.regulatoryInfoId), Mockito.anyCollection())).thenReturn(
-                (regulatoryInfo != null) ? Collections.singletonList(regulatoryInfo) : Collections.<RegulatoryInfo>emptyList());
+                (regulatoryInfo != null) ? Collections.singletonList(regulatoryInfo) :
+                        Collections.<RegulatoryInfo>emptyList());
         actionBean.setRegulatoryInfoDao(regulatoryInfoDao);
         actionBean.setSelectedRegulatoryIds(regInfoIds);
 
@@ -608,6 +611,49 @@ public class ProductOrderActionBeanTest {
         actionBean.validateRegulatoryInformation(action);
         Assert.assertEquals(actionBean.getValidationErrors().isEmpty(), expectedToPass);
     }
+
+    public void testRegulatoryInformationProjectHasNoIrbButParentDoes()
+            throws ParseException {
+        // set up two projects, one will be the child of the other.
+        ResearchProject dummyParentProject = ResearchProjectTestFactory.createTestResearchProject();
+        dummyParentProject.setJiraTicketKey("rp-parent");
+        ResearchProject dummyChildProject = ResearchProjectTestFactory.createTestResearchProject();
+        dummyChildProject.setJiraTicketKey("rp-child");
+        // clear the regulatory infos from both of them
+        dummyChildProject.getRegulatoryInfos().clear();
+        dummyParentProject.getRegulatoryInfos().clear();
+        // create a regulatory info and add it only to the parent.
+        RegulatoryInfo regulatoryInfoFromParent =
+                new RegulatoryInfo("IRB Consent", RegulatoryInfo.Type.IRB, new Date().toString());
+        dummyParentProject.addRegulatoryInfo(regulatoryInfoFromParent);
+        dummyChildProject.setParentResearchProject(dummyParentProject);
+
+        // finally create a product order and add the child project to it.
+        ProductOrder productOrder = ProductOrderTestFactory.buildSampleInitiationProductOrder(2);
+        productOrder.setResearchProject(dummyChildProject);
+
+        actionBean.setEditOrder(productOrder);
+        RegulatoryInfoDao regulatoryInfoDao = Mockito.mock(RegulatoryInfoDao.class);
+
+        Mockito.when(regulatoryInfoDao.findListByList(
+                Mockito.eq(RegulatoryInfo.class),
+                Mockito.eq(RegulatoryInfo_.regulatoryInfoId),
+                Mockito.anyCollectionOf(Long.class)))
+                .thenReturn(Collections.singletonList(regulatoryInfoFromParent));
+        actionBean.setRegulatoryInfoDao(regulatoryInfoDao);
+        actionBean.setSelectedRegulatoryIds(Collections.singletonList(1234l));
+        actionBean.getEditOrder().setAttestationConfirmed(true);
+
+        actionBean.initRegulatoryParameter();
+
+        // test validation for all pertinent actions.
+        for (String action : Arrays.asList(ProductOrderActionBean.SAVE_ACTION, ProductOrderActionBean.VALIDATE_ORDER,
+                ProductOrderActionBean.PLACE_ORDER)) {
+            actionBean.validateRegulatoryInformation(action);
+            Assert.assertTrue(actionBean.getValidationErrors().isEmpty(), "Validation failed for " + action);
+        }
+    }
+
 
     public static class RegulatoryInfoStub extends RegulatoryInfo {
 

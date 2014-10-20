@@ -123,7 +123,7 @@ Move the mouse over the question marks to see details about each section.
                         </optgroup>
                     </c:forEach>
                 </stripes:select>
-                <a href="#" id="addTerm" onclick="addTerm();return false;">Add Term</a>
+                <stripes:button id="addTermBtn" name="addTermBtn" value="Add Term" onclick="addTerm();" class="btn btn-primary"/>
                 <img id="addTermTooltip" src="${ctxpath}/images/help.png" alt="help">
             </p>
             <label>Filter: </label> <input type="text" id="filterSearchTerms" onkeyup="filterSelect($j('#searchTermSelect')[0], this);">
@@ -143,7 +143,7 @@ Move the mouse over the question marks to see details about each section.
         <legend>Result Columns <img id="resultColumnsTooltip" src="${ctxpath}/images/help.png" alt="help"></legend>
         <!-- Allow user to choose column sets -->
         <stripes:layout-render name="/columns/view_column_sets.jsp"/>
-        <a href="#" onclick="chooseColumnSet();return false;">Choose column set</a>
+        <stripes:button id="chooseColumnSetBtn" name="chooseColumnSetBtn" value="Choose Column Set" onclick="chooseColumnSet();" class="btn btn-primary"/>
         <stripes:layout-render name="/search/view_columns.jsp"
                                availableMapGroupToColumnNames="${actionBean.availableMapGroupToColumnNames}"
                                predefinedViewColumns="${actionBean.searchInstance.predefinedViewColumns}"/>
@@ -154,7 +154,7 @@ Move the mouse over the question marks to see details about each section.
 
 </stripes:form>
 <!-- Show results -->
-<fieldset title="Results">
+<fieldset>
     <legend>Results</legend>
     <stripes:layout-render name="/columns/configurable_list.jsp"
                            entityName="${actionBean.entityName}"
@@ -181,6 +181,13 @@ function validateNewSearch() {
     return true;
 }
 
+/*
+ Several places need entity name
+ */
+function getEntityName() {
+    return $j('#searchForm :input[name=entityName]' ).val();
+}
+
 
 /*
  Add a top level term by making an AJAX request.
@@ -193,10 +200,10 @@ function addTerm() {
     var parameters;
     if (searchTerm == null) {
         searchTermName = option.value;
-        parameters = 'addTopLevelTerm&searchTermName=' + option.value + '&entityName=' + $j('#searchForm :input[name=entityName]' ).val();
+        parameters = 'addTopLevelTerm&searchTermName=' + option.value + '&entityName=' + getEntityName();
     } else {
         parameters = 'addTopLevelTermWithValue&searchTermName=' + searchTerm + '&searchTermFirstValue=' + option.value
-                + '&entityName=' + $j.url('?entityName');
+                + '&entityName=' + getEntityName();
     }
     new $j.ajax({
         url: '${ctxpath}/search/ConfigurableSearch.action',
@@ -219,8 +226,7 @@ function addTerm() {
  */
 function nextTerm(link) {
     var startDiv = link.parentNode;
-    // Find out how deeply nested the divs are, so we can build the Stripes
-    // parameter correctly
+    // Find out how deeply nested the divs are, so we can build the Stripes parameter correctly
     var div = startDiv;
     var termDepth = 0;
     // for each ancestor div
@@ -264,7 +270,7 @@ function nextTerm(link) {
         parameters = parameterFragment + parameters;
         div = div.parentNode;
     }
-    parameters = 'addChildTerm&readOnly=' + $j.url('?readOnly') + '&entityName=' + $j.url('?entityName') + '&' + parameters;
+    parameters = 'addChildTerm&readOnly=' + $j.url('?readOnly') + '&entityName=' + getEntityName() + '&' + parameters;
     // AJAX append to current div
     new $j.ajax({
         url: '${ctxpath}/search/ConfigurableSearch.action',
@@ -417,7 +423,25 @@ function removeTerm(link) {
     if (br != null) {
         searchTerm.parentNode.removeChild(br);
     }
+
+    if( searchTerm.parentNode.nodeName.toLowerCase() == 'div' ) {
+        if( searchTerm.parentNode.classList.contains('searchterm')) {
+            // Restore the "Add sub-term" link
+            var button = document.createElement("input");
+            button.setAttribute("type","button");
+            button.setAttribute("id","addSubTermBtn");
+            button.setAttribute("class", "btn btn-primary");
+            button.setAttribute("value","Add Sub-Term");
+            button.onclick = function () {
+                nextTerm(this);
+                return false;
+            };
+            searchTerm.parentNode.appendChild(button);
+        }
+    }
+
     searchTerm.parentNode.removeChild(searchTerm);
+
 }
 
 /**
@@ -442,15 +466,16 @@ function changeDependee(select) {
     }
     if (foundChildren) {
         // Restore the "Add sub-term" link
-        var link = document.createElement("A");
-        var text = document.createTextNode("Add sub-term");
-        link.onclick = function () {
+        var button = document.createElement("input");
+        button.setAttribute("type","button");
+        button.setAttribute("id","addSubTermBtn");
+        button.setAttribute("class", "btn btn-primary");
+        button.setAttribute("value","Add Sub-Term");
+        button.onclick = function () {
             nextTerm(this);
             return false;
         };
-        link.setAttribute("href", "#");
-        link.appendChild(text);
-        select.parentNode.appendChild(link);
+        select.parentNode.appendChild(button);
     }
 }
 

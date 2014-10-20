@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.bucket;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -74,7 +74,7 @@ public class BucketEjbDbFreeTest {
     private BSPUserList bspUserList;
     private Bucket bucket;
     private String pdoCreator;
-    private final Map<String, BSPSampleDTO> bspDtoMap = new HashMap<>();
+    private final Map<String, BspSampleData> bspSampleDataMap = new HashMap<>();
     private final Collection<ProductOrderSample> expectedSamples = new ArrayList<>();
     private final List<LabVessel> labVessels = new ArrayList<>();
 
@@ -117,7 +117,7 @@ public class BucketEjbDbFreeTest {
 
         expectedSamples.clear();
         labVessels.clear();
-        bspDtoMap.clear();
+        bspSampleDataMap.clear();
         pdo.setCreatedBy(BSPManagerFactoryStub.QA_DUDE_USER_ID);
         setupMercurySamples(pdo, expectedSamples, labVessels);
 
@@ -168,12 +168,12 @@ public class BucketEjbDbFreeTest {
                 expectedSamples.add(pdoSample);
                 break;
             }
-            BSPSampleDTO bspDto = new BSPSampleDTO(bspData);
-            bspDto.addPlastic(makeTubeBarcode(rackPosition));
-            bspDtoMap.put(pdoSample.getName(), bspDto);
+            BspSampleData bspSampleData = new BspSampleData(bspData);
+            bspSampleData.addPlastic(makeTubeBarcode(rackPosition));
+            bspSampleDataMap.put(pdoSample.getName(), bspSampleData);
 
             LabVessel labVessel = new BarcodedTube(makeTubeBarcode(rackPosition));
-            labVessel.addSample(new MercurySample(pdoSample.getName(), bspDto));
+            labVessel.addSample(new MercurySample(pdoSample.getName(), bspSampleData));
             labVessels.add(labVessel);
 
             labBatch.addLabVessel(labVessel);
@@ -192,7 +192,8 @@ public class BucketEjbDbFreeTest {
                                                           (LabBatch) anyObject(), (String) anyObject(),
                                                           (String) anyObject(), (LabEventType) anyObject()))
                     .andReturn(Collections.<LabEvent>emptyList());
-            expect(bspSampleDataFetcher.fetchSamplesFromBSP((List<String>) anyObject())).andReturn(bspDtoMap);
+            expect(bspSampleDataFetcher.fetchSampleData((List<String>) anyObject())).andReturn(
+                    bspSampleDataMap);
             bucketDao.persist(bucket);
 
             replay(mocks);
@@ -212,12 +213,13 @@ public class BucketEjbDbFreeTest {
             }
             setupCoreMocks(workflow, false);
 
-            for (BSPSampleDTO sampleDTO : bspDtoMap.values()) {
+            for (BspSampleData sampleDTO : bspSampleDataMap.values()) {
                 sampleDTO.getPlasticBarcodes().clear();
                 sampleDTO.addPlastic(badLabelResult);
             }
 
-            expect(bspSampleDataFetcher.fetchSamplesFromBSP((List<String>) anyObject())).andReturn(bspDtoMap);
+            expect(bspSampleDataFetcher.fetchSampleData((List<String>) anyObject())).andReturn(
+                    bspSampleDataMap);
 
             replay(mocks);
 
@@ -269,9 +271,9 @@ public class BucketEjbDbFreeTest {
                     List<LabVessel> mockCreatedVessels = new ArrayList<>();
                     mockCreatedVessels.add(labVessels.get(rackPosition - 1));
                     expect(labVesselFactory.buildInitialLabVessels(eq(pdoSample.getName()),
-                                                                   eq(makeTubeBarcode(rackPosition)), eq(pdoCreator),
-                                                                   (Date) anyObject()))
-                            .andReturn(mockCreatedVessels);
+                            eq(makeTubeBarcode(rackPosition)), eq(pdoCreator), (Date) anyObject(),
+                            eq(MercurySample.MetadataSource.BSP))).
+                                    andReturn(mockCreatedVessels);
                 }
             }
         }

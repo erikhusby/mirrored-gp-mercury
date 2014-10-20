@@ -7,7 +7,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestOptions;
@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingReq
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.ControlWell;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraCustomFieldsUtil;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
@@ -32,6 +33,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderT
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bsp.BSPSampleFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
@@ -53,9 +55,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.queue.AliquotParameters;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
@@ -100,6 +102,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DA
 public class ExomeExpressEndToEndTest {
 
 
+    private final CrspPipelineUtils crspPipelineUtils = new CrspPipelineUtils(Deployment.DEV);
     // if this bombs because of a jira refresh, just switch it to JiraServiceProducer.stubInstance();
     // for integration test fun where we post things back to a real jira, try JiraServiceProducer.testInstance();
     private JiraService jiraService = JiraServiceProducer.stubInstance();
@@ -121,7 +124,8 @@ public class ExomeExpressEndToEndTest {
                 "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
                 40, null, null, true, Workflow.AGILENT_EXOME_EXPRESS, false, "agg type"),
                                                       new ResearchProject(101L, "Test RP", "Test synopsis",
-                                                                          false));
+                                                                          false,
+                                                                          ResearchProject.RegulatoryDesignation.RESEARCH_ONLY));
         String jiraTicketKey = "PD0-1";
         productOrder1.setJiraTicketKey(jiraTicketKey);
         productOrder1.setOrderStatus(ProductOrder.OrderStatus.Submitted);
@@ -163,7 +167,7 @@ public class ExomeExpressEndToEndTest {
                 Temporarily adding from ProjectPlanFromPassTest to move test case content along.
              */
 
-            BSPSampleDataFetcher bspDataFetcher = new BSPSampleDataFetcher(new EverythingYouAskForYouGetAndItsHuman());
+            SampleDataFetcher bspDataFetcher = new SampleDataFetcher(new EverythingYouAskForYouGetAndItsHuman());
             //            BaitSetListResult baitsCache = new BaitSetListResult();
             //            BaitSet baitSet = new BaitSet();
             //            baitSet.setDesignName(BAIT_DESIGN_NAME);
@@ -536,14 +540,6 @@ public class ExomeExpressEndToEndTest {
             Assert.assertNotNull(illuminaSequencingRun.getSampleCartridge(),
                                  "No registered flowcell");
 
-            // We're container-free, so we have to populate the BSPSampleDTO ourselves
-            //            for (Starter starter : projectPlan.getStarters()) {
-            //                BSPSampleAuthorityTube aliquot = (BSPSampleAuthorityTube) projectPlan.getAliquotForStarter(starter);
-            //                BSPStartingSample bspStartingSample = (BSPStartingSample) aliquot.getAliquot();
-            //                bspStartingSample.setBspDTO(new BSPSampleDTO("1", "", "", "", "", "", "", "", "", "", "lsid:" + bspStartingSample.getSampleName(),
-            //                        "", "", "","", "", "", "",""));
-            //            }
-
             // ZIMS
             ProductOrderDao productOrderDao = Mockito.mock(ProductOrderDao.class);
             Mockito.when(productOrderDao.findByBusinessKey(Mockito.anyString())).then(new Answer<Object>() {
@@ -556,13 +552,15 @@ public class ExomeExpressEndToEndTest {
                 }
             });
 
-            ZimsIlluminaRunFactory zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(new BSPSampleDataFetcher(),
+            ZimsIlluminaRunFactory zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(new SampleDataFetcher(),
                                                                                        null,
                                                                                        new SequencingTemplateFactory(),
-                                                                                       productOrderDao);
+                                                                                       productOrderDao,
+                                                                                       null,
+                                                                                       crspPipelineUtils);
             ZimsIlluminaRun zimsRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);
 
-            // how to populate BSPSampleDTO?  Ease of use from EL suggests an entity that can load itself, but this
+            // how to populate BspSampleData?  Ease of use from EL suggests an entity that can load itself, but this
             // would require injecting a service, or using a singleton
 
             Assert.assertNotNull(zimsRun);

@@ -26,7 +26,7 @@ public class ControlEjb {
      *              an existing control is to be set
      */
     public void saveControl(Control passedControl, Control.ControlState state) {
-        Control foundControl = controlDao.findBySampleId(passedControl.getBusinessKey());
+        Control foundControl = controlDao.findByCollaboratorParticipantId(passedControl.getBusinessKey());
 
         if(null == foundControl) {
             foundControl = passedControl;

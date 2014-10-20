@@ -85,7 +85,7 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
      * @return
      */
     public Map<String, List<SearchTerm>> getMapGroupSearchTerms() {
-        Map<String, List<SearchTerm>> mapGroupAvailableCriteria = new HashMap<>();
+        Map<String, List<SearchTerm>> mapGroupAvailableCriteria = new LinkedHashMap<>();
         List<SearchTerm> searchTermList;
         for (Map.Entry<String, List<SearchTerm>> groupSearchListEntry : mapGroupSearchTerms.entrySet()) {
             searchTermList = new ArrayList<>();
@@ -102,7 +102,7 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
     }
 
     public Map<String, List<ColumnTabulation>> getMapGroupToColumnTabulations() {
-        Map<String, List<ColumnTabulation>> mapGroupToColumnTabulations = new HashMap<>();
+        Map<String, List<ColumnTabulation>> mapGroupToColumnTabulations = new LinkedHashMap<>();
         for (Map.Entry<String, List<SearchTerm>> groupSearchListEntry : mapGroupSearchTerms.entrySet()) {
             mapGroupToColumnTabulations.put(groupSearchListEntry.getKey(),
                     new ArrayList<ColumnTabulation>(groupSearchListEntry.getValue()));

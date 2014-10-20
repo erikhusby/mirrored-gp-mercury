@@ -29,6 +29,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
@@ -53,11 +54,21 @@ public class GetSampleInstancesTest {
     public static final String LCSET_1 = "LCSET-1";
     public static final String LCSET_2 = "LCSET-2";
 
+
     /** date for LabEVents */
     private long now = System.currentTimeMillis();
     private StaticPlate indexPlateP7;
     private StaticPlate indexPlateP5;
     private BarcodedTube baitTube;
+
+    private SampleInstanceV2 createSampleInstanceForPipelineAPIMetadataTesting(MercurySample.MetadataSource metadataSource,
+                                                                        String sampleName) {
+        LabVessel tube = new BarcodedTube("barcde");
+        MercurySample bspSample = new MercurySample(sampleName, metadataSource);
+        tube.addSample(bspSample);
+        return new SampleInstanceV2(tube);
+
+    }
 
     /**
      * Moves 3 samples through initiation and extraction; makes an LCSET with tubes 1 and 2; reworks tube 2 in
@@ -93,7 +104,8 @@ public class GetSampleInstancesTest {
         int i = 1;
         for (ProductOrderSample productOrderSample : sampleInitProductOrder.getSamples()) {
             BarcodedTube tube = new BarcodedTube("R" + i);
-            MercurySample mercurySample = new MercurySample(productOrderSample.getSampleKey());
+            MercurySample mercurySample = new MercurySample(productOrderSample.getSampleKey(),
+                    MercurySample.MetadataSource.BSP);
             mercurySample.addProductOrderSample(productOrderSample);
             tube.addSample(mercurySample);
             receivedVessels.add(tube);
@@ -126,15 +138,15 @@ public class GetSampleInstancesTest {
 
         Map<VesselPosition, BarcodedTube> mapPositionToExtractTube = new EnumMap<>(VesselPosition.class);
         BarcodedTube tube1 = new BarcodedTube("X1");
-        tube1.addSample(new MercurySample("SM-X1"));
+        tube1.addSample(new MercurySample("SM-X1", MercurySample.MetadataSource.BSP));
         mapPositionToExtractTube.put(VesselPosition.A01, tube1);
 
         BarcodedTube tube2 = new BarcodedTube("X2");
-        tube2.addSample(new MercurySample("SM-X2"));
+        tube2.addSample(new MercurySample("SM-X2", MercurySample.MetadataSource.BSP));
         mapPositionToExtractTube.put(VesselPosition.A02, tube2);
 
         BarcodedTube tube3 = new BarcodedTube("X3");
-        tube3.addSample(new MercurySample("SM-X3"));
+        tube3.addSample(new MercurySample("SM-X3", MercurySample.MetadataSource.BSP));
         mapPositionToExtractTube.put(VesselPosition.A03, tube3);
 
         TubeFormation targetTubeFormation = new TubeFormation(mapPositionToExtractTube, RackOfTubes.RackType.Matrix96);
@@ -267,7 +279,7 @@ public class GetSampleInstancesTest {
         mapPositionToExtractTubeControl.put(position2, tube2);
 
         BarcodedTube controlTube = new BarcodedTube("CONTROL" + lcsetNum);
-        controlTube.addSample(new MercurySample("SM-C" + lcsetNum));
+        controlTube.addSample(new MercurySample("SM-C" + lcsetNum, MercurySample.MetadataSource.BSP));
         mapPositionToExtractTubeControl.put(position3, controlTube);
 
         // Import
@@ -395,7 +407,8 @@ public class GetSampleInstancesTest {
         int i = 0;
         for (ProductOrderSample productOrderSample : sampleInitProductOrder.getSamples()) {
             BarcodedTube barcodedTube = new BarcodedTube("tube1." + i, BarcodedTube.BarcodedTubeType.MatrixTube);
-            productOrderSample.setMercurySample(new MercurySample(productOrderSample.getSampleKey()));
+            productOrderSample.setMercurySample(new MercurySample(productOrderSample.getSampleKey(),
+                    MercurySample.MetadataSource.BSP));
             barcodedTube.getMercurySamples().add(productOrderSample.getMercurySample());
             mapPositionToTube.put(SBSSection.ALL96.getWells().get(i), barcodedTube);
             starterVessels1.add(barcodedTube);
@@ -452,5 +465,16 @@ public class GetSampleInstancesTest {
 
         Assert.assertEquals(labEvent2.getComputedLcSets().size(), 1);
         Assert.assertEquals(labEvent2.getComputedLcSets().iterator().next(), lcSet2);
+    }
+
+    public void testGetMetadataSourceForPipeline() {
+        Assert.assertEquals(createSampleInstanceForPipelineAPIMetadataTesting(MercurySample.MetadataSource.BSP,"sample").getMetadataSourceForPipelineAPI(),
+                                                                              MercurySample.BSP_METADATA_SOURCE);
+        Assert.assertEquals(createSampleInstanceForPipelineAPIMetadataTesting(MercurySample.MetadataSource.MERCURY,"sample").getMetadataSourceForPipelineAPI(),
+                            MercurySample.MERCURY_METADATA_SOURCE);
+        Assert.assertEquals(createSampleInstanceForPipelineAPIMetadataTesting(null,"123.5").getMetadataSourceForPipelineAPI(),
+                            MercurySample.GSSR_METADATA_SOURCE);
+        Assert.assertEquals(createSampleInstanceForPipelineAPIMetadataTesting(null,"samples from outer space").getMetadataSourceForPipelineAPI(),
+                            MercurySample.OTHER_METADATA_SOURCE);
     }
 }

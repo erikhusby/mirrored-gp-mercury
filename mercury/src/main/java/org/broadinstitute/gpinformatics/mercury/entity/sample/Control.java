@@ -15,7 +15,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 /**
- * Represents a user defined control for Mercury.  Will encapsulate both the collaborator sample ID that is
+ * Represents a user defined control for Mercury.  Will encapsulate both the collaborator participant ID that is
  * associated with the control and an indicator of what kind of control (positive or negative) this is.
  *
  * @author Scott Matthews
@@ -95,7 +95,7 @@ public class Control {
     private Long mercuryControlId;
 
     @Index(name = "ix_mc_sample_key")
-    private String collaboratorSampleId;
+    private String collaboratorParticipantId;
 
     @Enumerated(EnumType.STRING)
     private ControlType type;
@@ -107,17 +107,17 @@ public class Control {
     public Control() {
     }
 
-    public Control(String collaboratorSampleId, ControlType type) {
-        this.collaboratorSampleId = collaboratorSampleId;
+    public Control(String collaboratorParticipantId, ControlType type) {
+        this.collaboratorParticipantId = collaboratorParticipantId;
         this.type = type;
     }
 
-    public String getCollaboratorSampleId() {
-        return collaboratorSampleId;
+    public String getCollaboratorParticipantId() {
+        return collaboratorParticipantId;
     }
 
     public String getBusinessKey() {
-        return getCollaboratorSampleId();
+        return getCollaboratorParticipantId();
     }
 
     public ControlType getType() {
@@ -128,8 +128,8 @@ public class Control {
         return state;
     }
 
-    public void setCollaboratorSampleId(String collaboratorSampleId) {
-        this.collaboratorSampleId = collaboratorSampleId;
+    public void setCollaboratorParticipantId(String collaboratorParticipantId) {
+        this.collaboratorParticipantId = collaboratorParticipantId;
     }
 
     public void setType(ControlType type) {

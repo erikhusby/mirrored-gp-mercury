@@ -10,7 +10,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceStub;
@@ -128,7 +128,8 @@ public class SolexaRunRestResourceTest extends Arquillian {
         String rpJiraTicketKey = "RP-" + testPrefix + runDate.getTime() + "RP";
         researchProject = new ResearchProject(bspUserList.getByUsername("scottmat").getUserId(),
                                               "Rework Integration Test RP " + runDate.getTime() + "RP",
-                                              "Rework Integration Test RP", false);
+                                              "Rework Integration Test RP", false,
+                                              ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
         researchProject.setJiraTicketKey(rpJiraTicketKey);
         researchProjectDao.persist(researchProject);
 
@@ -159,10 +160,10 @@ public class SolexaRunRestResourceTest extends Arquillian {
                         ReworkEjbTest.SM_SGM_Test_Genomic_1_COLLAB_PID);
                     put(BSPSampleSearchColumn.MATERIAL_TYPE, BSPSampleSearchServiceStub.GENOMIC_MAT_TYPE);
                     put(BSPSampleSearchColumn.TOTAL_DNA, ReworkEjbTest.SM_SGM_Test_Genomic_1_DNA);
-                    put(BSPSampleSearchColumn.SAMPLE_TYPE, BSPSampleDTO.NORMAL_IND);
+                    put(BSPSampleSearchColumn.SAMPLE_TYPE, BspSampleData.NORMAL_IND);
                     put(BSPSampleSearchColumn.PRIMARY_DISEASE, ReworkEjbTest.SM_SGM_Test_Genomic_1_DISEASE);
-                    put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.FEMALE_IND);
-                    put(BSPSampleSearchColumn.STOCK_TYPE, BSPSampleDTO.ACTIVE_IND);
+                    put(BSPSampleSearchColumn.GENDER, BspSampleData.FEMALE_IND);
+                    put(BSPSampleSearchColumn.STOCK_TYPE, BspSampleData.ACTIVE_IND);
                     put(BSPSampleSearchColumn.CONTAINER_ID, SM_SGM_Test_Genomic_1_CONTAINER_ID);
                     put(BSPSampleSearchColumn.SAMPLE_ID, genomicSample1);
                 }});
@@ -188,7 +189,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
                                            flowcellBarcode);
 
         for (ProductOrderSample currSample : exexOrder.getSamples()) {
-            newFlowcell.addSample(new MercurySample(currSample.getBspSampleName()));
+            newFlowcell.addSample(new MercurySample(currSample.getBspSampleName(), MercurySample.MetadataSource.BSP));
         }
 
         flowcellDao.persist(newFlowcell);

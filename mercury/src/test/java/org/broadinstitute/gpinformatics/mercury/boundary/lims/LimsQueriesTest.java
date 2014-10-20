@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ConcentrationAndVolumeAndWeightType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LibraryDataType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SampleInfoType;
@@ -75,7 +76,7 @@ public class LimsQueriesTest {
         String barcode = "1234";
         BarcodedTube barcodedTube = new BarcodedTube(barcode);
         String sampleKey = "SM-1234";
-        barcodedTube.addSample(new MercurySample(sampleKey));
+        barcodedTube.addSample(new MercurySample(sampleKey, MercurySample.MetadataSource.BSP));
         mapBarcodeToVessel.put(barcode, barcodedTube);
         List<LibraryDataType> libraryDataTypes = limsQueries.fetchLibraryDetailsByTubeBarcode(mapBarcodeToVessel);
         assertThat(libraryDataTypes.size(), equalTo(1));
@@ -236,5 +237,47 @@ public class LimsQueriesTest {
         Assert.assertTrue(limsQueries.doesLimsRecognizeAllTubes(Arrays.asList(barcode)), "Wrong return");
         Assert.assertFalse(limsQueries.doesLimsRecognizeAllTubes(Arrays.asList(badBarcode)), "Wrong return");
         verify(barcodedTubeDao);
+    }
+
+    @Test(groups = DATABASE_FREE)
+    public void testFetchConcentrationAndVolumeAndWeightForTubeBarcodes() {
+        String barcode = "tube1";
+        Map<String, LabVessel> mercuryTubes = new HashMap<>();
+        BarcodedTube tube = new BarcodedTube(barcode);
+        mercuryTubes.put(barcode, tube);
+
+        //Should not find Final Library Size since its not a concentration
+        LabMetric finalLibrarySizeMetric =
+                new LabMetric(new BigDecimal(224), LabMetric.MetricType.FINAL_LIBRARY_SIZE, LabMetric.LabUnit.UG_PER_ML,
+                        "A01", new Date());
+        tube.addMetric(finalLibrarySizeMetric);
+        Map<String, ConcentrationAndVolumeAndWeightType> concentrationAndVolumeTypeMap =
+                limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(mercuryTubes);
+        assertThat(concentrationAndVolumeTypeMap.size(), equalTo(1));
+        ConcentrationAndVolumeAndWeightType concentrationAndVolumeType = concentrationAndVolumeTypeMap.get(barcode);
+        assertThat(concentrationAndVolumeType.isWasFound(), equalTo(true));
+        assertThat(concentrationAndVolumeType.getConcentration(), equalTo(null));
+
+        BigDecimal labMetricQuant = BigDecimal.valueOf(22.21);
+        LabMetric quantMetric =
+                new LabMetric(labMetricQuant, LabMetric.MetricType.INITIAL_PICO, LabMetric.LabUnit.UG_PER_ML,
+                        "A02", new Date());
+        tube.addMetric(quantMetric);
+        BigDecimal volume = BigDecimal.valueOf(40.04);
+        tube.setVolume(volume);
+        BigDecimal receptacleWeight = BigDecimal.valueOf(.002);
+        tube.setReceptacleWeight(receptacleWeight);
+
+        concentrationAndVolumeTypeMap =
+                limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(mercuryTubes);
+        assertThat(concentrationAndVolumeTypeMap.size(), equalTo(1));
+        concentrationAndVolumeType = concentrationAndVolumeTypeMap.get(barcode);
+        assertThat(concentrationAndVolumeType.isWasFound(), equalTo(true));
+        assertThat(concentrationAndVolumeType.getTubeBarcode(), equalTo(barcode));
+        assertThat(concentrationAndVolumeType.getConcentration(), equalTo(labMetricQuant));
+        assertThat(concentrationAndVolumeType.getVolume(), equalTo(volume));
+        assertThat(concentrationAndVolumeType.getWeight(), equalTo(receptacleWeight));
+        assertThat(concentrationAndVolumeType.getConcentrationUnits(),
+                equalTo(LabMetric.LabUnit.UG_PER_ML.getDisplayName()));
     }
 }

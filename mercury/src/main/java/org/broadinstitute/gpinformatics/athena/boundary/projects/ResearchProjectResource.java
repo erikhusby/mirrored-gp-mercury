@@ -9,6 +9,8 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectCoh
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
+import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
@@ -22,6 +24,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -46,6 +49,9 @@ public class ResearchProjectResource {
 
     @Inject
     private BSPUserList bspUserList;
+
+    @Inject
+    private UserBean userBean;
 
     @XmlRootElement
     public static class ResearchProjectData {
@@ -75,17 +81,29 @@ public class ResearchProjectResource {
         @XmlElement(name = "order")
         public final List<String> orders;
 
-        // Required by JAXB.
-        ResearchProjectData() {
-            title = null;
+        public ResearchProjectData(String title, String synopsis, String username) {
+            this.title = title;
+            this.synopsis = synopsis;
+            this.username = username;
             id = null;
-            synopsis = null;
             projectManagers = null;
             collections = null;
             broadPIs = null;
             orders = null;
             modifiedDate = null;
+        }
+
+        // Required by JAXB.
+        ResearchProjectData() {
+            title = null;
+            synopsis = null;
             username = null;
+            id = null;
+            projectManagers = null;
+            collections = null;
+            broadPIs = null;
+            orders = null;
+            modifiedDate = null;
         }
 
         private static List<String> createUsernamesFromIds(BSPUserList bspUserList, Long[] ids) {
@@ -222,12 +240,21 @@ public class ResearchProjectResource {
     @Produces(MediaType.APPLICATION_XML)
     public ResearchProjectData create(@Nonnull ResearchProjectData data) {
         if (researchProjectDao.findByTitle(data.title) != null) {
-            throw new InformaticsServiceException(
-                    "Cannot create a project that already exists - the project name is already being used.");
+            throw new ResourceException(
+                    "Cannot create a project that already exists - the project name is already being used.",
+                    Response.Status.BAD_REQUEST);
         }
 
-        ResearchProject project = new ResearchProject(null, data.title, data.synopsis, false);
-        BspUser user = bspUserList.getByUsername(data.username);
+        userBean.login(data.username);
+
+        if(userBean.getBspUser() == UserBean.UNKNOWN) {
+            throw new ResourceException("A valid Username is required to complete this request",
+                    Response.Status.UNAUTHORIZED);
+        }
+
+        ResearchProject project = new ResearchProject(null, data.title, data.synopsis, false,
+                                                      ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
+        BspUser user = userBean.getBspUser();
         project.setCreatedBy(user.getUserId());
 
         try {

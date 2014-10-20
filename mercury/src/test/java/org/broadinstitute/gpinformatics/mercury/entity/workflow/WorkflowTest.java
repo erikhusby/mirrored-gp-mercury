@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
@@ -201,7 +201,7 @@ public class WorkflowTest {
         }};
 
         BarcodedTube barcodedTube = new BarcodedTube("00001234");
-        barcodedTube.addSample(new MercurySample("SM-1234", new BSPSampleDTO(dataMap)));
+        barcodedTube.addSample(new MercurySample("SM-1234", new BspSampleData(dataMap)));
 
         WorkflowLoader workflowLoader = new WorkflowLoader();
         WorkflowConfig workflowConfig1 = workflowLoader.load();
@@ -229,7 +229,7 @@ public class WorkflowTest {
                 }};
 
         BarcodedTube barcodedTube = new BarcodedTube("00002345");
-        barcodedTube.addSample(new MercurySample("SM-2345", new BSPSampleDTO(dataMap)));
+        barcodedTube.addSample(new MercurySample("SM-2345", new BspSampleData(dataMap)));
 
         WorkflowLoader workflowLoader = new WorkflowLoader();
         WorkflowConfig workflowConfig1 = workflowLoader.load();

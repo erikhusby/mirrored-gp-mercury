@@ -10,8 +10,7 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
@@ -61,6 +60,11 @@ public class BucketEjb {
     private final WorkflowLoader workflowLoader;
     private final BSPUserList bspUserList;
     private final LabVesselFactory labVesselFactory;
+
+    /*
+     * Uses BSPSampleDataFetcher (rather than SampleDataFetcher) to create LabVessels for samples that are in BSP but
+     * are not yet known to Mercury.
+     */
     private final BSPSampleDataFetcher bspSampleDataFetcher;
     private final ProductOrderDao productOrderDao;
 
@@ -420,18 +424,18 @@ public class BucketEjb {
      * @return the created LabVessels
      */
     public Collection<LabVessel> createInitialVessels(Collection<String> samplesWithoutVessel, String username) {
-        Map<String, BSPSampleDTO> bspDtoMap = bspSampleDataFetcher.fetchSamplesFromBSP(samplesWithoutVessel);
+        Map<String, BspSampleData> bspSampleDataMap = bspSampleDataFetcher.fetchSampleData(samplesWithoutVessel);
         Collection<LabVessel> vessels = new ArrayList<>();
         List<String> cannotAddToBucket = new ArrayList<>();
 
         for (String sampleName : samplesWithoutVessel) {
-            BSPSampleDTO bspDto = bspDtoMap.get(sampleName);
+            BspSampleData bspSampleData = bspSampleDataMap.get(sampleName);
 
-            if (bspDto != null &&
-                StringUtils.isNotBlank(bspDto.getBarcodeForLabVessel())) {
-                if (bspDto.isSampleReceived()) {
-                    vessels.addAll(labVesselFactory.buildInitialLabVessels(sampleName, bspDto.getBarcodeForLabVessel(),
-                                                                           username, new Date()));
+            if (bspSampleData != null &&
+                StringUtils.isNotBlank(bspSampleData.getBarcodeForLabVessel())) {
+                if (bspSampleData.isSampleReceived()) {
+                    vessels.addAll(labVesselFactory.buildInitialLabVessels(sampleName, bspSampleData.getBarcodeForLabVessel(),
+                            username, new Date(), MercurySample.MetadataSource.BSP));
                 }
             } else {
                 cannotAddToBucket.add(sampleName);

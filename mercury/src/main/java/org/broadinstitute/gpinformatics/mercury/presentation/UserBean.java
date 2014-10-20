@@ -34,6 +34,7 @@ public class UserBean implements Serializable {
     public static final String LOGIN_WARNING = "Your account needs to connect to JIRA and BSP before you can {0}.  " +
                                                "The application is currently having problems reaching at least one " +
                                                "of them, please try again later.";
+    private static final String PRODINFO_USER = "prodinfo";
 
     private BspUser bspUser;
 
@@ -49,7 +50,7 @@ public class UserBean implements Serializable {
     @Inject
     private JiraService jiraService;
 
-    private static final BspUser UNKNOWN = new BspUser() {{
+    public static final BspUser UNKNOWN = new BspUser() {{
         setUserId(-1L);
         setUsername("");
     }};
@@ -178,9 +179,29 @@ public class UserBean implements Serializable {
      * ONLY CALL FROM TESTS.
      */
     public void loginTestUser() {
-        loginUserName = "QADudeTest";
-        updateBspStatus();
+        loginDeveloper("QADudeTest");
+    }
+
+    /**
+     * Logs in as the current OS user.
+     * ONLY CALL FROM FIXUP TESTS
+     */
+    public void loginOSUser() {
+        String osUser = System.getProperty("user.name");
+        if (PRODINFO_USER.equals(osUser)) {
+            throw new RuntimeException("You probably shouldn't be running this script as " + osUser + " because it will corrupt the audit trail.");
+        }
+        loginDeveloper(osUser);
+    }
+
+    private void loginDeveloper(String user) {
+        login(user);
         roles.add(Role.Developer);
+    }
+
+    public void login(String user) {
+        loginUserName = user;
+        updateBspStatus();
     }
 
     /**

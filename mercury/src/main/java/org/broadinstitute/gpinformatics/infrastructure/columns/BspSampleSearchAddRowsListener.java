@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A listener for the ConfigurableList addRows method.  Fetches columns from BSP.
@@ -34,15 +35,18 @@ public class BspSampleSearchAddRowsListener implements ConfigurableList.AddRowsL
 
     @Override
     public void addRows(List<?> entityList, Map<String, Object> context, List<ColumnTabulation> nonPluginTabulations) {
+
         List<String> sampleIDs = new ArrayList<>();
         for (Object entity : entityList) {
             LabVessel labVessel = (LabVessel) entity;
-            MercurySample mercurySample = labVessel.getMercurySamples().iterator().next();
-            sampleIDs.add(mercurySample.getSampleKey());
+            Set<MercurySample> mercurySamples = labVessel.getMercurySamples();
+            if( !mercurySamples.isEmpty() ) {
+                MercurySample mercurySample = mercurySamples.iterator().next();
+                sampleIDs.add(mercurySample.getSampleKey());
+            }
         }
         if (!columnsInitialized) {
-            bspSampleSearchColumns.add(BSPSampleSearchColumn.SAMPLE_ID);
-            for (ColumnTabulation nonPluginTabulation : nonPluginTabulations) {
+           for (ColumnTabulation nonPluginTabulation : nonPluginTabulations) {
                 // todo jmt avoid all this casting
                 SearchTerm searchTerm;
                 if (nonPluginTabulation instanceof SearchInstance.SearchValue) {
@@ -60,8 +64,18 @@ public class BspSampleSearchAddRowsListener implements ConfigurableList.AddRowsL
             columnsInitialized = true;
         }
 
-        List<Map<BSPSampleSearchColumn, String>> listMapColumnToValue = bspSampleSearchService.runSampleSearch(
-                sampleIDs, bspSampleSearchColumns.toArray(new BSPSampleSearchColumn[bspSampleSearchColumns.size()]));
+        List<Map<BSPSampleSearchColumn, String>> listMapColumnToValue;
+
+        // Skip BSP call if no sample IDs or no BSP column data requested
+        // TODO JMS Will new (as of 09/18/2014) sample data fetcher quietly ignore all BSP data?
+        if( sampleIDs.isEmpty() || bspSampleSearchColumns.isEmpty() ) {
+            listMapColumnToValue = new ArrayList<>();
+        } else {
+            // Needs sample ID in first position
+            bspSampleSearchColumns.add( 0, BSPSampleSearchColumn.SAMPLE_ID );
+            listMapColumnToValue = bspSampleSearchService.runSampleSearch(
+                    sampleIDs, bspSampleSearchColumns.toArray(new BSPSampleSearchColumn[bspSampleSearchColumns.size()]));
+        }
         for (Map<BSPSampleSearchColumn, String> mapColumnToValue : listMapColumnToValue) {
             mapSampleIdToColumns.put(mapColumnToValue.get(BSPSampleSearchColumn.SAMPLE_ID), mapColumnToValue);
         }

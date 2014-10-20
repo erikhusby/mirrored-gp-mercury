@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.test.dbfree;
 
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,7 +30,7 @@ public class ProductOrderSampleTestFactory {
         for (String sampleName : sampleArray) {
             ProductOrderSample productOrderSample;
             if (dbFree) {
-                productOrderSample = new ProductOrderSample(sampleName, new BSPSampleDTO());
+                productOrderSample = new ProductOrderSample(sampleName, new BspSampleData());
             } else {
                 productOrderSample = new ProductOrderSample(sampleName);
             }

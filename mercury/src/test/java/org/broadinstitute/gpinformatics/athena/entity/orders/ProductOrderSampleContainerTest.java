@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -31,27 +31,27 @@ public class ProductOrderSampleContainerTest extends ContainerTest {
         Assert.assertTrue(testSample.needsBspMetaData());
 
         try {
-            BSPSampleDTO bspDTO = testSample.getBspSampleDTO();
-            Assert.assertTrue(bspDTO.isSampleReceived());
-            Assert.assertTrue(bspDTO.isActiveStock());
+            SampleData sampleData = testSample.getSampleData();
+            Assert.assertTrue(sampleData.isSampleReceived());
+            Assert.assertTrue(sampleData.isActiveStock());
 
-            Assert.assertEquals(String.valueOf(bspDTO.getVolume()), BSPSampleSearchServiceStub.SM_1P3XN_VOLUME);
-            Assert.assertEquals(bspDTO.getRootSample(), BSPSampleSearchServiceStub.SM_1P3XN_ROOT_SAMP);
-            Assert.assertEquals(bspDTO.getStockSample(), BSPSampleSearchServiceStub.SM_1P3XN_STOCK_SAMP);
-            Assert.assertEquals(bspDTO.getCollection(), BSPSampleSearchServiceStub.SM_1P3XN_COLL);
-            Assert.assertEquals(bspDTO.getCollaboratorsSampleName(), BSPSampleSearchServiceStub.SM_1P3XN_COLLAB_SAMP_ID);
-            Assert.assertEquals(bspDTO.getContainerId(), BSPSampleSearchServiceStub.SM_1P3XN_CONTAINER_ID);
-            Assert.assertEquals(bspDTO.getPatientId(), BSPSampleSearchServiceStub.SM_1P3XN_PATIENT_ID);
-            Assert.assertEquals(bspDTO.getOrganism(), BSPSampleSearchServiceStub.SM_1P3XN_SPECIES);
-            Assert.assertEquals(bspDTO.getSampleLsid(), BSPSampleSearchServiceStub.SM_1P3XN_LSID);
+            Assert.assertEquals(String.valueOf(sampleData.getVolume()), BSPSampleSearchServiceStub.SM_1P3XN_VOLUME);
+            Assert.assertEquals(sampleData.getRootSample(), BSPSampleSearchServiceStub.SM_1P3XN_ROOT_SAMP);
+            Assert.assertEquals(sampleData.getStockSample(), BSPSampleSearchServiceStub.SM_1P3XN_STOCK_SAMP);
+            Assert.assertEquals(sampleData.getCollection(), BSPSampleSearchServiceStub.SM_1P3XN_COLL);
+            Assert.assertEquals(sampleData.getCollaboratorsSampleName(), BSPSampleSearchServiceStub.SM_1P3XN_COLLAB_SAMP_ID);
+            Assert.assertEquals(sampleData.getContainerId(), BSPSampleSearchServiceStub.SM_1P3XN_CONTAINER_ID);
+            Assert.assertEquals(sampleData.getPatientId(), BSPSampleSearchServiceStub.SM_1P3XN_PATIENT_ID);
+            Assert.assertEquals(sampleData.getOrganism(), BSPSampleSearchServiceStub.SM_1P3XN_SPECIES);
+            Assert.assertEquals(sampleData.getSampleLsid(), BSPSampleSearchServiceStub.SM_1P3XN_LSID);
 
-            Assert.assertEquals(bspDTO.getCollaboratorParticipantId(), BSPSampleSearchServiceStub.SM_1P3XN_COLLAB_PID);
-            Assert.assertEquals(bspDTO.getMaterialType(), BSPSampleSearchServiceStub.SM_1P3XN_MAT_TYPE);
-            Assert.assertEquals(String.valueOf(bspDTO.getTotal()), BSPSampleSearchServiceStub.SM_1P3XN_DNA);
-            Assert.assertEquals(bspDTO.getSampleType(), ProductOrderSample.NORMAL_IND);
-            Assert.assertEquals(bspDTO.getPrimaryDisease(), BSPSampleSearchServiceStub.SM_1P3XN_DISEASE);
-            Assert.assertEquals(bspDTO.getGender(), ProductOrderSample.MALE_IND);
-            Assert.assertEquals(bspDTO.getStockType(), ProductOrderSample.ACTIVE_IND);
+            Assert.assertEquals(sampleData.getCollaboratorParticipantId(), BSPSampleSearchServiceStub.SM_1P3XN_COLLAB_PID);
+            Assert.assertEquals(sampleData.getMaterialType(), BSPSampleSearchServiceStub.SM_1P3XN_MAT_TYPE);
+            Assert.assertEquals(String.valueOf(sampleData.getTotal()), BSPSampleSearchServiceStub.SM_1P3XN_DNA);
+            Assert.assertEquals(sampleData.getSampleType(), ProductOrderSample.NORMAL_IND);
+            Assert.assertEquals(sampleData.getPrimaryDisease(), BSPSampleSearchServiceStub.SM_1P3XN_DISEASE);
+            Assert.assertEquals(sampleData.getGender(), ProductOrderSample.MALE_IND);
+            Assert.assertEquals(sampleData.getStockType(), ProductOrderSample.ACTIVE_IND);
 
         } catch (IllegalStateException ise) {
             Assert.fail();

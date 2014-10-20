@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.parsers.poi;
 
+import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -18,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.Format;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -47,10 +49,54 @@ public final class PoiSpreadsheetParser {
      *
      * @throws ValidationException
      */
-    private void processRows(Sheet workSheet, TableProcessor processor) throws ValidationException {
+    public void processRows(Sheet workSheet, TableProcessor processor) throws ValidationException {
         Iterator<Row> rows = workSheet.rowIterator();
         processHeaders(processor, rows);
         processData(processor, rows);
+    }
+
+    /**
+     * If all values in this row are blank return true, otherwise false.
+     */
+    static boolean representsBlankLine(Collection<String> values) {
+        for (String value : values) {
+            if (!StringUtils.isBlank(value)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Return a List of all blank lines seen in the input List of blank line indexes which do not represent trailing
+     * blank lines.
+     *
+     * @param allBlankLineIndexesSeen input List of blank line index numbers, in increasing order, 1-based.
+     * @param numRows The number of data rows in the spreadsheet.
+     * @return A List of non-trailing blank line indexes in increasing order, 1-based.
+     */
+    static List<Integer> findNonTrailingBlankLineIndexes(List<Integer> allBlankLineIndexesSeen, int numRows) {
+        // Trailing blank lines should all be at the end, reverse the input List and start looking for
+        // consecutive blank lines, if any.  The loop below will remove any trailing blank lines from this List,
+        // any remaining blank lines will be returned to the caller.
+        List<Integer> nonTrailingBlankLineIndexes = new ArrayList<>(Lists.reverse(allBlankLineIndexesSeen));
+        int currentLastIndex = numRows;
+
+        Iterator<Integer> iterator = nonTrailingBlankLineIndexes.iterator();
+        while (iterator.hasNext()) {
+            Integer lastIndex = iterator.next();
+            // If the trailing blank line is not where it is supposed to be, break out of the loop and
+            // report on all the blank lines remaining in nonTrailingBlankLineIndexes.
+            if (lastIndex != currentLastIndex) {
+                break;
+            }
+            // If the trailing blank line index is where it was expected to be, remove this from the List of
+            // reported trailing blank lines.
+            currentLastIndex--;
+            iterator.remove();
+        }
+
+        return Lists.reverse(nonTrailingBlankLineIndexes);
     }
 
     /**
@@ -60,9 +106,15 @@ public final class PoiSpreadsheetParser {
      * @param rows The iterator on the excel rows.
      */
     private void processData(TableProcessor processor, Iterator<Row> rows) {
+        List<Integer> allBlankLinesSeen = new ArrayList<>();
+
+        // Keep a count of the number of rows seen, this will be important for trailing blank line determination.
+        int numRows = 0;
         while (rows.hasNext()) {
             Row row = rows.next();
+            numRows++;
 
+            boolean currentLineIsBlank = false;
             // Create a mapping of the headers to the cell values. There are never date values for the header.
             Map<String, String> dataByHeader = new HashMap<>();
             for (int i = 0; i < processor.getHeaderNames().size(); i++) {
@@ -71,8 +123,28 @@ public final class PoiSpreadsheetParser {
                         extractCellContent(row, headerName, i, processor.isDateColumn(i), processor.isStringColumn(i)));
             }
 
-            // Take the map and turn it into objects and process the data appropriately.
-            processor.processRow(dataByHeader, row.getRowNum());
+            if (processor.ignoreTrailingBlankLines() && representsBlankLine(dataByHeader.values())) {
+                allBlankLinesSeen.add(row.getRowNum());
+                currentLineIsBlank = true;
+            }
+
+            // Process the row unless the TableProcessor is configured to ignore blank lines and the current line is
+            // blank.
+            if (!(processor.ignoreTrailingBlankLines() && currentLineIsBlank)) {
+                // Take the map and turn it into objects and process the data appropriately.
+                processor.processRow(dataByHeader, row.getRowNum());
+            }
+        }
+
+        // If there were any blank lines that do not represent trailing blank lines, report these to the TableProcessor
+        // implementation.  This only needs to be handled specially if the processor is configured to ignore trailing
+        // blank lines, otherwise the parser would have already been given the blank line via #processRow.
+        if (processor.ignoreTrailingBlankLines()) {
+            Collection<Integer> nonTrailingBlankLineIndexes =
+                    findNonTrailingBlankLineIndexes(allBlankLinesSeen, numRows);
+            if (!nonTrailingBlankLineIndexes.isEmpty()) {
+                processor.generateErrorsForNonTrailingBlankLines(nonTrailingBlankLineIndexes);
+            }
         }
     }
 
@@ -83,10 +155,14 @@ public final class PoiSpreadsheetParser {
      * @param rows The row iterator.
      */
     private static void processHeaders(TableProcessor processor, Iterator<Row> rows) throws ValidationException {
-        int headerRowIndex = 0;
+        int headerRowIndex = processor.getHeaderRowIndex();
+        int headerRowNum = 0;
         int numHeaderRows = processor.getNumHeaderRows();
-        while (rows.hasNext() && headerRowIndex < numHeaderRows) {
+        while (rows.hasNext() && headerRowNum < numHeaderRows) {
             Row headerRow = rows.next();
+            if (headerRow.getRowNum() < headerRowIndex) {
+                continue;
+            }
 
             List<String> headers = new ArrayList<>();
             Iterator<Cell> cellIterator = headerRow.cellIterator();
@@ -104,7 +180,7 @@ public final class PoiSpreadsheetParser {
             }
 
             // Turn the header strings for this row into whatever objects are needed to continue on.
-            processor.processHeader(headers, headerRowIndex++);
+            processor.processHeader(headers, headerRowNum++);
         }
     }
 
@@ -166,12 +242,15 @@ public final class PoiSpreadsheetParser {
      * We leave all parsing and validating up to the caller by turning everything into a string. We might want to
      * let POI turn things into real objects in the map in the future, but for now this was what callers were
      * expecting.
+     * <p/>
+     * <b>Note, if your cell contains a formula, this method will return not the calculated value, nor the formula
+     * but an empty string instead.</b>
      *
      * @param cell The cell data.
      *
      * @return A string representation of the cell.
      */
-    private static String getCellValues(Cell cell, boolean isDate, boolean isString) {
+    public static String getCellValues(Cell cell, boolean isDate, boolean isString) {
         if (cell != null) {
             switch (cell.getCellType()) {
             case Cell.CELL_TYPE_BOOLEAN:
@@ -191,6 +270,7 @@ public final class PoiSpreadsheetParser {
         }
 
         return "";
+        // todo jmt this could all be replaced with return new HSSFDataFormatter().formatCellValue( cell );
     }
 
     /**
@@ -241,15 +321,14 @@ public final class PoiSpreadsheetParser {
      */
     public static List<String> processSingleWorksheet(InputStream spreadsheet, TableProcessor processor)
             throws InvalidFormatException, IOException, ValidationException {
-
         PoiSpreadsheetParser parser = new PoiSpreadsheetParser(Collections.<String, TableProcessor>emptyMap());
-
         try {
-            parser.processRows(WorkbookFactory.create(spreadsheet).getSheetAt(0), processor);
+            Workbook workbook = WorkbookFactory.create(spreadsheet);
+            processor.validateNumberOfWorksheets(workbook.getNumberOfSheets());
+            parser.processRows(workbook.getSheetAt(0), processor);
+            return processor.getMessages();
         } finally {
             processor.close();
         }
-
-        return parser.validationMessages;
     }
 }

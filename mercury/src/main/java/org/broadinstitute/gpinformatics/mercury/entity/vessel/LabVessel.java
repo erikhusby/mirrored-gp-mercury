@@ -8,6 +8,8 @@ import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -165,6 +167,14 @@ public abstract class LabVessel implements Serializable {
     @BatchSize(size = 100)
     private Set<BucketEntry> bucketEntries = new HashSet<>();
 
+    /**
+     * Counts the number of bucketEntries this vessel is assigned to.
+     * Primary use-case to ID samples that have been transferred from collaborator tubes, but not added to a product order.
+     */
+    @NotAudited
+    @Formula("(select count(*) from bucket_entry where bucket_entry.lab_vessel_id = lab_vessel_id)")
+    private Integer bucketEntriesCount = 0;
+
     @Embedded
     private UserRemarks userRemarks;
 
@@ -223,7 +233,7 @@ public abstract class LabVessel implements Serializable {
 
     public boolean isDNA() {
         for (SampleInstance si : getSampleInstances()) {
-            if (!si.getStartingSample().getBspSampleDTO().getMaterialType().startsWith("DNA:")) {
+            if (!si.getStartingSample().getSampleData().getMaterialType().startsWith("DNA:")) {
                 return false;
             }
         }
@@ -262,6 +272,20 @@ public abstract class LabVessel implements Serializable {
 
     public Set<LabMetric> getMetrics() {
         return labMetrics;
+    }
+
+    public Set<LabMetric> getConcentrationMetrics() {
+        if(labMetrics != null) {
+            Set<LabMetric> concentrationLabMetrics = new HashSet<>();
+            for (LabMetric labMetric: labMetrics) {
+                if(labMetric.getName().getCategory() == LabMetric.MetricType.Category.CONCENTRATION) {
+                    concentrationLabMetrics.add(labMetric);
+                }
+            }
+            return concentrationLabMetrics;
+        }
+
+        return null;
     }
 
     @SuppressWarnings("unused")
@@ -1025,7 +1049,7 @@ public abstract class LabVessel implements Serializable {
     }
 
     public BigDecimal getVolume() {
-        return volume;
+        return MathUtils.scaleTwoDecimalPlaces(volume);
     }
 
     public void setVolume(BigDecimal volume) {
@@ -1052,6 +1076,10 @@ public abstract class LabVessel implements Serializable {
         return Collections.unmodifiableSet(bucketEntries);
     }
 
+    public Integer getBucketEntriesCount(){
+        return bucketEntriesCount;
+    }
+
     /** For fixups only. */
     Set<BucketEntry> getModifiableBucketEntries() {
         return bucketEntries;
@@ -1069,6 +1097,7 @@ public abstract class LabVessel implements Serializable {
              */
             throw new RuntimeException("Vessel already contains an entry equal to: " + bucketEntry);
         }
+        clearCaches();
     }
 
     public void addNonReworkLabBatch(LabBatch labBatch) {
@@ -1736,7 +1765,6 @@ public abstract class LabVessel implements Serializable {
 
     /**
      * This method gets a map of all of the metrics from this vessel and all ancestor/descendant vessels.
-     * TODO jac should this be a traversal criteria?
      *
      * @return Returns a map of lab metrics keyed by the metric display name.
      */
@@ -1745,7 +1773,7 @@ public abstract class LabVessel implements Serializable {
         if (metricMap == null) {
             metricMap = new HashMap<>();
             allMetrics.addAll(getMetrics());
-            for (LabVessel curVessel : getAncestorAndDescendantVessels()) {
+            for (LabVessel curVessel : getDescendantVessels()) {
                 allMetrics.addAll(curVessel.getMetrics());
             }
             Set<LabMetric> metricSet;
@@ -1831,4 +1859,56 @@ public abstract class LabVessel implements Serializable {
         }
     }
 
+    /** Looks up the most recent lab metric using the lab metric's created date. */
+    public LabMetric findMostRecentLabMetric(LabMetric.MetricType metricType) {
+        LabMetric latestLabMetric = null;
+        for (LabMetric labMetric : getMetrics()) {
+            if (labMetric.getName().equals(metricType) &&
+                (latestLabMetric == null || latestLabMetric.getCreatedDate() == null ||
+                 (labMetric.getCreatedDate() != null &&
+                  labMetric.getCreatedDate().after(latestLabMetric.getCreatedDate())))) {
+                latestLabMetric = labMetric;
+            }
+        }
+        return latestLabMetric;
+    }
+
+
+    /**
+     * Allows the caller to determine if the current vessel or any of its ancestors have been involved in a tube
+     * transfer for clinical work.
+     *
+     * @return true if the vessel is affiliated with clinical work
+     */
+    public boolean doesChainOfCustodyInclude(LabEventType labEventType) {
+
+        if (LabEvent.isEventPresent(getEvents(), labEventType)) {
+            return true;
+        }
+
+        TransferTraverserCriteria.LabEventDescendantCriteria eventTraversalCriteria =
+                new TransferTraverserCriteria.LabEventDescendantCriteria();
+        evaluateCriteria(eventTraversalCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+
+        return LabEvent.isEventPresent(eventTraversalCriteria.getAllEvents(), LabEventType.COLLABORATOR_TRANSFER);
+    }
+
+    /**
+     * Get metadata values for the given key.
+     * @param key e.g. SAMPLE_ID
+     * @return array (JSP-friendly)
+     */
+    public String[] getMetadataValues(Metadata.Key key) {
+        List<String> values = new ArrayList<>();
+        for (SampleInstanceV2 sampleInstanceV2 : getSampleInstancesV2()) {
+            for (MercurySample mercurySample : sampleInstanceV2.getRootMercurySamples()) {
+                for (Metadata metadata : mercurySample.getMetadata()) {
+                    if (metadata.getKey() == key) {
+                        values.add(metadata.getStringValue());
+                    }
+                }
+            }
+        }
+        return values.toArray(new String[values.size()]);
+    }
 }

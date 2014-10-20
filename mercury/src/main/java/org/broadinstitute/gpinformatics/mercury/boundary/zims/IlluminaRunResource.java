@@ -10,9 +10,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPLSIDUtil;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
@@ -57,7 +58,7 @@ public class IlluminaRunResource implements Serializable {
     private static final Log LOG = LogFactory.getLog(IlluminaRunResource.class);
 
     @Inject
-    private BSPSampleDataFetcher bspSampleDataFetcher;
+    private BSPSampleDataFetcher sampleDataFetcher;
 
     @Inject
     private ThriftService thriftService;
@@ -78,10 +79,10 @@ public class IlluminaRunResource implements Serializable {
     }
 
     public IlluminaRunResource(ThriftService thriftService,
-            BSPSampleDataFetcher bspSampleDataFetcher,
+            BSPSampleDataFetcher sampleDataFetcher,
             IlluminaSequencingRunDao illuminaSequencingRunDao) {
         this.thriftService = thriftService;
-        this.bspSampleDataFetcher = bspSampleDataFetcher;
+        this.sampleDataFetcher = sampleDataFetcher;
         this.illuminaSequencingRunDao = illuminaSequencingRunDao;
     }
 
@@ -130,7 +131,7 @@ public class IlluminaRunResource implements Serializable {
 
     /**
      * Given a thrift run and a precomputed map of lsids
-     * to BSP DTOs, create the run object.  Package protected
+     * to BSP SampleData, create the run object.  Package protected
      * for testing.
      *
      * @param thriftRun from Thrift
@@ -138,7 +139,7 @@ public class IlluminaRunResource implements Serializable {
      * @return DTO
      */
     ZimsIlluminaRun getRun(@Nonnull TZamboniRun thriftRun,
-                           Map<String, BSPSampleDTO> lsidToBSPSample,
+                           Map<String, SampleData> lsidToBSPSample,
                            ThriftLibraryConverter thriftLibConverter,
                            ProductOrderDao pdoDao) {
         if (thriftRun == null) {
@@ -154,12 +155,12 @@ public class IlluminaRunResource implements Serializable {
         for (TZamboniLane tZamboniLane : thriftRun.getLanes()) {
             List<LibraryBean> libraries = new ArrayList<>(96);
             for (TZamboniLibrary zamboniLibrary : tZamboniLane.getLibraries()) {
-                BSPSampleDTO bspDTO = lsidToBSPSample.get(zamboniLibrary.getLsid());
+                SampleData bspSampleData = lsidToBSPSample.get(zamboniLibrary.getLsid());
                 ProductOrder pdo = null;
                 if (zamboniLibrary.getPdoKey() != null) {
                     pdo = pdoDao.findByBusinessKey(zamboniLibrary.getPdoKey());
                 }
-                libraries.add(thriftLibConverter.convertLibrary(zamboniLibrary, bspDTO, pdo));
+                libraries.add(thriftLibConverter.convertLibrary(zamboniLibrary, bspSampleData, pdo));
             }
             runBean.addLane(new ZimsIlluminaChamber(tZamboniLane.getLaneNumber(), libraries, tZamboniLane.getPrimer(),
                     tZamboniLane.getSequencedLibraryName(), tZamboniLane.getSequencedLibraryCreationDate(),
@@ -180,7 +181,7 @@ public class IlluminaRunResource implements Serializable {
         ZimsIlluminaRun runBean = new ZimsIlluminaRun();
         TZamboniRun tRun = thriftService.fetchRun(runName);
         if (tRun != null) {
-            Map<String, BSPSampleDTO> lsidToBSPSample = fetchAllBSPDataAtOnce(tRun);
+            Map<String, SampleData> lsidToBSPSample = fetchAllBSPDataAtOnce(tRun);
             runBean = getRun(tRun, lsidToBSPSample, new SquidThriftLibraryConverter(), pdoDao);
         } else {
             setErrorNoRun(runName, runBean);
@@ -194,12 +195,12 @@ public class IlluminaRunResource implements Serializable {
     }
 
     /**
-     * Fetches all BSP data for the run in one shot, returning a Map from the LSID to the {@link BSPSampleDTO}.
+     * Fetches all BSP data for the run in one shot, returning a Map from the LSID to the {@link BspSampleData}.
      *
      * @param run from Thrift
      * @return map lsid to DTO
      */
-    private Map<String, BSPSampleDTO> fetchAllBSPDataAtOnce(TZamboniRun run) {
+    Map<String, SampleData> fetchAllBSPDataAtOnce(TZamboniRun run) {
         Set<String> sampleLsids = new HashSet<>();
         for (TZamboniLane zamboniLane : run.getLanes()) {
             for (TZamboniLibrary zamboniLibrary : zamboniLane.getLibraries()) {
@@ -217,31 +218,31 @@ public class IlluminaRunResource implements Serializable {
                 sampleNames.add(lsIdToBareId.getValue());
             }
         }
-        Map<String, BSPSampleDTO> sampleToBspDto = bspSampleDataFetcher.fetchSamplesFromBSP(sampleNames);
+        Map<String, BspSampleData> sampleDataByName = sampleDataFetcher.fetchSampleData(sampleNames);
 
-        Map<String, BSPSampleDTO> lsidToBspDto = new HashMap<>();
-        for (Map.Entry<String, BSPSampleDTO> bspSampleDTOEntry : sampleToBspDto.entrySet()) {
-            BSPSampleDTO bspDto = bspSampleDTOEntry.getValue();
+        Map<String, SampleData> lsidToSampleData = new HashMap<>();
+        for (Map.Entry<String, BspSampleData> bspSampleDataEntry : sampleDataByName.entrySet()) {
+            SampleData sampleData = bspSampleDataEntry.getValue();
             // Make sure we get something out of BSP.  If we don't, consider it a
             // catastrophe, especially for the pipeline.
-            String sampleName = bspSampleDTOEntry.getKey();
-            if (bspDto == null) {
+            String sampleName = bspSampleDataEntry.getKey();
+            if (sampleData == null) {
                 throw new BSPLookupException("BSP returned no data for " + sampleName);
             }
-            if (bspDto.getSampleLsid() == null || StringUtils.isBlank(bspDto.getSampleLsid())) {
+            if (sampleData.getSampleLsid() == null || StringUtils.isBlank(sampleData.getSampleLsid())) {
                 throw new BSPLookupException("BSP returned no LSID for " + sampleName);
             }
-            if (bspDto.getSampleId() == null || StringUtils.isBlank(bspDto.getSampleId())) {
+            if (sampleData.getSampleId() == null || StringUtils.isBlank(sampleData.getSampleId())) {
                 throw new BSPLookupException("BSP returned no sample id for " + sampleName);
             }
-            lsidToBspDto.put(bspDto.getSampleLsid(), bspDto);
+            lsidToSampleData.put(sampleData.getSampleLsid(), sampleData);
         }
 
-        if (sampleNames.size() != sampleToBspDto.size()) {
-            throw new BSPLookupException("BSP search for " + sampleNames.size() + " samples returned " + sampleToBspDto.size() + " results!");
+        if (sampleNames.size() != sampleDataByName.size()) {
+            throw new BSPLookupException("BSP search for " + sampleNames.size() + " samples returned " + sampleDataByName.size() + " results!");
         }
 
-        return lsidToBspDto;
+        return lsidToSampleData;
     }
 
     /**

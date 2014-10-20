@@ -1,15 +1,19 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -20,6 +24,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -41,6 +46,9 @@ public class SampleImportResource {
 
     @Inject
     private BSPUserList bspUserList;
+
+    @Inject
+    private UserBean userBean;
 
     /**
      * Get an imported batch, currently used only for testing
@@ -99,8 +107,15 @@ public class SampleImportResource {
         // todo jmt store the text of the message
         List<ParentVesselBean> parentVesselBeans = sampleImportBean.getParentVesselBeans();
 
+        userBean.login(sampleImportBean.getUserName());
+
+        if(userBean.getBspUser() ==  UserBean.UNKNOWN) {
+            throw new ResourceException("A valid Username is required to complete this request",
+                    Response.Status.UNAUTHORIZED);
+        }
+
         List<LabVessel> labVessels = labVesselFactory.buildLabVessels(parentVesselBeans, sampleImportBean.getUserName(),
-                sampleImportBean.getExportDate(), LabEventType.SAMPLE_IMPORT);
+                sampleImportBean.getExportDate(), LabEventType.SAMPLE_IMPORT, MercurySample.MetadataSource.BSP);
 
         LabBatch labBatch = labBatchDao.findByName(sampleImportBean.getSourceSystemExportId());
         if (labBatch != null) {

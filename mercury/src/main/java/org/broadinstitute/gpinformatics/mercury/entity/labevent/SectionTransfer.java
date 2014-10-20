@@ -38,7 +38,7 @@ public class SectionTransfer extends VesselTransfer {
     private LabVessel ancillaryTargetVessel;
 
     @Index(name = "ix_st_lab_event")
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private LabEvent labEvent;
 
     public SectionTransfer(VesselContainer sourceVesselContainer, SBSSection sourceSection, LabVessel ancillarySourceVessel,

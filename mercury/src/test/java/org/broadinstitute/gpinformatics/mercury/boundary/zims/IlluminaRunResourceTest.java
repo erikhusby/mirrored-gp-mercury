@@ -13,13 +13,14 @@ import edu.mit.broad.prodinfo.thrift.lims.TZamboniRead;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.MockThriftService;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftFileAccessor;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ImportFromSquidTest;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.DevExperimentDataBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.IndexComponent;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
@@ -161,6 +162,11 @@ public class IlluminaRunResourceTest extends Arquillian {
         Assert.assertTrue(rawJson.contains("\"productPartNumber\""));
         Assert.assertTrue(rawJson.contains("\"workRequestType\""));
         Assert.assertTrue(rawJson.contains("\"workRequestDomain\""));
+        Assert.assertTrue(rawJson.contains("\"metadataSource\""));
+        Assert.assertTrue(rawJson.contains("\"regulatoryDesignation\""));
+        Assert.assertTrue(rawJson.contains("\"testType"));
+        Assert.assertTrue(rawJson.contains("\"buickCollectionDate"));
+        Assert.assertTrue(rawJson.contains("\"buickVisit"));
 
         Assert.assertNotNull(run);
         Assert.assertEquals(run.getName(),RUN_NAME);
@@ -173,6 +179,9 @@ public class IlluminaRunResourceTest extends Arquillian {
         boolean foundTumor = false;
         for (ZimsIlluminaChamber zimsIlluminaChamber : run.getLanes()) {
             for (LibraryBean libraryBean : zimsIlluminaChamber.getLibraries()) {
+                Assert.assertEquals(libraryBean.getRegulatoryDesignation(),"RESEARCH_ONLY");
+                Assert.assertNull(libraryBean.getBuickVisit());
+                Assert.assertNull(libraryBean.getBuickCollectionDate());
                 if (libraryBean.getLsid() != null) {
                     if (libraryBean.getLsid().contains("bsp")) {
                         foundBspSample = true;
@@ -182,7 +191,7 @@ public class IlluminaRunResourceTest extends Arquillian {
                     }
                     if ("broadinstitute.org:bsp.prod.sample:12MD2".equals(libraryBean.getLsid())) {
                         foundTumor = true;
-                        Assert.assertEquals(libraryBean.getSampleType(), BSPSampleDTO.TUMOR_IND);
+                        Assert.assertEquals(libraryBean.getSampleType(), BspSampleData.TUMOR_IND);
                     }
                     if (libraryBean.getLcSet() != null) {
                         foundLcSet = true;
@@ -190,6 +199,8 @@ public class IlluminaRunResourceTest extends Arquillian {
                     if (libraryBean.getProductOrderTitle() != null) {
                         foundPdo = true;
                     }
+                    Assert.assertEquals(libraryBean.getMetadataSource(), MercurySample.BSP_METADATA_SOURCE);
+                    Assert.assertNull(libraryBean.getTestType());
                 }
             }
         }

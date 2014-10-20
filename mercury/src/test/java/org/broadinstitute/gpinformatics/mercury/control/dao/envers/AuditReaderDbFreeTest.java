@@ -3,18 +3,15 @@ package org.broadinstitute.gpinformatics.mercury.control.dao.envers;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
-import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup_;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.UserRemarks;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer_;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -26,12 +23,11 @@ import java.util.List;
 @Test(enabled = true, groups = TestGroups.DATABASE_FREE)
 public class AuditReaderDbFreeTest {
 
-    // Exceptions to the Entity classes.
+    // Exceptions to the Entity classes.  The Audit Trail UI requires a Long entity id in order to
+    // show data audits that changed or deleted the entity.
     private final Collection<Class> unauditableClasses = new ArrayList<Class>() {{
         add(JiraTicket.class);   // todo make a Long primary key and remove this special case.
-        add(UserRemarks.class);
     }};
-
 
     @Test
     public void areAllEntitiesAuditable() throws Exception {
@@ -50,13 +46,14 @@ public class AuditReaderDbFreeTest {
         Assert.assertTrue(entityClasses.size() > 0);
 
         for (Class cls : entityClasses) {
-            if (ReflectionUtil.getEntityIdField(cls) == null) {
-                failingClasses.add(cls.getName());
+            Field field = ReflectionUtil.getEntityIdField(cls);
+            if (field == null || !field.getGenericType().equals(Long.class)) {
+                failingClasses.add(cls.getSimpleName());
             }
         }
 
         if (failingClasses.size() > 0) {
-            Assert.fail("Entity definition error -- missing @Id on Long field which is the primary key in class " +
+            Assert.fail("Entity definition error. Primary key must have '@Id' and type must be 'Long' in class: " +
                         StringUtils.join(failingClasses, ", "));
         }
     }
@@ -82,8 +79,8 @@ public class AuditReaderDbFreeTest {
         final String barcode = "A00000001";
 
         BarcodedTube barcodedTube = new BarcodedTube(barcode, BarcodedTube.BarcodedTubeType.VacutainerBloodTube10);
-        barcodedTube.addSample(new MercurySample("SM-0"));
-        barcodedTube.addSample(new MercurySample("SM-1"));
+        barcodedTube.addSample(new MercurySample("SM-0", MercurySample.MetadataSource.BSP));
+        barcodedTube.addSample(new MercurySample("SM-1", MercurySample.MetadataSource.BSP));
 
         List<EntityField> entityFields = ReflectionUtil.formatFields(barcodedTube, barcodedTube.getClass());
         Assert.assertTrue(CollectionUtils.isNotEmpty(entityFields));
@@ -123,4 +120,10 @@ public class AuditReaderDbFreeTest {
         }
     }
 
+    @Test
+    public void testAbstractClass() throws Exception {
+        Assert.assertTrue(ReflectionUtil.getAbstractEntities().contains(LabVessel.class));
+        Assert.assertTrue(ReflectionUtil.getAbstractEntityClassnames().contains(
+                LabVessel.class.getCanonicalName()));
+    }
 }

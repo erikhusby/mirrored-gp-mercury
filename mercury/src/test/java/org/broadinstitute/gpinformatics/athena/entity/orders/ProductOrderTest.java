@@ -116,7 +116,8 @@ public class ProductOrderTest {
                 Product product = new Product("Exome Express", null, "Exome Express", "P-EX-0002", new Date(), null,
                         1814400, 1814400, 184, null, null, null, true, Workflow.AGILENT_EXOME_EXPRESS, false, "agg type");
                 ResearchProject researchProject =
-                        new ResearchProject(ID, title, "RP title", ResearchProject.IRB_NOT_ENGAGED);
+                        new ResearchProject(ID, title, "RP title", ResearchProject.IRB_NOT_ENGAGED,
+                                            ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
 
                 return new ProductOrder(ID, "PO title", sixBspSamplesNoDupes, "quoteId", product, researchProject);
             }
@@ -234,7 +235,8 @@ public class ProductOrderTest {
     }
 
     public void testSetResearchProject() {
-        ResearchProject researchProject = new ResearchProject(0L, "ProductOrderTest Research Project", "Test", true);
+        ResearchProject researchProject = new ResearchProject(0L, "ProductOrderTest Research Project", "Test", true,
+                                                              ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
 
         productOrder.setResearchProject(researchProject);
         assertThat(productOrder.getResearchProject(), equalTo(researchProject));
@@ -243,5 +245,10 @@ public class ProductOrderTest {
         productOrder.setResearchProject(null);
         assertThat(productOrder.getResearchProject(), nullValue());
         assertThat(researchProject.getProductOrders(), not(hasItem(productOrder)));
+    }
+
+    @Test(expectedExceptions = RuntimeException.class)
+    public void testNullRegulatoryDesignationThrowsException() {
+        new ProductOrder("Foo","Bar","Baz").getRegulatoryDesignationCodeForPipeline();
     }
 }

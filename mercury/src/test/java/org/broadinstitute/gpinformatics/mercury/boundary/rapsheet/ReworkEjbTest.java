@@ -12,13 +12,14 @@ import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -31,15 +32,15 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.ReworkReasonDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
@@ -155,7 +156,7 @@ public class ReworkEjbTest extends Arquillian {
     private BSPSampleSearchService bspSampleSearchService;
 
     @Inject
-    private BSPSampleDataFetcher bspSampleDataFetcher;
+    private SampleDataFetcher sampleDataFetcher;
 
     @Inject
     private LabBatchEjb labBatchEJB;
@@ -239,10 +240,10 @@ public class ReworkEjbTest extends Arquillian {
                     put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, SM_SGM_Test_Somatic_2_COLLAB_PID);
                     put(BSPSampleSearchColumn.MATERIAL_TYPE, BSPSampleSearchServiceStub.SOMATIC_MAT_TYPE);
                     put(BSPSampleSearchColumn.TOTAL_DNA, SM_SGM_Test_Somatic_2_DNA);
-                    put(BSPSampleSearchColumn.SAMPLE_TYPE, BSPSampleDTO.NORMAL_IND);
+                    put(BSPSampleSearchColumn.SAMPLE_TYPE, BspSampleData.NORMAL_IND);
                     put(BSPSampleSearchColumn.PRIMARY_DISEASE, SM_SGM_Test_Somatic_2_DISEASE);
-                    put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.FEMALE_IND);
-                    put(BSPSampleSearchColumn.STOCK_TYPE, BSPSampleDTO.ACTIVE_IND);
+                    put(BSPSampleSearchColumn.GENDER, BspSampleData.FEMALE_IND);
+                    put(BSPSampleSearchColumn.STOCK_TYPE, BspSampleData.ACTIVE_IND);
                     put(BSPSampleSearchColumn.CONTAINER_ID, SM_SGM_Test_Somatic_2_CONTAINER_ID);
                     put(BSPSampleSearchColumn.SAMPLE_ID, somaticSample2);
                 }});
@@ -261,10 +262,10 @@ public class ReworkEjbTest extends Arquillian {
                     put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, SM_SGM_Test_Somatic_1_COLLAB_PID);
                     put(BSPSampleSearchColumn.MATERIAL_TYPE, BSPSampleSearchServiceStub.SOMATIC_MAT_TYPE);
                     put(BSPSampleSearchColumn.TOTAL_DNA, SM_SGM_Test_Somatic_1_DNA);
-                    put(BSPSampleSearchColumn.SAMPLE_TYPE, BSPSampleDTO.NORMAL_IND);
+                    put(BSPSampleSearchColumn.SAMPLE_TYPE, BspSampleData.NORMAL_IND);
                     put(BSPSampleSearchColumn.PRIMARY_DISEASE, SM_SGM_Test_Somatic_1_DISEASE);
-                    put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.FEMALE_IND);
-                    put(BSPSampleSearchColumn.STOCK_TYPE, BSPSampleDTO.ACTIVE_IND);
+                    put(BSPSampleSearchColumn.GENDER, BspSampleData.FEMALE_IND);
+                    put(BSPSampleSearchColumn.STOCK_TYPE, BspSampleData.ACTIVE_IND);
                     put(BSPSampleSearchColumn.CONTAINER_ID, SM_SGM_Test_Somatic_1_CONTAINER_ID);
                     put(BSPSampleSearchColumn.SAMPLE_ID, somaticSample1);
                 }});
@@ -282,10 +283,10 @@ public class ReworkEjbTest extends Arquillian {
                     put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, SM_SGM_Test_Somatic_1_COLLAB_PID);
                     put(BSPSampleSearchColumn.MATERIAL_TYPE, BSPSampleSearchServiceStub.SOMATIC_MAT_TYPE);
                     put(BSPSampleSearchColumn.TOTAL_DNA, SM_SGM_Test_Somatic_1_DNA);
-                    put(BSPSampleSearchColumn.SAMPLE_TYPE, BSPSampleDTO.NORMAL_IND);
+                    put(BSPSampleSearchColumn.SAMPLE_TYPE, BspSampleData.NORMAL_IND);
                     put(BSPSampleSearchColumn.PRIMARY_DISEASE, SM_SGM_Test_Somatic_1_DISEASE);
-                    put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.FEMALE_IND);
-                    put(BSPSampleSearchColumn.STOCK_TYPE, BSPSampleDTO.ACTIVE_IND);
+                    put(BSPSampleSearchColumn.GENDER, BspSampleData.FEMALE_IND);
+                    put(BSPSampleSearchColumn.STOCK_TYPE, BspSampleData.ACTIVE_IND);
                     put(BSPSampleSearchColumn.CONTAINER_ID, SM_SGM_Test_Somatic_3_CONTAINER_ID);
                     put(BSPSampleSearchColumn.SAMPLE_ID, somaticSample3);
                 }});
@@ -303,10 +304,10 @@ public class ReworkEjbTest extends Arquillian {
                     put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, SM_SGM_Test_Genomic_2_COLLAB_PID);
                     put(BSPSampleSearchColumn.MATERIAL_TYPE, BSPSampleSearchServiceStub.GENOMIC_MAT_TYPE);
                     put(BSPSampleSearchColumn.TOTAL_DNA, SM_SGM_Test_Genomic_2_DNA);
-                    put(BSPSampleSearchColumn.SAMPLE_TYPE, BSPSampleDTO.NORMAL_IND);
+                    put(BSPSampleSearchColumn.SAMPLE_TYPE, BspSampleData.NORMAL_IND);
                     put(BSPSampleSearchColumn.PRIMARY_DISEASE, SM_SGM_Test_Genomic_2_DISEASE);
-                    put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.FEMALE_IND);
-                    put(BSPSampleSearchColumn.STOCK_TYPE, BSPSampleDTO.ACTIVE_IND);
+                    put(BSPSampleSearchColumn.GENDER, BspSampleData.FEMALE_IND);
+                    put(BSPSampleSearchColumn.STOCK_TYPE, BspSampleData.ACTIVE_IND);
                     put(BSPSampleSearchColumn.CONTAINER_ID, SM_SGM_Test_Genomic_2_CONTAINER_ID);
                     put(BSPSampleSearchColumn.SAMPLE_ID, genomicSample2);
                 }});
@@ -325,10 +326,10 @@ public class ReworkEjbTest extends Arquillian {
                     put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, SM_SGM_Test_Genomic_1_COLLAB_PID);
                     put(BSPSampleSearchColumn.MATERIAL_TYPE, BSPSampleSearchServiceStub.GENOMIC_MAT_TYPE);
                     put(BSPSampleSearchColumn.TOTAL_DNA, SM_SGM_Test_Genomic_1_DNA);
-                    put(BSPSampleSearchColumn.SAMPLE_TYPE, BSPSampleDTO.NORMAL_IND);
+                    put(BSPSampleSearchColumn.SAMPLE_TYPE, BspSampleData.NORMAL_IND);
                     put(BSPSampleSearchColumn.PRIMARY_DISEASE, SM_SGM_Test_Genomic_1_DISEASE);
-                    put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.FEMALE_IND);
-                    put(BSPSampleSearchColumn.STOCK_TYPE, BSPSampleDTO.ACTIVE_IND);
+                    put(BSPSampleSearchColumn.GENDER, BspSampleData.FEMALE_IND);
+                    put(BSPSampleSearchColumn.STOCK_TYPE, BspSampleData.ACTIVE_IND);
                     put(BSPSampleSearchColumn.CONTAINER_ID, SM_SGM_Test_Genomic_1_CONTAINER_ID);
                     put(BSPSampleSearchColumn.SAMPLE_ID, genomicSample1);
                 }});
@@ -346,10 +347,10 @@ public class ReworkEjbTest extends Arquillian {
                     put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, SM_SGM_Test_Genomic_1_COLLAB_PID);
                     put(BSPSampleSearchColumn.MATERIAL_TYPE, BSPSampleSearchServiceStub.GENOMIC_MAT_TYPE);
                     put(BSPSampleSearchColumn.TOTAL_DNA, SM_SGM_Test_Genomic_1_DNA);
-                    put(BSPSampleSearchColumn.SAMPLE_TYPE, BSPSampleDTO.NORMAL_IND);
+                    put(BSPSampleSearchColumn.SAMPLE_TYPE, BspSampleData.NORMAL_IND);
                     put(BSPSampleSearchColumn.PRIMARY_DISEASE, SM_SGM_Test_Genomic_1_DISEASE);
-                    put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.FEMALE_IND);
-                    put(BSPSampleSearchColumn.STOCK_TYPE, BSPSampleDTO.ACTIVE_IND);
+                    put(BSPSampleSearchColumn.GENDER, BspSampleData.FEMALE_IND);
+                    put(BSPSampleSearchColumn.STOCK_TYPE, BspSampleData.ACTIVE_IND);
                     put(BSPSampleSearchColumn.CONTAINER_ID, SM_SGM_Test_Genomic_3_CONTAINER_ID);
                     put(BSPSampleSearchColumn.SAMPLE_ID, genomicSample3);
                 }});
@@ -367,10 +368,10 @@ public class ReworkEjbTest extends Arquillian {
                     put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, SM_SGM_Test_Genomic_1_COLLAB_PID);
                     put(BSPSampleSearchColumn.MATERIAL_TYPE, BSPSampleSearchServiceStub.GENOMIC_MAT_TYPE);
                     put(BSPSampleSearchColumn.TOTAL_DNA, SM_SGM_Test_Genomic_1_DNA);
-                    put(BSPSampleSearchColumn.SAMPLE_TYPE, BSPSampleDTO.NORMAL_IND);
+                    put(BSPSampleSearchColumn.SAMPLE_TYPE, BspSampleData.NORMAL_IND);
                     put(BSPSampleSearchColumn.PRIMARY_DISEASE, SM_SGM_Test_Genomic_1_DISEASE);
-                    put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.FEMALE_IND);
-                    put(BSPSampleSearchColumn.STOCK_TYPE, BSPSampleDTO.ACTIVE_IND);
+                    put(BSPSampleSearchColumn.GENDER, BspSampleData.FEMALE_IND);
+                    put(BSPSampleSearchColumn.STOCK_TYPE, BspSampleData.ACTIVE_IND);
                     put(BSPSampleSearchColumn.CONTAINER_ID, SM_SGM_Test_Genomic_3_CONTAINER_ID);
                     put(BSPSampleSearchColumn.SAMPLE_ID, genomicSampleDraft);
                 }});
@@ -379,7 +380,8 @@ public class ReworkEjbTest extends Arquillian {
         String rpJiraTicketKey = "RP-SGM-Rework_tst1" + currDate.getTime() + "RP";
         researchProject = new ResearchProject(bspUserList.getByUsername("scottmat").getUserId(),
                                               "Rework Integration Test RP " + currDate.getTime() + "RP",
-                                              "Rework Integration Test RP", false);
+                                              "Rework Integration Test RP", false,
+                                              ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
         researchProject.setJiraTicketKey(rpJiraTicketKey);
         researchProjectDao.persist(researchProject);
 
@@ -1325,13 +1327,11 @@ public class ReworkEjbTest extends Arquillian {
                                     @Nonnull String barcodePrefix) {
 
         for (ProductOrderSample currSamp : pos) {
-            String barcode =
-                    bspSampleDataFetcher.fetchSingleSampleFromBSP(currSamp.getBspSampleName()).getContainerId();
+            SampleData sampleData = sampleDataFetcher.fetchSampleData(currSamp.getSampleKey());
+            String barcode = sampleData.getContainerId();
 
             BarcodedTube aliquot = new BarcodedTube(barcode);
-            aliquot.addSample(new MercurySample(currSamp.getBspSampleName(),
-                                                bspSampleDataFetcher.fetchSingleSampleFromBSP(
-                                                        currSamp.getBspSampleName())));
+            aliquot.addSample(new MercurySample(currSamp.getSampleKey(), sampleData));
             mapBarcodeToTube.put(barcode, aliquot);
             labVesselDao.persist(aliquot);
         }

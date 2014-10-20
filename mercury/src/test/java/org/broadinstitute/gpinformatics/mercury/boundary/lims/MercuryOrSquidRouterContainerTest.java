@@ -917,7 +917,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
             if (newTube == null) {
                 newTube = new BarcodedTube("R" + currSample.getName());
             }
-            newTube.addSample(new MercurySample(currSample.getName()));
+            newTube.addSample(new MercurySample(currSample.getName(), MercurySample.MetadataSource.BSP));
             tubes.add(newTube);
             barcodes.add(newTube.getLabel());
             if (bucketName != null && bucket.findEntry(newTube) == null) {

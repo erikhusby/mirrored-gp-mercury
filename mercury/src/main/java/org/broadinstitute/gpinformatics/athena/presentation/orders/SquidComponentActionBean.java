@@ -29,6 +29,7 @@ import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataSourceResolver;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
@@ -75,6 +76,9 @@ public class SquidComponentActionBean extends CoreActionBean {
 
     @Inject
     private SquidConnector squidConnector;
+
+    @Inject
+    private SampleDataSourceResolver sampleDataSourceResolver;
 
     private ProductOrder sourceOrder;
 
@@ -136,6 +140,7 @@ public class SquidComponentActionBean extends CoreActionBean {
             if (sourceOrder != null) {
                 progressFetcher.loadProgress(productOrderDao, Collections.singletonList(
                         sourceOrder.getProductOrderId()));
+                sampleDataSourceResolver.populateSampleDataSources(sourceOrder.getSamples());
             }
             autoSquidDto.setProductOrderKey(productOrderKey);
 
