@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadshee
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
+import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -58,6 +59,8 @@ public class ManifestImporterTest {
     private static final String REARRANGED_COLUMNS = relativePathToTestFile("test-manifest-rearranged-columns.xlsx");
     private static final String DUPLICATE_COLUMNS = relativePathToTestFile("test-manifest-duplicate-columns.xlsx");
     private static final String ROW_NUMBER_PREFIX = "Row #%s ";
+    private static final String REQUIRED_VALUE_IS_MISSING = ROW_NUMBER_PREFIX + TableProcessor.REQUIRED_VALUE_IS_MISSING;
+    private static final String VALIDATION_EXCEPTION_MESSAGE = "This test should have thrown a ValidationException.";
 
     private ManifestImportProcessor manifestImportProcessor;
 
@@ -89,76 +92,86 @@ public class ManifestImporterTest {
         assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
     }
 
-    @Test(expectedExceptions = ValidationException.class)
     public void testImportMissingRequiredSpecimen() throws InvalidFormatException, IOException, ValidationException {
         InputStream inputStream = new FileInputStream(TestUtils.getTestData(MISSING_REQUIRED_SPECIMEN));
         PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
 
-        validateManifestRecords(manifestImportProcessor);
-        assertThat(manifestImportProcessor.getMessages(),
-                hasItem(String.format(ROW_NUMBER_PREFIX + TableProcessor.REQUIRED_VALUE_IS_MISSING, 1,
-                        ManifestHeader.SPECIMEN_NUMBER.getColumnName())));
-        assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
+        try {
+            validateManifestRecords(manifestImportProcessor);
+            Assert.fail(VALIDATION_EXCEPTION_MESSAGE);
+        } catch (ValidationException e) {
+            assertThat(manifestImportProcessor.getMessages(), hasItem(String
+                    .format(REQUIRED_VALUE_IS_MISSING, 1, ManifestHeader.SPECIMEN_NUMBER.getColumnName())));
+            assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
+        }
     }
 
-    @Test(expectedExceptions = ValidationException.class)
     public void testImportMissingRequiredCollectionDate() throws InvalidFormatException, IOException, ValidationException {
         InputStream inputStream = new FileInputStream(TestUtils.getTestData(MISSING_REQUIRED_COLLECTION_DATE));
         PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
 
-        validateManifestRecords(manifestImportProcessor);
-        assertThat(manifestImportProcessor.getMessages(),
-                hasItem(String.format(ROW_NUMBER_PREFIX + TableProcessor.REQUIRED_VALUE_IS_MISSING, 1,
-                        ManifestHeader.COLLECTION_DATE.getColumnName())));
-        assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
+        try {
+            validateManifestRecords(manifestImportProcessor);
+            Assert.fail(VALIDATION_EXCEPTION_MESSAGE);
+        } catch (ValidationException e) {
+            assertThat(manifestImportProcessor.getMessages(), hasItem(String
+                    .format(REQUIRED_VALUE_IS_MISSING, 1, ManifestHeader.COLLECTION_DATE.getColumnName())));
+            assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
+        }
     }
 
-    @Test(expectedExceptions = ValidationException.class)
     public void testImportMissingRequiredVisit() throws InvalidFormatException, IOException, ValidationException {
         InputStream inputStream = new FileInputStream(TestUtils.getTestData(MISSING_REQUIRED_VISIT));
         PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
 
-        validateManifestRecords(manifestImportProcessor);
-        assertThat(manifestImportProcessor.getMessages(),
-                hasItem(String.format(ROW_NUMBER_PREFIX + TableProcessor.REQUIRED_VALUE_IS_MISSING, 1,
-                        ManifestHeader.VISIT.getColumnName())));
-        assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
+        try {
+            validateManifestRecords(manifestImportProcessor);
+            Assert.fail(VALIDATION_EXCEPTION_MESSAGE);
+        } catch (ValidationException e) {
+            assertThat(manifestImportProcessor.getMessages(),
+                    hasItem(String.format(REQUIRED_VALUE_IS_MISSING, 1, ManifestHeader.VISIT.getColumnName())));
+            assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
+        }
     }
 
-    @Test(expectedExceptions = ValidationException.class)
     public void testImportMissingRequiredSex() throws InvalidFormatException, IOException, ValidationException {
         InputStream inputStream = new FileInputStream(TestUtils.getTestData(MISSING_REQUIRED_SEX));
         PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
 
-        validateManifestRecords(manifestImportProcessor);
-        assertThat(manifestImportProcessor.getMessages(),
-                hasItem(String.format(ROW_NUMBER_PREFIX + TableProcessor.REQUIRED_VALUE_IS_MISSING, 1,
-                        ManifestHeader.SEX.getColumnName())));
-        assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
+        try {
+            validateManifestRecords(manifestImportProcessor);
+            Assert.fail(VALIDATION_EXCEPTION_MESSAGE);
+        } catch (ValidationException e) {
+            assertThat(manifestImportProcessor.getMessages(),
+                    hasItem(String.format(REQUIRED_VALUE_IS_MISSING, 1, ManifestHeader.SEX.getColumnName())));
+            assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
+        }
     }
 
-    @Test(expectedExceptions = ValidationException.class)
     public void testImportMissingRequiredTumorNormal() throws InvalidFormatException, IOException, ValidationException {
         InputStream inputStream = new FileInputStream(TestUtils.getTestData(MISSING_REQUIRED_TUMOR_NORMAL));
         PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
 
-        validateManifestRecords(manifestImportProcessor);
-        assertThat(manifestImportProcessor.getMessages(),
-                hasItem(String.format(ROW_NUMBER_PREFIX + TableProcessor.REQUIRED_VALUE_IS_MISSING, 1,
-                        ManifestHeader.TUMOR_OR_NORMAL.getColumnName())));
-        assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
+        try {
+            validateManifestRecords(manifestImportProcessor);
+        } catch (ValidationException e) {
+            assertThat(manifestImportProcessor.getMessages(), hasItem(String
+                    .format(REQUIRED_VALUE_IS_MISSING, 1, ManifestHeader.TUMOR_OR_NORMAL.getColumnName())));
+            assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
+        }
     }
 
-    @Test(expectedExceptions = ValidationException.class)
     public void testImportMissingRequiredPatient() throws InvalidFormatException, IOException, ValidationException {
         InputStream inputStream = new FileInputStream(TestUtils.getTestData(MISSING_REQUIRED_PATIENT));
         PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
 
-        validateManifestRecords(manifestImportProcessor);
-        assertThat(manifestImportProcessor.getMessages(),
-                hasItem(String.format(ROW_NUMBER_PREFIX + TableProcessor.REQUIRED_VALUE_IS_MISSING, 1,
-                        ManifestHeader.PATIENT_ID.getColumnName())));
-        assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
+        try {
+            validateManifestRecords(manifestImportProcessor);
+            Assert.fail(VALIDATION_EXCEPTION_MESSAGE);
+        } catch (ValidationException e) {
+            assertThat(manifestImportProcessor.getMessages(), hasItem(String.format(REQUIRED_VALUE_IS_MISSING, 1, ManifestHeader.PATIENT_ID.getColumnName())));
+            assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
+        }
     }
 
     @Test(expectedExceptions = ValidationException.class)
