@@ -11,16 +11,14 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.common;
 
+import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
-import org.jboss.arquillian.testng.Arquillian;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -30,7 +28,7 @@ import java.util.SortedMap;
 
 
 @Test(groups = TestGroups.STANDARD)
-public class FixupCommentaryTest extends Arquillian {
+public class FixupCommentaryTest extends ContainerTest {
 
     @Inject
     private AuditReaderDao auditReaderDao;
@@ -41,7 +39,7 @@ public class FixupCommentaryTest extends Arquillian {
     @Inject
     private UserBean userBean;
 
-    @Test(enabled = true)
+    @Test(groups = TestGroups.STANDARD)
     public void fixupCommentaryTest () throws InterruptedException {
         // Sets the user associated with the fixup.
         userBean.loginOSUser();
