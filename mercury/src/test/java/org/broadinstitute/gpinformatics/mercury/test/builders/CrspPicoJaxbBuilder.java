@@ -64,7 +64,7 @@ public class CrspPicoJaxbBuilder {
         for (int i = 0; i < tubeBarcodes.size(); i++) {
             weights.add(new BigDecimal("0.63"));
         }
-        initialTare(rackBarcode, tubeBarcodes, weights);
+        buildInitialTare(rackBarcode, tubeBarcodes, weights);
 
         // WeightMeasurement
         int i = 0;
@@ -75,7 +75,7 @@ public class CrspPicoJaxbBuilder {
             sourceVolumes.add(volume);
             i++;
         }
-        weightMeasurement(rackBarcode, tubeBarcodes, sourceVolumes);
+        buildWeightMeasurement(rackBarcode, tubeBarcodes, sourceVolumes);
 
         // VolumeAddition, only tubes with volume < 65
         sourceVolumes.clear();
@@ -90,7 +90,7 @@ public class CrspPicoJaxbBuilder {
             }
             i++;
         }
-        volumeAddition(rackBarcode, tubeBarcodes, sourceVolumes);
+        buildVolumeAddition(rackBarcode, tubeBarcodes, sourceVolumes);
 
         // Initial PicoTransfer
         sourceVolumes.clear();
@@ -102,12 +102,12 @@ public class CrspPicoJaxbBuilder {
         }
         String initialPico1 = "11" + testPrefix;
         String initialPico2 = "22" + testPrefix;
-        picoTransfer(rackBarcode, tubeBarcodes, sourceVolumes, initialPico1, initialPico2);
+        buildPicoTransfer(rackBarcode, tubeBarcodes, sourceVolumes, initialPico1, initialPico2);
         initialPicoTransfer1 = picoTransfer1;
         initialPicoTransfer2 = picoTransfer2;
 
         // Initial PicoBufferAddition
-        picoBufferAddition(initialPico1, initialPico2);
+        buildPicoBufferAddition(initialPico1, initialPico2);
         initialPicoBufferAddition1 = picoBufferAddition1;
         initialPicoBufferAddition2 = picoBufferAddition2;
 
@@ -137,7 +137,7 @@ public class CrspPicoJaxbBuilder {
             targetConcentrations.add(new BigDecimal("20"));
         }
 
-        fingerprintingAliquot(rackBarcode, fpSourceTubes, sourceVolumes,
+        buildFingerprintingAliquot(rackBarcode, fpSourceTubes, sourceVolumes,
                 fpRackBarcode, fpTargetTubes, targetVolumes, targetConcentrations);
 
         // FP PicoTransfer
@@ -153,12 +153,12 @@ public class CrspPicoJaxbBuilder {
         }
         String fpPico1 = "33" + testPrefix;
         String fpPico2 = "44" + testPrefix;
-        picoTransfer(fpRackBarcode, postFpTubes, sourceVolumes, fpPico1, fpPico2);
+        buildPicoTransfer(fpRackBarcode, postFpTubes, sourceVolumes, fpPico1, fpPico2);
         fingerprintingPicoTransfer1 = picoTransfer1;
         fingerprintingPicoTransfer2 = picoTransfer2;
 
         // FP PicoBufferAddition
-        picoBufferAddition(fpPico1, fpPico2);
+        buildPicoBufferAddition(fpPico1, fpPico2);
         fingerprintingPicoBufferAddition1 = picoBufferAddition1;
         fingerprintingPicoBufferAddition2 = picoBufferAddition2;
 
@@ -171,7 +171,7 @@ public class CrspPicoJaxbBuilder {
             mapBarcodeToVolume.put(postFpTube, volume);
             sourceVolumes.add(volume);
         }
-        fingerprintingPlateSetup(fpRackBarcode, postFpTubes, sourceVolumes, fpPlate);
+        buildFingerprintingPlateSetup(fpRackBarcode, postFpTubes, sourceVolumes, fpPlate);
 
         // ShearingAliquot
         String shearingRackBarcode = "sr" + testPrefix;
@@ -190,7 +190,7 @@ public class CrspPicoJaxbBuilder {
             targetConcentrations.add(new BigDecimal("3"));
         }
 
-        shearingAliquot(rackBarcode, postFpTubes, sourceVolumes,
+        buildShearingAliquot(rackBarcode, postFpTubes, sourceVolumes,
                 shearingRackBarcode, shearingTubes, targetVolumes, targetConcentrations);
 
         // Shearing PicoTransfer
@@ -203,12 +203,12 @@ public class CrspPicoJaxbBuilder {
         }
         String shearingPico1 = "55" + testPrefix;
         String shearingPico2 = "66" + testPrefix;
-        picoTransfer(shearingRackBarcode, shearingTubes, sourceVolumes, shearingPico1, shearingPico2);
+        buildPicoTransfer(shearingRackBarcode, shearingTubes, sourceVolumes, shearingPico1, shearingPico2);
         shearingPicoTransfer1 = picoTransfer1;
         shearingPicoTransfer2 = picoTransfer2;
 
         // Shearing PicoBufferAddition
-        picoBufferAddition(shearingPico1, shearingPico2);
+        buildPicoBufferAddition(shearingPico1, shearingPico2);
         shearingPicoBufferAddition1 = picoBufferAddition1;
         shearingPicoBufferAddition2 = picoBufferAddition2;
 
@@ -218,7 +218,7 @@ public class CrspPicoJaxbBuilder {
     /**
      * Builds an InitialTare message.  Called from this class and from GPUI tests.
      */
-    public BettaLIMSMessage initialTare(String rackBarcode, List<String> tubeBarcodes, List<BigDecimal> weights) {
+    public BettaLIMSMessage buildInitialTare(String rackBarcode, List<String> tubeBarcodes, List<BigDecimal> weights) {
         initialTareJaxb = bettaLimsMessageTestFactory.buildRackEvent("InitialTare", rackBarcode, tubeBarcodes);
         int i = 0;
         for (ReceptacleType receptacleType : initialTareJaxb.getPositionMap().getReceptacle()) {
@@ -228,7 +228,7 @@ public class CrspPicoJaxbBuilder {
         return bettaLimsMessageTestFactory.addMessage(messageList, initialTareJaxb);
     }
 
-    private BettaLIMSMessage weightMeasurement(String rackBarcode, List<String> tubeBarcodes,
+    public BettaLIMSMessage buildWeightMeasurement(String rackBarcode, List<String> tubeBarcodes,
             List<BigDecimal> volumes) {
         weightMeasurementJaxb = bettaLimsMessageTestFactory.buildRackEvent("WeightMeasurement",
                 rackBarcode, tubeBarcodes);
@@ -240,7 +240,7 @@ public class CrspPicoJaxbBuilder {
         return bettaLimsMessageTestFactory.addMessage(messageList, weightMeasurementJaxb);
     }
 
-    private BettaLIMSMessage volumeAddition(String rackBarcode, List<String> tubeBarcodes, List<BigDecimal> volumes) {
+    public BettaLIMSMessage buildVolumeAddition(String rackBarcode, List<String> tubeBarcodes, List<BigDecimal> volumes) {
         volumeAdditionJaxb = bettaLimsMessageTestFactory.buildRackEvent("VolumeAddition", rackBarcode,
                 tubeBarcodes);
         int i = 0;
@@ -251,7 +251,7 @@ public class CrspPicoJaxbBuilder {
         return bettaLimsMessageTestFactory.addMessage(messageList, volumeAdditionJaxb);
     }
 
-    private BettaLIMSMessage picoTransfer(String rackBarcode, List<String> tubeBarcodes, List<BigDecimal> volumes,
+    public BettaLIMSMessage buildPicoTransfer(String rackBarcode, List<String> tubeBarcodes, List<BigDecimal> volumes,
             String initialPico1, String initialPico2) {
         picoTransfer1 = bettaLimsMessageTestFactory.buildRackToPlate("PicoTransfer", rackBarcode,
                 tubeBarcodes, initialPico1);
@@ -267,16 +267,18 @@ public class CrspPicoJaxbBuilder {
             receptacleType.setVolume(volumes.get(i));
             i++;
         }
+        picoTransfer2.setDisambiguator(2L);
         return bettaLimsMessageTestFactory.addMessage(messageList, picoTransfer1, picoTransfer2);
     }
 
-    private BettaLIMSMessage picoBufferAddition(String initialPico1, String initialPico2) {
+    public BettaLIMSMessage buildPicoBufferAddition(String initialPico1, String initialPico2) {
         picoBufferAddition1 = bettaLimsMessageTestFactory.buildPlateEvent("PicoBufferAddition", initialPico1);
         picoBufferAddition2 = bettaLimsMessageTestFactory.buildPlateEvent("PicoBufferAddition", initialPico2);
+        picoBufferAddition2.setDisambiguator(2L);
         return bettaLimsMessageTestFactory.addMessage(messageList, picoBufferAddition1, picoBufferAddition2);
     }
 
-    private BettaLIMSMessage fingerprintingAliquot(
+    public BettaLIMSMessage buildFingerprintingAliquot(
             String rackBarcode, List<String> fpSourceTubes, List<BigDecimal> sourceVolumes,
             String fpRackBarcode, List<String> fpTargetTubes, List<BigDecimal> targetVolumes,
             List<BigDecimal> targetConcentrations) {
@@ -297,7 +299,7 @@ public class CrspPicoJaxbBuilder {
         return bettaLimsMessageTestFactory.addMessage(messageList, fingerprintingAliquotJaxb);
     }
 
-    private BettaLIMSMessage fingerprintingPlateSetup(String fpRackBarcode, List<String> postFpTubes,
+    public BettaLIMSMessage buildFingerprintingPlateSetup(String fpRackBarcode, List<String> postFpTubes,
             List<BigDecimal> sourceVolumes, String fpPlate) {
         fingerprintingPlateSetup = bettaLimsMessageTestFactory.buildRackToPlate("FingerprintingPlateSetup",
                 fpRackBarcode, postFpTubes, fpPlate);
@@ -313,7 +315,7 @@ public class CrspPicoJaxbBuilder {
         return bettaLimsMessageTestFactory.addMessage(messageList, fingerprintingPlateSetup);
     }
 
-    private BettaLIMSMessage shearingAliquot(
+    public BettaLIMSMessage buildShearingAliquot(
             String rackBarcode, List<String> postFpTubes, List<BigDecimal> sourceVolumes,
             String shearingRackBarcode, List<String> shearingTubes, List<BigDecimal> targetVolumes,
             List<BigDecimal> targetConcentrations) {
