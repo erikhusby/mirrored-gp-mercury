@@ -98,7 +98,7 @@ public class ManifestImporterTest {
                 {MISSING_REQUIRED_SEX, ManifestHeader.SEX},
                 {MISSING_REQUIRED_SPECIMEN, ManifestHeader.SPECIMEN_NUMBER},
                 {MISSING_REQUIRED_TUMOR_NORMAL, ManifestHeader.TUMOR_OR_NORMAL},
-                {MISSING_REQUIRED_VISIT, ManifestHeader.VISIT},
+                {MISSING_REQUIRED_VISIT, ManifestHeader.VISIT}
         };
 
     }
