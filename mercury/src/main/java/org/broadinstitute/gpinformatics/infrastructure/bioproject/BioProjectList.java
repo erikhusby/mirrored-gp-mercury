@@ -11,12 +11,15 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.bioproject;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsService;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -24,7 +27,10 @@ import java.util.Map;
 
 @ApplicationScoped
 public class BioProjectList extends AbstractCache implements Serializable {
+    private static final Log log = LogFactory.getLog(BioProjectList.class);
+
     private SubmissionsService submissionsService;
+
     @Inject
     public BioProjectList(SubmissionsService submissionsService) {
         this.submissionsService = submissionsService;
@@ -37,7 +43,15 @@ public class BioProjectList extends AbstractCache implements Serializable {
 
     @Override
     public synchronized void refreshCache() {
-        for (BioProject bioProject : submissionsService.getAllBioProjects()) {
+        Collection<BioProject> bioProjects = new ArrayList<>();
+        try {
+            bioProjects = submissionsService.getAllBioProjects();
+        }
+        catch(Exception e) {
+            log.error("Failed to get bioprojects",e);
+        }
+
+        for (BioProject bioProject : bioProjects) {
             bioProjectMap.put(bioProject.getAccession(), bioProject);
         }
     }
