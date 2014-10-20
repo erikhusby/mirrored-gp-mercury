@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ConcentrationAndVolumeAndWeightType;
+import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.testng.Assert;
 
 import java.math.BigDecimal;
@@ -60,6 +61,7 @@ public class CrspPicoEntityBuilder {
                 rackBarcode, tubeBarcodes).invoke();
 
         // InitialTare
+        LabEventTest.validateWorkflow("InitialTare", mapBarcodeToTube.values());
         initialTareEntity = labEventFactory.buildFromBettaLimsRackEventDbFree(crspPicoJaxbBuilder.getInitialTareJaxb(),
                 null, mapBarcodeToTube, null);
         labEventHandler.processEvent(initialTareEntity);

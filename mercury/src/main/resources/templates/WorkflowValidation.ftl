@@ -25,7 +25,7 @@
     <#list validationErrors as validationError>
     <tr>
         <td>${validationError.sampleInstance.earliestMercurySampleName}</td>
-        <td><a href="${(validationError.sampleInstance.singleInferredBucketedBatch.jiraTicket.browserUrl)!}">${(validationError.sampleInstance.singleInferredBucketedBatch.batchName)!''}</a></td>
+        <td><a href="${(validationError.sampleInstance.singleBatch.jiraTicket.browserUrl)!}">${(validationError.sampleInstance.singleBatch.batchName)!''}</a></td>
         <td>
             <#list validationError.errors as error>${error.message}
                 <#list error.expectedEventNames as expectedEventName>${expectedEventName} </#list>
