@@ -1773,7 +1773,7 @@
     <changeSet id="GPLIM-2884-1" author="epolk">
         <createTable tableName="FIXUP_COMMENTARY" schemaName="mercury">
             <column name="FIXUP_COMMENTARY_ID" type="number(19,0)">
-	        <constraints nullable="false" primaryKey="true"/>
+	        <constraints nullable="false" primaryKey="true" primaryKeyName="PK_FIXUP_COMMENTARY"/>
 	    </column>
             <column name="REASON" type="varchar2(1023)">
                 <constraints nullable="false"/>
