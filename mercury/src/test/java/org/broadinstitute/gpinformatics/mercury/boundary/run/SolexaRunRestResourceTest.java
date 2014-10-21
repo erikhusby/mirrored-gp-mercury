@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.config.ClientConfig;
-import com.sun.jersey.api.client.config.DefaultClientConfig;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
@@ -282,8 +281,9 @@ public class SolexaRunRestResourceTest extends Arquillian {
             dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = false)
     @RunAsClient
     public void testReadStructureOverHttp(
-            @ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = 8443) URL baseUrl) {
-        String wsUrl = baseUrl.toExternalForm() + "rest/solexarun/storeRunReadStructure";
+            @ArquillianResource @UriScheme(name = SchemeName.HTTPS,
+                    port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl) {
+        String wsUrl = RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/solexarun/storeRunReadStructure";
 
         ReadStructureRequest readStructureData = new ReadStructureRequest();
         readStructureData.setRunBarcode(runBarcode);
@@ -314,8 +314,9 @@ public class SolexaRunRestResourceTest extends Arquillian {
 
     @Test(groups = TestGroups.STUBBY, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = true)
     @RunAsClient
-    public void testMercuryLanes(@ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = 8443) URL baseUrl) {
-        String wsUrl = baseUrl.toExternalForm() + "rest/solexarun/storeRunReadStructure";
+    public void testMercuryLanes(@ArquillianResource @UriScheme(name = SchemeName.HTTPS,
+            port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl) {
+        String wsUrl = RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/solexarun/storeRunReadStructure";
 
         ReadStructureRequest readStructureData = new ReadStructureRequest();
         readStructureData.setRunBarcode("H7HBEADXX140225");

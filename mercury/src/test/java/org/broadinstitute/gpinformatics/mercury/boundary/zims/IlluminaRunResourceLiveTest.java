@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.boundary.zims;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
-import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -41,7 +40,8 @@ public class IlluminaRunResourceLiveTest extends Arquillian {
 
     @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, groups = STANDARD)
     @RunAsClient
-    public void testMercury(@ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = 8443) URL baseUrl) {
+    public void testMercury(@ArquillianResource @UriScheme(name = SchemeName.HTTPS,
+            port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl) {
         ZimsIlluminaRun run = getZimsIlluminaRun(baseUrl, "130903_SL-HDG_0177_BFCH16FBADXX");
 
         Assert.assertEquals(run.getLanes().size(), 2, "Wrong number of lanes");
@@ -56,7 +56,8 @@ public class IlluminaRunResourceLiveTest extends Arquillian {
 
     @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, groups = STANDARD)
     @RunAsClient
-    public void testThrift(@ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = 8443) URL baseUrl) {
+    public void testThrift(@ArquillianResource @UriScheme(name = SchemeName.HTTPS,
+            port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl) {
         ZimsIlluminaRun run = getZimsIlluminaRun(baseUrl, "120910_SL-HBL_0218_BFCD15B6ACXX");
 
         Assert.assertEquals(run.getLanes().size(), 8, "Wrong number of lanes");
@@ -71,7 +72,8 @@ public class IlluminaRunResourceLiveTest extends Arquillian {
 
     @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, groups = STANDARD)
     @RunAsClient
-    public void testThriftNullConc(@ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = 8443) URL baseUrl) {
+    public void testThriftNullConc(@ArquillianResource @UriScheme(name = SchemeName.HTTPS,
+            port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl) {
         ZimsIlluminaRun run = getZimsIlluminaRun(baseUrl, "120830_SL-MAK_0035_AFC000000000-A1ETN");
 
         Assert.assertEquals(run.getLanes().size(), 1, "Wrong number of lanes");
@@ -96,7 +98,7 @@ public class IlluminaRunResourceLiveTest extends Arquillian {
     }
 
     private static WebResource.Builder getBuilder(URL baseUrl, String runName) {
-        String url = baseUrl.toExternalForm() + IlluminaRunResourceTest.WEBSERVICE_URL;
+        String url = RestServiceContainerTest.convertUrlToSecure(baseUrl) + IlluminaRunResourceTest.WEBSERVICE_URL;
         ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
         clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
         clientConfig.getProperties().put(ClientConfig.PROPERTY_FOLLOW_REDIRECTS, Boolean.TRUE);

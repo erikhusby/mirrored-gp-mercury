@@ -50,7 +50,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = false)
     @RunAsClient
     public void testFetchLibraryDetailsByTubeBarcode(
-            @ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = 8443) URL baseUrl) {
+            @ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = DEFAULT_FORWARD_PORT) URL baseUrl) {
         Date testDate = new Date();
 
         ProductOrderData data = new ProductOrderData();
@@ -69,7 +69,8 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
     @RunAsClient
     public void testFetchAtRiskPDOSamplesAllAtRisk(@ArquillianResource
-                                                   @UriScheme(name = SchemeName.HTTPS, port = 8443) URL baseUrl) {
+                                                   @UriScheme(name = SchemeName.HTTPS,
+                                                           port = DEFAULT_FORWARD_PORT) URL baseUrl) {
         PDOSamples pdoSamples = getAtRiskSamples();
 
         PDOSamples returnedPdoSamples = makeWebResource(baseUrl, PDO_SAMPLE_STATUS)
@@ -108,7 +109,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
     @RunAsClient
     public void testFetchAtRiskPDOSamplesNoneAtRisk(
-            @ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = 8443) URL baseUrl) {
+            @ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = DEFAULT_FORWARD_PORT) URL baseUrl) {
         PDOSamples pdoSamples = getNonRiskPDOSamples();
         PDOSamples returnedPdoSamples = makeWebResource(baseUrl, PDO_SAMPLE_STATUS)
                 .type(MediaType.APPLICATION_JSON)
@@ -122,7 +123,8 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testFindByIds(@ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = 8443) URL baseUrl) {
+    public void testFindByIds(
+            @ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = DEFAULT_FORWARD_PORT) URL baseUrl) {
         ProductOrders orders = makeWebResource(baseUrl, "pdo/" + VALID_PDO_ID)
                 .accept(MediaType.APPLICATION_XML)
                 .get(ProductOrders.class);

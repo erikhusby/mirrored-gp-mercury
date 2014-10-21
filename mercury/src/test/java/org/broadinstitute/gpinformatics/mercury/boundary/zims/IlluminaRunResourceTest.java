@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.boundary.zims;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.config.ClientConfig;
-import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
 import edu.mit.broad.prodinfo.thrift.lims.IndexPosition;
 import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
@@ -122,9 +121,10 @@ public class IlluminaRunResourceTest extends Arquillian {
     @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER,
             groups = ALTERNATIVES)
     @RunAsClient
-    public void testErrorHandling(@ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = 8443) URL baseUrl)
+    public void testErrorHandling(@ArquillianResource @UriScheme(name = SchemeName.HTTPS,
+            port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl)
             throws Exception {
-        String url = baseUrl.toExternalForm() + WEBSERVICE_URL;
+        String url = RestServiceContainerTest.convertUrlToSecure(baseUrl) + WEBSERVICE_URL;
 
         ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
         clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
@@ -148,9 +148,10 @@ public class IlluminaRunResourceTest extends Arquillian {
     @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER,
             groups = ALTERNATIVES)
     @RunAsClient
-    public void testZimsOverHttp(@ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = 8443) URL baseUrl)
+    public void testZimsOverHttp(@ArquillianResource @UriScheme(name = SchemeName.HTTPS,
+            port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl)
             throws Exception {
-        String url = baseUrl.toExternalForm() + WEBSERVICE_URL;
+        String url = RestServiceContainerTest.convertUrlToSecure(baseUrl) + WEBSERVICE_URL;
 
         ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
         clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
@@ -189,7 +190,7 @@ public class IlluminaRunResourceTest extends Arquillian {
         boolean foundTumor = false;
         for (ZimsIlluminaChamber zimsIlluminaChamber : run.getLanes()) {
             for (LibraryBean libraryBean : zimsIlluminaChamber.getLibraries()) {
-                Assert.assertEquals(libraryBean.getRegulatoryDesignation(),"RESEARCH_ONLY");
+                Assert.assertEquals(libraryBean.getRegulatoryDesignation(), "RESEARCH_ONLY");
                 Assert.assertNull(libraryBean.getBuickVisit());
                 Assert.assertNull(libraryBean.getBuickCollectionDate());
                 if (libraryBean.getLsid() != null) {

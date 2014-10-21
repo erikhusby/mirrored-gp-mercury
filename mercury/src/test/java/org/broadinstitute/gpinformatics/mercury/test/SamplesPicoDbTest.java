@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.test;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.config.ClientConfig;
-import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.client.filter.LoggingFilter;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -39,7 +38,8 @@ public class SamplesPicoDbTest extends ContainerTest {
 
     @Test(enabled = true, groups = TestGroups.STUBBY, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testEndToEnd(@ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = 8443) URL baseUrl) {
+    public void testEndToEnd(@ArquillianResource @UriScheme(name = SchemeName.HTTPS,
+            port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl) {
         String timestamp = timestampFormat.format(new Date());
 
         ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
@@ -61,9 +61,10 @@ public class SamplesPicoDbTest extends ContainerTest {
         List<BettaLIMSMessage> messageList = samplesPicoJaxbBuilder.getMessageList();
         sendMessages(baseUrl, client, messageList);
 
-        LabEventResponseBean labEventResponseBean = client.resource(baseUrl.toExternalForm() + "rest/labevent/batch")
-                .path(batchId)
-                .get(LabEventResponseBean.class);
+        LabEventResponseBean labEventResponseBean =
+                client.resource(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/labevent/batch")
+                        .path(batchId)
+                        .get(LabEventResponseBean.class);
         List<LabEventBean> labEventBeans = labEventResponseBean.getLabEventBeans();
         Assert.assertEquals(10, labEventBeans.size(), "Wrong number of lab events");
         SamplesPicoEndToEndTest.printLabEvents(labEventBeans);
@@ -88,7 +89,7 @@ public class SamplesPicoDbTest extends ContainerTest {
         }
         LabBatchBean labBatchBean = new LabBatchBean(batchId, null, tubeBeans);
 
-        String response = client.resource(baseUrl.toExternalForm() + "rest/labbatch")
+        String response = client.resource(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/labbatch")
                 .type(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)
                 .entity(labBatchBean)
@@ -107,7 +108,7 @@ public class SamplesPicoDbTest extends ContainerTest {
     public static String sendMessages(URL baseUrl, Client client, List<BettaLIMSMessage> messageList) {
         String response = null;
         for (BettaLIMSMessage bettaLIMSMessage : messageList) {
-            response = client.resource(baseUrl.toExternalForm() + "rest/bettalimsmessage")
+            response = client.resource(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/bettalimsmessage")
                     .type(MediaType.APPLICATION_XML_TYPE)
                     .accept(MediaType.APPLICATION_XML)
                     .entity(bettaLIMSMessage)

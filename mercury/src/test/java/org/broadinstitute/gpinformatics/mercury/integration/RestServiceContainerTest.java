@@ -1,31 +1,18 @@
 package org.broadinstitute.gpinformatics.mercury.integration;
 
 import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientRequest;
-import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
-import com.sun.jersey.api.client.filter.ClientFilter;
 import com.sun.jersey.api.json.JSONConfiguration;
-import com.sun.jersey.client.urlconnection.HTTPSProperties;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.jboss.arquillian.testng.Arquillian;
 import org.testng.annotations.BeforeMethod;
 
 import javax.inject.Inject;
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-import javax.ws.rs.core.Response;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.security.SecureRandom;
-import java.security.cert.X509Certificate;
 import java.util.List;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
@@ -49,6 +36,7 @@ import static org.testng.Assert.fail;
  */
 public abstract class RestServiceContainerTest extends Arquillian {
 
+    public static final int DEFAULT_FORWARD_PORT = 1000;
     private static final String SERVLET_MAPPING_PREFIX = "rest";
 
     @Inject
@@ -89,10 +77,14 @@ public abstract class RestServiceContainerTest extends Arquillian {
     protected WebResource makeWebResource(URL baseUrl, String serviceUrl) {
 
         Client client = Client.create(clientConfig);
-        String port = System.getProperty("jboss.socket.https");
-        String newUrl = baseUrl.toString().replaceAll(String.valueOf(baseUrl.getPort()),port);
+        String newUrl = convertUrlToSecure(baseUrl);
         return client.resource(
                 newUrl + SERVLET_MAPPING_PREFIX + "/" + getResourcePath() + "/" + serviceUrl);
+    }
+
+    public static String convertUrlToSecure(URL baseUrl) {
+        String port = System.getProperty("jboss.socket.https");
+        return baseUrl.toString().replaceAll(String.valueOf(baseUrl.getPort()), port);
     }
 
     /**

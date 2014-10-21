@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 
-import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
@@ -14,7 +13,6 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import java.net.URL;
 import java.util.ArrayList;
@@ -41,7 +39,8 @@ public class PDOSampleBillingStatusResourceTest extends RestServiceContainerTest
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testPDOSampleBilling(@ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = 8443) URL baseUrl)
+    public void testPDOSampleBilling(
+            @ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = DEFAULT_FORWARD_PORT) URL baseUrl)
             throws Exception {
         List<PDOSample> pdoSamplesList = new ArrayList<>();
         PDOSample pdoSample1 = new PDOSample("PDO-872", "SM-47KKU", null);
