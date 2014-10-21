@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>Mercury</groupId>
     <artifactId>Mercury</artifactId>
@@ -12,7 +11,7 @@
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
-    <version>1.57-SNAPSHOT</version>
+    <version>1.58-SNAPSHOT</version>
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
@@ -187,7 +186,7 @@
         was not really possible.
         -->
         <tests.excludedGroups>UI</tests.excludedGroups>
-        <tests.groups/>
+        <tests.groups />
 
         <build.resultKey>${project.version}</build.resultKey>
         <maven.build.timestamp.format>yyyyMMdd-HHmm</maven.build.timestamp.format>
@@ -215,6 +214,7 @@
 
         <jboss.socket.https>8443</jboss.socket.https>
 
+        <bspclient.version>[1.3,)</bspclient.version>
     </properties>
 
     <profiles>
@@ -525,7 +525,7 @@
         <profile>
             <id>Tests.UI</id>
             <properties>
-                <tests.excludedGroups/>
+                <tests.excludedGroups />
                 <tests.groups>UI,arquillian</tests.groups>
             </properties>
         </profile>
@@ -892,8 +892,8 @@
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
                 <database.url>jdbc:oracle:thin:@crsp-db-prod-vm:1521:gpinfprd</database.url>
-                <mercury.password></mercury.password>
-                <athena.password></athena.password>
+                <mercury.password />
+                <athena.password />
             </properties>
             <build>
                 <!-- This allows us to overwrite the ejb-jar.xml for development with the special version for crsp production -->
@@ -1680,7 +1680,7 @@
             <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
             <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
             <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
-            <version>[1.3,)</version>
+            <version>${bspclient.version}</version>
             <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
             <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
             <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
@@ -1940,6 +1940,12 @@
                     <artifactId>build-helper-maven-plugin</artifactId>
                     <version>1.9</version>
                 </plugin>
+                <plugin>
+                     <groupId>external.atlassian.jgitflow</groupId>
+                     <artifactId>jgitflow-maven-plugin</artifactId>
+                     <version>1.0-m4.3</version>
+                 </plugin>
+
                 <!--
                                 <plugin>
                                     <artifactId>maven-dependency-plugin</artifactId>
@@ -2402,10 +2408,8 @@
                         <configuration>
                             <target>
                                 <propertyfile file="${pom.basedir}/target/classes/build.properties">
-                                    <entry key="build.resultKey" type="string" value="${build.resultKey}"
-                                           operation="="/>
-                                    <entry key="build.buildTimeStamp" type="string" value="${build.buildTimeStamp}"
-                                           operation="="/>
+                                    <entry key="build.resultKey" type="string" value="${build.resultKey}" operation="=" />
+                                    <entry key="build.buildTimeStamp" type="string" value="${build.buildTimeStamp}" operation="=" />
                                 </propertyfile>
                             </target>
                         </configuration>
@@ -2414,16 +2418,28 @@
             </plugin>
 
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-release-plugin</artifactId>
+                <groupId>external.atlassian.jgitflow</groupId>
+                <artifactId>jgitflow-maven-plugin</artifactId>
                 <configuration>
-                    <tagNameFormat>@{project.version}</tagNameFormat>
-                    <preparationGoals>clean validate</preparationGoals>
-                    <goals>help:active-profiles validate</goals>
-                    <allowTimestampedSnapshots>true</allowTimestampedSnapshots>
+                    <!-- Allow untracked files during the release process -->
+                    <allowUntracked>true</allowUntracked>
+                    <!-- Allow snapshots when we start the release because the limsThrift version will be fixed during the release process -->
+                    <allowSnapshots>true</allowSnapshots>
+                    <pushFeatures>true</pushFeatures>
+                    <noFeatureBuild>true</noFeatureBuild>
+                    <enableFeatureVersions>true</enableFeatureVersions>
+                    <releaseBranchVersionSuffix>RC</releaseBranchVersionSuffix>
+                    <!--Do NOT do a build during the release-finish process -->
+                    <noReleaseBuild>true</noReleaseBuild>
+                    <!-- Do NOT use the Maven default release profile during the release process -->
                     <useReleaseProfile>false</useReleaseProfile>
-                    <scmCommentPrefix>[REL-000 Production Release]</scmCommentPrefix>
-                    <!--<arguments>-X</arguments>-->
+                    <!-- Do NOT use the Maven deploy goal during the release process. -->
+                    <noDeploy>true</noDeploy>
+                    <!-- Do push the release branches to the remote upstream -->
+                    <pushReleases>true</pushReleases>
+                    <!-- Do push the hotfix branches to the remote upstream --> 
+                    <pushHotfixes>true</pushHotfixes>
+                    <noHotfixBuild>true</noHotfixBuild>
                 </configuration>
             </plugin>
 
@@ -2433,6 +2449,14 @@
             </plugin>
 
         </plugins>
+
+        <extensions>
+            <extension>
+                <groupId>org.apache.maven.wagon</groupId>
+                <artifactId>wagon-ssh</artifactId>
+                <version>2.6</version>
+            </extension>
+        </extensions>
 
         <testResources>
             <!-- Filtering corrupts the xlsx test files -->

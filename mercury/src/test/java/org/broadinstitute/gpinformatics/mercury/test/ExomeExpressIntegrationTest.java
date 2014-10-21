@@ -92,8 +92,8 @@ public class ExomeExpressIntegrationTest {
             }
             LibraryConstructionJaxbBuilder libraryConstructionJaxbBuilder = new LibraryConstructionJaxbBuilder(
                     bettaLimsMessageTestFactory, testSuffix, shearingJaxbBuilder.getShearCleanPlateBarcode(),
-                    "000002453323", null,
-                    sampleBarcodeMap.size()).invoke();
+                    "000002453323", null, sampleBarcodeMap.size(),
+                    LibraryConstructionJaxbBuilder.TargetSystem.SQUID_VIA_MERCURY).invoke();
 
             for (BettaLIMSMessage bettaLIMSMessage : libraryConstructionJaxbBuilder.getMessageList()) {
                 boolean willSkipEndRepair = false;

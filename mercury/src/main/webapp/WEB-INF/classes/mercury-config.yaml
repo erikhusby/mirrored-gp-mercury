@@ -297,7 +297,7 @@ mercury:
       app:      QA
       bsp:      RC
       jira:     TEST
-      quote:    QA
+      quote:    DEV  # temp change, due to QA down
       squid:    QA
       tableau:  PROD
       thrift:   QA
@@ -314,7 +314,7 @@ mercury:
       app:      RC
       bsp:      RC
       jira:     TEST
-      quote:    QA
+      quote:    DEV  # temp change, due to QA down
       squid:    QA
       tableau:  PROD
       thrift:   QA

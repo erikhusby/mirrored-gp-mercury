@@ -41,6 +41,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -77,6 +78,14 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
      *   value is pipe delimited scope|preference type|search name (e.g. GLOBAL|GLOBAL_LAB_VESSEL_SEARCH_INSTANCES|Custom Search)
      */
     private Map<String,String> searchInstanceNames;
+
+    /**
+     * All available saved searches for every entity type (populates selection list on search type selection page).
+     * [LabVessel, LabEvent, ...]
+     *                '-> [Global Type, User Type]
+     *                                      '-> [Saved Search Names...]
+     */
+    private  Map<ColumnEntity, Map<PreferenceType,List<String>>> allSearchInstances;
 
     /**
      * The name of an existing search the user is using
@@ -208,14 +217,22 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
     private ConstrainedValueDao constrainedValueDao;
 
     /**
-     * Called from the search menu selection link
-     * User must select the entity to search.
+     * Called from the search menu selection link.
+     * User must select the base entity to begin a search or select an existing USER or GLOBAL saved search.
+     *
+     * Populates a set of all global and user defined searches to select from
      *
      * @return JSP to edit search
      */
     @HandlesEvent("entitySelection")
     @DefaultHandler
     public Resolution entitySelectionPage() {
+        allSearchInstances = new LinkedHashMap<>();
+        try {
+            searchInstanceEjb.fetchAllInstances(allSearchInstances);
+        } catch (Exception e) {
+            addGlobalValidationError("Failed to retrieve search definitions");
+        }
         return new ForwardResolution("/search/config_search_choose_entity.jsp");
     }
 
@@ -613,6 +630,10 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
 
     public Map<String,String> getSearchInstanceNames() {
         return searchInstanceNames;
+    }
+
+    public Map<ColumnEntity, Map<PreferenceType,List<String>>> getAllSearchInstances(){
+        return allSearchInstances;
     }
 
     public String getNewSearchLevel() {

@@ -1770,4 +1770,44 @@
         </createIndex>
     </changeSet>
 
+    <changeSet id="GPLIM-2884-1" author="epolk">
+        <createTable tableName="FIXUP_COMMENTARY" schemaName="mercury">
+            <column name="FIXUP_COMMENTARY_ID" type="number(19,0)">
+	        <constraints nullable="false" primaryKey="true" primaryKeyName="PK_FIXUP_COMMENTARY"/>
+	    </column>
+            <column name="REASON" type="varchar2(1023)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-2884-2" author="epolk">
+        <createSequence sequenceName="SEQ_FIXUP_COMMENTARY" schemaName="mercury" startValue="1" incrementBy="50"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-2884-3" author="epolk">
+        <createTable tableName="FIXUP_COMMENTARY_AUD" schemaName="mercury">
+            <column name="REV" type="number(19,0)">
+                <constraints nullable="false"/>
+	    </column>
+            <column name="REVTYPE" type="number(3,0)">
+                <constraints nullable="false"/>
+	    </column>
+            <column name="FIXUP_COMMENTARY_ID" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="REASON" type="varchar2(1023)"/>
+        </createTable>
+
+	<addPrimaryKey tableName="FIXUP_COMMENTARY_AUD" schemaName="mercury"
+		       constraintName="PK_FIXUP_COMMENTARY_AUD"
+		       columnNames="rev, fixup_commentary_id"/>
+
+	<createIndex tableName="FIXUP_COMMENTARY_AUD" indexName="IX_FIXUP_COMMENTARY_AUD">
+            <column name="fixup_commentary_id"/>
+        </createIndex>
+
+    </changeSet>
+
+
 </databaseChangeLog>

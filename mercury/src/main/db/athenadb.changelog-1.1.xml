@@ -1201,4 +1201,22 @@
         </addColumn>
     </changeSet>
 
+
+    <!-- Adds missing rows in _AUD table using rev_info_id of the earliest reference of the entity. -->
+    <changeSet author="epolk" id="GPLIM-3033-1">
+        <sql>
+	  insert into PRODUCT_FAMILY_AUD (product_family_id, name, rev, revtype)
+	  select pf.product_family_id, pf.name, min(pa.rev), 0
+	  from PRODUCT_FAMILY pf
+	  join PRODUCT_AUD pa on pa.product_family = pf.product_family_id
+	  where not exists
+	  (select 1 from PRODUCT_FAMILY_AUD pfa where pfa.product_family_id = pf.product_family_id)
+	  group by pf.product_family_id, pf.name;
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-3083-1" author="epolk">
+      <dropTable cascadeConstraints="true"  schemaName="athena"  tableName="PREF_PREFERENCE_AUD"/>
+    </changeSet>
+
 </databaseChangeLog>

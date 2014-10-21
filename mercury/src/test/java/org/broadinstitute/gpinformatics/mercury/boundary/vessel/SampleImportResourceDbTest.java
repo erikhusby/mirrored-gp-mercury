@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
 import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
@@ -64,5 +65,61 @@ public class SampleImportResourceDbTest extends ContainerTest {
         Assert.assertEquals(sampleImportBeanGet.getParentVesselBeans().iterator().next().getChildVesselBeans().size(),
                 sampleImportBeanPost.getParentVesselBeans().iterator().next().getChildVesselBeans().size(),
                 "Wrong number of tubes");
+    }
+
+    @Test(enabled=true, groups= TestGroups.STUBBY, dataProvider= Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testImportTubesNoUser(@ArquillianResource URL baseUrl) {
+        Date now = new Date();
+        String suffix = dateFormat.format(now);
+
+        List<ChildVesselBean> childVesselBeans = new ArrayList<>();
+        childVesselBeans.add(new ChildVesselBean(suffix + "1", "SM-" + suffix + "1", "Matrix Tube Screw cap [0.5mL]", "A01"));
+        childVesselBeans.add(new ChildVesselBean(suffix + "2", "SM-" + suffix + "2", "Matrix Tube Screw cap [0.5mL]", "A02"));
+
+        List<ParentVesselBean> parentVesselBeans = new ArrayList<>();
+        parentVesselBeans.add(new ParentVesselBean("CO-" + suffix, null, "2D Matrix 96 Slot Rack [0.5ml SC]", childVesselBeans));
+        SampleImportBean sampleImportBeanPost = new SampleImportBean("BSP", "EX-" + suffix, now,
+                parentVesselBeans, "");
+
+        // POST to the resource
+        WebResource resource = Client.create().resource(baseUrl.toExternalForm() + "rest/sampleimport");
+        try {
+            String response= resource.type(MediaType.APPLICATION_XML_TYPE)
+                    .accept(MediaType.APPLICATION_XML)
+                    .entity(sampleImportBeanPost)
+                    .post(String.class);
+            Assert.fail();
+        } catch (UniformInterfaceException e) {
+
+        }
+    }
+
+    @Test(enabled=true, groups= TestGroups.STUBBY, dataProvider= Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testImportTubesNoGoodUser(@ArquillianResource URL baseUrl) {
+        Date now = new Date();
+        String suffix = dateFormat.format(now);
+
+        List<ChildVesselBean> childVesselBeans = new ArrayList<>();
+        childVesselBeans.add(new ChildVesselBean(suffix + "1", "SM-" + suffix + "1", "Matrix Tube Screw cap [0.5mL]", "A01"));
+        childVesselBeans.add(new ChildVesselBean(suffix + "2", "SM-" + suffix + "2", "Matrix Tube Screw cap [0.5mL]", "A02"));
+
+        List<ParentVesselBean> parentVesselBeans = new ArrayList<>();
+        parentVesselBeans.add(new ParentVesselBean("CO-" + suffix, null, "2D Matrix 96 Slot Rack [0.5ml SC]", childVesselBeans));
+        SampleImportBean sampleImportBeanPost = new SampleImportBean("BSP", "EX-" + suffix, now,
+                parentVesselBeans, "scottMatthewes");
+
+        // POST to the resource
+        WebResource resource = Client.create().resource(baseUrl.toExternalForm() + "rest/sampleimport");
+        try {
+            String response= resource.type(MediaType.APPLICATION_XML_TYPE)
+                    .accept(MediaType.APPLICATION_XML)
+                    .entity(sampleImportBeanPost)
+                    .post(String.class);
+            Assert.fail();
+        } catch (UniformInterfaceException e) {
+
+        }
     }
 }
