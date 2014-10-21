@@ -21,6 +21,7 @@ import java.util.regex.Pattern;
  */
 public class BSPUtil {
     private static final Pattern BSP_SAMPLE_SHORT_BARCODE_PATTERN = Pattern.compile("S[MP]-[A-Z1-9]{4,6}");
+    private static final Pattern BSP_BARE_ID_BARCODE_PATTERN = Pattern.compile("[A-Z1-9]{4,6}");
     private static final Pattern CRSP_BSP_SAMPLE_SHORT_BARCODE_PATTERN = Pattern.compile("CS[MP]-[A-Z1-9]{4,6}");
 
     /**
@@ -33,6 +34,7 @@ public class BSPUtil {
      */
     public static boolean isInBspFormat(@Nonnull String sampleName) {
         return  BSP_SAMPLE_SHORT_BARCODE_PATTERN.matcher(sampleName).matches() ||
+                BSP_BARE_ID_BARCODE_PATTERN.matcher(sampleName).matches() ||
                 (CRSP_BSP_SAMPLE_SHORT_BARCODE_PATTERN.matcher(sampleName).matches() && ApplicationInstance.CRSP.isCurrent());
     }
 

@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>Mercury</groupId>
     <artifactId>Mercury</artifactId>
@@ -12,7 +11,7 @@
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
-    <version>1.57-SNAPSHOT</version>
+    <version>1.58-SNAPSHOT</version>
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
@@ -187,7 +186,7 @@
         was not really possible.
         -->
         <tests.excludedGroups>UI</tests.excludedGroups>
-        <tests.groups/>
+        <tests.groups />
 
         <build.resultKey>${project.version}</build.resultKey>
         <maven.build.timestamp.format>yyyyMMdd-HHmm</maven.build.timestamp.format>
@@ -524,7 +523,7 @@
         <profile>
             <id>Tests.UI</id>
             <properties>
-                <tests.excludedGroups/>
+                <tests.excludedGroups />
                 <tests.groups>UI,arquillian</tests.groups>
             </properties>
         </profile>
@@ -887,8 +886,8 @@
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
                 <database.url>jdbc:oracle:thin:@crsp-db-prod-vm:1521:gpinfprd</database.url>
-                <mercury.password></mercury.password>
-                <athena.password></athena.password>
+                <mercury.password />
+                <athena.password />
             </properties>
             <build>
                 <!-- This allows us to overwrite the ejb-jar.xml for development with the special version for crsp production -->
@@ -2387,10 +2386,8 @@
                         <configuration>
                             <target>
                                 <propertyfile file="${pom.basedir}/target/classes/build.properties">
-                                    <entry key="build.resultKey" type="string" value="${build.resultKey}"
-                                           operation="="/>
-                                    <entry key="build.buildTimeStamp" type="string" value="${build.buildTimeStamp}"
-                                           operation="="/>
+                                    <entry key="build.resultKey" type="string" value="${build.resultKey}" operation="=" />
+                                    <entry key="build.buildTimeStamp" type="string" value="${build.buildTimeStamp}" operation="=" />
                                 </propertyfile>
                             </target>
                         </configuration>
@@ -2420,6 +2417,7 @@
                     <pushReleases>true</pushReleases>
                     <!-- Do push the hotfix branches to the remote upstream --> 
                     <pushHotfixes>true</pushHotfixes>
+                    <noHotfixBuild>true</noHotfixBuild>
                 </configuration>
             </plugin>
 
