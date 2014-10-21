@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactoryTest;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
+import org.jboss.aerogear.arquillian.test.smarturl.SchemeName;
 import org.jboss.aerogear.arquillian.test.smarturl.UriScheme;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -32,14 +33,15 @@ public class SampleReceiptResourceDbTest extends ContainerTest {
     @Test(enabled = true, groups = TestGroups.STUBBY, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testReceiveTubes(
-            @ArquillianResource @UriScheme(port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl) {
+            @ArquillianResource @UriScheme(name = SchemeName.HTTPS,
+                    port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl) {
         SampleReceiptBean sampleReceiptBean = LabVesselFactoryTest.buildTubes(dateFormat.format(new Date()));
         // POST to the resource
 
         ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
 
         WebResource resource = Client.create(clientConfig)
-                .resource(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/samplereceipt");
+                .resource(RestServiceContainerTest.convertPortToPresetPort(baseUrl) + "rest/samplereceipt");
         String response = resource.type(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)
                 .entity(sampleReceiptBean)

@@ -33,6 +33,7 @@ import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainer
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LaneReadStructure;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
+import org.jboss.aerogear.arquillian.test.smarturl.SchemeName;
 import org.jboss.aerogear.arquillian.test.smarturl.UriScheme;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
@@ -280,8 +281,10 @@ public class SolexaRunRestResourceTest extends Arquillian {
             dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = false)
     @RunAsClient
     public void testReadStructureOverHttp(
-            @ArquillianResource @UriScheme(port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl) {
-        String wsUrl = RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/solexarun/storeRunReadStructure";
+            @ArquillianResource @UriScheme(name = SchemeName.HTTPS,
+                    port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl) {
+        String wsUrl =
+                RestServiceContainerTest.convertPortToPresetPort(baseUrl) + "rest/solexarun/storeRunReadStructure";
 
         ReadStructureRequest readStructureData = new ReadStructureRequest();
         readStructureData.setRunBarcode(runBarcode);
@@ -313,8 +316,10 @@ public class SolexaRunRestResourceTest extends Arquillian {
     @Test(groups = TestGroups.STUBBY, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = true)
     @RunAsClient
     public void testMercuryLanes(
-            @ArquillianResource @UriScheme(port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl) {
-        String wsUrl = RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/solexarun/storeRunReadStructure";
+            @ArquillianResource @UriScheme(name = SchemeName.HTTPS,
+                    port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl) {
+        String wsUrl =
+                RestServiceContainerTest.convertPortToPresetPort(baseUrl) + "rest/solexarun/storeRunReadStructure";
 
         ReadStructureRequest readStructureData = new ReadStructureRequest();
         readStructureData.setRunBarcode("H7HBEADXX140225");

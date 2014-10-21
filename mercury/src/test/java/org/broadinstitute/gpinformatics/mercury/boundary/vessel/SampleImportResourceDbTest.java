@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
+import org.jboss.aerogear.arquillian.test.smarturl.SchemeName;
 import org.jboss.aerogear.arquillian.test.smarturl.UriScheme;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -33,7 +34,8 @@ public class SampleImportResourceDbTest extends ContainerTest {
     @Test(enabled = true, groups = TestGroups.STUBBY, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testImportTubes(
-            @ArquillianResource @UriScheme(port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl) {
+            @ArquillianResource @UriScheme(name = SchemeName.HTTPS,
+                    port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl) {
         Date now = new Date();
         String suffix = dateFormat.format(now);
 
@@ -53,7 +55,7 @@ public class SampleImportResourceDbTest extends ContainerTest {
 
         // POST to the resource
         WebResource resource = Client.create(clientConfig)
-                .resource(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/sampleimport");
+                .resource(RestServiceContainerTest.convertPortToPresetPort(baseUrl) + "rest/sampleimport");
         String response = resource.type(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)
                 .entity(sampleImportBeanPost)
@@ -67,25 +69,28 @@ public class SampleImportResourceDbTest extends ContainerTest {
                 "Wrong number of tubes");
     }
 
-    @Test(enabled=true, groups= TestGroups.STUBBY, dataProvider= Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    @Test(enabled = true, groups = TestGroups.STUBBY, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testImportTubesNoUser(@ArquillianResource URL baseUrl) {
         Date now = new Date();
         String suffix = dateFormat.format(now);
 
         List<ChildVesselBean> childVesselBeans = new ArrayList<>();
-        childVesselBeans.add(new ChildVesselBean(suffix + "1", "SM-" + suffix + "1", "Matrix Tube Screw cap [0.5mL]", "A01"));
-        childVesselBeans.add(new ChildVesselBean(suffix + "2", "SM-" + suffix + "2", "Matrix Tube Screw cap [0.5mL]", "A02"));
+        childVesselBeans
+                .add(new ChildVesselBean(suffix + "1", "SM-" + suffix + "1", "Matrix Tube Screw cap [0.5mL]", "A01"));
+        childVesselBeans
+                .add(new ChildVesselBean(suffix + "2", "SM-" + suffix + "2", "Matrix Tube Screw cap [0.5mL]", "A02"));
 
         List<ParentVesselBean> parentVesselBeans = new ArrayList<>();
-        parentVesselBeans.add(new ParentVesselBean("CO-" + suffix, null, "2D Matrix 96 Slot Rack [0.5ml SC]", childVesselBeans));
+        parentVesselBeans
+                .add(new ParentVesselBean("CO-" + suffix, null, "2D Matrix 96 Slot Rack [0.5ml SC]", childVesselBeans));
         SampleImportBean sampleImportBeanPost = new SampleImportBean("BSP", "EX-" + suffix, now,
                 parentVesselBeans, "");
 
         // POST to the resource
         WebResource resource = Client.create().resource(baseUrl.toExternalForm() + "rest/sampleimport");
         try {
-            String response= resource.type(MediaType.APPLICATION_XML_TYPE)
+            String response = resource.type(MediaType.APPLICATION_XML_TYPE)
                     .accept(MediaType.APPLICATION_XML)
                     .entity(sampleImportBeanPost)
                     .post(String.class);
@@ -95,25 +100,28 @@ public class SampleImportResourceDbTest extends ContainerTest {
         }
     }
 
-    @Test(enabled=true, groups= TestGroups.STUBBY, dataProvider= Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    @Test(enabled = true, groups = TestGroups.STUBBY, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testImportTubesNoGoodUser(@ArquillianResource URL baseUrl) {
         Date now = new Date();
         String suffix = dateFormat.format(now);
 
         List<ChildVesselBean> childVesselBeans = new ArrayList<>();
-        childVesselBeans.add(new ChildVesselBean(suffix + "1", "SM-" + suffix + "1", "Matrix Tube Screw cap [0.5mL]", "A01"));
-        childVesselBeans.add(new ChildVesselBean(suffix + "2", "SM-" + suffix + "2", "Matrix Tube Screw cap [0.5mL]", "A02"));
+        childVesselBeans
+                .add(new ChildVesselBean(suffix + "1", "SM-" + suffix + "1", "Matrix Tube Screw cap [0.5mL]", "A01"));
+        childVesselBeans
+                .add(new ChildVesselBean(suffix + "2", "SM-" + suffix + "2", "Matrix Tube Screw cap [0.5mL]", "A02"));
 
         List<ParentVesselBean> parentVesselBeans = new ArrayList<>();
-        parentVesselBeans.add(new ParentVesselBean("CO-" + suffix, null, "2D Matrix 96 Slot Rack [0.5ml SC]", childVesselBeans));
+        parentVesselBeans
+                .add(new ParentVesselBean("CO-" + suffix, null, "2D Matrix 96 Slot Rack [0.5ml SC]", childVesselBeans));
         SampleImportBean sampleImportBeanPost = new SampleImportBean("BSP", "EX-" + suffix, now,
                 parentVesselBeans, "scottMatthewes");
 
         // POST to the resource
         WebResource resource = Client.create().resource(baseUrl.toExternalForm() + "rest/sampleimport");
         try {
-            String response= resource.type(MediaType.APPLICATION_XML_TYPE)
+            String response = resource.type(MediaType.APPLICATION_XML_TYPE)
                     .accept(MediaType.APPLICATION_XML)
                     .entity(sampleImportBeanPost)
                     .post(String.class);

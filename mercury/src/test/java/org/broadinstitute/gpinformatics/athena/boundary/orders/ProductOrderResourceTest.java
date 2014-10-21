@@ -4,12 +4,12 @@ import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
 import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.MaterialInfo;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
+import org.jboss.aerogear.arquillian.test.smarturl.SchemeName;
 import org.jboss.aerogear.arquillian.test.smarturl.UriScheme;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
@@ -19,7 +19,6 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,9 +28,6 @@ import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.AUTO_BUILD;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STANDARD;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 @Test(groups = TestGroups.STANDARD)
 public class ProductOrderResourceTest extends RestServiceContainerTest {
@@ -57,7 +53,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
     @RunAsClient
     public void testFetchLibraryDetailsByTubeBarcode(
-            @ArquillianResource @UriScheme(port = DEFAULT_FORWARD_PORT) URL baseUrl) {
+            @ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = DEFAULT_FORWARD_PORT) URL baseUrl) {
         Date testDate = new Date();
 
         ProductOrderData data = new ProductOrderData();
@@ -187,7 +183,8 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
     @RunAsClient
     public void testFetchAtRiskPDOSamplesAllAtRisk(@ArquillianResource
-                                                   @UriScheme(port = DEFAULT_FORWARD_PORT) URL baseUrl) {
+                                                   @UriScheme(name = SchemeName.HTTPS,
+                                                           port = DEFAULT_FORWARD_PORT) URL baseUrl) {
         PDOSamples pdoSamples = getAtRiskSamples();
 
         PDOSamples returnedPdoSamples = makeWebResource(baseUrl, PDO_SAMPLE_STATUS)
@@ -226,7 +223,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
     @RunAsClient
     public void testFetchAtRiskPDOSamplesNoneAtRisk(
-            @ArquillianResource @UriScheme(port = DEFAULT_FORWARD_PORT) URL baseUrl) {
+            @ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = DEFAULT_FORWARD_PORT) URL baseUrl) {
         PDOSamples pdoSamples = getNonRiskPDOSamples();
         PDOSamples returnedPdoSamples = makeWebResource(baseUrl, PDO_SAMPLE_STATUS)
                 .type(MediaType.APPLICATION_JSON)
@@ -241,7 +238,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFindByIds(
-            @ArquillianResource @UriScheme(port = DEFAULT_FORWARD_PORT) URL baseUrl) {
+            @ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = DEFAULT_FORWARD_PORT) URL baseUrl) {
         ProductOrders orders = makeWebResource(baseUrl, "pdo/" + VALID_PDO_ID)
                 .accept(MediaType.APPLICATION_XML)
                 .get(ProductOrders.class);

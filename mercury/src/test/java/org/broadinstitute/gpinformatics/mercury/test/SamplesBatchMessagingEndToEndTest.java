@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventResponseBean;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
+import org.jboss.aerogear.arquillian.test.smarturl.SchemeName;
 import org.jboss.aerogear.arquillian.test.smarturl.UriScheme;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -40,7 +41,8 @@ public class SamplesBatchMessagingEndToEndTest extends ContainerTest {
     @Test(enabled = true, groups = TestGroups.STUBBY, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testEndToEnd(
-            @ArquillianResource @UriScheme(port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl) {
+            @ArquillianResource @UriScheme(name = SchemeName.HTTPS,
+                    port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl) {
         String timestamp = timestampFormat.format(new Date());
         ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
         clientConfig.getProperties().put(ClientConfig.PROPERTY_FOLLOW_REDIRECTS, Boolean.TRUE);
@@ -134,7 +136,7 @@ public class SamplesBatchMessagingEndToEndTest extends ContainerTest {
         bettaLimsMessageTestFactory.advanceTime();
 
         LabEventResponseBean labEventResponseBean =
-                client.resource(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/labevent/batch")
+                client.resource(RestServiceContainerTest.convertPortToPresetPort(baseUrl) + "rest/labevent/batch")
                         .path(batchId)
                         .get(LabEventResponseBean.class);
         List<LabEventBean> labEventBeans = labEventResponseBean.getLabEventBeans();

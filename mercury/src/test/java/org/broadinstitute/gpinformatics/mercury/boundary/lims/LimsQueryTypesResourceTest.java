@@ -5,6 +5,7 @@ import com.sun.jersey.api.client.WebResource;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
+import org.jboss.aerogear.arquillian.test.smarturl.SchemeName;
 import org.jboss.aerogear.arquillian.test.smarturl.UriScheme;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
@@ -99,7 +100,7 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
     @Test(groups = TestGroups.STUBBY, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testEchoBooleanAsJson(
-            @ArquillianResource @UriScheme(port = DEFAULT_FORWARD_PORT) URL baseUrl) {
+            @ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = DEFAULT_FORWARD_PORT) URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "echoBoolean");
 
         String result1 = get(resource.queryParam("value", "false"));
@@ -112,7 +113,7 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
     @Test(groups = TestGroups.STUBBY, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testEchoDoubleAsJson(
-            @ArquillianResource @UriScheme(port = DEFAULT_FORWARD_PORT) URL baseUrl) {
+            @ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = DEFAULT_FORWARD_PORT) URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "echoDouble");
 
         String result1 = get(resource.queryParam("value", "1.234"));
@@ -125,7 +126,7 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
     @Test(groups = TestGroups.STUBBY, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testEchoStringAsJson(
-            @ArquillianResource @UriScheme(port = DEFAULT_FORWARD_PORT) URL baseUrl) {
+            @ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = DEFAULT_FORWARD_PORT) URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "echoString");
 
         String result = get(resource.queryParam("value", "test"));
@@ -135,7 +136,7 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
     @Test(groups = TestGroups.STUBBY, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testEchoStringArrayAsJson(
-            @ArquillianResource @UriScheme(port = DEFAULT_FORWARD_PORT) URL baseUrl) {
+            @ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = DEFAULT_FORWARD_PORT) URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "echoStringArray");
 
         List<String> values = Arrays.asList("value1", "value2");
@@ -154,7 +155,7 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
     @Test(groups = TestGroups.STUBBY, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testEchoStringArrayLargeAsJson(
-            @ArquillianResource @UriScheme(port = DEFAULT_FORWARD_PORT) URL baseUrl) {
+            @ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = DEFAULT_FORWARD_PORT) URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "echoStringArray");
 
         List<String> values = new ArrayList<>();
@@ -169,7 +170,7 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
     @Test(groups = TestGroups.STUBBY, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testEchoFlowcellDesignationAsJson(
-            @ArquillianResource @UriScheme(port = DEFAULT_FORWARD_PORT) URL baseUrl) {
+            @ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = DEFAULT_FORWARD_PORT) URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "echoFlowcellDesignation");
 
         String result = post(resource, FLOWCELL_DESIGNATION_JSON);
@@ -179,7 +180,7 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
     @Test(groups = TestGroups.STUBBY, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testEchoStringToBooleanMap(
-            @ArquillianResource @UriScheme(port = DEFAULT_FORWARD_PORT) URL baseUrl) {
+            @ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = DEFAULT_FORWARD_PORT) URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "echoStringToBooleanMap");
 
         String request = "{\"result1\":false,\"result2\":true}";
@@ -190,7 +191,7 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
     @Test(groups = TestGroups.STUBBY, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testEchoWellAndSourceTube(
-            @ArquillianResource @UriScheme(port = DEFAULT_FORWARD_PORT) URL baseUrl) {
+            @ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = DEFAULT_FORWARD_PORT) URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "echoWellAndSourceTube");
 
         String request = "{\"wellName\":\"A01\",\"tubeBarcode\":\"tube_barcode1\"}";
@@ -201,7 +202,7 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
     @Test(groups = TestGroups.STUBBY, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testEchoWellAndSourceTubeList(
-            @ArquillianResource @UriScheme(port = DEFAULT_FORWARD_PORT) URL baseUrl) {
+            @ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = DEFAULT_FORWARD_PORT) URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "echoWellAndSourceTubeList");
 
         String request =
@@ -213,7 +214,7 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
     @Test(groups = TestGroups.STUBBY, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testThrowRuntimeException(
-            @ArquillianResource @UriScheme(port = DEFAULT_FORWARD_PORT) URL baseUrl) {
+            @ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = DEFAULT_FORWARD_PORT) URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "throwRuntimeException");
         UniformInterfaceException caught = getWithError(resource.queryParam("message", "testThrowRuntimeException"));
         assertErrorResponse(caught, 500, "testThrowRuntimeException");
@@ -222,7 +223,7 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
     @Test(groups = TestGroups.STUBBY, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testThrowApplicationException(
-            @ArquillianResource @UriScheme(port = DEFAULT_FORWARD_PORT) URL baseUrl) {
+            @ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = DEFAULT_FORWARD_PORT) URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "throwApplicationException");
         UniformInterfaceException caught =
                 getWithError(resource.queryParam("message", "testThrowApplicationException"));

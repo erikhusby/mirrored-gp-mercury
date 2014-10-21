@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainer
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LaneReadStructure;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
+import org.jboss.aerogear.arquillian.test.smarturl.SchemeName;
 import org.jboss.aerogear.arquillian.test.smarturl.UriScheme;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
@@ -44,10 +45,12 @@ public class SolexaRunResourceLiveTest extends Arquillian {
     @Test(groups = STANDARD, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = true)
     @RunAsClient
     public void testSquidLanes(
-            @ArquillianResource @UriScheme(port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl) {
+            @ArquillianResource @UriScheme(name = SchemeName.HTTPS,
+                    port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl) {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(LabBatchDbTest.XML_DATE_FORMAT);
         String timeStamp = simpleDateFormat.format(new Date());
-        String wsUrl = RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/solexarun/storeRunReadStructure";
+        String wsUrl =
+                RestServiceContainerTest.convertPortToPresetPort(baseUrl) + "rest/solexarun/storeRunReadStructure";
 
         String runName1 = "120907_SL-HBV_0191_BFCD15DDACXX";
         ReadStructureRequest readStructureData = new ReadStructureRequest();

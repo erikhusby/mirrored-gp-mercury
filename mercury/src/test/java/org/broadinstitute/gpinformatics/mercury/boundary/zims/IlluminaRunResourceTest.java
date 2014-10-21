@@ -32,6 +32,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.zims.ZamboniReadType;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
+import org.jboss.aerogear.arquillian.test.smarturl.SchemeName;
 import org.jboss.aerogear.arquillian.test.smarturl.UriScheme;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
@@ -121,9 +122,10 @@ public class IlluminaRunResourceTest extends Arquillian {
             groups = ALTERNATIVES)
     @RunAsClient
     public void testErrorHandling(
-            @ArquillianResource @UriScheme(port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl)
+            @ArquillianResource @UriScheme(name = SchemeName.HTTPS,
+                    port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl)
             throws Exception {
-        String url = RestServiceContainerTest.convertUrlToSecure(baseUrl) + WEBSERVICE_URL;
+        String url = RestServiceContainerTest.convertPortToPresetPort(baseUrl) + WEBSERVICE_URL;
 
         ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
         clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
@@ -148,9 +150,10 @@ public class IlluminaRunResourceTest extends Arquillian {
             groups = ALTERNATIVES)
     @RunAsClient
     public void testZimsOverHttp(
-            @ArquillianResource @UriScheme(port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl)
+            @ArquillianResource @UriScheme(name = SchemeName.HTTPS,
+                    port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl)
             throws Exception {
-        String url = RestServiceContainerTest.convertUrlToSecure(baseUrl) + WEBSERVICE_URL;
+        String url = RestServiceContainerTest.convertPortToPresetPort(baseUrl) + WEBSERVICE_URL;
 
         ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
         clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
