@@ -60,8 +60,7 @@ public class CrspPicoEntityBuilder {
         CrspPicoJaxbBuilder crspPicoJaxbBuilder = new CrspPicoJaxbBuilder(bettaLimsMessageTestFactory, testPrefix,
                 rackBarcode, tubeBarcodes).invoke();
 
-        // InitialTare
-        LabEventTest.validateWorkflow("InitialTare", mapBarcodeToTube.values());
+        // InitialTare, prior to workflow
         initialTareEntity = labEventFactory.buildFromBettaLimsRackEventDbFree(crspPicoJaxbBuilder.getInitialTareJaxb(),
                 null, mapBarcodeToTube, null);
         labEventHandler.processEvent(initialTareEntity);
@@ -76,12 +75,13 @@ public class CrspPicoEntityBuilder {
         Assert.assertNull(concVolDto.getConcentration());
         Assert.assertNull(concVolDto.getVolume());
 
-        // WeightMeasurement
+        // WeightMeasurement, prior to workflow?
         weightMeasurementEntity = labEventFactory.buildFromBettaLimsRackEventDbFree(
                 crspPicoJaxbBuilder.getWeightMeasurementJaxb(), initialRack, mapBarcodeToTube, null);
         labEventHandler.processEvent(weightMeasurementEntity);
 
         // VolumeAddition
+        LabEventTest.validateWorkflow("VolumeAddition", mapBarcodeToTube.values());
         volumeAdditionEntity = labEventFactory.buildFromBettaLimsRackEventDbFree(
                 crspPicoJaxbBuilder.getVolumeAdditionJaxb(), initialRack, mapBarcodeToTube, null);
         labEventHandler.processEvent(volumeAdditionEntity);

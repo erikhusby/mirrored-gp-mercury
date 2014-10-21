@@ -109,6 +109,93 @@
         </workflowProcessDefVersions>
     </workflowProcessDefs>
     <workflowProcessDefs>
+        <name>CRSP Pico/Plating</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2012-09-30T21:03:24.085-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Pico/Plating Bucket</name>
+                <labEventTypes>PICO_PLATING_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <!-- todo jmt what if there's a mix of material types? -->
+                <entryExpression>
+                    foreach (iSampleInstance : labVessel.getSampleInstances()) {
+                    if (iSampleInstance.getStartingSample().getBspSampleData().getMaterialType() contains "DNA:") {
+                    return true;
+                    }
+                    }
+                    return false;
+                </entryExpression>
+                <batchJiraProjectType>LCSET</batchJiraProjectType>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Volume Addition</name>
+                <labEventTypes>VOLUME_ADDITION</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Initial Pico</name>
+                <labEventTypes>PICO_TRANSFER</labEventTypes>
+                <labEventTypes>PICO_BUFFER_ADDITION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <quantType>PICO</quantType>
+                <numberOfRepeats>2</numberOfRepeats>
+                <deadEndBranch>true</deadEndBranch>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Fingerprinting Aliquot</name>
+                <labEventTypes>FINGERPRINTING_ALIQUOT</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Fingerprinting Pico</name>
+                <labEventTypes>PICO_TRANSFER</labEventTypes>
+                <labEventTypes>PICO_BUFFER_ADDITION</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <quantType>PICO</quantType>
+                <numberOfRepeats>2</numberOfRepeats>
+                <deadEndBranch>true</deadEndBranch>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Fingerprinting Plate Setup</name>
+                <labEventTypes>FINGERPRINTING_PLATE_SETUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <numberOfRepeats>1</numberOfRepeats>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Shearing Aliquot</name>
+                <labEventTypes>SHEARING_ALIQUOT</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <numberOfRepeats>1</numberOfRepeats>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Shearing Pico</name>
+                <labEventTypes>PICO_TRANSFER</labEventTypes>
+                <labEventTypes>PICO_BUFFER_ADDITION</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <quantType>PICO</quantType>
+                <numberOfRepeats>2</numberOfRepeats>
+                <deadEndBranch>true</deadEndBranch>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
         <name>Shearing</name>
         <workflowProcessDefVersions>
             <version>1.0</version>
@@ -878,6 +965,27 @@
             <version>4.0</version>
             <effectiveDate>2014-03-04T00:00:00.000-04:00</effectiveDate>
             <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
+            <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
+            <workflowProcessDefs>Library Construction</workflowProcessDefs>
+            <workflowProcessDefs>ICE</workflowProcessDefs>
+            <workflowProcessDefs>QTP</workflowProcessDefs>
+            <workflowProcessDefs>MiSEQ</workflowProcessDefs>
+            <workflowProcessDefs>HiSEQ 2500</workflowProcessDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
+            <routingRule>MERCURY</routingRule>
+            <inValidation>false</inValidation>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+      <name>ICE CRSP</name>
+        <productWorkflowDefVersions>
+            <version>4.0</version>
+            <effectiveDate>2014-03-04T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>CRSP Pico/Plating</workflowProcessDefs>
             <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
             <workflowProcessDefs>Library Construction</workflowProcessDefs>
             <workflowProcessDefs>ICE</workflowProcessDefs>

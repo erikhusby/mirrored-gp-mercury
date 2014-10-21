@@ -1328,7 +1328,7 @@ public class LabEventTest extends BaseEventTest {
                 new HashSet<LabVessel>(mapBarcodeToTube.values()),
                 LabBatch.LabBatchType.WORKFLOW);
         workflowBatch.setCreatedOn(new Date());
-        workflowBatch.setWorkflow(Workflow.ICE_EXOME_EXPRESS);
+        workflowBatch.setWorkflow(Workflow.ICE_CRSP);
 
         bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
 

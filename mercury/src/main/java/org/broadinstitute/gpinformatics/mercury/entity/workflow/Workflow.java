@@ -17,6 +17,7 @@ public enum Workflow {
     HYBRID_SELECTION("Hybrid Selection"),
     WHOLE_GENOME("Whole Genome"),
     ICE("ICE"),
+    ICE_CRSP("ICE CRSP"),
     /** Use this to indicate that no workflow is associated. */
     NONE(null, false);
 
