@@ -237,10 +237,9 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                     new CriteriaInClauseCreator<String>() {
                         @Override
                         public Query createCriteriaInQuery(Collection<String> parameterList) {
-                            CriteriaQuery<ProductOrderListEntry> query =
-                                    ledgerStatus.buildQuery(cb, cq, productOrderRoot, parameterList,
-                                            productOrderSampleLedgerEntrySetJoin, ledgerEntryBillingSessionJoin);
-                            return getEntityManager().createQuery(query);
+                            cq.where(ledgerStatus.buildPredicate(cb, productOrderSampleLedgerEntrySetJoin, ledgerEntryBillingSessionJoin),
+                                    productOrderRoot.get(ProductOrder_.jiraTicketKey).in(parameterList));
+                            return getEntityManager().createQuery(cq);
                         }
                     }
             );

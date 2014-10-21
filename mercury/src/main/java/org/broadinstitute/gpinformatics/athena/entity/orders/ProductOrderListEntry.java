@@ -9,9 +9,8 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 
 import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Join;
-import javax.persistence.criteria.Root;
+import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.SetJoin;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -242,12 +241,9 @@ public class ProductOrderListEntry implements Serializable {
             }
 
             @Override
-            public CriteriaQuery<ProductOrderListEntry> buildQuery(CriteriaBuilder criteriaBuilder,
-                                                                   CriteriaQuery<ProductOrderListEntry> criteriaQuery,
-                                                                   Root<ProductOrder> productOrderRoot,
-                                                                   Collection<String> parameterList,
-                                                                   SetJoin<ProductOrderSample, LedgerEntry> sampleLedgerEntryJoin,
-                                                                   Join<LedgerEntry, BillingSession> ledgerEntryBillingSessionJoin) {
+            public Predicate buildPredicate(CriteriaBuilder criteriaBuilder,
+                                            SetJoin<ProductOrderSample, LedgerEntry> sampleLedgerEntryJoin,
+                                            Join<LedgerEntry, BillingSession> ledgerEntryBillingSessionJoin) {
                 return null;
             }
 
@@ -265,16 +261,13 @@ public class ProductOrderListEntry implements Serializable {
             }
 
             @Override
-            public CriteriaQuery<ProductOrderListEntry> buildQuery(CriteriaBuilder criteriaBuilder,
-                                                                   CriteriaQuery<ProductOrderListEntry> criteriaQuery,
-                                                                   Root<ProductOrder> productOrderRoot,
-                                                                   Collection<String> parameterList,
-                                                                   SetJoin<ProductOrderSample, LedgerEntry> sampleLedgerEntryJoin,
-                                                                   Join<LedgerEntry, BillingSession> ledgerEntryBillingSessionJoin) {
+            public Predicate buildPredicate(CriteriaBuilder criteriaBuilder,
+                                            SetJoin<ProductOrderSample, LedgerEntry> sampleLedgerEntryJoin,
+                                            Join<LedgerEntry, BillingSession> ledgerEntryBillingSessionJoin) {
                 // The billing session is null but the auto bill timestamp is NOT null.
-                return criteriaQuery.where(criteriaBuilder.isNull(sampleLedgerEntryJoin.get(LedgerEntry_.billingSession)),
-                        criteriaBuilder.isNotNull(sampleLedgerEntryJoin.get(LedgerEntry_.autoLedgerTimestamp)),
-                        productOrderRoot.get(ProductOrder_.jiraTicketKey).in(parameterList));
+                return criteriaBuilder.and(
+                        criteriaBuilder.isNull(sampleLedgerEntryJoin.get(LedgerEntry_.billingSession)),
+                        criteriaBuilder.isNotNull(sampleLedgerEntryJoin.get(LedgerEntry_.autoLedgerTimestamp)));
             }
 
             @Override
@@ -291,16 +284,13 @@ public class ProductOrderListEntry implements Serializable {
             }
 
             @Override
-            public CriteriaQuery<ProductOrderListEntry> buildQuery(CriteriaBuilder criteriaBuilder,
-                                                                   CriteriaQuery<ProductOrderListEntry> criteriaQuery,
-                                                                   Root<ProductOrder> productOrderRoot,
-                                                                   Collection<String> parameterList,
-                                                                   SetJoin<ProductOrderSample, LedgerEntry> sampleLedgerEntryJoin,
-                                                                   Join<LedgerEntry, BillingSession> ledgerEntryBillingSessionJoin) {
+            public Predicate buildPredicate(CriteriaBuilder criteriaBuilder,
+                                            SetJoin<ProductOrderSample, LedgerEntry> sampleLedgerEntryJoin,
+                                            Join<LedgerEntry, BillingSession> ledgerEntryBillingSessionJoin) {
                 // The billing session is null but the auto bill timestamp is null.
-                return criteriaQuery.where(criteriaBuilder.isNull(sampleLedgerEntryJoin.get(LedgerEntry_.billingSession)),
-                        criteriaBuilder.isNull(sampleLedgerEntryJoin.get(LedgerEntry_.autoLedgerTimestamp)),
-                        productOrderRoot.get(ProductOrder_.jiraTicketKey).in(parameterList));
+                return criteriaBuilder.and(
+                        criteriaBuilder.isNull(sampleLedgerEntryJoin.get(LedgerEntry_.billingSession)),
+                        criteriaBuilder.isNull(sampleLedgerEntryJoin.get(LedgerEntry_.autoLedgerTimestamp)));
             }
 
             @Override
@@ -315,19 +305,14 @@ public class ProductOrderListEntry implements Serializable {
             }
 
             @Override
-            public CriteriaQuery<ProductOrderListEntry> buildQuery(CriteriaBuilder criteriaBuilder,
-                                                                   CriteriaQuery<ProductOrderListEntry> criteriaQuery,
-                                                                   Root<ProductOrder> productOrderRoot,
-                                                                   Collection<String> parameterList,
-                                                                   SetJoin<ProductOrderSample, LedgerEntry> sampleLedgerEntryJoin,
-                                                                   Join<LedgerEntry, BillingSession> ledgerEntryBillingSessionJoin) {
+            public Predicate buildPredicate(CriteriaBuilder criteriaBuilder,
+                                            SetJoin<ProductOrderSample, LedgerEntry> sampleLedgerEntryJoin,
+                                            Join<LedgerEntry, BillingSession> ledgerEntryBillingSessionJoin) {
                 // The session is NOT null, but the session's billed date IS null.
-                return criteriaQuery.where(
+                return criteriaBuilder.and(
                         criteriaBuilder.isNull(ledgerEntryBillingSessionJoin.get(BillingSession_.billedDate)),
-                        criteriaBuilder.isNotNull(
-                                sampleLedgerEntryJoin.get(LedgerEntry_.billingSession)),
-                        criteriaBuilder.isNull(sampleLedgerEntryJoin.get(LedgerEntry_.autoLedgerTimestamp)),
-                        productOrderRoot.get(ProductOrder_.jiraTicketKey).in(parameterList));
+                        criteriaBuilder.isNotNull(sampleLedgerEntryJoin.get(LedgerEntry_.billingSession)),
+                        criteriaBuilder.isNull(sampleLedgerEntryJoin.get(LedgerEntry_.autoLedgerTimestamp)));
             }
 
             @Override
@@ -379,14 +364,11 @@ public class ProductOrderListEntry implements Serializable {
         }
 
         /**
-         * @return the criteria query that selects for PDOs with this ledger status.
+         * @return the criteria predicate that selects for PDOs with this ledger status.
          */
-        public abstract CriteriaQuery<ProductOrderListEntry> buildQuery(CriteriaBuilder criteriaBuilder,
-                                                                        CriteriaQuery<ProductOrderListEntry> criteriaQuery,
-                                                                        Root<ProductOrder> productOrderRoot,
-                                                                        Collection<String> parameterList,
-                                                                        SetJoin<ProductOrderSample, LedgerEntry> sampleLedgerEntryJoin,
-                                                                        Join<LedgerEntry, BillingSession> ledgerEntryBillingSessionJoin);
+        public abstract Predicate buildPredicate(CriteriaBuilder criteriaBuilder,
+                                                 SetJoin<ProductOrderSample, LedgerEntry> sampleLedgerEntryJoin,
+                                                 Join<LedgerEntry, BillingSession> ledgerEntryBillingSessionJoin);
 
         /**
          * Update the count in the product order for this status.
