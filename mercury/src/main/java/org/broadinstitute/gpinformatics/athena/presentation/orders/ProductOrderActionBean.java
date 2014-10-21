@@ -307,11 +307,11 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private Long productFamilyId;
 
-    private List<ProductOrder.OrderStatus> selectedStatuses;
+    private List<ProductOrder.OrderStatus> selectedStatuses =  Collections.emptyList();
 
-    private List<ProductOrder.LedgerStatus> selectedLedgerStatuses;
+    private List<ProductOrderListEntry.LedgerStatus> selectedLedgerStatuses = Collections.emptyList();
 
-    private static List<MaterialInfo> dnaMatrixMaterialTypes =
+    private static final List<MaterialInfo> dnaMatrixMaterialTypes =
             Arrays.asList(KitTypeAllowanceSpecification.DNA_MATRIX_KIT.getMaterialInfo());
 
     private KitType chosenKitType = KitType.DNA_MATRIX;
@@ -744,7 +744,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 // If there are any errors with this preference, just use defaults and populate a message that
                 // the defaults were ignored for some reason.
                 populateSearchDefaults();
-                logger.error("Could not read user preference on search for product orders.");
+                logger.error("Could not read user preference on search for product orders.", t);
                 addMessage("Could not read search preference");
             }
         }
@@ -781,7 +781,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         // Set up all the simple fields from the values in the preference data.
         productTokenInput.setListOfKeys(preferenceData.get(PRODUCT));
         selectedStatuses = ProductOrder.OrderStatus.getFromNames(preferenceData.get(STATUS));
-        selectedLedgerStatuses = ProductOrder.LedgerStatus.getFromNames(preferenceData.get(LEDGER_STATUS));
+        selectedLedgerStatuses = ProductOrderListEntry.LedgerStatus.getFromNames(preferenceData.get(LEDGER_STATUS));
         setDateRange(new DateRangeSelector(preferenceData.get(DATE)));
         owner.setListOfKeys(preferenceData.get(OWNER));
     }
@@ -2060,11 +2060,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.selectedStatuses = selectedStatuses;
     }
 
-    public List<ProductOrder.LedgerStatus> getSelectedLedgerStatuses() {
+    public List<ProductOrderListEntry.LedgerStatus> getSelectedLedgerStatuses() {
         return selectedLedgerStatuses;
     }
 
-    public void setSelectedLedgerStatuses(List<ProductOrder.LedgerStatus> selectedLedgerStatuses) {
+    public void setSelectedLedgerStatuses(List<ProductOrderListEntry.LedgerStatus> selectedLedgerStatuses) {
         this.selectedLedgerStatuses = selectedLedgerStatuses;
     }
 
@@ -2085,8 +2085,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         return !editOrder.isDraft() && isCreateAllowed();
     }
 
-    public ProductOrder.LedgerStatus[] getLedgerStatuses() {
-        return ProductOrder.LedgerStatus.values();
+    public ProductOrderListEntry.LedgerStatus[] getLedgerStatuses() {
+        return ProductOrderListEntry.LedgerStatus.values();
     }
 
     public ProductOrder.OrderStatus[] getOrderStatuses() {

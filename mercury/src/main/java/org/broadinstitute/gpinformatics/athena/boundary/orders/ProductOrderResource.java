@@ -448,7 +448,7 @@ public class ProductOrderResource {
         Iterator<ProductOrder> iterator = orders.iterator();
         while (iterator.hasNext()) {
             ProductOrder productOrder = iterator.next();
-            if (productOrder.getOrderStatus() == ProductOrder.OrderStatus.Draft) {
+            if (productOrder.isDraft()) {
                 iterator.remove();
             }
         }

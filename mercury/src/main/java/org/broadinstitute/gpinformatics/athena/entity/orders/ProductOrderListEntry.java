@@ -1,11 +1,22 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession_;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Join;
+import javax.persistence.criteria.Root;
+import javax.persistence.criteria.SetJoin;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -18,27 +29,7 @@ public class ProductOrderListEntry implements Serializable {
 
     private final Long orderId;
 
-    private final String title;
-
-    private final String jiraTicketKey;
-
-    private final String productName;
-
-    private Product product;
-
-    private final String productFamilyName;
-
-    private final ProductOrder.OrderStatus orderStatus;
-
-    private final String researchProjectTitle;
-
-    private final Long ownerId;
-
-    private final Date placedDate;
-
-    private Integer laneCount;
-
-    private final String quoteId;
+    private final ProductOrder productOrder;
 
     private Long billingSessionId;
 
@@ -56,17 +47,18 @@ public class ProductOrderListEntry implements Serializable {
                                   Long billingSessionId,
                                   long constructedCount) {
         this.orderId = orderId;
-        this.title = title;
-        this.jiraTicketKey = jiraTicketKey;
-        this.orderStatus = orderStatus;
-        this.productName = productName;
-        this.product = product;
-        this.productFamilyName = productFamilyName;
-        this.researchProjectTitle = researchProjectTitle;
-        this.ownerId = ownerId;
-        this.placedDate = placedDate;
-        this.laneCount = laneCount;
-        this.quoteId = quoteId;
+        productOrder = new ProductOrder();
+        productOrder.setTitle(title);
+        productOrder.setJiraTicketKey(jiraTicketKey);
+        productOrder.setOrderStatus(orderStatus);
+        productOrder.setProduct(product);
+        productOrder.setCreatedBy(ownerId);
+        productOrder.setPlacedDate(placedDate);
+        productOrder.setLaneCount(laneCount != null ? laneCount : 0);
+        productOrder.setQuoteId(quoteId);
+        ResearchProject researchProject = new ResearchProject();
+        researchProject.setTitle(researchProjectTitle);
+        productOrder.setResearchProject(researchProject);
         this.billingSessionId = billingSessionId;
 
         // This count is used by the query that needs to populate one of the two other counts.
@@ -109,52 +101,64 @@ public class ProductOrderListEntry implements Serializable {
         return new ProductOrderListEntry();
     }
 
+    /**
+     * @return true if this entry matches any of the statuses in the list.
+     */
+    public boolean matchStatuses(Collection<LedgerStatus> ledgerStatuses) {
+        for (LedgerStatus selectedStatus : ledgerStatuses) {
+            if (selectedStatus.entryMatch(this)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public String getTitle() {
-        return title;
+        return productOrder.getTitle();
     }
 
     public String getJiraTicketKey() {
-        return jiraTicketKey;
+        return productOrder.getJiraTicketKey();
     }
 
     public String getBusinessKey() {
-        return ProductOrder.createBusinessKey(orderId, jiraTicketKey);
+        return ProductOrder.createBusinessKey(orderId, productOrder.getJiraTicketKey());
     }
 
     public String getProductName() {
-        return productName;
+        return (productOrder.getProduct() != null) ? productOrder.getProduct().getProductName() : "";
     }
 
     public Product getProduct() {
-        return product;
+        return productOrder.getProduct();
     }
 
     public String getProductFamilyName() {
-        return productFamilyName;
+        return (productOrder.getProduct() != null) ? productOrder.getProduct().getProductFamily().getName() : "";
     }
 
     public ProductOrder.OrderStatus getOrderStatus() {
-        return orderStatus;
+        return productOrder.getOrderStatus();
     }
 
     public String getResearchProjectTitle() {
-        return researchProjectTitle;
+        return productOrder.getResearchProject().getTitle();
     }
 
     public Long getOwnerId() {
-        return ownerId;
+        return productOrder.getCreatedBy();
     }
 
     public Date getPlacedDate() {
-        return placedDate;
+        return productOrder.getPlacedDate();
     }
 
     public Integer getLaneCount() {
-        return laneCount;
+        return productOrder.getLaneCount();
     }
 
     public String getQuoteId() {
-        return quoteId;
+        return productOrder.getQuoteId();
     }
 
     public boolean isBilling() {
@@ -180,14 +184,6 @@ public class ProductOrderListEntry implements Serializable {
         return constructedCount;
     }
 
-    public void setReadyForBillingCount(Long readyForBillingCount) {
-        this.readyForBillingCount = readyForBillingCount;
-    }
-
-    public void setReadyForReviewCount(Long readyForReviewCount) {
-        this.readyForReviewCount = readyForReviewCount;
-    }
-
     /**
      * If the transient readyForBillingCount is set (done by the order list entry dao), then this is ready for
      * billing when there are entries ready for billing and nothing ready for review. Ready for review means there
@@ -210,28 +206,8 @@ public class ProductOrderListEntry implements Serializable {
         return readyForReviewCount > 0;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof ProductOrderListEntry)) {
-            return false;
-        }
-
-        ProductOrderListEntry that = (ProductOrderListEntry) o;
-
-        return !(jiraTicketKey != null ? !jiraTicketKey.equals(that.jiraTicketKey) : that.jiraTicketKey != null);
-
-    }
-
-    @Override
-    public int hashCode() {
-        return jiraTicketKey != null ? jiraTicketKey.hashCode() : 0;
-    }
-
     public boolean isDraft() {
-        return ProductOrder.OrderStatus.Draft == orderStatus;
+        return productOrder.isDraft();
     }
 
     public static Collection<Long> getProductOrderIDs(List<ProductOrderListEntry> productOrderListEntries) {
@@ -241,5 +217,180 @@ public class ProductOrderListEntry implements Serializable {
         }
 
         return pdoIds;
+    }
+
+    /**
+     * This enum defines the different states that the PDO is in based on the ledger status of all samples in the order.
+     * This status does not included 'Billed' because that is orthogonal to this status. Once something is billed, it
+     * is, essentially in NOTHING_NEW state again and new billing can happen at any time. When something is auto billed,
+     * the status becomes READY_FOR_REVIEW, which means more auto billing can happen, but there is some work to look
+     * at. The PDM can download the tracker at any time when there is no billing, but can only upload when auto billing
+     * is not happening (and billing is happening).
+     * <p/>
+     * Once the PDM or Billing Manager does an upload, the state is changed to READY_TO_BILL and the auto-biller will
+     * not process any more entries for this PDO until a billing session has been completed on it.
+     * <p/>
+     * These statuses are calculated on-demand based on the ledger entries.
+     */
+    public enum LedgerStatus {
+        NOTHING_NEW("None", false) {
+            @Override
+            public boolean entryMatch(ProductOrderListEntry entry) {
+                // Drafts are always new.
+                return entry.isDraft() ||
+                       (!entry.isReadyForBilling() && !entry.isReadyForReview() && !entry.isBilling());
+            }
+
+            @Override
+            public CriteriaQuery<ProductOrderListEntry> buildQuery(CriteriaBuilder criteriaBuilder,
+                                                                   CriteriaQuery<ProductOrderListEntry> criteriaQuery,
+                                                                   Root<ProductOrder> productOrderRoot,
+                                                                   Collection<String> parameterList,
+                                                                   SetJoin<ProductOrderSample, LedgerEntry> sampleLedgerEntryJoin,
+                                                                   Join<LedgerEntry, BillingSession> ledgerEntryBillingSessionJoin) {
+                return null;
+            }
+
+            @Override
+            public void updateEntryCount(ProductOrderListEntry entry, Long count) {
+                throw new IllegalArgumentException("Can only fetch ready to bill or ready for review");
+            }
+        },
+        READY_FOR_REVIEW("Review") {
+            @Override
+            public boolean entryMatch(ProductOrderListEntry entry) {
+                // Ready for review is ALWAYS indicated when there are ledger entries. Billing locks out
+                // automated ledger entry. For now, so does ready to bill, but that may change.
+                return entry.isReadyForReview();
+            }
+
+            @Override
+            public CriteriaQuery<ProductOrderListEntry> buildQuery(CriteriaBuilder criteriaBuilder,
+                                                                   CriteriaQuery<ProductOrderListEntry> criteriaQuery,
+                                                                   Root<ProductOrder> productOrderRoot,
+                                                                   Collection<String> parameterList,
+                                                                   SetJoin<ProductOrderSample, LedgerEntry> sampleLedgerEntryJoin,
+                                                                   Join<LedgerEntry, BillingSession> ledgerEntryBillingSessionJoin) {
+                // The billing session is null but the auto bill timestamp is NOT null.
+                return criteriaQuery.where(criteriaBuilder.isNull(sampleLedgerEntryJoin.get(LedgerEntry_.billingSession)),
+                        criteriaBuilder.isNotNull(sampleLedgerEntryJoin.get(LedgerEntry_.autoLedgerTimestamp)),
+                        productOrderRoot.get(ProductOrder_.jiraTicketKey).in(parameterList));
+            }
+
+            @Override
+            public void updateEntryCount(ProductOrderListEntry entry, Long count) {
+                entry.readyForReviewCount = count;
+            }
+        },
+        READY_TO_BILL("Ready to Bill") {
+            @Override
+            public boolean entryMatch(ProductOrderListEntry entry) {
+                // Ready for review overrides ready for billing. May not come up for a while because of
+                // lockouts, but this is the way the visual works, so using this.
+                return entry.isReadyForBilling() && !entry.isReadyForReview();
+            }
+
+            @Override
+            public CriteriaQuery<ProductOrderListEntry> buildQuery(CriteriaBuilder criteriaBuilder,
+                                                                   CriteriaQuery<ProductOrderListEntry> criteriaQuery,
+                                                                   Root<ProductOrder> productOrderRoot,
+                                                                   Collection<String> parameterList,
+                                                                   SetJoin<ProductOrderSample, LedgerEntry> sampleLedgerEntryJoin,
+                                                                   Join<LedgerEntry, BillingSession> ledgerEntryBillingSessionJoin) {
+                // The billing session is null but the auto bill timestamp is null.
+                return criteriaQuery.where(criteriaBuilder.isNull(sampleLedgerEntryJoin.get(LedgerEntry_.billingSession)),
+                        criteriaBuilder.isNull(sampleLedgerEntryJoin.get(LedgerEntry_.autoLedgerTimestamp)),
+                        productOrderRoot.get(ProductOrder_.jiraTicketKey).in(parameterList));
+            }
+
+            @Override
+            public void updateEntryCount(ProductOrderListEntry entry, Long count) {
+                entry.readyForBillingCount = count;
+            }
+        },
+        BILLING("Billing Started") {
+            @Override
+            public boolean entryMatch(ProductOrderListEntry entry) {
+                return entry.isBilling();
+            }
+
+            @Override
+            public CriteriaQuery<ProductOrderListEntry> buildQuery(CriteriaBuilder criteriaBuilder,
+                                                                   CriteriaQuery<ProductOrderListEntry> criteriaQuery,
+                                                                   Root<ProductOrder> productOrderRoot,
+                                                                   Collection<String> parameterList,
+                                                                   SetJoin<ProductOrderSample, LedgerEntry> sampleLedgerEntryJoin,
+                                                                   Join<LedgerEntry, BillingSession> ledgerEntryBillingSessionJoin) {
+                // The session is NOT null, but the session's billed date IS null.
+                return criteriaQuery.where(
+                        criteriaBuilder.isNull(ledgerEntryBillingSessionJoin.get(BillingSession_.billedDate)),
+                        criteriaBuilder.isNotNull(
+                                sampleLedgerEntryJoin.get(LedgerEntry_.billingSession)),
+                        criteriaBuilder.isNull(sampleLedgerEntryJoin.get(LedgerEntry_.autoLedgerTimestamp)),
+                        productOrderRoot.get(ProductOrder_.jiraTicketKey).in(parameterList));
+            }
+
+            @Override
+            public void updateEntryCount(ProductOrderListEntry entry, Long count) {
+                // Nothing to do.
+            }
+        };
+
+        private final String displayName;
+
+        public final boolean canCreateQuery;
+
+        LedgerStatus(String displayName, boolean canCreateQuery) {
+            this.displayName = displayName;
+            this.canCreateQuery = canCreateQuery;
+        }
+
+        LedgerStatus(String displayName) {
+            this(displayName, true);
+        }
+
+        /**
+         * @return true if the entry matches this status.
+         */
+        public abstract boolean entryMatch(ProductOrderListEntry entry);
+
+        /**
+         * Get all status values using the name strings.
+         *
+         * @param statusStrings The desired list of statuses.
+         *
+         * @return The statuses that are listed.
+         */
+        public static List<LedgerStatus> getFromNames(List<String> statusStrings) {
+            if (CollectionUtils.isEmpty(statusStrings)) {
+                return Collections.emptyList();
+            }
+
+            List<LedgerStatus> statuses = new ArrayList<>(statusStrings.size());
+            for (String statusString : statusStrings) {
+                statuses.add(LedgerStatus.valueOf(statusString));
+            }
+
+            return statuses;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+
+        /**
+         * @return the criteria query that selects for PDOs with this ledger status.
+         */
+        public abstract CriteriaQuery<ProductOrderListEntry> buildQuery(CriteriaBuilder criteriaBuilder,
+                                                                        CriteriaQuery<ProductOrderListEntry> criteriaQuery,
+                                                                        Root<ProductOrder> productOrderRoot,
+                                                                        Collection<String> parameterList,
+                                                                        SetJoin<ProductOrderSample, LedgerEntry> sampleLedgerEntryJoin,
+                                                                        Join<LedgerEntry, BillingSession> ledgerEntryBillingSessionJoin);
+
+        /**
+         * Update the count in the product order for this status.
+         */
+        public abstract void updateEntryCount(ProductOrderListEntry entry, Long count);
     }
 }
