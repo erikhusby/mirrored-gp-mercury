@@ -11,9 +11,10 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 
 /**
@@ -27,6 +28,7 @@ public class IceJaxbBuilder {
     private final List<String> pondRegTubeBarcodes;
     private String baitTube1Barcode;
     private String baitTube2Barcode;
+    private LibraryConstructionJaxbBuilder.TargetSystem targetSystem;
 
     private final List<BettaLIMSMessage> messageList = new ArrayList<>();
     private String poolRackBarcode;
@@ -60,13 +62,14 @@ public class IceJaxbBuilder {
 
     public IceJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory, String testPrefix,
             String pondRegRackBarcode, List<String> pondRegTubeBarcodes,
-            String baitTube1Barcode, String baitTube2Barcode) {
+            String baitTube1Barcode, String baitTube2Barcode, LibraryConstructionJaxbBuilder.TargetSystem targetSystem) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.testPrefix = testPrefix;
         this.pondRegRackBarcode = pondRegRackBarcode;
         this.pondRegTubeBarcodes = pondRegTubeBarcodes;
         this.baitTube1Barcode = baitTube1Barcode;
         this.baitTube2Barcode = baitTube2Barcode;
+        this.targetSystem = targetSystem;
     }
 
     public IceJaxbBuilder invoke() {
@@ -141,10 +144,17 @@ public class IceJaxbBuilder {
         bettaLimsMessageTestFactory.addMessage(messageList, ice1stCapture);
 
         // Ice2ndHybridization
-        List<BettaLimsMessageTestFactory.ReagentDto> reagentDtos = Arrays.asList(
-                new BettaLimsMessageTestFactory.ReagentDto("CT3", "0009763452", new Date()),
-                new BettaLimsMessageTestFactory.ReagentDto("Rapid Capture Kit bait", "0009773452", new Date()),
-                new BettaLimsMessageTestFactory.ReagentDto("Rapid Capture Kit Resuspension Buffer", "0009783452", new Date()));
+        List<BettaLimsMessageTestFactory.ReagentDto> reagentDtos = new ArrayList<>();
+        GregorianCalendar gregorianCalendar = new GregorianCalendar();
+        gregorianCalendar.add(Calendar.MONTH, 6);
+        Date expiration = gregorianCalendar.getTime();
+        if (targetSystem == LibraryConstructionJaxbBuilder.TargetSystem.MERCURY_ONLY) {
+            reagentDtos.add(new BettaLimsMessageTestFactory.ReagentDto("CT3", "0009763452", expiration));
+            reagentDtos.add(new BettaLimsMessageTestFactory.ReagentDto("Rapid Capture Kit bait", "0009773452",
+                    expiration));
+            reagentDtos.add(new BettaLimsMessageTestFactory.ReagentDto("Rapid Capture Kit Resuspension Buffer",
+                    "0009783452", expiration));
+        }
         ice2ndHybridization = bettaLimsMessageTestFactory.buildPlateEvent("Ice2ndHybridization",
                 firstCapturePlateBarcode, reagentDtos);
         bettaLimsMessageTestFactory.addMessage(messageList, ice2ndHybridization);
@@ -167,11 +177,15 @@ public class IceJaxbBuilder {
         bettaLimsMessageTestFactory.addMessage(messageList, iceCatchCleanup);
 
         // IceCatchEnrichmentSetup
-        List<BettaLimsMessageTestFactory.ReagentDto> reagentDtos1 = Arrays.asList(
-                new BettaLimsMessageTestFactory.ReagentDto("Dual Index Primers Lot", "0009764452", new Date()),
-                new BettaLimsMessageTestFactory.ReagentDto("Rapid Capture Enrichment Amp Lot Barcode", "0009765452", new Date()));
+        reagentDtos.clear();
+        if (targetSystem == LibraryConstructionJaxbBuilder.TargetSystem.MERCURY_ONLY) {
+            reagentDtos.add(new BettaLimsMessageTestFactory.ReagentDto("Dual Index Primers Lot", "0009764452",
+                    expiration));
+            reagentDtos.add(new BettaLimsMessageTestFactory.ReagentDto("Rapid Capture Enrichment Amp Lot Barcode",
+                    "0009765452", expiration));
+        }
         iceCatchEnrichmentSetup = bettaLimsMessageTestFactory.buildPlateEvent("IceCatchEnrichmentSetup",
-                catchCleanupPlateBarcode, reagentDtos1);
+                catchCleanupPlateBarcode, reagentDtos);
         bettaLimsMessageTestFactory.addMessage(messageList, iceCatchEnrichmentSetup);
 
         // IceCatchEnrichmentCleanup
