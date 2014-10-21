@@ -7,7 +7,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
-import org.jboss.aerogear.arquillian.test.smarturl.SchemeName;
 import org.jboss.aerogear.arquillian.test.smarturl.UriScheme;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -32,8 +31,8 @@ public class SampleImportResourceDbTest extends ContainerTest {
 
     @Test(enabled = true, groups = TestGroups.STUBBY, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testImportTubes(@ArquillianResource @UriScheme(name = SchemeName.HTTPS,
-            port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl) {
+    public void testImportTubes(
+            @ArquillianResource @UriScheme(port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl) {
         Date now = new Date();
         String suffix = dateFormat.format(now);
 
@@ -52,7 +51,8 @@ public class SampleImportResourceDbTest extends ContainerTest {
         ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
 
         // POST to the resource
-        WebResource resource = Client.create(clientConfig).resource(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/sampleimport");
+        WebResource resource = Client.create(clientConfig)
+                .resource(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/sampleimport");
         String response = resource.type(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)
                 .entity(sampleImportBeanPost)

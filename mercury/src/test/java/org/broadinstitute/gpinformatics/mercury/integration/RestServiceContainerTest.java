@@ -84,7 +84,7 @@ public abstract class RestServiceContainerTest extends Arquillian {
 
     public static String convertUrlToSecure(URL baseUrl) {
         String port = System.getProperty("jboss.socket.https");
-        return baseUrl.toString().replaceAll(String.valueOf(baseUrl.getPort()), port);
+        return baseUrl.toString().replaceAll(String.valueOf(baseUrl.getPort()), port).replaceAll("http://", "https://");
     }
 
     /**

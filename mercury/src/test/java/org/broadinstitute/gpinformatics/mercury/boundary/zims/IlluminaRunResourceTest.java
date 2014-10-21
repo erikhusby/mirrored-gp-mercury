@@ -32,7 +32,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.zims.ZamboniReadType;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
-import org.jboss.aerogear.arquillian.test.smarturl.SchemeName;
 import org.jboss.aerogear.arquillian.test.smarturl.UriScheme;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
@@ -121,8 +120,8 @@ public class IlluminaRunResourceTest extends Arquillian {
     @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER,
             groups = ALTERNATIVES)
     @RunAsClient
-    public void testErrorHandling(@ArquillianResource @UriScheme(name = SchemeName.HTTPS,
-            port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl)
+    public void testErrorHandling(
+            @ArquillianResource @UriScheme(port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl)
             throws Exception {
         String url = RestServiceContainerTest.convertUrlToSecure(baseUrl) + WEBSERVICE_URL;
 
@@ -148,8 +147,8 @@ public class IlluminaRunResourceTest extends Arquillian {
     @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER,
             groups = ALTERNATIVES)
     @RunAsClient
-    public void testZimsOverHttp(@ArquillianResource @UriScheme(name = SchemeName.HTTPS,
-            port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl)
+    public void testZimsOverHttp(
+            @ArquillianResource @UriScheme(port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl)
             throws Exception {
         String url = RestServiceContainerTest.convertUrlToSecure(baseUrl) + WEBSERVICE_URL;
 

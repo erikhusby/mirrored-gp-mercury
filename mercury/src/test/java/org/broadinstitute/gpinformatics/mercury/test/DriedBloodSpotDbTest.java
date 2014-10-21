@@ -8,7 +8,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.DriedBloodSpotJaxbBuilder;
-import org.jboss.aerogear.arquillian.test.smarturl.SchemeName;
 import org.jboss.aerogear.arquillian.test.smarturl.UriScheme;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -31,8 +30,8 @@ public class DriedBloodSpotDbTest extends ContainerTest {
 
     @Test(enabled = true, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testEndToEnd(@ArquillianResource @UriScheme(name = SchemeName.HTTPS,
-            port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl) {
+    public void testEndToEnd(
+            @ArquillianResource @UriScheme(port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl) {
         String timestamp = timestampFormat.format(new Date());
 
         List<String> ftaPaperBarcodes = new ArrayList<>();

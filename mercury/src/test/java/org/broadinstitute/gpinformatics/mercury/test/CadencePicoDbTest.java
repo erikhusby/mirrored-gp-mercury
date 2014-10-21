@@ -13,7 +13,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.labevent.ReagentBean;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.CadencePicoJaxbBuilder;
-import org.jboss.aerogear.arquillian.test.smarturl.SchemeName;
 import org.jboss.aerogear.arquillian.test.smarturl.UriScheme;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -37,8 +36,8 @@ public class CadencePicoDbTest extends ContainerTest {
 
     @Test(enabled = true, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testEndToEnd(@ArquillianResource @UriScheme(name = SchemeName.HTTPS,
-            port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl) {
+    public void testEndToEnd(
+            @ArquillianResource @UriScheme(port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl) {
         String testSuffix = timestampFormat.format(new Date());
 
         BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
@@ -67,7 +66,8 @@ public class CadencePicoDbTest extends ContainerTest {
 
         //fetches plate transfers for batchless
         LabEventResponseBean labEventResponseBean =
-                client.resource(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/labevent/transfersToFirstAncestorRack")
+                client.resource(RestServiceContainerTest.convertUrlToSecure(baseUrl)
+                                + "rest/labevent/transfersToFirstAncestorRack")
                         .queryParam("plateBarcodes", cadencePicoJaxbBuilder.getPicoMicrofluorBarcode())
                         .get(LabEventResponseBean.class);
         List<LabEventBean> labEventBeans = labEventResponseBean.getLabEventBeans();
@@ -81,7 +81,8 @@ public class CadencePicoDbTest extends ContainerTest {
         Assert.assertEquals("DilutionFactor", metadataBean.getName());
 
         //Fetch reagent addition message for batchless
-        labEventResponseBean = client.resource(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/labevent/inPlaceReagentEvents")
+        labEventResponseBean = client.resource(
+                RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/labevent/inPlaceReagentEvents")
                 .queryParam("plateBarcodes", cadencePicoJaxbBuilder.getPicoMicrofluorBarcode())
                 .get(LabEventResponseBean.class);
         labEventBeans = labEventResponseBean.getLabEventBeans();
