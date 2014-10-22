@@ -140,7 +140,9 @@
             <workflowStepDefs>
                 <name>Initial Pico</name>
                 <labEventTypes>PICO_TRANSFER</labEventTypes>
+<!--
                 <labEventTypes>PICO_BUFFER_ADDITION</labEventTypes>
+-->
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -158,7 +160,9 @@
             <workflowStepDefs>
                 <name>Fingerprinting Pico</name>
                 <labEventTypes>PICO_TRANSFER</labEventTypes>
+<!--
                 <labEventTypes>PICO_BUFFER_ADDITION</labEventTypes>
+-->
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -185,7 +189,9 @@
             <workflowStepDefs>
                 <name>Shearing Pico</name>
                 <labEventTypes>PICO_TRANSFER</labEventTypes>
+<!--
                 <labEventTypes>PICO_BUFFER_ADDITION</labEventTypes>
+-->
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>

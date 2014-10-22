@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.test.builders;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.LimsQueries;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
@@ -87,6 +88,7 @@ public class CrspPicoEntityBuilder {
         labEventHandler.processEvent(volumeAdditionEntity);
 
         // Initial PicoTransfer
+        LabEventTest.validateWorkflow("PicoTransfer", mapBarcodeToTube.values());
         mapBarcodeToVessel.put(initialRack.getLabel(), initialRack);
         initialPicoTransfer1 = labEventFactory.buildFromBettaLims(crspPicoJaxbBuilder.getInitialPicoTransfer1(),
                 mapBarcodeToVessel);
@@ -101,9 +103,12 @@ public class CrspPicoEntityBuilder {
                 initialPicoPlate2);
 
         // FingerprintingAliquot
+        LabEventTest.validateWorkflow("FingerprintingAliquot", mapBarcodeToTube.values());
         mapBarcodeToVessel.clear();
-        // todo jmt make this more selective
-        mapBarcodeToVessel.putAll(mapBarcodeToTube);
+        for (ReceptacleType receptacleType :
+                crspPicoJaxbBuilder.getFingerprintingAliquotJaxb().getSourcePositionMap().getReceptacle()) {
+            mapBarcodeToVessel.put(receptacleType.getBarcode(), mapBarcodeToTube.get(receptacleType.getBarcode()));
+        }
         fingerprintingAliquotEntity = labEventFactory.buildFromBettaLims(
                 crspPicoJaxbBuilder.getFingerprintingAliquotJaxb(), mapBarcodeToVessel);
         mapBarcodeToConcVolDto = limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(mapBarcodeToVessel);
@@ -113,16 +118,22 @@ public class CrspPicoEntityBuilder {
         Assert.assertEquals(concVolDto.getVolume(), new BigDecimal("51.00"));
 
         // FP PicoTransfer
-        mapBarcodeToVessel.clear();
         TubeFormation fpAliquotSourceTf =
                 (TubeFormation) fingerprintingAliquotEntity.getSourceLabVessels().iterator().next();
         TubeFormation fpAliquotTargetTf =
                 (TubeFormation) fingerprintingAliquotEntity.getTargetLabVessels().iterator().next();
+        LabEventTest.validateWorkflow("PicoTransfer", fpAliquotTargetTf);
+        mapBarcodeToVessel.clear();
         for (BarcodedTube barcodedTube : fpAliquotTargetTf.getContainerRole().getContainedVessels()) {
             mapBarcodeToVessel.put(barcodedTube.getLabel(), barcodedTube);
         }
-        // todo jmt make this more selective
-        mapBarcodeToVessel.putAll(mapBarcodeToTube);
+        for (ReceptacleType receptacleType : crspPicoJaxbBuilder.getFingerprintingPicoTransfer1().getSourcePositionMap()
+                .getReceptacle()) {
+            BarcodedTube barcodedTube = mapBarcodeToTube.get(receptacleType.getBarcode());
+            if (barcodedTube != null) {
+                mapBarcodeToVessel.put(receptacleType.getBarcode(), barcodedTube);
+            }
+        }
         fingerprintingPicoTransfer1 = labEventFactory.buildFromBettaLims(
                 crspPicoJaxbBuilder.getFingerprintingPicoTransfer1(), mapBarcodeToVessel);
         StaticPlate fpPicoPlate1 = (StaticPlate) fingerprintingPicoTransfer1.getTargetLabVessels().iterator().next();
@@ -136,15 +147,21 @@ public class CrspPicoEntityBuilder {
                 fpPicoPlate2);
 
         // FingerprintingPlateSetup
+        LabEventTest.validateWorkflow("FingerprintingPlateSetup", fpAliquotTargetTf);
         fingerprintingPlateSetupEntity = labEventFactory.buildFromBettaLims(
                 crspPicoJaxbBuilder.getFingerprintingPlateSetup(), mapBarcodeToVessel);
 
         // ShearingAliquot
-//        mapBarcodeToVessel.clear();
+        LabEventTest.validateWorkflow("ShearingAliquot", fingerprintingPlateSetupEntity.getTargetLabVessels());
         shearingAliquotEntity = labEventFactory.buildFromBettaLims(crspPicoJaxbBuilder.getShearingAliquot(),
                 mapBarcodeToVessel);
 
         // Shearing Pico
+        mapBarcodeToVessel.clear();
+        for (LabVessel labVessel : shearingAliquotEntity.getTargetLabVessels()) {
+            mapBarcodeToVessel.put(labVessel.getLabel(), labVessel);
+        }
+        LabEventTest.validateWorkflow("PicoTransfer", mapBarcodeToVessel.values());
         shearingPicoTransfer1 = labEventFactory.buildFromBettaLims(crspPicoJaxbBuilder.getShearingPicoTransfer1(),
                 mapBarcodeToVessel);
         StaticPlate shearingPicoPlate1 = (StaticPlate) shearingPicoTransfer1.getTargetLabVessels().iterator().next();
