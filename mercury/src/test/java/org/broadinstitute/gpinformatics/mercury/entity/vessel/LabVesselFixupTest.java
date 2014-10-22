@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -57,6 +58,9 @@ public class LabVesselFixupTest extends Arquillian {
 
     @Inject
     private BarcodedTubeDao barcodedTubeDao;
+
+    @Inject
+    private UserBean userBean;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -549,5 +553,121 @@ public class LabVesselFixupTest extends Arquillian {
         // SM-4VFD1 is in the Pico bucket twice: 0150466237, 0156371090
         BarcodedTube oldTube = barcodedTubeDao.findByBarcode("0156371090");
         barcodedTubeDao.remove(oldTube);
+    }
+
+    @Test(enabled = false)
+    public void gplim3103UpdateVolumes() {
+        userBean.loginOSUser();
+        Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(Arrays.asList(
+                "0175362322",
+                "0175362261",
+                "0175362291",
+                "0175362304",
+                "0175362254",
+                "0175362302",
+                "0175362332",
+                "0175362266",
+                "0175362256",
+                "0175362249",
+                "0175362320",
+                "0175362281",
+                "0175362316",
+                "0175362293",
+                "0175362279",
+                "0175362308",
+                "0175362257",
+                "0175362309",
+                "0175362298",
+                "0175362271",
+                "0175362314",
+                "0175362295",
+                "0175362306",
+                "0175362334",
+                "0175362258",
+                "0175362268",
+                "0175362286",
+                "0175362319",
+                "0175362335",
+                "0175362312",
+                "0175362297",
+                "0175362274",
+                "0175362326",
+                "0175362289",
+                "0175362310",
+                "0175362246",
+                "0175362255",
+                "0175362273",
+                "0175362270",
+                "0175362294",
+                "0175362305",
+                "0175362265",
+                "0175362260",
+                "0175362267",
+                "0175362243",
+                "0175362247",
+                "0175362282",
+                "0175362292",
+                "0175362245",
+                "0175362330",
+                "0175362325",
+                "0175362290",
+                "0175362315",
+                "0175362301",
+                "0175362285",
+                "0175362303",
+                "0175362283",
+                "0175362280",
+                "0175358893",
+                "0175362327",
+                "0175362263",
+                "0175362277",
+                "0175362264",
+                "0175362272",
+                "0175362262",
+                "0175362288",
+                "0175362328",
+                "0175362248",
+                "0175362311",
+                "0175362296",
+                "0175362318",
+                "0175362284",
+                "0175362241",
+                "0175362331",
+                "0175362329",
+                "0175362278",
+                "0175362269",
+                "0175362244",
+                "0175362333",
+                "0175362287",
+                "0175362317",
+                "0175362307",
+                "0175362313",
+                "0175362242",
+                "0175362259"));
+        for (Map.Entry<String, BarcodedTube> stringBarcodedTubeEntry : mapBarcodeToTube.entrySet()) {
+            BarcodedTube barcodedTube = stringBarcodedTubeEntry.getValue();
+            if (barcodedTube == null) {
+                throw new RuntimeException("Failed to find tube " + stringBarcodedTubeEntry.getKey());
+            }
+            System.out.println("Updating volume in " + barcodedTube.getLabel());
+            barcodedTube.setVolume(new BigDecimal("61"));
+        }
+        barcodedTubeDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void gplim3103UpdateVolumesNegControl() {
+        userBean.loginOSUser();
+        Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(Arrays.asList(
+                "0175362285"));
+        for (Map.Entry<String, BarcodedTube> stringBarcodedTubeEntry : mapBarcodeToTube.entrySet()) {
+            BarcodedTube barcodedTube = stringBarcodedTubeEntry.getValue();
+            if (barcodedTube == null) {
+                throw new RuntimeException("Failed to find tube " + stringBarcodedTubeEntry.getKey());
+            }
+            System.out.println("Updating volume in " + barcodedTube.getLabel());
+            barcodedTube.setVolume(new BigDecimal("131.3"));
+        }
+        barcodedTubeDao.flush();
     }
 }
