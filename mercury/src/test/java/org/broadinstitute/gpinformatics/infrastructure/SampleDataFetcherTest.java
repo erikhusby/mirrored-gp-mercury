@@ -221,13 +221,15 @@ public class SampleDataFetcherTest {
         verify(mockBspSampleDataFetcher).fetchSampleData(argThat(contains(GSSR_SAMPLE_ID)));
     }
 
-    public void test_BSP_bare_sample_should_query_BSP_and_return_nothing() {
+    public void test_BSP_bare_sample_should_query_BSP() {
         configureMercurySampleDao(new MercurySample(BSP_BARE_SAMPLE_ID, MercurySample.MetadataSource.BSP));
+        configureBspFetcher(BSP_BARE_SAMPLE_ID, bspSampleData);
 
         Map<String, SampleData> sampleDataBySampleId =
                 sampleDataFetcher.fetchSampleData(Collections.singleton(BSP_BARE_SAMPLE_ID));
 
-        assertThat(sampleDataBySampleId.size(), equalTo(0));
+        assertThat(sampleDataBySampleId.size(), equalTo(1));
+        assertThat(sampleDataBySampleId.get(BSP_BARE_SAMPLE_ID), equalTo((SampleData) bspSampleData));
     }
 
     public void fetch_BSP_samples_without_MercurySample_should_query_BSP() {
