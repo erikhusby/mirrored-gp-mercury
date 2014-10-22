@@ -655,7 +655,7 @@ public class LabVesselFixupTest extends Arquillian {
         barcodedTubeDao.flush();
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void gplim3103UpdateVolumesNegControl() {
         userBean.loginOSUser();
         Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(Arrays.asList(
