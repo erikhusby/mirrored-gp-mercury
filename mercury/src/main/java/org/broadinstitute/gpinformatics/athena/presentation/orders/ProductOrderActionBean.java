@@ -1617,11 +1617,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.materialInfo = materialInfo;
     }
 
-    @HandlesEvent("projectAutocomplete")
-    public Resolution projectAutocomplete() throws Exception {
-        return createTextResolution(projectTokenInput.getJsonString(getQ()));
-    }
-
     @HandlesEvent("productAutocomplete")
     public Resolution productAutocomplete() throws Exception {
         return createTextResolution(productTokenInput.getJsonString(getQ()));

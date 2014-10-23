@@ -98,8 +98,9 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
         } catch (UniformInterfaceException e) {
             throw new QuoteNotFoundException("Could not find quote " + id + " at " + url);
         } catch (ClientHandlerException e) {
-            throw new QuoteServerException(String.format("Could not communicate with quote server at %s: %s" + url,
-                                e.getLocalizedMessage()));        }
+            throw new QuoteServerException(String.format("Could not communicate with quote server at %s: %s",
+                    url, e.getLocalizedMessage()));
+        }
         return quote;
     }
 
@@ -121,7 +122,7 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
         } catch (UniformInterfaceException e) {
             throw new QuoteNotFoundException("Could not find any quotes at " + url);
         } catch (ClientHandlerException e) {
-            throw new QuoteServerException(String.format("Could not communicate with quote server at %s: %s" + url,
+            throw new QuoteServerException(String.format("Could not communicate with quote server at %s: %s", url,
                                 e.getLocalizedMessage()));
 
         }
@@ -141,7 +142,7 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
         } catch (UniformInterfaceException e) {
             throw new QuoteNotFoundException("Could not find any quotes at " + url);
         } catch (ClientHandlerException e) {
-            throw new QuoteServerException(String.format("Could not communicate with quote server at %s: %s" + url,
+            throw new QuoteServerException(String.format("Could not communicate with quote server at %s: %s", url,
                                 e.getLocalizedMessage()));
         }
 
