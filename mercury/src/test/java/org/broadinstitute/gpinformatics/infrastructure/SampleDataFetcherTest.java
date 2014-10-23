@@ -303,7 +303,7 @@ public class SampleDataFetcherTest {
     public void test_determineMetadataSource_for_BSP_only_sample_should_return_empty_collection() {
         Map<MercurySample.MetadataSource, Collection<MercurySample>> metadataBySampleId =
                 sampleDataFetcher.determineMetadataSource(Collections.singleton(BSP_ONLY_SAMPLE_ID));
-        assertThat(metadataBySampleId.get(MercurySample.MetadataSource.BSP), is(Matchers.nullValue()));
+        assertThat(metadataBySampleId.get(MercurySample.MetadataSource.BSP), emptyCollectionOf(MercurySample.class));
     }
 
     public void test_determineMetadataSource_for_MERCURY_sample_should_return_mercury_samples() {

@@ -194,10 +194,10 @@ public class SampleDataFetcher implements Serializable {
         Map<MercurySample.MetadataSource, Collection<MercurySample>> results = new HashMap<>();
         for (Map.Entry<String, MercurySample.MetadataSource> metadataSourceEntry : metadataSourceMap.entrySet()) {
             MercurySample sampleOfSource = mercurySamples.get(metadataSourceEntry.getKey());
+            if(CollectionUtils.isEmpty(results.get(metadataSourceEntry.getValue()))) {
+                results.put(metadataSourceEntry.getValue(), new ArrayList<MercurySample>());
+            }
             if(sampleOfSource != null) {
-                if(CollectionUtils.isEmpty(results.get(metadataSourceEntry.getValue()))) {
-                    results.put(metadataSourceEntry.getValue(), new ArrayList<MercurySample>());
-                }
                 results.get(metadataSourceEntry.getValue()).add(sampleOfSource);
             }
         }
