@@ -47,7 +47,8 @@ public class IceEntityBuilder {
 
     public IceEntityBuilder invoke() {
         IceJaxbBuilder iceJaxbBuilder = new IceJaxbBuilder(bettaLimsMessageTestFactory, testPrefix, pondRegRackBarcode,
-                pondRegTubeBarcodes, testPrefix + "IceBait1", testPrefix + "IceBait2").invoke();
+                pondRegTubeBarcodes, testPrefix + "IceBait1", testPrefix + "IceBait2",
+                LibraryConstructionJaxbBuilder.TargetSystem.SQUID_VIA_MERCURY).invoke();
         catchEnrichBarcodes = iceJaxbBuilder.getCatchEnrichTubeBarcodes();
 
         Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();

@@ -51,6 +51,11 @@
 
             $j("#sourceTube").focus();
 
+            // If the user tabs off the submit button, reset the focus loop on the first #sourceTube field.
+            $j("#recordTransfer").blur(function () {
+               $j("#sourceTube").focus();
+            });
+
             // Prevent posting the form for an enter key press in the input text fields.  Also
             // blur out of the current text field so an enter key press essentially behaves the
             // same as a blurring tab.
@@ -160,7 +165,7 @@
                     <th>Research Project</th>
                     <th>Session Name</th>
                     <th># Tubes Transferred</th>
-                    <th>Total Tubes to be Transferred</th>
+                    <th># Tubes Available for Transfer</th>
                     <th># Tubes Quarantined</th>
                     <th>Creator</th>
                     <th>Creation Date</th>
@@ -247,7 +252,7 @@
                 </div>
 
                 <div class="actionButtons">
-                    <stripes:submit name="recordTransfer" value="Record Transfer" class="btn"/>
+                    <stripes:submit id="recordTransfer" name="recordTransfer" value="Record Transfer" class="btn" tabindex="4"/>
                 </div>
             </div>
 

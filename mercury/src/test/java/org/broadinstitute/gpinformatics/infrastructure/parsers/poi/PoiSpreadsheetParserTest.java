@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.parsers.poi;
 
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
@@ -22,23 +23,32 @@ import org.testng.annotations.Test;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.emptyCollectionOf;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class PoiSpreadsheetParserTest {
     private static final String POI_TEST_XLS = "poi-test.xls";
     private static final String POI_TEST_XLSX = "poi-test.xlsx";
+    private static final String POI_TEST_TRAILING_BLANK_LINES = "poi-test-trailing-blank-lines.xlsx";
+    private static final String POI_TEST_INTERVENING_BLANK_LINES = "poi-test-intervening-blank-lines.xlsx";
+
     private TestProcessor testProcessor;
+    private TestProcessor testProcessorIgnoreTrailingBlankLines;
 
     @BeforeMethod
     public void setUp() throws Exception {
         testProcessor = new TestProcessor();
+        testProcessorIgnoreTrailingBlankLines = new TestProcessor(TableProcessor.IgnoreTrailingBlankLines.YES);
     }
 
     @DataProvider(name = "excelFileDataProvider")
@@ -47,7 +57,6 @@ public class PoiSpreadsheetParserTest {
                 {new FileInputStream(TestUtils.getTestData(POI_TEST_XLS))},
                 {new FileInputStream(TestUtils.getTestData(POI_TEST_XLSX))},
         };
-
     }
 
     @Test(dataProvider = "excelFileDataProvider")
@@ -67,7 +76,6 @@ public class PoiSpreadsheetParserTest {
                 throw new ValidationException("No, No!, Noooooooeoo!");
             }
         });
-
     }
 
     @Test(dataProvider = "excelFileDataProvider")
@@ -137,7 +145,11 @@ public class PoiSpreadsheetParserTest {
         private List<Map<String, String>> spreadsheetValues = new ArrayList<>();
 
         private TestProcessor() {
-            super(null);
+            this(IgnoreTrailingBlankLines.NO);
+        }
+
+        private TestProcessor(IgnoreTrailingBlankLines ignoreTrailingBlankLines) {
+            super(null, ignoreTrailingBlankLines);
         }
 
         @Override
@@ -172,5 +184,44 @@ public class PoiSpreadsheetParserTest {
         public List<Map<String, String>> getSpreadsheetValues() {
             return spreadsheetValues;
         }
+    }
+
+    public void representsBlankLine() {
+        List<String> line = new ArrayList<>();
+        assertThat(PoiSpreadsheetParser.representsBlankLine(line), is(true));
+
+        line.add("");
+        assertThat(PoiSpreadsheetParser.representsBlankLine(line), is(true));
+        line.add("  ");
+        assertThat(PoiSpreadsheetParser.representsBlankLine(line), is(true));
+        line.add("\t");
+        assertThat(PoiSpreadsheetParser.representsBlankLine(line), is(true));
+
+        line.add("  \tx");
+        assertThat(PoiSpreadsheetParser.representsBlankLine(line), is(false));
+    }
+
+    public void trailingBlankLines() throws IOException, InvalidFormatException, ValidationException {
+        String testData = TestUtils.getTestData(POI_TEST_TRAILING_BLANK_LINES);
+        List<String> messages;
+
+        messages = PoiSpreadsheetParser.processSingleWorksheet(new FileInputStream(testData),
+                testProcessorIgnoreTrailingBlankLines);
+        assertThat(messages, is(empty()));
+
+        messages = PoiSpreadsheetParser.processSingleWorksheet(new FileInputStream(testData), testProcessor);
+        assertThat(messages, is(not(empty())));
+    }
+
+    public void interveningBlankLines() throws IOException, InvalidFormatException, ValidationException {
+        String testData = TestUtils.getTestData(POI_TEST_INTERVENING_BLANK_LINES);
+        List<String> messages;
+
+        messages = PoiSpreadsheetParser.processSingleWorksheet(new FileInputStream(testData),
+                testProcessorIgnoreTrailingBlankLines);
+        assertThat(messages, is(not(empty())));
+
+        messages = PoiSpreadsheetParser.processSingleWorksheet(new FileInputStream(testData), testProcessor);
+        assertThat(messages, is(not(empty())));
     }
 }

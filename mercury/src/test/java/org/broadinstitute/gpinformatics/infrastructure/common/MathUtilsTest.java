@@ -5,6 +5,8 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.math.BigDecimal;
+
 @Test(groups = TestGroups.DATABASE_FREE)
 public class MathUtilsTest {
 
@@ -26,5 +28,21 @@ public class MathUtilsTest {
     @Test(dataProvider = "isSameData")
     public void testIsSame(double actual, double expected, boolean result) throws Exception {
         Assert.assertEquals(MathUtils.isSame(actual, expected), result);
+    }
+
+    public void testScaling(){
+        BigDecimal output;
+
+        output = MathUtils.scaleTwoDecimalPlaces( new BigDecimal(".001") );
+        Assert.assertEquals( output, new BigDecimal("0.00") );
+
+        output = MathUtils.scaleTwoDecimalPlaces( new BigDecimal("-0.001") );
+        Assert.assertEquals( output, new BigDecimal("0.00") );
+
+        output = MathUtils.scaleTwoDecimalPlaces( new BigDecimal(".009") );
+        Assert.assertEquals( output, new BigDecimal("0.01") );
+
+        output = MathUtils.scaleTwoDecimalPlaces( new BigDecimal("-0.009") );
+        Assert.assertEquals( output, new BigDecimal("-0.01") );
     }
 }

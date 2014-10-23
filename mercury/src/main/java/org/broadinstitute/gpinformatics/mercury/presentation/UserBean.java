@@ -50,7 +50,7 @@ public class UserBean implements Serializable {
     @Inject
     private JiraService jiraService;
 
-    private static final BspUser UNKNOWN = new BspUser() {{
+    public static final BspUser UNKNOWN = new BspUser() {{
         setUserId(-1L);
         setUsername("");
     }};
@@ -195,9 +195,13 @@ public class UserBean implements Serializable {
     }
 
     private void loginDeveloper(String user) {
+        login(user);
+        roles.add(Role.Developer);
+    }
+
+    public void login(String user) {
         loginUserName = user;
         updateBspStatus();
-        roles.add(Role.Developer);
     }
 
     /**

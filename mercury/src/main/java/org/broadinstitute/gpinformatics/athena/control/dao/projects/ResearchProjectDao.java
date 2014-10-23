@@ -190,9 +190,13 @@ public class ResearchProjectDao extends GenericDao {
         return projectOrderCounts;
     }
 
+    /**
+     * Search Research Projects by title or business key.
+     */
     public Collection<ResearchProject> searchProjects(String searchText) {
         String[] searchWords = searchText.split("\\s");
-        return findListWithWildcardList(ResearchProject.class, Arrays.asList(searchWords), true, ResearchProject_.title);
+        return findListWithWildcardList(ResearchProject.class, Arrays.asList(searchWords), true,
+                ResearchProject_.title, ResearchProject_.jiraTicketKey);
     }
 
     /**

@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.presentation.vessel;
 
 import freemarker.template.utility.StringUtil;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.Row;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
@@ -56,16 +57,19 @@ public class FingerprintingSpreadsheetActionBeanTest {
     private ControlReagent fillerReagent = new ControlReagent("NA12878", "nolot", new Date(),
             new Control("NA12878", Control.ControlType.POSITIVE));
 
+    private static final int FULL_RACK_COUNT = Matrix96.getVesselGeometry().getVesselPositions().length;
+    private static final BigDecimal BD_60 = new BigDecimal("60.0");
+
     @BeforeMethod
     public void setUp() throws Exception {
         Date now = new Date();
         Date later = new Date(now.getTime() + 10000L);
 
-        // Makes an initial pico Matrix96 rack with 1 positive control, 1 negative control, and 90 samples.
+        // Makes an initial pico Matrix96 rack with 1 positive control, 1 negative control, and 94 samples.
         // Samples above SM-159 will be high concentration and will be FP pico'd.
         initialPicoMap = new HashMap<>();
-        int i = 0;
-        for (VesselPosition position : Matrix96.getVesselGeometry().getVesselPositions()) {
+        for (int i = 0; i < FULL_RACK_COUNT; ++i) {
+            VesselPosition position = Matrix96.getVesselGeometry().getVesselPositions()[i];
             String idValue = String.valueOf(100 + i);
             MercurySample mercurySample = new MercurySample("SM-" + idValue, MercurySample.MetadataSource.MERCURY);
             String collaboratorSampleId =
@@ -78,7 +82,6 @@ public class FingerprintingSpreadsheetActionBeanTest {
             tube.addMetric(new LabMetric(new BigDecimal(i), LabMetric.MetricType.INITIAL_PICO,
                     LabMetric.LabUnit.NG_PER_UL, position.name(), now));
             initialPicoMap.put(position, tube);
-            ++i;
         }
         initialPicoRack = new TubeFormation(initialPicoMap, Matrix96);
 
@@ -87,29 +90,55 @@ public class FingerprintingSpreadsheetActionBeanTest {
         LabEvent initPicoTransfer = doSectionTransfer(initialPicoRack, initalPicoPlate);
         initPicoTransfer.addMetadata(new LabEventMetadata(LabEventMetadata.LabEventMetadataType.Volume, "11.1"));
 
+        // Dilutes the high concentration tubes and puts an FP Pico metric on the new aliquot tubes.
+        Map<VesselPosition, BarcodedTube> aliquotSourceMap = new HashMap<>();
+        Map<VesselPosition, BarcodedTube> aliquotDestMap = new HashMap<>();
+        int aliquotPositionIdx = 0;
+        for (int i = 60; i < 91; ++i) {
+            VesselPosition picoPosition = Matrix96.getVesselGeometry().getVesselPositions()[i];
+            VesselPosition aliquotPosition = Matrix96.getVesselGeometry().getVesselPositions()[aliquotPositionIdx];
+
+            BarcodedTube initialTube = initialPicoMap.get(picoPosition);
+            Assert.assertEquals(initialTube.getMetrics().size(), 1);
+            Assert.assertTrue(BD_60.compareTo(initialTube.getMetrics().iterator().next().getValue()) <= 0);
+
+            aliquotSourceMap.put(aliquotPosition, initialTube);
+
+            BarcodedTube aliquotTube = new BarcodedTube("tube" + (200 + i));
+            aliquotTube.addAllSamples(initialTube.getMercurySamples());
+            BigDecimal conc = new BigDecimal("5." + StringUtil.leftPad(String.valueOf(i), 3, '0'));
+            aliquotTube.addMetric(new LabMetric(conc, LabMetric.MetricType.FINGERPRINT_PICO,
+                    LabMetric.LabUnit.NG_PER_UL, aliquotPosition.name(), later));
+
+            aliquotDestMap.put(aliquotPosition, aliquotTube);
+
+            ++aliquotPositionIdx;
+        }
+        TubeFormation aliquotSourceRack = new TubeFormation(aliquotSourceMap, Matrix96);
+        TubeFormation aliquotDestRack = new TubeFormation(aliquotDestMap, Matrix96);
+        LabEvent aliquotTransfer = doSectionTransfer(aliquotSourceRack, aliquotDestRack);
+
         // Makes a rearray rack with 1 positive control, 1 negative control, 58 Initial pico quant samples,
         // 30 FP pico quant aliquots, and 6 tubes of NA12878 filler.
         rearrayMap = new HashMap<>();
-        i = 0;
-        for (VesselPosition position : Matrix96.getVesselGeometry().getVesselPositions()) {
+        aliquotPositionIdx = 0;
+        for (int i = 0; i < FULL_RACK_COUNT; ++i) {
+            VesselPosition picoPosition = Matrix96.getVesselGeometry().getVesselPositions()[i];
+            VesselPosition aliquotPosition = Matrix96.getVesselGeometry().getVesselPositions()[aliquotPositionIdx];
+            VesselPosition rearrayPosition = Matrix96.getVesselGeometry().getVesselPositions()[i];
             BarcodedTube rearrayTube;
             if (i < 60) {
-                rearrayTube = initialPicoMap.get(position);
+                rearrayTube = initialPicoMap.get(picoPosition);
             } else if (i < 91) {
-                // Dilutes the high concentration tubes and puts an FP Pico metric on the new tubes.
-                rearrayTube = new BarcodedTube("tube" + (200 + i));
-                BarcodedTube initialTube = initialPicoMap.get(position);
-                rearrayTube.addAllSamples(initialTube.getMercurySamples());
-                BigDecimal conc = new BigDecimal("5." + StringUtil.leftPad(String.valueOf(i), 3, '0'));
-                rearrayTube.addMetric(new LabMetric(conc, LabMetric.MetricType.FINGERPRINT_PICO,
-                        LabMetric.LabUnit.NG_PER_UL, position.name(), later));
+                rearrayTube = aliquotDestMap.get(aliquotPosition);
+                Assert.assertNotNull(rearrayTube, "at idx " + i + " (aliquot idx " + aliquotPositionIdx + ")");
+                ++aliquotPositionIdx;
             } else {
                 // Fills empty positions with non-control NA12878, which has no sample, no SM-id, no quant value.
                 rearrayTube = new BarcodedTube("tube" + (300 + i));
                 rearrayTube.addReagent(fillerReagent);
             }
-            rearrayMap.put(position, rearrayTube);
-            ++i;
+            rearrayMap.put(rearrayPosition, rearrayTube);
         }
         rearrayRack = new TubeFormation(rearrayMap, Matrix96);
 
@@ -133,13 +162,17 @@ public class FingerprintingSpreadsheetActionBeanTest {
         EasyMock.replay(controlDao);
 
         // Generates a spreadsheet.
-        actionBean.staticPlate = fpPlate;
+        actionBean.setStaticPlate(fpPlate);
         actionBean.barcodeSubmit();
+
+        // Should have no validation errors and a workbook.
+        Assert.assertEquals(actionBean.getErrorMessages().size(), 0, StringUtils.join(actionBean.getErrorMessages(), "; "));
+        Assert.assertNotNull(actionBean.getWorkbook());
 
         // Collects the participant ids from the first sheet.
         List<String> participantIds = new ArrayList<>();
         int smCount = 0;
-        for (Row row : actionBean.workbook.getSheet("Participants")) {
+        for (Row row : actionBean.getWorkbook().getSheet("Participants")) {
             // Skips the header row and last row that has nulls.
             if (row.getCell(0) == null || row.getCell(0).getStringCellValue().startsWith("Participant")) {
                 continue;
@@ -158,7 +191,7 @@ public class FingerprintingSpreadsheetActionBeanTest {
         // Checks the data on the second sheet against the tubes in rearray rack.
         Set<String> tubePrefixes = new HashSet<>();
         Iterator<String> participantIdsIter = participantIds.iterator();
-        for (Row row : actionBean.workbook.getSheet("Plate")) {
+        for (Row row : actionBean.getWorkbook().getSheet("Plate")) {
             // Skips the header row and last row that has nulls.
             if (row.getCell(0) == null || row.getCell(0).getStringCellValue().startsWith("Well Position")) {
                 continue;
@@ -198,7 +231,7 @@ public class FingerprintingSpreadsheetActionBeanTest {
 
         // Checks row counts.
         Assert.assertFalse(participantIdsIter.hasNext());
-        Assert.assertEquals(participantIds.size(), Matrix96.getVesselGeometry().getVesselPositions().length);
+        Assert.assertEquals(participantIds.size(), FULL_RACK_COUNT);
 
         EasyMock.verify(controlDao);
     }
@@ -220,14 +253,16 @@ public class FingerprintingSpreadsheetActionBeanTest {
         LabEvent rearrayTransfer = doSectionTransfer(rearrayRack, fpPlate);
         // Provide no volume information as lab event metadata.
 
-        actionBean.staticPlate = fpPlate;
+        actionBean.setStaticPlate(fpPlate);
         actionBean.barcodeSubmit();
 
-        // No validation errors.
-        Assert.assertEquals(actionBean.getContext().getValidationErrors().size(), 0);
+        // Should have no errors and a workbook.
+        Assert.assertEquals(actionBean.getErrorMessages().size(), 0, StringUtils.join(actionBean.getErrorMessages(), "; "));
+        Assert.assertNotNull(actionBean.getWorkbook());
+
         // 48 sample rows in the spreadsheet.
         int rowCount = 0;
-        for (Row row : actionBean.workbook.getSheet("Plate")) {
+        for (Row row : actionBean.getWorkbook().getSheet("Plate")) {
             // Skips the header row and last row that has nulls.
             if (row.getCell(0) == null || row.getCell(0).getStringCellValue().startsWith("Well Position")) {
                 continue;
@@ -240,22 +275,27 @@ public class FingerprintingSpreadsheetActionBeanTest {
         EasyMock.verify(controlDao);
     }
 
-    public void test95SampleCount() throws Exception {
-        EasyMock.expect(controlDao.findByCollaboratorParticipantId(EasyMock.anyObject(String.class))).andReturn(null).anyTimes();
+    public void test46SampleCount() throws Exception {
+        EasyMock.expect(controlDao.findByCollaboratorParticipantId(EasyMock.anyObject(String.class))).andReturn(null)
+                .anyTimes();
         EasyMock.replay(controlDao);
 
         // Removes two tubes and the action bean should make a validation error.
-        rearrayMap.remove(VesselPosition.A01);
-        rearrayMap.remove(VesselPosition.A02);
+        List<VesselPosition> positions = new ArrayList<>(rearrayMap.keySet());
+        for (VesselPosition position : positions.subList(46, 96)) {
+            rearrayMap.remove(position);
+        }
         rearrayRack = new TubeFormation(rearrayMap, Matrix96);
         fpPlate = new StaticPlate("fpPlateBad", Eppendorf96);
         LabEvent rearrayTransfer = doSectionTransfer(rearrayRack, fpPlate);
         rearrayTransfer.addMetadata(new LabEventMetadata(LabEventMetadata.LabEventMetadataType.Volume, "33.3"));
 
-        actionBean.staticPlate = fpPlate;
+        actionBean.setStaticPlate(fpPlate);
         actionBean.barcodeSubmit();
+        // Should have no creation errors, one validation error, and no workbook.
+        Assert.assertEquals(actionBean.getErrorMessages().size(), 0, StringUtils.join(actionBean.getErrorMessages(), "; "));
         Assert.assertEquals(actionBean.getContext().getValidationErrors().size(), 1);
-        Assert.assertNull(actionBean.workbook);
+        Assert.assertNull(actionBean.getWorkbook());
         EasyMock.verify(controlDao);
     }
 

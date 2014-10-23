@@ -11,8 +11,10 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.envers.ReflectionUti
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -39,6 +41,16 @@ public class AuditTrailActionBean extends CoreActionBean {
     private static final String ANY_USER = "Any user";
     private static final String NO_USER = "(no user)";
     private static final String ANY_ENTITY = "Any type";
+    private static final Date FIRST_AUDIT;
+    static {
+        try {
+            // Set to the earliest date of a change that can be displayed in audit trail.
+            // This is the rev_date of the earliest rev_info record that joins with REVCHANGES.
+            FIRST_AUDIT = (new SimpleDateFormat("d-MMM-yyyy hh:mm:ss")).parse("6-AUG-2014 21:35:29");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     @Inject
     private AuditReaderDao auditReaderDao;
@@ -104,9 +116,10 @@ public class AuditTrailActionBean extends CoreActionBean {
         return canonicalToDisplayClassnames.get(canonicalClassname);
     }
 
-    /** These entity classnames are removed from the Entity Type dropdown. */
-    private static final SortedSet<String> excludedEntityTypes = new TreeSet<String>(){{
+    /** These entity classnames are removed from the Entity Type dropdown and the list of modified entities. */
+    private static final SortedSet<String> excludedDisplayClassnames = new TreeSet<String>(){{
         add("RevInfo");
+        add("Preference");
     }};
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -140,7 +153,7 @@ public class AuditTrailActionBean extends CoreActionBean {
                     // it if necessary by including more of the canonical classname.
                     for (int idx = classname.lastIndexOf('.'); idx >= 0; idx = classname.lastIndexOf('.', idx)) {
                         String displayName = classname.substring(idx + 1);
-                        if (excludedEntityTypes.contains(displayName)) {
+                        if (excludedDisplayClassnames.contains(displayName)) {
                             break;
                         }
                         if (!entityDisplayNames.contains(displayName)) {
@@ -167,19 +180,25 @@ public class AuditTrailActionBean extends CoreActionBean {
         // Search Envers using the user's criteria.
         String usernameParam =  ANY_USER.equals(searchUsername) ? AuditReaderDao.IS_ANY_USER :
                 (NO_USER.equals(searchUsername) ? AuditReaderDao.IS_NULL_USER : searchUsername);
-        Set<Long> revIds = (SortedSet)auditReaderDao.fetchAuditIds(getDateRange().getStartTime().getTime()/1000,
-                getDateRange().getEndTime().getTime()/1000, usernameParam).keySet();
+        long from = (getDateRange().getStartTime() != null ?
+                getDateRange().getStartTime() : FIRST_AUDIT).getTime()/1000;
+        long to = (getDateRange().getEndTime() != null ? getDateRange().getEndTime() : new Date()).getTime()/1000;
+        Set<Long> revIds = (SortedSet)auditReaderDao.fetchAuditIds(from, to, usernameParam).keySet();
         auditTrailList = auditReaderDao.fetchAuditedRevs(revIds);
         // Convert canonical classnames to our display names.
         for (AuditedRevDto auditedRevDto : auditTrailList) {
             List<String> displayNames = new ArrayList<>();
             for (String canonicalName : auditedRevDto.getEntityTypeNames()) {
-                // Hibernate may return an abstract class (see GPLIM-3011) which should not be shown.
+                // Doesn't show excluded classes or abstract classes (due to a Hibernate bug) and logs the latter.
                 if (canonicalToDisplayClassnames.containsKey(canonicalName)) {
                     displayNames.add(canonicalToDisplayClassnames.get(canonicalName));
                 } else {
-                    logger.info("AuditReader found an unexpected class " + canonicalName +
-                                " at revision id " + auditedRevDto.getRevId());
+                    for (String excludedDisplayClassname : excludedDisplayClassnames) {
+                        if (!canonicalName.endsWith(excludedDisplayClassname)) {
+                            logger.info("AuditReader found an unexpected class " + canonicalName +
+                                        " at revision id " + auditedRevDto.getRevId());
+                        }
+                    }
                 }
             }
             auditedRevDto.getEntityTypeNames().clear();
@@ -198,4 +217,7 @@ public class AuditTrailActionBean extends CoreActionBean {
         Collections.sort(auditTrailList, AuditedRevDto.BY_REV_ID);
     }
 
+    public static SortedSet<String> getExcludedDisplayClassnames() {
+        return excludedDisplayClassnames;
+    }
 }

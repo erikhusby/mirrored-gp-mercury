@@ -276,31 +276,32 @@ public class VesselContainer<T extends LabVessel> {
         TransferTraverserCriteria.Context context =
                 new TransferTraverserCriteria.Context(vesselAtPosition, this, position, labEvent, hopCount,
                         traversalDirection);
-        TransferTraverserCriteria.TraversalControl traversalControl =
-                transferTraverserCriteria.evaluateVesselPreOrder(context);
-        if (vesselAtPosition != null) {
-            // handle re-arrays of tubes - look in any other racks that the tube has been in
-            if (getEmbedder() instanceof TubeFormation) {
-                TubeFormation thisTubeFormation = (TubeFormation) getEmbedder();
-                for (VesselContainer<?> vesselContainer : vesselAtPosition.getContainers()) {
-                    if (OrmUtil.proxySafeIsInstance(vesselContainer.getEmbedder(), TubeFormation.class)) {
-                        TubeFormation otherTubeFormation =
-                                OrmUtil.proxySafeCast(vesselContainer.getEmbedder(), TubeFormation.class);
-                        if (!otherTubeFormation.getDigest().equals(thisTubeFormation.getDigest())) {
-                            if (traversalDirection == TransferTraverserCriteria.TraversalDirection.Ancestors) {
-                                vesselContainer.traverseAncestors(vesselContainer.getPositionOfVessel(vesselAtPosition),
-                                        transferTraverserCriteria, traversalDirection, hopCount);
-                            } else {
-                                vesselContainer
-                                        .traverseDescendants(vesselContainer.getPositionOfVessel(vesselAtPosition),
-                                                transferTraverserCriteria, traversalDirection, hopCount);
+        if (transferTraverserCriteria.evaluateVesselPreOrder(context) ==
+            TransferTraverserCriteria.TraversalControl.ContinueTraversing) {
+
+            if (vesselAtPosition != null) {
+                // handle re-arrays of tubes - look in any other racks that the tube has been in
+                if (getEmbedder() instanceof TubeFormation) {
+                    TubeFormation thisTubeFormation = (TubeFormation) getEmbedder();
+                    for (VesselContainer<?> vesselContainer : vesselAtPosition.getContainers()) {
+                        if (OrmUtil.proxySafeIsInstance(vesselContainer.getEmbedder(), TubeFormation.class)) {
+                            TubeFormation otherTubeFormation =
+                                    OrmUtil.proxySafeCast(vesselContainer.getEmbedder(), TubeFormation.class);
+                            if (!otherTubeFormation.getDigest().equals(thisTubeFormation.getDigest())) {
+                                if (traversalDirection == TransferTraverserCriteria.TraversalDirection.Ancestors) {
+                                    vesselContainer.traverseAncestors(vesselContainer.getPositionOfVessel(vesselAtPosition),
+                                            transferTraverserCriteria, traversalDirection, hopCount);
+                                } else {
+                                    vesselContainer
+                                            .traverseDescendants(vesselContainer.getPositionOfVessel(vesselAtPosition),
+                                                    transferTraverserCriteria, traversalDirection, hopCount);
+                                }
                             }
                         }
                     }
                 }
             }
-        }
-        if (traversalControl == TransferTraverserCriteria.TraversalControl.ContinueTraversing) {
+
             if (traversalDirection == TransferTraverserCriteria.TraversalDirection.Ancestors) {
                 traverseAncestors(position, transferTraverserCriteria, traversalDirection, hopCount);
             } else {

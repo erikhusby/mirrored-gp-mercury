@@ -631,15 +631,15 @@ public class LabEventFactory implements Serializable {
                         RackOfTubes rackOfTubes = OrmUtil.proxySafeCast(
                                 mapBarcodeToVessel.get(plateType.getBarcode()), RackOfTubes.class);
                         boolean rackOfTubesWasNull = rackOfTubes == null;
-                        if (tubeFormation == null) {
-                            Map<String, BarcodedTube> mapBarcodeToTube = new HashMap<>();
-                            for (ReceptacleType receptacleType : positionMapType.getReceptacle()) {
-                                mapBarcodeToTube.put(receptacleType.getBarcode(),
-                                        OrmUtil.proxySafeCast(mapBarcodeToVessel.get(receptacleType.getBarcode()),
-                                                BarcodedTube.class)
-                                );
-                            }
 
+                        Map<String, BarcodedTube> mapBarcodeToTube = new HashMap<>();
+                        for (ReceptacleType receptacleType : positionMapType.getReceptacle()) {
+                            mapBarcodeToTube.put(receptacleType.getBarcode(),
+                                    OrmUtil.proxySafeCast(mapBarcodeToVessel.get(receptacleType.getBarcode()),
+                                            BarcodedTube.class)
+                            );
+                        }
+                        if (tubeFormation == null) {
                             tubeFormation = buildRackDaoFree(mapBarcodeToTube, rackOfTubes, plateType,
                                     positionMapType, source, create);
                             mapBarcodeToVessel.put(tubeFormation.getLabel(), tubeFormation);
@@ -654,6 +654,7 @@ public class LabEventFactory implements Serializable {
                                 mapBarcodeToVessel.put(rackOfTubes.getLabel(), rackOfTubes);
                                 tubeFormation.addRackOfTubes(rackOfTubes);
                             }
+                            setTubeQuantities(mapBarcodeToTube, positionMapType);
                         }
                         mapBarcodeToTubeFormation.put(plateType.getBarcode(), tubeFormation);
                         break;
@@ -1066,9 +1067,15 @@ public class LabEventFactory implements Serializable {
         for (ReceptacleType receptacleType : positionMap.getReceptacle()) {
             BarcodedTube barcodedTube = mapBarcodeToTubes.get(receptacleType.getBarcode());
             if (barcodedTube != null) {
-                barcodedTube.setVolume(receptacleType.getVolume());
-                barcodedTube.setConcentration(receptacleType.getConcentration());
-                barcodedTube.setReceptacleWeight(receptacleType.getReceptacleWeight());
+                if (receptacleType.getVolume() != null) {
+                    barcodedTube.setVolume(receptacleType.getVolume());
+                }
+                if (receptacleType.getConcentration() != null) {
+                    barcodedTube.setConcentration(receptacleType.getConcentration());
+                }
+                if (receptacleType.getReceptacleWeight() != null) {
+                    barcodedTube.setReceptacleWeight(receptacleType.getReceptacleWeight());
+                }
             }
         }
     }

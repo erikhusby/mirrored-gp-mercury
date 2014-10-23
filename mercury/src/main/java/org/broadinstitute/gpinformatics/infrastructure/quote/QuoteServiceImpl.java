@@ -175,7 +175,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         } catch (UniformInterfaceException e) {
             throw new QuoteNotFoundException("Could not find price list at " + url);
         } catch (ClientHandlerException e) {
-            throw new QuoteServerException(String.format("Could not communicate with quote server at %s: %s" + url,
+            throw new QuoteServerException(String.format("Could not communicate with quote server at %s: %s", url,
                                 e.getLocalizedMessage()));
 
         }
@@ -204,7 +204,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         } catch (UniformInterfaceException e) {
             throw new QuoteNotFoundException("Could not find quotes for sequencing at " + url);
         } catch (ClientHandlerException e) {
-            throw new QuoteServerException(String.format("Could not communicate with quote server at %s: %s" + url,
+            throw new QuoteServerException(String.format("Could not communicate with quote server at %s: %s", url,
                                 e.getLocalizedMessage()));
 
         }
@@ -247,7 +247,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         } catch (UniformInterfaceException e) {
             throw new QuoteNotFoundException("Could not find quote " + id + " at " + url);
         } catch (ClientHandlerException e) {
-            throw new QuoteServerException(String.format("Could not communicate with quote server at %s: %s" + url,
+            throw new QuoteServerException(String.format("Could not communicate with quote server at %s: %s", url,
                                 e.getLocalizedMessage()));
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException("URL encoding not supported: '" + ENCODING + "'", e);
