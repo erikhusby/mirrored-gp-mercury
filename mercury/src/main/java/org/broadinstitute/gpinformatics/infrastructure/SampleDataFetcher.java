@@ -87,7 +87,7 @@ public class SampleDataFetcher implements Serializable {
      * @return Mapping of sample id to its sample data
      */
     public Map<String, SampleData> fetchSampleData(@Nonnull Collection<String> sampleNames) {
-        Map<String, List<MercurySample>> allMercurySamples = mercurySampleDao.findMapIdToListMercurySample(sampleNames);
+        Map<String, MercurySample> allMercurySamples = mercurySampleDao.findMapIdToMercurySample(sampleNames);
         Map<String, MercurySample.MetadataSource> metadataSources =
                 sampleDataSourceResolver.resolveSampleDataSources(sampleNames, allMercurySamples);
 
@@ -100,7 +100,7 @@ public class SampleDataFetcher implements Serializable {
                 bspSampleIds.add(sampleName);
                 break;
             case MERCURY:
-                mercurySamples.addAll(allMercurySamples.get(sampleName));
+                mercurySamples.add(allMercurySamples.get(sampleName));
                 break;
             default:
                 throw new IllegalStateException("Unknown sample data source: " + metadataSource);
@@ -188,12 +188,18 @@ public class SampleDataFetcher implements Serializable {
      * Given a Collection of sampleIds, return a Map of MercurySamples keyed on MetadataSource.
      */
     Map<MercurySample.MetadataSource, Collection<MercurySample>> determineMetadataSource(Collection<String> sampleIds) {
-        Map<String, List<MercurySample>> mercurySamples = mercurySampleDao.findMapIdToListMercurySample(sampleIds);
+        Map<String, MercurySample> mercurySamples = mercurySampleDao.findMapIdToMercurySample(sampleIds);
         Map<String, MercurySample.MetadataSource> metadataSourceMap = sampleDataSourceResolver.resolveSampleDataSources(
                 sampleIds, mercurySamples);
         Map<MercurySample.MetadataSource, Collection<MercurySample>> results = new HashMap<>();
         for (Map.Entry<String, MercurySample.MetadataSource> metadataSourceEntry : metadataSourceMap.entrySet()) {
-            results.put(metadataSourceEntry.getValue(), mercurySamples.get(metadataSourceEntry.getKey()));
+            MercurySample sampleOfSource = mercurySamples.get(metadataSourceEntry.getKey());
+            if(sampleOfSource != null) {
+                if(CollectionUtils.isEmpty(results.get(metadataSourceEntry.getValue()))) {
+                    results.put(metadataSourceEntry.getValue(), new ArrayList<MercurySample>());
+                }
+                results.get(metadataSourceEntry.getValue()).add(sampleOfSource);
+            }
         }
         return results;
     }

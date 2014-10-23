@@ -88,7 +88,7 @@ public class LabVesselFactory implements Serializable {
         }
 
         Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
-        Map<String, List<MercurySample>> mapIdToListMercurySample = mercurySampleDao.findMapIdToListMercurySample(
+        Map<String, MercurySample> mapIdToListMercurySample = mercurySampleDao.findMapIdToMercurySample(
                 sampleIds);
         Map<String, Set<ProductOrderSample>> mapIdToListPdoSamples = productOrderSampleDao.findMapBySamples(sampleIds);
         return buildLabVesselDaoFree(mapBarcodeToVessel, mapIdToListMercurySample,
@@ -115,8 +115,8 @@ public class LabVesselFactory implements Serializable {
 
         List<String> sampleIds = new ArrayList<>();
         sampleIds.add(sampleName);
-        Map<String, List<MercurySample>> mapIdToListMercurySample =
-                mercurySampleDao.findMapIdToListMercurySample(sampleIds);
+        Map<String, MercurySample> mapIdToListMercurySample =
+                mercurySampleDao.findMapIdToMercurySample(sampleIds);
         Map<String, Set<ProductOrderSample>> mapIdToListPdoSamples =
                 productOrderSampleDao.findMapBySamples(sampleIds);
 
@@ -143,7 +143,7 @@ public class LabVesselFactory implements Serializable {
     @DaoFree
     public List<LabVessel> buildLabVesselDaoFree(
             Map<String, LabVessel> mapBarcodeToVessel,
-            Map<String, List<MercurySample>> mapIdToListMercurySample,
+            Map<String, MercurySample> mapIdToListMercurySample,
             Map<String, Set<ProductOrderSample>> mapIdToListPdoSamples,
             String userName,
             Date eventDate,
@@ -280,20 +280,17 @@ public class LabVesselFactory implements Serializable {
      * @return MercurySample with mandatory sampleId and optional Product Order
      */
     @DaoFree
-    private MercurySample getMercurySample(Map<String, List<MercurySample>> mapIdToListMercurySample,
+    private MercurySample getMercurySample(Map<String, MercurySample> mapIdToListMercurySample,
             Map<String, Set<ProductOrderSample>> mapIdToListPdoSamples,
             String sampleId, MercurySample.MetadataSource metadataSource) {
-        List<MercurySample> mercurySamples = mapIdToListMercurySample.get(sampleId);
-        if (mercurySamples == null) {
-            mercurySamples = Collections.emptyList();
-        }
+        MercurySample mercurySample = mapIdToListMercurySample.get(sampleId);
+
         Set<ProductOrderSample> productOrderSamples = mapIdToListPdoSamples.get(sampleId);
         if (productOrderSamples == null) {
             productOrderSamples = Collections.emptySet();
         }
 
-        MercurySample mercurySample = null;
-        if (mercurySamples.isEmpty()) {
+        if (mercurySample == null) {
             if (productOrderSamples.isEmpty()) {
                 mercurySample = new MercurySample(sampleId, metadataSource);
             } else {
@@ -301,10 +298,6 @@ public class LabVesselFactory implements Serializable {
                     mercurySample = new MercurySample(productOrderSample.getName(), metadataSource);
                 }
             }
-        } else if (mercurySamples.size() > 1) {
-            throw new RuntimeException("More than one MercurySample for " + sampleId);
-        } else {
-            mercurySample = mercurySamples.get(0);
         }
         return mercurySample;
     }

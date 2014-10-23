@@ -57,8 +57,8 @@ public class MercurySampleDao extends GenericDao {
         return findListByList(MercurySample.class, MercurySample_.sampleKey, sampleKeys);
     }
 
-    public List<MercurySample> findBySampleKey(String sampleKey) {
-        return findList(MercurySample.class, MercurySample_.sampleKey, sampleKey);
+    public MercurySample findBySampleKey(String sampleKey) {
+        return findSingle(MercurySample.class, MercurySample_.sampleKey, sampleKey);
     }
 
     /**
@@ -76,6 +76,22 @@ public class MercurySampleDao extends GenericDao {
         List<MercurySample> mercurySamples = findListByList(MercurySample.class, MercurySample_.sampleKey, sampleKeys);
         for (MercurySample mercurySample : mercurySamples) {
             mapSampleIdToListMercurySamples.get(mercurySample.getSampleKey()).add(mercurySample);
+        }
+        return mapSampleIdToListMercurySamples;
+    }
+
+    /**
+     * Finds MercurySamples for the given samples keys. Returns a map of MercurySamples indexed by sample key. The map
+     * contains empty collections if no MercurySamples are found.
+     *
+     * @param sampleKeys    the sample keys to search for
+     * @return a map of sample key to (possibly multiple) MercurySamples
+     */
+    public Map<String, MercurySample> findMapIdToMercurySample(Collection<String> sampleKeys) {
+        Map<String, MercurySample> mapSampleIdToListMercurySamples = new HashMap<>();
+        List<MercurySample> mercurySamples = findListByList(MercurySample.class, MercurySample_.sampleKey, sampleKeys);
+        for (MercurySample mercurySample : mercurySamples) {
+            mapSampleIdToListMercurySamples.put(mercurySample.getSampleKey(), mercurySample);
         }
         return mapSampleIdToListMercurySamples;
     }

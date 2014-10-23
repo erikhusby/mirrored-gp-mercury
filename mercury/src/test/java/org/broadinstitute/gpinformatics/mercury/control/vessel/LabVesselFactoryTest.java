@@ -45,7 +45,7 @@ public class LabVesselFactoryTest {
         SampleReceiptBean sampleReceiptBean = buildTubes("");
 
         List<LabVessel> labVessels = labVesselFactory.buildLabVesselDaoFree(
-                new HashMap<String, LabVessel>(), new HashMap<String, List<MercurySample>>(),
+                new HashMap<String, LabVessel>(), new HashMap<String, MercurySample>(),
                 new HashMap<String, Set<ProductOrderSample>>(), sampleReceiptBean.getReceivingUserName(),
                 sampleReceiptBean.getReceiptDate(), sampleReceiptBean.getParentVesselBeans(),
                 LabEventType.SAMPLE_RECEIPT, MercurySample.MetadataSource.BSP);
@@ -74,7 +74,7 @@ public class LabVesselFactoryTest {
                 "jowalsh");
 
         List<LabVessel> labVessels = labVesselFactory.buildLabVesselDaoFree(
-                new HashMap<String, LabVessel>(), new HashMap<String, List<MercurySample>>(),
+                new HashMap<String, LabVessel>(), new HashMap<String, MercurySample>(),
                 new HashMap<String, Set<ProductOrderSample>>(), sampleReceiptBean.getReceivingUserName(),
                 sampleReceiptBean.getReceiptDate(), sampleReceiptBean.getParentVesselBeans(),
                 LabEventType.SAMPLE_RECEIPT, MercurySample.MetadataSource.BSP);
@@ -100,7 +100,7 @@ public class LabVesselFactoryTest {
         mapIdToListPdoSamples.put(SAMPLE1, Collections.singleton(productOrderSample));
 
         List<LabVessel> labVessels = labVesselFactory.buildLabVesselDaoFree(
-                new HashMap<String, LabVessel>(), new HashMap<String, List<MercurySample>>(),
+                new HashMap<String, LabVessel>(), new HashMap<String, MercurySample>(),
                 mapIdToListPdoSamples, sampleReceiptBean.getReceivingUserName(), sampleReceiptBean.getReceiptDate(),
                 sampleReceiptBean.getParentVesselBeans(), LabEventType.SAMPLE_RECEIPT,
                 MercurySample.MetadataSource.BSP);
@@ -134,7 +134,7 @@ public class LabVesselFactoryTest {
         SampleReceiptBean sampleReceiptBean = new SampleReceiptBean(new Date(), "SK-123", parentVesselBeans, "jowalsh");
 
         List<LabVessel> labVessels = labVesselFactory.buildLabVesselDaoFree(
-                new HashMap<String, LabVessel>(), new HashMap<String, List<MercurySample>>(),
+                new HashMap<String, LabVessel>(), new HashMap<String, MercurySample>(),
                 new HashMap<String, Set<ProductOrderSample>>(), sampleReceiptBean.getReceivingUserName(),
                 sampleReceiptBean.getReceiptDate(), sampleReceiptBean.getParentVesselBeans(),
                 LabEventType.SAMPLE_RECEIPT, MercurySample.MetadataSource.BSP);
@@ -160,7 +160,7 @@ public class LabVesselFactoryTest {
         SampleReceiptBean sampleReceiptBean = new SampleReceiptBean(new Date(), "SK-123", parentVesselBeans, "jowalsh");
 
         List<LabVessel> labVessels = labVesselFactory.buildLabVesselDaoFree(
-                new HashMap<String, LabVessel>(), new HashMap<String, List<MercurySample>>(),
+                new HashMap<String, LabVessel>(), new HashMap<String, MercurySample>(),
                 new HashMap<String, Set<ProductOrderSample>>(), sampleReceiptBean.getReceivingUserName(),
                 sampleReceiptBean.getReceiptDate(), sampleReceiptBean.getParentVesselBeans(),
                 LabEventType.SAMPLE_RECEIPT, MercurySample.MetadataSource.BSP);
