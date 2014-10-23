@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.sample;
 
-import com.lowagie.text.ListItem;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
