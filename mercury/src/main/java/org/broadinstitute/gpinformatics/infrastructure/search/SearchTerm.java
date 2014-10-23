@@ -187,10 +187,9 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     private Boolean multipleForParent;
 
     /**
-     * True if the constrained values should be added to the list of search terms, e.g.
-     * phenotype names
+     * True if dependent search terms should be added to the list of criteria and result columns.
      */
-    private Boolean addConstrainedValuesToSearchTermList;
+    private Boolean addDependentTermsToSearchTermList = Boolean.FALSE;
 
     /**
      * The maximum number of values that will be returned by the constrained values
@@ -389,12 +388,12 @@ public class SearchTerm implements Serializable, ColumnTabulation {
         this.multipleForParent = multipleForParent;
     }
 
-    public Boolean getAddConstrainedValuesToSearchTermList() {
-        return addConstrainedValuesToSearchTermList;
+    public Boolean getAddDependentTermsToSearchTermList() {
+        return addDependentTermsToSearchTermList;
     }
 
-    public void setAddConstrainedValuesToSearchTermList(Boolean addConstrainedValuesToSearchTermList) {
-        this.addConstrainedValuesToSearchTermList = addConstrainedValuesToSearchTermList;
+    public void setAddDependentTermsToSearchTermList(Boolean addDependentTermsToSearchTermList) {
+        this.addDependentTermsToSearchTermList = addDependentTermsToSearchTermList;
     }
 
     public List<CriteriaPath> getCriteriaPaths() {
@@ -446,11 +445,17 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
     @Override
     public Object evalPlainTextExpression(Object entity, Map<String, Object> context) {
-        return getDisplayExpression().evaluate(entity, context);
+        // Both methods identical 10/17/2014
+        return evalFormattedExpression(entity, context);
     }
 
     @Override
     public Object evalFormattedExpression(Object entity, Map<String, Object> context) {
+        if( context == null ) {
+            context = new HashMap<>();
+        }
+        // May require this SearchTerm to extract metadata key from column name
+        context.put(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_TERM, this);
         return getDisplayExpression().evaluate(entity, context);
     }
 

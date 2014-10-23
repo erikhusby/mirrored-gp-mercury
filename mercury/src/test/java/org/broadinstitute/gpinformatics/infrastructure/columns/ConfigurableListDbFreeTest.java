@@ -26,7 +26,7 @@ public class ConfigurableListDbFreeTest {
     @Test(groups= TestGroups.DATABASE_FREE)
     public void testSimplest() {
         ConfigurableSearchDefinition configurableSearchDefinition =
-                new SearchDefinitionFactory().buildLabVesselSearchDef();
+                SearchDefinitionFactory.getForEntity( ColumnEntity.LAB_VESSEL.getEntityName());
 
         BarcodedTube tube1 = new BarcodedTube("tube1");
         List<ColumnTabulation> columnTabulations = new ArrayList<>();
@@ -48,7 +48,7 @@ public class ConfigurableListDbFreeTest {
     @Test(groups= TestGroups.DATABASE_FREE)
     public void testReagents() {
         ConfigurableSearchDefinition configurableSearchDefinition =
-                new SearchDefinitionFactory().buildLabEventSearchDef();
+                SearchDefinitionFactory.getForEntity( ColumnEntity.LAB_EVENT.getEntityName());
 
         List<ColumnTabulation> columnTabulations = new ArrayList<>();
         columnTabulations.add(configurableSearchDefinition.getSearchTerm("LabEventId"));
