@@ -26,15 +26,12 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.emptyCollectionOf;
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 
@@ -202,16 +199,6 @@ public class PoiSpreadsheetParserTest {
 
         line.add("  \tx");
         assertThat(PoiSpreadsheetParser.representsBlankLine(line), is(false));
-    }
-
-    public void findNonTrailingBlankLineIndexes() {
-        assertThat(PoiSpreadsheetParser.findNonTrailingBlankLineIndexes(Arrays.asList(3, 4, 5), 5), is(empty()));
-
-        assertThat(PoiSpreadsheetParser.findNonTrailingBlankLineIndexes(Arrays.asList(1, 2, 4, 5), 5), is(equalTo(
-                Arrays.asList(1, 2))));
-
-        assertThat(PoiSpreadsheetParser.findNonTrailingBlankLineIndexes(Collections.<Integer>emptyList(), 7),
-                is(equalTo(Collections.<Integer>emptyList())));
     }
 
     public void trailingBlankLines() throws IOException, InvalidFormatException, ValidationException {
