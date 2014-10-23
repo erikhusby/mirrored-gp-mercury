@@ -1,14 +1,13 @@
 package org.broadinstitute.gpinformatics.infrastructure;
 
-import com.google.common.collect.HashMultiset;
-import com.google.common.collect.Multiset;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleDataFetcher;
@@ -144,36 +143,45 @@ public class SampleDataFetcher implements Serializable {
      * Given a list of aliquot IDs, return a map of aliquot IDs to stock IDs.
      */
     public Map<String, String> getStockIdByAliquotId(Collection<String> aliquotIds) {
-        Collection<String> allMercurySamples = new ArrayList<>();
+        Map<String, String> stockIdByAliquotId = new HashMap<>();
 
         Map<MercurySample.MetadataSource, Collection<MercurySample>> samplesBySource =
                 determineMetadataSource(aliquotIds);
-        for (Collection<MercurySample> mercurySamples : samplesBySource.values()) {
-            for (MercurySample mercurySample : mercurySamples) {
-                allMercurySamples.add(mercurySample.getSampleKey());
-            }
-        }
 
-        // Assume that BSP is the owner of samples data for sample IDs with no MercurySample.
-        Collection<String> aliquotsWithNoMercurySample = CollectionUtils.subtract(aliquotIds, allMercurySamples);
-        List<String> bspSampleIds = new ArrayList<>(aliquotsWithNoMercurySample);
-        Map<String, String> stockIdByAliquotId = new HashMap<>();
-
-        for (Map.Entry<MercurySample.MetadataSource, Collection<MercurySample>> entry : samplesBySource.entrySet()) {
-            MercurySample.MetadataSource metadataSource = entry.getKey();
-            if (metadataSource == MercurySample.MetadataSource.BSP) {
-                for (MercurySample mercurySample : entry.getValue()) {
-                    bspSampleIds.add(mercurySample.getSampleKey());
-                }
-                stockIdByAliquotId.putAll(bspSampleDataFetcher.getStockIdByAliquotId(bspSampleIds));
-            } else if (metadataSource == MercurySample.MetadataSource.MERCURY) {
-                stockIdByAliquotId.putAll(mercurySampleDataFetcher.getStockIdByAliquotId(entry.getValue()));
-            } else {
-                throw new IllegalStateException("Unknown sample data source: " + samplesBySource.keySet());
-            }
-        }
+        collectStockIdByAliquotIdForSamplesWithBspSource(stockIdByAliquotId, aliquotIds, samplesBySource);
+        collectStockIdByAliquotIdForSamplesWithMercurySource(stockIdByAliquotId,
+                samplesBySource.get(MercurySample.MetadataSource.MERCURY));
 
         return stockIdByAliquotId;
+    }
+
+    private void collectStockIdByAliquotIdForSamplesWithBspSource(
+            Map<String, String> stockIdByAliquotId, Collection<String> aliquotIds,
+            Map<MercurySample.MetadataSource, Collection<MercurySample>> samplesBySource) {
+        Collection<String> sampleIdsWithKnownSource = new ArrayList<>();
+        for (Collection<MercurySample> mercurySamples : samplesBySource.values()) {
+            for (MercurySample mercurySample : mercurySamples) {
+                sampleIdsWithKnownSource.add(mercurySample.getSampleKey());
+            }
+        }
+        Collection<String> aliquotsWithNoMercurySample = CollectionUtils.subtract(aliquotIds, sampleIdsWithKnownSource);
+        Collection<String> sampleIdsWithBspSource = new ArrayList<>(aliquotsWithNoMercurySample);
+        Collection<MercurySample> mercurySamplesWithBspSource = samplesBySource.get(MercurySample.MetadataSource.BSP);
+        if (mercurySamplesWithBspSource != null) {
+            for (MercurySample mercurySample : mercurySamplesWithBspSource) {
+                sampleIdsWithBspSource.add(mercurySample.getSampleKey());
+            }
+        }
+        if (!sampleIdsWithBspSource.isEmpty()) {
+            stockIdByAliquotId.putAll(bspSampleDataFetcher.getStockIdByAliquotId(sampleIdsWithBspSource));
+        }
+    }
+
+    private void collectStockIdByAliquotIdForSamplesWithMercurySource(Map<String, String> stockIdByAliquotId,
+                                                                      Collection<MercurySample> mercurySamples) {
+        if (mercurySamples != null && !mercurySamples.isEmpty()) {
+            stockIdByAliquotId.putAll(mercurySampleDataFetcher.getStockIdByAliquotId(mercurySamples));
+        }
     }
 
     /**
@@ -191,10 +199,10 @@ public class SampleDataFetcher implements Serializable {
         Map<String, List<MercurySample>> mercurySamples = mercurySampleDao.findMapIdToListMercurySample(sampleIds);
         Map<String, MercurySample.MetadataSource> metadataSourceMap = sampleDataSourceResolver.resolveSampleDataSources(
                 sampleIds, mercurySamples);
-        Map<MercurySample.MetadataSource, Collection<MercurySample>> results = new HashMap<>();
+        Multimap<MercurySample.MetadataSource, MercurySample> results = HashMultimap.create();
         for (Map.Entry<String, MercurySample.MetadataSource> metadataSourceEntry : metadataSourceMap.entrySet()) {
-            results.put(metadataSourceEntry.getValue(), mercurySamples.get(metadataSourceEntry.getKey()));
+            results.putAll(metadataSourceEntry.getValue(), mercurySamples.get(metadataSourceEntry.getKey()));
         }
-        return results;
+        return results.asMap();
     }
 }
