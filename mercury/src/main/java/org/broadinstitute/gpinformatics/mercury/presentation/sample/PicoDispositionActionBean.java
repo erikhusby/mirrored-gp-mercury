@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.sample;
 
+import com.lowagie.text.ListItem;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
@@ -8,6 +9,7 @@ import net.sourceforge.stripes.action.UrlBinding;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.rackscan.ScannerException;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.RackScannerEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
@@ -123,6 +125,11 @@ public class PicoDispositionActionBean extends RackScanActionBean {
     // TubeFormation accessible only for test purposes.
     void setTubeFormation(TubeFormation tubeFormation) {
         this.tubeFormation = tubeFormation;
+    }
+
+    // Accessible only for test purposes.
+    void setBarcodedTubeDao(BarcodedTubeDao dao) {
+        barcodedTubeDao = dao;
     }
 
     /**
@@ -257,6 +264,10 @@ public class PicoDispositionActionBean extends RackScanActionBean {
         return PAGE_TITLE;
     }
 
+    void setRackScannerEjb(RackScannerEjb ejb) {
+        rackScannerEjb = ejb;
+    }
+
     /**
      * Uses a rack scanner to find tubes and generates their next step dispositions.
      * @throws org.broadinstitute.bsp.client.rackscan.ScannerException
@@ -282,11 +293,13 @@ public class PicoDispositionActionBean extends RackScanActionBean {
         } else if (scanAndMakeListItems()) {
             // Removes tubes with the expected Next Step confirmationGroup value,
             // leaving only incorrect ones in listItems.
-            if (!hasErrors()) {
+            // Checks the ActionBean context validity to allow running a unit test.
+            if (getContext().getRequest() == null || !hasErrors()) {
                 final int expectedGroup = nextStepSelect.getNextStepConfirmationGroup();
                 for (Iterator<ListItem> iter = listItems.iterator(); iter.hasNext(); ) {
-                    if (iter.next().getDisposition() != null &&
-                        iter.next().getDisposition().getNextStepConfirmationGroup() == expectedGroup) {
+                    ListItem listItem = iter.next();
+                    if (listItem.getDisposition() != null &&
+                        listItem.getDisposition().getNextStepConfirmationGroup() == expectedGroup) {
                         iter.remove();
                     }
                 }
