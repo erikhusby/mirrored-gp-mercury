@@ -872,7 +872,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      * @return true if order is in Draft
      */
     public boolean isDraft() {
-        return OrderStatus.Draft == orderStatus;
+        return orderStatus.isDraft();
     }
 
     /**
@@ -1159,6 +1159,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         @Override
         public String getDisplayName() {
             return name();
+        }
+
+        public boolean isDraft() {
+            return this == Draft;
         }
     }
 

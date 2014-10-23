@@ -1,12 +1,12 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderListEntryDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession_;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Join;
@@ -26,9 +26,33 @@ public class ProductOrderListEntry implements Serializable {
 
     private static final long serialVersionUID = 6343514424527232374L;
 
+    // These fields duplicate fields that are in ProductOrder. The code in this class could be merged into
+    // ProductOrder, where transient fields would store the computed values, such as constructedCount,
+    // readyForReviewCount and readyForBillingCount.
+
     private final Long orderId;
 
-    private final ProductOrder productOrder;
+    private final String title;
+
+    private final String jiraTicketKey;
+
+    private final String productName;
+
+    private final Product product;
+
+    private final String productFamilyName;
+
+    private final ProductOrder.OrderStatus orderStatus;
+
+    private final String researchProjectTitle;
+
+    private final Long ownerId;
+
+    private final Date placedDate;
+
+    private final Integer laneCount;
+
+    private final String quoteId;
 
     private Long billingSessionId;
 
@@ -39,25 +63,22 @@ public class ProductOrderListEntry implements Serializable {
     private long readyForBillingCount;
 
     private ProductOrderListEntry(Long orderId, String title, String jiraTicketKey,
-                                  ProductOrder.OrderStatus orderStatus, String productName, Product product,
-                                  String productFamilyName,
-                                  String researchProjectTitle,
+                                  ProductOrder.OrderStatus orderStatus, Product product, String researchProjectTitle,
                                   Long ownerId, Date placedDate, Integer laneCount, String quoteId,
                                   Long billingSessionId,
                                   long constructedCount) {
         this.orderId = orderId;
-        productOrder = new ProductOrder();
-        productOrder.setTitle(title);
-        productOrder.setJiraTicketKey(jiraTicketKey);
-        productOrder.setOrderStatus(orderStatus);
-        productOrder.setProduct(product);
-        productOrder.setCreatedBy(ownerId);
-        productOrder.setPlacedDate(placedDate);
-        productOrder.setLaneCount(laneCount != null ? laneCount : 0);
-        productOrder.setQuoteId(quoteId);
-        ResearchProject researchProject = new ResearchProject();
-        researchProject.setTitle(researchProjectTitle);
-        productOrder.setResearchProject(researchProject);
+        this.title = title;
+        this.jiraTicketKey = jiraTicketKey;
+        this.orderStatus = orderStatus;
+        productName = product != null ? product.getProductName() : "";
+        this.product = product;
+        productFamilyName = product != null ? product.getProductFamily().getName() : "";
+        this.researchProjectTitle = researchProjectTitle;
+        this.ownerId = ownerId;
+        this.placedDate = placedDate;
+        this.laneCount = laneCount;
+        this.quoteId = quoteId;
         this.billingSessionId = billingSessionId;
 
         // This count is used by the query that needs to populate one of the two other counts.
@@ -66,29 +87,29 @@ public class ProductOrderListEntry implements Serializable {
 
     /**
      * Version of the constructor called by the non-ledger aware first pass query.
-     *
      */
     @SuppressWarnings("UnusedDeclaration")
     // This is called through reflection and only appears to be unused.
     public ProductOrderListEntry(Long orderId, String title, String jiraTicketKey, ProductOrder.OrderStatus orderStatus,
-                                 String productName, Product product, String productFamilyName,
-                                 String researchProjectTitle, Long ownerId,
+                                 Product product, String researchProjectTitle, Long ownerId,
                                  Date placedDate, Integer laneCount, String quoteId) {
 
         // No billing session and a the constructed count is set to 0 because it is not used for this constructor.
-        this(orderId, title, jiraTicketKey, orderStatus, productName, product, productFamilyName,
-                researchProjectTitle, ownerId, placedDate, laneCount, quoteId, null, 0);
+        this(orderId, title, jiraTicketKey, orderStatus, product, researchProjectTitle, ownerId, placedDate,
+                laneCount, quoteId, null, 0);
     }
+
 
     /**
      * Version of the constructor called by the ledger-aware second pass query, these objects are merged
      * into the objects from the first query.
+     * <p/>
+     * See {@link ProductOrderListEntryDao#fetchUnbilledLedgerEntryCounts(List)}
      */
     // This is called through reflection and only appears to be unused.
     @SuppressWarnings("UnusedDeclaration")
-    public ProductOrderListEntry(
-        Long orderId, String jiraTicketKey, Long billingSessionId, long constructedCount) {
-        this(orderId, null, jiraTicketKey, null, null, null, null, null, null, null, null, null, billingSessionId,
+    public ProductOrderListEntry(Long orderId, String jiraTicketKey, Long billingSessionId, long constructedCount) {
+        this(orderId, null, jiraTicketKey, null, null, null, null, null, null, null, billingSessionId,
                 constructedCount);
     }
 
@@ -113,51 +134,51 @@ public class ProductOrderListEntry implements Serializable {
     }
 
     public String getTitle() {
-        return productOrder.getTitle();
+        return title;
     }
 
     public String getJiraTicketKey() {
-        return productOrder.getJiraTicketKey();
+        return jiraTicketKey;
     }
 
     public String getBusinessKey() {
-        return ProductOrder.createBusinessKey(orderId, productOrder.getJiraTicketKey());
+        return ProductOrder.createBusinessKey(orderId, jiraTicketKey);
     }
 
     public String getProductName() {
-        return (productOrder.getProduct() != null) ? productOrder.getProduct().getProductName() : "";
+        return productName;
     }
 
     public Product getProduct() {
-        return productOrder.getProduct();
+        return product;
     }
 
     public String getProductFamilyName() {
-        return (productOrder.getProduct() != null) ? productOrder.getProduct().getProductFamily().getName() : "";
+        return productFamilyName;
     }
 
     public ProductOrder.OrderStatus getOrderStatus() {
-        return productOrder.getOrderStatus();
+        return orderStatus;
     }
 
     public String getResearchProjectTitle() {
-        return productOrder.getResearchProject().getTitle();
+        return researchProjectTitle;
     }
 
     public Long getOwnerId() {
-        return productOrder.getCreatedBy();
+        return ownerId;
     }
 
     public Date getPlacedDate() {
-        return productOrder.getPlacedDate();
+        return placedDate;
     }
 
     public Integer getLaneCount() {
-        return productOrder.getLaneCount();
+        return laneCount;
     }
 
     public String getQuoteId() {
-        return productOrder.getQuoteId();
+        return quoteId;
     }
 
     public boolean isBilling() {
@@ -206,7 +227,7 @@ public class ProductOrderListEntry implements Serializable {
     }
 
     public boolean isDraft() {
-        return productOrder.isDraft();
+        return orderStatus.isDraft();
     }
 
     public static Collection<Long> getProductOrderIDs(List<ProductOrderListEntry> productOrderListEntries) {
