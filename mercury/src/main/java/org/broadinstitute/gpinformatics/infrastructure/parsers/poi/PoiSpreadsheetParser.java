@@ -174,7 +174,7 @@ public final class PoiSpreadsheetParser {
 
             // The primary header row is the one that needs to be generally validated.
             if (processor.getPrimaryHeaderRow() == headerRowIndex) {
-                if (!processor.validateHeaders(headers)) {
+                if (!processor.validateColumnHeaders(headers)) {
                     throw new ValidationException("Error parsing headers.", processor.getMessages());
                 }
             }

@@ -154,8 +154,7 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     private ManifestSession uploadManifest(ManifestSessionEjb manifestSessionEjb, String pathToManifestFile,
-                                           ResearchProject researchProject)
-            throws Exception {
+                                           ResearchProject researchProject) throws Exception {
         String PATH_TO_SPREADSHEET = TestUtils.getTestData(pathToManifestFile);
         InputStream inputStream = new FileInputStream(PATH_TO_SPREADSHEET);
         return manifestSessionEjb.uploadManifest(researchProject.getBusinessKey(), inputStream, PATH_TO_SPREADSHEET,
@@ -186,7 +185,7 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     private static void addRecord(ManifestSessionAndEjbHolder holder, ManifestRecord.ErrorStatus errorStatus,
-                             ManifestRecord.Status status, Metadata.Key key, String value) {
+                                  ManifestRecord.Status status, Metadata.Key key, String value) {
         ManifestTestFactory.addRecord(holder.manifestSession, errorStatus, status, ImmutableMap.of(key, value));
     }
 
@@ -282,7 +281,9 @@ public class ManifestSessionEjbDBFreeTest {
 
     /********************************************************************/
     /**  =======  upload manifest tests ============================== **/
-    /********************************************************************/
+    /**
+     * ****************************************************************
+     */
 
     public void uploadGoodManifest() throws Exception {
         ManifestSession manifestSession = uploadManifest(MANIFEST_FILE_GOOD);
@@ -294,20 +295,31 @@ public class ManifestSessionEjbDBFreeTest {
 
     @DataProvider(name = BAD_MANIFEST_UPLOAD_PROVIDER)
     public Object[][] badManifestUploadProvider() {
+        String wrongFormatStringFormat =
+                "Error reading manifest file '%s'.  Manifest files must be in the proper Excel format.";
+        // @formatter:off
         return new Object[][]{
-                {"Not an Excel file", "manifest-upload/not-an-excel-file.txt"},
-                {"Missing required field", "manifest-import/test-manifest-missing-specimen.xlsx"},
-                {"Missing column", "manifest-upload/manifest-with-missing-column.xlsx"},
-                {"Empty manifest", "manifest-upload/empty-manifest.xlsx"}
+                {"Not an Excel file", String.format(wrongFormatStringFormat, "not-an-excel-file.txt"),
+                        "manifest-upload/not-an-excel-file.txt"},
+                {"Missing required field", String.format(wrongFormatStringFormat, "test-manifest-missing-specimen.xlsx"),
+                        "manifest-import/test-manifest-missing-specimen.xlsx"},
+                {"Missing column", "Error parsing headers.\nRequired header: Specimen_Number is missing",
+                        "manifest-upload/manifest-with-missing-column.xlsx"},
+                {"Empty manifest", "Error parsing headers.\nRequired header: Specimen_Number is missing\nRequired header: SAMPLE_TYPE is missing\nUnknown headers '[Sample ID, T/N]' present",
+                        "manifest-upload/empty-manifest.xlsx"},
+                {"Multiple Bad Columns in Manifest", "Error parsing headers.\nRequired header: Specimen_Number is missing\nRequired header: Sex is missing\nRequired header: Patient_ID is missing\nRequired header: Collection_Date is missing\nRequired header: Visit is missing\nRequired header: SAMPLE_TYPE is missing\nUnknown headers '[Specimen_Numberz, Patient_Idee, Gender, Date, Visit Type, Sample Type]' present",
+                        "manifest-upload/manifest-with-multiple-bad-columns.xlsx"}
         };
+        // @formatter:on
     }
 
     @Test(dataProvider = BAD_MANIFEST_UPLOAD_PROVIDER)
-    public void uploadBadManifest(String description, String pathToManifestFile) throws Exception {
+    public void uploadBadManifest(String description, String errorMessage, String pathToManifestFile) throws Exception {
         try {
             uploadManifest(pathToManifestFile);
             Assert.fail(description);
-        } catch (InformaticsServiceException ignored) {
+        } catch (InformaticsServiceException e) {
+            Assert.assertEquals(e.getMessage(), errorMessage);
         }
     }
 
@@ -340,7 +352,7 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     private Collection<ManifestRecord> filterThisRecord(final ManifestRecord record,
-                                                      ImmutableList<ManifestRecord> manifestRecords) {
+                                                        ImmutableList<ManifestRecord> manifestRecords) {
         return Collections2.filter(manifestRecords, new Predicate<ManifestRecord>() {
             @Override
             public boolean apply(ManifestRecord localRecord) {
@@ -376,14 +388,16 @@ public class ManifestSessionEjbDBFreeTest {
                 ManifestRecord duplicateRecord = session1RecordsBySampleId.get(record.getValueByKey(
                         Metadata.Key.SAMPLE_ID)).iterator().next();
                 assertThat(manifestEvent.getMessage(),
-                        containsString(record.buildMessageForConflictingRecords(Collections.singleton(duplicateRecord))));
+                        containsString(
+                                record.buildMessageForConflictingRecords(Collections.singleton(duplicateRecord))));
             } else {
                 assertThat(record.getManifestEvents(), is(empty()));
             }
         }
     }
 
-    private ImmutableListMultimap<String, ManifestRecord> buildSampleIdToRecordMultimap(ManifestSession manifestSession) {
+    private ImmutableListMultimap<String, ManifestRecord> buildSampleIdToRecordMultimap(
+            ManifestSession manifestSession) {
         return Multimaps.index(manifestSession.getRecords(), new Function<ManifestRecord, String>() {
             @Override
             public String apply(ManifestRecord manifestRecord) {
@@ -393,7 +407,8 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     private ResearchProject createTestResearchProject() {
-        ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(TEST_RESEARCH_PROJECT_KEY);
+        ResearchProject researchProject =
+                ResearchProjectTestFactory.createTestResearchProject(TEST_RESEARCH_PROJECT_KEY);
         researchProject.setRegulatoryDesignation(ResearchProject.RegulatoryDesignation.CLINICAL_DIAGNOSTICS);
         return researchProject;
     }
@@ -476,7 +491,9 @@ public class ManifestSessionEjbDBFreeTest {
 
     /********************************************************************/
     /**  =======  Load session tests  ================================ **/
-    /********************************************************************/
+    /**
+     * ****************************************************************
+     */
 
     public void loadManifestSessionSuccess() {
         final long TEST_MANIFEST_SESSION_ID = ARBITRARY_MANIFEST_SESSION_ID;
@@ -503,7 +520,9 @@ public class ManifestSessionEjbDBFreeTest {
 
     /********************************************************************/
     /**  =======  Accept upload tests ================================ **/
-    /********************************************************************/
+    /**
+     * ****************************************************************
+     */
 
     public void acceptUploadSessionNotFound() {
         ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao,
@@ -647,7 +666,9 @@ public class ManifestSessionEjbDBFreeTest {
 
     /********************************************************************/
     /**  =======  accession scan tests =============================== **/
-    /********************************************************************/
+    /**
+     * ****************************************************************
+     */
 
     @Test(dataProvider = GOOD_MANIFEST_ACCESSION_SCAN_PROVIDER)
     public void accessionScanGoodManifest(String tubeBarcode, boolean successExpected) throws Exception {
@@ -744,7 +765,9 @@ public class ManifestSessionEjbDBFreeTest {
 
     /********************************************************************/
     /**  =======  Prepare to close    ================================ **/
-    /********************************************************************/
+    /**
+     * ****************************************************************
+     */
 
     public void prepareForSessionCloseGoodSession() throws Exception {
 
@@ -823,7 +846,9 @@ public class ManifestSessionEjbDBFreeTest {
 
     /********************************************************************/
     /**  =======  close    ================================ **/
-    /********************************************************************/
+    /**
+     * ****************************************************************
+     */
 
     public void closeGoodManifest() throws Exception {
 
@@ -937,7 +962,9 @@ public class ManifestSessionEjbDBFreeTest {
 
     /********************************************************************/
     /**  =======  Validate source test (Supports Ajax Call) ========== **/
-    /********************************************************************/
+    /**
+     * ****************************************************************
+     */
 
     public void validateSourceOnCleanSession() throws Exception {
 
@@ -1011,7 +1038,9 @@ public class ManifestSessionEjbDBFreeTest {
 
     /********************************************************************/
     /**  =======  Validate target sample tests ======================= **/
-    /********************************************************************/
+    /**
+     * ****************************************************************
+     */
 
     public void validateValidTargetSample() throws Exception {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 1);
@@ -1050,7 +1079,9 @@ public class ManifestSessionEjbDBFreeTest {
 
     /********************************************************************/
     /**  =======  Validate tube and Sample tests ===================== **/
-    /********************************************************************/
+    /**
+     * ****************************************************************
+     */
 
     public void validateTargetTubeAndSampleOnValidRecord() throws Exception {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 1);
@@ -1120,7 +1151,9 @@ public class ManifestSessionEjbDBFreeTest {
 
     /********************************************************************/
     /**  =======  Record Transfer Tests ============================== **/
-    /********************************************************************/
+    /**
+     * ****************************************************************
+     */
 
     public void transferSourceValidRecord() throws Exception {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20);

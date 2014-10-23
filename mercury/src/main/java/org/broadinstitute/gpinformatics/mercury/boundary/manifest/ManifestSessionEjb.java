@@ -117,7 +117,7 @@ public class ManifestSessionEjb {
                 throw new InformaticsServiceException("Error reading manifest file: " + messageText);
             }
         } catch (ValidationException e) {
-            throw new InformaticsServiceException(e);
+            throw new InformaticsServiceException(e.getMessage(), e);
         } catch (Exception e) {
             throw new InformaticsServiceException(
                     String.format(
