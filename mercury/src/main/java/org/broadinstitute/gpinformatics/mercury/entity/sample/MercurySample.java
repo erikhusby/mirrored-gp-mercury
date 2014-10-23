@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.RapSheet;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
@@ -26,8 +27,10 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -70,6 +73,9 @@ public class MercurySample extends AbstractSample {
 
     @ManyToMany
     private Set<Metadata> metadata = new HashSet<>();
+
+    @ManyToMany(mappedBy = "mercurySamplesForRemoval", cascade = CascadeType.PERSIST)
+    protected List<LabVessel> labVessels = new ArrayList<>();
 
     /**
      * For JPA

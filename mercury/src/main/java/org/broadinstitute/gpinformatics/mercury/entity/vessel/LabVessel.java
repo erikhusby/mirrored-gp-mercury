@@ -202,6 +202,10 @@ public abstract class LabVessel implements Serializable {
     @Transient
     private Map<String, Set<LabMetric>> metricMap;
 
+    @ManyToMany(cascade = CascadeType.PERSIST)
+    @BatchSize(size = 100)
+    private List<MercurySample> mercurySamplesForRemoval = new ArrayList<>();
+
     /**
      * Set by {@link #preProcessEvents()}
      */
@@ -1910,5 +1914,13 @@ public abstract class LabVessel implements Serializable {
             }
         }
         return values.toArray(new String[values.size()]);
+    }
+
+    public List<MercurySample> getMercurySamplesForRemoval() {
+        return mercurySamplesForRemoval;
+    }
+
+    public void setMercurySamplesForRemoval(List<MercurySample> mercurySamplesForRemoval) {
+        this.mercurySamplesForRemoval = mercurySamplesForRemoval;
     }
 }
