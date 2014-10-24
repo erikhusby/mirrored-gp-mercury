@@ -32,6 +32,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.MiSeqReagentKitDao;
@@ -103,6 +104,9 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
 
     @Inject
     private MiSeqReagentKitDao miSeqReagentKitDao;
+
+    @Inject
+    private MercurySampleDao mercurySampleDao;
 
     @Inject
     private LabBatchEjb labBatchEjb;
@@ -184,9 +188,6 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
 
     @BeforeMethod(groups = ALTERNATIVES)
     public void setUp() throws Exception {
-//        Controller.startCPURecording(true);
-//        Controller.startProbeRecording(Controller.PROBE_NAME_JDBC, true);
-//        Controller.startProbeRecording(Controller.PROBE_NAME_PERSISTENCE, true);
 
         if (flowcellDao == null) {
             return;
@@ -273,8 +274,10 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         miSeqFlowcell = new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.MiSeqFlowcell, miSeqBarcode);
 
         for (ProductOrderSample currSample : exexOrder.getSamples()) {
-            newFlowcell.addSample(new MercurySample(currSample.getBspSampleName(), MercurySample.MetadataSource.BSP));
-            miSeqFlowcell.addSample(new MercurySample(currSample.getBspSampleName(), MercurySample.MetadataSource.BSP));
+            MercurySample sample = mercurySampleDao.findBySampleKey(currSample.getSampleKey());
+
+            newFlowcell.addSample(sample);
+            miSeqFlowcell.addSample(sample);
         }
 
         flowcellDao.persist(miSeqFlowcell);
@@ -290,7 +293,6 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
                            File.separator + runName;
         File runFile = new File(runFileDirectory);
         runFile.mkdirs();
-//        Controller.stopCPURecording();
     }
 
     @AfterMethod(groups = ALTERNATIVES)
