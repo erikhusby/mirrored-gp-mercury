@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -8,6 +9,7 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.EventVesselSource
 import org.broadinstitute.gpinformatics.infrastructure.columns.EventVesselTargetPositionPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetadataPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetricPlugin;
+import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
@@ -249,6 +251,38 @@ public class SearchDefinitionFactory {
             public Object evaluate(Object entity, Map<String, Object> context) {
                 LabVessel labVessel = (LabVessel) entity;
                 return findVesselType(labVessel);
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Vessel Volume");
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                LabVessel labVessel = (LabVessel) entity;
+                BigDecimal volume = labVessel.getVolume();
+                if( volume != null ) {
+                    return MathUtils.scaleTwoDecimalPlaces(volume).toPlainString();
+                } else {
+                    return "";
+                }
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Vessel Concentration");
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                LabVessel labVessel = (LabVessel) entity;
+                BigDecimal conc = labVessel.getConcentration();
+                if( conc != null ) {
+                    return MathUtils.scaleTwoDecimalPlaces(conc).toPlainString();
+                } else {
+                    return "";
+                }
             }
         });
         searchTerms.add(searchTerm);
@@ -586,10 +620,11 @@ public class SearchDefinitionFactory {
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            private FastDateFormat dateFormat = FastDateFormat.getInstance( "MM/dd/yyyy HH:mm:ss");
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
                 LabEvent labEvent = (LabEvent) entity;
-                return labEvent.getEventDate();
+                return dateFormat.format( labEvent.getEventDate());
             }
         });
         searchTerm.setTypeExpression(new SearchTerm.Evaluator<String>() {
@@ -987,9 +1022,16 @@ public class SearchDefinitionFactory {
                 List<String> results = new ArrayList<>();
                 LabEvent labEvent = (LabEvent) entity;
 
-                for (LabVessel vessel : labEvent.getSourceLabVessels()) {
-                    if( vessel instanceof TubeFormation) {
-                        TubeFormation tubes = (TubeFormation) vessel;
+                LabVessel inPlaceLabVessel = labEvent.getInPlaceLabVessel();
+
+                // Ignore source vessels for in-place events
+                if( inPlaceLabVessel != null ) {
+                    return results;
+                }
+
+                for (LabVessel vessel : labEvent.getSourceLabVessels() ) {
+                    if( OrmUtil.proxySafeIsInstance( vessel, TubeFormation.class )) {
+                        TubeFormation tubes = OrmUtil.proxySafeCast(vessel, TubeFormation.class);
                         for ( RackOfTubes rack : tubes.getRacksOfTubes()) {
                             results.add(rack.getLabel());
                         }
@@ -997,15 +1039,6 @@ public class SearchDefinitionFactory {
                         results.add(vessel.getLabel());
                     }
                 }
-
-                if( results.isEmpty() && labEvent.getInPlaceLabVessel() != null ) {
-                    if( labEvent.getInPlaceLabVessel().getContainerRole() != null ) {
-                        results.add( labEvent.getInPlaceLabVessel().getContainerRole().getEmbedder().getLabel() );
-                    } else {
-                        results.add( labEvent.getInPlaceLabVessel().getLabel() );
-                    }
-                }
-
                 return results;
             }
         });
@@ -1029,9 +1062,23 @@ public class SearchDefinitionFactory {
                 List<String> results = new ArrayList<>();
                 LabEvent labEvent = (LabEvent) entity;
 
+                LabVessel inPlaceLabVessel = labEvent.getInPlaceLabVessel();
+                if( inPlaceLabVessel != null ) {
+                    // This will do for now, but looking at ancillary vessel in VesselTransfer is more reliable.
+                    if( OrmUtil.proxySafeIsInstance( inPlaceLabVessel, TubeFormation.class )) {
+                        TubeFormation tubes = OrmUtil.proxySafeCast(inPlaceLabVessel, TubeFormation.class);
+                        for ( RackOfTubes rack : tubes.getRacksOfTubes()) {
+                            results.add(rack.getLabel());
+                        }
+                    } else {
+                        results.add( inPlaceLabVessel.getLabel() );
+                    }
+                    return results;
+                }
+
                 for (LabVessel vessel : labEvent.getTargetLabVessels()) {
-                    if( vessel instanceof TubeFormation) {
-                        TubeFormation tubes = (TubeFormation) vessel;
+                    if( OrmUtil.proxySafeIsInstance( vessel, TubeFormation.class )) {
+                        TubeFormation tubes = OrmUtil.proxySafeCast(vessel, TubeFormation.class);
                         for ( RackOfTubes rack : tubes.getRacksOfTubes()) {
                             results.add(rack.getLabel());
                         }
@@ -1073,6 +1120,9 @@ public class SearchDefinitionFactory {
                 }
                 break;
             }
+        } else {
+            // Ignore source vessels for in-place events
+            return vesselTypeName;
         }
 
         if( vessel != null ) {
@@ -1163,10 +1213,10 @@ public class SearchDefinitionFactory {
                 Set<LabMetric> labMetrics = labVessel.getMetrics();
                 for (LabMetric labMetric : labMetrics) {
                     BigDecimal ng = labMetric.getTotalNg();
-                    if (ng != null) {
-                        value = ng.toPlainString();
-                        break;
+                    if( ng != null ) {
+                        value = MathUtils.scaleTwoDecimalPlaces(ng).toPlainString();
                     }
+                    break;
                 }
                 return value;
 

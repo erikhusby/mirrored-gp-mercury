@@ -1723,4 +1723,98 @@
         <renameColumn tableName="mercury_control_aud" oldColumnName="collaborator_sample_id"
                       newColumnName="collaborator_participant_id" schemaName="mercury" />
     </changeSet>
+    
+    <changeSet id="GPLIM-2881-1" author="thompson">
+        <createIndex tableName="LAB_VESSEL_CONTAINERS_AUD" indexName="IX_LVCA_LAB_VESSEL">
+            <column name="LAB_VESSEL"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-2881-2" author="thompson">
+        <createIndex tableName="LAB_VESSEL_AUD" indexName="IX_LVA_LAB_VESSEL">
+            <column name="LAB_VESSEL_ID"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-2881-3" author="thompson">
+        <createIndex tableName="LAB_EVENT_AUD" indexName="IX_LEA_IN_PLACE_LAB_VESSEL">
+            <column name="IN_PLACE_LAB_VESSEL"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-2881-4" author="thompson">
+        <createIndex tableName="BATCH_STARTING_VESSELS_AUD" indexName="IX_BSVA_DILUTION_VESSEL">
+            <column name="DILUTION_VESSEL"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-2881-5" author="thompson">
+        <createIndex tableName="LAB_VESSEL_MERCURY_SAMPLES_AUD" indexName="IX_LVMS_LAB_VESSEL">
+            <column name="LAB_VESSEL"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-2881-6" author="thompson">
+        <createIndex tableName="MERCURY_SAMPLE_AUD" indexName="IX_MSA_MERCURY_SAMPLE_ID">
+            <column name="MERCURY_SAMPLE_ID"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-2881-7" author="thompson">
+        <createIndex tableName="LV_REAGENT_CONTENTS_AUD" indexName="IX_LVRCA_LAB_VESSEL">
+            <column name="LAB_VESSEL"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-2881-8" author="thompson">
+        <createIndex tableName="REAGENT_AUD" indexName="IX_RA_REAGENT_ID">
+            <column name="REAGENT_ID"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-2881-9" author="thompson">
+        <createIndex tableName="BATCH_STARTING_VESSELS_AUD" indexName="IX_BSVA_LAB_VESSEL">
+            <column name="LAB_VESSEL"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-2884-1" author="epolk">
+        <createTable tableName="FIXUP_COMMENTARY" schemaName="mercury">
+            <column name="FIXUP_COMMENTARY_ID" type="number(19,0)">
+	        <constraints nullable="false" primaryKey="true" primaryKeyName="PK_FIXUP_COMMENTARY"/>
+	    </column>
+            <column name="REASON" type="varchar2(1023)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-2884-2" author="epolk">
+        <createSequence sequenceName="SEQ_FIXUP_COMMENTARY" schemaName="mercury" startValue="1" incrementBy="50"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-2884-3" author="epolk">
+        <createTable tableName="FIXUP_COMMENTARY_AUD" schemaName="mercury">
+            <column name="REV" type="number(19,0)">
+                <constraints nullable="false"/>
+	    </column>
+            <column name="REVTYPE" type="number(3,0)">
+                <constraints nullable="false"/>
+	    </column>
+            <column name="FIXUP_COMMENTARY_ID" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="REASON" type="varchar2(1023)"/>
+        </createTable>
+
+	<addPrimaryKey tableName="FIXUP_COMMENTARY_AUD" schemaName="mercury"
+		       constraintName="PK_FIXUP_COMMENTARY_AUD"
+		       columnNames="rev, fixup_commentary_id"/>
+
+	<createIndex tableName="FIXUP_COMMENTARY_AUD" indexName="IX_FIXUP_COMMENTARY_AUD">
+            <column name="fixup_commentary_id"/>
+        </createIndex>
+
+    </changeSet>
+    <!--
+       ##################################################################
+       ##################################################################
+
+                    NO MORE CHANGES FOR THIS FILE
+
+       ##################################################################
+       ##################################################################
+    -->
 </databaseChangeLog>

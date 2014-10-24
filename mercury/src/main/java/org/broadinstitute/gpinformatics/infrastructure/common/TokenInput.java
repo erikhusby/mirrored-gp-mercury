@@ -267,7 +267,7 @@ public abstract class TokenInput<TOKEN_OBJECT> {
 
     /**
      * Given the arguments, create a JSON object that represents it.  This is used to create the response for a
-     * JQeury Tokeninput auto-complete UI.
+     * jQuery Tokeninput auto-complete UI.
      *
      * @param id the ID
      * @param name the name
@@ -284,7 +284,7 @@ public abstract class TokenInput<TOKEN_OBJECT> {
 
     /**
      * Given the arguments, create a JSON object that represents it.  This is used to create the response for a
-     * JQeury Tokeninput auto-complete UI.
+     * jQuery Tokeninput auto-complete UI.
      *
      * @param id the ID
      * @param name the name

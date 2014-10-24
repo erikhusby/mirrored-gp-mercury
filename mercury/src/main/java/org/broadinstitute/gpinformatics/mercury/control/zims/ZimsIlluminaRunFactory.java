@@ -356,7 +356,7 @@ public class ZimsIlluminaRunFactory {
             MolecularIndexingScheme indexingSchemeEntity, List<String> catNames, String labWorkflow,
             edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme indexingSchemeDto,
             Map<String, Control> mapNameToControl, String pdoSampleName,
-            boolean isCrspLane, ResearchProject CrspPositiveControlsProject,
+            boolean isCrspLane, ResearchProject crspPositiveControlsProject,
             String metadataSourceForPipelineAPI) {
 
         Format dateFormat = FastDateFormat.getInstance(ZimsIlluminaRun.DATE_FORMAT);
@@ -438,7 +438,7 @@ public class ZimsIlluminaRunFactory {
                 positiveControl, negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation,
                 catNames, productOrder, lcSet, sampleData, labWorkflow, libraryCreationDate, pdoSampleName, metadataSourceForPipelineAPI);
         if (isCrspLane) {
-            crspPipelineUtils.setFieldsForCrsp(libraryBean, sampleData, CrspPositiveControlsProject, lcSet);
+            crspPipelineUtils.setFieldsForCrsp(libraryBean, sampleData, crspPositiveControlsProject, lcSet);
         }
         return libraryBean;        
     }

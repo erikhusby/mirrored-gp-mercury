@@ -7,10 +7,12 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.rackscan.ScannerException;
+import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.RackScannerEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
-import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanPlateProcessor;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
@@ -20,7 +22,6 @@ import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActi
 
 import javax.inject.Inject;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -125,23 +126,29 @@ public class PicoDispositionActionBean extends RackScanActionBean {
         this.tubeFormation = tubeFormation;
     }
 
+    // Accessible only for test purposes.
+    void setBarcodedTubeDao(BarcodedTubeDao dao) {
+        barcodedTubeDao = dao;
+    }
+
     /**
      * SampleDisposition represents a sample disposition displayed in the jsp's list.
      */
     public class ListItem {
         private String position;
         private String barcode;
+        private String[] collaboratorPatientIds;
         private BigDecimal concentration;
         private NextStep disposition;
         private boolean riskOverride;
 
-        public ListItem(String position, String barcode, BigDecimal concentration,  NextStep disposition,
-                        boolean riskOverride) {
+        public ListItem(String position, String barcode, String[] collaboratorPatientIds, BigDecimal concentration,
+                NextStep disposition, boolean riskOverride) {
             this.position = position;
             this.barcode = barcode;
+            this.collaboratorPatientIds = collaboratorPatientIds;
             // Sets the number of decimal digits to display.
-            this.concentration = (concentration != null) ?
-                    concentration.setScale(VarioskanPlateProcessor.SCALE, RoundingMode.HALF_EVEN) : null;
+            this.concentration = (concentration != null) ? MathUtils.scaleTwoDecimalPlaces(concentration) : null;
             this.disposition = disposition;
             this.riskOverride = riskOverride;
         }
@@ -151,6 +158,9 @@ public class PicoDispositionActionBean extends RackScanActionBean {
         }
         public String getBarcode() {
             return barcode;
+        }
+        public String[] getCollaboratorPatientIds() {
+            return collaboratorPatientIds;
         }
         public BigDecimal getConcentration() {
             return concentration;
@@ -253,6 +263,10 @@ public class PicoDispositionActionBean extends RackScanActionBean {
         return PAGE_TITLE;
     }
 
+    void setRackScannerEjb(RackScannerEjb ejb) {
+        rackScannerEjb = ejb;
+    }
+
     /**
      * Uses a rack scanner to find tubes and generates their next step dispositions.
      * @throws org.broadinstitute.bsp.client.rackscan.ScannerException
@@ -278,10 +292,13 @@ public class PicoDispositionActionBean extends RackScanActionBean {
         } else if (scanAndMakeListItems()) {
             // Removes tubes with the expected Next Step confirmationGroup value,
             // leaving only incorrect ones in listItems.
-            if (!hasErrors()) {
+            // Checks the ActionBean context validity to allow running a unit test.
+            if (getContext().getRequest() == null || !hasErrors()) {
                 final int expectedGroup = nextStepSelect.getNextStepConfirmationGroup();
                 for (Iterator<ListItem> iter = listItems.iterator(); iter.hasNext(); ) {
-                    if (iter.next().getDisposition().getNextStepConfirmationGroup() == expectedGroup) {
+                    ListItem listItem = iter.next();
+                    if (listItem.getDisposition() != null &&
+                        listItem.getDisposition().getNextStepConfirmationGroup() == expectedGroup) {
                         iter.remove();
                     }
                 }
@@ -350,11 +367,13 @@ public class PicoDispositionActionBean extends RackScanActionBean {
                 BigDecimal concentration = labMetric.getValue();
                 LabMetricDecision.Decision decision = labMetric.getLabMetricDecision().getDecision();
                 int rangeCompare = labMetric.initialPicoDispositionRange();
-                listItems.add(new ListItem(vesselPosition.name(), tube.getLabel(), concentration,
+                listItems.add(new ListItem(vesselPosition.name(), tube.getLabel(),
+                        tube.getMetadataValues(Metadata.Key.PATIENT_ID), concentration,
                         NextStep.calculateNextStep(rangeCompare, decision),
                         decision.equals(LabMetricDecision.Decision.RISK)));
             } else {
-                listItems.add(new ListItem(vesselPosition.name(), tube.getLabel(), null, null, false));
+                listItems.add(new ListItem(vesselPosition.name(), tube.getLabel(),
+                        tube.getMetadataValues(Metadata.Key.PATIENT_ID), null, null, false));
             }
         }
         Collections.sort(listItems, BY_DISPOSITION_THEN_POSITION);

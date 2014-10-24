@@ -37,7 +37,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
@@ -56,7 +55,7 @@ public class FingerprintingSpreadsheetActionBean extends CoreActionBean {
     private static final String CREATE_PAGE = "/vessel/create_fingerprint_spreadsheet.jsp";
     private static final String SUBMIT_ACTION = "barcodeSubmit";
 
-    private static final List<Integer> ACCEPTABLE_SAMPLE_COUNTS = Arrays.asList(new Integer[]{48, 96});
+    private static final Integer MINIMUM_SAMPLE_COUNT = 48;
 
     private String plateBarcode;
     private StaticPlate staticPlate;
@@ -117,9 +116,9 @@ public class FingerprintingSpreadsheetActionBean extends CoreActionBean {
             }
 
             // Must be a full plate for GAP.
-            if (!ACCEPTABLE_SAMPLE_COUNTS.contains(dtos.size())) {
-                addGlobalValidationError("Plate has a pico'd sample count of " + dtos.size() + " and it must be " +
-                                         StringUtils.join(ACCEPTABLE_SAMPLE_COUNTS, " or "));
+            if (dtos.size() < MINIMUM_SAMPLE_COUNT) {
+                addGlobalValidationError("Plate has a pico'd sample count of " + dtos.size() +
+                        " and it must be at least " + MINIMUM_SAMPLE_COUNT);
                 return new ForwardResolution(CREATE_PAGE);
             }
 

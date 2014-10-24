@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.parsers.poi;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -18,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.Format;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -54,12 +56,28 @@ public final class PoiSpreadsheetParser {
     }
 
     /**
+     * If all values in this row are blank return true, otherwise false.
+     */
+    static boolean representsBlankLine(Collection<String> values) {
+        for (String value : values) {
+            if (!StringUtils.isBlank(value)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
      * Process the data portion of the spreadsheet.
      *
      * @param processor The processor being used.
      * @param rows The iterator on the excel rows.
      */
     private void processData(TableProcessor processor, Iterator<Row> rows) {
+        // Buffer of blank lines used only for TableProcessors where #shouldIgnoreTrailingBlankLines is true.
+        List<Pair<Row, Map<String, String>>> blankLineBuffer = new ArrayList<>();
+        boolean shouldIgnoreTrailingBlankLines = processor.shouldIgnoreTrailingBlankLines();
+
         while (rows.hasNext()) {
             Row row = rows.next();
 
@@ -71,9 +89,30 @@ public final class PoiSpreadsheetParser {
                         extractCellContent(row, headerName, i, processor.isDateColumn(i), processor.isStringColumn(i)));
             }
 
-            // Take the map and turn it into objects and process the data appropriately.
-            processor.processRow(dataByHeader, row.getRowNum());
+            boolean isBlankLine = false;
+            if (shouldIgnoreTrailingBlankLines) {
+                isBlankLine = representsBlankLine(dataByHeader.values());
+                if (isBlankLine) {
+                    blankLineBuffer.add(Pair.of(row, dataByHeader));
+                } else {
+                    // If there are any blank lines in the buffer they were in the middle of the file, flush them
+                    // to the processor.
+                    for (Pair<Row, Map<String, String>> pair : blankLineBuffer) {
+                        processor.processRow(pair.getRight(), pair.getLeft().getRowNum());
+                    }
+                    blankLineBuffer.clear();
+                }
+            }
+
+            // Unless this processor ignores trailing blank lines and the line is blank, the processor should
+            // process the row data.
+            if (!(shouldIgnoreTrailingBlankLines && isBlankLine)) {
+                // Take the map and turn it into objects and process the data appropriately.
+                processor.processRow(dataByHeader, row.getRowNum());
+            }
         }
+        // At this point any blank lines remaining in blankLineBuffer are deliberately ignored and not sent to
+        // the processor.
     }
 
     /**
