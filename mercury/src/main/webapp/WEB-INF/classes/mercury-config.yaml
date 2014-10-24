@@ -159,13 +159,13 @@ thrift:
 deckMsgs:
 
     DEV:
-        messageStoreDirRoot: /Users/scottmat/temp/seq/lims/mercury/dev
+        messageStoreDirRoot: /seq/lims/mercury/dev
 
     QA:
-        messageStoreDirRoot: /Users/scottmat/temp/seq/lims/mercury/qa
+        messageStoreDirRoot: /seq/lims/mercury/qa
 
     PROD:
-        messageStoreDirRoot: /Users/scottmat/temp/seq/lims/mercury/prod
+        messageStoreDirRoot: /seq/lims/mercury/prod
 
 
 bettaLimsServer:
