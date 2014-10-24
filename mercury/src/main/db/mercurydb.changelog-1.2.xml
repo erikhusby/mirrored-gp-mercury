@@ -7,9 +7,9 @@
 
     <changeSet id="GPLIM-3005-sample-key-unique-constraint" author="scottmat">
         <preConditions onFail="MARK_RAN">
-            <not>
+            <sqlCheck expectedResult="0">
 
-            </not>
+            </sqlCheck>
         </preConditions>
     </changeSet>
 
