@@ -5,4 +5,16 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-2.0.xsd">
 
+    <changeSet author="pshapiro" id="PORTAL-238-1">
+        <sql>
+            ALTER TABLE athena.product_order
+            drop CONSTRAINT check_order_status
+        </sql>
+        <sql>
+            ALTER TABLE athena.product_order
+            add CONSTRAINT check_order_status
+            CHECK (order_status IN ('Draft', 'Pending', 'Submitted', 'Abandoned', 'Completed'));
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
