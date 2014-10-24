@@ -76,7 +76,7 @@ public class MercurySample extends AbstractSample {
     private Set<Metadata> metadata = new HashSet<>();
 
     @ManyToMany(mappedBy = "mercurySamples", cascade = CascadeType.PERSIST)
-    protected List<LabVessel> labVessel = new ArrayList<>();
+    protected Set<LabVessel> labVessel = new HashSet<>();
 
     /**
      * For JPA
