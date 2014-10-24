@@ -6,6 +6,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 
 import javax.annotation.Nonnull;
 import java.text.ParseException;
@@ -418,6 +419,11 @@ public class BspSampleData implements SampleData {
             sampleDataFetcher.fetchFFPEDerived(Collections.singletonList(this));
         }
         return ffpeStatus.derived;
+    }
+
+    @Override
+    public MercurySample.MetadataSource getMetadataSource() {
+        return MercurySample.MetadataSource.BSP;
     }
 
     public void setFfpeStatus(Boolean ffpeStatus) {
