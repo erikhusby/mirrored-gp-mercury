@@ -27,6 +27,7 @@ public class MercurySampleDaoTest extends ContainerTest {
         }
     }
 
+    @Test(enabled = false, groups = TestGroups.STANDARD)
     public void testFindDupeSamples() throws Exception {
 
         List<MercurySample> duplicateSamples = mercurySampleDao.findDuplicateSamples();
