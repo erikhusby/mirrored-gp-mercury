@@ -28,6 +28,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -74,8 +75,8 @@ public class MercurySample extends AbstractSample {
     @ManyToMany
     private Set<Metadata> metadata = new HashSet<>();
 
-    @ManyToMany(mappedBy = "mercurySamplesForRemoval", cascade = CascadeType.PERSIST)
-    protected List<LabVessel> labVessels = new ArrayList<>();
+    @ManyToMany(mappedBy = "mercurySamples", cascade = CascadeType.PERSIST)
+    protected List<LabVessel> labVessel = new ArrayList<>();
 
     /**
      * For JPA
@@ -209,4 +210,10 @@ public class MercurySample extends AbstractSample {
         return new HashCodeBuilder().append(getSampleKey()).toHashCode();
     }
 
+    public void removeSampleFromVessels(Collection<LabVessel> vesselsForRemoval) {
+        for (LabVessel labVesselForRemoval : vesselsForRemoval) {
+            labVesselForRemoval.getMercurySamples().remove(this);
+            labVessel.remove(labVesselForRemoval);
+        }
+    }
 }

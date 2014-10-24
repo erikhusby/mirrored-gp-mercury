@@ -181,7 +181,7 @@ public abstract class LabVessel implements Serializable {
     // todo jmt separate role for sample holder?
     @ManyToMany(cascade = CascadeType.PERSIST)
     @BatchSize(size = 100)
-    private Set<MercurySample> mercurySamples = new HashSet<>();
+    private List<MercurySample> mercurySamples = new ArrayList<>();
 
     // todo jmt set these fields db-free
     @OneToMany(mappedBy = "sourceVessel", cascade = CascadeType.PERSIST)
@@ -201,10 +201,6 @@ public abstract class LabVessel implements Serializable {
 
     @Transient
     private Map<String, Set<LabMetric>> metricMap;
-
-    @ManyToMany(cascade = CascadeType.PERSIST)
-    @BatchSize(size = 100)
-    private List<MercurySample> mercurySamplesForRemoval = new ArrayList<>();
 
     /**
      * Set by {@link #preProcessEvents()}
@@ -1183,7 +1179,7 @@ public abstract class LabVessel implements Serializable {
         }
     }
 
-    public Set<MercurySample> getMercurySamples() {
+    public List<MercurySample> getMercurySamples() {
         return mercurySamples;
     }
 
@@ -1192,7 +1188,7 @@ public abstract class LabVessel implements Serializable {
     }
 
     @SuppressWarnings("unused")
-    public void addAllSamples(Set<MercurySample> mercurySamples) {
+    public void addAllSamples(Collection<MercurySample> mercurySamples) {
         this.mercurySamples.addAll(mercurySamples);
     }
 
@@ -1916,11 +1912,4 @@ public abstract class LabVessel implements Serializable {
         return values.toArray(new String[values.size()]);
     }
 
-    public List<MercurySample> getMercurySamplesForRemoval() {
-        return mercurySamplesForRemoval;
-    }
-
-    public void setMercurySamplesForRemoval(List<MercurySample> mercurySamplesForRemoval) {
-        this.mercurySamplesForRemoval = mercurySamplesForRemoval;
-    }
 }
