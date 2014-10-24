@@ -33,6 +33,7 @@ public class ProductOrderData {
     private String title;
     private String id;
     private String comments;
+    private Date createdDate;
     private Date placedDate;
     private Date modifiedDate;
     private String product;
@@ -92,6 +93,7 @@ public class ProductOrderData {
         quoteId = productOrder.getQuoteId();
         status = productOrder.getOrderStatus().name();
         requisitionName = productOrder.getRequisitionName();
+        createdDate = productOrder.getCreatedDate();
 
         Product product = productOrder.getProduct();
         if (product != null) {
@@ -369,5 +371,13 @@ public class ProductOrderData {
 
     public void setSiteId(long siteId) {
         this.siteId = siteId;
+    }
+
+    public Date getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(Date createdDate) {
+        this.createdDate = createdDate;
     }
 }

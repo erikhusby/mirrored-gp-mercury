@@ -167,7 +167,7 @@ public class ProductOrderResource {
         validateAndLoginUser(productOrderData);
 
         // This will create a product order and place it, so a JIRA ticket is created.
-        ProductOrder productOrder = createProductOrder(productOrderData);
+        ProductOrder productOrder = createProductOrder(productOrderData, ProductOrder.OrderStatus.Pending);
 
 
         ResearchProject researchProject =
@@ -264,11 +264,11 @@ public class ProductOrderResource {
     @Consumes(MediaType.APPLICATION_XML)
     public ProductOrderData create(@Nonnull ProductOrderData productOrderData)
             throws DuplicateTitleException, NoSamplesException, QuoteNotFoundException, ApplicationValidationException {
-        ProductOrder productOrder = createProductOrder(productOrderData);
+        ProductOrder productOrder = createProductOrder(productOrderData, ProductOrder.OrderStatus.Submitted);
         return new ProductOrderData(productOrder, true);
     }
 
-    private ProductOrder createProductOrder(ProductOrderData productOrderData)
+    private ProductOrder createProductOrder(ProductOrderData productOrderData, ProductOrder.OrderStatus initialStatus)
             throws DuplicateTitleException, NoSamplesException, QuoteNotFoundException, ApplicationValidationException {
 
         validateAndLoginUser(productOrderData);
@@ -286,7 +286,7 @@ public class ProductOrderResource {
             productOrder.setCreatedBy(user.getUserId());
             productOrder.prepareToSave(user, ProductOrder.SaveType.CREATING);
             ProductOrderJiraUtil.placeOrder(productOrder, jiraService);
-            productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+            productOrder.setOrderStatus(initialStatus);
 
             // Not supplying add-ons at this point, just saving what we defined above and then flushing to make sure
             // any DB constraints have been enforced.

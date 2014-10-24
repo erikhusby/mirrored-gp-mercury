@@ -43,7 +43,7 @@ import java.util.TreeSet;
  * This class creates a spreadsheet version of a product order's sample billing status, also called the sample
  * billing ledger.  The exported spreadsheet will later be imported after the user has updated the sample
  * billing information.
- *
+ * <p/>
  * A future version of this class will probably support both export and import, since there will be some common
  * code & data structures.
  */
@@ -162,17 +162,16 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
         List<Product> productsSortedByPartNumber = new ArrayList<>(orderMap.keySet());
         Collections.sort(productsSortedByPartNumber);
 
-        // Go through each product
+        // Loop through all the products, creating a new sheet for each one.
         for (Product currentProduct : productsSortedByPartNumber) {
 
-            // per 2012-11-19 conversation with Alex and Hugh, Excel does not give us enough characters in a tab
-            // name to allow for the product name in all cases, so use just the part number.
+            // Excel sheet names are limited to 31 characters, so we use the product's part number instead of its name.
             getWriter().createSheet(currentProduct.getPartNumber());
 
-            List<ProductOrder> productOrders = orderMap.get(currentProduct);
-
-            // Write headers after placing an extra line
+            // Need to create a new row for the headers.
             getWriter().nextRow();
+
+            List<ProductOrder> productOrders = orderMap.get(currentProduct);
             for (BillingTrackerHeader header : BillingTrackerHeader.values()) {
                 if (header.shouldShow(currentProduct)) {
                     getWriter().writeHeaderCell(header.getText(), header == BillingTrackerHeader.TABLEAU_LINK);
@@ -230,6 +229,15 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
         return historicalPriceItems;
     }
 
+    // FIXME: This can be made more efficient by avoiding the remote call to BSP, since we have aliquot ID on the
+    // FIXME: PDO sample. This allows us to map directly from the PDO sample to its WorkCompleteMessage. The SQL
+    // FIXME: looks like:
+    // SELECT * FROM athena.message_data_value, athena.work_complete_message
+    // WHERE key = 'ALIQUOT_ID' AND value IN (SELECT
+    //                                      concat('broadinstitute.org:bsp.prod.sample:', aliquot_id)
+    //                                     FROM athena.product_order_sample
+    //                                     WHERE aliquot_id IS NOT NULL)
+    //    AND work_complete_message_id = work_complete_message;
     private Map<String, WorkCompleteMessage> getWorkCompleteMessageBySample(ProductOrder productOrder) {
         Map<String, WorkCompleteMessage> workCompleteMessageBySample = workCompleteMessageCache.get(productOrder);
         if (workCompleteMessageBySample == null) {
@@ -438,10 +446,13 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
             writer.setRowStyle(getAbandonedStyle());
         }
     }
+
+    @SuppressWarnings("MagicNumber")
     private static final XSSFColor HISTORICAL_PRICE_ITEM_COLOR = new XSSFColor(new Color(204, 204, 204));
 
     private static class PriceItemColor {
 
+        @SuppressWarnings("MagicNumber")
         private static final XSSFColor[] COLORS = {
                 new XSSFColor(new Color(255, 255, 204)),
                 new XSSFColor(new Color(255, 204, 255)),

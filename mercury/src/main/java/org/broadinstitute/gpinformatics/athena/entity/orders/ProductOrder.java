@@ -1132,6 +1132,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public enum OrderStatus implements StatusType {
         Draft,
+        Pending,
         Submitted,
         Abandoned,
         Completed;
@@ -1472,5 +1473,16 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public int getSampleCount() {
         return sampleCount;
+    }
+
+    /**
+     * Is the current PDO ready for lab work? A PDO is ready if all of its samples are received.
+     *
+     * @return true if this PDO contains samples that are ready for lab work
+     */
+    public boolean readyForLab() {
+        // Abandoned and Completed PDOs are considered "ready" because they can transition back to the
+        // Submitted state.
+        return orderStatus != OrderStatus.Draft && orderStatus != OrderStatus.Pending;
     }
 }
