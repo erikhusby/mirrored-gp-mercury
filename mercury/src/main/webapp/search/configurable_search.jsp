@@ -113,7 +113,7 @@ Move the mouse over the question marks to see details about each section.
                         <optgroup label="${entry.key}">
                             <c:forEach items="${entry.value}" var="searchTerm">
                                 <option value="${searchTerm.name}">${searchTerm.name}</option>
-                                <c:if test="${searchTerm.addConstrainedValuesToSearchTermList}">
+                                <c:if test="${searchTerm.addDependentTermsToSearchTermList}">
                                     <c:forEach items="${searchTerm.constrainedValues}" var="constrainedValue">
                                         <option value="${constrainedValue.code}"
                                                 searchTerm="${searchTerm.name}">${constrainedValue.label}</option>
