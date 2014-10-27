@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
+import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -21,7 +22,7 @@ public class LabEventTraversalTest extends ContainerTest {
     @Test(groups = TestGroups.STANDARD)
     public void testLcsetDescendantSearch() {
         ConfigurableSearchDefinition configurableSearchDefinition =
-                new SearchDefinitionFactory().buildLabEventSearchDef();
+                SearchDefinitionFactory.getForEntity(ColumnEntity.LAB_EVENT.getEntityName());
 
         SearchInstance searchInstance = new SearchInstance();
         SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("LCSET", configurableSearchDefinition);

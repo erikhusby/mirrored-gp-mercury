@@ -3,15 +3,18 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricRunDao;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.logging.Logger;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -23,6 +26,9 @@ public class LabMetricFixupTest extends Arquillian {
 
     @Inject
     private LabMetricRunDao dao;
+
+    @Inject
+    private UserBean userBean;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -69,4 +75,18 @@ public class LabMetricFixupTest extends Arquillian {
             }
         }
     }
+
+    @Test(enabled = false)
+    public void gplim3119FixupQuant() {
+        userBean.loginOSUser();
+        LabMetric labMetric = dao.findById(LabMetric.class, 67522L);
+        Assert.assertTrue(labMetric != null &&
+                          labMetric.getName() == LabMetric.MetricType.ECO_QPCR &&
+                          labMetric.getValue().compareTo(new BigDecimal("3.69")) == 0);
+        labMetric.setValue(new BigDecimal("25.93380293"));
+        Logger.getLogger(this.getClass().getName()).info("updated metric=" + labMetric.getLabMetricId() +
+                                                         " value=" + labMetric.getValue());
+        dao.flush();
+    }
+
 }

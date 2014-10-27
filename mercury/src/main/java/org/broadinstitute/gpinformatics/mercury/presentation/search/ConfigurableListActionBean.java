@@ -198,7 +198,7 @@ public class ConfigurableListActionBean extends CoreActionBean {
         } else {
             columnNameList = searchInstance.getColumnSetColumnNameList();
         }
-        ConfigurableSearchDefinition configurableSearchDef = new SearchDefinitionFactory().getForEntity(entityName);
+        ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(entityName);
         List<ColumnTabulation> columnTabulations = new ArrayList<>();
         for (String columnName : columnNameList) {
             columnTabulations.add(configurableSearchDef.getSearchTerm(columnName));
