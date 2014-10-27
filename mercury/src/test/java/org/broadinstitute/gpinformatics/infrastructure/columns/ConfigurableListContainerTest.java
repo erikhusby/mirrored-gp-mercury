@@ -55,7 +55,7 @@ public class ConfigurableListContainerTest extends Arquillian {
         }
 
         ConfigurableSearchDefinition configurableSearchDefinition =
-                new SearchDefinitionFactory().buildLabVesselSearchDef();
+                SearchDefinitionFactory.getForEntity( ColumnEntity.LAB_VESSEL.getEntityName());
         for (Map.Entry<String, List<ColumnTabulation>> groupListSearchTermEntry :
                 configurableSearchDefinition.getMapGroupToColumnTabulations().entrySet()) {
             for (ColumnTabulation searchTerm : groupListSearchTermEntry.getValue()) {
