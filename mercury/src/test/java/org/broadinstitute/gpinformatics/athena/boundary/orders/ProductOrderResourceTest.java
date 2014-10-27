@@ -1,9 +1,11 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
+import com.sun.jersey.api.client.GenericType;
 import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
 import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.MaterialInfo;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -116,15 +118,16 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
         return kitDetailData;
     }
 
-    private void sendCreateWithKitRequest(URL baseUrl, String username) {
+    private ProductOrderData sendCreateWithKitRequest(URL baseUrl, String username) {
         WebResource resource = makeWebResource(baseUrl, "createWithKitRequest");
-        resource.post(createTestProductOrderData(username));
+        return resource.entity(createTestProductOrderData(username)).post(new GenericType<ProductOrderData>() { });
     }
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testCreateProductOrderWithKit(@ArquillianResource URL baseUrl) {
-        sendCreateWithKitRequest(baseUrl, "scottmat");
+        ProductOrderData data = sendCreateWithKitRequest(baseUrl, "scottmat");
+        Assert.assertEquals(data.getStatus(), ProductOrder.OrderStatus.Pending.name());
     }
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, expectedExceptions = UniformInterfaceException.class)
