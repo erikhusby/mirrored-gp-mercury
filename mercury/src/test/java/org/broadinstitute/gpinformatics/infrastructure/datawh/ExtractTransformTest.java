@@ -25,9 +25,9 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.hibernate.SQLQuery;
 import org.hibernate.type.LongType;
@@ -186,10 +186,12 @@ public class ExtractTransformTest extends Arquillian {
         String queryString;
         if (deleted) {
             queryString = "select risk_item_id as id1, product_order_sample as id2, rev " +
-                    " from ATHENA.PO_SAMPLE_RISK_JOIN_AUD where revtype = 2 and rownum = 1";
+                    " from ATHENA.PO_SAMPLE_RISK_JOIN_AUD where revtype = 2 and rownum = 1 " +
+                    " and exists (select 1 from revchanges rc where rc.rev = ATHENA.PO_SAMPLE_RISK_JOIN_AUD.rev)";
         } else {
             queryString = "select risk_item_id as id1, product_order_sample as id2, rev " +
                     " from ATHENA.PO_SAMPLE_RISK_JOIN_AUD p1  where revtype = 0 and rownum = 1 " +
+                    " and exists (select 1 from revchanges rc where rc.rev = p1.rev)" +
                     " and not exists (select 1 from ATHENA.PO_SAMPLE_RISK_JOIN_AUD p2 " +
                     " where p2.risk_item_id = p1.risk_item_id and p2.revtype = 2)";
         }
@@ -202,10 +204,13 @@ public class ExtractTransformTest extends Arquillian {
         if (deleted) {
             queryString = "select p1.ledger_id as id1, p2.product_order_sample_id as id2, p1.rev" +
                     " from ATHENA.BILLING_LEDGER_AUD p1, ATHENA.BILLING_LEDGER_AUD p2" +
-                    " where p1.revtype = 2 and p2.revtype = 0 and p1.ledger_id = p2.ledger_id and rownum = 1";
+                    " where p1.revtype = 2 and p2.revtype = 0 and p1.ledger_id = p2.ledger_id " +
+                    " and exists (select 1 from revchanges rc where rc.rev = p1.rev)" +
+                    " and rownum = 1";
         } else {
             queryString = "select ledger_id as id1, product_order_sample_id as id2, rev " +
                     " from ATHENA.BILLING_LEDGER_AUD p1 where revtype = 0 and rownum = 1" +
+                    " and exists (select 1 from revchanges rc where rc.rev = p1.rev)" +
                     " and not exists (select 1 from ATHENA.BILLING_LEDGER_AUD p2" +
                     " where p2.ledger_id = p1.ledger_id and p2.revtype = 2)";
         }

@@ -2,19 +2,15 @@ package org.broadinstitute.gpinformatics.mercury.control.dao.envers;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
-import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup_;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer_;
 import org.hibernate.envers.RevisionType;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -26,7 +22,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
 
 /**
  * Container test of AuditReaderDao.
@@ -51,7 +46,7 @@ public class AuditReaderDaoTest extends ContainerTest {
     public void testGetModifiedEntityTypes() throws Exception {
         final long now = System.currentTimeMillis();
         final LabVessel labVessel = new BarcodedTube("A" + now);
-        Collection<Long> revIds = revsBracketingTransaction(new Runnable() {
+        List<AuditedRevDto> auditedRevDtos = revsBracketingTransaction(new Runnable() {
             @Override
             public void run() {
                 labVesselDao.persist(labVessel);
@@ -60,9 +55,8 @@ public class AuditReaderDaoTest extends ContainerTest {
         });
 
         boolean found = false;
-        for (Long revId : revIds) {
-            Collection<String> names = auditReaderDao.getClassnamesModifiedAtRevision(revId);
-            for (String name : names) {
+        for (AuditedRevDto auditedRevDto : auditedRevDtos) {
+            for (String name : auditedRevDto.getEntityTypeNames()) {
                 if (name.contains(BarcodedTube.class.getCanonicalName())) {
                     found = true;
                 }
@@ -76,10 +70,10 @@ public class AuditReaderDaoTest extends ContainerTest {
         final long now = System.currentTimeMillis();
         final String barcode = "A" + now;
         // List of all values from start to end of this test, and should have at least this test's transactions.
-        Set<Long> revIds = new HashSet<>();
+        Set<AuditedRevDto> auditedRevDtos = new HashSet<>();
 
         // Creates a new barcoded tube.
-        revIds.addAll(revsBracketingTransaction(new Runnable() {
+        auditedRevDtos.addAll(revsBracketingTransaction(new Runnable() {
             @Override
             public void run() {
                 LabVessel labVessel = new BarcodedTube(barcode, BarcodedTube.BarcodedTubeType.MatrixTube);
@@ -89,7 +83,7 @@ public class AuditReaderDaoTest extends ContainerTest {
         }));
 
         // Modifies the tube type.
-        revIds.addAll(revsBracketingTransaction(new Runnable() {
+        auditedRevDtos.addAll(revsBracketingTransaction(new Runnable() {
             @Override
             public void run() {
                 BarcodedTube tube = barcodedTubeDao.findByBarcode(barcode);
@@ -105,7 +99,7 @@ public class AuditReaderDaoTest extends ContainerTest {
         Assert.assertNotNull(persistedTube.getLabVesselId());
 
         // Deletes the tube.
-        revIds.addAll(revsBracketingTransaction(new Runnable() {
+        auditedRevDtos.addAll(revsBracketingTransaction(new Runnable() {
             @Override
             public void run() {
                 BarcodedTube tube = barcodedTubeDao.findByBarcode(barcode);
@@ -115,7 +109,7 @@ public class AuditReaderDaoTest extends ContainerTest {
         }));
 
         // Creates a random different new barcoded tube.
-        revIds.addAll(revsBracketingTransaction(new Runnable() {
+        auditedRevDtos.addAll(revsBracketingTransaction(new Runnable() {
             @Override
             public void run() {
                 LabVessel labVessel = new BarcodedTube(barcode + "0", BarcodedTube.BarcodedTubeType.MatrixTube);
@@ -125,13 +119,18 @@ public class AuditReaderDaoTest extends ContainerTest {
         }));
 
 
-        Assert.assertTrue(revIds.size() >= 4);
+        Assert.assertTrue(auditedRevDtos.size() >= 4);
 
         // Iterates on all the BarcodedTube types in the list of revIds, and picks the
         // ones that created, modified, and deleted the tube under test.
         Long tubeCreatedRevId = null;
         Long tubeModifiedRevId = null;
         Long tubeDeletedRevId = null;
+
+        Set<Long> revIds = new HashSet<>();
+        for (AuditedRevDto auditedRevDto : auditedRevDtos) {
+            revIds.add(auditedRevDto.getRevId());
+        }
 
         List<EnversAudit> auditEntities = auditReaderDao.fetchEnversAudits(revIds, BarcodedTube.class);
         for (EnversAudit<BarcodedTube> enversAudit : auditEntities) {
@@ -208,7 +207,7 @@ public class AuditReaderDaoTest extends ContainerTest {
 
 
     /**
-     * Returns all of the revInfoId that were created while running the transaction.
+     * Returns all of the revs that were created while running the transaction.
      *
      * May include more revs than just what's in transactionToBracket, depending on what else
      * the Mercury app is doing.
@@ -216,7 +215,7 @@ public class AuditReaderDaoTest extends ContainerTest {
      * RevInfo.revInfoId is non-monotonic so must use RevInfo revDate to determine the
      * start-end range.
      */
-    private SortedSet<Long> revsBracketingTransaction(Runnable transactionToBracket) {
+    private List<AuditedRevDto> revsBracketingTransaction(Runnable transactionToBracket) {
         long startTimeSec = System.currentTimeMillis() / 1000;
         try {
             utx.begin();
@@ -227,6 +226,6 @@ public class AuditReaderDaoTest extends ContainerTest {
             Assert.fail("Caught exception ", e);
         }
         long endTimeSec = System.currentTimeMillis() / 1000 + 1;
-        return (SortedSet<Long>) auditReaderDao.fetchAuditIds(startTimeSec, endTimeSec).keySet();
+        return auditReaderDao.fetchAuditIds(startTimeSec, endTimeSec, AuditReaderDao.IS_ANY_USER, null);
     }
 }
