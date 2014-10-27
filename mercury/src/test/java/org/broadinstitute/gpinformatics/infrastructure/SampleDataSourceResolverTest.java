@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ListMultimap;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
@@ -10,6 +12,7 @@ import org.mockito.stubbing.Answer;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -34,10 +37,6 @@ public class SampleDataSourceResolverTest {
     private SampleDataSourceResolver sampleDataSourceResolver;
 
     private MercurySampleDao mockMercurySampleDao;
-
-    /*
-     * Test cases for SampleDataSourceResolver#determineSampleDataSource(Collection<String>)
-     */
 
     @BeforeMethod
     public void setUp() {
@@ -76,6 +75,10 @@ public class SampleDataSourceResolverTest {
         sampleDataSourceResolver = new SampleDataSourceResolver(mockMercurySampleDao);
     }
 
+    /*
+     * Test cases for SampleDataSourceResolver#resolveSampleDataSources(Collection<String>)
+     */
+
     /**
      * FIXME: This seems like the wrong answer to expect.
      * This should return something other than BSP, but it's difficult to identify bare BSP IDs in a way that includes
@@ -91,14 +94,24 @@ public class SampleDataSourceResolverTest {
         assertThat(sources.get(gssrOnlySampleId), equalTo(MercurySample.MetadataSource.BSP));
     }
 
-    /**
-     * FIXME: This seems like the wrong answer to expect.
-     * This should return something other than BSP, but it's difficult to identify bare BSP IDs in a way that includes
-     * those but doesn't potentially include other sample ID formats (of which Squid/GSSR is only one example).
-     */
-    public void resolveSampleDataSources_for_Squid_sample_with_MercurySample_should_return_BSP() {
+    public void resolveSampleDataSources_for_Squid_sample_with_BSP_MercurySample_should_return_BSP() {
         String gssrSampleId = "100.0";
         MercurySample.MetadataSource metadataSource = MercurySample.MetadataSource.BSP;
+        stubMercurySampleDao(new MercurySample(gssrSampleId, metadataSource));
+
+        Map<String, MercurySample.MetadataSource> sources =
+                sampleDataSourceResolver.resolveSampleDataSources(Collections.singleton(gssrSampleId));
+
+        assertThat(sources.size(), equalTo(1));
+        assertThat(sources.get(gssrSampleId), equalTo(metadataSource));
+
+        // Verify that stubbing for this test had some effect on the test run
+        verify(mockMercurySampleDao).findMapIdToListMercurySample(argThat(contains(gssrSampleId)));
+    }
+
+    public void resolveSampleDataSources_for_Squid_sample_with_MERCURY_MercurySample_should_return_MERCURY() {
+        String gssrSampleId = "100.0";
+        MercurySample.MetadataSource metadataSource = MercurySample.MetadataSource.MERCURY;
         stubMercurySampleDao(new MercurySample(gssrSampleId, metadataSource));
 
         Map<String, MercurySample.MetadataSource> sources =
@@ -149,32 +162,70 @@ public class SampleDataSourceResolverTest {
         verify(mockMercurySampleDao).findMapIdToListMercurySample(argThat(contains(clinicalSampleId)));
     }
 
+    public void resolveSampleDataSources_for_multiple_MERCURY_samples_should_return_MERCURY_for_all_samples() {
+        String bspSampleId1 = "SM-1111";
+        String bspSampleId2 = "SM-2222";
+        MercurySample.MetadataSource metadataSource = MercurySample.MetadataSource.MERCURY;
+        stubMercurySampleDao(new MercurySample(bspSampleId1, metadataSource),
+                new MercurySample(bspSampleId2, metadataSource));
+
+        Map<String, MercurySample.MetadataSource> sources =
+                sampleDataSourceResolver.resolveSampleDataSources(Arrays.asList(bspSampleId1, bspSampleId2));
+
+        assertThat(sources.size(), equalTo(2));
+        assertThat(sources.get(bspSampleId1), equalTo(metadataSource));
+        assertThat(sources.get(bspSampleId2), equalTo(metadataSource));
+    }
+
     /**
      * FIXME: This seems like the wrong answer to expect for the GSSR-only case.
      * This should return something other than BSP, but it's difficult to identify bare BSP IDs in a way that includes
      * those but doesn't potentially include other sample ID formats (of which Squid/GSSR is only one example).
      */
     public void resolveSampleDataSources_correctly_handles_query_with_all_sample_variations() {
-        String gssrOnlySampleId = "100.0";
-        String bspOnlySampleId = "SM-1234";
-        String bspSampleId = "SM-5678";
+        String gssrOnlySampleId = "100.0"; // BSP because there's no other choice
+        String bspOnlySampleId = "SM-BSP1"; // BSP because there's no MercurySample
+        String bspSampleId = "SM-BSP2"; // BSP because the MercurySample says BSP
+        String gssrSampleIdWithMercuryData = "200.0"; // MERCURY because the MercurySample says MERCURY
+        String clinicalSampleId = "SM-MERC"; // MERCURY because the MercurySample says MERCURY
+
+        String[] sampleIds =
+                {gssrOnlySampleId, bspOnlySampleId, bspSampleId, gssrSampleIdWithMercuryData, clinicalSampleId};
 
         Map<String, List<MercurySample>> sampleMap = new HashMap<>();
-        sampleMap.put(gssrOnlySampleId, Collections.<MercurySample>emptyList());
-        sampleMap.put(bspOnlySampleId, Collections.<MercurySample>emptyList());
-        sampleMap.put(bspSampleId,
-                Collections.singletonList(new MercurySample(bspSampleId, MercurySample.MetadataSource.BSP)));
-        when(mockMercurySampleDao.findMapIdToListMercurySample(
-                argThat(containsInAnyOrder(gssrOnlySampleId, bspOnlySampleId, bspSampleId)))).thenReturn(sampleMap);
+        addToSampleMap(sampleMap, gssrOnlySampleId);
+        addToSampleMap(sampleMap, bspOnlySampleId);
+        addToSampleMap(sampleMap, bspSampleId, MercurySample.MetadataSource.BSP);
+        addToSampleMap(sampleMap, gssrSampleIdWithMercuryData, MercurySample.MetadataSource.MERCURY);
+        addToSampleMap(sampleMap, clinicalSampleId, MercurySample.MetadataSource.MERCURY);
 
-        Map<String, MercurySample.MetadataSource> sources = sampleDataSourceResolver
-                .resolveSampleDataSources(Arrays.asList(bspOnlySampleId, bspSampleId, gssrOnlySampleId));
+        when(mockMercurySampleDao.findMapIdToListMercurySample(argThat(containsInAnyOrder(sampleIds))))
+                .thenReturn(sampleMap);
 
-        assertThat(sources.size(), equalTo(3));
+        Map<String, MercurySample.MetadataSource> sources =
+                sampleDataSourceResolver.resolveSampleDataSources(Arrays.asList(sampleIds));
+
+        assertThat(sources.size(), equalTo(5));
+        assertThat(sources.get(gssrOnlySampleId), equalTo(MercurySample.MetadataSource.BSP));
         assertThat(sources.get(bspOnlySampleId), equalTo(MercurySample.MetadataSource.BSP));
         assertThat(sources.get(bspSampleId), equalTo(MercurySample.MetadataSource.BSP));
-        assertThat(sources.get(gssrOnlySampleId), equalTo(MercurySample.MetadataSource.BSP));
+        assertThat(sources.get(gssrSampleIdWithMercuryData), equalTo(MercurySample.MetadataSource.MERCURY));
+        assertThat(sources.get(clinicalSampleId), equalTo(MercurySample.MetadataSource.MERCURY));
     }
+
+    private void addToSampleMap(Map<String, List<MercurySample>> sampleMap, String sampleId) {
+        sampleMap.put(sampleId, Collections.<MercurySample>emptyList());
+    }
+
+    private void addToSampleMap(Map<String, List<MercurySample>> sampleMap, String sampleId,
+                                MercurySample.MetadataSource metadataSource) {
+        MercurySample mercurySample = new MercurySample(sampleId, metadataSource);
+        sampleMap.put(mercurySample.getSampleKey(), Collections.singletonList(mercurySample));
+    }
+
+    /*
+     * Test cases for SampleDataSourceResolver#populateSampleDataSources(Collection<String>)
+     */
 
     public void populateSampleDataSources_for_Mercury_sample() {
         String mercurySampleId = "SM-1234";
@@ -199,9 +250,20 @@ public class SampleDataSourceResolverTest {
         assertThat(productOrderSample2.getMetadataSource(), equalTo(metadataSource));
     }
 
-    private void stubMercurySampleDao(MercurySample mercurySample) {
-        String sampleKey = mercurySample.getSampleKey();
-        when(mockMercurySampleDao.findMapIdToListMercurySample(argThat(contains(sampleKey))))
-                .thenReturn(Collections.singletonMap(sampleKey, Collections.singletonList(mercurySample)));
+    private void stubMercurySampleDao(MercurySample... mercurySamples) {
+        List<String> sampleIds = new ArrayList<>(mercurySamples.length);
+        ListMultimap<String, MercurySample> sampleIdToMercurySamples =
+                ArrayListMultimap.create(mercurySamples.length, 1);
+        for (MercurySample mercurySample : mercurySamples) {
+            String sampleId = mercurySample.getSampleKey();
+            sampleIds.add(sampleId);
+            sampleIdToMercurySamples.put(sampleId, mercurySample);
+        }
+
+        String[] sampleIdArray = sampleIds.toArray(new String[sampleIds.size()]);
+        @SuppressWarnings("unchecked") // The untyped HashMap is safe because sampleIdToMercurySamples is a ListMultimap
+        Map<String, List<MercurySample>> result = new HashMap(sampleIdToMercurySamples.asMap());
+        when(mockMercurySampleDao.findMapIdToListMercurySample(argThat(containsInAnyOrder(sampleIdArray))))
+                .thenReturn(result);
     }
 }

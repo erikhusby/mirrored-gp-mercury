@@ -324,45 +324,6 @@ public class SampleDataFetcherTest {
         assertThat(stockId, equalTo(BSP_STOCK_ID));
     }
 
-    public void test_determineMetadataSource_for_BSP_sample_should_return_bsp_mercury_samples() {
-        configureMercurySampleDao(bspMercurySample);
-        Map<MercurySample.MetadataSource, Collection<MercurySample>> metadataBySampleId =
-                sampleDataFetcher.determineMetadataSource(Collections.singleton(BSP_SAMPLE_ID));
-
-        assertThat(metadataBySampleId.get(MercurySample.MetadataSource.BSP), contains(bspMercurySample));
-    }
-
-    public void test_determineMetadataSource_for_BSP_only_sample_should_return_empty_collection() {
-        Map<MercurySample.MetadataSource, Collection<MercurySample>> metadataBySampleId =
-                sampleDataFetcher.determineMetadataSource(Collections.singleton(BSP_ONLY_SAMPLE_ID));
-        assertThat(metadataBySampleId.keySet(), is(empty()));
-    }
-
-    public void test_determineMetadataSource_for_MERCURY_sample_should_return_mercury_samples() {
-        configureMercurySampleDao(clinicalMercurySample);
-
-        Map<MercurySample.MetadataSource, Collection<MercurySample>> metadataBySampleId =
-                sampleDataFetcher.determineMetadataSource(Collections.singleton(CLINICAL_SAMPLE_ID));
-        assertThat(metadataBySampleId.get(MercurySample.MetadataSource.MERCURY), contains(clinicalMercurySample));
-    }
-
-    public void test_determineMetaDataSource_for_multiple_BSP_samples_should_return_BSP_for_all_samples()
-            throws Exception {
-        String bspSampleId1 = "SM-BSP1";
-        String bspSampleId2 = "SM-BSP2";
-        MercurySample mercurySample1 = new MercurySample(bspSampleId1, MercurySample.MetadataSource.BSP);
-        MercurySample mercurySample2 = new MercurySample(bspSampleId2, MercurySample.MetadataSource.BSP);
-        when(mockMercurySampleDao.findMapIdToListMercurySample(argThat(containsInAnyOrder(bspSampleId1, bspSampleId2))))
-                .thenReturn(ImmutableMap.of(bspSampleId1, Collections.singletonList(mercurySample1), bspSampleId2,
-                                Collections.singletonList(mercurySample2)));
-
-        Map<MercurySample.MetadataSource, Collection<MercurySample>> metadataBySampleId =
-                sampleDataFetcher.determineMetadataSource(Arrays.asList(bspSampleId1, bspSampleId2));
-
-        assertThat(metadataBySampleId.keySet(), contains(MercurySample.MetadataSource.BSP));
-        assertThat(metadataBySampleId.get(MercurySample.MetadataSource.BSP), contains(mercurySample1, mercurySample2));
-    }
-
     public void test_getStockIdForAliquotId_for_BSP_only_bare_sample_should_query_BSP() {
         configureBspFetcher(BSP_ONLY_BARE_SAMPLE_ID, BSP_STOCK_ID);
 
