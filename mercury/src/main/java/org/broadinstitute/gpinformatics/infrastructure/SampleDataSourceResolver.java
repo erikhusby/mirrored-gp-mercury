@@ -41,13 +41,11 @@ public class SampleDataSourceResolver {
     /**
      * Resolve the sample data source for a collection of sample IDs.
      * <p>
-     * Sample IDs can be BSP SM-IDs, BSP "bare" IDs (without the SM- or SP- prefix), or any ID that matches a value
-     * stored in {@link MercurySample#sampleKey}. Sample IDs in other formats, specifically LSIDs, will be indicated as
-     * BSP samples for historical reasons but will NOT successfully retrieve sample data from BSP when queried from
-     * {@link SampleDataFetcher} or {@link BSPSampleDataFetcher}.
+     * Sample IDs can be BSP SM-IDs or any other ID that matches a value stored in {@link MercurySample#sampleKey}.
+     * Sample IDs in other formats, specifically LSIDs, will be indicated as BSP samples for historical reasons but
+     * will NOT successfully retrieve sample data from BSP when queried from {@link SampleDataFetcher} or
+     * {@link BSPSampleDataFetcher}.
      * <p>
-     * The keys of the returned map will be in the same form as the parameters.
-     *
      *
      * @param sampleNames    the sample IDs for which to resolve the sample data source
      * @return a map of sample ID to sample data source
