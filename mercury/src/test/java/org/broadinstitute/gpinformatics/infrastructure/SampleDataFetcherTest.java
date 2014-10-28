@@ -351,16 +351,6 @@ public class SampleDataFetcherTest {
         assertThat(stockId, equalTo(CLINICAL_SAMPLE_ID));
     }
 
-//    @Test(expectedExceptions = RuntimeException.class)
-//    public void test_getStockIdForAliquotId_for_ambiguous_sample_should_throw_exception() {
-//        when(mockMercurySampleDao.findMapIdToMercurySample(argThat(contains(FUBAR_SAMPLE_ID))))
-//                .thenReturn(ImmutableMap.of(FUBAR_SAMPLE_ID, Arrays.asList(
-//                        new MercurySample(FUBAR_SAMPLE_ID, MercurySample.MetadataSource.BSP),
-//                        new MercurySample(FUBAR_SAMPLE_ID, MercurySample.MetadataSource.MERCURY))));
-//
-//        sampleDataFetcher.getStockIdForAliquotId(FUBAR_SAMPLE_ID);
-//    }
-
     /*
      * Test cases for SampleDataFetcher#getStockIdByAliquotId
      */

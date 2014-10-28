@@ -72,7 +72,7 @@ public class SampleSearchActionBean extends SearchActionBean {
                 List<String> sampleNames = new ArrayList<>();
                 sampleNames.add(foundSample.getSampleKey());
 
-                sampleDTOMap.putAll(sampleDataFetcher.fetchSampleData((Collection<String>) sampleNames));
+                sampleDTOMap.putAll(sampleDataFetcher.fetchSampleData(sampleNames));
 
                 mercurySampleToVessels.put(foundSample, allVessels);
                 SampleData sampleData = sampleDTOMap.get(foundSample.getSampleKey());

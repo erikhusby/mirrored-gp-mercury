@@ -42,34 +42,6 @@ public class SampleDataSourceResolverTest {
     @BeforeMethod
     public void setUp() {
         mockMercurySampleDao = Mockito.mock(MercurySampleDao.class);
-        /*
-         * findMapIdToListMercurySample returns a map with an entry for every sample ID key. If no MercurySamples are
-         * found, the entry's value is an empty collection. The stub behavior here configures the mock to respond
-         * correctly for any input, assuming that there are no MercurySamples for any sample ID.
-         *
-         * Where needed, different behavior can be stubbed for specific sample IDs.
-         */
-        when(mockMercurySampleDao.findMapIdToMercurySample(anyCollectionOf(String.class)))
-                .thenAnswer(new Answer<Object>() {
-                    @Override
-                    public Object answer(InvocationOnMock invocation) throws Throwable {
-                        @SuppressWarnings("unchecked")
-                        Collection<String> sampleKeys = (Collection<String>) invocation.getArguments()[0];
-
-                        /*
-                         * This won't generally be null. However, when doing further stubbing for specific sample IDs,
-                         * use of argument matchers will cause null to be passed in. Simply returning null in these
-                         * cases seems to be in the spirit of stubbing with argument matchers.
-                         */
-                        if (sampleKeys == null) {
-                            return null;
-                        }
-
-                        Map<String, MercurySample> result = new HashMap<>();
-                        return result;
-                    }
-                });
-
         sampleDataSourceResolver = new SampleDataSourceResolver(mockMercurySampleDao);
     }
 

@@ -92,7 +92,7 @@ public class MercurySampleDao extends GenericDao {
      * contains entries only for MercurySamples that are found.
      *
      * @param sampleKeys    the sample keys to search for
-     * @return a map of sample key to (possibly multiple) MercurySamples
+     * @return a map of sample key to a MercurySample
      */
     public Map<String, MercurySample> findMapIdToMercurySample(Collection<String> sampleKeys) {
         Map<String, MercurySample> mapSampleIdToListMercurySamples = new HashMap<>();

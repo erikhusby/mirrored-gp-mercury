@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
+import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -88,10 +89,10 @@ public class LabVesselFactory implements Serializable {
         }
 
         Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
-        Map<String, MercurySample> mapIdToListMercurySample = mercurySampleDao.findMapIdToMercurySample(
+        Map<String, MercurySample> mapIdToMercurySample = mercurySampleDao.findMapIdToMercurySample(
                 sampleIds);
         Map<String, Set<ProductOrderSample>> mapIdToListPdoSamples = productOrderSampleDao.findMapBySamples(sampleIds);
-        return buildLabVesselDaoFree(mapBarcodeToVessel, mapIdToListMercurySample,
+        return buildLabVesselDaoFree(mapBarcodeToVessel, mapIdToMercurySample,
                                      mapIdToListPdoSamples, userName, eventDate,
                                      parentVesselBeans, labEventType, metadataSource);
     }
@@ -282,7 +283,7 @@ public class LabVesselFactory implements Serializable {
     @DaoFree
     private MercurySample getMercurySample(Map<String, MercurySample> mapIdToListMercurySample,
             Map<String, Set<ProductOrderSample>> mapIdToListPdoSamples,
-            String sampleId, MercurySample.MetadataSource metadataSource) {
+            String sampleId, @Nonnull MercurySample.MetadataSource metadataSource) {
         MercurySample mercurySample = mapIdToListMercurySample.get(sampleId);
 
         Set<ProductOrderSample> productOrderSamples = mapIdToListPdoSamples.get(sampleId);

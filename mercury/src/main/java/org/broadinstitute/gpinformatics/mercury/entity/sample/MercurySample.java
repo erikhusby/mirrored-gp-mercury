@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.RapSheet;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
@@ -196,11 +197,11 @@ public class MercurySample extends AbstractSample {
             return true;
         }
 
-        if (!(o instanceof MercurySample)) {
+        if (o == null || !(OrmUtil.proxySafeIsInstance(o, MercurySample.class))) {
             return false;
         }
 
-        MercurySample that = (MercurySample) o;
+        MercurySample that = OrmUtil.proxySafeCast(o, MercurySample.class);
 
         return new EqualsBuilder().append(getSampleKey(), that.getSampleKey()).isEquals();
     }
