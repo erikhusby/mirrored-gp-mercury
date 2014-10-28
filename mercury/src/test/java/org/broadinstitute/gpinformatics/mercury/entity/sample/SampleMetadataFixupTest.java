@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -25,7 +26,6 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -54,12 +54,13 @@ public class SampleMetadataFixupTest extends Arquillian {
     @Test(enabled = false)
     public void fixupGPLIM3107_repatienting_NA12878_samples() {
         Map<String, MetaDataFixupItem> fixupItems = new HashMap<>();
-
+        // @formatter:off
         fixupItems.putAll(MetaDataFixupItem.mapOf("SM-7482Q", Metadata.Key.PATIENT_ID, "Buick_PV_NA12878_A", "Buick_PV_NA12878"));
         fixupItems.putAll(MetaDataFixupItem.mapOf("SM-7482B", Metadata.Key.PATIENT_ID, "Buick_PV_NA12878_B", "Buick_PV_NA12878"));
         fixupItems.putAll(MetaDataFixupItem.mapOf("SM-74838", Metadata.Key.PATIENT_ID, "Buick_PV_NA12878_C", "Buick_PV_NA12878"));
         fixupItems.putAll(MetaDataFixupItem.mapOf("SM-7482I", Metadata.Key.PATIENT_ID, "Buick_PV_NA12878_D", "Buick_PV_NA12878"));
         fixupItems.putAll(MetaDataFixupItem.mapOf("SM-7482L", Metadata.Key.PATIENT_ID, "Buick_PV_NA12878_E", "Buick_PV_NA12878"));
+        // @formatter:on
 
         userBean.loginOSUser();
         Map<String, Metadata.Key> fixUpErrors = new HashMap<>();
@@ -67,12 +68,15 @@ public class SampleMetadataFixupTest extends Arquillian {
                 mercurySampleDao.findMapIdToListMercurySample(fixupItems.keySet());
         for (MetaDataFixupItem fixupItem : fixupItems.values()) {
             List<MercurySample> mercurySamples = samplesById.get(fixupItem.getSampleKey());
-            fixUpErrors.putAll(fixupItem.updateMetadataForSamples(mercurySamples));
+            assertThat(mercurySamples.size(), equalTo(1));
+            fixUpErrors.putAll(fixupItem.updateMetadataForSamples(mercurySamples.get(0)));
         }
         String assertFailureReason =
                 String.format("Error updating some or all samples: %s. Please consult server log for more information.",
                         fixUpErrors);
         assertThat(assertFailureReason, fixUpErrors, equalTo(Collections.EMPTY_MAP));
+        mercurySampleDao
+                .persist(new FixupCommentary("see https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-3107"));
         mercurySampleDao.flush();
     }
 }
@@ -85,7 +89,6 @@ class MetaDataFixupItem {
     private final String sampleKey;
     private final String oldValue;
     private final String newValue;
-
 
     MetaDataFixupItem(String sampleKey, Metadata.Key metadataKey, String oldValue, String newValue) {
         this.sampleKey = sampleKey;
@@ -108,27 +111,25 @@ class MetaDataFixupItem {
         return new Metadata(metadataKey, oldValue);
     }
 
-    public Map<String, Metadata.Key> updateMetadataForSamples(Collection<MercurySample> mercurySamples) {
+    public Map<String, Metadata.Key> updateMetadataForSamples(MercurySample mercurySample) {
         Map<String, Metadata.Key> errors = new HashMap<>();
-        for (MercurySample mercurySample : mercurySamples) {
-            if (!mercurySample.getSampleKey().equals(sampleKey)) {
-                throw new RuntimeException(
-                        String.format("Expected sample %s but received %s", sampleKey, mercurySample.getSampleKey()));
-            }
-            Metadata originalMetadata = originalMetadata();
-            if (mercurySample.getMetadata().remove(originalMetadata)) {
-                Metadata updatedMetadata = updatedMetadata();
-                mercurySample.getMetadata().add(updatedMetadata);
-                log.info(String.format("Successfully updated metadata for sample '%s': '[%s, %s]", sampleKey,
-                        updatedMetadata.getKey(), updatedMetadata.getValue()));
-            } else {
-                errors.put(sampleKey, metadataKey);
+        if (!mercurySample.getSampleKey().equals(sampleKey)) {
+            throw new RuntimeException(
+                    String.format("Expected sample %s but received %s", sampleKey, mercurySample.getSampleKey()));
+        }
+        Metadata originalMetadata = originalMetadata();
+        if (mercurySample.getMetadata().remove(originalMetadata)) {
+            Metadata updatedMetadata = updatedMetadata();
+            mercurySample.getMetadata().add(updatedMetadata);
+            log.info(String.format("Successfully updated metadata for sample '%s': '[%s, %s]", sampleKey,
+                    updatedMetadata.getKey(), updatedMetadata.getValue()));
+        } else {
+            errors.put(sampleKey, metadataKey);
 
-                String errorString = String.format(
-                        "Could not find metadata matching original metadata '[%s, %s]' for sample '%s'. Please verify the oldValue and newValue are correct for this sample.",
-                        originalMetadata.getKey(), originalMetadata.getValue(), sampleKey);
-                log.error(errorString);
-            }
+            String errorString = String.format(
+                    "Could not find metadata matching original metadata '[%s, %s]' for sample '%s'. Please verify the oldValue and newValue are correct for this sample.",
+                    originalMetadata.getKey(), originalMetadata.getValue(), sampleKey);
+            log.error(errorString);
         }
         return errors;
     }
