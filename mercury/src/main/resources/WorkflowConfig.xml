@@ -90,6 +90,9 @@
                 <numberOfRepeats>1</numberOfRepeats>
                 <deadEndBranch>true</deadEndBranch>
             </workflowStepDefs>
+            <!-- PicoRework -->
+            <!-- SeqPlatingNormalization -->
+            <!-- todo has never happened -->
             <workflowStepDefs>
                 <name>Pico/Plating Normalization</name>
                 <labEventTypes>SAMPLES_NORMALIZATION_TRANSFER</labEventTypes>
@@ -97,6 +100,7 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
+            <!-- todo has never happened -->
             <workflowStepDefs>
                 <name>Pico/Plating Post Norm Pico Setup</name>
                 <labEventTypes>PICO_PLATING_POST_NORM_PICO</labEventTypes>
@@ -560,10 +564,18 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
+            <!-- next two are alternatives -->
             <workflowStepDefs>
                 <name>IceSPRIConcentration</name>
                 <labEventTypes>ICE_SPRI_CONCENTRATION</labEventTypes>
-                <optional>false</optional>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Ice96PlexSPRIConcentration</name>
+                <labEventTypes>ICE_96_PLEX_SPRI_CONCENTRATION</labEventTypes>
+                <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
@@ -581,10 +593,18 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
+            <!-- next two are alternatives -->
             <workflowStepDefs>
                 <name>Ice1stBaitAddition</name>
                 <labEventTypes>ICE_1S_TBAIT_ADDITION</labEventTypes>
-                <optional>false</optional>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Ice1stBaitPick</name>
+                <labEventTypes>ICE_1S_TBAIT_PICK</labEventTypes>
+                <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
@@ -595,16 +615,24 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
+            <!-- next two are alternatives -->
             <workflowStepDefs>
-                <name>Ice2ndHybridization</name>
-                <labEventTypes>ICE_2ND_HYBRIDIZATION</labEventTypes>
-                <optional>false</optional>
+                <name>Ice2ndBaitAddition</name>
+                <labEventTypes>ICE_2ND_BAIT_ADDITION</labEventTypes>
+                <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>Ice2ndBaitAddition</name>
-                <labEventTypes>ICE_2ND_BAIT_ADDITION</labEventTypes>
+                <name>Ice2ndBaitPick</name>
+                <labEventTypes>ICE_2ND_BAIT_PICK</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Ice2ndHybridization</name>
+                <labEventTypes>ICE_2ND_HYBRIDIZATION</labEventTypes>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -642,7 +670,7 @@
                 </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>IceCatchPico</name>
+                <name>IceCatchPico</name> <!-- will change on deck, from CatchPico -->
                 <labEventTypes>ICE_CATCH_PICO</labEventTypes>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
