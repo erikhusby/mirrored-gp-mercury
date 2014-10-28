@@ -12,6 +12,7 @@ import org.jboss.arquillian.testng.Arquillian;
 import org.testng.annotations.BeforeMethod;
 
 import javax.inject.Inject;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 
@@ -36,7 +37,7 @@ import static org.testng.Assert.fail;
  */
 public abstract class RestServiceContainerTest extends Arquillian {
 
-    public static final int DEFAULT_FORWARD_PORT = 1000;
+    public static final int DEFAULT_FORWARD_PORT = 443;
     private static final String SERVLET_MAPPING_PREFIX = "rest";
 
     @Inject
@@ -74,7 +75,7 @@ public abstract class RestServiceContainerTest extends Arquillian {
      *
      * @return a configured WebResource for the service method
      */
-    protected WebResource makeWebResource(URL baseUrl, String serviceUrl) {
+    protected WebResource makeWebResource(URL baseUrl, String serviceUrl) throws MalformedURLException {
 
         Client client = Client.create(clientConfig);
         String newUrl = convertPortToPresetPort(baseUrl);
@@ -82,9 +83,18 @@ public abstract class RestServiceContainerTest extends Arquillian {
                 newUrl + SERVLET_MAPPING_PREFIX + "/" + getResourcePath() + "/" + serviceUrl);
     }
 
-    public static String convertPortToPresetPort(URL baseUrl) {
-        String port = System.getProperty("jboss.socket.https");
-        return baseUrl.toString().replaceAll(String.valueOf(DEFAULT_FORWARD_PORT), port);
+    /**
+     * Helper method to convert the given URL (typically generated as an ArquillianResource) to point to the Secure
+     * port of the machine that is running this application
+     *
+     * @throws MalformedURLException
+     */
+    public static String convertPortToPresetPort(URL baseUrl) throws MalformedURLException {
+        String port = System.getProperty("jboss.socket.https", String.valueOf(DEFAULT_FORWARD_PORT));
+        String returnValue;
+            returnValue = new URL("https", baseUrl.getHost(), Integer.valueOf(port),
+                    baseUrl.getFile()).toExternalForm();
+        return returnValue;
     }
 
     /**

@@ -40,9 +40,7 @@ public class SamplesBatchMessagingEndToEndTest extends ContainerTest {
 
     @Test(enabled = true, groups = TestGroups.STUBBY, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testEndToEnd(
-            @ArquillianResource @UriScheme(name = SchemeName.HTTPS,
-                    port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl) {
+    public void testEndToEnd(@ArquillianResource URL baseUrl) throws Exception {
         String timestamp = timestampFormat.format(new Date());
         ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
         clientConfig.getProperties().put(ClientConfig.PROPERTY_FOLLOW_REDIRECTS, Boolean.TRUE);

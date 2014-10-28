@@ -280,9 +280,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
     @Test(groups = TestGroups.STUBBY,
             dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = false)
     @RunAsClient
-    public void testReadStructureOverHttp(
-            @ArquillianResource @UriScheme(name = SchemeName.HTTPS,
-                    port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl) {
+    public void testReadStructureOverHttp(@ArquillianResource URL baseUrl) throws Exception {
         String wsUrl =
                 RestServiceContainerTest.convertPortToPresetPort(baseUrl) + "rest/solexarun/storeRunReadStructure";
 
@@ -315,9 +313,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
 
     @Test(groups = TestGroups.STUBBY, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = true)
     @RunAsClient
-    public void testMercuryLanes(
-            @ArquillianResource @UriScheme(name = SchemeName.HTTPS,
-                    port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl) {
+    public void testMercuryLanes(@ArquillianResource URL baseUrl) throws Exception {
         String wsUrl =
                 RestServiceContainerTest.convertPortToPresetPort(baseUrl) + "rest/solexarun/storeRunReadStructure";
 

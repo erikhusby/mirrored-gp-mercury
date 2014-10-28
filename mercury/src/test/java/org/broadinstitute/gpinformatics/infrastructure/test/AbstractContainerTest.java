@@ -10,9 +10,7 @@ public class AbstractContainerTest extends Arquillian {
 
     // todo arz have ContainerTest extend this, then recode all tests that
     // use the "if (someDao != null) return" to instead
-    // use "if (!isRunningInContainer) {return;}
-
-    @ArquillianResource
+    // use "if (!isRunningInContainer) {return;}@ArquillianResource
     protected InitialContext initialContext;
 
     /**

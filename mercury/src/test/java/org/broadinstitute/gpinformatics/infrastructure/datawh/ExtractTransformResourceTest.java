@@ -45,8 +45,8 @@ public class ExtractTransformResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testAnalyze(
-            @ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = DEFAULT_FORWARD_PORT) URL baseUrl) {
+    public void testAnalyze(@ArquillianResource URL baseUrl)
+            throws Exception {
         WebResource resource = makeWebResource(baseUrl, "analyze/sequencingRun/1");
         ClientResponse response = resource.type("text/html").get(ClientResponse.class);
         Assert.assertEquals(response.getClientResponseStatus(), ClientResponse.Status.OK);
@@ -62,8 +62,8 @@ public class ExtractTransformResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testIncrementalAndBackup(
-            @ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = DEFAULT_FORWARD_PORT) URL baseUrl) {
+    public void testIncrementalAndBackup(@ArquillianResource URL baseUrl)
+            throws Exception {
 
         // Tests incremental.
         WebResource resource = makeWebResource(baseUrl, "incremental/20121120000000/20121120000001");

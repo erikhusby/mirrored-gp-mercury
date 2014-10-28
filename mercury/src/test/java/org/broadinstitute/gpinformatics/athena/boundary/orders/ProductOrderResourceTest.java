@@ -9,8 +9,6 @@ import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
-import org.jboss.aerogear.arquillian.test.smarturl.SchemeName;
-import org.jboss.aerogear.arquillian.test.smarturl.UriScheme;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -37,6 +35,9 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
     private static final String MULTIPLE_RISK_SAMPLE = "SM-3RAE1";
 
     private static final String VALID_PDO_ID = "PDO-10";
+    private static final String WIDELY_USED_QUOTE_ID = "MMMAC1";
+    private static final String RP_CONTAINING_COHORTS = "RP-31";
+    private static final String EXOME_EXPRESS_V3_PRODUCT_NAME = "Exome Express v3";
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -52,14 +53,13 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
     @RunAsClient
-    public void testFetchLibraryDetailsByTubeBarcode(
-            @ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = DEFAULT_FORWARD_PORT) URL baseUrl) {
+    public void testFetchLibraryDetailsByTubeBarcode(@ArquillianResource URL baseUrl) throws Exception {
         Date testDate = new Date();
 
         ProductOrderData data = new ProductOrderData();
-        data.setProductName("Exome Express v3");
+        data.setProductName(EXOME_EXPRESS_V3_PRODUCT_NAME);
         data.setTitle("test product name" + testDate.getTime());
-        data.setQuoteId("MMMAC1");
+        data.setQuoteId(WIDELY_USED_QUOTE_ID);
         data.setUsername("scottmat");
         data.setResearchProjectId("RP-32");
         List<String> sampleIds = new ArrayList<>();
@@ -74,13 +74,13 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
     @RunAsClient
-    public void testCreateProductOrderNoUser(@ArquillianResource URL baseUrl) {
+    public void testCreateProductOrderNoUser(@ArquillianResource URL baseUrl) throws Exception{
         Date testDate = new Date();
 
         ProductOrderData data = new ProductOrderData();
-        data.setProductName("Exome Express v3");
+        data.setProductName(EXOME_EXPRESS_V3_PRODUCT_NAME);
         data.setTitle("test product name" + testDate.getTime());
-        data.setQuoteId("MMMAC1");
+        data.setQuoteId(WIDELY_USED_QUOTE_ID);
         data.setResearchProjectId("RP-32");
         List<String> sampleIds = new ArrayList<>();
         Collections.addAll(sampleIds, "SM-41Q94", "SM-41Q95");
@@ -98,15 +98,15 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
     @RunAsClient
-    public void testCreateProductOrderWithKit(@ArquillianResource URL baseUrl) {
+    public void testCreateProductOrderWithKit(@ArquillianResource URL baseUrl) throws Exception {
         Date testDate = new Date();
 
         ProductOrderData data = new ProductOrderData();
-        data.setProductName("Exome Express v3");
+        data.setProductName(EXOME_EXPRESS_V3_PRODUCT_NAME);
         data.setTitle("test product name" + testDate.getTime());
-        data.setQuoteId("MMMAC1");
+        data.setQuoteId(WIDELY_USED_QUOTE_ID);
         data.setUsername("scottmat");
-        data.setResearchProjectId("RP-31"); //RP that has cohorts associated with it.
+        data.setResearchProjectId(RP_CONTAINING_COHORTS); //RP that has cohorts associated with it.
 
         ProductOrderKitDetailData kitDetailData = new ProductOrderKitDetailData();
 
@@ -123,14 +123,14 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
     @RunAsClient
-    public void testCreateProductOrderWithKitNoUser(@ArquillianResource URL baseUrl) {
+    public void testCreateProductOrderWithKitNoUser(@ArquillianResource URL baseUrl) throws Exception {
         Date testDate = new Date();
 
         ProductOrderData data = new ProductOrderData();
-        data.setProductName("Exome Express v3");
+        data.setProductName(EXOME_EXPRESS_V3_PRODUCT_NAME);
         data.setTitle("test product name" + testDate.getTime());
-        data.setQuoteId("MMMAC1");
-        data.setResearchProjectId("RP-31"); //RP that has cohorts associated with it.
+        data.setQuoteId(WIDELY_USED_QUOTE_ID);
+        data.setResearchProjectId(RP_CONTAINING_COHORTS); //RP that has cohorts associated with it.
 
         ProductOrderKitDetailData kitDetailData = new ProductOrderKitDetailData();
 
@@ -152,15 +152,16 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
     @RunAsClient
-    public void testCreateProductOrderWithKitNoGoodUser(@ArquillianResource URL baseUrl) {
+    public void testCreateProductOrderWithKitNoGoodUser(@ArquillianResource URL baseUrl) throws Exception {
         Date testDate = new Date();
+        String purposely_Misspelled_User = "scottmatthewes";
 
         ProductOrderData data = new ProductOrderData();
-        data.setProductName("Exome Express v3");
+        data.setProductName(EXOME_EXPRESS_V3_PRODUCT_NAME);
         data.setTitle("test product name" + testDate.getTime());
-        data.setQuoteId("MMMAC1");
-        data.setUsername("scottmatthewes");
-        data.setResearchProjectId("RP-31"); //RP that has cohorts associated with it.
+        data.setQuoteId(WIDELY_USED_QUOTE_ID);
+        data.setUsername(purposely_Misspelled_User);
+        data.setResearchProjectId(RP_CONTAINING_COHORTS); //RP that has cohorts associated with it.
 
         ProductOrderKitDetailData kitDetailData = new ProductOrderKitDetailData();
 
@@ -182,9 +183,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
     @RunAsClient
-    public void testFetchAtRiskPDOSamplesAllAtRisk(@ArquillianResource
-                                                   @UriScheme(name = SchemeName.HTTPS,
-                                                           port = DEFAULT_FORWARD_PORT) URL baseUrl) {
+    public void testFetchAtRiskPDOSamplesAllAtRisk(@ArquillianResource URL baseUrl) throws Exception {
         PDOSamples pdoSamples = getAtRiskSamples();
 
         PDOSamples returnedPdoSamples = makeWebResource(baseUrl, PDO_SAMPLE_STATUS)
@@ -222,8 +221,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
     @RunAsClient
-    public void testFetchAtRiskPDOSamplesNoneAtRisk(
-            @ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = DEFAULT_FORWARD_PORT) URL baseUrl) {
+    public void testFetchAtRiskPDOSamplesNoneAtRisk(@ArquillianResource URL baseUrl) throws Exception {
         PDOSamples pdoSamples = getNonRiskPDOSamples();
         PDOSamples returnedPdoSamples = makeWebResource(baseUrl, PDO_SAMPLE_STATUS)
                 .type(MediaType.APPLICATION_JSON)
@@ -237,8 +235,8 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testFindByIds(
-            @ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = DEFAULT_FORWARD_PORT) URL baseUrl) {
+    public void testFindByIds(@ArquillianResource URL baseUrl)
+            throws Exception {
         ProductOrders orders = makeWebResource(baseUrl, "pdo/" + VALID_PDO_ID)
                 .accept(MediaType.APPLICATION_XML)
                 .get(ProductOrders.class);

@@ -654,9 +654,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
      */
     @Test(enabled = false, groups = ALTERNATIVES, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testHttp(
-            @ArquillianResource @UriScheme(name = SchemeName.HTTPS,
-                    port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl) {
+    public void testHttp(@ArquillianResource URL baseUrl) {
         File inboxDirectory = new File("C:/Temp/seq/lims/bettalims/production/inbox");
         List<String> dayDirectoryNames = Arrays.asList(inboxDirectory.list());
         Collections.sort(dayDirectoryNames);
@@ -684,9 +682,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
      */
     @Test(enabled = false, groups = ALTERNATIVES, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testSingleFile(
-            @ArquillianResource @UriScheme(name = SchemeName.HTTPS,
-                    port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl) {
+    public void testSingleFile(@ArquillianResource URL baseUrl) {
         File file = new File(
                 "c:/Temp/seq/lims/bettalims/production/inbox/20120103/20120103_101119570_localhost_9998_ws.xml");
         sendFile(baseUrl, file);
@@ -694,9 +690,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
 
     @Test(enabled = false, groups = ALTERNATIVES, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testFileList(
-            @ArquillianResource @UriScheme(name = SchemeName.HTTPS,
-                    port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl) {
+    public void testFileList(@ArquillianResource URL baseUrl) {
         try {
             BufferedReader bufferedReader = new BufferedReader(new FileReader("c:/temp/PdoLcSetMessageList.txt"));
             String line;

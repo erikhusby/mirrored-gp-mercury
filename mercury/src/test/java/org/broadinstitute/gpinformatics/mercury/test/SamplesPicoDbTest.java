@@ -38,9 +38,7 @@ public class SamplesPicoDbTest extends ContainerTest {
 
     @Test(enabled = true, groups = TestGroups.STUBBY, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testEndToEnd(
-            @ArquillianResource @UriScheme(name = SchemeName.HTTPS,
-                    port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl) {
+    public void testEndToEnd(@ArquillianResource URL baseUrl) throws Exception {
         String timestamp = timestampFormat.format(new Date());
 
         ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
@@ -83,7 +81,7 @@ public class SamplesPicoDbTest extends ContainerTest {
      * @return bean sent to the web service
      */
     public static LabBatchBean createBatch(URL baseUrl, Client client, String batchId,
-                                           List<String> tubeBarcodes) {
+                                           List<String> tubeBarcodes) throws Exception {
         ArrayList<TubeBean> tubeBeans = new ArrayList<>();
         for (String tubeBarcode : tubeBarcodes) {
             tubeBeans.add(new TubeBean(tubeBarcode, null));
@@ -106,7 +104,8 @@ public class SamplesPicoDbTest extends ContainerTest {
      * @param client      jersey
      * @param messageList list of messages to send
      */
-    public static String sendMessages(URL baseUrl, Client client, List<BettaLIMSMessage> messageList) {
+    public static String sendMessages(URL baseUrl, Client client, List<BettaLIMSMessage> messageList)
+            throws Exception {
         String response = null;
         for (BettaLIMSMessage bettaLIMSMessage : messageList) {
             response =

@@ -39,8 +39,7 @@ public class PDOSampleBillingStatusResourceTest extends RestServiceContainerTest
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testPDOSampleBilling(
-            @ArquillianResource @UriScheme(name = SchemeName.HTTPS, port = DEFAULT_FORWARD_PORT) URL baseUrl)
+    public void testPDOSampleBilling(@ArquillianResource URL baseUrl)
             throws Exception {
         List<PDOSample> pdoSamplesList = new ArrayList<>();
         PDOSample pdoSample1 = new PDOSample("PDO-872", "SM-47KKU", null);

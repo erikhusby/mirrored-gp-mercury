@@ -4,12 +4,11 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
-import org.jboss.aerogear.arquillian.test.smarturl.SchemeName;
-import org.jboss.aerogear.arquillian.test.smarturl.UriScheme;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
@@ -29,27 +28,33 @@ import java.util.List;
 @Test(groups = TestGroups.STUBBY)
 public class SampleImportResourceDbTest extends ContainerTest {
 
+    private static final String MATRIX_TUBE_SCREW_CAP_0_5M_L = "Matrix Tube Screw cap [0.5mL]";
+    private static final String A01 = "A01";
+    private static final String A02 = "A02";
+    private static final String D_MATRIX_96_SLOT_RACK_0_5ML_SC = "2D Matrix 96 Slot Rack [0.5ml SC]";
+    private static final String badUserName = "scottMatthewes";
+    private static final String goodUserName = "jowalsh";
+    private static final String SOURCE_SYSTEM = "BSP";
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("MMddHHmmss");
 
     @Test(enabled = true, groups = TestGroups.STUBBY, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testImportTubes(
-            @ArquillianResource @UriScheme(name = SchemeName.HTTPS,
-                    port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl) {
+    public void testImportTubes(@ArquillianResource URL baseUrl) throws Exception {
         Date now = new Date();
         String suffix = dateFormat.format(now);
 
         List<ChildVesselBean> childVesselBeans = new ArrayList<>();
         childVesselBeans
-                .add(new ChildVesselBean(suffix + "1", "SM-" + suffix + "1", "Matrix Tube Screw cap [0.5mL]", "A01"));
+                .add(new ChildVesselBean(suffix + "1", genrateSampleId(suffix, "1"), MATRIX_TUBE_SCREW_CAP_0_5M_L, A01));
         childVesselBeans
-                .add(new ChildVesselBean(suffix + "2", "SM-" + suffix + "2", "Matrix Tube Screw cap [0.5mL]", "A02"));
+                .add(new ChildVesselBean(suffix + "2",  genrateSampleId(suffix, "2"), MATRIX_TUBE_SCREW_CAP_0_5M_L, A02));
 
         List<ParentVesselBean> parentVesselBeans = new ArrayList<>();
         parentVesselBeans
-                .add(new ParentVesselBean("CO-" + suffix, null, "2D Matrix 96 Slot Rack [0.5ml SC]", childVesselBeans));
-        SampleImportBean sampleImportBeanPost = new SampleImportBean("BSP", "EX-" + suffix, now,
-                parentVesselBeans, "jowalsh");
+                .add(new ParentVesselBean("CO-" + suffix, null, D_MATRIX_96_SLOT_RACK_0_5ML_SC, childVesselBeans));
+        SampleImportBean sampleImportBeanPost = new SampleImportBean(SOURCE_SYSTEM,
+                generateSourceSystemExportId(suffix), now,
+                parentVesselBeans, goodUserName);
 
         ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
 
@@ -69,6 +74,14 @@ public class SampleImportResourceDbTest extends ContainerTest {
                 "Wrong number of tubes");
     }
 
+    private String generateSourceSystemExportId(String suffix) {
+        return "EX-" + suffix;
+    }
+
+    private String genrateSampleId(String suffix, String increment) {
+        return BSPUtil.BSP_SAMPLE_PREFIX +"-" + suffix + increment;
+    }
+
     @Test(enabled = true, groups = TestGroups.STUBBY, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testImportTubesNoUser(@ArquillianResource URL baseUrl) {
@@ -77,14 +90,14 @@ public class SampleImportResourceDbTest extends ContainerTest {
 
         List<ChildVesselBean> childVesselBeans = new ArrayList<>();
         childVesselBeans
-                .add(new ChildVesselBean(suffix + "1", "SM-" + suffix + "1", "Matrix Tube Screw cap [0.5mL]", "A01"));
+                .add(new ChildVesselBean(suffix + "1", genrateSampleId(suffix, "1"), MATRIX_TUBE_SCREW_CAP_0_5M_L, A01));
         childVesselBeans
-                .add(new ChildVesselBean(suffix + "2", "SM-" + suffix + "2", "Matrix Tube Screw cap [0.5mL]", "A02"));
+                .add(new ChildVesselBean(suffix + "2",  genrateSampleId(suffix, "2"), MATRIX_TUBE_SCREW_CAP_0_5M_L, A02));
 
         List<ParentVesselBean> parentVesselBeans = new ArrayList<>();
         parentVesselBeans
-                .add(new ParentVesselBean("CO-" + suffix, null, "2D Matrix 96 Slot Rack [0.5ml SC]", childVesselBeans));
-        SampleImportBean sampleImportBeanPost = new SampleImportBean("BSP", "EX-" + suffix, now,
+                .add(new ParentVesselBean("CO-" + suffix, null, D_MATRIX_96_SLOT_RACK_0_5ML_SC, childVesselBeans));
+        SampleImportBean sampleImportBeanPost = new SampleImportBean("BSP", generateSourceSystemExportId(suffix), now,
                 parentVesselBeans, "");
 
         // POST to the resource
@@ -108,15 +121,15 @@ public class SampleImportResourceDbTest extends ContainerTest {
 
         List<ChildVesselBean> childVesselBeans = new ArrayList<>();
         childVesselBeans
-                .add(new ChildVesselBean(suffix + "1", "SM-" + suffix + "1", "Matrix Tube Screw cap [0.5mL]", "A01"));
+                .add(new ChildVesselBean(suffix + "1", genrateSampleId(suffix, "1"), MATRIX_TUBE_SCREW_CAP_0_5M_L, A01));
         childVesselBeans
-                .add(new ChildVesselBean(suffix + "2", "SM-" + suffix + "2", "Matrix Tube Screw cap [0.5mL]", "A02"));
+                .add(new ChildVesselBean(suffix + "2",  genrateSampleId(suffix, "2"), MATRIX_TUBE_SCREW_CAP_0_5M_L, A02));
 
         List<ParentVesselBean> parentVesselBeans = new ArrayList<>();
         parentVesselBeans
-                .add(new ParentVesselBean("CO-" + suffix, null, "2D Matrix 96 Slot Rack [0.5ml SC]", childVesselBeans));
-        SampleImportBean sampleImportBeanPost = new SampleImportBean("BSP", "EX-" + suffix, now,
-                parentVesselBeans, "scottMatthewes");
+                .add(new ParentVesselBean("CO-" + suffix, null, D_MATRIX_96_SLOT_RACK_0_5ML_SC, childVesselBeans));
+        SampleImportBean sampleImportBeanPost = new SampleImportBean("BSP", generateSourceSystemExportId(suffix), now,
+                parentVesselBeans, badUserName);
 
         // POST to the resource
         WebResource resource = Client.create().resource(baseUrl.toExternalForm() + "rest/sampleimport");

@@ -121,9 +121,7 @@ public class IlluminaRunResourceTest extends Arquillian {
     @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER,
             groups = ALTERNATIVES)
     @RunAsClient
-    public void testErrorHandling(
-            @ArquillianResource @UriScheme(name = SchemeName.HTTPS,
-                    port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl)
+    public void testErrorHandling(@ArquillianResource URL baseUrl)
             throws Exception {
         String url = RestServiceContainerTest.convertPortToPresetPort(baseUrl) + WEBSERVICE_URL;
 
@@ -149,9 +147,7 @@ public class IlluminaRunResourceTest extends Arquillian {
     @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER,
             groups = ALTERNATIVES)
     @RunAsClient
-    public void testZimsOverHttp(
-            @ArquillianResource @UriScheme(name = SchemeName.HTTPS,
-                    port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl)
+    public void testZimsOverHttp(@ArquillianResource URL baseUrl)
             throws Exception {
         String url = RestServiceContainerTest.convertPortToPresetPort(baseUrl) + WEBSERVICE_URL;
 
@@ -177,9 +173,9 @@ public class IlluminaRunResourceTest extends Arquillian {
         Assert.assertTrue(rawJson.contains("\"workRequestDomain\""));
         Assert.assertTrue(rawJson.contains("\"metadataSource\""));
         Assert.assertTrue(rawJson.contains("\"regulatoryDesignation\""));
-        Assert.assertTrue(rawJson.contains("\"testType"));
-        Assert.assertTrue(rawJson.contains("\"buickCollectionDate"));
-        Assert.assertTrue(rawJson.contains("\"buickVisit"));
+        Assert.assertTrue(rawJson.contains("\"testType\""));
+        Assert.assertTrue(rawJson.contains("\"buickCollectionDate\""));
+        Assert.assertTrue(rawJson.contains("\"buickVisit\""));
 
         Assert.assertNotNull(run);
         Assert.assertEquals(run.getName(), RUN_NAME);

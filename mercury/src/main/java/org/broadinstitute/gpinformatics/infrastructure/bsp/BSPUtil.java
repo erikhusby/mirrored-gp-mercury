@@ -23,6 +23,7 @@ public class BSPUtil {
     private static final Pattern BSP_SAMPLE_SHORT_BARCODE_PATTERN = Pattern.compile("S[MP]-[A-Z1-9]{4,6}");
     private static final Pattern BSP_BARE_ID_BARCODE_PATTERN = Pattern.compile("[A-Z1-9]{4,6}");
     private static final Pattern CRSP_BSP_SAMPLE_SHORT_BARCODE_PATTERN = Pattern.compile("CS[MP]-[A-Z1-9]{4,6}");
+    public static final String BSP_SAMPLE_PREFIX = "SM";
 
     /**
      * Tests if the sampleName is in a valid BSP barcode format,

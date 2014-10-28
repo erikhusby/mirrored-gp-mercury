@@ -44,9 +44,7 @@ public class SolexaRunResourceLiveTest extends Arquillian {
 
     @Test(groups = STANDARD, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = true)
     @RunAsClient
-    public void testSquidLanes(
-            @ArquillianResource @UriScheme(name = SchemeName.HTTPS,
-                    port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl) {
+    public void testSquidLanes(@ArquillianResource URL baseUrl) throws Exception {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(LabBatchDbTest.XML_DATE_FORMAT);
         String timeStamp = simpleDateFormat.format(new Date());
         String wsUrl =

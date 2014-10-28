@@ -37,9 +37,7 @@ public class CadencePicoDbTest extends ContainerTest {
 
     @Test(enabled = true, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testEndToEnd(
-            @ArquillianResource @UriScheme(name = SchemeName.HTTPS,
-                    port = RestServiceContainerTest.DEFAULT_FORWARD_PORT) URL baseUrl) {
+    public void testEndToEnd(@ArquillianResource URL baseUrl) throws Exception {
         String testSuffix = timestampFormat.format(new Date());
 
         BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);

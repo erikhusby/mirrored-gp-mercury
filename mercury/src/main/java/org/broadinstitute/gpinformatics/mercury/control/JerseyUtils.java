@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Utility class to define common rest helper functions assist in most Jersey calls.
+ * Utility class to define common rest helper functions that can assist in most Jersey calls.
  */
 public class JerseyUtils {
     public static WebResource.Builder getWebResource(String squidWSUrl, MediaType mediaType) {
@@ -94,6 +94,11 @@ public class JerseyUtils {
         }
     }
 
+    /**
+     * Generates a new client config which has been configured to ignore warnings that a certificate has not been
+     * signed.  Mainly useful when testing which is where the existence of an unsigned certificate is most likely
+     * @return
+     */
     public static ClientConfig getClientConfigAcceptCertificate() {
         ClientConfig clientConfig = new DefaultClientConfig();
         acceptAllServerCertificates(clientConfig);
