@@ -39,7 +39,7 @@ import static org.hamcrest.Matchers.equalTo;
  * Fixup test for repatienting
  */
 @Test(groups = TestGroups.FIXUP)
-public class RepatientingFixupTest extends Arquillian {
+public class SampleMetadataFixupTest extends Arquillian {
     @Inject
     private MercurySampleDao mercurySampleDao;
 
