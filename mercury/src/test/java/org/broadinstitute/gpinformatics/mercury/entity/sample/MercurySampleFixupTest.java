@@ -63,7 +63,7 @@ public class MercurySampleFixupTest extends Arquillian {
         utx.commit();
     }
 
-    @Test(groups = TestGroups.FIXUP, enabled = true)
+    @Test(groups = TestGroups.FIXUP, enabled = false)
     public void gplim3005ReassignDuplicateSamples() throws Exception {
 
         List<MercurySample> duplicateSamples = mercurySampleDao.findDuplicateSamples();
