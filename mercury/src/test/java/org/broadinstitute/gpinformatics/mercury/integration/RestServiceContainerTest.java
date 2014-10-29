@@ -39,6 +39,7 @@ public abstract class RestServiceContainerTest extends Arquillian {
 
     public static final int DEFAULT_FORWARD_PORT = 443;
     private static final String SERVLET_MAPPING_PREFIX = "rest";
+    private static final String JBOSS_HTTPS_PORT_SYSTEM_PROPERTY = "jbossHttpsPort";
 
     @Inject
     private AppConfig appConfig;
@@ -90,7 +91,7 @@ public abstract class RestServiceContainerTest extends Arquillian {
      * @throws MalformedURLException
      */
     public static String convertPortToPresetPort(URL baseUrl) throws MalformedURLException {
-        String port = System.getProperty("jboss.socket.https", String.valueOf(DEFAULT_FORWARD_PORT));
+        String port = System.getProperty(JBOSS_HTTPS_PORT_SYSTEM_PROPERTY, String.valueOf(DEFAULT_FORWARD_PORT));
         String returnValue;
             returnValue = new URL("https", baseUrl.getHost(), Integer.valueOf(port),
                     baseUrl.getFile()).toExternalForm();
