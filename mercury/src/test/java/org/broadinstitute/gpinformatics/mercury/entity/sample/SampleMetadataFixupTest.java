@@ -60,6 +60,7 @@ public class SampleMetadataFixupTest extends Arquillian {
         fixupItems.putAll(MetaDataFixupItem.mapOf("SM-74838", Metadata.Key.PATIENT_ID, "Buick_PV_NA12878_C", "Buick_PV_NA12878"));
         fixupItems.putAll(MetaDataFixupItem.mapOf("SM-7482I", Metadata.Key.PATIENT_ID, "Buick_PV_NA12878_D", "Buick_PV_NA12878"));
         fixupItems.putAll(MetaDataFixupItem.mapOf("SM-7482L", Metadata.Key.PATIENT_ID, "Buick_PV_NA12878_E", "Buick_PV_NA12878"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-74846", Metadata.Key.PATIENT_ID, "Buick_PV_NA12878_F", "Buick_PV_NA12878"));
         // @formatter:on
 
         userBean.loginOSUser();
