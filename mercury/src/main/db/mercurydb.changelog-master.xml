@@ -8,4 +8,5 @@
     <!-- add more includes as each file becomes unmanageably large -->
     <include file="src/main/db/mercurydb.changelog-1.0.xml"/>
     <include file="src/main/db/mercurydb.changelog-1.1.xml"/>
+    <include file="src/main/db/mercurydb.changelog-1.2.xml"/>
 </databaseChangeLog>

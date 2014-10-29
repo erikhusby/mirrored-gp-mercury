@@ -46,9 +46,8 @@ public class ConfigurableSearchTest extends ContainerTest {
 
         // Create instance
         SearchInstance searchInstance = new SearchInstance();
-        SearchDefinitionFactory searchDefinitionFactory = new SearchDefinitionFactory();
         String entity = "LabEvent";
-        ConfigurableSearchDefinition configurableSearchDef = searchDefinitionFactory.getForEntity(entity);
+        ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(entity);
         SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("EventDate",
                 configurableSearchDef);
         searchValue.setOperator(SearchInstance.Operator.BETWEEN);

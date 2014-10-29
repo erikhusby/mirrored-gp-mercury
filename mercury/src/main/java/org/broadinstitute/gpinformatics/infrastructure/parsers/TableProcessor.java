@@ -21,12 +21,7 @@ public abstract class TableProcessor implements Serializable {
 
     /**
      * If a TableProcessor is constructed with IgnoreTrailingBlankLines.YES, it will silently ignore trailing rows of
-     * all-blank cells.  Otherwise rows of all-blank cells are sent to the TableProcessor implementation as if they
-     * were ordinary data rows.  If a TableProcessor is configured with IgnoreTrailingBlankLines.YES and non-trailing
-     * blank lines are seen, the row numbers of these lines will be passed to
-     * {@code generateErrorsForNonTrailingBlankLines}.
-     *
-     * @see #generateErrorsForNonTrailingBlankLines(java.util.Collection)
+     * all-blank cells.
      */
     public enum IgnoreTrailingBlankLines {
         YES,
@@ -35,8 +30,6 @@ public abstract class TableProcessor implements Serializable {
 
     private static final long serialVersionUID = 8122298462727182883L;
     public static final String REQUIRED_VALUE_IS_MISSING = "Required value for %s is missing";
-
-    public static final String NON_TRAILING_BLANK_LINE = "Non-trailing blank line seen";
 
     private final List<String> validationMessages = new ArrayList<>();
 
@@ -219,13 +212,7 @@ public abstract class TableProcessor implements Serializable {
      */
     public void validateNumberOfWorksheets(int actualNumberOfSheets) throws ValidationException {    }
 
-    public boolean ignoreTrailingBlankLines() {
+    public boolean shouldIgnoreTrailingBlankLines() {
         return ignoreTrailingBlankLines == IgnoreTrailingBlankLines.YES;
-    }
-
-    public void generateErrorsForNonTrailingBlankLines(Collection<Integer> nonTrailingBlankLineIndexes) {
-        for (Integer nonTrailingBlankLineIndex : nonTrailingBlankLineIndexes) {
-            addDataMessage(NON_TRAILING_BLANK_LINE, nonTrailingBlankLineIndex);
-        }
     }
 }

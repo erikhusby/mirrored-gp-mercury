@@ -296,7 +296,7 @@ public class ManifestSessionEjbDBFreeTest {
     public Object[][] badManifestUploadProvider() {
         return new Object[][]{
                 {"Not an Excel file", "manifest-upload/not-an-excel-file.txt"},
-                {"Missing required field", "manifest-import/test-manifest-missing-required.xlsx"},
+                {"Missing required field", "manifest-import/test-manifest-missing-specimen.xlsx"},
                 {"Missing column", "manifest-upload/manifest-with-missing-column.xlsx"},
                 {"Empty manifest", "manifest-upload/empty-manifest.xlsx"}
         };

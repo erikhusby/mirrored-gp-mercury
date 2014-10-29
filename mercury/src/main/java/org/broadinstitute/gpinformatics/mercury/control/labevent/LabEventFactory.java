@@ -631,15 +631,15 @@ public class LabEventFactory implements Serializable {
                         RackOfTubes rackOfTubes = OrmUtil.proxySafeCast(
                                 mapBarcodeToVessel.get(plateType.getBarcode()), RackOfTubes.class);
                         boolean rackOfTubesWasNull = rackOfTubes == null;
-                        if (tubeFormation == null) {
-                            Map<String, BarcodedTube> mapBarcodeToTube = new HashMap<>();
-                            for (ReceptacleType receptacleType : positionMapType.getReceptacle()) {
-                                mapBarcodeToTube.put(receptacleType.getBarcode(),
-                                        OrmUtil.proxySafeCast(mapBarcodeToVessel.get(receptacleType.getBarcode()),
-                                                BarcodedTube.class)
-                                );
-                            }
 
+                        Map<String, BarcodedTube> mapBarcodeToTube = new HashMap<>();
+                        for (ReceptacleType receptacleType : positionMapType.getReceptacle()) {
+                            mapBarcodeToTube.put(receptacleType.getBarcode(),
+                                    OrmUtil.proxySafeCast(mapBarcodeToVessel.get(receptacleType.getBarcode()),
+                                            BarcodedTube.class)
+                            );
+                        }
+                        if (tubeFormation == null) {
                             tubeFormation = buildRackDaoFree(mapBarcodeToTube, rackOfTubes, plateType,
                                     positionMapType, source, create);
                             mapBarcodeToVessel.put(tubeFormation.getLabel(), tubeFormation);
@@ -654,6 +654,7 @@ public class LabEventFactory implements Serializable {
                                 mapBarcodeToVessel.put(rackOfTubes.getLabel(), rackOfTubes);
                                 tubeFormation.addRackOfTubes(rackOfTubes);
                             }
+                            setTubeQuantities(mapBarcodeToTube, positionMapType);
                         }
                         mapBarcodeToTubeFormation.put(plateType.getBarcode(), tubeFormation);
                         break;

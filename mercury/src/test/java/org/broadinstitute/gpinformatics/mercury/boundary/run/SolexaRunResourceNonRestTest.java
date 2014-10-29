@@ -32,6 +32,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.MiSeqReagentKitDao;
@@ -73,6 +74,7 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -81,7 +83,6 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.ALTERNATIVES;
 
 /**
  * Tests the methods in the SolexaRunResource without any rest calls
@@ -103,6 +104,9 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
 
     @Inject
     private MiSeqReagentKitDao miSeqReagentKitDao;
+
+    @Inject
+    private MercurySampleDao mercurySampleDao;
 
     @Inject
     private LabBatchEjb labBatchEjb;
@@ -157,9 +161,6 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
     private String reagentKitBarcode;
     private String runFileDirectory;
     private ProductOrder exexOrder;
-    private ResearchProject researchProject;
-    private Product exExProduct;
-    private ArrayList<ProductOrderSample> bucketReadySamples1;
     private String runName;
     private String machineName;
     private String pdo1JiraKey;
@@ -182,11 +183,8 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
                 .buildMercuryWarWithAlternatives(DEV, EverythingYouAskForYouGetAndItsHuman.class);
     }
 
-    @BeforeMethod(groups = ALTERNATIVES)
+    @BeforeMethod(groups = TestGroups.ALTERNATIVES)
     public void setUp() throws Exception {
-//        Controller.startCPURecording(true);
-//        Controller.startProbeRecording(Controller.PROBE_NAME_JDBC, true);
-//        Controller.startProbeRecording(Controller.PROBE_NAME_PERSISTENCE, true);
 
         if (flowcellDao == null) {
             return;
@@ -199,12 +197,12 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         String testPrefix = "runResourceTst" + runDate.getTime();
         machineName = "SL-HAL";
 
-        researchProject = researchProjectDao.findByTitle("ADHD");
+        ResearchProject researchProject = researchProjectDao.findByTitle("ADHD");
 
-        exExProduct = productDao.findByPartNumber(
+        Product exExProduct = productDao.findByPartNumber(
                 BettaLimsMessageResourceTest.mapWorkflowToPartNum.get(Workflow.AGILENT_EXOME_EXPRESS));
 
-        bucketReadySamples1 = new ArrayList<>(2);
+        ArrayList<ProductOrderSample> bucketReadySamples1 = new ArrayList<>(2);
 
         for (int rackPosition = 1; rackPosition <= 96; rackPosition++) {
             String bspStock = "SM-" + testPrefix + rackPosition;
@@ -214,7 +212,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         exexOrder =
                 new ProductOrder(bspUserList.getByUsername("scottmat").getUserId(),
                                  "Solexa RunResource No Rest Test" + runDate.getTime(),
-                                 bucketReadySamples1, "GSP-123", exExProduct, researchProject);
+                        bucketReadySamples1, "GSP-123", exExProduct, researchProject);
         exexOrder.setProduct(exExProduct);
         exexOrder.prepareToSave(bspUserList.getByUsername("scottmat"));
         productOrderDao.persist(exexOrder);
@@ -273,8 +271,10 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         miSeqFlowcell = new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.MiSeqFlowcell, miSeqBarcode);
 
         for (ProductOrderSample currSample : exexOrder.getSamples()) {
-            newFlowcell.addSample(new MercurySample(currSample.getBspSampleName(), MercurySample.MetadataSource.BSP));
-            miSeqFlowcell.addSample(new MercurySample(currSample.getBspSampleName(), MercurySample.MetadataSource.BSP));
+            Collection<MercurySample> sample = mercurySampleDao.findBySampleKey(currSample.getSampleKey());
+
+            newFlowcell.addSample(sample.iterator().next());
+            miSeqFlowcell.addSample(sample.iterator().next());
         }
 
         flowcellDao.persist(miSeqFlowcell);
@@ -290,10 +290,9 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
                            File.separator + runName;
         File runFile = new File(runFileDirectory);
         runFile.mkdirs();
-//        Controller.stopCPURecording();
     }
 
-    @AfterMethod(groups = ALTERNATIVES)
+    @AfterMethod(groups = TestGroups.ALTERNATIVES)
     public void tearDown() throws Exception {
         if (flowcellDao == null) {
             return;
@@ -305,12 +304,10 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         productOrderDao.persist(exexOrder);
     }
 
-    @Test(groups = ALTERNATIVES,
+    @Test(groups = TestGroups.ALTERNATIVES,
           dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     public void testRunResource() {
 
-        Map<String, VesselPosition> denatureRackMap = new HashMap<>();
-        denatureRackMap.put(denatureBarcode, VesselPosition.A01);
         BarcodedTube tube = new BarcodedTube(denatureBarcode);
         labVesselDao.persist(tube);
         labVesselDao.flush();
@@ -354,7 +351,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
      * Calls storeRunReadStructure with a ReadStructureRequest that has a runName but no runBarcode. This
      * method will also create a run to associate the read structures.
      */
-    @Test(groups = ALTERNATIVES)
+    @Test(groups = TestGroups.ALTERNATIVES)
     public void testGetReadStructureByName() {
         SolexaRunResource runResource =
                 new SolexaRunResource(runDao, illuminaSequencingRunFactory, flowcellDao, vesselTransferEjb, router,
@@ -382,7 +379,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
      * Calls storeRunReadStructure with a ReadStructureRequest that has a runName but no runBarcode. This
      * method will also create a run to associate the read structures.
      */
-    @Test(groups = ALTERNATIVES)
+    @Test(groups = TestGroups.ALTERNATIVES)
     public void testLaneReadStructure() {
         SolexaRunResource runResource =
                 new SolexaRunResource(runDao, illuminaSequencingRunFactory, flowcellDao, vesselTransferEjb, router,
@@ -416,7 +413,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
      * Calls the run resource methods that will apply the setup and actual read structures to a sequencing run.  This
      * method will also create a run to associate the read structures.
      */
-    @Test(groups = ALTERNATIVES)
+    @Test(groups = TestGroups.ALTERNATIVES)
     public void testGetReadStructureByBarcode() {
         ReadStructureRequest readStructure = new ReadStructureRequest();
         readStructure.setRunBarcode(runBarcode);
@@ -483,7 +480,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
      * Calls the run resource methods that will apply the setup and actual read structures to a sequencing run.  This
      * method will also create a run to associate the read structures.
      */
-    @Test(groups = ALTERNATIVES,
+    @Test(groups = TestGroups.ALTERNATIVES,
           dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     public void testFailSetReadStructureInSquid() {
         ReadStructureRequest readStructure = new ReadStructureRequest();
