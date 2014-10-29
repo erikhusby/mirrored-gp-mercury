@@ -774,7 +774,7 @@ public class LabVesselFixupTest extends Arquillian {
 
 
     @Test(enabled = false)
-    public void gplim3939FixupVolumes() {
+    public void gplim3139FixupVolumes() {
         userBean.loginOSUser();
         Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(Arrays.asList(
                 "0173519367","0173519410","0173519344","0173519391","0173519387","0173519377","0173519390","0173519385"
