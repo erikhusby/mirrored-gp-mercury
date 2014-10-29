@@ -771,4 +771,31 @@ public class LabVesselFixupTest extends Arquillian {
         }
         barcodedTubeDao.flush();
     }
+
+
+    @Test(enabled = false)
+    public void gplim3940FixupVolumes() {
+        userBean.loginOSUser();
+        Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(Arrays.asList(
+                "173519367","173519410","173519344","173519391","173519387","173519377","173519390","173519385"
+        ));
+        BigDecimal expectedVolume = new BigDecimal("41");
+        BigDecimal correctVolume = new BigDecimal("36");
+        for (String barcode : mapBarcodeToTube.keySet()) {
+            BarcodedTube barcodedTube = mapBarcodeToTube.get(barcode);
+            if (barcodedTube == null) {
+                throw new RuntimeException("Failed to find tube " + barcode);
+            }
+            if (barcodedTube.getVolume().compareTo(expectedVolume) == 0) {
+                System.out.println("Updating volume in " + barcodedTube.getLabel() +
+                                   " from " + barcodedTube.getVolume().toString() +
+                                   " to " + correctVolume.toString());
+                barcodedTube.setVolume(correctVolume);
+            } else {
+                throw new RuntimeException("tube " + barcode + " has unexpected volume " + barcodedTube.getVolume());
+            }
+        }
+        barcodedTubeDao.flush();
+    }
+
 }
