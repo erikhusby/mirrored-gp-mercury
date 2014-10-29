@@ -5,4 +5,18 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-2.0.xsd">
 
+    <changeSet id="GPLIM-3005-sample-key-unique-constraint" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                select count(*) from all_cons_columns col, all_constraints cons
+                where col.constraint_name = cons.constraint_name
+                and cons.table_name = 'MERCURY_SAMPLE'
+                and col.column_name = 'SAMPLE_KEY'
+                and cons.constraint_type in ('U', 'P')
+            </sqlCheck>
+        </preConditions>
+        <addUniqueConstraint tableName="MERCURY_SAMPLE" columnNames="SAMPLE_KEY"
+                             constraintName="U_MERCURY_SAMPLE_SAMPLE_KEY" schemaName="mercury" />
+    </changeSet>
+
 </databaseChangeLog>

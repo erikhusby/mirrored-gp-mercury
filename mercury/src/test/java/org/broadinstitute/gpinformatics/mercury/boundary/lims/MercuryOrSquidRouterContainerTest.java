@@ -917,12 +917,12 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
                 newTube = new BarcodedTube("R" + currSample.getName());
             }
 
-            Collection<MercurySample> mercurySample = mercurySampleDao.findBySampleKey(currSample.getName());
+            MercurySample mercurySample = mercurySampleDao.findBySampleKey(currSample.getName());
 
             if(mercurySample == null) {
-                mercurySample = Collections.singleton(new MercurySample(currSample.getName(), MercurySample.MetadataSource.BSP));
+                mercurySample = new MercurySample(currSample.getName(), MercurySample.MetadataSource.BSP);
             }
-            newTube.addSample(mercurySample.iterator().next());
+            newTube.addSample(mercurySample);
             tubes.add(newTube);
             barcodes.add(newTube.getLabel());
             if (bucketName != null && bucket.findEntry(newTube) == null) {
