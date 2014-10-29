@@ -23,22 +23,20 @@ import java.util.Map;
  * This enum holds header information for sample metadata manifests.
  */
 public enum ManifestHeader implements ColumnHeader {
-    SPECIMEN_NUMBER("Specimen_Number", 0, Metadata.Key.SAMPLE_ID, ColumnHeader.REQUIRED_VALUE),
-    SEX("Sex", 2, Metadata.Key.GENDER, ColumnHeader.REQUIRED_VALUE),
-    PATIENT_ID("Patient_ID", 1, Metadata.Key.PATIENT_ID, ColumnHeader.REQUIRED_VALUE),
-    COLLECTION_DATE("Collection_Date", 3, Metadata.Key.BUICK_COLLECTION_DATE, ColumnHeader.OPTIONAL_VALUE),
-    VISIT("Visit", 4, Metadata.Key.BUICK_VISIT, ColumnHeader.OPTIONAL_VALUE),
-    TUMOR_OR_NORMAL("SAMPLE_TYPE", 5, Metadata.Key.TUMOR_NORMAL, ColumnHeader.REQUIRED_VALUE);
+    SPECIMEN_NUMBER("Specimen_Number", 0, Metadata.Key.SAMPLE_ID),
+    SEX("Sex", 2, Metadata.Key.GENDER),
+    PATIENT_ID("Patient_ID", 1, Metadata.Key.PATIENT_ID),
+    COLLECTION_DATE("Collection_Date", 3, Metadata.Key.BUICK_COLLECTION_DATE),
+    VISIT("Visit", 4, Metadata.Key.BUICK_VISIT),
+    TUMOR_OR_NORMAL("SAMPLE_TYPE", 5, Metadata.Key.TUMOR_NORMAL);
     private final String columnName;
     private final int index;
     private final Metadata.Key metadataKey;
-    private final boolean requiredValue;
 
-    ManifestHeader(String columnName, int index, Metadata.Key metadataKey, boolean requiredValue) {
+    ManifestHeader(String columnName, int index, Metadata.Key metadataKey) {
         this.columnName = columnName;
         this.index = index;
         this.metadataKey = metadataKey;
-        this.requiredValue = requiredValue;
     }
 
     /**
@@ -81,7 +79,7 @@ public enum ManifestHeader implements ColumnHeader {
 
     @Override
     public boolean isRequiredValue() {
-        return requiredValue;
+        return ColumnHeader.REQUIRED_VALUE;
     }
 
     /**

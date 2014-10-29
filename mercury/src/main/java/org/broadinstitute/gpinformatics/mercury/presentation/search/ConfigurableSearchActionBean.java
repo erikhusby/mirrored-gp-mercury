@@ -254,7 +254,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
         searchInstanceNames = new HashMap<>();
         newSearchLevels = new HashMap<>();
         try {
-            configurableSearchDef = new SearchDefinitionFactory().getForEntity(entityType.getEntityName());
+            configurableSearchDef = SearchDefinitionFactory.getForEntity(entityType.getEntityName());
 
             searchInstanceEjb.fetchInstances( entityType, preferenceMap,  searchInstanceNames, newSearchLevels );
         } catch (Exception e) {
@@ -304,7 +304,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
      * @return JSP fragment to render term
      */
     public Resolution addTopLevelTerm() {
-        configurableSearchDef = new SearchDefinitionFactory().getForEntity( getEntityName() );
+        configurableSearchDef = SearchDefinitionFactory.getForEntity( getEntityName() );
         searchInstance = new SearchInstance();
         buildSearchContext();
         searchInstance.addTopLevelTerm(searchTermName, configurableSearchDef);
@@ -320,7 +320,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
      * @return JSP fragment to render term
      */
     public Resolution addTopLevelTermWithValue() {
-        configurableSearchDef = new SearchDefinitionFactory().getForEntity( getEntityName() );
+        configurableSearchDef = SearchDefinitionFactory.getForEntity( getEntityName() );
         searchInstance = new SearchInstance();
         buildSearchContext();
         SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm(searchTermName, configurableSearchDef);
@@ -341,7 +341,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
      * @return JSP fragment to render search term
      */
     public Resolution addChildTerm() {
-        configurableSearchDef = new SearchDefinitionFactory().getForEntity( getEntityName() );
+        configurableSearchDef = SearchDefinitionFactory.getForEntity( getEntityName() );
         buildSearchContext();
         searchInstance.establishRelationships(configurableSearchDef);
         searchValueList = recurseToLeaf(searchInstance.getSearchValues());
