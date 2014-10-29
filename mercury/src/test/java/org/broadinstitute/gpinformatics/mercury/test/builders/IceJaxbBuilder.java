@@ -46,10 +46,10 @@ public class IceJaxbBuilder {
     private PlateCherryPickEvent icePoolingTransfer;
     private PlateTransferEventType iceSPRIConcentration;
     private PlateTransferEventType ice1stHybridization;
-    private ReceptaclePlateTransferEvent ice1stBaitAddition;
+    private PlateCherryPickEvent ice1stBaitPick;
     private PlateTransferEventType ice1stCapture;
     private PlateEventType ice2ndHybridization;
-    private ReceptaclePlateTransferEvent ice2ndBaitAddition;
+    private PlateCherryPickEvent ice2ndBaitPick;
     private PlateTransferEventType ice2ndCapture;
     private PlateTransferEventType iceCatchCleanup;
     private PlateEventType iceCatchEnrichmentSetup;
@@ -128,11 +128,18 @@ public class IceJaxbBuilder {
                 "Ice1stHybridization", spriRackBarcode, spriTubeBarcodes, firstHybPlateBarcode);
         bettaLimsMessageTestFactory.addMessage(messageList, ice1stHybridization);
 
-        // Ice1stBaitAddition
-        ice1stBaitAddition = bettaLimsMessageTestFactory.buildTubeToPlate(
-                "Ice1stBaitAddition", baitTube1Barcode, firstHybPlateBarcode, LabEventFactory.PHYS_TYPE_EPPENDORF_96,
-                LabEventFactory.SECTION_ALL_96, "tube");
-        bettaLimsMessageTestFactory.addMessage(messageList, ice1stBaitAddition);
+        // Ice1stBaitPick
+        List<BettaLimsMessageTestFactory.CherryPick> bait1CherryPicks = new ArrayList<>();
+        String bait1RackBarcode = "B1R" + testPrefix;
+        for (int i = 0; i < 8; i++) {
+            bait1CherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(bait1RackBarcode, "A01",
+                    firstHybPlateBarcode, (char)('A' + i) + "01"));
+        }
+        ice1stBaitPick = bettaLimsMessageTestFactory.buildCherryPickToPlate("Ice1stBaitPick",
+                LabEventFactory.PHYS_TYPE_TUBE_RACK, Collections.singletonList(bait1RackBarcode),
+                Collections.singletonList(Collections.singletonList(baitTube1Barcode)),
+                Collections.singletonList(firstHybPlateBarcode), bait1CherryPicks);
+        bettaLimsMessageTestFactory.addMessage(messageList, ice1stBaitPick);
 
         // Ice1stCapture
         firstCapturePlateBarcode = testPrefix + "Ice1stCap";
@@ -149,10 +156,18 @@ public class IceJaxbBuilder {
                 firstCapturePlateBarcode, reagentDtos);
         bettaLimsMessageTestFactory.addMessage(messageList, ice2ndHybridization);
 
-        ice2ndBaitAddition = bettaLimsMessageTestFactory
-                .buildTubeToPlate("Ice2ndBaitAddition", baitTube2Barcode, firstCapturePlateBarcode,
-                        LabEventFactory.PHYS_TYPE_EPPENDORF_96, LabEventFactory.SECTION_ALL_96, "tube");
-        bettaLimsMessageTestFactory.addMessage(messageList, ice2ndBaitAddition);
+        // Ice2ndBaitPick
+        List<BettaLimsMessageTestFactory.CherryPick> bait2CherryPicks = new ArrayList<>();
+        String bait2RackBarcode = "B2R" + testPrefix;
+        for (int i = 0; i < 8; i++) {
+            bait2CherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(bait2RackBarcode, "A01",
+                    firstCapturePlateBarcode, (char)('A' + i) + "01"));
+        }
+        ice2ndBaitPick = bettaLimsMessageTestFactory.buildCherryPickToPlate("Ice2ndBaitPick",
+                LabEventFactory.PHYS_TYPE_TUBE_RACK, Collections.singletonList(bait2RackBarcode),
+                Collections.singletonList(Collections.singletonList(baitTube2Barcode)),
+                Collections.singletonList(firstCapturePlateBarcode), bait2CherryPicks);
+        bettaLimsMessageTestFactory.addMessage(messageList, ice2ndBaitPick);
 
         // Ice2ndCapture
         secondCapturePlateBarcode = testPrefix + "Ice2ndCap";
@@ -266,8 +281,8 @@ public class IceJaxbBuilder {
         return ice1stHybridization;
     }
 
-    public ReceptaclePlateTransferEvent getIce1stBaitAddition() {
-        return ice1stBaitAddition;
+    public PlateCherryPickEvent getIce1stBaitPick() {
+        return ice1stBaitPick;
     }
 
     public PlateTransferEventType getIce1stCapture() {
@@ -278,8 +293,8 @@ public class IceJaxbBuilder {
         return ice2ndHybridization;
     }
 
-    public ReceptaclePlateTransferEvent getIce2ndBaitAddition() {
-        return ice2ndBaitAddition;
+    public PlateCherryPickEvent getIce2ndBaitPick() {
+        return ice2ndBaitPick;
     }
 
     public PlateTransferEventType getIce2ndCapture() {
