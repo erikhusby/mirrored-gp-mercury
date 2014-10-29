@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.envers;
 
 import com.sun.xml.ws.developer.Stateful;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -30,7 +29,6 @@ import javax.persistence.criteria.Root;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -152,24 +150,6 @@ public class AuditReaderDao extends GenericDao {
     }
 
     /**
-     * Finds data changes for all entity types over a collection of revision ids.
-     * @param revIds list of revIds.
-     * @return a list of AuditedRevDtos sorted by revId.
-     */
-    public List<AuditedRevDto> fetchAuditedRevs(Set<Long> revIds) {
-        List<AuditedRevDto> auditedRevDtos = new ArrayList<>();
-
-        for (Long revId : revIds) {
-            RevInfo revInfo = getEntityManager().find(RevInfo.class, revId);
-
-            auditedRevDtos.add(new AuditedRevDto(revId, revInfo.getRevDate(), revInfo.getUsername(),
-                    revInfo.getModifiedEntityNames()));
-        }
-        Collections.sort(auditedRevDtos, AuditedRevDto.BY_REV_ID);
-        return auditedRevDtos;
-    }
-
-    /**
      * Finds EnversAudit dtos for one entity type over a collection of revision ids.
      *
      * @param revIds collection of audit revision ids to search through.
@@ -239,68 +219,29 @@ public class AuditReaderDao extends GenericDao {
     }
 
     /**
-     * Returns the revId of a version of the entity immediately prior to the version at the given revision id.
+     * Returns the revId of an entity immediately prior to the version at the given revision id.
      * Returns null if entity can't be found, or doesn't have a Long primary key.
      */
     public Long getPreviousVersionRevId(Long entityId, Class cls, long revId) {
-        // The previous rev will then be the top of the ordered list.
-        List<Long> list = getPreviousVersionRevIds(entityId, cls, revId);
-        return CollectionUtils.isNotEmpty(list) ? list.get(0) : null;
-    }
-
-
-    /**
-     * Returns all revIds of a version of an entity prior to the version at the given revision id.
-     * Returns null if entity can't be found, or doesn't have a Long primary key.
-     */
-    private List<Long> getPreviousVersionRevIds(Long entityId, Class cls, long revId) {
-        List<Long> previousVersionRevIds = new ArrayList<>();
-        if (entityId != null) {
-            final Date revDate = fetchRevDate(revId);
-            if (revDate != null) {
-                List<Object[]> list = getAuditReader().createQuery()
-                        .forRevisionsOfEntity(cls, false, true)
-                        .add(AuditEntity.id().eq(entityId))
-                        .add(AuditEntity.revisionProperty("revDate").le(revDate))
-                        .getResultList();
-
-                // Reverse order the transactions (newest one first).  Mercury does not always
-                // have increasing values of revId with successive transaction commits, so use
-                // revDate as primary and revId as secondary.
-                Collections.sort(list, new Comparator<Object[]>() {
-                    @Override
-                    public int compare(Object[] o1, Object[] o2) {
-                        RevInfo revInfo1 = (RevInfo)o1[AuditReaderDao.AUDIT_READER_REV_INFO_IDX];
-                        RevInfo revInfo2 = (RevInfo)o2[AuditReaderDao.AUDIT_READER_REV_INFO_IDX];
-                        if (revInfo1.getRevDate().equals(revInfo2.getRevDate())) {
-                            return revInfo2.getRevInfoId().compareTo(revInfo1.getRevInfoId());
-                        } else {
-                            return revInfo2.getRevDate().compareTo(revInfo1.getRevDate());
-                        }
-                    }
-                });
-
-                // The query included the revDate in the search endpoint, but it's not really a
-                // point, it's a time interval, albeit very small.  It's conceivable that within that
-                // interval the revId transaction might be found before or after other transactions.
-                //
-                // Skips over the given revId and revIds from any transactions that come after it.
-                // Since it's in one time quantum, the revId was used for the ordering, imperfect as it may be.
-
-                for (Object[] objs : list) {
-                    RevInfo revInfo = (RevInfo)objs[AuditReaderDao.AUDIT_READER_REV_INFO_IDX];
-                    if (revInfo.getRevDate().before(revDate) || revInfo.getRevInfoId() < revId) {
-                        previousVersionRevIds.add(revInfo.getRevInfoId());
-                    }
-                }
-            }
-        }
-        return previousVersionRevIds;
-    }
-
-    private Date fetchRevDate(Long revId) {
         RevInfo revInfo = getEntityManager().find(RevInfo.class, revId);
-        return (revInfo != null) ? revInfo.getRevDate() : null;
+        if (revInfo == null) {
+            return null;
+        }
+        boolean ONLY_RETURN_ENTITIES = false;
+        boolean INCLUDE_DELETES = true;
+        Date previousRevDate = (Date)getAuditReader().createQuery()
+                .forRevisionsOfEntity(cls, ONLY_RETURN_ENTITIES, INCLUDE_DELETES)
+                .addProjection(AuditEntity.revisionProperty("revDate").function("max"))
+                .add(AuditEntity.id().eq(entityId))
+                .add(AuditEntity.revisionProperty("revDate").lt(revInfo.getRevDate()))
+                .getSingleResult();
+        Long previousRevId = (Long)getAuditReader().createQuery()
+                .forRevisionsOfEntity(cls, ONLY_RETURN_ENTITIES, INCLUDE_DELETES)
+                .addProjection(AuditEntity.revisionNumber().max())
+                .add(AuditEntity.id().eq(entityId))
+                .add(AuditEntity.revisionProperty("revDate").eq(previousRevDate))
+                .getSingleResult();
+        return previousRevId;
     }
 
     /** Returns sorted list of all usernames found in REV_INFO. */
