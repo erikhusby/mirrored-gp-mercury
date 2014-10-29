@@ -56,6 +56,10 @@
             <property name="username">${jboss.username}</property>
             <property name="password">${jboss.password}</property>
         </configuration>
+        <protocol type="Servlet 3.0">
+            <property name="name">https</property>
+            <property name="port">${jboss.socket.https}</property>
+        </protocol>
     </container>
     <!-- -->
 

@@ -18,6 +18,10 @@
             <property name="username">${jbossRC.username}</property>
             <property name="password">${jbossRC.password}</property>
         </configuration>
+        <protocol type="Servlet 3.0">
+            <property name="name">https</property>
+            <property name="port">${jboss.socket.https}</property>
+        </protocol>
     </container>
 
 </arquillian>
