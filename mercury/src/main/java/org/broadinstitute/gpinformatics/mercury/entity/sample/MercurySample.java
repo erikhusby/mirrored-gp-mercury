@@ -68,7 +68,7 @@ public class MercurySample extends AbstractSample {
     @Enumerated(EnumType.STRING)
     private MetadataSource metadataSource;
 
-    @ManyToMany(cascade = CascadeType.PERSIST)
+    @ManyToMany
     private Set<Metadata> metadata = new HashSet<>();
 
     /**

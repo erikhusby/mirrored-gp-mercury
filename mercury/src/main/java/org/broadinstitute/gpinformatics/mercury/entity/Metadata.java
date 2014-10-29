@@ -101,6 +101,10 @@ public class Metadata {
         return stringValue;
     }
 
+    public void setStringValue(String stringValue) {
+        this.stringValue = stringValue;
+    }
+
     public BigDecimal getNumberValue() {
         return numberValue;
     }

@@ -99,16 +99,7 @@ class MetaDataFixupItem {
 
     public static Map<String, MetaDataFixupItem> mapOf(String sampleId, Metadata.Key metadataKey,
                                                        String oldValue, String newValue) {
-
         return ImmutableMap.of(sampleId, new MetaDataFixupItem(sampleId, metadataKey, oldValue, newValue));
-    }
-
-    public Metadata updatedMetadata() {
-        return new Metadata(metadataKey, newValue);
-    }
-
-    public Metadata originalMetadata() {
-        return new Metadata(metadataKey, oldValue);
     }
 
     public Map<String, Metadata.Key> updateMetadataForSamples(MercurySample mercurySample) {
@@ -117,21 +108,31 @@ class MetaDataFixupItem {
             throw new RuntimeException(
                     String.format("Expected sample %s but received %s", sampleKey, mercurySample.getSampleKey()));
         }
-        Metadata originalMetadata = originalMetadata();
-        if (mercurySample.getMetadata().remove(originalMetadata)) {
-            Metadata updatedMetadata = updatedMetadata();
-            mercurySample.getMetadata().add(updatedMetadata);
+
+        Metadata metadataRecord = findMetadataRecord(mercurySample);
+
+        if (metadataRecord!=null && metadataRecord.getValue()!=null) {
+            metadataRecord.setStringValue(newValue);
             log.info(String.format("Successfully updated metadata for sample '%s': '[%s, %s]", sampleKey,
-                    updatedMetadata.getKey(), updatedMetadata.getValue()));
+                    metadataRecord.getKey(), metadataRecord.getValue()));
         } else {
             errors.put(sampleKey, metadataKey);
 
             String errorString = String.format(
                     "Could not find metadata matching original metadata '[%s, %s]' for sample '%s'. Please verify the oldValue and newValue are correct for this sample.",
-                    originalMetadata.getKey(), originalMetadata.getValue(), sampleKey);
+                    metadataKey, oldValue, sampleKey);
             log.error(errorString);
         }
         return errors;
+    }
+
+    private Metadata findMetadataRecord(MercurySample mercurySample) {
+        for (Metadata metadata : mercurySample.getMetadata()) {
+            if (metadata.getKey().equals(metadataKey)){
+                return metadata;
+            }
+        }
+        return null;
     }
 
     public String getSampleKey() {
