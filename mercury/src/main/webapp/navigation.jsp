@@ -112,11 +112,9 @@
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.LinkDenatureTubeToReagentBlockActionBean"
                                           event="view">Link Denature Tube to Reagent Block</stripes:link>
                         </li>
-                        <security:authorizeBlock roles="<%= roles(Developer) %>">
-                            <li>
-                                <a tabindex="-1" href="${ctxpath}/reagent/design.action?list">Reagent Designs</a>
-                            </li>
-                        </security:authorizeBlock>
+                        <li>
+                            <a tabindex="-1" href="${ctxpath}/reagent/design.action?list">Reagent Designs</a>
+                        </li>
                         <security:authorizeBlock roles="<%= roles(LabUser, LabManager, Developer) %>" context="<%= ApplicationInstance.CRSP %>">
                             <li>
                                 <a tabindex="-1" href="${ctxpath}/reagent/molindscheme.action">Molecular Index Schemes</a>
