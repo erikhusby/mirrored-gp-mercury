@@ -503,6 +503,15 @@ public class ProductWorkflowDefVersion implements Serializable {
                     found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, actualEventNames,
                             found, labVessel.getInPlaceEventsWithContainers(), labEventNode);
                 }
+                if (!found) {
+                    // e.g. PicoBufferAddition after PicoTransfer
+                    for (LabEvent labEvent : labVessel.getTransfersFrom()) {
+                        for (LabVessel vessel : labEvent.getTargetLabVessels()) {
+                            found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, actualEventNames,
+                                    found, vessel.getInPlaceLabEvents(), labEventNode);
+                        }
+                    }
+                }
             }
             if (!found && !start) {
                 errors.add(new ValidationError("", actualEventNames, validPredecessorEventNames));

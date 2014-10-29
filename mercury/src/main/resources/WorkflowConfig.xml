@@ -92,7 +92,7 @@
             </workflowStepDefs>
             <!-- PicoRework -->
             <!-- SeqPlatingNormalization -->
-            <!-- todo has never happened -->
+            <!-- todo jmt has never happened -->
             <workflowStepDefs>
                 <name>Pico/Plating Normalization</name>
                 <labEventTypes>SAMPLES_NORMALIZATION_TRANSFER</labEventTypes>
@@ -100,7 +100,7 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
-            <!-- todo has never happened -->
+            <!-- todo jmt has never happened -->
             <workflowStepDefs>
                 <name>Pico/Plating Post Norm Pico Setup</name>
                 <labEventTypes>PICO_PLATING_POST_NORM_PICO</labEventTypes>
@@ -144,9 +144,7 @@
             <workflowStepDefs>
                 <name>Initial Pico</name>
                 <labEventTypes>PICO_TRANSFER</labEventTypes>
-<!--
                 <labEventTypes>PICO_BUFFER_ADDITION</labEventTypes>
--->
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -164,9 +162,7 @@
             <workflowStepDefs>
                 <name>Fingerprinting Pico</name>
                 <labEventTypes>PICO_TRANSFER</labEventTypes>
-<!--
                 <labEventTypes>PICO_BUFFER_ADDITION</labEventTypes>
--->
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -193,9 +189,7 @@
             <workflowStepDefs>
                 <name>Shearing Pico</name>
                 <labEventTypes>PICO_TRANSFER</labEventTypes>
-<!--
                 <labEventTypes>PICO_BUFFER_ADDITION</labEventTypes>
--->
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
