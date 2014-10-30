@@ -60,7 +60,7 @@ public class IlluminaRunResourceDiffsTest extends Arquillian {
                     new URL(ImportFromSquidTest.TEST_MERCURY_URL + "/"),
                     illuminaSequencingRun.getRunName());
             String referenceRun = IlluminaRunResourceLiveTest.getZimsIlluminaRunString(
-                    new URL("https://mercurydev:443/Mercury/"),
+                    new URL("https://mercurydev:8443/Mercury/"),
                     illuminaSequencingRun.getRunName());
             JSONCompareResult jsonCompareResult = JSONCompare.compareJSON(referenceRun, localRun,
                     JSONCompareMode.LENIENT);

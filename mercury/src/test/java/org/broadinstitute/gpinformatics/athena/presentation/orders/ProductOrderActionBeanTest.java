@@ -491,7 +491,7 @@ public class ProductOrderActionBeanTest {
     public void testGetProductOrderLink() {
         AppConfig productionConfig = AppConfig.produce(Deployment.PROD);
         Assert.assertEquals(ProductOrderActionBean.getProductOrderLink("PDO-1", productionConfig),
-                "https://mercury.broadinstitute.org:443/Mercury//orders/order.action?view=&productOrder=PDO-1");
+                "https://mercury.broadinstitute.org:8443/Mercury//orders/order.action?view=&productOrder=PDO-1");
     }
 
     @DataProvider(name = "regulatoryOptionsDataProvider")
