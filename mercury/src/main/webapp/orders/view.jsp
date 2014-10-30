@@ -30,11 +30,11 @@ $j(document).ready(function () {
     // after the work request happens. Adding a work request id field to the UI when there is a work request with
     // a non-sample initiation PDO.
     <c:if test="${actionBean.editOrder.sampleInitiation}">
-        <c:forEach items="${actionBean.editOrder.productOrderKit.kitOrderDetails}" var="kitDetail">
-            showKitDetail('${kitDetail.numberOfSamples}', '${kitDetail.kitType.displayName}',
-                    '${kitDetail.organismName}', '${kitDetail.bspMaterialName}',
-                    '${kitDetail.getPostReceivedOptionsAsString("<br/>")}');
-        </c:forEach>
+    <c:forEach items="${actionBean.editOrder.productOrderKit.kitOrderDetails}" var="kitDetail">
+    showKitDetail('${kitDetail.numberOfSamples}', '${kitDetail.kitType.displayName}',
+            '${kitDetail.organismName}', '${kitDetail.bspMaterialName}',
+            '${kitDetail.getPostReceivedOptionsAsString("<br/>")}');
+    </c:forEach>
     </c:if>
 
     // if there are no sample kit details, just show one empty detail section
@@ -195,6 +195,31 @@ function setupDialogs() {
                     $j(this).dialog("close");
 
                     $j("#deleteOKButton").attr("disabled", "disabled");
+                    $j("#orderForm").submit();
+                }
+            },
+            {
+                text: "Cancel",
+                click: function () {
+                    $j(this).dialog("close");
+                }
+            }
+        ]
+    });
+
+    $j("#placeConfirmation").dialog({
+        modal: true,
+        autoOpen: false,
+        width: 600,
+        height: 260,
+        buttons: [
+            {
+                id: "placeOrderOKButton",
+                text: "OK",
+                click: function () {
+                    $j(this).dialog("close");
+                    $j("#placeOrderOKButton").attr("disabled", "disabled");
+                    $j("#attestationConfirmed").attr("value", $j("#placeConfirmAttestation").prop("checked"));
                     $j("#orderForm").submit();
                 }
             },
@@ -433,6 +458,11 @@ function showDeleteConfirm(action) {
     $j("#deleteConfirmation").dialog("open");
 }
 
+function showPlaceConfirm(action) {
+    $j("#dialogAction").attr("name", action);
+    $j("#placeConfirmation").dialog("open");
+}
+
 function showConfirm(action, actionPrompt) {
     var numChecked = $("input.shiftCheckbox:checked").size();
     if (numChecked) {
@@ -614,12 +644,47 @@ function formatInput(item) {
 </div>
 
 <stripes:form action="/orders/order.action" id="orderForm" class="form-horizontal">
+
+<div id="placeConfirmation" style="display:none;" title="Place Order">
+    <p>Click OK to place the order and make it available for lab work.</p>
+    <c:set var="numberSamplesToAbandon" value="${actionBean.editOrder.nonReceivedNonAbandonedCount}"/>
+    <c:choose>
+        <c:when test="${numberSamplesToAbandon == 1}">
+            <p>
+                <em>NOTE:</em> There is one sample that has not yet been received. If the order is placed,
+                this sample will be marked as abandoned.
+            </p>
+        </c:when>
+        <c:when test="${numberSamplesToAbandon > 1}">
+            <p>
+                <em>NOTE:</em> There are ${numberSamplesToAbandon} samples that have not yet been received.
+                If the order is placed, these samples will be marked as abandoned.
+            </p>
+        </c:when>
+    </c:choose>
+
+    <span class="control-group">
+        <span class="controls">
+            <stripes:checkbox id="placeConfirmAttestation" name="attestationConfirmed"
+                              class="controls controls-text" style="margin-top: 0px; margin-right: 5px;"/>
+        </span>
+        <stripes:label for="placeConfirmAttestation" class="controls control-label"
+                       style="display: inline; position: absolute;">
+            By checking this box, I am attesting that I am fully aware of the regulatory
+            requirements for this project, that these requirements have been met, and that the
+            information I have provided is accurate. Disregard of relevant requirements and/or
+            falsification of information may lead to quarantining of data.
+        </stripes:label>
+    </span>
+</div>
+
 <stripes:hidden name="productOrder" value="${actionBean.editOrder.businessKey}"/>
 <stripes:hidden id="dialogAction" name=""/>
 <stripes:hidden id="riskStatus" name="riskStatus" value=""/>
 <stripes:hidden id="riskComment" name="riskComment" value=""/>
 <stripes:hidden id="abandonComment" name="abandonComment" value=""/>
 <stripes:hidden id="unAbandonComment" name="unAbandonComment" value=""/>
+<stripes:hidden id="attestationConfirmed" name="editOrder.attestationConfirmed" value=""/>
 
 <div class="actionButtons">
     <c:choose>
@@ -646,10 +711,16 @@ function formatInput(item) {
             </security:authorizeBlock>
         </c:when>
         <c:otherwise>
+            <c:if test="${actionBean.canPlaceOrder}">
+                <security:authorizeBlock roles="<%= roles(Developer, PDM, PM) %>">
+                    <stripes:button onclick="showPlaceConfirm('placeOrder')" name="placeOrder"
+                                    value="Place Order" class="btn"/>
+                </security:authorizeBlock>
+            </c:if>
             <%-- Do not show abandon button at all for DRAFTs, do show for Submitted *or later states* --%>
             <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
                 <c:choose>
-                    <c:when test="${actionBean.abandonable}">
+                    <c:when test="${actionBean.canAbandonOrder}">
                         <c:set var="abandonTitle" value="Click to abandon ${actionBean.editOrder.title}"/>
                         <c:set var="abandonDisable" value="false"/>
                         <stripes:hidden name="selectedProductOrderBusinessKeys"
@@ -772,7 +843,7 @@ function formatInput(item) {
         <div class="controls">
             <div class="form-value">
                 <a href="${actionBean.workRequestUrl}" class="external" target="BSP">
-                    ${actionBean.editOrder.productOrderKit.workRequestId}</a>
+                        ${actionBean.editOrder.productOrderKit.workRequestId}</a>
             </div>
         </div>
     </div>
@@ -783,9 +854,7 @@ function formatInput(item) {
 
     <div class="controls">
         <div class="form-value">
-            <c:if test="${actionBean.editOrder.draft}"><span class="label label-info"></c:if>
-                                    ${actionBean.editOrder.orderStatus}
-            <c:if test="${actionBean.editOrder.draft}"></span></c:if>
+            <span class="${actionBean.editOrder.orderStatus.cssClass}">${actionBean.editOrder.orderStatus}</span>
         </div>
     </div>
 </div>

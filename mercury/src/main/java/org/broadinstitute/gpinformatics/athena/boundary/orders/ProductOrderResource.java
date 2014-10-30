@@ -169,6 +169,9 @@ public class ProductOrderResource {
         // This will create a product order and place it, so a JIRA ticket is created.
         ProductOrder productOrder = createProductOrder(productOrderData, ProductOrder.OrderStatus.Pending);
 
+        // The PDO's IRB information is copied from its RP. For Collaboration PDOs, we require that there
+        // is only one IRB on on the RP.
+        productOrder.setRegulatoryInfos(productOrder.getResearchProject().getRegulatoryInfos());
 
         ResearchProject researchProject =
                 researchProjectDao.findByBusinessKey(productOrderData.getResearchProjectId());

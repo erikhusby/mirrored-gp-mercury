@@ -631,6 +631,7 @@ public class ProductOrderEjb {
      * JIRA Status used by PDOs. Each status contains two transitions. One will transition to Open, one to Closed.
      */
     protected enum JiraStatus {
+        PENDING("Pending", JiraTransition.OPEN, JiraTransition.CLOSED),
         OPEN("Open", null, JiraTransition.COMPLETE_ORDER),
         // This status is only set in the JIRA UI. In Mercury it has the same behavior as Open.
         WORK_REQUEST_CREATED("Work Request Created", null, JiraTransition.ORDER_COMPLETE),
@@ -675,7 +676,7 @@ public class ProductOrderEjb {
         }
 
         /**
-         * Given a PDO status, return the transition required to get to that JIRA status from this one.
+         * Given a PDO status, return the transition required to get to the corresponding JIRA status from this one.
          */
         public JiraTransition getTransitionTo(OrderStatus orderStatus) {
             if (orderStatus == OrderStatus.Completed) {
@@ -713,13 +714,24 @@ public class ProductOrderEjb {
         // update the status.
         ProductOrder order = findProductOrder(jiraTicketKey);
         if (order.updateOrderStatus()) {
-            JiraIssue issue = jiraService.getIssue(jiraTicketKey);
-            JiraTransition transition = JiraStatus.fromIssue(issue).getTransitionTo(order.getOrderStatus());
-            if (transition != null) {
-                issue.postTransition(transition.stateName, getUserName() + " transitioned to " + transition.stateName);
-            }
+            transitionIssueToSameOrderStatus(order);
             // The status was changed, let the user know.
             reporter.addMessage("The order status of ''{0}'' is now {1}.", jiraTicketKey, order.getOrderStatus());
+        }
+    }
+
+    /**
+     * If possible, update the JIRA issue so its status matches the status of the PDO in Mercury. No error is
+     * generated if the transition is not possible, or if the JIRA status already matches Mercury.
+     *
+     * @param order the order to transition
+     * @throws IOException
+     */
+    private void transitionIssueToSameOrderStatus(@Nonnull ProductOrder order) throws IOException {
+        JiraIssue issue = jiraService.getIssue(order.getJiraTicketKey());
+        JiraTransition transition = JiraStatus.fromIssue(issue).getTransitionTo(order.getOrderStatus());
+        if (transition != null) {
+            issue.postTransition(transition.stateName, getUserName() + " transitioned to " + transition.stateName);
         }
     }
 
@@ -911,27 +923,28 @@ public class ProductOrderEjb {
         }
         editOrder.prepareToSave(userBean.getBspUser());
         try {
-
-            ProductOrderJiraUtil.placeOrder(editOrder, jiraService);
+            if (editOrder.isDraft()) {
+                // Only Draft orders are not already created in JIRA.
+                ProductOrderJiraUtil.placeOrder(editOrder, jiraService);
+            }
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+            transitionIssueToSameOrderStatus(editOrder);
+
+            // Now that the order is placed, add the comments about the samples to the issue.
+            ProductOrderJiraUtil.addSampleComments(editOrder, jiraService.getIssue(editOrder.getJiraTicketKey()));
 
         } catch (IOException e) {
             log.error("An exception occurred attempting to create a Product Order in Jira", e);
             throw new InformaticsServiceException("Unable to create the Product Order in Jira", e);
         }
 
-        // This checks if there is a product order kit defined, which will let ANY PDO define the kit work request.
-        if (editOrder.getProductOrderKit().getKitOrderDetails().isEmpty()) {
-            if (editOrder.isSampleInitiation()) {
-                throw new InformaticsServiceException("Kit Work Requests require at least one kit definition");
-            }
-        } else {
+        if (editOrder.isSampleInitiation()) {
             try {
                 submitSampleKitRequest(editOrder, messageCollection);
             } catch (Exception e) {
-                String errorMessage = "Unable to successfully complete the sample kit creation";
-                log.error(errorMessage);
-                messageCollection.addError(errorMessage);
+                String errorMessage = "Unable to successfully complete the sample kit creation: ";
+                log.error(errorMessage, e);
+                messageCollection.addError(errorMessage + e);
             }
         }
 

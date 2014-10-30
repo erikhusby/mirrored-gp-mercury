@@ -119,7 +119,7 @@ import java.util.Set;
 @UrlBinding(ProductOrderActionBean.ACTIONBEAN_URL_BINDING)
 public class ProductOrderActionBean extends CoreActionBean {
 
-    private static Log logger = LogFactory.getLog(ProductOrderActionBean.class);
+    private static final Log logger = LogFactory.getLog(ProductOrderActionBean.class);
 
     public static final String ACTIONBEAN_URL_BINDING = "/orders/order.action";
     public static final String PRODUCT_ORDER_PARAMETER = "productOrder";
@@ -140,7 +140,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public static final String SQUID_COMPONENTS_ACTION = "createSquidComponents";
     private static final String SET_RISK = "setRisk";
     private static final String RECALCULATE_RISK = "recalculateRisk";
-    protected static final String PLACE_ORDER = "placeOrder";
+    protected static final String PLACE_ORDER_ACTION = "placeOrder";
     protected static final String VALIDATE_ORDER = "validate";
     // Search field constants
     private static final String FAMILY = "productFamily";
@@ -526,10 +526,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private void requireField(boolean hasValue, String name, String action) {
         if (!hasValue) {
             addGlobalValidationError("Cannot {2} ''{3}'' because it does not have {4}.",
-                    MercuryStringUtils
-                            .splitCamelCase(action),
-                    editOrder.getName(),
-                    name);
+                    MercuryStringUtils.splitCamelCase(action), editOrder.getName(), name);
         }
     }
 
@@ -654,9 +651,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    @ValidationMethod(on = PLACE_ORDER)
+    @ValidationMethod(on = PLACE_ORDER_ACTION)
     public void validatePlacedOrder() {
-        validatePlacedOrder(PLACE_ORDER);
+        validatePlacedOrder(PLACE_ORDER_ACTION);
     }
 
     public void validatePlacedOrder(String action) {
@@ -852,7 +849,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     // All actions that can result in the view page loading (either by a validation error or view itself)
     @After(stages = LifecycleStage.BindingAndValidation,
             on = {EDIT_ACTION, VIEW_ACTION, ADD_SAMPLES_ACTION, SET_RISK, RECALCULATE_RISK, ABANDON_SAMPLES_ACTION,
-                    DELETE_SAMPLES_ACTION, PLACE_ORDER, VALIDATE_ORDER, UNABANDON_SAMPLES_ACTION})
+                    DELETE_SAMPLES_ACTION, PLACE_ORDER_ACTION, VALIDATE_ORDER, UNABANDON_SAMPLES_ACTION})
     public void entryInit() {
         if (editOrder != null) {
             productOrderListEntry = editOrder.isDraft() ? ProductOrderListEntry.createDummy() :
@@ -1018,12 +1015,17 @@ public class ProductOrderActionBean extends CoreActionBean {
         notificationListTokenInput.setup(editOrder.getProductOrderKit().getNotificationIds());
     }
 
-    @HandlesEvent(PLACE_ORDER)
+    @HandlesEvent(PLACE_ORDER_ACTION)
     public Resolution placeOrder() {
         String originalBusinessKey = editOrder.getBusinessKey();
 
         MessageCollection placeOrderMessageCollection = new MessageCollection();
         try {
+
+            if (editOrder.getOrderStatus() == ProductOrder.OrderStatus.Pending) {
+                // For a Pending order, we need to abandon samples that haven't been received.
+                abandonNonReceivedSamples();
+            }
 
             productOrderEjb.placeProductOrder(editOrder.getProductOrderId(), originalBusinessKey,
                     placeOrderMessageCollection);
@@ -1064,6 +1066,21 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         return createViewResolution(editOrder.getBusinessKey());
+    }
+
+    /**
+     * Convert all non-received samples to abandoned.
+     */
+    private void abandonNonReceivedSamples() throws ProductOrderEjb.NoSuchPDOException, IOException,
+            ProductOrderEjb.SampleDeliveryStatusChangeException {
+        List<ProductOrderSample> nonReceivedSamples = new ArrayList<>(editOrder.getNonReceivedNonAbandonedCount());
+        for (ProductOrderSample sample : editOrder.getSamples()) {
+            if (!sample.getSampleData().isSampleReceived()) {
+                nonReceivedSamples.add(sample);
+            }
+        }
+
+        productOrderEjb.abandonSamples(editOrder.getJiraTicketKey(), nonReceivedSamples, "Sample was not received.");
     }
 
     private Resolution handlePlaceError(Exception e) {
@@ -1704,7 +1721,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     public boolean getCanPlaceOrder() {
         // User must be logged into JIRA to place an order.
-        return userBean.isValidUser();
+        return userBean.isValidUser() && editOrder.getOrderStatus().canPlace();
     }
 
     /**
@@ -1880,9 +1897,10 @@ public class ProductOrderActionBean extends CoreActionBean {
      *
      * @return Boolean eligible for abandoning
      */
-    public boolean isAbandonable() {
-        if (!editOrder.isSubmitted()) {
-            setAbandonDisabledReason("the order status of the PDO is not 'Submitted'.");
+    public boolean getCanAbandonOrder() {
+        ProductOrder.OrderStatus status = editOrder.getOrderStatus();
+        if (!status.canAbandon()) {
+            setAbandonDisabledReason("an order with status " + status + " can't be abandoned.");
             return false;
         }
         if (productOrderSampleDao.countSamplesWithLedgerEntries(editOrder) > 0) {
@@ -2112,7 +2130,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     public void validateQuoteOptions(String action) {
-        if (action.equals(PLACE_ORDER) || action.equals(VALIDATE_ORDER)) {
+        if (action.equals(PLACE_ORDER_ACTION) || action.equals(VALIDATE_ORDER)) {
             boolean hasQuote = !StringUtils.isBlank(editOrder.getQuoteId());
             requireField(hasQuote || editOrder.canSkipQuote(), "a quote specified", action);
             if (!hasQuote) {
@@ -2123,7 +2141,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void validateRegulatoryInformation(String action) {
 
-        if (action.equals(PLACE_ORDER) || action.equals(VALIDATE_ORDER)) {
+        if (action.equals(PLACE_ORDER_ACTION) || action.equals(VALIDATE_ORDER)) {
             requireField(editOrder.regulatoryRequirementsMet(),
                     "its regulatory requirements met or a reason for bypassing the regulatory requirements",
                     action);

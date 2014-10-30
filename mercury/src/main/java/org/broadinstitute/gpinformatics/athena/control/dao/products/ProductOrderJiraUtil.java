@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.products;
 
-import edu.mit.broad.prodinfo.bean.generated.AutoWorkRequestOutput;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
@@ -36,7 +35,7 @@ public class ProductOrderJiraUtil {
      * <li>Add any validation comments regarding the Samples contained within the order</li>
      * </ul>
      *
-     * @throws java.io.IOException
+     * @throws IOException
      */
     public static void placeOrder(@Nonnull ProductOrder pdo,@Nonnull JiraService jiraService) throws IOException {
         pdo.setPlacedDate(new Date());
@@ -102,9 +101,14 @@ public class ProductOrderJiraUtil {
 
         pdo.setJiraTicketKey(issue.getKey());
         issue.addLink(pdo.getResearchProject().getJiraTicketKey());
-
-        issue.addComment(StringUtils.join(pdo.getSampleSummaryComments(), "\n"));
-        issue.addComment(StringUtils.join(pdo.getSampleValidationComments(), "\n"));
     }
 
+    /**
+     * Add comments about the state of the samples to the order's JIRA issue. This is done separately from issue
+     * creation because we want to delay adding these comments until the issue is placed.
+     */
+    public static void addSampleComments(ProductOrder order, JiraIssue issue) throws IOException {
+        issue.addComment(StringUtils.join(order.getSampleSummaryComments(), "\n"));
+        issue.addComment(StringUtils.join(order.getSampleValidationComments(), "\n"));
+    }
 }

@@ -850,6 +850,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     /**
+     * @return the number of samples that are both not received and not abandoned
+     */
+    public int getNonReceivedNonAbandonedCount() {
+        return updateSampleCounts().notReceivedAndNotAbandonedCount;
+    }
+
+    /**
      * Helper method that determines how many BSP samples registered to the product order are
      * in an Active state.
      *
@@ -1135,11 +1142,22 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public enum OrderStatus implements StatusType {
-        Draft,
-        Pending,
+        Draft("label label-info"),
+        Pending("label label-success"),
         Submitted,
         Abandoned,
         Completed;
+
+        /** CSS Class to use when displaying this status in HTML. */
+        private final String cssClass;
+
+        OrderStatus() {
+            this("");
+        }
+
+        OrderStatus(String cssClass) {
+            this.cssClass = cssClass;
+        }
 
         /**
          * Get all status values using the name strings.
@@ -1168,6 +1186,20 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
         public boolean isDraft() {
             return this == Draft;
+        }
+
+        public String getCssClass() {
+            return cssClass;
+        }
+
+        /** @return true if an order can be abandoned from this state. */
+        public boolean canAbandon() {
+            return this == Pending || this == Submitted;
+        }
+
+        /** @return true if an order can be placed from this state. */
+        public boolean canPlace() {
+            return this == Draft || this == Pending;
         }
     }
 
@@ -1217,7 +1249,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      * Class that encapsulates counting samples and storing the results.
      */
     private class SampleCounts implements Serializable {
-        private static final long serialVersionUID = -6031146789417566007L;
+        private static final long serialVersionUID = 3984705436979136125L;
         private final Counter stockTypeCounter = new Counter();
         private final Counter primaryDiseaseCounter = new Counter();
         private final Counter genderCounter = new Counter();
@@ -1233,6 +1265,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         private int missingBspMetaDataCount;
         private int uniqueSampleCount;
         private int uniqueParticipantCount;
+        // This is the number of samples that are both not received and not abandoned. This is to compute
+        // the number of samples that will become abandoned when a Pending PDO is placed.
+        private int notReceivedAndNotAbandonedCount;
 
         /**
          * Go through all the samples and tabulate statistics.
@@ -1261,7 +1296,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                         if (sample.bspMetaDataMissing()) {
                             missingBspMetaDataCount++;
                         } else {
-                            updateDTOCounts(participantSet, sample.getSampleData());
+                            updateSampleCounts(participantSet, sample);
                         }
                     }
                 }
@@ -1289,20 +1324,24 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             hasSampleKitUploadRackscanMismatch = 0;
             missingBspMetaDataCount = 0;
             onRiskCount = 0;
+            notReceivedAndNotAbandonedCount = 0;
             stockTypeCounter.clear();
             primaryDiseaseCounter.clear();
             genderCounter.clear();
         }
 
         /**
-         * Update all the counts related to BSP information.
+         * Update all the counts related to sample data information.
          *
          * @param participantSet The unique collection of participants by Id.
-         * @param bspSampleData         The BSP Sample Data.
+         * @param sample         the sample to update the counts with
          */
-        private void updateDTOCounts(Set<String> participantSet, SampleData bspSampleData) {
+        private void updateSampleCounts(Set<String> participantSet, ProductOrderSample sample) {
+            SampleData bspSampleData = sample.getSampleData();
             if (bspSampleData.isSampleReceived()) {
                 receivedSampleCount++;
+            } else if (!sample.getDeliveryStatus().isAbandoned()) {
+                notReceivedAndNotAbandonedCount++;
             }
 
             if (bspSampleData.isActiveStock()) {
