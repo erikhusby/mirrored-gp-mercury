@@ -12,27 +12,19 @@ import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleDataFetcher;
 import org.hamcrest.Matchers;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.Matchers.argThat;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.empty;
-import static org.mockito.Matchers.anyCollectionOf;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
@@ -76,7 +68,6 @@ public class SampleDataFetcherTest {
      * A sample that was exported from BSP for which Mercury is the metadata source.
      */
     private static final String CLINICAL_SAMPLE_ID = "SM-MERC1";
-    private static final String FUBAR_SAMPLE_ID = "SM-FUBAR";
     private static final String CLINICAL_PATIENT_ID = "ZB12345";
 
     private BspSampleData bspOnlySampleData;

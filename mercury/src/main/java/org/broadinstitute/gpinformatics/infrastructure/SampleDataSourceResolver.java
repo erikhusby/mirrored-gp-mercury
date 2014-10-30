@@ -12,7 +12,6 @@ import javax.inject.Inject;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -26,8 +25,8 @@ import java.util.Set;
  * Since SampleDataSourceResolver needs to consult MercurySample, a database query is required when only the sample IDs
  * are provided. Callers that themselves need the MercurySample instances should favor calling
  * {@link SampleDataSourceResolver#resolveSampleDataSources(Collection, Map)}, using the result of
- * {@link MercurySampleDao#findMapIdToListMercurySample(Collection)} for the second argument to avoid a redundant
- * database query.
+ * {@link MercurySampleDao#findMapIdToMercurySample(Collection)} for the second argument to avoid a redundant database
+ * query.
  */
 public class SampleDataSourceResolver {
 

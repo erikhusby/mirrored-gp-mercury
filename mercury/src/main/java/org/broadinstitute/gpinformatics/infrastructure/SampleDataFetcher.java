@@ -140,7 +140,7 @@ public class SampleDataFetcher implements Serializable {
      * Given a list of aliquot IDs, return a map of aliquot IDs to stock IDs.
      */
     public Map<String, String> getStockIdByAliquotId(Collection<String> aliquotIds) {
-        Map<String, List<MercurySample>> allMercurySamples = mercurySampleDao.findMapIdToListMercurySample(aliquotIds);
+        Map<String, MercurySample> allMercurySamples = mercurySampleDao.findMapIdToMercurySample(aliquotIds);
 
         Collection<MercurySample> mercurySamplesWithMercurySource = new ArrayList<>();
         Collection<String> sampleIdsWithBspSource = new ArrayList<>();
@@ -153,7 +153,7 @@ public class SampleDataFetcher implements Serializable {
 
             switch (metadataSource) {
             case MERCURY:
-                mercurySamplesWithMercurySource.addAll(allMercurySamples.get(sampleId));
+                mercurySamplesWithMercurySource.add(allMercurySamples.get(sampleId));
                 break;
             case BSP:
                 sampleIdsWithBspSource.add(sampleId);
@@ -181,19 +181,5 @@ public class SampleDataFetcher implements Serializable {
      */
     public Map<String, GetSampleDetails.SampleInfo> fetchSampleDetailsByBarcode(@Nonnull Collection<String> barcodes) {
         return bspSampleDataFetcher.fetchSampleDetailsByBarcode(barcodes);
-    }
-
-    /**
-     * Given a Collection of sampleIds, return a Map of MercurySamples keyed on MetadataSource.
-     */
-    Map<MercurySample.MetadataSource, Collection<MercurySample>> determineMetadataSource(Collection<String> sampleIds) {
-        Map<String, List<MercurySample>> mercurySamples = mercurySampleDao.findMapIdToListMercurySample(sampleIds);
-        Map<String, MercurySample.MetadataSource> metadataSourceMap = sampleDataSourceResolver.resolveSampleDataSources(
-                sampleIds, mercurySamples);
-        Map<MercurySample.MetadataSource, Collection<MercurySample>> results = new HashMap<>();
-        for (Map.Entry<String, MercurySample.MetadataSource> metadataSourceEntry : metadataSourceMap.entrySet()) {
-            results.put(metadataSourceEntry.getValue(), mercurySamples.get(metadataSourceEntry.getKey()));
-        }
-        return results;
     }
 }
