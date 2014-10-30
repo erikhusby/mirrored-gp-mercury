@@ -16,10 +16,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.logging.Logger;
@@ -177,14 +175,13 @@ public class AuditTrailActionBean extends CoreActionBean {
     }
 
     private void generateAuditTrailList() {
-        // Search Envers using the user's criteria.
         String usernameParam =  ANY_USER.equals(searchUsername) ? AuditReaderDao.IS_ANY_USER :
                 (NO_USER.equals(searchUsername) ? AuditReaderDao.IS_NULL_USER : searchUsername);
         long from = (getDateRange().getStartTime() != null ?
                 getDateRange().getStartTime() : FIRST_AUDIT).getTime()/1000;
         long to = (getDateRange().getEndTime() != null ? getDateRange().getEndTime() : new Date()).getTime()/1000;
-        Set<Long> revIds = (SortedSet)auditReaderDao.fetchAuditIds(from, to, usernameParam).keySet();
-        auditTrailList = auditReaderDao.fetchAuditedRevs(revIds);
+        String canonicalClassname = displayToCanonicalClassnames.get(searchEntityDisplayName);
+        auditTrailList = auditReaderDao.fetchAuditIds(from, to, usernameParam, canonicalClassname);
         // Convert canonical classnames to our display names.
         for (AuditedRevDto auditedRevDto : auditTrailList) {
             List<String> displayNames = new ArrayList<>();
@@ -204,17 +201,6 @@ public class AuditTrailActionBean extends CoreActionBean {
             auditedRevDto.getEntityTypeNames().clear();
             auditedRevDto.getEntityTypeNames().addAll(displayNames);
         }
-
-        // Filters out the dtos that don't match the entity type criteria.  Ignore criteria if set to "any".
-        if (!ANY_ENTITY.equals(searchEntityDisplayName)) {
-            for (Iterator<AuditedRevDto> iter = auditTrailList.iterator(); iter.hasNext(); ) {
-                AuditedRevDto dto = iter.next();
-                if (!dto.getEntityTypeNames().contains(searchEntityDisplayName)) {
-                    iter.remove();
-                }
-            }
-        }
-        Collections.sort(auditTrailList, AuditedRevDto.BY_REV_ID);
     }
 
     public static SortedSet<String> getExcludedDisplayClassnames() {

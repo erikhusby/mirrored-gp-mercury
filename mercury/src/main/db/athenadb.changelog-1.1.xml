@@ -1218,5 +1218,13 @@
     <changeSet id="GPLIM-3083-1" author="epolk">
       <dropTable cascadeConstraints="true"  schemaName="athena"  tableName="PREF_PREFERENCE_AUD"/>
     </changeSet>
+    <!--
+   ##################################################################
+   ##################################################################
 
+                NO MORE CHANGES FOR THIS FILE
+
+   ##################################################################
+   ##################################################################
+    -->
 </databaseChangeLog>

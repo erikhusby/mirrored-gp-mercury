@@ -226,25 +226,20 @@ public class ManifestSessionEjb {
      * @return the desired mercury sample if it is both found and eligible
      */
     public MercurySample validateTargetSample(String targetSampleKey) {
-        Collection<MercurySample> targetSamples = mercurySampleDao.findBySampleKey(targetSampleKey);
+        MercurySample targetSample = mercurySampleDao.findBySampleKey(targetSampleKey);
 
         // There should be one and only one target sample.
-        if (CollectionUtils.isEmpty(targetSamples)) {
+        if (targetSample == null) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET,
                     MERCURY_SAMPLE_KEY, targetSampleKey, SAMPLE_NOT_FOUND_MESSAGE);
         }
-        if (targetSamples.size() > 1) {
-            throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET,
-                    MERCURY_SAMPLE_KEY, targetSampleKey, SAMPLE_NOT_UNIQUE_MESSAGE);
-        }
-        MercurySample foundTarget = targetSamples.iterator().next();
 
-        if (foundTarget.getMetadataSource() != MercurySample.MetadataSource.MERCURY) {
+        if (targetSample.getMetadataSource() != MercurySample.MetadataSource.MERCURY) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, MERCURY_SAMPLE_KEY,
                     targetSampleKey, SAMPLE_NOT_ELIGIBLE_FOR_CLINICAL_MESSAGE);
         }
 
-        return foundTarget;
+        return targetSample;
     }
 
     /**
