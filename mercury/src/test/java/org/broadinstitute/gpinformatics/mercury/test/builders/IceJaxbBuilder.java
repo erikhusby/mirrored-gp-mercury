@@ -49,10 +49,14 @@ public class IceJaxbBuilder {
     private PlateTransferEventType iceSPRIConcentration;
     private PlateTransferEventType ice1stHybridization;
     private ReceptaclePlateTransferEvent ice1stBaitAddition;
+    private PlateEventType postIce1stHybridizationThermoCyclerLoaded;
     private PlateTransferEventType ice1stCapture;
+    private PlateEventType postIce1stCaptureThermoCyclerLoaded;
     private PlateEventType ice2ndHybridization;
     private ReceptaclePlateTransferEvent ice2ndBaitAddition;
+    private PlateEventType postIce2ndHybridizationThermoCyclerLoaded;
     private PlateTransferEventType ice2ndCapture;
+    private PlateEventType postIce2ndCaptureThermoCyclerLoaded;
     private PlateTransferEventType iceCatchCleanup;
     private PlateEventType iceCatchEnrichmentSetup;
     private PlateTransferEventType iceCatchEnrichmentCleanup;
@@ -137,11 +141,23 @@ public class IceJaxbBuilder {
                 LabEventFactory.SECTION_ALL_96, "tube");
         bettaLimsMessageTestFactory.addMessage(messageList, ice1stBaitAddition);
 
+        //PostIce1stHybridizationThermoCyclerLoaded
+        postIce1stHybridizationThermoCyclerLoaded = bettaLimsMessageTestFactory.buildPlateEvent(
+                "PostIce1stHybridizationThermoCyclerLoaded", firstHybPlateBarcode);
+        postIce1stHybridizationThermoCyclerLoaded.setStation("WALDORF");
+        bettaLimsMessageTestFactory.addMessage(messageList, postIce1stHybridizationThermoCyclerLoaded);
+
         // Ice1stCapture
         firstCapturePlateBarcode = testPrefix + "Ice1stCap";
         ice1stCapture = bettaLimsMessageTestFactory.buildPlateToPlate("Ice1stCapture",
                 firstHybPlateBarcode, firstCapturePlateBarcode);
         bettaLimsMessageTestFactory.addMessage(messageList, ice1stCapture);
+
+        //PostIce1stCaptureThermoCyclerLoaded
+        postIce1stCaptureThermoCyclerLoaded = bettaLimsMessageTestFactory.buildPlateEvent(
+                "PostIce1stCaptureThermoCyclerLoaded", firstCapturePlateBarcode);
+        postIce1stCaptureThermoCyclerLoaded.setStation("WALDORF");
+        bettaLimsMessageTestFactory.addMessage(messageList, postIce1stCaptureThermoCyclerLoaded);
 
         // Ice2ndHybridization
         List<BettaLimsMessageTestFactory.ReagentDto> reagentDtos = new ArrayList<>();
@@ -164,11 +180,23 @@ public class IceJaxbBuilder {
                         LabEventFactory.PHYS_TYPE_EPPENDORF_96, LabEventFactory.SECTION_ALL_96, "tube");
         bettaLimsMessageTestFactory.addMessage(messageList, ice2ndBaitAddition);
 
+        //PostIce2ndHybridizationThermoCyclerLoaded
+        postIce2ndHybridizationThermoCyclerLoaded = bettaLimsMessageTestFactory.buildPlateEvent(
+                "PostIce2ndHybridizationThermoCyclerLoaded", firstCapturePlateBarcode);
+        postIce1stCaptureThermoCyclerLoaded.setStation("WALDORF");
+        bettaLimsMessageTestFactory.addMessage(messageList, postIce2ndHybridizationThermoCyclerLoaded);
+
         // Ice2ndCapture
         secondCapturePlateBarcode = testPrefix + "Ice2ndCap";
         ice2ndCapture = bettaLimsMessageTestFactory.buildPlateToPlate("Ice2ndCapture",
                 firstCapturePlateBarcode, secondCapturePlateBarcode);
         bettaLimsMessageTestFactory.addMessage(messageList, ice2ndCapture);
+
+        //PostIce2ndCaptureThermoCyclerLoaded
+        postIce2ndCaptureThermoCyclerLoaded = bettaLimsMessageTestFactory.buildPlateEvent(
+                "PostIce2ndCaptureThermoCyclerLoaded", secondCapturePlateBarcode);
+        postIce1stCaptureThermoCyclerLoaded.setStation("WALDORF");
+        bettaLimsMessageTestFactory.addMessage(messageList, postIce2ndCaptureThermoCyclerLoaded);
 
         // IceCatchCleanup
         catchCleanupPlateBarcode = testPrefix + "IceCatchClean";
@@ -284,8 +312,16 @@ public class IceJaxbBuilder {
         return ice1stBaitAddition;
     }
 
+    public PlateEventType getPostIce1stHybridizationThermoCyclerLoaded() {
+        return postIce1stHybridizationThermoCyclerLoaded;
+    }
+
     public PlateTransferEventType getIce1stCapture() {
         return ice1stCapture;
+    }
+
+    public PlateEventType getPostIce1stCaptureThermoCyclerLoaded() {
+        return postIce1stCaptureThermoCyclerLoaded;
     }
 
     public PlateEventType getIce2ndHybridization() {
@@ -296,8 +332,16 @@ public class IceJaxbBuilder {
         return ice2ndBaitAddition;
     }
 
+    public PlateEventType getPostIce2ndHybridizationThermoCyclerLoaded() {
+        return postIce2ndHybridizationThermoCyclerLoaded;
+    }
+
     public PlateTransferEventType getIce2ndCapture() {
         return ice2ndCapture;
+    }
+
+    public PlateEventType getPostIce2ndCaptureThermoCyclerLoaded() {
+        return postIce2ndCaptureThermoCyclerLoaded;
     }
 
     public PlateTransferEventType getIceCatchCleanup() {
