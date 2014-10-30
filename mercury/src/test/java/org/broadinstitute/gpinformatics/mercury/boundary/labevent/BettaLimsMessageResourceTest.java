@@ -363,7 +363,8 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         LibraryConstructionJaxbBuilder libraryConstructionJaxbBuilder = new LibraryConstructionJaxbBuilder(
                 bettaLimsMessageFactory, testPrefix, shearingJaxbBuilder.getShearCleanPlateBarcode(),
                 LibraryConstructionJaxbBuilder.P_7_INDEX_PLATE_BARCODE,
-                LibraryConstructionJaxbBuilder.P_5_INDEX_PLATE_BARCODE, BaseEventTest.NUM_POSITIONS_IN_RACK).invoke();
+                LibraryConstructionJaxbBuilder.P_5_INDEX_PLATE_BARCODE, BaseEventTest.NUM_POSITIONS_IN_RACK,
+                LibraryConstructionJaxbBuilder.TargetSystem.MERCURY_ONLY).invoke();
 
         for (BettaLIMSMessage bettaLIMSMessage : libraryConstructionJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage, bettaLimsMessageResource, ImportFromSquidTest.TEST_MERCURY_URL);
@@ -371,7 +372,8 @@ public class BettaLimsMessageResourceTest extends Arquillian {
 
         IceJaxbBuilder iceJaxbBuilder = new IceJaxbBuilder(bettaLimsMessageFactory,
                 testPrefix, libraryConstructionJaxbBuilder.getPondRegRackBarcode(),
-                libraryConstructionJaxbBuilder.getPondRegTubeBarcodes(), "Bait" + testPrefix, "Bait" + testPrefix)
+                libraryConstructionJaxbBuilder.getPondRegTubeBarcodes(), "Bait" + testPrefix, "Bait" + testPrefix,
+                LibraryConstructionJaxbBuilder.TargetSystem.MERCURY_ONLY)
                 .invoke();
         List<ReagentDesign> reagentDesigns = reagentDesignDao.findAll(ReagentDesign.class, 0, 1);
         ReagentDesign baitDesign = null;
