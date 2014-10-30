@@ -51,7 +51,7 @@
         <name>Pico/Plating</name>
         <workflowProcessDefVersions>
             <version>1.0</version>
-            <effectiveDate>2012-09-30T21:03:24.085-04:00</effectiveDate>
+            <effectiveDate>2014-10-19T21:03:24.085-04:00</effectiveDate>
             <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
                 <name>Pico/Plating Bucket</name>
                 <labEventTypes>PICO_PLATING_BUCKET</labEventTypes>
@@ -1012,7 +1012,7 @@
       <name>ICE CRSP</name>
         <productWorkflowDefVersions>
             <version>4.0</version>
-            <effectiveDate>2014-03-04T00:00:00.000-04:00</effectiveDate>
+            <effectiveDate>2014-10-19T21:03:24.085-04:00</effectiveDate>
             <workflowProcessDefs>CRSP Pico/Plating</workflowProcessDefs>
             <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
             <workflowProcessDefs>Library Construction</workflowProcessDefs>
