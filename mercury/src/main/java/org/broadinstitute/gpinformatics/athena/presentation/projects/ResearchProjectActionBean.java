@@ -354,6 +354,16 @@ public class ResearchProjectActionBean extends CoreActionBean {
                     "Cannot create a collaboration for this research project because it has more than one cohort associated with it");
         }
 
+        if (editResearchProject.getRegulatoryInfos().isEmpty()) {
+            addGlobalValidationError(
+                    "A collaboration requires regulatory information to be set on the research project");
+        }
+
+        if (editResearchProject.getRegulatoryInfos().size() > 1) {
+            addGlobalValidationError(
+                    "Cannot create a collaboration for this research project because it has more than one regulatory information associated with it");
+        }
+
         if ((specifiedCollaborator == null) && (selectedCollaborator == null)) {
             addGlobalValidationError("Must specify either an existing collaborator or an email address.");
         }
