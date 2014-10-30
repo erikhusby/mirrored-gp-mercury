@@ -1,12 +1,18 @@
 package org.broadinstitute.gpinformatics.infrastructure;
 
+import com.google.common.collect.ImmutableMap;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -173,4 +179,15 @@ public class SampleDataSourceResolverTest {
         when(mockMercurySampleDao.findMapIdToMercurySample(argThat(contains(sampleKey))))
                 .thenReturn(Collections.singletonMap(sampleKey, mercurySample));
     }
+
+    public void testMercurySampleDataReturnsMetadataSourceMercury(){
+        SampleData sampleData = new MercurySampleData("SM-1234", Collections.<Metadata>emptySet());
+        Assert.assertEquals(sampleData.getMetadataSource(), MercurySample.MetadataSource.MERCURY);
+    }
+    public void testBspSampleDataReturnsMetadataSourceBsp(){
+        SampleData sampleData = new BspSampleData(ImmutableMap.of(BSPSampleSearchColumn.SAMPLE_ID, "SM-1234"));
+        Assert.assertEquals(sampleData.getMetadataSource(), MercurySample.MetadataSource.BSP);
+    }
+
+
 }

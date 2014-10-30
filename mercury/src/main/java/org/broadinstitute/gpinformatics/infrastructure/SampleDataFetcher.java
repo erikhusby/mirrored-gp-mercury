@@ -1,14 +1,11 @@
 package org.broadinstitute.gpinformatics.infrastructure;
 
-import com.google.common.collect.HashMultiset;
-import com.google.common.collect.Multiset;
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleDataFetcher;
@@ -122,7 +119,7 @@ public class SampleDataFetcher implements Serializable {
          */
         Collection<BspSampleData> bspSampleDataCollection = new ArrayList<>();
         for (SampleData sampleData : sampleDataCollection) {
-            if (sampleData instanceof BspSampleData) {
+            if (sampleData.getMetadataSource() == MercurySample.MetadataSource.BSP){
                 bspSampleDataCollection.add((BspSampleData) sampleData);
             }
         }
