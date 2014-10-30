@@ -41,9 +41,6 @@ public abstract class RestServiceContainerTest extends Arquillian {
     private static final String SERVLET_MAPPING_PREFIX = "rest";
     private static final String JBOSS_HTTPS_PORT_SYSTEM_PROPERTY = "jbossHttpsPort";
 
-    @Inject
-    private AppConfig appConfig;
-
     // TODO: BEFORE COMMIT! revert to private
     protected ClientConfig clientConfig;
 
