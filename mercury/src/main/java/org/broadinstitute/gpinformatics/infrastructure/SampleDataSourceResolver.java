@@ -27,22 +27,23 @@ public class SampleDataSourceResolver {
     }
 
     public Map<String, MercurySample.MetadataSource> resolveSampleDataSources(Collection<String> sampleNames) {
-        Map<String, List<MercurySample>> allMercurySamples =
-                mercurySampleDao.findMapIdToListMercurySample(sampleNames);
+        Map<String, MercurySample> allMercurySamples =
+                mercurySampleDao.findMapIdToMercurySample(sampleNames);
         return resolveSampleDataSources(sampleNames, allMercurySamples);
     }
 
     @DaoFree
     public Map<String, MercurySample.MetadataSource> resolveSampleDataSources(Collection<String> sampleNames,
-                Map<String, List<MercurySample>> allMercurySamples) {
+                Map<String, MercurySample> allMercurySamples) {
         Map<String, MercurySample.MetadataSource> results = new HashMap<>();
 
         for (String sampleName : sampleNames) {
             Multiset<MercurySample.MetadataSource> metadataSources = HashMultiset.create();
 
-            List<MercurySample> mercurySamples = allMercurySamples.get(sampleName);
+            MercurySample mercurySample = allMercurySamples.get(sampleName);
             MercurySample.MetadataSource metadataSource;
-            for (MercurySample mercurySample : mercurySamples) {
+
+            if(mercurySample != null) {
                 metadataSources.add(mercurySample.getMetadataSource());
             }
 

@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +40,7 @@ public class BspSampleSearchAddRowsListener implements ConfigurableList.AddRowsL
         List<String> sampleIDs = new ArrayList<>();
         for (Object entity : entityList) {
             LabVessel labVessel = (LabVessel) entity;
-            Set<MercurySample> mercurySamples = labVessel.getMercurySamples();
+            Collection<MercurySample> mercurySamples = labVessel.getMercurySamples();
             if( !mercurySamples.isEmpty() ) {
                 MercurySample mercurySample = mercurySamples.iterator().next();
                 sampleIDs.add(mercurySample.getSampleKey());

@@ -1,12 +1,18 @@
 package org.broadinstitute.gpinformatics.infrastructure;
 
+import com.google.common.collect.ImmutableMap;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -42,37 +48,6 @@ public class SampleDataSourceResolverTest {
     @BeforeMethod
     public void setUp() {
         mockMercurySampleDao = Mockito.mock(MercurySampleDao.class);
-        /*
-         * findMapIdToListMercurySample returns a map with an entry for every sample ID key. If no MercurySamples are
-         * found, the entry's value is an empty collection. The stub behavior here configures the mock to respond
-         * correctly for any input, assuming that there are no MercurySamples for any sample ID.
-         *
-         * Where needed, different behavior can be stubbed for specific sample IDs.
-         */
-        when(mockMercurySampleDao.findMapIdToListMercurySample(anyCollectionOf(String.class)))
-                .thenAnswer(new Answer<Object>() {
-                    @Override
-                    public Object answer(InvocationOnMock invocation) throws Throwable {
-                        @SuppressWarnings("unchecked")
-                        Collection<String> sampleKeys = (Collection<String>) invocation.getArguments()[0];
-
-                        /*
-                         * This won't generally be null. However, when doing further stubbing for specific sample IDs,
-                         * use of argument matchers will cause null to be passed in. Simply returning null in these
-                         * cases seems to be in the spirit of stubbing with argument matchers.
-                         */
-                        if (sampleKeys == null) {
-                            return null;
-                        }
-
-                        Map<String, List<MercurySample>> result = new HashMap<>();
-                        for (String sampleKey : sampleKeys) {
-                            result.put(sampleKey, Collections.<MercurySample>emptyList());
-                        }
-                        return result;
-                    }
-                });
-
         sampleDataSourceResolver = new SampleDataSourceResolver(mockMercurySampleDao);
     }
 
@@ -108,7 +83,7 @@ public class SampleDataSourceResolverTest {
         assertThat(sources.get(gssrSampleId), equalTo(metadataSource));
 
         // Verify that stubbing for this test had some effect on the test run
-        verify(mockMercurySampleDao).findMapIdToListMercurySample(argThat(contains(gssrSampleId)));
+        verify(mockMercurySampleDao).findMapIdToMercurySample(argThat(contains(gssrSampleId)));
     }
 
     public void resolveSampleDataSources_for_BSP_sample_without_MercurySample_should_return_BSP() {
@@ -132,7 +107,7 @@ public class SampleDataSourceResolverTest {
         assertThat(sources.get(bspSampleId), equalTo(MercurySample.MetadataSource.BSP));
 
         // Verify that stubbing for this test had some effect on the test run
-        verify(mockMercurySampleDao).findMapIdToListMercurySample(argThat(contains(bspSampleId)));
+        verify(mockMercurySampleDao).findMapIdToMercurySample(argThat(contains(bspSampleId)));
     }
 
     public void resolveSampleDataSources_for_clinical_sample_with_MercurySample_should_return_Mercury() {
@@ -146,7 +121,7 @@ public class SampleDataSourceResolverTest {
         assertThat(sources.get(clinicalSampleId), equalTo(MercurySample.MetadataSource.MERCURY));
 
         // Verify that stubbing for this test had some effect on the test run
-        verify(mockMercurySampleDao).findMapIdToListMercurySample(argThat(contains(clinicalSampleId)));
+        verify(mockMercurySampleDao).findMapIdToMercurySample(argThat(contains(clinicalSampleId)));
     }
 
     /**
@@ -159,12 +134,12 @@ public class SampleDataSourceResolverTest {
         String bspOnlySampleId = "SM-1234";
         String bspSampleId = "SM-5678";
 
-        Map<String, List<MercurySample>> sampleMap = new HashMap<>();
-        sampleMap.put(gssrOnlySampleId, Collections.<MercurySample>emptyList());
-        sampleMap.put(bspOnlySampleId, Collections.<MercurySample>emptyList());
+        Map<String, MercurySample> sampleMap = new HashMap<>();
+//        sampleMap.put(gssrOnlySampleId, null);
+//        sampleMap.put(bspOnlySampleId, null);
         sampleMap.put(bspSampleId,
-                Collections.singletonList(new MercurySample(bspSampleId, MercurySample.MetadataSource.BSP)));
-        when(mockMercurySampleDao.findMapIdToListMercurySample(
+                new MercurySample(bspSampleId, MercurySample.MetadataSource.BSP));
+        when(mockMercurySampleDao.findMapIdToMercurySample(
                 argThat(containsInAnyOrder(gssrOnlySampleId, bspOnlySampleId, bspSampleId)))).thenReturn(sampleMap);
 
         Map<String, MercurySample.MetadataSource> sources = sampleDataSourceResolver
@@ -201,7 +176,18 @@ public class SampleDataSourceResolverTest {
 
     private void stubMercurySampleDao(MercurySample mercurySample) {
         String sampleKey = mercurySample.getSampleKey();
-        when(mockMercurySampleDao.findMapIdToListMercurySample(argThat(contains(sampleKey))))
-                .thenReturn(Collections.singletonMap(sampleKey, Collections.singletonList(mercurySample)));
+        when(mockMercurySampleDao.findMapIdToMercurySample(argThat(contains(sampleKey))))
+                .thenReturn(Collections.singletonMap(sampleKey, mercurySample));
     }
+
+    public void testMercurySampleDataReturnsMetadataSourceMercury(){
+        SampleData sampleData = new MercurySampleData("SM-1234", Collections.<Metadata>emptySet());
+        Assert.assertEquals(sampleData.getMetadataSource(), MercurySample.MetadataSource.MERCURY);
+    }
+    public void testBspSampleDataReturnsMetadataSourceBsp(){
+        SampleData sampleData = new BspSampleData(ImmutableMap.of(BSPSampleSearchColumn.SAMPLE_ID, "SM-1234"));
+        Assert.assertEquals(sampleData.getMetadataSource(), MercurySample.MetadataSource.BSP);
+    }
+
+
 }
