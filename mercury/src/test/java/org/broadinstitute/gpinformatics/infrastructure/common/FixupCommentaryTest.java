@@ -14,6 +14,7 @@ package org.broadinstitute.gpinformatics.infrastructure.common;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditedRevDto;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -23,8 +24,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import java.util.Date;
-import java.util.SortedMap;
+import java.util.List;
 
 
 @Test(groups = TestGroups.STANDARD)
@@ -64,14 +64,14 @@ public class FixupCommentaryTest extends ContainerTest {
         labEventDao.flush();
 
         // Looks for a rev in the timebox that has both LabEvent and FixupCommentary.
-        SortedMap<Long, Date> revIdAndDate = auditReaderDao.fetchAuditIds(timeboxStart, timeboxEnd,
-                userBean.getLoginUserName());
-        Assert.assertTrue(revIdAndDate.size() > 0, "Could not find modifications by " + userBean.getLoginUserName() +
-                                                   " in the range " + timeboxStart + " to " + timeboxEnd);
-        for (Long revId : revIdAndDate.keySet()) {
+        List<AuditedRevDto> auditedRevDtos = auditReaderDao.fetchAuditIds(timeboxStart, timeboxEnd,
+                userBean.getLoginUserName(), null);
+        Assert.assertTrue(auditedRevDtos.size() > 0, "Could not find modifications by " + userBean.getLoginUserName() +
+                                                     " in the range " + timeboxStart + " to " + timeboxEnd);
+        for (AuditedRevDto auditedRevDto : auditedRevDtos) {
             boolean foundLabEvent = false;
             boolean foundFixupCommentary = false;
-            for (String classname : auditReaderDao.getClassnamesModifiedAtRevision (revId)) {
+            for (String classname : auditedRevDto.getEntityTypeNames()) {
                 foundLabEvent |= classname.equals(LabEvent.class.getCanonicalName());
                 foundFixupCommentary |= classname.equals(FixupCommentary.class.getCanonicalName());
             }
