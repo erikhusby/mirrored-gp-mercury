@@ -112,6 +112,20 @@
         </user-data-constraint>
     </security-constraint>
 
+    <security-constraint>
+        <web-resource-collection>
+            <!-- https://issues.jboss.org/browse/ARQ-1426
+                Unable to force Arquillian tests to redirect to ssl, so we are creating a hole to allow arquillian
+                tests to still utilize http when initiating.
+            -->
+            <web-resource-name>ArquillianTestRunnerAccess</web-resource-name>
+            <url-pattern>/ArquillianServletRunner</url-pattern>
+        </web-resource-collection>
+        <!--  By defining the user-data-constraint, we make use of the redirect setting on JBOSS.  With out this,
+              we can guarantee that Arquillian supported tests will not redirect to the SSL port-->
+    </security-constraint>
+
+
     <welcome-file-list>
         <welcome-file>/security/login.jsp</welcome-file>
     </welcome-file-list>
