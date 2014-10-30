@@ -104,7 +104,7 @@ public class ConfigurableListFactory {
         ColumnSetsPreference.ColumnSet columnSet = ConfigurableList.getColumnNameList(columnSetNameSuffix,
                 ConfigurableList.ColumnSetType.DOWNLOAD, columnSetsPreference);
 //        ListConfig listConfig = entityPreferenceFactory.loadListConfig(entityName);
-        ConfigurableSearchDefinition configurableSearchDefinition = new SearchDefinitionFactory().getForEntity(
+        ConfigurableSearchDefinition configurableSearchDefinition = SearchDefinitionFactory.getForEntity(
                 entityName);
         List<ColumnTabulation> columnTabulations = new ArrayList<>();
         for (String columnName : columnSet.getColumnDefinitions()) {
@@ -390,7 +390,7 @@ public class ConfigurableListFactory {
         List<?> entityList = paginationDao.getPage(pagination, pageNumber);
 
         // Format the results into columns
-        ConfigurableSearchDefinition configurableSearchDef = new SearchDefinitionFactory().getForEntity(entityName);
+        ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(entityName);
         List<ColumnTabulation> columnTabulations = new ArrayList<>();
         List<SearchInstance.SearchValue> displaySearchValues = searchInstance.findDisplaySearchValues();
         List<String> columnNameList;

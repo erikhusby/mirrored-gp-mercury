@@ -68,7 +68,7 @@ public class LabVesselTest {
         mapBarcodeToVessel.put(destinationTube2.getLabel(), destinationTube2);
         mapBarcodeToVessel.put(targetTubeFormation.getLabel(), targetTubeFormation);
         List<LabVessel> labVessels = labVesselFactory.buildLabVesselDaoFree(
-                mapBarcodeToVessel, new HashMap<String, List<MercurySample>>(),
+                mapBarcodeToVessel, new HashMap<String, MercurySample>(),
                 new HashMap<String, Set<ProductOrderSample>>(), "jowalsh",
                 new Date(), Collections.singletonList(parentVesselBean), LabEventType.SAMPLE_IMPORT,
                 MercurySample.MetadataSource.BSP);
@@ -121,7 +121,7 @@ public class LabVesselTest {
         mapBarcodeToVessel.put(destinationTube2.getLabel(), destinationTube2);
         mapBarcodeToVessel.put(targetTubeFormation.getLabel(), targetTubeFormation);
         List<LabVessel> labVessels = labVesselFactory.buildLabVesselDaoFree(
-                mapBarcodeToVessel, new HashMap<String, List<MercurySample>>(),
+                mapBarcodeToVessel, new HashMap<String, MercurySample>(),
                 new HashMap<String, Set<ProductOrderSample>>(), "jowalsh",
                 new Date(), Collections.singletonList(parentVesselBean), LabEventType.SAMPLE_IMPORT,
                 MercurySample.MetadataSource.BSP);

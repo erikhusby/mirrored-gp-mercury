@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
+import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -23,7 +24,7 @@ public class ConfigurableSearchDaoTest extends ContainerTest {
 
     public void testLcset() {
         ConfigurableSearchDefinition configurableSearchDefinition =
-                new SearchDefinitionFactory().buildLabVesselSearchDef();
+                SearchDefinitionFactory.getForEntity(ColumnEntity.LAB_VESSEL.getEntityName());
 
         SearchInstance searchInstance = new SearchInstance();
         SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("LCSET", configurableSearchDefinition);
@@ -37,7 +38,7 @@ public class ConfigurableSearchDaoTest extends ContainerTest {
 
     public void testLabel() {
         ConfigurableSearchDefinition configurableSearchDefinition =
-                new SearchDefinitionFactory().buildLabVesselSearchDef();
+                SearchDefinitionFactory.getForEntity( ColumnEntity.LAB_VESSEL.getEntityName());
 
         SearchInstance searchInstance = new SearchInstance();
         SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("Barcode", configurableSearchDefinition);
