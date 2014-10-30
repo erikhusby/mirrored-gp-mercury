@@ -183,6 +183,8 @@ public class ExtractTransformTest extends Arquillian {
 
     // Returns existing riskItemId and its productOrderSampleId.  Set deleted=true for a deleted risk item.
     private Long[] getRiskJoin(boolean deleted) {
+        // The join with revchanges is needed to make audits visible to ETL.  Currently the audits before
+        // 8/6/14 (rev 330051) do not have joins with revchanges, so this test must not pick them up.
         String queryString;
         if (deleted) {
             queryString = "select risk_item_id as id1, product_order_sample as id2, rev " +
@@ -200,6 +202,8 @@ public class ExtractTransformTest extends Arquillian {
 
     // Returns existing ledgerId and its productOrderSampleId.  Set deleted=true for a deleted ledger item.
     private Long[] getLedgerJoin(boolean deleted) {
+        // The join with revchanges is needed to make audits visible to ETL.  Currently the audits before
+        // 8/6/14 (rev 330051) do not have joins with revchanges, so this test must not pick them up.
         String queryString;
         if (deleted) {
             queryString = "select p1.ledger_id as id1, p2.product_order_sample_id as id2, p1.rev" +

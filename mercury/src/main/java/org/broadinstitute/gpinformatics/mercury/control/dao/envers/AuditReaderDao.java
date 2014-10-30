@@ -94,7 +94,10 @@ public class AuditReaderDao extends GenericDao {
      * @throws IllegalArgumentException if params are not whole second values.
      */
     public List<AuditedRevDto> fetchAuditIds(long startTimeSec, long endTimeSec, String username, String classname) {
-
+        // This was changed to a native query in GPLIM-3098 because AuditReader is excessively verbose with sql,
+        // possibly due to revchanges being a optional Envers feature and not fully or well integrated.  For a
+        // comparison, a UI audit trail search of two months with AuditReader code took 3238 sql queries and
+        // 10.0 seconds.  The same search with this native query code took 1 sql query and under 0.5 second.
         String queryString = " select rev, rev_date, username, entityname from revchanges, rev_info " +
                              " where rev_info_id = rev and rev_date >= :startDate  and rev_date < :endDate ";
         if (IS_NULL_USER.equals(username)) {
