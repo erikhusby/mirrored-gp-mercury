@@ -45,9 +45,9 @@ public class SampleImportResourceDbTest extends ContainerTest {
 
         List<ChildVesselBean> childVesselBeans = new ArrayList<>();
         childVesselBeans
-                .add(new ChildVesselBean(suffix + "1", genrateSampleId(suffix, "1"), MATRIX_TUBE_SCREW_CAP_0_5M_L, A01));
+                .add(new ChildVesselBean(suffix + "1", generateSampleId(suffix, "1"), MATRIX_TUBE_SCREW_CAP_0_5M_L, A01));
         childVesselBeans
-                .add(new ChildVesselBean(suffix + "2",  genrateSampleId(suffix, "2"), MATRIX_TUBE_SCREW_CAP_0_5M_L, A02));
+                .add(new ChildVesselBean(suffix + "2",  generateSampleId(suffix, "2"), MATRIX_TUBE_SCREW_CAP_0_5M_L, A02));
 
         List<ParentVesselBean> parentVesselBeans = new ArrayList<>();
         parentVesselBeans
@@ -60,7 +60,7 @@ public class SampleImportResourceDbTest extends ContainerTest {
 
         // POST to the resource
         WebResource resource = Client.create(clientConfig)
-                .resource(RestServiceContainerTest.convertPortToPresetPort(baseUrl) + "rest/sampleimport");
+                .resource(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/sampleimport");
         String response = resource.type(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)
                 .entity(sampleImportBeanPost)
@@ -78,7 +78,7 @@ public class SampleImportResourceDbTest extends ContainerTest {
         return "EX-" + suffix;
     }
 
-    private String genrateSampleId(String suffix, String increment) {
+    private String generateSampleId(String suffix, String increment) {
         return BSPUtil.BSP_SAMPLE_PREFIX +"-" + suffix + increment;
     }
 
@@ -90,9 +90,9 @@ public class SampleImportResourceDbTest extends ContainerTest {
 
         List<ChildVesselBean> childVesselBeans = new ArrayList<>();
         childVesselBeans
-                .add(new ChildVesselBean(suffix + "1", genrateSampleId(suffix, "1"), MATRIX_TUBE_SCREW_CAP_0_5M_L, A01));
+                .add(new ChildVesselBean(suffix + "1", generateSampleId(suffix, "1"), MATRIX_TUBE_SCREW_CAP_0_5M_L, A01));
         childVesselBeans
-                .add(new ChildVesselBean(suffix + "2",  genrateSampleId(suffix, "2"), MATRIX_TUBE_SCREW_CAP_0_5M_L, A02));
+                .add(new ChildVesselBean(suffix + "2",  generateSampleId(suffix, "2"), MATRIX_TUBE_SCREW_CAP_0_5M_L, A02));
 
         List<ParentVesselBean> parentVesselBeans = new ArrayList<>();
         parentVesselBeans
@@ -121,9 +121,9 @@ public class SampleImportResourceDbTest extends ContainerTest {
 
         List<ChildVesselBean> childVesselBeans = new ArrayList<>();
         childVesselBeans
-                .add(new ChildVesselBean(suffix + "1", genrateSampleId(suffix, "1"), MATRIX_TUBE_SCREW_CAP_0_5M_L, A01));
+                .add(new ChildVesselBean(suffix + "1", generateSampleId(suffix, "1"), MATRIX_TUBE_SCREW_CAP_0_5M_L, A01));
         childVesselBeans
-                .add(new ChildVesselBean(suffix + "2",  genrateSampleId(suffix, "2"), MATRIX_TUBE_SCREW_CAP_0_5M_L, A02));
+                .add(new ChildVesselBean(suffix + "2",  generateSampleId(suffix, "2"), MATRIX_TUBE_SCREW_CAP_0_5M_L, A02));
 
         List<ParentVesselBean> parentVesselBeans = new ArrayList<>();
         parentVesselBeans

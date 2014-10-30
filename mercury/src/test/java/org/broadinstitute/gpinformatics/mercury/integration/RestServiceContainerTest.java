@@ -79,7 +79,7 @@ public abstract class RestServiceContainerTest extends Arquillian {
     protected WebResource makeWebResource(URL baseUrl, String serviceUrl) throws MalformedURLException {
 
         Client client = Client.create(clientConfig);
-        String newUrl = convertPortToPresetPort(baseUrl);
+        String newUrl = convertUrlToSecure(baseUrl);
         return client.resource(
                 newUrl + SERVLET_MAPPING_PREFIX + "/" + getResourcePath() + "/" + serviceUrl);
     }
@@ -90,7 +90,7 @@ public abstract class RestServiceContainerTest extends Arquillian {
      *
      * @throws MalformedURLException
      */
-    public static String convertPortToPresetPort(URL baseUrl) throws MalformedURLException {
+    public static String convertUrlToSecure(URL baseUrl) throws MalformedURLException {
         String port = System.getProperty(JBOSS_HTTPS_PORT_SYSTEM_PROPERTY, String.valueOf(DEFAULT_FORWARD_PORT));
         String returnValue;
             returnValue = new URL("https", baseUrl.getHost(), Integer.valueOf(port),

@@ -33,8 +33,6 @@ import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainer
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LaneReadStructure;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
-import org.jboss.aerogear.arquillian.test.smarturl.SchemeName;
-import org.jboss.aerogear.arquillian.test.smarturl.UriScheme;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -282,7 +280,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
     @RunAsClient
     public void testReadStructureOverHttp(@ArquillianResource URL baseUrl) throws Exception {
         String wsUrl =
-                RestServiceContainerTest.convertPortToPresetPort(baseUrl) + "rest/solexarun/storeRunReadStructure";
+                RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/solexarun/storeRunReadStructure";
 
         ReadStructureRequest readStructureData = new ReadStructureRequest();
         readStructureData.setRunBarcode(runBarcode);
@@ -315,7 +313,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
     @RunAsClient
     public void testMercuryLanes(@ArquillianResource URL baseUrl) throws Exception {
         String wsUrl =
-                RestServiceContainerTest.convertPortToPresetPort(baseUrl) + "rest/solexarun/storeRunReadStructure";
+                RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/solexarun/storeRunReadStructure";
 
         ReadStructureRequest readStructureData = new ReadStructureRequest();
         readStructureData.setRunBarcode("H7HBEADXX140225");

@@ -8,8 +8,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactoryTest;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
-import org.jboss.aerogear.arquillian.test.smarturl.SchemeName;
-import org.jboss.aerogear.arquillian.test.smarturl.UriScheme;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
@@ -39,7 +37,7 @@ public class SampleReceiptResourceDbTest extends ContainerTest {
         ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
 
         WebResource resource = Client.create(clientConfig)
-                .resource(RestServiceContainerTest.convertPortToPresetPort(baseUrl) + "rest/samplereceipt");
+                .resource(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/samplereceipt");
         String response = resource.type(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)
                 .entity(sampleReceiptBean)

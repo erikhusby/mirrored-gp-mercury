@@ -32,8 +32,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.zims.ZamboniReadType;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
-import org.jboss.aerogear.arquillian.test.smarturl.SchemeName;
-import org.jboss.aerogear.arquillian.test.smarturl.UriScheme;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -123,7 +121,7 @@ public class IlluminaRunResourceTest extends Arquillian {
     @RunAsClient
     public void testErrorHandling(@ArquillianResource URL baseUrl)
             throws Exception {
-        String url = RestServiceContainerTest.convertPortToPresetPort(baseUrl) + WEBSERVICE_URL;
+        String url = RestServiceContainerTest.convertUrlToSecure(baseUrl) + WEBSERVICE_URL;
 
         ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
         clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
@@ -149,7 +147,7 @@ public class IlluminaRunResourceTest extends Arquillian {
     @RunAsClient
     public void testZimsOverHttp(@ArquillianResource URL baseUrl)
             throws Exception {
-        String url = RestServiceContainerTest.convertPortToPresetPort(baseUrl) + WEBSERVICE_URL;
+        String url = RestServiceContainerTest.convertUrlToSecure(baseUrl) + WEBSERVICE_URL;
 
         ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
         clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
