@@ -7,7 +7,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class AuditedRevDto {
     private final Long revId;
@@ -15,7 +14,7 @@ public class AuditedRevDto {
     private final String username;
     private final List<String> entityTypeNames;
 
-    public AuditedRevDto(Long revId, Date revDate, String username, Set<String> entityClassNames) {
+    public AuditedRevDto(Long revId, Date revDate, String username, Collection<String> entityClassNames) {
         this.revId = revId;
         this.revDate = revDate;
         this.username = username;
@@ -66,5 +65,35 @@ public class AuditedRevDto {
         return map;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof AuditedRevDto)) {
+            return false;
+        }
 
+        AuditedRevDto that = (AuditedRevDto) o;
+
+        if (!revDate.equals(that.revDate)) {
+            return false;
+        }
+        if (!revId.equals(that.revId)) {
+            return false;
+        }
+        if (username != null ? !username.equals(that.username) : that.username != null) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = revId.hashCode();
+        result = 31 * result + revDate.hashCode();
+        result = 31 * result + (username != null ? username.hashCode() : 0);
+        return result;
+    }
 }

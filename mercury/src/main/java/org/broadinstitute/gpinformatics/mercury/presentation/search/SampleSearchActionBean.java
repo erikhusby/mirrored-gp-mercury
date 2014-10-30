@@ -61,28 +61,25 @@ public class SampleSearchActionBean extends SearchActionBean {
         Set<String> foundSampleNames=new HashSet<>(searchList.size());
 
         for (String searchKey : searchList) {
-            Set<MercurySample> samples = new HashSet<>();
-            samples.addAll(mercurySampleDao.findBySampleKey(searchKey));
+            MercurySample foundSample = mercurySampleDao.findBySampleKey(searchKey);
             List<LabVessel> vessels = getLabVesselDao().findBySampleKey(searchKey);
             Set<LabVessel> allVessels = new LinkedHashSet<>(vessels);
             for (LabVessel vessel : vessels) {
                 allVessels.addAll(vessel.getAncestorVessels());
                 allVessels.addAll(vessel.getDescendantVessels());
             }
-            if (!samples.isEmpty()) {
+            if (foundSample != null) {
                 List<String> sampleNames = new ArrayList<>();
-                for (MercurySample sample : samples) {
-                    sampleNames.add(sample.getSampleKey());
+                sampleNames.add(foundSample.getSampleKey());
+
+                sampleDTOMap.putAll(sampleDataFetcher.fetchSampleData(sampleNames));
+
+                mercurySampleToVessels.put(foundSample, allVessels);
+                SampleData sampleData = sampleDTOMap.get(foundSample.getSampleKey());
+                if (sampleData != null) {
+                    foundSample.setSampleData(sampleData);
                 }
-                sampleDTOMap.putAll(sampleDataFetcher.fetchSampleData((Collection<String>) sampleNames));
-                for (MercurySample sample : samples) {
-                    mercurySampleToVessels.put(sample, allVessels);
-                    SampleData sampleData = sampleDTOMap.get(sample.getSampleKey());
-                    if (sampleData != null) {
-                        sample.setSampleData(sampleData);
-                    }
-                    foundSampleNames.add(sample.getSampleKey());
-                }
+                foundSampleNames.add(foundSample.getSampleKey());
             }
         }
 

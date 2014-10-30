@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
@@ -16,6 +18,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlIDREF;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -45,7 +48,7 @@ public class ProductWorkflowDefVersion implements Serializable {
     private transient Map<String, WorkflowProcessDef> processDefsByName = new HashMap<>();
 
     private final List<String> entryPointsUsed = new ArrayList<>();
-    private transient Map<String, LabEventNode> mapNameToLabEvent;
+    private transient Multimap<String, LabEventNode> mapNameToLabEvents;
     private transient LabEventNode rootLabEventNode;
     private transient ProductWorkflowDef productWorkflowDef;
 
@@ -248,9 +251,7 @@ public class ProductWorkflowDefVersion implements Serializable {
                 for (LabEventType labEventType : workflowStepDef.getLabEventTypes()) {
                     // todo jmt optional should probably be on the message, not the step
                     LabEventNode labEventNode = new LabEventNode(labEventType, workflowStepDef);
-                    if (mapNameToLabEvent.put(labEventType.getName(), labEventNode) != null) {
-                        throw new RuntimeException("Duplicate lab event in workflow, " + labEventType.getName());
-                    }
+                    mapNameToLabEvents.put(labEventType.getName(), labEventNode);
                     if (rootLabEventNode == null) {
                         rootLabEventNode = labEventNode;
                     }
@@ -272,11 +273,30 @@ public class ProductWorkflowDefVersion implements Serializable {
      * @return found node
      */
     public LabEventNode findStepByEventType(String eventTypeName) {
-        if (mapNameToLabEvent == null) {
-            mapNameToLabEvent = new HashMap<>();
+        if (mapNameToLabEvents == null) {
+            mapNameToLabEvents = ArrayListMultimap.create();
             buildLabEventGraph();
         }
-        return mapNameToLabEvent.get(eventTypeName);
+        Collection<LabEventNode> labEventNodes = mapNameToLabEvents.get(eventTypeName);
+        if (labEventNodes.size() > 1) {
+            throw new RuntimeException("More than one lab event for " + eventTypeName);
+        }
+        return labEventNodes.iterator().next();
+    }
+
+    /**
+     * Finds the workflow steps that are associated with the given Event type
+     *
+     * @param eventTypeName name of an event to use as an index to the cataloged workflow steps
+     *
+     * @return found nodes
+     */
+    public Collection<LabEventNode> findStepsByEventType(String eventTypeName) {
+        if (mapNameToLabEvents == null) {
+            mapNameToLabEvents = ArrayListMultimap.create();
+            buildLabEventGraph();
+        }
+        return mapNameToLabEvents.get(eventTypeName);
     }
 
     /**
@@ -458,27 +478,40 @@ public class ProductWorkflowDefVersion implements Serializable {
     public List<ValidationError> validate(LabVessel labVessel, String nextEventTypeName) {
         List<ValidationError> errors = new ArrayList<>();
 
-        LabEventNode labEventNode = findStepByEventType(nextEventTypeName);
-        if (labEventNode == null) {
+        Collection<LabEventNode> labEventNodes = findStepsByEventType(nextEventTypeName);
+        if (labEventNodes.isEmpty()) {
             errors.add(new ValidationError("Failed to find " + nextEventTypeName + " in " +
                                            productWorkflowDef.getName() + " version " + getVersion()));
         } else {
             Set<String> actualEventNames = new HashSet<>();
 
-            Set<String> validPredecessorEventNames = new HashSet<>();
-            boolean start = recurseToNonOptional(validPredecessorEventNames, labEventNode);
-
             boolean found = false;
-            found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, actualEventNames,
-                    found, labVessel.getTransfersFrom(), labEventNode);
+            Set<String> validPredecessorEventNames = null;
+            boolean start = false;
+            for (LabEventNode labEventNode : labEventNodes) {
+                validPredecessorEventNames = new HashSet<>();
+                start = recurseToNonOptional(validPredecessorEventNames, labEventNode);
 
-            if (!found) {
                 found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, actualEventNames,
-                        found, labVessel.getTransfersToWithReArrays(), labEventNode);
-            }
-            if (!found) {
-                found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, actualEventNames,
-                        found, labVessel.getInPlaceEventsWithContainers(), labEventNode);
+                        found, labVessel.getTransfersFrom(), labEventNode);
+
+                if (!found) {
+                    found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, actualEventNames,
+                            found, labVessel.getTransfersToWithReArrays(), labEventNode);
+                }
+                if (!found) {
+                    found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, actualEventNames,
+                            found, labVessel.getInPlaceEventsWithContainers(), labEventNode);
+                }
+                if (!found) {
+                    // e.g. PicoBufferAddition after PicoTransfer
+                    for (LabEvent labEvent : labVessel.getTransfersFrom()) {
+                        for (LabVessel vessel : labEvent.getTargetLabVessels()) {
+                            found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, actualEventNames,
+                                    found, vessel.getInPlaceLabEvents(), labEventNode);
+                        }
+                    }
+                }
             }
             if (!found && !start) {
                 errors.add(new ValidationError("", actualEventNames, validPredecessorEventNames));
