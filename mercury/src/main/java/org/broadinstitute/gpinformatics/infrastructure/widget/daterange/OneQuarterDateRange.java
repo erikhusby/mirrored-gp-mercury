@@ -51,6 +51,8 @@ public class OneQuarterDateRange extends DateRange.ComputeStartAndStopDate {
         startCalendar.set(Calendar.DAY_OF_MONTH, 1);
         startCalendar.setTime(DateUtils.getStartOfDay(startCalendar.getTime()));
 
+        // Set the day to 1 so that the startCalendar.get(Calendar.MONTH) + 2 math works.
+        stop.set(Calendar.DAY_OF_MONTH, 1);
         stop.set(Calendar.MONTH, startCalendar.get(Calendar.MONTH) + 2);
         stop.set(Calendar.DAY_OF_MONTH, stop.getActualMaximum(Calendar.DAY_OF_MONTH));
         stop.setTime(DateUtils.getEndOfDay(stop.getTime()));
