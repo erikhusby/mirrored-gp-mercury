@@ -38,7 +38,7 @@ public class RevInfoFixupTest extends Arquillian {
     public void gplim3140FixupUsername() throws Exception {
         // The audit username for data fixup GPLIM-3140 should be "epolk".
         // This fix only affects rev_info for an existing fixup, so there is no userbean or fixupCommentary.
-        long revInfoId = 343101L; //prod: 355651L;
+        long revInfoId = 355651L;
         userTransaction.begin();
         RevInfo revInfo = auditReaderDao.getEntityManager().find(RevInfo.class, revInfoId);
         if (revInfo == null) {
