@@ -479,6 +479,13 @@
 
                         <configuration>
                             <groups>arquillian, ExternalIntegration</groups>
+                            <systemProperties>
+                                <property>
+                                    <name>jbossHttpsPort</name>
+                                    <value>${jboss.socket.https}</value>
+                                </property>
+                            </systemProperties>
+
                         </configuration>
                     </plugin>
 
@@ -495,6 +502,13 @@
                         <artifactId>maven-surefire-plugin</artifactId>
                         <configuration>
                             <groups>DatabaseFree</groups>
+                            <systemProperties>
+                                <property>
+                                    <name>jbossHttpsPort</name>
+                                    <value>${jboss.socket.https}</value>
+                                </property>
+                            </systemProperties>
+
                             <!--<parallel>methods</parallel>-->
                             <!--<threadCount>10</threadCount>-->
                         </configuration>
@@ -515,6 +529,13 @@
                             <runOrder>failedFirst</runOrder>
                             <parallel>methods</parallel>
                             <threadCount>10</threadCount>
+                            <systemProperties>
+                                <property>
+                                    <name>jbossHttpsPort</name>
+                                    <value>${jboss.socket.https}</value>
+                                </property>
+                            </systemProperties>
+
                         </configuration>
                     </plugin>
                 </plugins>
@@ -568,6 +589,10 @@
                                 <property>
                                     <name>ArqSuiteGroup</name>
                                     <value>Stubby</value>
+                                </property>
+                                <property>
+                                    <name>jbossHttpsPort</name>
+                                    <value>${jboss.socket.https}</value>
                                 </property>
                             </systemProperties>
                             <groups>arquillian, Stubby</groups>
@@ -639,6 +664,12 @@
                         <!-- "arquillian" test group is used by Arquillian itself and needs to be active to run Arquillian tests -->
                         <configuration>
                             <groups>arquillian, Alternatives</groups>
+                            <systemProperties>
+                                <property>
+                                    <name>jbossHttpsPort</name>
+                                    <value>${jboss.socket.https}</value>
+                                </property>
+                            </systemProperties>
                         </configuration>
                     </plugin>
                 </plugins>
@@ -724,6 +755,10 @@
                             <argLine>-Xmx2048m</argLine>
                             <systemProperties>
                                 <jboss.version>${jbossas_7.version}</jboss.version>
+                                <property>
+                                    <name>jbossHttpsPort</name>
+                                    <value>${jboss.socket.https}</value>
+                                </property>
                             </systemProperties>
                         </configuration>
                     </plugin>
