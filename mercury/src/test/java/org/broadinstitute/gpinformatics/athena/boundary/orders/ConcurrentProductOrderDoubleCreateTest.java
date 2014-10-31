@@ -45,6 +45,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.MatcherAssert.assertThat;
+
 @Test(groups = TestGroups.ALTERNATIVES)
 public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
 
@@ -111,13 +114,13 @@ public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
         int numErrors = 0;
         if (placePdoThread.getError() != null) {
             pdoJiraError = placePdoThread.getError();
-            Assert.assertTrue(pdoJiraError instanceof InformaticsServiceException);
+            assertThat(pdoJiraError, instanceOf(InformaticsServiceException.class));
             logger.info("Error found in Thread 1: " + pdoJiraError.getMessage());
             numErrors++;
         }
         if (placePdoThread2.getError() != null) {
             pdoJiraError = placePdoThread2.getError();
-            Assert.assertTrue(pdoJiraError instanceof InformaticsServiceException);
+            assertThat(pdoJiraError, instanceOf(InformaticsServiceException.class));
             logger.info("Error found in Thread 2: " + pdoJiraError.getMessage());
             numErrors++;
         }
