@@ -39,7 +39,7 @@ public abstract class RestServiceContainerTest extends Arquillian {
 
     public static final int DEFAULT_FORWARD_PORT = 443;
     private static final String SERVLET_MAPPING_PREFIX = "rest";
-    private static final String JBOSS_HTTPS_PORT_SYSTEM_PROPERTY = "jbossHttpsPort";
+    public static final String JBOSS_HTTPS_PORT_SYSTEM_PROPERTY = "jbossHttpsPort";
 
     // TODO: BEFORE COMMIT! revert to private
     protected ClientConfig clientConfig;
