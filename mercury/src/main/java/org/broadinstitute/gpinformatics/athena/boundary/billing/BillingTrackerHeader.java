@@ -31,12 +31,14 @@ public enum BillingTrackerHeader implements ColumnHeader {
     PF_ALIGNED_GB("PF Aligned GB", ColumnHeader.OPTIONAL_HEADER),
     PF_READS_ALIGNED_IN_PAIRS("PF Reads Aligned in Pairs", ColumnHeader.OPTIONAL_HEADER),
     PERCENT_COVERAGE_AT_20X("% Coverage at 20X", ColumnHeader.OPTIONAL_HEADER) {
-        @Override public boolean shouldShow(Product product) {
+        @Override
+        public boolean shouldShow(Product product) {
             return product.isSameProductFamily(ProductFamily.ProductFamilyName.EXOME);
         }
     },
     TARGET_BASES_100X_PERCENT("Target Bases 100x %", ColumnHeader.OPTIONAL_HEADER) {
-        @Override public boolean shouldShow(Product product) {
+        @Override
+        public boolean shouldShow(Product product) {
             return product.isSameProductFamily(ProductFamily.ProductFamilyName.EXOME);
         }
     },
