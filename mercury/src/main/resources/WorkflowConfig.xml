@@ -603,8 +603,22 @@
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
             <workflowStepDefs>
+                <name>PostIce1stHybridizationThermoCyclerLoaded</name>
+                <labEventTypes>POST_ICE_1ST_HYBRIDIZATION_THERMO_CYCLER_LOADED</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
                 <name>Ice1stCapture</name>
                 <labEventTypes>ICE_1ST_CAPTURE</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>PostIce1stCaptureThermoCyclerLoaded</name>
+                <labEventTypes>POST_ICE_1ST_CAPTURE_THERMO_CYCLER_LOADED</labEventTypes>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -632,8 +646,22 @@
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
             <workflowStepDefs>
+                <name>PostIce2ndHybridizationThermoCyclerLoaded</name>
+                <labEventTypes>POST_ICE_2ND_HYBRIDIZATION_THERMO_CYCLER_LOADED</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
                 <name>Ice2ndCapture</name>
                 <labEventTypes>ICE_2ND_CAPTURE</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>PostIce2ndCaptureThermoCyclerLoaded</name>
+                <labEventTypes>POST_ICE_2ND_CAPTURE_THERMO_CYCLER_LOADED</labEventTypes>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
