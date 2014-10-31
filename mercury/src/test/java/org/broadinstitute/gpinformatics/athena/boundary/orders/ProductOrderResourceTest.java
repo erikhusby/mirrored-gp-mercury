@@ -37,6 +37,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
     private static final String VALID_PDO_ID = "PDO-10";
     private static final String WIDELY_USED_QUOTE_ID = "MMMAC1";
     private static final String RP_CONTAINING_COHORTS = "RP-31";
+    private static final String RP_WITHOUT_COHORTS = "RP-32";
     private static final String EXOME_EXPRESS_V3_PRODUCT_NAME = "Exome Express v3";
 
     @Deployment
@@ -61,7 +62,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
         data.setTitle("test product name" + testDate.getTime());
         data.setQuoteId(WIDELY_USED_QUOTE_ID);
         data.setUsername("scottmat");
-        data.setResearchProjectId("RP-32");
+        data.setResearchProjectId(RP_WITHOUT_COHORTS);
         List<String> sampleIds = new ArrayList<>();
         Collections.addAll(sampleIds, "SM-41Q94", "SM-41Q95");
         data.setSamples(sampleIds);
@@ -81,7 +82,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
         data.setProductName(EXOME_EXPRESS_V3_PRODUCT_NAME);
         data.setTitle("test product name" + testDate.getTime());
         data.setQuoteId(WIDELY_USED_QUOTE_ID);
-        data.setResearchProjectId("RP-32");
+        data.setResearchProjectId(RP_WITHOUT_COHORTS);
         List<String> sampleIds = new ArrayList<>();
         Collections.addAll(sampleIds, "SM-41Q94", "SM-41Q95");
         data.setSamples(sampleIds);
@@ -106,7 +107,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
         data.setTitle("test product name" + testDate.getTime());
         data.setQuoteId(WIDELY_USED_QUOTE_ID);
         data.setUsername("scottmat");
-        data.setResearchProjectId(RP_CONTAINING_COHORTS); //RP that has cohorts associated with it.
+        data.setResearchProjectId(RP_CONTAINING_COHORTS);
 
         ProductOrderKitDetailData kitDetailData = new ProductOrderKitDetailData();
 
@@ -130,7 +131,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
         data.setProductName(EXOME_EXPRESS_V3_PRODUCT_NAME);
         data.setTitle("test product name" + testDate.getTime());
         data.setQuoteId(WIDELY_USED_QUOTE_ID);
-        data.setResearchProjectId(RP_CONTAINING_COHORTS); //RP that has cohorts associated with it.
+        data.setResearchProjectId(RP_CONTAINING_COHORTS);
 
         ProductOrderKitDetailData kitDetailData = new ProductOrderKitDetailData();
 
@@ -161,7 +162,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
         data.setTitle("test product name" + testDate.getTime());
         data.setQuoteId(WIDELY_USED_QUOTE_ID);
         data.setUsername(purposely_Misspelled_User);
-        data.setResearchProjectId(RP_CONTAINING_COHORTS); //RP that has cohorts associated with it.
+        data.setResearchProjectId(RP_CONTAINING_COHORTS);
 
         ProductOrderKitDetailData kitDetailData = new ProductOrderKitDetailData();
 

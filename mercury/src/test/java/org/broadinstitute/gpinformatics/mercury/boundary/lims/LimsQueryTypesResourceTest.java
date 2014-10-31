@@ -5,8 +5,6 @@ import com.sun.jersey.api.client.WebResource;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
-import org.jboss.aerogear.arquillian.test.smarturl.SchemeName;
-import org.jboss.aerogear.arquillian.test.smarturl.UriScheme;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;

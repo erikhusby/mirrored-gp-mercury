@@ -79,7 +79,7 @@ public class SampleImportResourceDbTest extends ContainerTest {
     }
 
     private String generateSampleId(String suffix, String increment) {
-        return BSPUtil.BSP_SAMPLE_PREFIX +"-" + suffix + increment;
+        return BSPUtil.BSP_SAMPLE_SM_PREFIX +"-" + suffix + increment;
     }
 
     @Test(enabled = true, groups = TestGroups.STUBBY, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
@@ -90,9 +90,11 @@ public class SampleImportResourceDbTest extends ContainerTest {
 
         List<ChildVesselBean> childVesselBeans = new ArrayList<>();
         childVesselBeans
-                .add(new ChildVesselBean(suffix + "1", generateSampleId(suffix, "1"), MATRIX_TUBE_SCREW_CAP_0_5M_L, A01));
+                .add(new ChildVesselBean(suffix + "1", generateSampleId(suffix, "1"), MATRIX_TUBE_SCREW_CAP_0_5M_L,
+                        A01));
         childVesselBeans
-                .add(new ChildVesselBean(suffix + "2",  generateSampleId(suffix, "2"), MATRIX_TUBE_SCREW_CAP_0_5M_L, A02));
+                .add(new ChildVesselBean(suffix + "2", generateSampleId(suffix, "2"), MATRIX_TUBE_SCREW_CAP_0_5M_L,
+                        A02));
 
         List<ParentVesselBean> parentVesselBeans = new ArrayList<>();
         parentVesselBeans
@@ -121,9 +123,11 @@ public class SampleImportResourceDbTest extends ContainerTest {
 
         List<ChildVesselBean> childVesselBeans = new ArrayList<>();
         childVesselBeans
-                .add(new ChildVesselBean(suffix + "1", generateSampleId(suffix, "1"), MATRIX_TUBE_SCREW_CAP_0_5M_L, A01));
+                .add(new ChildVesselBean(suffix + "1", generateSampleId(suffix, "1"), MATRIX_TUBE_SCREW_CAP_0_5M_L,
+                        A01));
         childVesselBeans
-                .add(new ChildVesselBean(suffix + "2",  generateSampleId(suffix, "2"), MATRIX_TUBE_SCREW_CAP_0_5M_L, A02));
+                .add(new ChildVesselBean(suffix + "2", generateSampleId(suffix, "2"), MATRIX_TUBE_SCREW_CAP_0_5M_L,
+                        A02));
 
         List<ParentVesselBean> parentVesselBeans = new ArrayList<>();
         parentVesselBeans
