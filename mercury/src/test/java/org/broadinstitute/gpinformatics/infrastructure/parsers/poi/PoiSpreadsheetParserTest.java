@@ -101,7 +101,6 @@ public class PoiSpreadsheetParserTest {
         private final boolean isDateColumn;
         private final boolean isStringColumn;
         private final boolean requiredValue;
-        private final String text;
 
         TestHeaders(boolean isDateColumn, boolean isStringColumn) {
             this(isDateColumn, isStringColumn, ColumnHeader.OPTIONAL_VALUE);
@@ -111,12 +110,11 @@ public class PoiSpreadsheetParserTest {
             this.isDateColumn = isDateColumn;
             this.isStringColumn = isStringColumn;
             this.requiredValue = requiredValue;
-            text = name();
         }
 
         @Override
         public String getText() {
-            return text;
+            return name();
         }
 
         @Override

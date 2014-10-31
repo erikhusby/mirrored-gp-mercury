@@ -70,18 +70,16 @@ public class BillingTrackerProcessor extends TableProcessor {
         // The price items for the product, in order that they appear in the spreadsheet. Populate the price item cache.
         currentPriceItemsByName = new HashMap<>();
         currentBillableRefs = new ArrayList<>();
-        collectBillableRefs(currentProduct, priceItemDao, priceListCache, currentPriceItemsByName, currentBillableRefs);
+        addToBillableRefs(currentProduct, priceItemDao, priceListCache, currentPriceItemsByName, currentBillableRefs);
         for (Product addOn : currentProduct.getAddOns()) {
-            collectBillableRefs(addOn, priceItemDao, priceListCache, currentPriceItemsByName, currentBillableRefs);
+            addToBillableRefs(addOn, priceItemDao, priceListCache, currentPriceItemsByName, currentBillableRefs);
         }
 
         this.doPersist = doPersist;
     }
 
-    private static void collectBillableRefs(Product product, PriceItemDao priceItemDao,
-                                            PriceListCache priceListCache,
-                                            Map<String, PriceItem> currentPriceItemsByName,
-                                            List<BillableRef> billableRefs) {
+    private static void addToBillableRefs(Product product, PriceItemDao priceItemDao, PriceListCache priceListCache,
+                                          Map<String, PriceItem> currentPriceItemsByName, List<BillableRef> billableRefs) {
 
         List<PriceItem> priceItems = SampleLedgerExporter.getPriceItems(product, priceItemDao, priceListCache);
         for (PriceItem priceItem : priceItems) {

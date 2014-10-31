@@ -57,12 +57,17 @@ public enum BillingTrackerHeader implements ColumnHeader {
     private final boolean requiredValue;
     private final IsDate isDate;
 
+    /**
+     * Construct a header where the 'required header' and 'required value' are the same. This is the most common case.
+     */
     BillingTrackerHeader(String text, boolean requiredHeader) {
         this(text, requiredHeader, IsDate.NO);
     }
 
+    /**
+     * Construct a header where the 'required header' and 'required value' are the same. This is the most common case.
+     */
     BillingTrackerHeader(String text, boolean requiredHeader, IsDate isDate) {
-        // The most typical cases have the same value for 'required header' and 'required value'.
         this(text, requiredHeader, requiredHeader, isDate);
     }
 
