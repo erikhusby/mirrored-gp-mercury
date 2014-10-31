@@ -13,11 +13,9 @@ package org.broadinstitute.gpinformatics.infrastructure.widget.daterange;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.util.Calendar;
-import java.util.Date;
 import java.util.GregorianCalendar;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -42,7 +40,8 @@ public class DateRangeTest {
             {
                     new GregorianCalendar(2014, Calendar.OCTOBER, 1, 0, 0, 0),
                     new GregorianCalendar(2014, Calendar.DECEMBER, 31, 23, 59, 59)
-            }};
+            }
+    };
 
     @BeforeClass(groups = TestGroups.DATABASE_FREE)
     public void beforeClass() {
@@ -74,13 +73,14 @@ public class DateRangeTest {
     }
 
     public void testEqualDatesRanges() {
-        Calendar start = Calendar.getInstance();
-        Calendar end = Calendar.getInstance();
+        Calendar now = Calendar.getInstance();
+        Calendar start = (Calendar) now.clone();
+        Calendar end = (Calendar) now.clone();
         DateRange.ThisQuarter.calcDate(start, end);
 
         // calcDate above side effects the start date. We are using that for our new start date
         Calendar start2 = (Calendar) start.clone();
-        Calendar end2 = Calendar.getInstance();
+        Calendar end2 = (Calendar) end.clone();
         DateRange.ThisQuarter.calcDate(start2, end2);
 
         assertThat(start, equalTo(start2));
@@ -89,7 +89,7 @@ public class DateRangeTest {
 
     private void validateDateRange(DateRange range, Calendar startAt, Calendar expectedStartDate, Calendar expectedEndDate) {
         Calendar start = startAt != null ? (Calendar) startAt.clone() : Calendar.getInstance();
-        Calendar end = Calendar.getInstance();
+        Calendar end = (Calendar) start.clone();
         range.calcDate(start, end);
 
         assertThat(start, equalTo(expectedStartDate));
