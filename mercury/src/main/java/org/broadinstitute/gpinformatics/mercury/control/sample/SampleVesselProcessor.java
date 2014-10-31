@@ -81,10 +81,10 @@ public class SampleVesselProcessor extends TableProcessor {
         private final int index;
         private final boolean requiredHeader;
         private final boolean requiredValue;
-        private boolean isString;
+        private final boolean isString;
 
         Headers(String text, int index, boolean requiredHeader, boolean requiredValue) {
-            this(text, index, requiredHeader, requiredValue, false);
+            this(text, index, requiredHeader, requiredValue, true);
         }
 
         Headers(String text, int index, boolean requiredHeader, boolean requiredValue,
