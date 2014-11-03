@@ -949,9 +949,7 @@ public abstract class LabVessel implements Serializable {
                 if (mercurySamples.size() > 1) {
                     throw new RuntimeException("No support for pooled sample imports.");
                 }
-                for (MercurySample mercurySample : mercurySamples) {
-                    traversalResults.setBspExportSample(mercurySamples.iterator().next());
-                }
+                traversalResults.setBspExportSample(mercurySamples.iterator().next());
             }
         }
 
