@@ -76,15 +76,19 @@ public class ReagentFixupTest extends Arquillian {
         Date correctDate = (new SimpleDateFormat("MM/dd/yyyy")).parse("02/17/2015");
         List<Reagent> reagents = reagentDesignDao.findListByList(Reagent.class, Reagent_.lot,
                 Arrays.asList(new String[]{"14D24A0015", correctLot}));
-        Assert.assertEquals(2, reagents.size());
+        int count = 0;
         for (Reagent reagent : reagents) {
-            System.out.println("Reagent lot " + reagent.getLot());
-            if (!correctLot.equals(reagent.getLot())) {
-                reagent.setLot(correctLot);
+            if (reagent.getName().equals("ET2")) {
+                ++count;
+                System.out.println("Reagent lot " + reagent.getLot());
+                if (!correctLot.equals(reagent.getLot())) {
+                    reagent.setLot(correctLot);
+                }
+                reagent.setExpiration(correctDate);
+                System.out.println("   updated to " + reagent.getLot() + " expiring " + reagent.getExpiration());
             }
-            reagent.setExpiration(correctDate);
-            System.out.println("   updated to " + reagent.getLot() + " expiring " + reagent.getExpiration());
         }
+        Assert.assertEquals(count, 2);
         reagentDesignDao.flush();
     }
 
