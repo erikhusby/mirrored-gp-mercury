@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.entity.reagent;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
-import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -63,8 +62,6 @@ public class ReagentFixupTest extends Arquillian {
             reagent.setLot(map.get(id));
             System.out.println("   updated to " + reagent.getLot());
         }
-        reagentDesignDao.persist(new FixupCommentary(
-                "GPLIM-3136 Masterform did not allow other than 10 character lot identifier."));
         reagentDesignDao.flush();
     }
 
@@ -88,7 +85,6 @@ public class ReagentFixupTest extends Arquillian {
             reagent.setExpiration(correctDate);
             System.out.println("   updated to " + reagent.getLot() + " expiring " + reagent.getExpiration());
         }
-        reagentDesignDao.persist(new FixupCommentary("GPLIM-3132 Incorrect lot information was entered."));
         reagentDesignDao.flush();
     }
 
