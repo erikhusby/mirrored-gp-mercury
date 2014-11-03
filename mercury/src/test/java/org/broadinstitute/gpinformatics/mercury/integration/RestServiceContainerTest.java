@@ -6,9 +6,13 @@ import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
+import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.jboss.arquillian.testng.Arquillian;
 import org.testng.annotations.BeforeMethod;
 
+import javax.inject.Inject;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 
@@ -33,7 +37,9 @@ import static org.testng.Assert.fail;
  */
 public abstract class RestServiceContainerTest extends Arquillian {
 
+    public static final int DEFAULT_FORWARD_PORT = 443;
     private static final String SERVLET_MAPPING_PREFIX = "rest";
+    public static final String JBOSS_HTTPS_PORT_SYSTEM_PROPERTY = "jbossHttpsPort";
 
     // TODO: BEFORE COMMIT! revert to private
     protected ClientConfig clientConfig;
@@ -51,6 +57,8 @@ public abstract class RestServiceContainerTest extends Arquillian {
     public void setUp() throws Exception {
         clientConfig = new DefaultClientConfig();
         clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
+        clientConfig.getProperties().put(ClientConfig.PROPERTY_FOLLOW_REDIRECTS, Boolean.TRUE);
+        JerseyUtils.acceptAllServerCertificates(clientConfig);
     }
 
     /**
@@ -60,19 +68,39 @@ public abstract class RestServiceContainerTest extends Arquillian {
      * effectively the value of the resource method's @Path annotation (with
      * leading/trailing slashes removed).
      *
-     * @param baseUrl       the base URL of the deployed application
-     * @param serviceUrl    the relative URL of the service method
+     * @param baseUrl    the base URL of the deployed application
+     * @param serviceUrl the relative URL of the service method
+     *
      * @return a configured WebResource for the service method
      */
-    protected WebResource makeWebResource(URL baseUrl, String serviceUrl) {
-        return Client.create(clientConfig).resource(baseUrl + SERVLET_MAPPING_PREFIX + "/" + getResourcePath() + "/" + serviceUrl);
+    protected WebResource makeWebResource(URL baseUrl, String serviceUrl) throws MalformedURLException {
+
+        Client client = Client.create(clientConfig);
+        String newUrl = convertUrlToSecure(baseUrl);
+        return client.resource(
+                newUrl + SERVLET_MAPPING_PREFIX + "/" + getResourcePath() + "/" + serviceUrl);
+    }
+
+    /**
+     * Helper method to convert the given URL (typically generated as an ArquillianResource) to point to the Secure
+     * port of the machine that is running this application
+     *
+     * @throws MalformedURLException
+     */
+    public static String convertUrlToSecure(URL baseUrl) throws MalformedURLException {
+        String port = System.getProperty(JBOSS_HTTPS_PORT_SYSTEM_PROPERTY, String.valueOf(DEFAULT_FORWARD_PORT));
+        String returnValue;
+            returnValue = new URL("https", baseUrl.getHost(), Integer.valueOf(port),
+                    baseUrl.getFile()).toExternalForm();
+        return returnValue;
     }
 
     /**
      * Performs a GET on the given WebResource. Automatically throws an
      * assertion failure if the call results in a UniformInterfaceException.
      *
-     * @param resource    the web resource to GET
+     * @param resource the web resource to GET
+     *
      * @return the response content
      */
     protected String get(WebResource resource) {
@@ -90,7 +118,8 @@ public abstract class RestServiceContainerTest extends Arquillian {
      * returning the UniformInterfaceException. Throws an assertion failure if
      * the call does NOT result in a UniformInterfaceException.
      *
-     * @param resource    the web resource to GET
+     * @param resource the web resource to GET
+     *
      * @return the caught UniformInterfaceException
      */
     protected UniformInterfaceException getWithError(WebResource resource) {
@@ -109,9 +138,9 @@ public abstract class RestServiceContainerTest extends Arquillian {
      * UniformInterfaceException. Throws and assertion failure if there is a
      * mismatch.
      *
-     * @param caught     the caught UniformInterfaceException
-     * @param status     the expected status code
-     * @param content    the expected response content
+     * @param caught  the caught UniformInterfaceException
+     * @param status  the expected status code
+     * @param content the expected response content
      */
     protected void assertErrorResponse(UniformInterfaceException caught, int status, String content) {
         assertThat(caught.getResponse().getStatus(), equalTo(status));
@@ -123,8 +152,9 @@ public abstract class RestServiceContainerTest extends Arquillian {
      * Automatically throws an assertion failure if the call results in a
      * UniformInterfaceException.
      *
-     * @param resource    the web resource to POST to
-     * @param request     the request to post
+     * @param resource the web resource to POST to
+     * @param request  the request to post
+     *
      * @return the response content
      */
     protected String post(WebResource resource, String request) {
