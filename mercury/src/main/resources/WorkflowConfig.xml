@@ -681,6 +681,13 @@
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
             <workflowStepDefs>
+                <name>PostIceCatchEnrichmentSetupThermoCyclerLoaded</name>
+                <labEventTypes>POST_ICE_CATCH_ENRICHMENT_SETUP_THERMO_CYCLER_LOADED</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
                 <name>IceCatchEnrichmentCleanup</name>
                 <labEventTypes>ICE_CATCH_ENRICHMENT_CLEANUP</labEventTypes>
                 <optional>false</optional>

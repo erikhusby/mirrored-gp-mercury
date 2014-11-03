@@ -168,6 +168,11 @@ public class IceEntityBuilder {
                 iceJaxbBuilder.getIceCatchEnrichmentSetup(), catchCleanupPlate);
         labEventHandler.processEvent(iceCatchEnrichmentSetup);
 
+        LabEventTest.validateWorkflow("PostIceCatchEnrichmentSetupThermoCyclerLoaded", catchCleanupPlate);
+        LabEvent postIceCatchEnrichmentSetupThermoCyclerLoaded = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                iceJaxbBuilder.getPostIceCatchEnrichmentSetupThermoCyclerLoaded(), catchCleanupPlate);
+        labEventHandler.processEvent(postIceCatchEnrichmentSetupThermoCyclerLoaded);
+
         LabEventTest.validateWorkflow("IceCatchEnrichmentCleanup", catchCleanupPlate);
         mapBarcodeToVessel.clear();
         mapBarcodeToVessel.put(catchCleanupPlate.getLabel(), catchCleanupPlate);
