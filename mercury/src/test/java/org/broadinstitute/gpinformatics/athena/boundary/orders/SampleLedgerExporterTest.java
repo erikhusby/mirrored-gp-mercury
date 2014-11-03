@@ -41,6 +41,7 @@ import java.util.Map;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.endsWith;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.matches;
 import static org.mockito.Mockito.inOrder;
@@ -177,9 +178,8 @@ public class SampleLedgerExporterTest {
                 any(CellStyle.class));
         dataOrder.verify(mockWriter).writeCell(ProductOrderSample.DeliveryStatus.DELIVERED.getDisplayName());
         dataOrder.verify(mockWriter).writeCell("Test Product");
-        dataOrder.verify(mockWriter).writeCellLink(eq("PDO-123"), matches(String
-                .format("https://[a-z\\.]+:%s/Mercury//orders/order\\.action\\?view=&productOrder=PDO-123",
-                        deployedMercuryPort)));
+        dataOrder.verify(mockWriter).writeCellLink(eq("PDO-123"),
+                endsWith(":"+deployedMercuryPort + "/Mercury//orders/order.action?view=&productOrder=PDO-123"));
         dataOrder.verify(mockWriter).writeCell("SampleLedgerExporterFactoryTest");
         dataOrder.verify(mockWriter).writeCell("Test Dummy");
         dataOrder.verify(mockWriter).writeCell(8);
