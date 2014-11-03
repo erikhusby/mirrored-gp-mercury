@@ -178,8 +178,8 @@ public class SampleLedgerExporterTest {
                 any(CellStyle.class));
         dataOrder.verify(mockWriter).writeCell(ProductOrderSample.DeliveryStatus.DELIVERED.getDisplayName());
         dataOrder.verify(mockWriter).writeCell("Test Product");
-        dataOrder.verify(mockWriter).writeCellLink(eq("PDO-123"),
-                endsWith(":"+deployedMercuryPort + "/Mercury//orders/order.action?view=&productOrder=PDO-123"));
+        dataOrder.verify(mockWriter).writeCellLink("PDO-123",
+                "http://localhost:8443/Mercury//orders/order.action?view=&productOrder=PDO-123");
         dataOrder.verify(mockWriter).writeCell("SampleLedgerExporterFactoryTest");
         dataOrder.verify(mockWriter).writeCell("Test Dummy");
         dataOrder.verify(mockWriter).writeCell(8);
