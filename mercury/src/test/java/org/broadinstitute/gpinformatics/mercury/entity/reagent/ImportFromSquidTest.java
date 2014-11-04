@@ -45,7 +45,7 @@ import java.util.Map;
 @Test(groups = TestGroups.STANDARD)
 public class ImportFromSquidTest extends Arquillian {
 
-    public static final String TEST_MERCURY_URL = "http://localhost:8080/Mercury";
+    public static final String TEST_MERCURY_URL = "https://localhost:8443/Mercury";
     @PersistenceContext(unitName = "squid_pu")
     private EntityManager entityManager;
 

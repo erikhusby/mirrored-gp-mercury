@@ -1,11 +1,14 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
 import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.config.ClientConfig;
+import com.sun.jersey.api.client.config.DefaultClientConfig;
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
+import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500JaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionJaxbBuilder;
@@ -44,7 +47,7 @@ public class ExomeExpressIntegrationTest {
     @SuppressWarnings("FeatureEnvy")
     public void testAll(String sampleFileName) {
         try {
-            URL baseUrl = new URL("http", "localhost", 8080, "/Mercury");
+            URL baseUrl = new URL("https", "localhost", 8443, "/Mercury");
             String testSuffix = testSuffixDateFormat.format(new Date());
 
             // load reagents with ImportFromSquidTest.
@@ -161,7 +164,10 @@ public class ExomeExpressIntegrationTest {
             System.out.println("Registering run " + runName + " with path " + runFilePath);
             System.out.println("URL to preview the run will be " + baseUrl.toExternalForm()
                                + "/rest/IlluminaRun/queryMercury?runName=" + runFile.getName());
-            Client.create().resource(baseUrl.toExternalForm() + "/rest/solexarun")
+            ClientConfig clientConfig = new DefaultClientConfig();
+            JerseyUtils.acceptAllServerCertificates(clientConfig);
+
+            Client.create(clientConfig).resource(baseUrl.toExternalForm() + "/rest/solexarun")
                     .type(MediaType.APPLICATION_XML_TYPE)
                     .accept(MediaType.APPLICATION_XML)
                     .entity(solexaRunBean)
@@ -176,7 +182,9 @@ public class ExomeExpressIntegrationTest {
     }
 
     private void sendMessage(URL baseUrl, BettaLIMSMessage bean) {
-        Client.create().resource(baseUrl + "/rest/bettalimsmessage")
+        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
+
+        Client.create(clientConfig).resource(baseUrl + "/rest/bettalimsmessage")
                 .type(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)
                 .entity(bean)
