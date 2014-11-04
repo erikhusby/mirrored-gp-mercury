@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.run;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -33,6 +34,9 @@ public class SequencingRunFixupTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
+    @Inject
+    private UserBean userBean;
+
     @Test(enabled = false)
     public void fixupGplim2628() {
         // storeRunReadStructure is supplying run barcode, but there are two runs with same barcode, so change
@@ -49,9 +53,10 @@ public class SequencingRunFixupTest extends Arquillian {
      */
     @Test(enabled = true)
     public void fixupRunBarcodeGplim3159() throws IOException {
+        userBean.loginOSUser();
         Map<String,String> runNameToRunBarcode = buildRunNameToRunBarcodeMap(
-                "140417_SL-HDF_0436_BFCH7UB7ADXX\ttestFixupA\n" +
-                "130903_SL-HCB_0343_AFCH169YADXX testFixupB");
+                "140417_SL-HDF_0436_BFCH7UB7ADXX\ttestFixup1\n" +
+                "130903_SL-HCB_0343_AFCH169YADXX testFixup2");
                /*
                 "141031_SL-HCC_0483_AFCHAAVEADXX\tHAAVEADXX141031\n"
                 + "141031_SL-HCC_0484_BFCHAB3DADXX\tHAB3DADXX141031\n"
