@@ -37,7 +37,7 @@ import static org.testng.Assert.fail;
  */
 public abstract class RestServiceContainerTest extends Arquillian {
 
-    public static final int DEFAULT_FORWARD_PORT = 443;
+    public static final int DEFAULT_FORWARD_PORT = 8443;
     private static final String SERVLET_MAPPING_PREFIX = "rest";
     public static final String JBOSS_HTTPS_PORT_SYSTEM_PROPERTY = "jbossHttpsPort";
 
