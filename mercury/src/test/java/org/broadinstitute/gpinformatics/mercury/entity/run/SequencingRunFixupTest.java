@@ -72,16 +72,20 @@ public class SequencingRunFixupTest extends Arquillian {
 
         // The DAO is not touched within this loop, so any exceptions will cause all changes to be rolled back.
         for (IlluminaSequencingRun run : runs) {
-            assertThat(run.getRunDirectory(), startsWith("/crsp/illumina/"));
-            int initialLength = run.getRunDirectory().length();
+            String originalRunDirectory = run.getRunDirectory();
+            assertThat(originalRunDirectory, startsWith("/crsp/illumina/"));
 
-            run.setRunDirectory(run.getRunDirectory().replaceFirst("/crsp/illumina/", "/crsp/qa/illumina/"));
+            String modifiedRunDirectory = originalRunDirectory.replaceFirst("/crsp/illumina/", "/crsp/qa/illumina/");
+            assertThat(modifiedRunDirectory, startsWith("/crsp/qa/illumina/"));
+            assertThat(modifiedRunDirectory.length(), equalTo(run.getRunDirectory().length() + "/qa".length()));
 
-            assertThat(run.getRunDirectory(), startsWith("/crsp/qa/illumina/"));
-            int updatedLength = run.getRunDirectory().length();
-            assertThat(updatedLength, equalTo(initialLength + "/qa".length()));
+            run.setRunDirectory(modifiedRunDirectory);
+
+            System.out.println(String.format("Updated run directory for sequencing run named %s from %s to %s",
+                    run.getRunName(), originalRunDirectory, modifiedRunDirectory));
         }
 
         illuminaSequencingRunDao.flush();
+        System.out.println("Updates flushed to database.");
     }
 }
