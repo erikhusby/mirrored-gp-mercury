@@ -51,13 +51,10 @@ public class SequencingRunFixupTest extends Arquillian {
     /**
      * Updates the run barcode for one or more sequencing runs
      */
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void fixupRunBarcodeGplim3159() throws IOException {
         userBean.loginOSUser();
         Map<String,String> runNameToRunBarcode = buildRunNameToRunBarcodeMap(
-                "140417_SL-HDF_0436_BFCH7UB7ADXX\ttestFixup1\n" +
-                "130903_SL-HCB_0343_AFCH169YADXX testFixup2");
-               /*
                 "141031_SL-HCC_0483_AFCHAAVEADXX\tHAAVEADXX141031\n"
                 + "141031_SL-HCC_0484_BFCHAB3DADXX\tHAB3DADXX141031\n"
                 + "141031_SL-HCD_0319_AFCHAHFBADXX\tHAHFBADXX141031\n"
@@ -72,7 +69,6 @@ public class SequencingRunFixupTest extends Arquillian {
                 + "141031_SL-HDG_0470_BHAHW6ADXX\tHAHW6ADXX141031\n"
                 + "141031_SL-HDH_0502_AHAB3AADXX\tHAB3AADXX141031\n"
                 + "141031_SL-HDH_0503_BHAAWCADXX\tHAAWCADXX141031");
-                */
         if (runNameToRunBarcode.isEmpty()) {
             throw new RuntimeException("No runs to fixup.");
         }
