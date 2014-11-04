@@ -5,10 +5,12 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -41,6 +43,9 @@ public class LabEventFixupTest extends Arquillian {
 
     @Inject
     private BarcodedTubeDao barcodedTubeDao;
+
+    @Inject
+    private StaticPlateDao staticPlateDao;
 
     @Inject
     private UserBean userBean;
@@ -333,6 +338,23 @@ public class LabEventFixupTest extends Arquillian {
             }
         }
         barcodedTubeDao.flush();
+    }
+
+    /**
+     * This is done after importing index plates from Squid.
+     */
+    @Test(enabled = false)
+    public void fixupGplim3164() {
+        userBean.loginOSUser();
+        StaticPlate staticPlateEmpty = staticPlateDao.findByBarcode("000001814423-GPLIM-3164");
+        StaticPlate staticPlateIndexed = staticPlateDao.findByBarcode("000001814423");
+        for (LabEvent labEvent : staticPlateEmpty.getTransfersFrom()) {
+            for (SectionTransfer sectionTransfer : labEvent.getSectionTransfers()) {
+                System.out.println("Changing source for labEvent " + labEvent.getLabEventId());
+                sectionTransfer.setSourceVesselContainer(staticPlateIndexed.getContainerRole());
+            }
+        }
+        staticPlateDao.flush();
     }
 
     @Test(enabled = true)
