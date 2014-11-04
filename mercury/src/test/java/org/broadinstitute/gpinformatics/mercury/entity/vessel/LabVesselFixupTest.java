@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -57,6 +58,9 @@ public class LabVesselFixupTest extends Arquillian {
 
     @Inject
     private BarcodedTubeDao barcodedTubeDao;
+
+    @Inject
+    private UserBean userBean;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -549,5 +553,17 @@ public class LabVesselFixupTest extends Arquillian {
         // SM-4VFD1 is in the Pico bucket twice: 0150466237, 0156371090
         BarcodedTube oldTube = barcodedTubeDao.findByBarcode("0156371090");
         barcodedTubeDao.remove(oldTube);
+    }
+
+    /**
+     * This is done before importing index plates from Squid.
+     */
+    @Test(enabled = false)
+    public void fixupGplim3164() {
+        userBean.loginOSUser();
+        StaticPlate staticPlate = staticPlateDao.findByBarcode("000001814423");
+        System.out.println("Renaming plate " + staticPlate.getLabel());
+        staticPlate.setLabel("000001814423-GPLIM-3164");
+        staticPlateDao.flush();
     }
 }
