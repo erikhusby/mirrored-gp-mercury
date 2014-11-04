@@ -125,6 +125,10 @@ public class SequencingRun {
         return runDirectory;
     }
 
+    public void setRunDirectory(String runDirectory) {
+        this.runDirectory = runDirectory;
+    }
+
     public long getSequencingRunId() {
         return sequencingRunId;
     }
