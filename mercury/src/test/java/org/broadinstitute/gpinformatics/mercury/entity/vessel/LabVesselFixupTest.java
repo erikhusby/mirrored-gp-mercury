@@ -555,6 +555,18 @@ public class LabVesselFixupTest extends Arquillian {
         barcodedTubeDao.remove(oldTube);
     }
 
+    /**
+     * This is done before importing index plates from Squid.
+     */
+    @Test(enabled = false)
+    public void fixupGplim3164() {
+        userBean.loginOSUser();
+        StaticPlate staticPlate = staticPlateDao.findByBarcode("000001814423");
+        System.out.println("Renaming plate " + staticPlate.getLabel());
+        staticPlate.setLabel("000001814423-GPLIM-3164");
+        staticPlateDao.flush();
+    }
+
     @Test(enabled = false)
     public void gplim3103UpdateVolumes() {
         userBean.loginOSUser();

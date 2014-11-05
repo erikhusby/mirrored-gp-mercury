@@ -5,19 +5,18 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselMetricBean;
-import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselMetricRunBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -27,9 +26,7 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,6 +73,9 @@ public class ImportFromSquidTest extends Arquillian {
     @Inject
     private ReagentDesignDao reagentDesignDao;
 
+    @Inject
+    private UserBean userBean;
+
     @Deployment
     public static WebArchive buildMercuryWar() {
         // change dataSourceEnvironment parameter to "prod" when importing from production.
@@ -88,6 +88,7 @@ public class ImportFromSquidTest extends Arquillian {
      */
     @Test(enabled = false, groups = TestGroups.STANDARD)
     public void testImportIndexingSchemes() {
+        userBean.loginOSUser();
         // Get schemes and sequences from Squid.
         Query nativeQuery = entityManager.createNativeQuery(
                 "SELECT " +
@@ -155,6 +156,7 @@ public class ImportFromSquidTest extends Arquillian {
      */
     @Test(enabled = false, groups = TestGroups.STANDARD, dependsOnMethods = {"testImportIndexingSchemes"})
     public void testImportIndexPlates() {
+        userBean.loginOSUser();
         // Get plates, wells and molecular indexes from Squid.
         Query nativeQuery = entityManager.createNativeQuery(
                 "SELECT " +
@@ -238,6 +240,7 @@ public class ImportFromSquidTest extends Arquillian {
      */
     @Test(enabled = false, groups = TestGroups.STANDARD)
     public void testCreateBaits() {
+        userBean.loginOSUser();
         // todo jmt for a bait to show up in this query, it must have been transferred to a plate at least once.
         // Without this restriction, the number of tubes goes from ~40 to ~70,000
         Query nativeQuery = entityManager.createNativeQuery(
@@ -325,6 +328,7 @@ public class ImportFromSquidTest extends Arquillian {
      */
     @Test(enabled = false, groups = TestGroups.STANDARD)
     public void testCreateCats() {
+        userBean.loginOSUser();
         // todo jmt for a CAT to show up in this query, it must have been transferred to a plate at least once.
         // Without this restriction, the number of tubes rises from 122 to ~14,000
         Query nativeQuery = entityManager.createNativeQuery(
@@ -385,59 +389,6 @@ public class ImportFromSquidTest extends Arquillian {
             }
         }
         barcodedTubeDao.clear();
-    }
-
-    /**
-     * For demos, import quants from Squid.
-     */
-    @Test(enabled = false, groups = TestGroups.STANDARD)
-    public void testImportQuants() {
-        Query nativeQuery = entityManager.createNativeQuery(
-                "SELECT " +
-                "     lqr.run_name, " +
-                "     lqr.run_date, " +
-                "     lqt.quant_type_name, " +
-                "     lq.quant_value, " +
-                "     r.barcode " +
-                "FROM " +
-                "     library_quant_run lqr " +
-                "     INNER JOIN library_quant_type lqt " +
-                "          ON   lqt.quant_type_id = lqr.quant_type_id " +
-                "     INNER JOIN library_quant lq " +
-                "          ON   lq.quant_run_id = lqr.run_id " +
-                "     INNER JOIN receptacle r " +
-                "          ON   r.receptacle_id = lq.receptacle_id " +
-                "WHERE " +
-                "     lq.is_archived = 'N' AND lqr.run_name = :lcSetNumber " +
-                "ORDER BY " +
-                "     1, 3");
-        nativeQuery.setParameter("lcSetNumber", "2588");
-        List<?> resultList = nativeQuery.getResultList();
-
-        ArrayList<VesselMetricBean> vesselMetricBeans = new ArrayList<>();
-        String previousQuantType = "";
-        VesselMetricRunBean vesselMetricRunBean = null;
-        for (Object o : resultList) {
-            Object[] columns = (Object[]) o;
-            String runName = (String) columns[0];
-            Date runDate = (Date) columns[1];
-            String quantTypeName = (String) columns[2];
-            BigDecimal quantValue = (BigDecimal) columns[3];
-            String barcode = (String) columns[4];
-
-            if (!quantTypeName.equals(previousQuantType)) {
-                if (!previousQuantType.isEmpty()) {
-                    ImportFromBspTest.recordMetrics(vesselMetricRunBean);
-                }
-                vesselMetricBeans.clear();
-                vesselMetricRunBean = new VesselMetricRunBean(runName, runDate, quantTypeName,
-                        vesselMetricBeans);
-                previousQuantType = quantTypeName;
-            }
-            vesselMetricBeans.add(new VesselMetricBean(barcode, quantValue.toString(), "ng/uL"));
-        }
-
-        ImportFromBspTest.recordMetrics(vesselMetricRunBean);
     }
 
 }
