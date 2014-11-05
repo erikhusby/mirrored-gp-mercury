@@ -119,8 +119,6 @@ public class ProductOrderSampleKitFixupTest extends Arquillian {
                     return o.getSampleKey();
                 }
             });
-
-
         }
     }
 }
