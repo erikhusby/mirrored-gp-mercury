@@ -307,7 +307,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private Long productFamilyId;
 
-    private List<ProductOrder.OrderStatus> selectedStatuses =  Collections.emptyList();
+    private List<ProductOrder.OrderStatus> selectedStatuses = Collections.emptyList();
 
     private List<ProductOrderListEntry.LedgerStatus> selectedLedgerStatuses = Collections.emptyList();
 
