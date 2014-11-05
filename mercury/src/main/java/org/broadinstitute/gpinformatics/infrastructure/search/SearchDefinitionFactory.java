@@ -453,7 +453,7 @@ public class SearchDefinitionFactory {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
-        searchTerm.setName("Imported Sample Well");
+        searchTerm.setName("Imported Sample Position");
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
@@ -509,7 +509,7 @@ public class SearchDefinitionFactory {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
-        searchTerm.setName("Imported Sample Well");
+        searchTerm.setName("Imported Sample Position");
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
@@ -521,7 +521,7 @@ public class SearchDefinitionFactory {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
-        searchTerm.setName("Pond Sample Well");
+        searchTerm.setName("Pond Sample Position");
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
@@ -545,7 +545,7 @@ public class SearchDefinitionFactory {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
-        searchTerm.setName("Shearing Sample Well");
+        searchTerm.setName("Shearing Sample Position");
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
@@ -569,7 +569,7 @@ public class SearchDefinitionFactory {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
-        searchTerm.setName("Catch Sample Well");
+        searchTerm.setName("Catch Sample Position");
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
