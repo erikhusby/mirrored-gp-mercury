@@ -210,7 +210,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
             bettaLIMSMessage.getPlateTransferEvent().add(transfer);
             sendMessage(bettaLIMSMessage, bettaLimsMessageResource, ImportFromSquidTest.TEST_MERCURY_URL);
         } catch (Exception e) {
-            Assert.assertTrue(e.getMessage().contains("Failed to find"));
+            Assert.assertTrue(e.getMessage().contains("Failed to find plate"));
             exception = true;
         }
         Assert.assertTrue(exception);
