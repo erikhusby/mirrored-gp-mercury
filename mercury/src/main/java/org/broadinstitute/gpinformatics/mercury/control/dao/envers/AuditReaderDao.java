@@ -15,9 +15,9 @@ import org.hibernate.envers.RevisionType;
 import org.hibernate.envers.exception.AuditException;
 import org.hibernate.envers.query.AuditEntity;
 import org.hibernate.envers.query.AuditQuery;
-import org.hibernate.type.DateType;
 import org.hibernate.type.LongType;
 import org.hibernate.type.StringType;
+import org.hibernate.type.TimestampType;
 
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.NoResultException;
@@ -124,7 +124,7 @@ public class AuditReaderDao extends GenericDao {
         // Fixes the return types.
         query.unwrap(SQLQuery.class)
                 .addScalar("rev", LongType.INSTANCE)
-                .addScalar("rev_date", DateType.INSTANCE)
+                .addScalar("rev_date", TimestampType.INSTANCE)
                 .addScalar("username", StringType.INSTANCE)
                 .addScalar("entityname", StringType.INSTANCE);
 
