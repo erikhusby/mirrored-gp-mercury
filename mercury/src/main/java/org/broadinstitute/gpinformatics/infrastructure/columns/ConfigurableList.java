@@ -503,7 +503,7 @@ public class ConfigurableList {
             // Legacy plugin process from BSP
             if( !columnTabulation.isNestedParent() ) {
                 List<Row> pluginRows =
-                        listPlugin.getData(entityList, headerGroupMap.get(columnTabulation.getName()));
+                        listPlugin.getData(entityList, headerGroupMap.get(columnTabulation.getName()), context);
                 int rowIndex = pageStartingRow;
                 for (Row row : pluginRows) {
                     // TODO jmt rows might be empty, if columns are all plugins

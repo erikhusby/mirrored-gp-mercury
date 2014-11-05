@@ -67,13 +67,12 @@ public class PublicMessageEjb {
     }
 
     public void clearPublicMessage() {
-        if (message != null) {
-            message = null;
-            try {
-                publicMessageDao.clearMessage();
-            } catch (Exception e) {
-                log.error("Could not clear public message", e);
-            }
+        message = null;
+        try {
+            publicMessageDao.clearMessage();
+        } catch (Exception e) {
+            log.error("Could not clear public message", e);
         }
+
     }
 }

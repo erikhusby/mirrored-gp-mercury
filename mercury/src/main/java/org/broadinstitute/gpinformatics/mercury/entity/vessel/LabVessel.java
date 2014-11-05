@@ -1428,13 +1428,14 @@ public abstract class LabVessel implements Serializable {
      * when the event matches the type given.
      *
      * @param type The type of event to filter the ancestors and descendants by.
+     * @param useTargetVessels True if the vessels returned are event targets (vs. sources).
      *
      * @return A map of lab vessels keyed off the event they were present at filtered by type.
      */
-    public Map<LabEvent, Set<LabVessel>> findVesselsForLabEventType(LabEventType type) {
+    public Map<LabEvent, Set<LabVessel>> findVesselsForLabEventType(LabEventType type, boolean useTargetVessels) {
         List<LabEventType> eventTypeList = new ArrayList<>();
         eventTypeList.add(type);
-        return findVesselsForLabEventTypes(eventTypeList);
+        return findVesselsForLabEventTypes(eventTypeList, useTargetVessels);
     }
 
     /**
@@ -1442,15 +1443,16 @@ public abstract class LabVessel implements Serializable {
      * when the event matches the type given.
      *
      * @param types A list of types of event to filter the ancestors and descendants by.
+     * @param useTargetVessels True if the vessels returned are event targets (vs. sources).
      *
      * @return A map of lab vessels keyed off the event they were present at filterd by types.
      */
-    public Map<LabEvent, Set<LabVessel>> findVesselsForLabEventTypes(List<LabEventType> types) {
+    public Map<LabEvent, Set<LabVessel>> findVesselsForLabEventTypes(List<LabEventType> types, boolean useTargetVessels) {
         if (getContainerRole() != null) {
             return getContainerRole().getVesselsForLabEventTypes(types);
         }
         TransferTraverserCriteria.VesselForEventTypeCriteria vesselForEventTypeCriteria =
-                new TransferTraverserCriteria.VesselForEventTypeCriteria(types);
+                new TransferTraverserCriteria.VesselForEventTypeCriteria(types, useTargetVessels);
         evaluateCriteria(vesselForEventTypeCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
         evaluateCriteria(vesselForEventTypeCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
         return vesselForEventTypeCriteria.getVesselsForLabEventType();

@@ -19,7 +19,8 @@ public interface ListPlugin {
      *                    new ones
      * @return list of rows of cells, with each cell having a reference to a header
      */
-    public List<ConfigurableList.Row> getData(List<?> entityList, ConfigurableList.HeaderGroup headerGroup);
+    public List<ConfigurableList.Row> getData(List<?> entityList, ConfigurableList.HeaderGroup headerGroup
+            , @Nonnull Map<String, Object> context);
 
     /**
      * Defines a mechanism for creating nested table data
@@ -28,5 +29,6 @@ public interface ListPlugin {
      * @param columnTabulation Column definition for the nested table
      * @return ResultList containing nested table data
      */
-    public ConfigurableList.ResultList getNestedTableData(Object entity, ColumnTabulation columnTabulation, @Nonnull Map<String, Object> context);
+    public ConfigurableList.ResultList getNestedTableData(Object entity, ColumnTabulation columnTabulation
+            , @Nonnull Map<String, Object> context);
 }
