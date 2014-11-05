@@ -190,7 +190,12 @@ public class GenericDao {
      */
     public <ENTITY_TYPE> List<ENTITY_TYPE> findAll(Class<ENTITY_TYPE> entity, int first, int max) {
 
-        CriteriaQuery<ENTITY_TYPE> select = buildBasicCriteriaQuery(entity, null);
+        return findAll(entity, null, first, max);
+    }
+
+    public <ENTITY_TYPE> List<ENTITY_TYPE> findAll(Class<ENTITY_TYPE> entity, GenericDaoCallback<ENTITY_TYPE> callback,
+                                                    int first, int max) {
+        CriteriaQuery<ENTITY_TYPE> select = buildBasicCriteriaQuery(entity, callback);
         TypedQuery<ENTITY_TYPE> typedQuery = getQuery(select, LockModeType.NONE, true, first, max);
 
         try {

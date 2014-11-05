@@ -6,6 +6,8 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.infrastructure.common.BaseSplitter;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample_;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
@@ -14,8 +16,11 @@ import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Join;
+import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
+import javax.persistence.criteria.Subquery;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -154,5 +159,34 @@ public class ProductOrderSampleDao extends GenericDao {
         return findListByList(ProductOrderSample.class,ProductOrderSample_.sampleName,sampleNames);
     }
 
+    public List<ProductOrderSample> findSamplesWithoutMercurySample(int page, int samplesPerPage) {
 
+        List<ProductOrderSample> productOrderSamplesWithoutMercurySamples = findAll(ProductOrderSample.class,
+
+                new GenericDaoCallback<ProductOrderSample>() {
+                    @Override
+                    public void callback(CriteriaQuery<ProductOrderSample> criteriaQuery,
+                                         Root<ProductOrderSample> root) {
+
+                        CriteriaBuilder builder = getEntityManager().getCriteriaBuilder();
+                        Join<ProductOrderSample, MercurySample> mercurySampleJoin =
+                                root.join(ProductOrderSample_.mercurySample, JoinType.LEFT);
+
+
+                        Subquery<String> sampleNameSubquery = criteriaQuery.subquery(String.class);
+                        Root<MercurySample> mercurySampleRoot = sampleNameSubquery.from(MercurySample.class);
+
+                        sampleNameSubquery.select(mercurySampleRoot.get(MercurySample_.sampleKey));
+
+                        Predicate predicate = builder.and(builder.isNull(mercurySampleJoin.get(MercurySample_.sampleKey)),
+                                builder.in(root.get(ProductOrderSample_.sampleName)).value(sampleNameSubquery));
+
+                        criteriaQuery.where(predicate);
+
+                        criteriaQuery.orderBy(builder.asc(root.get(ProductOrderSample_.sampleName)));
+                    }
+                },
+                (page - 1) * samplesPerPage, samplesPerPage);
+        return productOrderSamplesWithoutMercurySamples;
+    }
 }

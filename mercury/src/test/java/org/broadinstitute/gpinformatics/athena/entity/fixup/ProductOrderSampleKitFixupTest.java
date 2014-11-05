@@ -13,19 +13,27 @@ package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderKitDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit_;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import java.util.Collection;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * This "test" is an example of how to fixup some data.  Each fix method includes the JIRA ticket ID.
@@ -36,6 +44,12 @@ public class ProductOrderSampleKitFixupTest extends Arquillian {
 
     @Inject
     private ProductOrderKitDao productOrderKitDao;
+
+    @Inject
+    private ProductOrderSampleDao productOrderSampleDao;
+
+    @Inject
+    private MercurySampleDao mercurySampleDao;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -56,5 +70,31 @@ public class ProductOrderSampleKitFixupTest extends Arquillian {
         productOrderKitDao.persistAll(nullExomeExpress);
         productOrderKitDao.flush();
 
+    }
+
+    public void gplim3153_associate_mercurySamples_to_productOrderSamples() {
+
+        int referencePage = 1;
+
+        int samplesPerPage = 1000;
+        Collection<ProductOrderSample> allSamplesToModify =
+                productOrderSampleDao.findSamplesWithoutMercurySample(referencePage++, samplesPerPage);
+
+        while(!allSamplesToModify.isEmpty()) {
+            log.info(String.format("Working on page %d with a page size of %d", referencePage, samplesPerPage));
+            log.info("About to process samples beginning with " +allSamplesToModify.iterator().next().getSampleKey());
+            for (ProductOrderSample productOrderSample : allSamplesToModify) {
+                assertThat(productOrderSample.getMercurySample(), is(nullValue()));
+                MercurySample matchingSample = mercurySampleDao.findBySampleKey(productOrderSample.getSampleKey());
+                if (matchingSample != null) {
+                    productOrderSample.setMercurySample(matchingSample);
+                }
+            }
+            productOrderSampleDao.flush();
+            productOrderSampleDao.clear();
+
+            allSamplesToModify =
+                    productOrderSampleDao.findSamplesWithoutMercurySample(referencePage++, samplesPerPage);
+        }
     }
 }
