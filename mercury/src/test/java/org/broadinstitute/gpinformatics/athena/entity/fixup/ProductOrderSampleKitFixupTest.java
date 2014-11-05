@@ -87,9 +87,8 @@ public class ProductOrderSampleKitFixupTest extends Arquillian {
                 productOrderSampleDao.findSamplesWithoutMercurySample(referencePage++, samplesPerPage);
 
         List<String> sampleKeys = Lists.transform(allSamplesToModify, new Function<ProductOrderSample, String>() {
-            @Nullable
             @Override
-            public String apply(@Nullable ProductOrderSample o) {
+            public String apply(ProductOrderSample o) {
                 return o.getSampleKey();
             }
         });
