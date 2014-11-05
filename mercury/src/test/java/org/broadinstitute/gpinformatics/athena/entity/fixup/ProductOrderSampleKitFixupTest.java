@@ -11,6 +11,10 @@
 
 package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
+import clover.com.google.common.base.Function;
+import clover.com.google.common.collect.Lists;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderKitDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
@@ -26,9 +30,11 @@ import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.hamcrest.CoreMatchers.is;
@@ -76,16 +82,27 @@ public class ProductOrderSampleKitFixupTest extends Arquillian {
 
         int referencePage = 1;
 
-        int samplesPerPage = 1000;
-        Collection<ProductOrderSample> allSamplesToModify =
+        int samplesPerPage = 5000;
+        List<ProductOrderSample> allSamplesToModify =
                 productOrderSampleDao.findSamplesWithoutMercurySample(referencePage++, samplesPerPage);
+
+        List<String> sampleKeys = Lists.transform(allSamplesToModify, new Function<ProductOrderSample, String>() {
+            @Nullable
+            @Override
+            public String apply(@Nullable ProductOrderSample o) {
+                return o.getSampleKey();
+            }
+        });
 
         while(!allSamplesToModify.isEmpty()) {
             log.info(String.format("Working on page %d with a page size of %d", referencePage, samplesPerPage));
             log.info("About to process samples beginning with " +allSamplesToModify.iterator().next().getSampleKey());
+
+            Map<String, MercurySample> sampleByKey = mercurySampleDao.findMapIdToMercurySample(sampleKeys);
+
             for (ProductOrderSample productOrderSample : allSamplesToModify) {
                 assertThat(productOrderSample.getMercurySample(), is(nullValue()));
-                MercurySample matchingSample = mercurySampleDao.findBySampleKey(productOrderSample.getSampleKey());
+                MercurySample matchingSample = sampleByKey.get(productOrderSample.getSampleKey());
                 if (matchingSample != null) {
                     productOrderSample.setMercurySample(matchingSample);
                 }
@@ -95,6 +112,15 @@ public class ProductOrderSampleKitFixupTest extends Arquillian {
 
             allSamplesToModify =
                     productOrderSampleDao.findSamplesWithoutMercurySample(referencePage++, samplesPerPage);
+            sampleKeys = Lists.transform(allSamplesToModify, new Function<ProductOrderSample, String>() {
+                @Nullable
+                @Override
+                public String apply(@Nullable ProductOrderSample o) {
+                    return o.getSampleKey();
+                }
+            });
+
+
         }
     }
 }
