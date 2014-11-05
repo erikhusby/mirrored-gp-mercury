@@ -123,7 +123,7 @@ public class BucketEjbDbFreeTest {
 
         bucketEjb = new BucketEjb(labEventFactory, JiraServiceProducer.stubInstance(), bucketDao, bucketEntryDao,
                                   labVesselDao, labVesselFactory, bspSampleDataFetcher,
-                                  bspUserList, workflowLoader, createNiceMock(ProductOrderDao.class));
+                                  bspUserList, workflowLoader, createNiceMock(ProductOrderDao.class), mercurysampleDao);
     }
 
     // Creates test samples and updates expectedSamples and labVessels.

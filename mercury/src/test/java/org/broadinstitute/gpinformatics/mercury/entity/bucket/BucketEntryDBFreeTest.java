@@ -94,7 +94,7 @@ public class BucketEntryDBFreeTest {
         Mockito.when(productOrderDao.findByBusinessKey(Mockito.eq("PDO-1"))).thenReturn(productOrder1);
 
         BucketEjb bucketEjb = new BucketEjb(null, null, Mockito.mock(BucketDao.class), null, Mockito.mock(LabVesselDao.class), null, null, null,
-                                            null, productOrderDao);
+                                            null, productOrderDao, mercurysampleDao);
 
         for (BucketEntry bucketEntry : bucketEntries) {
             Assert.assertEquals(bucketEntry.getProductOrder(), productOrder1);

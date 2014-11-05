@@ -206,7 +206,7 @@ public class BaseEventTest {
         labEventFactory.setEventHandlerSelector(eventHandlerSelector);
 
         bucketEjb = new BucketEjb(labEventFactory, jiraService, null, null, null, null,
-                                  null, null, null, EasyMock.createNiceMock(ProductOrderDao.class));
+                                  null, null, null, EasyMock.createNiceMock(ProductOrderDao.class), mercurysampleDao);
     }
 
     /**
