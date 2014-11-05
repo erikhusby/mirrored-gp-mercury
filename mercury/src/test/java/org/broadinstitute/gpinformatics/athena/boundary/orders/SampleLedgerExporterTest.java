@@ -26,6 +26,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.tableau.TableauConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
 import org.testng.annotations.Test;
@@ -40,6 +41,7 @@ import java.util.Map;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.endsWith;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.matches;
 import static org.mockito.Mockito.inOrder;
@@ -55,6 +57,10 @@ import static org.mockito.Mockito.when;
 public class SampleLedgerExporterTest {
 
     public void testWriteToStream() throws IOException {
+
+        final String deployedMercuryPort= System.getProperty(RestServiceContainerTest.JBOSS_HTTPS_PORT_SYSTEM_PROPERTY,
+                String.valueOf(RestServiceContainerTest.DEFAULT_FORWARD_PORT));
+
         /*
          * Simulate getting a user from BSP.
          */
@@ -173,7 +179,7 @@ public class SampleLedgerExporterTest {
         dataOrder.verify(mockWriter).writeCell(ProductOrderSample.DeliveryStatus.DELIVERED.getDisplayName());
         dataOrder.verify(mockWriter).writeCell("Test Product");
         dataOrder.verify(mockWriter).writeCellLink("PDO-123",
-                "http://localhost:8080/Mercury//orders/order.action?view=&productOrder=PDO-123");
+                "https://localhost:8443/Mercury//orders/order.action?view=&productOrder=PDO-123");
         dataOrder.verify(mockWriter).writeCell("SampleLedgerExporterFactoryTest");
         dataOrder.verify(mockWriter).writeCell("Test Dummy");
         dataOrder.verify(mockWriter).writeCell(8);

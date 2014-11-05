@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
@@ -50,6 +51,7 @@ import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -78,6 +80,9 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
     @Inject
     private LabVesselDao vesselDao;
 
+    @Inject
+    private MercurySampleDao mercurySampleDao;
+
     private BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
 
     @Inject
@@ -103,7 +108,6 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
     private BettaLimsConnector mockConnector;
     private String testPrefix;
     private String ligationBarcode;
-    private StaticPlate ligationPlate;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -132,7 +136,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         testPrefix = "bcode";
         ligationBarcode = "ligationPlate" + testPrefix;
 
-        ligationPlate = LabEventTest.buildIndexPlate(molecularIndexingSchemeDao, molecularIndexDao,
+        StaticPlate ligationPlate = LabEventTest.buildIndexPlate(molecularIndexingSchemeDao, molecularIndexDao,
                 Collections.singletonList(MolecularIndexingScheme.IndexPosition.ILLUMINA_P7),
                 Collections.singletonList(ligationBarcode)).get(0);
         vesselDao.persist(ligationPlate);
@@ -163,7 +167,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         testExExOrder = poDao.findByBusinessKey(exExJiraKey);
 
         Map<String, BarcodedTube> mapBarcodeToTube =
-                buildVesselsForPdo(testExExOrder, vesselDao, "Shearing Bucket", bucketDao);
+                buildVesselsForPdo(testExExOrder, "Shearing Bucket");
 
         String rackBarcode = "REXEX" + (new Date()).toString();
         List<VesselPosition> vesselPositions = new ArrayList<>(mapBarcodeToTube.size());
@@ -241,7 +245,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         squidProductOrder = poDao.findByBusinessKey(squidPdoJiraKey);
 
         Map<String, BarcodedTube> mapBarcodeToTube =
-                buildVesselsForPdo(squidProductOrder, vesselDao, null, bucketDao);
+                buildVesselsForPdo(squidProductOrder, null);
 
         String rackBarcode = "RSQUID" + (new Date()).toString();
         List<VesselPosition> vesselPositions = new ArrayList<>(mapBarcodeToTube.size());
@@ -301,7 +305,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         squidProductOrder = poDao.findByBusinessKey(squidPdoJiraKey);
 
         Map<String, BarcodedTube> mapBarcodeToTube =
-                buildVesselsForPdo(squidProductOrder, vesselDao, null, bucketDao);
+                buildVesselsForPdo(squidProductOrder, null);
 
         String rackBarcode = "RSQUID" + (new Date()).toString();
         List<VesselPosition> vesselPositions = new ArrayList<>(mapBarcodeToTube.size());
@@ -381,7 +385,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         squidProductOrder = poDao.findByBusinessKey(squidPdoJiraKey);
 
         Map<String, BarcodedTube> mapBarcodeToTube =
-                buildVesselsForPdo(squidProductOrder, vesselDao, null, bucketDao);
+                buildVesselsForPdo(squidProductOrder, null);
 
         String rackBarcode = "RSQUID" + (new Date()).toString();
         List<VesselPosition> vesselPositions = new ArrayList<>(mapBarcodeToTube.size());
@@ -467,7 +471,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         squidProductOrder = poDao.findByBusinessKey(squidPdoJiraKey);
 
         Map<String, BarcodedTube> mapBarcodeToTube =
-                buildVesselsForPdo(squidProductOrder, vesselDao, null, bucketDao);
+                buildVesselsForPdo(squidProductOrder, null);
 
         String rackBarcode = "RSQUID" + (new Date()).toString();
         List<VesselPosition> vesselPositions = new ArrayList<>(mapBarcodeToTube.size());
@@ -592,7 +596,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         squidProductOrder = poDao.findByBusinessKey(squidPdoJiraKey);
 
         Map<String, BarcodedTube> mapBarcodeToTube =
-                buildVesselsForPdo(squidProductOrder, vesselDao, null, bucketDao);
+                buildVesselsForPdo(squidProductOrder, null);
 
         String rackBarcode = "RSQUID" + (new Date()).toString();
         List<VesselPosition> vesselPositions = new ArrayList<>(mapBarcodeToTube.size());
@@ -735,7 +739,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         squidProductOrder = poDao.findByBusinessKey(squidPdoJiraKey);
 
         Map<String, BarcodedTube> mapBarcodeToTube =
-                buildVesselsForPdo(squidProductOrder, vesselDao, null, bucketDao);
+                buildVesselsForPdo(squidProductOrder, null);
 
         String rackBarcode = "RSQUID" + (new Date()).toString();
         List<VesselPosition> vesselPositions = new ArrayList<>(mapBarcodeToTube.size());
@@ -887,16 +891,11 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
      * TODO SGM:  this could probably be broken up better to define an alternate method to make cleaner
      *
      * @param productOrder Product order by which to determine the Samples to Create.
-     * @param vesselDao1   Assists in finding the created Tubes
      * @param bucketName   Optional:  Name of the Bucket to create.  If left null, bucket creation will be avoided
-     * @param bucketDao1   Optional:  Dao to assist in finding/persisting to a bucket
-     *
      * @return
      */
     private Map<String, BarcodedTube> buildVesselsForPdo(@Nonnull ProductOrder productOrder,
-                                                             @Nonnull LabVesselDao vesselDao1,
-                                                             @Nullable String bucketName,
-                                                             @Nullable BucketDao bucketDao1) {
+                                                         @Nullable String bucketName) {
 
         Date testSuffix = new Date();
         Set<LabVessel> tubes = new HashSet<>(productOrder.getTotalSampleCount());
@@ -905,7 +904,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         Bucket bucket = null;
         if (bucketName != null) {
-            bucket = bucketDao1.findByName(bucketName);
+            bucket = bucketDao.findByName(bucketName);
             if (bucket == null) {
                 bucket = new Bucket(new WorkflowBucketDef(bucketName));
             }
@@ -913,11 +912,17 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         for (ProductOrderSample currSample : productOrder.getSamples()) {
 
-            BarcodedTube newTube = (BarcodedTube) vesselDao1.findByIdentifier("R" + currSample.getName());
+            BarcodedTube newTube = (BarcodedTube) vesselDao.findByIdentifier("R" + currSample.getName());
             if (newTube == null) {
                 newTube = new BarcodedTube("R" + currSample.getName());
             }
-            newTube.addSample(new MercurySample(currSample.getName(), MercurySample.MetadataSource.BSP));
+
+            MercurySample mercurySample = mercurySampleDao.findBySampleKey(currSample.getName());
+
+            if(mercurySample == null) {
+                mercurySample = new MercurySample(currSample.getName(), MercurySample.MetadataSource.BSP);
+            }
+            newTube.addSample(mercurySample);
             tubes.add(newTube);
             barcodes.add(newTube.getLabel());
             if (bucketName != null && bucket.findEntry(newTube) == null) {
@@ -943,17 +948,17 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
                 new LinkedHashMap<>(productOrder.getTotalSampleCount());
 
         if (bucketName != null) {
-            bucketDao1.persist(bucket);
-            bucketDao1.flush();
-            bucketDao1.clear();
+            bucketDao.persist(bucket);
+            bucketDao.flush();
+            bucketDao.clear();
         } else {
-            vesselDao1.persistAll(new ArrayList<Object>(tubes));
-            vesselDao1.flush();
-            vesselDao1.clear();
+            vesselDao.persistAll(new ArrayList<Object>(tubes));
+            vesselDao.flush();
+            vesselDao.clear();
         }
 
         for (String barcode : barcodes) {
-            LabVessel foundTube = vesselDao1.findByIdentifier(barcode);
+            LabVessel foundTube = vesselDao.findByIdentifier(barcode);
             mapBarcodeToTube.put(barcode, (BarcodedTube) foundTube);
         }
         return mapBarcodeToTube;

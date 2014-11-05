@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.deployment;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -30,10 +29,7 @@ public class AppConfig extends AbstractConfig implements Serializable {
     private String workflowValidationEmail;
 
     public String getUrl() {
-        if (!StringUtils.isBlank(port)) {
-            return getHttpScheme() + host + ":" + port + "/Mercury/";
-        }
-        return getHttpScheme() + host + ((ApplicationInstance.CRSP.isCurrent()) ? ":8443" : "") + "/Mercury/";
+        return "https://" + host + ":" + port + "/Mercury/";
     }
 
     public void setHost(String host) {
@@ -62,6 +58,7 @@ public class AppConfig extends AbstractConfig implements Serializable {
 
     /**
      * Should we send emails in this deployment?
+     *
      * @return
      */
     public boolean shouldSendEmail() {
@@ -79,4 +76,6 @@ public class AppConfig extends AbstractConfig implements Serializable {
     public static AppConfig produce(Deployment deployment) {
         return produce(AppConfig.class, deployment);
     }
+
+
 }

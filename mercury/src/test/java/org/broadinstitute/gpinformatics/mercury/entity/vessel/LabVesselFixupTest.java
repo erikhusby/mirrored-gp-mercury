@@ -555,6 +555,18 @@ public class LabVesselFixupTest extends Arquillian {
         barcodedTubeDao.remove(oldTube);
     }
 
+    /**
+     * This is done before importing index plates from Squid.
+     */
+    @Test(enabled = false)
+    public void fixupGplim3164() {
+        userBean.loginOSUser();
+        StaticPlate staticPlate = staticPlateDao.findByBarcode("000001814423");
+        System.out.println("Renaming plate " + staticPlate.getLabel());
+        staticPlate.setLabel("000001814423-GPLIM-3164");
+        staticPlateDao.flush();
+    }
+
     @Test(enabled = false)
     public void gplim3103UpdateVolumes() {
         userBean.loginOSUser();
@@ -771,4 +783,62 @@ public class LabVesselFixupTest extends Arquillian {
         }
         barcodedTubeDao.flush();
     }
+
+
+    @Test(enabled = false)
+    public void gplim3139FixupVolumes() {
+        userBean.loginOSUser();
+        Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(Arrays.asList(
+                "0173519367","0173519410","0173519344","0173519391","0173519387","0173519377","0173519390","0173519385"
+        ));
+        BigDecimal expectedVolume = new BigDecimal("41");
+        BigDecimal correctVolume = new BigDecimal("36");
+        for (String barcode : mapBarcodeToTube.keySet()) {
+            BarcodedTube barcodedTube = mapBarcodeToTube.get(barcode);
+            if (barcodedTube == null) {
+                throw new RuntimeException("Failed to find tube " + barcode);
+            }
+            if (barcodedTube.getVolume().compareTo(expectedVolume) == 0) {
+                System.out.println("Updating volume in " + barcodedTube.getLabel() +
+                                   " from " + barcodedTube.getVolume().toString() +
+                                   " to " + correctVolume.toString());
+                barcodedTube.setVolume(correctVolume);
+            } else {
+                throw new RuntimeException("tube " + barcode + " has unexpected volume " + barcodedTube.getVolume());
+            }
+        }
+        barcodedTubeDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void gplim3140FixupVolumes() {
+        userBean.loginOSUser();
+        Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(Arrays.asList(
+                "0175358893", "0175362241", "0175362242", "0175362243", "0175362244", "0175362245", "0175362246",
+                "0175362247", "0175362248", "0175362249", "0175362254", "0175362255", "0175362256", "0175362257",
+                "0175362258", "0175362259", "0175362260", "0175362261", "0175362262", "0175362263", "0175362264",
+                "0175362265", "0175362266", "0175362267", "0175362268", "0175362269", "0175362270", "0175362271",
+                "0175362272", "0175362273", "0175362274", "0175362277", "0175362278", "0175362279", "0175362280",
+                "0175362281", "0175362282", "0175362283", "0175362284", "0175362285", "0175362286", "0175362287",
+                "0175362288", "0175362289", "0175362290", "0175362291", "0175362292", "0175362293", "0175362294",
+                "0175362295", "0175362296", "0175362297", "0175362298", "0175362301", "0175362302", "0175362303",
+                "0175362304", "0175362305", "0175362306", "0175362307", "0175362308", "0175362309", "0175362310",
+                "0175362311", "0175362312", "0175362313", "0175362314", "0175362315", "0175362316", "0175362317",
+                "0175362318", "0175362319", "0175362320", "0175362322", "0175362325", "0175362326", "0175362327",
+                "0175362328", "0175362329", "0175362330", "0175362331", "0175362332", "0175362333", "0175362334",
+                "0175362335"
+        ));
+        BigDecimal diffVolume = new BigDecimal("2.5");
+        for (String barcode : mapBarcodeToTube.keySet()) {
+            BarcodedTube barcodedTube = mapBarcodeToTube.get(barcode);
+            if (barcodedTube == null) {
+                throw new RuntimeException("Failed to find tube " + barcode);
+            }
+            System.out.println(barcodedTube.getLabel() + " has volume " + barcodedTube.getVolume());
+            barcodedTube.setVolume(barcodedTube.getVolume().add(diffVolume));
+            System.out.println("Updated to " + barcodedTube.getVolume());
+        }
+        barcodedTubeDao.flush();
+    }
+
 }

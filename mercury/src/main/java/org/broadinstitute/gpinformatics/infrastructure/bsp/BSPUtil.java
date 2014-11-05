@@ -23,6 +23,7 @@ public class BSPUtil {
     private static final Pattern BSP_SAMPLE_SHORT_BARCODE_PATTERN = Pattern.compile("S[MP]-[A-Z1-9]{4,6}");
     private static final Pattern BSP_BARE_ID_BARCODE_PATTERN = Pattern.compile("[A-Z1-9]{4,6}");
     private static final Pattern CRSP_BSP_SAMPLE_SHORT_BARCODE_PATTERN = Pattern.compile("CS[MP]-[A-Z1-9]{4,6}");
+    public static final String BSP_SAMPLE_SM_PREFIX = "SM";
 
     /**
      * Tests if the sampleName is in a valid BSP barcode format,
@@ -34,8 +35,20 @@ public class BSPUtil {
      */
     public static boolean isInBspFormat(@Nonnull String sampleName) {
         return  BSP_SAMPLE_SHORT_BARCODE_PATTERN.matcher(sampleName).matches() ||
-                BSP_BARE_ID_BARCODE_PATTERN.matcher(sampleName).matches() ||
                 (CRSP_BSP_SAMPLE_SHORT_BARCODE_PATTERN.matcher(sampleName).matches() && ApplicationInstance.CRSP.isCurrent());
     }
 
+    /**
+     * Tests if the sampleName could be a valid BSP barcode, such as SM-4FHTK.
+     *
+     * Bare IDs, e.g. 4FHTK, may or may not represent BSP samples. However, since they may represent parts extracted
+     * from LSIDs, they can't be ruled out so this method returns true in these cases (unlike
+     * {@link #isInBspFormat(String)}).
+     *
+     * @param sampleName    the name of the sample to check
+     * @return true if the sample name could be a valid BSP barcode or bare sample ID (as possibly extracted from an LSID
+     */
+    public static boolean isInBspFormatOrBareId(@Nonnull String sampleName) {
+        return isInBspFormat(sampleName) || BSP_BARE_ID_BARCODE_PATTERN.matcher(sampleName).matches();
+    }
 }

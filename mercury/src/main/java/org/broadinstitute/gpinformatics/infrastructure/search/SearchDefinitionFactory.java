@@ -33,6 +33,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -315,7 +316,7 @@ public class SearchDefinitionFactory {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
                 LabVessel labVessel = (LabVessel) entity;
-                Set<MercurySample> mercurySamples = labVessel.getMercurySamples();
+                Collection<MercurySample> mercurySamples = labVessel.getMercurySamples();
                 if( !mercurySamples.isEmpty() ) {
                     MercurySample mercurySample = mercurySamples.iterator().next();
                     BspSampleSearchAddRowsListener bspColumns = (BspSampleSearchAddRowsListener) context.get(
@@ -506,7 +507,7 @@ public class SearchDefinitionFactory {
                         LabEventType.SAMPLE_IMPORT);
                 for (Map.Entry<LabEvent, Set<LabVessel>> eventVesselEntry : mapEventToVessels.entrySet()) {
                     for (LabVessel vessel : eventVesselEntry.getValue()) {
-                        Set<MercurySample> mercurySamples = vessel.getMercurySamples();
+                        Collection<MercurySample> mercurySamples = vessel.getMercurySamples();
                         if( !mercurySamples.isEmpty() ) {
                             results.add(mercurySamples.iterator().next().getSampleKey());
                         }
@@ -1262,7 +1263,7 @@ public class SearchDefinitionFactory {
                 Metadata.Key key = Metadata.Key.valueOf(header);
 
                 LabVessel labVessel = (LabVessel) entity;
-                Set<MercurySample> samples = labVessel.getMercurySamples();
+                Collection<MercurySample> samples = labVessel.getMercurySamples();
                 for (MercurySample sample : samples) {
                     Set<Metadata> metadataSet = sample.getMetadata();
                     for (Metadata meta : metadataSet) {
