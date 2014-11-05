@@ -56,7 +56,7 @@ public class SampleDataSourceResolverTest {
         String gssrOnlySampleId = "100.0";
 
         Map<String, MercurySample.MetadataSource> sources =
-                sampleDataSourceResolver.resolveSampleDataSources(Collections.singleton(gssrOnlySampleId));
+                sampleDataSourceResolver.resolve(Collections.singleton(gssrOnlySampleId));
 
         assertThat(sources.size(), equalTo(1));
         assertThat(sources.get(gssrOnlySampleId), equalTo(MercurySample.MetadataSource.BSP));
@@ -68,7 +68,7 @@ public class SampleDataSourceResolverTest {
         stubMercurySampleDao(new MercurySample(gssrSampleId, metadataSource));
 
         Map<String, MercurySample.MetadataSource> sources =
-                sampleDataSourceResolver.resolveSampleDataSources(Collections.singleton(gssrSampleId));
+                sampleDataSourceResolver.resolve(Collections.singleton(gssrSampleId));
 
         assertThat(sources.size(), equalTo(1));
         assertThat(sources.get(gssrSampleId), equalTo(metadataSource));
@@ -83,7 +83,7 @@ public class SampleDataSourceResolverTest {
         stubMercurySampleDao(new MercurySample(gssrSampleId, metadataSource));
 
         Map<String, MercurySample.MetadataSource> sources =
-                sampleDataSourceResolver.resolveSampleDataSources(Collections.singleton(gssrSampleId));
+                sampleDataSourceResolver.resolve(Collections.singleton(gssrSampleId));
 
         assertThat(sources.size(), equalTo(1));
         assertThat(sources.get(gssrSampleId), equalTo(metadataSource));
@@ -95,7 +95,7 @@ public class SampleDataSourceResolverTest {
     public void resolveSampleDataSources_for_BSP_sample_without_MercurySample_should_return_BSP() {
         String bspOnlySampleId = "SM-1234";
 
-        Map<String, MercurySample.MetadataSource> sources = sampleDataSourceResolver.resolveSampleDataSources(
+        Map<String, MercurySample.MetadataSource> sources = sampleDataSourceResolver.resolve(
                 Collections.singleton(bspOnlySampleId));
 
         assertThat(sources.size(), equalTo(1));
@@ -106,7 +106,7 @@ public class SampleDataSourceResolverTest {
         String bspSampleId = "SM-1234";
         stubMercurySampleDao(new MercurySample(bspSampleId, MercurySample.MetadataSource.BSP));
 
-        Map<String, MercurySample.MetadataSource> sources = sampleDataSourceResolver.resolveSampleDataSources(
+        Map<String, MercurySample.MetadataSource> sources = sampleDataSourceResolver.resolve(
                 Collections.singleton(bspSampleId));
 
         assertThat(sources.size(), equalTo(1));
@@ -121,7 +121,7 @@ public class SampleDataSourceResolverTest {
         stubMercurySampleDao(new MercurySample(clinicalSampleId, MercurySample.MetadataSource.MERCURY));
 
         Map<String, MercurySample.MetadataSource> sources =
-                sampleDataSourceResolver.resolveSampleDataSources(Collections.singleton(clinicalSampleId));
+                sampleDataSourceResolver.resolve(Collections.singleton(clinicalSampleId));
 
         assertThat(sources.size(), equalTo(1));
         assertThat(sources.get(clinicalSampleId), equalTo(MercurySample.MetadataSource.MERCURY));
@@ -138,7 +138,7 @@ public class SampleDataSourceResolverTest {
                 new MercurySample(bspSampleId2, metadataSource));
 
         Map<String, MercurySample.MetadataSource> sources =
-                sampleDataSourceResolver.resolveSampleDataSources(Arrays.asList(bspSampleId1, bspSampleId2));
+                sampleDataSourceResolver.resolve(Arrays.asList(bspSampleId1, bspSampleId2));
 
         assertThat(sources.size(), equalTo(2));
         assertThat(sources.get(bspSampleId1), equalTo(metadataSource));
@@ -169,7 +169,7 @@ public class SampleDataSourceResolverTest {
                 .thenReturn(sampleMap);
 
         Map<String, MercurySample.MetadataSource> sources =
-                sampleDataSourceResolver.resolveSampleDataSources(Arrays.asList(sampleIds));
+                sampleDataSourceResolver.resolve(Arrays.asList(sampleIds));
 
         assertThat(sources.size(), equalTo(5));
         assertThat(sources.get(gssrOnlySampleId), equalTo(MercurySample.MetadataSource.BSP));

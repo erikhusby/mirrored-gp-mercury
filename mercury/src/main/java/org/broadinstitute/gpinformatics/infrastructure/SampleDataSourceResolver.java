@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure;
 
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
@@ -49,14 +50,14 @@ public class SampleDataSourceResolver {
      * @param sampleNames    the sample IDs for which to resolve the sample data source
      * @return a map of sample ID to sample data source
      */
-    public Map<String, MercurySample.MetadataSource> resolveSampleDataSources(Collection<String> sampleNames) {
+    public Map<String, MercurySample.MetadataSource> resolve(Collection<String> sampleNames) {
         Map<String, MercurySample> allMercurySamples =
                 mercurySampleDao.findMapIdToMercurySample(sampleNames);
-        return resolveSampleDataSources(sampleNames, allMercurySamples);
+        return resolve(sampleNames, allMercurySamples);
     }
 
     @DaoFree
-    public Map<String, MercurySample.MetadataSource> resolveSampleDataSources(Collection<String> sampleNames,
+    public Map<String, MercurySample.MetadataSource> resolve(Collection<String> sampleNames,
                 Map<String, MercurySample> allMercurySamples) {
         Map<String, MercurySample.MetadataSource> results = new HashMap<>();
 
@@ -89,14 +90,17 @@ public class SampleDataSourceResolver {
         return results;
     }
 
+    public void populateSampleDataSources(ProductOrder productOrder) {
+        populateSampleDataSources(productOrder.getSamples());
+    }
+
     public void populateSampleDataSources(Collection<ProductOrderSample> productOrderSamples) {
         Set<String> sampleIds = new HashSet<>();
         for (ProductOrderSample productOrderSample : productOrderSamples) {
             sampleIds.add(productOrderSample.getSampleKey());
         }
 
-        final Map<String, MercurySample.MetadataSource> sampleDataSources =
-                resolveSampleDataSources(sampleIds);
+        Map<String, MercurySample.MetadataSource> sampleDataSources = resolve(sampleIds);
 
         for (ProductOrderSample productOrderSample : productOrderSamples) {
             productOrderSample.setMetadataSource(sampleDataSources.get(productOrderSample.getSampleKey()));

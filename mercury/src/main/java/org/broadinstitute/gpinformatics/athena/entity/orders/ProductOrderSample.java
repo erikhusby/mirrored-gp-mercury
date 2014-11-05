@@ -265,7 +265,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
     public void setMetadataSource(MercurySample.MetadataSource metadataSource) {
         this.metadataSource = metadataSource;
-        this.isMetadataSourceInitialized = true;
+        isMetadataSourceInitialized = true;
     }
 
     public enum DeliveryStatus implements StatusType {
