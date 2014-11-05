@@ -24,6 +24,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunResource;
@@ -176,6 +177,43 @@ public class BettaLimsMessageResourceTest extends Arquillian {
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWarWithAlternatives(DEV, EverythingYouAskForYouGetAndItsHuman.class);
+    }
+
+    @Test
+    public void testNonExistingSourceTube() {
+        BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(false);
+        String testPrefix = testPrefixDateFormat.format(new Date());
+        PlateTransferEventType transfer = bettaLimsMessageTestFactory.buildRackToPlate("FingerprintingPlateSetup",
+                testPrefix + "R", Collections.singletonList(testPrefix + "T"), testPrefix + "P");
+        boolean exception = false;
+        try {
+            BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
+            bettaLIMSMessage.getPlateTransferEvent().add(transfer);
+            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, ImportFromSquidTest.TEST_MERCURY_URL);
+        } catch (Exception e) {
+            Assert.assertTrue(e.getMessage().contains("Failed to find tube"));
+            exception = true;
+        }
+        Assert.assertTrue(exception);
+    }
+
+    @Test
+    public void testNonExistingSourcePlate() {
+        BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(false);
+        String testPrefix = testPrefixDateFormat.format(new Date());
+
+        PlateTransferEventType transfer = bettaLimsMessageTestFactory.buildPlateToPlate("FingerprintingPlateSetup",
+                testPrefix + "P1", testPrefix + "P2");
+        boolean exception = false;
+        try {
+            BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
+            bettaLIMSMessage.getPlateTransferEvent().add(transfer);
+            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, ImportFromSquidTest.TEST_MERCURY_URL);
+        } catch (Exception e) {
+            Assert.assertTrue(e.getMessage().contains("Failed to find"));
+            exception = true;
+        }
+        Assert.assertTrue(exception);
     }
 
     /**
