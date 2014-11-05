@@ -200,19 +200,6 @@ public class GenericDao {
         }
     }
 
-    public <ENTITY_TYPE> Page<ENTITY_TYPE> findPageOfAll(Class<ENTITY_TYPE> entity, int first, int max) {
-
-        List<ENTITY_TYPE> results;
-        int pageNumber = first / max + 1;
-
-        results = findAll(entity, first, max);
-        if(results.isEmpty()) {
-            pageNumber = 1;
-        }
-
-        return new Page<>(results, pageNumber, first, max);
-    }
-
     /**
      * Returns a single entity that matches a specified value for a specified property.
      *
@@ -387,18 +374,6 @@ public class GenericDao {
                 }
         );
         return entity_types;
-    }
-
-
-    private <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> Page<ENTITY_TYPE> findListPage(
-            Class<ENTITY_TYPE> entity, final SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute,
-            Collection<VALUE_TYPE> values, GenericDaoCallback<ENTITY_TYPE> genericDaoCallback,
-            final int firstResult, final int maxResults) {
-
-        List<ENTITY_TYPE> results = findListForPagination(entity, singularAttribute, values, genericDaoCallback, true,
-                firstResult, maxResults);
-
-        return new Page<>(results, (firstResult/maxResults + 1), firstResult, maxResults);
     }
 
     public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> List<ENTITY_TYPE> findListByList(

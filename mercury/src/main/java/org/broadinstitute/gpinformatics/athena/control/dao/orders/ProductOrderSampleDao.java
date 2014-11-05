@@ -6,7 +6,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.infrastructure.common.BaseSplitter;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.Page;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
@@ -155,17 +154,5 @@ public class ProductOrderSampleDao extends GenericDao {
         return findListByList(ProductOrderSample.class,ProductOrderSample_.sampleName,sampleNames);
     }
 
-    /**
-     * returns a block of product order samples
-     * @param pageNumber the intended page of results requested by the user
-     * @return
-     */
-    public Page<ProductOrderSample> getBlockOfSamples(int pageNumber) {
 
-        int first = (pageNumber - 1) * GenericDao.RESULT_DEFAULT_PAGE_SIZE;
-        List<ProductOrderSample> sampleList = findAll(ProductOrderSample.class,
-                first,GenericDao.RESULT_DEFAULT_PAGE_SIZE);
-
-        return new Page<>(sampleList, pageNumber, first, GenericDao.RESULT_DEFAULT_PAGE_SIZE);
-    }
 }
