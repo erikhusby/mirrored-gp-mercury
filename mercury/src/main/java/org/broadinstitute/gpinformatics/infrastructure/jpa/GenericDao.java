@@ -166,6 +166,15 @@ public class GenericDao {
         }
     }
 
+    /**
+     * Builds a criteria query, executes a generic call back (if there is one) and returns the Criteria Query.   This
+     * method pulls in common code that was used in all finder methods here
+     *
+     * @param entity            Class of the entity to be retrieved
+     * @param callback          extra criteria to be executed
+     * @param <ENTITY_TYPE>     Generic type of the entity to be retrieved
+     * @return CritieriaQuery to execute for find operation
+     */
     private <ENTITY_TYPE> CriteriaQuery<ENTITY_TYPE> buildBasicCriteriaQuery(Class<ENTITY_TYPE> entity,
                                                                              GenericDaoCallback<ENTITY_TYPE> callback) {
 
@@ -193,6 +202,16 @@ public class GenericDao {
         return findAll(entity, null, first, max);
     }
 
+    /**
+     * Finder method to return a list of entities in a set range of records
+     *
+     * @param entity            Class of the entity to be retrieved
+     * @param callback          extra criteria to be executed
+     * @param first             index of the first record to be returned
+     * @param max               amount of records in the range to be returned
+     * @param <ENTITY_TYPE>     Generic type of the entity to be retrieved
+     * @return list of entities, or empty list if none found
+     */
     public <ENTITY_TYPE> List<ENTITY_TYPE> findAll(Class<ENTITY_TYPE> entity, GenericDaoCallback<ENTITY_TYPE> callback,
                                                     int first, int max) {
         CriteriaQuery<ENTITY_TYPE> select = buildBasicCriteriaQuery(entity, callback);
@@ -274,6 +293,15 @@ public class GenericDao {
         return getQuery(criteriaQuery, lockModeType, false, 0, RESULT_DEFAULT_PAGE_SIZE);
     }
 
+    /**
+     * Extracts a type query specifying a range of records to return
+     *
+     * @param lockModeType      Level of row locking to put on the record for the query
+     * @param withPagination    indicates that the caller intends to return records over a specified range
+     * @param firstResult       index of the first record in the range to return
+     * @param maxResults        Amount of records to return in the range
+     * @param <ENTITY_TYPE>     the type of the entity to return
+     */
     private <ENTITY_TYPE> TypedQuery<ENTITY_TYPE> getQuery(CriteriaQuery<ENTITY_TYPE> criteriaQuery,
                                                            LockModeType lockModeType, boolean withPagination,
                                                            int firstResult, int maxResults) {

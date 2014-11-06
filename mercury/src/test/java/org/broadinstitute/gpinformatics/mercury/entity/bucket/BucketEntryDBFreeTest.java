@@ -21,11 +21,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-/**
- * @author Scott Matthews
- *         Date: 10/26/12
- *         Time: 1:18 PM
- */
 @Test(groups = TestGroups.DATABASE_FREE)
 public class BucketEntryDBFreeTest {
 
