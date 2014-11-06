@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.meanbean.test.BeanTester;
@@ -93,8 +94,9 @@ public class BucketEntryDBFreeTest {
         Mockito.when(productOrderDao.findByBusinessKey(Mockito.eq("PDO-2"))).thenReturn(productOrder2);
         Mockito.when(productOrderDao.findByBusinessKey(Mockito.eq("PDO-1"))).thenReturn(productOrder1);
 
-        BucketEjb bucketEjb = new BucketEjb(null, null, Mockito.mock(BucketDao.class), null, Mockito.mock(LabVesselDao.class), null, null, null,
-                                            null, productOrderDao, mercurysampleDao);
+        BucketEjb bucketEjb = new BucketEjb(null, null, Mockito.mock(BucketDao.class), null,
+                Mockito.mock(LabVesselDao.class), null, null, null, null, productOrderDao,
+                Mockito.mock(MercurySampleDao.class));
 
         for (BucketEntry bucketEntry : bucketEntries) {
             Assert.assertEquals(bucketEntry.getProductOrder(), productOrder1);

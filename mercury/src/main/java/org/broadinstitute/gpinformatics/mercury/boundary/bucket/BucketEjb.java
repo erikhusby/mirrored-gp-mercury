@@ -61,7 +61,7 @@ public class BucketEjb {
     private final WorkflowLoader workflowLoader;
     private final BSPUserList bspUserList;
     private final LabVesselFactory labVesselFactory;
-    private final MercurySampleDao mercurysampleDao;
+    private final MercurySampleDao mercurySampleDao;
 
     /*
      * Uses BSPSampleDataFetcher (rather than SampleDataFetcher) to create LabVessels for samples that are in BSP but
@@ -85,7 +85,7 @@ public class BucketEjb {
                      LabVesselFactory labVesselFactory,
                      BSPSampleDataFetcher bspSampleDataFetcher,
                      BSPUserList bspUserList,
-                     WorkflowLoader workflowLoader, ProductOrderDao productOrderDao, MercurySampleDao mercurysampleDao) {
+                     WorkflowLoader workflowLoader, ProductOrderDao productOrderDao, MercurySampleDao mercurySampleDao) {
         this.labEventFactory = labEventFactory;
         this.jiraService = jiraService;
         this.bucketDao = bucketDao;
@@ -96,7 +96,7 @@ public class BucketEjb {
         this.bspUserList = bspUserList;
         this.workflowLoader = workflowLoader;
         this.productOrderDao = productOrderDao;
-        this.mercurysampleDao = mercurysampleDao;
+        this.mercurySampleDao = mercurySampleDao;
     }
 
     /**
@@ -389,7 +389,7 @@ public class BucketEjb {
             vessels.addAll(createInitialVessels(samplesWithoutVessel, username));
         }
 
-        Map<String, MercurySample> existingSamples = mercurysampleDao.findMapIdToMercurySample(nameToSampleMap.keys());
+        Map<String, MercurySample> existingSamples = mercurySampleDao.findMapIdToMercurySample(nameToSampleMap.keys());
 
         for (ProductOrderSample productOrderSample : nameToSampleMap.values()) {
             if(productOrderSample.getMercurySample() == null) {
