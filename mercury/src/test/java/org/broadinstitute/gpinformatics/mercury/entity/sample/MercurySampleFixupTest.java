@@ -63,6 +63,18 @@ public class MercurySampleFixupTest extends Arquillian {
         utx.commit();
     }
 
+    /**
+     * This fixup will remove duplicate samples from the system and reset their existing labVessel relationships to
+     * converge to the one remaining sample of which they are a duplicate.
+     *
+     *
+     * IMPORTANT!!!!!   Before Running this, change the mercurySample ManytoMany relationship on LabVessel to be a
+     * List!!!!
+     *
+     *
+     *
+     * @throws Exception
+     */
     @Test(groups = TestGroups.FIXUP, enabled = false)
     public void gplim3005ReassignDuplicateSamples() throws Exception {
 

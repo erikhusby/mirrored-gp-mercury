@@ -181,7 +181,7 @@ public abstract class LabVessel implements Serializable {
     // todo jmt separate role for sample holder?
     @ManyToMany(cascade = CascadeType.PERSIST)
     @BatchSize(size = 100)
-    private List<MercurySample> mercurySamples = new ArrayList<>();
+    private Set<MercurySample> mercurySamples = new HashSet<>();
 
     // todo jmt set these fields db-free
     @OneToMany(mappedBy = "sourceVessel", cascade = CascadeType.PERSIST)
