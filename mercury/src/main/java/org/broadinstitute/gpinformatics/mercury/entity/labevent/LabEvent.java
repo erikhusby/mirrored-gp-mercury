@@ -339,6 +339,10 @@ public class LabEvent {
         return eventLocation;
     }
 
+    void setEventLocation(String eventLocation) {
+        this.eventLocation = eventLocation;
+    }
+
     public Long getEventOperator() {
         return eventOperator;
     }

@@ -43,7 +43,8 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testFetchLibraryDetailsByTubeBarcode(@ArquillianResource URL baseUrl) {
+    public void testFetchLibraryDetailsByTubeBarcode(@ArquillianResource URL baseUrl)
+            throws Exception {
         WebResource resource = makeWebResource(baseUrl, "fetchLibraryDetailsByTubeBarcode")
                 .queryParam("includeWorkRequestDetails", "true");
 
@@ -71,7 +72,8 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testDoesLimsRecognizeAllTubes(@ArquillianResource URL baseUrl) {
+    public void testDoesLimsRecognizeAllTubes(@ArquillianResource URL baseUrl)
+            throws Exception {
         WebResource resource = makeWebResource(baseUrl, "doesLimsRecognizeAllTubes");
 
         String result1 = get(addQueryParam(resource, "q", Arrays.asList("0099443960", "406164")));
@@ -83,7 +85,8 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testFetchMaterialTypesForTubeBarcodes(@ArquillianResource URL baseUrl) {
+    public void testFetchMaterialTypesForTubeBarcodes(@ArquillianResource URL baseUrl)
+            throws Exception {
         WebResource resource = makeWebResource(baseUrl, "fetchMaterialTypesForTubeBarcodes");
 
         String result1 = get(addQueryParam(resource, "q", Arrays.asList("0099443960", "406164")));
@@ -93,7 +96,8 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testFindFlowcellDesignationByTaskName(@ArquillianResource URL baseUrl) {
+    public void testFindFlowcellDesignationByTaskName(@ArquillianResource URL baseUrl)
+            throws Exception {
         WebResource resource =
                 makeWebResource(baseUrl, "findFlowcellDesignationByTaskName").queryParam("taskName", "14A_03.19.2012");
         String result = get(resource);
@@ -102,7 +106,8 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testFindFlowcellDesignationByTaskNameInvalid(@ArquillianResource URL baseUrl) {
+    public void testFindFlowcellDesignationByTaskNameInvalid(@ArquillianResource URL baseUrl)
+            throws Exception {
         WebResource resource =
                 makeWebResource(baseUrl, "findFlowcellDesignationByTaskName").queryParam("taskName", "invalid_task");
         UniformInterfaceException caught = getWithError(resource);
@@ -112,7 +117,8 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testFindFlowcellDesignationByFlowcellBarcode(@ArquillianResource URL baseUrl) {
+    public void testFindFlowcellDesignationByFlowcellBarcode(@ArquillianResource URL baseUrl)
+            throws Exception {
         WebResource resource = makeWebResource(baseUrl, "findFlowcellDesignationByFlowcellBarcode")
                 .queryParam("flowcellBarcode", "C0GHCACXX");
         String result = get(resource);
@@ -121,7 +127,8 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testFindFlowcellDesignationByFlowcellBarcodeInvalid(@ArquillianResource URL baseUrl) {
+    public void testFindFlowcellDesignationByFlowcellBarcodeInvalid(@ArquillianResource URL baseUrl)
+            throws Exception {
         WebResource resource = makeWebResource(baseUrl, "findFlowcellDesignationByFlowcellBarcode")
                 .queryParam("flowcellBarcode", "invalid_flowcell");
         UniformInterfaceException caught = getWithError(resource);
@@ -131,7 +138,8 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testFindFlowcellDesignationByReagentBlockBarcode(@ArquillianResource URL baseUrl) {
+    public void testFindFlowcellDesignationByReagentBlockBarcode(@ArquillianResource URL baseUrl)
+            throws Exception {
         WebResource resource = makeWebResource(baseUrl, "findFlowcellDesignationByReagentBlockBarcode")
                 .queryParam("reagentBlockBarcode", "MS0000252-50");
         String result = get(resource);
@@ -141,7 +149,8 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testFindImmediatePlateParents(@ArquillianResource URL baseUrl) {
+    public void testFindImmediatePlateParents(@ArquillianResource URL baseUrl)
+            throws Exception {
         WebResource resource =
                 makeWebResource(baseUrl, "findImmediatePlateParents").queryParam("plateBarcode", "000001383666");
         String result = get(resource);
@@ -151,7 +160,8 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testFetchUserIdForBadgeId(@ArquillianResource URL baseUrl) {
+    public void testFetchUserIdForBadgeId(@ArquillianResource URL baseUrl)
+            throws Exception {
         WebResource resource =
                 makeWebResource(baseUrl, "fetchUserIdForBadgeId").queryParam("badgeId", "8f03f000f7ff12e0");
         String result = get(resource);
@@ -167,7 +177,8 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testFetchUserIdForBadgeIdNotFound(@ArquillianResource URL baseUrl) {
+    public void testFetchUserIdForBadgeIdNotFound(@ArquillianResource URL baseUrl)
+            throws Exception {
         WebResource resource =
                 makeWebResource(baseUrl, "fetchUserIdForBadgeId").queryParam("badgeId", "invalid_badge_id");
         UniformInterfaceException caught = getWithError(resource);
@@ -177,7 +188,8 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testFetchParentRackContentsForPlate(@ArquillianResource URL baseUrl) {
+    public void testFetchParentRackContentsForPlate(@ArquillianResource URL baseUrl)
+            throws Exception {
         WebResource resource =
                 makeWebResource(baseUrl, "fetchParentRackContentsForPlate").queryParam("plateBarcode", "000003343552");
         String result = get(resource);
@@ -189,7 +201,8 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testFetchParentRackContentsForPlateNotFound(@ArquillianResource URL baseUrl) {
+    public void testFetchParentRackContentsForPlateNotFound(@ArquillianResource URL baseUrl)
+            throws Exception {
         WebResource resource =
                 makeWebResource(baseUrl, "fetchParentRackContentsForPlate").queryParam("plateBarcode", "invalid_plate");
         UniformInterfaceException caught = getWithError(resource);
@@ -199,7 +212,8 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testFetchQpcrForTube(@ArquillianResource URL baseUrl) {
+    public void testFetchQpcrForTube(@ArquillianResource URL baseUrl)
+            throws Exception {
         WebResource resource = makeWebResource(baseUrl, "fetchQpcrForTube").queryParam("tubeBarcode", "0075414288");
         String result = get(resource);
         assertThat(result, equalTo("19.37698653"));
@@ -207,16 +221,19 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void fetchQpcrForTubeAndType(@ArquillianResource URL baseUrl) {
-        WebResource resource = makeWebResource(baseUrl, "fetchQpcrForTubeAndType").queryParam("tubeBarcode", "1037346690").
-                queryParam("qpcrType", "Denatured Library");
+    public void fetchQpcrForTubeAndType(@ArquillianResource URL baseUrl)
+            throws Exception {
+        WebResource resource =
+                makeWebResource(baseUrl, "fetchQpcrForTubeAndType").queryParam("tubeBarcode", "1037346690").
+                        queryParam("qpcrType", "Denatured Library");
         String result = get(resource);
         assertThat(result, equalTo("38.87261345"));
     }
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testFetchQpcrForTubeNotFound(@ArquillianResource URL baseUrl) {
+    public void testFetchQpcrForTubeNotFound(@ArquillianResource URL baseUrl)
+            throws Exception {
         WebResource resource = makeWebResource(baseUrl, "fetchQpcrForTube").queryParam("tubeBarcode", "invalid_tube");
         UniformInterfaceException caught = getWithError(resource);
         assertThat(caught.getResponse().getStatus(), equalTo(500));
@@ -225,7 +242,8 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testFetchQpcrForTubeNoQpcr(@ArquillianResource URL baseUrl) {
+    public void testFetchQpcrForTubeNoQpcr(@ArquillianResource URL baseUrl)
+            throws Exception {
         WebResource resource = makeWebResource(baseUrl, "fetchQpcrForTube").queryParam("tubeBarcode", "000001848862");
         UniformInterfaceException caught = getWithError(resource);
         assertThat(caught.getResponse().getStatus(), equalTo(500));
@@ -234,7 +252,8 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testFetchQuantForTube(@ArquillianResource URL baseUrl) {
+    public void testFetchQuantForTube(@ArquillianResource URL baseUrl)
+            throws Exception {
         WebResource resource = makeWebResource(baseUrl, "fetchQuantForTube").queryParam("tubeBarcode", "0108462600")
                 .queryParam("quantType", "Catch Pico");
         String result = get(resource);
@@ -243,7 +262,8 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testFetchQuantForTubeNotFound(@ArquillianResource URL baseUrl) {
+    public void testFetchQuantForTubeNotFound(@ArquillianResource URL baseUrl)
+            throws Exception {
         WebResource resource = makeWebResource(baseUrl, "fetchQuantForTube").queryParam("tubeBarcode", "invalid_tube")
                 .queryParam("quantType", "Catch Pico");
         UniformInterfaceException caught = getWithError(resource);
@@ -254,7 +274,8 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testFetchQuantForTubeUnknownQuant(@ArquillianResource URL baseUrl) {
+    public void testFetchQuantForTubeUnknownQuant(@ArquillianResource URL baseUrl)
+            throws Exception {
         WebResource resource = makeWebResource(baseUrl, "fetchQuantForTube").queryParam("tubeBarcode", "0108462600")
                 .queryParam("quantType", "Bogus Pico");
         UniformInterfaceException caught = getWithError(resource);
@@ -265,7 +286,8 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testFetchQuantForTubeNoQuant(@ArquillianResource URL baseUrl) {
+    public void testFetchQuantForTubeNoQuant(@ArquillianResource URL baseUrl)
+            throws Exception {
         WebResource resource = makeWebResource(baseUrl, "fetchQuantForTube").queryParam("tubeBarcode", "000001859062")
                 .queryParam("quantType", "Catch Pico");
         UniformInterfaceException caught = getWithError(resource);
@@ -276,7 +298,8 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testFetchUnfulfilledDesignations(@ArquillianResource URL baseUrl) {
+    public void testFetchUnfulfilledDesignations(@ArquillianResource URL baseUrl)
+            throws Exception {
         WebResource resource = makeWebResource(baseUrl, "fetchUnfulfilledDesignations");
         String result = get(resource);
         // This is about all we can do because the result is going to change over time
@@ -285,7 +308,8 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testFetchSourceTubesForPlate(@ArquillianResource URL baseUrl) {
+    public void testFetchSourceTubesForPlate(@ArquillianResource URL baseUrl)
+            throws Exception {
         WebResource resource =
                 makeWebResource(baseUrl, "fetchSourceTubesForPlate").queryParam("plateBarcode", "000009873173");
         String result = get(resource);
@@ -299,7 +323,8 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
      */
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testFetchTransfersForPlateFromSquid(@ArquillianResource URL baseUrl) {
+    public void testFetchTransfersForPlateFromSquid(@ArquillianResource URL baseUrl)
+            throws Exception {
         WebResource resource =
                 makeWebResource(baseUrl, "fetchTransfersForPlate").queryParam("plateBarcode", "000009873173")
                         .queryParam("depth", "2");
@@ -310,7 +335,8 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testFetchPoolGroups(@ArquillianResource URL baseUrl) {
+    public void testFetchPoolGroups(@ArquillianResource URL baseUrl)
+            throws Exception {
         WebResource resource =
                 makeWebResource(baseUrl, "fetchPoolGroups").queryParam("q", "0089526681").queryParam("q", "0089526682");
         String result = get(resource);
@@ -321,7 +347,8 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     // todo: Re-enable when we have some test data
     @Test(enabled = false, groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testFetchIlluminaSeqTemplateWithFlowCell(@ArquillianResource URL baseUrl) {
+    public void testFetchIlluminaSeqTemplateWithFlowCell(@ArquillianResource URL baseUrl)
+            throws Exception {
         WebResource resource =
                 makeWebResource(baseUrl, "fetchIlluminaSeqTemplate").queryParam("id", "Flowcell0528112517")
                         .queryParam("idType",
@@ -339,7 +366,8 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     // todo: Re-enable when we have some test data
     @Test(enabled = false, groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testFetchIlluminaSeqTemplateWithStripTube(@ArquillianResource URL baseUrl) {
+    public void testFetchIlluminaSeqTemplateWithStripTube(@ArquillianResource URL baseUrl)
+            throws Exception {
         WebResource resource =
                 makeWebResource(baseUrl, "fetchIlluminaSeqTemplate").queryParam("id", "DenatureTube05131701450")
                         .queryParam("idType",
@@ -356,7 +384,8 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testFetchIlluminaSeqTemplateBadEnum(@ArquillianResource URL baseUrl) {
+    public void testFetchIlluminaSeqTemplateBadEnum(@ArquillianResource URL baseUrl)
+            throws Exception {
         WebResource resource =
                 makeWebResource(baseUrl, "fetchIlluminaSeqTemplate").queryParam("id", "0089526681")
                         .queryParam("idType",
@@ -371,7 +400,8 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testFetchConcentrationAndVolumeAndWeightForTubeBarcodes(@ArquillianResource URL baseUrl) {
+    public void testFetchConcentrationAndVolumeAndWeightForTubeBarcodes(@ArquillianResource URL baseUrl)
+            throws Exception {
         WebResource resource = makeWebResource(baseUrl, "fetchConcentrationAndVolumeAndWeightForTubeBarcodes");
 
         String result1 = get(addQueryParam(resource, "q", Arrays.asList("1075671760", "1075671761")));

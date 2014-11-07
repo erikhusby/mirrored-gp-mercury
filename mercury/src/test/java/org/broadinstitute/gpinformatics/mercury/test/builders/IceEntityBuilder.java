@@ -104,6 +104,7 @@ public class IceEntityBuilder {
                 mapBarcodeToVessel);
         labEventHandler.processEvent(ice1stBaitAddition);
 
+        LabEventTest.validateWorkflow("PostIce1stHybridizationThermoCyclerLoaded", firstHybPlate);
         LabEvent postIce1stHybridizationThermoCyclerLoaded = labEventFactory.buildFromBettaLimsPlateEventDbFree(
                 iceJaxbBuilder.getPostIce1stHybridizationThermoCyclerLoaded(), firstHybPlate);
         labEventHandler.processEvent(postIce1stHybridizationThermoCyclerLoaded);
@@ -116,6 +117,7 @@ public class IceEntityBuilder {
         labEventHandler.processEvent(ice1stCapture);
         StaticPlate firstCapturePlate = (StaticPlate) ice1stCapture.getTargetLabVessels().iterator().next();
 
+        LabEventTest.validateWorkflow("PostIce1stCaptureThermoCyclerLoaded", firstCapturePlate);
         LabEvent postIce1stCaptureThermoCyclerLoaded = labEventFactory.buildFromBettaLimsPlateEventDbFree(
                 iceJaxbBuilder.getPostIce1stCaptureThermoCyclerLoaded(), firstCapturePlate);
         labEventHandler.processEvent(postIce1stCaptureThermoCyclerLoaded);
@@ -135,6 +137,7 @@ public class IceEntityBuilder {
                 mapBarcodeToVessel);
         labEventHandler.processEvent(ice2ndBaitAddition);
 
+        LabEventTest.validateWorkflow("PostIce2ndHybridizationThermoCyclerLoaded", firstCapturePlate);
         LabEvent postIce2ndHybridizationThermoCyclerLoaded = labEventFactory.buildFromBettaLimsPlateEventDbFree(
                 iceJaxbBuilder.getPostIce2ndHybridizationThermoCyclerLoaded(), firstCapturePlate);
         labEventHandler.processEvent(postIce2ndHybridizationThermoCyclerLoaded);
@@ -147,6 +150,7 @@ public class IceEntityBuilder {
         labEventHandler.processEvent(ice2ndCapture);
         StaticPlate secondCapturePlate = (StaticPlate) ice2ndCapture.getTargetLabVessels().iterator().next();
 
+        LabEventTest.validateWorkflow("PostIce2ndCaptureThermoCyclerLoaded", secondCapturePlate);
         LabEvent postIce2ndCaptureThermoCyclerLoaded = labEventFactory.buildFromBettaLimsPlateEventDbFree(
                 iceJaxbBuilder.getPostIce2ndCaptureThermoCyclerLoaded(), secondCapturePlate);
         labEventHandler.processEvent(postIce2ndCaptureThermoCyclerLoaded);
@@ -163,6 +167,11 @@ public class IceEntityBuilder {
         LabEvent iceCatchEnrichmentSetup = labEventFactory.buildFromBettaLimsPlateEventDbFree(
                 iceJaxbBuilder.getIceCatchEnrichmentSetup(), catchCleanupPlate);
         labEventHandler.processEvent(iceCatchEnrichmentSetup);
+
+        LabEventTest.validateWorkflow("PostIceCatchEnrichmentSetupThermoCyclerLoaded", catchCleanupPlate);
+        LabEvent postIceCatchEnrichmentSetupThermoCyclerLoaded = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                iceJaxbBuilder.getPostIceCatchEnrichmentSetupThermoCyclerLoaded(), catchCleanupPlate);
+        labEventHandler.processEvent(postIceCatchEnrichmentSetupThermoCyclerLoaded);
 
         LabEventTest.validateWorkflow("IceCatchEnrichmentCleanup", catchCleanupPlate);
         mapBarcodeToVessel.clear();

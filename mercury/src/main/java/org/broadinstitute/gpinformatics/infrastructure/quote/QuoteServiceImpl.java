@@ -12,6 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
+import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -153,7 +154,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
 
     @Override
     protected void customizeConfig(ClientConfig clientConfig) {
-        acceptAllServerCertificates(clientConfig);
+        JerseyUtils.acceptAllServerCertificates(clientConfig);
     }
 
     @Override

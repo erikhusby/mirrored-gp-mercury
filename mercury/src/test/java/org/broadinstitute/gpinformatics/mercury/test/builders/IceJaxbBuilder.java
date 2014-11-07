@@ -59,6 +59,7 @@ public class IceJaxbBuilder {
     private PlateEventType postIce2ndCaptureThermoCyclerLoaded;
     private PlateTransferEventType iceCatchCleanup;
     private PlateEventType iceCatchEnrichmentSetup;
+    private PlateEventType postIceCatchEnrichmentSetupThermoCyclerLoaded;
     private PlateTransferEventType iceCatchEnrichmentCleanup;
     private PlateTransferEventType iceCatchPico1;
     private PlateTransferEventType iceCatchPico2;
@@ -231,6 +232,11 @@ public class IceJaxbBuilder {
                 catchCleanupPlateBarcode, reagentDtos);
         bettaLimsMessageTestFactory.addMessage(messageList, iceCatchEnrichmentSetup);
 
+        postIceCatchEnrichmentSetupThermoCyclerLoaded = bettaLimsMessageTestFactory.buildPlateEvent(
+                "PostIceCatchEnrichmentSetupThermoCyclerLoaded", catchCleanupPlateBarcode);
+        postIceCatchEnrichmentSetupThermoCyclerLoaded.setStation("WALDORF");
+        bettaLimsMessageTestFactory.addMessage(messageList, postIceCatchEnrichmentSetupThermoCyclerLoaded);
+
         // IceCatchEnrichmentCleanup
         catchEnrichRackBarcode = testPrefix + "IceCatchEnrich";
         iceCatchEnrichmentCleanup = bettaLimsMessageTestFactory.buildPlateToRack(
@@ -365,6 +371,10 @@ public class IceJaxbBuilder {
 
     public PlateEventType getIceCatchEnrichmentSetup() {
         return iceCatchEnrichmentSetup;
+    }
+
+    public PlateEventType getPostIceCatchEnrichmentSetupThermoCyclerLoaded() {
+        return postIceCatchEnrichmentSetupThermoCyclerLoaded;
     }
 
     public PlateTransferEventType getIceCatchEnrichmentCleanup() {

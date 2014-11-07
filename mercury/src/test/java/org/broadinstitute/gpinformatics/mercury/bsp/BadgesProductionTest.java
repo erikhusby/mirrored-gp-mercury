@@ -2,10 +2,14 @@ package org.broadinstitute.gpinformatics.mercury.bsp;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.api.client.config.ClientConfig;
+import com.sun.jersey.api.client.config.DefaultClientConfig;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -54,8 +58,8 @@ public class BadgesProductionTest extends Arquillian {
     }
 
     @BeforeMethod
-    public void setUp() throws Exception{
-        if(utx == null) {
+    public void setUp() throws Exception {
+        if (utx == null) {
             return;
         }
         utx.begin();
@@ -65,7 +69,7 @@ public class BadgesProductionTest extends Arquillian {
 
     @AfterMethod
     public void tearDown() throws Exception {
-        if(utx == null) {
+        if (utx == null) {
             return;
         }
         utx.rollback();
@@ -75,14 +79,16 @@ public class BadgesProductionTest extends Arquillian {
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = false)
     public void validateBadgeIds() throws Exception {
 
-        FileInputStream badgesList = (FileInputStream)Thread.currentThread()
-                                                            .getContextClassLoader()
-                                                            .getResourceAsStream(PROD_BADGES_SOURCE);
+        FileInputStream badgesList = (FileInputStream) Thread.currentThread()
+                .getContextClassLoader()
+                .getResourceAsStream(PROD_BADGES_SOURCE);
 
         BufferedReader badgesReader = new BufferedReader(new InputStreamReader(badgesList));
 
+        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
+
         final WebResource badgeResource =
-                Client.create().resource(appConfig.getUrl() + "rest/limsQuery/fetchUserIdForBadgeId");
+                Client.create(clientConfig).resource(appConfig.getUrl() + "rest/limsQuery/fetchUserIdForBadgeId");
 
         while (badgesReader.ready()) {
             String[] columns = badgesReader.readLine().split(",");
@@ -92,14 +98,14 @@ public class BadgesProductionTest extends Arquillian {
             String termination = columns[2].replace('\'', ' ').trim();
 
 
-            if(StringUtils.isBlank(termination)) {
+            if (StringUtils.isBlank(termination)) {
 
                 System.out.println("Testing bsp list for user " + username);
                 assertThat(badgeId, equalTo(bspList.getByUsername(username).getBadgeNumber()));
                 String result =
                         badgeResource.queryParam("badgeId", badgeId)
-                                     .accept(APPLICATION_JSON_TYPE)
-                                     .get(String.class);
+                                .accept(APPLICATION_JSON_TYPE)
+                                .get(String.class);
 
                 assertThat(result, equalTo(username));
             }
