@@ -1179,7 +1179,7 @@ public abstract class LabVessel implements Serializable {
         }
     }
 
-    public List<MercurySample> getMercurySamples() {
+    public Set<MercurySample> getMercurySamples() {
         return mercurySamples;
     }
 
@@ -1911,5 +1911,4 @@ public abstract class LabVessel implements Serializable {
         }
         return values.toArray(new String[values.size()]);
     }
-
 }
