@@ -111,17 +111,22 @@ public abstract class TableProcessor implements Serializable {
      */
     public abstract void processRowDetails(Map<String, String> dataRow, int dataRowIndex);
 
-    public final boolean validateHeaders(List<String> headers) {
+    public final boolean validateColumnHeaders(List<String> headers) {
         // If any of the required headers are NOT in the header list, then return false.
         for (ColumnHeader header : getColumnHeaders()) {
             if (header.isRequiredHeader() && !headers.contains(header.getText())) {
                 validationMessages.add("Required header: " + header.getText() + " is missing");
-                return false;
             }
         }
-
-        return true;
+        validateHeaderRow(headers);
+        return validationMessages.isEmpty();
     }
+
+    /**
+     * If Processor specific header validation is required, override this method and perform it there.
+     */
+    @SuppressWarnings("unused")
+    public void validateHeaderRow(List<String> headers) { }
 
     /**
      * This method makes sure that all values in the row that are deemed 'required' have values. This means that
@@ -192,7 +197,7 @@ public abstract class TableProcessor implements Serializable {
         return columnHeader != null && columnHeader.isStringColumn();
     }
 
-    private ColumnHeader findColumnHeaderByName(String headerName) {
+    protected ColumnHeader findColumnHeaderByName(String headerName) {
         for (ColumnHeader columnHeader : getColumnHeaders()) {
             if (headerName.equals(columnHeader.getText())) {
                 return columnHeader;
