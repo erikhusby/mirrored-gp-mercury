@@ -37,43 +37,6 @@
 
     <!-- END for JBoss AS 7 -->
 
-    <context-param>
-        <param-name>resteasy.scan.resources</param-name>
-        <!-- we don't scan for test performance reasons.  use resteasy.resources explicitly instead. -->
-        <param-value>false</param-value>
-    </context-param>
-    <context-param>
-        <param-name>resteasy.resources</param-name>
-        <!-- comma separated list of jax-rs resource classes -->
-        <param-value>
-            org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderResource,
-            org.broadinstitute.gpinformatics.athena.boundary.products.ProductResource,
-            org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectResource,
-            org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectResourceForBass,
-            org.broadinstitute.gpinformatics.athena.boundary.util.PingResource,
-            org.broadinstitute.gpinformatics.infrastructure.datawh.ExtractTransformResource,
-            org.broadinstitute.gpinformatics.mercury.boundary.zims.IlluminaRunResource,
-            org.broadinstitute.gpinformatics.mercury.boundary.lims.LimsQueryResource,
-            org.broadinstitute.gpinformatics.mercury.boundary.lims.LimsQueryTypesResource,
-            org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchResource,
-            org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleImportResource,
-            org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleReceiptResource,
-            org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselMetricResource,
-            org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource,
-            org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventResource,
-            org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunResource,
-            org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselResource
-        </param-value>
-    </context-param>
-    <context-param>
-        <param-name>resteasy.providers</param-name>
-        <param-value>
-            org.broadinstitute.gpinformatics.infrastructure.jaxrs.JacksonConfigurator,
-            org.broadinstitute.gpinformatics.infrastructure.jaxrs.CatchAllExceptionMapper,
-            org.broadinstitute.gpinformatics.infrastructure.jaxrs.EJBExceptionMapper
-        </param-value>
-    </context-param>
-
     <security-constraint>
         <web-resource-collection>
             <!--

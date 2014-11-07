@@ -1,32 +1,43 @@
 package org.broadinstitute.gpinformatics.infrastructure.jaxrs;
 
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import javax.ejb.EJBException;
-import javax.inject.Inject;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
+import javax.ws.rs.ext.Providers;
 
 /**
- * @author breilly
+ * This ExceptionMapper called when EJBException is thrown.
  */
 @Provider
 public class EJBExceptionMapper implements ExceptionMapper<EJBException> {
 
-    @Inject
-    private Log log;
+    private Log log = LogFactory.getLog(EJBExceptionMapper.class);
+
+    @Context
+    private Providers providers;
 
     @Override
-    public Response toResponse(EJBException e) {
-        log.error("EJBException thrown from JAX-RS service", e);
-        Exception realCause;
-        if (e.getCausedByException() != null) {
-            realCause = e.getCausedByException();
-            log.error("EJBException's CausedByException", realCause);
+    @SuppressWarnings("unchecked") // for mapper.toResponse()
+    public Response toResponse(EJBException exception) {
+
+        // EJBExceptions are most likely wrapped around other kinds of exceptions. If this is the case, find the
+        // cause and check if it has its own ExceptionMapper.
+        if (exception.getCausedByException() != null) {
+            Exception cause = exception.getCausedByException();
+            log.error("EJBException's CausedByException", cause);
+            ExceptionMapper mapper = providers.getExceptionMapper(cause.getClass());
+            if (mapper == null) {
+                return Response.serverError().build();
+            }
+            return mapper.toResponse(exception.getCause());
         } else {
-            realCause = e;
+            log.error("EJBException thrown from JAX-RS service", exception);
+            return Response.serverError().build();
         }
-        return Response.serverError().entity(realCause.getMessage()).build();
     }
 }
