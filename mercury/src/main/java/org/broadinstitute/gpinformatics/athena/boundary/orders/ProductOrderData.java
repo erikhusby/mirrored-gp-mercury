@@ -47,6 +47,7 @@ public class ProductOrderData {
     private String productOrderKey;
     private String workRequestId;
     private int riskNotCalculatedCount;
+    private boolean initiationOrder;
 
     /** Even if includeSamples == false this will still contain the number of samples in the PDO. */
     private int numberOfSamples;
@@ -100,6 +101,7 @@ public class ProductOrderData {
             this.product = product.getBusinessKey();
             productName = product.getProductName();
             aggregationDataType = product.getAggregationDataType();
+            initiationOrder = product.isSampleInitiationProduct();
         }
 
 
@@ -379,5 +381,13 @@ public class ProductOrderData {
 
     public void setCreatedDate(Date createdDate) {
         this.createdDate = createdDate;
+    }
+
+    public boolean isInitiationOrder() {
+        return initiationOrder;
+    }
+
+    public void setInitiationOrder(boolean initiationOrder) {
+        this.initiationOrder = initiationOrder;
     }
 }
