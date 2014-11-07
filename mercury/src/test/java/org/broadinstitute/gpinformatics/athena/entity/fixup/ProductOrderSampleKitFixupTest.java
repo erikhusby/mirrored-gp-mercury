@@ -81,32 +81,10 @@ public class ProductOrderSampleKitFixupTest extends Arquillian {
         int iteration = 1;
 
         int sampleBlockSize = 5000;
-        List<ProductOrderSample> allSamplesToModify =
-                productOrderSampleDao.findSamplesWithoutMercurySample(0, sampleBlockSize);
+        List<ProductOrderSample> allSamplesToModify;
+        List<String> sampleKeys;
 
-        List<String> sampleKeys = Lists.transform(allSamplesToModify, new Function<ProductOrderSample, String>() {
-            @Override
-            public String apply(ProductOrderSample o) {
-                return o.getSampleKey();
-            }
-        });
-
-        while (!allSamplesToModify.isEmpty()) {
-            log.info(String.format("Working on iteration %d with a sample block size of %d", iteration,
-                    sampleBlockSize));
-            log.info("About to process samples beginning with " + allSamplesToModify.iterator().next().getSampleKey());
-
-            Map<String, MercurySample> sampleByKey = mercurySampleDao.findMapIdToMercurySample(sampleKeys);
-
-            for (ProductOrderSample productOrderSample : allSamplesToModify) {
-                assertThat(productOrderSample.getMercurySample(), is(nullValue()));
-                MercurySample matchingSample = sampleByKey.get(productOrderSample.getSampleKey());
-                if (matchingSample != null) {
-                    productOrderSample.setMercurySample(matchingSample);
-                }
-            }
-            productOrderSampleDao.flush();
-            productOrderSampleDao.clear();
+        do {
             allSamplesToModify =
                     productOrderSampleDao.findSamplesWithoutMercurySample(0, sampleBlockSize);
             sampleKeys = Lists.transform(allSamplesToModify, new Function<ProductOrderSample, String>() {
@@ -115,7 +93,24 @@ public class ProductOrderSampleKitFixupTest extends Arquillian {
                     return o.getSampleKey();
                 }
             });
-            iteration++;
-        }
+            if (!allSamplesToModify.isEmpty()) {
+                log.info(String.format("Working on iteration %d with a sample block size of %d", iteration,
+                        sampleBlockSize));
+                log.info("About to process samples beginning with " + allSamplesToModify.iterator().next().getSampleKey());
+
+                Map<String, MercurySample> sampleByKey = mercurySampleDao.findMapIdToMercurySample(sampleKeys);
+
+                for (ProductOrderSample productOrderSample : allSamplesToModify) {
+                    assertThat(productOrderSample.getMercurySample(), is(nullValue()));
+                    MercurySample matchingSample = sampleByKey.get(productOrderSample.getSampleKey());
+                    if (matchingSample != null) {
+                        productOrderSample.setMercurySample(matchingSample);
+                    }
+                }
+                productOrderSampleDao.flush();
+                productOrderSampleDao.clear();
+                iteration++;
+            }
+        } while (!allSamplesToModify.isEmpty());
     }
 }
