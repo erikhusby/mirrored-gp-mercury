@@ -37,8 +37,6 @@ import java.util.Set;
 @RequestScoped
 public class GenericDao {
 
-    public static final int RESULT_DEFAULT_PAGE_SIZE = 100;
-
     /**
      * Interface for callbacks that want to specify fetches from the specified {@link Root}, make the query distinct,
      * etc.
@@ -243,7 +241,7 @@ public class GenericDao {
                                  SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute, VALUE_TYPE value,
                                  LockModeType lockModeType) {
         CriteriaBuilder criteriaBuilder = getCriteriaBuilder();
-        CriteriaQuery<ENTITY_TYPE> criteriaQuery = getCriteriaBuilder().createQuery(entity);
+        CriteriaQuery<ENTITY_TYPE> criteriaQuery = criteriaBuilder.createQuery(entity);
         Root<ENTITY_TYPE> root = criteriaQuery.from(entity);
 
         Predicate predicate;
@@ -290,7 +288,7 @@ public class GenericDao {
     public <ENTITY_TYPE> TypedQuery<ENTITY_TYPE> getQuery(
             CriteriaQuery<ENTITY_TYPE> criteriaQuery, LockModeType lockModeType) {
 
-        return getQuery(criteriaQuery, lockModeType, false, 0, RESULT_DEFAULT_PAGE_SIZE);
+        return getQuery(criteriaQuery, lockModeType);
     }
 
     /**
@@ -376,8 +374,7 @@ public class GenericDao {
             Collection<VALUE_TYPE> values,
             @Nullable GenericDaoCallback<ENTITY_TYPE> genericDaoCallback) {
 
-        return findListForPagination(entity, singularAttribute, values, genericDaoCallback, false, 0,
-                RESULT_DEFAULT_PAGE_SIZE);
+        return findListForPagination(entity, singularAttribute, values, genericDaoCallback, false, 0, 0);
     }
 
     private <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> List<ENTITY_TYPE> findListForPagination(
@@ -490,8 +487,7 @@ public class GenericDao {
 
         criteriaQuery.where(criteriaBuilder.or(predicates));
         try {
-            return getQuery((CriteriaQuery<ENTITY_TYPE>) criteriaQuery,
-                    (LockModeType) LockModeType.NONE).getResultList();
+            return getQuery(criteriaQuery, LockModeType.NONE).getResultList();
         } catch (NoResultException ignored) {
             return Collections.emptyList();
         }

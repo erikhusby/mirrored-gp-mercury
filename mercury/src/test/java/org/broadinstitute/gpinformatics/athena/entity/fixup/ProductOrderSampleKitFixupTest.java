@@ -11,11 +11,10 @@
 
 package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
-import clover.com.google.common.base.Function;
-import clover.com.google.common.collect.Lists;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
+import com.google.common.base.Function;
+import com.google.common.collect.Lists;
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderKitDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
@@ -30,9 +29,7 @@ import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
-import javax.annotation.Nullable;
 import javax.inject.Inject;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -57,19 +54,19 @@ public class ProductOrderSampleKitFixupTest extends Arquillian {
     @Inject
     private MercurySampleDao mercurySampleDao;
 
-    @SuppressWarnings("CdiInjectionPointsInspection")
-    @Inject
-    private Log log;
+    private final Log log = LogFactory.getLog(ProductOrderSampleKitFixupTest.class);
 
     // When you run this on prod, change to PROD and prod.
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
+
     // GPLIM-2427
-    @Test(enabled=false)
-    public void backPopulateKitRequestIsExomeExpress(){
-        List<ProductOrderKit> nullExomeExpress = productOrderKitDao.findList(ProductOrderKit.class, ProductOrderKit_.exomeExpress, null);
+    @Test(enabled = false)
+    public void backPopulateKitRequestIsExomeExpress() {
+        List<ProductOrderKit> nullExomeExpress =
+                productOrderKitDao.findList(ProductOrderKit.class, ProductOrderKit_.exomeExpress, null);
         for (ProductOrderKit pdoKit : nullExomeExpress) {
             pdoKit.setExomeExpress(false);
         }
@@ -78,13 +75,14 @@ public class ProductOrderSampleKitFixupTest extends Arquillian {
 
     }
 
+    @Test(groups = TestGroups.FIXUP, enabled = true)
     public void gplim3153_associate_mercurySamples_to_productOrderSamples() {
 
-        int referencePage = 1;
+        int iteration = 1;
 
-        int samplesPerPage = 5000;
+        int sampleBlockSize = 5000;
         List<ProductOrderSample> allSamplesToModify =
-                productOrderSampleDao.findSamplesWithoutMercurySample(referencePage++, samplesPerPage);
+                productOrderSampleDao.findSamplesWithoutMercurySample(0, sampleBlockSize);
 
         List<String> sampleKeys = Lists.transform(allSamplesToModify, new Function<ProductOrderSample, String>() {
             @Override
@@ -93,9 +91,10 @@ public class ProductOrderSampleKitFixupTest extends Arquillian {
             }
         });
 
-        while(!allSamplesToModify.isEmpty()) {
-            log.info(String.format("Working on page %d with a page size of %d", referencePage, samplesPerPage));
-            log.info("About to process samples beginning with " +allSamplesToModify.iterator().next().getSampleKey());
+        while (!allSamplesToModify.isEmpty()) {
+            log.info(String.format("Working on iteration %d with a sample block size of %d", iteration,
+                    sampleBlockSize));
+            log.info("About to process samples beginning with " + allSamplesToModify.iterator().next().getSampleKey());
 
             Map<String, MercurySample> sampleByKey = mercurySampleDao.findMapIdToMercurySample(sampleKeys);
 
@@ -108,15 +107,15 @@ public class ProductOrderSampleKitFixupTest extends Arquillian {
             }
             productOrderSampleDao.flush();
             productOrderSampleDao.clear();
-
             allSamplesToModify =
-                    productOrderSampleDao.findSamplesWithoutMercurySample(referencePage++, samplesPerPage);
+                    productOrderSampleDao.findSamplesWithoutMercurySample(0, sampleBlockSize);
             sampleKeys = Lists.transform(allSamplesToModify, new Function<ProductOrderSample, String>() {
                 @Override
                 public String apply(ProductOrderSample o) {
                     return o.getSampleKey();
                 }
             });
+            iteration++;
         }
     }
 }

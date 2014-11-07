@@ -162,11 +162,11 @@ public class ProductOrderSampleDao extends GenericDao {
     /**
      * Used primarily for a fixup test, this method will return a block of results from the total set of product
      * order samples which are not previously bound to a mercury sample
-     * @param page              Block of samples to return
-     * @param samplesPerPage    Number of samples to return per block
+     * @param page              Zero based index of the Block of samples to return
+     * @param sampleBlockSize    Number of samples to return per block
      * @return a block of samples out of the total set
      */
-    public List<ProductOrderSample> findSamplesWithoutMercurySample(int page, int samplesPerPage) {
+    public List<ProductOrderSample> findSamplesWithoutMercurySample(int page, int sampleBlockSize) {
 
         return findAll(ProductOrderSample.class,
                 new GenericDaoCallback<ProductOrderSample>() {
@@ -192,6 +192,6 @@ public class ProductOrderSampleDao extends GenericDao {
                         criteriaQuery.orderBy(builder.asc(root.get(ProductOrderSample_.sampleName)));
                     }
                 },
-                (page - 1) * samplesPerPage, samplesPerPage);
+                page * sampleBlockSize, sampleBlockSize);
     }
 }
