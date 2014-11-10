@@ -47,7 +47,8 @@ public class IceEntityBuilder {
 
     public IceEntityBuilder invoke() {
         IceJaxbBuilder iceJaxbBuilder = new IceJaxbBuilder(bettaLimsMessageTestFactory, testPrefix, pondRegRackBarcode,
-                pondRegTubeBarcodes, testPrefix + "IceBait1", testPrefix + "IceBait2").invoke();
+                pondRegTubeBarcodes, testPrefix + "IceBait1", testPrefix + "IceBait2",
+                LibraryConstructionJaxbBuilder.TargetSystem.SQUID_VIA_MERCURY).invoke();
         catchEnrichBarcodes = iceJaxbBuilder.getCatchEnrichTubeBarcodes();
 
         Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
@@ -96,9 +97,16 @@ public class IceEntityBuilder {
         LabEventTest.validateWorkflow("Ice1stBaitAddition", firstHybPlate);
         ReagentDesign baitDesign1 = new ReagentDesign("Ice Bait 1", ReagentDesign.ReagentType.BAIT);
         BarcodedTube baitTube1 = LabEventTest.buildBaitTube(iceJaxbBuilder.getBaitTube1Barcode(), baitDesign1);
-        LabEvent ice1stBaitAddition = labEventFactory.buildVesselToSectionDbFree(
-                iceJaxbBuilder.getIce1stBaitAddition(), baitTube1, firstHybPlate, SBSSection.ALL96.getSectionName());
+        mapBarcodeToVessel.clear();
+        mapBarcodeToVessel.put(baitTube1.getLabel(), baitTube1);
+        mapBarcodeToVessel.put(firstHybPlate.getLabel(), firstHybPlate);
+        LabEvent ice1stBaitAddition = labEventFactory.buildFromBettaLims(iceJaxbBuilder.getIce1stBaitPick(),
+                mapBarcodeToVessel);
         labEventHandler.processEvent(ice1stBaitAddition);
+
+        LabEvent postIce1stHybridizationThermoCyclerLoaded = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                iceJaxbBuilder.getPostIce1stHybridizationThermoCyclerLoaded(), firstHybPlate);
+        labEventHandler.processEvent(postIce1stHybridizationThermoCyclerLoaded);
 
         LabEventTest.validateWorkflow("Ice1stCapture", firstHybPlate);
         mapBarcodeToVessel.clear();
@@ -108,6 +116,10 @@ public class IceEntityBuilder {
         labEventHandler.processEvent(ice1stCapture);
         StaticPlate firstCapturePlate = (StaticPlate) ice1stCapture.getTargetLabVessels().iterator().next();
 
+        LabEvent postIce1stCaptureThermoCyclerLoaded = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                iceJaxbBuilder.getPostIce1stCaptureThermoCyclerLoaded(), firstCapturePlate);
+        labEventHandler.processEvent(postIce1stCaptureThermoCyclerLoaded);
+
         LabEventTest.validateWorkflow("Ice2ndHybridization", firstCapturePlate);
         LabEvent ice2ndHybridization = labEventFactory.buildFromBettaLimsPlateEventDbFree(
                 iceJaxbBuilder.getIce2ndHybridization(), firstCapturePlate);
@@ -116,9 +128,16 @@ public class IceEntityBuilder {
         LabEventTest.validateWorkflow("Ice2ndBaitAddition", firstCapturePlate);
         ReagentDesign baitDesign2 = new ReagentDesign("Ice Bait 2", ReagentDesign.ReagentType.BAIT);
         BarcodedTube baitTube2 = LabEventTest.buildBaitTube(iceJaxbBuilder.getBaitTube2Barcode(), baitDesign2);
-        LabEvent ice2ndBaitAddition = labEventFactory.buildVesselToSectionDbFree(
-                iceJaxbBuilder.getIce2ndBaitAddition(), baitTube2, firstCapturePlate, SBSSection.ALL96.getSectionName());
+        mapBarcodeToVessel.clear();
+        mapBarcodeToVessel.put(baitTube2.getLabel(), baitTube2);
+        mapBarcodeToVessel.put(firstCapturePlate.getLabel(), firstCapturePlate);
+        LabEvent ice2ndBaitAddition = labEventFactory.buildFromBettaLims(iceJaxbBuilder.getIce2ndBaitPick(),
+                mapBarcodeToVessel);
         labEventHandler.processEvent(ice2ndBaitAddition);
+
+        LabEvent postIce2ndHybridizationThermoCyclerLoaded = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                iceJaxbBuilder.getPostIce2ndHybridizationThermoCyclerLoaded(), firstCapturePlate);
+        labEventHandler.processEvent(postIce2ndHybridizationThermoCyclerLoaded);
 
         LabEventTest.validateWorkflow("Ice2ndCapture", firstCapturePlate);
         mapBarcodeToVessel.clear();
@@ -127,6 +146,10 @@ public class IceEntityBuilder {
                 mapBarcodeToVessel);
         labEventHandler.processEvent(ice2ndCapture);
         StaticPlate secondCapturePlate = (StaticPlate) ice2ndCapture.getTargetLabVessels().iterator().next();
+
+        LabEvent postIce2ndCaptureThermoCyclerLoaded = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                iceJaxbBuilder.getPostIce2ndCaptureThermoCyclerLoaded(), secondCapturePlate);
+        labEventHandler.processEvent(postIce2ndCaptureThermoCyclerLoaded);
 
         LabEventTest.validateWorkflow("IceCatchCleanup", secondCapturePlate);
         mapBarcodeToVessel.clear();

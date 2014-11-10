@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.control.labevent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
@@ -26,14 +27,35 @@ public class BettaLimsMessageUtils {
      */
     public static Set<String> getBarcodesForCherryPick(PlateCherryPickEvent plateCherryPickEvent) {
         Set<String> barcodes = new HashSet<>();
-        switch (LabEventType.getByName(plateCherryPickEvent.getEventType()).getPlasticToValidate()) {
-        case SOURCE:
-            for (PositionMapType positionMapType : plateCherryPickEvent.getSourcePositionMap()) {
-                for (ReceptacleType receptacle : positionMapType.getReceptacle()) {
-                    barcodes.add(receptacle.getBarcode());
+        LabEventType.PlasticToValidate plasticToValidate =
+                LabEventType.getByName(plateCherryPickEvent.getEventType()).getPlasticToValidate();
+        if (plasticToValidate == LabEventType.PlasticToValidate.SOURCE ||
+                plasticToValidate == LabEventType.PlasticToValidate.BOTH) {
+            if (plateCherryPickEvent.getSourcePositionMap().isEmpty()) {
+                for (PlateType plateType : plateCherryPickEvent.getSourcePlate()) {
+                    barcodes.add(plateType.getBarcode());
+                }
+            } else {
+                for (PositionMapType positionMapType : plateCherryPickEvent.getSourcePositionMap()) {
+                    for (ReceptacleType receptacle : positionMapType.getReceptacle()) {
+                        barcodes.add(receptacle.getBarcode());
+                    }
                 }
             }
-            break;
+        }
+        if (plasticToValidate == LabEventType.PlasticToValidate.TARGET ||
+                plasticToValidate == LabEventType.PlasticToValidate.BOTH) {
+            if (plateCherryPickEvent.getPositionMap().isEmpty()) {
+                for (PlateType plateType : plateCherryPickEvent.getPlate()) {
+                    barcodes.add(plateType.getBarcode());
+                }
+            } else {
+                for (PositionMapType positionMapType : plateCherryPickEvent.getPositionMap()) {
+                    for (ReceptacleType receptacle : positionMapType.getReceptacle()) {
+                        barcodes.add(receptacle.getBarcode());
+                    }
+                }
+            }
         }
         return barcodes;
     }

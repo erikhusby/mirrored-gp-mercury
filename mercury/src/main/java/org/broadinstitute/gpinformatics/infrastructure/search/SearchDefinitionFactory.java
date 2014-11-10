@@ -5,6 +5,7 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.BspSampleSearchAddRowsListener;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.EventVesselSourcePositionPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.EventVesselTargetPositionPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetadataPlugin;
@@ -32,6 +33,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -48,26 +50,30 @@ import java.util.Set;
 @SuppressWarnings("FeatureEnvy")
 public class SearchDefinitionFactory {
 
-    private Map<String, ConfigurableSearchDefinition> mapNameToDef = new HashMap<>();
+    // State of ConfigurableSearchDefinition does not change once created.
+    private static Map<String, ConfigurableSearchDefinition> MAP_NAME_TO_DEF = new HashMap<>();
 
     public static final String CONTEXT_KEY_BSP_USER_LIST = "bspUserList";
     public static final String CONTEXT_KEY_COLUMN_SET_TYPE = "columnSetType";
     public static final String CONTEXT_KEY_SEARCH_VALUE = "searchValue";
+    public static final String CONTEXT_KEY_SEARCH_TERM = "searchTerm";
     public static final String CONTEXT_KEY_SEARCH_STRING = "searchString";
     public static final String CONTEXT_KEY_BSP_SAMPLE_SEARCH = "BSPSampleSearchService";
     public static final String CONTEXT_KEY_OPTION_VALUE_DAO = "OptionValueDao";
 
-    public ConfigurableSearchDefinition getForEntity(String entity) {
-        if (mapNameToDef.isEmpty()) {
-            ConfigurableSearchDefinition configurableSearchDefinition = buildLabVesselSearchDef();
-            mapNameToDef.put(configurableSearchDefinition.getName(), configurableSearchDefinition);
-            configurableSearchDefinition = buildLabEventSearchDef();
-            mapNameToDef.put(configurableSearchDefinition.getName(), configurableSearchDefinition);
-        }
-        return mapNameToDef.get(entity);
+    private SearchDefinitionFactory(){}
+
+    static {
+        SearchDefinitionFactory fact = new SearchDefinitionFactory();
+        fact.buildLabEventSearchDef();
+        fact.buildLabVesselSearchDef();
     }
 
-    public ConfigurableSearchDefinition buildLabVesselSearchDef() {
+    public static ConfigurableSearchDefinition getForEntity(String entity) {
+        return MAP_NAME_TO_DEF.get(entity);
+    }
+
+    private void buildLabVesselSearchDef() {
         Map<String, List<SearchTerm>> mapGroupSearchTerms = new LinkedHashMap<>();
 
         List<SearchTerm> searchTerms = buildLabVesselIds();
@@ -155,11 +161,10 @@ public class SearchDefinitionFactory {
 
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
                 "LabVessel", LabVessel.class.getName(), "label", 100, criteriaProjections, mapGroupSearchTerms);
-        mapNameToDef.put(configurableSearchDefinition.getName(), configurableSearchDefinition);
-        return configurableSearchDefinition;
+        MAP_NAME_TO_DEF.put(ColumnEntity.LAB_VESSEL.getEntityName(), configurableSearchDefinition);
     }
 
-    public ConfigurableSearchDefinition buildLabEventSearchDef() {
+    private void buildLabEventSearchDef() {
         Map<String, List<SearchTerm>> mapGroupSearchTerms = new LinkedHashMap<>();
 
         List<SearchTerm> searchTerms = buildLabEventBatch();
@@ -197,8 +202,7 @@ public class SearchDefinitionFactory {
 
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
                 "LabEvent", LabEvent.class.getName(), "labEventId", 100, criteriaProjections, mapGroupSearchTerms);
-        mapNameToDef.put(configurableSearchDefinition.getName(), configurableSearchDefinition);
-        return configurableSearchDefinition;
+        MAP_NAME_TO_DEF.put(ColumnEntity.LAB_EVENT.getEntityName(), configurableSearchDefinition);
     }
 
     private List<SearchTerm> buildLabVesselIds() {
@@ -312,7 +316,7 @@ public class SearchDefinitionFactory {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
                 LabVessel labVessel = (LabVessel) entity;
-                Set<MercurySample> mercurySamples = labVessel.getMercurySamples();
+                Collection<MercurySample> mercurySamples = labVessel.getMercurySamples();
                 if( !mercurySamples.isEmpty() ) {
                     MercurySample mercurySample = mercurySamples.iterator().next();
                     BspSampleSearchAddRowsListener bspColumns = (BspSampleSearchAddRowsListener) context.get(
@@ -503,7 +507,7 @@ public class SearchDefinitionFactory {
                         LabEventType.SAMPLE_IMPORT);
                 for (Map.Entry<LabEvent, Set<LabVessel>> eventVesselEntry : mapEventToVessels.entrySet()) {
                     for (LabVessel vessel : eventVesselEntry.getValue()) {
-                        Set<MercurySample> mercurySamples = vessel.getMercurySamples();
+                        Collection<MercurySample> mercurySamples = vessel.getMercurySamples();
                         if( !mercurySamples.isEmpty() ) {
                             results.add(mercurySamples.iterator().next().getSampleKey());
                         }
@@ -1200,6 +1204,12 @@ public class SearchDefinitionFactory {
                 return values;
             }
         });
+        List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
+        SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList( "mercurySample", "mercurySamples" ));
+        criteriaPath.setPropertyName("sampleKey");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
 
         searchTerms.add(searchTerm);
 
@@ -1228,8 +1238,8 @@ public class SearchDefinitionFactory {
                 return new BigDecimal( (String) context.get(CONTEXT_KEY_SEARCH_STRING));
             }
         });
-        List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
-        SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPaths = new ArrayList<>();
+        criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setCriteria(Arrays.asList( "labMetric" /* LabVessel */, "labMetrics" /* LabMetric */, "metadataSet" /* Metadata */ ));
         criteriaPath.setPropertyName("numberValue");
         criteriaPaths.add(criteriaPath);
@@ -1237,10 +1247,11 @@ public class SearchDefinitionFactory {
 
         searchTerms.add(searchTerm);
 
-        // Build sample metadata child search term (the metadata value)
+        // ***** Build sample metadata child search term (the metadata value) ***** //
         List<SearchTerm> childSearchTerms = new ArrayList<>();
         searchTerm = new SearchTerm();
         searchTerm.setName("Metadata Value");
+        // This is needed to show the selected metadata column term in the results.
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
@@ -1252,7 +1263,7 @@ public class SearchDefinitionFactory {
                 Metadata.Key key = Metadata.Key.valueOf(header);
 
                 LabVessel labVessel = (LabVessel) entity;
-                Set<MercurySample> samples = labVessel.getMercurySamples();
+                Collection<MercurySample> samples = labVessel.getMercurySamples();
                 for (MercurySample sample : samples) {
                     Set<Metadata> metadataSet = sample.getMetadata();
                     for (Metadata meta : metadataSet) {
@@ -1322,7 +1333,7 @@ public class SearchDefinitionFactory {
         searchTerm.setCriteriaPaths(criteriaPaths);
         childSearchTerms.add(searchTerm);
 
-        // Build parent search term (the metadata name)
+        // *****  Build parent search term (the metadata name) ***** //
         searchTerm = new SearchTerm();
         searchTerm.setName("Sample Metadata");
         searchTerm.setValuesExpression(new SearchTerm.Evaluator<List<ConstrainedValue>>() {
@@ -1347,7 +1358,7 @@ public class SearchDefinitionFactory {
         // Don't want this option in selectable columns
         searchTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
         searchTerm.setDependentSearchTerms(childSearchTerms);
-        searchTerm.setAddConstrainedValuesToSearchTermList(true);
+        searchTerm.setAddDependentTermsToSearchTermList(Boolean.TRUE);
         criteriaPaths = new ArrayList<>();
         criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setCriteria(Arrays.asList( "mercurySample", "mercurySamples", "metadata" ));
@@ -1355,6 +1366,17 @@ public class SearchDefinitionFactory {
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerms.add(searchTerm);
+
+        // ******** Allow individual selectable result columns for each sample metadata value *******
+        SampleMetadataDisplayExpression sampleMetadataDisplayExpression = new SampleMetadataDisplayExpression();
+        for (Metadata.Key meta : Metadata.Key.values()) {
+            if (meta.getCategory() == Metadata.Category.SAMPLE) {
+                searchTerm = new SearchTerm();
+                searchTerm.setName(meta.getDisplayName());
+                searchTerm.setDisplayExpression(sampleMetadataDisplayExpression);
+                searchTerms.add(searchTerm);
+            }
+        }
 
         return searchTerms;
     }
@@ -1401,6 +1423,49 @@ public class SearchDefinitionFactory {
         @Override
         public Object evaluate(Object entity, Map<String, Object> context) {
             return Enum.valueOf(LabEventType.class, (String) context.get(CONTEXT_KEY_SEARCH_STRING));
+        }
+    }
+
+    /**
+     * Shared display expression for sample metadata
+     */
+    private class SampleMetadataDisplayExpression extends SearchTerm.Evaluator<Object> {
+
+        // Put a quick way to lookup key by display name in place
+        // TODO: With only this one use-case, should this be part of Metadata.Key?
+        private Map<String,Metadata.Key> keyMap = new HashMap<>();
+
+        public SampleMetadataDisplayExpression(){
+            for(Metadata.Key key : Metadata.Key.values() ){
+                if( key.getCategory() == Metadata.Category.SAMPLE ) {
+                    keyMap.put(key.getDisplayName(), key);
+                }
+            }
+        }
+
+        @Override
+        public Object evaluate(Object entity, Map<String, Object> context) {
+            SearchTerm searchTerm = (SearchTerm) context.get(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_TERM);
+            String metaName = searchTerm.getName();
+            String value = "";
+            LabVessel labVessel = (LabVessel) entity;
+
+            for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                MercurySample sample = sampleInstanceV2.getRootOrEarliestMercurySample();
+                Set<Metadata> metadata = sample.getMetadata();
+                if( metadata != null && !metadata.isEmpty() ) {
+                    Metadata.Key key = keyMap.get(metaName);
+                    for( Metadata meta : metadata){
+                        if( meta.getKey() == key ) {
+                            value = value + meta.getValue() + " ";
+                            // Assume only one metadata type (e.g. Gender, Sample ID) per vessel.
+                            break;
+                        }
+                    }
+                }
+            }
+
+            return value;
         }
     }
 

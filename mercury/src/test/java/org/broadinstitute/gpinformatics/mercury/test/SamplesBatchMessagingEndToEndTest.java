@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
 import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.filter.LoggingFilter;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -11,6 +12,8 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransfe
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventResponseBean;
+import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
@@ -35,9 +38,12 @@ public class SamplesBatchMessagingEndToEndTest extends ContainerTest {
 
     @Test(enabled = true, groups = TestGroups.STUBBY, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testEndToEnd(@ArquillianResource URL baseUrl) {
+    public void testEndToEnd(@ArquillianResource URL baseUrl) throws Exception {
         String timestamp = timestampFormat.format(new Date());
-        Client client = Client.create();
+        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
+        clientConfig.getProperties().put(ClientConfig.PROPERTY_FOLLOW_REDIRECTS, Boolean.TRUE);
+
+        Client client = Client.create(clientConfig);
         client.addFilter(new LoggingFilter(System.out));
 
         BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
@@ -125,9 +131,10 @@ public class SamplesBatchMessagingEndToEndTest extends ContainerTest {
         SamplesPicoDbTest.sendMessages(baseUrl, client, Arrays.asList(platingMsg));
         bettaLimsMessageTestFactory.advanceTime();
 
-        LabEventResponseBean labEventResponseBean = client.resource(baseUrl.toExternalForm() + "rest/labevent/batch")
-                .path(batchId)
-                .get(LabEventResponseBean.class);
+        LabEventResponseBean labEventResponseBean =
+                client.resource(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/labevent/batch")
+                        .path(batchId)
+                        .get(LabEventResponseBean.class);
         List<LabEventBean> labEventBeans = labEventResponseBean.getLabEventBeans();
         Assert.assertEquals(labEventBeans.size(), 6, "Wrong number of lab events");
         SamplesPicoEndToEndTest.printLabEvents(labEventBeans);

@@ -1,20 +1,28 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.sample;
 
+import net.sourceforge.stripes.action.ForwardResolution;
+import net.sourceforge.stripes.action.Resolution;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.bsp.client.rackscan.RackScanner;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.RackScannerEjb;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBeanContext;
+import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -34,6 +42,10 @@ public class PicoDispositionActionBeanTest {
 
     // Makes a rack of tubes with initial pico quant metrics.
     private void setUpQuants(int numberTubes) {
+        setUpQuants(numberTubes, null);
+    }
+
+    private void setUpQuants(int numberTubes, BigDecimal metricValue) {
         boolean needAtRiskMetric = true;
         Map<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
         for (int incrementer = 0; incrementer < numberTubes; ++incrementer) {
@@ -46,9 +58,10 @@ public class PicoDispositionActionBeanTest {
             VesselPosition vesselPosition = VesselPosition.getByName(cellname);
             mapPositionToTube.put(vesselPosition, tube);
 
-            // Concentration bounces around for successive positions (i.e. 96, 1, 94, 3, 92, 5, ...)
-            // so code can check sorting.
-            BigDecimal concentration = new BigDecimal(incrementer % 2 == 1 ? incrementer : NUMBER_TUBES - incrementer);
+            // Concentration is as specified, or if that's null make it bounce around for successive
+            // positions (i.e. 96, 1, 94, 3, 92, 5, ...) so code can check sorting.
+            BigDecimal concentration = metricValue != null ? metricValue :
+                    new BigDecimal(incrementer % 2 == 1 ? incrementer : NUMBER_TUBES - incrementer);
             // Puts the quant metric on each tube.
             LabMetric labMetric = new LabMetric(concentration, LabMetric.MetricType.INITIAL_PICO,
                     LabMetric.LabUnit.NG_PER_UL, cellname, timeSteps[0]);
@@ -243,5 +256,87 @@ public class PicoDispositionActionBeanTest {
         Assert.assertEquals(1, picoDispositionActionBean.getListItems().size());
         Assert.assertEquals(PicoDispositionActionBean.NextStep.FP_DAUGHTER,
                 picoDispositionActionBean.getListItems().get(0).getDisposition());
+    }
+
+    private static final Resolution PROBLEM_PAGE = new ForwardResolution(PicoDispositionActionBean.CONFIRM_REARRAY_RACK_SCAN_PAGE);
+    private static final Resolution OK_PAGE = new ForwardResolution(PicoDispositionActionBean.CONFIRM_REARRAY_PAGE);
+
+    /** Simulates clicking "confirm rearray" and expects a failure since expected next step selection hasn't been set. */
+    @Test
+    public void testConfirmRearrayFail1() throws Exception {
+        setUpQuants(NUMBER_TUBES);
+        picoDispositionActionBean.setContext(new CoreActionBeanContext());
+        Assert.assertEquals(picoDispositionActionBean.confirmRearrayScan().toString(), PROBLEM_PAGE.toString());
+        Assert.assertEquals(picoDispositionActionBean.getContext().getValidationErrors().size(), 1);
+    }
+
+    /** Simulates clicking confirm rearray on the un-rearrayed plate, to view the mismatched tube dispositions. */
+    @Test
+    public void testConfirmRearrayFail2() throws Exception {
+        setUpQuants(NUMBER_TUBES);
+        picoDispositionActionBean.setContext(new CoreActionBeanContext());
+
+        // Makes a map of position name to barcode that will be the output of the simulated rack scanner.
+        TubeFormation tubeFormation = picoDispositionActionBean.getTubeFormation();
+        mockScanningARack(tubeFormation);
+
+        picoDispositionActionBean.setNextStepSelect(PicoDispositionActionBean.NextStep.SHEARING_DAUGHTER.getStepName());
+        picoDispositionActionBean.setRackScanner(RackScanner.BSP_1114_1);
+        Assert.assertEquals(picoDispositionActionBean.confirmRearrayScan().toString(), OK_PAGE.toString());
+        Assert.assertEquals(picoDispositionActionBean.getListItems().size(), 38);
+        for (PicoDispositionActionBean.ListItem listItem : picoDispositionActionBean.getListItems()) {
+            Assert.assertTrue(listItem.getDisposition() != PicoDispositionActionBean.NextStep.SHEARING_DAUGHTER);
+        }
+
+        mockScanningARack(tubeFormation);
+        picoDispositionActionBean.setNextStepSelect(PicoDispositionActionBean.NextStep.FP_DAUGHTER.getStepName());
+        picoDispositionActionBean.setRackScanner(RackScanner.BSP_1114_1);
+        Assert.assertEquals(picoDispositionActionBean.confirmRearrayScan().toString(), OK_PAGE.toString());
+        Assert.assertEquals(picoDispositionActionBean.getListItems().size(), 62);
+        for (PicoDispositionActionBean.ListItem listItem : picoDispositionActionBean.getListItems()) {
+            Assert.assertTrue(listItem.getDisposition() != PicoDispositionActionBean.NextStep.FP_DAUGHTER);
+        }
+    }
+
+    /** Simulates clicking confirm rearray on a rearrayed plate, to verify no mismatched tube dispositions. */
+    @Test
+    public void testConfirmRearray() throws Exception {
+        int numberOfTubes = 5;
+        // Makes all metrics be the same, for shearing daughter.
+        setUpQuants(numberOfTubes, new BigDecimal(5.0));
+        picoDispositionActionBean.setContext(new CoreActionBeanContext());
+
+        // Makes a map of position name to barcode that will be the output of the simulated rack scanner.
+        TubeFormation tubeFormation = picoDispositionActionBean.getTubeFormation();
+        mockScanningARack(tubeFormation);
+
+        picoDispositionActionBean.setNextStepSelect(PicoDispositionActionBean.NextStep.SHEARING_DAUGHTER.getStepName());
+        picoDispositionActionBean.setRackScanner(RackScanner.BSP_1114_1);
+        Assert.assertEquals(picoDispositionActionBean.confirmRearrayScan().toString(), OK_PAGE.toString());
+        Assert.assertEquals(picoDispositionActionBean.getListItems().size(), 0);
+    }
+
+
+    private void mockScanningARack(TubeFormation tubeFormation) throws Exception {
+        // Makes a map of cellname to tubeBarcode that the scanner ejb will return.
+        Map<VesselPosition, BarcodedTube> positionToVessel = tubeFormation.getContainerRole().getMapPositionToVessel();
+        LinkedHashMap<String, String> cellToBarcode = new LinkedHashMap<>();
+        for (VesselPosition vesselPosition : positionToVessel.keySet()) {
+            cellToBarcode.put(vesselPosition.name(), positionToVessel.get(vesselPosition).getLabel());
+        }
+
+        RackScannerEjb rackScannerEjb = EasyMock.createMock(RackScannerEjb.class);
+        BarcodedTubeDao barcodedTubeDao = EasyMock.createMock(BarcodedTubeDao.class);
+        EasyMock.reset(rackScannerEjb);
+        EasyMock.reset(barcodedTubeDao);
+        picoDispositionActionBean.setRackScannerEjb(rackScannerEjb);
+        picoDispositionActionBean.setBarcodedTubeDao(barcodedTubeDao);
+        EasyMock.expect(rackScannerEjb.runRackScanner(EasyMock.anyObject(RackScanner.class))).andReturn(cellToBarcode);
+        for (BarcodedTube barcodedTube : positionToVessel.values()) {
+            // This returns all tubes but not in the correct position, which will have to be ok for our purposes.
+            EasyMock.expect(barcodedTubeDao.findByBarcode(EasyMock.anyObject(String.class))).andReturn(barcodedTube);
+        }
+        EasyMock.replay(barcodedTubeDao);
+        EasyMock.replay(rackScannerEjb);
     }
 }

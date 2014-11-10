@@ -9,6 +9,7 @@ import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
+import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.w3c.dom.Document;
 
 import javax.inject.Inject;
@@ -52,7 +53,7 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
 
     @Override
     protected void customizeConfig(ClientConfig clientConfig) {
-        acceptAllServerCertificates(clientConfig);
+        JerseyUtils.acceptAllServerCertificates(clientConfig);
     }
 
     @Override
@@ -98,8 +99,9 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
         } catch (UniformInterfaceException e) {
             throw new QuoteNotFoundException("Could not find quote " + id + " at " + url);
         } catch (ClientHandlerException e) {
-            throw new QuoteServerException(String.format("Could not communicate with quote server at %s: %s" + url,
-                                e.getLocalizedMessage()));        }
+            throw new QuoteServerException(String.format("Could not communicate with quote server at %s: %s",
+                    url, e.getLocalizedMessage()));
+        }
         return quote;
     }
 
@@ -121,7 +123,7 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
         } catch (UniformInterfaceException e) {
             throw new QuoteNotFoundException("Could not find any quotes at " + url);
         } catch (ClientHandlerException e) {
-            throw new QuoteServerException(String.format("Could not communicate with quote server at %s: %s" + url,
+            throw new QuoteServerException(String.format("Could not communicate with quote server at %s: %s", url,
                                 e.getLocalizedMessage()));
 
         }
@@ -141,7 +143,7 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
         } catch (UniformInterfaceException e) {
             throw new QuoteNotFoundException("Could not find any quotes at " + url);
         } catch (ClientHandlerException e) {
-            throw new QuoteServerException(String.format("Could not communicate with quote server at %s: %s" + url,
+            throw new QuoteServerException(String.format("Could not communicate with quote server at %s: %s", url,
                                 e.getLocalizedMessage()));
         }
 

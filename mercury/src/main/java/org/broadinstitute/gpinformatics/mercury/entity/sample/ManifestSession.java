@@ -92,9 +92,9 @@ public class ManifestSession implements Updatable {
     private UpdateData updateData = new UpdateData();
 
     @NotAudited
-    @Formula("(select count(*) from mercury.manifest_record where manifest_record.status != 'SAMPLE_TRANSFERRED_TO_TUBE'" +
+    @Formula("(select count(*) from mercury.manifest_record where manifest_record.status = 'SAMPLE_TRANSFERRED_TO_TUBE'" +
              " and manifest_record.manifest_session_id = manifest_session_id)")
-    private int tubesRemainingToBeTransferred;
+    private int numberOfTubesTransferred;
 
     @NotAudited
     @Formula("(select count(*) from mercury.manifest_record rec where rec.manifest_session_id = manifest_session_id)")
@@ -387,14 +387,14 @@ public class ManifestSession implements Updatable {
      * Returns the total number of records that have been transferred to a mercury vessel.
      */
     public int getNumberOfTubesTransferred() {
-        return totalNumberOfRecords - tubesRemainingToBeTransferred;
+        return numberOfTubesTransferred;
     }
 
     /**
      * Returns the total number of records that can be transferred to a mercury vessel.
      */
     public int getNumberOfTubesAvailableForTransfer() {
-        return tubesRemainingToBeTransferred - numberOfQuarantinedRecords;
+        return totalNumberOfRecords - numberOfTubesTransferred - numberOfQuarantinedRecords;
     }
 
     public int getNumberOfQuarantinedRecords() {

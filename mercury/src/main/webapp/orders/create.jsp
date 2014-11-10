@@ -102,8 +102,8 @@
                     );
 
                     $j("#researchProject").tokenInput(
-                            "${ctxpath}/orders/order.action?projectAutocomplete=", {
-                                hintText: "Type a project name",
+                            "${ctxpath}/projects/project.action?projectAutocomplete=", {
+                                hintText: "Type a Research Project key or title",
                                 onAdd: updateUIForProjectChoice,
                                 onDelete: updateUIForProjectChoice,
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.projectTokenInput.completeData)},

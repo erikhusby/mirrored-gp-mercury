@@ -314,16 +314,20 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         }
     }
 
-    public static void loadBspData(List<ProductOrderSample> samples) {
+    /**
+     * Load SampleData for all the supplied ProductOrderSamples.
+     * @see SampleDataFetcher
+     */
+    public static void loadSampleData(List<ProductOrderSample> samples) {
 
         // Create a subset of the samples so we only call BSP for BSP samples that aren't already cached.
-        Set<String> bspSampleNames = new HashSet<>(samples.size());
+        Set<String> sampleNames = new HashSet<>(samples.size());
         for (ProductOrderSample productOrderSample : samples) {
             if (productOrderSample.needsBspMetaData()) {
-                bspSampleNames.add(productOrderSample.getName());
+                sampleNames.add(productOrderSample.getName());
             }
         }
-        if (bspSampleNames.isEmpty()) {
+        if (sampleNames.isEmpty()) {
             // This early return is needed to avoid making a unnecessary injection, which could cause
             // DB Free automated tests to fail.
             return;
@@ -331,23 +335,22 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
         // This gets all the sample names. We could get unique sample names from BSP as a future optimization.
         SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
-        Map<String, SampleData> bspSampleMetaData = sampleDataFetcher.fetchSampleData(
-                (Collection<String>) bspSampleNames);
+        Map<String, SampleData> sampleDataMap = sampleDataFetcher.fetchSampleData(sampleNames);
 
-        // The non-null DTOs which we use to look up FFPE status.
-        List<SampleData> nonNullDTOs = new ArrayList<>();
+        // Collect SampleData which we will then use to look up FFPE status.
+        List<SampleData> nonNullSampleData = new ArrayList<>();
         for (ProductOrderSample sample : samples) {
-            SampleData sampleData = bspSampleMetaData.get(sample.getName());
+            SampleData sampleData = sampleDataMap.get(sample.getName());
 
             // If the DTO is null, we do not need to set it because it defaults to DUMMY inside sample.
             if (sampleData != null) {
                 sample.setSampleData(sampleData);
-                nonNullDTOs.add(sampleData);
+                nonNullSampleData.add(sampleData);
             }
         }
 
-        // Fill out all the non-null DTOs with FFPE status in one shot.
-        sampleDataFetcher.fetchFFPEDerived(nonNullDTOs);
+        // Fill out all the SampleData with FFPE status in one shot.
+        sampleDataFetcher.fetchFFPEDerived(nonNullSampleData);
     }
 
     // Initialize our transient data after the object has been loaded from the database.
@@ -408,7 +411,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      */
     public int calculateRisk(List<ProductOrderSample> selectedSamples) {
         // Load the bsp data for the selected samples
-        loadBspData(selectedSamples);
+        loadSampleData(selectedSamples);
 
         Set<String> uniqueSampleNamesOnRisk = new HashSet<>();
         for (ProductOrderSample sample : selectedSamples) {
@@ -745,7 +748,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      * Use the BSP Manager to load the bsp data for every sample in this product order.
      */
     public void loadBspData() {
-        loadBspData(samples);
+        loadSampleData(samples);
     }
 
     // Return the sample counts object to allow call chaining.
