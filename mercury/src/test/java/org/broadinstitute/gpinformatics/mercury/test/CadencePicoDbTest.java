@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
 import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.filter.LoggingFilter;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -9,6 +10,8 @@ import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventResponseBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.MetadataBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.ReagentBean;
+import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.CadencePicoJaxbBuilder;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -32,7 +35,7 @@ public class CadencePicoDbTest extends ContainerTest {
 
     @Test(enabled = true, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testEndToEnd(@ArquillianResource URL baseUrl) {
+    public void testEndToEnd(@ArquillianResource URL baseUrl) throws Exception {
         String testSuffix = timestampFormat.format(new Date());
 
         BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
@@ -44,7 +47,10 @@ public class CadencePicoDbTest extends ContainerTest {
             picoSampleTubeBarcodes.add("CadencePico" + testSuffix + rackPosition);
         }
 
-        Client client = Client.create();
+        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
+        clientConfig.getProperties().put(ClientConfig.PROPERTY_FOLLOW_REDIRECTS, Boolean.TRUE);
+
+        Client client = Client.create(clientConfig);
         client.addFilter(new LoggingFilter(System.out));
 
         CadencePicoJaxbBuilder cadencePicoJaxbBuilder = new CadencePicoJaxbBuilder(
@@ -57,9 +63,11 @@ public class CadencePicoDbTest extends ContainerTest {
         SamplesPicoDbTest.sendMessages(baseUrl, client, cadencePicoJaxbBuilder.getMessageList());
 
         //fetches plate transfers for batchless
-        LabEventResponseBean labEventResponseBean = client.resource(baseUrl.toExternalForm() + "rest/labevent/transfersToFirstAncestorRack")
-                .queryParam("plateBarcodes", cadencePicoJaxbBuilder.getPicoMicrofluorBarcode())
-                .get(LabEventResponseBean.class);
+        LabEventResponseBean labEventResponseBean =
+                client.resource(RestServiceContainerTest.convertUrlToSecure(baseUrl)
+                                + "rest/labevent/transfersToFirstAncestorRack")
+                        .queryParam("plateBarcodes", cadencePicoJaxbBuilder.getPicoMicrofluorBarcode())
+                        .get(LabEventResponseBean.class);
         List<LabEventBean> labEventBeans = labEventResponseBean.getLabEventBeans();
         Assert.assertEquals(2, labEventBeans.size(), "Wrong number of lab events");
         SamplesPicoEndToEndTest.printLabEvents(labEventBeans);
@@ -71,7 +79,8 @@ public class CadencePicoDbTest extends ContainerTest {
         Assert.assertEquals("DilutionFactor", metadataBean.getName());
 
         //Fetch reagent addition message for batchless
-        labEventResponseBean = client.resource(baseUrl.toExternalForm() + "rest/labevent/inPlaceReagentEvents")
+        labEventResponseBean = client.resource(
+                RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/labevent/inPlaceReagentEvents")
                 .queryParam("plateBarcodes", cadencePicoJaxbBuilder.getPicoMicrofluorBarcode())
                 .get(LabEventResponseBean.class);
         labEventBeans = labEventResponseBean.getLabEventBeans();

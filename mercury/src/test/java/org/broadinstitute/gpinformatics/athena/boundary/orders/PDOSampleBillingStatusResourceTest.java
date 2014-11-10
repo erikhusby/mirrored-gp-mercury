@@ -26,7 +26,7 @@ public class PDOSampleBillingStatusResourceTest extends RestServiceContainerTest
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-       return DeploymentBuilder.buildMercuryWar(DEV);
+        return DeploymentBuilder.buildMercuryWar(DEV);
     }
 
     @Override
@@ -37,11 +37,12 @@ public class PDOSampleBillingStatusResourceTest extends RestServiceContainerTest
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testPDOSampleBilling(@ArquillianResource URL baseUrl) throws Exception {
+    public void testPDOSampleBilling(@ArquillianResource URL baseUrl)
+            throws Exception {
         List<PDOSample> pdoSamplesList = new ArrayList<>();
-        PDOSample pdoSample1 = new PDOSample("PDO-872", "SM-47KKU",null);
-        PDOSample pdoSample2 = new PDOSample("PDO-1133","0113404606",null);
-        PDOSample pdoSample3 = new PDOSample("PDO-ONE_BILLION","DooDoo",null);
+        PDOSample pdoSample1 = new PDOSample("PDO-872", "SM-47KKU", null);
+        PDOSample pdoSample2 = new PDOSample("PDO-1133", "0113404606", null);
+        PDOSample pdoSample3 = new PDOSample("PDO-ONE_BILLION", "DooDoo", null);
         pdoSamplesList.add(pdoSample1);
         pdoSamplesList.add(pdoSample2);
         pdoSamplesList.add(pdoSample3);
@@ -77,7 +78,7 @@ public class PDOSampleBillingStatusResourceTest extends RestServiceContainerTest
         Assert.assertTrue(foundPdoSample2);
         Assert.assertTrue(foundPdoSample3);
 
-        Assert.assertEquals(returnedPdoSamples.getErrors().size(),1);
+        Assert.assertEquals(returnedPdoSamples.getErrors().size(), 1);
 
     }
 

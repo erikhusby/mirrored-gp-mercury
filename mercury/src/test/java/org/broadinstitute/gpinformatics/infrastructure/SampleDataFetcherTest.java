@@ -12,27 +12,19 @@ import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleDataFetcher;
 import org.hamcrest.Matchers;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.Matchers.argThat;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.emptyCollectionOf;
-import static org.mockito.Matchers.anyCollectionOf;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
@@ -76,7 +68,6 @@ public class SampleDataFetcherTest {
      * A sample that was exported from BSP for which Mercury is the metadata source.
      */
     private static final String CLINICAL_SAMPLE_ID = "SM-MERC1";
-    private static final String FUBAR_SAMPLE_ID = "SM-FUBAR";
     private static final String CLINICAL_PATIENT_ID = "ZB12345";
 
     private BspSampleData bspOnlySampleData;
@@ -192,13 +183,15 @@ public class SampleDataFetcherTest {
         verify(mockBspSampleDataFetcher).fetchSampleData(argThat(contains(GSSR_SAMPLE_ID)));
     }
 
-    public void test_BSP_bare_sample_should_query_BSP_and_return_nothing() {
+    public void test_BSP_bare_sample_should_query_BSP() {
         configureMercurySampleDao(new MercurySample(BSP_BARE_SAMPLE_ID, MercurySample.MetadataSource.BSP));
+        configureBspFetcher(BSP_BARE_SAMPLE_ID, bspSampleData);
 
         Map<String, SampleData> sampleDataBySampleId =
                 sampleDataFetcher.fetchSampleData(Collections.singleton(BSP_BARE_SAMPLE_ID));
 
-        assertThat(sampleDataBySampleId.size(), equalTo(0));
+        assertThat(sampleDataBySampleId.size(), equalTo(1));
+        assertThat(sampleDataBySampleId.get(BSP_BARE_SAMPLE_ID), equalTo((SampleData) bspSampleData));
     }
 
     public void fetch_BSP_samples_without_MercurySample_should_query_BSP() {
@@ -290,28 +283,6 @@ public class SampleDataFetcherTest {
         String stockId = sampleDataFetcher.getStockIdForAliquotId(BSP_ONLY_SAMPLE_ID);
 
         assertThat(stockId, equalTo(BSP_STOCK_ID));
-    }
-
-    public void test_determineMetadataSource_for_BSP_sample_should_return_bsp_mercury_samples() {
-        configureMercurySampleDao(bspMercurySample);
-        Map<MercurySample.MetadataSource, Collection<MercurySample>> metadataBySampleId =
-                sampleDataFetcher.determineMetadataSource(Collections.singleton(BSP_SAMPLE_ID));
-
-        assertThat(metadataBySampleId.get(MercurySample.MetadataSource.BSP), contains(bspMercurySample));
-    }
-
-    public void test_determineMetadataSource_for_BSP_only_sample_should_return_empty_collection() {
-        Map<MercurySample.MetadataSource, Collection<MercurySample>> metadataBySampleId =
-                sampleDataFetcher.determineMetadataSource(Collections.singleton(BSP_ONLY_SAMPLE_ID));
-        assertThat(metadataBySampleId.get(MercurySample.MetadataSource.BSP), emptyCollectionOf(MercurySample.class));
-    }
-
-    public void test_determineMetadataSource_for_MERCURY_sample_should_return_mercury_samples() {
-        configureMercurySampleDao(clinicalMercurySample);
-
-        Map<MercurySample.MetadataSource, Collection<MercurySample>> metadataBySampleId =
-                sampleDataFetcher.determineMetadataSource(Collections.singleton(CLINICAL_SAMPLE_ID));
-        assertThat(metadataBySampleId.get(MercurySample.MetadataSource.MERCURY), contains(clinicalMercurySample));
     }
 
     public void test_getStockIdForAliquotId_for_BSP_only_bare_sample_should_query_BSP() {

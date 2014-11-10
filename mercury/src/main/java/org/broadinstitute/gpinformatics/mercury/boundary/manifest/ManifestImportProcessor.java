@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
+import org.jvnet.inflector.Noun;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,6 +48,16 @@ public class ManifestImportProcessor extends TableProcessor {
     @Override
     public List<String> getHeaderNames() {
         return ManifestHeader.headerNames(columnHeaders);
+    }
+
+    @Override
+    public void validateHeaderRow(List<String> headers) {
+        List<String> errors = new ArrayList<>();
+        ManifestHeader.fromColumnName(errors, headers.toArray(new String[headers.size()]));
+        if (!errors.isEmpty()){
+            getMessages()
+                    .add(String.format("Unknown %s '%s' present", Noun.pluralOf("header", errors.size()), errors));
+        }
     }
 
     /**

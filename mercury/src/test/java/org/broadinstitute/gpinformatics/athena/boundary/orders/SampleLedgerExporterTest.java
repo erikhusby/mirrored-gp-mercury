@@ -25,6 +25,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.tableau.TableauConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
 import org.testng.annotations.Test;
@@ -38,6 +39,7 @@ import java.util.Date;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.endsWith;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.times;
@@ -52,6 +54,10 @@ import static org.mockito.Mockito.when;
 public class SampleLedgerExporterTest {
 
     public void testWriteToStream() throws IOException {
+
+        final String deployedMercuryPort= System.getProperty(RestServiceContainerTest.JBOSS_HTTPS_PORT_SYSTEM_PROPERTY,
+                String.valueOf(RestServiceContainerTest.DEFAULT_FORWARD_PORT));
+
         /*
          * Simulate getting a user from BSP.
          */
