@@ -153,7 +153,7 @@ public class ZimsIlluminaRunFactory {
                     String sampleId = pdoSampleName;
                     LabBatchStartingVessel importLbsv = laneSampleInstance.getSingleBatchVessel(LabBatch.LabBatchType.SAMPLES_IMPORT);
                     if (importLbsv != null) {
-                        Set<MercurySample> mercurySamples = importLbsv.getLabVessel().getMercurySamples();
+                        Collection<MercurySample> mercurySamples = importLbsv.getLabVessel().getMercurySamples();
                         if (!mercurySamples.isEmpty()) {
                             sampleId = mercurySamples.iterator().next().getSampleKey();
                         }

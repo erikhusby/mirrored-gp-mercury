@@ -10,7 +10,6 @@ import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.client.filter.ClientFilter;
 import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
 import com.sun.jersey.api.json.JSONConfiguration;
-import com.sun.jersey.client.urlconnection.HTTPSProperties;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.CharEncoding;
 import org.apache.commons.logging.Log;
@@ -23,11 +22,6 @@ import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInsta
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
@@ -36,8 +30,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Serializable;
-import java.security.SecureRandom;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
@@ -95,58 +87,13 @@ public abstract class AbstractJerseyClientService implements Serializable {
     }
 
     /**
-     * Subclasses can call this to trust all server certificates (Quote service).
-     *
-     * Code pulled from http://stackoverflow.com/questions/6047996/ignore-self-signed-ssl-cert-using-jersey-client
-     *
-     * This code is trusting ALL certificates.  This might be made more specific and secure,
-     * but we are currently only applying it to the Jersey ClientConfig pointed at the Quote server so
-     * this is probably okay.
-     *
-     */
-    protected void acceptAllServerCertificates(ClientConfig config) {
-        try {
-            // Create a trust manager that does not validate certificate chains
-            TrustManager[] trustAllCerts = new TrustManager[] {
-                    new X509TrustManager() {
-                        @Override
-                        public X509Certificate[] getAcceptedIssuers() {
-                            return null;
-                        }
-
-                        @Override
-                        public void checkClientTrusted(X509Certificate[] certs, String authType) {
-                        }
-
-                        @Override
-                        public void checkServerTrusted(X509Certificate[] certs, String authType) {
-                        }
-                    }};
-            SSLContext sc = SSLContext.getInstance("TLS");
-            sc.init(null, trustAllCerts, new SecureRandom());
-
-
-            config.getProperties().put(HTTPSProperties.PROPERTY_HTTPS_PROPERTIES, new HTTPSProperties(
-                    new HostnameVerifier() {
-                        @Override
-                        public boolean verify(String s, SSLSession sslSession) {
-                            return true;
-                        }
-                    }, sc
-            ));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
      * Method for subclasses to retrieve the {@link Client} for making webservice calls.
      */
     protected Client getJerseyClient() {
         if (jerseyClient == null) {
             DefaultClientConfig clientConfig = new DefaultClientConfig();
-            if(ApplicationInstance.CRSP.isCurrent() && deployment != Deployment.PROD) {
-                acceptAllServerCertificates(clientConfig);
+            if(deployment != Deployment.PROD) {
+                JerseyUtils.acceptAllServerCertificates(clientConfig);
             }
             customizeConfig(clientConfig);
 

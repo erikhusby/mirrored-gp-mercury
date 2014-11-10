@@ -1188,7 +1188,7 @@ public abstract class LabVessel implements Serializable {
     }
 
     @SuppressWarnings("unused")
-    public void addAllSamples(Set<MercurySample> mercurySamples) {
+    public void addAllSamples(Collection<MercurySample> mercurySamples) {
         this.mercurySamples.addAll(mercurySamples);
     }
 

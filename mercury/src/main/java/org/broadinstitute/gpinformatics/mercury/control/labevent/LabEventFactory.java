@@ -679,6 +679,9 @@ public class LabEventFactory implements Serializable {
                     }
 
                     if (labVessel == null) {
+                        if (source && !create) {
+                            throw new RuntimeException("Failed to find plate " + plateType.getBarcode());
+                        }
                         labVessel = new StaticPlate(plateType.getBarcode(),
                                 StaticPlate.PlateType.getByAutomationName(plateType.getPhysType()));
                     }

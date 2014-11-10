@@ -75,7 +75,7 @@ public class LibraryConstructionEntityBuilder {
     public LibraryConstructionEntityBuilder invoke() {
         final LibraryConstructionJaxbBuilder libraryConstructionJaxbBuilder = new LibraryConstructionJaxbBuilder(
                 bettaLimsMessageTestFactory, testPrefix, shearCleanPlateBarcode, "IndexPlateP7", "IndexPlateP5",
-                numSamples).invoke();
+                numSamples, LibraryConstructionJaxbBuilder.TargetSystem.SQUID_VIA_MERCURY).invoke();
         pondRegRackBarcode = libraryConstructionJaxbBuilder.getPondRegRackBarcode();
         pondRegTubeBarcodes = libraryConstructionJaxbBuilder.getPondRegTubeBarcodes();
 

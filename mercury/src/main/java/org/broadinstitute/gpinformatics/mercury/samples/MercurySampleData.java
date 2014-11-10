@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.samples;
 import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 
 import javax.annotation.Nonnull;
 import java.text.ParseException;
@@ -227,6 +228,11 @@ public class MercurySampleData implements SampleData {
     @Override
     public Boolean getFfpeStatus() {
         return null;
+    }
+
+    @Override
+    public MercurySample.MetadataSource getMetadataSource() {
+        return MercurySample.MetadataSource.MERCURY;
     }
 
     // TODO: decide whether to keep these methods or implement a general get(Metadata.Key)

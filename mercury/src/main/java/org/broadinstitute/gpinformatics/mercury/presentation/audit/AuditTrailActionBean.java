@@ -16,10 +16,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.logging.Logger;
@@ -116,9 +114,10 @@ public class AuditTrailActionBean extends CoreActionBean {
         return canonicalToDisplayClassnames.get(canonicalClassname);
     }
 
-    /** These entity classnames are removed from the Entity Type dropdown. */
-    private static final SortedSet<String> excludedEntityTypes = new TreeSet<String>(){{
+    /** These entity classnames are removed from the Entity Type dropdown and the list of modified entities. */
+    private static final SortedSet<String> excludedDisplayClassnames = new TreeSet<String>(){{
         add("RevInfo");
+        add("Preference");
     }};
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -152,7 +151,7 @@ public class AuditTrailActionBean extends CoreActionBean {
                     // it if necessary by including more of the canonical classname.
                     for (int idx = classname.lastIndexOf('.'); idx >= 0; idx = classname.lastIndexOf('.', idx)) {
                         String displayName = classname.substring(idx + 1);
-                        if (excludedEntityTypes.contains(displayName)) {
+                        if (excludedDisplayClassnames.contains(displayName)) {
                             break;
                         }
                         if (!entityDisplayNames.contains(displayName)) {
@@ -176,40 +175,35 @@ public class AuditTrailActionBean extends CoreActionBean {
     }
 
     private void generateAuditTrailList() {
-        // Search Envers using the user's criteria.
         String usernameParam =  ANY_USER.equals(searchUsername) ? AuditReaderDao.IS_ANY_USER :
                 (NO_USER.equals(searchUsername) ? AuditReaderDao.IS_NULL_USER : searchUsername);
         long from = (getDateRange().getStartTime() != null ?
                 getDateRange().getStartTime() : FIRST_AUDIT).getTime()/1000;
         long to = (getDateRange().getEndTime() != null ? getDateRange().getEndTime() : new Date()).getTime()/1000;
-        Set<Long> revIds = (SortedSet)auditReaderDao.fetchAuditIds(from, to, usernameParam).keySet();
-        auditTrailList = auditReaderDao.fetchAuditedRevs(revIds);
+        String canonicalClassname = displayToCanonicalClassnames.get(searchEntityDisplayName);
+        auditTrailList = auditReaderDao.fetchAuditIds(from, to, usernameParam, canonicalClassname);
         // Convert canonical classnames to our display names.
         for (AuditedRevDto auditedRevDto : auditTrailList) {
             List<String> displayNames = new ArrayList<>();
             for (String canonicalName : auditedRevDto.getEntityTypeNames()) {
-                // Hibernate may return an abstract class (see GPLIM-3011) which should not be shown.
+                // Doesn't show excluded classes or abstract classes (due to a Hibernate bug) and logs the latter.
                 if (canonicalToDisplayClassnames.containsKey(canonicalName)) {
                     displayNames.add(canonicalToDisplayClassnames.get(canonicalName));
                 } else {
-                    logger.info("AuditReader found an unexpected class " + canonicalName +
-                                " at revision id " + auditedRevDto.getRevId());
+                    for (String excludedDisplayClassname : excludedDisplayClassnames) {
+                        if (!canonicalName.endsWith(excludedDisplayClassname)) {
+                            logger.info("AuditReader found an unexpected class " + canonicalName +
+                                        " at revision id " + auditedRevDto.getRevId());
+                        }
+                    }
                 }
             }
             auditedRevDto.getEntityTypeNames().clear();
             auditedRevDto.getEntityTypeNames().addAll(displayNames);
         }
-
-        // Filters out the dtos that don't match the entity type criteria.  Ignore criteria if set to "any".
-        if (!ANY_ENTITY.equals(searchEntityDisplayName)) {
-            for (Iterator<AuditedRevDto> iter = auditTrailList.iterator(); iter.hasNext(); ) {
-                AuditedRevDto dto = iter.next();
-                if (!dto.getEntityTypeNames().contains(searchEntityDisplayName)) {
-                    iter.remove();
-                }
-            }
-        }
-        Collections.sort(auditTrailList, AuditedRevDto.BY_REV_ID);
     }
 
+    public static SortedSet<String> getExcludedDisplayClassnames() {
+        return excludedDisplayClassnames;
+    }
 }

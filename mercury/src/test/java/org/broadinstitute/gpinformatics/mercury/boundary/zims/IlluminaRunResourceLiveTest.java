@@ -2,13 +2,15 @@ package org.broadinstitute.gpinformatics.mercury.boundary.zims;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.client.config.DefaultClientConfig;
+import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
+import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -36,7 +38,7 @@ public class IlluminaRunResourceLiveTest extends Arquillian {
 
     @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, groups = STANDARD)
     @RunAsClient
-    public void testMercury(@ArquillianResource URL baseUrl) {
+    public void testMercury(@ArquillianResource URL baseUrl) throws Exception {
         ZimsIlluminaRun run = getZimsIlluminaRun(baseUrl, "130903_SL-HDG_0177_BFCH16FBADXX");
 
         Assert.assertEquals(run.getLanes().size(), 2, "Wrong number of lanes");
@@ -51,7 +53,7 @@ public class IlluminaRunResourceLiveTest extends Arquillian {
 
     @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, groups = STANDARD)
     @RunAsClient
-    public void testThrift(@ArquillianResource URL baseUrl) {
+    public void testThrift(@ArquillianResource URL baseUrl) throws Exception {
         ZimsIlluminaRun run = getZimsIlluminaRun(baseUrl, "120910_SL-HBL_0218_BFCD15B6ACXX");
 
         Assert.assertEquals(run.getLanes().size(), 8, "Wrong number of lanes");
@@ -66,7 +68,7 @@ public class IlluminaRunResourceLiveTest extends Arquillian {
 
     @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, groups = STANDARD)
     @RunAsClient
-    public void testThriftNullConc(@ArquillianResource URL baseUrl) {
+    public void testThriftNullConc(@ArquillianResource URL baseUrl) throws Exception {
         ZimsIlluminaRun run = getZimsIlluminaRun(baseUrl, "120830_SL-MAK_0035_AFC000000000-A1ETN");
 
         Assert.assertEquals(run.getLanes().size(), 1, "Wrong number of lanes");
@@ -80,20 +82,21 @@ public class IlluminaRunResourceLiveTest extends Arquillian {
         Assert.assertEquals(libraryBean.getLibraryCreationDate(), "08/30/2012 10:06");
     }
 
-    public static ZimsIlluminaRun getZimsIlluminaRun(URL baseUrl, String runName) {
+    public static ZimsIlluminaRun getZimsIlluminaRun(URL baseUrl, String runName) throws Exception {
         WebResource.Builder builder = getBuilder(baseUrl, runName);
         return builder.get(ZimsIlluminaRun.class);
     }
 
-    public static String getZimsIlluminaRunString(URL baseUrl, String runName) {
+    public static String getZimsIlluminaRunString(URL baseUrl, String runName) throws Exception {
         WebResource.Builder builder = getBuilder(baseUrl, runName);
         return builder.get(String.class);
     }
 
-    private static WebResource.Builder getBuilder(URL baseUrl, String runName) {
-        String url = baseUrl.toExternalForm() + IlluminaRunResourceTest.WEBSERVICE_URL;
-        DefaultClientConfig clientConfig = new DefaultClientConfig();
+    private static WebResource.Builder getBuilder(URL baseUrl, String runName) throws Exception {
+        String url = RestServiceContainerTest.convertUrlToSecure(baseUrl) + IlluminaRunResourceTest.WEBSERVICE_URL;
+        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
         clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
+        clientConfig.getProperties().put(ClientConfig.PROPERTY_FOLLOW_REDIRECTS, Boolean.TRUE);
         return Client.create(clientConfig).resource(url)
                 .queryParam("runName", runName)
                 .accept(MediaType.APPLICATION_JSON);

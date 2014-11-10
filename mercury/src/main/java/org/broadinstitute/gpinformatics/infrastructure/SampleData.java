@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure;
 
 import org.broadinstitute.bsp.client.sample.MaterialType;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 
 import java.text.ParseException;
 import java.util.Date;
@@ -73,4 +74,6 @@ public interface SampleData {
     String getRace();
 
     Boolean getFfpeStatus();
+
+    MercurySample.MetadataSource getMetadataSource();
 }

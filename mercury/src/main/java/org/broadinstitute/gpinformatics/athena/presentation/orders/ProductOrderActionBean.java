@@ -1338,7 +1338,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         if (samples != null) {
             // Assuming all samples come from same product order here.
-            ProductOrder.loadBspData(samples);
+            ProductOrder.loadSampleData(samples);
 
             for (ProductOrderSample sample : samples) {
                 JSONObject item = new JSONObject();
@@ -1618,11 +1618,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setMaterialInfo(String materialInfo) {
         this.materialInfo = materialInfo;
-    }
-
-    @HandlesEvent("projectAutocomplete")
-    public Resolution projectAutocomplete() throws Exception {
-        return createTextResolution(projectTokenInput.getJsonString(getQ()));
     }
 
     @HandlesEvent("productAutocomplete")

@@ -108,11 +108,6 @@ public class AuditTrailEntryActionBean extends CoreActionBean {
 
     @HandlesEvent(AuditTrailActionBean.VIEW_AUDIT_TRAIL_ENTRIES)
     public Resolution listEntries() {
-        generateAuditTrailEntryList();
-        return new ForwardResolution(AuditTrailActionBean.AUDIT_TRAIL_ENTRY_PAGE);
-    }
-
-    private void generateAuditTrailEntryList() {
         // For each instance of entity type modified at this revId, generate a previous and current AuditEntity pair
         // showing the differences.
         for (EnversAudit enversAudit : auditReaderDao.fetchEnversAudits(Collections.singleton(revId), entityClass)) {
@@ -139,6 +134,7 @@ public class AuditTrailEntryActionBean extends CoreActionBean {
 
             auditTrailEntries.add(new AuditTrailEntry(fieldNames, prev, cur));
         }
+        return new ForwardResolution(AuditTrailActionBean.AUDIT_TRAIL_ENTRY_PAGE);
     }
 
     // Finds fields that are different from previous entity.  If same, removes the field from
