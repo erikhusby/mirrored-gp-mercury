@@ -107,6 +107,11 @@ public enum DateRange {
             startCalendar.set(Calendar.DAY_OF_MONTH, 1);
             startCalendar.setTime(DateUtils.getStartOfDay(startCalendar.getTime()));
 
+            /*
+             * Set the day to minimum (effectively 1) for its current month so that startCalendar.get(Calendar.MONTH)
+             * doesn't accidentally lead to spill-over into the next month when stop.getActualMaximum() is called.
+             */
+            stopCalendar.set(Calendar.DAY_OF_MONTH, stopCalendar.getActualMinimum(Calendar.DAY_OF_MONTH));
             stopCalendar.set(Calendar.MONTH, startCalendar.get(Calendar.MONTH) + 2);
             stopCalendar.set(Calendar.DAY_OF_MONTH, stopCalendar.getActualMaximum(Calendar.DAY_OF_MONTH));
             stopCalendar.setTime(DateUtils.getEndOfDay(stopCalendar.getTime()));
