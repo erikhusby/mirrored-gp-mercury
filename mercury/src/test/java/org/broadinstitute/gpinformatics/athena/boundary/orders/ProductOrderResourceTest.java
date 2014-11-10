@@ -122,27 +122,27 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
         return kitDetailData;
     }
 
-    private ProductOrderData sendCreateWithKitRequest(URL baseUrl, String username) {
+    private ProductOrderData sendCreateWithKitRequest(URL baseUrl, String username) throws Exception {
         WebResource resource = makeWebResource(baseUrl, "createWithKitRequest");
         return resource.entity(createTestProductOrderData(username)).post(new GenericType<ProductOrderData>() { });
     }
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testCreateProductOrderWithKit(@ArquillianResource URL baseUrl) {
+    public void testCreateProductOrderWithKit(@ArquillianResource URL baseUrl) throws Exception {
         ProductOrderData data = sendCreateWithKitRequest(baseUrl, "scottmat");
         Assert.assertEquals(data.getStatus(), ProductOrder.OrderStatus.Pending.name());
     }
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, expectedExceptions = UniformInterfaceException.class)
     @RunAsClient
-    public void testCreateProductOrderWithKitNoUser(@ArquillianResource URL baseUrl) {
+    public void testCreateProductOrderWithKitNoUser(@ArquillianResource URL baseUrl) throws Exception {
         sendCreateWithKitRequest(baseUrl, null);
     }
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, expectedExceptions = UniformInterfaceException.class)
     @RunAsClient
-    public void testCreateProductOrderWithKitNoGoodUser(@ArquillianResource URL baseUrl) {
+    public void testCreateProductOrderWithKitNoGoodUser(@ArquillianResource URL baseUrl) throws Exception {
         sendCreateWithKitRequest(baseUrl, "invalid user name");
     }
 
