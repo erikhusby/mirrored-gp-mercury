@@ -158,6 +158,7 @@ public class CreateFields extends UpdateFields {
         public static final Map<String, IssueType> MAP_WORKFLOW_TO_ISSUE_TYPE = new HashMap<String, IssueType>() {{
             put(Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(), EXOME_EXPRESS);
             put(Workflow.ICE_EXOME_EXPRESS.getWorkflowName(), EXOME_EXPRESS);
+            put(Workflow.ICE_CRSP.getWorkflowName(), EXOME_EXPRESS);
             put(Workflow.ICE.getWorkflowName(), EXOME_EXPRESS);
         }};
     }
