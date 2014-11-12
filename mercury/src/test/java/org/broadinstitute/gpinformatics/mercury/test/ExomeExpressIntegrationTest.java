@@ -9,7 +9,6 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMes
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
-import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500JaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionJaxbBuilder;
@@ -48,7 +47,7 @@ public class ExomeExpressIntegrationTest {
     @SuppressWarnings("FeatureEnvy")
     public void testAll(String sampleFileName) {
         try {
-            URL baseUrl = new URL("https", "localhost", 443, "/Mercury");
+            URL baseUrl = new URL("https", "localhost", 8443, "/Mercury");
             String testSuffix = testSuffixDateFormat.format(new Date());
 
             // load reagents with ImportFromSquidTest.
