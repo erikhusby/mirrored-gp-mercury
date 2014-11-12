@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -42,12 +43,13 @@ public class ProductResource {
     @Inject
     private WorkflowDiagrammer diagrammer;
 
-    @XmlRootElement
+    @XmlRootElement(name = "product")
     public static class ProductData {
         public final String name;
         public final String family;
         public final String partNumber;
         public final String workflowName;
+        public final boolean isInitiation;
 
         // Required by JAXB.
         ProductData() {
@@ -55,6 +57,7 @@ public class ProductResource {
             family = null;
             partNumber = null;
             workflowName = null;
+            isInitiation = false;
         }
 
         public ProductData(Product product) {
@@ -62,6 +65,7 @@ public class ProductResource {
             family = product.getProductFamily().getName();
             partNumber = product.getPartNumber();
             workflowName = product.getWorkflow().getWorkflowName();
+            isInitiation = product.isSampleInitiationProduct();
         }
     }
 
@@ -92,6 +96,17 @@ public class ProductResource {
     @Produces(MediaType.APPLICATION_XML)
     public Products findProducts() {
         return new Products(productDao.findProductsForProductList());
+    }
+
+    @GET
+    @Path("partNumber/{partNumber}")
+    @Produces(MediaType.APPLICATION_XML)
+    public ProductData findByPartNumber(@PathParam("partNumber") String partNumber) {
+        Product product = productDao.findByPartNumber(partNumber);
+        if (product != null) {
+            return new ProductData(product);
+        }
+        return null;
     }
 
     /**
