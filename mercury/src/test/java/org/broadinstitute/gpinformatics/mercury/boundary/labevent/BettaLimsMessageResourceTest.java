@@ -384,6 +384,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
 
 //        Controller.stopCPURecording();
     }
+
     /**
      * Message one LCSET, and register run.
      */
