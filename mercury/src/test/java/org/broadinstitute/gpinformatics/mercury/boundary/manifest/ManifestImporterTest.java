@@ -56,6 +56,9 @@ public class ManifestImporterTest {
     private static final String TOO_MANY_SHEETS = relativePathToTestFile("test-manifest-too-many-sheets.xlsx");
     private static final String REARRANGED_COLUMNS = relativePathToTestFile("test-manifest-rearranged-columns.xlsx");
     private static final String DUPLICATE_COLUMNS = relativePathToTestFile("test-manifest-duplicate-columns.xlsx");
+    private static final String EMPTY_MANIFEST= relativePathToTestFile("empty.xlsx");
+    private static final String HEADERS_ONLY= relativePathToTestFile("headers-only.xlsx");
+
     private static final String ROW_NUMBER_PREFIX = "Row #%s ";
     private static final String REQUIRED_VALUE_IS_MISSING = ROW_NUMBER_PREFIX + TableProcessor.REQUIRED_VALUE_IS_MISSING;
     private static final String VALIDATION_EXCEPTION_MESSAGE = "This test should have thrown a ValidationException.";
@@ -152,10 +155,34 @@ public class ManifestImporterTest {
         PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
 
         validateManifestRecords(manifestImportProcessor);
+        String errorMessageFormat = ROW_NUMBER_PREFIX + ManifestImportProcessor.DUPLICATE_HEADER_FORMAT;
         String expectedError =
-                String.format(ROW_NUMBER_PREFIX + ManifestImportProcessor.DUPLICATE_HEADER_FORMAT, 0, "Patient_ID");
+                String.format(errorMessageFormat, 0, "Patient_ID");
         assertThat(manifestImportProcessor.getMessages(), hasItem(expectedError));
         assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
+    }
+
+
+    public void testEmptyFile() throws Exception {
+        InputStream inputStream = new FileInputStream(TestUtils.getTestData(EMPTY_MANIFEST));
+        try {
+            PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
+            validateManifestRecords(manifestImportProcessor);
+            Assert.fail();
+        } catch (ValidationException e) {
+            assertThat(manifestImportProcessor.getMessages(), hasItem(ManifestImportProcessor.EMPTY_FILE_ERROR));
+        }
+    }
+
+    public void testManifestFileHasHeadersButNoData() throws Exception {
+        InputStream inputStream = new FileInputStream(TestUtils.getTestData(HEADERS_ONLY));
+        try {
+            PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
+            validateManifestRecords(manifestImportProcessor);
+            Assert.fail();
+        } catch (ValidationException e) {
+            assertThat(e.getValidationMessages(), hasItem(ManifestImportProcessor.NO_DATA_ERROR));
+        }
     }
 
     /**
