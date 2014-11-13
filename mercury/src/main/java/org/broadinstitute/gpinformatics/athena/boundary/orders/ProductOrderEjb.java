@@ -117,6 +117,24 @@ public class ProductOrderEjb {
     private final Log log = LogFactory.getLog(ProductOrderEjb.class);
 
     /**
+     * Convert all non-received samples to abandoned.
+     */
+    public void abandonNonReceivedSamples(ProductOrder editOrder) throws NoSuchPDOException, IOException,
+            SampleDeliveryStatusChangeException {
+        // Note that calling getNonReceivedNonAbandonedCount() will cause the sample data for all samples to be
+        // fetched if it hasn't been already. This is good because without it each call to getSampleData() below
+        // would fetch it one sample at a time.
+        List<ProductOrderSample> nonReceivedSamples = new ArrayList<>(editOrder.getNonReceivedNonAbandonedCount());
+        for (ProductOrderSample sample : editOrder.getSamples()) {
+            if (!sample.getSampleData().isSampleReceived()) {
+                nonReceivedSamples.add(sample);
+            }
+        }
+
+        abandonSamples(editOrder.getJiraTicketKey(), nonReceivedSamples, "Sample was not received.");
+    }
+
+    /**
      * Persisting a Product order.  This method's primary job is to Support a call from the Product Order Action bean
      * to wrap the persistence of an order in a transaction.
      *
@@ -291,6 +309,7 @@ public class ProductOrderEjb {
     public void handleSamplesAdded(@Nonnull String productOrderKey, @Nonnull Collection<ProductOrderSample> newSamples,
                                    @Nonnull MessageReporter reporter) {
         ProductOrder order = productOrderDao.findByBusinessKey(productOrderKey);
+        // Only add samples to the LIMS bucket if the order is ready for lab work.
         if (order.readyForLab()) {
             Collection<ProductOrderSample> samples = bucketEjb.addSamplesToBucket(order, newSamples);
             if (!samples.isEmpty()) {
@@ -925,7 +944,7 @@ public class ProductOrderEjb {
         try {
             if (editOrder.isDraft()) {
                 // Only Draft orders are not already created in JIRA.
-                ProductOrderJiraUtil.placeOrder(editOrder, jiraService);
+                ProductOrderJiraUtil.createIssueForOrder(editOrder, jiraService);
             }
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
             transitionIssueToSameOrderStatus(editOrder);
@@ -934,8 +953,9 @@ public class ProductOrderEjb {
             ProductOrderJiraUtil.addSampleComments(editOrder, jiraService.getIssue(editOrder.getJiraTicketKey()));
 
         } catch (IOException e) {
-            log.error("An exception occurred attempting to create a Product Order in Jira", e);
-            throw new InformaticsServiceException("Unable to create the Product Order in Jira", e);
+            String message = "Unable to create the Product Order in Jira";
+            log.error(message, e);
+            throw new InformaticsServiceException(message, e);
         }
 
         if (editOrder.isSampleInitiation()) {
@@ -944,7 +964,7 @@ public class ProductOrderEjb {
             } catch (Exception e) {
                 String errorMessage = "Unable to successfully complete the sample kit creation: ";
                 log.error(errorMessage, e);
-                messageCollection.addError(errorMessage + e);
+                messageCollection.addError(errorMessage + e.getMessage());
             }
         }
 

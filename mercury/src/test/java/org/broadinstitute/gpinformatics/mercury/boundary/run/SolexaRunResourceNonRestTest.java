@@ -74,7 +74,6 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -215,9 +214,10 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
                         bucketReadySamples1, "GSP-123", exExProduct, researchProject);
         exexOrder.setProduct(exExProduct);
         exexOrder.prepareToSave(bspUserList.getByUsername("scottmat"));
+        exexOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         productOrderDao.persist(exexOrder);
         try {
-            ProductOrderJiraUtil.placeOrder(exexOrder, jiraService);
+            ProductOrderJiraUtil.createIssueForOrder(exexOrder, jiraService);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

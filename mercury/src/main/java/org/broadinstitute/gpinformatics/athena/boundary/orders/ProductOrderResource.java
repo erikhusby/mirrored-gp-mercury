@@ -170,7 +170,7 @@ public class ProductOrderResource {
         ProductOrder productOrder = createProductOrder(productOrderData, ProductOrder.OrderStatus.Pending);
 
         // The PDO's IRB information is copied from its RP. For Collaboration PDOs, we require that there
-        // is only one IRB on on the RP.
+        // is only one IRB on the RP.
         productOrder.setRegulatoryInfos(productOrder.getResearchProject().getRegulatoryInfos());
 
         ResearchProject researchProject =
@@ -287,7 +287,7 @@ public class ProductOrderResource {
         try {
             productOrder.setCreatedBy(user.getUserId());
             productOrder.prepareToSave(user, ProductOrder.SaveType.CREATING);
-            ProductOrderJiraUtil.placeOrder(productOrder, jiraService);
+            ProductOrderJiraUtil.createIssueForOrder(productOrder, jiraService);
             productOrder.setOrderStatus(initialStatus);
 
             // Not supplying add-ons at this point, just saving what we defined above and then flushing to make sure

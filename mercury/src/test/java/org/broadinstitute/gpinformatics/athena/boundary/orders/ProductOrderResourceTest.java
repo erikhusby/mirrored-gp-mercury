@@ -58,7 +58,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
     @RunAsClient
-    public void testFetchLibraryDetailsByTubeBarcode(@ArquillianResource URL baseUrl) throws Exception {
+    public void testCreateProductOrder(@ArquillianResource URL baseUrl) throws Exception {
         Date testDate = new Date();
 
         ProductOrderData data = new ProductOrderData();
@@ -73,9 +73,9 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
 
         WebResource resource = makeWebResource(baseUrl, "create");
 
-        resource.post(data);
+        ProductOrderData productOrderData = resource.entity(data).post(new GenericType<ProductOrderData>() { });
+        Assert.assertEquals(productOrderData.getStatus(), ProductOrder.OrderStatus.Submitted.name());
     }
-
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
     @RunAsClient

@@ -333,43 +333,41 @@ public class ResearchProjectActionBean extends CoreActionBean {
      */
     @ValidationMethod(on = BEGIN_COLLABORATION_ACTION)
     public void validateCollaborationInformation(ValidationErrors errors) {
+        String ERROR_PREFIX = "Cannot create a collaboration because ";
+        String RP_ERROR_PREFIX = ERROR_PREFIX + "this research project ";
+
+
         // Cannot start a collaboration with an outside user if there is no PM specified.
         if (editResearchProject.getProjectManagers().length == 0) {
-            addGlobalValidationError(
-                    "The research project must have a Project Manager before starting a collaboration.");
+            addGlobalValidationError(RP_ERROR_PREFIX + "does not have a Project Manager.");
         }
 
         if (editResearchProject.getBroadPIs().length == 0) {
-            addGlobalValidationError(
-                    "The research project must have an investigator before starting a collaboration.");
+            addGlobalValidationError(RP_ERROR_PREFIX + "does not have a Primary Investigator.");
         }
 
         if (editResearchProject.getCohortIds().length == 0) {
-            addGlobalValidationError(
-                    "A collaboration requires a cohort to be defined on the research project");
+            addGlobalValidationError(RP_ERROR_PREFIX + "does not have a Sample Cohort.");
         }
 
         if (editResearchProject.getCohortIds().length > 1) {
-            addGlobalValidationError(
-                    "Cannot create a collaboration for this research project because it has more than one cohort associated with it");
+            addGlobalValidationError(RP_ERROR_PREFIX + "has more than one Sample Cohort.");
         }
 
         if (editResearchProject.getRegulatoryInfos().isEmpty()) {
-            addGlobalValidationError(
-                    "A collaboration requires regulatory information to be set on the research project");
+            addGlobalValidationError(RP_ERROR_PREFIX + "has no Regulatory Information.");
         }
 
         if (editResearchProject.getRegulatoryInfos().size() > 1) {
-            addGlobalValidationError(
-                    "Cannot create a collaboration for this research project because it has more than one regulatory information associated with it");
+            addGlobalValidationError(RP_ERROR_PREFIX + "has more than one Regulatory Information.");
         }
 
         if ((specifiedCollaborator == null) && (selectedCollaborator == null)) {
-            addGlobalValidationError("Must specify either an existing collaborator or an email address.");
+            addGlobalValidationError(ERROR_PREFIX + "an existing collaborator or an email address is required.");
         }
 
         if (specifiedCollaborator != null && !EmailValidator.getInstance(false).isValid(specifiedCollaborator)) {
-            addGlobalValidationError("''{2}'' is not a valid email address.", specifiedCollaborator);
+            addGlobalValidationError(ERROR_PREFIX + "''{2}'' is not a valid email address.", specifiedCollaborator);
         }
 
         validateQuoteId(collaborationQuoteId);

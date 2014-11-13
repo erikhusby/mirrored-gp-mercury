@@ -642,9 +642,10 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                 new ProductOrder(10950L, "Messaging Test " + testPrefix, productOrderSamples, "GSP-123",
                         product, researchProject);
         productOrder.prepareToSave(bspUserList.getByUsername("jowalsh"));
+        productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         productOrderDao.persist(productOrder);
         try {
-            ProductOrderJiraUtil.placeOrder(productOrder, jiraService);
+            ProductOrderJiraUtil.createIssueForOrder(productOrder, jiraService);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
