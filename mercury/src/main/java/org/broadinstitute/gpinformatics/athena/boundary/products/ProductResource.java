@@ -44,6 +44,7 @@ public class ProductResource {
     @Inject
     private WorkflowDiagrammer diagrammer;
 
+    @XmlRootElement
     public static class ProductData {
         public final String name;
         public final String family;
