@@ -98,11 +98,11 @@ public class ProductResource {
     @GET
     @Produces(MediaType.APPLICATION_XML)
     public Products findProducts(@QueryParam("withPartNumbers") String partNumbers) {
-        if (!StringUtils.isBlank(partNumbers)) {
+        if (StringUtils.isBlank(partNumbers)) {
+            return new Products(productDao.findProductsForProductList());
+        } else {
             List<String> partNumberList = Arrays.asList(partNumbers.split(","));
             return new Products(productDao.findByPartNumbers(partNumberList));
-        } else {
-            return new Products(productDao.findProductsForProductList());
         }
     }
 
