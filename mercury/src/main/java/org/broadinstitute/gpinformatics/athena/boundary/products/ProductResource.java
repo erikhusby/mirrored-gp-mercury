@@ -15,6 +15,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -23,7 +24,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -43,7 +44,6 @@ public class ProductResource {
     @Inject
     private WorkflowDiagrammer diagrammer;
 
-    @XmlRootElement(name = "product")
     public static class ProductData {
         public final String name;
         public final String family;
@@ -88,25 +88,21 @@ public class ProductResource {
     }
 
     /**
-     * Method to GET the list of products. All products are returned.
+     * Method to GET the list of products.  If no part numbers are specified, all products are returned.
+     * If part numbers are specified, products with matching part numbers are returned.  Part numbers
+     * should be comma-separated with no spaces between them.
      *
-     * @return The product orders that match
+     * @return Matching Products.
      */
     @GET
     @Produces(MediaType.APPLICATION_XML)
-    public Products findProducts() {
-        return new Products(productDao.findProductsForProductList());
-    }
-
-    @GET
-    @Path("partNumber/{partNumber}")
-    @Produces(MediaType.APPLICATION_XML)
-    public ProductData findByPartNumber(@PathParam("partNumber") String partNumber) {
-        Product product = productDao.findByPartNumber(partNumber);
-        if (product != null) {
-            return new ProductData(product);
+    public Products findProducts(@QueryParam("withPartNumbers") String partNumbers) {
+        if (!StringUtils.isBlank(partNumbers)) {
+            List<String> partNumberList = Arrays.asList(partNumbers.split(","));
+            return new Products(productDao.findByPartNumbers(partNumberList));
+        } else {
+            return new Products(productDao.findProductsForProductList());
         }
-        return null;
     }
 
     /**
