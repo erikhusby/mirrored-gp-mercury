@@ -54,6 +54,7 @@ public class LabVesselLatestEventPlugin implements ListPlugin {
      * @param entityList  List of LabVessel entities for which to return LabMetrics data
      * @param headerGroup List of headers associated with columns selected by user.  This plugin appends column headers
      *                    for LabMetrics and Decisions of interest.
+     * @param context At minimum, BSP user required helper object passed in from callers (e.g. ConfigurableListFactory)
      * @return A list of rows, each corresponding to a LabVessel row in search results.
      */
     @Override
@@ -64,12 +65,12 @@ public class LabVesselLatestEventPlugin implements ListPlugin {
         BSPUserList bspUserList = (BSPUserList)context.get(SearchDefinitionFactory.CONTEXT_KEY_BSP_USER_LIST);
         String cellValue;
 
-        // Append headers for metric data of interest.
+        // Append headers for event data of interest.
         for( LatestEventColumn column : LatestEventColumn.values() ){
             headerGroup.addHeader(column.getHeader());
         }
 
-        // Populate rows with any available metrics data.
+        // Populate rows with any available event data.
         for( LabVessel labVessel : labVesselList ) {
             ConfigurableList.Row row = new ConfigurableList.Row( labVessel.getLabel() );
             // No good... stops at DilutionToFlowcellTransfer and misses FlowcellLoaded

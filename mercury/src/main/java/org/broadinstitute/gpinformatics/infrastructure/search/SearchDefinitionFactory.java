@@ -487,6 +487,17 @@ public class SearchDefinitionFactory {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
+        searchTerm.setName("Imported Sample Tube Barcode");
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                return getEventLabel((LabVessel) entity
+                        , Collections.singletonList(LabEventType.SAMPLE_IMPORT), true);
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
         searchTerm.setName("Imported Sample ID");
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
@@ -513,9 +524,8 @@ public class SearchDefinitionFactory {
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
-                List<LabEventType> labEventTypes = new ArrayList<>();
-                labEventTypes.add(LabEventType.INITIAL_TARE);
-                return getEventPosition((LabVessel) entity, labEventTypes, false);
+                return getEventPosition((LabVessel) entity
+                        , Collections.singletonList(LabEventType.INITIAL_TARE), false);
             }
         });
         searchTerms.add(searchTerm);
@@ -525,9 +535,8 @@ public class SearchDefinitionFactory {
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
-                List<LabEventType> labEventTypes = new ArrayList<>();
-                labEventTypes.add(LabEventType.POND_REGISTRATION);
-                return getEventPosition((LabVessel) entity, labEventTypes, true);
+                return getEventPosition((LabVessel) entity
+                        , Collections.singletonList(LabEventType.POND_REGISTRATION), true);
             }
         });
         searchTerms.add(searchTerm);
@@ -537,9 +546,8 @@ public class SearchDefinitionFactory {
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
-                List<LabEventType> labEventTypes = new ArrayList<>();
-                labEventTypes.add(LabEventType.POND_REGISTRATION);
-                return getEventLabel((LabVessel) entity, labEventTypes, true);
+                return getEventLabel((LabVessel) entity
+                        , Collections.singletonList(LabEventType.POND_REGISTRATION), true);
             }
         });
         searchTerms.add(searchTerm);
@@ -549,9 +557,8 @@ public class SearchDefinitionFactory {
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
-                List<LabEventType> labEventTypes = new ArrayList<>();
-                labEventTypes.add(LabEventType.SHEARING_TRANSFER);
-                return getEventPosition((LabVessel) entity, labEventTypes, false);
+                return getEventPosition((LabVessel) entity
+                        , Collections.singletonList(LabEventType.SHEARING_TRANSFER), false);
             }
         });
         searchTerms.add(searchTerm);
@@ -561,9 +568,8 @@ public class SearchDefinitionFactory {
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
-                List<LabEventType> labEventTypes = new ArrayList<>();
-                labEventTypes.add(LabEventType.SHEARING_TRANSFER);
-                return getEventLabel((LabVessel) entity, labEventTypes, false);
+                return getEventLabel((LabVessel) entity
+                        , Collections.singletonList(LabEventType.SHEARING_TRANSFER), false);
             }
         });
         searchTerms.add(searchTerm);
