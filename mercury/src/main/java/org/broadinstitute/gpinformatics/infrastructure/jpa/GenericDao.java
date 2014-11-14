@@ -288,7 +288,7 @@ public class GenericDao {
     public <ENTITY_TYPE> TypedQuery<ENTITY_TYPE> getQuery(
             CriteriaQuery<ENTITY_TYPE> criteriaQuery, LockModeType lockModeType) {
 
-        return getQuery(criteriaQuery, lockModeType);
+        return getQuery(criteriaQuery, lockModeType, false, 0, 0);
     }
 
     /**
