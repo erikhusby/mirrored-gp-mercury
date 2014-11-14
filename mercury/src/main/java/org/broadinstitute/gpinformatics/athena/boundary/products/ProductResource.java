@@ -100,10 +100,9 @@ public class ProductResource {
     public Products findProducts(@QueryParam("withPartNumbers") String partNumbers) {
         if (StringUtils.isBlank(partNumbers)) {
             return new Products(productDao.findProductsForProductList());
-        } else {
-            List<String> partNumberList = Arrays.asList(partNumbers.split(","));
-            return new Products(productDao.findByPartNumbers(partNumberList));
         }
+        List<String> partNumberList = Arrays.asList(partNumbers.split(","));
+        return new Products(productDao.findByPartNumbers(partNumberList));
     }
 
     /**
