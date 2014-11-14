@@ -15,6 +15,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -23,6 +24,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -48,6 +50,7 @@ public class ProductResource {
         public final String family;
         public final String partNumber;
         public final String workflowName;
+        public final boolean isInitiation;
 
         // Required by JAXB.
         ProductData() {
@@ -55,6 +58,7 @@ public class ProductResource {
             family = null;
             partNumber = null;
             workflowName = null;
+            isInitiation = false;
         }
 
         public ProductData(Product product) {
@@ -62,6 +66,7 @@ public class ProductResource {
             family = product.getProductFamily().getName();
             partNumber = product.getPartNumber();
             workflowName = product.getWorkflow().getWorkflowName();
+            isInitiation = product.isSampleInitiationProduct();
         }
     }
 
@@ -84,14 +89,20 @@ public class ProductResource {
     }
 
     /**
-     * Method to GET the list of products. All products are returned.
+     * Method to GET the list of products.  If no part numbers are specified, all products are returned.
+     * If part numbers are specified, products with matching part numbers are returned.  Part numbers
+     * should be comma-separated with no spaces between them.
      *
-     * @return The product orders that match
+     * @return Matching Products.
      */
     @GET
     @Produces(MediaType.APPLICATION_XML)
-    public Products findProducts() {
-        return new Products(productDao.findProductsForProductList());
+    public Products findProducts(@QueryParam("withPartNumbers") String partNumbers) {
+        if (StringUtils.isBlank(partNumbers)) {
+            return new Products(productDao.findProductsForProductList());
+        }
+        List<String> partNumberList = Arrays.asList(partNumbers.split(","));
+        return new Products(productDao.findByPartNumbers(partNumberList));
     }
 
     /**

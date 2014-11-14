@@ -19,8 +19,12 @@ then
     KEYSTORE_PASSWORD="changeit"
     SSL_OPTS="-DkeystoreFile=$KEYSTORE_FILE -DkeystorePassword=$KEYSTORE_PASSWORD"expo
 fi
+if [ "x$BUILD_PROFILE" == "x" ]
+then
+    BUILD_PROFILE=BUILD
+fi
 MAVEN_OPTS="-Xms4g -XX:MaxPermSize=1g $SSL_OPTS"
-OPTIONS="-PArquillian-JBossAS7-Remote,BUILD -Djava.awt.headless=true --batch-mode -Dmaven.download.meter=silent "
+OPTIONS="-PArquillian-JBossAS7-Remote,$BUILD_PROFILE -Djava.awt.headless=true --batch-mode -Dmaven.download.meter=silent "
 PROFILES="Tests.ArqSuite.Standard Tests.ArqSuite.Stubby Tests.DatabaseFree Tests.ExternalIntegration Tests.Alternatives"
 #PROFILES="Tests.ExternalIntegration"
 

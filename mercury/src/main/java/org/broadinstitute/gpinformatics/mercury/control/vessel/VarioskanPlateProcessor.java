@@ -132,29 +132,22 @@ public class VarioskanPlateProcessor extends TableProcessor {
     }
 
     private enum Headers implements ColumnHeader {
-        PLATE("Plate", 0, REQUIRED_HEADER, OPTIONAL_VALUE, IS_STRING),
-        WELL("Well", 1, REQUIRED_HEADER, OPTIONAL_VALUE, IS_STRING),
-        SAMPLE("Sample", 2, REQUIRED_HEADER, OPTIONAL_VALUE, IS_STRING),
-        VALUE("Value", 3, REQUIRED_HEADER, OPTIONAL_VALUE),
-        RESULT("Result", 4, REQUIRED_HEADER, OPTIONAL_VALUE);
+        PLATE("Plate", IS_STRING),
+        WELL("Well", IS_STRING),
+        SAMPLE("Sample", IS_STRING),
+        VALUE("Value"),
+        RESULT("Result");
 
         private final String text;
-        private final int index;
-        private final boolean requiredHeader;
-        private final boolean requiredValue;
-        private boolean isString;
+        private final boolean isString;
 
-        Headers(String text, int index, boolean requiredHeader, boolean requiredValue) {
-            this(text, index, requiredHeader, requiredValue, false);
+        Headers(String text, boolean isString) {
+            this.text = text;
+            this.isString = isString;
         }
 
-        Headers(String text, int index, boolean requiredHeader, boolean requiredValue,
-                boolean isString) {
-            this.text = text;
-            this.index = index;
-            this.requiredHeader = requiredHeader;
-            this.requiredValue = requiredValue;
-            this.isString = isString;
+        Headers(String text) {
+            this(text, false);
         }
 
         @Override
@@ -163,18 +156,13 @@ public class VarioskanPlateProcessor extends TableProcessor {
         }
 
         @Override
-        public int getIndex() {
-            return index;
-        }
-
-        @Override
         public boolean isRequiredHeader() {
-            return requiredHeader;
+            return true;
         }
 
         @Override
         public boolean isRequiredValue() {
-            return requiredValue;
+            return false;
         }
 
         @Override

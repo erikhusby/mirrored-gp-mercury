@@ -287,6 +287,10 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         public String getDisplayName() {
             return displayName;
         }
+
+        public boolean isAbandoned() {
+            return this == ABANDONED;
+        }
     }
 
     @Enumerated(EnumType.STRING)
