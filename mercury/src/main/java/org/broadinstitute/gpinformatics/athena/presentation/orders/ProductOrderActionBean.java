@@ -350,6 +350,17 @@ public class ProductOrderActionBean extends CoreActionBean {
     private String prepopulatePostReceiveOptions;
 
     /**
+     * @return the required confirmation message for IRB attestation.
+     */
+    // Keep non-static so it can be easily called from JSP.
+    public String getAttestationMessage() {
+        return "By checking this box, I am attesting that I am fully aware of the regulatory requirements for this "
+               + "project, that these requirements have been met, and that the information I have provided is "
+               + "accurate. Disregard of relevant requirements and/or falsification of information may lead to "
+               + "quarantining of data.";
+    }
+
+    /**
      * Given a product order, create an external link back to the application's View Details page for that order.
      */
     public static String getProductOrderLink(ProductOrder productOrder, AppConfig appConfig) {
@@ -1021,10 +1032,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         MessageCollection placeOrderMessageCollection = new MessageCollection();
         try {
-
             if (editOrder.getOrderStatus() == ProductOrder.OrderStatus.Pending) {
                 // For a Pending order, we need to abandon samples that haven't been received.
-                abandonNonReceivedSamples();
+                productOrderEjb.abandonNonReceivedSamples(editOrder);
             }
 
             productOrderEjb.placeProductOrder(editOrder.getProductOrderId(), originalBusinessKey,
@@ -1066,21 +1076,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         return createViewResolution(editOrder.getBusinessKey());
-    }
-
-    /**
-     * Convert all non-received samples to abandoned.
-     */
-    private void abandonNonReceivedSamples() throws ProductOrderEjb.NoSuchPDOException, IOException,
-            ProductOrderEjb.SampleDeliveryStatusChangeException {
-        List<ProductOrderSample> nonReceivedSamples = new ArrayList<>(editOrder.getNonReceivedNonAbandonedCount());
-        for (ProductOrderSample sample : editOrder.getSamples()) {
-            if (!sample.getSampleData().isSampleReceived()) {
-                nonReceivedSamples.add(sample);
-            }
-        }
-
-        productOrderEjb.abandonSamples(editOrder.getJiraTicketKey(), nonReceivedSamples, "Sample was not received.");
     }
 
     private Resolution handlePlaceError(Exception e) {

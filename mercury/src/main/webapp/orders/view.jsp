@@ -670,10 +670,7 @@ function formatInput(item) {
         </span>
         <stripes:label for="placeConfirmAttestation" class="controls control-label"
                        style="display: inline; position: absolute;">
-            By checking this box, I am attesting that I am fully aware of the regulatory
-            requirements for this project, that these requirements have been met, and that the
-            information I have provided is accurate. Disregard of relevant requirements and/or
-            falsification of information may lead to quarantining of data.
+            ${actionBean.attestationMessage}
         </stripes:label>
     </span>
 </div>

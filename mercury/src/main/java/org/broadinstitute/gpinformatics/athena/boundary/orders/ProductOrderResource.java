@@ -170,7 +170,7 @@ public class ProductOrderResource {
         ProductOrder productOrder = createProductOrder(productOrderData, ProductOrder.OrderStatus.Pending);
 
         // The PDO's IRB information is copied from its RP. For Collaboration PDOs, we require that there
-        // is only one IRB on on the RP.
+        // is only one IRB on the RP.
         productOrder.setRegulatoryInfos(productOrder.getResearchProject().getRegulatoryInfos());
 
         ResearchProject researchProject =
@@ -207,7 +207,7 @@ public class ProductOrderResource {
         }
     }
 
-    public ProductOrderKit createOrderKit(boolean isExomeExpress, List<ProductOrderKitDetailData> kitDetailsData,
+    private ProductOrderKit createOrderKit(boolean isExomeExpress, List<ProductOrderKitDetailData> kitDetailsData,
                                           SampleCollection sampleCollection, Site site) {
 
         List<ProductOrderKitDetail> kitDetails = new ArrayList<>(kitDetailsData.size());
@@ -217,7 +217,6 @@ public class ProductOrderResource {
             MaterialInfoDto materialInfoDto = createMaterialInfoDTO(kitDetailData.getMaterialInfo(), moleculeType);
 
             kitDetails.add(createKitDetail(kitDetailData.getNumberOfSamples(), moleculeType, materialInfoDto));
-
         }
         return new ProductOrderKit(sampleCollection, site, kitDetails, isExomeExpress);
     }
@@ -288,7 +287,7 @@ public class ProductOrderResource {
         try {
             productOrder.setCreatedBy(user.getUserId());
             productOrder.prepareToSave(user, ProductOrder.SaveType.CREATING);
-            ProductOrderJiraUtil.placeOrder(productOrder, jiraService);
+            ProductOrderJiraUtil.createIssueForOrder(productOrder, jiraService);
             productOrder.setOrderStatus(initialStatus);
 
             // Not supplying add-ons at this point, just saving what we defined above and then flushing to make sure

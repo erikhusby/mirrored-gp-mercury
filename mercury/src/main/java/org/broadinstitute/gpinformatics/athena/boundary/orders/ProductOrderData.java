@@ -113,6 +113,11 @@ public class ProductOrderData {
 
         if (includeSamples) {
             samples = getSampleList(productOrder.getSamples());
+            for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
+                if (productOrderSample.getRiskItems().isEmpty()) {
+                    riskNotCalculatedCount++;
+                }
+            }
         } else {
             // Explicit set of null into a List<String> field, this duplicates what the existing code was doing when
             // includeSamples = false.  Is the JAXB behavior with an empty List undesirable?
@@ -120,14 +125,6 @@ public class ProductOrderData {
         }
 
         numberOfSamples = productOrder.getSampleCount();
-
-        if (includeSamples) {
-            for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
-                if (productOrderSample.getRiskItems().isEmpty()) {
-                    riskNotCalculatedCount++;
-                }
-            }
-        }
     }
 
     private static List<String> getSampleList(List<ProductOrderSample> productOrderSamples) {

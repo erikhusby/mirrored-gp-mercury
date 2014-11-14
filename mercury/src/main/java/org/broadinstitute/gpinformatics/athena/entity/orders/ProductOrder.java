@@ -1519,7 +1519,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     /**
-     * Is the current PDO ready for lab work? A PDO is ready if all of its samples are received.
+     * Is the current PDO ready for lab work? A PDO is ready if all of its samples are received (or abandoned) and
+     * the PM has placed the order.
      *
      * @return true if this PDO contains samples that are ready for lab work
      */
