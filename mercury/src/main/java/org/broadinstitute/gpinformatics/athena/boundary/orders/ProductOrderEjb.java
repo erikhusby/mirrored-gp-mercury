@@ -117,6 +117,24 @@ public class ProductOrderEjb {
     private final Log log = LogFactory.getLog(ProductOrderEjb.class);
 
     /**
+     * Convert all non-received samples to abandoned.
+     */
+    public void abandonNonReceivedSamples(ProductOrder editOrder) throws NoSuchPDOException, IOException,
+            SampleDeliveryStatusChangeException {
+        // Note that calling getNonReceivedNonAbandonedCount() will cause the sample data for all samples to be
+        // fetched if it hasn't been already. This is good because without it each call to getSampleData() below
+        // would fetch it one sample at a time.
+        List<ProductOrderSample> nonReceivedSamples = new ArrayList<>(editOrder.getNonReceivedNonAbandonedCount());
+        for (ProductOrderSample sample : editOrder.getSamples()) {
+            if (!sample.getSampleData().isSampleReceived()) {
+                nonReceivedSamples.add(sample);
+            }
+        }
+
+        abandonSamples(editOrder.getJiraTicketKey(), nonReceivedSamples, "Sample was not received.");
+    }
+
+    /**
      * Persisting a Product order.  This method's primary job is to Support a call from the Product Order Action bean
      * to wrap the persistence of an order in a transaction.
      *
@@ -141,9 +159,6 @@ public class ProductOrderEjb {
         editedProductOrder.prepareToSave(userBean.getBspUser(), saveType);
 
         if (editedProductOrder.isDraft()) {
-            // mlc isDraft checks if the status is Draft and if so, we set it to Draft again?
-            editedProductOrder.setOrderStatus(OrderStatus.Draft);
-
             if (editedProductOrder.isSampleInitiation()) {
                 Map<Long, ProductOrderKitDetail> mapKitDetailsByIDs = new HashMap<>();
                 Iterator<ProductOrderKitDetail> kitDetailIterator =
@@ -175,12 +190,6 @@ public class ProductOrderEjb {
         productOrderDao.persist(editedProductOrder);
     }
 
-    private void validateUniqueProjectTitle(ProductOrder productOrder) throws DuplicateTitleException {
-        if (productOrderDao.findByTitle(productOrder.getTitle()) != null) {
-            throw new DuplicateTitleException();
-        }
-    }
-
     /**
      * Looks up the quote for the pdo (if the pdo has one) in the
      * quote server.
@@ -194,53 +203,6 @@ public class ProductOrderEjb {
             }
         }
     }
-
-    // Could be static, but EJB spec does not like it.
-    private void setSamples(ProductOrder productOrder, List<String> sampleIds) throws NoSamplesException {
-        if (sampleIds.isEmpty()) {
-            throw new NoSamplesException();
-        }
-
-        List<ProductOrderSample> orderSamples = new ArrayList<>(sampleIds.size());
-        for (String sampleId : sampleIds) {
-            orderSamples.add(new ProductOrderSample(sampleId));
-        }
-        productOrder.setSamples(orderSamples);
-    }
-
-    private void setAddOnProducts(ProductOrder productOrder, List<String> addOnPartNumbers) {
-        List<Product> addOns =
-                addOnPartNumbers.isEmpty() ? new ArrayList<Product>() : productDao.findByPartNumbers(addOnPartNumbers);
-
-        productOrder.updateAddOnProducts(addOns);
-    }
-
-    // Could be static, but EJB spec does not like it.
-    private void setStatus(ProductOrder productOrder) {
-        // DRAFT orders not yet supported; force state of new PDOs to Submitted.
-        productOrder.setOrderStatus(OrderStatus.Submitted);
-    }
-
-    /**
-     * Including {@link QuoteNotFoundException} since this is an expected failure that may occur in application
-     * validation.  This automatically sets the status of the {@link ProductOrder} to submitted.
-     *
-     * @param productOrder          product order
-     * @param productOrderSampleIds sample IDs
-     * @param addOnPartNumbers      add-on part numbers
-     *
-     * @throws QuoteNotFoundException
-     */
-    public void save(
-            ProductOrder productOrder, List<String> productOrderSampleIds, List<String> addOnPartNumbers)
-            throws DuplicateTitleException, QuoteNotFoundException, NoSamplesException {
-        validateUniqueProjectTitle(productOrder);
-        validateQuote(productOrder, quoteService);
-        setSamples(productOrder, productOrderSampleIds);
-        setAddOnProducts(productOrder, addOnPartNumbers);
-        setStatus(productOrder);
-    }
-
 
     /**
      * Calculate the risk for all samples on the product order specified by business key.
@@ -347,9 +309,12 @@ public class ProductOrderEjb {
     public void handleSamplesAdded(@Nonnull String productOrderKey, @Nonnull Collection<ProductOrderSample> newSamples,
                                    @Nonnull MessageReporter reporter) {
         ProductOrder order = productOrderDao.findByBusinessKey(productOrderKey);
-        Collection<ProductOrderSample> samples = bucketEjb.addSamplesToBucket(order, newSamples);
-        if (!samples.isEmpty()) {
-            reporter.addMessage("{0} samples have been added to the pico bucket.", samples.size());
+        // Only add samples to the LIMS bucket if the order is ready for lab work.
+        if (order.readyForLab()) {
+            Collection<ProductOrderSample> samples = bucketEjb.addSamplesToBucket(order, newSamples);
+            if (!samples.isEmpty()) {
+                reporter.addMessage("{0} samples have been added to the pico bucket.", samples.size());
+            }
         }
     }
 
@@ -645,7 +610,7 @@ public class ProductOrderEjb {
          */
         private final String stateName;
 
-        private JiraTransition(String stateName) {
+        JiraTransition(String stateName) {
             this.stateName = stateName;
         }
 
@@ -684,8 +649,10 @@ public class ProductOrderEjb {
     /**
      * JIRA Status used by PDOs. Each status contains two transitions. One will transition to Open, one to Closed.
      */
-    private enum JiraStatus {
+    protected enum JiraStatus {
+        PENDING("Pending", JiraTransition.OPEN, JiraTransition.CLOSED),
         OPEN("Open", null, JiraTransition.COMPLETE_ORDER),
+        // This status is only set in the JIRA UI. In Mercury it has the same behavior as Open.
         WORK_REQUEST_CREATED("Work Request Created", null, JiraTransition.ORDER_COMPLETE),
         CLOSED("Closed", JiraTransition.OPEN, null),
         REOPENED("Reopened", JiraTransition.OPEN, JiraTransition.CLOSED),
@@ -698,12 +665,12 @@ public class ProductOrderEjb {
         private final String text;
 
         /**
-         * Transition to use to get to 'Open'. Null if we are already Open.
+         * Transition to use to get to 'Open'. Null indicates a transition is not possible.
          */
         private final JiraTransition toOpen;
 
         /**
-         * Transition to use to get to 'Closed'. Null if we are already Closed.
+         * Transition to use to get to 'Closed'. Null indicates a transition is not possible.
          */
         private final JiraTransition toClosed;
 
@@ -713,13 +680,28 @@ public class ProductOrderEjb {
             this.toClosed = toClosed;
         }
 
-        static JiraStatus fromString(String text) {
+        /**
+         * Given a JIRA issue, return its status as a JiraStatus.
+         */
+        public static JiraStatus fromIssue(JiraIssue issue) throws IOException {
+            Object statusValue = issue.getField(ProductOrder.JiraField.STATUS.getName());
+            String text = ((Map<?, ?>) statusValue).get("name").toString();
             for (JiraStatus status : values()) {
                 if (status.text.equalsIgnoreCase(text)) {
                     return status;
                 }
             }
             return UNKNOWN;
+        }
+
+        /**
+         * Given a PDO status, return the transition required to get to the corresponding JIRA status from this one.
+         */
+        public JiraTransition getTransitionTo(OrderStatus orderStatus) {
+            if (orderStatus == OrderStatus.Completed) {
+                return toClosed;
+            }
+            return toOpen;
         }
     }
 
@@ -751,24 +733,24 @@ public class ProductOrderEjb {
         // update the status.
         ProductOrder order = findProductOrder(jiraTicketKey);
         if (order.updateOrderStatus()) {
-            String operation;
-            JiraIssue issue = jiraService.getIssue(jiraTicketKey);
-            Object statusValue = issue.getField(ProductOrder.JiraField.STATUS.getName());
-            JiraStatus status = JiraStatus.fromString(((Map<?, ?>) statusValue).get("name").toString());
-            JiraTransition transition;
-            if (order.getOrderStatus() == OrderStatus.Completed) {
-                operation = "Completed";
-                transition = status.toClosed;
-            } else {
-                operation = "Opened";
-                transition = status.toOpen;
-            }
-            if (transition != null) {
-                issue.postTransition(transition.getStateName(),
-                        getUserName() + " performed " + operation + " transition");
-            }
+            transitionIssueToSameOrderStatus(order);
             // The status was changed, let the user know.
             reporter.addMessage("The order status of ''{0}'' is now {1}.", jiraTicketKey, order.getOrderStatus());
+        }
+    }
+
+    /**
+     * If possible, update the JIRA issue so its status matches the status of the PDO in Mercury. No error is
+     * generated if the transition is not possible, or if the JIRA status already matches Mercury.
+     *
+     * @param order the order to transition
+     * @throws IOException
+     */
+    private void transitionIssueToSameOrderStatus(@Nonnull ProductOrder order) throws IOException {
+        JiraIssue issue = jiraService.getIssue(order.getJiraTicketKey());
+        JiraTransition transition = JiraStatus.fromIssue(issue).getTransitionTo(order.getOrderStatus());
+        if (transition != null) {
+            issue.postTransition(transition.stateName, getUserName() + " transitioned to " + transition.stateName);
         }
     }
 
@@ -960,27 +942,29 @@ public class ProductOrderEjb {
         }
         editOrder.prepareToSave(userBean.getBspUser());
         try {
-
-            ProductOrderJiraUtil.placeOrder(editOrder, jiraService);
+            if (editOrder.isDraft()) {
+                // Only Draft orders are not already created in JIRA.
+                ProductOrderJiraUtil.createIssueForOrder(editOrder, jiraService);
+            }
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+            transitionIssueToSameOrderStatus(editOrder);
+
+            // Now that the order is placed, add the comments about the samples to the issue.
+            ProductOrderJiraUtil.addSampleComments(editOrder, jiraService.getIssue(editOrder.getJiraTicketKey()));
 
         } catch (IOException e) {
-            log.error("An exception occurred attempting to create a Product Order in Jira", e);
-            throw new InformaticsServiceException("Unable to create the Product Order in Jira", e);
+            String message = "Unable to create the Product Order in Jira";
+            log.error(message, e);
+            throw new InformaticsServiceException(message, e);
         }
 
-        // This checks if there is a product order kit defined, which will let ANY PDO define the kit work request.
-        if (editOrder.getProductOrderKit().getKitOrderDetails().isEmpty()) {
-            if (editOrder.isSampleInitiation()) {
-                throw new InformaticsServiceException("Kit Work Requests require at least one kit definition");
-            }
-        } else {
+        if (editOrder.isSampleInitiation()) {
             try {
                 submitSampleKitRequest(editOrder, messageCollection);
             } catch (Exception e) {
-                String errorMessage = "Unable to successfully complete the sample kit creation";
-                log.error(errorMessage);
-                messageCollection.addError(errorMessage);
+                String errorMessage = "Unable to successfully complete the sample kit creation: ";
+                log.error(errorMessage, e);
+                messageCollection.addError(errorMessage + e.getMessage());
             }
         }
 

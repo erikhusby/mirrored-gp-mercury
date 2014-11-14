@@ -23,19 +23,17 @@ import java.util.Map;
  * This enum holds header information for sample metadata manifests.
  */
 public enum ManifestHeader implements ColumnHeader {
-    SPECIMEN_NUMBER("Specimen_Number", 0, Metadata.Key.SAMPLE_ID),
-    SEX("Sex", 2, Metadata.Key.GENDER),
-    PATIENT_ID("Patient_ID", 1, Metadata.Key.PATIENT_ID),
-    COLLECTION_DATE("Collection_Date", 3, Metadata.Key.BUICK_COLLECTION_DATE),
-    VISIT("Visit", 4, Metadata.Key.BUICK_VISIT),
-    TUMOR_OR_NORMAL("SAMPLE_TYPE", 5, Metadata.Key.TUMOR_NORMAL);
+    SPECIMEN_NUMBER("Specimen_Number", Metadata.Key.SAMPLE_ID),
+    SEX("Sex", Metadata.Key.GENDER),
+    PATIENT_ID("Patient_ID", Metadata.Key.PATIENT_ID),
+    COLLECTION_DATE("Collection_Date", Metadata.Key.BUICK_COLLECTION_DATE),
+    VISIT("Visit", Metadata.Key.BUICK_VISIT),
+    TUMOR_OR_NORMAL("SAMPLE_TYPE", Metadata.Key.TUMOR_NORMAL);
     private final String columnName;
-    private final int index;
     private final Metadata.Key metadataKey;
 
-    ManifestHeader(String columnName, int index, Metadata.Key metadataKey) {
+    ManifestHeader(String columnName, Metadata.Key metadataKey) {
         this.columnName = columnName;
-        this.index = index;
         this.metadataKey = metadataKey;
     }
 
@@ -68,13 +66,8 @@ public enum ManifestHeader implements ColumnHeader {
     }
 
     @Override
-    public int getIndex() {
-        return index;
-    }
-
-    @Override
     public boolean isRequiredHeader() {
-        return ColumnHeader.REQUIRED_HEADER;
+        return true;
     }
 
     @Override

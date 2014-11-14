@@ -45,7 +45,7 @@ public class ProductOrderJiraUtilTest extends Arquillian {
         Assert.assertTrue(StringUtils.isEmpty(pdo.getJiraTicketKey()),
                 "PDO already has a jira id, but we want it blank for our test.");
 
-        ProductOrderJiraUtil.placeOrder(pdo,jiraService);
+        ProductOrderJiraUtil.createIssueForOrder(pdo, jiraService);
 
         Assert.assertFalse(StringUtils.isEmpty(pdo.getJiraTicketKey()),
                 "When the PDO is created in jira, we expected the PDO's business key to be assigned.");
