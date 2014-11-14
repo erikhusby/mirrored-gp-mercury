@@ -18,8 +18,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class SampleDataFetcher implements Serializable {
 
@@ -177,5 +179,46 @@ public class SampleDataFetcher implements Serializable {
                         String.format("Unknown sample data source %s for sample %s", metadataSource, sampleId));
             }
         }
+    }
+
+    /**
+     * Fetch the sampleData for multiple product Order Samples
+     * @param samples collection of product order sample for which sample data is needed
+     * @return Mapping of sample id to its sample data
+     */
+    public Map<String, SampleData> fetchSampleData(List<ProductOrderSample> samples) {
+
+        Map<String, SampleData> sampleData = new HashMap<>();
+
+        Collection<MercurySample> mercurySamplesWithMercurySource = new ArrayList<>();
+        Collection<String> sampleIdsWithBspSource = new ArrayList<>();
+
+        Set<String> sampleNames = new HashSet<>(samples.size());
+        for (ProductOrderSample productOrderSample : samples) {
+            if (productOrderSample.needsBspMetaData()) {
+                MercurySample mercurySample = productOrderSample.getMercurySample();
+                if(mercurySample != null &&
+                   mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
+                    mercurySamplesWithMercurySource.add(mercurySample);
+                } else {
+                    sampleNames.add(productOrderSample.getName());
+                }
+            }
+        }
+        if (sampleNames.isEmpty()) {
+            // This early return is needed to avoid making a unnecessary injection, which could cause
+            // DB Free automated tests to fail.
+            return sampleData;
+        }
+
+        buildSampleCollectionsBySource(sampleNames, mercurySamplesWithMercurySource, sampleIdsWithBspSource);
+
+        if (!sampleIdsWithBspSource.isEmpty()) {
+            Map<String, BspSampleData> bspSampleData = bspSampleDataFetcher.fetchSampleData(sampleIdsWithBspSource);
+            sampleData.putAll(bspSampleData);
+        }
+        sampleData.putAll(mercurySampleDataFetcher.fetchSampleData(mercurySamplesWithMercurySource));
+
+        return sampleData;
     }
 }

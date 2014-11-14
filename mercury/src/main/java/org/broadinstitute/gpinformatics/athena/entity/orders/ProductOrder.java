@@ -295,7 +295,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return count;
     }
 
-    /**
+     /**
      * Initializes the {@link LabEventSampleDTO} for each {@link ProductOrderSample} with the {@link LabVessel}
      * associated with the ProductOrderSample so far.
      *
@@ -321,36 +321,27 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     public static void loadSampleData(List<ProductOrderSample> samples) {
 
         // Create a subset of the samples so we only call BSP for BSP samples that aren't already cached.
-        Set<String> sampleNames = new HashSet<>(samples.size());
-        for (ProductOrderSample productOrderSample : samples) {
-            if (productOrderSample.needsBspMetaData()) {
-                sampleNames.add(productOrderSample.getName());
-            }
-        }
-        if (sampleNames.isEmpty()) {
-            // This early return is needed to avoid making a unnecessary injection, which could cause
-            // DB Free automated tests to fail.
-            return;
-        }
 
         // This gets all the sample names. We could get unique sample names from BSP as a future optimization.
         SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
-        Map<String, SampleData> sampleDataMap = sampleDataFetcher.fetchSampleData(sampleNames);
+        Map<String, SampleData> sampleDataMap = sampleDataFetcher.fetchSampleData(samples);
 
         // Collect SampleData which we will then use to look up FFPE status.
-        List<SampleData> nonNullSampleData = new ArrayList<>();
-        for (ProductOrderSample sample : samples) {
-            SampleData sampleData = sampleDataMap.get(sample.getName());
+        if (!sampleDataMap.isEmpty()) {
+            List<SampleData> nonNullSampleData = new ArrayList<>();
+            for (ProductOrderSample sample : samples) {
+                SampleData sampleData = sampleDataMap.get(sample.getName());
 
-            // If the DTO is null, we do not need to set it because it defaults to DUMMY inside sample.
-            if (sampleData != null) {
-                sample.setSampleData(sampleData);
-                nonNullSampleData.add(sampleData);
+                // If the DTO is null, we do not need to set it because it defaults to DUMMY inside sample.
+                if (sampleData != null) {
+                    sample.setSampleData(sampleData);
+                    nonNullSampleData.add(sampleData);
+                }
             }
-        }
 
-        // Fill out all the SampleData with FFPE status in one shot.
-        sampleDataFetcher.fetchFFPEDerived(nonNullSampleData);
+            // Fill out all the SampleData with FFPE status in one shot.
+            sampleDataFetcher.fetchFFPEDerived(nonNullSampleData);
+        }
     }
 
     // Initialize our transient data after the object has been loaded from the database.
