@@ -261,6 +261,7 @@ function showSamples(sampleData) {
         $j('#collab-sample-' + sampleId).text(sampleData[x].collaboratorSampleId);
         $j('#patient-' + sampleId).text(sampleData[x].patientId);
         $j('#collab-patient-' + sampleId).text(sampleData[x].collaboratorParticipantId);
+        $j('#sample-type-' + sampleId).text(sampleData[x].sampleType);
         $j('#volume-' + sampleId).text(sampleData[x].volume);
         $j('#concentration-' + sampleId).text(sampleData[x].concentration);
         $j('#rin-' + sampleId).text(sampleData[x].rin);
@@ -294,8 +295,9 @@ function showSamples(sampleData) {
                 {"bSortable": true},                            // Collaborator Sample ID
                 {"bSortable": true},                            // Participant ID
                 {"bSortable": true},                            // Collaborator Participant ID
-                {"bSortable": true},                            // Shipped Date
-                {"bSortable": true},                            // Received Date
+                {"bSortable": true, "sType": "date"},           // Shipped Date
+                {"bSortable": true, "sType": "date"},           // Received Date
+                {"bSortable": true},                            // Sample Type
                 {"bSortable": true, "sType": "numeric"},        // Volume
                 {"bSortable": true, "sType": "numeric"},        // Concentration
 
@@ -1136,6 +1138,7 @@ function formatInput(item) {
                 <th width="110">Collaborator Participant ID</th>
                 <th width="40">Shipped Date</th>
                 <th width="40">Received Date</th>
+                <th width="40">Sample Type</th>
                 <th width="40">Volume</th>
                 <th width="40">Concentration</th>
 
@@ -1193,6 +1196,8 @@ function formatInput(item) {
                     <td id="receipt-date-${sample.productOrderSampleId}">
                             ${sample.labEventSampleDTO.sampleReceiptDate}
                     </td>
+
+                    <td id="sample-type-${sample.productOrderSampleId}"></td>
 
                     <td id="volume-${sample.productOrderSampleId}"></td>
                     <td id="concentration-${sample.productOrderSampleId}"></td>

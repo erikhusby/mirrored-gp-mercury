@@ -53,6 +53,7 @@ public class ProductOrderSampleJsonFactory {
         item.put(BspSampleData.COLLABORATOR_SAMPLE_ID, sampleData.getCollaboratorsSampleName());
         item.put(BspSampleData.PATIENT_ID, sampleData.getPatientId());
         item.put(BspSampleData.COLLABORATOR_PARTICIPANT_ID, sampleData.getCollaboratorParticipantId());
+        item.put(BspSampleData.SAMPLE_TYPE, sampleData.getSampleType());
         item.put(BspSampleData.VOLUME, sampleData.getVolume());
         item.put(BspSampleData.CONCENTRATION, sampleData.getConcentration());
         item.put(BspSampleData.JSON_RIN_KEY, sampleData.getRawRin());
