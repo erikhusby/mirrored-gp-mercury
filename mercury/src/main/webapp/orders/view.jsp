@@ -663,16 +663,17 @@ function formatInput(item) {
         </c:when>
     </c:choose>
 
+    <c:set var="regulatoryInfoForPendingOrder" value="${actionBean.regulatoryInfoForPendingOrder}"/>
+    <c:if test="${regulatoryInfoForPendingOrder != null}">
+        <div>
+            Regulatory Info: ${regulatoryInfoForPendingOrder.displayText}
+        </div>
+    </c:if>
+
     <span class="control-group">
         <span class="controls">
             <stripes:checkbox id="placeConfirmAttestation" name="editOrder.attestationConfirmed"
                               class="controls controls-text" style="margin-top: 0px; margin-right: 5px;"/>
-        </span>
-        <span class="control-label">
-            <c:set var="regulatoryInfoForPendingOrder" value="${actionBean.regulatoryInfoForPendingOrder}"/>
-            <c:if test="${regulatoryInfoForPendingOrder != null}">
-                ${regulatoryInfoForPendingOrder.name}
-            </c:if>
         </span>
         <stripes:label for="placeConfirmAttestation" class="controls control-label"
                        style="display: inline; position: absolute;">
