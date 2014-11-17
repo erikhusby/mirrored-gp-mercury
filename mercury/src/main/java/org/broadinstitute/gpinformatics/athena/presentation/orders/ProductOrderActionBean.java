@@ -360,6 +360,15 @@ public class ProductOrderActionBean extends CoreActionBean {
                + "quarantining of data.";
     }
 
+    public RegulatoryInfo getRegulatoryInfoForPendingOrder() {
+        if (editOrder != null) {
+            if (editOrder.getRegulatoryInfos().size() == 1) {
+                return editOrder.getRegulatoryInfos().iterator().next();
+            }
+        }
+        return null;
+    }
+
     /**
      * Given a product order, create an external link back to the application's View Details page for that order.
      */
