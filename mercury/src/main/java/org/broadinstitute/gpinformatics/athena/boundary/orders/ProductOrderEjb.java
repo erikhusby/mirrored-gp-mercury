@@ -131,7 +131,9 @@ public class ProductOrderEjb {
             }
         }
 
-        abandonSamples(editOrder.getJiraTicketKey(), nonReceivedSamples, "Sample was not received.");
+        if (!nonReceivedSamples.isEmpty()) {
+            abandonSamples(editOrder.getJiraTicketKey(), nonReceivedSamples, "Sample was not received.");
+        }
     }
 
     /**
