@@ -1,8 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -23,7 +22,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -108,27 +109,25 @@ public class ManifestSessionEjb {
     private ManifestSession uploadManifest(InputStream inputStream, String pathToFile, BspUser bspUser,
                                            ResearchProject researchProject) {
         ManifestImportProcessor manifestImportProcessor = new ManifestImportProcessor();
-
+        List<String> messages=new ArrayList<>();
         try {
-            List<String> messages = manifestImportProcessor.processSingleWorksheet(inputStream);
-
-            if (!messages.isEmpty()) {
-                String messageText = StringUtils.join(messages, ", ");
-                throw new InformaticsServiceException("Error reading manifest file: " + messageText);
-            }
-        } catch (ValidationException e) {
+            messages.addAll(manifestImportProcessor.processSingleWorksheet(inputStream));
+        } catch (IOException | InvalidFormatException e) {
             throw new InformaticsServiceException(e.getMessage(), e);
-        } catch (Exception e) {
-            throw new InformaticsServiceException(
-                    String.format(
-                    "Error reading manifest file '%s'.  Manifest files must be in the proper Excel format.",
-                    FilenameUtils.getName(pathToFile)), e);
+        } catch (ValidationException e) {
+            if (!messages.addAll(e.getValidationMessages())) {
+                messages.add(e.getMessage());
+            }
         }
+        if (!messages.isEmpty()) {
+            throw new InformaticsServiceException(StringUtils.join(messages, "\n"));
+        }
+
         Collection<ManifestRecord> manifestRecords;
         try {
             manifestRecords = manifestImportProcessor.getManifestRecords();
         } catch (ValidationException e) {
-            throw new InformaticsServiceException(e);
+            throw new InformaticsServiceException(StringUtils.join(e.getValidationMessages(), ", "));
         }
         ManifestSession manifestSession = new ManifestSession(researchProject, pathToFile, bspUser);
         // Persist here so an ID will be generated for the ManifestSession.  This ID is used for the

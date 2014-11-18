@@ -58,7 +58,7 @@ public class ManifestImportProcessor extends TableProcessor {
         ManifestHeader.fromColumnName(errors, headers.toArray(new String[headers.size()]));
         if (!errors.isEmpty()){
             getMessages()
-                    .add(String.format("Unknown %s '%s' present", Noun.pluralOf("header", errors.size()), errors));
+                    .add(String.format("Unknown %s '%s' present.", Noun.pluralOf("header", errors.size()), errors));
         }
     }
 

@@ -83,7 +83,7 @@ public class ManifestImportProcessorTest {
         headers.addAll(unknownHeaders);
         boolean headersAreValid = processor.validateColumnHeaders(headers);
         assertThat(headersAreValid, is(not(true)));
-        assertThat(processor.getMessages(), contains("Unknown headers '[bad header 1, bad header 2]' present"));
+        assertThat(processor.getMessages(), contains("Unknown headers '[bad header 1, bad header 2]' present."));
     }
 
     public void testProcessRowDetailsShouldPass() throws Exception {

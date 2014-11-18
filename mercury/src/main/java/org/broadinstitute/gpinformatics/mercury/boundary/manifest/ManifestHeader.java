@@ -104,7 +104,11 @@ public enum ManifestHeader implements ColumnHeader {
             try {
                 matches.add(ManifestHeader.fromColumnName(columnName));
             } catch (EnumConstantNotPresentException e) {
-                errors.add(e.constantName());
+
+                // If a header cell is not blank.
+                if (!e.constantName().isEmpty()) {
+                    errors.add(e.constantName());
+                }
             }
         }
         return matches;

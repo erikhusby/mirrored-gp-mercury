@@ -293,30 +293,28 @@ public class ManifestSessionEjbDBFreeTest {
 
     @DataProvider(name = BAD_MANIFEST_UPLOAD_PROVIDER)
     public Object[][] badManifestUploadProvider() {
-        String wrongFormatStringFormat =
-                "Error reading manifest file '%s'.  Manifest files must be in the proper Excel format.";
         // @formatter:off
         return new Object[][]{
-                {"Not an Excel file", String.format(wrongFormatStringFormat, "not-an-excel-file.txt"),
+                {"Not an Excel file", "Your InputStream was neither an OLE2 stream, nor an OOXML stream",
                         "manifest-upload/not-an-excel-file.txt"},
-                {"Missing required field", String.format(wrongFormatStringFormat, "test-manifest-missing-specimen.xlsx"),
+                {"Missing required field", "Row #1 Required value for Specimen_Number is missing.",
                         "manifest-import/test-manifest-missing-specimen.xlsx"},
-                {"Missing column", "Error parsing headers.\nRequired header: Specimen_Number is missing",
+                {"Missing column", "Required header missing: Specimen_Number.",
                         "manifest-upload/manifest-with-missing-column.xlsx"},
-                {"Empty manifest", "Error parsing headers.\nRequired header: Specimen_Number is missing\nRequired header: SAMPLE_TYPE is missing\nUnknown headers '[Sample ID, T/N]' present",
+                {"Empty manifest", "The uploaded Manifest has no data.",
                         "manifest-upload/empty-manifest.xlsx"},
-                {"Multiple Bad Columns in Manifest", "Error parsing headers.\nRequired header: Specimen_Number is missing\nRequired header: Sex is missing\nRequired header: Patient_ID is missing\nRequired header: Collection_Date is missing\nRequired header: Visit is missing\nRequired header: SAMPLE_TYPE is missing\nUnknown headers '[Specimen_Numberz, Patient_Idee, Gender, Date, Visit Type, Sample Type]' present",
+                {"Multiple Bad Columns in Manifest", "Required headers missing: Specimen_Number, Sex, Patient_ID, Collection_Date, Visit, SAMPLE_TYPE.\nUnknown headers '[Specimen_Numberz, Patient_Idee, Gender, Date, Visit Type, Sample Type]' present.",
                         "manifest-upload/manifest-with-multiple-bad-columns.xlsx"}
         };
         // @formatter:on
     }
 
     @Test(dataProvider = BAD_MANIFEST_UPLOAD_PROVIDER)
-    public void uploadBadManifest(String description, String errorMessage, String pathToManifestFile) throws Exception {
+    public void uploadBadManifest(String description, String errorMessage, String pathToManifestFile) {
         try {
             uploadManifest(pathToManifestFile);
             Assert.fail(description);
-        } catch (InformaticsServiceException e) {
+        } catch (Exception e) {
             Assert.assertEquals(e.getMessage(), errorMessage);
         }
     }

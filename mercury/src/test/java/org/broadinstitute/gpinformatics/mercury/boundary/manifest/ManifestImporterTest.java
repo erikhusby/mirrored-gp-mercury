@@ -52,6 +52,7 @@ public class ManifestImporterTest {
     private static final String MISSING_REQUIRED_SEX = relativePathToTestFile("test-manifest-missing-sex.xlsx");
     private static final String MISSING_REQUIRED_TUMOR_NORMAL = relativePathToTestFile("test-manifest-missing-tn.xlsx");
     private static final String MISSING_REQUIRED_PATIENT = relativePathToTestFile("test-manifest-missing-patient.xlsx");
+    private static final String MISSING_HEADER_PATIENT = relativePathToTestFile("missing-patient-header.xlsx");
     private static final String UNKNOWN_HEADERS = relativePathToTestFile("test-manifest-unknown-headers.xlsx");
     private static final String TOO_MANY_SHEETS = relativePathToTestFile("test-manifest-too-many-sheets.xlsx");
     private static final String REARRANGED_COLUMNS = relativePathToTestFile("test-manifest-rearranged-columns.xlsx");
@@ -109,14 +110,28 @@ public class ManifestImporterTest {
     @Test(dataProvider = "missingRequiredDataProvider")
     public void testImportMissing(String fileName, ManifestHeader header) throws Exception {
         InputStream inputStream = new FileInputStream(TestUtils.getTestData(fileName));
-        PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
 
         try {
+            PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
             validateManifestRecords(manifestImportProcessor);
             Assert.fail(VALIDATION_EXCEPTION_MESSAGE);
         } catch (ValidationException e) {
             assertThat(manifestImportProcessor.getMessages(),
                     hasItem(String.format(REQUIRED_VALUE_IS_MISSING, 1, header.getColumnName())));
+            assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
+        }
+    }
+
+    public void testImportMissingHeader() throws Exception {
+        InputStream inputStream = new FileInputStream(TestUtils.getTestData(MISSING_HEADER_PATIENT));
+
+        try {
+            PoiSpreadsheetParser.processSingleWorksheet(inputStream, manifestImportProcessor);
+            validateManifestRecords(manifestImportProcessor);
+            Assert.fail(VALIDATION_EXCEPTION_MESSAGE);
+        } catch (ValidationException e) {
+            assertThat(manifestImportProcessor.getMessages(),
+                    hasItem(String.format("Required header missing: %s.", ManifestHeader.PATIENT_ID.getColumnName())));
             assertThat(manifestImportProcessor.getWarnings(), emptyCollectionOf(String.class));
         }
     }
