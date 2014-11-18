@@ -85,6 +85,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
+import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -358,6 +359,17 @@ public class ProductOrderActionBean extends CoreActionBean {
                + "project, that these requirements have been met, and that the information I have provided is "
                + "accurate. Disregard of relevant requirements and/or falsification of information may lead to "
                + "quarantining of data.";
+    }
+
+    /**
+     * @return the list if role names that can modify the order being edited.
+     */
+    public String[] getModifyOrderRoles() {
+        if (editOrder.isPending()) {
+            // Allow PMs to modify Pending orders.
+            return Role.roles(Role.Developer, Role.PDM, Role.PM);
+        }
+        return Role.roles(Role.Developer, Role.PDM);
     }
 
     /**
@@ -1032,7 +1044,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         MessageCollection placeOrderMessageCollection = new MessageCollection();
         try {
-            if (editOrder.getOrderStatus() == ProductOrder.OrderStatus.Pending) {
+            if (editOrder.isPending()) {
                 // For a Pending order, we need to abandon samples that haven't been received.
                 productOrderEjb.abandonNonReceivedSamples(editOrder);
             }

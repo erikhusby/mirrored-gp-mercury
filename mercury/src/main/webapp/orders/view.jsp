@@ -714,8 +714,7 @@ function formatInput(item) {
                                     value="Place Order" class="btn"/>
                 </security:authorizeBlock>
             </c:if>
-            <%-- Do not show abandon button at all for DRAFTs, do show for Submitted *or later states* --%>
-            <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+            <security:authorizeBlock roles="${actionBean.modifyOrderRoles}">
                 <c:choose>
                     <c:when test="${actionBean.canAbandonOrder}">
                         <c:set var="abandonTitle" value="Click to abandon ${actionBean.editOrder.title}"/>
@@ -1128,14 +1127,14 @@ function formatInput(item) {
 </c:if>
 </div>
 
-<c:if test="${!actionBean.editOrder.draft || !actionBean.editOrder.isSampleInitiation()}">
+<c:if test="${!actionBean.editOrder.draft || !actionBean.editOrder.sampleInitiation}">
 
     <div class="borderHeader">
         <h4 style="display:inline">Samples</h4>
 
         <c:if test="${!actionBean.editOrder.draft}">
             <span class="actionButtons">
-                <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+                <security:authorizeBlock roles="${actionBean.modifyOrderRoles}">
                     <stripes:button name="deleteSamples" value="Delete Samples" class="btn"
                                     style="margin-left:30px;"
                                     onclick="showConfirm('deleteSamples', 'delete')"/>
@@ -1171,7 +1170,7 @@ function formatInput(item) {
                 </security:authorizeBlock>
             </span>
 
-            <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+            <security:authorizeBlock roles="${actionBean.modifyOrderRoles}">
                 <div class="pull-right">
                     <stripes:text size="100" name="addSamplesText" style="margin-left:15px;"/>
                     <stripes:submit name="addSamples" value="Add Samples" class="btn" style="margin-right:15px;"/>

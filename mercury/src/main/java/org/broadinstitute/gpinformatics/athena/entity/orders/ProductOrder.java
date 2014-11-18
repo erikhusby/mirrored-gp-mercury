@@ -901,6 +901,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     /**
+     * @return true if order is pending
+     */
+    public boolean isPending() {
+        return orderStatus == OrderStatus.Pending;
+    }
+
+    /**
      * This is a helper method encapsulating the validations run against the samples contained
      * within this product order.  The results of these validation checks are then added to the existing Jira Ticket.
      */
