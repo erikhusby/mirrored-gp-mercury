@@ -89,7 +89,7 @@ public class SampleDataFetcher implements Serializable {
      */
     public Map<String, SampleData> fetchSampleData(@Nonnull Collection<String> sampleNames) {
 
-        List<String> sampleIdsWithBspSource = new ArrayList<>();
+        Collection<String> sampleIdsWithBspSource = new ArrayList<>();
         Collection<MercurySample> mercurySamplesWithMercurySource = new ArrayList<>();
 
         buildSampleCollectionsBySource(sampleNames, mercurySamplesWithMercurySource, sampleIdsWithBspSource);
@@ -186,7 +186,7 @@ public class SampleDataFetcher implements Serializable {
      * @param samples collection of product order sample for which sample data is needed
      * @return Mapping of sample id to its sample data
      */
-    public Map<String, SampleData> fetchSampleData(List<ProductOrderSample> samples) {
+    public Map<String, SampleData> fetchSampleDataForProductOrderSample(Collection<ProductOrderSample> samples) {
 
         Map<String, SampleData> sampleData = new HashMap<>();
 
@@ -205,17 +205,14 @@ public class SampleDataFetcher implements Serializable {
                 }
             }
         }
-        if (sampleNames.isEmpty()) {
-            // This early return is needed to avoid making a unnecessary injection, which could cause
-            // DB Free automated tests to fail.
-            return sampleData;
-        }
+        if (!sampleNames.isEmpty()) {
 
-        buildSampleCollectionsBySource(sampleNames, mercurySamplesWithMercurySource, sampleIdsWithBspSource);
+            buildSampleCollectionsBySource(sampleNames, mercurySamplesWithMercurySource, sampleIdsWithBspSource);
 
-        if (!sampleIdsWithBspSource.isEmpty()) {
-            Map<String, BspSampleData> bspSampleData = bspSampleDataFetcher.fetchSampleData(sampleIdsWithBspSource);
-            sampleData.putAll(bspSampleData);
+            if (!sampleIdsWithBspSource.isEmpty()) {
+                Map<String, BspSampleData> bspSampleData = bspSampleDataFetcher.fetchSampleData(sampleIdsWithBspSource);
+                sampleData.putAll(bspSampleData);
+            }
         }
         sampleData.putAll(mercurySampleDataFetcher.fetchSampleData(mercurySamplesWithMercurySource));
 

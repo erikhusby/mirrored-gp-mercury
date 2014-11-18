@@ -324,7 +324,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
         // This gets all the sample names. We could get unique sample names from BSP as a future optimization.
         SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
-        Map<String, SampleData> sampleDataMap = sampleDataFetcher.fetchSampleData(samples);
+        Map<String, SampleData> sampleDataMap = sampleDataFetcher.fetchSampleDataForProductOrderSample(samples);
 
         // Collect SampleData which we will then use to look up FFPE status.
         if (!sampleDataMap.isEmpty()) {
