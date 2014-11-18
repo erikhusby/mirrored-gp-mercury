@@ -1,77 +1,109 @@
+
 <%@ include file="/resources/layout/taglibs.jsp" %>
 <%@ taglib prefix='fn' uri='http://java.sun.com/jsp/jstl/functions' %>
+<%@ page import="org.broadinstitute.bsp.client.rackscan.RackScanner" %>
+<%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.sample.PicoDispositionActionBean" %>
 
-<stripes:useActionBean var="actionBean"
-                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.PicoDispositionActionBean"/>
+<%-- Allows selecting a rack scan lab, rack scanner device, and user-input simulated rack scan file. --%>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="Confirm Rearray from Rack Scan"
-                       sectionTitle="Confirm Rearray from Rack Scan" showCreate="false">
+<stripes:layout-render name="/layout.jsp" pageTitle="Confirm Rearray via Rack Scan"
+                       sectionTitle="Confirm Rearray via Rack Scan" showCreate="false">
 
     <stripes:layout-component name="extraHead">
-
         <script type="text/javascript">
+
+            function hideDependentControls() {
+                $j('#selectScanner').css('display','none');
+                $j('#selectScannerLabel').css('display','none');
+                $j('#simulationFile').css('display','none');
+                $j('#simulationFileLabel').css('display','none');
+                $j('#scanBtn').css('display','none');
+            }
+
             $j(document).ready(function () {
-                <%-- Ajax is used here since the scanner list is populated based on the lab selection.
-                     This code is a slightly modified form of rack_scan_lab_select.jsp  --%>
-                $j( "#labToFilterBy" ).change(function() {
-                    var scanUrl = "${ctxpath}${actionBean.rackScanPageUrl}?${actionBean.showScanSelectionEvent}="
-                            + "&labToFilterBy=" +$j("select#labToFilterBy option:selected").val()
-                            + "&nextStepSelect=" + $j("select#nextStepSelect option:selected").val();
-                    $j.ajax({
-                        url: scanUrl,
-                        dataType:'html',
-                        success:showRackScanForm
-                    });
-                });
+                $j('#selectLab').val("");
+                hideDependentControls();
             });
 
-            function showRackScanForm(data) {
-                $j("#rackScanForm").html(data);
-                $j("#rackScanForm input[type='button']").click(function() {
-                    var scanUrl = "${ctxpath}${actionBean.rackScanPageUrl}?${actionBean.confirmRearrayScanEvent}="
-                            + "&labToFilterBy=" +$j("select#labToFilterBy option:selected").val()
-                            + "&rackScanner=" +$j("select#rackScanner option:selected").val()
-                            + "&nextStepSelect=" + $j("select#nextStepSelect option:selected").val();
-                    document.location.href = scanUrl;
-                });
+            function labChanged() {
+                if ($j('#selectLab').val() == '') {
+                    hideDependentControls();
+                } else {
+                    // POST invokes the action bean event to get the scanner devices, using these params.
+                    actionBeanParams = { getScannersForLab : '', labToFilterBy : $j('#selectLab').val() };
+                    $j.post(window.location.pathname, actionBeanParams, function (data) {
+                        // Rewrites the option tags in the selectScanner dropdown.
+                        $j('#selectScanner').html(data);
+                    });
+                    $j('#selectScannerLabel').css('display','block');
+                    $j('#selectScanner').css('display','block');
+                    // The csv file selector used for simulation.
+                    if ($j('#selectLab').val() == "<%= RackScanner.RackScannerLab.RACK_SCAN_SIMULATOR_LAB.getName() %>") {
+                        $j('#simulationFileLabel').css('display','block');
+                        $j('#simulationFile').css('display','block');
+                    } else {
+                        $j('#simulationFileLabel').css('display','none');
+                        $j('#simulationFile').css('display','none');
+                    }
+                    $j('#scanBtn').css('display','block');
+                }
             }
-        </script>
 
+        </script>
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
 
-        <stripes:form beanclass="${actionBean.class.name}" id="nextStepSelectForm" class="form-horizontal" onsubmit="return false;">
-            <%-- User must declare which Next Step value all the scanned tubes should have. --%>
+        <stripes:form beanclass="${actionBean.class.name}" id="selectionForm" class="form-horizontal">
             <div class="form-horizontal">
+
+                <!-- User must declare which Next Step value all the scanned tubes should have. -->
                 <div class="control-group">
                     <stripes:label for="nextStepSelect" class="control-label">Expected Next Step</stripes:label>
                     <div class="controls">
-                        <stripes:select name="nextStepSelect" id="nextStepSelect">
+                        <stripes:select name="nextStepSelect" id="nextStepSelect" value="${actionBean.nextStepSelect}">
                             <stripes:option value="" label="Select One" />
                             <stripes:options-collection collection="${actionBean.confirmableNextSteps}"
                                                         label="stepName" value="stepName"/>
                         </stripes:select>
                     </div>
                 </div>
-            </div>
-        </stripes:form>
 
-        <stripes:form beanclass="${actionBean.class.name}" id="labForm" class="form-horizontal" onsubmit="return false;">
-            <div class="form-horizontal">
+                <!-- Selects the lab, which then populates the scanner device list. -->
                 <div class="control-group">
-                    <stripes:label for="labToFilterBy" class="control-label">Lab</stripes:label>
+                    <stripes:label for="selectLab" class="control-label">Lab</stripes:label>
                     <div class="controls">
-                        <stripes:select name="labToFilterBy" id="labToFilterBy">
+                        <stripes:select name="labToFilterBy" id="selectLab" onchange="labChanged()">
                             <stripes:option value="" label="Select One" />
                             <stripes:options-collection collection="${actionBean.allLabs}" label="labName" value="name"/>
                         </stripes:select>
                     </div>
                 </div>
+
+                <!-- Dynamically generated list of scanner device names. -->
+                <div class="control-group">
+                    <stripes:label id="selectScannerLabel" for="selectScanner" class="control-label">Rack Scanner</stripes:label>
+                    <div class="controls">
+                        <stripes:select name="rackScanner" id="selectScanner"/>
+                    </div>
+                </div>
+
+
+                <!-- Dynamically exposed/hidden file browse control. -->
+                <div class="control-group">
+                    <stripes:label id="simulationFileLabel" for="simulationFile" class="control-label">Choose a csv file</stripes:label>
+                    <div class="controls">
+                        <stripes:file name="simulatedScanCsv" id="simulationFile"/>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <stripes:submit value="Scan" id="scanBtn" class="btn btn-primary"
+                                    name="<%= PicoDispositionActionBean.CONFIRM_REARRAY_SCAN_EVENT %>"/>
+                </div>
             </div>
+
         </stripes:form>
-        <div id="rackScanForm"></div>
-        <div id="results"></div>
 
     </stripes:layout-component>
 </stripes:layout-render>

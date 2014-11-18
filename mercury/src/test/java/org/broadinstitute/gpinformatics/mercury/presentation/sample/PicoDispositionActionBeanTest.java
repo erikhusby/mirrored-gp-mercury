@@ -2,9 +2,11 @@ package org.broadinstitute.gpinformatics.mercury.presentation.sample;
 
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.Resolution;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.rackscan.RackScanner;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.RackScannerEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
@@ -16,9 +18,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBeanContext;
 import org.easymock.EasyMock;
+import org.openqa.selenium.By;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.io.Reader;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.HashMap;
@@ -93,6 +97,20 @@ public class PicoDispositionActionBeanTest {
 
         picoDispositionActionBean = new PicoDispositionActionBean();
         picoDispositionActionBean.setTubeFormation(tubeFormation);
+    }
+
+    @Test
+    public void testRackScannerSelectors() {
+        Assert.assertTrue(picoDispositionActionBean.getAllLabs().
+                contains(RackScanner.RackScannerLab.RACK_SCAN_SIMULATOR_LAB));
+        Assert.assertFalse(RackScanner.RackScannerLab.getLabsBySoftwareSystems(RackScanner.SoftwareSystem.MERCURY).
+                contains(RackScanner.RackScannerLab.RACK_SCAN_SIMULATOR_LAB), "PROD must not include simulator");
+        
+        picoDispositionActionBean.setLabToFilterBy(RackScanner.RackScannerLab.RACK_SCAN_SIMULATOR_LAB);
+        picoDispositionActionBean.loadRackScanners();
+        Assert.assertTrue(picoDispositionActionBean.getRackScanners().contains(RackScanner.RACK_SCAN_SIMULATOR));
+        Assert.assertFalse(RackScanner.getRackScannersByLab(RackScanner.RackScannerLab.RACK_SCAN_SIMULATOR_LAB, false).
+                contains(RackScanner.RACK_SCAN_SIMULATOR),  "PROD must not include simulator");
     }
 
     @Test
@@ -331,7 +349,8 @@ public class PicoDispositionActionBeanTest {
         EasyMock.reset(barcodedTubeDao);
         picoDispositionActionBean.setRackScannerEjb(rackScannerEjb);
         picoDispositionActionBean.setBarcodedTubeDao(barcodedTubeDao);
-        EasyMock.expect(rackScannerEjb.runRackScanner(EasyMock.anyObject(RackScanner.class))).andReturn(cellToBarcode);
+        EasyMock.expect(rackScannerEjb.runRackScanner(EasyMock.anyObject(RackScanner.class),
+                EasyMock.anyObject(Reader.class))).andReturn(cellToBarcode);
         for (BarcodedTube barcodedTube : positionToVessel.values()) {
             // This returns all tubes but not in the correct position, which will have to be ok for our purposes.
             EasyMock.expect(barcodedTubeDao.findByBarcode(EasyMock.anyObject(String.class))).andReturn(barcodedTube);
