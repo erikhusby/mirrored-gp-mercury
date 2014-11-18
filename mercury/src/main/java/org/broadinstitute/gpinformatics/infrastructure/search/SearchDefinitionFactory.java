@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.BspSampleSearchAd
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.EventVesselSourcePositionPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.EventVesselTargetPositionPlugin;
+import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselLatestEventPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetadataPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetricPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
@@ -17,7 +18,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -453,14 +453,14 @@ public class SearchDefinitionFactory {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
-        searchTerm.setName("Imported Sample Well");
+        searchTerm.setName("Imported Sample Position");
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
                 List<String> results = new ArrayList<>();
                 LabVessel labVessel = (LabVessel) entity;
                 Map<LabEvent, Set<LabVessel>> mapEventToVessels = labVessel.findVesselsForLabEventType(
-                        LabEventType.SAMPLE_IMPORT);
+                        LabEventType.SAMPLE_IMPORT, true);
                 for (Map.Entry<LabEvent, Set<LabVessel>> eventVesselEntry : mapEventToVessels.entrySet()) {
                     for (LabVessel vessel : eventVesselEntry.getValue()) {
                         Set<VesselContainer<?>> containers = vessel.getContainers();
@@ -491,7 +491,8 @@ public class SearchDefinitionFactory {
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
-                return getEventLabel((LabVessel) entity, LabEventType.SAMPLE_IMPORT);
+                return getEventLabel((LabVessel) entity
+                        , Collections.singletonList(LabEventType.SAMPLE_IMPORT), true);
             }
         });
         searchTerms.add(searchTerm);
@@ -504,7 +505,7 @@ public class SearchDefinitionFactory {
                 List<String> results = new ArrayList<>();
                 LabVessel labVessel = (LabVessel) entity;
                 Map<LabEvent, Set<LabVessel>> mapEventToVessels = labVessel.findVesselsForLabEventType(
-                        LabEventType.SAMPLE_IMPORT);
+                        LabEventType.SAMPLE_IMPORT, true);
                 for (Map.Entry<LabEvent, Set<LabVessel>> eventVesselEntry : mapEventToVessels.entrySet()) {
                     for (LabVessel vessel : eventVesselEntry.getValue()) {
                         Collection<MercurySample> mercurySamples = vessel.getMercurySamples();
@@ -519,11 +520,23 @@ public class SearchDefinitionFactory {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
-        searchTerm.setName("Pond Sample Well");
+        searchTerm.setName("Imported Sample Position");
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
-                return getEventPosition((LabVessel) entity, LabEventType.POND_REGISTRATION);
+                return getEventPosition((LabVessel) entity
+                        , Collections.singletonList(LabEventType.INITIAL_TARE), false);
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Pond Sample Position");
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                return getEventPosition((LabVessel) entity
+                        , Collections.singletonList(LabEventType.POND_REGISTRATION), true);
             }
         });
         searchTerms.add(searchTerm);
@@ -533,17 +546,46 @@ public class SearchDefinitionFactory {
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
-                return getEventLabel((LabVessel) entity, LabEventType.POND_REGISTRATION);
+                return getEventLabel((LabVessel) entity
+                        , Collections.singletonList(LabEventType.POND_REGISTRATION), true);
             }
         });
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
-        searchTerm.setName("Catch Sample Well");
+        searchTerm.setName("Shearing Sample Position");
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
-                return getEventPosition((LabVessel) entity, LabEventType.NORMALIZED_CATCH_REGISTRATION);
+                return getEventPosition((LabVessel) entity
+                        , Collections.singletonList(LabEventType.SHEARING_TRANSFER), false);
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Shearing Sample Barcode");
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                return getEventLabel((LabVessel) entity
+                        , Collections.singletonList(LabEventType.SHEARING_TRANSFER), false);
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Catch Sample Position");
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                List<LabEventType> labEventTypes = new ArrayList<>();
+                // ICE
+                labEventTypes.add(LabEventType.ICE_CATCH_ENRICHMENT_CLEANUP);
+                // Agilent
+                labEventTypes.add(LabEventType.NORMALIZED_CATCH_REGISTRATION);
+
+                return getEventPosition((LabVessel) entity, labEventTypes, true);
             }
         });
         searchTerms.add(searchTerm);
@@ -553,7 +595,13 @@ public class SearchDefinitionFactory {
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
-                return getEventLabel((LabVessel) entity, LabEventType.NORMALIZED_CATCH_REGISTRATION);
+                List<LabEventType> labEventTypes = new ArrayList<>();
+                // ICE
+                labEventTypes.add(LabEventType.ICE_CATCH_ENRICHMENT_CLEANUP);
+                // Agilent
+                labEventTypes.add(LabEventType.NORMALIZED_CATCH_REGISTRATION);
+
+                return getEventLabel((LabVessel) entity, labEventTypes, true );
             }
         });
         searchTerms.add(searchTerm);
@@ -561,28 +609,88 @@ public class SearchDefinitionFactory {
         return searchTerms;
     }
 
-    private Object getEventPosition(LabVessel labVessel, LabEventType labEventType) {
+    /**
+     * Traverse lab vessel events looking for specific types
+     * @param labVessel
+     * @param labEventTypes Mutually exclusive event types
+     * @param useTargetContainer Should target container (vs. source container) be used for positions?
+     * @return
+     */
+    private Object getEventPosition(LabVessel labVessel, List<LabEventType> labEventTypes, boolean useTargetContainer ) {
+
         List<String> results = new ArrayList<>();
-        Map<LabEvent, Set<LabVessel>> mapEventToVessels = labVessel.findVesselsForLabEventType(
-                labEventType);
-        for (Map.Entry<LabEvent, Set<LabVessel>> eventVesselEntry : mapEventToVessels.entrySet()) {
-            for (LabVessel vessel : eventVesselEntry.getValue()) {
-                Set<SectionTransfer> sectionTransfers = eventVesselEntry.getKey().getSectionTransfers();
-                if( !sectionTransfers.isEmpty() ) {
-                    VesselContainer container = sectionTransfers.iterator().next().getTargetVesselContainer();
-                    if( container != null ) {
-                        VesselPosition position = container.getPositionOfVessel(vessel);
-                        results.add(position==null?"":position.toString());
+
+        // Look for in-place
+        Set<LabEvent> inPlaceEvents = labVessel.getInPlaceEventsWithContainers();
+        for( LabEvent event : inPlaceEvents ) {
+            if( labEventTypes.contains(event.getLabEventType()) ){
+                VesselContainer container = event.getInPlaceLabVessel().getContainerRole();
+                VesselPosition position = container.getPositionOfVessel(labVessel);
+                if( position != null ) {
+                    results.add(position.toString());
+                }
+            }
+        }
+
+        if( results.size() > 0 ) {
+            return results;
+        }
+
+        // Lab event types
+        Map<LabEvent, Set<LabVessel>> mapEventToVessels
+                = labVessel.findVesselsForLabEventTypes( labEventTypes, useTargetContainer );
+
+        if( mapEventToVessels.isEmpty() ) {
+            return "";
+        }
+
+        LabEvent labEvent = mapEventToVessels.entrySet().iterator().next().getKey();
+        Set<LabVessel> descendantLabVessels = mapEventToVessels.entrySet().iterator().next().getValue();
+        VesselContainer vesselContainer = null;
+
+        // In place vessel is a container where event has no transfers
+        LabVessel inPlaceVessel = labEvent.getInPlaceLabVessel();
+        if( inPlaceVessel != null ) {
+            vesselContainer = inPlaceVessel.getContainerRole();
+        }
+
+        // Transfer
+        if( vesselContainer == null ){
+            if( useTargetContainer ) {
+                for (LabVessel srcVessel : labEvent.getTargetLabVessels()) {
+                    vesselContainer = srcVessel.getContainerRole();
+                    if( vesselContainer != null ) {
+                        break;
+                    }
+                }
+            } else {
+                for (LabVessel srcVessel : labEvent.getSourceLabVessels()) {
+                    vesselContainer = srcVessel.getContainerRole();
+                    if( vesselContainer != null ) {
+                        break;
                     }
                 }
             }
         }
+
+        if( vesselContainer == null || vesselContainer.getMapPositionToVessel().isEmpty() ) {
+            return "";
+        }
+
+        VesselPosition position = vesselContainer.getPositionOfVessel(labVessel);
+        results.add(position == null ? "" : position.toString());
+
+        for (LabVessel descendantVessel : descendantLabVessels) {
+            position = vesselContainer.getPositionOfVessel(descendantVessel);
+            results.add(position == null ? "" : position.toString());
+        }
+
         return results;
     }
 
-    private List<String> getEventLabel(LabVessel labVessel, LabEventType labEventType) {
+    private List<String> getEventLabel(LabVessel labVessel, List<LabEventType> labEventTypes, boolean useTargetContainer) {
         List<String> results = new ArrayList<>();
-        Map<LabEvent, Set<LabVessel>> mapEventToVessels = labVessel.findVesselsForLabEventType(labEventType);
+        Map<LabEvent, Set<LabVessel>> mapEventToVessels = labVessel.findVesselsForLabEventTypes(labEventTypes, useTargetContainer);
         for (Map.Entry<LabEvent, Set<LabVessel>> eventVesselEntry : mapEventToVessels.entrySet()) {
             for (LabVessel vessel : eventVesselEntry.getValue()) {
                 results.add(vessel.getLabel());
@@ -1396,6 +1504,11 @@ public class SearchDefinitionFactory {
         searchTerm = new SearchTerm();
         searchTerm.setName("Vessel Concentrations");
         searchTerm.setPluginClass(LabVesselMetricPlugin.class);
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Vessel Latest Event");
+        searchTerm.setPluginClass(LabVesselLatestEventPlugin.class);
         searchTerms.add(searchTerm);
 
         return searchTerms;

@@ -40,7 +40,8 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
      * @return
      */
     @Override
-    public List<ConfigurableList.Row> getData(List<?> entityList, ConfigurableList.HeaderGroup headerGroup) {
+    public List<ConfigurableList.Row> getData(List<?> entityList, ConfigurableList.HeaderGroup headerGroup
+            , Map<String, Object> context) {
         return null;
     }
 

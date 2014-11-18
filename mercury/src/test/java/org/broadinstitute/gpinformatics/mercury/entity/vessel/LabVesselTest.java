@@ -73,7 +73,7 @@ public class LabVesselTest {
                 new Date(), Collections.singletonList(parentVesselBean), LabEventType.SAMPLE_IMPORT,
                 MercurySample.MetadataSource.BSP);
         Map<LabEvent, Set<LabVessel>> vesselsForLabEventType = sourceTube1.findVesselsForLabEventType(
-                LabEventType.SAMPLE_IMPORT);
+                LabEventType.SAMPLE_IMPORT, true);
         Assert.assertEquals(vesselsForLabEventType.size(), 1);
     }
 
@@ -130,7 +130,7 @@ public class LabVesselTest {
         Assert.assertEquals(tube1.getTubeType(), BarcodedTube.BarcodedTubeType.VacutainerBloodTubeEDTA_3);
 
         Map <LabEvent, Set<LabVessel>> vesselsForLabEventType = sourceTube1.findVesselsForLabEventType(
-                LabEventType.SAMPLE_IMPORT);
+                LabEventType.SAMPLE_IMPORT, true);
         Assert.assertEquals(vesselsForLabEventType.values().iterator().next().iterator().next().getLabel(),
                 tube1.getLabel());
     }

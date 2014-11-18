@@ -583,10 +583,16 @@ public interface TransferTraverserCriteria {
 
     public class VesselForEventTypeCriteria implements TransferTraverserCriteria {
         private List<LabEventType> types;
+        private boolean useTargetVessels = true;
         private Map<LabEvent, Set<LabVessel>> vesselsForLabEventType = new HashMap<>();
 
-        public VesselForEventTypeCriteria(List<LabEventType> type) {
-            this.types = type;
+        public VesselForEventTypeCriteria(List<LabEventType> types) {
+            this.types = types;
+        }
+
+        public VesselForEventTypeCriteria(List<LabEventType> types, boolean useTargetVessels ) {
+            this(types);
+            this.useTargetVessels = useTargetVessels;
         }
 
         @Override
@@ -602,9 +608,14 @@ public interface TransferTraverserCriteria {
                 for (LabEvent inPlaceEvent : vessel.getInPlaceLabEvents()) {
                     evaluteEvent(vessel, inPlaceEvent);
                 }
-                Collection<LabVessel> descendantVessels = vessel.getDescendantVessels();
-                for (LabVessel descendant : descendantVessels) {
-                    Set<LabEvent> inPlaceEvents = descendant.getInPlaceLabEvents();
+                Collection<LabVessel> traversalVessels;
+                if( context.getTraversalDirection() == TraversalDirection.Ancestors ) {
+                    traversalVessels = vessel.getAncestorVessels();
+                } else {
+                    traversalVessels = vessel.getDescendantVessels();
+                }
+                for (LabVessel traversalVessel : traversalVessels) {
+                    Set<LabEvent> inPlaceEvents = traversalVessel.getInPlaceLabEvents();
                     for (LabEvent inPlaceEvent : inPlaceEvents) {
                         evaluteEvent(vessel, inPlaceEvent);
                     }
@@ -615,7 +626,7 @@ public interface TransferTraverserCriteria {
 
         private void evaluteEvent(LabVessel vessel, LabEvent event) {
             if (types.contains(event.getLabEventType())) {
-                //if this is in place just add the vessel
+                // If this is in place just add the vessel
                 if (event.getInPlaceLabVessel() != null) {
                     Set<LabVessel> vessels = vesselsForLabEventType.get(event);
                     if (vessels == null) {
@@ -624,8 +635,15 @@ public interface TransferTraverserCriteria {
                     vessels.add(event.getInPlaceLabVessel());
                     vesselsForLabEventType.put(event, vessels);
                 }
-                //otherwise check the target vessels
-                for (LabVessel targetVessel : event.getTargetLabVessels()) {
+                // Otherwise check the target or source vessels
+                Set<LabVessel> labXferVessels;
+                if( useTargetVessels ) {
+                    labXferVessels = event.getTargetLabVessels();
+                } else {
+                    labXferVessels = event.getSourceLabVessels();
+                }
+
+                for ( LabVessel targetVessel : labXferVessels ) {
                     Set<LabVessel> vessels = vesselsForLabEventType.get(event);
                     if (vessels == null) {
                         vessels = new HashSet<>();

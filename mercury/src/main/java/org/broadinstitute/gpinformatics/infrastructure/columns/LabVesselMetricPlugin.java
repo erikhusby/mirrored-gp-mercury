@@ -45,7 +45,8 @@ public class LabVesselMetricPlugin implements ListPlugin {
      * @return A list of rows, each corresponding to a LabVessel row in search results.
      */
     @Override
-    public List<ConfigurableList.Row> getData(List<?> entityList, ConfigurableList.HeaderGroup headerGroup) {
+    public List<ConfigurableList.Row> getData(List<?> entityList, ConfigurableList.HeaderGroup headerGroup
+            , @Nonnull Map<String, Object> context) {
         List<LabVessel> labVesselList = (List<LabVessel>) entityList;
         List<ConfigurableList.Row> metricRows = new ArrayList<>();
 

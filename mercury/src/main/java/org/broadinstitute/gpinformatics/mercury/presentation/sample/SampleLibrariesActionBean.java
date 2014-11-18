@@ -102,7 +102,7 @@ public class SampleLibrariesActionBean extends CoreActionBean {
                 vesselList.add(startingVessel);
             }
             Map<LabEvent, Set<LabVessel>> eventListMap =
-                    startingVessel.findVesselsForLabEventTypes(eventTypes);
+                    startingVessel.findVesselsForLabEventTypes(eventTypes, true);
             vesselToEventVesselsMap.put(startingVessel, eventListMap);
         }
         sampleToBspPicoValueMap = sampleDataFetcher.fetchSampleData(sampleNames);
