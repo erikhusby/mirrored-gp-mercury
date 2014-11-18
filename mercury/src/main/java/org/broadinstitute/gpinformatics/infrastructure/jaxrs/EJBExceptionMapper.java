@@ -32,12 +32,12 @@ public class EJBExceptionMapper implements ExceptionMapper<EJBException> {
             log.error("EJBException's CausedByException", cause);
             ExceptionMapper mapper = providers.getExceptionMapper(cause.getClass());
             if (mapper == null) {
-                return Response.serverError().build();
+                return Response.serverError().entity(cause.getMessage()).build();
             }
             return mapper.toResponse(exception.getCause());
         } else {
             log.error("EJBException thrown from JAX-RS service", exception);
-            return Response.serverError().build();
+            return Response.serverError().entity(exception.getMessage()).build();
         }
     }
 }
