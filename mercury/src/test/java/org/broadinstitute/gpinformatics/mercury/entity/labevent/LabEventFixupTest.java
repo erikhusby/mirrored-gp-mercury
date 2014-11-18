@@ -357,7 +357,7 @@ public class LabEventFixupTest extends Arquillian {
         staticPlateDao.flush();
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void gplim3126fixupMachineName() {
         userBean.loginOSUser();
         for (long id : new Long[] {687513L, 687557L}) {
@@ -370,6 +370,23 @@ public class LabEventFixupTest extends Arquillian {
             System.out.println("   updated to " + labEvent.getEventLocation());
             labEventDao.persist(new FixupCommentary(
                     "GPLIM-3126 incorrect machine configuration caused messages to be sent with the wrong machine name."));
+            labEventDao.flush();
+        }
+    }
+
+    @Test(enabled = true)
+    public void gplim3208fixupEventType() {
+        userBean.loginOSUser();
+        for (long id : new Long[] {710100L, 710156L}) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, id);
+            if (labEvent == null || labEvent.getLabEventType() != LabEventType.FINGERPRINTING_ALIQUOT) {
+                throw new RuntimeException("cannot find " + id + " or is not FINGERPRINTING_ALIQUOT");
+            }
+            System.out.println("LabEvent " + id + " type " + labEvent.getLabEventType());
+            labEvent.setLabEventType(LabEventType.SHEARING_ALIQUOT);
+            System.out.println("   updated to " + labEvent.getLabEventType());
+            labEventDao.persist(new FixupCommentary(
+                    "GPLIM-3208 incorrect selection at the janus app caused wrong type of aliquot event."));
             labEventDao.flush();
         }
     }
