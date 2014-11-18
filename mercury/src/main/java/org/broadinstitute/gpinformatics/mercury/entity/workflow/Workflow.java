@@ -47,6 +47,7 @@ public enum Workflow {
     public static final Collection<Workflow> SUPPORTED_WORKFLOWS = new ArrayList<Workflow>(){{
         add(AGILENT_EXOME_EXPRESS);
         add(ICE_EXOME_EXPRESS);
+        add(ICE_CRSP);
     }};
 
     public static boolean isWorkflowSupportedByMercury(Workflow workflow) {

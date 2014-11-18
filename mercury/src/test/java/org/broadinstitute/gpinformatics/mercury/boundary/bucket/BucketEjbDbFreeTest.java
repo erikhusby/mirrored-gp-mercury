@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderT
 import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
@@ -33,6 +34,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDe
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.easymock.EasyMock;
+import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -90,6 +92,7 @@ public class BucketEjbDbFreeTest {
     private Object[] mocks =
             new Object[]{bucketDao, bucketEntryDao, labVesselDao, bspSampleDataFetcher,
                     labVesselFactory, labEventFactory};
+    public MercurySampleDao mercurysampleDao;
 
     @BeforeClass(groups = TestGroups.DATABASE_FREE)
     private void beforeClass() {
@@ -123,12 +126,17 @@ public class BucketEjbDbFreeTest {
 
         bucketEjb = new BucketEjb(labEventFactory, JiraServiceProducer.stubInstance(), bucketDao, bucketEntryDao,
                                   labVesselDao, labVesselFactory, bspSampleDataFetcher,
-                                  bspUserList, workflowLoader, createNiceMock(ProductOrderDao.class));
+                                  bspUserList, workflowLoader, createNiceMock(ProductOrderDao.class), mercurysampleDao);
     }
 
     // Creates test samples and updates expectedSamples and labVessels.
     private void setupMercurySamples(ProductOrder pdo, Collection<ProductOrderSample> expectedSamples,
                                      List<LabVessel> labVessels) {
+
+        mercurysampleDao = Mockito.mock(MercurySampleDao.class);
+
+        Map<String, MercurySample> sampleMap = new HashMap<>();
+
         for (int rackPosition = 1; rackPosition <= pdo.getSamples().size(); ++rackPosition) {
             ProductOrderSample pdoSample = pdo.getSamples().get(rackPosition - 1);
 
@@ -173,11 +181,15 @@ public class BucketEjbDbFreeTest {
             bspSampleDataMap.put(pdoSample.getName(), bspSampleData);
 
             LabVessel labVessel = new BarcodedTube(makeTubeBarcode(rackPosition));
-            labVessel.addSample(new MercurySample(pdoSample.getName(), bspSampleData));
+            MercurySample mercurySample = new MercurySample(pdoSample.getName(), bspSampleData);
+            sampleMap.put(pdoSample.getName(), mercurySample);
+            labVessel.addSample(mercurySample);
             labVessels.add(labVessel);
 
             labBatch.addLabVessel(labVessel);
         }
+
+        Mockito.when(mercurysampleDao.findMapIdToMercurySample(Mockito.anyCollection())).thenReturn(sampleMap);
     }
 
     @Test(enabled = true, groups = TestGroups.DATABASE_FREE)

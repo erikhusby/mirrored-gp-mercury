@@ -189,6 +189,8 @@ public class IlluminaRunResourceTest extends Arquillian {
                 Assert.assertEquals(libraryBean.getRegulatoryDesignation(), "RESEARCH_ONLY");
                 Assert.assertNull(libraryBean.getBuickVisit());
                 Assert.assertNull(libraryBean.getBuickCollectionDate());
+                Assert.assertNull(libraryBean.getBuickVisit());
+                Assert.assertNull(libraryBean.getBuickCollectionDate());
                 if (libraryBean.getLsid() != null) {
                     if (libraryBean.getLsid().contains("bsp")) {
                         foundBspSample = true;

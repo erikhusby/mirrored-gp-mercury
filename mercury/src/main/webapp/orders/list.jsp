@@ -1,6 +1,6 @@
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
-<%@ page import="org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -336,17 +336,17 @@
                                 <c:choose>
                                     <c:when test="${order.readyForReview}">
                                         <span class="badge badge-warning">
-                                            <%=ProductOrder.LedgerStatus.READY_FOR_REVIEW.getDisplayName()%>
+                                            <%=ProductOrderListEntry.LedgerStatus.READY_FOR_REVIEW.getDisplayName()%>
                                         </span>
                                     </c:when>
                                     <c:when test="${order.billing}">
                                         <span class="badge badge-info">
-                                            <%=ProductOrder.LedgerStatus.BILLING.getDisplayName()%>
+                                            <%=ProductOrderListEntry.LedgerStatus.BILLING.getDisplayName()%>
                                         </span>
                                     </c:when>
                                     <c:when test="${order.readyForBilling}">
                                         <span class="badge badge-success">
-                                            <%=ProductOrder.LedgerStatus.READY_TO_BILL.getDisplayName()%>
+                                            <%=ProductOrderListEntry.LedgerStatus.READY_TO_BILL.getDisplayName()%>
                                         </span>
                                     </c:when>
                                 </c:choose>

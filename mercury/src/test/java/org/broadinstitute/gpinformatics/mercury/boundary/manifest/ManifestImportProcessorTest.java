@@ -26,10 +26,12 @@ import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContainingInAnyOrder;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 
 
 @Test(groups = TestGroups.DATABASE_FREE)
@@ -73,6 +75,15 @@ public class ManifestImportProcessorTest {
         }
 
         assertThat(processor.getHeaderNames(), containsInAnyOrder(allHeaders.toArray()));
+    }
+
+    public void testValidateHeader_Several_Bad_Headers() throws Exception {
+        List<String> headers = new ArrayList<>(makeDataRow().keySet());
+        List<String> unknownHeaders = Arrays.asList("bad header 1", "bad header 2");
+        headers.addAll(unknownHeaders);
+        boolean headersAreValid = processor.validateColumnHeaders(headers);
+        assertThat(headersAreValid, is(not(true)));
+        assertThat(processor.getMessages(), contains("Unknown headers '[bad header 1, bad header 2]' present"));
     }
 
     public void testProcessRowDetailsShouldPass() throws Exception {

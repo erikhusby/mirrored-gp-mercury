@@ -181,7 +181,7 @@ public abstract class LabVessel implements Serializable {
     // todo jmt separate role for sample holder?
     @ManyToMany(cascade = CascadeType.PERSIST)
     @BatchSize(size = 100)
-    private List<MercurySample> mercurySamples = new ArrayList<>();
+    private Set<MercurySample> mercurySamples = new HashSet<>();
 
     // todo jmt set these fields db-free
     @OneToMany(mappedBy = "sourceVessel", cascade = CascadeType.PERSIST)
@@ -949,9 +949,7 @@ public abstract class LabVessel implements Serializable {
                 if (mercurySamples.size() > 1) {
                     throw new RuntimeException("No support for pooled sample imports.");
                 }
-                for (MercurySample mercurySample : mercurySamples) {
-                    traversalResults.setBspExportSample(mercurySamples.iterator().next());
-                }
+                traversalResults.setBspExportSample(mercurySamples.iterator().next());
             }
         }
 
@@ -1179,7 +1177,7 @@ public abstract class LabVessel implements Serializable {
         }
     }
 
-    public List<MercurySample> getMercurySamples() {
+    public Set<MercurySample> getMercurySamples() {
         return mercurySamples;
     }
 
@@ -1913,5 +1911,4 @@ public abstract class LabVessel implements Serializable {
         }
         return values.toArray(new String[values.size()]);
     }
-
 }

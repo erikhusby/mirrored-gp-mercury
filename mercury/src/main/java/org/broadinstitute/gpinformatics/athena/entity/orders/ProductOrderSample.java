@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
@@ -88,6 +89,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
     @OneToMany(mappedBy = "productOrderSample", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
             orphanRemoval = true)
+    @BatchSize(size = 100)
     private final Set<LedgerEntry> ledgerItems = new HashSet<>();
 
     @Column(name = "SAMPLE_POSITION", updatable = false, insertable = false, nullable = false)
@@ -96,6 +98,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "product_order_sample", nullable = false)
     @AuditJoinTable(name = "po_sample_risk_join_aud")
+    @BatchSize(size = 100)
     private final Set<RiskItem> riskItems = new HashSet<>();
 
     /**
@@ -106,6 +109,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     private String aliquotId;
 
     @OneToMany(mappedBy = "productOrderSample",cascade = {CascadeType.PERSIST}, orphanRemoval = true)
+    @BatchSize(size = 100)
     Set<SampleReceiptValidation> sampleReceiptValidations = new HashSet<>();
 
     @ManyToOne
@@ -282,6 +286,10 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         @Override
         public String getDisplayName() {
             return displayName;
+        }
+
+        public boolean isAbandoned() {
+            return this == ABANDONED;
         }
     }
 
