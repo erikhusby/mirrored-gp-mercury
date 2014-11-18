@@ -27,8 +27,8 @@ public class EJBExceptionMapper implements ExceptionMapper<EJBException> {
 
         // EJBExceptions are most likely wrapped around other kinds of exceptions. If this is the case, find the
         // cause and check if it has its own ExceptionMapper.
-        if (exception.getCausedByException() != null) {
-            Exception cause = exception.getCausedByException();
+        Exception cause = exception.getCausedByException();
+        if (cause != null) {
             log.error("EJBException's CausedByException", cause);
             ExceptionMapper mapper = providers.getExceptionMapper(cause.getClass());
             if (mapper == null) {
