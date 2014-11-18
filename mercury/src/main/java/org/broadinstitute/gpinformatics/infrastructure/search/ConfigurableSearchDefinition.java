@@ -68,6 +68,11 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
      */
     transient private Map<String, SearchTerm> mapNameToSearchTerm = new HashMap<>();
 
+    /**
+     * Allow an evaluator to expand entity list to be attached to search term.
+     */
+    private SearchTerm.TraversalEvaluator<List<?>> traversalEvaluator;
+
     public ConfigurableSearchDefinition(String name, String resultEntity, String resultEntityId, Integer pageSize,
             List<CriteriaProjection> criteriaProjections,
             Map<String, List<SearchTerm>> mapGroupSearchTerms) {
@@ -120,6 +125,15 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
             }
         }
         return requiredSearchTerms;
+    }
+
+    public void setTraversalEvaluator(
+            SearchTerm.TraversalEvaluator<List<?>> traversalEvaluator) {
+        this.traversalEvaluator = traversalEvaluator;
+    }
+
+    public SearchTerm.TraversalEvaluator<List<?>> getTraversalEvaluator(){
+        return this.traversalEvaluator;
     }
 
     /**

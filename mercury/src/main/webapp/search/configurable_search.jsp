@@ -573,6 +573,14 @@ function chooseColumnSet() {
         <li>Down arrow: moves selected Chosen columns lower in the order</li>
     </ul>
 </div>
+<div id="traversalOptionDescription" style="display: none;">
+    <p>Choose traversal options for any row primary entities found.
+        For any primary entity (e.g lab event), a user may wish to show: </p>
+    <ul>
+        <li> Entities in transfers leading up to a primary row entity (ancestors)</li>
+        <li> Entities in transfers following a primary row entity (descendants)</li>
+    </ul>
+</div>
 <script type="text/javascript">
     $j(function(){
         // This is required in order to render HTML in title attributes.
@@ -597,6 +605,9 @@ function chooseColumnSet() {
         });
         $j('#resultColumnsTooltip').attr('title', function(){
             return $j('#resultColumnsDescription').remove().html();
+        });
+        $j('#traversalOptionTooltip').attr('title', function(){
+            return $j('#traversalOptionDescription').remove().html();
         });
 
         $j(document).tooltip();

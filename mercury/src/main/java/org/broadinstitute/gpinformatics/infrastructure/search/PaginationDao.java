@@ -180,7 +180,7 @@ public class PaginationDao extends GenericDao {
      * @param entityList list of retrieved entities
      * @return list of entities, in same order as idList
      */
-    private static <T> List<T> reorderList(Pagination pagination, List<?> idList, List<T> entityList) {
+    private <T> List<T> reorderList(Pagination pagination, List<?> idList, List<T> entityList) {
         // re-order results to match order of input IDs list
         try {
             Map<Object, T> criteriaIdMap = new HashMap<>();

@@ -135,6 +135,10 @@ buttons to move columns from one to the other --%>
             <td>&nbsp;</td>
             <td><label>Chosen</label></td>
             <td>&nbsp;</td>
+            <td style="padding-left: 20px">
+                <c:if test="${actionBean.configurableSearchDef.traversalEvaluator != null}">
+                <label>Result Row Retrieval Options <img id="traversalOptionTooltip" src="${ctxpath}/images/help.png" alt="help"></label>
+                </c:if>&nbsp;</td>
         </tr>
         <tr>
             <td rowspan="2" style="padding-left: 5px">
@@ -174,6 +178,12 @@ buttons to move columns from one to the other --%>
                     <img style="vertical-align:middle;" border="0" src="${ctxpath}/images/up.png" alt="Move Up"
                          title="Move Up"/>
                 </a>
+            </td>
+            <td rowspan="2" style="padding-left: 30px;vertical-align: top">
+                <c:if test="${actionBean.configurableSearchDef.traversalEvaluator != null}">
+                <stripes:checkbox id="ancestorOptionEnabled"   name="searchInstance.ancestorOptionEnabled"   checked="${actionBean.searchInstance.ancestorOptionEnabled}"   /> Traverse Ancestors<br />
+                <stripes:checkbox id="descendantOptionEnabled" name="searchInstance.descendantOptionEnabled" checked="${actionBean.searchInstance.descendantOptionEnabled}" /> Traverse Descendants
+                </c:if>&nbsp;
             </td>
         </tr>
         <tr>

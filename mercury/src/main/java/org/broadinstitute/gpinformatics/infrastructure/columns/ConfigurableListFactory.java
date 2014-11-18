@@ -330,33 +330,9 @@ public class ConfigurableListFactory {
         }
         columnTabulations.addAll(searchInstance.findTopLevelColumnTabulations());
 
-        /* Traverse IDs for lab events and obtain parents and ancestors
-         * Intercepts the LabEvent ID list and injects descendant LabEvents
-         * TODO jms Move this elsewhere along with BSPSampleSearchService  */
-
-        boolean doEventTraversal = false;
-        if (entityName.equals("LabEvent")) {
-            /* Only traverse descendant events if LCSET is in search criteria (or all events?) */
-            for( SearchInstance.SearchValue searchValue : searchInstance.getSearchValues() ) {
-                if( searchValue.getSearchTerm().getName().equals("LCSET")){
-                    doEventTraversal = true;
-                    break;
-                }
-            }
-        }
-
         PaginationDao.Pagination pagination = new PaginationDao.Pagination( configurableSearchDef.getPageSize() );
 
-        if( doEventTraversal ) {
-            // Flag pagination to do an initial full entity fetch then replace entities with IDs
-            pagination.setResultEntity(configurableSearchDef.getResultEntity(), configurableSearchDef.getResultEntityId());
-            criteria.addOrder(Order.asc(pagination.getResultEntityId()));
-            List<?> idList = getDescendantVesselLabEvents( criteria.list() );
-            pagination.setIdList(idList);
-        } else {
-            // Legacy pagination - initially fetches only ID values
-            configurableSearchDao.startPagination(pagination, criteria, false);
-        }
+        configurableSearchDao.startPagination(pagination, criteria, searchInstance, configurableSearchDef );
 
         pagination.setJoinFetchPaths(joinFetchPaths);
         List<?> entityList = paginationDao.getPage(pagination, 0);
@@ -415,35 +391,4 @@ public class ConfigurableListFactory {
 
         return configurableList.getResultList();
     }
-
-    /**
-     * Accumulates lab events for a given LabVessel
-     * LabEventDescendantCriteria sorts them by date and disambiguator
-     * TODO:  jms - Move this entity specific logic out of generic ConfigurableList logic
-     */
-    private List<?> getDescendantVesselLabEvents( List<?> labEventList ) {
-        Set<LabEvent> sortedSet;
-        List<Long> idList = new ArrayList<>();
-        TransferTraverserCriteria.LabEventDescendantCriteria eventTraversalCriteria =
-                new TransferTraverserCriteria.LabEventDescendantCriteria();
-        for( LabEvent startingEvent : (List<LabEvent>) labEventList ) {
-            // Add each starting event so it gets date sorted with descendants
-            eventTraversalCriteria.getAllEvents().add(startingEvent);
-            // First events found have in place lab vessels
-            LabVessel vessel = startingEvent.getInPlaceLabVessel();
-            // Recurse down through vessel-event layers
-            if( vessel != null ) {
-                vessel.evaluateCriteria(eventTraversalCriteria
-                        , TransferTraverserCriteria.TraversalDirection.Descendants );
-            }
-        }
-        sortedSet = eventTraversalCriteria.getAllEvents();
-        // Replace entire original list contents
-        for( LabEvent event : sortedSet ) {
-            idList.add( event.getLabEventId() );
-        }
-
-        return idList;
-    }
-
 }

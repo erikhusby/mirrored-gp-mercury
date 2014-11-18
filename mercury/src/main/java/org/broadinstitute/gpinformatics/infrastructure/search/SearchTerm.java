@@ -36,6 +36,15 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     }
 
     /**
+     * Attached to a ConfigurableSearchDefinition to expand list of entity identifiers
+     *    to include ancestors, descendants, or both.
+     * @param <T>
+     */
+    public abstract static class TraversalEvaluator <T> {
+        public abstract T evaluate(List<?> rootEntities, boolean doAncestorTraversal, boolean doDescendantTraversal);
+    }
+
+    /**
      * Defines Hibernate path from search result entity to the property being searched.
      * Allows one term to search multiple properties, e.g. All Aliases
      */
