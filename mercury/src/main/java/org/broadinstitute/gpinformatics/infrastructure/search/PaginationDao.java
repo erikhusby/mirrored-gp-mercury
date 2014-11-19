@@ -11,6 +11,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.apache.commons.beanutils.PropertyUtils;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.common.BaseSplitter;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.hibernate.Criteria;
@@ -55,9 +56,7 @@ public class PaginationDao extends GenericDao {
 
         private List<String> joinFetchPaths = new ArrayList<>();
 
-        private String resultEntity;
-
-        private String resultEntityId;
+        private ColumnEntity resultColumnEntity;
 
         public Integer getNumberPages() {
             if (idList == null) {
@@ -90,17 +89,16 @@ public class PaginationDao extends GenericDao {
             this.joinFetchPaths = joinFetchPaths;
         }
 
-        public String getResultEntity() {
-            return resultEntity;
+        public ColumnEntity getResultEntity() {
+            return resultColumnEntity;
         }
 
-        public void setResultEntity(String resultEntity, String resultEntityId) {
-            this.resultEntity = resultEntity;
-            this.resultEntityId = resultEntityId;
+        public void setResultEntity(ColumnEntity columnEntity) {
+            this.resultColumnEntity = columnEntity;
         }
 
         public String getResultEntityId() {
-            return resultEntityId;
+            return resultColumnEntity.getEntityIdProperty();
         }
 
     }
@@ -152,7 +150,7 @@ public class PaginationDao extends GenericDao {
     private Criteria buildCriteria(Pagination pagination, List<?> idList) {
         HibernateEntityManager hibernateEntityManager = getEntityManager().unwrap(HibernateEntityManager.class);
         Session hibernateSession = hibernateEntityManager.getSession();
-        Criteria criteria = hibernateSession.createCriteria(pagination.getResultEntity());
+        Criteria criteria = hibernateSession.createCriteria(pagination.getResultEntity().getEntityClass());
         criteria.setResultTransformer(Criteria.DISTINCT_ROOT_ENTITY);
         // Improve performance, by reducing the number of selects
         for (String joinFetchPath : pagination.getJoinFetchPaths()) {

@@ -9,7 +9,9 @@
  */
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
+import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -28,20 +30,9 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
     private static final long serialVersionUID = 4774977707743986613L;
 
     /**
-     * Name of the search definition
-     */
-    private String name;
-
-    // todo jmt use ColumnEntity here?
-    /**
      * Hibernate entity returned by the search
      */
-    private String resultEntity;
-
-    /**
-     * For pagination, queries need to be ordered by a unique ID
-     */
-    private String resultEntityId;
+    private ColumnEntity resultColumnEntity;
 
     /**
      * How many entities on each page of results
@@ -71,14 +62,17 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
     /**
      * Allow an evaluator to expand entity list to be attached to search term.
      */
-    private SearchTerm.TraversalEvaluator<List<?>> traversalEvaluator;
+    private TraversalEvaluator<List<?>> traversalEvaluator;
 
-    public ConfigurableSearchDefinition(String name, String resultEntity, String resultEntityId, Integer pageSize,
+    /**
+     * Produce named AddRowsListener instances for this search definition.
+     */
+    private AddRowsListenerFactory addRowsListenerFactory;
+
+    public ConfigurableSearchDefinition(ColumnEntity resultColumnEntity, Integer pageSize,
             List<CriteriaProjection> criteriaProjections,
             Map<String, List<SearchTerm>> mapGroupSearchTerms) {
-        this.name = name;
-        this.resultEntity = resultEntity;
-        this.resultEntityId = resultEntityId;
+        this.resultColumnEntity = resultColumnEntity;
         this.pageSize = pageSize;
         this.criteriaProjections = criteriaProjections;
         this.mapGroupSearchTerms = mapGroupSearchTerms;
@@ -128,12 +122,21 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
     }
 
     public void setTraversalEvaluator(
-            SearchTerm.TraversalEvaluator<List<?>> traversalEvaluator) {
+            TraversalEvaluator<List<?>> traversalEvaluator) {
         this.traversalEvaluator = traversalEvaluator;
     }
 
-    public SearchTerm.TraversalEvaluator<List<?>> getTraversalEvaluator(){
+    public TraversalEvaluator<List<?>> getTraversalEvaluator(){
         return this.traversalEvaluator;
+    }
+
+
+    public void setAddRowsListenerFactory(AddRowsListenerFactory addRowsListenerFactory) {
+        this.addRowsListenerFactory = addRowsListenerFactory;
+    }
+
+    public AddRowsListenerFactory getAddRowsListenerFactory(){
+        return this.addRowsListenerFactory;
     }
 
     /**
@@ -213,16 +216,8 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
         }
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public String getResultEntity() {
-        return resultEntity;
-    }
-
-    public String getResultEntityId() {
-        return resultEntityId;
+    public ColumnEntity getResultEntity() {
+        return resultColumnEntity;
     }
 
     public Integer getPageSize() {
@@ -230,8 +225,7 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
     }
 
     public SearchTerm getSearchTerm(String name) {
-        // If the object has been serialized and deserialized then we have to
-        // rebuild the map
+        // If the object has been serialized and deserialized then we have to rebuild the map
         if (mapNameToSearchTerm == null) {
             mapNameToSearchTerm = new HashMap<>();
             buildNameMap();
@@ -251,5 +245,21 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
             }
         }
         return mapCriteriaToProjection.get(criteriaName);
+    }
+
+    /**
+     * Attached to a ConfigurableSearchDefinition to expand list of entity identifiers
+     *    to include ancestors, descendants, or both.
+     * @param <T>
+     */
+    public abstract static class TraversalEvaluator <T> {
+        public abstract T evaluate(List<?> rootEntities, boolean doAncestorTraversal, boolean doDescendantTraversal);
+    }
+
+    /**
+     * Attached to a ConfigurableSearchDefinition to produce ConfigurableList.AddRowsListener instances.
+     */
+    public abstract static class AddRowsListenerFactory {
+        public abstract Map<String,ConfigurableList.AddRowsListener> getAddRowsListeners();
     }
 }

@@ -64,7 +64,7 @@ public class ConfigurableSearchDao extends GenericDao {
         searchInstance.checkValues();
         HibernateEntityManager hibernateEntityManager = getEntityManager().unwrap(HibernateEntityManager.class);
         Session hibernateSession = hibernateEntityManager.getSession();
-        Criteria criteria = hibernateSession.createCriteria(configurableSearchDefinition.getResultEntity());
+        Criteria criteria = hibernateSession.createCriteria(configurableSearchDefinition.getResultEntity().getEntityClass());
         criteria.setResultTransformer(Criteria.DISTINCT_ROOT_ENTITY);
 
         // Each term contains a list of criteria names and a property. We may encounter
@@ -243,8 +243,7 @@ public class ConfigurableSearchDao extends GenericDao {
     public void startPagination(PaginationDao.Pagination pagination, Criteria criteria, SearchInstance searchInstance,
                                 ConfigurableSearchDefinition configurableSearchDef ) {
 
-        pagination.setResultEntity(configurableSearchDef.getResultEntity()
-                , configurableSearchDef.getResultEntityId());
+        pagination.setResultEntity(configurableSearchDef.getResultEntity());
         // TODO set join fetch paths? would require access to column defs
         PaginationDao paginationDao = new PaginationDao();
 
@@ -253,7 +252,7 @@ public class ConfigurableSearchDao extends GenericDao {
 
         if( doAncestorTraversal || doDescendantTraversal ) {
 
-            SearchTerm.TraversalEvaluator<List<?>> traversalEvaluator = configurableSearchDef.getTraversalEvaluator();
+            ConfigurableSearchDefinition.TraversalEvaluator<List<?>> traversalEvaluator = configurableSearchDef.getTraversalEvaluator();
             if( traversalEvaluator == null ) {
                 throw new RuntimeException("No traversal evaluator configured for search definition");
             }

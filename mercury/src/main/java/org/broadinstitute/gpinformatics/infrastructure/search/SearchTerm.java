@@ -10,6 +10,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -33,15 +34,6 @@ public class SearchTerm implements Serializable, ColumnTabulation {
      */
     public abstract static class Evaluator <T> {
         public abstract T evaluate(Object entity, Map<String, Object> context);
-    }
-
-    /**
-     * Attached to a ConfigurableSearchDefinition to expand list of entity identifiers
-     *    to include ancestors, descendants, or both.
-     * @param <T>
-     */
-    public abstract static class TraversalEvaluator <T> {
-        public abstract T evaluate(List<?> rootEntities, boolean doAncestorTraversal, boolean doDescendantTraversal);
     }
 
     /**

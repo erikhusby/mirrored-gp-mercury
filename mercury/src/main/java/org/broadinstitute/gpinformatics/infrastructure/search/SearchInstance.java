@@ -343,7 +343,9 @@ public class SearchInstance implements Serializable {
                 for (String value : getValues()) {
                     if (searchTerm.getValueConversionExpression() != null) {
                         Map<String, Object> localContext = new HashMap<>();
-                        localContext.putAll(searchInstance.getEvalContext());
+                        if( searchInstance.getEvalContext() != null ) {
+                            localContext.putAll(searchInstance.getEvalContext());
+                        }
                         localContext.put(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_VALUE, this);
                         localContext.put(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_STRING, value);
                         propertyValues.add(searchTerm.getValueConversionExpression().evaluate(null, localContext));

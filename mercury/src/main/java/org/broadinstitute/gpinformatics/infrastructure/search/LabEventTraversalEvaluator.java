@@ -13,7 +13,7 @@ import java.util.Set;
  * Starts with a List of LabEvent objects and returns an event date-location-disambiguator sorted List
  *    of labEventID (Long) values to use for pagination.
  */
-public class LabEventTraversalEvaluator extends SearchTerm.TraversalEvaluator<List<?>> {
+public class LabEventTraversalEvaluator extends ConfigurableSearchDefinition.TraversalEvaluator<List<?>> {
 
     @Override
     public List<?> evaluate(List<?> rootEntities, boolean doAncestorTraversal, boolean doDescendantTraversal) {
