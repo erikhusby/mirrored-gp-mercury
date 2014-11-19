@@ -25,6 +25,7 @@ import java.util.GregorianCalendar;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 
 /**
  * Fixups to LabEvent entities
@@ -374,7 +375,7 @@ public class LabEventFixupTest extends Arquillian {
         }
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void gplim3208fixupEventType() {
         userBean.loginOSUser();
         for (long id : new Long[] {710100L, 710156L}) {
@@ -387,6 +388,8 @@ public class LabEventFixupTest extends Arquillian {
             System.out.println("   updated to " + labEvent.getLabEventType());
             labEventDao.persist(new FixupCommentary(
                     "GPLIM-3208 incorrect selection at the janus app caused wrong type of aliquot event."));
+            // Next time move this flush out of the loop so that both fixups are on one rev and
+            // share one FixupCommentary.
             labEventDao.flush();
         }
     }
