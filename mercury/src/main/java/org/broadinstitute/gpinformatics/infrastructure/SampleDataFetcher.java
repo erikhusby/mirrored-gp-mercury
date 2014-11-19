@@ -25,8 +25,6 @@ import java.util.Set;
 
 public class SampleDataFetcher implements Serializable {
 
-    private static final long serialVersionUID = -8884540645576563140L;
-
     @Inject
     private SampleDataSourceResolver sampleDataSourceResolver;
 

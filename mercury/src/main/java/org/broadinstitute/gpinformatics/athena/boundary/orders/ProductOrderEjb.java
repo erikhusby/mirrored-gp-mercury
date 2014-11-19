@@ -1,6 +1,10 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Multimaps;
 import edu.mit.broad.prodinfo.bean.generated.AutoWorkRequestInput;
 import edu.mit.broad.prodinfo.bean.generated.AutoWorkRequestOutput;
 import org.apache.commons.collections4.CollectionUtils;
@@ -37,6 +41,8 @@ import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInsta
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
@@ -91,6 +97,8 @@ public class ProductOrderEjb {
 
     private ProductOrderSampleDao productOrderSampleDao;
 
+    private MercurySampleDao mercurySampleDao;
+
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
     public ProductOrderEjb() {
@@ -103,7 +111,7 @@ public class ProductOrderEjb {
                            JiraService jiraService,
                            UserBean userBean,
                            BSPUserList userList,
-                           BucketEjb bucketEjb, SquidConnector squidConnector) {
+                           BucketEjb bucketEjb, SquidConnector squidConnector, MercurySampleDao mercurySampleDao) {
         this.productOrderDao = productOrderDao;
         this.productDao = productDao;
         this.quoteService = quoteService;
@@ -112,6 +120,7 @@ public class ProductOrderEjb {
         this.userList = userList;
         this.bucketEjb = bucketEjb;
         this.squidConnector = squidConnector;
+        this.mercurySampleDao = mercurySampleDao;
     }
 
     private final Log log = LogFactory.getLog(ProductOrderEjb.class);
@@ -868,6 +877,24 @@ public class ProductOrderEjb {
                            @Nonnull MessageReporter reporter) throws NoSuchPDOException, IOException {
         ProductOrder order = findProductOrder(jiraTicketKey);
         order.addSamples(samples);
+
+        ImmutableListMultimap<String, ProductOrderSample> samplesBySampleId =
+                Multimaps.index(samples, new Function<ProductOrderSample, String>() {
+                    @Override
+                    public String apply(ProductOrderSample productOrderSample) {
+                        return productOrderSample.getSampleKey();
+                    }
+                });
+
+        Map<String, MercurySample> mercurySampleMap = mercurySampleDao.findMapIdToMercurySample(samplesBySampleId.keySet());
+
+        for (Map.Entry<String, ProductOrderSample> productOrderSampleEntry : samplesBySampleId.entries()) {
+            if(productOrderSampleEntry.getValue().getMercurySample() != null) {
+                productOrderSampleEntry.getValue()
+                        .setMercurySample(mercurySampleMap.get(productOrderSampleEntry.getKey()));
+            }
+        }
+
         order.prepareToSave(bspUser);
         productOrderDao.persist(order);
         handleSamplesAdded(jiraTicketKey, samples, reporter);

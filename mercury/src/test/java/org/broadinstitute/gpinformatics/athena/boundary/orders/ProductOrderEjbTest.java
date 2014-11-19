@@ -21,6 +21,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderT
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -42,7 +43,7 @@ public class ProductOrderEjbTest {
     private static final UserBean mockUserBean = Mockito.mock(UserBean.class);
     private ProductOrderDao productOrderDaoMock = Mockito.mock(ProductOrderDao.class);
     ProductOrderEjb productOrderEjb = new ProductOrderEjb(productOrderDaoMock, null, null,
-                    JiraServiceProducer.stubInstance(), mockUserBean, null, null, null);
+                    JiraServiceProducer.stubInstance(), mockUserBean, null, null, null, Mockito.mock(MercurySampleDao.class));
     private static final String[] sampleNames = {"SM-1234", "SM-5678", "SM-9101", "SM-1112"};
     ProductOrder productOrder=null;
     private Log logger = LogFactory.getLog(ProductOrderEjbTest.class);

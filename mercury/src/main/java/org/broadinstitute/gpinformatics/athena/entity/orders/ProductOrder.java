@@ -321,15 +321,26 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     public static void loadSampleData(List<ProductOrderSample> samples) {
 
         // Create a subset of the samples so we only call BSP for BSP samples that aren't already cached.
+        List<ProductOrderSample> samplesNeedingData = new ArrayList<>(samples.size());
+
+        for (ProductOrderSample sample : samples) {
+            if(sample.needsBspMetaData()) {
+                samplesNeedingData.add(sample);
+            }
+        }
+
+        if(samplesNeedingData.isEmpty()) {
+            return;
+        }
 
         // This gets all the sample names. We could get unique sample names from BSP as a future optimization.
         SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
-        Map<String, SampleData> sampleDataMap = sampleDataFetcher.fetchSampleDataForProductOrderSample(samples);
+        Map<String, SampleData> sampleDataMap = sampleDataFetcher.fetchSampleDataForProductOrderSample(samplesNeedingData);
 
         // Collect SampleData which we will then use to look up FFPE status.
         if (!sampleDataMap.isEmpty()) {
             List<SampleData> nonNullSampleData = new ArrayList<>();
-            for (ProductOrderSample sample : samples) {
+            for (ProductOrderSample sample : samplesNeedingData) {
                 SampleData sampleData = sampleDataMap.get(sample.getName());
 
                 // If the DTO is null, we do not need to set it because it defaults to DUMMY inside sample.
