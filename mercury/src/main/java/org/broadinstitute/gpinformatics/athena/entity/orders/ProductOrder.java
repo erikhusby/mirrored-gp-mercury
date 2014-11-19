@@ -295,7 +295,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return count;
     }
 
-     /**
+    /**
      * Initializes the {@link LabEventSampleDTO} for each {@link ProductOrderSample} with the {@link LabVessel}
      * associated with the ProductOrderSample so far.
      *
@@ -323,13 +323,15 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         // Create a subset of the samples so we only call BSP for BSP samples that aren't already cached.
         List<ProductOrderSample> samplesNeedingData = new ArrayList<>(samples.size());
 
-        for (ProductOrderSample sample : samples) {
-            if(sample.needsBspMetaData()) {
-                samplesNeedingData.add(sample);
+        for (ProductOrderSample productOrderSample : samples) {
+            if(productOrderSample.needsBspMetaData()) {
+                samplesNeedingData.add(productOrderSample);
             }
         }
 
         if(samplesNeedingData.isEmpty()) {
+            // This early return is needed to avoid making a unnecessary injection, which could cause
+            // DB Free automated tests to fail.
             return;
         }
 
