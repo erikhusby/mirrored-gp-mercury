@@ -127,7 +127,7 @@ public class ManifestSessionEjb {
         try {
             manifestRecords = manifestImportProcessor.getManifestRecords();
         } catch (ValidationException e) {
-            throw new InformaticsServiceException(StringUtils.join(e.getValidationMessages(), ", "));
+            throw new InformaticsServiceException(StringUtils.join(e.getValidationMessages(), "\n"));
         }
         ManifestSession manifestSession = new ManifestSession(researchProject, pathToFile, bspUser);
         // Persist here so an ID will be generated for the ManifestSession.  This ID is used for the
