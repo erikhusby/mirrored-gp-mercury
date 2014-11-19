@@ -530,45 +530,4 @@ public class SampleDataFetcherTest {
 
         return productOrderSample;
     }
-
-    private void configureBspFetcher(Map<String , BspSampleData >sampleData) {
-        when(mockBspSampleDataFetcher.fetchSampleData(argThat(contains(sampleData.keySet().toArray(new String[sampleData.keySet().size()])))))
-                .thenReturn(sampleData);
-    }
-
-    private void configureMercurySampleDao(Collection<String> sampleNames) {
-        Iterable<MercurySample> mercurySamples = convertSamplesToMercurySamples(sampleNames);
-        configureMercurySampleDao(mercurySamples);
-    }
-
-    private void configureMercurySampleDao(Iterable<MercurySample> mercurySamples) {
-        Map<String, MercurySample> sampleMap = Maps.uniqueIndex(mercurySamples, new Function<MercurySample, String>() {
-
-            @Override
-            public String apply(@Nullable MercurySample mercurySample) {
-                String sampleKey = null;
-                if (mercurySample != null) {
-                    sampleKey = mercurySample.getSampleKey();
-                }
-                return sampleKey;
-            }
-        });
-
-        when(mockMercurySampleDao.findMapIdToMercurySample(
-                argThat(contains(sampleMap.keySet().toArray(new String[sampleMap.keySet().size()])))))
-                .thenReturn(sampleMap);
-    }
-
-    private Iterable<MercurySample> convertSamplesToMercurySamples(Collection<String> sampleNames) {
-        return Iterables.transform(sampleNames, new Function<String, MercurySample>() {
-            @Override
-            public MercurySample apply(@Nullable String s) {
-                MercurySample sampleResult = null;
-                if (s != null) {
-                    sampleResult = new MercurySample(s, MercurySample.MetadataSource.MERCURY);
-                }
-                return sampleResult;
-            }
-        });
-    }
 }
