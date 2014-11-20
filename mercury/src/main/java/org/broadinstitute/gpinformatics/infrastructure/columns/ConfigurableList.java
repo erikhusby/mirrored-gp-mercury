@@ -524,11 +524,6 @@ public class ConfigurableList {
             }
         }
 
-        // Clean out the AddRowsListener(s)
-        for (Map.Entry<String,AddRowsListener> entry : addRowsListeners.entrySet()) {
-            entry.getValue().reset();
-        }
-
         pageStartingRow = rows.size();
     }
 
