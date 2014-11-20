@@ -288,7 +288,6 @@ public class PicoDispositionActionBean extends RackScanActionBean {
         String nextPage = CONFIRM_REARRAY_RACK_SCAN_PAGE;
         if (nextStepSelect == null) {
             addGlobalValidationError("Missing Next Step selection.");
-            setLabToFilterBy(null);
         } else if (scanAndMakeListItems()) {
             // Removes tubes with the expected Next Step confirmationGroup value,
             // leaving only incorrect ones in listItems.
@@ -309,9 +308,9 @@ public class PicoDispositionActionBean extends RackScanActionBean {
     }
 
     private boolean scanAndMakeListItems() throws ScannerException {
+        setLabToFilterBy(null);
         if (getRackScanner() == null) {
             addGlobalValidationError("Missing rack scanner selection.");
-            setLabToFilterBy(null);
             return false;
         }
         // Runs the rack scanner.  Ignores the returned Stripes Resolution and

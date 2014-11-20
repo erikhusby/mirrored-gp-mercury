@@ -4,14 +4,14 @@ import org.broadinstitute.bsp.client.rackscan.NetworkRackScanner;
 import org.broadinstitute.bsp.client.rackscan.RackScanner;
 import org.broadinstitute.bsp.client.rackscan.RackScannerConfig;
 import org.broadinstitute.bsp.client.rackscan.ScannerException;
-import org.broadinstitute.bsp.client.rackscan.abgene.AbgeneNetworkRackScanner;
-import org.broadinstitute.bsp.client.rackscan.zaith.ZaithNetworkRackScanner;
+import org.broadinstitute.bsp.client.rackscan.SimulatorRackScanner;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -29,31 +29,31 @@ public class RackScannerEjb {
     private BSPSampleDataFetcher sampleDataFetcherService;
 
     /**
-     * Based upon the RackScanner selected, this runs the rack scan and returns a linked HashMap of position to barcode
+     * Scans a rack.
      *
-     * @param rackScanner RackScanner to connect and run.
+     * @param rackScanner RackScanner to connect to and run.
      * @return Linked HashMap of position to scanned barcode.
      * @throws ScannerException
      */
     public LinkedHashMap<String, String> runRackScanner(RackScanner rackScanner) throws ScannerException {
+        return runRackScanner(rackScanner, null);
+    }
 
+    /**
+     * Scans a rack or runs a rack scan simulation using the data from specified file.
+     *
+     * @param rackScanner RackScanner to connect to and run.
+     * @param simulationContent For a rack scan simulation, gets positions and barcodes from this reader.
+     * @return Linked HashMap of position to scanned barcode.
+     * @throws ScannerException
+     */
+    public LinkedHashMap<String, String> runRackScanner(RackScanner rackScanner, Reader simulationContent)
+            throws ScannerException {
         RackScannerConfig config = rackScanner.getRackScannerConfig();
-
-        NetworkRackScanner networkRackScanner;
-
-        // Based on the selected scanner, create the rack scanner object
-        switch (config.getScannerType()) {
-            case AGBENE:
-                networkRackScanner = new AbgeneNetworkRackScanner(config.getIpAddress(), config.getPort());
-                break;
-            case ZAITH:
-                networkRackScanner = new ZaithNetworkRackScanner(config.getIpAddress(), config.getPort(),
-                                                                 config.getScannerInternalName());
-                break;
-            default:
-                throw new ScannerException("Failed to find the proper scanner.");
+        NetworkRackScanner networkRackScanner = NetworkRackScanner.createNetworkRackScanner(config);
+        if (networkRackScanner instanceof SimulatorRackScanner) {
+            ((SimulatorRackScanner)networkRackScanner).setSimulationContent(simulationContent);
         }
-
         return networkRackScanner.readRackScan().getPositionData();
     }
 
