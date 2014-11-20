@@ -5,6 +5,8 @@
 <%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.sample.PicoDispositionActionBean" %>
 
 <%-- Allows selecting a rack scan lab, rack scanner device, and user-input simulated rack scan file. --%>
+<stripes:useActionBean var="actionBean"
+                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.PicoDispositionActionBean"/>
 
 <stripes:layout-render name="/layout.jsp" pageTitle="Confirm Rearray via Rack Scan"
                        sectionTitle="Confirm Rearray via Rack Scan" showCreate="false">

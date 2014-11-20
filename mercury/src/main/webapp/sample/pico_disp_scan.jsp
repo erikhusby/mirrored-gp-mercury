@@ -4,6 +4,8 @@
 <%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean" %>
 
 <%-- Allows selecting a rack scan lab, rack scanner device, and user-input simulated rack scan file. --%>
+<stripes:useActionBean var="actionBean"
+                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.PicoDispositionActionBean"/>
 
 <stripes:layout-render name="/layout.jsp" pageTitle="Review Pico Dispositions via Rack Scan"
                        sectionTitle="Review Pico Dispositions via Rack Scan" showCreate="false">
