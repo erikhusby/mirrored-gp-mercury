@@ -4,25 +4,19 @@ import org.broadinstitute.gpinformatics.athena.control.dao.preference.Preference
 import org.broadinstitute.gpinformatics.athena.entity.preference.ColumnSetsPreference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.PaginationDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.hibernate.Criteria;
-import org.hibernate.criterion.Order;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Creates ConfigurableList instances.
@@ -37,9 +31,6 @@ public class ConfigurableListFactory {
 
     @Inject
     private PaginationDao paginationDao;
-
-    @Inject
-    private BSPSampleSearchService bspSampleSearchService;
 
     /**
      * Create a ConfigurableList instance.
@@ -341,10 +332,15 @@ public class ConfigurableListFactory {
         ConfigurableList configurableList = new ConfigurableList(columnTabulations,
                 pagination.getNumberPages() == 1 ? sortColumnIndex : null, sortDirection,
                 ColumnEntity.getByName(entityName));
-        // todo jmt adding the BSP stuff needs to be configurable
-        if (entityName.equals("LabVessel")) {
-            configurableList.addListener(new BspSampleSearchAddRowsListener(bspSampleSearchService));
+
+        // Add any row listeners
+        ConfigurableSearchDefinition.AddRowsListenerFactory addRowsListenerFactory = configurableSearchDef.getAddRowsListenerFactory();
+        if( addRowsListenerFactory != null ) {
+            for( Map.Entry<String,ConfigurableList.AddRowsListener> entry : addRowsListenerFactory.getAddRowsListeners().entrySet() ) {
+                configurableList.addAddRowsListener(entry.getKey(), entry.getValue());
+            }
         }
+
         configurableList.addRows( entityList, searchInstance.getEvalContext() );
         ConfigurableList.ResultList resultList = configurableList.getResultList();
 
@@ -383,10 +379,15 @@ public class ConfigurableListFactory {
         }
         ConfigurableList configurableList = new ConfigurableList(columnTabulations, null,
                 ColumnEntity.getByName(entityName));
-        // todo jmt adding the BSP stuff needs to be configurable
-        if (entityName.equals("LabVessel")) {
-            configurableList.addListener(new BspSampleSearchAddRowsListener(bspSampleSearchService));
+
+        // Add any row listeners
+        ConfigurableSearchDefinition.AddRowsListenerFactory addRowsListenerFactory = configurableSearchDef.getAddRowsListenerFactory();
+        if( addRowsListenerFactory != null ) {
+            for( Map.Entry<String,ConfigurableList.AddRowsListener> entry : addRowsListenerFactory.getAddRowsListeners().entrySet() ) {
+                configurableList.addAddRowsListener(entry.getKey(), entry.getValue());
+            }
         }
+
         configurableList.addRows( entityList,searchInstance.getEvalContext() );
 
         return configurableList.getResultList();

@@ -59,9 +59,11 @@ public class LabVesselMetadataPlugin implements ListPlugin {
 
             for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
                 MercurySample sample = sampleInstanceV2.getRootOrEarliestMercurySample();
-                Set<Metadata> metadata = sample.getMetadata();
-                if( metadata != null && !metadata.isEmpty() ) {
-                    addMetadataToRowData( metadata, rowData );
+                if( sample != null ) {
+                    Set<Metadata> metadata = sample.getMetadata();
+                    if( metadata != null && !metadata.isEmpty() ) {
+                        addMetadataToRowData( metadata, rowData );
+                    }
                 }
             }
 
