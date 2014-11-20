@@ -1208,6 +1208,11 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         public boolean canPlace() {
             return this == Draft || this == Pending;
         }
+
+        /** @return true if an order can be billed from this state. */
+        public boolean canBill() {
+            return this == Submitted || this == Abandoned || this == Completed;
+        }
     }
 
     public static class JiraOrId {

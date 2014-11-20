@@ -364,12 +364,12 @@ public class ProductOrderActionBean extends CoreActionBean {
     /**
      * @return the list if role names that can modify the order being edited.
      */
-    public String[] getModifyOrderRoles() {
+    public String getModifyOrderRoles() {
         if (editOrder.isPending()) {
             // Allow PMs to modify Pending orders.
-            return Role.roles(Role.Developer, Role.PDM, Role.PM);
+            return StringUtils.join(Role.roles(Role.Developer, Role.PDM, Role.PM), ",");
         }
-        return Role.roles(Role.Developer, Role.PDM);
+        return StringUtils.join(Role.roles(Role.Developer, Role.PDM), ",");
     }
 
     /**
@@ -1045,8 +1045,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         MessageCollection placeOrderMessageCollection = new MessageCollection();
         try {
             if (editOrder.isPending()) {
-                // For a Pending order, we need to abandon samples that haven't been received.
-                productOrderEjb.abandonNonReceivedSamples(editOrder);
+                // For a Pending order, we need to remove samples that haven't been received.
+                productOrderEjb.removeNonReceivedSamples(editOrder, this);
             }
 
             productOrderEjb.placeProductOrder(editOrder.getProductOrderId(), originalBusinessKey,
@@ -1444,8 +1444,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent(DELETE_SAMPLES_ACTION)
     public Resolution deleteSamples() throws Exception {
-        productOrderEjb.removeSamples(getUserBean().getBspUser(), editOrder.getBusinessKey(),
-                selectedProductOrderSamples, this);
+        productOrderEjb.removeSamples(editOrder.getBusinessKey(), selectedProductOrderSamples, this);
         return createViewResolution(editOrder.getBusinessKey());
     }
 
@@ -1565,7 +1564,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution addSamples() throws Exception {
         List<ProductOrderSample> samplesToAdd = stringToSampleList(addSamplesText);
         try {
-            productOrderEjb.addSamples(userBean.getBspUser(), editOrder.getJiraTicketKey(), samplesToAdd, this);
+            productOrderEjb.addSamples(editOrder.getJiraTicketKey(), samplesToAdd, this);
         } catch (BucketException e) {
             logger.error("Problem adding samples to bucket", e);
             addGlobalValidationError(e.getMessage());

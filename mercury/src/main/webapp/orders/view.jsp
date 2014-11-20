@@ -647,18 +647,18 @@ function formatInput(item) {
 
 <div id="placeConfirmation" style="display:none;" title="Place Order">
     <p>Click OK to place the order and make it available for lab work.</p>
-    <c:set var="numberSamplesToAbandon" value="${actionBean.editOrder.nonReceivedNonAbandonedCount}"/>
+    <c:set var="numberSamplesNotReceived" value="${actionBean.editOrder.sampleCount - actionBean.editOrder.receivedSampleCount}"/>
     <c:choose>
-        <c:when test="${numberSamplesToAbandon == 1}">
+        <c:when test="${numberSamplesNotReceived == 1}">
             <p>
                 <em>NOTE:</em> There is one sample that has not yet been received. If the order is placed,
-                this sample will be marked as abandoned.
+                this sample will be removed from the order.
             </p>
         </c:when>
-        <c:when test="${numberSamplesToAbandon > 1}">
+        <c:when test="${numberSamplesNotReceived > 1}">
             <p>
-                <em>NOTE:</em> There are ${numberSamplesToAbandon} samples that have not yet been received.
-                If the order is placed, these samples will be marked as abandoned.
+                <em>NOTE:</em> There are ${numberSamplesNotReceived} samples that have not yet been received.
+                If the order is placed, these samples will be removed from the order.
             </p>
         </c:when>
     </c:choose>
@@ -733,19 +733,24 @@ function formatInput(item) {
                                 class="btn padright" title="${abandonTitle}" disabled="${abandonDisable}"/>
             </security:authorizeBlock>
 
-            <security:authorizeBlock roles="<%= roles(Developer, PDM, BillingManager) %>">
-                <stripes:param name="selectedProductOrderBusinessKeys" value="${actionBean.editOrder.businessKey}"/>
-                <stripes:submit name="downloadBillingTracker" value="Download Billing Tracker" class="btn"
-                                style="margin-right:5px;"/>
-            </security:authorizeBlock>
+            <c:if test="${actionBean.editOrder.orderStatus.canBill()}">
 
-            <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
-                <stripes:link
-                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.UploadTrackerActionBean"
-                        event="view">
-                    Upload Billing Tracker
-                </stripes:link>
-            </security:authorizeBlock>
+                <security:authorizeBlock roles="<%= roles(Developer, PDM, BillingManager) %>">
+                    <stripes:param name="selectedProductOrderBusinessKeys" value="${actionBean.editOrder.businessKey}"/>
+                    <stripes:submit name="downloadBillingTracker" value="Download Billing Tracker" class="btn"
+                                    style="margin-right:5px;"/>
+                </security:authorizeBlock>
+
+                <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+                    <stripes:link
+                            beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.UploadTrackerActionBean"
+                            event="view">
+                        Upload Billing Tracker
+                    </stripes:link>
+                </security:authorizeBlock>
+
+            </c:if>
+
         </c:otherwise>
     </c:choose>
 
@@ -1139,14 +1144,15 @@ function formatInput(item) {
                                     style="margin-left:30px;"
                                     onclick="showConfirm('deleteSamples', 'delete')"/>
 
-                    <stripes:button name="abandonSamples" value="Abandon Samples" class="btn"
-                                    style="margin-left:15px;"
-                                    onclick="showAbandonDialog()"/>
+                    <c:if test="${!actionBean.editOrder.pending}">
+                        <stripes:button name="abandonSamples" value="Abandon Samples" class="btn"
+                                        style="margin-left:15px;"
+                                        onclick="showAbandonDialog()"/>
 
-                    <stripes:button name="unAbandonSamples" value="Un-Abandon Samples" class="btn"
-                                    style="margin-left:15px;"
-                                    onclick="showUnAbandonDialog()"/>
-
+                        <stripes:button name="unAbandonSamples" value="Un-Abandon Samples" class="btn"
+                                        style="margin-left:15px;"
+                                        onclick="showUnAbandonDialog()"/>
+                    </c:if>
                     <stripes:button name="recalculateRisk" value="Recalculate Risk" class="btn"
                                     style="margin-left:15px;" onclick="showRecalculateRiskDialog()"/>
 

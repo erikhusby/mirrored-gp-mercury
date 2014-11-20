@@ -272,7 +272,7 @@
                     <c:forEach items="${actionBean.displayedProductOrderListEntries}" var="order">
                         <tr>
                             <td>
-                                <c:if test="${!order.draft}">
+                                <c:if test="${order.canBill()}">
                                     <stripes:checkbox class="shiftCheckbox" name="selectedProductOrderBusinessKeys" value="${order.businessKey}"/>
                                 </c:if>
                             </td>

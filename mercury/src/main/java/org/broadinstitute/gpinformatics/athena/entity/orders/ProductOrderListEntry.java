@@ -230,6 +230,10 @@ public class ProductOrderListEntry implements Serializable {
         return orderStatus.isDraft();
     }
 
+    public boolean canBill() {
+        return orderStatus.canBill();
+    }
+
     public static Collection<Long> getProductOrderIDs(List<ProductOrderListEntry> productOrderListEntries) {
         Collection<Long> pdoIds = new ArrayList<>(productOrderListEntries.size());
         for (ProductOrderListEntry entry : productOrderListEntries){
@@ -256,8 +260,8 @@ public class ProductOrderListEntry implements Serializable {
         NOTHING_NEW("None", false) {
             @Override
             public boolean entryMatch(ProductOrderListEntry entry) {
-                // Drafts are always new.
-                return entry.isDraft() ||
+                // PDOs that aren't billable are always new.
+                return !entry.canBill() ||
                        (!entry.isReadyForBilling() && !entry.isReadyForReview() && !entry.isBilling());
             }
 
