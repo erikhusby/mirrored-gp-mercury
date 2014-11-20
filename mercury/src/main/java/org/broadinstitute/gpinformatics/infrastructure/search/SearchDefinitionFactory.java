@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.BspSampleSearchAddRowsListener;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.EventVesselSourcePositionPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.EventVesselTargetPositionPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselLatestEventPlugin;
@@ -60,6 +61,20 @@ public class SearchDefinitionFactory {
     public static final String CONTEXT_KEY_SEARCH_STRING = "searchString";
     public static final String CONTEXT_KEY_BSP_SAMPLE_SEARCH = "BSPSampleSearchService";
     public static final String CONTEXT_KEY_OPTION_VALUE_DAO = "OptionValueDao";
+
+    /**
+     * Convenience to allow user to just enter the number of the LCSET.
+     */
+    private SearchTerm.Evaluator<Object> lcsetConverter = new SearchTerm.Evaluator<Object>() {
+        @Override
+        public Object evaluate(Object entity, Map<String, Object> context) {
+            String value = (String) context.get(CONTEXT_KEY_SEARCH_STRING);
+            if( value.matches("[0-9]*")){
+                value = "LCSET-" + value;
+            }
+            return value;
+        }
+    };
 
     private SearchDefinitionFactory(){}
 
@@ -150,7 +165,6 @@ public class SearchDefinitionFactory {
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("labMetricId", "labMetrics",
                 "id", Metadata.class.getName()));
 
-
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("mercurySample", "labVesselId",
                 "mercurySamples", LabVessel.class.getName()));
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("mercurySamples", "mercurySamples",
@@ -160,7 +174,18 @@ public class SearchDefinitionFactory {
                 "inPlaceLabVesselId", LabEvent.class.getName()));
 
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
-                "LabVessel", LabVessel.class.getName(), "label", 100, criteriaProjections, mapGroupSearchTerms);
+                ColumnEntity.LAB_VESSEL, 100, criteriaProjections, mapGroupSearchTerms);
+
+        configurableSearchDefinition.setAddRowsListenerFactory(
+                new ConfigurableSearchDefinition.AddRowsListenerFactory() {
+                    @Override
+                    public Map<String, ConfigurableList.AddRowsListener> getAddRowsListeners() {
+                        Map<String, ConfigurableList.AddRowsListener> listeners = new HashMap<>();
+                        listeners.put(CONTEXT_KEY_BSP_SAMPLE_SEARCH, new BspSampleSearchAddRowsListener());
+                        return listeners;
+                    }
+                });
+
         MAP_NAME_TO_DEF.put(ColumnEntity.LAB_VESSEL.getEntityName(), configurableSearchDefinition);
     }
 
@@ -199,9 +224,17 @@ public class SearchDefinitionFactory {
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("reagents", "reagents",
                 "reagentId", Reagent.class.getName()));
 
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("mercurySample", "inPlaceLabVesselId",
+                "mercurySamples", LabVessel.class.getName()));
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("mercurySamples", "mercurySamples",
+                "mercurySampleId", MercurySample.class.getName()));
 
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
-                "LabEvent", LabEvent.class.getName(), "labEventId", 100, criteriaProjections, mapGroupSearchTerms);
+                ColumnEntity.LAB_EVENT, 100, criteriaProjections, mapGroupSearchTerms);
+
+        // Allow user to search ancestor and/or descendant events
+        configurableSearchDefinition.setTraversalEvaluator(new LabEventTraversalEvaluator());
+
         MAP_NAME_TO_DEF.put(ColumnEntity.LAB_EVENT.getEntityName(), configurableSearchDefinition);
     }
 
@@ -215,6 +248,7 @@ public class SearchDefinitionFactory {
         SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setCriteria(Arrays.asList("bucketEntries", "labBatch"));
         criteriaPath.setPropertyName("batchName");
+        criteriaPath.setJoinFetch(Boolean.TRUE);
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
@@ -230,6 +264,7 @@ public class SearchDefinitionFactory {
                 return results;
             }
         });
+        searchTerm.setValueConversionExpression(lcsetConverter);
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -305,10 +340,21 @@ public class SearchDefinitionFactory {
         return searchTerms;
     }
 
+    /**
+     * Builds BSP term with default display name
+     * @param bspSampleSearchColumn
+     * @return
+     */
     private SearchTerm buildLabVesselBspTerm(final BSPSampleSearchColumn bspSampleSearchColumn) {
         return buildLabVesselBspTerm(bspSampleSearchColumn, bspSampleSearchColumn.columnName());
     }
 
+    /**
+     * Builds BSP term with user specified display name
+     * @param bspSampleSearchColumn
+     * @param name
+     * @return
+     */
     private SearchTerm buildLabVesselBspTerm(final BSPSampleSearchColumn bspSampleSearchColumn, String name) {
         SearchTerm searchTerm = new SearchTerm();
         searchTerm.setName(name);
@@ -320,7 +366,7 @@ public class SearchDefinitionFactory {
                 if( !mercurySamples.isEmpty() ) {
                     MercurySample mercurySample = mercurySamples.iterator().next();
                     BspSampleSearchAddRowsListener bspColumns = (BspSampleSearchAddRowsListener) context.get(
-                            BspSampleSearchAddRowsListener.BSP_LISTENER);
+                             CONTEXT_KEY_BSP_SAMPLE_SEARCH);
                     return bspColumns.getColumn(mercurySample.getSampleKey(), bspSampleSearchColumn);
                 } else {
                     return "";
@@ -1069,10 +1115,13 @@ public class SearchDefinitionFactory {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("LCSET");
+        searchTerm.setValueConversionExpression(lcsetConverter);
         criteriaPaths = new ArrayList<>();
         criteriaPath = new SearchTerm.CriteriaPath();
 
-        criteriaPath.setCriteria(Arrays.asList(/* LabEvent*/ "inPlaceLabEvents", /* LabVessel */ "bucketEntries", /* BucketEntry */ "labBatch" /* LabBatch */));
+        criteriaPath.setCriteria(
+                Arrays.asList(/* LabEvent*/ "inPlaceLabEvents", /* LabVessel */ "bucketEntries", /* BucketEntry */
+                        "labBatch" /* LabBatch */));
         criteriaPath.setPropertyName("batchName");
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
@@ -1086,17 +1135,17 @@ public class SearchDefinitionFactory {
                     lcSetNames.add(labBatch.getBatchName());
                 }
 
-                if( lcSetNames.isEmpty() ) {
+                if (lcSetNames.isEmpty()) {
                     LabVessel labVessel = labEvent.getInPlaceLabVessel();
                     // Test req'd, DB columns are nullable
                     if (labVessel != null) {
                         Set<BucketEntry> bucketEntries = labVessel.getBucketEntries();
-                        if ( bucketEntries != null && !bucketEntries.isEmpty() ) {
+                        if (bucketEntries != null && !bucketEntries.isEmpty()) {
                             Iterator<BucketEntry> iterator = bucketEntries.iterator();
                             BucketEntry bucketEntry = iterator.next();
                             LabBatch batch = bucketEntry.getLabBatch();
-                            if( batch != null ) {
-                                lcSetNames.add( batch.getBatchName() );
+                            if (batch != null) {
+                                lcSetNames.add(batch.getBatchName());
                             }
                         }
                     }
@@ -1106,6 +1155,56 @@ public class SearchDefinitionFactory {
             }
         });
         searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Mercury Sample ID");
+        criteriaPaths = new ArrayList<>();
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("mercurySample", "mercurySamples"));
+        criteriaPath.setPropertyName("sampleKey");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                LabEvent labEvent = (LabEvent) entity;
+                List<String> results = new ArrayList<>();
+
+                LabVessel labVessel = labEvent.getInPlaceLabVessel();
+                // Test req'd, DB columns are nullable
+                if (labVessel != null) {
+                    for (MercurySample sample : labVessel.getMercurySamples()) {
+                        results.add(sample.getSampleKey());
+                    }
+                }
+                return results;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("In-Place Vessel Barcode");
+        criteriaPaths = new ArrayList<>();
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("inPlaceLabEvents"));
+        criteriaPath.setPropertyName("label");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                LabEvent labEvent = (LabEvent) entity;
+
+                LabVessel labVessel = labEvent.getInPlaceLabVessel();
+                // Test req'd, DB columns are nullable
+                if (labVessel != null) {
+                    return labVessel.getLabel();
+                }
+                return "";
+            }
+        });
+        searchTerms.add(searchTerm);
+
 
         return searchTerms;
     }
@@ -1316,9 +1415,26 @@ public class SearchDefinitionFactory {
         SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setCriteria(Arrays.asList( "mercurySample", "mercurySamples" ));
         criteriaPath.setPropertyName("sampleKey");
+        criteriaPath.setJoinFetch(Boolean.TRUE);
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerms.add(searchTerm);
 
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Mercury Sample Tube Barcode");
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                List<String> values = new ArrayList<String>();
+                LabVessel labVessel = (LabVessel) entity;
+                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                    if( sampleInstanceV2.getInitialLabVessel() != null ) {
+                        values.add(sampleInstanceV2.getInitialLabVessel().getLabel());
+                    }
+                }
+                return values;
+            }
+        });
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -1352,7 +1468,6 @@ public class SearchDefinitionFactory {
         criteriaPath.setPropertyName("numberValue");
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
-
         searchTerms.add(searchTerm);
 
         // ***** Build sample metadata child search term (the metadata value) ***** //

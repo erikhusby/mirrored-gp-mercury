@@ -48,11 +48,18 @@ import java.util.Map;
  */
 public class ConfigurableList {
 
+    /**
+     * A way to capture high latency bulk data for a page of results
+     */
     public interface AddRowsListener {
         void addRows(List<?> entityList, Map<String, Object> context, List<ColumnTabulation> nonPluginTabulations);
+        void reset();
     }
 
-    private final List<AddRowsListener> addRowsListeners = new ArrayList<>();
+    /**
+     * Allow multiple named AddRowsListener instances for a single search
+     */
+    private final Map<String,AddRowsListener> addRowsListeners = new HashMap<>();
 
     private final List<ColumnTabulation> pluginTabulations = new ArrayList<>();
 
@@ -465,8 +472,9 @@ public class ConfigurableList {
      */
     public void addRows(List<?> entityList, @Nonnull Map<String, Object> context ) {
 
-        for (AddRowsListener addRowsListener : addRowsListeners) {
-            addRowsListener.addRows(entityList, context, nonPluginTabulations);
+        for (Map.Entry<String,AddRowsListener> entry : addRowsListeners.entrySet()) {
+            entry.getValue().addRows(entityList, context, nonPluginTabulations);
+            context.put(entry.getKey(),entry.getValue());
         }
         for (Object entity : entityList) {
             // evaluate expression to get ID
@@ -1163,8 +1171,8 @@ public class ConfigurableList {
         return finalString.toString();
     }
 
-    public void addListener(AddRowsListener addRowsListener) {
-        addRowsListeners.add(addRowsListener);
+    public void addAddRowsListener(String name, AddRowsListener addRowsListener) {
+        addRowsListeners.put(name, addRowsListener);
     }
 
     /**
