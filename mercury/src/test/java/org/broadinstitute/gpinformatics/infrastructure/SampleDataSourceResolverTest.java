@@ -26,10 +26,14 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.Matchers.argThat;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.emptyCollectionOf;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -231,15 +235,21 @@ public class SampleDataSourceResolverTest {
         dataList.add(new Object[]{buildProductOrderSamples(false, null, "SM-1234", "SM-1234")});
         dataList.add(
                 new Object[]{buildProductOrderSamples(true, MercurySample.MetadataSource.BSP, "SM-1234", "SM-1234")});
+        dataList.add(new Object[]{Arrays.asList(buildProductOrderSample("SM-1234", false, null),
+                buildProductOrderSample("SM-3423", true, MercurySample.MetadataSource.MERCURY),
+                buildProductOrderSample("SM-2432", true, MercurySample.MetadataSource.BSP))});
 
         return dataList.toArray(new Object[dataList.size()][]);
     }
 
     @Test(dataProvider = "sampleDataSourceBspSample")
-    public void populateSampleDataSources_with_duplicate_keys_populates_all_instances(
+    public void populateSampleDataSources_multiple_samples(
             Collection<ProductOrderSample> samples) {
 
+        assertThat(samples, is(not(emptyCollectionOf(ProductOrderSample.class))));
+
         Map<String, Boolean> mapSampleIdToDaoUsage = new HashMap<>();
+        Map<String, MercurySample.MetadataSource> sampleToSourceType = new HashMap<>();
 
         MercurySample.MetadataSource metadataSource = MercurySample.MetadataSource.BSP;
 
@@ -251,16 +261,17 @@ public class SampleDataSourceResolverTest {
             } else {
                 mapSampleIdToDaoUsage.put(sample.getSampleKey(), false);
             }
+            sampleToSourceType.put(sample.getSampleKey(), mercurySample.getMetadataSource());
             stubMercurySampleDao(mercurySample);
         }
         sampleDataSourceResolver.populateSampleDataSources(samples);
 
         for (ProductOrderSample sample : samples) {
-            assertThat(sample.getMetadataSource(), equalTo(metadataSource));
+            assertThat(sample.getMetadataSource(), equalTo(sampleToSourceType.get(sample.getSampleKey())));
             if(mapSampleIdToDaoUsage.get(sample.getSampleKey())) {
-                verify(mockMercurySampleDao, never()).findMapIdToMercurySample(argThat(containsInAnyOrder(sample.getSampleKey())));
-            } else {
                 verify(mockMercurySampleDao).findMapIdToMercurySample(argThat(containsInAnyOrder(sample.getSampleKey())));
+            } else {
+                verify(mockMercurySampleDao, never()).findMapIdToMercurySample(argThat(containsInAnyOrder(sample.getSampleKey())));
             }
         }
     }
@@ -322,7 +333,7 @@ public class SampleDataSourceResolverTest {
                 }
                 sample.setMercurySample(mercurySample);
             }
-
+            sampleCollection.add(sample);
         }
 
         return sampleCollection;
