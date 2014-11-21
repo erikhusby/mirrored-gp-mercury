@@ -85,6 +85,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
+import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -358,6 +359,17 @@ public class ProductOrderActionBean extends CoreActionBean {
                + "project, that these requirements have been met, and that the information I have provided is "
                + "accurate. Disregard of relevant requirements and/or falsification of information may lead to "
                + "quarantining of data.";
+    }
+
+    /**
+     * @return the list if role names that can modify the order being edited.
+     */
+    public String getModifyOrderRoles() {
+        if (editOrder.isPending()) {
+            // Allow PMs to modify Pending orders.
+            return StringUtils.join(Role.roles(Role.Developer, Role.PDM, Role.PM), ",");
+        }
+        return StringUtils.join(Role.roles(Role.Developer, Role.PDM), ",");
     }
 
     /**
@@ -1032,9 +1044,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         MessageCollection placeOrderMessageCollection = new MessageCollection();
         try {
-            if (editOrder.getOrderStatus() == ProductOrder.OrderStatus.Pending) {
-                // For a Pending order, we need to abandon samples that haven't been received.
-                productOrderEjb.abandonNonReceivedSamples(editOrder);
+            if (editOrder.isPending()) {
+                // For a Pending order, we need to remove samples that haven't been received.
+                productOrderEjb.removeNonReceivedSamples(editOrder, this);
             }
 
             productOrderEjb.placeProductOrder(editOrder.getProductOrderId(), originalBusinessKey,
@@ -1432,8 +1444,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent(DELETE_SAMPLES_ACTION)
     public Resolution deleteSamples() throws Exception {
-        productOrderEjb.removeSamples(getUserBean().getBspUser(), editOrder.getBusinessKey(),
-                selectedProductOrderSamples, this);
+        productOrderEjb.removeSamples(editOrder.getBusinessKey(), selectedProductOrderSamples, this);
         return createViewResolution(editOrder.getBusinessKey());
     }
 
@@ -1553,7 +1564,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution addSamples() throws Exception {
         List<ProductOrderSample> samplesToAdd = stringToSampleList(addSamplesText);
         try {
-            productOrderEjb.addSamples(userBean.getBspUser(), editOrder.getJiraTicketKey(), samplesToAdd, this);
+            productOrderEjb.addSamples(editOrder.getJiraTicketKey(), samplesToAdd, this);
         } catch (BucketException e) {
             logger.error("Problem adding samples to bucket", e);
             addGlobalValidationError(e.getMessage());

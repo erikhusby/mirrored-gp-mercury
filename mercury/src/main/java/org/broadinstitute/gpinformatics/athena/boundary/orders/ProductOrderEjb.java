@@ -117,21 +117,24 @@ public class ProductOrderEjb {
     private final Log log = LogFactory.getLog(ProductOrderEjb.class);
 
     /**
-     * Convert all non-received samples to abandoned.
+     * Remove all non-received samples from the order.
      */
-    public void abandonNonReceivedSamples(ProductOrder editOrder) throws NoSuchPDOException, IOException,
-            SampleDeliveryStatusChangeException {
-        // Note that calling getNonReceivedNonAbandonedCount() will cause the sample data for all samples to be
+    public void removeNonReceivedSamples(ProductOrder editOrder,
+                                         MessageReporter reporter) throws NoSuchPDOException, IOException {
+        // Note that calling getSampleCount() will cause the sample data for all samples to be
         // fetched if it hasn't been already. This is good because without it each call to getSampleData() below
         // would fetch it one sample at a time.
-        List<ProductOrderSample> nonReceivedSamples = new ArrayList<>(editOrder.getNonReceivedNonAbandonedCount());
+        List<ProductOrderSample> samplesToRemove =
+                new ArrayList<>(editOrder.getSampleCount() - editOrder.getReceivedSampleCount());
         for (ProductOrderSample sample : editOrder.getSamples()) {
             if (!sample.getSampleData().isSampleReceived()) {
-                nonReceivedSamples.add(sample);
+                samplesToRemove.add(sample);
             }
         }
 
-        abandonSamples(editOrder.getJiraTicketKey(), nonReceivedSamples, "Sample was not received.");
+        if (!samplesToRemove.isEmpty()) {
+            removeSamples(editOrder.getJiraTicketKey(), samplesToRemove, reporter);
+        }
     }
 
     /**
@@ -793,8 +796,12 @@ public class ProductOrderEjb {
 
         productOrder.setOrderStatus(OrderStatus.Abandoned);
 
-        transitionSamples(productOrder, EnumSet.of(DeliveryStatus.ABANDONED, DeliveryStatus.NOT_STARTED),
-                DeliveryStatus.ABANDONED, productOrder.getSamples());
+        // For Pending orders, don't change the sample states. This is so reporting can distinguish
+        // abandoned samples vs samples that were removed because the PDO was never placed.
+        if (!productOrder.isPending()) {
+            transitionSamples(productOrder, EnumSet.of(DeliveryStatus.ABANDONED, DeliveryStatus.NOT_STARTED),
+                    DeliveryStatus.ABANDONED, productOrder.getSamples());
+        }
 
         // Currently not setting abandon comments into PDO comments, that seems too intrusive.  We will record the comments
         // with the JIRA ticket.
@@ -863,12 +870,11 @@ public class ProductOrderEjb {
      * @param jiraTicketKey the PDO key
      * @param samples       the samples to add
      */
-    public void addSamples(@Nonnull BspUser bspUser, @Nonnull String jiraTicketKey,
-                           @Nonnull Collection<ProductOrderSample> samples,
+    public void addSamples(@Nonnull String jiraTicketKey, @Nonnull Collection<ProductOrderSample> samples,
                            @Nonnull MessageReporter reporter) throws NoSuchPDOException, IOException {
         ProductOrder order = findProductOrder(jiraTicketKey);
         order.addSamples(samples);
-        order.prepareToSave(bspUser);
+        order.prepareToSave(userBean.getBspUser());
         productOrderDao.persist(order);
         handleSamplesAdded(jiraTicketKey, samples, reporter);
 
@@ -888,15 +894,14 @@ public class ProductOrderEjb {
         updateOrderStatus(jiraTicketKey, reporter);
     }
 
-    public void removeSamples(@Nonnull BspUser bspUser, @Nonnull String jiraTicketKey,
-                              @Nonnull Collection<ProductOrderSample> samples,
+    public void removeSamples(@Nonnull String jiraTicketKey, @Nonnull Collection<ProductOrderSample> samples,
                               @Nonnull MessageReporter reporter) throws IOException, NoSuchPDOException {
         ProductOrder productOrder = findProductOrder(jiraTicketKey);
 
         // If removeAll returns false, no samples were removed -- should never happen.
         if (productOrder.getSamples().removeAll(samples)) {
             String nameList = StringUtils.join(ProductOrderSample.getSampleNames(samples), ",");
-            productOrder.prepareToSave(bspUser);
+            productOrder.prepareToSave(userBean.getBspUser());
             productOrderDao.persist(productOrder);
             reporter.addMessage("Deleted samples: {0}.", nameList);
 
