@@ -663,12 +663,9 @@ function formatInput(item) {
         </c:when>
     </c:choose>
 
-    <c:set var="regulatoryInfoForPendingOrder" value="${actionBean.regulatoryInfoForPendingOrder}"/>
-    <c:if test="${regulatoryInfoForPendingOrder != null}">
-        <div>
-            Regulatory Info: ${regulatoryInfoForPendingOrder.displayText}
-        </div>
-    </c:if>
+    <div>
+        Regulatory Info: ${actionBean.regulatoryInfoForPendingOrder.displayText}
+    </div>
 
     <span class="control-group">
         <span class="controls">

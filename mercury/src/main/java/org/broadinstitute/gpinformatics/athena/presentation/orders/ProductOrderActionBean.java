@@ -362,10 +362,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     public RegulatoryInfo getRegulatoryInfoForPendingOrder() {
-        if (editOrder != null) {
-            if (editOrder.getRegulatoryInfos().size() == 1) {
-                return editOrder.getRegulatoryInfos().iterator().next();
-            }
+        if (editOrder.getRegulatoryInfos().size() == 1) {
+            return editOrder.getRegulatoryInfos().iterator().next();
         }
         return null;
     }
