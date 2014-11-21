@@ -369,14 +369,14 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     /**
-     * @return the list if role names that can modify the order being edited.
+     * @return the list of role names that can modify the order being edited.
      */
-    public String getModifyOrderRoles() {
+    public String[] getModifyOrderRoles() {
         if (editOrder.isPending()) {
             // Allow PMs to modify Pending orders.
-            return StringUtils.join(Role.roles(Role.Developer, Role.PDM, Role.PM), ",");
+            return Role.roles(Role.Developer, Role.PDM, Role.PM);
         }
-        return StringUtils.join(Role.roles(Role.Developer, Role.PDM), ",");
+        return Role.roles(Role.Developer, Role.PDM);
     }
 
     /**
