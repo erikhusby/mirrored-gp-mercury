@@ -21,6 +21,7 @@
                     "aoColumns": [
                         {"bSortable": true}, // rev id
                         {"bSortable": true}, // barcode
+                        {"bSortable": true}, // sample ID
                         {"bSortable": true}, // collaborator patient ID
                         {"bSortable": true, "sType": "numeric"}, // value
                         {"bSortable": true, "sType": "numeric"}, // volume
@@ -109,6 +110,7 @@
                     <tr>
                         <th>Position</th>
                         <th>Barcode</th>
+                        <th>Sample ID</th>
                         <th>Collaborator Patient ID</th>
                         <th>Value</th>
                         <th>Volume</th>
@@ -129,6 +131,9 @@
                                 </td>
                                 <td>
                                     ${labMetric.labVessel.label}
+                                </td>
+                                <td>
+                                    ${fn:join(labMetric.labVessel.sampleNamesArray, " ")}
                                 </td>
                                 <td>
                                     ${fn:join(labMetric.labVessel.getMetadataValues("PATIENT_ID"), " ")}

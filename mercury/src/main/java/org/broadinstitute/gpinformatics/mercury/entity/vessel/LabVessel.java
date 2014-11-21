@@ -1683,6 +1683,9 @@ public abstract class LabVessel implements Serializable {
         return sampleNames;
     }
 
+    public String[] getSampleNamesArray() {
+        return getSampleNames().toArray(new String[]{});
+    }
 
     /**
      * Helper method to determine if a given vessel or any of its ancestors are currently in a bucket.
