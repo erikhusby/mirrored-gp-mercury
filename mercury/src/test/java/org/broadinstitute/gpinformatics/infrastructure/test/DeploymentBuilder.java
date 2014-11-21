@@ -144,6 +144,18 @@ public class DeploymentBuilder {
     public static WebArchive buildMercuryWarWithAlternatives(Deployment deployment,
                                                              String dataSourceEnvironment,
                                                              Class... alternatives) {
+        String beansXml = buildBeansXml(alternatives);
+
+        if (deployment == null) {
+            return buildMercuryWar(beansXml);
+        } else if (dataSourceEnvironment == null) {
+            return buildMercuryWar(beansXml, deployment);
+        } else {
+            return buildMercuryWar(beansXml, dataSourceEnvironment, deployment);
+        }
+    }
+
+    public static String buildBeansXml(Class... alternatives) {
         StringBuilder sb = new StringBuilder();
         sb.append("<beans>\n")
                 .append("  <alternatives>\n");
@@ -156,14 +168,7 @@ public class DeploymentBuilder {
         }
         sb.append("  </alternatives>\n")
                 .append("</beans>");
-
-        if (deployment == null) {
-            return buildMercuryWar(sb.toString());
-        } else if (dataSourceEnvironment == null) {
-            return buildMercuryWar(sb.toString(), deployment);
-        } else {
-            return buildMercuryWar(sb.toString(), dataSourceEnvironment, deployment);
-        }
+        return sb.toString();
     }
 
     @SuppressWarnings("UnusedDeclaration")
