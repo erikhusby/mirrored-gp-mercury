@@ -264,6 +264,8 @@ public class SampleDataSourceResolverTest {
             sampleToSourceType.put(sample.getSampleKey(), mercurySample.getMetadataSource());
             stubMercurySampleDao(mercurySample);
         }
+
+
         sampleDataSourceResolver.populateSampleDataSources(samples);
 
         for (ProductOrderSample sample : samples) {
