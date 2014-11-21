@@ -12,11 +12,16 @@ import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -25,7 +30,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -188,27 +195,74 @@ public class SampleDataSourceResolverTest {
      * Test cases for SampleDataSourceResolver#populateSampleDataSources(Collection<String>)
      */
 
-    public void populateSampleDataSources_for_Mercury_sample() {
-        String mercurySampleId = "SM-1234";
-        ProductOrderSample mercuryProductOrderSample = new ProductOrderSample(mercurySampleId);
-        stubMercurySampleDao(new MercurySample(mercurySampleId, MercurySample.MetadataSource.MERCURY));
+    @DataProvider(name = "sampleDataSourceMercurySample")
+    public Object[][] sampleDataSourceMercurySample() {
+        List<Object[]> dataList = new ArrayList<>();
 
-        sampleDataSourceResolver.populateSampleDataSources(Collections.singleton(mercuryProductOrderSample));
+        dataList.add(new Object[]{buildProductOrderSample("SM-1234", false, null)});
+        dataList.add(new Object[]{(buildProductOrderSample("SM-1234", true, MercurySample.MetadataSource.MERCURY))});
 
-        assertThat(mercuryProductOrderSample.getMetadataSource(), equalTo(MercurySample.MetadataSource.MERCURY));
+        return dataList.toArray(new Object[dataList.size()][]);
     }
 
-    public void populateSampleDataSources_with_duplicate_keys_populates_all_instances() {
-        String sampleId = "SM-1234";
+    @Test(dataProvider = "sampleDataSourceMercurySample")
+    public void populateSampleDataSources_for_Mercury_sample(ProductOrderSample testSample) {
+
+        MercurySample mercurySample = testSample.getMercurySample();
+        if (mercurySample == null) {
+            mercurySample = new MercurySample(testSample.getSampleKey(), MercurySample.MetadataSource.MERCURY);
+        }
+        stubMercurySampleDao(mercurySample);
+
+        sampleDataSourceResolver.populateSampleDataSources(Collections.singleton(testSample));
+
+        assertThat(testSample.getMetadataSource(), equalTo(MercurySample.MetadataSource.MERCURY));
+        if(testSample.getMercurySample() != null) {
+            verify(mockMercurySampleDao, never()).findMapIdToMercurySample(argThat(containsInAnyOrder(testSample.getSampleKey())));
+        } else {
+            verify(mockMercurySampleDao).findMapIdToMercurySample(argThat(containsInAnyOrder(testSample.getSampleKey())));
+        }
+    }
+
+    @DataProvider(name = "sampleDataSourceBspSample")
+    public Object[][] sampleDataSourceBspSample() {
+        List<Object[]> dataList = new ArrayList<>();
+
+        dataList.add(new Object[]{buildProductOrderSamples(false, null, "SM-1234", "SM-1234")});
+        dataList.add(
+                new Object[]{buildProductOrderSamples(true, MercurySample.MetadataSource.BSP, "SM-1234", "SM-1234")});
+
+        return dataList.toArray(new Object[dataList.size()][]);
+    }
+
+    @Test(dataProvider = "sampleDataSourceBspSample")
+    public void populateSampleDataSources_with_duplicate_keys_populates_all_instances(
+            Collection<ProductOrderSample> samples) {
+
+        Map<String, Boolean> mapSampleIdToDaoUsage = new HashMap<>();
+
         MercurySample.MetadataSource metadataSource = MercurySample.MetadataSource.BSP;
-        stubMercurySampleDao(new MercurySample(sampleId, metadataSource));
-        ProductOrderSample productOrderSample1 = new ProductOrderSample(sampleId);
-        ProductOrderSample productOrderSample2 = new ProductOrderSample(sampleId);
 
-        sampleDataSourceResolver.populateSampleDataSources(Arrays.asList(productOrderSample1, productOrderSample2));
+        for (ProductOrderSample sample : samples) {
+            MercurySample mercurySample = sample.getMercurySample();
+            if (mercurySample == null) {
+                mercurySample = new MercurySample(sample.getSampleKey(), metadataSource);
+                mapSampleIdToDaoUsage.put(sample.getSampleKey(), true);
+            } else {
+                mapSampleIdToDaoUsage.put(sample.getSampleKey(), false);
+            }
+            stubMercurySampleDao(mercurySample);
+        }
+        sampleDataSourceResolver.populateSampleDataSources(samples);
 
-        assertThat(productOrderSample1.getMetadataSource(), equalTo(metadataSource));
-        assertThat(productOrderSample2.getMetadataSource(), equalTo(metadataSource));
+        for (ProductOrderSample sample : samples) {
+            assertThat(sample.getMetadataSource(), equalTo(metadataSource));
+            if(mapSampleIdToDaoUsage.get(sample.getSampleKey())) {
+                verify(mockMercurySampleDao, never()).findMapIdToMercurySample(argThat(containsInAnyOrder(sample.getSampleKey())));
+            } else {
+                verify(mockMercurySampleDao).findMapIdToMercurySample(argThat(containsInAnyOrder(sample.getSampleKey())));
+            }
+        }
     }
 
     private void stubMercurySampleDao(MercurySample... mercurySamples) {
@@ -229,15 +283,48 @@ public class SampleDataSourceResolverTest {
                 .thenReturn(sampleIdToMercurySample);
     }
 
-    public void testMercurySampleDataReturnsMetadataSourceMercury(){
+    public void testMercurySampleDataReturnsMetadataSourceMercury() {
         SampleData sampleData = new MercurySampleData("SM-1234", Collections.<Metadata>emptySet());
         Assert.assertEquals(sampleData.getMetadataSource(), MercurySample.MetadataSource.MERCURY);
     }
 
-    public void testBspSampleDataReturnsMetadataSourceBsp(){
+    public void testBspSampleDataReturnsMetadataSourceBsp() {
         SampleData sampleData = new BspSampleData(ImmutableMap.of(BSPSampleSearchColumn.SAMPLE_ID, "SM-1234"));
         Assert.assertEquals(sampleData.getMetadataSource(), MercurySample.MetadataSource.BSP);
     }
 
+    private ProductOrderSample buildProductOrderSample(String sampleId, boolean withMercurySample,
+                                                       MercurySample.MetadataSource source) {
+        ProductOrderSample sample = new ProductOrderSample(sampleId);
 
+        if (withMercurySample) {
+            MercurySample mercurySample = new MercurySample(sampleId, source);
+            sample.setMercurySample(mercurySample);
+
+        }
+        return sample;
+    }
+
+    private Collection<ProductOrderSample> buildProductOrderSamples(boolean withMercurySample,
+                                                                    MercurySample.MetadataSource source,
+                                                                    String... sampleIds) {
+        List<ProductOrderSample> sampleCollection = new ArrayList<>();
+        Map<String, MercurySample> sampleToMercurySample = new HashMap<>();
+
+        for (String sampleId : sampleIds) {
+            ProductOrderSample sample = new ProductOrderSample(sampleId);
+
+            if (withMercurySample) {
+                MercurySample mercurySample = sampleToMercurySample.get(sampleId);
+                if (mercurySample == null) {
+                    mercurySample = new MercurySample(sampleId, source);
+                    sampleToMercurySample.put(sampleId, mercurySample);
+                }
+                sample.setMercurySample(mercurySample);
+            }
+
+        }
+
+        return sampleCollection;
+    }
 }

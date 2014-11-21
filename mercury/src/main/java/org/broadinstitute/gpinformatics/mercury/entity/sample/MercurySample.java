@@ -179,15 +179,14 @@ public class MercurySample extends AbstractSample {
         return sampleId.matches("\\d+\\.\\d+");
     }
 
-    @Override
-    protected SampleData makeSampleData() {
-        switch (metadataSource) {
+    public SampleData makeSampleData() {
+        switch (getMetadataSource()) {
         case BSP:
             return new BspSampleData();
         case MERCURY:
-            return new MercurySampleData(sampleKey, Collections.<Metadata>emptySet());
+            return new MercurySampleData(getSampleKey(), Collections.<Metadata>emptySet());
         default:
-            throw new IllegalStateException("Unknown sample data source: " + metadataSource);
+            throw new IllegalStateException("Unknown sample data source: " + getMetadataSource());
         }
     }
 
