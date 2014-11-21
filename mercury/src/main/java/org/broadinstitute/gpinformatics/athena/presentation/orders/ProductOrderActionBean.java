@@ -361,6 +361,15 @@ public class ProductOrderActionBean extends CoreActionBean {
                + "quarantining of data.";
     }
 
+    public RegulatoryInfo getRegulatoryInfoForPendingOrder() {
+        if (editOrder != null) {
+            if (editOrder.getRegulatoryInfos().size() == 1) {
+                return editOrder.getRegulatoryInfos().iterator().next();
+            }
+        }
+        return null;
+    }
+
     /**
      * @return the list if role names that can modify the order being edited.
      */
