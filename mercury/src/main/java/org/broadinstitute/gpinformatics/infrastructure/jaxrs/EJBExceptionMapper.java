@@ -27,14 +27,14 @@ public class EJBExceptionMapper implements ExceptionMapper<EJBException> {
 
         // EJBExceptions are most likely wrapped around other kinds of exceptions. If this is the case, find the
         // cause and check if it has its own ExceptionMapper.
-        Exception cause = exception.getCausedByException();
+        Throwable cause = exception.getCause();
         if (cause != null) {
             log.error("EJBException's CausedByException", cause);
             ExceptionMapper mapper = providers.getExceptionMapper(cause.getClass());
             if (mapper == null) {
                 return Response.serverError().entity(cause.getMessage()).build();
             }
-            return mapper.toResponse(exception.getCause());
+            return mapper.toResponse(cause);
         } else {
             log.error("EJBException thrown from JAX-RS service", exception);
             return Response.serverError().entity(exception.getMessage()).build();
