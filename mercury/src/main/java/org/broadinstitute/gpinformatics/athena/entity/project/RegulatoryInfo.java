@@ -166,4 +166,8 @@ public class RegulatoryInfo implements Serializable, BusinessObject {
     public int hashCode() {
         return new HashCodeBuilder().append(getIdentifier()).append(getType()).toHashCode();
     }
+
+    public String printFriendlyValue() {
+        return String.format("OSRP/IRB Identifier: %s, Type: %s, Title: %s", identifier, type.getName(), name);
+    }
 }

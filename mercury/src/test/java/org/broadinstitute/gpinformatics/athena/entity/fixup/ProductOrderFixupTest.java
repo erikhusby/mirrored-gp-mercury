@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProj
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -32,13 +33,21 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.persistence.Query;
+import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.ParameterExpression;
+import javax.persistence.criteria.Root;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -47,6 +56,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 
 /**
  * This "test" is an example of how to fixup some data.  Each fix method includes the JIRA ticket ID.
@@ -87,7 +97,7 @@ public class ProductOrderFixupTest extends Arquillian {
     // When you run this on prod, change to PROD and prod.
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
+        return DeploymentBuilder.buildMercuryWar(PROD, "prod");
     }
 
     /**
@@ -460,10 +470,10 @@ public class ProductOrderFixupTest extends Arquillian {
 
     @Test(enabled = false)
     public void updateQuotesGPLIM2830() throws Exception {
-        List<ProductOrder> ordersToUpdate = productOrderDao.findListByBusinessKeys(Arrays.asList("PDO-2693","PDO-2771",
-                "PDO-2686","PDO-2635"));
+        List<ProductOrder> ordersToUpdate = productOrderDao.findListByBusinessKeys(Arrays.asList("PDO-2693", "PDO-2771",
+                "PDO-2686", "PDO-2635"));
 
-        for(ProductOrder productOrder:ordersToUpdate) {
+        for (ProductOrder productOrder : ordersToUpdate) {
             productOrder.setQuoteId("GP87U");
         }
         productOrderDao.persistAll(ordersToUpdate);
@@ -492,7 +502,9 @@ public class ProductOrderFixupTest extends Arquillian {
                         if (ledgerEntry.getPriceItemType() == LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM) {
                             ledgerEntry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
                             samples.remove(productOrderSample.getSampleKey());
-                            System.out.println("Updated leger entry " + ledgerEntry.getLedgerId() + " for " + productOrderSample.getSampleKey());
+                            System.out.println(
+                                    "Updated leger entry " + ledgerEntry.getLedgerId() + " for " + productOrderSample
+                                            .getSampleKey());
                         }
                     }
                 }
@@ -501,5 +513,37 @@ public class ProductOrderFixupTest extends Arquillian {
 
         productOrderDao.flush();
         Assert.assertTrue(samples.isEmpty());
+    }
+
+    @Test(enabled = true)
+    public void reportProductOrderCompliance() {
+
+        CriteriaQuery<ProductOrder> criteriaQuery = productOrderDao.getEntityManager().getCriteriaBuilder().createQuery(
+                ProductOrder.class);
+        Root<ProductOrder> root = criteriaQuery.from(ProductOrder.class);
+
+        Calendar malleableCalendar = new GregorianCalendar();
+        malleableCalendar.add(Calendar.MONTH, -3);
+
+        Date startDate = malleableCalendar.getTime();
+
+        CriteriaBuilder builder = productOrderDao.getEntityManager().getCriteriaBuilder();
+
+        ParameterExpression<Date> rangeStart = builder.parameter(Date.class);
+
+        builder.greaterThan(rangeStart, root.get(ProductOrder_.createdDate));
+
+        TypedQuery<ProductOrder> query = productOrderDao.getEntityManager().createQuery(criteriaQuery);
+
+        Collection<ProductOrder> productOrders = query.setParameter(rangeStart, startDate).getResultList();
+
+        System.out.println("PDO key\tOwner\treason if not required\tselected IRB\\OSRP");
+        for (ProductOrder productOrder : productOrders) {
+            System.out.print(String.format("%s\t%s\t%s\t%s\t",
+                    productOrder.getBusinessKey(), bspUserList.getById(productOrder.getCreatedBy()),
+                    (StringUtils.isBlank(productOrder.getSkipRegulatoryReason())) ? "Regulatory Required" :
+                            productOrder.getSkipRegulatoryReason(),
+                    StringUtils.join(productOrder.getPrintFriendlyRegulatoryInfo(), ", ")));
+        }
     }
 }
