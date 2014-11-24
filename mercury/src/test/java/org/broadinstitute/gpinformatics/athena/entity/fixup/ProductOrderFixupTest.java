@@ -38,6 +38,7 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.ParameterExpression;
 import javax.persistence.criteria.Root;
+import java.io.File;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -346,7 +347,7 @@ public class ProductOrderFixupTest extends Arquillian {
         }
     }
 
-    public void changeProjectForPdo(String pdoKey, String newProjectKey) throws IOException {
+    private void changeProjectForPdo(String pdoKey, String newProjectKey) throws IOException {
         ProductOrder order = productOrderDao.findByBusinessKey(pdoKey);
         Assert.assertNotNull(order, "Could not find " + pdoKey);
 
@@ -516,7 +517,7 @@ public class ProductOrderFixupTest extends Arquillian {
     }
 
     @Test(enabled = true)
-    public void reportProductOrderCompliance() {
+    public void gplim3221ReportProductOrderCompliance() {
 
         CriteriaQuery<ProductOrder> criteriaQuery = productOrderDao.getEntityManager().getCriteriaBuilder().createQuery(
                 ProductOrder.class);
@@ -531,11 +532,13 @@ public class ProductOrderFixupTest extends Arquillian {
 
         ParameterExpression<Date> rangeStart = builder.parameter(Date.class);
 
-        builder.greaterThan(rangeStart, root.get(ProductOrder_.createdDate));
+        criteriaQuery.where(builder.greaterThan(rangeStart, root.get(ProductOrder_.createdDate)));
 
         TypedQuery<ProductOrder> query = productOrderDao.getEntityManager().createQuery(criteriaQuery);
 
-        Collection<ProductOrder> productOrders = query.setParameter(rangeStart, startDate).getResultList();
+        query.setParameter(rangeStart, startDate);
+        Collection<ProductOrder> productOrders = query.getResultList();
+        File output = new File(File.pathSeparatorChar+"Users"+File.pathSeparatorChar+"scottmat"+File.pathSeparatorChar+)
 
         System.out.println("PDO key\tOwner\treason if not required\tselected IRB\\OSRP");
         for (ProductOrder productOrder : productOrders) {
