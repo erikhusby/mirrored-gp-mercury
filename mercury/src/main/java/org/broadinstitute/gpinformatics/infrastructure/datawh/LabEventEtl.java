@@ -4,14 +4,17 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
 import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.SampleType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -292,49 +295,45 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
             for (LabVessel vessel : vessels) {
                 try {
-                    Set<SampleInstance> sampleInstances =
-                            vessel.getSampleInstances(SampleType.ROOT_SAMPLE, LabBatchType.WORKFLOW);
+                    Set<SampleInstanceV2> sampleInstances = vessel.getSampleInstancesV2();
 
                     if (!sampleInstances.isEmpty()) {
-                        for (SampleInstance si : sampleInstances) {
+                        for (SampleInstanceV2 si : sampleInstances) {
 
-                            String pdoKey = si.getProductOrderKey();
-                            // null pdo is ok for BSP events.
-                            ProductOrder pdo = null;
-                            synchronized (cachedPdo) {
-                                if (cachedPdo.containsKey(pdoKey)) {
-                                    pdo = cachedPdo.get(pdoKey);
-                                } else {
-                                    if (pdoKey != null) {
-                                        pdo = pdoDao.findByBusinessKey(pdoKey);
-                                    }
-                                    cachedPdo.put(pdoKey, pdo);
-                                }
-                            }
+                            // null pdo and pdoSample is ok for BSP events.
+                            ProductOrderSample productOrderSample = si.getSingleProductOrderSample();
+                            ProductOrder pdo = (productOrderSample != null) ? productOrderSample.getProductOrder() : null;
 
-                            MercurySample sample = si.getStartingSample();
+                            MercurySample sample = si.getRootOrEarliestMercurySample();
                             if (sample != null) {
 
-                                LabBatch labBatch = si.getLabBatch();
-                                String batchName = labBatch != null ? labBatch.getBatchName() : NONE;
+                                LabBatch labBatch = si.getSingleInferredBucketedBatch();
+                                if (labBatch != null) {
 
-                                String workflowName = labBatch != null ? labBatch.getWorkflowName() : null;
-                                if (StringUtils.isBlank(workflowName) && pdo != null) {
-                                    workflowName = pdo.getProduct().getWorkflow().getWorkflowName();
+                                    String batchName = labBatch.getBatchName();
+                                    String workflowName = labBatch.getWorkflowName();
+                                    if (StringUtils.isBlank(workflowName) && pdo != null) {
+                                        workflowName = pdo.getProduct().getWorkflow().getWorkflowName();
+                                    }
+                                    WorkflowConfigDenorm wfDenorm = workflowConfigLookup.lookupWorkflowConfig(
+                                            eventName, workflowName, entity.getEventDate());
+
+                                    boolean canEtl = labBatch.getLabBatchType() == LabBatchType.WORKFLOW &&
+                                                     wfDenorm != null && (pdo != null ||
+                                                                          !wfDenorm.isProductOrderNeeded());
+
+                                    dtos.add(new EventFactDto(entity, vessel, null, batchName, workflowName,
+                                            sample, pdo, wfDenorm, canEtl));
+                                } else {
+                                    dtos.add(new EventFactDto(entity, vessel, null, null, null, sample, pdo, null, false));
                                 }
-                                WorkflowConfigDenorm wfDenorm = workflowConfigLookup.lookupWorkflowConfig(
-                                        eventName, workflowName, entity.getEventDate());
-
-                                boolean canEtl = wfDenorm != null &&
-                                                 (pdo != null || !wfDenorm.isProductOrderNeeded());
-
-                                dtos.add(new EventFactDto(entity, vessel, null, batchName, workflowName,
-                                        sample, pdo, wfDenorm, canEtl));
                             } else {
                                 // Use of the full constructor which in this case has multiple nulls is intentional
                                 // since exactly which fields are null is used as indicator in postEtlLogging, and this
                                 // pattern is used in other fact table etl that are exposed in ExtractTransformResource.
-                                dtos.add(new EventFactDto(entity, vessel, vessel.getIndexesString(si),
+
+                                dtos.add(new EventFactDto(entity, vessel,
+                                        MolecularIndexReagent.getIndexesString(vessel.getIndexes(si)),
                                         null, null, null, pdo, null, false));
                             }
                         }

@@ -19,9 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTr
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.UserRemarks;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -1530,68 +1528,38 @@ public abstract class LabVessel implements Serializable {
         Set<MolecularIndexReagent> indexes = new HashSet<>();
         for (SampleInstance sampleInstance : getAllSamplesOfType(SampleType.ANY)) {
             if (sampleInstance.getStartingSample().equals(sample)) {
-                indexes.addAll(getIndexesForSampleInstance(sampleInstance));
+                indexes.addAll(getIndexes(sampleInstance));
             }
         }
         return indexes;
     }
 
     /**
-     * This method gets index information only for the single sample instance passed in.
+     * This method gets indexes for the single sample instance passed in.
      *
      * @param sampleInstance The sample instance to get the index information for.
      *
      * @return A set of indexes for the sample instance passed in.
      */
-    public Set<MolecularIndexReagent> getIndexesForSampleInstance(SampleInstance sampleInstance) {
+    public Set<MolecularIndexReagent> getIndexes(SampleInstance sampleInstance) {
+        return getIndexes(sampleInstance.getReagents());
+    }
+
+    /** This method gets indexes for the single sample instance passed in. */
+    public Set<MolecularIndexReagent> getIndexes(SampleInstanceV2 sampleInstance) {
+        return getIndexes(sampleInstance.getReagents());
+    }
+
+    /** This method gets indexes for the reagents passed in. */
+    public Set<MolecularIndexReagent> getIndexes(Collection<Reagent> reagents) {
         Set<MolecularIndexReagent> indexes = new HashSet<>();
-        for (Reagent reagent : sampleInstance.getReagents()) {
+        for (Reagent reagent : reagents) {
             if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
                 MolecularIndexReagent indexReagent = (MolecularIndexReagent) reagent;
                 indexes.add(indexReagent);
             }
         }
         return indexes;
-    }
-
-    /**
-     * This method gets a string concatenated representation of all the indexes for a given sample instance.
-     *
-     * @param sampleInstance Gets indexes for this sample instance, or if null, for all sample instances in the vessel.
-     *
-     * @return A string containing information about all the indexes.
-     */
-    public String getIndexesString(SampleInstance sampleInstance) {
-        Collection<MolecularIndexReagent> indexes =
-                (sampleInstance == null ? getIndexes() : getIndexesForSampleInstance(sampleInstance));
-
-        if ((indexes == null) || indexes.isEmpty()) {
-            return "";
-        }
-
-        StringBuilder indexInfo = new StringBuilder();
-        for (MolecularIndexReagent indexReagent : indexes) {
-            indexInfo.append(indexReagent.getMolecularIndexingScheme().getName());
-            indexInfo.append(" - ");
-            for (MolecularIndexingScheme.IndexPosition hint : indexReagent.getMolecularIndexingScheme()
-                    .getIndexes().keySet()) {
-                MolecularIndex index = indexReagent.getMolecularIndexingScheme().getIndexes().get(hint);
-                indexInfo.append(index.getSequence());
-                indexInfo.append("\n");
-            }
-        }
-
-        return indexInfo.toString();
-    }
-
-    /**
-     * This method gets a string concatenated representation of all the indexes.
-     *
-     * @return A string containing information about all the indexes.
-     */
-    @SuppressWarnings("unused")
-    public String getIndexesString() {
-        return getIndexesString(null);
     }
 
     @SuppressWarnings("unused")
