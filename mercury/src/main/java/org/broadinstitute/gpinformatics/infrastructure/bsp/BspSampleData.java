@@ -63,6 +63,7 @@ public class BspSampleData implements SampleData {
     public static final String SUPPORTS_NUMBER_OF_LANES = "supportsNumberOfLanes";
     public static final String JSON_RIN_KEY = "rin";
     public static final String JSON_RQS_KEY = "rqs";
+    public static final String SAMPLE_TYPE = "sampleType";
 
     private final Map<BSPSampleSearchColumn, String> columnToValue;
 
