@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
+import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
@@ -529,6 +530,7 @@ public class ProductOrderFixupTest extends Arquillian {
 
         Calendar malleableCalendar = new GregorianCalendar();
         malleableCalendar.add(Calendar.MONTH, -3);
+        malleableCalendar.set(Calendar.DAY_OF_MONTH, 1);
 
         Date startDate = malleableCalendar.getTime();
 
@@ -536,7 +538,7 @@ public class ProductOrderFixupTest extends Arquillian {
 
         ParameterExpression<Date> rangeStart = builder.parameter(Date.class);
 
-        criteriaQuery.where(builder.lessThan(rangeStart, root.get(ProductOrder_.createdDate)),
+        criteriaQuery.where(builder.lessThanOrEqualTo(rangeStart, root.get(ProductOrder_.createdDate)),
                 builder.notEqual(root.get(ProductOrder_.orderStatus), ProductOrder.OrderStatus.Draft));
         criteriaQuery.orderBy(builder.asc(root.get(ProductOrder_.createdDate)),
                 builder.asc(root.get(ProductOrder_.skipRegulatoryReason)));
@@ -558,22 +560,25 @@ public class ProductOrderFixupTest extends Arquillian {
 
         PrintStream fileWriter = new PrintStream(outputStream);
 
-        fileWriter.print("PDO key\tProduct order name\t Creation Date\tOwner\tProduct\t" +
-                         "Reason Regulatory info is not required\tSamples\tSelected IRB\\OSRP\n");
+        fileWriter.print("PDO key\tProduct order name\t Create Date\tOwner\tOwner Email\tQuote ID\t" +
+                         "Reason Regulatory info is not required\tIRB/OSRP Number\tRegulatory Type\n");
 
-        DateFormat creationDate = new SimpleDateFormat("MM/dd/yyyy");
+        DateFormat creationDate = new SimpleDateFormat("yyyy-MM-dd");
         for (ProductOrder productOrder : productOrders) {
-            fileWriter.print(String.format("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
-                    productOrder.getBusinessKey(), productOrder.getName(),
-                    creationDate.format(productOrder.getCreatedDate()),
-                    bspUserList.getById(productOrder.getCreatedBy()).getFullName(),
-                    productOrder.getProduct().getBusinessKey() + "  " +
-                    productOrder.getProduct().getProductFamily().getName() + ": " +
-                    productOrder.getProduct().getProductName(),
-                    (StringUtils.isBlank(productOrder.getSkipRegulatoryReason())) ? " " :
-                            productOrder.getSkipRegulatoryReason(),
-                    StringUtils.join(ProductOrderSample.getSampleNames(productOrder.getSamples()),", "),
-                    StringUtils.join(productOrder.getPrintFriendlyRegulatoryInfo(), ",")));
+            for (RegulatoryInfo regulatoryInfo : productOrder.getRegulatoryInfos()) {
+
+                fileWriter.print(String.format("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+                        productOrder.getBusinessKey(),
+                        productOrder.getName(),
+                        creationDate.format(productOrder.getCreatedDate()),
+                        bspUserList.getById(productOrder.getCreatedBy()).getFullName(),
+                        bspUserList.getById(productOrder.getCreatedBy()).getEmail(),
+                        productOrder.getQuoteId(),
+                        (StringUtils.isBlank(productOrder.getSkipRegulatoryReason())) ? " " :
+                                productOrder.getSkipRegulatoryReason(),
+                        StringUtils.replaceChars(regulatoryInfo.getIdentifier(),"\t"," "),
+                        StringUtils.replaceChars(regulatoryInfo.getType().getName(),"\t"," ")));
+            }
         }
         fileWriter.close();
     }
