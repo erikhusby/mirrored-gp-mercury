@@ -38,9 +38,6 @@ public class SequencingRunFixupTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
-    @Inject
-    private UserBean userBean;
-
     @Test(enabled = false)
     public void fixupGplim2628() {
         // storeRunReadStructure is supplying run barcode, but there are two runs with same barcode, so change
