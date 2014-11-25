@@ -129,7 +129,7 @@ public class CollaboratorControlsActionBean extends CoreActionBean {
                                                   "different name");
             }
             if (StringUtils.isBlank(workingControl.getBusinessKey())) {
-                addValidationError("controlName", "The Collaborator Sample ID is required for a new control");
+                addValidationError("controlName", "The Collaborator Participant ID is required for a new control");
             }
 
             if (createControlType == null) {

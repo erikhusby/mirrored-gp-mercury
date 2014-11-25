@@ -5,8 +5,12 @@ import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectFunding;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
+import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
+import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -14,6 +18,7 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
+import javax.ws.rs.core.Response;
 import java.util.Date;
 import java.util.UUID;
 
@@ -25,9 +30,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 @Test(groups = TestGroups.STUBBY)
 public class ResearchProjectResourceTest extends ContainerTest {
-
+    private Date now;
     private static final long TEST_CREATOR = 10;
-
     private static final long TEST_SCIENTIST_1 = 14567;
     private static final long TEST_SCIENTIST_2 = 11908;
 
@@ -45,6 +49,7 @@ public class ResearchProjectResourceTest extends ContainerTest {
 
     @BeforeMethod(groups = TestGroups.STUBBY)
     public void setUp() throws Exception {
+        now = new Date();
         // Skip if no injections, meaning we're not running in container
         if (utx == null) {
             return;
@@ -87,6 +92,7 @@ public class ResearchProjectResourceTest extends ContainerTest {
         return researchProject;
     }
 
+    @Override
     @AfterMethod(groups = TestGroups.STUBBY)
     public void tearDown() throws Exception {
         // Skip if no injections, meaning we're not running in container
@@ -105,37 +111,65 @@ public class ResearchProjectResourceTest extends ContainerTest {
 
     @Test(groups = TestGroups.STUBBY)
     public void testCreateResearchProject() throws Exception {
-        Date now = new Date();
         ResearchProjectResource.ResearchProjectData data =
                 new ResearchProjectResource.ResearchProjectData("Test Research Project " + now.getTime(),
                         "Small test project to test logging", "scottmat");
         ResearchProjectResource.ResearchProjectData researchProjectData = researchProjectResource.create(data);
         assertThat(researchProjectData.id, is(notNullValue()));
     }
+
+    @Test(groups = TestGroups.STUBBY)
+    public void testCreateResearchProjectJiraException() throws Exception {
+        ResearchProjectResource.ResearchProjectData data =
+                new ResearchProjectResource.ResearchProjectData("Test Research Project " + now.getTime(),
+                        "Small test project to test logging", "scottmat");
+        String jiraTransitionError = "Some Jira Error";
+
+        try {
+            ResearchProjectEjb mockResearchProjectEjb = Mockito.mock(ResearchProjectEjb.class);
+            Mockito.doThrow(new NoJiraTransitionException(jiraTransitionError))
+                    .when(mockResearchProjectEjb).submitToJira(Mockito.any(ResearchProject.class));
+            researchProjectResource.setResearchProjectEjb(mockResearchProjectEjb);
+            researchProjectResource.create(data);
+            Assert.fail();
+        } catch (InformaticsServiceException e) {
+            Assert.assertEquals(e.getMessage(),
+                    String.format(ResearchProjectResource.SUBMIT_TO_JIRA_FORMAT_STRING, jiraTransitionError));
+        } catch (Exception e) {
+            Assert.fail(String.format("Expected an %s but instead got a %s",
+                    InformaticsServiceException.class.getName(), e.getClass().getName()));
+        }
+    }
+
     @Test(groups = TestGroups.STUBBY)
     public void testCreateResearchProjectNoUser() throws Exception {
-        Date now = new Date();
         ResearchProjectResource.ResearchProjectData data =
                 new ResearchProjectResource.ResearchProjectData("Test Research Project " + now.getTime(),
                         "Small test project to test logging", " ");
         try {
-            ResearchProjectResource.ResearchProjectData researchProjectData = researchProjectResource.create(data);
+            researchProjectResource.create(data);
             Assert.fail();
         } catch (Exception e) {
-
+            Assert.assertEquals(e.getCause().getClass(), ResourceException.class);
+            ResourceException resourceException = (ResourceException) e.getCause();
+            Assert.assertEquals(resourceException.getMessage(), ResearchProjectResource.VALID_USERNAME_REQUIRED_MESSAGE);
+            Assert.assertEquals(resourceException.getStatus(), Response.Status.UNAUTHORIZED);
         }
     }
+
     @Test(groups = TestGroups.STUBBY)
     public void testCreateResearchProjectNoGoodUser() throws Exception {
-        Date now = new Date();
         ResearchProjectResource.ResearchProjectData data =
                 new ResearchProjectResource.ResearchProjectData("Test Research Project " + now.getTime(),
                         "Small test project to test logging", "scottMatthewes");
         try {
-            ResearchProjectResource.ResearchProjectData researchProjectData = researchProjectResource.create(data);
+            researchProjectResource.create(data);
             Assert.fail();
         } catch (Exception e) {
-
+            Assert.assertEquals(e.getCause().getClass(), ResourceException.class);
+            ResourceException resourceException = (ResourceException) e.getCause();
+            Assert.assertEquals(resourceException.getMessage(), ResearchProjectResource.VALID_USERNAME_REQUIRED_MESSAGE);
+            Assert.assertEquals(resourceException.getStatus(), Response.Status.UNAUTHORIZED);
         }
     }
 }
