@@ -62,7 +62,7 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
     /**
      * Allow an evaluator to expand entity list to be attached to search term.
      */
-    private TraversalEvaluator<List<?>> traversalEvaluator;
+    private TraversalEvaluator traversalEvaluator;
 
     /**
      * Produce named AddRowsListener instances for this search definition.
@@ -121,12 +121,15 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
         return requiredSearchTerms;
     }
 
-    public void setTraversalEvaluator(
-            TraversalEvaluator<List<?>> traversalEvaluator) {
+    /**
+     * Allow an optional traversal evaluator to be attached to this search
+     * @param traversalEvaluator
+     */
+    public void addTraversalEvaluator(TraversalEvaluator traversalEvaluator) {
         this.traversalEvaluator = traversalEvaluator;
     }
 
-    public TraversalEvaluator<List<?>> getTraversalEvaluator(){
+    public TraversalEvaluator getTraversalEvaluator(){
         return this.traversalEvaluator;
     }
 
@@ -245,15 +248,6 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
             }
         }
         return mapCriteriaToProjection.get(criteriaName);
-    }
-
-    /**
-     * Attached to a ConfigurableSearchDefinition to expand list of entity identifiers
-     *    to include ancestors, descendants, or both.
-     * @param <T>
-     */
-    public abstract static class TraversalEvaluator <T> {
-        public abstract T evaluate(List<?> rootEntities, boolean doAncestorTraversal, boolean doDescendantTraversal);
     }
 
     /**

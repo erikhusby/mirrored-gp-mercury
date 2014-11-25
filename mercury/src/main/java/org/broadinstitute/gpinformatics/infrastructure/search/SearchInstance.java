@@ -738,8 +738,7 @@ public class SearchInstance implements Serializable {
     /**
      * Should searches include ancestors/descendants of directly located base entities?
      */
-    private boolean ancestorOptionEnabled;
-    private boolean descendantOptionEnabled;
+    private Map<String,Boolean> traversalEvaluatorValues = new HashMap<>();
 
     /**
      * Default constructor for Stripes.
@@ -811,6 +810,24 @@ public class SearchInstance implements Serializable {
      */
     public void establishRelationships(ConfigurableSearchDefinition configurableSearchDefinition) {
         recurseRelationships(configurableSearchDefinition, searchValues, null);
+        buildTraversalOptions(configurableSearchDefinition);
+    }
+
+    /**
+     * Builds out traversal options to include all available options,
+     *    not just the ones set as true with user checkbox selections.
+     * @param configurableSearchDefinition
+     */
+    private void buildTraversalOptions(ConfigurableSearchDefinition configurableSearchDefinition) {
+        TraversalEvaluator evaluator = configurableSearchDefinition.getTraversalEvaluator();
+        if( evaluator != null ) {
+            for (TraversalEvaluator.TraversalOption option : evaluator.getTraversalOptions()) {
+                Boolean isSelected = traversalEvaluatorValues.get(option.getId());
+                if (isSelected == null) {
+                    traversalEvaluatorValues.put(option.getId(), Boolean.FALSE);
+                }
+            }
+        }
     }
 
     /**
@@ -987,25 +1004,6 @@ public class SearchInstance implements Serializable {
         this.evalContext = evalContext;
     }
 
-    /**
-     * Flag searches to include ancestors/descendants of directly located base entities.
-     */
-    public boolean getAncestorOptionEnabled(){
-        return ancestorOptionEnabled;
-    }
-
-    public void setAncestorOptionEnabled( boolean ancestorOptionEnabled){
-        this.ancestorOptionEnabled = ancestorOptionEnabled;
-    }
-
-    public boolean getDescendantOptionEnabled() {
-        return descendantOptionEnabled;
-    }
-
-    public void setDescendantOptionEnabled( boolean descendantOptionEnabled ) {
-        this.descendantOptionEnabled = descendantOptionEnabled;
-    }
-
     public List<String> getColumnSetColumnNameList() {
         return columnSetColumnNameList;
     }
@@ -1020,5 +1018,9 @@ public class SearchInstance implements Serializable {
 
     public void setOrderByList(List<SearchOrderBy> orderByList) {
         this.orderByList = orderByList;
+    }
+
+    public Map<String,Boolean> getTraversalEvaluatorValues(){
+        return traversalEvaluatorValues;
     }
 }

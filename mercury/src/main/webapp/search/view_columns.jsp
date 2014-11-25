@@ -135,10 +135,11 @@ buttons to move columns from one to the other --%>
             <td>&nbsp;</td>
             <td><label>Chosen</label></td>
             <td>&nbsp;</td>
+        <c:if test="${actionBean.configurableSearchDef.traversalEvaluator != null}">
             <td style="padding-left: 20px">
-                <c:if test="${actionBean.configurableSearchDef.traversalEvaluator != null}">
-                <label>Result Row Retrieval Options <img id="traversalOptionTooltip" src="${ctxpath}/images/help.png" alt="help"></label>
-                </c:if>&nbsp;</td>
+            <label>${actionBean.configurableSearchDef.traversalEvaluator.title} <img id="traversalOptionTooltip" src="${ctxpath}/images/help.png" alt="help"></label>
+            &nbsp;</td>
+        </c:if>
         </tr>
         <tr>
             <td rowspan="2" style="padding-left: 5px">
@@ -180,10 +181,9 @@ buttons to move columns from one to the other --%>
                 </a>
             </td>
             <td rowspan="2" style="padding-left: 30px;vertical-align: top">
-                <c:if test="${actionBean.configurableSearchDef.traversalEvaluator != null}">
-                <stripes:checkbox id="ancestorOptionEnabled"   name="searchInstance.ancestorOptionEnabled"   checked="${actionBean.searchInstance.ancestorOptionEnabled}"   /> Traverse Ancestors<br />
-                <stripes:checkbox id="descendantOptionEnabled" name="searchInstance.descendantOptionEnabled" checked="${actionBean.searchInstance.descendantOptionEnabled}" /> Traverse Descendants
-                </c:if>&nbsp;
+                <c:forEach items="${actionBean.configurableSearchDef.traversalEvaluator.traversalOptions}" var="traversalOption">
+                    <stripes:checkbox id="${traversalOption.id}" name="searchInstance.traversalEvaluatorValues['${traversalOption.id}']" checked="${searchInstance.traversalEvaluatorValues[traversalOption.id]}" /> ${traversalOption.label}<br />
+                </c:forEach>
             </td>
         </tr>
         <tr>

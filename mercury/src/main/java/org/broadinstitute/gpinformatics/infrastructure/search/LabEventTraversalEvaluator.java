@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserC
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -13,10 +14,34 @@ import java.util.Set;
  * Starts with a List of LabEvent objects and returns an event date-location-disambiguator sorted List
  *    of labEventID (Long) values to use for pagination.
  */
-public class LabEventTraversalEvaluator extends ConfigurableSearchDefinition.TraversalEvaluator<List<?>> {
+public class LabEventTraversalEvaluator extends TraversalEvaluator {
 
+    public LabEventTraversalEvaluator(){
+        super("Lab Event Result Traversal Options");
+        helpHeader = "Choose traversal options for any primary result Lab Event found using the search terms:";
+        addTraversalOption(ancestorOption);
+        addTraversalOption(descendantOption);
+    }
+
+    private TraversalOption ancestorOption = new TraversalOption("Traverse Ancestors", "ancestorOptionEnabled"
+            , "Lab Events leading up to a primary Lab Event (ancestors)");
+    private TraversalOption descendantOption = new TraversalOption("Traverse Descendants", "descendantOptionEnabled"
+            , "Lab Events following a primary Lab Event (descendants)");
+
+    /**
+     * Traverse ancestor and/or descendants of supplied event list (or neither if no options selected).
+     * @param rootEntities
+     * @param evaluatorOptionValues
+     * @return
+     */
     @Override
-    public List<?> evaluate(List<?> rootEntities, boolean doAncestorTraversal, boolean doDescendantTraversal) {
+    public Set<Object> evaluate(List<?> rootEntities, Map<String,Boolean> evaluatorOptionValues) {
+
+        Boolean doAncestorTraversal = evaluatorOptionValues.get( ancestorOption.getId() );
+        if( doAncestorTraversal == null ) doAncestorTraversal = Boolean.FALSE;
+
+        Boolean doDescendantTraversal = evaluatorOptionValues.get( descendantOption.getId() );
+        if( doDescendantTraversal == null ) doDescendantTraversal = Boolean.FALSE;
 
         TransferTraverserCriteria.LabEventDescendantCriteria eventTraversalCriteria =
                 new TransferTraverserCriteria.LabEventDescendantCriteria();
@@ -36,16 +61,24 @@ public class LabEventTraversalEvaluator extends ConfigurableSearchDefinition.Tra
             traverse( eventTraversalCriteria, rootEvents, TransferTraverserCriteria.TraversalDirection.Ancestors);
         }
 
-        Set<LabEvent> sortedSet = eventTraversalCriteria.getAllEvents();
-        List<Long> idList = new ArrayList<>();
+        Set sortedSet = eventTraversalCriteria.getAllEvents();
 
-        // Replace entire original list contents
-        for (LabEvent event : sortedSet) {
-            idList.add(event.getLabEventId());
-        }
-
-        return idList;
+        return sortedSet;
     }
+
+    /**
+     * Convert a collection of LabEvent objects to ids (Long)
+     * @param entities
+     * @return
+     */
+    @Override
+    public List<Long> buildEntityIdList( Set entities ) {
+        List<Long> idList = new ArrayList<>();
+        for( LabEvent labEvent : (Set<LabEvent>)entities ) {
+            idList.add(labEvent.getLabEventId());
+        }
+        return idList;
+    };
 
     private void traverse( TransferTraverserCriteria.LabEventDescendantCriteria eventTraversalCriteria,
                            List<LabEvent> rootEvents, TransferTraverserCriteria.TraversalDirection traversalDirection ){

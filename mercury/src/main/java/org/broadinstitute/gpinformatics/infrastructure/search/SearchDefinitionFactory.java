@@ -233,7 +233,7 @@ public class SearchDefinitionFactory {
                 ColumnEntity.LAB_EVENT, 100, criteriaProjections, mapGroupSearchTerms);
 
         // Allow user to search ancestor and/or descendant events
-        configurableSearchDefinition.setTraversalEvaluator(new LabEventTraversalEvaluator());
+        configurableSearchDefinition.addTraversalEvaluator(new LabEventTraversalEvaluator());
 
         MAP_NAME_TO_DEF.put(ColumnEntity.LAB_EVENT.getEntityName(), configurableSearchDefinition);
     }
