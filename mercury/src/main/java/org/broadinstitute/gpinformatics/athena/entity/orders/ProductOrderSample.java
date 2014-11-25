@@ -262,7 +262,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     @Override
     public MercurySample.MetadataSource getMetadataSource() {
         if (!isMetadataSourceInitialized) {
-            throw new IllegalStateException("ProductOrderSample's transient metadataSource has not been initialized");
+           throw new IllegalStateException(String.format("ProductOrderSample %s transient metadataSource has not been initialized", sampleName));
         }
         return metadataSource;
     }

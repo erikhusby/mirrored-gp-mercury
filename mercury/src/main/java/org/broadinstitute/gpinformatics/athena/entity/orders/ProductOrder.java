@@ -21,6 +21,7 @@ import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtili
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraProject;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
@@ -327,7 +328,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                 sampleNames.add(productOrderSample.getName());
             }
         }
-        if (sampleNames.isEmpty()) {
+         if (sampleNames.isEmpty()) {
             // This early return is needed to avoid making a unnecessary injection, which could cause
             // DB Free automated tests to fail.
             return;
@@ -747,7 +748,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     /**
      * Use the BSP Manager to load the bsp data for every sample in this product order.
      */
-    public void loadBspData() {
+    public void loadSampleData() {
         loadSampleData(samples);
     }
 
@@ -1270,6 +1271,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         private int totalSampleCount;
         private int onRiskCount;
         private int bspSampleCount;
+        private int mercurySampleCount;
         private int lastPicoCount;
         private int receivedSampleCount;
         private int activeSampleCount;
@@ -1290,7 +1292,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             }
 
             // This gets the BSP data for every sample in the order.
-            loadBspData();
+            loadSampleData();
 
             // Initialize all counts.
             clearAllData();
@@ -1303,12 +1305,15 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                     // This is a unique sample name, so do any counts that are only needed for unique names. Since
                     // BSP looks up samples by name, it would always get the same data, so only counting unique values.
                     if (sample.isInBspFormat()) {
-                        bspSampleCount++;
-
-                        if (sample.bspMetaDataMissing()) {
-                            missingBspMetaDataCount++;
-                        } else {
-                            updateSampleCounts(participantSet, sample);
+                        if (sample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
+                            bspSampleCount++;
+                            if (sample.bspMetaDataMissing()) {
+                                missingBspMetaDataCount++;
+                            } else {
+                                updateSampleCounts(participantSet, sample);
+                            }
+                        } else if(sample.getMetadataSource() == MercurySample.MetadataSource.MERCURY){
+                            mercurySampleCount++;
                         }
                     }
                 }
@@ -1321,6 +1326,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             }
 
             uniqueSampleCount = sampleSet.size();
+            sampleCount = samples.size();
             uniqueParticipantCount = participantSet.size();
             countsValid = true;
         }
@@ -1331,6 +1337,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         private void clearAllData() {
             totalSampleCount = samples.size();
             bspSampleCount = 0;
+            mercurySampleCount = 0;
+            sampleCount = 0;
             receivedSampleCount = 0;
             activeSampleCount = 0;
             hasSampleKitUploadRackscanMismatch = 0;
@@ -1418,11 +1426,21 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
                 if (bspSampleCount == uniqueSampleCount) {
                     output.add("From BSP: All");
-                } else if (bspSampleCount != 0) {
-                    formatSummaryNumber(output, "Unique BSP: {0}", bspSampleCount);
-                    formatSummaryNumber(output, "Unique Not BSP: {0}", uniqueSampleCount - bspSampleCount);
+                } else if (mercurySampleCount == uniqueSampleCount) {
+                    output.add("From Mercury: All");
                 } else {
-                    output.add("From BSP: None");
+                    if (sampleCount != 0) {
+                        if (bspSampleCount > 0) {
+                            formatSummaryNumber(output, "Unique BSP: {0}", bspSampleCount);
+                        }
+                        if (mercurySampleCount > 0) {
+                            formatSummaryNumber(output, "Unique Mercury: {0}", mercurySampleCount);
+                        }
+                        formatSummaryNumber(output, "Unique Not BSP: {0}", uniqueSampleCount - bspSampleCount);
+                    } else {
+                        output.add("From BSP: None");
+                        output.add("From Mercury: None");
+                    }
                 }
             }
 
@@ -1463,8 +1481,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         public List<String> sampleValidation() {
             List<String> output = new ArrayList<>();
             checkCount(missingBspMetaDataCount, "No BSP Data: {0}", output);
-            checkCount(bspSampleCount - activeSampleCount, "Not ACTIVE: {0}", output);
-            checkCount(bspSampleCount - receivedSampleCount, "Not RECEIVED: {0}", output);
+            checkCount(sampleCount - activeSampleCount, "Not ACTIVE: {0}", output);
+            checkCount(sampleCount - receivedSampleCount, "Not RECEIVED: {0}", output);
             return output;
         }
 
