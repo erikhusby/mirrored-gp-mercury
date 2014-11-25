@@ -44,6 +44,10 @@ public class TestGroupsTest {
                 if (annotation.annotationType().equals(Test.class)) {
                     String[] groups = ((Test) annotation).groups();
                     boolean enabled = ((Test) annotation).enabled();
+                    if (!enabled) {
+                        errors.add(String.format("Test in class %s has class-level enabled=false, this can prevent " +
+                                "@BeforeSuite from being run, which breaks Arquillian.\n", clazz.getName()));
+                    }
                     if (groups.length == 0 && enabled) {
                         errors.add(String.format("Test in class %s has no test groups defined.\n", clazz.getName()));
                     }

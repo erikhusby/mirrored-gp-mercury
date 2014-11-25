@@ -287,6 +287,7 @@ function showSamples(sampleData) {
         $j('#patient-' + sampleId).text(sampleData[x].patientId);
         $j('#collab-patient-' + sampleId).text(sampleData[x].collaboratorParticipantId);
         $j('#volume-' + sampleId).text(sampleData[x].volume);
+        $j('#sample-type-' + sampleId).text(sampleData[x].sampleType);
         $j('#concentration-' + sampleId).text(sampleData[x].concentration);
         $j('#rin-' + sampleId).text(sampleData[x].rin);
         $j('#rqs-' + sampleId).text(sampleData[x].rqs);
@@ -319,9 +320,10 @@ function showSamples(sampleData) {
                 {"bSortable": true},                            // Collaborator Sample ID
                 {"bSortable": true},                            // Participant ID
                 {"bSortable": true},                            // Collaborator Participant ID
-                {"bSortable": true},                            // Shipped Date
-                {"bSortable": true},                            // Received Date
-                {"bSortable": true, "sType": "numeric"},        // Volume
+                {"bSortable": true, "sType": "numeric"},        // Shipped Date
+                {"bSortable": true, "sType": "numeric"},        // Received Date
+                {"bSortable": true},                            // Collaborator Participant ID
+                {"bSortable": true, "sType": "numeric"},        // Sample Type
                 {"bSortable": true, "sType": "numeric"},        // Concentration
 
                 <c:if test="${actionBean.supportsRin}">
@@ -1211,6 +1213,7 @@ function formatInput(item) {
                 <th width="110">Collaborator Participant ID</th>
                 <th width="40">Shipped Date</th>
                 <th width="40">Received Date</th>
+                <th width="40">Sample Type</th>
                 <th width="40">Volume</th>
                 <th width="40">Concentration</th>
 
@@ -1269,6 +1272,7 @@ function formatInput(item) {
                             ${sample.labEventSampleDTO.sampleReceiptDate}
                     </td>
 
+                    <td id="sample-type-${sample.productOrderSampleId}"></td>
                     <td id="volume-${sample.productOrderSampleId}"></td>
                     <td id="concentration-${sample.productOrderSampleId}"></td>
 
