@@ -39,9 +39,13 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.ParameterExpression;
 import javax.persistence.criteria.Root;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.text.DateFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -56,7 +60,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 
 /**
@@ -532,21 +535,45 @@ public class ProductOrderFixupTest extends Arquillian {
 
         ParameterExpression<Date> rangeStart = builder.parameter(Date.class);
 
-        criteriaQuery.where(builder.greaterThan(rangeStart, root.get(ProductOrder_.createdDate)));
+        criteriaQuery.where(builder.lessThan(rangeStart, root.get(ProductOrder_.createdDate)),
+                builder.notEqual(root.get(ProductOrder_.orderStatus), ProductOrder.OrderStatus.Draft));
+        criteriaQuery.orderBy(builder.asc(root.get(ProductOrder_.createdDate)),
+                builder.asc(root.get(ProductOrder_.skipRegulatoryReason)));
 
         TypedQuery<ProductOrder> query = productOrderDao.getEntityManager().createQuery(criteriaQuery);
 
         query.setParameter(rangeStart, startDate);
         Collection<ProductOrder> productOrders = query.getResultList();
-        File output = new File(File.pathSeparatorChar+"Users"+File.pathSeparatorChar+"scottmat"+File.pathSeparatorChar+)
 
-        System.out.println("PDO key\tOwner\treason if not required\tselected IRB\\OSRP");
-        for (ProductOrder productOrder : productOrders) {
-            System.out.print(String.format("%s\t%s\t%s\t%s\t",
-                    productOrder.getBusinessKey(), bspUserList.getById(productOrder.getCreatedBy()),
-                    (StringUtils.isBlank(productOrder.getSkipRegulatoryReason())) ? "Regulatory Required" :
-                            productOrder.getSkipRegulatoryReason(),
-                    StringUtils.join(productOrder.getPrintFriendlyRegulatoryInfo(), ", ")));
+        log.info("Found product order records: " + productOrders.size());
+        OutputStream outputStream = null;
+        try {
+            File output = File.createTempFile("compliance_rpt", ".csv");
+            outputStream = new FileOutputStream(output);
+            log.info("The filestream path is: " + output.getAbsolutePath() + output.getName());
+        } catch (IOException e) {
+            Assert.fail("Problem opening the output file.");
         }
+
+        PrintStream fileWriter = new PrintStream(outputStream);
+
+        fileWriter.print("PDO key\tProduct order name\t Creation Date\tOwner\tProduct\t" +
+                         "Reason Regulatory info is not required\tSamples\tSelected IRB\\OSRP\n");
+
+        DateFormat creationDate = new SimpleDateFormat("MM/dd/yyyy");
+        for (ProductOrder productOrder : productOrders) {
+            fileWriter.print(String.format("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+                    productOrder.getBusinessKey(), productOrder.getName(),
+                    creationDate.format(productOrder.getCreatedDate()),
+                    bspUserList.getById(productOrder.getCreatedBy()).getFullName(),
+                    productOrder.getProduct().getBusinessKey() + "  " +
+                    productOrder.getProduct().getProductFamily().getName() + ": " +
+                    productOrder.getProduct().getProductName(),
+                    (StringUtils.isBlank(productOrder.getSkipRegulatoryReason())) ? " " :
+                            productOrder.getSkipRegulatoryReason(),
+                    StringUtils.join(ProductOrderSample.getSampleNames(productOrder.getSamples()),", "),
+                    StringUtils.join(productOrder.getPrintFriendlyRegulatoryInfo(), ",")));
+        }
+        fileWriter.close();
     }
 }

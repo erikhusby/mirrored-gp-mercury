@@ -168,6 +168,6 @@ public class RegulatoryInfo implements Serializable, BusinessObject {
     }
 
     public String printFriendlyValue() {
-        return String.format("OSRP/IRB Identifier: %s, Type: %s, Title: %s", identifier, type.getName(), name);
+        return String.format("OSRP/IRB Identifier: %s Type: %s Title: %s", identifier, type.getName(), name);
     }
 }
