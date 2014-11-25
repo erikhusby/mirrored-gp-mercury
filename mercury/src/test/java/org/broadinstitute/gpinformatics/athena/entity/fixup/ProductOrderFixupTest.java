@@ -60,6 +60,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 
 /**
@@ -101,7 +102,7 @@ public class ProductOrderFixupTest extends Arquillian {
     // When you run this on prod, change to PROD and prod.
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(PROD, "prod");
+        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
     /**
@@ -519,7 +520,7 @@ public class ProductOrderFixupTest extends Arquillian {
         Assert.assertTrue(samples.isEmpty());
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void gplim3221ReportProductOrderCompliance() {
 
         CriteriaQuery<ProductOrder> criteriaQuery = productOrderDao.getEntityManager().getCriteriaBuilder().createQuery(
