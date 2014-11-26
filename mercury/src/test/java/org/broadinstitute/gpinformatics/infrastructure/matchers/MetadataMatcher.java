@@ -57,24 +57,11 @@ public class MetadataMatcher {
     }
 
     private ProductOrderSample getProductOrderSample(String sampleKey, MercurySample.MetadataSource metadataSource) {
-//        MercurySampleData sampleData = new MercurySampleData(sampleKey, Collections.<Metadata>emptySet());
         MercurySample mercurySample = new MercurySample(sampleKey, metadataSource);
         ProductOrderSample sample = new ProductOrderSample(sampleKey);
         sample.setMercurySample(mercurySample);
         return sample;
     }
-//    @Test
-//    public void testMixedMetadataSourceWithMercurySamples() {
-//        MercurySample fooSample = new MercurySample("foo", MercurySample.MetadataSource.BSP);
-//        MercurySample barSample = new MercurySample("bar", MercurySample.MetadataSource.MERCURY);
-//        List<MercurySample> samples = Arrays.asList(fooSample, barSample);
-//
-//        assertThat(samples,
-//                Matchers.<List<MercurySample>>not(
-//                        (List<MercurySample>) everyItem(isMetadataSource(MercurySample.MetadataSource.MERCURY))));
-//        assertThat(samples,
-//                (Matcher<? super List<MercurySample>>) not(everyItem(isMetadataSource(MercurySample.MetadataSource.BSP))));
-//    }
 }
 
 
