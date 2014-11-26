@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Business logic for determining the sample data source for Mercury LIMS samples. Historically, the only place that
+ * Business logic for determining the sample data source for samples in mercury. Historically, the only place that
  * Mercury would look for sample data was BSP. Later, there came a need to store sample data directly in Mercury. The
  * primary determination is based on {@link MercurySample#metadataSource}. When there is no MercurySample for a sample
  * ID being queried (e.g. because it has been entered in a PDO but has not been introduced to Mercury LIMS), BSP is
