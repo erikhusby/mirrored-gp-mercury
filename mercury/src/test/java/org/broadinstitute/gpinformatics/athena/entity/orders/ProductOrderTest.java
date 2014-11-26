@@ -47,6 +47,9 @@ public class ProductOrderTest {
     private final List<ProductOrderSample> sixBspSamplesNoDupes =
             ProductOrderSampleTestFactory
                     .createDBFreeSampleList(MercurySample.MetadataSource.BSP, "SM-2ACGC", "SM-2ABDD", "SM-2ACKV", "SM-2AB1B", "SM-2ACJC", "SM-2AD5D");
+    private final List<ProductOrderSample> sixMercurySamplesNoDupes =
+            ProductOrderSampleTestFactory
+                    .createDBFreeSampleList(MercurySample.MetadataSource.MERCURY, "SM-2ACGC", "SM-2ABDD", "SM-2ACKV", "SM-2AB1B", "SM-2ACJC", "SM-2AD5D");
     private final List<ProductOrderSample> fourBspSamplesWithDupes =
             ProductOrderSampleTestFactory
                     .createDBFreeSampleList(MercurySample.MetadataSource.BSP, "SM-2ACGC", "SM-2ABDD", "SM-2ACGC", "SM-2AB1B", "SM-2ACJC", "SM-2ACGC");
@@ -169,7 +172,7 @@ public class ProductOrderTest {
                 .createDBFreeSampleList(MercurySample.MetadataSource.MERCURY, "SM-2AB1B", "SM-2ACJC", "SM-2AD5D"));
         return sampleList;
     }
- // todo: write similar tests for all bsp and all mercury
+
     @Test
     public void testGetProductOrderWithMixedSampleMetadata() throws Exception {
         productOrder = new ProductOrder(TEST_CREATOR, "title", getMixedMetaDataSourcePDOSamples(), "quote", null, null);
@@ -184,6 +187,33 @@ public class ProductOrderTest {
                 "Unique BSP: 3",
                 "Unique Mercury: 3",
                 "Unique Not BSP: 3"));
+    }
+
+    @Test
+    public void testGetProductOrderBspSampleMetadata() throws Exception {
+        productOrder = new ProductOrder(TEST_CREATOR, "title", sixBspSamplesNoDupes, "quote", null, null);
+        assertThat(productOrder.getSamples(), everyItem(isMetadataSource(MercurySample.MetadataSource.BSP)));
+        assertThat(productOrder.getSamples(), everyItem(not(isMetadataSource(MercurySample.MetadataSource.MERCURY))));
+        List<String> sampleSummaryComments = productOrder.getSampleSummaryComments();
+        assertThat(sampleSummaryComments, hasItems(
+                "Total: 6",
+                "Unique: All",
+                "Duplicate: None",
+                "From BSP: All"));
+    }
+
+    @Test
+    public void testGetProductOrderMercurySampleMetadata() throws Exception {
+        productOrder = new ProductOrder(TEST_CREATOR, "title", sixMercurySamplesNoDupes, "quote", null, null);
+        assertThat(productOrder.getSamples(), everyItem(isMetadataSource(MercurySample.MetadataSource.MERCURY)));
+        assertThat(productOrder.getSamples(), everyItem(not(isMetadataSource(MercurySample.MetadataSource.BSP))));
+
+        List<String> sampleSummaryComments = productOrder.getSampleSummaryComments();
+        assertThat(sampleSummaryComments, hasItems(
+                "Total: 6",
+                "Unique: All",
+                "Duplicate: None",
+                "From Mercury: All"));
     }
 
     @Test
