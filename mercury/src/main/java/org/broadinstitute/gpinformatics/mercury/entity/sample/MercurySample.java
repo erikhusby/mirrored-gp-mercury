@@ -180,13 +180,13 @@ public class MercurySample extends AbstractSample {
     }
 
     public SampleData makeSampleData() {
-        switch (getMetadataSource()) {
+        switch (metadataSource) {
         case BSP:
             return new BspSampleData();
         case MERCURY:
-            return new MercurySampleData(getSampleKey(), Collections.<Metadata>emptySet());
+            return new MercurySampleData(sampleKey, Collections.<Metadata>emptySet());
         default:
-            throw new IllegalStateException("Unknown sample data source: " + getMetadataSource());
+            throw new IllegalStateException("Unknown sample data source: " + metadataSource);
         }
     }
 
