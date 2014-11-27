@@ -889,7 +889,7 @@ public class ProductOrderEjb {
         Map<String, MercurySample> mercurySampleMap = mercurySampleDao.findMapIdToMercurySample(samplesBySampleId.keySet());
 
         for (Map.Entry<String, ProductOrderSample> productOrderSampleEntry : samplesBySampleId.entries()) {
-            if(productOrderSampleEntry.getValue().getMercurySample() != null) {
+            if(productOrderSampleEntry.getValue().getMercurySample() == null) {
                 productOrderSampleEntry.getValue()
                         .setMercurySample(mercurySampleMap.get(productOrderSampleEntry.getKey()));
             }
