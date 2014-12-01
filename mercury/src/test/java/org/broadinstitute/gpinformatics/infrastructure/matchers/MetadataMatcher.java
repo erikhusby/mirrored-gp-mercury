@@ -11,56 +11,32 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.matchers;
 
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
-import org.testng.annotations.Test;
-
-import java.util.Arrays;
-import java.util.List;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.everyItem;
 
 public class MetadataMatcher {
 
-    public static Matcher<ProductOrderSample> isMetadataSource(final MercurySample.MetadataSource metadataSource) {
-        return new TypeSafeMatcher<ProductOrderSample>() {
+    public static <T extends AbstractSample> Matcher isMetadataSource(final MercurySample.MetadataSource metadataSource) {
+        return new TypeSafeMatcher<T>() {
             @Override
             public void describeTo(Description description) {
                 description.appendText("metadataSource should be ").appendValue(metadataSource);
             }
 
             @Override
-            protected void describeMismatchSafely(ProductOrderSample sample, Description mismatchDescription) {
+            protected void describeMismatchSafely(T sample, Description mismatchDescription) {
                 mismatchDescription.appendText(" was ").appendValue(sample.getMetadataSource());
             }
 
             @Override
-            protected boolean matchesSafely(ProductOrderSample sample) {
+            protected boolean matchesSafely(T sample) {
                 return metadataSource == sample.getMetadataSource();
             }
         };
 
-    }
-
-    @Test
-    public void testMercuryMetadataSourceWithMercurySamples() {
-        ProductOrderSample fooSample = getProductOrderSample("foo", MercurySample.MetadataSource.MERCURY);
-        ProductOrderSample barSample = getProductOrderSample("bar", MercurySample.MetadataSource.MERCURY);
-        List<ProductOrderSample> samples = Arrays.asList(fooSample, barSample);
-
-        assertThat(samples,
-                 everyItem(isMetadataSource(MercurySample.MetadataSource.MERCURY)));
-    }
-
-    private ProductOrderSample getProductOrderSample(String sampleKey, MercurySample.MetadataSource metadataSource) {
-        MercurySample mercurySample = new MercurySample(sampleKey, metadataSource);
-        ProductOrderSample sample = new ProductOrderSample(sampleKey);
-        sample.setMercurySample(mercurySample);
-        return sample;
     }
 }
 

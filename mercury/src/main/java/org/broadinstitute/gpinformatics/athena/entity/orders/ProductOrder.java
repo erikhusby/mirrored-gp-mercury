@@ -7,6 +7,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.time.DateUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -21,7 +23,6 @@ import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtili
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraProject;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
@@ -72,6 +73,7 @@ import java.util.Set;
 @Table(name = "PRODUCT_ORDER", schema = "athena")
 public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     private static final long serialVersionUID = 2712946561792445251L;
+    private static final Log log = LogFactory.getLog(ProductOrder.class);
 
     // for clarity in jira, we use this string in the quote field when there is no quote
     public static final String QUOTE_TEXT_USED_IN_JIRA_WHEN_QUOTE_FIELD_IS_EMPTY = "no quote";
@@ -1305,15 +1307,26 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                     // This is a unique sample name, so do any counts that are only needed for unique names. Since
                     // BSP looks up samples by name, it would always get the same data, so only counting unique values.
                     if (sample.isInBspFormat()) {
-                        if (sample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
-                            bspSampleCount++;
+
+                        try {
+                            switch (sample.getMetadataSource()) {
+                            case BSP:
+                                bspSampleCount++;
+                                break;
+                            case MERCURY:
+                                mercurySampleCount++;
+                                updateSampleCounts(participantSet, sample);
+                                break;
+                            default:
+                                throw new IllegalStateException("Unknown metadata source");
+                            }
                             if (sample.bspMetaDataMissing()) {
                                 missingBspMetaDataCount++;
                             } else {
                                 updateSampleCounts(participantSet, sample);
                             }
-                        } else if(sample.getMetadataSource() == MercurySample.MetadataSource.MERCURY){
-                            mercurySampleCount++;
+                        } catch (IllegalStateException e) {
+                            log.error("Could not determine metadata source for " + sample.getSampleKey(), e);
                         }
                     }
                 }
@@ -1357,38 +1370,38 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
          * @param sample         the sample to update the counts with
          */
         private void updateSampleCounts(Set<String> participantSet, ProductOrderSample sample) {
-            SampleData bspSampleData = sample.getSampleData();
-            if (bspSampleData.isSampleReceived()) {
+            SampleData sampleData = sample.getSampleData();
+            if (sampleData.isSampleReceived()) {
                 receivedSampleCount++;
             } else if (!sample.getDeliveryStatus().isAbandoned()) {
                 notReceivedAndNotAbandonedCount++;
             }
 
-            if (bspSampleData.isActiveStock()) {
+            if (sampleData.isActiveStock()) {
                 activeSampleCount++;
             }
 
             // If the pico has never been run then it is not warned in the last pico date highlighting.
-            Date picoRunDate = bspSampleData.getPicoRunDate();
+            Date picoRunDate = sampleData.getPicoRunDate();
             if ((picoRunDate == null) || picoRunDate.before(oneYearAgo)) {
                 lastPicoCount++;
             }
 
-            stockTypeCounter.increment(bspSampleData.getStockType());
+            stockTypeCounter.increment(sampleData.getStockType());
 
-            String participantId = bspSampleData.getPatientId();
+            String participantId = sampleData.getPatientId();
             if (StringUtils.isNotBlank(participantId)) {
                 participantSet.add(participantId);
             }
 
-            primaryDiseaseCounter.increment(bspSampleData.getPrimaryDisease());
-            genderCounter.increment(bspSampleData.getGender());
+            primaryDiseaseCounter.increment(sampleData.getPrimaryDisease());
+            genderCounter.increment(sampleData.getGender());
 
-            if (bspSampleData.getHasSampleKitUploadRackscanMismatch()) {
+            if (sampleData.getHasSampleKitUploadRackscanMismatch()) {
                 hasSampleKitUploadRackscanMismatch++;
             }
 
-            sampleTypeCounter.increment(bspSampleData.getSampleType());
+            sampleTypeCounter.increment(sampleData.getSampleType());
         }
 
         /**
@@ -1436,7 +1449,11 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                         if (mercurySampleCount > 0) {
                             formatSummaryNumber(output, "Unique Mercury: {0}", mercurySampleCount);
                         }
-                        formatSummaryNumber(output, "Unique Not BSP: {0}", uniqueSampleCount - bspSampleCount);
+                        int uniqueBspAndMercurySampleCount = mercurySampleCount + bspSampleCount;
+                        if (uniqueSampleCount > uniqueBspAndMercurySampleCount) {
+                            formatSummaryNumber(output,
+                                    "Unique Not BSP/Mercury: {0}", uniqueSampleCount - uniqueBspAndMercurySampleCount);
+                        }
                     } else {
                         output.add("From BSP: None");
                         output.add("From Mercury: None");
@@ -1455,12 +1472,12 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
             if (product != null && product.isSupportsPico()) {
                 formatSummaryNumber(output, "Last Pico over a year ago: {0}",
-                                    lastPicoCount);
+                        lastPicoCount);
             }
 
             if (hasSampleKitUploadRackscanMismatch != 0) {
                 formatSummaryNumber(output, "<div class=\"text-error\">Rackscan Mismatch: {0}</div>",
-                                    hasSampleKitUploadRackscanMismatch, totalSampleCount);
+                        hasSampleKitUploadRackscanMismatch, totalSampleCount);
             }
 
             return output;

@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderS
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.hamcrest.Matchers;
 import org.meanbean.lang.EquivalentFactory;
 import org.meanbean.test.BeanTester;
 import org.meanbean.test.Configuration;
@@ -44,7 +45,9 @@ public class ProductOrderTest {
 
     private static final Long TEST_CREATOR = 1111L;
     public static final String PDO_JIRA_KEY = "PDO-8";
-    private final List<ProductOrderSample> sixBspSamplesNoDupes =
+    private static final String PDO_TITLE = "title";
+    private static final String QUOTE = "quote";
+    private final List<ProductOrderSample> sixSamplesWithNamesInBspFormatNoDupes =
             ProductOrderSampleTestFactory
                     .createDBFreeSampleList(MercurySample.MetadataSource.BSP, "SM-2ACGC", "SM-2ABDD", "SM-2ACKV", "SM-2AB1B", "SM-2ACJC", "SM-2AD5D");
     private final List<ProductOrderSample> sixMercurySamplesNoDupes =
@@ -53,10 +56,10 @@ public class ProductOrderTest {
     private final List<ProductOrderSample> fourBspSamplesWithDupes =
             ProductOrderSampleTestFactory
                     .createDBFreeSampleList(MercurySample.MetadataSource.BSP, "SM-2ACGC", "SM-2ABDD", "SM-2ACGC", "SM-2AB1B", "SM-2ACJC", "SM-2ACGC");
-    private final List<ProductOrderSample> sixMixedSampleProducts =
+    private final List<ProductOrderSample> sixSamplesWithNotAllNamesInBspFormat =
             ProductOrderSampleTestFactory
                     .createDBFreeSampleList(MercurySample.MetadataSource.BSP, "SM-2ACGC", "SM2ABDD", "SM2ACKV", "SM-2AB1B", "SM-2ACJC", "SM-2AD5D");
-    private final List<ProductOrderSample> nonBspSampleProducts =
+    private final List<ProductOrderSample> sixSamplesWithNoNamesInBspFormat =
             ProductOrderSampleTestFactory
                     .createDBFreeSampleList(MercurySample.MetadataSource.BSP, "SSM-2ACGC1", "SM--2ABDDD", "SM-2AB", "SM-2AB1B-", "SM-2ACJCACB",
                             "SM-SM-SM");
@@ -85,7 +88,7 @@ public class ProductOrderTest {
         // Currently ProductOrder is equivalent based only on RP and title.
         Configuration configuration = new ConfigurationBuilder()
                 .ignoreProperty("samples")
-                .ignoreProperty("title")
+                .ignoreProperty(PDO_TITLE)
                         // TODO: jiraTicketKey is part of businessKey which is what equals() uses. should it really be ignored?
                 .ignoreProperty("jiraTicketKey")
                 .ignoreProperty("orderStatus")
@@ -115,7 +118,7 @@ public class ProductOrderTest {
 
         class ProductOrderFactory implements EquivalentFactory<ProductOrder> {
             public final long ID = new Random().nextInt(Integer.MAX_VALUE);
-            public String title = "title";
+            public String title = PDO_TITLE;
 
             @Override
             public ProductOrder create() {
@@ -125,7 +128,7 @@ public class ProductOrderTest {
                         new ResearchProject(ID, title, "RP title", ResearchProject.IRB_NOT_ENGAGED,
                                             ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
 
-                return new ProductOrder(ID, "PO title", sixBspSamplesNoDupes, "quoteId", product, researchProject);
+                return new ProductOrder(ID, "PO title", sixSamplesWithNamesInBspFormatNoDupes, "quoteId", product, researchProject);
             }
         }
 
@@ -143,29 +146,29 @@ public class ProductOrderTest {
 
     @Test
     public void testGetUniqueSampleCount() throws Exception {
-        productOrder = new ProductOrder(TEST_CREATOR, "title", sixBspSamplesNoDupes, "quote", null, null);
+        productOrder = new ProductOrder(TEST_CREATOR, PDO_TITLE, sixSamplesWithNamesInBspFormatNoDupes, QUOTE, null, null);
         assertThat(productOrder.getUniqueSampleCount(), is(equalTo(6)));
 
-        productOrder = new ProductOrder(TEST_CREATOR, "title", fourBspSamplesWithDupes, "quote", null, null);
+        productOrder = new ProductOrder(TEST_CREATOR, PDO_TITLE, fourBspSamplesWithDupes, QUOTE, null, null);
         assertThat(productOrder.getUniqueSampleCount(), is(equalTo(4)));
     }
 
     @Test
     public void testGetTotalSampleCount() throws Exception {
-        productOrder = new ProductOrder(TEST_CREATOR, "title", sixBspSamplesNoDupes, "quote", null, null);
+        productOrder = new ProductOrder(TEST_CREATOR, PDO_TITLE, sixSamplesWithNamesInBspFormatNoDupes, QUOTE, null, null);
         assertThat(productOrder.getTotalSampleCount(), is(equalTo(6)));
 
-        productOrder = new ProductOrder(TEST_CREATOR, "title", fourBspSamplesWithDupes, "quote", null, null);
+        productOrder = new ProductOrder(TEST_CREATOR, PDO_TITLE, fourBspSamplesWithDupes, QUOTE, null, null);
         assertThat(productOrder.getTotalSampleCount(), is(equalTo(6)));
     }
 
     @Test
     public void testGetDuplicateCount() throws Exception {
-        productOrder = new ProductOrder(TEST_CREATOR, "title", fourBspSamplesWithDupes, "quote", null, null);
+        productOrder = new ProductOrder(TEST_CREATOR, PDO_TITLE, fourBspSamplesWithDupes, QUOTE, null, null);
         assertThat(productOrder.getDuplicateCount(), is(equalTo(2)));
     }
 
-    private List<ProductOrderSample> getMixedMetaDataSourcePDOSamples() {
+    private List<ProductOrderSample> getSamplesWithBspAndMercuryMetadataSource() {
         List<ProductOrderSample> sampleList = ProductOrderSampleTestFactory
                 .createDBFreeSampleList(MercurySample.MetadataSource.BSP, "SM-2ACGC", "SM-2ABDD", "SM-2ACKV");
         sampleList.addAll(ProductOrderSampleTestFactory
@@ -175,7 +178,10 @@ public class ProductOrderTest {
 
     @Test
     public void testGetProductOrderWithMixedSampleMetadata() throws Exception {
-        productOrder = new ProductOrder(TEST_CREATOR, "title", getMixedMetaDataSourcePDOSamples(), "quote", null, null);
+        productOrder =
+                new ProductOrder(TEST_CREATOR, PDO_TITLE, getSamplesWithBspAndMercuryMetadataSource(), QUOTE, null,
+                        null);
+        assertThat(productOrder.getSamples().size(), Matchers.is(6));
         assertThat(productOrder.getSamples(), not(everyItem(isMetadataSource(MercurySample.MetadataSource.BSP))));
         assertThat(productOrder.getSamples(), not(everyItem(isMetadataSource(MercurySample.MetadataSource.MERCURY))));
 
@@ -186,14 +192,13 @@ public class ProductOrderTest {
                 "Duplicate: None",
                 "Unique BSP: 3",
                 "Unique Mercury: 3",
-                "Unique Not BSP: 3"));
+                "On Risk: None"));
     }
 
     @Test
     public void testGetProductOrderBspSampleMetadata() throws Exception {
-        productOrder = new ProductOrder(TEST_CREATOR, "title", sixBspSamplesNoDupes, "quote", null, null);
+        productOrder = new ProductOrder(TEST_CREATOR, PDO_TITLE, sixSamplesWithNamesInBspFormatNoDupes, QUOTE, null, null);
         assertThat(productOrder.getSamples(), everyItem(isMetadataSource(MercurySample.MetadataSource.BSP)));
-        assertThat(productOrder.getSamples(), everyItem(not(isMetadataSource(MercurySample.MetadataSource.MERCURY))));
         List<String> sampleSummaryComments = productOrder.getSampleSummaryComments();
         assertThat(sampleSummaryComments, hasItems(
                 "Total: 6",
@@ -204,9 +209,8 @@ public class ProductOrderTest {
 
     @Test
     public void testGetProductOrderMercurySampleMetadata() throws Exception {
-        productOrder = new ProductOrder(TEST_CREATOR, "title", sixMercurySamplesNoDupes, "quote", null, null);
+        productOrder = new ProductOrder(TEST_CREATOR, PDO_TITLE, sixMercurySamplesNoDupes, QUOTE, null, null);
         assertThat(productOrder.getSamples(), everyItem(isMetadataSource(MercurySample.MetadataSource.MERCURY)));
-        assertThat(productOrder.getSamples(), everyItem(not(isMetadataSource(MercurySample.MetadataSource.BSP))));
 
         List<String> sampleSummaryComments = productOrder.getSampleSummaryComments();
         assertThat(sampleSummaryComments, hasItems(
@@ -219,9 +223,9 @@ public class ProductOrderTest {
     @Test
     public void testAreAllSampleBSPFormat() throws Exception {
         assertThat(fourBspSamplesWithDupes, everyItem(is(inBspFormat())));
-        assertThat(sixBspSamplesNoDupes, everyItem(is(inBspFormat())));
-        assertThat(nonBspSampleProducts, everyItem(is(not(inBspFormat()))));
-        assertThat(sixMixedSampleProducts, not(everyItem(is(inBspFormat()))));
+        assertThat(sixSamplesWithNamesInBspFormatNoDupes, everyItem(is(inBspFormat())));
+        assertThat(sixSamplesWithNoNamesInBspFormat, everyItem(is(not(inBspFormat()))));
+        assertThat(sixSamplesWithNotAllNamesInBspFormat, not(everyItem(is(inBspFormat()))));
     }
 
     @DataProvider(name = "testUpdateOrderStatus")
