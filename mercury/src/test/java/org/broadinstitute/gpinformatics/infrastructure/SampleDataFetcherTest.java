@@ -1,10 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure;
 
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
@@ -20,7 +17,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -185,8 +181,8 @@ public class SampleDataFetcherTest {
     public Object[][] gssrFetch_data_provider() {
         List<Object[]> dataList = new ArrayList<>();
 
-        dataList.add(new Object[]{GSSR_ONLY_SAMPLE_ID, false});
-        dataList.add(new Object[]{GSSR_SAMPLE_ID, true});
+        dataList.add(new Object[]{GSSR_ONLY_SAMPLE_ID});
+        dataList.add(new Object[]{GSSR_SAMPLE_ID});
 
         return dataList.toArray(new Object[dataList.size()][]);
     }
@@ -196,11 +192,7 @@ public class SampleDataFetcherTest {
      */
 
     @Test(dataProvider = "gssrFetch_data_provider")
-    public void fetch_GSSR_samples_without_MercurySample_should_query_nothing(String sampleId, Boolean configureDao) {
-
-        if (configureDao) {
-            configureMercurySampleDao(gssrMercurySample);
-        }
+    public void fetch_GSSR_samples_without_MercurySample_should_query_nothing(String sampleId) {
 
         when(mockBspSampleDataFetcher.fetchSampleData(argThat(contains(sampleId)))).thenReturn(
                 Collections.<String, BspSampleData>emptyMap());
@@ -221,9 +213,9 @@ public class SampleDataFetcherTest {
         dataList.add(new Object[]{BSP_BARE_SAMPLE_ID, false});
         dataList.add(new Object[]{BSP_SAMPLE_ID, true});
         dataList.add(new Object[]{BSP_SAMPLE_ID, false});
-        dataList.add(new Object[]{build_product_order_sample_with_mercury_sample(MercurySample.MetadataSource.BSP,
+        dataList.add(new Object[]{build_product_order_sample_with_mercury_sample_bound(MercurySample.MetadataSource.BSP,
                 BSP_SAMPLE_ID), true});
-        dataList.add(new Object[]{build_product_order_sample_without_mercury_sample(BSP_SAMPLE_ID), false});
+        dataList.add(new Object[]{build_product_order_sample_without_mercury_sample_bound(BSP_SAMPLE_ID), false});
 
         return dataList.toArray(new Object[dataList.size()][]);
     }
@@ -257,8 +249,9 @@ public class SampleDataFetcherTest {
         List<Object[]> dataList = new ArrayList<>();
 
         dataList.add(new Object[]{CLINICAL_SAMPLE_ID});
-        dataList.add(new Object[]{build_product_order_sample_without_mercury_sample(CLINICAL_SAMPLE_ID)});
-        dataList.add(new Object[]{build_product_order_sample_with_mercury_sample(MercurySample.MetadataSource.MERCURY,
+        dataList.add(new Object[]{build_product_order_sample_without_mercury_sample_bound(CLINICAL_SAMPLE_ID)});
+        dataList.add(new Object[]{build_product_order_sample_with_mercury_sample_bound(
+                MercurySample.MetadataSource.MERCURY,
                 CLINICAL_SAMPLE_ID)});
 
         return dataList.toArray(new Object[dataList.size()][]);
@@ -316,13 +309,15 @@ public class SampleDataFetcherTest {
     private Object[][] mixedProductOrderSampleDataProvider() {
         List<Object[]> dataList = new ArrayList<>();
 
-        dataList.add(new Object[]{Arrays.asList(build_product_order_sample_without_mercury_sample(BSP_ONLY_SAMPLE_ID),
-                build_product_order_sample_without_mercury_sample(BSP_SAMPLE_ID),
-                build_product_order_sample_without_mercury_sample(CLINICAL_SAMPLE_ID))});
-        dataList.add(new Object[]{Arrays.asList(build_product_order_sample_with_mercury_sample(
-                MercurySample.MetadataSource.BSP,BSP_ONLY_SAMPLE_ID),
-                build_product_order_sample_with_mercury_sample(MercurySample.MetadataSource.BSP,BSP_SAMPLE_ID),
-                build_product_order_sample_with_mercury_sample(MercurySample.MetadataSource.MERCURY,CLINICAL_SAMPLE_ID))});
+        dataList.add(new Object[]{Arrays.asList(build_product_order_sample_without_mercury_sample_bound(
+                        BSP_ONLY_SAMPLE_ID),
+                build_product_order_sample_without_mercury_sample_bound(BSP_SAMPLE_ID),
+                build_product_order_sample_without_mercury_sample_bound(CLINICAL_SAMPLE_ID))});
+        dataList.add(new Object[]{Arrays.asList(build_product_order_sample_with_mercury_sample_bound(
+                        MercurySample.MetadataSource.BSP, BSP_ONLY_SAMPLE_ID),
+                build_product_order_sample_with_mercury_sample_bound(MercurySample.MetadataSource.BSP, BSP_SAMPLE_ID),
+                build_product_order_sample_with_mercury_sample_bound(MercurySample.MetadataSource.MERCURY,
+                        CLINICAL_SAMPLE_ID))});
 
         return dataList.toArray(new Object[dataList.size()][]);
     }
@@ -507,12 +502,12 @@ public class SampleDataFetcherTest {
                 .thenReturn(ImmutableMap.of(aliquotId, stockId));
     }
 
-    private ProductOrderSample build_product_order_sample_without_mercury_sample(String sampleId) {
+    private ProductOrderSample build_product_order_sample_without_mercury_sample_bound(String sampleId) {
 
         return new ProductOrderSample(sampleId);
     }
 
-    private ProductOrderSample build_product_order_sample_with_mercury_sample(
+    private ProductOrderSample build_product_order_sample_with_mercury_sample_bound(
             MercurySample.MetadataSource metadataSource,
             String sampleId) {
 
