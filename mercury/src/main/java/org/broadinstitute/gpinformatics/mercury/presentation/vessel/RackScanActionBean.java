@@ -148,7 +148,7 @@ public abstract class RackScanActionBean extends CoreActionBean {
                     RackScanner.RackScannerLab.getLabsBySoftwareSystems(RackScanner.SoftwareSystem.CRSP_BSP);
         } else if (deployment != Deployment.PROD) {
             labsBySoftwareSystems = RackScanner.RackScannerLab.getLabsBySoftwareSystems(RackScanner.SoftwareSystem.BSP,
-                    RackScanner.SoftwareSystem.MERCURY_NON_PROD);
+                    RackScanner.SoftwareSystem.MERCURY_NON_PROD, RackScanner.SoftwareSystem.MERCURY);
         } else {
             labsBySoftwareSystems = RackScanner.RackScannerLab.getLabsBySoftwareSystems(RackScanner.SoftwareSystem.BSP,
                     RackScanner.SoftwareSystem.MERCURY);
