@@ -340,21 +340,19 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         Map<String, SampleData> sampleDataMap = sampleDataFetcher.fetchSampleDataForProductOrderSample(samplesNeedingData);
 
         // Collect SampleData which we will then use to look up FFPE status.
-        if (!sampleDataMap.isEmpty()) {
-            List<SampleData> nonNullSampleData = new ArrayList<>();
-            for (ProductOrderSample sample : samplesNeedingData) {
-                SampleData sampleData = sampleDataMap.get(sample.getName());
+        List<SampleData> nonNullSampleData = new ArrayList<>();
+        for (ProductOrderSample sample : samples) {
+            SampleData sampleData = sampleDataMap.get(sample.getName());
 
-                // If the DTO is null, we do not need to set it because it defaults to DUMMY inside sample.
-                if (sampleData != null) {
-                    sample.setSampleData(sampleData);
-                    nonNullSampleData.add(sampleData);
-                }
+            // If the DTO is null, we do not need to set it because it defaults to DUMMY inside sample.
+            if (sampleData != null) {
+                sample.setSampleData(sampleData);
+                nonNullSampleData.add(sampleData);
             }
-
-            // Fill out all the SampleData with FFPE status in one shot.
-            sampleDataFetcher.fetchFFPEDerived(nonNullSampleData);
         }
+
+        // Fill out all the SampleData with FFPE status in one shot.
+        sampleDataFetcher.fetchFFPEDerived(nonNullSampleData);
     }
 
     // Initialize our transient data after the object has been loaded from the database.
