@@ -103,7 +103,7 @@ public class ProductOrderFixupTest extends Arquillian {
     // When you run this on prod, change to PROD and prod.
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
+        return DeploymentBuilder.buildMercuryWar(PROD, "prod");
     }
 
     /**
@@ -521,7 +521,7 @@ public class ProductOrderFixupTest extends Arquillian {
         Assert.assertTrue(samples.isEmpty());
     }
 
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void gplim3221ReportProductOrderCompliance() {
 
         CriteriaQuery<ProductOrder> criteriaQuery = productOrderDao.getEntityManager().getCriteriaBuilder().createQuery(
@@ -565,8 +565,7 @@ public class ProductOrderFixupTest extends Arquillian {
 
         DateFormat creationDate = new SimpleDateFormat("yyyy-MM-dd");
         for (ProductOrder productOrder : productOrders) {
-            for (RegulatoryInfo regulatoryInfo : productOrder.getRegulatoryInfos()) {
-
+            if (productOrder.getRegulatoryInfos().isEmpty()) {
                 fileWriter.print(String.format("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
                         productOrder.getBusinessKey(),
                         productOrder.getName(),
@@ -576,8 +575,24 @@ public class ProductOrderFixupTest extends Arquillian {
                         productOrder.getQuoteId(),
                         (StringUtils.isBlank(productOrder.getSkipRegulatoryReason())) ? " " :
                                 productOrder.getSkipRegulatoryReason(),
-                        StringUtils.replaceChars(regulatoryInfo.getIdentifier(),"\t"," "),
-                        StringUtils.replaceChars(regulatoryInfo.getType().getName(),"\t"," ")));
+                        " ",
+                        " "));
+
+            } else {
+                for (RegulatoryInfo regulatoryInfo : productOrder.getRegulatoryInfos()) {
+
+                    fileWriter.print(String.format("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+                            productOrder.getBusinessKey(),
+                            productOrder.getName(),
+                            creationDate.format(productOrder.getCreatedDate()),
+                            bspUserList.getById(productOrder.getCreatedBy()).getFullName(),
+                            bspUserList.getById(productOrder.getCreatedBy()).getEmail(),
+                            productOrder.getQuoteId(),
+                            (StringUtils.isBlank(productOrder.getSkipRegulatoryReason())) ? " " :
+                                    productOrder.getSkipRegulatoryReason(),
+                            StringUtils.replaceChars(regulatoryInfo.getIdentifier(), "\t", " "),
+                            StringUtils.replaceChars(regulatoryInfo.getType().getName(), "\t", " ")));
+                }
             }
         }
         fileWriter.close();
