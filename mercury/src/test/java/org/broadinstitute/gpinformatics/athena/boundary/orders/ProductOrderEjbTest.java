@@ -28,9 +28,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.hamcrest.Matchers;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.mockito.verification.VerificationMode;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -217,7 +219,7 @@ public class ProductOrderEjbTest {
         }
     }
 
-    public void test_Add_Samples_Without_Bound_Mercury_Samples() throws Exception{
+    public void test_Add_Samples_Without_Bound_Mercury_Samples() throws Exception {
         String jiraTicketKey = "PDO-testMe";
         MessageReporter mockReporter = Mockito.mock(MessageReporter.class);
 
@@ -236,6 +238,8 @@ public class ProductOrderEjbTest {
         assertThat(order.getSamples(), is(empty()));
 
         productOrderEjb.addSamples(qaDudeUser, jiraTicketKey, samples, mockReporter);
+        assertThat(order.getSamples(), is(not(empty())));
+        assertThat(order.getSamples().size(), is(Matchers.equalTo(5)));
         for (ProductOrderSample sample : order.getSamples()) {
             assertThat(sample.getMercurySample(), is(not(nullValue())));
             assertThat(sample.getMercurySample().getSampleKey(), is(equalTo(sample.getBusinessKey())));
