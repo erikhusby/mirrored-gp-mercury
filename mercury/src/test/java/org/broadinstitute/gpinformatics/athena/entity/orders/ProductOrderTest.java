@@ -168,18 +168,15 @@ public class ProductOrderTest {
         assertThat(productOrder.getDuplicateCount(), is(equalTo(2)));
     }
 
-    private List<ProductOrderSample> getSamplesWithBspAndMercuryMetadataSource() {
+    @Test
+    public void testGetProductOrderWithMixedSampleMetadata() throws Exception {
         List<ProductOrderSample> sampleList = ProductOrderSampleTestFactory
                 .createDBFreeSampleList(MercurySample.MetadataSource.BSP, "SM-2ACGC", "SM-2ABDD", "SM-2ACKV");
         sampleList.addAll(ProductOrderSampleTestFactory
                 .createDBFreeSampleList(MercurySample.MetadataSource.MERCURY, "SM-2AB1B", "SM-2ACJC", "SM-2AD5D"));
-        return sampleList;
-    }
 
-    @Test
-    public void testGetProductOrderWithMixedSampleMetadata() throws Exception {
         productOrder =
-                new ProductOrder(TEST_CREATOR, PDO_TITLE, getSamplesWithBspAndMercuryMetadataSource(), QUOTE, null,
+                new ProductOrder(TEST_CREATOR, PDO_TITLE, sampleList, QUOTE, null,
                         null);
         assertThat(productOrder.getSamples().size(), Matchers.is(6));
         assertThat(productOrder.getSamples(), not(everyItem(isMetadataSource(MercurySample.MetadataSource.BSP))));
