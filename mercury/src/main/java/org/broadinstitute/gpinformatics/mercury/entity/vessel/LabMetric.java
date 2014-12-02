@@ -282,6 +282,13 @@ public class LabMetric implements Comparable<LabMetric> {
         return metricType;
     }
 
+    /**
+     * For fixups only.
+     */
+    void setMetricType(MetricType metricType) {
+        this.metricType = metricType;
+    }
+
     public LabUnit getUnits() {
         return labUnit;
     }
