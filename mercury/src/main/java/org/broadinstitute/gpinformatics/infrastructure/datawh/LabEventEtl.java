@@ -13,10 +13,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexRea
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
 import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.SampleType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch.LabBatchType;
 
@@ -39,7 +37,6 @@ import java.util.TreeSet;
 
 @Stateful
 public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
-    private ProductOrderDao pdoDao;
     private WorkflowConfigLookup workflowConfigLookup;
     private final Map<String, ProductOrder> cachedPdo = new HashMap<>();
     private final Collection<EventFactDto> loggingDtos = new ArrayList<>();
@@ -52,11 +49,10 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
     }
 
     @Inject
-    public LabEventEtl(WorkflowConfigLookup workflowConfigLookup, LabEventDao dao, ProductOrderDao pdoDao,
+    public LabEventEtl(WorkflowConfigLookup workflowConfigLookup, LabEventDao dao,
                        SequencingSampleFactEtl sequencingSampleFactEtl) {
         super(LabEvent.class, "event_fact", "lab_event_aud", "lab_event_id", dao);
         this.workflowConfigLookup = workflowConfigLookup;
-        this.pdoDao = pdoDao;
         this.sequencingSampleFactEtl = sequencingSampleFactEtl;
     }
 
@@ -308,25 +304,21 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                             if (sample != null) {
 
                                 LabBatch labBatch = si.getSingleInferredBucketedBatch();
-                                if (labBatch != null) {
+                                String batchName = labBatch != null ? labBatch.getBatchName() : NONE;
 
-                                    String batchName = labBatch.getBatchName();
-                                    String workflowName = labBatch.getWorkflowName();
-                                    if (StringUtils.isBlank(workflowName) && pdo != null) {
-                                        workflowName = pdo.getProduct().getWorkflow().getWorkflowName();
-                                    }
-                                    WorkflowConfigDenorm wfDenorm = workflowConfigLookup.lookupWorkflowConfig(
-                                            eventName, workflowName, entity.getEventDate());
+                                String workflowName = labBatch != null ? labBatch.getWorkflowName() : null;
+                                if (StringUtils.isBlank(workflowName) && pdo != null) {
+                                    workflowName = pdo.getProduct().getWorkflow().getWorkflowName();
+                                 }
+                                WorkflowConfigDenorm wfDenorm = workflowConfigLookup.lookupWorkflowConfig(
+                                        eventName, workflowName, entity.getEventDate());
 
-                                    boolean canEtl = labBatch.getLabBatchType() == LabBatchType.WORKFLOW &&
-                                                     wfDenorm != null && (pdo != null ||
-                                                                          !wfDenorm.isProductOrderNeeded());
+                                boolean canEtl = labBatch != null && labBatch.getLabBatchType() == LabBatchType.WORKFLOW
+                                                 || wfDenorm != null && (pdo != null || !wfDenorm.isProductOrderNeeded());
 
-                                    dtos.add(new EventFactDto(entity, vessel, null, batchName, workflowName,
-                                            sample, pdo, wfDenorm, canEtl));
-                                } else {
-                                    dtos.add(new EventFactDto(entity, vessel, null, null, null, sample, pdo, null, false));
-                                }
+                                dtos.add(new EventFactDto(entity, vessel, null, batchName, workflowName,
+                                        sample, pdo, wfDenorm, canEtl));
+
                             } else {
                                 // Use of the full constructor which in this case has multiple nulls is intentional
                                 // since exactly which fields are null is used as indicator in postEtlLogging, and this
