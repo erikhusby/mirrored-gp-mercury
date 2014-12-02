@@ -1339,7 +1339,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             }
 
             uniqueSampleCount = sampleSet.size();
-            sampleCount = samples.size();
             uniqueParticipantCount = participantSet.size();
             countsValid = true;
         }
