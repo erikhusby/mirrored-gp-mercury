@@ -8,7 +8,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.common.TestLogHandler;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -16,9 +15,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderS
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
-import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
-import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -26,15 +23,9 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
 
 @Test(groups = TestGroups.STANDARD)
 public class ProductOrderContainerTest extends Arquillian {
@@ -67,26 +58,6 @@ public class ProductOrderContainerTest extends Arquillian {
                 ProductOrderSampleTestFactory.createSampleList("SM-1P3X9", "SM-1P3WY", "SM-1P3XN"),
                 "newQuote", ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "partNumber"),
                 ResearchProjectTestFactory.createDummyResearchProject(researchProjectEjb, userList, "Test Research Project"));
-    }
-
-    @Test
-    public void testGetMetadataSourceLogsExceptionWhenUpdatingSampleCounts() {
-        Logger pdoLogger = Logger.getLogger(ProductOrder.class.getName());
-        TestLogHandler testLogHandler = new TestLogHandler();
-        pdoLogger.addHandler(testLogHandler);
-        pdoLogger.setLevel(Level.FINEST);
-        testLogHandler.setLevel(Level.FINEST);
-
-        MercurySampleData sampleData = new MercurySampleData("NON_BSP_SAMPLE", Collections.<Metadata>emptySet());
-        String productOrderSampleName = "SM-AHKAY";
-        ProductOrderSample nonBspSample = new ProductOrderSample(productOrderSampleName, sampleData);
-        ProductOrder productOrder =
-                new ProductOrder(ResearchProjectTestFactory.TEST_CREATOR, "title", Arrays.asList(nonBspSample), "quote",
-                        null, null);
-        productOrder.getSampleSummaryComments();
-
-        assertThat(testLogHandler.messageMatches(String.format("Could not determine metadata source for %s",
-                productOrderSampleName)), is(true));
     }
 
     public void testSimpleProductOrder() throws Exception {

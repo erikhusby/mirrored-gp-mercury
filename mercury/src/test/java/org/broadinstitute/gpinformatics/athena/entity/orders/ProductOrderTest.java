@@ -168,8 +168,9 @@ public class ProductOrderTest {
         assertThat(productOrder.getDuplicateCount(), is(equalTo(2)));
     }
 
-    @Test
+    @SuppressWarnings("unchecked")
     public void testGetProductOrderWithMixedSampleMetadata() throws Exception {
+                assertThat(productOrder.getSamples(), not(everyItem(isMetadataSource(MercurySample.MetadataSource.BSP))));
         List<ProductOrderSample> sampleList = ProductOrderSampleTestFactory
                 .createDBFreeSampleList(MercurySample.MetadataSource.BSP, "SM-2ACGC", "SM-2ABDD", "SM-2ACKV");
         sampleList.addAll(ProductOrderSampleTestFactory
@@ -179,7 +180,6 @@ public class ProductOrderTest {
                 new ProductOrder(TEST_CREATOR, PDO_TITLE, sampleList, QUOTE, null,
                         null);
         assertThat(productOrder.getSamples().size(), Matchers.is(6));
-        assertThat(productOrder.getSamples(), not(everyItem(isMetadataSource(MercurySample.MetadataSource.BSP))));
         assertThat(productOrder.getSamples(), not(everyItem(isMetadataSource(MercurySample.MetadataSource.MERCURY))));
 
         List<String> sampleSummaryComments = productOrder.getSampleSummaryComments();
@@ -192,7 +192,7 @@ public class ProductOrderTest {
                 "On Risk: None"));
     }
 
-    @Test
+    @SuppressWarnings("unchecked")
     public void testGetProductOrderBspSampleMetadata() throws Exception {
         productOrder = new ProductOrder(TEST_CREATOR, PDO_TITLE, sixSamplesWithNamesInBspFormatNoDupes, QUOTE, null, null);
         assertThat(productOrder.getSamples(), everyItem(isMetadataSource(MercurySample.MetadataSource.BSP)));
@@ -204,7 +204,7 @@ public class ProductOrderTest {
                 "From BSP: All"));
     }
 
-    @Test
+    @SuppressWarnings("unchecked")
     public void testGetProductOrderMercurySampleMetadata() throws Exception {
         productOrder = new ProductOrder(TEST_CREATOR, PDO_TITLE, sixMercurySamplesNoDupes, QUOTE, null, null);
         assertThat(productOrder.getSamples(), everyItem(isMetadataSource(MercurySample.MetadataSource.MERCURY)));

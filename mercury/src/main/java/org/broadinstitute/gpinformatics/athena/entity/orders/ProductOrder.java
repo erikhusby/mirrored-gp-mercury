@@ -7,8 +7,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.time.DateUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -73,7 +71,6 @@ import java.util.Set;
 @Table(name = "PRODUCT_ORDER", schema = "athena")
 public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     private static final long serialVersionUID = 2712946561792445251L;
-    private static final Log log = LogFactory.getLog(ProductOrder.class);
 
     // for clarity in jira, we use this string in the quote field when there is no quote
     public static final String QUOTE_TEXT_USED_IN_JIRA_WHEN_QUOTE_FIELD_IS_EMPTY = "no quote";
@@ -1307,26 +1304,21 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                     // This is a unique sample name, so do any counts that are only needed for unique names. Since
                     // BSP looks up samples by name, it would always get the same data, so only counting unique values.
                     if (sample.isInBspFormat()) {
-
-                        try {
-                            switch (sample.getMetadataSource()) {
-                            case BSP:
-                                bspSampleCount++;
-                                break;
-                            case MERCURY:
-                                mercurySampleCount++;
-                                updateSampleCounts(participantSet, sample);
-                                break;
-                            default:
-                                throw new IllegalStateException("Unknown metadata source");
-                            }
-                            if (sample.bspMetaDataMissing()) {
-                                missingBspMetaDataCount++;
-                            } else {
-                                updateSampleCounts(participantSet, sample);
-                            }
-                        } catch (IllegalStateException e) {
-                            log.error("Could not determine metadata source for " + sample.getSampleKey(), e);
+                        switch (sample.getMetadataSource()) {
+                        case BSP:
+                            bspSampleCount++;
+                            break;
+                        case MERCURY:
+                            mercurySampleCount++;
+                            updateSampleCounts(participantSet, sample);
+                            break;
+                        default:
+                            throw new IllegalStateException("Unknown metadata source");
+                        }
+                        if (sample.bspMetaDataMissing()) {
+                            missingBspMetaDataCount++;
+                        } else {
+                            updateSampleCounts(participantSet, sample);
                         }
                     }
                 }
