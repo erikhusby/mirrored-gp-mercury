@@ -94,7 +94,7 @@ public abstract class AbstractSample {
     public void setSampleData(@Nonnull SampleData sampleData) {
         //noinspection ConstantConditions
         if (sampleData == null) {
-            throw new NullPointerException("BSP Sample DTO cannot be null");
+            throw new NullPointerException("SampleData cannot be null");
         }
 
         this.sampleData = sampleData;

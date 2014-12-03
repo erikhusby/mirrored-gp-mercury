@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.test.dbfree;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
@@ -11,7 +13,6 @@ import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
@@ -43,9 +44,10 @@ public class ProductOrderSampleTestFactory {
             SampleData sampleData;
             if (dbFree) {
                 if (metadataSource == MercurySample.MetadataSource.BSP) {
-                    sampleData = new BspSampleData(Collections.<BSPSampleSearchColumn, String>emptyMap());
+                    sampleData = new BspSampleData(ImmutableMap.of(BSPSampleSearchColumn.SAMPLE_ID, sampleName));
                 } else {
-                    sampleData = new MercurySampleData(sampleName, Collections.<Metadata>emptySet());
+                    sampleData = new MercurySampleData(sampleName,
+                            ImmutableSet.of(new Metadata(Metadata.Key.SAMPLE_ID, sampleName)));
                 }
                 productOrderSample = new ProductOrderSample(sampleName, sampleData);
             } else {

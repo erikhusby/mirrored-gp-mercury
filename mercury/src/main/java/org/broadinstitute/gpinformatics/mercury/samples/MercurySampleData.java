@@ -23,6 +23,7 @@ public class MercurySampleData implements SampleData {
 
     private String collectionDate;
     private String visit;
+    private boolean hasData;
 
     public MercurySampleData(@Nonnull String sampleId, @Nonnull Set<Metadata> metadata) {
         this.sampleId = sampleId;
@@ -52,12 +53,13 @@ public class MercurySampleData implements SampleData {
                 this.visit = value;
                 break;
             }
+            this.hasData = true;
         }
     }
 
     @Override
     public boolean hasData() {
-        return false;
+        return hasData;
     }
 
     @Override

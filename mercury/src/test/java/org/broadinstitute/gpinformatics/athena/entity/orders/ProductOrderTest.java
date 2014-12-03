@@ -81,7 +81,6 @@ public class ProductOrderTest {
     public void tearDown() throws Exception {
     }
 
-    @Test
     public void testBeaniness() {
 
         BeanTester tester = new BeanTester();
@@ -139,12 +138,10 @@ public class ProductOrderTest {
 
     }
 
-    @Test
     public void testOrder() throws Exception {
         assertThat(productOrder.getJiraTicketKey(), is(equalTo(PDO_JIRA_KEY)));
     }
 
-    @Test
     public void testGetUniqueSampleCount() throws Exception {
         productOrder = new ProductOrder(TEST_CREATOR, PDO_TITLE, sixSamplesWithNamesInBspFormatNoDupes, QUOTE, null, null);
         assertThat(productOrder.getUniqueSampleCount(), is(equalTo(6)));
@@ -153,7 +150,6 @@ public class ProductOrderTest {
         assertThat(productOrder.getUniqueSampleCount(), is(equalTo(4)));
     }
 
-    @Test
     public void testGetTotalSampleCount() throws Exception {
         productOrder = new ProductOrder(TEST_CREATOR, PDO_TITLE, sixSamplesWithNamesInBspFormatNoDupes, QUOTE, null, null);
         assertThat(productOrder.getTotalSampleCount(), is(equalTo(6)));
@@ -162,7 +158,6 @@ public class ProductOrderTest {
         assertThat(productOrder.getTotalSampleCount(), is(equalTo(6)));
     }
 
-    @Test
     public void testGetDuplicateCount() throws Exception {
         productOrder = new ProductOrder(TEST_CREATOR, PDO_TITLE, fourBspSamplesWithDupes, QUOTE, null, null);
         assertThat(productOrder.getDuplicateCount(), is(equalTo(2)));
@@ -170,16 +165,14 @@ public class ProductOrderTest {
 
     @SuppressWarnings("unchecked")
     public void testGetProductOrderWithMixedSampleMetadata() throws Exception {
-                assertThat(productOrder.getSamples(), not(everyItem(isMetadataSource(MercurySample.MetadataSource.BSP))));
         List<ProductOrderSample> sampleList = ProductOrderSampleTestFactory
                 .createDBFreeSampleList(MercurySample.MetadataSource.BSP, "SM-2ACGC", "SM-2ABDD", "SM-2ACKV");
         sampleList.addAll(ProductOrderSampleTestFactory
                 .createDBFreeSampleList(MercurySample.MetadataSource.MERCURY, "SM-2AB1B", "SM-2ACJC", "SM-2AD5D"));
 
-        productOrder =
-                new ProductOrder(TEST_CREATOR, PDO_TITLE, sampleList, QUOTE, null,
-                        null);
+        productOrder = new ProductOrder(TEST_CREATOR, PDO_TITLE, sampleList, QUOTE, null, null);
         assertThat(productOrder.getSamples().size(), Matchers.is(6));
+        assertThat(productOrder.getSamples(), not(everyItem(isMetadataSource(MercurySample.MetadataSource.BSP))));
         assertThat(productOrder.getSamples(), not(everyItem(isMetadataSource(MercurySample.MetadataSource.MERCURY))));
 
         List<String> sampleSummaryComments = productOrder.getSampleSummaryComments();
@@ -201,7 +194,10 @@ public class ProductOrderTest {
                 "Total: 6",
                 "Unique: All",
                 "Duplicate: None",
-                "From BSP: All"));
+                "From BSP: All",
+                "Unique BSP: 6",
+                "On Risk: None"
+        ));
     }
 
     @SuppressWarnings("unchecked")
@@ -214,10 +210,12 @@ public class ProductOrderTest {
                 "Total: 6",
                 "Unique: All",
                 "Duplicate: None",
-                "From Mercury: All"));
+                "From Mercury: All",
+                "Unique Mercury: 6",
+                "On Risk: None"
+                ));
     }
 
-    @Test
     public void testAreAllSampleBSPFormat() throws Exception {
         assertThat(fourBspSamplesWithDupes, everyItem(is(inBspFormat())));
         assertThat(sixSamplesWithNamesInBspFormatNoDupes, everyItem(is(inBspFormat())));
@@ -266,7 +264,6 @@ public class ProductOrderTest {
         Assert.assertEquals(order.getOrderStatus(), status);
     }
 
-    @Test
     public void testQuoteStringForJira() {
         ProductOrder pdo = new ProductOrder();
         Assert.assertEquals(pdo.getQuoteStringForJiraTicket(),ProductOrder.QUOTE_TEXT_USED_IN_JIRA_WHEN_QUOTE_FIELD_IS_EMPTY);
@@ -275,9 +272,7 @@ public class ProductOrderTest {
         Assert.assertEquals(pdo.getQuoteStringForJiraTicket(),quoteId);
     }
 
-    @Test
-    public void
-    testQuoteRequired() {
+    public void testQuoteRequired() {
         boolean hasQuote = false;
         String quoteOrNoQuoteString = "just because";
         int numberOfSamples = 4;
