@@ -71,39 +71,45 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
 
     @Override
     Collection<String> dataRecords(String etlDateStr, boolean isDelete, SequencingRun entity) {
-        Collection<String> records = new ArrayList<>();
         try {
-            // De-duplicate based on flowcell barcode, lane, and molecular index (GPLIM-1618).
-            Map<String, SequencingRunDto> uniqueFlowcellLaneIndex = new HashMap<>();
-            for (SequencingRunDto dto : makeSequencingRunDtos(entity)) {
-                uniqueFlowcellLaneIndex.put(dto.getFlowcellLaneIndexKey(), dto);
-            }
-            for (SequencingRunDto dto : uniqueFlowcellLaneIndex.values()) {
-                if (dto.canEtl()) {
-                    // Turns "LANE1" to "LANE8" into "1" to "8".
-                    String position = dto.getPosition().replaceAll("LANE", "");
-
-                    LabVessel loadingVessel = dto.getLoadingVessel();
-                    records.add(genericRecord(etlDateStr, isDelete,
-                            entity.getSequencingRunId(),
-                            format(dto.getFlowcellBarcode()),
-                            format(position),
-                            format(dto.getMolecularIndexingSchemeName()),
-                            format(dto.getProductOrderId()),
-                            format(dto.getSampleKey()),
-                            format(dto.getResearchProjectId()),
-                            (loadingVessel != null) ? format(loadingVessel.getLabel()) : null,
-                            (loadingVessel != null) ?
-                                    format(ExtractTransform.formatTimestamp(loadingVessel.getCreatedOn())) : null,
-                            format(dto.getBatchName())
-                    ));
-                }
-            }
+            return dataRecords(etlDateStr, isDelete, entity.getSequencingRunId(), makeSequencingRunDtos(entity));
         } catch (Exception e) {
             // Uncaught RuntimeExceptions kill the injected SequencingSampleFactEtl in ExtractTransform.
             logger.error("Error doing ETL of sequencingRun", e);
+            return Collections.emptyList();
         }
+    }
 
+    Collection<String> dataRecords(String etlDateStr, boolean isDelete, Long sequencingRunId,
+                                   Collection<SequencingRunDto> dtos) {
+        Collection<String> records = new ArrayList<>();
+
+        // De-duplicate based on flowcell barcode, lane, and molecular index (GPLIM-1618).
+        Map<String, SequencingRunDto> uniqueFlowcellLaneIndex = new HashMap<>();
+        for (SequencingRunDto dto : dtos) {
+            uniqueFlowcellLaneIndex.put(dto.getFlowcellLaneIndexKey(), dto);
+        }
+        for (SequencingRunDto dto : uniqueFlowcellLaneIndex.values()) {
+            if (dto.canEtl()) {
+                // Turns "LANE1" to "LANE8" into "1" to "8".
+                String position = dto.getPosition().replaceAll("LANE", "");
+
+                LabVessel loadingVessel = dto.getLoadingVessel();
+                records.add(genericRecord(etlDateStr, isDelete,
+                        sequencingRunId,
+                        format(dto.getFlowcellBarcode()),
+                        format(position),
+                        format(dto.getMolecularIndexingSchemeName()),
+                        format(dto.getProductOrderId()),
+                        format(dto.getSampleKey()),
+                        format(dto.getResearchProjectId()),
+                        (loadingVessel != null) ? format(loadingVessel.getLabel()) : null,
+                        (loadingVessel != null) ?
+                                format(ExtractTransform.formatTimestamp(loadingVessel.getCreatedOn())) : null,
+                        format(dto.getBatchName())
+                ));
+            }
+        }
         return records;
     }
 
@@ -276,14 +282,13 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
                     for (SampleInstanceV2 si : sampleInstances) {
                         ProductOrderSample productOrderSample = si.getSingleProductOrderSample();
                         ProductOrder pdo = (productOrderSample != null) ? productOrderSample.getProductOrder() : null;
-                        String productOrderId = (pdo != null) ? String.valueOf(pdo.getProductOrderId()) : null;
+                        String productOrderId = (pdo == null) ? null : String.valueOf(pdo.getProductOrderId());
                         MercurySample sample = si.getRootOrEarliestMercurySample();
                         String sampleKey = (sample != null ? sample.getSampleKey() : null);
                         LabBatch labBatch = si.getSingleInferredBucketedBatch();
                         String batchName = labBatch != null ? labBatch.getBatchName() : NONE;
                         String researchProjectId = (pdo != null && pdo.getResearchProject() != null) ?
                                 String.valueOf(pdo.getResearchProject().getResearchProjectId()) : null;
-
                         // Finds the molecular barcode, or "NONE" if not found, or a sorted comma-delimited
                         // concatenation if multiple are found.
                         SortedSet<String> names = new TreeSet<>();

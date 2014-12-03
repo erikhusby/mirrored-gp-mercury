@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderT
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.envers.ReflectionUtil;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
@@ -47,6 +48,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -300,10 +302,20 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
     }
 
     public void testWithEventHistory() throws Exception {
+        final int numberOfSamples = 96;
         expectedRouting = SystemRouter.System.MERCURY;
 
-        final ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
-        Long pdoId = 9202938094820L;
+        final ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(numberOfSamples);
+
+        // Uses reflection to set the entity id fields needed by ETL.
+        Field productOrderIdField = ReflectionUtil.getEntityIdField(ProductOrder.class);
+        productOrderIdField.setAccessible(true);
+        productOrderIdField.set(productOrder, pdoId);
+        Assert.assertNotNull(productOrder.getResearchProject());
+        Field researchProjectIdField = ReflectionUtil.getEntityIdField(ResearchProject.class);
+        researchProjectIdField.setAccessible(true);
+        researchProjectIdField.set(productOrder.getResearchProject(), researchProjectId);
+
         Date runDate = new Date();
         Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
@@ -313,7 +325,7 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         workflowBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
 
         bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
-        //Build Event History
+
         PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube,
                                                                                   String.valueOf(runDate.getTime()),
                                                                                   "1", true);
@@ -374,53 +386,30 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         runFactory.storeReadsStructureDBFree(readStructureRequest, run);
 
         EasyMock.expect(dao.findById(SequencingRun.class, entityId)).andReturn(run).anyTimes();
-/*
-        EasyMock.expect(runCartridge.getCartridgeName()).andReturn(cartridgeName).anyTimes();
-        EasyMock.expect(runCartridge.getVesselGeometry()).andReturn(VesselGeometry.FLOWCELL1x2).anyTimes();
-        EasyMock.expect(runCartridge.getContainerRole()).andReturn(vesselContainer).anyTimes();
-
-        EasyMock.expect(runCartridge.getAllLabBatches(EasyMock.anyObject(LabBatch.LabBatchType.class))).andReturn(
-                Collections.singleton(fctBatch)).anyTimes();
-        EasyMock.expect(runCartridge.getNearestTubeAncestorsForLanes()).andReturn(laneVesselsAndPositions).anyTimes();
-
-        EasyMock.expect(denatureSource.getLabel()).andReturn(tubeBarcode).anyTimes();
-        EasyMock.expect(denatureSource.getCreatedOn()).andReturn(tubeCreateDate).anyTimes();
-
-        EasyMock.expect(denatureSource.getSampleInstancesV2()).andReturn(sampleInstances).anyTimes();
-
-        for (SampleInstanceV2 sampleInstance1 : sampleInstances) {
-            EasyMock.expect(sampleInstance1.getSingleProductOrderSample()).andReturn(pdoSample).anyTimes();
-            EasyMock.expect(pdoSample.getProductOrder()).andReturn(pdo).anyTimes();
-            EasyMock.expect(pdo.getProductOrderId()).andReturn(pdoId).anyTimes();
-            EasyMock.expect(sampleInstance1.getRootOrEarliestMercurySample()).andReturn(sample).anyTimes();
-            EasyMock.expect(sample.getSampleKey()).andReturn("SM-abcd").anyTimes();
-            EasyMock.expect(sampleInstance1.getSingleInferredBucketedBatch()).andReturn(workflowBatch).anyTimes();
-            EasyMock.expect(workflowBatch.getBatchName()).andReturn("LCSET-jklm").anyTimes();
-            EasyMock.expect(sampleInstance1.getReagents()).andReturn(reagents).anyTimes();
-        }
-*/
         EasyMock.expect(pdo.getResearchProject()).andReturn(researchProject).anyTimes();
         EasyMock.expect(researchProject.getResearchProjectId()).andReturn(researchProjectId).anyTimes();
 
         EasyMock.replay(mocks);
-        Collection<String> records = tst.dataRecords(etlDateString, false, entityId);
+        List<SequencingSampleFactEtl.SequencingRunDto> dtos = tst.makeSequencingRunDtos(run);
+        // There will be all samples on lane 1 and on lane 2, each making a dto.
+        Assert.assertEquals(dtos.size(), numberOfSamples * 2);
 
-        Assert.assertEquals(records.size(), 192);
+        Map<String, Set<String>> mapSampleToRecord = new HashMap<>();
 
-        Map<String, List<String>> mapSampleToRecord = new HashMap<>();
-
-        for (String record : records) {
+        for (String record : tst.dataRecords(etlDateString, false, entityId, dtos)) {
             String[] recordParts = record.split(",");
 
             String recordSampleKey = recordParts[7];
+
             if (StringUtils.isNotBlank(recordSampleKey)) {
                 if (!mapSampleToRecord.containsKey(recordSampleKey)) {
-                    mapSampleToRecord.put(recordSampleKey, new ArrayList<String>(2));
+                    mapSampleToRecord.put(recordSampleKey, new HashSet<String>(2));
                 }
-                mapSampleToRecord.get(recordSampleKey).add(record);
+                boolean isAdded = mapSampleToRecord.get(recordSampleKey).add(record);
+                Assert.assertTrue(isAdded, "duplicate record: " + record);
             }
         }
-
+        Assert.assertEquals(mapSampleToRecord.size(), numberOfSamples);
 
         for (SampleInstance testInstance : dilutionSource.getSampleInstances()) {
 
