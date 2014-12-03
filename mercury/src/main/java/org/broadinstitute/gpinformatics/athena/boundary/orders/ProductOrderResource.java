@@ -267,6 +267,7 @@ public class ProductOrderResource {
     public ProductOrderData create(@Nonnull ProductOrderData productOrderData)
             throws DuplicateTitleException, NoSamplesException, QuoteNotFoundException, ApplicationValidationException {
         ProductOrder productOrder = createProductOrder(productOrderData, ProductOrder.OrderStatus.Submitted);
+        productOrder.setPlacedDate(new Date());
         return new ProductOrderData(productOrder, true);
     }
 
