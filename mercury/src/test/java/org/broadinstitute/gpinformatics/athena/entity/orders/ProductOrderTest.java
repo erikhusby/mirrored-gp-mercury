@@ -117,14 +117,13 @@ public class ProductOrderTest {
 
         class ProductOrderFactory implements EquivalentFactory<ProductOrder> {
             public final long ID = new Random().nextInt(Integer.MAX_VALUE);
-            public String title = PDO_TITLE;
 
             @Override
             public ProductOrder create() {
                 Product product = new Product("Exome Express", null, "Exome Express", "P-EX-0002", new Date(), null,
                         1814400, 1814400, 184, null, null, null, true, Workflow.AGILENT_EXOME_EXPRESS, false, "agg type");
                 ResearchProject researchProject =
-                        new ResearchProject(ID, title, "RP title", ResearchProject.IRB_NOT_ENGAGED,
+                        new ResearchProject(ID, PDO_TITLE, "RP title", ResearchProject.IRB_NOT_ENGAGED,
                                             ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
 
                 return new ProductOrder(ID, "PO title", sixSamplesWithNamesInBspFormatNoDupes, "quoteId", product, researchProject);
