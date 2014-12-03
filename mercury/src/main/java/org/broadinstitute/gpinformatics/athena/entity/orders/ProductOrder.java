@@ -1512,12 +1512,12 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         private class SampleCountForSource {
             private final Counter total=new Counter();
             private final Counter unique=new Counter();
-            private Set<String> sampleIds=new HashSet<>();
+            private Set<String> uniqueSampleIds =new HashSet<>();
 
             public void increment(String ... sampleIds) {
                 for (String sampleId : sampleIds) {
                     total.increment(sampleId);
-                    if (this.sampleIds.add(sampleId)){
+                    if (uniqueSampleIds.add(sampleId)){
                         unique.increment(sampleId);
                     }
                 }
@@ -1526,7 +1526,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             public void clear(){
                 total.clear();
                 unique.clear();
-                sampleIds.clear();
+                uniqueSampleIds.clear();
             }
 
             public int getTotal() {
