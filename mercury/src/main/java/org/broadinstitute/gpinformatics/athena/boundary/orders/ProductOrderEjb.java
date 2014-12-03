@@ -52,6 +52,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -952,6 +953,7 @@ public class ProductOrderEjb {
                 ProductOrderJiraUtil.createIssueForOrder(editOrder, jiraService);
             }
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+            editOrder.setPlacedDate(new Date());
             transitionIssueToSameOrderStatus(editOrder);
 
             // Now that the order is placed, add the comments about the samples to the issue.
