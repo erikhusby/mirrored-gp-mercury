@@ -62,7 +62,7 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
     /**
      * Allow an evaluator to expand entity list to be attached to search term.
      */
-    private TraversalEvaluator traversalEvaluator;
+    private Map<String, TraversalEvaluator> traversalEvaluators;
 
     /**
      * Produce named AddRowsListener instances for this search definition.
@@ -123,14 +123,25 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
 
     /**
      * Allow an optional traversal evaluator to be attached to this search
+     * @param Id - The identifier representing this evaluator (presented as the UI identifier)
      * @param traversalEvaluator
      */
-    public void addTraversalEvaluator(TraversalEvaluator traversalEvaluator) {
-        this.traversalEvaluator = traversalEvaluator;
+    public void addTraversalEvaluator(String Id, TraversalEvaluator traversalEvaluator) {
+        if( traversalEvaluators == null ) {
+            traversalEvaluators = new LinkedHashMap<>();
+        } else {
+            if( traversalEvaluators.containsKey(Id) ) {
+                throw new RuntimeException("Duplicate TraversalEvaluator Id in ConfigurableSearchDefinition: " + Id);
+            }
+        }
+        this.traversalEvaluators.put(Id, traversalEvaluator);
     }
 
-    public TraversalEvaluator getTraversalEvaluator(){
-        return this.traversalEvaluator;
+    /**
+     * Obtain the TraversalEvaluator implementations
+     */
+    public Map<String,TraversalEvaluator> getTraversalEvaluators(){
+        return traversalEvaluators;
     }
 
 

@@ -574,11 +574,11 @@ function chooseColumnSet() {
     </ul>
 </div>
 <div id="traversalOptionDescription" style="display: none;">
-    <c:if test="${actionBean.configurableSearchDef.traversalEvaluator != null}">
-        <p>${actionBean.configurableSearchDef.traversalEvaluator.helpHeader}&nbsp;</p>
+    <c:if test="${actionBean.configurableSearchDef.traversalEvaluators != null}">
+        <p>Available Options:</p>
         <ul>
-        <c:forEach items="${actionBean.configurableSearchDef.traversalEvaluator.traversalOptions}" var="traversalOption">
-            <li>${traversalOption.helpNote}</li>
+        <c:forEach items="${actionBean.configurableSearchDef.traversalEvaluators}" var="traversalMapEntry">
+            <li>${traversalMapEntry.value.helpNote}</li>
         </c:forEach>
         </ul>
     </c:if>

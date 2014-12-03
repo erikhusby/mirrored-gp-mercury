@@ -819,12 +819,12 @@ public class SearchInstance implements Serializable {
      * @param configurableSearchDefinition
      */
     private void buildTraversalOptions(ConfigurableSearchDefinition configurableSearchDefinition) {
-        TraversalEvaluator evaluator = configurableSearchDefinition.getTraversalEvaluator();
-        if( evaluator != null ) {
-            for (TraversalEvaluator.TraversalOption option : evaluator.getTraversalOptions()) {
-                Boolean isSelected = traversalEvaluatorValues.get(option.getId());
+        Map<String,TraversalEvaluator> evaluators = configurableSearchDefinition.getTraversalEvaluators();
+        if( evaluators != null ) {
+            for (String id : evaluators.keySet() ) {
+                Boolean isSelected = traversalEvaluatorValues.get(id);
                 if (isSelected == null) {
-                    traversalEvaluatorValues.put(option.getId(), Boolean.FALSE);
+                    traversalEvaluatorValues.put(id, Boolean.FALSE);
                 }
             }
         }

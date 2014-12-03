@@ -135,9 +135,9 @@ buttons to move columns from one to the other --%>
             <td>&nbsp;</td>
             <td><label>Chosen</label></td>
             <td>&nbsp;</td>
-        <c:if test="${actionBean.configurableSearchDef.traversalEvaluator != null}">
+        <c:if test="${actionBean.configurableSearchDef.traversalEvaluators != null}">
             <td style="padding-left: 20px">
-            <label>${actionBean.configurableSearchDef.traversalEvaluator.title} <img id="traversalOptionTooltip" src="${ctxpath}/images/help.png" alt="help"></label>
+            <label><img id="traversalOptionTooltip" src="${ctxpath}/images/help.png" alt="help">&nbsp;&nbsp;Expand Search Results to Include: </label>
             &nbsp;</td>
         </c:if>
         </tr>
@@ -181,9 +181,11 @@ buttons to move columns from one to the other --%>
                 </a>
             </td>
             <td rowspan="2" style="padding-left: 30px;vertical-align: top">
-                <c:forEach items="${actionBean.configurableSearchDef.traversalEvaluator.traversalOptions}" var="traversalOption">
-                    <stripes:checkbox id="${traversalOption.id}" name="searchInstance.traversalEvaluatorValues['${traversalOption.id}']" checked="${searchInstance.traversalEvaluatorValues[traversalOption.id]}" /> ${traversalOption.label}<br />
+                <c:if test="${actionBean.configurableSearchDef.traversalEvaluators != null}">
+                <c:forEach items="${actionBean.configurableSearchDef.traversalEvaluators}" var="traversalMapEntry">
+                    <stripes:checkbox id="${traversalMapEntry.key}" name="searchInstance.traversalEvaluatorValues['${traversalMapEntry.key}']" checked="${searchInstance.traversalEvaluatorValues[traversalMapEntry.key]}" /> ${traversalMapEntry.value.label}<br />
                 </c:forEach>
+                </c:if>
             </td>
         </tr>
         <tr>

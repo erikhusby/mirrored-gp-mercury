@@ -250,27 +250,41 @@ public class ConfigurableSearchDao extends GenericDao {
         // TODO set join fetch paths? would require access to column defs
         PaginationDao paginationDao = new PaginationDao();
 
-        TraversalEvaluator configuredEvaluator = configurableSearchDef.getTraversalEvaluator();
-        Set<Object> idList = null;
-        boolean wasTraversed = false;
-        if( configuredEvaluator != null ) {
-            // Only bother with the traversal if any of the options are checked
-            Map<String,Boolean> traversalEvaluatorValues = searchInstance.getTraversalEvaluatorValues();
-            if( traversalEvaluatorValues != null && traversalEvaluatorValues.containsValue(Boolean.TRUE) ) {
-                // Grab the core entity list before the traversal
-                paginationDao.startPagination( criteria, pagination, true );
-                idList = configuredEvaluator.evaluate( pagination.getIdList(), traversalEvaluatorValues );
-                wasTraversed = true;
+        // Determine if we need to expand the core entity list
+        Map<String,Boolean> traversalEvaluatorValues = searchInstance.getTraversalEvaluatorValues();
+        boolean traversalRequired = ( configurableSearchDef.getTraversalEvaluators() != null
+            && traversalEvaluatorValues != null
+            && traversalEvaluatorValues.containsValue(Boolean.TRUE) );
+
+        if( !traversalRequired ) {
+            // Fetch only ID values for pagination if no traversal required
+            paginationDao.startPagination( criteria, pagination, false );
+        } else {
+            // Fetch the core entities before the traversal
+            paginationDao.startPagination( criteria, pagination, true );
+
+            TraversalEvaluator evaluator = null;
+            Set<Object> idList = null;
+
+            for( Map.Entry<String,TraversalEvaluator> configuredEvaluatorEntry : configurableSearchDef.getTraversalEvaluators().entrySet() ) {
+                // Traverse the options which are checked
+                Boolean doTraverse = traversalEvaluatorValues.get(configuredEvaluatorEntry.getKey());
+                if( doTraverse ) {
+                    evaluator = configuredEvaluatorEntry.getValue();
+                    if( idList == null ) {
+                        idList = evaluator.evaluate(pagination.getIdList());
+                    } else {
+                        idList.addAll(evaluator.evaluate(pagination.getIdList()));
+                    }
+                }
             }
+
+            // Replace the full entities in the pagination with ids using last evaluator
+            List<Object> rootIdList = evaluator.buildEntityIdList(idList);
+            pagination.setIdList(rootIdList);
+
         }
 
-        if( wasTraversed ) {
-            List<Object> rootIdList = configuredEvaluator.buildEntityIdList(idList);
-            pagination.setIdList(rootIdList);
-        } else {
-            // Legacy pagination - initially fetches only ID values
-            paginationDao.startPagination( criteria, pagination, false );
-        }
     }
 
     /**
