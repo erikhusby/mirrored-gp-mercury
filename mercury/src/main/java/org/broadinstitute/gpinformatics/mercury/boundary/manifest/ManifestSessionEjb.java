@@ -24,7 +24,6 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -109,15 +108,13 @@ public class ManifestSessionEjb {
     private ManifestSession uploadManifest(InputStream inputStream, String pathToFile, BspUser bspUser,
                                            ResearchProject researchProject) {
         ManifestImportProcessor manifestImportProcessor = new ManifestImportProcessor();
-        List<String> messages=new ArrayList<>();
+        List<String> messages;
         try {
-            messages.addAll(manifestImportProcessor.processSingleWorksheet(inputStream));
+            messages = manifestImportProcessor.processSingleWorksheet(inputStream);
         } catch (IOException | InvalidFormatException e) {
             throw new InformaticsServiceException(e.getMessage(), e);
         } catch (ValidationException e) {
-            if (!messages.addAll(e.getValidationMessages())) {
-                messages.add(e.getMessage());
-            }
+            messages = e.getValidationMessages();
         }
         if (!messages.isEmpty()) {
             throw new InformaticsServiceException(StringUtils.join(messages, "\n"));
