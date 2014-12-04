@@ -267,6 +267,7 @@ public class ProductOrderResource {
     public ProductOrderData create(@Nonnull ProductOrderData productOrderData)
             throws DuplicateTitleException, NoSamplesException, QuoteNotFoundException, ApplicationValidationException {
         ProductOrder productOrder = createProductOrder(productOrderData, ProductOrder.OrderStatus.Submitted);
+        productOrder.setPlacedDate(new Date());
         return new ProductOrderData(productOrder, true);
     }
 
@@ -387,7 +388,7 @@ public class ProductOrderResource {
 
         try {
             // Add the samples.
-            productOrderEjb.addSamples(bspUser, pdoKey, samplesToAdd, MessageReporter.UNUSED);
+            productOrderEjb.addSamples(pdoKey, samplesToAdd, MessageReporter.UNUSED);
 
             // If the PDO is not a sample initiation PDO, but DOES have a sample initiation add on, then add a new
             // auto-billing message so that the billing will happen at the appropriate lock out time.

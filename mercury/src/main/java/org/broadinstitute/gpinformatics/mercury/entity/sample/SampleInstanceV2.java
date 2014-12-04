@@ -37,6 +37,7 @@ public class SampleInstanceV2 {
     private List<ProductOrderSample> allProductOrderSamples = new ArrayList<>();
     private List<LabBatchStartingVessel> allLabBatchStartingVessels = new ArrayList<>();
     private LabVessel labVessel;
+    private LabVessel initialLabVessel;
     private boolean examinedContainers;
     private MolecularIndexingScheme molecularIndexingScheme;
 
@@ -50,6 +51,7 @@ public class SampleInstanceV2 {
      * Constructs a sample instance from a LabVessel.
      */
     public SampleInstanceV2(LabVessel labVessel) {
+        this.initialLabVessel = labVessel;
         this.labVessel = labVessel;
         rootMercurySamples.addAll(labVessel.getMercurySamples());
         mercurySamples.addAll(labVessel.getMercurySamples());
@@ -78,6 +80,7 @@ public class SampleInstanceV2 {
         allProductOrderSamples.addAll(other.allProductOrderSamples);
         allLabBatchStartingVessels.addAll(other.allLabBatchStartingVessels);
         molecularIndexingScheme = other.molecularIndexingScheme;
+        initialLabVessel = other.initialLabVessel;
     }
 
     /**
@@ -150,6 +153,13 @@ public class SampleInstanceV2 {
      */
     public LabBatchStartingVessel getSingleBatchVessel() {
         return getSingleBatchVessel(null);
+    }
+
+    /**
+     * Returns the vessel associated with this sample instance.
+     */
+    public LabVessel getInitialLabVessel() {
+        return initialLabVessel;
     }
 
     /**

@@ -573,6 +573,16 @@ function chooseColumnSet() {
         <li>Down arrow: moves selected Chosen columns lower in the order</li>
     </ul>
 </div>
+<div id="traversalOptionDescription" style="display: none;">
+    <c:if test="${actionBean.configurableSearchDef.traversalEvaluators != null}">
+        <p>Available Options:</p>
+        <ul>
+        <c:forEach items="${actionBean.configurableSearchDef.traversalEvaluators}" var="traversalMapEntry">
+            <li>${traversalMapEntry.value.helpNote}</li>
+        </c:forEach>
+        </ul>
+    </c:if>
+</div>
 <script type="text/javascript">
     $j(function(){
         // This is required in order to render HTML in title attributes.
@@ -597,6 +607,9 @@ function chooseColumnSet() {
         });
         $j('#resultColumnsTooltip').attr('title', function(){
             return $j('#resultColumnsDescription').remove().html();
+        });
+        $j('#traversalOptionTooltip').attr('title', function(){
+            return $j('#traversalOptionDescription').remove().html();
         });
 
         $j(document).tooltip();

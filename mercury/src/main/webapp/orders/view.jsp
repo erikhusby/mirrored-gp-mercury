@@ -287,6 +287,7 @@ function showSamples(sampleData) {
         $j('#patient-' + sampleId).text(sampleData[x].patientId);
         $j('#collab-patient-' + sampleId).text(sampleData[x].collaboratorParticipantId);
         $j('#volume-' + sampleId).text(sampleData[x].volume);
+        $j('#sample-type-' + sampleId).text(sampleData[x].sampleType);
         $j('#concentration-' + sampleId).text(sampleData[x].concentration);
         $j('#rin-' + sampleId).text(sampleData[x].rin);
         $j('#rqs-' + sampleId).text(sampleData[x].rqs);
@@ -319,9 +320,10 @@ function showSamples(sampleData) {
                 {"bSortable": true},                            // Collaborator Sample ID
                 {"bSortable": true},                            // Participant ID
                 {"bSortable": true},                            // Collaborator Participant ID
-                {"bSortable": true},                            // Shipped Date
-                {"bSortable": true},                            // Received Date
-                {"bSortable": true, "sType": "numeric"},        // Volume
+                {"bSortable": true, "sType": "numeric"},        // Shipped Date
+                {"bSortable": true, "sType": "numeric"},        // Received Date
+                {"bSortable": true},                            // Collaborator Participant ID
+                {"bSortable": true, "sType": "numeric"},        // Sample Type
                 {"bSortable": true, "sType": "numeric"},        // Concentration
 
                 <c:if test="${actionBean.supportsRin}">
@@ -647,25 +649,29 @@ function formatInput(item) {
 
 <div id="placeConfirmation" style="display:none;" title="Place Order">
     <p>Click OK to place the order and make it available for lab work.</p>
-    <c:set var="numberSamplesToAbandon" value="${actionBean.editOrder.nonReceivedNonAbandonedCount}"/>
+    <c:set var="numberSamplesNotReceived" value="${actionBean.editOrder.sampleCount - actionBean.editOrder.receivedSampleCount}"/>
     <c:choose>
-        <c:when test="${numberSamplesToAbandon == 1}">
+        <c:when test="${numberSamplesNotReceived == 1}">
             <p>
                 <em>NOTE:</em> There is one sample that has not yet been received. If the order is placed,
-                this sample will be marked as abandoned.
+                this sample will be removed from the order.
             </p>
         </c:when>
-        <c:when test="${numberSamplesToAbandon > 1}">
+        <c:when test="${numberSamplesNotReceived > 1}">
             <p>
-                <em>NOTE:</em> There are ${numberSamplesToAbandon} samples that have not yet been received.
-                If the order is placed, these samples will be marked as abandoned.
+                <em>NOTE:</em> There are ${numberSamplesNotReceived} samples that have not yet been received.
+                If the order is placed, these samples will be removed from the order.
             </p>
         </c:when>
     </c:choose>
 
+    <div>
+        Regulatory Info: ${actionBean.regulatoryInfoForPendingOrder.displayText}
+    </div>
+
     <span class="control-group">
         <span class="controls">
-            <stripes:checkbox id="placeConfirmAttestation" name="attestationConfirmed"
+            <stripes:checkbox id="placeConfirmAttestation" name="editOrder.attestationConfirmed"
                               class="controls controls-text" style="margin-top: 0px; margin-right: 5px;"/>
         </span>
         <stripes:label for="placeConfirmAttestation" class="controls control-label"
@@ -714,8 +720,7 @@ function formatInput(item) {
                                     value="Place Order" class="btn"/>
                 </security:authorizeBlock>
             </c:if>
-            <%-- Do not show abandon button at all for DRAFTs, do show for Submitted *or later states* --%>
-            <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+            <security:authorizeBlock roles="${actionBean.modifyOrderRoles}">
                 <c:choose>
                     <c:when test="${actionBean.canAbandonOrder}">
                         <c:set var="abandonTitle" value="Click to abandon ${actionBean.editOrder.title}"/>
@@ -734,19 +739,24 @@ function formatInput(item) {
                                 class="btn padright" title="${abandonTitle}" disabled="${abandonDisable}"/>
             </security:authorizeBlock>
 
-            <security:authorizeBlock roles="<%= roles(Developer, PDM, BillingManager) %>">
-                <stripes:param name="selectedProductOrderBusinessKeys" value="${actionBean.editOrder.businessKey}"/>
-                <stripes:submit name="downloadBillingTracker" value="Download Billing Tracker" class="btn"
-                                style="margin-right:5px;"/>
-            </security:authorizeBlock>
+            <c:if test="${actionBean.editOrder.orderStatus.canBill()}">
 
-            <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
-                <stripes:link
-                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.UploadTrackerActionBean"
-                        event="view">
-                    Upload Billing Tracker
-                </stripes:link>
-            </security:authorizeBlock>
+                <security:authorizeBlock roles="<%= roles(Developer, PDM, BillingManager) %>">
+                    <stripes:param name="selectedProductOrderBusinessKeys" value="${actionBean.editOrder.businessKey}"/>
+                    <stripes:submit name="downloadBillingTracker" value="Download Billing Tracker" class="btn"
+                                    style="margin-right:5px;"/>
+                </security:authorizeBlock>
+
+                <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+                    <stripes:link
+                            beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.UploadTrackerActionBean"
+                            event="view">
+                        Upload Billing Tracker
+                    </stripes:link>
+                </security:authorizeBlock>
+
+            </c:if>
+
         </c:otherwise>
     </c:choose>
 
@@ -1128,26 +1138,27 @@ function formatInput(item) {
 </c:if>
 </div>
 
-<c:if test="${!actionBean.editOrder.draft || !actionBean.editOrder.isSampleInitiation()}">
+<c:if test="${!actionBean.editOrder.draft || !actionBean.editOrder.sampleInitiation}">
 
     <div class="borderHeader">
         <h4 style="display:inline">Samples</h4>
 
         <c:if test="${!actionBean.editOrder.draft}">
             <span class="actionButtons">
-                <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+                <security:authorizeBlock roles="${actionBean.modifyOrderRoles}">
                     <stripes:button name="deleteSamples" value="Delete Samples" class="btn"
                                     style="margin-left:30px;"
                                     onclick="showConfirm('deleteSamples', 'delete')"/>
 
-                    <stripes:button name="abandonSamples" value="Abandon Samples" class="btn"
-                                    style="margin-left:15px;"
-                                    onclick="showAbandonDialog()"/>
+                    <c:if test="${!actionBean.editOrder.pending}">
+                        <stripes:button name="abandonSamples" value="Abandon Samples" class="btn"
+                                        style="margin-left:15px;"
+                                        onclick="showAbandonDialog()"/>
 
-                    <stripes:button name="unAbandonSamples" value="Un-Abandon Samples" class="btn"
-                                    style="margin-left:15px;"
-                                    onclick="showUnAbandonDialog()"/>
-
+                        <stripes:button name="unAbandonSamples" value="Un-Abandon Samples" class="btn"
+                                        style="margin-left:15px;"
+                                        onclick="showUnAbandonDialog()"/>
+                    </c:if>
                     <stripes:button name="recalculateRisk" value="Recalculate Risk" class="btn"
                                     style="margin-left:15px;" onclick="showRecalculateRiskDialog()"/>
 
@@ -1171,7 +1182,7 @@ function formatInput(item) {
                 </security:authorizeBlock>
             </span>
 
-            <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+            <security:authorizeBlock roles="${actionBean.modifyOrderRoles}">
                 <div class="pull-right">
                     <stripes:text size="100" name="addSamplesText" style="margin-left:15px;"/>
                     <stripes:submit name="addSamples" value="Add Samples" class="btn" style="margin-right:15px;"/>
@@ -1202,6 +1213,7 @@ function formatInput(item) {
                 <th width="110">Collaborator Participant ID</th>
                 <th width="40">Shipped Date</th>
                 <th width="40">Received Date</th>
+                <th width="40">Sample Type</th>
                 <th width="40">Volume</th>
                 <th width="40">Concentration</th>
 
@@ -1260,6 +1272,7 @@ function formatInput(item) {
                             ${sample.labEventSampleDTO.sampleReceiptDate}
                     </td>
 
+                    <td id="sample-type-${sample.productOrderSampleId}"></td>
                     <td id="volume-${sample.productOrderSampleId}"></td>
                     <td id="concentration-${sample.productOrderSampleId}"></td>
 

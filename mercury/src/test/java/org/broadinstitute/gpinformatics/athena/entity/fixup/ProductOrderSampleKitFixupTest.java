@@ -75,7 +75,7 @@ public class ProductOrderSampleKitFixupTest extends Arquillian {
 
     }
 
-    @Test(groups = TestGroups.FIXUP, enabled = true)
+    @Test(groups = TestGroups.FIXUP, enabled = false)
     public void gplim3153_associate_mercurySamples_to_productOrderSamples() {
 
         int iteration = 1;

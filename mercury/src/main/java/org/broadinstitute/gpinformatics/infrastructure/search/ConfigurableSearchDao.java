@@ -22,6 +22,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * This class takes a search structure and converts it to Hibernate criteria. The intended
@@ -48,9 +49,6 @@ public class ConfigurableSearchDao extends GenericDao {
      */
     public static final int IN_QUERY_TOTAL_SIZE = 32768;
 
-    // todo jmt this should probably be supplied as a parameter, not stored as a field.
-    private ConfigurableSearchDefinition configurableSearchDefinition;
-
     /**
      * From a search definition, an instance, and sorting definition, build Hibernate criteria
      *
@@ -64,11 +62,10 @@ public class ConfigurableSearchDao extends GenericDao {
             ConfigurableSearchDefinition configurableSearchDefinition, SearchInstance searchInstance, String orderPath,
             String orderDirection) {
 
-        this.configurableSearchDefinition = configurableSearchDefinition;
         searchInstance.checkValues();
         HibernateEntityManager hibernateEntityManager = getEntityManager().unwrap(HibernateEntityManager.class);
         Session hibernateSession = hibernateEntityManager.getSession();
-        Criteria criteria = hibernateSession.createCriteria(configurableSearchDefinition.getResultEntity());
+        Criteria criteria = hibernateSession.createCriteria(configurableSearchDefinition.getResultEntity().getEntityClass());
         criteria.setResultTransformer(Criteria.DISTINCT_ROOT_ENTITY);
 
         // Each term contains a list of criteria names and a property. We may encounter
@@ -116,7 +113,7 @@ public class ConfigurableSearchDao extends GenericDao {
      * @param orderPath
      * @param orderDirection
      */
-    private static void addOrderByToCriteria(Criteria criteria, String orderPath, String orderDirection) {
+    private void addOrderByToCriteria(Criteria criteria, String orderPath, String orderDirection) {
 
         if (orderPath != null && orderDirection != null) {
 
@@ -154,7 +151,7 @@ public class ConfigurableSearchDao extends GenericDao {
     }
 
     /**
-     * Recurse over the hiearchical search instance and build Hibernate criteria
+     * Recurse over the search instance hierarchy and build Hibernate criteria
      *
      * @param depth                        The depth of the recursion, starting at 1
      * @param resultCriteria               Hibernate criteria for search result entity
@@ -164,7 +161,7 @@ public class ConfigurableSearchDao extends GenericDao {
      * @param searchValues                 list of search values at one level in the hieararchy
      * @param configurableSearchDefinition definitions of search terms
      */
-    private static void recurseSearchValues(int depth, Criteria resultCriteria, DetachedCriteria detachedCriteria,
+    private void recurseSearchValues(int depth, Criteria resultCriteria, DetachedCriteria detachedCriteria,
                                             Map<String, DetachedCriteria> mapPathToCriteria,
                                             List<SearchInstance.SearchValue> searchValues,
                                             ConfigurableSearchDefinition configurableSearchDefinition) {
@@ -243,13 +240,51 @@ public class ConfigurableSearchDao extends GenericDao {
      *
      * @param pagination to hold results IDs
      * @param criteria   from buildCriteria
+     * @param searchInstance search options
+     * @param configurableSearchDef search configuration
      */
-    public void startPagination(PaginationDao.Pagination pagination, Criteria criteria, boolean doInitialfullFetch ) {
-        pagination.setResultEntity(configurableSearchDefinition.getResultEntity()
-                , configurableSearchDefinition.getResultEntityId());
+    public void startPagination(PaginationDao.Pagination pagination, Criteria criteria, SearchInstance searchInstance,
+                                ConfigurableSearchDefinition configurableSearchDef ) {
+
+        pagination.setResultEntity(configurableSearchDef.getResultEntity());
         // TODO set join fetch paths? would require access to column defs
         PaginationDao paginationDao = new PaginationDao();
-        paginationDao.startPagination( criteria, pagination, doInitialfullFetch );
+
+        // Determine if we need to expand the core entity list
+        Map<String,Boolean> traversalEvaluatorValues = searchInstance.getTraversalEvaluatorValues();
+        boolean traversalRequired = ( configurableSearchDef.getTraversalEvaluators() != null
+            && traversalEvaluatorValues != null
+            && traversalEvaluatorValues.containsValue(Boolean.TRUE) );
+
+        if( !traversalRequired ) {
+            // Fetch only ID values for pagination if no traversal required
+            paginationDao.startPagination( criteria, pagination, false );
+        } else {
+            // Fetch the core entities before the traversal
+            paginationDao.startPagination( criteria, pagination, true );
+
+            TraversalEvaluator evaluator = null;
+            Set<Object> idList = null;
+
+            for( Map.Entry<String,TraversalEvaluator> configuredEvaluatorEntry : configurableSearchDef.getTraversalEvaluators().entrySet() ) {
+                // Traverse the options which are checked
+                Boolean doTraverse = traversalEvaluatorValues.get(configuredEvaluatorEntry.getKey());
+                if( doTraverse ) {
+                    evaluator = configuredEvaluatorEntry.getValue();
+                    if( idList == null ) {
+                        idList = evaluator.evaluate(pagination.getIdList());
+                    } else {
+                        idList.addAll(evaluator.evaluate(pagination.getIdList()));
+                    }
+                }
+            }
+
+            // Replace the full entities in the pagination with ids using last evaluator
+            List<Object> rootIdList = evaluator.buildEntityIdList(idList);
+            pagination.setIdList(rootIdList);
+
+        }
+
     }
 
     /**
@@ -258,7 +293,7 @@ public class ConfigurableSearchDao extends GenericDao {
      * @param searchValue contains operator chosen by user
      * @return Hibernate restriction
      */
-    private static Criterion buildCriterion(SearchInstance.SearchValue searchValue) {
+    private Criterion buildCriterion(SearchInstance.SearchValue searchValue) {
         Criterion criterion;
         // Add the criterion for the search value
         List<Object> propertyValues = searchValue.convertSearchValue();
@@ -309,7 +344,7 @@ public class ConfigurableSearchDao extends GenericDao {
      * {@code Restrictions.in(searchValue.getPropertyName(), propertyValues)}.
      * Respects the {@code searchValue.getCaseInsensitive()} property.
      */
-    private static Criterion createInCriterion(SearchInstance.SearchValue searchValue, List<Object> propertyValues) {
+    private Criterion createInCriterion(SearchInstance.SearchValue searchValue, List<Object> propertyValues) {
 
         Criterion criterion = null;
 
@@ -349,7 +384,7 @@ public class ConfigurableSearchDao extends GenericDao {
      * @param nestedCriteria    the criteria that will be attached to the result entity
      * @return the end of the criteria path
      */
-    private static DetachedCriteria createCriteria(Map<String, DetachedCriteria> mapPathToCriteria,
+    private DetachedCriteria createCriteria(Map<String, DetachedCriteria> mapPathToCriteria,
                                                    SearchTerm.CriteriaPath criteriaPath,
                                                    DetachedCriteria nestedCriteria) {
 
@@ -371,7 +406,7 @@ public class ConfigurableSearchDao extends GenericDao {
         return nestedCriteria;
     }
 
-    private static String getCriteriaKey(String path) {
+    private String getCriteriaKey(String path) {
         return path + "|";
     }
 }

@@ -16,12 +16,12 @@ import java.util.HashMap;
 /**
  * Validate that the event vessel plugin locates and builds container arrays correctly
  */
+@Test(groups = TestGroups.STANDARD)
 public class EventVesselPluginTest extends ContainerTest {
 
     @Inject
     private LabEventDao labEventDao;
 
-    @Test(groups = TestGroups.STANDARD)
     public void testNestedTablePlugin() {
 
         LabEvent labEvent = labEventDao.findById(LabEvent.class, new Long(617246));

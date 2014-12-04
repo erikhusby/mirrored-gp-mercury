@@ -422,6 +422,11 @@ todo jmt adder methods
         return labEventType;
     }
 
+    /** For data fixup use only. */
+    void setLabEventType(LabEventType labEventType) {
+        this.labEventType = labEventType;
+    }
+
     public void setLabBatch(LabBatch labBatch) {
         this.labBatch = labBatch;
         labBatch.addLabEvent(this);

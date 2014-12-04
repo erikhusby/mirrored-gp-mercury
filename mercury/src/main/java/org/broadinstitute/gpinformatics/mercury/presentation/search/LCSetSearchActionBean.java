@@ -75,7 +75,7 @@ public class LCSetSearchActionBean extends SearchActionBean {
             for (LabVessel startingVessel : startingBatchLabVessels) {
                 sampleNames.addAll(startingVessel.getSampleNames());
                 Map<LabEvent, Set<LabVessel>> eventListMap =
-                        startingVessel.findVesselsForLabEventType(LabEventType.SAMPLE_IMPORT);
+                        startingVessel.findVesselsForLabEventType(LabEventType.SAMPLE_IMPORT, true);
                 for (Map.Entry<LabEvent, Set<LabVessel>> entry : eventListMap.entrySet()) {
                     for (LabVessel sourceVessel : entry.getValue()) {
                         Set<SampleInstance> sampleInstances = sourceVessel.getSampleInstances();
@@ -136,7 +136,7 @@ public class LCSetSearchActionBean extends SearchActionBean {
     }
 
     public String getPositionsForEvent(LabVessel vessel, LabEventType type) {
-        Map<LabEvent, Set<LabVessel>> eventMap = vessel.findVesselsForLabEventType(type);
+        Map<LabEvent, Set<LabVessel>> eventMap = vessel.findVesselsForLabEventType(type, true);
 
         Set<MercurySample> allMercurySamples = new HashSet<>();
         Collection<LabVessel> descendants = vessel.getDescendantVessels();
