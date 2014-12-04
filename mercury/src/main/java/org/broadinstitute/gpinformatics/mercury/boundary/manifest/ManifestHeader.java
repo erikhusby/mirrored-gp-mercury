@@ -32,6 +32,9 @@ public enum ManifestHeader implements ColumnHeader {
     private final String columnName;
     private final Metadata.Key metadataKey;
 
+    public static final String NO_MANIFEST_HEADER_FOUND_FOR_COLUMN =
+            "No ManifestHeader found for columnHeader: ";
+
     ManifestHeader(String columnName, Metadata.Key metadataKey) {
         this.columnName = columnName;
         this.metadataKey = metadataKey;
@@ -107,7 +110,7 @@ public enum ManifestHeader implements ColumnHeader {
 
                 // If a header cell is not blank.
                 if (!e.constantName().isEmpty()) {
-                    errors.add(e.constantName());
+                    errors.add(columnName);
                 }
             }
         }
@@ -121,7 +124,7 @@ public enum ManifestHeader implements ColumnHeader {
      *
      * @return ManifestHeader for given column.
      *
-     * @throws EnumConstantNotPresentException if enum does not exist for columnHeader.
+     * @throws IllegalArgumentException if enum does not exist for columnHeader.
      */
     public static ManifestHeader fromColumnName(String columnHeader) {
         for (ManifestHeader manifestHeader : ManifestHeader.values()) {
@@ -129,7 +132,7 @@ public enum ManifestHeader implements ColumnHeader {
                 return manifestHeader;
             }
         }
-        throw new EnumConstantNotPresentException(ManifestHeader.class, columnHeader);
+        throw new IllegalArgumentException(NO_MANIFEST_HEADER_FOUND_FOR_COLUMN + columnHeader);
     }
 
     /**
