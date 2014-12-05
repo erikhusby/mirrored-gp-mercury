@@ -62,18 +62,13 @@ public abstract class AbstractSample {
     @Nonnull
     public SampleData getSampleData() {
         if (!hasBspSampleDataBeenInitialized) {
-            // We allow non-BSP samples through for test cases only.
-            // FIXME: update tests to produce BSP sample names so this check is unnecessary.
-            if (isInBspFormat() ||
-                ServiceAccessUtility.getBean(BSPConfig.class).getMercuryDeployment() != Deployment.PROD) {
 
-                SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
-                sampleData = sampleDataFetcher.fetchSampleData(getSampleKey());
+            SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
+            sampleData = sampleDataFetcher.fetchSampleData(getSampleKey());
 
-                // If there is no DTO, create one with no data populated.
-                if (sampleData == null) {
-                    sampleData = makeSampleData();
-                }
+            // If there is no DTO, create one with no data populated.
+            if (sampleData == null) {
+                sampleData = makeSampleData();
             }
 
             hasBspSampleDataBeenInitialized = true;
