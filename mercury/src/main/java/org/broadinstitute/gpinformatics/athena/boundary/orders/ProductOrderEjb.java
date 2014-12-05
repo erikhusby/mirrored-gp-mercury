@@ -122,7 +122,7 @@ public class ProductOrderEjb {
      */
     public void removeNonReceivedSamples(ProductOrder editOrder,
                                          MessageReporter reporter) throws NoSuchPDOException, IOException {
-        // Note that calling getSampleCount() will cause the sample data for all samples to be
+        // Note that calling getReceivedSampleCount() will cause the sample data for all samples to be
         // fetched if it hasn't been already. This is good because without it each call to getSampleData() below
         // would fetch it one sample at a time.
         List<ProductOrderSample> samplesToRemove =
