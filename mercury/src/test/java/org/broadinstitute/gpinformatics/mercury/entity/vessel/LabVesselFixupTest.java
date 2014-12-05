@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormation
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
+import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
@@ -555,18 +556,6 @@ public class LabVesselFixupTest extends Arquillian {
         barcodedTubeDao.remove(oldTube);
     }
 
-    /**
-     * This is done before importing index plates from Squid.
-     */
-    @Test(enabled = false)
-    public void fixupGplim3164() {
-        userBean.loginOSUser();
-        StaticPlate staticPlate = staticPlateDao.findByBarcode("000001814423");
-        System.out.println("Renaming plate " + staticPlate.getLabel());
-        staticPlate.setLabel("000001814423-GPLIM-3164");
-        staticPlateDao.flush();
-    }
-
     @Test(enabled = false)
     public void gplim3103UpdateVolumes() {
         userBean.loginOSUser();
@@ -867,6 +856,26 @@ public class LabVesselFixupTest extends Arquillian {
             }
             tube.setLabel(barcode + "gplim3154");
         }
+        barcodedTubeDao.flush();
+    }
+    
+    @Test(enabled = false)
+    public void gplim3247FixupVolumes() {
+        userBean.loginOSUser();
+        Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(Arrays.asList(
+                "0175569248",
+                "0175569269",
+                "0175569227",
+                "0175569290"
+        ));
+        for (Map.Entry<String, BarcodedTube> stringBarcodedTubeEntry : mapBarcodeToTube.entrySet()) {
+            if (stringBarcodedTubeEntry.getValue() == null) {
+                throw new RuntimeException("Failed to find tube " + stringBarcodedTubeEntry.getKey());
+            }
+            System.out.println("Setting " + stringBarcodedTubeEntry.getKey() + " to 0");
+            stringBarcodedTubeEntry.getValue().setVolume(new BigDecimal("0.00"));
+        }
+        barcodedTubeDao.persist(new FixupCommentary("GPLIM-3247 set volumes to 0"));
         barcodedTubeDao.flush();
     }
 }
