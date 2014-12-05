@@ -9,14 +9,24 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Functionality required to traverse ancestor and/or descendant events of a set of starting lab events.
+ * Functionality required to traverse ancestor and descendant events of a set of starting lab events.
  * Starts with a List of LabEvent objects and returns an event date-location-disambiguator sorted List
  *    of labEventID (Long) values to use for pagination.
+ * Directionality implemented in AncestorTraversalEvaluator and DescendantTraversalEvaluator nested classes
  */
-public class LabEventTraversalEvaluator extends ConfigurableSearchDefinition.TraversalEvaluator<List<?>> {
+public abstract class LabEventTraversalEvaluator extends TraversalEvaluator {
 
+    protected TransferTraverserCriteria.TraversalDirection traversalDirection;
+
+    public LabEventTraversalEvaluator(){ }
+
+    /**
+     * Traverse ancestor and/or descendants of supplied event list (or neither if no options selected).
+     * @param rootEntities
+     * @return
+     */
     @Override
-    public List<?> evaluate(List<?> rootEntities, boolean doAncestorTraversal, boolean doDescendantTraversal) {
+    public Set<Object> evaluate(List<?> rootEntities) {
 
         TransferTraverserCriteria.LabEventDescendantCriteria eventTraversalCriteria =
                 new TransferTraverserCriteria.LabEventDescendantCriteria();
@@ -28,24 +38,27 @@ public class LabEventTraversalEvaluator extends ConfigurableSearchDefinition.Tra
             eventTraversalCriteria.getAllEvents().add(startingEvent);
         }
 
-        // Do the traversals as selected by user
-        if( doDescendantTraversal ) {
-            traverse( eventTraversalCriteria, rootEvents, TransferTraverserCriteria.TraversalDirection.Descendants);
-        }
-        if( doAncestorTraversal ) {
-            traverse( eventTraversalCriteria, rootEvents, TransferTraverserCriteria.TraversalDirection.Ancestors);
-        }
+        // Do the traversal
+        traverse( eventTraversalCriteria, rootEvents, traversalDirection);
 
-        Set<LabEvent> sortedSet = eventTraversalCriteria.getAllEvents();
-        List<Long> idList = new ArrayList<>();
+        Set sortedSet = eventTraversalCriteria.getAllEvents();
 
-        // Replace entire original list contents
-        for (LabEvent event : sortedSet) {
-            idList.add(event.getLabEventId());
-        }
-
-        return idList;
+        return sortedSet;
     }
+
+    /**
+     * Convert a collection of LabEvent objects to ids (Long)
+     * @param entities
+     * @return
+     */
+    @Override
+    public List<Long> buildEntityIdList( Set entities ) {
+        List<Long> idList = new ArrayList<>();
+        for( LabEvent labEvent : (Set<LabEvent>)entities ) {
+            idList.add(labEvent.getLabEventId());
+        }
+        return idList;
+    };
 
     private void traverse( TransferTraverserCriteria.LabEventDescendantCriteria eventTraversalCriteria,
                            List<LabEvent> rootEvents, TransferTraverserCriteria.TraversalDirection traversalDirection ){
@@ -77,4 +90,29 @@ public class LabEventTraversalEvaluator extends ConfigurableSearchDefinition.Tra
             }
         }
     }
+
+    /**
+     * Implementation of the Lab Event ancestor traversal evaluator
+     */
+    public static class AncestorTraversalEvaluator extends LabEventTraversalEvaluator{
+        // ID = "ancestorOptionEnabled"
+        public AncestorTraversalEvaluator() {
+            setHelpNote("Lab Events leading up to a primary Lab Event (ancestors)");
+            setLabel("Traverse Ancestors");
+            traversalDirection = TransferTraverserCriteria.TraversalDirection.Ancestors;
+        }
+    }
+
+    /**
+     * Implementation of the Lab Event descendant traversal evaluator
+     */
+    public static class DescendantTraversalEvaluator extends LabEventTraversalEvaluator{
+        // ID = "descendantOptionEnabled"
+        public DescendantTraversalEvaluator() {
+            setHelpNote("Lab Events following a primary Lab Event (descendants)");
+            setLabel("Traverse Descendants");
+            traversalDirection = TransferTraverserCriteria.TraversalDirection.Descendants;
+        }
+    }
+
 }

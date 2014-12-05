@@ -22,6 +22,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * This class takes a search structure and converts it to Hibernate criteria. The intended
@@ -239,6 +240,8 @@ public class ConfigurableSearchDao extends GenericDao {
      *
      * @param pagination to hold results IDs
      * @param criteria   from buildCriteria
+     * @param searchInstance search options
+     * @param configurableSearchDef search configuration
      */
     public void startPagination(PaginationDao.Pagination pagination, Criteria criteria, SearchInstance searchInstance,
                                 ConfigurableSearchDefinition configurableSearchDef ) {
@@ -247,24 +250,41 @@ public class ConfigurableSearchDao extends GenericDao {
         // TODO set join fetch paths? would require access to column defs
         PaginationDao paginationDao = new PaginationDao();
 
-        boolean doAncestorTraversal = searchInstance.getAncestorOptionEnabled();
-        boolean doDescendantTraversal = searchInstance.getDescendantOptionEnabled();
+        // Determine if we need to expand the core entity list
+        Map<String,Boolean> traversalEvaluatorValues = searchInstance.getTraversalEvaluatorValues();
+        boolean traversalRequired = ( configurableSearchDef.getTraversalEvaluators() != null
+            && traversalEvaluatorValues != null
+            && traversalEvaluatorValues.containsValue(Boolean.TRUE) );
 
-        if( doAncestorTraversal || doDescendantTraversal ) {
+        if( !traversalRequired ) {
+            // Fetch only ID values for pagination if no traversal required
+            paginationDao.startPagination( criteria, pagination, false );
+        } else {
+            // Fetch the core entities before the traversal
+            paginationDao.startPagination( criteria, pagination, true );
 
-            ConfigurableSearchDefinition.TraversalEvaluator<List<?>> traversalEvaluator = configurableSearchDef.getTraversalEvaluator();
-            if( traversalEvaluator == null ) {
-                throw new RuntimeException("No traversal evaluator configured for search definition");
+            TraversalEvaluator evaluator = null;
+            Set<Object> idList = null;
+
+            for( Map.Entry<String,TraversalEvaluator> configuredEvaluatorEntry : configurableSearchDef.getTraversalEvaluators().entrySet() ) {
+                // Traverse the options which are checked
+                Boolean doTraverse = traversalEvaluatorValues.get(configuredEvaluatorEntry.getKey());
+                if( doTraverse ) {
+                    evaluator = configuredEvaluatorEntry.getValue();
+                    if( idList == null ) {
+                        idList = evaluator.evaluate(pagination.getIdList());
+                    } else {
+                        idList.addAll(evaluator.evaluate(pagination.getIdList()));
+                    }
+                }
             }
 
-            // Flag pagination to do an initial full entity fetch then replace entities with IDs
-            paginationDao.startPagination( criteria, pagination, true );
-            List<?> idList = traversalEvaluator.evaluate( pagination.getIdList(), doAncestorTraversal, doDescendantTraversal );
-            pagination.setIdList(idList);
-        } else {
-            // Legacy pagination - initially fetches only ID values
-            paginationDao.startPagination( criteria, pagination, false );
+            // Replace the full entities in the pagination with ids using last evaluator
+            List<Object> rootIdList = evaluator.buildEntityIdList(idList);
+            pagination.setIdList(rootIdList);
+
         }
+
     }
 
     /**

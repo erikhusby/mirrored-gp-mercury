@@ -177,7 +177,7 @@ public class ProductOrderDaoTest extends ContainerTest {
 
         List<ProductOrder> productOrders = productOrderDao.findBySampleBarcodes("NTC", "SC_9001");
         Assert.assertNotNull(productOrders);
-        Assert.assertEquals(productOrders.size(), 3);
+        Assert.assertTrue(productOrders.size() >= 3);
 
         Map<String, ProductOrder> productOrderMap = new HashMap<>();
         for (ProductOrder productOrder : productOrders) {

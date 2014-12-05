@@ -84,6 +84,13 @@ public class LabMetricRun {
         return metricType;
     }
 
+    /**
+     * For fixups only.
+     */
+    void setMetricType(LabMetric.MetricType metricType) {
+        this.metricType = metricType;
+    }
+
     public Set<LabMetric> getLabMetrics() {
         return labMetrics;
     }
