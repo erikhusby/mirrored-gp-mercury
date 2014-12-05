@@ -11,8 +11,15 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Class containing alternative implementations of {@link SampleDataFetcher} for use as alternatives in Arquillian
+ * tests.
+ */
 public class SampleDataFetcherStub {
 
+    /**
+     * SampleDataFetcher implementation that returns a human sample for any sample it is asked about.
+     */
     @Alternative
     public static class EverythingYouAskForYouGetAndItsHuman extends SampleDataFetcher {
 
