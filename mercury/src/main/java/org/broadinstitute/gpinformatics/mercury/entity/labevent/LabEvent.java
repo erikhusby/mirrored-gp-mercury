@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
@@ -482,10 +483,10 @@ todo jmt adder methods
         Map<LabBatch, Integer> mapLabBatchToCount = new HashMap<>();
         int numVesselsWithBucketEntries = 0;
         for (CherryPickTransfer cherryPickTransfer : cherryPickTransfers) {
-            LabVessel sourceVessel = cherryPickTransfer.getSourceVesselContainer()
-                    .getVesselAtPosition(cherryPickTransfer.getSourcePosition());
+            Set<SampleInstanceV2> sampleInstancesAtPositionV2 = cherryPickTransfer.getSourceVesselContainer()
+                    .getSampleInstancesAtPositionV2(cherryPickTransfer.getSourcePosition());
             numVesselsWithBucketEntries = VesselContainer.collateLcSets(mapLabBatchToCount, numVesselsWithBucketEntries,
-                    sourceVessel);
+                    sampleInstancesAtPositionV2);
         }
         return VesselContainer.computeLcSets(mapLabBatchToCount, numVesselsWithBucketEntries);
     }

@@ -689,9 +689,8 @@ public class VesselContainer<T extends LabVessel> {
         Map<LabBatch, Integer> mapLabBatchToCount = new HashMap<>();
         int numSampleInstanceWithBucketEntries = 0;
         for (VesselPosition vesselPosition : section.getWells()) {
-            T vesselAtPosition = getVesselAtPosition(vesselPosition);
             numSampleInstanceWithBucketEntries = collateLcSets(mapLabBatchToCount, numSampleInstanceWithBucketEntries,
-                    vesselAtPosition);
+                    getSampleInstancesAtPositionV2(vesselPosition));
         }
         return computeLcSets(mapLabBatchToCount, numSampleInstanceWithBucketEntries);
     }
@@ -700,34 +699,32 @@ public class VesselContainer<T extends LabVessel> {
      * Calculates the number of bucket entries for each LCSET.
      * @param mapLabBatchToCount map from LCSET to count of bucket entries
      * @param numSampleInstanceWithBucketEntries number of sample instances that have at least one bucket entry
-     * @param labVessel vessel to evaluate
+     * @param sampleInstancesAtPositionV2 Sample instances to evaluate
      * @return changed numSampleInstanceWithBucketEntries
      */
     public static int collateLcSets(Map<LabBatch, Integer> mapLabBatchToCount, int numSampleInstanceWithBucketEntries,
-            LabVessel labVessel) {
-        if (labVessel != null) {
-            Set<LabBatch> labBatches = new HashSet<>();
-            for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-                List<BucketEntry> allBucketEntries = sampleInstanceV2.getAllBucketEntries();
-                for (BucketEntry bucketEntry : allBucketEntries) {
-                    if (bucketEntry.getLabBatch() != null) {
-                        labBatches.add(bucketEntry.getLabBatch());
-                    }
+                                    Set<SampleInstanceV2> sampleInstancesAtPositionV2 ) {
+        Set<LabBatch> labBatches = new HashSet<>();
+        for (SampleInstanceV2 sampleInstanceV2 : sampleInstancesAtPositionV2) {
+            List<BucketEntry> allBucketEntries = sampleInstanceV2.getAllBucketEntries();
+            for (BucketEntry bucketEntry : allBucketEntries) {
+                if (bucketEntry.getLabBatch() != null) {
+                    labBatches.add(bucketEntry.getLabBatch());
                 }
+            }
 
-                if (!labBatches.isEmpty()) {
-                    numSampleInstanceWithBucketEntries++;
-                }
+            if (!labBatches.isEmpty()) {
+                numSampleInstanceWithBucketEntries++;
             }
-            for (LabBatch labBatch : labBatches) {
-                Integer count = mapLabBatchToCount.get(labBatch);
-                if (count == null) {
-                    count = 1;
-                } else {
-                    count = count + 1;
-                }
-                mapLabBatchToCount.put(labBatch, count);
+        }
+        for (LabBatch labBatch : labBatches) {
+            Integer count = mapLabBatchToCount.get(labBatch);
+            if (count == null) {
+                count = 1;
+            } else {
+                count = count + 1;
             }
+            mapLabBatchToCount.put(labBatch, count);
         }
         return numSampleInstanceWithBucketEntries;
     }
