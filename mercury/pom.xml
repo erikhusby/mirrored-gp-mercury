@@ -1656,7 +1656,7 @@
         <dependency>
             <groupId>lims</groupId>
             <artifactId>limsThrift</artifactId>
-            <version>1.0-20140820.174647-57</version>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>

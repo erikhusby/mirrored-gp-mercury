@@ -52,6 +52,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -121,7 +122,7 @@ public class ProductOrderEjb {
      */
     public void removeNonReceivedSamples(ProductOrder editOrder,
                                          MessageReporter reporter) throws NoSuchPDOException, IOException {
-        // Note that calling getSampleCount() will cause the sample data for all samples to be
+        // Note that calling getReceivedSampleCount() will cause the sample data for all samples to be
         // fetched if it hasn't been already. This is good because without it each call to getSampleData() below
         // would fetch it one sample at a time.
         List<ProductOrderSample> samplesToRemove =
@@ -952,6 +953,7 @@ public class ProductOrderEjb {
                 ProductOrderJiraUtil.createIssueForOrder(editOrder, jiraService);
             }
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+            editOrder.setPlacedDate(new Date());
             transitionIssueToSameOrderStatus(editOrder);
 
             // Now that the order is placed, add the comments about the samples to the issue.
