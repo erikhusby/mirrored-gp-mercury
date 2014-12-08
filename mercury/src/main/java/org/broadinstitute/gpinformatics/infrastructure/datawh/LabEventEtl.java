@@ -313,8 +313,10 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                                 WorkflowConfigDenorm wfDenorm = workflowConfigLookup.lookupWorkflowConfig(
                                         eventName, workflowName, entity.getEventDate());
 
-                                boolean canEtl = labBatch != null && labBatch.getLabBatchType() == LabBatchType.WORKFLOW
-                                                 || wfDenorm != null && (pdo != null || !wfDenorm.isProductOrderNeeded());
+                                boolean canEtl = wfDenorm != null &&
+                                                 (labBatch != null && labBatch.getLabBatchType() == LabBatchType.WORKFLOW
+                                                  || !wfDenorm.isBatchNeeded()) &&
+                                                 (pdo != null || !wfDenorm.isProductOrderNeeded());
 
                                 dtos.add(new EventFactDto(entity, vessel, null, batchName, workflowName,
                                         sample, pdo, wfDenorm, canEtl));
