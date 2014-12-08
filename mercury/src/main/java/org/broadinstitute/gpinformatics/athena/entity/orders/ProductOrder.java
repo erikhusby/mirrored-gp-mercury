@@ -321,13 +321,15 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     public static void loadSampleData(List<ProductOrderSample> samples) {
 
         // Create a subset of the samples so we only call BSP for BSP samples that aren't already cached.
-        Set<String> sampleNames = new HashSet<>(samples.size());
+        List<ProductOrderSample> samplesNeedingData = new ArrayList<>(samples.size());
+
         for (ProductOrderSample productOrderSample : samples) {
-            if (productOrderSample.needsBspMetaData()) {
-                sampleNames.add(productOrderSample.getName());
+            if(productOrderSample.needsBspMetaData()) {
+                samplesNeedingData.add(productOrderSample);
             }
         }
-        if (sampleNames.isEmpty()) {
+
+        if(samplesNeedingData.isEmpty()) {
             // This early return is needed to avoid making a unnecessary injection, which could cause
             // DB Free automated tests to fail.
             return;
@@ -335,7 +337,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
         // This gets all the sample names. We could get unique sample names from BSP as a future optimization.
         SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
-        Map<String, SampleData> sampleDataMap = sampleDataFetcher.fetchSampleData(sampleNames);
+        Map<String, SampleData> sampleDataMap = sampleDataFetcher.fetchSampleDataForProductOrderSample(samplesNeedingData);
 
         // Collect SampleData which we will then use to look up FFPE status.
         List<SampleData> nonNullSampleData = new ArrayList<>();
