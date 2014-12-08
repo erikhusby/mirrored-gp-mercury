@@ -226,6 +226,7 @@ public class ProductOrderEjbTest {
         ProductOrder order = ProductOrderTestFactory.createDummyProductOrder(0, jiraTicketKey);
 
         Mockito.when(productOrderDaoMock.findByBusinessKey(Mockito.eq(jiraTicketKey))).thenReturn(order);
+        Mockito.when(mockUserBean.getBspUser()).thenReturn(new BSPUserList.QADudeUser("PM", 2423L));
 
         String[] sampleNames = {"SM-smpl1", "SM-smpl2", "SM-smpl3", "SM-smpl4", "SM-smpl5"};
         List<ProductOrderSample> samples = ProductOrderSampleTestFactory.createDBFreeSampleList(sampleNames);
@@ -237,7 +238,7 @@ public class ProductOrderEjbTest {
 
         assertThat(order.getSamples(), is(empty()));
 
-        productOrderEjb.addSamples(qaDudeUser, jiraTicketKey, samples, mockReporter);
+        productOrderEjb.addSamples(jiraTicketKey, samples, mockReporter);
         assertThat(order.getSamples(), is(not(empty())));
         assertThat(order.getSamples().size(), is(Matchers.equalTo(5)));
         for (ProductOrderSample sample : order.getSamples()) {

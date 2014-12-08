@@ -215,17 +215,6 @@ public class ResearchProjectTest {
         Assert.assertEquals(found, expected);
     }
 
-    /**
-     * Attempts to update a Jira ResearchProject which should throw an exception when the expected transition is not
-     * available.
-     */
-    @Test(expectedExceptions = NoJiraTransitionException.class)
-    public void testUpdateResearchProjectAndThrowAnException() throws IOException {
-        ResearchProjectEjb researchProjectEjb = setupMocksSoThatThereAreNotJiraTransitions();
-        researchProjectEjb.submitToJira(researchProject);
-        Assert.fail("I was expecting an exception to be thrown before I got here!");
-    }
-
     @Test
     public void testCollectAllSamples() throws Exception {
         ProductOrder dummyProductOrder1 =
@@ -275,7 +264,5 @@ public class ResearchProjectTest {
                 bspCohortList, AppConfig.produce(Deployment.STUBBY), researchProjectDao, submissionsService);
 
     }
-
-
 }
 

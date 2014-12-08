@@ -902,7 +902,7 @@ public class ProductOrderEjb {
             }
         }
 
-        order.prepareToSave(bspUser);
+        order.prepareToSave(userBean.getBspUser());
         productOrderDao.persist(order);
         handleSamplesAdded(jiraTicketKey, samples, reporter);
 
