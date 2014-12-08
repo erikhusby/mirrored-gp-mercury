@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
@@ -16,7 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Business logic for determining the sample data source for Mercury LIMS samples. Historically, the only place that
+ * Business logic for determining the sample data source for samples in mercury. Historically, the only place that
  * Mercury would look for sample data was BSP. Later, there came a need to store sample data directly in Mercury. The
  * primary determination is based on {@link MercurySample#metadataSource}. When there is no MercurySample for a sample
  * ID being queried (e.g. because it has been entered in a PDO but has not been introduced to Mercury LIMS), BSP is
@@ -90,13 +91,12 @@ public class SampleDataSourceResolver {
     }
 
     public void populateSampleDataSources(Collection<ProductOrderSample> productOrderSamples) {
-        Set<String> sampleIds = new HashSet<>();
-        for (ProductOrderSample productOrderSample : productOrderSamples) {
-            sampleIds.add(productOrderSample.getSampleKey());
-        }
+        Set<String> sampleIds = new HashSet<>(ProductOrderSample.getSampleNames(productOrderSamples));
 
-        final Map<String, MercurySample.MetadataSource> sampleDataSources =
-                resolveSampleDataSources(sampleIds);
+        Map<String, MercurySample.MetadataSource> sampleDataSources =
+                ProductOrderSample.getMetadataSourcesForBoundProductOrderSamples(productOrderSamples);
+        sampleIds.removeAll(sampleDataSources.keySet());
+        sampleDataSources.putAll(resolveSampleDataSources(sampleIds));
 
         for (ProductOrderSample productOrderSample : productOrderSamples) {
             productOrderSample.setMetadataSource(sampleDataSources.get(productOrderSample.getSampleKey()));
