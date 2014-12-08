@@ -60,6 +60,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -804,15 +805,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return sampleCounts.totalSampleCount - sampleCounts.uniqueSampleCount;
     }
 
-    /**
-     * Exposes how many of the samples, which are registered to this product order, are from BSP.
-     *
-     * @return a count of all product order samples that come from bsp
-     */
-    public int getSampleCountForSource(MercurySample.MetadataSource metadataSource) {
-        return updateSampleCounts().samplesCountsBySource.get(metadataSource).getTotal();
-    }
-
     public int getTumorCount() {
         return updateSampleCounts().sampleTypeCounter.get(ProductOrderSample.TUMOR_IND);
     }
@@ -1259,7 +1251,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         private final Counter sampleTypeCounter = new Counter();
         private boolean countsValid;
         private int totalSampleCount;
-        private int totalSamplesWithMetadata;
         private int onRiskCount;
         private int lastPicoCount;
         private int receivedSampleCount;
@@ -1269,15 +1260,19 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         private int uniqueSampleCount;
         private int uniqueParticipantCount;
 
-        // This keeps track of unique and total samples per metadataSource.
-        private Map<MercurySample.MetadataSource, SampleCountForSource> samplesCountsBySource = new HashMap<>();
+        /**
+         * This keeps track of unique and total samples per metadataSource.
+         */
+        private Map<MercurySample.MetadataSource, SampleCountForSource> samplesCountsBySource =
+                new EnumMap<>(MercurySample.MetadataSource.class);
 
-        // This is the number of samples that are both not received and not abandoned. This is to compute
-        // the number of samples that will become abandoned when a Pending PDO is placed.
+        /**
+         * This is the number of samples that are both not received and not abandoned. This is to compute the number
+         * of samples that will become abandoned when a Pending PDO is placed.
+         */
         private int notReceivedAndNotAbandonedCount;
 
         private void initializeSamplesCountsBySource() {
-            samplesCountsBySource.clear();
             for (MercurySample.MetadataSource metadataSource : MercurySample.MetadataSource.values()) {
                 samplesCountsBySource.put(metadataSource, new SampleCountForSource());
             }
@@ -1327,8 +1322,18 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         }
 
         private void incrementSampleCountByMetadata(ProductOrderSample sample) {
-            samplesCountsBySource.get(sample.getMetadataSource()).increment(sample.getName());
-            totalSamplesWithMetadata++;
+            samplesCountsBySource.get(sample.getMetadataSource()).addSample(sample.getName());
+        }
+
+        /**
+         * This method returns the total number of unique samples that have MercurySample.MetadataSource.
+         */
+        private int getTotalUniqueSamplesWithMetadata() {
+            int total = 0;
+            for (SampleCountForSource counts : samplesCountsBySource.values()) {
+                total += counts.getTotal();
+            }
+            return total;
         }
 
         /**
@@ -1336,7 +1341,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
          */
         private void clearAllData() {
             totalSampleCount = samples.size();
-            totalSamplesWithMetadata = 0;
             receivedSampleCount = 0;
             activeSampleCount = 0;
             hasSampleKitUploadRackscanMismatch = 0;
@@ -1401,14 +1405,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         }
 
         /**
-         * Format the number to say None if the value is zero, or All if it matches the comparison number.
+         * Format the number to say None if the value is zero if it matches the comparison number.
          *
          * @param metadataSource The metadataSource for this sample
          * @param count        The number to format
          */
         private void formatSummaryNumber(List<String> output, String message,
                                          MercurySample.MetadataSource metadataSource, int count) {
-                output.add(MessageFormat.format(message, metadataSource.getValue(), count));
+                output.add(MessageFormat.format(message, metadataSource.getDisplayName(), count));
         }
 
         /**
@@ -1422,7 +1426,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
         private void formatSummaryNumber(List<String> output, String message,
                                          MercurySample.MetadataSource metadataSource, int count, int compareCount) {
-                output.add(MessageFormat.format(message, metadataSource.getValue(), formatCountTotal(count, compareCount)));
+                output.add(MessageFormat.format(message, metadataSource.getDisplayName(), formatCountTotal(count, compareCount)));
         }
 
         /**
@@ -1440,43 +1444,49 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             generateCounts();
 
             List<String> output = new ArrayList<>();
-            formatSummaryNumber(output, "Total: {0}", totalSampleCount);
-            formatSummaryNumber(output, "Unique: {0}", uniqueSampleCount, totalSampleCount);
-            formatSummaryNumber(output, "Duplicate: {0}", totalSampleCount - uniqueSampleCount, totalSampleCount);
-            formatSummaryNumber(output, "On Risk: {0}", onRiskCount, totalSampleCount);
+            if (totalSampleCount == 0) {
+                output.add("No Samples");
+            } else {
+                formatSummaryNumber(output, "Total: {0}", totalSampleCount);
+                formatSummaryNumber(output, "Unique: {0}", uniqueSampleCount, totalSampleCount);
+                formatSummaryNumber(output, "Duplicate: {0}", totalSampleCount - uniqueSampleCount, totalSampleCount);
+                formatSummaryNumber(output, "On Risk: {0}", onRiskCount, totalSampleCount);
+                int totalUniqueSamplesWithMetadata = getTotalUniqueSamplesWithMetadata();
 
-            for (MercurySample.MetadataSource metadataSource : MercurySample.MetadataSource.values()) {
-                int currentCount = samplesCountsBySource.get(metadataSource).getTotal();
-                int currentUnique = samplesCountsBySource.get(metadataSource).getUnique();
+                for (MercurySample.MetadataSource metadataSource : MercurySample.MetadataSource.values()) {
+                    int currentCount = samplesCountsBySource.get(metadataSource).getTotal();
+                    int currentUnique = samplesCountsBySource.get(metadataSource).getUnique();
 
-                formatSummaryNumber(output, "From {0}: {1}", metadataSource, currentCount, totalSampleCount);
+                    formatSummaryNumber(output, "From {0}: {1}", metadataSource, currentCount, totalSampleCount);
 
-                if (currentCount != 0 && currentCount == currentUnique) {
-                    formatSummaryNumber(output, "Unique {0}: {1}", metadataSource, currentCount);
+                    if (currentCount != 0 && currentCount == currentUnique) {
+                        formatSummaryNumber(output, "Unique {0}: {1}", metadataSource, currentCount);
+                    }
                 }
-            }
-            if (uniqueSampleCount > totalSamplesWithMetadata) {
-                formatSummaryNumber(output, "Unique Not BSP/Mercury: {0}", uniqueSampleCount - totalSamplesWithMetadata,
-                        totalSampleCount);
-            }
+                if (uniqueSampleCount > totalUniqueSamplesWithMetadata) {
+                    formatSummaryNumber(output, "Unique Not BSP/Mercury: {0}",
+                            uniqueSampleCount - totalUniqueSamplesWithMetadata,
+                            totalSampleCount);
+                }
 
-            if (uniqueParticipantCount != 0) {
-                formatSummaryNumber(output, "Unique Participants: {0}", uniqueParticipantCount, totalSampleCount);
-            }
+                if (uniqueParticipantCount != 0) {
+                    formatSummaryNumber(output, "Unique Participants: {0}", uniqueParticipantCount, totalSampleCount);
+                }
 
-            stockTypeCounter.output(output, "Stock Type", totalSampleCount);
-            primaryDiseaseCounter.output(output, "Disease", totalSampleCount);
-            genderCounter.output(output, "Gender", totalSampleCount);
-            sampleTypeCounter.output(output, "Sample Type", totalSampleCount);
+                stockTypeCounter.output(output, "Stock Type", totalSampleCount);
+                primaryDiseaseCounter.output(output, "Disease", totalSampleCount);
+                genderCounter.output(output, "Gender", totalSampleCount);
+                sampleTypeCounter.output(output, "Sample Type", totalSampleCount);
 
-            if (product != null && product.isSupportsPico()) {
-                formatSummaryNumber(output, "Last Pico over a year ago: {0}",
-                        lastPicoCount);
-            }
+                if (product != null && product.isSupportsPico()) {
+                    formatSummaryNumber(output, "Last Pico over a year ago: {0}",
+                            lastPicoCount);
+                }
 
-            if (hasSampleKitUploadRackscanMismatch != 0) {
-                formatSummaryNumber(output, "<div class=\"text-error\">Rackscan Mismatch: {0}</div>",
-                        hasSampleKitUploadRackscanMismatch, totalSampleCount);
+                if (hasSampleKitUploadRackscanMismatch != 0) {
+                    formatSummaryNumber(output, "<div class=\"text-error\">Rackscan Mismatch: {0}</div>",
+                            hasSampleKitUploadRackscanMismatch, totalSampleCount);
+                }
             }
 
             return output;
@@ -1495,10 +1505,11 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
          * - all BSP samples' stock is ACTIVE
          */
         public List<String> sampleValidation() {
+            int totalUniqueSamplesWithMetadata = getTotalUniqueSamplesWithMetadata();
             List<String> output = new ArrayList<>();
             checkCount(missingBspMetaDataCount, "No BSP Data: {0}", output);
-            checkCount(totalSamplesWithMetadata - activeSampleCount, "Not ACTIVE: {0}", output);
-            checkCount(totalSamplesWithMetadata - receivedSampleCount, "Not RECEIVED: {0}", output);
+            checkCount(totalUniqueSamplesWithMetadata - activeSampleCount, "Not ACTIVE: {0}", output);
+            checkCount(totalUniqueSamplesWithMetadata - receivedSampleCount, "Not RECEIVED: {0}", output);
             return output;
         }
 
@@ -1510,31 +1521,27 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
          * This class keeps track of sample totals per Metadatasource
          */
         private class SampleCountForSource {
-            private final Counter total=new Counter();
-            private final Counter unique=new Counter();
-            private Set<String> uniqueSampleIds =new HashSet<>();
+            private int total=0;
+            private final Set<String> uniqueSampleIds =new HashSet<>();
 
-            public void increment(String ... sampleIds) {
+            public void addSample(String... sampleIds) {
                 for (String sampleId : sampleIds) {
-                    total.increment(sampleId);
-                    if (uniqueSampleIds.add(sampleId)){
-                        unique.increment(sampleId);
-                    }
+                    total++;
+                    uniqueSampleIds.add(sampleId);
                 }
             }
 
             public void clear(){
-                total.clear();
-                unique.clear();
+                total=0;
                 uniqueSampleIds.clear();
             }
 
             public int getTotal() {
-                return total.countMap.size();
+                return total;
             }
 
             public int getUnique() {
-                return unique.countMap.size();
+                return uniqueSampleIds.size();
             }
         }
     }

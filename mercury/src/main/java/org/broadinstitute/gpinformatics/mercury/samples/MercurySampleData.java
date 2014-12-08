@@ -14,7 +14,6 @@ import java.util.Set;
  * This class holds sample data specific to MercurySamples whose MetadataSource == MERCURY.
  */
 public class MercurySampleData implements SampleData {
-
     private String sampleId;
     private String collaboratorSampleId;
     private String patientId;
@@ -23,10 +22,11 @@ public class MercurySampleData implements SampleData {
 
     private String collectionDate;
     private String visit;
-    private boolean hasData;
+    private final boolean hasData;
 
     public MercurySampleData(@Nonnull String sampleId, @Nonnull Set<Metadata> metadata) {
         this.sampleId = sampleId;
+        hasData = !metadata.isEmpty();
         extractSampleDataFromMetadata(metadata);
     }
 
@@ -53,7 +53,6 @@ public class MercurySampleData implements SampleData {
                 this.visit = value;
                 break;
             }
-            this.hasData = true;
         }
     }
 

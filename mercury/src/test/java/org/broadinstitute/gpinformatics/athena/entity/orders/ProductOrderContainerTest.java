@@ -71,7 +71,6 @@ public class ProductOrderContainerTest extends Arquillian {
 
         Assert.assertEquals(testOrder.getTotalSampleCount(), 3);
         Assert.assertEquals(testOrder.getDuplicateCount(), 0);
-        Assert.assertEquals(testOrder.getSampleCountForSource(MercurySample.MetadataSource.BSP), 3);
         Assert.assertEquals(testOrder.getFemaleCount(), 3);
         Assert.assertEquals(testOrder.getMaleCount(), 0);
 

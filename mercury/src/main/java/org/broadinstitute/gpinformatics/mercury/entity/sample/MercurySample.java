@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
@@ -48,7 +49,7 @@ public class MercurySample extends AbstractSample {
     public static final String GSSR_METADATA_SOURCE = "GSSR";
 
     /** Determines from which system Mercury gets metadata, e.g. collaborator sample ID */
-    public enum MetadataSource {
+    public enum MetadataSource implements Displayable {
         BSP("BSP"),
         MERCURY("Mercury");
         private final String value;
@@ -57,7 +58,8 @@ public class MercurySample extends AbstractSample {
             this.value = value;
         }
 
-        public String getValue() {
+        @Override
+        public String getDisplayName() {
             return value;
         }
     }
