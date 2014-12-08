@@ -393,4 +393,24 @@ public class LabEventFixupTest extends Arquillian {
             labEventDao.flush();
         }
     }
+
+    //These lab events need eventLocation changed from 'BUNSEN' to 'BEAKER'.
+    @Test(enabled = true)
+    public void gplim3248fixupEventType() {
+        userBean.loginOSUser();
+        for (long id : new Long[] {724636L, 724050L, 724047L, 723648L}) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, id);
+            if (labEvent == null || !labEvent.getEventLocation().equals("BUNSEN")) {
+                throw new RuntimeException("cannot find " + id + " or location not BUNSEN");
+            }
+            System.out.println("LabEvent " + id + " location " + labEvent.getEventLocation());
+            labEvent.setEventLocation("BEAKER");
+            System.out.println("   updated to " + labEvent.getEventLocation());
+        }
+        labEventDao.persist(new FixupCommentary(
+                "GPLIM-3248 machine script set location to BUNSEN but it was actually BEAKER."));
+        labEventDao.flush();
+    }
+
+
 }
