@@ -179,8 +179,7 @@ public class MercurySample extends AbstractSample {
         return sampleId.matches("\\d+\\.\\d+");
     }
 
-    @Override
-    protected SampleData makeSampleData() {
+    public SampleData makeSampleData() {
         switch (metadataSource) {
         case BSP:
             return new BspSampleData();
