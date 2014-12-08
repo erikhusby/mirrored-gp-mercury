@@ -174,8 +174,6 @@ public class IlluminaRunResourceTest extends Arquillian {
         Assert.assertTrue(rawJson.contains("\"testType\""));
         Assert.assertTrue(rawJson.contains("\"buickCollectionDate\""));
         Assert.assertTrue(rawJson.contains("\"buickVisit\""));
-        Assert.assertTrue(rawJson.contains("\"buickCollectionDate"));
-        Assert.assertTrue(rawJson.contains("\"buickVisit"));
 
         Assert.assertNotNull(run);
         Assert.assertEquals(run.getName(), RUN_NAME);

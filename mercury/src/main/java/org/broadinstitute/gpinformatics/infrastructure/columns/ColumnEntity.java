@@ -7,13 +7,13 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
  * Enumeration of the entities for which configurable columns have been created.
  */
 public enum ColumnEntity {
-    LAB_VESSEL("LabVessel", "Lab Vessel", new IdGetter() {
+    LAB_VESSEL("LabVessel", "Lab Vessel", "label", LabVessel.class, new IdGetter() {
         @Override
         public String getId(Object entity) {
             return ((LabVessel) entity).getLabel();
         }
     }),
-    LAB_EVENT("LabEvent", "Lab Event", new IdGetter() {
+    LAB_EVENT("LabEvent", "Lab Event", "labEventId", LabEvent.class, new IdGetter() {
         @Override
         public String getId(Object entity) {
             return ((LabEvent) entity).getLabEventId().toString();
@@ -21,10 +21,13 @@ public enum ColumnEntity {
     });
 
     private IdGetter idGetter;
-    private String entityName, displayName;
+    private String entityName, displayName, entityIdProperty;
+    private Class entityClass;
 
-    ColumnEntity(String entityName, String displayName, IdGetter idGetter) {
+    ColumnEntity(String entityName, String displayName, String entityIdProperty, Class clazz, IdGetter idGetter) {
         this.entityName = entityName;
+        this.entityIdProperty = entityIdProperty;
+        this.entityClass = clazz;
         this.idGetter = idGetter;
         this.displayName = displayName;
     }
@@ -43,6 +46,14 @@ public enum ColumnEntity {
 
     public IdGetter getIdGetter() {
         return idGetter;
+    }
+
+    public String getEntityIdProperty(){
+        return entityIdProperty;
+    }
+
+    public Class getEntityClass(){
+        return entityClass;
     }
 
     public static ColumnEntity getByName(String entityName) {

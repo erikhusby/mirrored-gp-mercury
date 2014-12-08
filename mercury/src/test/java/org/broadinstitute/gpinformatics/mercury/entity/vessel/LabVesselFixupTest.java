@@ -555,6 +555,18 @@ public class LabVesselFixupTest extends Arquillian {
         barcodedTubeDao.remove(oldTube);
     }
 
+    /**
+     * This is done before importing index plates from Squid.
+     */
+    @Test(enabled = false)
+    public void fixupGplim3164() {
+        userBean.loginOSUser();
+        StaticPlate staticPlate = staticPlateDao.findByBarcode("000001814423");
+        System.out.println("Renaming plate " + staticPlate.getLabel());
+        staticPlate.setLabel("000001814423-GPLIM-3164");
+        staticPlateDao.flush();
+    }
+
     @Test(enabled = false)
     public void gplim3103UpdateVolumes() {
         userBean.loginOSUser();
@@ -829,4 +841,32 @@ public class LabVesselFixupTest extends Arquillian {
         barcodedTubeDao.flush();
     }
 
+    @Test(enabled = true)
+    public void gplim3154relabelTubes() {
+        userBean.loginOSUser();
+        Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(Arrays.asList(
+                "0175596971", "0175596970", "0175596969", "0175596968", "0175596967", "0175596966", "0175596965",
+                "0175596964", "0175596963", "0175596962", "0175596961", "0175596960", "0175596972", "0175596973",
+                "0175596974", "0175596975", "0175596976", "0175596977", "0175596978", "0175596979", "0175596980",
+                "0175596981", "0175596982", "0175596983", "0175596995", "0175596994", "0175596993", "0175596992",
+                "0175596991", "0175596990", "0175596989", "0175596988", "0175596987", "0175596986", "0175596985",
+                "0175596984", "0175596996", "0175596997", "0175596998", "0175596999", "0175597000", "0175597001",
+                "0175597002", "0175597003", "0175597004", "0175597005", "0175597006", "0175597007", "0175597019",
+                "0175597018", "0175597017", "0175597016", "0175597015", "0175597014", "0175597013", "0175597012",
+                "0175597011", "0175597010", "0175597009", "0175597008", "0175597020", "0175597021", "0175597022",
+                "0175597023", "0175597024", "0175597025", "0175597026", "0175597027", "0175597028", "0175597029",
+                "0175597030", "0175597031", "0175597043", "0175597042", "0175597041", "0175597040", "0175597039",
+                "0175597038", "0175597037", "0175597036", "0175597035", "0175597034", "0175597033", "0175597032",
+                "0175597044", "0175597045", "0175597046", "0175597047", "0175597048", "0175597049", "0175597050",
+                "0175597051", "0175597052", "0175597053", "0175597054", "0175597055"));
+        for (String barcode : mapBarcodeToTube.keySet()) {
+            System.out.println("Relabeling tube " + barcode);
+            BarcodedTube tube = mapBarcodeToTube.get(barcode);
+            if (tube == null) {
+                throw new RuntimeException("cannot find tube " + barcode);
+            }
+            tube.setLabel(barcode + "gplim3154");
+        }
+        barcodedTubeDao.flush();
+    }
 }

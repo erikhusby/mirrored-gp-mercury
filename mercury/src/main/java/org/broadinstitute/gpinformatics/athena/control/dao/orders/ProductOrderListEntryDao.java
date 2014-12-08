@@ -84,9 +84,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                         productOrderRoot.get(ProductOrder_.title),
                         productOrderRoot.get(ProductOrder_.jiraTicketKey),
                         productOrderRoot.get(ProductOrder_.orderStatus),
-                        productOrderProductJoin.get(Product_.productName),
                         productOrderProductJoin,
-                        productProductFamilyJoin.get(ProductFamily_.name),
                         productOrderResearchProjectJoin.get(ResearchProject_.title),
                         productOrderRoot.get(ProductOrder_.createdBy),
                         productOrderRoot.get(ProductOrder_.placedDate),
@@ -176,10 +174,6 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                 cb.equal(productOrderRoot.get(ProductOrder_.orderStatus), ProductOrder.OrderStatus.Draft));
     }
 
-    private static final Set<ProductOrder.LedgerStatus> FETCH_STATUSES =
-            EnumSet.of(ProductOrder.LedgerStatus.READY_FOR_REVIEW,
-                    ProductOrder.LedgerStatus.BILLING, ProductOrder.LedgerStatus.READY_TO_BILL);
-
     /**
      * This fetches the count information in some subqueries and then populates the transient counts for the appropriate
      * orders. The makes the ledger status field work in the view.
@@ -231,46 +225,19 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
             }
         }
 
-        for (final ProductOrder.LedgerStatus ledgerStatus : FETCH_STATUSES) {
+        for (final ProductOrderListEntry.LedgerStatus ledgerStatus : ProductOrderListEntry.LedgerStatus.values()) {
+            if (!ledgerStatus.canCreateQuery) {
+                continue;
+            }
             // Only query for the JIRA ticket keys of interest, using Splitter.
             List<ProductOrderListEntry> resultList = JPASplitter.runCriteriaQuery(
                     jiraTicketKeys,
                     new CriteriaInClauseCreator<String>() {
                         @Override
                         public Query createCriteriaInQuery(Collection<String> parameterList) {
-                            CriteriaQuery<ProductOrderListEntry> query;
-                            switch (ledgerStatus) {
-                            case READY_FOR_REVIEW:
-                                // The billing session is null but the auto bill timestamp is NOT null.
-                                query = cq.where(cb.isNull(
-                                        productOrderSampleLedgerEntrySetJoin.get(LedgerEntry_.billingSession)),
-                                        cb.isNotNull(productOrderSampleLedgerEntrySetJoin
-                                                .get(LedgerEntry_.autoLedgerTimestamp)),
-                                        productOrderRoot.get(ProductOrder_.jiraTicketKey).in(parameterList));
-                                break;
-                            case READY_TO_BILL:
-                                // The billing session is null but the auto bill timestamp is null.
-                                query = cq.where(cb.isNull(
-                                        productOrderSampleLedgerEntrySetJoin.get(LedgerEntry_.billingSession)),
-                                        cb.isNull(productOrderSampleLedgerEntrySetJoin
-                                                .get(LedgerEntry_.autoLedgerTimestamp)),
-                                        productOrderRoot.get(ProductOrder_.jiraTicketKey).in(parameterList));
-                                break;
-                            case BILLING:
-                                // The session is NOT null, but the session's billed date IS null.
-                                query = cq.where(
-                                        cb.isNull(ledgerEntryBillingSessionJoin.get(BillingSession_.billedDate)),
-                                        cb.isNotNull(
-                                                productOrderSampleLedgerEntrySetJoin.get(LedgerEntry_.billingSession)),
-                                        cb.isNull(productOrderSampleLedgerEntrySetJoin
-                                                .get(LedgerEntry_.autoLedgerTimestamp)),
-                                        productOrderRoot.get(ProductOrder_.jiraTicketKey).in(parameterList));
-                                break;
-                            default:
-                                throw new IllegalArgumentException("Can only fetch ready to bill or ready for review");
-                            }
-
-                            return getEntityManager().createQuery(query);
+                            cq.where(ledgerStatus.buildPredicate(cb, productOrderSampleLedgerEntrySetJoin, ledgerEntryBillingSessionJoin),
+                                    productOrderRoot.get(ProductOrder_.jiraTicketKey).in(parameterList));
+                            return getEntityManager().createQuery(cq);
                         }
                     }
             );
@@ -290,19 +257,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                             jiraKeyToProductOrderListEntryMap.get(result.getJiraTicketKey());
                     productOrderListEntry.setBillingSessionId(result.getBillingSessionId());
 
-                    switch (ledgerStatus) {
-                    case READY_FOR_REVIEW:
-                        productOrderListEntry.setReadyForReviewCount(result.getConstructedCount());
-                        break;
-                    case READY_TO_BILL:
-                        productOrderListEntry.setReadyForBillingCount(result.getConstructedCount());
-                        break;
-                    case BILLING:
-                        break;
-                    default:
-                        // The constructor handles billing, so if not that now, throw this exception.
-                        throw new IllegalArgumentException("Can only fetch ready to bill or ready for review");
-                    }
+                    ledgerStatus.updateEntryCount(productOrderListEntry, result.getConstructedCount());
                 }
             }
         }
@@ -318,7 +273,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
             @Nullable List<ProductOrder.OrderStatus> orderStatuses,
             @Nullable DateRangeSelector placedDate,
             @Nullable List<Long> ownerIds,
-            @Nullable List<ProductOrder.LedgerStatus> ledgerStatuses) {
+            @Nullable List<ProductOrderListEntry.LedgerStatus> ledgerStatuses) {
 
         List<ProductOrderListEntry> productOrderListEntries =
                 findBaseProductOrderListEntries(null, productFamilyId, productKeys, orderStatuses, placedDate,
@@ -332,7 +287,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
         // problem for a long time. Before needing to make this work, we will probably want scrolling and paging. This
         // returns the whole list if there is nothing selected or if all statuses are selected.
         if (CollectionUtils.isEmpty(ledgerStatuses) ||
-            (ledgerStatuses.size() == ProductOrder.LedgerStatus.values().length)) {
+            (ledgerStatuses.size() == ProductOrderListEntry.LedgerStatus.values().length)) {
             // If there is nothing selected or all statuses are selected, just return the full list.
             return productOrderListEntries;
         }
@@ -340,7 +295,9 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
         // The following code filters out only the items that have the appropriate ledger status that the user wants.
         List<ProductOrderListEntry> filteredList = new ArrayList<>();
         for (ProductOrderListEntry entry : productOrderListEntries) {
-            ProductOrder.LedgerStatus.addEntryBasedOnStatus(ledgerStatuses, filteredList, entry);
+            if (entry.matchStatuses(ledgerStatuses)) {
+                filteredList.add(entry);
+            }
         }
 
         return filteredList;

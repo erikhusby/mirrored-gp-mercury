@@ -940,10 +940,7 @@
                             <div id="attestationDiv" class="controls controls-text">
 
                                 <stripes:checkbox name="editOrder.attestationConfirmed" id="attestationConfirmed"/>
-                                By checking this box, I am attesting that I am fully aware of the regulatory
-                                requirements for this project, that these requirements have been met, and that the
-                                information I have provided is accurate. Disregard of relevant requirements and/or
-                                falsification of information may lead to quarantining of data.
+                                ${actionBean.attestationMessage}
                             </div>
                         </div>
                     </c:when>

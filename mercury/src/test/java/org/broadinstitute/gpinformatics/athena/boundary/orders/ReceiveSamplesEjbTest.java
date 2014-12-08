@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@Test(groups = TestGroups.STUBBY, enabled = false)
+@Test(groups = TestGroups.STUBBY)
 public class ReceiveSamplesEjbTest extends ContainerTest {
 
     @Inject

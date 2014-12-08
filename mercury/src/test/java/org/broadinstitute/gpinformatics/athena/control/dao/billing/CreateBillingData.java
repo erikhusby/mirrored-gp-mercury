@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -14,7 +15,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
-@Test(enabled = false)
+@Test(groups = TestGroups.STANDARD)
 public class CreateBillingData extends ContainerTest {
 
     @Inject
@@ -24,6 +25,7 @@ public class CreateBillingData extends ContainerTest {
     @Inject
     private UserTransaction userTransaction;
 
+    @Test(enabled = false)
     public void createData() {
 
         try {

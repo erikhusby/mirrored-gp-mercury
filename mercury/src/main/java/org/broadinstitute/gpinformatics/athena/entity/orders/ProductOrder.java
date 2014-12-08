@@ -850,6 +850,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     /**
+     * @return the number of samples that are both not received and not abandoned
+     */
+    public int getNonReceivedNonAbandonedCount() {
+        return updateSampleCounts().notReceivedAndNotAbandonedCount;
+    }
+
+    /**
      * Helper method that determines how many BSP samples registered to the product order are
      * in an Active state.
      *
@@ -876,7 +883,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      * @return true if order is in Draft
      */
     public boolean isDraft() {
-        return OrderStatus.Draft == orderStatus;
+        return orderStatus.isDraft();
     }
 
     /**
@@ -891,6 +898,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      */
     public boolean isSubmitted() {
         return OrderStatus.Submitted == orderStatus;
+    }
+
+    /**
+     * @return true if order is pending
+     */
+    public boolean isPending() {
+        return orderStatus == OrderStatus.Pending;
     }
 
     /**
@@ -1110,13 +1124,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         SUMMARY("Summary");
 
         private final String fieldName;
-        private boolean nullable;
+        private final boolean nullable;
 
         JiraField(String fieldName) {
             this(fieldName, false);
         }
 
-        private JiraField(String fieldName, boolean nullable) {
+        JiraField(String fieldName, boolean nullable) {
             this.fieldName = fieldName;
             this.nullable = nullable;
         }
@@ -1135,10 +1149,22 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public enum OrderStatus implements StatusType {
-        Draft,
+        Draft("label label-info"),
+        Pending("label label-success"),
         Submitted,
         Abandoned,
         Completed;
+
+        /** CSS Class to use when displaying this status in HTML. */
+        private final String cssClass;
+
+        OrderStatus() {
+            this("");
+        }
+
+        OrderStatus(String cssClass) {
+            this.cssClass = cssClass;
+        }
 
         /**
          * Get all status values using the name strings.
@@ -1160,140 +1186,32 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             return statuses;
         }
 
-        /**
-         * This is a utility function to pull out the names of the statuses so that items can be used in queries.
-         *
-         * @param statuses The status enums that were selected.
-         *
-         * @return The string list.
-         */
-        public static List<String> getStrings(List<OrderStatus> statuses) {
-            if (CollectionUtils.isEmpty(statuses)) {
-                return Collections.emptyList();
-            }
-
-            List<String> statusStrings = new ArrayList<>(statuses.size());
-            for (ProductOrder.OrderStatus status : statuses) {
-                statusStrings.add(status.name());
-            }
-
-            return statusStrings;
-        }
-
         @Override
         public String getDisplayName() {
             return name();
         }
-    }
 
-    /**
-     * This enum defines the different states that the PDO is in based on the ledger status of all samples in the order.
-     * This status does not included 'Billed' because that is orthogonal to this status. Once something is billed, it
-     * is, essentially in NOTHING_NEW state again and new billing can happen at any time. When something is auto billed,
-     * the status becomes READY_FOR_REVIEW, which means more auto billing can happen, but there is some work to look
-     * at. The PDM can download the tracker at any time when there is no billing, but can only upload when auto billing
-     * is not happening (and billing is happening).
-     * <p/>
-     * Once the PDM or Billing Manager does an upload, the state is changed to READY_TO_BILL and the auto-biller will
-     * not process any more entries for this PDO until a billing session has been completed on it.
-     * <p/>
-     * These statuses are calculated on-demand based on the ledger entries.
-     */
-    public enum LedgerStatus {
-        NOTHING_NEW("None"),
-        READY_FOR_REVIEW("Review"),
-        READY_TO_BILL("Ready to Bill"),
-        BILLING("Billing Started");
-        private String displayName;
-
-        LedgerStatus(String displayName) {
-            this.displayName = displayName;
+        public boolean isDraft() {
+            return this == Draft;
         }
 
-        /**
-         * Get all status values using the name strings.
-         *
-         * @param statusStrings The desired list of statuses.
-         *
-         * @return The statuses that are listed.
-         */
-        public static List<LedgerStatus> getFromNames(@Nonnull List<String> statusStrings) {
-            if (CollectionUtils.isEmpty(statusStrings)) {
-                return Collections.emptyList();
-            }
-
-            List<LedgerStatus> statuses = new ArrayList<>();
-            for (String statusString : statusStrings) {
-                statuses.add(LedgerStatus.valueOf(statusString));
-            }
-
-            return statuses;
+        public String getCssClass() {
+            return cssClass;
         }
 
-        /**
-         * Get the status item names from the ledger statuses.
-         *
-         * @param statuses The statuses
-         *
-         * @return The list of strings
-         */
-        public static List<String> getStrings(List<LedgerStatus> statuses) {
-            if (CollectionUtils.isEmpty(statuses)) {
-                return Collections.emptyList();
-            }
-
-            List<String> statusStrings = new ArrayList<>();
-            for (ProductOrder.LedgerStatus status : statuses) {
-                statusStrings.add(status.name());
-            }
-
-            return statusStrings;
+        /** @return true if an order can be abandoned from this state. */
+        public boolean canAbandon() {
+            return this == Pending || this == Submitted;
         }
 
-        public static void addEntryBasedOnStatus(
-                List<ProductOrder.LedgerStatus> ledgerStatuses,
-                List<ProductOrderListEntry> filteredList,
-                ProductOrderListEntry entry) {
-
-            for (ProductOrder.LedgerStatus selectedStatus : ledgerStatuses) {
-                switch (selectedStatus) {
-
-                case NOTHING_NEW:
-                    // Drafts are always new.
-                    if (entry.isDraft() ||
-                        (!entry.isReadyForBilling() && !entry.isReadyForReview() && !entry.isBilling())) {
-                        filteredList.add(entry);
-                        return;
-                    }
-                    break;
-                case READY_FOR_REVIEW:
-                    // Ready for review is ALWAYS indicated when there are ledger entries. Billing locks out
-                    // automated ledger entry. For now, so does ready to bill, but that may change.
-                    if (entry.isReadyForReview()) {
-                        filteredList.add(entry);
-                        return;
-                    }
-                    break;
-                case READY_TO_BILL:
-                    // Ready for review overrides ready for billing. May not come up for a while because of
-                    // lockouts, but this is the way the visual works, so using this.
-                    if (entry.isReadyForBilling() && !entry.isReadyForReview()) {
-                        filteredList.add(entry);
-                        return;
-                    }
-                    break;
-                case BILLING:
-                    if (entry.isBilling()) {
-                        filteredList.add(entry);
-                        return;
-                    }
-                    break;
-                }
-            }
+        /** @return true if an order can be placed from this state. */
+        public boolean canPlace() {
+            return this == Draft || this == Pending;
         }
 
-        public String getDisplayName() {
-            return displayName;
+        /** @return true if an order can be billed from this state. */
+        public boolean canBill() {
+            return this == Submitted || this == Abandoned || this == Completed;
         }
     }
 
@@ -1343,7 +1261,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      * Class that encapsulates counting samples and storing the results.
      */
     private class SampleCounts implements Serializable {
-        private static final long serialVersionUID = -6031146789417566007L;
+        private static final long serialVersionUID = 3984705436979136125L;
         private final Counter stockTypeCounter = new Counter();
         private final Counter primaryDiseaseCounter = new Counter();
         private final Counter genderCounter = new Counter();
@@ -1359,6 +1277,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         private int missingBspMetaDataCount;
         private int uniqueSampleCount;
         private int uniqueParticipantCount;
+        // This is the number of samples that are both not received and not abandoned. This is to compute
+        // the number of samples that will become abandoned when a Pending PDO is placed.
+        private int notReceivedAndNotAbandonedCount;
 
         /**
          * Go through all the samples and tabulate statistics.
@@ -1387,7 +1308,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                         if (sample.bspMetaDataMissing()) {
                             missingBspMetaDataCount++;
                         } else {
-                            updateDTOCounts(participantSet, sample.getSampleData());
+                            updateSampleCounts(participantSet, sample);
                         }
                     }
                 }
@@ -1415,20 +1336,24 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             hasSampleKitUploadRackscanMismatch = 0;
             missingBspMetaDataCount = 0;
             onRiskCount = 0;
+            notReceivedAndNotAbandonedCount = 0;
             stockTypeCounter.clear();
             primaryDiseaseCounter.clear();
             genderCounter.clear();
         }
 
         /**
-         * Update all the counts related to BSP information.
+         * Update all the counts related to sample data information.
          *
          * @param participantSet The unique collection of participants by Id.
-         * @param bspSampleData         The BSP Sample Data.
+         * @param sample         the sample to update the counts with
          */
-        private void updateDTOCounts(Set<String> participantSet, SampleData bspSampleData) {
+        private void updateSampleCounts(Set<String> participantSet, ProductOrderSample sample) {
+            SampleData bspSampleData = sample.getSampleData();
             if (bspSampleData.isSampleReceived()) {
                 receivedSampleCount++;
+            } else if (!sample.getDeliveryStatus().isAbandoned()) {
+                notReceivedAndNotAbandonedCount++;
             }
 
             if (bspSampleData.isActiveStock()) {
@@ -1603,5 +1528,17 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public int getSampleCount() {
         return sampleCount;
+    }
+
+    /**
+     * Is the current PDO ready for lab work? A PDO is ready if all of its samples are received (or abandoned) and
+     * the PM has placed the order.
+     *
+     * @return true if this PDO contains samples that are ready for lab work
+     */
+    public boolean readyForLab() {
+        // Abandoned and Completed PDOs are considered "ready" because they can transition back to the
+        // Submitted state.
+        return orderStatus != OrderStatus.Draft && orderStatus != OrderStatus.Pending;
     }
 }

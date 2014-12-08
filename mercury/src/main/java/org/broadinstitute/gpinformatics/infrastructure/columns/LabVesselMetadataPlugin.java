@@ -39,7 +39,8 @@ public class LabVesselMetadataPlugin implements ListPlugin {
      * @return A list of rows, each corresponding to a LabVessel row in search results.
      */
     @Override
-    public List<ConfigurableList.Row> getData(List<?> entityList, ConfigurableList.HeaderGroup headerGroup) {
+    public List<ConfigurableList.Row> getData(List<?> entityList, ConfigurableList.HeaderGroup headerGroup
+            , @Nonnull Map<String, Object> context) {
         List<LabVessel> labVesselList = (List<LabVessel>) entityList;
         List<ConfigurableList.Row> metricRows = new ArrayList<>();
 
@@ -58,9 +59,11 @@ public class LabVesselMetadataPlugin implements ListPlugin {
 
             for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
                 MercurySample sample = sampleInstanceV2.getRootOrEarliestMercurySample();
-                Set<Metadata> metadata = sample.getMetadata();
-                if( metadata != null && !metadata.isEmpty() ) {
-                    addMetadataToRowData( metadata, rowData );
+                if( sample != null ) {
+                    Set<Metadata> metadata = sample.getMetadata();
+                    if( metadata != null && !metadata.isEmpty() ) {
+                        addMetadataToRowData( metadata, rowData );
+                    }
                 }
             }
 

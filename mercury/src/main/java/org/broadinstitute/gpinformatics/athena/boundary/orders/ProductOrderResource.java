@@ -30,6 +30,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.work.WorkCompleteMessage;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPGroupCollectionList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSiteList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
@@ -63,6 +64,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -124,6 +126,9 @@ public class ProductOrderResource {
     private BSPGroupCollectionList bspGroupCollectionList;
 
     @Inject
+    private BSPSiteList bspSiteList;
+
+    @Inject
     private BillingEjb billingEjb;
 
     @Inject
@@ -145,7 +150,9 @@ public class ProductOrderResource {
      * It would be nice to only allow Project Managers and Administrators to create PDOs.  Use same {@link Role} names
      * as defined in the class (although I can't seem to be able to use the enum for the annotation.
      *
-     * @param productOrderData the document for the construction of the new {@link ProductOrder}
+     * @param productOrderData The document for the construction of the new {@link ProductOrder}. This MUST include the
+     *                         site id even though it is optional for the ProductOrderData to support the other create
+     *                         method here.
      *
      * @return the reference for the newly created {@link ProductOrder}
      */
@@ -160,15 +167,19 @@ public class ProductOrderResource {
         validateAndLoginUser(productOrderData);
 
         // This will create a product order and place it, so a JIRA ticket is created.
-        ProductOrder productOrder = createProductOrder(productOrderData);
+        ProductOrder productOrder = createProductOrder(productOrderData, ProductOrder.OrderStatus.Pending);
 
+        // The PDO's IRB information is copied from its RP. For Collaboration PDOs, we require that there
+        // is only one IRB on the RP.
+        productOrder.setRegulatoryInfos(productOrder.getResearchProject().getRegulatoryInfos());
 
         ResearchProject researchProject =
                 researchProjectDao.findByBusinessKey(productOrderData.getResearchProjectId());
 
-        // Get the collection id from the research project so that we can get the site id.
         SampleCollection sampleCollection = getFirstCollection(researchProject);
-        Site site = getSiteId(sampleCollection.getCollectionId());
+
+        // If we have a valid site, we can set up the product order kit.
+        Site site = bspSiteList.getById(productOrderData.getSiteId());
         if (site != null) {
             boolean isExomeExpress = productOrder.getProduct().isExomeExpress();
             productOrder.setProductOrderKit(createOrderKit(isExomeExpress,
@@ -196,47 +207,42 @@ public class ProductOrderResource {
         }
     }
 
-    public ProductOrderKit createOrderKit(boolean isExomeExpress, List<ProductOrderKitDetailData> kitDetailsData,
+    private ProductOrderKit createOrderKit(boolean isExomeExpress, List<ProductOrderKitDetailData> kitDetailsData,
                                           SampleCollection sampleCollection, Site site) {
 
-        List<ProductOrderKitDetail> kitDetails = new ArrayList<>();
+        List<ProductOrderKitDetail> kitDetails = new ArrayList<>(kitDetailsData.size());
         for (ProductOrderKitDetailData kitDetailData : kitDetailsData) {
             SampleKitWorkRequest.MoleculeType moleculeType = kitDetailData.getMoleculeType();
 
             MaterialInfoDto materialInfoDto = createMaterialInfoDTO(kitDetailData.getMaterialInfo(), moleculeType);
 
             kitDetails.add(createKitDetail(kitDetailData.getNumberOfSamples(), moleculeType, materialInfoDto));
-
         }
         return new ProductOrderKit(sampleCollection, site, kitDetails, isExomeExpress);
     }
 
     private ProductOrderKitDetail createKitDetail(long numberOfSamples, SampleKitWorkRequest.MoleculeType moleculeType,
-                                                  MaterialInfoDto materialInfoDto) {
-        ProductOrderKitDetail kitDetail =
-                new ProductOrderKitDetail(numberOfSamples, KitType.DNA_MATRIX, HUMAN, materialInfoDto);
+                                                  MaterialInfoDto materialInfo) {
+        Set<PostReceiveOption> postReceiveOptions = EnumSet.noneOf(PostReceiveOption.class);
 
-        kitDetail.getPostReceiveOptions().add(PostReceiveOption.FLUIDIGM_FINGERPRINTING);
         if (moleculeType == SampleKitWorkRequest.MoleculeType.DNA) {
-            kitDetail.getPostReceiveOptions().add(PostReceiveOption.PICO_RECEIVED);
+            postReceiveOptions.add(PostReceiveOption.PICO_RECEIVED);
         } else {
-            kitDetail.getPostReceiveOptions().add(PostReceiveOption.BIOANALYZER);
+            postReceiveOptions.add(PostReceiveOption.BIOANALYZER);
         }
 
-        return kitDetail;
+        return new ProductOrderKitDetail(numberOfSamples, KitType.DNA_MATRIX, HUMAN, materialInfo, postReceiveOptions);
     }
 
     private MaterialInfoDto createMaterialInfoDTO(MaterialInfo materialInfo,
                                                   SampleKitWorkRequest.MoleculeType moleculeType) {
-        MaterialInfoDto materialInfoDto;
+        KitTypeAllowanceSpecification kitType;
         if (moleculeType == SampleKitWorkRequest.MoleculeType.DNA) {
-            materialInfoDto = new MaterialInfoDto(
-                    KitTypeAllowanceSpecification.DNA_MATRIX_KIT.getText(), materialInfo.getText());
+            kitType = KitTypeAllowanceSpecification.DNA_MATRIX_KIT;
         } else {
-            materialInfoDto = new MaterialInfoDto(
-                    KitTypeAllowanceSpecification.RNA_MATRIX_KIT.getText(), materialInfo.getText());
+            kitType = KitTypeAllowanceSpecification.RNA_MATRIX_KIT;
         }
-        return materialInfoDto;
+        return new MaterialInfoDto(kitType.getText(), materialInfo.getText());
     }
 
     /**
@@ -260,11 +266,12 @@ public class ProductOrderResource {
     @Consumes(MediaType.APPLICATION_XML)
     public ProductOrderData create(@Nonnull ProductOrderData productOrderData)
             throws DuplicateTitleException, NoSamplesException, QuoteNotFoundException, ApplicationValidationException {
-        ProductOrder productOrder = createProductOrder(productOrderData);
+        ProductOrder productOrder = createProductOrder(productOrderData, ProductOrder.OrderStatus.Submitted);
+        productOrder.setPlacedDate(new Date());
         return new ProductOrderData(productOrder, true);
     }
 
-    private ProductOrder createProductOrder(ProductOrderData productOrderData)
+    private ProductOrder createProductOrder(ProductOrderData productOrderData, ProductOrder.OrderStatus initialStatus)
             throws DuplicateTitleException, NoSamplesException, QuoteNotFoundException, ApplicationValidationException {
 
         validateAndLoginUser(productOrderData);
@@ -281,8 +288,8 @@ public class ProductOrderResource {
         try {
             productOrder.setCreatedBy(user.getUserId());
             productOrder.prepareToSave(user, ProductOrder.SaveType.CREATING);
-            ProductOrderJiraUtil.placeOrder(productOrder, jiraService);
-            productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+            ProductOrderJiraUtil.createIssueForOrder(productOrder, jiraService);
+            productOrder.setOrderStatus(initialStatus);
 
             // Not supplying add-ons at this point, just saving what we defined above and then flushing to make sure
             // any DB constraints have been enforced.
@@ -381,7 +388,7 @@ public class ProductOrderResource {
 
         try {
             // Add the samples.
-            productOrderEjb.addSamples(bspUser, pdoKey, samplesToAdd, MessageReporter.UNUSED);
+            productOrderEjb.addSamples(pdoKey, samplesToAdd, MessageReporter.UNUSED);
 
             // If the PDO is not a sample initiation PDO, but DOES have a sample initiation add on, then add a new
             // auto-billing message so that the billing will happen at the appropriate lock out time.
@@ -444,7 +451,7 @@ public class ProductOrderResource {
         Iterator<ProductOrder> iterator = orders.iterator();
         while (iterator.hasNext()) {
             ProductOrder productOrder = iterator.next();
-            if (productOrder.getOrderStatus() == ProductOrder.OrderStatus.Draft) {
+            if (productOrder.isDraft()) {
                 iterator.remove();
             }
         }

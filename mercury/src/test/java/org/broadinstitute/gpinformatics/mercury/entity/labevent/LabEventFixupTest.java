@@ -5,11 +5,15 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
+import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -21,6 +25,7 @@ import java.util.GregorianCalendar;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 
 /**
  * Fixups to LabEvent entities
@@ -39,6 +44,12 @@ public class LabEventFixupTest extends Arquillian {
 
     @Inject
     private BarcodedTubeDao barcodedTubeDao;
+
+    @Inject
+    private StaticPlateDao staticPlateDao;
+
+    @Inject
+    private UserBean userBean;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -303,7 +314,7 @@ public class LabEventFixupTest extends Arquillian {
         labEventDao.remove(labEvent);
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void fixupPo743 () {
         BarcodedTube tube = barcodedTubeDao.findByBarcode("0168281750");
         Assert.assertEquals(tube.getTransfersTo().size(), 1);
@@ -330,4 +341,56 @@ public class LabEventFixupTest extends Arquillian {
         barcodedTubeDao.flush();
     }
 
+    /**
+     * This is done after importing index plates from Squid.
+     */
+    @Test(enabled = false)
+    public void fixupGplim3164() {
+        userBean.loginOSUser();
+        StaticPlate staticPlateEmpty = staticPlateDao.findByBarcode("000001814423-GPLIM-3164");
+        StaticPlate staticPlateIndexed = staticPlateDao.findByBarcode("000001814423");
+        for (LabEvent labEvent : staticPlateEmpty.getTransfersFrom()) {
+            for (SectionTransfer sectionTransfer : labEvent.getSectionTransfers()) {
+                System.out.println("Changing source for labEvent " + labEvent.getLabEventId());
+                sectionTransfer.setSourceVesselContainer(staticPlateIndexed.getContainerRole());
+            }
+        }
+        staticPlateDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void gplim3126fixupMachineName() {
+        userBean.loginOSUser();
+        for (long id : new Long[] {687513L, 687557L}) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, id);
+            if (labEvent == null) {
+                throw new RuntimeException("cannot find " + id);
+            }
+            System.out.println("LabEvent " + id + " location " + labEvent.getEventLocation());
+            labEvent.setEventLocation("JON_HAMM");
+            System.out.println("   updated to " + labEvent.getEventLocation());
+            labEventDao.persist(new FixupCommentary(
+                    "GPLIM-3126 incorrect machine configuration caused messages to be sent with the wrong machine name."));
+            labEventDao.flush();
+        }
+    }
+
+    @Test(enabled = false)
+    public void gplim3208fixupEventType() {
+        userBean.loginOSUser();
+        for (long id : new Long[] {710100L, 710156L}) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, id);
+            if (labEvent == null || labEvent.getLabEventType() != LabEventType.FINGERPRINTING_ALIQUOT) {
+                throw new RuntimeException("cannot find " + id + " or is not FINGERPRINTING_ALIQUOT");
+            }
+            System.out.println("LabEvent " + id + " type " + labEvent.getLabEventType());
+            labEvent.setLabEventType(LabEventType.SHEARING_ALIQUOT);
+            System.out.println("   updated to " + labEvent.getLabEventType());
+            labEventDao.persist(new FixupCommentary(
+                    "GPLIM-3208 incorrect selection at the janus app caused wrong type of aliquot event."));
+            // Next time move this flush out of the loop so that both fixups are on one rev and
+            // share one FixupCommentary.
+            labEventDao.flush();
+        }
+    }
 }

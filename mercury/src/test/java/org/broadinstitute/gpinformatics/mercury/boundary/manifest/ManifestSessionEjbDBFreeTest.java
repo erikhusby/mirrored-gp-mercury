@@ -154,8 +154,7 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     private ManifestSession uploadManifest(ManifestSessionEjb manifestSessionEjb, String pathToManifestFile,
-                                           ResearchProject researchProject)
-            throws Exception {
+                                           ResearchProject researchProject) throws Exception {
         String PATH_TO_SPREADSHEET = TestUtils.getTestData(pathToManifestFile);
         InputStream inputStream = new FileInputStream(PATH_TO_SPREADSHEET);
         return manifestSessionEjb.uploadManifest(researchProject.getBusinessKey(), inputStream, PATH_TO_SPREADSHEET,
@@ -280,10 +279,9 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
-    /* ****************************************************************** *
-     * *  =======  upload manifest tests ============================== * *
-     * ****************************************************************
-     */
+    /********************************************************************/
+    /**  =======  upload manifest tests ============================== **/
+    /********************************************************************/
 
     public void uploadGoodManifest() throws Exception {
         ManifestSession manifestSession = uploadManifest(MANIFEST_FILE_GOOD);
@@ -295,20 +293,31 @@ public class ManifestSessionEjbDBFreeTest {
 
     @DataProvider(name = BAD_MANIFEST_UPLOAD_PROVIDER)
     public Object[][] badManifestUploadProvider() {
+        String wrongFormatStringFormat =
+                "Error reading manifest file '%s'.  Manifest files must be in the proper Excel format.";
+        // @formatter:off
         return new Object[][]{
-                {"Not an Excel file", "manifest-upload/not-an-excel-file.txt"},
-                {"Missing required field", "manifest-import/test-manifest-missing-specimen.xlsx"},
-                {"Missing column", "manifest-upload/manifest-with-missing-column.xlsx"},
-                {"Empty manifest", "manifest-upload/empty-manifest.xlsx"}
+                {"Not an Excel file", String.format(wrongFormatStringFormat, "not-an-excel-file.txt"),
+                        "manifest-upload/not-an-excel-file.txt"},
+                {"Missing required field", String.format(wrongFormatStringFormat, "test-manifest-missing-specimen.xlsx"),
+                        "manifest-import/test-manifest-missing-specimen.xlsx"},
+                {"Missing column", "Error parsing headers.\nRequired header: Specimen_Number is missing",
+                        "manifest-upload/manifest-with-missing-column.xlsx"},
+                {"Empty manifest", "Error parsing headers.\nRequired header: Specimen_Number is missing\nRequired header: SAMPLE_TYPE is missing\nUnknown headers '[Sample ID, T/N]' present",
+                        "manifest-upload/empty-manifest.xlsx"},
+                {"Multiple Bad Columns in Manifest", "Error parsing headers.\nRequired header: Specimen_Number is missing\nRequired header: Sex is missing\nRequired header: Patient_ID is missing\nRequired header: Collection_Date is missing\nRequired header: Visit is missing\nRequired header: SAMPLE_TYPE is missing\nUnknown headers '[Specimen_Numberz, Patient_Idee, Gender, Date, Visit Type, Sample Type]' present",
+                        "manifest-upload/manifest-with-multiple-bad-columns.xlsx"}
         };
+        // @formatter:on
     }
 
     @Test(dataProvider = BAD_MANIFEST_UPLOAD_PROVIDER)
-    public void uploadBadManifest(String description, String pathToManifestFile) throws Exception {
+    public void uploadBadManifest(String description, String errorMessage, String pathToManifestFile) throws Exception {
         try {
             uploadManifest(pathToManifestFile);
             Assert.fail(description);
-        } catch (InformaticsServiceException ignored) {
+        } catch (InformaticsServiceException e) {
+            Assert.assertEquals(e.getMessage(), errorMessage);
         }
     }
 

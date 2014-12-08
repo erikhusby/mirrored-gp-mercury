@@ -25,6 +25,7 @@ public class LabEventTraversalTest extends ContainerTest {
                 SearchDefinitionFactory.getForEntity(ColumnEntity.LAB_EVENT.getEntityName());
 
         SearchInstance searchInstance = new SearchInstance();
+        searchInstance.setDescendantOptionEnabled(true);
         SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("LCSET", configurableSearchDefinition);
         searchValue.setOperator(SearchInstance.Operator.EQUALS);
         searchValue.setValues(Collections.singletonList("LCSET-5102"));

@@ -21,7 +21,14 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Test(groups = TestGroups.STUBBY, enabled = true)
 public class ProductOrderListEntryDaoTest extends ContainerTest {
@@ -104,8 +111,8 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
             List<String> strings = new ArrayList<>();
             for (Map.Entry<String, Long> countEntry : countsEntries) {
                 strings.add(countEntry.getKey() + ": " + countEntry.getValue());
-                Assert.fail("Found PDOs represented more than once: " + StringUtils.join(strings, ", "));
             }
+            Assert.fail("Found PDOs represented more than once: " + StringUtils.join(strings, ", "));
         }
     }
 

@@ -343,7 +343,9 @@ public class SearchInstance implements Serializable {
                 for (String value : getValues()) {
                     if (searchTerm.getValueConversionExpression() != null) {
                         Map<String, Object> localContext = new HashMap<>();
-                        localContext.putAll(searchInstance.getEvalContext());
+                        if( searchInstance.getEvalContext() != null ) {
+                            localContext.putAll(searchInstance.getEvalContext());
+                        }
                         localContext.put(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_VALUE, this);
                         localContext.put(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_STRING, value);
                         propertyValues.add(searchTerm.getValueConversionExpression().evaluate(null, localContext));
@@ -734,6 +736,12 @@ public class SearchInstance implements Serializable {
     private Map<String, Object> evalContext;
 
     /**
+     * Should searches include ancestors/descendants of directly located base entities?
+     */
+    private boolean ancestorOptionEnabled;
+    private boolean descendantOptionEnabled;
+
+    /**
      * Default constructor for Stripes.
      */
     public SearchInstance() {
@@ -977,6 +985,25 @@ public class SearchInstance implements Serializable {
 
     public void setEvalContext(Map<String, Object> evalContext) {
         this.evalContext = evalContext;
+    }
+
+    /**
+     * Flag searches to include ancestors/descendants of directly located base entities.
+     */
+    public boolean getAncestorOptionEnabled(){
+        return ancestorOptionEnabled;
+    }
+
+    public void setAncestorOptionEnabled( boolean ancestorOptionEnabled){
+        this.ancestorOptionEnabled = ancestorOptionEnabled;
+    }
+
+    public boolean getDescendantOptionEnabled() {
+        return descendantOptionEnabled;
+    }
+
+    public void setDescendantOptionEnabled( boolean descendantOptionEnabled ) {
+        this.descendantOptionEnabled = descendantOptionEnabled;
     }
 
     public List<String> getColumnSetColumnNameList() {
