@@ -70,7 +70,8 @@ public class EventEtlDbFreeTest {
     private final SampleInstanceV2 sampleInst = EasyMock.createMock(SampleInstanceV2.class);
     private final MercurySample sample = EasyMock.createMock(MercurySample.class);
     private final LabBatch labBatch = EasyMock.createMock(LabBatch.class);
-    private final SequencingSampleFactEtl sequencingSampleFactEtl = EasyMock.createNiceMock(SequencingSampleFactEtl.class);
+    private final SequencingSampleFactEtl sequencingSampleFactEtl = EasyMock.createNiceMock(
+            SequencingSampleFactEtl.class);
     private final LabEvent modEvent = EasyMock.createNiceMock(LabEvent.class);
     private final LabVessel denature = EasyMock.createNiceMock(LabVessel.class);
     private final RunCartridge cartridge = EasyMock.createNiceMock(RunCartridge.class);
@@ -225,6 +226,7 @@ public class EventEtlDbFreeTest {
 
         EasyMock.expect(wfLookup.lookupWorkflowConfig(LabEventType.SAMPLE_IMPORT.getName(), null, eventDate))
                 .andReturn(wfConfig);
+        EasyMock.expect(wfConfig.isBatchNeeded()).andReturn(false);
         EasyMock.expect(wfConfig.isProductOrderNeeded()).andReturn(false);
         EasyMock.expect(wfConfig.getWorkflowId()).andReturn(workflowId);
         EasyMock.expect(wfConfig.getProcessId()).andReturn(processId);
@@ -261,6 +263,8 @@ public class EventEtlDbFreeTest {
 
         EasyMock.expect(wfLookup.lookupWorkflowConfig(LabEventType.PICO_PLATING_BUCKET.getName(),
                 Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(), eventDate)).andReturn(wfConfig);
+        EasyMock.expect(wfConfig.isBatchNeeded()).andReturn(false);
+
         EasyMock.expect(obj.getEventDate()).andReturn(eventDate).anyTimes();
 
         EasyMock.replay(mocks);
