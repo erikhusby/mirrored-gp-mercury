@@ -394,8 +394,8 @@ public class LabEventFixupTest extends Arquillian {
         }
     }
 
-    //These lab events need eventLocation changed from 'BUNSEN' to 'BEAKER'.
-    @Test(enabled = true)
+    // Change lab events' eventLocation changed from BUNSEN to BEAKER.
+    @Test(enabled = false)
     public void gplim3248fixupEventType() {
         userBean.loginOSUser();
         for (long id : new Long[] {724636L, 724050L, 724047L, 723648L}) {
