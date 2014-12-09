@@ -26,7 +26,7 @@ public enum BillingTrackerHeader implements ColumnHeader {
         }
     },
     AUTO_LEDGER_TIMESTAMP("Auto Ledger Timestamp", ColumnHeader.OPTIONAL_HEADER, IsDate.YES),
-    WORK_COMPLETE_DATE("Date Completed", ColumnHeader.REQUIRED_HEADER, IsDate.YES),
+    WORK_COMPLETE_DATE("Date Completed", ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE, IsDate.YES),
     PF_READS("PF Reads", ColumnHeader.OPTIONAL_HEADER),
     PF_ALIGNED_GB("PF Aligned GB", ColumnHeader.OPTIONAL_HEADER),
     PF_READS_ALIGNED_IN_PAIRS("PF Reads Aligned in Pairs", ColumnHeader.OPTIONAL_HEADER),
