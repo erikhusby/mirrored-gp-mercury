@@ -160,7 +160,7 @@ public class SampleDataFetcher implements Serializable {
                                                 Collection<String> sampleIdsWithBspSource) {
         Map<String, MercurySample> allMercurySamples = mercurySampleDao.findMapIdToMercurySample(aliquotIds);
         Map<String, MercurySample.MetadataSource> sourceBySampleId =
-                sampleDataSourceResolver.resolveSampleDataSources(aliquotIds, allMercurySamples);
+                sampleDataSourceResolver.resolve(aliquotIds, allMercurySamples);
         for (Map.Entry<String, MercurySample.MetadataSource> entry : sourceBySampleId.entrySet()) {
             String sampleId = entry.getKey();
             MercurySample.MetadataSource metadataSource = entry.getValue();
