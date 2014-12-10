@@ -292,14 +292,13 @@ public class LabVesselFactory implements Serializable {
         }
 
         if (mercurySample == null) {
-            if (productOrderSamples.isEmpty()) {
-                mercurySample = new MercurySample(sampleId, metadataSource);
-            } else {
-                for (ProductOrderSample productOrderSample : productOrderSamples) {
-                    mercurySample = new MercurySample(productOrderSample.getName(), metadataSource);
-                }
-            }
+            mercurySample = new MercurySample(sampleId, metadataSource);
         }
+
+        for (ProductOrderSample productOrderSample : productOrderSamples) {
+            productOrderSample.setMercurySample(mercurySample);
+        }
+
         return mercurySample;
     }
 
