@@ -1005,9 +1005,9 @@ public class LabEventTest extends BaseEventTest {
         QtpEntityBuilder qtpEntityBuilder = new QtpEntityBuilder(
                 getBettaLimsMessageTestFactory(), getLabEventFactory(), getLabEventHandler(),
                 Collections.singletonList(iceEntityBuilder.getCatchEnrichRack()),
-                Collections.singletonList(iceEntityBuilder.getCatchEnrichRack().getLabel()),
+                Collections.singletonList(iceEntityBuilder.getCatchEnrichRack().getRacksOfTubes().iterator().next().getLabel()),
                 Collections.singletonList(iceEntityBuilder.getCatchEnrichBarcodes()),
-                iceEntityBuilder.getMapBarcodeToCatchEnrichTubes(), "1").invoke(false, true);
+                iceEntityBuilder.getMapBarcodeToCatchEnrichTubes(), "1").invoke(true, true);
 
         final LabVessel denatureSource = qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(
                 VesselPosition.A01);
@@ -1088,19 +1088,19 @@ public class LabEventTest extends BaseEventTest {
                 "HybSelPondEnrichmentCleanup",
                 "PondRegistration",
                 "IcePoolingTransfer",
-                "IceSPRIConcentration",
+                "Ice96PlexSpriConcentration",
                 "IcePoolTest",
                 "Ice1stHybridization",
                 "Ice1stCapture",
                 "Ice2ndCapture",
                 "IceCatchCleanup",
                 "IceCatchEnrichmentCleanup",
-//                "EcoTransfer",
+                "PoolingTransfer",
+                "EcoTransfer",
                 "NormalizationTransfer",
                 "DenatureTransfer",
-                // todo jmt why aren't these events found?
-//                "DenatureToDilutionTransfer",
-//                "DilutionToFlowcellTransfer",
+                "DenatureToDilutionTransfer",
+                "DilutionToFlowcellTransfer",
         };
         verifyEventSequence(labEventNames, expectedEventNames);
 

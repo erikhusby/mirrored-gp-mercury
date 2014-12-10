@@ -467,11 +467,22 @@ todo jmt adder methods
     Set<LabBatch> computeLcSets() {
         if (computedLcSets == null) {
             computedLcSets = new HashSet<>();
+
+            // First attempt to find the LCSET that all single-sample vessels have in common
             for (SectionTransfer sectionTransfer : sectionTransfers) {
                 computedLcSets.addAll(sectionTransfer.getSourceVesselContainer().getComputedLcSetsForSection(
                         sectionTransfer.getSourceSection()));
             }
             computedLcSets.addAll(computeLcSetsForCherryPickTransfers());
+
+            if (computedLcSets.isEmpty()) {
+                // Use the LCSET(s) from incoming events
+                for (LabVessel labVessel : getSourceLabVessels()) {
+                    for (LabEvent labEvent : labVessel.getTransfersToWithReArrays()) {
+                        computedLcSets.addAll(labEvent.getComputedLcSets());
+                    }
+                }
+            }
             if (LabVessel.DIAGNOSTICS) {
                 System.out.println("computedLcSets for " + labEventType.getName() + " " + computedLcSets);
             }
