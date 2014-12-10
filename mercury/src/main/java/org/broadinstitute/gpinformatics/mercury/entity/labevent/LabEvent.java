@@ -470,8 +470,16 @@ todo jmt adder methods
 
             // First attempt to find the LCSET that all single-sample vessels have in common
             for (SectionTransfer sectionTransfer : sectionTransfers) {
-                computedLcSets.addAll(sectionTransfer.getSourceVesselContainer().getComputedLcSetsForSection(
-                        sectionTransfer.getSourceSection()));
+                Set<LabBatch> sectionLcsets = sectionTransfer.getSourceVesselContainer().getComputedLcSetsForSection(
+                        sectionTransfer.getSourceSection());
+                if( !sectionLcsets.isEmpty() ) {
+                    computedLcSets.addAll(sectionLcsets);
+                } else {
+                    // Try target vessel container(s) when section transfer source vessel container comes up blank
+                    // (e.g. IndexedAdapterLigation event from IndexedAdapterPlate96 source)
+                    computedLcSets.addAll(sectionTransfer.getTargetVesselContainer().getComputedLcSetsForSection(
+                            sectionTransfer.getSourceSection()));
+                }
             }
             computedLcSets.addAll(computeLcSetsForCherryPickTransfers());
 
