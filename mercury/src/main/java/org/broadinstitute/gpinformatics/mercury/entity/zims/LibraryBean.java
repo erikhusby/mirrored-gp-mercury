@@ -53,16 +53,16 @@ public class LibraryBean {
     private String expectedInsertSize; // Squid only
 
     @JsonProperty("analysisType")
-    private String analysisType; // Squid only
+    private String analysisType;
 
     @JsonProperty("referenceSequence")
-    private String referenceSequence; // Squid only
+    private String referenceSequence;
 
     @JsonProperty("referenceSequenceVersion")
-    private String referenceSequenceVersion; // Squid only
+    private String referenceSequenceVersion;
 
     @JsonProperty("aggregate")
-    private Boolean doAggregation; // Squid only
+    private Boolean doAggregation;
 
     @JsonProperty("species")
     private String species;
