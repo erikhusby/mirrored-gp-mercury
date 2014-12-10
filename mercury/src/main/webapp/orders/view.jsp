@@ -649,17 +649,19 @@ function formatInput(item) {
 
 <div id="placeConfirmation" style="display:none;" title="Place Order">
     <p>Click OK to place the order and make it available for lab work.</p>
-    <c:set var="numberSamplesNotReceived" value="${actionBean.editOrder.sampleCount - actionBean.editOrder.receivedSampleCount}"/>
     <c:choose>
-        <c:when test="${numberSamplesNotReceived == 1}">
+        <c:when test="${actionBean.numberSamplesNotReceived == null}">
+            <p>N/A</p>
+        </c:when>
+        <c:when test="${actionBean.numberSamplesNotReceived == 1}">
             <p>
                 <em>NOTE:</em> There is one sample that has not yet been received. If the order is placed,
                 this sample will be removed from the order.
             </p>
         </c:when>
-        <c:when test="${numberSamplesNotReceived > 1}">
+        <c:when test="${actionBean.numberSamplesNotReceived > 1}">
             <p>
-                <em>NOTE:</em> There are ${numberSamplesNotReceived} samples that have not yet been received.
+                <em>NOTE:</em> There are ${actionBean.numberSamplesNotReceived} samples that have not yet been received.
                 If the order is placed, these samples will be removed from the order.
             </p>
         </c:when>

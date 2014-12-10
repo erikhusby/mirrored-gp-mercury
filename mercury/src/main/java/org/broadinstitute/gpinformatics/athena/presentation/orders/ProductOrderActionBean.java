@@ -88,6 +88,7 @@ import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInsta
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
+import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -154,6 +155,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String CHOSEN_ORGANISM = "chosenOrganism";
 
     private static final String KIT_DEFINITION_INDEX = "kitDefinitionQueryIndex";
+    private static final String COULD_NOT_LOAD_SAMPLE_DATA = "Could not load sample data";
 
     public ProductOrderActionBean() {
         super(CREATE_ORDER, EDIT_ORDER, PRODUCT_ORDER_PARAMETER);
@@ -691,7 +693,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (!hasErrors()) {
             doOnRiskUpdate();
         }
-        validateRegulatoryInformation(action);
+        if (!hasErrors()) {
+            validateRegulatoryInformation(action);
+        }
 
         updateFromInitiationTokenInputs();
     }
@@ -1346,15 +1350,25 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution getSummary() throws Exception {
         JSONArray itemList = new JSONArray();
         if (editOrder != null) {
-            List<String> comments = editOrder.getSampleSummaryComments();
-            for (String comment : comments) {
-                JSONObject item = new JSONObject();
-                item.put("comment", comment);
+            try {
+                List<String> comments = editOrder.getSampleSummaryComments();
+                for (String comment : comments) {
+                    JSONObject item = new JSONObject();
+                    item.put("comment", comment);
+                    itemList.put(item);
+                }
 
-                itemList.put(item);
+            } catch (BSPLookupException e) {
+                handleBspLookupFailed(e);
             }
         }
         return createTextResolution(itemList.toString());
+    }
+
+    private void handleBspLookupFailed(BSPLookupException bspLookupException) {
+        String errorMessage = String.format("%s: %s", COULD_NOT_LOAD_SAMPLE_DATA, bspLookupException.getMessage());
+        addGlobalValidationError(errorMessage);
+        logger.error(errorMessage);
     }
 
     @HandlesEvent("getBspData")
@@ -1365,18 +1379,22 @@ public class ProductOrderActionBean extends CoreActionBean {
         JSONArray itemList = new JSONArray();
 
         if (samples != null) {
+
             // Assuming all samples come from same product order here.
-            ProductOrder.loadSampleData(samples);
+            try {
+                ProductOrder.loadSampleData(samples);
+                for (ProductOrderSample sample : samples) {
+                    JSONObject item = new JSONObject();
 
-            for (ProductOrderSample sample : samples) {
-                JSONObject item = new JSONObject();
-
-                if (sample.isInBspFormat()) {
-                    ProductOrderSampleJsonFactory.setupSampleDTOItems(sample, item);
-                } else {
-                    ProductOrderSampleJsonFactory.setupEmptyItems(sample, item);
+                    if (sample.isInBspFormat()) {
+                        ProductOrderSampleJsonFactory.setupSampleDTOItems(sample, item);
+                    } else {
+                        ProductOrderSampleJsonFactory.setupEmptyItems(sample, item);
+                    }
+                    itemList.put(item);
                 }
-                itemList.put(item);
+            } catch (BSPLookupException e) {
+                handleBspLookupFailed(e);
             }
         }
         return createTextResolution(itemList.toString());
@@ -2276,5 +2294,18 @@ public class ProductOrderActionBean extends CoreActionBean {
     public boolean isCollaborationKitRequest() {
         return !StringUtils.isBlank(editOrder.getProductOrderKit().getWorkRequestId()) && !editOrder
                 .isSampleInitiation();
+    }
+
+    /**
+     * Get count of samples not received. Return null if the samples can not be found in BSP
+     */
+    public Integer getNumberSamplesNotReceived() {
+        Integer samplesNotReceived=null;
+        try {
+            samplesNotReceived = editOrder.getSampleCount() - editOrder.getReceivedSampleCount();
+        } catch (BSPLookupException e) {
+            handleBspLookupFailed(e);
+        }
+        return samplesNotReceived;
     }
 }
