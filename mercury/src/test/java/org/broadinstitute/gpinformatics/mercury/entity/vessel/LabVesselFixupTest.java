@@ -4,11 +4,11 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.RackOfTubesDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
@@ -872,6 +872,26 @@ public class LabVesselFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
+    public void gplim3247FixupVolumes() {
+        userBean.loginOSUser();
+        Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(Arrays.asList(
+                "0175569248",
+                "0175569269",
+                "0175569227",
+                "0175569290"
+        ));
+        for (Map.Entry<String, BarcodedTube> stringBarcodedTubeEntry : mapBarcodeToTube.entrySet()) {
+            if (stringBarcodedTubeEntry.getValue() == null) {
+                throw new RuntimeException("Failed to find tube " + stringBarcodedTubeEntry.getKey());
+            }
+            System.out.println("Setting " + stringBarcodedTubeEntry.getKey() + " to 0");
+            stringBarcodedTubeEntry.getValue().setVolume(new BigDecimal("0.00"));
+        }
+        barcodedTubeDao.persist(new FixupCommentary("GPLIM-3247 set volumes to 0"));
+        barcodedTubeDao.flush();
+    }
+
+    @Test(enabled = false)
     public void gplim3257FixupVolumes() {
         userBean.loginOSUser();
         Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(Arrays.asList(
@@ -884,8 +904,8 @@ public class LabVesselFixupTest extends Arquillian {
                 throw new RuntimeException("Failed to find tube " + barcode);
             }
             System.out.println("Updating volume for tube " + barcodedTube.getLabel() +
-                               " from " + barcodedTube.getVolume().toString() +
-                               " to " + correctVolume.toString());
+                    " from " + barcodedTube.getVolume().toString() +
+                    " to " + correctVolume.toString());
             barcodedTube.setVolume(correctVolume);
         }
         barcodedTubeDao.persist(new FixupCommentary("GPLIM-3257 fixup manually adjusted tube volumes."));
