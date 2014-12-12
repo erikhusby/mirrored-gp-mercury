@@ -106,10 +106,10 @@ public enum ManifestHeader implements ColumnHeader {
         for (String columnName : columnNames) {
             try {
                 matches.add(ManifestHeader.fromColumnName(columnName));
-            } catch (EnumConstantNotPresentException e) {
+            } catch (IllegalArgumentException e) {
 
                 // If a header cell is not blank.
-                if (!e.constantName().isEmpty()) {
+                if (!columnName.isEmpty()) {
                     errors.add(columnName);
                 }
             }
