@@ -12,9 +12,8 @@ import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.SampleData;
-import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceStub;
@@ -156,7 +155,7 @@ public class ReworkEjbTest extends Arquillian {
     private BSPSampleSearchService bspSampleSearchService;
 
     @Inject
-    private SampleDataFetcher sampleDataFetcher;
+    private BSPSampleDataFetcher bspSampleDataFetcher;
 
     @Inject
     private LabBatchEjb labBatchEJB;
@@ -1327,7 +1326,7 @@ public class ReworkEjbTest extends Arquillian {
                                     @Nonnull String barcodePrefix) {
 
         for (ProductOrderSample currSamp : pos) {
-            SampleData sampleData = sampleDataFetcher.fetchSampleData(currSamp.getSampleKey());
+            BspSampleData sampleData = bspSampleDataFetcher.fetchSingleSampleFromBSP(currSamp.getSampleKey());
             String barcode = sampleData.getContainerId();
 
             BarcodedTube aliquot = new BarcodedTube(barcode);

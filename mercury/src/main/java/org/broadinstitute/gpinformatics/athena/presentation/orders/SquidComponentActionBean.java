@@ -140,7 +140,7 @@ public class SquidComponentActionBean extends CoreActionBean {
             if (sourceOrder != null) {
                 progressFetcher.loadProgress(productOrderDao, Collections.singletonList(
                         sourceOrder.getProductOrderId()));
-                sampleDataSourceResolver.populateSampleDataSources(sourceOrder.getSamples());
+                sampleDataSourceResolver.populateSampleDataSources(sourceOrder);
             }
             autoSquidDto.setProductOrderKey(productOrderKey);
 
