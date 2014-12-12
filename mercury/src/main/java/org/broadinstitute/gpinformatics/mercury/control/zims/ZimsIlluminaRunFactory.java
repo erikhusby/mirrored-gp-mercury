@@ -342,8 +342,9 @@ public class ZimsIlluminaRunFactory {
                     sampleInstanceDto.getMetadataSourceForPipelineAPI(), analysisTypes, referenceSequenceKeys));
         }
 
-        // Make order predictable
-        Collections.sort(libraryBeans, LibraryBean.BY_SAMPLE_ID);
+        // Make order predictable.  Include library name because for ICE there are 8 ancestor catch tubes, all with
+        // the same samples.  We must tell the pipeline the same library name when they ask multiple times.
+        Collections.sort(libraryBeans, LibraryBean.BY_SAMPLE_ID_LIBRARY);
 
         // Consolidates beans that have the same consolidation key.
         SortedSet<String> previouslySeenSampleAndMis = new TreeSet<>();
