@@ -1072,9 +1072,10 @@ public class LabEventTest extends BaseEventTest {
         Assert.assertEquals(zimsIlluminaRun.getLanesSequenced(), "3,6");
         Assert.assertEquals(zimsIlluminaRun.getSystemOfRecord(), SystemRouter.System.MERCURY);
         for (ZimsIlluminaChamber zimsIlluminaChamber : zimsIlluminaRun.getLanes()) {
+            Assert.assertEquals(zimsIlluminaChamber.getLibraries().size(), NUM_POSITIONS_IN_RACK);
             for (LibraryBean libraryBean : zimsIlluminaChamber.getLibraries()) {
                 Assert.assertTrue(libraryBean.getLibrary().startsWith(
-                        lcsetSuffix + IceJaxbBuilder.ICE_CATCH_ENRICH + "0"));
+                        POND_REGISTRATION_TUBE_PREFIX + lcsetSuffix));
             }
         }
 
