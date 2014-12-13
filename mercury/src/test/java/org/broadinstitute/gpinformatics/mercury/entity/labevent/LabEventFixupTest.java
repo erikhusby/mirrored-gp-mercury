@@ -5,7 +5,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
@@ -59,9 +58,6 @@ public class LabEventFixupTest extends Arquillian {
 
     @Inject
     private UserBean userBean;
-
-    @Inject
-    private LabVesselDao labVesselDao;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
