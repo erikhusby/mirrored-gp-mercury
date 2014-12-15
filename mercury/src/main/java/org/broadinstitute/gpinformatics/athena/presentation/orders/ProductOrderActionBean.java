@@ -693,9 +693,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (!hasErrors()) {
             doOnRiskUpdate();
         }
-        if (!hasErrors()) {
-            validateRegulatoryInformation(action);
-        }
+        validateRegulatoryInformation(action);
 
         updateFromInitiationTokenInputs();
     }
@@ -1365,6 +1363,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         return createTextResolution(itemList.toString());
     }
 
+    /**
+     * This convenience method logs exceptions from bsp and adds a global validation error.
+     *
+     * @param bspLookupException the exception thrown when a call to BspSampleDataFetcher fails.
+     */
     private void handleBspLookupFailed(BSPLookupException bspLookupException) {
         String errorMessage = String.format("%s: %s", COULD_NOT_LOAD_SAMPLE_DATA, bspLookupException.getMessage());
         addGlobalValidationError(errorMessage);
