@@ -361,7 +361,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
             );
         }
         BarcodedTube poolTube = barcodedTubeDao.findByBarcode(qtpJaxbBuilder.getPoolTubeBarcodes().get(0));
-        Assert.assertEquals(poolTube.getSampleInstances().size(), BaseEventTest.NUM_POSITIONS_IN_RACK,
+        Assert.assertEquals(poolTube.getSampleInstancesV2().size(), BaseEventTest.NUM_POSITIONS_IN_RACK,
                 "Wrong number of sample instances");
 
         IlluminaSequencingRun illuminaSequencingRun = registerIlluminaSequencingRun(testPrefix,
@@ -418,7 +418,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         IceJaxbBuilder iceJaxbBuilder = new IceJaxbBuilder(bettaLimsMessageFactory,
                 testPrefix, libraryConstructionJaxbBuilder.getPondRegRackBarcode(),
                 libraryConstructionJaxbBuilder.getPondRegTubeBarcodes(), "Bait" + testPrefix, "Bait" + testPrefix,
-                LibraryConstructionJaxbBuilder.TargetSystem.MERCURY_ONLY)
+                LibraryConstructionJaxbBuilder.TargetSystem.MERCURY_ONLY, IceJaxbBuilder.PlexType.PLEX96)
                 .invoke();
         List<ReagentDesign> reagentDesigns = reagentDesignDao.findAll(ReagentDesign.class, 0, 1);
         ReagentDesign baitDesign = null;
@@ -451,7 +451,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
             );
         }
         BarcodedTube poolTube = barcodedTubeDao.findByBarcode(qtpJaxbBuilder.getPoolTubeBarcodes().get(0));
-        Assert.assertEquals(poolTube.getSampleInstances().size(), BaseEventTest.NUM_POSITIONS_IN_RACK,
+        Assert.assertEquals(poolTube.getSampleInstancesV2().size(), BaseEventTest.NUM_POSITIONS_IN_RACK,
                 "Wrong number of sample instances");
 
         IlluminaSequencingRun illuminaSequencingRun = registerIlluminaSequencingRun(testPrefix,
@@ -740,7 +740,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
 
         IlluminaSequencingRun illuminaSequencingRun =
                 registerIlluminaSequencingRun(testPrefix, hiSeq2500JaxbBuilder.getFlowcellBarcode());
-        Assert.assertEquals(illuminaSequencingRun.getSampleCartridge().getSampleInstances().size(),
+        Assert.assertEquals(illuminaSequencingRun.getSampleCartridge().getSampleInstancesV2().size(),
                 BaseEventTest.NUM_POSITIONS_IN_RACK * 8, "Wrong number of sample instances");
         ZimsIlluminaRun zimsIlluminaRun = illuminaRunResource.getRun(illuminaSequencingRun.getRunName());
         Assert.assertEquals(zimsIlluminaRun.getLanes().size(), 8, "Wrong number of lanes");
