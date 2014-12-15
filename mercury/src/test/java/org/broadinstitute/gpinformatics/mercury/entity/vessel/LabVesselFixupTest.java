@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormation
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
+import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
@@ -841,7 +842,7 @@ public class LabVesselFixupTest extends Arquillian {
         barcodedTubeDao.flush();
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void gplim3154relabelTubes() {
         userBean.loginOSUser();
         Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(Arrays.asList(
@@ -867,6 +868,48 @@ public class LabVesselFixupTest extends Arquillian {
             }
             tube.setLabel(barcode + "gplim3154");
         }
+        barcodedTubeDao.flush();
+    }
+
+    private static class BarcodeVolume {
+        private final String barcode;
+        private final BigDecimal volume;
+
+        BarcodeVolume(String barcode, BigDecimal volume) {
+            this.barcode = barcode;
+            this.volume = volume;
+        }
+
+        public String getBarcode() {
+            return barcode;
+        }
+
+        public BigDecimal getVolume() {
+            return volume;
+        }
+    }
+
+    @Test(enabled = false)
+    public void gplim3269FixupVolumes() {
+        userBean.loginOSUser();
+        BarcodeVolume[] barcodeVolumes = {
+                new BarcodeVolume("175349826", new BigDecimal("35.00")),
+                new BarcodeVolume("175359203", new BigDecimal("32.00")),
+                new BarcodeVolume("175349846", new BigDecimal("37.00")),
+                new BarcodeVolume("175349790", new BigDecimal("18.00")),
+                new BarcodeVolume("175349772", new BigDecimal("45.00")),
+                new BarcodeVolume("175349817", new BigDecimal("28.00")),
+                new BarcodeVolume("175349839", new BigDecimal("36.00"))
+        };
+        for (BarcodeVolume barcodeVolume : barcodeVolumes) {
+            BarcodedTube barcodedTube = barcodedTubeDao.findByBarcode(barcodeVolume.getBarcode());
+            if (barcodedTube == null) {
+                throw new RuntimeException("Failed to find tube " + barcodeVolume.getBarcode());
+            }
+            System.out.println("Updating " + barcodeVolume.getBarcode() + " to " + barcodeVolume.getVolume());
+            barcodedTube.setVolume(barcodeVolume.getVolume());
+        }
+        barcodedTubeDao.persist(new FixupCommentary("GPLIM-3269 volume fixup"));
         barcodedTubeDao.flush();
     }
 }
