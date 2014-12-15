@@ -6,15 +6,17 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
+import org.testng.Assert;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Builds entity graphs for the Illumina Content Exome process.
@@ -27,7 +29,9 @@ public class IceEntityBuilder {
     private final TubeFormation pondRegRack;
     private final String pondRegRackBarcode;
     private final List<String> pondRegTubeBarcodes;
-    private String testPrefix;
+    private final String testPrefix;
+    private final IceJaxbBuilder.PlexType plexType;
+
     private TubeFormation catchEnrichRack;
     private List<String> catchEnrichBarcodes;
     private Map<String, BarcodedTube> mapBarcodeToCatchEnrichTubes;
@@ -35,7 +39,7 @@ public class IceEntityBuilder {
     public IceEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
             LabEventFactory labEventFactory, LabEventHandler labEventHandler,
             TubeFormation pondRegRack, String pondRegRackBarcode,
-            List<String> pondRegTubeBarcodes, String testPrefix) {
+            List<String> pondRegTubeBarcodes, String testPrefix, IceJaxbBuilder.PlexType plexType) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.labEventFactory = labEventFactory;
         this.labEventHandler = labEventHandler;
@@ -43,12 +47,13 @@ public class IceEntityBuilder {
         this.pondRegRackBarcode = pondRegRackBarcode;
         this.pondRegTubeBarcodes = pondRegTubeBarcodes;
         this.testPrefix = testPrefix;
+        this.plexType = plexType;
     }
 
     public IceEntityBuilder invoke() {
         IceJaxbBuilder iceJaxbBuilder = new IceJaxbBuilder(bettaLimsMessageTestFactory, testPrefix, pondRegRackBarcode,
                 pondRegTubeBarcodes, testPrefix + "IceBait1", testPrefix + "IceBait2",
-                LibraryConstructionJaxbBuilder.TargetSystem.SQUID_VIA_MERCURY).invoke();
+                LibraryConstructionJaxbBuilder.TargetSystem.SQUID_VIA_MERCURY, plexType).invoke();
         catchEnrichBarcodes = iceJaxbBuilder.getCatchEnrichTubeBarcodes();
 
         Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
@@ -63,14 +68,24 @@ public class IceEntityBuilder {
         labEventHandler.processEvent(icePoolingTransfer);
         TubeFormation poolRack = (TubeFormation) icePoolingTransfer.getTargetLabVessels().iterator().next();
 
-        LabEventTest.validateWorkflow("IceSPRIConcentration", poolRack);
         mapBarcodeToVessel.clear();
         mapBarcodeToVessel.put(poolRack.getLabel(), poolRack);
         for (BarcodedTube barcodedTube : poolRack.getContainerRole().getContainedVessels()) {
             mapBarcodeToVessel.put(barcodedTube.getLabel(), barcodedTube);
         }
-        LabEvent iceSpriConcentration = labEventFactory.buildFromBettaLims(iceJaxbBuilder.getIceSPRIConcentration(),
-                mapBarcodeToVessel);
+        LabEvent iceSpriConcentration = null;
+        switch (plexType) {
+            case PLEX12:
+                LabEventTest.validateWorkflow("IceSPRIConcentration", poolRack);
+                iceSpriConcentration = labEventFactory.buildFromBettaLims(iceJaxbBuilder.getIceSPRIConcentration(),
+                        mapBarcodeToVessel);
+                break;
+            case PLEX96:
+                LabEventTest.validateWorkflow("Ice96PlexSpriConcentration", poolRack);
+                iceSpriConcentration = labEventFactory.buildFromBettaLims(iceJaxbBuilder.getIce96PlexSpriConcentration(),
+                        mapBarcodeToVessel);
+                break;
+        }
         labEventHandler.processEvent(iceSpriConcentration);
         TubeFormation spriRack = (TubeFormation) iceSpriConcentration.getTargetLabVessels().iterator().next();
 
@@ -93,6 +108,9 @@ public class IceEntityBuilder {
                 mapBarcodeToVessel);
         labEventHandler.processEvent(ice1stHybridization);
         StaticPlate firstHybPlate = (StaticPlate) ice1stHybridization.getTargetLabVessels().iterator().next();
+        Set<LabBatch> computedLcSets = ice1stHybridization.getComputedLcSets();
+        // todo jmt enable this after GPLIM-3122 is merged
+//        Assert.assertFalse(computedLcSets.isEmpty());
 
         LabEventTest.validateWorkflow("Ice1stBaitAddition", firstHybPlate);
         ReagentDesign baitDesign1 = new ReagentDesign("Ice Bait 1", ReagentDesign.ReagentType.BAIT);
