@@ -192,7 +192,7 @@ public class ReworkEjbTest extends Arquillian {
     /**
      * Local map of SampleData to use when creating MercurySamples for ProductOrderSamples.
      */
-    private Map<String, SampleData> sampleDataMap;
+    private Map<String, BspSampleData> sampleDataMap;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -1337,7 +1337,7 @@ public class ReworkEjbTest extends Arquillian {
                                     @Nonnull String barcodePrefix) {
 
         for (ProductOrderSample currSamp : pos) {
-            SampleData sampleData = sampleDataMap.get(currSamp.getSampleKey());
+            BspSampleData sampleData = sampleDataMap.get(currSamp.getSampleKey());
             String barcode = sampleData.getContainerId();
 
             BarcodedTube aliquot = new BarcodedTube(barcode);
