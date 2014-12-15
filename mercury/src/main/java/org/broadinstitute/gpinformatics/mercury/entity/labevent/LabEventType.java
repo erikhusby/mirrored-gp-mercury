@@ -68,12 +68,14 @@ public enum LabEventType {
     WGS_ADAPTER_LIGATION_CLEANUP("WGSAdapterLigationCleanup",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+    // The PCR is associated with PondRegistration, because we want a tube barcode for the pipeline
     POND_ENRICHMENT("PondEnrichment",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.PCR, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+    // The PCR is associated with PondRegistration, because we want a tube barcode for the pipeline
     INDEX_P5_POND_ENRICHMENT("IndexP5PondEnrichment",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
-            PlasticToValidate.TARGET, PipelineTransformation.PCR, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+            PlasticToValidate.TARGET, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
     POST_POND_ENRICHMENT_THERMO_CYCLER_LOADED("PostPondEnrichmentThermoCyclerLoaded",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
@@ -82,7 +84,7 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
     POND_REGISTRATION("PondRegistration",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+            PlasticToValidate.SOURCE, PipelineTransformation.PCR, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
     POND_PICO("PondPico",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
@@ -852,6 +854,8 @@ public enum LabEventType {
     public enum PipelineTransformation {
         NONE,
         LIGATION,
+        /** This is currently the most important transformation.  In general, the Zims library name should include
+         * the barcode of the tube following the first post-shearing PCR event. */
         PCR,
         CAPTURE,
         SIZE_SELECTION

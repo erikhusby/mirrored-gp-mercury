@@ -47,8 +47,8 @@ public class IlluminaRunResourceLiveTest extends Arquillian {
 
         Assert.assertEquals(zimsIlluminaChamber.getLibraries().size(), 91, "Wrong number of libraries");
         LibraryBean libraryBean = zimsIlluminaChamber.getLibraries().iterator().next();
-        Assert.assertEquals(libraryBean.getLibrary(), "0148909054_Illumina_P5-Kizez_P7-Cakax");
-        Assert.assertEquals(libraryBean.getLibraryCreationDate(), "08/29/2013 11:51");
+        Assert.assertEquals(libraryBean.getLibrary(), "0145544926_Illumina_P5-Kizez_P7-Cakax");
+        Assert.assertEquals(libraryBean.getLibraryCreationDate(), "08/26/2013 14:28");
     }
 
     @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, groups = STANDARD)

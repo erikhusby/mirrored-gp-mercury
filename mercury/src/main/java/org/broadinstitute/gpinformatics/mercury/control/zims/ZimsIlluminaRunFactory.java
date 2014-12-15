@@ -71,8 +71,6 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalDirection.Ancestors;
-
 /**
  * This class constructs a pipeline API bean from a Mercury chain of custody.
  *
@@ -122,23 +120,24 @@ public class ZimsIlluminaRunFactory {
             perLaneSampleInstanceDtos.add(sampleInstanceDtos);
             String positionName = positionNames.next();
             VesselPosition vesselPosition = VesselPosition.getByName(positionName);
-            PipelineTransformationCriteria criteria = new PipelineTransformationCriteria();
-            flowcell.getContainerRole().evaluateCriteria(vesselPosition, criteria, Ancestors, null, 0);
-            Map<SampleInstanceV2, SampleInstanceV2> laneSampleInstances = new HashMap<>();
-            for (SampleInstanceV2 sampleInstanceV2 :
+            // todo jmt delete this code, and determine if remainder can be simplified
+//            PipelineTransformationCriteria criteria = new PipelineTransformationCriteria();
+//            flowcell.getContainerRole().evaluateCriteria(vesselPosition, criteria, Ancestors, null, 0);
+//            Map<SampleInstanceV2, SampleInstanceV2> laneSampleInstances = new HashMap<>();
+            for (SampleInstanceV2 laneSampleInstance :
                     flowcell.getContainerRole().getSampleInstancesAtPositionV2(vesselPosition)) {
-                laneSampleInstances.put(sampleInstanceV2, sampleInstanceV2);
-            }
-
-            for (LabVessel labVessel : criteria.getNearestLabVessels()) {
-                Set<SampleInstanceV2> sampleInstances = labVessel.getSampleInstancesV2();
-                for (SampleInstanceV2 sampleInstance : sampleInstances) {
-                    // Must use equivalent sample instance in the lane, to reflect any rework LCSET since the catch.
-                    SampleInstanceV2 laneSampleInstance = laneSampleInstances.get(sampleInstance);
-                    if (laneSampleInstance == null) {
-                        throw new RuntimeException("Failed to find " + sampleInstance.getMercuryRootSampleName() +
-                                " in lane " + laneNum);
-                    }
+//                laneSampleInstances.put(sampleInstanceV2, sampleInstanceV2);
+//            }
+//
+//            for (LabVessel labVessel : criteria.getNearestLabVessels()) {
+//                Set<SampleInstanceV2> sampleInstances = labVessel.getSampleInstancesV2();
+//                for (SampleInstanceV2 sampleInstance : sampleInstances) {
+//                    // Must use equivalent sample instance in the lane, to reflect any rework LCSET since the catch.
+//                    SampleInstanceV2 laneSampleInstance = laneSampleInstances.get(sampleInstance);
+//                    if (laneSampleInstance == null) {
+//                        throw new RuntimeException("Failed to find " + sampleInstance.getMercuryRootSampleName() +
+//                                " in lane " + laneNum);
+//                    }
                     BucketEntry singleBucketEntry = laneSampleInstance.getSingleBucketEntry();
                     String productOrderKey = null;
                     if (singleBucketEntry != null) {
@@ -164,10 +163,10 @@ public class ZimsIlluminaRunFactory {
                     String libraryName = libraryVessel.getLabel();
                     String metadataSource = laneSampleInstance.getMetadataSourceForPipelineAPI();
 
-                    sampleInstanceDtos
-                            .add(new SampleInstanceDto(laneNum, labVessel, laneSampleInstance, sampleId, productOrderKey,
-                                                       libraryName, libraryVessel.getCreatedOn(), pdoSampleName,isCrspLane,metadataSource));
-                }
+                    sampleInstanceDtos.add(new SampleInstanceDto(laneNum, laneSampleInstance.getFirstPcrVessel(),
+                            laneSampleInstance, sampleId, productOrderKey, libraryName, libraryVessel.getCreatedOn(),
+                            pdoSampleName,isCrspLane,metadataSource));
+//                }
             }
         }
         int numberOfLanes = laneNum;
@@ -342,8 +341,9 @@ public class ZimsIlluminaRunFactory {
                     sampleInstanceDto.getMetadataSourceForPipelineAPI(), analysisTypes, referenceSequenceKeys));
         }
 
-        // Make order predictable
-        Collections.sort(libraryBeans, LibraryBean.BY_SAMPLE_ID);
+        // Make order predictable.  Include library name because for ICE there are 8 ancestor catch tubes, all with
+        // the same samples.  We must tell the pipeline the same library name when they ask multiple times.
+        Collections.sort(libraryBeans, LibraryBean.BY_SAMPLE_ID_LIBRARY);
 
         // Consolidates beans that have the same consolidation key.
         SortedSet<String> previouslySeenSampleAndMis = new TreeSet<>();
@@ -462,6 +462,7 @@ public class ZimsIlluminaRunFactory {
         return libraryBean;        
     }
 
+    // todo jmt delete this class
     private static class PipelineTransformationCriteria implements TransferTraverserCriteria {
 
         private Map<Integer, Set<LabVessel>> mapHopToLabVessels = LazyMap.lazyMap(
