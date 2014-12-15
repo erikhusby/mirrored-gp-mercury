@@ -1326,14 +1326,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         }
 
         /**
-         * This method returns the total number of unique samples that have MercurySample.MetadataSource.
+         * This method returns the total number of unique samples for all MetadataSources.
          */
         private int getTotalUniqueSamplesWithMetadata() {
-            int total = 0;
+            int totalUnique = 0;
             for (SampleCountForSource counts : samplesCountsBySource.values()) {
-                total += counts.getTotal();
+                totalUnique += counts.getUnique();
             }
-            return total;
+            return totalUnique;
         }
 
         /**
