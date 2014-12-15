@@ -625,10 +625,13 @@ public class LibraryBean {
         return metadataSource;
     }
 
-    public static final Comparator<LibraryBean> BY_SAMPLE_ID = new Comparator<LibraryBean> () {
+    public static final Comparator<LibraryBean> BY_SAMPLE_ID_LIBRARY = new Comparator<LibraryBean> () {
         @Override
         public int compare(LibraryBean libraryBean1, LibraryBean libraryBean2) {
-            return new CompareToBuilder().append(libraryBean1.getSampleId(), libraryBean2.getSampleId()).toComparison();
+            return new CompareToBuilder().
+                    append(libraryBean1.getSampleId(), libraryBean2.getSampleId()).
+                    append(libraryBean1.getLibrary(), libraryBean2.getLibrary()).
+                    toComparison();
         }
     };
 

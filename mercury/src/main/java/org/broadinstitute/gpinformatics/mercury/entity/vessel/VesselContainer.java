@@ -1060,7 +1060,7 @@ public class VesselContainer<T extends LabVessel> {
             // Apply events to clones
             for (LabVessel.VesselEvent ancestorEvent : ancestorEvents) {
                 for (SampleInstanceV2 currentSampleInstance : currentSampleInstances) {
-                    currentSampleInstance.applyEvent(ancestorEvent.getLabEvent());
+                    currentSampleInstance.applyEvent(ancestorEvent.getLabEvent(), labVessel);
                 }
             }
 
