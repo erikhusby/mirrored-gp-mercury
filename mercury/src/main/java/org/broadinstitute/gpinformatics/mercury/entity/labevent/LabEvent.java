@@ -494,7 +494,9 @@ todo jmt adder methods
                 if (computedLcSets.isEmpty()) {
                     for (LabVessel labVessel : getTargetLabVessels()) {
                         for (LabEvent labEvent : labVessel.getTransfersTo()) {
-                            computedLcSets.addAll(labEvent.getComputedLcSets());
+                            if( !labEvent.getLabEventId().equals(getLabEventId() ) ) {
+                                computedLcSets.addAll(labEvent.getComputedLcSets());
+                            }
                         }
                     }
                 }
