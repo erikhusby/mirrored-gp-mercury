@@ -888,7 +888,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             ProductOrder.loadLabEventSampleData(editOrder.getSamples());
 
-            sampleDataSourceResolver.populateSampleDataSources(editOrder.getSamples());
+            sampleDataSourceResolver.populateSampleDataSources(editOrder);
         }
     }
 

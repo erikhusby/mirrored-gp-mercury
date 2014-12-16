@@ -71,6 +71,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressSheari
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.IceEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.IceJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.MiSeqReagentKitEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
@@ -449,7 +450,7 @@ public class BaseEventTest {
     public IceEntityBuilder runIceProcess(TubeFormation pondRegRack, String pondRegRackBarcode,
                                           List<String> pondRegTubeBarcodes, String barcodeSuffix) {
         return new IceEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(), pondRegRack,
-                                    pondRegRackBarcode, pondRegTubeBarcodes, barcodeSuffix).invoke();
+                pondRegRackBarcode, pondRegTubeBarcodes, barcodeSuffix, IceJaxbBuilder.PlexType.PLEX96).invoke();
     }
 
     /**
@@ -608,7 +609,7 @@ public class BaseEventTest {
 
         // Controls are added in a re-array
         BarcodedTube posControlTube = new BarcodedTube("C1");
-        SampleData bspSampleDataPos = new BspSampleData(
+        BspSampleData bspSampleDataPos = new BspSampleData(
                 new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
                     put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, POSITIVE_CONTROL);
                 }});
@@ -617,7 +618,7 @@ public class BaseEventTest {
         mapBarcodeToDaughterTube.put(VesselPosition.H11, posControlTube);
 
         BarcodedTube negControlTube = new BarcodedTube("C2");
-        SampleData bspSampleDataNeg = new BspSampleData(
+        BspSampleData bspSampleDataNeg = new BspSampleData(
                 new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
                     put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, NEGATIVE_CONTROL);
                 }});
@@ -696,7 +697,7 @@ public class BaseEventTest {
 
         // Controls are added in a re-array
         BarcodedTube posControlTube = new BarcodedTube("C1");
-        SampleData bspSampleDataPos = new BspSampleData(
+        BspSampleData bspSampleDataPos = new BspSampleData(
                 new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
                     put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, POSITIVE_CONTROL);
                     put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, POSITIVE_CONTROL);
@@ -706,7 +707,7 @@ public class BaseEventTest {
         mapBarcodeToDaughterTube.put(VesselPosition.H11, posControlTube);
 
         BarcodedTube negControlTube = new BarcodedTube("C2");
-        SampleData bspSampleDataNeg = new BspSampleData(
+        BspSampleData bspSampleDataNeg = new BspSampleData(
                 new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
                     put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, NEGATIVE_CONTROL);
                     put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, NEGATIVE_CONTROL);

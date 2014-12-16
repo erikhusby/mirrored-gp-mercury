@@ -108,7 +108,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     @Column(name = "ALIQUOT_ID")
     private String aliquotId;
 
-    @OneToMany(mappedBy = "productOrderSample",cascade = {CascadeType.PERSIST}, orphanRemoval = true)
+    @OneToMany(mappedBy = "productOrderSample", cascade = {CascadeType.PERSIST}, orphanRemoval = true)
     @BatchSize(size = 100)
     Set<SampleReceiptValidation> sampleReceiptValidations = new HashSet<>();
 
@@ -236,10 +236,10 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     public boolean canRinScoreBeUsedForOnRiskCalculation() {
         boolean canRinScoreBeUsed = false;
         if (isInBspFormat()) {
+
             SampleData sampleData = getSampleData();
-            if (sampleData != null) {
-                canRinScoreBeUsed = sampleData.canRinScoreBeUsedForOnRiskCalculation();
-            }
+            // at time of comment, getSampleData will never return null so a null check is not required
+            canRinScoreBeUsed = sampleData.canRinScoreBeUsedForOnRiskCalculation();
         }
         return canRinScoreBeUsed;
     }
@@ -260,6 +260,17 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     }
 
     @Override
+    protected SampleData makeSampleData() {
+        SampleData sampleData;
+        if(mercurySample != null) {
+            sampleData = mercurySample.makeSampleData();
+        } else {
+            sampleData = new BspSampleData();
+        }
+        return sampleData;
+    }
+
+    @Override
     public MercurySample.MetadataSource getMetadataSource() {
         if (mercurySample != null) {
             return mercurySample.getMetadataSource();
@@ -270,9 +281,21 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         return metadataSource;
     }
 
+    public static Map<String, MercurySample.MetadataSource> getMetadataSourcesForBoundProductOrderSamples(
+            Collection<ProductOrderSample> samples) {
+
+        Map<String, MercurySample.MetadataSource> results = new HashMap<>();
+        for (ProductOrderSample sample : samples) {
+            if (sample.getMercurySample() != null) {
+                results.put(sample.getSampleKey(), sample.getMetadataSource());
+            }
+        }
+        return results;
+    }
+
     public void setMetadataSource(MercurySample.MetadataSource metadataSource) {
         this.metadataSource = metadataSource;
-        this.isMetadataSourceInitialized = true;
+        isMetadataSourceInitialized = true;
     }
 
     public enum DeliveryStatus implements StatusType {
@@ -322,8 +345,8 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     /**
      * TEST-ONLY delegating constructor that also sets the entity's primary key.
      *
-     * @param sampleName    the sample ID
-     * @param primaryKey    the primary key
+     * @param sampleName the sample ID
+     * @param primaryKey the primary key
      *
      * @see #ProductOrderSample(String)
      */
@@ -344,9 +367,9 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     /**
      * TEST-ONLY delegating constructor that also sets the entity's primary key.
      *
-     * @param sampleName      the sample ID
-     * @param sampleData      the sample data
-     * @param primaryKey      the primary key
+     * @param sampleName the sample ID
+     * @param sampleData the sample data
+     * @param primaryKey the primary key
      *
      * @see #ProductOrderSample(String, SampleData)
      */
@@ -576,9 +599,9 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      * upload happened and needs to be reviewed.
      *
      * @param workCompleteDate The date completed.
-     * @param priceItem The price item to charge.
-     * @param delta The plus or minus value to bill to the quote server.
-     * @param currentDate The ledger entry needs a date to say when the auto entry was made.
+     * @param priceItem        The price item to charge.
+     * @param delta            The plus or minus value to bill to the quote server.
+     * @param currentDate      The ledger entry needs a date to say when the auto entry was made.
      */
     public void addAutoLedgerItem(Date workCompleteDate, PriceItem priceItem, double delta, Date currentDate) {
         addLedgerItem(workCompleteDate, priceItem, delta, currentDate);
@@ -589,8 +612,8 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      * will lock out auto billing and sets to Can Bill.
      *
      * @param workCompleteDate The date completed.
-     * @param priceItem The price item to charge.
-     * @param delta The plus or minus value to bill to the quote server.
+     * @param priceItem        The price item to charge.
+     * @param delta            The plus or minus value to bill to the quote server.
      */
     public void addLedgerItem(Date workCompleteDate, PriceItem priceItem, double delta) {
         addLedgerItem(workCompleteDate, priceItem, delta, null);

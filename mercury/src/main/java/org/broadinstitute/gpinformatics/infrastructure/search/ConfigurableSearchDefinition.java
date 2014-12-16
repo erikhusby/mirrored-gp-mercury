@@ -62,7 +62,7 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
     /**
      * Allow an evaluator to expand entity list to be attached to search term.
      */
-    private TraversalEvaluator<List<?>> traversalEvaluator;
+    private Map<String, TraversalEvaluator> traversalEvaluators;
 
     /**
      * Produce named AddRowsListener instances for this search definition.
@@ -121,13 +121,27 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
         return requiredSearchTerms;
     }
 
-    public void setTraversalEvaluator(
-            TraversalEvaluator<List<?>> traversalEvaluator) {
-        this.traversalEvaluator = traversalEvaluator;
+    /**
+     * Allow an optional traversal evaluator to be attached to this search
+     * @param Id - The identifier representing this evaluator (presented as the UI identifier)
+     * @param traversalEvaluator
+     */
+    public void addTraversalEvaluator(String Id, TraversalEvaluator traversalEvaluator) {
+        if( traversalEvaluators == null ) {
+            traversalEvaluators = new LinkedHashMap<>();
+        } else {
+            if( traversalEvaluators.containsKey(Id) ) {
+                throw new RuntimeException("Duplicate TraversalEvaluator Id in ConfigurableSearchDefinition: " + Id);
+            }
+        }
+        this.traversalEvaluators.put(Id, traversalEvaluator);
     }
 
-    public TraversalEvaluator<List<?>> getTraversalEvaluator(){
-        return this.traversalEvaluator;
+    /**
+     * Obtain the TraversalEvaluator implementations
+     */
+    public Map<String,TraversalEvaluator> getTraversalEvaluators(){
+        return traversalEvaluators;
     }
 
 
@@ -245,15 +259,6 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
             }
         }
         return mapCriteriaToProjection.get(criteriaName);
-    }
-
-    /**
-     * Attached to a ConfigurableSearchDefinition to expand list of entity identifiers
-     *    to include ancestors, descendants, or both.
-     * @param <T>
-     */
-    public abstract static class TraversalEvaluator <T> {
-        public abstract T evaluate(List<?> rootEntities, boolean doAncestorTraversal, boolean doDescendantTraversal);
     }
 
     /**

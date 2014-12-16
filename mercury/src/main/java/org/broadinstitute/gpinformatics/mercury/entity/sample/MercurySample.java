@@ -94,19 +94,37 @@ public class MercurySample extends AbstractSample {
     protected MercurySample() {
     }
 
+    /**
+     * Creates a new MercurySample with a specific metadata source in the absence of the actual sample data.
+     *
+     * @param sampleKey         the name of the sample
+     * @param metadataSource    the source of the sample data
+     */
     public MercurySample(String sampleKey, MetadataSource metadataSource) {
         this.sampleKey = sampleKey;
         this.metadataSource = metadataSource;
     }
 
-    public MercurySample(String sampleKey, SampleData sampleData) {
-        super(sampleData);
+    /**
+     * Creates a new MercurySample with the given sample data from BSP.
+     *
+     * @param sampleKey        the name of the sample
+     * @param bspSampleData    the sample data as fetched from BSP
+     */
+    public MercurySample(String sampleKey, BspSampleData bspSampleData) {
+        super(bspSampleData);
         this.sampleKey = sampleKey;
         this.metadataSource = MetadataSource.BSP;
     }
 
-    public MercurySample(String sampleKey, MetadataSource metadataSource, Set<Metadata> metadata) {
-        this(sampleKey, metadataSource);
+    /**
+     * Creates a new MercurySample with the given sample data in Mercury.
+     *
+     * @param sampleKey    the name of the sample
+     * @param metadata     the sample data to associate with the sample
+     */
+    public MercurySample(String sampleKey, Set<Metadata> metadata) {
+        this(sampleKey, MetadataSource.MERCURY);
         addMetadata(metadata);
     }
 
@@ -188,8 +206,7 @@ public class MercurySample extends AbstractSample {
         return sampleId.matches("\\d+\\.\\d+");
     }
 
-    @Override
-    protected SampleData makeSampleData() {
+    public SampleData makeSampleData() {
         switch (metadataSource) {
         case BSP:
             return new BspSampleData();

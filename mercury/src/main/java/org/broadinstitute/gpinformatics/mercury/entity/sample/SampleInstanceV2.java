@@ -6,6 +6,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -40,6 +41,7 @@ public class SampleInstanceV2 {
     private LabVessel initialLabVessel;
     private boolean examinedContainers;
     private MolecularIndexingScheme molecularIndexingScheme;
+    private LabVessel firstPcrVessel;
 
     /**
      * For a reagent-only sample instance.
@@ -81,6 +83,7 @@ public class SampleInstanceV2 {
         allLabBatchStartingVessels.addAll(other.allLabBatchStartingVessels);
         molecularIndexingScheme = other.molecularIndexingScheme;
         initialLabVessel = other.initialLabVessel;
+        firstPcrVessel = other.firstPcrVessel;
     }
 
     /**
@@ -341,7 +344,12 @@ todo jmt not sure if this applies.
     /**
      * Applies a LabEvent, specifically computed LCSets.
      */
-    public void applyEvent(LabEvent labEvent) {
+    public void applyEvent(LabEvent labEvent, LabVessel labVessel) {
+        if (labEvent.getLabEventType().getPipelineTransformation() == LabEventType.PipelineTransformation.PCR) {
+            if (firstPcrVessel == null && labVessel != null) {
+                firstPcrVessel = labVessel;
+            }
+        }
         Set<LabBatch> computedLcsets = labEvent.getComputedLcSets();
         // A single computed LCSET can help resolve ambiguity of multiple bucket entries.
         if (computedLcsets.size() == 1) {
@@ -370,6 +378,10 @@ todo jmt not sure if this applies.
 
     public Set<MercurySample> getRootMercurySamples() {
         return rootMercurySamples;
+    }
+
+    public LabVessel getFirstPcrVessel() {
+        return firstPcrVessel;
     }
 
     /**

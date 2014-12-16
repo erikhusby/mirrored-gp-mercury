@@ -36,6 +36,8 @@ import java.util.Map;
  */
 public class ManifestImportProcessor extends TableProcessor {
     private static final int ALLOWABLE_NUMBER_OF_SHEETS = 1;
+    public static final String EMPTY_FILE_ERROR = "The file uploaded was empty.";
+    public static final String NO_DATA_ERROR = "The uploaded Manifest has no data.";
     private ColumnHeader[] columnHeaders;
     private List<ManifestRecord> manifestRecords = new ArrayList<>();
     static final String UNKNOWN_HEADER_FORMAT = "Unknown header(s) '%s'.";
@@ -56,7 +58,7 @@ public class ManifestImportProcessor extends TableProcessor {
         ManifestHeader.fromColumnName(errors, headers.toArray(new String[headers.size()]));
         if (!errors.isEmpty()){
             getMessages()
-                    .add(String.format("Unknown %s '%s' present", Noun.pluralOf("header", errors.size()), errors));
+                    .add(String.format("Unknown %s '%s' present.", Noun.pluralOf("header", errors.size()), errors));
         }
     }
 
@@ -105,6 +107,11 @@ public class ManifestImportProcessor extends TableProcessor {
      * @throws ValidationException if there were any errors.
      */
     public List<ManifestRecord> getManifestRecords() throws ValidationException {
+        if (columnHeaders == null && manifestRecords.isEmpty()) {
+            getMessages().add(EMPTY_FILE_ERROR);
+        } else if (manifestRecords.isEmpty()) {
+            getMessages().add(NO_DATA_ERROR);
+        }
         if (!getMessages().isEmpty()) {
             throw new ValidationException("There was an error importing the Manifest.", getMessages());
         }

@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.parsers;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.jvnet.inflector.Noun;
 
 import javax.annotation.Nonnull;
 import java.io.Serializable;
@@ -29,7 +30,7 @@ public abstract class TableProcessor implements Serializable {
     }
 
     private static final long serialVersionUID = 8122298462727182883L;
-    public static final String REQUIRED_VALUE_IS_MISSING = "Required value for %s is missing";
+    public static final String REQUIRED_VALUE_IS_MISSING = "Required value for %s is missing.";
 
     private final List<String> validationMessages = new ArrayList<>();
 
@@ -112,11 +113,18 @@ public abstract class TableProcessor implements Serializable {
     public abstract void processRowDetails(Map<String, String> dataRow, int dataRowIndex);
 
     public final boolean validateColumnHeaders(List<String> headers) {
+
         // If any of the required headers are NOT in the header list, then return false.
+        List<String> missingHeaders = new ArrayList<>();
         for (ColumnHeader header : getColumnHeaders()) {
             if (header.isRequiredHeader() && !headers.contains(header.getText())) {
-                validationMessages.add("Required header: " + header.getText() + " is missing");
+                missingHeaders.add(header.getText());
             }
+        }
+        if (!missingHeaders.isEmpty()) {
+            validationMessages.add(
+                    String.format("Required %s missing: %s.", Noun.pluralOf("header", missingHeaders.size()),
+                            StringUtils.join(missingHeaders, ", ")));
         }
         validateHeaderRow(headers);
         return validationMessages.isEmpty();

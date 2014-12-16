@@ -7,10 +7,13 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 
 import javax.annotation.Nonnull;
 import javax.persistence.Transient;
+import java.util.Collections;
 
 /**
  * This abstraction describes a sample in both project management and LIMS in Mercury. Put code in here that will be
@@ -82,9 +85,7 @@ public abstract class AbstractSample {
         return sampleData;
     }
 
-    protected SampleData makeSampleData() {
-        return new BspSampleData();
-    }
+    protected abstract SampleData makeSampleData();
 
     /**
      * Set the BSP sample data manually. This is used when loading the sample data for a group of samples at once.

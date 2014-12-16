@@ -14,18 +14,20 @@ import java.util.Collections;
 /**
  * Validate that the traverser finds events correctly
  */
+@Test(groups = TestGroups.STANDARD)
 public class LabEventTraversalTest extends ContainerTest {
 
     @Inject
     private ConfigurableListFactory configurableListFactory;
 
-    @Test(groups = TestGroups.STANDARD)
+
     public void testLcsetDescendantSearch() {
         ConfigurableSearchDefinition configurableSearchDefinition =
                 SearchDefinitionFactory.getForEntity(ColumnEntity.LAB_EVENT.getEntityName());
 
         SearchInstance searchInstance = new SearchInstance();
-        searchInstance.setDescendantOptionEnabled(true);
+        // Select descendants
+        searchInstance.getTraversalEvaluatorValues().put("descendantOptionEnabled", Boolean.TRUE );
         SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("LCSET", configurableSearchDefinition);
         searchValue.setOperator(SearchInstance.Operator.EQUALS);
         searchValue.setValues(Collections.singletonList("LCSET-5102"));
@@ -37,6 +39,8 @@ public class LabEventTraversalTest extends ContainerTest {
         searchValue.setValues(dateVals);
 
         searchInstance.getPredefinedViewColumns().add("LabEventId");
+
+        searchInstance.establishRelationships(configurableSearchDefinition);
 
         ConfigurableListFactory.FirstPageResults firstPageResults =
                 configurableListFactory.getFirstResultsPage(

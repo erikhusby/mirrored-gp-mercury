@@ -805,6 +805,15 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return sampleCounts.totalSampleCount - sampleCounts.uniqueSampleCount;
     }
 
+    /**
+     * Exposes how many of the samples, which are registered to this product order, are from BSP.
+     *
+     * @return a count of all product order samples that come from bsp
+     */
+    public int getBspSampleCount() {
+        return updateSampleCounts().bspSampleCount;
+    }
+
     public int getTumorCount() {
         return updateSampleCounts().sampleTypeCounter.get(ProductOrderSample.TUMOR_IND);
     }
@@ -911,6 +920,16 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     public List<String> getSampleValidationComments() {
         return updateSampleCounts().sampleValidation();
     }
+
+    /**
+     * @return true if all samples are of BSP Format. Note:
+     * will return false if there are no samples on the sheet.
+     */
+    public boolean areAllSampleBSPFormat() {
+        updateSampleCounts();
+        return sampleCounts.bspSampleCount == sampleCounts.uniqueSampleCount;
+    }
+
 
     /**
      * Returns true if the product for this PDO
