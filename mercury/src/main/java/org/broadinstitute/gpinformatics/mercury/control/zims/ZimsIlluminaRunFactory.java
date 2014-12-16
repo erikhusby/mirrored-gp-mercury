@@ -254,12 +254,14 @@ public class ZimsIlluminaRunFactory {
         // positive control.
         Set<String> analysisTypes = new HashSet<>();
         Set<String> referenceSequenceKeys = new HashSet<>();
+        Set<String> aggregationDataTypes = new HashSet<>();
         for (SampleInstanceDto sampleInstanceDto : sampleInstanceDtos) {
             ProductOrder productOrder = (sampleInstanceDto.getProductOrderKey() != null) ?
                     mapKeyToProductOrder.get(sampleInstanceDto.getProductOrderKey()) : null;
             if (productOrder != null) {
                 Product product = productOrder.getProduct();
                 analysisTypes.add(product.getAnalysisTypeKey());
+                aggregationDataTypes.add(product.getAggregationDataType());
                 ResearchProject project = productOrder.getResearchProject();
                 if (!StringUtils.isBlank(project.getReferenceSequenceKey())) {
                     referenceSequenceKeys.add(project.getReferenceSequenceKey());
@@ -338,7 +340,8 @@ public class ZimsIlluminaRunFactory {
                     baitName, indexingSchemeEntity, catNames, sampleInstanceDto.getSampleInstance().getWorkflowName(),
                     indexingSchemeDto, mapNameToControl, sampleInstanceDto.getPdoSampleName(),
                     sampleInstanceDto.isCrspLane(), crspPositiveControlProject,
-                    sampleInstanceDto.getMetadataSourceForPipelineAPI(), analysisTypes, referenceSequenceKeys));
+                    sampleInstanceDto.getMetadataSourceForPipelineAPI(), analysisTypes, referenceSequenceKeys,
+                    aggregationDataTypes));
         }
 
         // Make order predictable.  Include library name because for ICE there are 8 ancestor catch tubes, all with
@@ -368,7 +371,8 @@ public class ZimsIlluminaRunFactory {
             edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme indexingSchemeDto,
             Map<String, Control> mapNameToControl, String pdoSampleName,
             boolean isCrspLane, ResearchProject crspPositiveControlsProject,
-            String metadataSourceForPipelineAPI, Set<String> analysisTypes, Set<String> referenceSequenceKeys) {
+            String metadataSourceForPipelineAPI, Set<String> analysisTypes, Set<String> referenceSequenceKeys,
+            Set<String> aggregationDataTypes) {
 
         Format dateFormat = FastDateFormat.getInstance(ZimsIlluminaRun.DATE_FORMAT);
 
@@ -394,6 +398,7 @@ public class ZimsIlluminaRunFactory {
         String analysisType = null;
         String referenceSequence = null;
         String referenceSequenceVersion = null;
+        String aggregationDataType = null;
         if (sampleData != null && productOrder == null) {
             Control control = mapNameToControl.get(sampleData.getCollaboratorParticipantId());
             if (control != null) {
@@ -401,13 +406,15 @@ public class ZimsIlluminaRunFactory {
                 case POSITIVE:
                     positiveControl = true;
                     doAggregation = Boolean.FALSE;
-                    if (analysisTypes.size() == 1 && referenceSequenceKeys.size() == 1) {
+                    if (analysisTypes.size() == 1 && referenceSequenceKeys.size() == 1 &&
+                            aggregationDataTypes.size() == 1) {
                         // horrible 7/25 hack.  todo fixme with workflow
                         analysisType = "HybridSelection." + analysisTypes.iterator().next();
 
                         String[] referenceSequenceValues = referenceSequenceKeys.iterator().next().split("\\|");
                         referenceSequence = referenceSequenceValues[0];
                         referenceSequenceVersion = referenceSequenceValues[1];
+                        aggregationDataType = aggregationDataTypes.iterator().next();
                     }
                     break;
                 case NEGATIVE:
@@ -455,7 +462,8 @@ public class ZimsIlluminaRunFactory {
                 analysisType, referenceSequence, referenceSequenceVersion, organism, species,
                 strain, aligner, rrbsSizeRange, restrictionEnzyme, bait, labMeasuredInsertSize,
                 positiveControl, negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation,
-                catNames, productOrder, lcSet, sampleData, labWorkflow, libraryCreationDate, pdoSampleName, metadataSourceForPipelineAPI);
+                catNames, productOrder, lcSet, sampleData, labWorkflow, libraryCreationDate, pdoSampleName,
+                metadataSourceForPipelineAPI, aggregationDataType);
         if (isCrspLane) {
             crspPipelineUtils.setFieldsForCrsp(libraryBean, sampleData, crspPositiveControlsProject, lcSet);
         }
