@@ -24,8 +24,8 @@ import static org.hamcrest.Matchers.not;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ManifestHeaderTest {
-    public void testFromColumnNameReturnsEnum(){
-        String goodHeaderName = "Patient_ID";
+    public void testFromColumnNameReturnsEnum() {
+        String goodHeaderName = ManifestHeader.PATIENT_ID.getColumnName();
         ManifestHeader patientId = ManifestHeader.fromColumnName(goodHeaderName);
         assertThat(patientId, equalTo(ManifestHeader.PATIENT_ID));
     }
@@ -36,8 +36,13 @@ public class ManifestHeaderTest {
         ManifestHeader.fromColumnName(badHeaderName);
     }
 
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testFromColumnNameWithNullThrowsIllegalArgumentException() {
+        ManifestHeader.fromColumnName(null);
+    }
+
     public void testFromColumnNameGeneratesErrors() {
-        String goodHeaderName = "Patient_ID";
+        String goodHeaderName = ManifestHeader.PATIENT_ID.getColumnName();
         String badHeaderName = "The_Patient_ID";
         List<String> errors = new ArrayList<>();
         ManifestHeader.fromColumnName(errors, badHeaderName, goodHeaderName);
