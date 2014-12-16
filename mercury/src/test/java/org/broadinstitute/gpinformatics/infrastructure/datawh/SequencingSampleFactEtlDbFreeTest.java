@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRu
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactoryTest;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
@@ -104,12 +105,13 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
     private SampleInstanceV2 sampleInstance = EasyMock.createMock(SampleInstanceV2.class);
     private SampleInstanceV2 sampleInstance2 = EasyMock.createMock(SampleInstanceV2.class);
     private LabVessel denatureSource = EasyMock.createMock(BarcodedTube.class);
+    private BucketEntry bucketEntry = EasyMock.createMock(BucketEntry.class);
 
     private Object[] mocks = new Object[]{auditReader, dao, runCartridge, vesselContainer, researchProject, pdo,
-            pdoSample, sample, sampleInstance, sampleInstance2, denatureSource};
+            pdoSample, sample, sampleInstance, sampleInstance2, denatureSource, bucketEntry};
 
     private final TemplateEngine templateEngine = new TemplateEngine();
-    private LabBatch workflowBatch;
+    private LabBatch labBatch;
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
@@ -128,8 +130,8 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         tst = new SequencingSampleFactEtl(dao);
         tst.setAuditReaderDao(auditReader);
 
-        workflowBatch = new LabBatch(batchName, new HashSet<LabVessel>(), LabBatch.LabBatchType.WORKFLOW);
-        workflowBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
+        labBatch = new LabBatch(batchName, new HashSet<LabVessel>(), LabBatch.LabBatchType.WORKFLOW);
+        labBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
 
         laneVesselsAndPositions.clear();
         laneVesselsAndPositions.put(VesselPosition.LANE1, denatureSource);
@@ -173,16 +175,17 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
 
         EasyMock.expect(denatureSource.getSampleInstancesV2()).andReturn(sampleInstances).anyTimes();
 
-        EasyMock.expect(pdoSample.getProductOrder()).andReturn(pdo).anyTimes();
+        EasyMock.expect(bucketEntry.getProductOrder()).andReturn(pdo).anyTimes();
         EasyMock.expect(pdo.getProductOrderId()).andReturn(pdoId).anyTimes();
+        EasyMock.expect(bucketEntry.getLabBatch()).andReturn(labBatch).anyTimes();
+
         EasyMock.expect(sample.getSampleKey()).andReturn(sampleName).anyTimes();
         EasyMock.expect(pdo.getResearchProject()).andReturn(researchProject).anyTimes();
         EasyMock.expect(researchProject.getResearchProjectId()).andReturn(researchProjectId).anyTimes();
 
         for (SampleInstanceV2 si : sampleInstances) {
-            EasyMock.expect(si.getSingleProductOrderSample()).andReturn(pdoSample).anyTimes();
+            EasyMock.expect(si.getSingleBucketEntry()).andReturn(bucketEntry).anyTimes();
             EasyMock.expect(si.getRootOrEarliestMercurySample()).andReturn(sample).anyTimes();
-            EasyMock.expect(si.getSingleInferredBucketedBatch()).andReturn(workflowBatch).anyTimes();
             EasyMock.expect(si.getReagents()).andReturn(reagents).anyTimes();
         }
     }
@@ -201,10 +204,10 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         for (String record : records) {
             if (record.contains(",2,")) {
                 verifyRecord(record, misName, pdoId, sampleName, 2, tubeBarcode,
-                             tubeCreateDateFormat, cartridgeName, researchProjectId, workflowBatch.getBatchName());
+                        tubeCreateDateFormat, cartridgeName, researchProjectId, labBatch.getBatchName());
             } else {
                 verifyRecord(record, misName, pdoId, sampleName, 1, tubeBarcode,
-                             tubeCreateDateFormat, cartridgeName, researchProjectId, workflowBatch.getBatchName());
+                        tubeCreateDateFormat, cartridgeName, researchProjectId, labBatch.getBatchName());
             }
         }
         // Tests the pdo cache.  Should just skip some of the expects.
@@ -228,12 +231,12 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         for (String record : records) {
             if (record.contains(",2,")) {
                 verifyRecord(record, misName, pdoId, sampleName, 2, denatureSource.getLabel(),
-                             ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()), cartridgeName,
-                             researchProjectId, workflowBatch.getBatchName());
+                        ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()), cartridgeName,
+                        researchProjectId, labBatch.getBatchName());
             } else {
                 verifyRecord(record, misName, pdoId, sampleName, 1, denatureSource.getLabel(),
-                             ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()), cartridgeName,
-                             researchProjectId, workflowBatch.getBatchName());
+                        ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()), cartridgeName,
+                        researchProjectId, labBatch.getBatchName());
             }
         }
 
@@ -256,12 +259,12 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         for (String record : records) {
             if (record.contains(",2,")) {
                 verifyRecord(record, misNames, pdoId, sampleName, 2, denatureSource.getLabel(),
-                             ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()), cartridgeName,
-                             researchProjectId, workflowBatch.getBatchName());
+                        ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()), cartridgeName,
+                        researchProjectId, labBatch.getBatchName());
             } else {
                 verifyRecord(record, misNames, pdoId, sampleName, 1, denatureSource.getLabel(),
-                             ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()), cartridgeName,
-                             researchProjectId, workflowBatch.getBatchName());
+                        ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()), cartridgeName,
+                        researchProjectId, labBatch.getBatchName());
             }
         }
 
@@ -294,8 +297,8 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
                 foundLane2 = true;
             }
             verifyRecord(record, "NONE", pdoId, sampleName, laneNumber, denatureSource.getLabel(),
-                         ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()), cartridgeName,
-                         researchProjectId, workflowBatch.getBatchName());
+                    ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()), cartridgeName,
+                    researchProjectId, labBatch.getBatchName());
         }
         Assert.assertTrue(foundLane1);
         Assert.assertTrue(foundLane2);

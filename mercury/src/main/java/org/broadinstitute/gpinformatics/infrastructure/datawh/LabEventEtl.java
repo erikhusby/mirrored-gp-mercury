@@ -3,9 +3,9 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
@@ -292,31 +292,27 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                     if (!sampleInstances.isEmpty()) {
                         for (SampleInstanceV2 si : sampleInstances) {
 
-                            // null pdo and pdoSample is ok for BSP events.
-                            ProductOrderSample productOrderSample = si.getSingleProductOrderSample();
-                            ProductOrder pdo = (productOrderSample != null) ? productOrderSample.getProductOrder() : null;
+                            // Null bucket entry is interpreted as either a pre-Mercury (BSP) event or a control sample
+                            // which ETL ignores.
+                            BucketEntry bucketEntry = si.getSingleBucketEntry();
+                            ProductOrder pdo = bucketEntry != null ? bucketEntry.getProductOrder() : null;
+                            LabBatch labBatch = bucketEntry != null ? bucketEntry.getLabBatch() : null;
+                            String batchName = labBatch != null ? labBatch.getBatchName() : NONE;
+                            String workflowName = labBatch != null ? labBatch.getWorkflowName() : null;
+                            if (StringUtils.isBlank(workflowName) && pdo != null) {
+                                workflowName = pdo.getProduct().getWorkflow().getWorkflowName();
+                            }
+                            WorkflowConfigDenorm wfDenorm = workflowConfigLookup.lookupWorkflowConfig(
+                                    eventName, workflowName, entity.getEventDate());
+                            boolean canEtl = wfDenorm != null &&
+                                             (labBatch != null && labBatch.getLabBatchType() == LabBatchType.WORKFLOW
+                                              || !wfDenorm.isBatchNeeded()) &&
+                                             (pdo != null || !wfDenorm.isProductOrderNeeded());
 
                             MercurySample sample = si.getRootOrEarliestMercurySample();
                             if (sample != null) {
-
-                                LabBatch labBatch = si.getSingleInferredBucketedBatch();
-                                String batchName = labBatch != null ? labBatch.getBatchName() : NONE;
-
-                                String workflowName = labBatch != null ? labBatch.getWorkflowName() : null;
-                                if (StringUtils.isBlank(workflowName) && pdo != null) {
-                                    workflowName = pdo.getProduct().getWorkflow().getWorkflowName();
-                                 }
-                                WorkflowConfigDenorm wfDenorm = workflowConfigLookup.lookupWorkflowConfig(
-                                        eventName, workflowName, entity.getEventDate());
-
-                                boolean canEtl = wfDenorm != null &&
-                                                 (labBatch != null && labBatch.getLabBatchType() == LabBatchType.WORKFLOW
-                                                  || !wfDenorm.isBatchNeeded()) &&
-                                                 (pdo != null || !wfDenorm.isProductOrderNeeded());
-
                                 dtos.add(new EventFactDto(entity, vessel, null, batchName, workflowName,
                                         sample, pdo, wfDenorm, canEtl));
-
                             } else {
                                 // Use of the full constructor which in this case has multiple nulls is intentional
                                 // since exactly which fields are null is used as indicator in postEtlLogging, and this

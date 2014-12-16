@@ -5,9 +5,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
@@ -280,13 +280,13 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
                     LabVessel fctVessel = (fctBatch != null) ? fctBatch.getStartingVesselByPosition(position) : tube;
                     Collection<SampleInstanceV2> sampleInstances = tube.getSampleInstancesV2();
                     for (SampleInstanceV2 si : sampleInstances) {
-                        ProductOrderSample productOrderSample = si.getSingleProductOrderSample();
-                        ProductOrder pdo = (productOrderSample != null) ? productOrderSample.getProductOrder() : null;
+                        BucketEntry bucketEntry = si.getSingleBucketEntry();
+                        ProductOrder pdo = bucketEntry != null ? bucketEntry.getProductOrder() : null;
                         String productOrderId = (pdo == null) ? null : String.valueOf(pdo.getProductOrderId());
+                        LabBatch labBatch = bucketEntry != null ? bucketEntry.getLabBatch() : null;
+                        String batchName = labBatch != null ? labBatch.getBatchName() : NONE;
                         MercurySample sample = si.getRootOrEarliestMercurySample();
                         String sampleKey = (sample != null ? sample.getSampleKey() : null);
-                        LabBatch labBatch = si.getSingleInferredBucketedBatch();
-                        String batchName = labBatch != null ? labBatch.getBatchName() : NONE;
                         String researchProjectId = (pdo != null && pdo.getResearchProject() != null) ?
                                 String.valueOf(pdo.getResearchProject().getResearchProjectId()) : null;
                         // Finds the molecular barcode, or "NONE" if not found, or a sorted comma-delimited
