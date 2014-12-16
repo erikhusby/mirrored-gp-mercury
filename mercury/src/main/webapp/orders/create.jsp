@@ -38,6 +38,7 @@
         /* Override Bootstrap's block display of labels for add-ons to constrain the hit box. */
         #addOnCheckboxes label {
             display: inline;
+            vertical-align: bottom;
         }
     </style>
         <script type="text/javascript">
