@@ -32,6 +32,9 @@ public enum ManifestHeader implements ColumnHeader {
     private final String columnName;
     private final Metadata.Key metadataKey;
 
+    public static final String NO_MANIFEST_HEADER_FOUND_FOR_COLUMN =
+            "No ManifestHeader found for columnHeader: ";
+
     ManifestHeader(String columnName, Metadata.Key metadataKey) {
         this.columnName = columnName;
         this.metadataKey = metadataKey;
@@ -98,13 +101,17 @@ public enum ManifestHeader implements ColumnHeader {
      *
      * @return Collection of ColumnHeaders for the columnNames
      */
-    static Collection<? extends ColumnHeader> fromColumnName(List<String> errors, String... columnNames) {
+    static Collection<ManifestHeader> fromColumnName(List<String> errors, String... columnNames) {
         List<ManifestHeader> matches = new ArrayList<>();
         for (String columnName : columnNames) {
             try {
                 matches.add(ManifestHeader.fromColumnName(columnName));
-            } catch (EnumConstantNotPresentException e) {
-                errors.add(e.constantName());
+            } catch (IllegalArgumentException e) {
+
+                // If a header cell is not blank.
+                if (!columnName.isEmpty()) {
+                    errors.add(columnName);
+                }
             }
         }
         return matches;
@@ -117,7 +124,7 @@ public enum ManifestHeader implements ColumnHeader {
      *
      * @return ManifestHeader for given column.
      *
-     * @throws EnumConstantNotPresentException if enum does not exist for columnHeader.
+     * @throws IllegalArgumentException if enum does not exist for columnHeader.
      */
     public static ManifestHeader fromColumnName(String columnHeader) {
         for (ManifestHeader manifestHeader : ManifestHeader.values()) {
@@ -125,7 +132,7 @@ public enum ManifestHeader implements ColumnHeader {
                 return manifestHeader;
             }
         }
-        throw new EnumConstantNotPresentException(ManifestHeader.class, columnHeader);
+        throw new IllegalArgumentException(NO_MANIFEST_HEADER_FOUND_FOR_COLUMN + columnHeader);
     }
 
     /**

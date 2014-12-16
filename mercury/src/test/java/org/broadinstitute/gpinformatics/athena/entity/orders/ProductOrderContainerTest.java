@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderS
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -70,7 +71,6 @@ public class ProductOrderContainerTest extends Arquillian {
 
         Assert.assertEquals(testOrder.getTotalSampleCount(), 3);
         Assert.assertEquals(testOrder.getDuplicateCount(), 0);
-        Assert.assertEquals(testOrder.getBspSampleCount(), 3);
         Assert.assertEquals(testOrder.getFemaleCount(), 3);
         Assert.assertEquals(testOrder.getMaleCount(), 0);
 
@@ -116,7 +116,7 @@ public class ProductOrderContainerTest extends Arquillian {
 
         Assert.assertEquals(testOrder.getTotalSampleCount(), 3);
         Assert.assertEquals(testOrder.getDuplicateCount(), 0);
-        Assert.assertEquals(testOrder.getBspSampleCount(), 0);
+        Assert.assertEquals(testOrder.getSampleCount(), 0);
     }
 
 }
