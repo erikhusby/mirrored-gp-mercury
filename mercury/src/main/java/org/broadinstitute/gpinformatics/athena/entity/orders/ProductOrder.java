@@ -61,6 +61,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -1156,12 +1157,12 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
          *
          * @return The statuses that are listed.
          */
-        public static List<OrderStatus> getFromNames(@Nonnull List<String> statusStrings) {
+        public static Set<OrderStatus> getFromNames(@Nonnull Collection<String> statusStrings) {
             if (CollectionUtils.isEmpty(statusStrings)) {
-                return Collections.emptyList();
+                return Collections.emptySet();
             }
 
-            List<OrderStatus> statuses = new ArrayList<>();
+            Set<OrderStatus> statuses = EnumSet.noneOf(OrderStatus.class);
             for (String statusString : statusStrings) {
                 statuses.add(OrderStatus.valueOf(statusString));
             }

@@ -106,6 +106,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -309,7 +310,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private Long productFamilyId;
 
-    private List<ProductOrder.OrderStatus> selectedStatuses = Collections.emptyList();
+    private Set<ProductOrder.OrderStatus> selectedStatuses = Collections.emptySet();
 
     private List<ProductOrderListEntry.LedgerStatus> selectedLedgerStatuses = Collections.emptyList();
 
@@ -779,7 +780,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     private void populateSearchDefaults() {
-        selectedStatuses = new ArrayList<>();
+        selectedStatuses = EnumSet.noneOf(ProductOrder.OrderStatus.class);
         selectedStatuses.add(ProductOrder.OrderStatus.Draft);
         selectedStatuses.add(ProductOrder.OrderStatus.Submitted);
 
@@ -2079,11 +2080,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.productFamilyId = productFamilyId;
     }
 
-    public List<ProductOrder.OrderStatus> getSelectedStatuses() {
+    public Set<ProductOrder.OrderStatus> getSelectedStatuses() {
         return selectedStatuses;
     }
 
-    public void setSelectedStatuses(List<ProductOrder.OrderStatus> selectedStatuses) {
+    public void setSelectedStatuses(Set<ProductOrder.OrderStatus> selectedStatuses) {
         this.selectedStatuses = selectedStatuses;
     }
 
