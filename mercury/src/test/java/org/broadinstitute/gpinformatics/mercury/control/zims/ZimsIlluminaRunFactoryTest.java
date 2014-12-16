@@ -414,6 +414,7 @@ public class ZimsIlluminaRunFactoryTest {
             Assert.assertEquals(libraryBean.getReferenceSequence(), "Homo_sapiens_assembly19");
             Assert.assertEquals(libraryBean.getReferenceSequenceVersion(), "1");
             Assert.assertEquals(libraryBean.getAnalysisType(), "HybridSelection.Resequencing");
+            Assert.assertEquals(libraryBean.getDataType(), "agg type");
 
             if (Boolean.TRUE.equals(libraryBean.isPositiveControl())) {
                 hasPositiveControl = true;
