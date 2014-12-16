@@ -53,16 +53,16 @@ public class LibraryBean {
     private String expectedInsertSize; // Squid only
 
     @JsonProperty("analysisType")
-    private String analysisType; // Squid only
+    private String analysisType;
 
     @JsonProperty("referenceSequence")
-    private String referenceSequence; // Squid only
+    private String referenceSequence;
 
     @JsonProperty("referenceSequenceVersion")
-    private String referenceSequenceVersion; // Squid only
+    private String referenceSequenceVersion;
 
     @JsonProperty("aggregate")
-    private Boolean doAggregation; // Squid only
+    private Boolean doAggregation;
 
     @JsonProperty("species")
     private String species;
@@ -625,10 +625,13 @@ public class LibraryBean {
         return metadataSource;
     }
 
-    public static final Comparator<LibraryBean> BY_SAMPLE_ID = new Comparator<LibraryBean> () {
+    public static final Comparator<LibraryBean> BY_SAMPLE_ID_LIBRARY = new Comparator<LibraryBean> () {
         @Override
         public int compare(LibraryBean libraryBean1, LibraryBean libraryBean2) {
-            return new CompareToBuilder().append(libraryBean1.getSampleId(), libraryBean2.getSampleId()).toComparison();
+            return new CompareToBuilder().
+                    append(libraryBean1.getSampleId(), libraryBean2.getSampleId()).
+                    append(libraryBean1.getLibrary(), libraryBean2.getLibrary()).
+                    toComparison();
         }
     };
 

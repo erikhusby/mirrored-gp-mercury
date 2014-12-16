@@ -71,6 +71,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressSheari
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.IceEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.IceJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.MiSeqReagentKitEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
@@ -458,7 +459,7 @@ public class BaseEventTest {
     public IceEntityBuilder runIceProcess(TubeFormation pondRegRack, String pondRegRackBarcode,
                                           List<String> pondRegTubeBarcodes, String barcodeSuffix) {
         return new IceEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(), pondRegRack,
-                                    pondRegRackBarcode, pondRegTubeBarcodes, barcodeSuffix).invoke();
+                pondRegRackBarcode, pondRegTubeBarcodes, barcodeSuffix, IceJaxbBuilder.PlexType.PLEX96).invoke();
     }
 
     /**
