@@ -15,7 +15,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderS
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -56,7 +55,7 @@ public class ProductOrderContainerTest extends Arquillian {
     public static ProductOrder createSimpleProductOrder(ResearchProjectEjb researchProjectEjb,
                                                         BSPUserList userList) throws Exception {
         return new ProductOrder(ResearchProjectTestFactory.TEST_CREATOR, "containerTest Product Order Test1",
-                ProductOrderSampleTestFactory.createSampleList("SM-1P3X9", "SM-1P3WY", "SM-1P3XN"),
+                ProductOrderSampleTestFactory.createSampleListWithMercurySamples("SM-1P3X9", "SM-1P3WY", "SM-1P3XN"),
                 "newQuote", ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "partNumber"),
                 ResearchProjectTestFactory.createDummyResearchProject(researchProjectEjb, userList, "Test Research Project"));
     }
@@ -107,7 +106,8 @@ public class ProductOrderContainerTest extends Arquillian {
     public void testSimpleNonBspProductOrder() throws Exception {
         ProductOrder testOrder =
                 new ProductOrder(ResearchProjectTestFactory.TEST_CREATOR, "containerTest Product Order Test2",
-                        ProductOrderSampleTestFactory.createSampleList("SM_12CO4", "SM_1P3WY", "SM_1P3XN"),
+                        ProductOrderSampleTestFactory.createSampleListWithMercurySamples("SM_12CO4", "SM_1P3WY",
+                                "SM_1P3XN"),
                         "newQuote",
                         ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "partNumber"),
                         ResearchProjectTestFactory.createDummyResearchProject(researchProjectEjb, userList, "Test Research Project"));

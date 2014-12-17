@@ -551,4 +551,34 @@ public class LabEventFixupTest extends Arquillian {
 
         utx.commit();
     }
+
+    /** Failed to solve the problem; later discovered that the sample had been through shearing 3 times. */
+    @Test(enabled = false)
+    public void fixupGplim3279Try1() {
+        lcsetOverride(717989L, LabEventType.SHEARING_TRANSFER, "LCSET-6507", "GPLIM-3279");
+    }
+
+    /** Failed to solve the problem; later discovered that the sample had been through shearing 3 times. */
+    @Test(enabled = false)
+    public void fixupGplim3279Try2() {
+        lcsetOverride(717910L, LabEventType.SHEARING_ALIQUOT, "LCSET-6507", "GPLIM-3279");
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim3279Try3() {
+        // Zims was returning LCSET-6611, but I think it should have been 6507.
+        lcsetOverride(722534L, LabEventType.SHEARING_ALIQUOT, "LCSET-6507", "GPLIM-3279");
+    }
+
+    private void lcsetOverride(long labEventId, LabEventType labEventType, String lcsetName, String jiraTicket) {
+        userBean.loginOSUser();
+        // Override routing for shearing transfer
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, labEventId);
+        Assert.assertEquals(labEvent.getLabEventType(), labEventType);
+        LabBatch labBatch = labBatchDao.findByName(lcsetName);
+        labEvent.setManualOverrideLcSet(labBatch);
+        labEventDao.persist(new FixupCommentary(
+                jiraTicket + " manual override to " + lcsetName + " for " + labEventType));
+        labEventDao.flush();
+    }
 }

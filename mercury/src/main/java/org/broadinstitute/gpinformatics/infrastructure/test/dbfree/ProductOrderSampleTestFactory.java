@@ -20,24 +20,28 @@ public class ProductOrderSampleTestFactory {
 
     private ProductOrderSampleTestFactory() {}
 
-    public static List<ProductOrderSample> createSampleList(String... sampleList) {
-        return createSampleList(sampleList, new HashSet<LedgerEntry>(), MercurySample.MetadataSource.BSP, false);
+    public static List<ProductOrderSample> createSampleListWithMercurySamples(String... sampleList) {
+        return createSampleList(sampleList, new HashSet<LedgerEntry>(), MercurySample.MetadataSource.BSP, false, true);
     }
 
+    public static List<ProductOrderSample> createSampleList(String... sampleList) {
+        return createSampleList(sampleList, new HashSet<LedgerEntry>(), MercurySample.MetadataSource.BSP, false, false);
+    }
 
     public static List<ProductOrderSample> createDBFreeSampleList(MercurySample.MetadataSource metadataSource,
                                                                   String... sampleList) {
-        return createSampleList(sampleList, new HashSet<LedgerEntry>(), metadataSource, true);
+        return createSampleList(sampleList, new HashSet<LedgerEntry>(), metadataSource, true, true);
     }
 
     public static List<ProductOrderSample> createDBFreeSampleList(String... sampleList) {
-        return createSampleList(sampleList, new HashSet<LedgerEntry>(), MercurySample.MetadataSource.BSP, true);
+        return createSampleList(sampleList, new HashSet<LedgerEntry>(), MercurySample.MetadataSource.BSP, true, true);
     }
 
 
     public static List<ProductOrderSample> createSampleList(String[] sampleArray,
                                                             Collection<LedgerEntry> billableItems,
-                                                            MercurySample.MetadataSource metadataSource, boolean dbFree) {
+                                                            MercurySample.MetadataSource metadataSource, boolean dbFree,
+                                                            boolean createMercurySamples) {
         List<ProductOrderSample> productOrderSamples = new ArrayList<>(sampleArray.length);
         for (String sampleName : sampleArray) {
             ProductOrderSample productOrderSample;
@@ -53,8 +57,10 @@ public class ProductOrderSampleTestFactory {
             } else {
                 productOrderSample = new ProductOrderSample(sampleName);
             }
-            MercurySample mercurySample = new MercurySample(sampleName, metadataSource);
-            productOrderSample.setMercurySample(mercurySample);
+            if (createMercurySamples) {
+                MercurySample mercurySample = new MercurySample(sampleName, metadataSource);
+                productOrderSample.setMercurySample(mercurySample);
+            }
             productOrderSample.setMetadataSource(metadataSource);
             productOrderSample.setSampleComment("athenaComment");
             productOrderSample.getLedgerItems().addAll(billableItems);
