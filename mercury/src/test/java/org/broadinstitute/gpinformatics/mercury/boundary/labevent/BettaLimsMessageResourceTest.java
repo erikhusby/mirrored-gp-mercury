@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcherStub;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
@@ -176,7 +177,8 @@ public class BettaLimsMessageResourceTest extends Arquillian {
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWarWithAlternatives(DEV, EverythingYouAskForYouGetAndItsHuman.class);
+        return DeploymentBuilder
+                .buildMercuryWarWithAlternatives(DEV, SampleDataFetcherStub.EverythingYouAskForYouGetAndItsHuman.class);
     }
 
     @Test

@@ -52,6 +52,7 @@ public class SquidThriftLibraryConverter implements ThriftLibraryConverter {
                 zamboniLibrary.getLibraryCreationDate(),
                 zamboniLibrary.getWorkRequestType(),
                 zamboniLibrary.getWorkRequestDomain(),
+                null,
                 null);
     }
 }

@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcherStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
@@ -179,7 +180,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
     public static WebArchive buildMercuryWar() {
 
         return DeploymentBuilder
-                .buildMercuryWarWithAlternatives(DEV, EverythingYouAskForYouGetAndItsHuman.class);
+                .buildMercuryWarWithAlternatives(DEV, SampleDataFetcherStub.EverythingYouAskForYouGetAndItsHuman.class);
     }
 
     @BeforeMethod(groups = TestGroups.ALTERNATIVES)
