@@ -57,7 +57,7 @@ public class ProductOrderSampleTestFactory {
             } else {
                 productOrderSample = new ProductOrderSample(sampleName);
             }
-            if (dbFree) {
+            if (createMercurySamples) {
                 MercurySample mercurySample = new MercurySample(sampleName, metadataSource);
                 productOrderSample.setMercurySample(mercurySample);
             }
