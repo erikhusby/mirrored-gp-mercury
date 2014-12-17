@@ -85,7 +85,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
         productOrderDao.clear();
     }
 
-    public void testFindDraftWithDateRange() {
+    public void testFindPendingWithDateRange() {
         ProductOrder.OrderStatus status = ProductOrder.OrderStatus.Pending;
         DateRangeSelector dateRange = new DateRangeSelector(DateRangeSelector.LAST_YEAR);
         List<ProductOrderListEntry> orders =
