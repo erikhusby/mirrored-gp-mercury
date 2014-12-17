@@ -156,6 +156,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private static final String KIT_DEFINITION_INDEX = "kitDefinitionQueryIndex";
     private static final String COULD_NOT_LOAD_SAMPLE_DATA = "Could not load sample data";
+    private static final String GET_SUMMARY = "getSummary";
 
     public ProductOrderActionBean() {
         super(CREATE_ORDER, EDIT_ORDER, PRODUCT_ORDER_PARAMETER);
@@ -881,7 +882,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     // All actions that can result in the view page loading (either by a validation error or view itself)
     @After(stages = LifecycleStage.BindingAndValidation,
             on = {EDIT_ACTION, VIEW_ACTION, ADD_SAMPLES_ACTION, SET_RISK, RECALCULATE_RISK, ABANDON_SAMPLES_ACTION,
-                    DELETE_SAMPLES_ACTION, PLACE_ORDER_ACTION, VALIDATE_ORDER, UNABANDON_SAMPLES_ACTION})
+                    DELETE_SAMPLES_ACTION, PLACE_ORDER_ACTION, VALIDATE_ORDER, UNABANDON_SAMPLES_ACTION, GET_SUMMARY})
     public void entryInit() {
         if (editOrder != null) {
             productOrderListEntry = editOrder.isDraft() ? ProductOrderListEntry.createDummy() :
@@ -1344,7 +1345,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         return createTextResolution(kitIndexObject.toString());
     }
 
-    @HandlesEvent("getSummary")
+    @HandlesEvent(GET_SUMMARY)
     public Resolution getSummary() throws Exception {
         JSONArray itemList = new JSONArray();
         if (editOrder != null) {

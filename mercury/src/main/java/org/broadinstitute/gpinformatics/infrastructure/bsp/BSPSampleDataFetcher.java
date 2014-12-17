@@ -102,7 +102,7 @@ public class BSPSampleDataFetcher extends BSPJerseyClient implements Serializabl
                                                       BSPSampleSearchColumn... bspSampleSearchColumns) {
         Collection<String> filteredSampleNames = new HashSet<>();
         for (String sampleName : sampleNames) {
-            if (BSPUtil.isInBspFormatOrBareId(sampleName) || getBspConfig().getMercuryDeployment() != Deployment.PROD) {
+            if (BSPUtil.isInBspFormatOrBareId(sampleName)) {
                 filteredSampleNames.add(sampleName);
             }
         }

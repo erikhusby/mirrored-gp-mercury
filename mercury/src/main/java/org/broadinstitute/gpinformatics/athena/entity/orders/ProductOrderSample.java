@@ -112,7 +112,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     @BatchSize(size = 100)
     Set<SampleReceiptValidation> sampleReceiptValidations = new HashSet<>();
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.PERSIST)
     private MercurySample mercurySample;
 
     @Transient
@@ -276,7 +276,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
             return mercurySample.getMetadataSource();
         }
         if (!isMetadataSourceInitialized) {
-            throw new IllegalStateException("ProductOrderSample's transient metadataSource has not been initialized");
+           throw new IllegalStateException(String.format("ProductOrderSample %s transient metadataSource has not been initialized", sampleName));
         }
         return metadataSource;
     }
