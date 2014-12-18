@@ -11,7 +11,7 @@
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
-    <version>1.59-SNAPSHOT</version>
+    <version>1.60-SNAPSHOT</version>
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
@@ -1656,7 +1656,7 @@
         <dependency>
             <groupId>lims</groupId>
             <artifactId>limsThrift</artifactId>
-            <version>1.0-20140820.174647-57</version>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>
@@ -2466,6 +2466,8 @@
                     <!-- Do push the hotfix branches to the remote upstream --> 
                     <pushHotfixes>true</pushHotfixes>
                     <noHotfixBuild>true</noHotfixBuild>
+		    <!-- Keep the hot fix branch to avoid the error https://ecosystem.atlassian.net/browse/MJF-207	    -->
+		    <keepBranch>true</keepBranch>
                 </configuration>
             </plugin>
 

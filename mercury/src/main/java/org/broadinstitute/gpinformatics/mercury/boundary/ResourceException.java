@@ -21,6 +21,7 @@ public class ResourceException extends WebApplicationException {
         this.message = message;
     }
 
+    @Override
     public String getMessage() {
         return message;
     }

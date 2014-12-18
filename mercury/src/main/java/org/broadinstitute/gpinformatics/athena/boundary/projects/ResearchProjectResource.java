@@ -41,6 +41,14 @@ import java.util.List;
 @Stateful
 @RequestScoped
 public class ResearchProjectResource {
+    public static final String VALID_USERNAME_REQUIRED_MESSAGE =
+            "A valid Username is required to complete this request";
+    static final String SUBMIT_TO_JIRA_FORMAT_STRING = "Could not submit new research project to JIRA (%s)";
+
+    public void setResearchProjectEjb(ResearchProjectEjb researchProjectEjb) {
+        this.researchProjectEjb = researchProjectEjb;
+    }
+
     @Inject
     private ResearchProjectDao researchProjectDao;
 
@@ -248,15 +256,12 @@ public class ResearchProjectResource {
         userBean.login(data.username);
 
         if(userBean.getBspUser() == UserBean.UNKNOWN) {
-            throw new ResourceException("A valid Username is required to complete this request",
-                    Response.Status.UNAUTHORIZED);
+            throw new ResourceException(VALID_USERNAME_REQUIRED_MESSAGE, Response.Status.UNAUTHORIZED);
         }
 
-        ResearchProject project = new ResearchProject(null, data.title, data.synopsis, false,
-                                                      ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
-        BspUser user = userBean.getBspUser();
-        project.setCreatedBy(user.getUserId());
-
+        ResearchProject project =
+                new ResearchProject(userBean.getBspUser().getUserId(), data.title, data.synopsis, false,
+                        ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
         try {
             researchProjectEjb.submitToJira(project);
         } catch (IOException | NoJiraTransitionException e) {

@@ -574,12 +574,14 @@ function chooseColumnSet() {
     </ul>
 </div>
 <div id="traversalOptionDescription" style="display: none;">
-    <p>Choose traversal options for any row primary entities found.
-        For any primary entity (e.g lab event), a user may wish to show: </p>
-    <ul>
-        <li> Entities in transfers leading up to a primary row entity (ancestors)</li>
-        <li> Entities in transfers following a primary row entity (descendants)</li>
-    </ul>
+    <c:if test="${actionBean.configurableSearchDef.traversalEvaluators != null}">
+        <p>Available Options:</p>
+        <ul>
+        <c:forEach items="${actionBean.configurableSearchDef.traversalEvaluators}" var="traversalMapEntry">
+            <li>${traversalMapEntry.value.helpNote}</li>
+        </c:forEach>
+        </ul>
+    </c:if>
 </div>
 <script type="text/javascript">
     $j(function(){

@@ -233,7 +233,10 @@ public class SearchDefinitionFactory {
                 ColumnEntity.LAB_EVENT, 100, criteriaProjections, mapGroupSearchTerms);
 
         // Allow user to search ancestor and/or descendant events
-        configurableSearchDefinition.setTraversalEvaluator(new LabEventTraversalEvaluator());
+        configurableSearchDefinition.addTraversalEvaluator("ancestorOptionEnabled"
+                , new LabEventTraversalEvaluator.AncestorTraversalEvaluator());
+        configurableSearchDefinition.addTraversalEvaluator("descendantOptionEnabled"
+                , new LabEventTraversalEvaluator.DescendantTraversalEvaluator());
 
         MAP_NAME_TO_DEF.put(ColumnEntity.LAB_EVENT.getEntityName(), configurableSearchDefinition);
     }
@@ -254,11 +257,30 @@ public class SearchDefinitionFactory {
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
-                List<String> results = new ArrayList<>();
+                Set<String> results = new HashSet<>();
                 LabVessel labVessel = (LabVessel) entity;
                 for (BucketEntry bucketEntry : labVessel.getBucketEntries()) {
                     if (bucketEntry.getLabBatch() != null) {
                         results.add(bucketEntry.getLabBatch().getBatchName());
+                    }
+                }
+                if( results.isEmpty() ) {
+                    // Try navigating back to sample instance batch
+                    for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                        if( sampleInstanceV2.getSingleBatch() != null ) {
+                            results.add( sampleInstanceV2.getSingleBatch().getBatchName());
+                        }
+                    }
+                }
+                if( results.isEmpty() ) {
+                    // Try navigating back to sample bucket entries
+                    for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                        for (BucketEntry bucketEntry : sampleInstanceV2.getAllBucketEntries()) {
+                            LabBatch batch = bucketEntry.getLabBatch();
+                            if( batch != null ) {
+                                results.add( bucketEntry.getLabBatch().getBatchName());
+                            }
+                        }
                     }
                 }
                 return results;

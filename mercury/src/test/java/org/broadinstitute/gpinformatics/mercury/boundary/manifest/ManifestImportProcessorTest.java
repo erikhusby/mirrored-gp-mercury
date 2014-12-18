@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
+import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -59,6 +60,16 @@ public class ManifestImportProcessorTest {
         assertThat(processor.getHeaderNames(), containsInAnyOrder(allHeaders));
     }
 
+    public void testGetHeaderNameWithNonexistentHeader() {
+        String unknownHeaderName = "who, me?";
+        try {
+            ManifestHeader.fromColumnName(unknownHeaderName);
+            Assert.fail();
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage(), is(ManifestHeader.NO_MANIFEST_HEADER_FOUND_FOR_COLUMN + unknownHeaderName));
+        }
+    }
+
     public void testGetColumns() throws Exception {
         processor.processHeader(new ArrayList<>(dataRow.keySet()), 0);
 
@@ -83,7 +94,7 @@ public class ManifestImportProcessorTest {
         headers.addAll(unknownHeaders);
         boolean headersAreValid = processor.validateColumnHeaders(headers);
         assertThat(headersAreValid, is(not(true)));
-        assertThat(processor.getMessages(), contains("Unknown headers '[bad header 1, bad header 2]' present"));
+        assertThat(processor.getMessages(), contains("Unknown headers '[bad header 1, bad header 2]' present."));
     }
 
     public void testProcessRowDetailsShouldPass() throws Exception {

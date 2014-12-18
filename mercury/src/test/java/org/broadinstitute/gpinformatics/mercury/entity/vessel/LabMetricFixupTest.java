@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricRunDao;
+import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -89,4 +90,18 @@ public class LabMetricFixupTest extends Arquillian {
         dao.flush();
     }
 
+    @Test(enabled = false)
+    public void gplim3233ChangeInitialToPond() {
+        userBean.loginOSUser();
+        LabMetricRun labMetricRun = dao.findById(LabMetricRun.class, 1072L);
+        Assert.assertEquals(labMetricRun.getRunName(), "LCSET-6493_Pond Pico_11262014_");
+        System.out.println("Updating run " + labMetricRun.getRunName());
+        labMetricRun.setMetricType(LabMetric.MetricType.POND_PICO);
+        for (LabMetric labMetric : labMetricRun.getLabMetrics()) {
+            System.out.println("Updating metric " + labMetric.getLabMetricId());
+            labMetric.setMetricType(LabMetric.MetricType.POND_PICO);
+        }
+        dao.persist(new FixupCommentary("GPLIM-3233, LCSET-6493, change Initial Pico to Pond Pico"));
+        dao.flush();
+    }
 }

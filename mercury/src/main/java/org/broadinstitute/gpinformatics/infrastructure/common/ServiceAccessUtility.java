@@ -8,6 +8,7 @@ import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+import java.util.Set;
 
 /**
  * This is a helper class to enable objects that are not capable of injecting Integration layer
@@ -30,7 +31,8 @@ public class ServiceAccessUtility {
             InitialContext initialContext = new InitialContext();
             try {
                 BeanManager beanManager = (BeanManager) initialContext.lookup("java:comp/BeanManager");
-                Bean<?> bean = beanManager.getBeans(beanType).iterator().next();
+                Set<Bean<?>> beans = beanManager.getBeans(beanType);
+                Bean<?> bean = beanManager.resolve(beans);
                 CreationalContext<?> ctx = beanManager.createCreationalContext(bean);
                 //noinspection unchecked
                 return (T) beanManager.getReference(bean, beanType, ctx);

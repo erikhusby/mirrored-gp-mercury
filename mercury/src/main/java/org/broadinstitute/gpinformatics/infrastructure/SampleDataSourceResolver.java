@@ -2,7 +2,9 @@ package org.broadinstitute.gpinformatics.infrastructure;
 
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
@@ -16,7 +18,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Business logic for determining the sample data source for Mercury LIMS samples. Historically, the only place that
+ * Business logic for determining the sample data source for samples in mercury. Historically, the only place that
  * Mercury would look for sample data was BSP. Later, there came a need to store sample data directly in Mercury. The
  * primary determination is based on {@link MercurySample#metadataSource}. When there is no MercurySample for a sample
  * ID being queried (e.g. because it has been entered in a PDO but has not been introduced to Mercury LIMS), BSP is
@@ -49,14 +51,14 @@ public class SampleDataSourceResolver {
      * @param sampleNames    the sample IDs for which to resolve the sample data source
      * @return a map of sample ID to sample data source
      */
-    public Map<String, MercurySample.MetadataSource> resolveSampleDataSources(Collection<String> sampleNames) {
+    public Map<String, MercurySample.MetadataSource> resolve(Collection<String> sampleNames) {
         Map<String, MercurySample> allMercurySamples =
                 mercurySampleDao.findMapIdToMercurySample(sampleNames);
-        return resolveSampleDataSources(sampleNames, allMercurySamples);
+        return resolve(sampleNames, allMercurySamples);
     }
 
     @DaoFree
-    public Map<String, MercurySample.MetadataSource> resolveSampleDataSources(Collection<String> sampleNames,
+    public Map<String, MercurySample.MetadataSource> resolve(Collection<String> sampleNames,
                 Map<String, MercurySample> allMercurySamples) {
         Map<String, MercurySample.MetadataSource> results = new HashMap<>();
 
@@ -89,14 +91,17 @@ public class SampleDataSourceResolver {
         return results;
     }
 
-    public void populateSampleDataSources(Collection<ProductOrderSample> productOrderSamples) {
-        Set<String> sampleIds = new HashSet<>();
-        for (ProductOrderSample productOrderSample : productOrderSamples) {
-            sampleIds.add(productOrderSample.getSampleKey());
-        }
+    public void populateSampleDataSources(ProductOrder productOrder) {
+        populateSampleDataSources(productOrder.getSamples());
+    }
 
-        final Map<String, MercurySample.MetadataSource> sampleDataSources =
-                resolveSampleDataSources(sampleIds);
+    public void populateSampleDataSources(Collection<ProductOrderSample> productOrderSamples) {
+        Set<String> sampleIds = new HashSet<>(ProductOrderSample.getSampleNames(productOrderSamples));
+
+        Map<String, MercurySample.MetadataSource> sampleDataSources =
+                ProductOrderSample.getMetadataSourcesForBoundProductOrderSamples(productOrderSamples);
+        sampleIds.removeAll(sampleDataSources.keySet());
+        sampleDataSources.putAll(resolve(sampleIds));
 
         for (ProductOrderSample productOrderSample : productOrderSamples) {
             productOrderSample.setMetadataSource(sampleDataSources.get(productOrderSample.getSampleKey()));

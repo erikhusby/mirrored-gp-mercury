@@ -972,7 +972,12 @@ public class VesselContainer<T extends LabVessel> {
                 ancestorEvents = vesselAtPosition.getAncestors();
             }
             if (ancestorEvents.isEmpty()) {
-                sampleInstances = Collections.emptySet();
+                if (vesselAtPosition != null) {
+                    sampleInstances = new HashSet<>();
+                    sampleInstances.add(new SampleInstanceV2(vesselAtPosition));
+                } else {
+                    sampleInstances = Collections.emptySet();
+                }
             } else {
                 sampleInstances = getAncestorSampleInstances(vesselAtPosition, ancestorEvents);
             }
@@ -1055,7 +1060,7 @@ public class VesselContainer<T extends LabVessel> {
             // Apply events to clones
             for (LabVessel.VesselEvent ancestorEvent : ancestorEvents) {
                 for (SampleInstanceV2 currentSampleInstance : currentSampleInstances) {
-                    currentSampleInstance.applyEvent(ancestorEvent.getLabEvent());
+                    currentSampleInstance.applyEvent(ancestorEvent.getLabEvent(), labVessel);
                 }
             }
 

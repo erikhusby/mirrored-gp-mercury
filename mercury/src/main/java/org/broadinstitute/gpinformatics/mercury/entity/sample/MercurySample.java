@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
@@ -28,11 +29,9 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -50,9 +49,19 @@ public class MercurySample extends AbstractSample {
     public static final String GSSR_METADATA_SOURCE = "GSSR";
 
     /** Determines from which system Mercury gets metadata, e.g. collaborator sample ID */
-    public enum MetadataSource {
-        BSP,
-        MERCURY
+    public enum MetadataSource implements Displayable {
+        BSP("BSP"),
+        MERCURY("Mercury");
+        private final String value;
+
+        MetadataSource(String value) {
+            this.value = value;
+        }
+
+        @Override
+        public String getDisplayName() {
+            return value;
+        }
     }
 
     @Id
@@ -85,19 +94,37 @@ public class MercurySample extends AbstractSample {
     protected MercurySample() {
     }
 
+    /**
+     * Creates a new MercurySample with a specific metadata source in the absence of the actual sample data.
+     *
+     * @param sampleKey         the name of the sample
+     * @param metadataSource    the source of the sample data
+     */
     public MercurySample(String sampleKey, MetadataSource metadataSource) {
         this.sampleKey = sampleKey;
         this.metadataSource = metadataSource;
     }
 
-    public MercurySample(String sampleKey, SampleData sampleData) {
-        super(sampleData);
+    /**
+     * Creates a new MercurySample with the given sample data from BSP.
+     *
+     * @param sampleKey        the name of the sample
+     * @param bspSampleData    the sample data as fetched from BSP
+     */
+    public MercurySample(String sampleKey, BspSampleData bspSampleData) {
+        super(bspSampleData);
         this.sampleKey = sampleKey;
         this.metadataSource = MetadataSource.BSP;
     }
 
-    public MercurySample(String sampleKey, MetadataSource metadataSource, Set<Metadata> metadata) {
-        this(sampleKey, metadataSource);
+    /**
+     * Creates a new MercurySample with the given sample data in Mercury.
+     *
+     * @param sampleKey    the name of the sample
+     * @param metadata     the sample data to associate with the sample
+     */
+    public MercurySample(String sampleKey, Set<Metadata> metadata) {
+        this(sampleKey, MetadataSource.MERCURY);
         addMetadata(metadata);
     }
 
@@ -179,8 +206,7 @@ public class MercurySample extends AbstractSample {
         return sampleId.matches("\\d+\\.\\d+");
     }
 
-    @Override
-    protected SampleData makeSampleData() {
+    public SampleData makeSampleData() {
         switch (metadataSource) {
         case BSP:
             return new BspSampleData();

@@ -118,6 +118,7 @@ public class ZimsIlluminaRunFactoryTest {
         Product testProduct = new Product("Test Product", new ProductFamily("Test Product Family"), "Test product",
                                           "P-TEST-1", new Date(), new Date(), 0, 0, 0, 0, "Test samples only", "None",
                                           true, Workflow.AGILENT_EXOME_EXPRESS, false, "agg type");
+        testProduct.setAnalysisTypeKey("Resequencing");
 
         zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(mockSampleDataFetcher, mockControlDao,
                 new SequencingTemplateFactory(), productOrderDao, mockResearchProjectDao, crspPipelineUtils);
@@ -144,6 +145,7 @@ public class ZimsIlluminaRunFactoryTest {
                                     ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
         testResearchProject.setJiraTicketKey("TestRP-1");
         testResearchProject.setRegulatoryDesignation(REGULATORY_DESIGNATION);
+        testResearchProject.setReferenceSequenceKey("Homo_sapiens_assembly19|1");
 
         // Create a test product order
         List<ProductOrderSample> pdoSamples = new ArrayList<>();
@@ -246,16 +248,16 @@ public class ZimsIlluminaRunFactoryTest {
                         bucketEntry.setLabBatch(batch);
                     }
                     sampleInstanceDtoList.add(new ZimsIlluminaRunFactory.SampleInstanceDto(LANE_NUMBER, testTube, instance,
-                                                                                           sampleId, getPdoKeyForSample(sampleId), null, null, mercurySample.getSampleKey(),
-                                                                                           areCrspSamples,metadataSourceForPipeline));
+                            sampleId, getPdoKeyForSample(sampleId), null, null, mercurySample.getSampleKey(),
+                            areCrspSamples,metadataSourceForPipeline));
                 }
             }
             else {
                 SampleInstanceV2 instance = new SampleInstanceV2(testTube);
                 instance.addReagent(reagents.get(sampleIdx));
                 sampleInstanceDtoList.add(new ZimsIlluminaRunFactory.SampleInstanceDto(LANE_NUMBER, testTube, instance,
-                                                                                       sampleId, getPdoKeyForSample(sampleId), null, null, mercurySample.getSampleKey(),
-                                                                                       areCrspSamples,metadataSourceForPipeline));
+                        sampleId, getPdoKeyForSample(sampleId), null, null, mercurySample.getSampleKey(),
+                        areCrspSamples,metadataSourceForPipeline));
             }
 
 
@@ -409,11 +411,18 @@ public class ZimsIlluminaRunFactoryTest {
         for (LibraryBean libraryBean : libraryBeans) {
             Assert.assertEquals(libraryBean.getRootSample(),libraryBean.getSampleId());
             Assert.assertEquals(libraryBean.getMetadataSource(), MercurySample.MERCURY_METADATA_SOURCE);
+            Assert.assertEquals(libraryBean.getReferenceSequence(), "Homo_sapiens_assembly19");
+            Assert.assertEquals(libraryBean.getReferenceSequenceVersion(), "1");
+            Assert.assertEquals(libraryBean.getAnalysisType(), "HybridSelection.Resequencing");
+            Assert.assertEquals(libraryBean.getDataType(), "agg type");
 
             if (Boolean.TRUE.equals(libraryBean.isPositiveControl())) {
                 hasPositiveControl = true;
                 Assert.assertTrue(libraryBean.getLsid().startsWith("org.broadinstitute:crsp:"));
                 Assert.assertEquals(libraryBean.getCollaboratorParticipantId(),libraryBean.getCollaboratorSampleId());
+                Assert.assertFalse(libraryBean.doAggregation());
+            } else {
+                Assert.assertTrue(libraryBean.doAggregation());
             }
         }
         Assert.assertTrue(hasPositiveControl);
