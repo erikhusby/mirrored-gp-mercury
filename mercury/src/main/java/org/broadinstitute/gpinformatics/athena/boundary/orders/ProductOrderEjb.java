@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableListMultimap;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimaps;
 import edu.mit.broad.prodinfo.bean.generated.AutoWorkRequestInput;
 import edu.mit.broad.prodinfo.bean.generated.AutoWorkRequestOutput;
@@ -252,8 +251,9 @@ public class ProductOrderEjb {
                 editOrder.calculateRisk(samples);
             }
         } catch (Exception ex) {
-            log.error("Could not calculate risk", ex);
-            throw ex;
+            String message = "Could not calculate risk.";
+            log.error(message, ex);
+            throw new InformaticsServiceException(message, ex);
         }
 
         // Set the create and modified information.
