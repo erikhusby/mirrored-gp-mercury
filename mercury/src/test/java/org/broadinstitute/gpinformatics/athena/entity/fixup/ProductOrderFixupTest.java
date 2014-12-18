@@ -529,8 +529,8 @@ public class ProductOrderFixupTest extends Arquillian {
         Root<ProductOrder> root = criteriaQuery.from(ProductOrder.class);
 
         Calendar malleableCalendar = new GregorianCalendar();
-        malleableCalendar.add(Calendar.MONTH, -3);
         malleableCalendar.set(Calendar.DAY_OF_MONTH, 1);
+        malleableCalendar.add(Calendar.MONTH, -3);
 
         Date startDate = malleableCalendar.getTime();
 
