@@ -222,7 +222,8 @@ public class SequencingRunFixupTest extends Arquillian {
                 "141220_SL-HCC_0520_BFCHBFN7ADXX",
                 "141220_SL-HDB_0562_AFCHBFMVADXX",
                 "141220_SL-HDC_0546_BFCHBFRLADXX",
-                "141220_SL-HBW_0503_AHBFRJADXX"
+                "141220_SL-HBW_0503_AHBFRJADXX",
+                "141220_SL-HBW_0504_BHBG5VADXX"
         };
         for (String runName : runNames) {
             IlluminaSequencingRun run = illuminaSequencingRunDao.findByRunName(runName);
