@@ -232,13 +232,10 @@ public class SequencingRunFixupTest extends Arquillian {
                     .replace("/crsp/illumina2/proc/", String.format("/crsp/illumina2/proc/%s/", machineName));
 
             run.setRunDirectory(goodRunDirectory);
-            String changeMessage = String.format("Changed runDirectory for %s from %s to %s.", runName, badRunDirectory,
-                    goodRunDirectory);
-            System.out.println(changeMessage);
-            illuminaSequencingRunDao.persist(new FixupCommentary(
-                    changeMessage + " See https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-3288"));
+            System.out.println(String.format("Changed runDirectory for %s from %s to %s", runName, badRunDirectory,
+                    goodRunDirectory));
         }
-
-        illuminaSequencingRunDao.flush();
+        illuminaSequencingRunDao.persist(new FixupCommentary(
+                "Fixing missing machine name in run directory path. See https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-3288"));
     }
 }
