@@ -25,7 +25,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import javax.annotation.Nonnull;
@@ -97,10 +97,10 @@ public class VesselTransferEjb {
         transferEvent.setOperator(username);
         transferEvent.setStation(stationName);
 
-        Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube = new HashMap<>();
+        Map<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
         for (Map.Entry<String, VesselPosition> item : denatureBarcodeMap.entrySet()) {
             String tubeBarcode = item.getKey();
-            TwoDBarcodedTube sourceTube = new TwoDBarcodedTube(tubeBarcode);
+            BarcodedTube sourceTube = new BarcodedTube(tubeBarcode);
             VesselPosition vesselPosition = item.getValue();
             mapPositionToTube.put(vesselPosition, sourceTube);
         }

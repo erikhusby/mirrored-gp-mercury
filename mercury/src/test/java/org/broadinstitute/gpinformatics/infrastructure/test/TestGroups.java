@@ -10,9 +10,22 @@ public class TestGroups {
     public static final String DATABASE_FREE = "DatabaseFree";
 
     /**
-     *  This means the test group requires a container and external resources to run properly.
+     *  This means the test group requires external resources, but does not require a container
+     *  (IE, calls web services) to run properly.
      */
     public static final String EXTERNAL_INTEGRATION = "ExternalIntegration";
+
+    /** Uses stubs */
+    public static final String STUBBY = "Stubby";
+
+    /** Uses standard code (no stubs, no alternatives) */
+    public static final String STANDARD = "Standard";
+
+    /** Uses CDI alternatives, can't be combined into a suite */
+    public static final String ALTERNATIVES = "Alternatives";
+
+    /** "Test" used only to perform a fixup on production data. */
+    public static final String FIXUP = "Fixup";
 
     /**
      * This means ... ?

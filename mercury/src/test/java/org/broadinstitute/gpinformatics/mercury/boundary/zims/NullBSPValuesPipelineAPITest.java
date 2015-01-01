@@ -16,6 +16,7 @@ import javax.inject.Inject;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
 
+@Test(groups = TestGroups.ALTERNATIVES)
 public class NullBSPValuesPipelineAPITest extends Arquillian {
 
     @Inject
@@ -29,8 +30,8 @@ public class NullBSPValuesPipelineAPITest extends Arquillian {
         ).addAsResource(ThriftFileAccessor.RUN_FILE);
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
-    public void testNullBspDtos() throws Exception {
+    @Test(groups = TestGroups.ALTERNATIVES)
+    public void testNullBspSampleData() throws Exception {
         ZimsIlluminaRun run = runLaneResource.getRun(IlluminaRunResourceTest.RUN_NAME);
         Assert.assertNotNull(run.getError());
         Assert.assertTrue(run.getError().contains("BSP returned no"));

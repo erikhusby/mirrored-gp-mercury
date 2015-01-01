@@ -10,11 +10,13 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.athena.entity.samples.SampleReceiptValidation;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
@@ -63,11 +65,11 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      * Count shown when no billing has occurred.
      */
     public static final double NO_BILL_COUNT = 0;
-    public static final String TUMOR_IND = BSPSampleDTO.TUMOR_IND;
-    public static final String NORMAL_IND = BSPSampleDTO.NORMAL_IND;
-    public static final String FEMALE_IND = BSPSampleDTO.FEMALE_IND;
-    public static final String MALE_IND = BSPSampleDTO.MALE_IND;
-    public static final String ACTIVE_IND = BSPSampleDTO.ACTIVE_IND;
+    public static final String TUMOR_IND = BspSampleData.TUMOR_IND;
+    public static final String NORMAL_IND = BspSampleData.NORMAL_IND;
+    public static final String FEMALE_IND = BspSampleData.FEMALE_IND;
+    public static final String MALE_IND = BspSampleData.MALE_IND;
+    public static final String ACTIVE_IND = BspSampleData.ACTIVE_IND;
 
     @Id
     @SequenceGenerator(name = "SEQ_ORDER_SAMPLE", schema = "athena", sequenceName = "SEQ_ORDER_SAMPLE")
@@ -87,6 +89,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
     @OneToMany(mappedBy = "productOrderSample", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
             orphanRemoval = true)
+    @BatchSize(size = 100)
     private final Set<LedgerEntry> ledgerItems = new HashSet<>();
 
     @Column(name = "SAMPLE_POSITION", updatable = false, insertable = false, nullable = false)
@@ -95,6 +98,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "product_order_sample", nullable = false)
     @AuditJoinTable(name = "po_sample_risk_join_aud")
+    @BatchSize(size = 100)
     private final Set<RiskItem> riskItems = new HashSet<>();
 
     /**
@@ -104,11 +108,18 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     @Column(name = "ALIQUOT_ID")
     private String aliquotId;
 
-    @OneToMany(mappedBy = "productOrderSample",cascade = {CascadeType.PERSIST}, orphanRemoval = true)
+    @OneToMany(mappedBy = "productOrderSample", cascade = {CascadeType.PERSIST}, orphanRemoval = true)
+    @BatchSize(size = 100)
     Set<SampleReceiptValidation> sampleReceiptValidations = new HashSet<>();
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.PERSIST)
     private MercurySample mercurySample;
+
+    @Transient
+    private MercurySample.MetadataSource metadataSource;
+
+    @Transient
+    private boolean isMetadataSourceInitialized;
 
     /**
      * Convert a list of ProductOrderSamples into a list of sample names.
@@ -125,17 +136,60 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         return names;
     }
 
+    /**
+     * Convert a list of ProductOrderSamples into a list of sample names.
+     *
+     * @param samples the samples to convert.
+     *
+     * @return the names of the samples, in the same order as the input.
+     */
+    public static List<Long> getSampleIDs(Collection<ProductOrderSample> samples) {
+        List<Long> ids = new ArrayList<>(samples.size());
+        for (ProductOrderSample productOrderSample : samples) {
+            ids.add(productOrderSample.getProductOrderSampleId());
+        }
+        return ids;
+    }
+
     public boolean calculateRisk() {
         riskItems.clear();
 
         boolean isOnRisk = false;
+        RiskCriterion rinRisk = null;
+        RiskCriterion rqsRisk = null;
 
         // Go through each risk check on the product
         for (RiskCriterion criterion : productOrder.getProduct().getRiskCriteria()) {
-            // If this is on risk, then create a risk item for it and add it in
-            if (criterion.onRisk(this)) {
-                riskItems.add(new RiskItem(criterion, criterion.getValueProvider().getValue(this)));
-                isOnRisk = true;
+            switch (criterion.getType()) {
+            case RIN:
+                rinRisk = criterion;
+                break;
+            case RQS:
+                rqsRisk = criterion;
+                break;
+            default:
+                isOnRisk = evaluateCriterion(criterion, isOnRisk);
+            }
+        }
+
+        // Special handling for the combination of RIN and RQS risk criteria.
+        if (rinRisk != null && rqsRisk != null) {
+            if (hasRin() == hasRqs()) {
+                isOnRisk = evaluateCriterion(rinRisk, isOnRisk);
+                isOnRisk = evaluateCriterion(rqsRisk, isOnRisk);
+            } else if (hasRin()) {
+                isOnRisk = evaluateCriterion(rinRisk, isOnRisk);
+                // suppress RQS risk criterion
+            } else if (hasRqs()) {
+                // suppress RIN risk criterion
+                isOnRisk = evaluateCriterion(rqsRisk, isOnRisk);
+            }
+        } else {
+            if (rinRisk != null) {
+                isOnRisk = evaluateCriterion(rinRisk, isOnRisk);
+            }
+            if (rqsRisk != null) {
+                isOnRisk = evaluateCriterion(rqsRisk, isOnRisk);
             }
         }
 
@@ -146,6 +200,23 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         }
 
         return isOnRisk;
+    }
+
+    private boolean evaluateCriterion(RiskCriterion criterion, boolean isOnRisk) {
+        // If this is on risk, then create a risk item for it and add it in
+        if (criterion.onRisk(this)) {
+            riskItems.add(new RiskItem(criterion, criterion.getValueProvider().getValue(this)));
+            isOnRisk = true;
+        }
+        return isOnRisk;
+    }
+
+    private boolean hasRin() {
+        return isInBspFormat() && getSampleData().getRin() != null;
+    }
+
+    private boolean hasRqs() {
+        return isInBspFormat() && getSampleData().getRqs() != null;
     }
 
     public void setManualOnRisk(RiskCriterion criterion, String comment) {
@@ -165,10 +236,10 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     public boolean canRinScoreBeUsedForOnRiskCalculation() {
         boolean canRinScoreBeUsed = false;
         if (isInBspFormat()) {
-            BSPSampleDTO bspDto = getBspSampleDTO();
-            if (bspDto != null) {
-                canRinScoreBeUsed = getBspSampleDTO().canRinScoreBeUsedForOnRiskCalculation();
-            }
+
+            SampleData sampleData = getSampleData();
+            // at time of comment, getSampleData will never return null so a null check is not required
+            canRinScoreBeUsed = sampleData.canRinScoreBeUsedForOnRiskCalculation();
         }
         return canRinScoreBeUsed;
     }
@@ -188,6 +259,45 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         return false;
     }
 
+    @Override
+    protected SampleData makeSampleData() {
+        SampleData sampleData;
+        if(mercurySample != null) {
+            sampleData = mercurySample.makeSampleData();
+        } else {
+            sampleData = new BspSampleData();
+        }
+        return sampleData;
+    }
+
+    @Override
+    public MercurySample.MetadataSource getMetadataSource() {
+        if (mercurySample != null) {
+            return mercurySample.getMetadataSource();
+        }
+        if (!isMetadataSourceInitialized) {
+           throw new IllegalStateException(String.format("ProductOrderSample %s transient metadataSource has not been initialized", sampleName));
+        }
+        return metadataSource;
+    }
+
+    public static Map<String, MercurySample.MetadataSource> getMetadataSourcesForBoundProductOrderSamples(
+            Collection<ProductOrderSample> samples) {
+
+        Map<String, MercurySample.MetadataSource> results = new HashMap<>();
+        for (ProductOrderSample sample : samples) {
+            if (sample.getMercurySample() != null) {
+                results.put(sample.getSampleKey(), sample.getMetadataSource());
+            }
+        }
+        return results;
+    }
+
+    public void setMetadataSource(MercurySample.MetadataSource metadataSource) {
+        this.metadataSource = metadataSource;
+        isMetadataSourceInitialized = true;
+    }
+
     public enum DeliveryStatus implements StatusType {
         NOT_STARTED(""),
         DELIVERED("Delivered"),
@@ -202,6 +312,10 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         @Override
         public String getDisplayName() {
             return displayName;
+        }
+
+        public boolean isAbandoned() {
+            return this == ABANDONED;
         }
     }
 
@@ -229,12 +343,39 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     }
 
     /**
+     * TEST-ONLY delegating constructor that also sets the entity's primary key.
+     *
+     * @param sampleName the sample ID
+     * @param primaryKey the primary key
+     *
+     * @see #ProductOrderSample(String)
+     */
+    public ProductOrderSample(@Nonnull String sampleName, Long primaryKey) {
+        this(sampleName);
+        this.productOrderSampleId = primaryKey;
+    }
+
+    /**
      * Used for testing only.
      */
     public ProductOrderSample(@Nonnull String sampleName,
-                              @Nonnull BSPSampleDTO bspSampleDTO) {
-        super(bspSampleDTO);
+                              @Nonnull SampleData sampleData) {
+        super(sampleData);
         this.sampleName = sampleName;
+    }
+
+    /**
+     * TEST-ONLY delegating constructor that also sets the entity's primary key.
+     *
+     * @param sampleName the sample ID
+     * @param sampleData the sample data
+     * @param primaryKey the primary key
+     *
+     * @see #ProductOrderSample(String, SampleData)
+     */
+    public ProductOrderSample(@Nonnull String sampleName, @Nonnull SampleData sampleData, Long primaryKey) {
+        this(sampleName, sampleData);
+        this.productOrderSampleId = primaryKey;
     }
 
     @Override
@@ -339,7 +480,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         List<PriceItem> items = new ArrayList<>();
         items.add(getProductOrder().getProduct().getPrimaryPriceItem());
         org.broadinstitute.bsp.client.sample.MaterialType materialTypeObject =
-                getBspSampleDTO().getMaterialTypeObject();
+                getSampleData().getMaterialTypeObject();
         Set<Product> productAddOns = productOrder.getProduct().getAddOns();
         if (materialTypeObject != null && !productAddOns.isEmpty()) {
             MaterialType sampleMaterialType =
@@ -458,9 +599,9 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      * upload happened and needs to be reviewed.
      *
      * @param workCompleteDate The date completed.
-     * @param priceItem The price item to charge.
-     * @param delta The plus or minus value to bill to the quote server.
-     * @param currentDate The ledger entry needs a date to say when the auto entry was made.
+     * @param priceItem        The price item to charge.
+     * @param delta            The plus or minus value to bill to the quote server.
+     * @param currentDate      The ledger entry needs a date to say when the auto entry was made.
      */
     public void addAutoLedgerItem(Date workCompleteDate, PriceItem priceItem, double delta, Date currentDate) {
         addLedgerItem(workCompleteDate, priceItem, delta, currentDate);
@@ -471,8 +612,8 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      * will lock out auto billing and sets to Can Bill.
      *
      * @param workCompleteDate The date completed.
-     * @param priceItem The price item to charge.
-     * @param delta The plus or minus value to bill to the quote server.
+     * @param priceItem        The price item to charge.
+     * @param delta            The plus or minus value to bill to the quote server.
      */
     public void addLedgerItem(Date workCompleteDate, PriceItem priceItem, double delta) {
         addLedgerItem(workCompleteDate, priceItem, delta, null);
@@ -492,7 +633,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      */
     public boolean isOnRisk() {
         for (RiskItem item : riskItems) {
-            if (item.getRiskCriterion() != null) {
+            if (item.isOnRisk()) {
                 return true;
             }
         }
@@ -624,4 +765,5 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     public void setMercurySample(MercurySample mercurySample) {
         this.mercurySample = mercurySample;
     }
+
 }

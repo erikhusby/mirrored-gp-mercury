@@ -21,6 +21,7 @@ public class LabEventBean {
     private List<LabVesselBean> targets = new ArrayList<>();
     private List<TransferBean> transfers = new ArrayList<>();
     private List<ReagentBean> reagents = new ArrayList<>();
+    private List<MetadataBean> metadatas = new ArrayList<>();
 
     public LabEventBean(String eventType, String station, String operator, Date eventDate) {
         this.eventType = eventType;
@@ -103,5 +104,13 @@ public class LabEventBean {
 
     public void setReagents(List<ReagentBean> reagents) {
         this.reagents = reagents;
+    }
+
+    public List<MetadataBean> getMetadatas() {
+        return metadatas;
+    }
+
+    public void setMetadatas(List<MetadataBean> metadatas) {
+        this.metadatas = metadatas;
     }
 }

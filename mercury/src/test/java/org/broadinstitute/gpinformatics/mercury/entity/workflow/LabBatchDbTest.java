@@ -27,7 +27,7 @@ import java.util.Set;
 /**
  * Tests of the LabBatch entity, using a database
  */
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.STUBBY)
 public class LabBatchDbTest extends ContainerTest {
 
     @Inject
@@ -76,10 +76,10 @@ public class LabBatchDbTest extends ContainerTest {
                     List<LabEvent> inPlaceLabEvents = new ArrayList<>();
                     if (context.getLabVessel() == null) {
                         for (LabVessel sourceLabVessel : context.getEvent().getSourceLabVessels()) {
-                            inPlaceLabEvents.addAll(sourceLabVessel.getInPlaceEvents());
+                            inPlaceLabEvents.addAll(sourceLabVessel.getInPlaceEventsWithContainers());
                         }
                     } else {
-                        inPlaceLabEvents.addAll(context.getLabVessel().getInPlaceEvents());
+                        inPlaceLabEvents.addAll(context.getLabVessel().getInPlaceEventsWithContainers());
                     }
                     Collections.sort(inPlaceLabEvents, new Comparator<LabEvent>() {
                         @Override
@@ -107,7 +107,7 @@ public class LabBatchDbTest extends ContainerTest {
 
     }
 
-    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = false, groups = TestGroups.STUBBY)
     public void findMessageFilesForBatch() {
         List<String> lcSets = new ArrayList<>();
         // PDO-135, C19F5ACXX

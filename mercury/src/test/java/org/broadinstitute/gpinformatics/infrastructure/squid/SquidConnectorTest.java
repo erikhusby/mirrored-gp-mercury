@@ -20,7 +20,7 @@ import java.util.Date;
  *         Date: 3/11/13
  *         Time: 3:27 PM
  */
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.STANDARD)
 public class SquidConnectorTest extends Arquillian {
 
     @Inject
@@ -59,7 +59,7 @@ public class SquidConnectorTest extends Arquillian {
 
     }
 
-    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = false, groups = TestGroups.STANDARD)
     public void testRunCreationConnection() throws Exception {
 
         SolexaRunBean connectorData =

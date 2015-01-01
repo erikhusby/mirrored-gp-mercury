@@ -4,36 +4,16 @@ package org.broadinstitute.gpinformatics.infrastructure.quote;
  * Based on test from Mercury
  */
 
-import org.apache.commons.logging.Log;
-import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.testng.Arquillian;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import javax.inject.Inject;
 import java.util.Set;
-
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
 
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
-public class PMBQuoteServiceTest extends Arquillian {
-
-    @Deployment
-    public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(DEV);
-    }
-
-    @Inject
-    private PMBQuoteService pmbQuoteService;
-
-
-    @Inject
-    private Log log;
-
+public class PMBQuoteServiceTest {
+    private PMBQuoteService pmbQuoteService=PMBQuoteServiceProducer.testInstance();
 
     // test works but the method under test doesn't seem to be used so why slow down our builds
     @Test(enabled = false)
@@ -70,8 +50,6 @@ public class PMBQuoteServiceTest extends Arquillian {
 
     // curl --location --user 'rnordin@broadinstitute.org:Squ1d_us3r' 'http://quoteqa.broadinstitute.org:8080/quotes/ws/portals/private/get_price_list'
     // curl --user 'rnordin@broadinstitute.org:Squ1d_us3r' 'http://quoteqa.broadinstitute.org:8080/quotes/rest/price_list/10
-
-    @Test
     public void testPriceItems() {
         try {
             PriceList priceItems = pmbQuoteService.getAllPriceItems();

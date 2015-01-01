@@ -13,11 +13,12 @@ import static org.hamcrest.Matchers.greaterThan;
 /**
  * @author breilly
  */
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class ThriftConnectionTest {
 
     private ThriftConnection connection;
 
-    @BeforeMethod
+    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
         connection = new ThriftConnection(ThriftConfig.produce(Deployment.TEST));
     }

@@ -13,11 +13,11 @@
                     <li>Message can contain html markup.</li>
                 </ul>
                 <div class="controls">
-                    <stripes:textarea style="width: 300px"  rows="5" name="publicMessage.message"/>
+                    <stripes:textarea style="width: 300px"  rows="5" name="messageText"/>
                 </div>
             </div>
             <div class="actionButtons">
-                <stripes:submit name="addMessage" value="Add Message" class="btn"/>
+                <stripes:submit name="setMessage" value="Set Message" class="btn"/>
                 <stripes:submit name="clearMessage" value="Clear Message" class="btn"/>
             </div>
         </stripes:form>

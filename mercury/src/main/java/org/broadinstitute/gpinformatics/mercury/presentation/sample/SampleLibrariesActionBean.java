@@ -6,8 +6,8 @@ import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.ValidationMethod;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -39,16 +39,16 @@ public class SampleLibrariesActionBean extends CoreActionBean {
     private MercurySampleDao mercurySampleDao;
 
     @Inject
-    private BSPSampleDataFetcher sampleDataFetcher;
+    private SampleDataFetcher sampleDataFetcher;
 
 
     private String searchKey;
-    private Map<String, BSPSampleDTO> sampleToBspPicoValueMap = new HashMap<>();
+    private Map<String, SampleData> sampleToBspPicoValueMap = new HashMap<>();
     private Map<LabVessel, Map<LabEvent, Set<LabVessel>>> vesselToEventVesselsMap = new HashMap<>();
     private List<String> selectedSamples = new ArrayList<>();
     private Map<String, List<LabVessel>> sampleNameToVesselsMap = new HashMap<>();
 
-    public Map<String, BSPSampleDTO> getSampleToBspPicoValueMap() {
+    public Map<String, SampleData> getSampleToBspPicoValueMap() {
         return sampleToBspPicoValueMap;
     }
 
@@ -76,7 +76,7 @@ public class SampleLibrariesActionBean extends CoreActionBean {
     }
 
     /**
-     * Create the cache of sample names to BSPSampleDTO objects.
+     * Create the cache of sample names to BspSampleData objects.
      */
     private void generateBspPicoMap() {
         Set<String> sampleNames = new HashSet<>();
@@ -102,10 +102,10 @@ public class SampleLibrariesActionBean extends CoreActionBean {
                 vesselList.add(startingVessel);
             }
             Map<LabEvent, Set<LabVessel>> eventListMap =
-                    startingVessel.findVesselsForLabEventTypes(eventTypes);
+                    startingVessel.findVesselsForLabEventTypes(eventTypes, true);
             vesselToEventVesselsMap.put(startingVessel, eventListMap);
         }
-        sampleToBspPicoValueMap = sampleDataFetcher.fetchSamplesFromBSP(sampleNames);
+        sampleToBspPicoValueMap = sampleDataFetcher.fetchSampleData(sampleNames);
     }
 
     public List<MolecularIndexReagent> getIndexesForSample(String sampleName) {

@@ -8,8 +8,9 @@ import org.broadinstitute.gpinformatics.infrastructure.common.BaseSplitter;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.envers.EnversAudit;
+import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo;
 import org.hibernate.SQLQuery;
-import org.hibernate.envers.RevisionType;
 import org.hibernate.type.LongType;
 
 import javax.inject.Inject;
@@ -169,11 +170,11 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
      *
      * @return the number of records created in the data file (deletes, modifies, and adds).
      */
-    public int doEtl(Collection<Long> revIds, String etlDateStr) {
+    public int doEtl(Set<Long> revIds, String etlDateStr) {
         try {
             // Retrieves the Envers-formatted list of entity changes in the given revision range.
             // Subclass may add additional entity ids based on custom rev query.
-            List<Object[]> auditEntities = auditReaderDao.fetchDataChanges(revIds, entityClass);
+            List<EnversAudit> auditEntities = auditReaderDao.fetchEnversAudits(revIds, entityClass);
             AuditLists<AUDITED_ENTITY_CLASS> auditLists = fetchAuditIds(auditEntities, fetchAdditionalModifies(revIds));
 
             // The convert calls optionally convert entity types for cross-entity etl classes.
@@ -288,38 +289,35 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
     /**
      * Parses AuditReader output into more useful lists of entities.
      *
-     * @param auditEntities is collection of Envers triples (elements are entity, RevInfo, RevisionType)
-     *                      already sorted by increasing rev date.
+     * @param auditEntities is collection of EnversAudit already sorted by increasing rev date.
      * @param additionalModifies is a collection of entity ids to be added to the modified entities.
      * @return lists of entity ids for deleted, added, and modified entities; and maybe a list of RevInfoPairs.
      */
-    //
-    // Object[] is an array of heterogeneous datatypes and must not be made into a generic.
-    //
     @DaoFree
-    private AuditLists<AUDITED_ENTITY_CLASS> fetchAuditIds(Collection<Object[]> auditEntities,
+    private AuditLists<AUDITED_ENTITY_CLASS> fetchAuditIds(Collection<EnversAudit> auditEntities,
                                                            Collection<Long> additionalModifies) {
         Set<Long> deletedEntityIds = new HashSet<>();
         Set<Long> modifiedEntityIds = new HashSet<>(additionalModifies);
         Set<Long> addedEntityIds = new HashSet<>();
         List<RevInfoPair<AUDITED_ENTITY_CLASS>> revInfoPairs = new ArrayList<>();
 
-        for (Object[] dataChange : auditEntities) {
-            AUDITED_ENTITY_CLASS entity = (AUDITED_ENTITY_CLASS) dataChange[AuditReaderDao.AUDIT_READER_ENTITY_IDX];
+        for (EnversAudit enversAudit : auditEntities) {
+            AUDITED_ENTITY_CLASS entity = (AUDITED_ENTITY_CLASS) enversAudit.getEntity();
             Long entityId = entityId(entity);
-
-            RevisionType revType = (RevisionType) dataChange[AuditReaderDao.AUDIT_READER_TYPE_IDX];
-            if (revType == RevisionType.DEL) {
+            switch(enversAudit.getRevType()) {
+            case ADD:
+                addedEntityIds.add(entityId);
+                break;
+            case MOD:
+                modifiedEntityIds.add(entityId);
+                break;
+            case DEL:
                 deletedEntityIds.add(entityId);
-            } else {
-                if (revType == RevisionType.ADD) {
-                    addedEntityIds.add(entityId);
-                } else {
-                    modifiedEntityIds.add(entityId);
-                }
-                addRevInfoPairs(revInfoPairs, dataChange, entity);
+                break;
             }
+            addRevInfoPairs(revInfoPairs, enversAudit.getRevInfo(), entity);
         }
+
         // A given entity id should appear in only one of the collections.
         modifiedEntityIds.removeAll(deletedEntityIds);
         addedEntityIds.removeAll(deletedEntityIds);
@@ -329,7 +327,7 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
     }
 
     protected void addRevInfoPairs(Collection<RevInfoPair<AUDITED_ENTITY_CLASS>> revInfoPairs,
-                                   Object[] enversTriple,
+                                   RevInfo revInfo,
                                    AUDITED_ENTITY_CLASS entity) {
         // No-op in this class.  Sub-class implements this in order to have revInfoPairs saved.
     }
@@ -611,6 +609,7 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
 
     /**
      * Calculates a hash on String.
+     * From http://stackoverflow.com/questions/1660501/what-is-a-good-64bit-hash-function-in-java-for-textual-strings
      */
     public static long hash(String string) {
         long h = HASH_PRIME;

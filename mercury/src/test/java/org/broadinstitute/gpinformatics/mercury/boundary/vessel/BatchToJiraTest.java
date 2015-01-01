@@ -12,7 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -34,7 +34,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.ALTERNATIVES)
 public class BatchToJiraTest extends Arquillian {
 
     @Inject
@@ -52,7 +52,7 @@ public class BatchToJiraTest extends Arquillian {
     @Inject
     private UserTransaction transaction;
 
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @BeforeMethod(groups = TestGroups.ALTERNATIVES)
     public void setUp() throws Exception {
         if (transaction == null) {
             return;
@@ -60,7 +60,7 @@ public class BatchToJiraTest extends Arquillian {
         transaction.begin();
     }
 
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @AfterMethod(groups = TestGroups.ALTERNATIVES)
     public void tearDown() throws Exception {
         // Skip if no injections, since we're not running in container.
         if (transaction == null) {
@@ -96,12 +96,12 @@ public class BatchToJiraTest extends Arquillian {
         String tube1Label = "Starter01";
         String tube2Label = "Rework01";
 
-        LabVessel tube1 = new TwoDBarcodedTube(tube1Label);
-        tube1.addSample(new MercurySample("SM-01"));
+        LabVessel tube1 = new BarcodedTube(tube1Label);
+        tube1.addSample(new MercurySample("SM-01", MercurySample.MetadataSource.BSP));
         startingVessels.add(tube1);
         Set<LabVessel> reworkVessels = new HashSet<>();
-        LabVessel tube2 = new TwoDBarcodedTube(tube2Label);
-        tube2.addSample(new MercurySample("SM-02"));
+        LabVessel tube2 = new BarcodedTube(tube2Label);
+        tube2.addSample(new MercurySample("SM-02", MercurySample.MetadataSource.BSP));
         labVesselDao.persistAll(Arrays.asList(tube1, tube2));
 
         labVesselDao.flush();

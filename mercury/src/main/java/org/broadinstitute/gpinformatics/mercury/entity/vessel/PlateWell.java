@@ -13,9 +13,9 @@ public class PlateWell extends LabVessel {
     @Enumerated(EnumType.STRING)
     private VesselPosition vesselPosition;
     
-    public PlateWell(StaticPlate p,VesselPosition vesselPosition) {
-        super(p.getLabel() + vesselPosition);
-        this.plate = p;
+    public PlateWell(StaticPlate staticPlate, VesselPosition vesselPosition) {
+        super(staticPlate.getLabel() + vesselPosition);
+        this.plate = staticPlate;
         this.vesselPosition = vesselPosition;
     }
 
@@ -32,4 +32,11 @@ public class PlateWell extends LabVessel {
         return ContainerType.PLATE_WELL;
     }
 
+    public StaticPlate getPlate() {
+        return plate;
+    }
+
+    public VesselPosition getVesselPosition() {
+        return vesselPosition;
+    }
 }

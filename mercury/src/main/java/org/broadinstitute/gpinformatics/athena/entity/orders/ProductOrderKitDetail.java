@@ -23,7 +23,7 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
@@ -63,7 +63,7 @@ public class ProductOrderKitDetail implements Serializable {
     @Enumerated(EnumType.STRING)
     @CollectionTable(schema = "athena", name = "PDO_KIT_DTL_POST_REC_OPT",
             joinColumns = {@JoinColumn(name = "product_order_kit_detail_id")})
-    private Set<PostReceiveOption> postReceiveOptions = new HashSet<>();
+    private Set<PostReceiveOption> postReceiveOptions = EnumSet.noneOf(PostReceiveOption.class);
 
     @Column(name = "material_bsp_name")
     private String bspMaterialName;
@@ -74,17 +74,16 @@ public class ProductOrderKitDetail implements Serializable {
     public ProductOrderKitDetail() {
     }
 
-    public ProductOrderKitDetail(Long numberOfSamples, KitType kitType, Long organismId,
-                                 MaterialInfoDto materialInfo) {
-        this.numberOfSamples = numberOfSamples;
-        this.kitType = kitType;
-        this.organismId = organismId;
-        this.setMaterialInfo(materialInfo);
+    public ProductOrderKitDetail(Long numberOfSamples, KitType kitType, Long organismId, MaterialInfoDto materialInfo) {
+        this(numberOfSamples, kitType, organismId, materialInfo, EnumSet.noneOf(PostReceiveOption.class));
     }
 
     public ProductOrderKitDetail(Long numberOfSamples, KitType kitType, Long organismId,
                                  MaterialInfoDto materialInfo, Set<PostReceiveOption> postReceiveOptions) {
-        this(numberOfSamples, kitType, organismId, materialInfo);
+        this.numberOfSamples = numberOfSamples;
+        this.kitType = kitType;
+        this.organismId = organismId;
+        setMaterialInfo(materialInfo);
         this.postReceiveOptions = postReceiveOptions;
     }
 
@@ -92,8 +91,8 @@ public class ProductOrderKitDetail implements Serializable {
         return productOrderKitDetailId;
     }
 
-    public void setProductOrderKitDetailId(Long productOrderKitDetaild) {
-        this.productOrderKitDetailId = productOrderKitDetaild;
+    public void setProductOrderKitDetailId(Long productOrderKitDetailId) {
+        this.productOrderKitDetailId = productOrderKitDetailId;
     }
 
     public ProductOrderKit getProductOrderKit() {

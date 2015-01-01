@@ -46,9 +46,9 @@ public class BSPWorkRequestClientService extends AbstractJerseyClientService {
         WorkRequestResponse response;
 
         if (workRequest.getBarCode() == null) {
-            response = bspWorkRequestManager.create(workRequest);
+            response = bspWorkRequestManager.create(workRequest.getRequestUser(), workRequest);
         } else {
-            response = bspWorkRequestManager.update(workRequest);
+            response = bspWorkRequestManager.update(workRequest.getRequestUser(), workRequest);
         }
 
         if (response == null) {

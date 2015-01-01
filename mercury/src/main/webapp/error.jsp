@@ -2,6 +2,8 @@
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
 
+<%--@elvariable id="actionBean" type="org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean"--%>
+
 <stripes:layout-render name="/layout.jsp" pageTitle="Mercury">
     <stripes:layout-component name="content">
 
@@ -21,11 +23,11 @@
                     </p>
 
                     <p>
-                        The cause of your problem from <strong>${request.getAttribute("javax.servlet.error.servlet_name")}</strong>:
+                        The cause of your problem from <strong>${requestScope["javax.servlet.error.request_uri"]}</strong>:
                     </p>
 
                     <p class="text-error" style="font-weight: bold; margin-left: 50px;">
-                        ${requestScope["javax.servlet.error.message"]}
+                        ${actionBean.getError(requestScope)}
                     </p>
 
                     <br/><br/><br/>
@@ -35,15 +37,9 @@
                             <h3>Additional information from the stack trace:</h3>
 
                             <p>
-                            <%
-                                Throwable e = (Throwable)request.getAttribute("javax.servlet.error.exception");
-                                StackTraceElement[] stack = e.getStackTrace();
-                                if (stack != null) {
-                                    for(int n = 0; n < Math.min(10, stack.length); n++) {
-                                      stack[n].toString();
-                                    }
-                                }
-                            %>
+                                <c:forEach var="stackEntry" end="10" items="${actionBean.getStackTrace(requestScope)}">
+                                    ${stackEntry}<br/>
+                                </c:forEach>
                             </p>
                         </div>
                     </security:authorizeBlock>

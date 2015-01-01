@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.control.labevent;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -26,8 +25,6 @@ public class LabEventHandler implements Serializable {
 
     private WorkflowLoader workflowLoader;
 
-    private AthenaClientService athenaClientService;
-
     @Inject
     private JiraCommentUtil jiraCommentUtil;
 
@@ -35,9 +32,8 @@ public class LabEventHandler implements Serializable {
     }
 
     @Inject
-    public LabEventHandler(WorkflowLoader workflowLoader, AthenaClientService athenaClientService) {
+    public LabEventHandler(WorkflowLoader workflowLoader) {
         this.workflowLoader = workflowLoader;
-        this.athenaClientService = athenaClientService;
     }
 
     public HandlerResponse processEvent(LabEvent labEvent) {

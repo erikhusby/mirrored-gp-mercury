@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
@@ -15,9 +16,10 @@ import org.testng.annotations.Test;
 import java.net.URL;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STANDARD;
 import static org.testng.Assert.assertTrue;
 
+@Test(groups = TestGroups.STANDARD)
 public class ExtractTransformResourceTest extends RestServiceContainerTest {
     private String datafileDir = System.getProperty("java.io.tmpdir");
 
@@ -31,7 +33,7 @@ public class ExtractTransformResourceTest extends RestServiceContainerTest {
         return "etl";
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @BeforeMethod
     public void beforeMethod() {
         // Deletes the etl .dat files.
@@ -39,9 +41,10 @@ public class ExtractTransformResourceTest extends RestServiceContainerTest {
         EtlTestUtilities.deleteEtlFiles(datafileDir);
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testAnalyze(@ArquillianResource URL baseUrl) {
+    public void testAnalyze(@ArquillianResource URL baseUrl)
+            throws Exception {
         WebResource resource = makeWebResource(baseUrl, "analyze/sequencingRun/1");
         ClientResponse response = resource.type("text/html").get(ClientResponse.class);
         Assert.assertEquals(response.getClientResponseStatus(), ClientResponse.Status.OK);
@@ -55,9 +58,10 @@ public class ExtractTransformResourceTest extends RestServiceContainerTest {
         assertTrue(result.contains("canEtl"));
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testIncrementalAndBackup(@ArquillianResource URL baseUrl) {
+    public void testIncrementalAndBackup(@ArquillianResource URL baseUrl)
+            throws Exception {
 
         // Tests incremental.
         WebResource resource = makeWebResource(baseUrl, "incremental/20121120000000/20121120000001");

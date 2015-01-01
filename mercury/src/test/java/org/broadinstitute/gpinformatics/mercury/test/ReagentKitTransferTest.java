@@ -11,18 +11,18 @@
 
 package org.broadinstitute.gpinformatics.mercury.test;
 
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
-import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageBeanTest;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
@@ -37,7 +37,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Test(enabled = false)
+@Test(groups = TestGroups.DATABASE_FREE)
 public class ReagentKitTransferTest {
     BettaLimsMessageTestFactory bettaLimsMessageTestFactory = null;
 
@@ -46,12 +46,13 @@ public class ReagentKitTransferTest {
         bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
     }
 
+    @Test(enabled = false)
     public void testDenatureToReagentKit() {
         final long time = new Date().getTime();
         String denatureRackBarcode = "denatureRack" + time;
         String miSeqReagentKitBarcode = "reagentKit" + time;
         Map<String, RackOfTubes> mapBarcodeToSourceRackOfTubes = new HashMap<>();
-        Map<String, TwoDBarcodedTube> mapBarcodeToSourceTube = new HashMap<>();
+        Map<String, BarcodedTube> mapBarcodeToSourceTube = new HashMap<>();
 
         Map<String, VesselPosition> sourceBarcodes = new HashMap<>();
         RackOfTubes denatureRack = new RackOfTubes(denatureRackBarcode, RackOfTubes.RackType.Matrix96);
@@ -60,8 +61,8 @@ public class ReagentKitTransferTest {
             final String tubeBarcode = String.format("denatureTube0%s-%s", i, time);
             final String position = "A0" + i;
             sourceBarcodes.put(tubeBarcode, VesselPosition.valueOf(position));
-            TwoDBarcodedTube tube = new TwoDBarcodedTube(tubeBarcode);
-            Map<VesselPosition, TwoDBarcodedTube> positionMap = new HashMap<>();
+            BarcodedTube tube = new BarcodedTube(tubeBarcode);
+            Map<VesselPosition, BarcodedTube> positionMap = new HashMap<>();
             positionMap.put(VesselPosition.getByName(position), tube);
             TubeFormation tubeFormation = new TubeFormation(positionMap, RackOfTubes.RackType.Matrix96);
             mapBarcodeToSourceTube.put(tubeBarcode, tube);
@@ -96,7 +97,7 @@ public class ReagentKitTransferTest {
             MatcherAssert.assertThat(reagentKit.getBarcode(), Matchers.equalTo(miSeqReagentKitBarcode));
             MatcherAssert.assertThat(reagentKit.getPhysType(), Matchers.equalTo("MiseqReagentKit"));
             MatcherAssert.assertThat(reagentKit.getPhysType(),
-                    Matchers.equalTo(StaticPlate.PlateType.MiSeqReagentKit.getDisplayName()));
+                    Matchers.equalTo(StaticPlate.PlateType.MiSeqReagentKit.getAutomationName()));
 
             // test the kind of event returned
             MatcherAssert.assertThat(transferEventType.getEventType(),

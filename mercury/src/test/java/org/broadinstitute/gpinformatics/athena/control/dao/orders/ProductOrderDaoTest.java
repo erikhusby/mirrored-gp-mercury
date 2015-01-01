@@ -23,7 +23,7 @@ import java.text.MessageFormat;
 import java.util.*;
 
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+@Test(groups = TestGroups.STUBBY, enabled = true)
 public class ProductOrderDaoTest extends ContainerTest {
 
     @Inject
@@ -45,7 +45,7 @@ public class ProductOrderDaoTest extends ContainerTest {
 
     ProductOrder order;
 
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @BeforeMethod(groups = TestGroups.STUBBY)
     public void setUp() throws Exception {
         // Skip if no injections, meaning we're not running in container.
         if (utx == null) {
@@ -60,7 +60,7 @@ public class ProductOrderDaoTest extends ContainerTest {
         productOrderDao.clear();
     }
 
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @AfterMethod(groups = TestGroups.STUBBY)
     public void tearDown() throws Exception {
         // Skip if no injections, meaning we're not running in container.
         if (utx == null) {
@@ -155,7 +155,8 @@ public class ProductOrderDaoTest extends ContainerTest {
      * @param productOrderKey PDO to search.
      * @param sampleBarcode Sample barcode we expect to find in this PDO.
      */
-    private void assertContains(Map<String, ProductOrder> productOrderMap, String productOrderKey, String sampleBarcode) {
+    private static void assertContains(Map<String, ProductOrder> productOrderMap, String productOrderKey,
+                                       String sampleBarcode) {
         Assert.assertNotNull(productOrderMap);
         Assert.assertTrue(productOrderMap.containsKey(productOrderKey));
 
@@ -176,7 +177,7 @@ public class ProductOrderDaoTest extends ContainerTest {
 
         List<ProductOrder> productOrders = productOrderDao.findBySampleBarcodes("NTC", "SC_9001");
         Assert.assertNotNull(productOrders);
-        Assert.assertEquals(productOrders.size(), 3);
+        Assert.assertTrue(productOrders.size() >= 3);
 
         Map<String, ProductOrder> productOrderMap = new HashMap<>();
         for (ProductOrder productOrder : productOrders) {
@@ -194,7 +195,7 @@ public class ProductOrderDaoTest extends ContainerTest {
     @Test
     public void testThatPDOFetchedForBillingHasHadRelatedEntitiesPrefetched() throws Exception {
         List<ProductOrder> pdos = productOrderDao.findListForBilling(Collections.singletonList("PDO-127"));
-        Assert.assertEquals(pdos.size(),1);
+        Assert.assertEquals(pdos.size(), 1);
 
         PersistenceUnitUtil persistenceUtil = entityManager.getEntityManager().getEntityManagerFactory().getPersistenceUnitUtil();
 
@@ -203,8 +204,10 @@ public class ProductOrderDaoTest extends ContainerTest {
         Assert.assertTrue(persistenceUtil.isLoaded(pdo,"samples"),"Samples should be pre-fetched so that the billing tracker download doesn't take forever to download.");
 
         for (ProductOrderSample productOrderSample : pdo.getSamples()) {
-            Assert.assertTrue(persistenceUtil.isLoaded(productOrderSample,"ledgerItems"),"Ledger items should be pre-fetched so that the billing tracker download doesn't take forever to download.");
-            Assert.assertTrue(persistenceUtil.isLoaded(productOrderSample,"riskItems"),"Risk items should be pre-fetched so that the billing tracker download doesn't take forever to download.");
+            Assert.assertTrue(persistenceUtil.isLoaded(productOrderSample, "ledgerItems"),
+                    "Ledger items should be pre-fetched so that the billing tracker download doesn't take forever to download.");
+            Assert.assertTrue(persistenceUtil.isLoaded(productOrderSample, "riskItems"),
+                    "Risk items should be pre-fetched so that the billing tracker download doesn't take forever to download.");
         }
     }
 
@@ -212,7 +215,7 @@ public class ProductOrderDaoTest extends ContainerTest {
     public void testFindUnconvertedSampleInitiationPdos() throws Exception {
         List<ProductOrder> unconvertedProductOrders = productOrderDao.findSampleInitiationPDOsNotConverted();
 
-        Assert.assertEquals( unconvertedProductOrders.size(),4);
+        Assert.assertEquals(unconvertedProductOrders.size(), 4);
     }
 
 }

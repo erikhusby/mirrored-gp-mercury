@@ -82,6 +82,11 @@ public class MockThriftService implements ThriftService {
     }
 
     @Override
+    public double fetchQpcrForTubeAndType(String tubeBarcode, String qpcrType) {
+        return 0;
+    }
+
+    @Override
     public double fetchQuantForTube(String tubeBarcode, String quantType) {
         return 0;
     }
@@ -113,6 +118,11 @@ public class MockThriftService implements ThriftService {
 
     @Override
     public List<PoolGroup> fetchPoolGroups(List<String> tubeBarcoces) {
+        return null;
+    }
+
+    @Override
+    public Map<String, ConcentrationAndVolume> fetchConcentrationAndVolumeForTubeBarcodes(List<String> tubeBarcodes) {
         return null;
     }
 

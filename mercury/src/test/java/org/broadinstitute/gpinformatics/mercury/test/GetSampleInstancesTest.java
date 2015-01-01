@@ -23,18 +23,20 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -52,11 +54,21 @@ public class GetSampleInstancesTest {
     public static final String LCSET_1 = "LCSET-1";
     public static final String LCSET_2 = "LCSET-2";
 
+
     /** date for LabEVents */
     private long now = System.currentTimeMillis();
     private StaticPlate indexPlateP7;
     private StaticPlate indexPlateP5;
-    private TwoDBarcodedTube baitTube;
+    private BarcodedTube baitTube;
+
+    private SampleInstanceV2 createSampleInstanceForPipelineAPIMetadataTesting(MercurySample.MetadataSource metadataSource,
+                                                                        String sampleName) {
+        LabVessel tube = new BarcodedTube("barcde");
+        MercurySample bspSample = new MercurySample(sampleName, metadataSource);
+        tube.addSample(bspSample);
+        return new SampleInstanceV2(tube);
+
+    }
 
     /**
      * Moves 3 samples through initiation and extraction; makes an LCSET with tubes 1 and 2; reworks tube 2 in
@@ -91,8 +103,9 @@ public class GetSampleInstancesTest {
         Set<LabVessel> receivedVessels = new LinkedHashSet<>();
         int i = 1;
         for (ProductOrderSample productOrderSample : sampleInitProductOrder.getSamples()) {
-            TwoDBarcodedTube tube = new TwoDBarcodedTube("R" + i);
-            MercurySample mercurySample = new MercurySample(productOrderSample.getSampleKey());
+            BarcodedTube tube = new BarcodedTube("R" + i);
+            MercurySample mercurySample = new MercurySample(productOrderSample.getSampleKey(),
+                    MercurySample.MetadataSource.BSP);
             mercurySample.addProductOrderSample(productOrderSample);
             tube.addSample(mercurySample);
             receivedVessels.add(tube);
@@ -116,36 +129,36 @@ public class GetSampleInstancesTest {
         // Extraction transfer
         LabEvent extractionTransfer = new LabEvent(LabEventType.SAMPLES_EXTRACTION_END_TRANSFER, new Date(now++), "HULK",
                 1L, 101L, "Bravo");
-        Map<VesselPosition, TwoDBarcodedTube> mapPositionToSourceTube = new EnumMap<>(VesselPosition.class);
+        Map<VesselPosition, BarcodedTube> mapPositionToSourceTube = new EnumMap<>(VesselPosition.class);
         Iterator<LabVessel> iterator = receivedVessels.iterator();
-        mapPositionToSourceTube.put(VesselPosition.A01, (TwoDBarcodedTube) iterator.next());
-        mapPositionToSourceTube.put(VesselPosition.A02, (TwoDBarcodedTube) iterator.next());
-        mapPositionToSourceTube.put(VesselPosition.A03, (TwoDBarcodedTube) iterator.next());
+        mapPositionToSourceTube.put(VesselPosition.A01, (BarcodedTube) iterator.next());
+        mapPositionToSourceTube.put(VesselPosition.A02, (BarcodedTube) iterator.next());
+        mapPositionToSourceTube.put(VesselPosition.A03, (BarcodedTube) iterator.next());
         TubeFormation sourceTubeFormation = new TubeFormation(mapPositionToSourceTube, RackOfTubes.RackType.Matrix96);
 
-        Map<VesselPosition, TwoDBarcodedTube> mapPositionToExtractTube = new EnumMap<>(VesselPosition.class);
-        TwoDBarcodedTube tube1 = new TwoDBarcodedTube("X1");
-        tube1.addSample(new MercurySample("SM-X1"));
+        Map<VesselPosition, BarcodedTube> mapPositionToExtractTube = new EnumMap<>(VesselPosition.class);
+        BarcodedTube tube1 = new BarcodedTube("X1");
+        tube1.addSample(new MercurySample("SM-X1", MercurySample.MetadataSource.BSP));
         mapPositionToExtractTube.put(VesselPosition.A01, tube1);
 
-        TwoDBarcodedTube tube2 = new TwoDBarcodedTube("X2");
-        tube2.addSample(new MercurySample("SM-X2"));
+        BarcodedTube tube2 = new BarcodedTube("X2");
+        tube2.addSample(new MercurySample("SM-X2", MercurySample.MetadataSource.BSP));
         mapPositionToExtractTube.put(VesselPosition.A02, tube2);
 
-        TwoDBarcodedTube tube3 = new TwoDBarcodedTube("X3");
-        tube3.addSample(new MercurySample("SM-X3"));
+        BarcodedTube tube3 = new BarcodedTube("X3");
+        tube3.addSample(new MercurySample("SM-X3", MercurySample.MetadataSource.BSP));
         mapPositionToExtractTube.put(VesselPosition.A03, tube3);
 
         TubeFormation targetTubeFormation = new TubeFormation(mapPositionToExtractTube, RackOfTubes.RackType.Matrix96);
         extractionTransfer.getSectionTransfers().add(new SectionTransfer(
-                sourceTubeFormation.getContainerRole(), SBSSection.ALL96,
-                targetTubeFormation.getContainerRole(), SBSSection.ALL96, extractionTransfer));
+                sourceTubeFormation.getContainerRole(), SBSSection.ALL96, null,
+                targetTubeFormation.getContainerRole(), SBSSection.ALL96, null, extractionTransfer));
 
         // sequencing PDO
         Product sequencingProduct = ProductTestFactory.createDummyProduct(Workflow.HYBRID_SELECTION, "HYBSEL-01");
         List<ProductOrderSample> sequencingProductOrderSamples = new ArrayList<>();
-        for (TwoDBarcodedTube twoDBarcodedTube : mapPositionToExtractTube.values()) {
-            MercurySample mercurySample = twoDBarcodedTube.getMercurySamples().iterator().next();
+        for (BarcodedTube barcodedTube : mapPositionToExtractTube.values()) {
+            MercurySample mercurySample = barcodedTube.getMercurySamples().iterator().next();
             ProductOrderSample sequencingProductOrderSample = new ProductOrderSample(mercurySample.getSampleKey());
             mercurySample.addProductOrderSample(sequencingProductOrderSample);
             sequencingProductOrderSamples.add(sequencingProductOrderSample);
@@ -164,27 +177,27 @@ public class GetSampleInstancesTest {
         // PoolingTransfer
         LabEvent poolingTransfer = new LabEvent(LabEventType.POOLING_TRANSFER, new Date(now++), "ROBIN", 1L, 101L,
                 "Janus");
-        Map<VesselPosition, TwoDBarcodedTube> mapPositionToPoolTube = new EnumMap<>(VesselPosition.class);
-        TwoDBarcodedTube poolTube = new TwoDBarcodedTube("POOL" + now);
+        Map<VesselPosition, BarcodedTube> mapPositionToPoolTube = new EnumMap<>(VesselPosition.class);
+        BarcodedTube poolTube = new BarcodedTube("POOL" + now);
         mapPositionToPoolTube.put(VesselPosition.A01, poolTube);
         TubeFormation poolTubeFormation = new TubeFormation(mapPositionToPoolTube, RackOfTubes.RackType.Matrix96);
         poolingTransfer.getCherryPickTransfers().add(new CherryPickTransfer(
-                shearingPlate1.getContainerRole(), VesselPosition.A01,
-                poolTubeFormation.getContainerRole(), VesselPosition.A01, poolingTransfer));
+                shearingPlate1.getContainerRole(), VesselPosition.A01, null,
+                poolTubeFormation.getContainerRole(), VesselPosition.A01, null, poolingTransfer));
         poolingTransfer.getCherryPickTransfers().add(new CherryPickTransfer(
-                shearingPlate1.getContainerRole(), VesselPosition.A02,
-                poolTubeFormation.getContainerRole(), VesselPosition.A01, poolingTransfer));
+                shearingPlate1.getContainerRole(), VesselPosition.A02, null,
+                poolTubeFormation.getContainerRole(), VesselPosition.A01, null, poolingTransfer));
         poolingTransfer.getCherryPickTransfers().add(new CherryPickTransfer(
-                shearingPlate1.getContainerRole(), VesselPosition.A03,
-                poolTubeFormation.getContainerRole(), VesselPosition.A01, poolingTransfer));
+                shearingPlate1.getContainerRole(), VesselPosition.A03, null,
+                poolTubeFormation.getContainerRole(), VesselPosition.A01, null, poolingTransfer));
         poolingTransfer.getCherryPickTransfers().add(new CherryPickTransfer(
-                shearingPlate2.getContainerRole(), VesselPosition.A04,
-                poolTubeFormation.getContainerRole(), VesselPosition.A01, poolingTransfer));
+                shearingPlate2.getContainerRole(), VesselPosition.A04, null,
+                poolTubeFormation.getContainerRole(), VesselPosition.A01, null, poolingTransfer));
         poolingTransfer.getCherryPickTransfers().add(new CherryPickTransfer(
-                shearingPlate2.getContainerRole(), VesselPosition.A05,
-                poolTubeFormation.getContainerRole(), VesselPosition.A01, poolingTransfer));
+                shearingPlate2.getContainerRole(), VesselPosition.A05, null,
+                poolTubeFormation.getContainerRole(), VesselPosition.A01, null, poolingTransfer));
 
-        List<SampleInstanceV2> poolSampleInstances = poolTube.getSampleInstancesV2();
+        Set<SampleInstanceV2> poolSampleInstances = poolTube.getSampleInstancesV2();
         Assert.assertEquals(poolSampleInstances.size(), 5);
         int matchedSamples = 0;
         for (SampleInstanceV2 poolSampleInstance : poolSampleInstances) {
@@ -231,7 +244,7 @@ public class GetSampleInstancesTest {
     /**
      * Moves tubes through (simplified) library construction transfers.
      */
-    private StaticPlate sequencing(TwoDBarcodedTube tube1, TwoDBarcodedTube tube2,
+    private StaticPlate sequencing(BarcodedTube tube1, BarcodedTube tube2,
             final ProductOrder sampleInitProductOrder, final ProductOrder extractionProductOrder,
             final ProductOrder sequencingProductOrder, String tube1RootSample, boolean tube1Rework, int lcsetNum) {
         // LCSET
@@ -241,18 +254,18 @@ public class GetSampleInstancesTest {
         LabBatch lcsetBatch = new LabBatch("LCSET-" + lcsetNum, extractedVessels, LabBatch.LabBatchType.WORKFLOW);
         lcsetBatch.setCreatedOn(new Date(now++));
         lcsetBatch.setWorkflowName("Exome Express");
-        BucketEntry bucketEntry1 = new BucketEntry(tube1, sequencingProductOrder.getBusinessKey(), new Bucket("Shearing"),
+        BucketEntry bucketEntry1 = new BucketEntry(tube1, sequencingProductOrder, new Bucket("Shearing"),
                 BucketEntry.BucketEntryType.PDO_ENTRY);
         bucketEntry1.setLabBatch(lcsetBatch);
         tube1.addBucketEntry(bucketEntry1);
 
-        BucketEntry bucketEntry2 = new BucketEntry(tube2, sequencingProductOrder.getBusinessKey(), new Bucket("Shearing"),
+        BucketEntry bucketEntry2 = new BucketEntry(tube2, sequencingProductOrder, new Bucket("Shearing"),
                 BucketEntry.BucketEntryType.PDO_ENTRY);
         bucketEntry2.setLabBatch(lcsetBatch);
         tube2.addBucketEntry(bucketEntry2);
 
         // re-array to add control
-        Map<VesselPosition, TwoDBarcodedTube> mapPositionToExtractTubeControl = new EnumMap<>(VesselPosition.class);
+        Map<VesselPosition, BarcodedTube> mapPositionToExtractTubeControl = new EnumMap<>(VesselPosition.class);
 
         // use different positions for each LCSET, to avoid molecular index collision.
         VesselPosition position1 = VesselPosition.values()[(lcsetNum - 1) * 3];
@@ -265,8 +278,8 @@ public class GetSampleInstancesTest {
         }
         mapPositionToExtractTubeControl.put(position2, tube2);
 
-        TwoDBarcodedTube controlTube = new TwoDBarcodedTube("CONTROL" + lcsetNum);
-        controlTube.addSample(new MercurySample("SM-C" + lcsetNum));
+        BarcodedTube controlTube = new BarcodedTube("CONTROL" + lcsetNum);
+        controlTube.addSample(new MercurySample("SM-C" + lcsetNum, MercurySample.MetadataSource.BSP));
         mapPositionToExtractTubeControl.put(position3, controlTube);
 
         // Import
@@ -279,38 +292,45 @@ public class GetSampleInstancesTest {
         }
         TubeFormation extractControlTubeFormation = new TubeFormation(mapPositionToExtractTubeControl,
                 RackOfTubes.RackType.Matrix96);
+
+        Assert.assertEquals(controlTube.getSampleInstancesV2().iterator().next().getSingleBatch().getBatchName(),
+                "LCSET-" + lcsetNum);
+
         LabEvent shearingTransfer = new LabEvent(LabEventType.SHEARING_TRANSFER, new Date(now++), "SUPERMAN", 1L, 101L,
                 "Bravo");
         StaticPlate shearingPlate = new StaticPlate("SHEAR" + lcsetNum, StaticPlate.PlateType.Eppendorf96);
         shearingTransfer.getSectionTransfers().add(new SectionTransfer(
-                extractControlTubeFormation.getContainerRole(), SBSSection.ALL96,
-                shearingPlate.getContainerRole(), SBSSection.ALL96, shearingTransfer));
+                extractControlTubeFormation.getContainerRole(), SBSSection.ALL96, null,
+                shearingPlate.getContainerRole(), SBSSection.ALL96, null, shearingTransfer));
 
         // P7 index transfer
         LabEvent p7IndexTransfer = new LabEvent(LabEventType.INDEXED_ADAPTER_LIGATION, new Date(now++), "SPIDERMAN", 1L,
                 101L, "Bravo");
-        p7IndexTransfer.getSectionTransfers().add(new SectionTransfer(indexPlateP7.getContainerRole(), SBSSection.ALL96,
-                shearingPlate.getContainerRole(), SBSSection.ALL96, p7IndexTransfer));
+        p7IndexTransfer.getSectionTransfers().add(new SectionTransfer(
+                indexPlateP7.getContainerRole(), SBSSection.ALL96, null,
+                shearingPlate.getContainerRole(), SBSSection.ALL96, null, p7IndexTransfer));
 
         // P5 index transfer
         LabEvent p5IndexTransfer = new LabEvent(LabEventType.INDEX_P5_POND_ENRICHMENT, new Date(now++), "TORCH", 1L,
                 101L, "Bravo");
-        p5IndexTransfer.getSectionTransfers().add(new SectionTransfer(indexPlateP5.getContainerRole(), SBSSection.ALL96,
-                shearingPlate.getContainerRole(), SBSSection.ALL96, p5IndexTransfer));
+        p5IndexTransfer.getSectionTransfers().add(new SectionTransfer(
+                indexPlateP5.getContainerRole(), SBSSection.ALL96, null,
+                shearingPlate.getContainerRole(), SBSSection.ALL96, null, p5IndexTransfer));
 
         // bait transfers
         StaticPlate baitPlate = new StaticPlate("BAITPLATE" + lcsetNum, StaticPlate.PlateType.Eppendorf96);
         LabEvent baitSetupTransfer = new LabEvent(LabEventType.BAIT_SETUP, new Date(now++), "TICK", 1L, 101L, "Bravo");
         baitSetupTransfer.getVesselToSectionTransfers().add(new VesselToSectionTransfer(baitTube, SBSSection.ALL96,
-                baitPlate.getContainerRole(), baitSetupTransfer));
+                baitPlate.getContainerRole(), null, baitSetupTransfer));
 
         LabEvent baitAdditionTransfer = new LabEvent(LabEventType.BAIT_ADDITION, new Date(now++), "BATMAN", 1L, 101L,
                 "Bravo");
-        baitAdditionTransfer.getSectionTransfers().add(new SectionTransfer(baitPlate.getContainerRole(),
-                SBSSection.ALL96, shearingPlate.getContainerRole(), SBSSection.ALL96, baitAdditionTransfer));
+        baitAdditionTransfer.getSectionTransfers().add(new SectionTransfer(
+                baitPlate.getContainerRole(), SBSSection.ALL96, null,
+                shearingPlate.getContainerRole(), SBSSection.ALL96, null, baitAdditionTransfer));
 
         // Verify 1st sample
-        List<SampleInstanceV2> sampleInstances =
+        Set<SampleInstanceV2> sampleInstances =
                 shearingPlate.getContainerRole().getSampleInstancesAtPositionV2(position1);
         Assert.assertEquals(sampleInstances.size(), 1);
         SampleInstanceV2 sampleInstance = sampleInstances.iterator().next();
@@ -368,5 +388,93 @@ public class GetSampleInstancesTest {
         Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(), expectedMolIndScheme);
         DesignedReagent designedReagent = (DesignedReagent) sampleInstance.getReagents().get(1);
         Assert.assertEquals(designedReagent.getReagentDesign().getDesignName(), "cancer_2000gene_shift170_undercovered");
+    }
+
+    // todo jmt test that reworking fewer than all tubes in a rack doesn't alter the computed LCSET for messages with all tubes.
+
+    /**
+     * Test that reworking every tube in a rack is reflected in the computed LCSET.
+     */
+    @Test
+    public void testLcSetOverride() {
+        ProductOrder sampleInitProductOrder = ProductOrderTestFactory.createDummyProductOrder(3, "PDO-SI",
+                Workflow.ICE, 101L, "Test research project", "Test research project", false, "SamInit", "1",
+                "ExExQuoteId");
+
+        // Create the source tubes for the first transfer
+        Map<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
+        Set<LabVessel> starterVessels1 = new HashSet<>();
+        int i = 0;
+        for (ProductOrderSample productOrderSample : sampleInitProductOrder.getSamples()) {
+            BarcodedTube barcodedTube = new BarcodedTube("tube1." + i, BarcodedTube.BarcodedTubeType.MatrixTube);
+            productOrderSample.setMercurySample(new MercurySample(productOrderSample.getSampleKey(),
+                    MercurySample.MetadataSource.BSP));
+            barcodedTube.getMercurySamples().add(productOrderSample.getMercurySample());
+            mapPositionToTube.put(SBSSection.ALL96.getWells().get(i), barcodedTube);
+            starterVessels1.add(barcodedTube);
+            i++;
+        }
+
+        // Create the first LCSET.
+        LabBatch lcSet1 = new LabBatch("LCSET-1", starterVessels1, LabBatch.LabBatchType.WORKFLOW);
+        for (LabVessel labVessel : lcSet1.getStartingBatchLabVessels()) {
+            BucketEntry bucketEntry = new BucketEntry(labVessel, sampleInitProductOrder,
+                    BucketEntry.BucketEntryType.PDO_ENTRY);
+            lcSet1.addBucketEntry(bucketEntry);
+            labVessel.addBucketEntry(bucketEntry);
+        }
+        TubeFormation tubeFormation1 = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
+
+        // Create the destination tubes for the first transfer.
+        Set<LabVessel> starterVessels2 = new HashSet<>();
+        mapPositionToTube = new HashMap<>();
+        for (int j = 0; j < tubeFormation1.getContainerRole().getContainedVessels().size(); j++) {
+            BarcodedTube barcodedTube = new BarcodedTube("tube2." + j, BarcodedTube.BarcodedTubeType.MatrixTube);
+            mapPositionToTube.put(SBSSection.ALL96.getWells().get(j), barcodedTube);
+            starterVessels2.add(barcodedTube);
+        }
+        TubeFormation tubeFormation2 = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
+
+        LabEvent labEvent1 = new LabEvent(LabEventType.SHEARING_TRANSFER, new Date(), "SPIDERMAN", 1L, 101L, "Bravo");
+        labEvent1.getSectionTransfers().add(new SectionTransfer(
+                tubeFormation1.getContainerRole(), SBSSection.ALL96, null,
+                tubeFormation2.getContainerRole(), SBSSection.ALL96, null, labEvent1));
+
+        // Create the second LCSET by reworking all tubes.
+        LabBatch lcSet2 = new LabBatch("LCSET-2", starterVessels2, LabBatch.LabBatchType.WORKFLOW);
+        for (LabVessel labVessel : lcSet2.getStartingBatchLabVessels()) {
+            BucketEntry bucketEntry = new BucketEntry(labVessel, sampleInitProductOrder,
+                    BucketEntry.BucketEntryType.REWORK_ENTRY);
+            lcSet2.addBucketEntry(bucketEntry);
+            labVessel.addBucketEntry(bucketEntry);
+        }
+
+        // Create the destination tubes for the second transfer.
+        mapPositionToTube = new HashMap<>();
+        for (int j = 0; j < tubeFormation2.getContainerRole().getContainedVessels().size(); j++) {
+            BarcodedTube barcodedTube = new BarcodedTube("tube3." + j, BarcodedTube.BarcodedTubeType.MatrixTube);
+            mapPositionToTube.put(SBSSection.ALL96.getWells().get(j), barcodedTube);
+        }
+        TubeFormation tubeFormation3 = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
+
+        // Create the second transfer.
+        LabEvent labEvent2 = new LabEvent(LabEventType.HYBRIDIZATION, new Date(), "BATMAN", 2L, 101L, "Bravo");
+        labEvent2.getSectionTransfers().add(new SectionTransfer(
+                tubeFormation2.getContainerRole(), SBSSection.ALL96, null,
+                tubeFormation3.getContainerRole(), SBSSection.ALL96, null, labEvent2));
+
+        Assert.assertEquals(labEvent2.getComputedLcSets().size(), 1);
+        Assert.assertEquals(labEvent2.getComputedLcSets().iterator().next(), lcSet2);
+    }
+
+    public void testGetMetadataSourceForPipeline() {
+        Assert.assertEquals(createSampleInstanceForPipelineAPIMetadataTesting(MercurySample.MetadataSource.BSP,"sample").getMetadataSourceForPipelineAPI(),
+                                                                              MercurySample.BSP_METADATA_SOURCE);
+        Assert.assertEquals(createSampleInstanceForPipelineAPIMetadataTesting(MercurySample.MetadataSource.MERCURY,"sample").getMetadataSourceForPipelineAPI(),
+                            MercurySample.MERCURY_METADATA_SOURCE);
+        Assert.assertEquals(createSampleInstanceForPipelineAPIMetadataTesting(null,"123.5").getMetadataSourceForPipelineAPI(),
+                            MercurySample.GSSR_METADATA_SOURCE);
+        Assert.assertEquals(createSampleInstanceForPipelineAPIMetadataTesting(null,"samples from outer space").getMetadataSourceForPipelineAPI(),
+                            MercurySample.OTHER_METADATA_SOURCE);
     }
 }

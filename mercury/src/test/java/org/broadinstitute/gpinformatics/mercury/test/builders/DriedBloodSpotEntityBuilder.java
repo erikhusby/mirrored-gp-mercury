@@ -10,7 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
@@ -24,10 +24,10 @@ import java.util.Set;
 public class DriedBloodSpotEntityBuilder {
     private DriedBloodSpotJaxbBuilder driedBloodSpotJaxbBuilder;
     private LabBatch labBatch;
-    private Map<String, TwoDBarcodedTube> mapBarcodeToTube;
+    private Map<String, BarcodedTube> mapBarcodeToTube;
 
     public DriedBloodSpotEntityBuilder(DriedBloodSpotJaxbBuilder driedBloodSpotJaxbBuilder, LabBatch labBatch,
-                                       Map<String, TwoDBarcodedTube> mapBarcodeToTube) {
+                                       Map<String, BarcodedTube> mapBarcodeToTube) {
         this.driedBloodSpotJaxbBuilder = driedBloodSpotJaxbBuilder;
         this.labBatch = labBatch;
         this.mapBarcodeToTube = mapBarcodeToTube;
@@ -56,9 +56,9 @@ public class DriedBloodSpotEntityBuilder {
 
         int tubeNum = 1;
         StaticPlate incubationPlate = null;
-        for (TwoDBarcodedTube twoDBarcodedTube : mapBarcodeToTube.values()) {
+        for (BarcodedTube barcodedTube : mapBarcodeToTube.values()) {
             LabEvent samplePunchEntity = labEventFactory.buildVesselToSectionDbFree(
-                    driedBloodSpotJaxbBuilder.getSamplePunchJaxbs().get(tubeNum), twoDBarcodedTube, null,
+                    driedBloodSpotJaxbBuilder.getSamplePunchJaxbs().get(tubeNum), barcodedTube, null,
                     bettaLimsMessageTestFactory.buildWellName(tubeNum,
                             BettaLimsMessageTestFactory.WellNameType.LONG));
             incubationPlate = (StaticPlate) samplePunchEntity.getTargetLabVessels().iterator().next();

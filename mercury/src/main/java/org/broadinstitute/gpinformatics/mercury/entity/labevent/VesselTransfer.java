@@ -22,4 +22,8 @@ public abstract class VesselTransfer {
     @SequenceGenerator(name = "SEQ_VESSEL_TRANSFER", schema = "mercury", sequenceName = "SEQ_VESSEL_TRANSFER")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_VESSEL_TRANSFER")
     private Long vesselTransferId;
+
+    Long getVesselTransferId() {
+        return vesselTransferId;
+    }
 }

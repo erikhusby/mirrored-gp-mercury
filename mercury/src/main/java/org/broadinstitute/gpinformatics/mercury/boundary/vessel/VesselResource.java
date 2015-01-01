@@ -5,7 +5,7 @@ import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
 
 import javax.annotation.Nonnull;
@@ -15,6 +15,7 @@ import javax.inject.Inject;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -29,7 +30,7 @@ import java.util.Map;
 public class VesselResource {
 
     @Inject
-    private BSPSampleDataFetcher bspSampleDataFetcher;
+    private SampleDataFetcher sampleDataFetcher;
 
     @Inject
     private VesselEjb vesselEjb;
@@ -52,13 +53,16 @@ public class VesselResource {
             MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
             if (queryParameters != null) {
                 for (Map.Entry<String, List<String>> entry : queryParameters.entrySet()) {
-                    log.error(String.format("registerTubes called with unexpected query parameter '%s' and values: %s",
-                            entry.getKey(), StringUtils.join(entry.getValue(), " ")));
+                    if (!TUBE_TYPE_QUERY_PARAM.equals(entry.getKey())) {
+                        log.error(String.format(
+                                "registerTubes called with unexpected query parameter '%s' and values: %s",
+                                entry.getKey(), StringUtils.join(entry.getValue(), " ")));
+                    }
                 }
             }
         }
 
-        // formParameters should not be null, but the caller will check this as part of extracting the Matrix
+        // formParameters should not be null, but the caller will check this as part of extracting the tube
         // barcodes and returning the appropriate status code.
         if (formParameters != null) {
             // Loop over the form parameters and log an error if any unexpected parameters are seen.
@@ -71,62 +75,65 @@ public class VesselResource {
             }
         }
     }
-
+    private static final String TUBE_TYPE_QUERY_PARAM = "tubeType";
     /**
-     * Register a collection of tubes by Matrix barcodes, associated with their sample IDs as recorded in BSP.
-     * This will query BSP for the Matrix barcodes to retrieve sample IDs and register LabVessels only if all
-     * Matrix barcodes are known to BSP.  MercurySamples will be associated with these LabVessels and created
-     * only if there is not an already existing MercurySample with the same sample barcode.
+     * Register a collection of barcoded tubes and associate with their sample IDs as recorded in BSP.
+     * This will query BSP using the tube barcode which can be manufacturer, sqm, or sample name barcode.
+     * Registers LabVessels only if all tubes are known to BSP.  MercurySamples will be associated with these
+     * LabVessels and created only if there is not an already existing MercurySample with the same sample name.
+     * An optional tubeType is the BarcodedTube.BarcodedTubeType.name and defaults to Matrix tube.
      */
     @Path("/registerTubes")
     @Produces(MediaType.APPLICATION_XML)
     @POST
-    public Response registerTubes(MultivaluedMap<String, String> formParameters, @Context UriInfo uriInfo) {
+    public Response registerTubes(MultivaluedMap<String, String> formParameters,
+                                  @QueryParam(TUBE_TYPE_QUERY_PARAM) String tubeType,
+                                  @Context UriInfo uriInfo) {
 
         logParameters(uriInfo, formParameters);
         RegisterTubesBean responseBean = new RegisterTubesBean();
 
         // Get the List<String> barcodes value from the form parameters in a null-safe way.
-        List<String> matrixBarcodes = MapUtils.getObject(formParameters, BARCODES_KEY);
+        List<String> tubeBarcodes = MapUtils.getObject(formParameters, BARCODES_KEY);
 
-        if (CollectionUtils.isEmpty(matrixBarcodes)) {
+        if (CollectionUtils.isEmpty(tubeBarcodes)) {
             log.error("No 'barcodes' form parameters passed to registerTubes.");
             return buildResponse(Response.Status.BAD_REQUEST, responseBean);
         } else {
-            log.info("registerTubes invoked for Matrix barcodes: " + StringUtils.join(matrixBarcodes, " "));
+            log.info("registerTubes invoked for tube barcodes: " + StringUtils.join(tubeBarcodes, " "));
         }
 
-        // The call to BSP happens for all barcodes since there is well information returned to the caller
+        // The call to BSP happens for all tube barcodes since there is well information returned to the caller
         // of this webservice that is not available in Mercury.  However it's not clear this well information
-        // is being used, perhaps this could be optimized to not call BSP unless the Matrix barcodes are not
+        // is being used, perhaps this could be optimized to not call BSP unless the tube barcodes are not
         // registered with Mercury.
-        // IntelliJ does not realize that the CollectionUtils.isEmpty test precludes matrixBarcodes from being null.
+        // IntelliJ does not realize that the CollectionUtils.isEmpty test precludes tubeBarcodes from being null.
         @SuppressWarnings("ConstantConditions")
         Map<String, GetSampleDetails.SampleInfo> sampleInfoMap =
-                bspSampleDataFetcher.fetchSampleDetailsByMatrixBarcodes(matrixBarcodes);
+                sampleDataFetcher.fetchSampleDetailsByBarcode(tubeBarcodes);
 
-        for (String matrixBarcode : matrixBarcodes) {
+        for (String tubeBarcode : tubeBarcodes) {
             String well = null;
-            String sampleBarcode = null;
+            String sampleName = null;
 
-            if (sampleInfoMap.containsKey(matrixBarcode)) {
-                GetSampleDetails.SampleInfo sampleInfo = sampleInfoMap.get(matrixBarcode);
+            if (sampleInfoMap.containsKey(tubeBarcode)) {
+                GetSampleDetails.SampleInfo sampleInfo = sampleInfoMap.get(tubeBarcode);
                 well = sampleInfo.getWellPosition();
-                sampleBarcode = sampleInfo.getSampleId();
+                sampleName = sampleInfo.getSampleId();
             }
 
-            RegisterTubeBean registerTubeBean = new RegisterTubeBean(matrixBarcode, well, sampleBarcode);
+            RegisterTubeBean registerTubeBean = new RegisterTubeBean(tubeBarcode, well, sampleName);
             responseBean.getRegisterTubeBeans().add(registerTubeBean);
         }
 
         // Flag for whether to persist the tube and sample registrations and what status code to return.
-        boolean allBarcodesInBsp = sampleInfoMap.keySet().containsAll(matrixBarcodes);
+        boolean allBarcodesInBsp = sampleInfoMap.keySet().containsAll(tubeBarcodes);
 
         Response.Status status;
-        // Only write out these MercurySamples if all Matrix barcodes were recognized by BSP.
+        // Only write out these MercurySamples if all tube barcodes were recognized by BSP.
         if (allBarcodesInBsp) {
             status = Response.Status.OK;
-            vesselEjb.registerSamplesAndTubes(matrixBarcodes, sampleInfoMap);
+            vesselEjb.registerSamplesAndTubes(tubeBarcodes, tubeType, sampleInfoMap);
         } else {
             // No tube or sample registration.
             status = Response.Status.PRECONDITION_FAILED;

@@ -5,19 +5,18 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselMetricBean;
-import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselMetricRunBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -27,9 +26,7 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,9 +39,10 @@ import java.util.Map;
  * <p/>
  * As of January 2013, the test takes about 35 minutes to run.
  */
+@Test(groups = TestGroups.STANDARD)
 public class ImportFromSquidTest extends Arquillian {
 
-    public static final String TEST_MERCURY_URL = "http://localhost:8080/Mercury";
+    public static final String TEST_MERCURY_URL = "https://localhost:8443/Mercury";
     @PersistenceContext(unitName = "squid_pu")
     private EntityManager entityManager;
 
@@ -61,7 +59,7 @@ public class ImportFromSquidTest extends Arquillian {
     private LabVesselDao labVesselDao;
 
     @Inject
-    private TwoDBarcodedTubeDao twoDBarcodedTubeDao;
+    private BarcodedTubeDao barcodedTubeDao;
 
     @Inject
     private ResearchProjectDao researchProjectDao;
@@ -75,8 +73,12 @@ public class ImportFromSquidTest extends Arquillian {
     @Inject
     private ReagentDesignDao reagentDesignDao;
 
+    @Inject
+    private UserBean userBean;
+
     @Deployment
     public static WebArchive buildMercuryWar() {
+        // change dataSourceEnvironment parameter to "prod" when importing from production.
         return DeploymentBuilder.buildMercuryWar(
                 org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV, "dev");
     }
@@ -84,21 +86,23 @@ public class ImportFromSquidTest extends Arquillian {
     /**
      * Import index schemes from Squid.
      */
-    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = false, groups = TestGroups.STANDARD)
     public void testImportIndexingSchemes() {
+        userBean.loginOSUser();
         // Get schemes and sequences from Squid.
-        Query nativeQuery = entityManager.createNativeQuery("SELECT " +
-                                                            "     mis.NAME, " +
-                                                            "     mip.position_hint, " +
-                                                            "     mi.SEQUENCE " +
-                                                            "FROM " +
-                                                            "     molecular_indexing_scheme mis " +
-                                                            "     INNER JOIN molecular_index_position mip " +
-                                                            "          ON   mip.scheme_id = mis.ID " +
-                                                            "     INNER JOIN molecular_index mi " +
-                                                            "          ON   mi.ID = mip.index_id " +
-                                                            "ORDER BY " +
-                                                            "     mis.NAME ");
+        Query nativeQuery = entityManager.createNativeQuery(
+                "SELECT " +
+                "     mis.NAME, " +
+                "     mip.position_hint, " +
+                "     mi.SEQUENCE " +
+                "FROM " +
+                "     molecular_indexing_scheme mis " +
+                "     INNER JOIN molecular_index_position mip " +
+                "          ON   mip.scheme_id = mis.ID " +
+                "     INNER JOIN molecular_index mi " +
+                "          ON   mi.ID = mip.index_id " +
+                "ORDER BY " +
+                "     mis.NAME ");
         List<?> resultList = nativeQuery.getResultList();
 
         // Get schemes from Mercury, to avoid creating duplicates.
@@ -150,8 +154,9 @@ public class ImportFromSquidTest extends Arquillian {
     /**
      * Import index plates from Squid.  This takes about 15 minutes.
      */
-    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION, dependsOnMethods = {"testImportIndexingSchemes"})
+    @Test(enabled = false, groups = TestGroups.STANDARD, dependsOnMethods = {"testImportIndexingSchemes"})
     public void testImportIndexPlates() {
+        userBean.loginOSUser();
         // Get plates, wells and molecular indexes from Squid.
         Query nativeQuery = entityManager.createNativeQuery(
                 "SELECT " +
@@ -233,8 +238,9 @@ public class ImportFromSquidTest extends Arquillian {
     /**
      * Import bait tubes from Squid.
      */
-    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = false, groups = TestGroups.STANDARD)
     public void testCreateBaits() {
+        userBean.loginOSUser();
         // todo jmt for a bait to show up in this query, it must have been transferred to a plate at least once.
         // Without this restriction, the number of tubes goes from ~40 to ~70,000
         Query nativeQuery = entityManager.createNativeQuery(
@@ -276,7 +282,7 @@ public class ImportFromSquidTest extends Arquillian {
             Object[] columns = (Object[]) o;
             tubeBarcodes.add((String) columns[0]);
         }
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = twoDBarcodedTubeDao.findByBarcodes(tubeBarcodes);
+        Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(tubeBarcodes);
 
         Map<String, ReagentDesign> mapNameToReagentDesign = getMapNameToMercuryReagentDesign();
 
@@ -294,13 +300,13 @@ public class ImportFromSquidTest extends Arquillian {
                 }
                 previousDesignName = designName;
             }
-            TwoDBarcodedTube twoDBarcodedTube = new TwoDBarcodedTube(barcode);
-            twoDBarcodedTube.addReagent(new DesignedReagent(reagentDesign));
+            BarcodedTube barcodedTube = new BarcodedTube(barcode);
+            barcodedTube.addReagent(new DesignedReagent(reagentDesign));
             if (mapBarcodeToTube.get(barcode) == null) {
-                twoDBarcodedTubeDao.persist(twoDBarcodedTube);
+                barcodedTubeDao.persist(barcodedTube);
             }
         }
-        twoDBarcodedTubeDao.clear();
+        barcodedTubeDao.clear();
     }
 
     /**
@@ -320,8 +326,9 @@ public class ImportFromSquidTest extends Arquillian {
     /**
      * Import Custom Amplicon Tubes from Squid.
      */
-    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = false, groups = TestGroups.STANDARD)
     public void testCreateCats() {
+        userBean.loginOSUser();
         // todo jmt for a CAT to show up in this query, it must have been transferred to a plate at least once.
         // Without this restriction, the number of tubes rises from 122 to ~14,000
         Query nativeQuery = entityManager.createNativeQuery(
@@ -355,7 +362,7 @@ public class ImportFromSquidTest extends Arquillian {
             Object[] columns = (Object[]) o;
             tubeBarcodes.add((String) columns[2]);
         }
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = twoDBarcodedTubeDao.findByBarcodes(tubeBarcodes);
+        Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(tubeBarcodes);
 
         Map<String, ReagentDesign> mapNameToReagentDesign = getMapNameToMercuryReagentDesign();
 
@@ -375,66 +382,13 @@ public class ImportFromSquidTest extends Arquillian {
                 }
                 previousDesignName = designName;
             }
-            TwoDBarcodedTube twoDBarcodedTube = new TwoDBarcodedTube(barcode);
-            twoDBarcodedTube.addReagent(new DesignedReagent(reagentDesign));
+            BarcodedTube barcodedTube = new BarcodedTube(barcode);
+            barcodedTube.addReagent(new DesignedReagent(reagentDesign));
             if (mapBarcodeToTube.get(barcode) == null) {
-                twoDBarcodedTubeDao.persist(twoDBarcodedTube);
+                barcodedTubeDao.persist(barcodedTube);
             }
         }
-        twoDBarcodedTubeDao.clear();
-    }
-
-    /**
-     * For demos, import quants from Squid.
-     */
-    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
-    public void testImportQuants() {
-        Query nativeQuery = entityManager.createNativeQuery(
-                "SELECT " +
-                "     lqr.run_name, " +
-                "     lqr.run_date, " +
-                "     lqt.quant_type_name, " +
-                "     lq.quant_value, " +
-                "     r.barcode " +
-                "FROM " +
-                "     library_quant_run lqr " +
-                "     INNER JOIN library_quant_type lqt " +
-                "          ON   lqt.quant_type_id = lqr.quant_type_id " +
-                "     INNER JOIN library_quant lq " +
-                "          ON   lq.quant_run_id = lqr.run_id " +
-                "     INNER JOIN receptacle r " +
-                "          ON   r.receptacle_id = lq.receptacle_id " +
-                "WHERE " +
-                "     lq.is_archived = 'N' AND lqr.run_name = :lcSetNumber " +
-                "ORDER BY " +
-                "     1, 3");
-        nativeQuery.setParameter("lcSetNumber", "2588");
-        List<?> resultList = nativeQuery.getResultList();
-
-        ArrayList<VesselMetricBean> vesselMetricBeans = new ArrayList<>();
-        String previousQuantType = "";
-        VesselMetricRunBean vesselMetricRunBean = null;
-        for (Object o : resultList) {
-            Object[] columns = (Object[]) o;
-            String runName = (String) columns[0];
-            Date runDate = (Date) columns[1];
-            String quantTypeName = (String) columns[2];
-            BigDecimal quantValue = (BigDecimal) columns[3];
-            String barcode = (String) columns[4];
-
-            if (!quantTypeName.equals(previousQuantType)) {
-                if (!previousQuantType.isEmpty()) {
-                    ImportFromBspTest.recordMetrics(vesselMetricRunBean);
-                }
-                vesselMetricBeans.clear();
-                vesselMetricRunBean = new VesselMetricRunBean(runName, runDate, quantTypeName,
-                        vesselMetricBeans);
-                previousQuantType = quantTypeName;
-            }
-            vesselMetricBeans.add(new VesselMetricBean(barcode, quantValue.toString(), "ng/uL"));
-        }
-
-        ImportFromBspTest.recordMetrics(vesselMetricRunBean);
+        barcodedTubeDao.clear();
     }
 
 }

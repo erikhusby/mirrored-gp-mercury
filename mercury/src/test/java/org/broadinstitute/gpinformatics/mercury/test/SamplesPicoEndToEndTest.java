@@ -1,13 +1,14 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
 import org.broadinstitute.bsp.client.users.BspUser;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventResource;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabVesselBean;
@@ -28,11 +29,14 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SamplesPicoJaxbBuilder;
 import org.easymock.EasyMock;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -47,6 +51,7 @@ import java.util.Set;
 /**
  * Test BSP Pico messaging
  */
+@Test(groups = TestGroups.DATABASE_FREE)
 public class SamplesPicoEndToEndTest {
 
     @Test(groups = TestGroups.DATABASE_FREE)
@@ -59,50 +64,61 @@ public class SamplesPicoEndToEndTest {
             tubeBeans.add(new TubeBean(barcode, null));
         }
         String batchId = "BP-1";
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
+        Map<String, BarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
         Map<MercurySample, MercurySample> mapSampleToSample = new LinkedHashMap<>();
         LabBatch labBatch = labBatchResource.buildLabBatch(new LabBatchBean(batchId, "HybSel", tubeBeans),
-                mapBarcodeToTube, mapSampleToSample/*, null*/);
+                                                           mapBarcodeToTube, mapSampleToSample/*, null*/);
 
         // validate workflow?
         // messaging
         SamplesPicoJaxbBuilder samplesPicoJaxbBuilder = new SamplesPicoJaxbBuilder(new ArrayList<>(
                 mapBarcodeToTube.keySet()), labBatch.getBatchName(), "");
         SamplesPicoEntityBuilder samplesPicoEntityBuilder = new SamplesPicoEntityBuilder(samplesPicoJaxbBuilder,
-                labBatch, mapBarcodeToTube);
+                                                                                         labBatch, mapBarcodeToTube);
         samplesPicoEntityBuilder.buildEntities();
 
         // event web service, by batch
         LabEventResource labEventResource = new LabEventResource();
         List<LabEventBean> labEventBeans = labEventResource.buildLabEventBeans(new ArrayList<>(
                 labBatch.getLabEvents()),
-                new LabEventRefDataFetcher() {
-                    @Override
-                    public BspUser getOperator(String userId) {
-                        BSPUserList testList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
-                        return testList.getByUsername(userId);
-                    }
+                                                                               new LabEventRefDataFetcher() {
+                                                                                   @Override
+                                                                                   public BspUser getOperator(
+                                                                                           String userId) {
+                                                                                       BSPUserList testList =
+                                                                                               new BSPUserList(
+                                                                                                       BSPManagerFactoryProducer
+                                                                                                               .stubInstance());
+                                                                                       return testList.getByUsername(
+                                                                                               userId);
+                                                                                   }
 
-                    @Override
-                    public BspUser getOperator(Long bspUserId) {
-                        BSPUserList testList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
-                        return testList.getById(bspUserId);
-                    }
+                                                                                   @Override
+                                                                                   public BspUser getOperator(
+                                                                                           Long bspUserId) {
+                                                                                       BSPUserList testList =
+                                                                                               new BSPUserList(
+                                                                                                       BSPManagerFactoryProducer
+                                                                                                               .stubInstance());
+                                                                                       return testList.getById(
+                                                                                               bspUserId);
+                                                                                   }
 
-                    @Override
-                    public LabBatch getLabBatch(String labBatchName) {
-                        return null;
-                    }
-                });
+                                                                                   @Override
+                                                                                   public LabBatch getLabBatch(
+                                                                                           String labBatchName) {
+                                                                                       return null;
+                                                                                   }
+                                                                               });
         Assert.assertEquals(10, labEventBeans.size(), "Wrong number of messages");
         LabEventBean standardsTransferEvent = labEventBeans.get(labEventBeans.size() - 1);
         LabVesselBean microfluorPlate = standardsTransferEvent.getTargets().iterator().next();
         Assert.assertEquals(samplesPicoJaxbBuilder.getPicoMicrofluorTransferJaxb().getPlate().getBarcode(),
-                microfluorPlate.getBarcode(), "Wrong barcode");
+                            microfluorPlate.getBarcode(), "Wrong barcode");
         LabVesselPositionBean labVesselPositionBean = microfluorPlate.getLabVesselPositionBeans().get(0);
         Assert.assertEquals("A01", labVesselPositionBean.getPosition(), "Wrong position");
         Assert.assertEquals(mapBarcodeToTube.values().iterator().next().getLabel(),
-                labVesselPositionBean.getLabVesselBean().getStarter(), "Wrong starter");
+                            labVesselPositionBean.getLabVesselBean().getStarter(), "Wrong starter");
 
         printLabEvents(labEventBeans);
 
@@ -110,7 +126,7 @@ public class SamplesPicoEndToEndTest {
         // datamart?
     }
 
-    public static void printLabEvents(List<LabEventBean> labEventBeans) {
+    static void printLabEvents(List<LabEventBean> labEventBeans) {
         Set<String> barcodes = new HashSet<>();
         for (LabEventBean labEventBean : labEventBeans) {
             System.out.println(labEventBean.getEventType() + " " + labEventBean.getEventDate());
@@ -131,10 +147,10 @@ public class SamplesPicoEndToEndTest {
 
         private final SamplesPicoJaxbBuilder samplesPicoJaxbBuilder;
         private final LabBatch labBatch;
-        private final Map<String, TwoDBarcodedTube> mapBarcodeToTube;
+        private final Map<String, BarcodedTube> mapBarcodeToTube;
 
         public SamplesPicoEntityBuilder(SamplesPicoJaxbBuilder samplesPicoJaxbBuilder, LabBatch labBatch,
-                                        Map<String, TwoDBarcodedTube> mapBarcodeToTube) {
+                                        Map<String, BarcodedTube> mapBarcodeToTube) {
             this.samplesPicoJaxbBuilder = samplesPicoJaxbBuilder;
             this.labBatch = labBatch;
             this.mapBarcodeToTube = mapBarcodeToTube;
@@ -165,7 +181,6 @@ public class SamplesPicoEndToEndTest {
             });
 
             LabBatchEjb labBatchEJB = new LabBatchEjb();
-            labBatchEJB.setAthenaClientService(AthenaClientProducer.stubInstance());
             labBatchEJB.setJiraService(JiraServiceProducer.stubInstance());
 
             LabVesselDao tubeDao = EasyMock.createNiceMock(LabVesselDao.class);
@@ -177,6 +192,17 @@ public class SamplesPicoEndToEndTest {
             LabBatchDao labBatchDao = EasyMock.createNiceMock(LabBatchDao.class);
             labBatchEJB.setLabBatchDao(labBatchDao);
 
+            ProductOrderDao mockProductOrderDao = Mockito.mock(ProductOrderDao.class);
+            Mockito.when(mockProductOrderDao.findByBusinessKey(Mockito.anyString())).thenAnswer(new Answer<Object>() {
+                @Override
+                public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+
+                    Object[] arguments = invocationOnMock.getArguments();
+
+                    return ProductOrderTestFactory.createDummyProductOrder((String) arguments[0]);
+                }
+            });
+            labBatchEJB.setProductOrderDao(mockProductOrderDao);
             BucketDao bucketDao = EasyMock.createNiceMock(BucketDao.class);
 
 
@@ -185,8 +211,8 @@ public class SamplesPicoEndToEndTest {
 
             TemplateEngine templateEngine = new TemplateEngine();
             templateEngine.postConstruct();
-            LabEventHandler labEventHandler = new LabEventHandler(new WorkflowLoader(),
-                    AthenaClientProducer.stubInstance());
+            LabEventHandler labEventHandler = new LabEventHandler(new WorkflowLoader()
+            );
 
             Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
             mapBarcodeToVessel.putAll(mapBarcodeToTube);
@@ -263,8 +289,8 @@ public class SamplesPicoEndToEndTest {
         }
     }
 
-    public static void printVessel(LabVesselBean labVesselBean) {
-        StaticPlate.PlateType plateType = StaticPlate.PlateType.getByDisplayName(labVesselBean.getType());
+    private static void printVessel(LabVesselBean labVesselBean) {
+        StaticPlate.PlateType plateType = StaticPlate.PlateType.getByAutomationName(labVesselBean.getType());
         VesselGeometry vesselGeometry;
         if (plateType == null) {
             vesselGeometry = VesselGeometry.G12x8;

@@ -63,6 +63,7 @@ table.simple th.sorting_asc { border-bottom: 2px solid #2F4F4F; }
 table.simple th.sorting_desc { border-bottom: 2px solid #2F4F4F; }
 table.simple tr.even { background-color: #fff; }
 table.simple tr.odd { background-color: #f5f5f5; }
+table.simple tr.highlighted { background-color: #FFFFC5; }
 table.simple { border: 1px solid #ccc; border-collapse: collapse; }
 table.simple tr:hover td { background-color: #def; }
 table.simple td,table.simple th { spacing: 10px ; border-right: 1px solid #ccc; border-bottom: 1px dotted #dfdfdf; padding: 2px; vertical-align: middle }
@@ -89,7 +90,7 @@ input[type="text"].defaultTextActive, .defaultTextActive { font-size: 12px; colo
 input[type='checkbox'].checkAll { margin-left: -8px; }
 
 /* multi-check box count indicator */
-.checkedCount { font-size: 8pt; vertical-align: super; margin-left: 2px; width: 25px; font-weight: normal }
+.checkedCount { font-size: 8pt; vertical-align: middle; margin-left: 2px; width: 25px; font-weight: normal }
 
 .form-horizontal .view-control-group { margin-bottom: 5px; }
 .form-horizontal .view-control-group .controls { margin-top: 5px; }
@@ -144,6 +145,7 @@ textarea.controlledText { width: 550px; }
 input.search-input { width: auto; }
 .search-checkbox-label { float: left; font-weight: bold; }
 input.search-checkbox { float: left; margin-right: 3px; }
+.searchterm { background-color: #f2f2f2 }
 
 .search-horizontal .control-group { margin-bottom: 3px; *zoom: 1; }
 .search-horizontal .control-group:before,

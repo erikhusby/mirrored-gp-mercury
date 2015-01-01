@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.bucket;
 
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -22,7 +23,7 @@ import java.util.List;
  *         Time: 10:58 AM
  */
 @Stateful
-@TransactionAttribute ( TransactionAttributeType.SUPPORTS)
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 @RequestScoped
 public class BucketEntryDao extends GenericDao {
 
@@ -30,14 +31,15 @@ public class BucketEntryDao extends GenericDao {
         return findListByList(BucketEntry.class, BucketEntry_.bucketEntryId, ids);
     }
 
-    public BucketEntry findByVesselAndPO(LabVessel vessel, String productOrder) {
+    public BucketEntry findByVesselAndPO(LabVessel vessel, ProductOrder productOrder) {
+
         CriteriaBuilder vesselPOCriteria = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<BucketEntry> query = vesselPOCriteria.createQuery(BucketEntry.class);
         Root<BucketEntry> root = query.from(BucketEntry.class);
-        query.where ( vesselPOCriteria.and ( vesselPOCriteria.equal ( root.get ( BucketEntry_.labVessel ), vessel ),
-                                             vesselPOCriteria.equal ( root.get ( BucketEntry_.poBusinessKey ),
-                                                                      productOrder ) ) );
-        try{
+        query.where(vesselPOCriteria.and(vesselPOCriteria.equal(root.get(BucketEntry_.labVessel), vessel),
+                                         vesselPOCriteria.equal(root.get(BucketEntry_.productOrder),
+                                                                productOrder)));
+        try {
             return getEntityManager().createQuery(query).getSingleResult();
         } catch (NoResultException ignored) {
             return null;
@@ -48,7 +50,7 @@ public class BucketEntryDao extends GenericDao {
         CriteriaBuilder vesselBucketCriteria = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<BucketEntry> query = vesselBucketCriteria.createQuery(BucketEntry.class);
         Root<BucketEntry> root = query.from(BucketEntry.class);
-        query.where(vesselBucketCriteria.and(vesselBucketCriteria.equal(root.get(BucketEntry_.labVessel),vessel),
+        query.where(vesselBucketCriteria.and(vesselBucketCriteria.equal(root.get(BucketEntry_.labVessel), vessel),
                                              vesselBucketCriteria.equal(root.get(BucketEntry_.bucket),
                                                                         bucket)));
         try {

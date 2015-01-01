@@ -5,9 +5,12 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectCohort;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
+import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
@@ -21,6 +24,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -37,6 +41,14 @@ import java.util.List;
 @Stateful
 @RequestScoped
 public class ResearchProjectResource {
+    public static final String VALID_USERNAME_REQUIRED_MESSAGE =
+            "A valid Username is required to complete this request";
+    static final String SUBMIT_TO_JIRA_FORMAT_STRING = "Could not submit new research project to JIRA (%s)";
+
+    public void setResearchProjectEjb(ResearchProjectEjb researchProjectEjb) {
+        this.researchProjectEjb = researchProjectEjb;
+    }
+
     @Inject
     private ResearchProjectDao researchProjectDao;
 
@@ -45,6 +57,9 @@ public class ResearchProjectResource {
 
     @Inject
     private BSPUserList bspUserList;
+
+    @Inject
+    private UserBean userBean;
 
     @XmlRootElement
     public static class ResearchProjectData {
@@ -59,6 +74,10 @@ public class ResearchProjectResource {
         public final String username;
 
         @XmlElementWrapper
+        @XmlElement(name = "collections")
+        public final List<Long> collections;
+
+        @XmlElementWrapper
         @XmlElement(name = "projectManager")
         public final List<String> projectManagers;
 
@@ -70,16 +89,29 @@ public class ResearchProjectResource {
         @XmlElement(name = "order")
         public final List<String> orders;
 
-        // Required by JAXB.
-        ResearchProjectData() {
-            title = null;
+        public ResearchProjectData(String title, String synopsis, String username) {
+            this.title = title;
+            this.synopsis = synopsis;
+            this.username = username;
             id = null;
-            synopsis = null;
             projectManagers = null;
+            collections = null;
             broadPIs = null;
             orders = null;
             modifiedDate = null;
+        }
+
+        // Required by JAXB.
+        ResearchProjectData() {
+            title = null;
+            synopsis = null;
             username = null;
+            id = null;
+            projectManagers = null;
+            collections = null;
+            broadPIs = null;
+            orders = null;
+            modifiedDate = null;
         }
 
         private static List<String> createUsernamesFromIds(BSPUserList bspUserList, Long[] ids) {
@@ -101,11 +133,26 @@ public class ResearchProjectResource {
             return names;
         }
 
+        /**
+         *
+         * @param researchProject the research project and its associated data
+         * @return a list of cohort Ids
+         */
+
+        private List<Long> createCollections(ResearchProject researchProject) {
+            List<Long> collectionIds = new ArrayList<>(researchProject.getCohorts().length);
+            for (ResearchProjectCohort researchProjectCohort : researchProject.getCohorts()) {
+                collectionIds.add(researchProjectCohort.getDatabaseId());
+            }
+            return collectionIds;
+        }
+
         public ResearchProjectData(BSPUserList bspUserList, ResearchProject researchProject) {
             title = researchProject.getTitle();
             id = researchProject.getJiraTicketKey();
             synopsis = researchProject.getSynopsis();
             projectManagers = createUsernamesFromIds(bspUserList, researchProject.getProjectManagers());
+            collections = createCollections(researchProject);
             broadPIs = createUsernamesFromIds(bspUserList, researchProject.getBroadPIs());
             orders = new ArrayList<>(researchProject.getProductOrders().size());
             BspUser user = bspUserList.getById(researchProject.getCreatedBy());
@@ -201,14 +248,20 @@ public class ResearchProjectResource {
     @Produces(MediaType.APPLICATION_XML)
     public ResearchProjectData create(@Nonnull ResearchProjectData data) {
         if (researchProjectDao.findByTitle(data.title) != null) {
-            throw new InformaticsServiceException(
-                    "Cannot create a project that already exists - the project name is already being used.");
+            throw new ResourceException(
+                    "Cannot create a project that already exists - the project name is already being used.",
+                    Response.Status.BAD_REQUEST);
         }
 
-        ResearchProject project = new ResearchProject(null, data.title, data.synopsis, false);
-        BspUser user = bspUserList.getByUsername(data.username);
-        project.setCreatedBy(user.getUserId());
+        userBean.login(data.username);
 
+        if(userBean.getBspUser() == UserBean.UNKNOWN) {
+            throw new ResourceException(VALID_USERNAME_REQUIRED_MESSAGE, Response.Status.UNAUTHORIZED);
+        }
+
+        ResearchProject project =
+                new ResearchProject(userBean.getBspUser().getUserId(), data.title, data.synopsis, false,
+                        ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
         try {
             researchProjectEjb.submitToJira(project);
         } catch (IOException | NoJiraTransitionException e) {

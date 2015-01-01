@@ -1,13 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
-import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.testng.Arquillian;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
@@ -16,21 +13,13 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EX
 
 
 @Test(groups = EXTERNAL_INTEGRATION)
-public class BSPSetVolumeConcentrationTest extends Arquillian {
+public class BSPSetVolumeConcentrationTest  {
     private static final double ERROR_BAND = 0.00001;
 
-    @Deployment
-    public static WebArchive getDeployment() {
-        return DeploymentBuilder.buildMercuryWar(DEV);
-    }
+    private BSPConfig bspConfig=BSPConfig.produce(DEV);
 
-    @Inject
-    private BSPConfig bspConfig;
+    private BSPSampleSearchService bspSampleSearchService=new BSPSampleSearchServiceImpl(bspConfig);
 
-    @Inject
-    private BSPSampleSearchService bspSampleSearchService;
-
-    @Test
     public void testSetVolumeAndConcentration() {
         BSPSampleDataFetcher dataFetcher = new BSPSampleDataFetcher(bspSampleSearchService, bspConfig);
         BSPSetVolumeConcentrationImpl bspSetVolumeConcentration = new BSPSetVolumeConcentrationImpl(bspConfig);
@@ -45,9 +34,9 @@ public class BSPSetVolumeConcentrationTest extends Arquillian {
                     testSampleId, newVolume[i], newConcentration[i], newReceptacleWeight[i]);
             Assert.assertEquals(result, BSPSetVolumeConcentration.RESULT_OK);
 
-            BSPSampleDTO bspSampleDTO = dataFetcher.fetchSingleSampleFromBSP(testSampleId);
-            Double currentVolume = bspSampleDTO.getVolume();
-            Double currentConcentration = bspSampleDTO.getConcentration();
+            SampleData bspSampleData = dataFetcher.fetchSingleSampleFromBSP(testSampleId);
+            Double currentVolume = bspSampleData.getVolume();
+            Double currentConcentration = bspSampleData.getConcentration();
 
             String errorString = "%s differs from expected value of %f by %f (original value was %f).";
 

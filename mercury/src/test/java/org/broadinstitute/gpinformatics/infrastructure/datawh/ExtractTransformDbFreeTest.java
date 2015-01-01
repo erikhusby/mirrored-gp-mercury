@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -93,7 +94,7 @@ public class ExtractTransformDbFreeTest {
             labMetricEtl
     };
 
-    @BeforeClass(groups = TestGroups.DATABASE_FREE)
+    @BeforeClass
     public void beforeClass() throws Exception {
         datafileDir = System.getProperty("java.io.tmpdir");
         badDataDir = datafileDir + System.getProperty("file.separator") + nowMsec;
@@ -104,6 +105,7 @@ public class ExtractTransformDbFreeTest {
                 etlInstances.add((GenericEntityEtl)mock);
             }
         }
+
         extractTransform = new ExtractTransform(auditReaderDao,
                 new SessionContextUtility(null, null) {
                     @Override
@@ -114,14 +116,14 @@ public class ExtractTransformDbFreeTest {
                 etlInstances);
     }
 
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @BeforeMethod
     public void beforeMethod() throws Exception {
         ExtractTransform.setDatafileDir(datafileDir);
         EtlTestUtilities.deleteEtlFiles(datafileDir);
         reset(mocks);
     }
 
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @AfterMethod
     public void afterMethod() throws Exception {
         EtlTestUtilities.deleteEtlFiles(datafileDir);
     }
@@ -355,7 +357,7 @@ public class ExtractTransformDbFreeTest {
         SortedMap<Long, Date> revs = new TreeMap<>();
         revs.put(1L, new Date(startEtlSec));
         expect(auditReaderDao.fetchAuditIds(eq(startEtlSec), anyLong())).andReturn(revs);
-        Collection<Long> revIds = revs.keySet();
+        Set<Long> revIds = revs.keySet();
         expect(productEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(1);
         expect(priceItemEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
         expect(researchProjectEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);

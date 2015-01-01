@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
+import edu.mit.broad.prodinfo.thrift.lims.ConcentrationAndVolume;
 import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
 import edu.mit.broad.prodinfo.thrift.lims.PlateTransfer;
 import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
@@ -9,8 +10,9 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFac
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.lims.LimsQueryResourceResponseFactory;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ConcentrationAndVolumeAndWeightType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.FlowcellDesignationType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
@@ -41,14 +43,14 @@ import static org.hamcrest.MatcherAssert.assertThat;
 /**
  * Tests of LimsQueryResource's API behavior and interactions with other services.
  */
-@Test(singleThreaded = true)
+@Test(singleThreaded = true, groups = DATABASE_FREE)
 public class LimsQueryResourceUnitTest {
 
     private SystemRouter mockSystemRouter;
     private ThriftService mockThriftService;
     private LimsQueries mockLimsQueries;
     private LimsQueryResourceResponseFactory mockResponseFactory;
-    private TwoDBarcodedTubeDao mockTwoDBarcodedTubeDao;
+    private BarcodedTubeDao mockBarcodedTubeDao;
     private LimsQueryResource resource;
     private StaticPlateDao mockStaticPlateDao;
     private SequencingTemplateFactory sequencingTemplateFactory;
@@ -60,7 +62,7 @@ public class LimsQueryResourceUnitTest {
         mockLimsQueries = createMock(LimsQueries.class);
         sequencingTemplateFactory = createMock(SequencingTemplateFactory.class);
         mockResponseFactory = createMock(LimsQueryResourceResponseFactory.class);
-        mockTwoDBarcodedTubeDao = createMock(TwoDBarcodedTubeDao.class);
+        mockBarcodedTubeDao = createMock(BarcodedTubeDao.class);
         mockStaticPlateDao = createMock(StaticPlateDao.class);
         BSPUserList bspUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
         resource =
@@ -334,6 +336,42 @@ public class LimsQueryResourceUnitTest {
         verifyAll();
     }
 
+    @Test(groups = DATABASE_FREE)
+    public void testFetchConcentrationAndVolumeForTubeBarcodesFromSquid() {
+        List<String> barcodes = Arrays.asList("barcode");
+        expect(mockSystemRouter.getSystemOfRecordForVesselBarcodes(barcodes)).andReturn(SQUID);
+        Map<String, ConcentrationAndVolume> map = new HashMap<>();
+        ConcentrationAndVolume concentrationAndVolume = new ConcentrationAndVolume();
+        ConcentrationAndVolumeAndWeightType concentrationAndVolumeType = new ConcentrationAndVolumeAndWeightType();
+        map.put("barcode", concentrationAndVolume);
+        expect(mockThriftService.fetchConcentrationAndVolumeForTubeBarcodes(barcodes)).andReturn(map);
+        expect(mockResponseFactory.makeConcentrationAndVolumeAndWeight(concentrationAndVolume)).andReturn(concentrationAndVolumeType);
+        replayAll();
+
+        Map<String, ConcentrationAndVolumeAndWeightType> result =
+                resource.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(barcodes);
+        assertThat(result.get("barcode"), equalTo(concentrationAndVolumeType));
+
+        verifyAll();
+    }
+
+    @Test(groups = DATABASE_FREE)
+    public void testFetchConcentrationAndVolumeForTubeBarcodesFromMercury() {
+        List<String> barcodes = Arrays.asList("barcode");
+        expect(mockSystemRouter.getSystemOfRecordForVesselBarcodes(barcodes)).andReturn(MERCURY);
+        Map<String, ConcentrationAndVolumeAndWeightType> map = new HashMap<>();
+        ConcentrationAndVolumeAndWeightType concentrationAndVolume  = new ConcentrationAndVolumeAndWeightType();
+        map.put("barcode", concentrationAndVolume);
+        expect(mockLimsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(barcodes)).andReturn(map);
+        replayAll();
+
+        Map<String, ConcentrationAndVolumeAndWeightType> result =
+                resource.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(barcodes);
+        assertThat(result.get("barcode"), equalTo(concentrationAndVolume));
+
+        verifyAll();
+    }
+
     @Test(groups = DATABASE_FREE, enabled = false)
     public void testFetchUserByBadge() {
 
@@ -427,11 +465,11 @@ public class LimsQueryResourceUnitTest {
 
     private void replayAll() {
         replay(mockSystemRouter, mockThriftService, mockLimsQueries, sequencingTemplateFactory,
-                mockResponseFactory, mockTwoDBarcodedTubeDao, mockStaticPlateDao);
+                mockResponseFactory, mockBarcodedTubeDao, mockStaticPlateDao);
     }
 
     private void verifyAll() {
         verify(mockSystemRouter, mockThriftService, mockLimsQueries, sequencingTemplateFactory,
-                mockResponseFactory, mockTwoDBarcodedTubeDao, mockStaticPlateDao);
+                mockResponseFactory, mockBarcodedTubeDao, mockStaticPlateDao);
     }
 }

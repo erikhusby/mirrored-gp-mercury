@@ -20,7 +20,7 @@ import java.util.Map;
 /**
  * Tests for the research project dao
  */
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+@Test(groups = TestGroups.STUBBY, enabled = true)
 public class ResearchProjectDaoTest extends ContainerTest {
 
     @Inject
@@ -29,7 +29,7 @@ public class ResearchProjectDaoTest extends ContainerTest {
     @Inject
     private ResearchProjectDao researchProjectDao;
 
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @BeforeMethod(groups = TestGroups.STUBBY)
     public void setUp() throws Exception {
         // Skip if no injections, meaning we're not running in container
         if (utx == null) {
@@ -39,7 +39,7 @@ public class ResearchProjectDaoTest extends ContainerTest {
         utx.begin();
     }
 
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @AfterMethod(groups = TestGroups.STUBBY)
     public void tearDown() throws Exception {
         // Skip if no injections, meaning we're not running in container
         if (utx == null) {

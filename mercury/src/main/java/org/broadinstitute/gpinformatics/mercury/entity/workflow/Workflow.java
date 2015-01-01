@@ -17,6 +17,7 @@ public enum Workflow {
     HYBRID_SELECTION("Hybrid Selection"),
     WHOLE_GENOME("Whole Genome"),
     ICE("ICE"),
+    ICE_CRSP("ICE CRSP"),
     /** Use this to indicate that no workflow is associated. */
     NONE(null, false);
 
@@ -46,6 +47,7 @@ public enum Workflow {
     public static final Collection<Workflow> SUPPORTED_WORKFLOWS = new ArrayList<Workflow>(){{
         add(AGILENT_EXOME_EXPRESS);
         add(ICE_EXOME_EXPRESS);
+        add(ICE_CRSP);
     }};
 
     public static boolean isWorkflowSupportedByMercury(Workflow workflow) {

@@ -1,7 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.test.entity.bsp;
 
-import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.*;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestOptions;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestResult;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestServiceImpl;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestServiceStub;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.ControlWell;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bsp.BSPSampleFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.AliquotParameters;
@@ -14,10 +19,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STUBBY;
 
 
-public class BSPPlatingTest extends ContainerTest {
+@Test(groups = TestGroups.STUBBY)
+public class BSPPlatingTest  {
 
     //@Inject
     BSPPlatingRequestService platingService;
@@ -30,25 +36,25 @@ public class BSPPlatingTest extends ContainerTest {
      *
      * @throws Exception any errors
      */
-    @Test(groups = {EXTERNAL_INTEGRATION}, enabled = false)
+    @Test(groups = {STUBBY}, enabled = false)
     public void testIssueBSPPlating() throws Exception {
         platingService = new BSPPlatingRequestServiceImpl();
 
         Map<MercurySample, AliquotParameters> starterMap = new HashMap<>();
 
-        MercurySample sample = new MercurySample("SM-26BPV");
+        MercurySample sample = new MercurySample("SM-26BPV", MercurySample.MetadataSource.BSP);
         starterMap.put(sample, new AliquotParameters(0.0f, 1.0f));
 
-        sample = new MercurySample("SM-26BHJ");
+        sample = new MercurySample("SM-26BHJ", MercurySample.MetadataSource.BSP);
         starterMap.put(sample, new AliquotParameters(0.0f, 1.0f));
 
-        sample = new MercurySample("SM-26BPU");
+        sample = new MercurySample("SM-26BPU", MercurySample.MetadataSource.BSP);
         starterMap.put(sample, new AliquotParameters(0.0f, 1.0f));
 
-        sample = new MercurySample("SM-HOWIE");
+        sample = new MercurySample("SM-HOWIE", MercurySample.MetadataSource.BSP);
         starterMap.put(sample, new AliquotParameters(0.0f, 1.0f));
 
-        sample = new MercurySample("SM-26BPK");
+        sample = new MercurySample("SM-26BPK", MercurySample.MetadataSource.BSP);
         starterMap.put(sample, new AliquotParameters(0.0f, 1.0f));
 
 

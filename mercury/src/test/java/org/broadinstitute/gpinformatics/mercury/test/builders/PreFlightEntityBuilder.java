@@ -7,7 +7,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.testng.Assert;
 
@@ -23,14 +23,14 @@ public class PreFlightEntityBuilder {
     private final LabEventFactory             labEventFactory;
     private final LabEventHandler             labEventHandler;
 
-    private final Map<String, TwoDBarcodedTube> mapBarcodeToTube;
+    private final Map<String, BarcodedTube> mapBarcodeToTube;
     private       TubeFormation                 tubeFormation;
     private String rackBarcode;
     private String testPrefix;
 
     public PreFlightEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
                                   LabEventFactory labEventFactory, LabEventHandler labEventHandler,
-                                  Map<String, TwoDBarcodedTube> mapBarcodeToTube, String testPrefix) {
+                                  Map<String, BarcodedTube> mapBarcodeToTube, String testPrefix) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.labEventFactory = labEventFactory;
         this.labEventHandler = labEventHandler;
@@ -63,8 +63,8 @@ public class PreFlightEntityBuilder {
         LabEventTest.validateWorkflow("PreflightPicoSetup", mapBarcodeToTube.values());
         mapBarcodeToVessel.clear();
         mapBarcodeToVessel.put(tubeFormation.getLabel(), tubeFormation);
-        for (TwoDBarcodedTube twoDBarcodedTube : tubeFormation.getContainerRole().getContainedVessels()) {
-            mapBarcodeToVessel.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
+        for (BarcodedTube barcodedTube : tubeFormation.getContainerRole().getContainedVessels()) {
+            mapBarcodeToVessel.put(barcodedTube.getLabel(), barcodedTube);
         }
         LabEvent preflightPicoSetup2Entity = labEventFactory.buildFromBettaLims(
                 preFlightJaxbBuilder.getPreflightPicoSetup2(), mapBarcodeToVessel);
@@ -88,8 +88,8 @@ public class PreFlightEntityBuilder {
         LabEventTest.validateWorkflow("PreflightPostNormPicoSetup", mapBarcodeToTube.values());
         mapBarcodeToVessel.clear();
         mapBarcodeToVessel.put(tubeFormation.getLabel(), tubeFormation);
-        for (TwoDBarcodedTube twoDBarcodedTube : tubeFormation.getContainerRole().getContainedVessels()) {
-            mapBarcodeToVessel.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
+        for (BarcodedTube barcodedTube : tubeFormation.getContainerRole().getContainedVessels()) {
+            mapBarcodeToVessel.put(barcodedTube.getLabel(), barcodedTube);
         }
 
         LabEvent preflightPostNormPicoSetup1Entity = labEventFactory.buildFromBettaLims(
@@ -105,8 +105,8 @@ public class PreFlightEntityBuilder {
         LabEventTest.validateWorkflow("PreflightPostNormPicoSetup", mapBarcodeToTube.values());
         mapBarcodeToVessel.clear();
         mapBarcodeToVessel.put(tubeFormation.getLabel(), tubeFormation);
-        for (TwoDBarcodedTube twoDBarcodedTube : tubeFormation.getContainerRole().getContainedVessels()) {
-            mapBarcodeToVessel.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
+        for (BarcodedTube barcodedTube : tubeFormation.getContainerRole().getContainedVessels()) {
+            mapBarcodeToVessel.put(barcodedTube.getLabel(), barcodedTube);
         }
 
         LabEvent preflightPostNormPicoSetup2Entity = labEventFactory.buildFromBettaLims(

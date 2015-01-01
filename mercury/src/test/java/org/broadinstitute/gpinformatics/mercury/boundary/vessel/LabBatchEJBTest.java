@@ -1,17 +1,22 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.testng.Assert;
@@ -30,12 +35,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-/**
- * @author Scott Matthews
- *         Date: 12/7/12
- *         Time: 4:31 PM
- */
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.STUBBY)
 public class LabBatchEJBTest extends ContainerTest {
 
     public static final String STUB_TEST_PDO_KEY = "PDO-999";
@@ -48,7 +48,7 @@ public class LabBatchEJBTest extends ContainerTest {
     private UserTransaction utx;
 
     @Inject
-    private TwoDBarcodedTubeDao tubeDao;
+    private BarcodedTubeDao tubeDao;
 
     @Inject
     private LabBatchDao labBatchDao;
@@ -56,12 +56,19 @@ public class LabBatchEJBTest extends ContainerTest {
     @Inject
     private BucketDao bucketDao;
 
-    private LinkedHashMap<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
+    @Inject
+    private ProductDao productDao;
+
+    @Inject
+    private ResearchProjectDao researchProjectDao;
+
+    private LinkedHashMap<String, BarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
+
     private ArrayList<String> pdoNames;
     private String scottmat;
     private Bucket bucket;
 
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @BeforeMethod(groups = TestGroups.STUBBY)
     public void setUp() throws Exception {
 
         if (utx == null) {
@@ -90,8 +97,8 @@ public class LabBatchEJBTest extends ContainerTest {
         for (int sampleIndex = 1; sampleIndex <= vesselSampleList.size(); sampleIndex++) {
             String barcode = "R" + sampleIndex + sampleIndex + sampleIndex + sampleIndex + sampleIndex + sampleIndex;
             String bspStock = vesselSampleList.get(sampleIndex - 1);
-            TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(bspStock));
+            BarcodedTube bspAliquot = new BarcodedTube(barcode);
+            bspAliquot.addSample(new MercurySample(bspStock, MercurySample.MetadataSource.BSP));
             tubeDao.persist(bspAliquot);
             mapBarcodeToTube.put(barcode, bspAliquot);
         }
@@ -99,7 +106,7 @@ public class LabBatchEJBTest extends ContainerTest {
         scottmat = "scottmat";
     }
 
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @AfterMethod(groups = TestGroups.STUBBY)
     public void tearDown() throws Exception {
         if (utx == null) {
             return;
@@ -115,7 +122,7 @@ public class LabBatchEJBTest extends ContainerTest {
 
         LabBatch testBatch =
                 labBatchEJB.createLabBatch(new HashSet<LabVessel>(mapBarcodeToTube.values()), scottmat, "LCSET-123",
-                        LabBatch.LabBatchType.WORKFLOW, CreateFields.IssueType.EXOME_EXPRESS);
+                                           LabBatch.LabBatchType.WORKFLOW, CreateFields.IssueType.EXOME_EXPRESS);
 
         final String batchName = testBatch.getBatchName();
 
@@ -152,7 +159,7 @@ public class LabBatchEJBTest extends ContainerTest {
         String futureDate = dFormatter.format(future);
 
         LabBatch batchInput = new LabBatch(batchName, new HashSet<LabVessel>(mapBarcodeToTube.values()),
-                LabBatch.LabBatchType.WORKFLOW);
+                                           LabBatch.LabBatchType.WORKFLOW);
         batchInput.setBatchDescription(description);
         batchInput.setDueDate(future);
 
@@ -179,9 +186,10 @@ public class LabBatchEJBTest extends ContainerTest {
 
         HashSet<LabVessel> starters = new HashSet<LabVessel>(mapBarcodeToTube.values());
         LabBatch batch = new LabBatch("LabBatchEJBTest.testCreateLabBatchAndRemoveFromBucket",
-                starters, LabBatch.LabBatchType.WORKFLOW);
+                                      starters, LabBatch.LabBatchType.WORKFLOW);
         LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(batch, scottmat, BUCKET_NAME,
-                LabEvent.UI_EVENT_LOCATION, CreateFields.IssueType.EXOME_EXPRESS);
+                                                                            LabEvent.UI_EVENT_LOCATION,
+                                                                            CreateFields.IssueType.EXOME_EXPRESS);
 
         //link the JIRA tickets for the batch created to the pdo batches.
         for (String pdoKey : LabVessel.extractPdoKeyList(starters)) {
@@ -199,7 +207,7 @@ public class LabBatchEJBTest extends ContainerTest {
 
         Assert.assertEquals(expectedTicketId, savedBatch.getJiraTicket().getTicketName());
         Assert.assertEquals(6, savedBatch.getStartingBatchLabVessels().size());
-        for (TwoDBarcodedTube tube : mapBarcodeToTube.values()) {
+        for (BarcodedTube tube : mapBarcodeToTube.values()) {
             Assert.assertTrue(bucket.findEntry(tube) == null);
         }
     }
@@ -211,8 +219,8 @@ public class LabBatchEJBTest extends ContainerTest {
         String expectedTicketId = "testCreateLabBatchAndRemoveFromBucketExistingTicket";
         LabBatch savedBatch = labBatchEJB
                 .createLabBatchAndRemoveFromBucket(new ArrayList<>(mapBarcodeToTube.keySet()), scottmat,
-                        expectedTicketId, BUCKET_NAME, LabBatch.LabBatchType.WORKFLOW,
-                        CreateFields.IssueType.EXOME_EXPRESS);
+                                                   expectedTicketId, BUCKET_NAME, LabBatch.LabBatchType.WORKFLOW,
+                                                   CreateFields.IssueType.EXOME_EXPRESS);
 
         labBatchDao.flush();
         labBatchDao.clear();
@@ -223,7 +231,7 @@ public class LabBatchEJBTest extends ContainerTest {
 
         Assert.assertEquals(expectedTicketId, savedBatch.getJiraTicket().getTicketName());
         Assert.assertEquals(6, savedBatch.getStartingBatchLabVessels().size());
-        for (TwoDBarcodedTube tube : mapBarcodeToTube.values()) {
+        for (BarcodedTube tube : mapBarcodeToTube.values()) {
             Assert.assertTrue(bucket.findEntry(tube) == null);
         }
     }
@@ -231,9 +239,14 @@ public class LabBatchEJBTest extends ContainerTest {
     private void putTubesInBucket() {
         bucket = bucketDao.findByName(BUCKET_NAME);
 
+        ProductOrder stubTestPDO = ProductOrderTestFactory.createDummyProductOrder(STUB_TEST_PDO_KEY);
+        stubTestPDO.setTitle(stubTestPDO.getTitle() + ((new Date()).getTime()));
+        stubTestPDO.updateAddOnProducts(Collections.<Product>emptyList());
+        stubTestPDO.setProduct(productDao.findByBusinessKey(Product.EXOME_EXPRESS_V2_PART_NUMBER));
+        stubTestPDO .setResearchProject(researchProjectDao.findByTitle("ADHD"));
         for (LabVessel vessel : mapBarcodeToTube.values()) {
-            bucket.addEntry(STUB_TEST_PDO_KEY, vessel,
-                    org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry.BucketEntryType.PDO_ENTRY);
+            bucket.addEntry(stubTestPDO, vessel,
+                            org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry.BucketEntryType.PDO_ENTRY);
         }
 
         for (LabVessel vessel : mapBarcodeToTube.values()) {

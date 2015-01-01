@@ -256,7 +256,6 @@ public class ReceiveSamplesEjb {
     private void addMultipleKitValidationViolations(MessageCollection messageCollection, String operator,
                                                     Map<String, Set<ProductOrderSample>> associatedProductOrderSamples) {
         for (Map.Entry<String, Set<ProductOrderSample>> entry : associatedProductOrderSamples.entrySet()) {
-            //TODO SGM: Temporarily setting this to a warning since the ability to clear blocking errors will not be ready for this sprint
             addValidation(messageCollection, operator, entry.getValue(),
                     SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS,
                     SampleReceiptValidation.SampleValidationType.WARNING, String.format(

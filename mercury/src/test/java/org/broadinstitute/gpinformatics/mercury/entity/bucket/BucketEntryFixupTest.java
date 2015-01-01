@@ -1,14 +1,15 @@
 package org.broadinstitute.gpinformatics.mercury.entity.bucket;
 
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableSet;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.ReworkReasonDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -17,17 +18,16 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
-import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-/**
- * TODO scottmat fill in javadoc!!!
- */
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.FIXUP)
 public class BucketEntryFixupTest extends Arquillian {
 
     @Inject
@@ -41,6 +41,9 @@ public class BucketEntryFixupTest extends Arquillian {
 
     @Inject
     LabVesselDao labVesselDao;
+
+    @Inject
+    ProductOrderDao productOrderDao;
 
     @Inject
     UserTransaction utx;
@@ -60,7 +63,7 @@ public class BucketEntryFixupTest extends Arquillian {
                 org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD, "prod");
     }
 
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @BeforeMethod(groups = TestGroups.FIXUP)
     public void setUp() throws Exception {
         if (utx == null) {
             return;
@@ -68,7 +71,7 @@ public class BucketEntryFixupTest extends Arquillian {
         utx.begin();
     }
 
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @AfterMethod(groups = TestGroups.FIXUP)
     public void tearDown() throws Exception {
         // Skip if no injections, since we're not running in container.
         if (utx == null) {
@@ -79,7 +82,7 @@ public class BucketEntryFixupTest extends Arquillian {
     }
 
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+    @Test(groups = TestGroups.FIXUP, enabled = false)
     public void archiveReworkEntries() throws Exception {
 
         Bucket fixupBucket = bucketDao.findByName("Pico/Plating Bucket");
@@ -90,7 +93,7 @@ public class BucketEntryFixupTest extends Arquillian {
         }
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+    @Test(groups = TestGroups.FIXUP, enabled = false)
     public void remove0150385070FromShearingBucketForGPLIM1932() {
         Bucket bucket = bucketDao.findByName("Shearing Bucket");
         LabVessel vessel = labVesselDao.findByIdentifier("0150385070");
@@ -99,7 +102,7 @@ public class BucketEntryFixupTest extends Arquillian {
         bucket.removeEntry(bucketEntry);
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+    @Test(groups = TestGroups.FIXUP, enabled = false)
     public void remove0155694973FromPoolingBucketGPLIM2503() {
         Bucket bucket = bucketDao.findByName("Pooling Bucket");
         LabVessel vessel = labVesselDao.findByIdentifier("0155694973");
@@ -108,7 +111,7 @@ public class BucketEntryFixupTest extends Arquillian {
         bucket.removeEntry(bucketEntry);
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+    @Test(groups = TestGroups.FIXUP, enabled = false)
     public void remove0155694973FromPicoPlatingBucketGPLIM2503() {
         Bucket bucket = bucketDao.findByName("Pico/Plating Bucket");
         LabVessel vessel = labVesselDao.findByIdentifier("0155694973");
@@ -117,12 +120,54 @@ public class BucketEntryFixupTest extends Arquillian {
         bucket.removeEntry(bucketEntry);
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+    @Test(groups = TestGroups.FIXUP, enabled = false)
     public void remove0159876899FromPicoPlatingBucketGPLIM2503() {
         Bucket bucket = bucketDao.findByName("Pico/Plating Bucket");
         LabVessel vessel = labVesselDao.findByIdentifier("0159876899");
 
         BucketEntry bucketEntry = bucket.findEntry(vessel);
         bucket.removeEntry(bucketEntry);
+    }
+
+    @Test(groups = TestGroups.FIXUP, enabled = false)
+    public void setProductOrderReferxences() throws Exception {
+
+        List<BucketEntry> bucketEntriesToFix =
+                bucketEntryDao.findList(BucketEntry.class, BucketEntry_.productOrder, null);
+        int counter = 0;
+
+        Set<String> badKeySet = new HashSet<>();
+
+        Map<String, ProductOrder> pdoCache = new HashMap<>();
+        while (!bucketEntriesToFix.isEmpty()) {
+
+            for (Iterator<BucketEntry> entryIterator = bucketEntriesToFix.iterator(); entryIterator.hasNext(); ) {
+                BucketEntry entry = entryIterator.next();
+                if (StringUtils.isNotBlank(entry.getPoBusinessKey()) && !badKeySet.contains(entry.getPoBusinessKey())) {
+                    ProductOrder orderToUpdate = pdoCache.get(entry.getPoBusinessKey());
+                    if (orderToUpdate == null) {
+                        orderToUpdate = bucketEntryDao.findSingle(ProductOrder.class, ProductOrder_.jiraTicketKey,
+                                                                  entry.getPoBusinessKey());
+                    }
+                    if (orderToUpdate != null) {
+                        pdoCache.put(entry.getPoBusinessKey(), orderToUpdate);
+                        entry.setProductOrder(orderToUpdate);
+                        counter++;
+                    } else {
+                        badKeySet.add(entry.getPoBusinessKey());
+                        entryIterator.remove();
+                    }
+                } else {
+                    entryIterator.remove();
+                }
+                if (counter == 100) {
+                    counter = 0;
+                    utx.commit();
+                    utx.begin();
+                    bucketEntriesToFix = bucketEntryDao.findList(BucketEntry.class, BucketEntry_.productOrder, null);
+                    break;
+                }
+            }
+        }
     }
 }

@@ -16,18 +16,20 @@ public class PMBQuoteServiceProducer {
     @Inject
     private Deployment deployment;
 
-
     @Produces
     @Default
     @ApplicationScoped
-    public PMBQuoteService produce(@New PMBQuoteServiceImpl impl) {
+    public PMBQuoteService produce(@New PMBQuoteServiceStub stub, @New PMBQuoteServiceImpl impl) {
 
         if ( deployment == STUBBY )
-            return null;
+            return stub;
 
         return impl;
     }
 
+    public static PMBQuoteService stubInstance() {
+        return new PMBQuoteServiceStub();
+    }
 
     /**
      * Creates a PMBQuoteServiceImpl with plain old new operator for container-free testing,

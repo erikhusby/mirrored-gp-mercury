@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
 import com.sun.jersey.api.client.ClientResponse;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
@@ -11,6 +12,7 @@ import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 
+@Test(groups = TestGroups.DATABASE_FREE)
 public class QuoteServiceTest {
 
     private Quote quote;
@@ -18,7 +20,7 @@ public class QuoteServiceTest {
     private QuotePriceItem quotePriceItem;
 
 
-    @BeforeClass
+    @BeforeClass(groups = DATABASE_FREE)
     private void setupLargeQuoteAndPriceItem() {
         quote = new Quote("DNA4JD",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION, "NHGRI", "NHGRI"))), ApprovalStatus.FUNDED);
         quotePriceItem = new QuotePriceItem("Illumina Sequencing","1","Illumina HiSeq Run 44 Base","15","bannan","DNA Sequencing");

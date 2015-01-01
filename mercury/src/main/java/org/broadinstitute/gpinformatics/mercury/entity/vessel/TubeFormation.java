@@ -4,11 +4,24 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.hibernate.envers.Audited;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Embedded;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * A set of tubes in a particular combination of positions, typically held in a RackOfTubes.  This entity is different
@@ -16,7 +29,7 @@ import java.util.*;
  */
 @Entity
 @Audited
-public class TubeFormation extends LabVessel implements VesselContainerEmbedder<TwoDBarcodedTube> {
+public class TubeFormation extends LabVessel implements VesselContainerEmbedder<BarcodedTube> {
 
     @ManyToMany(cascade = CascadeType.PERSIST)
     @JoinTable(schema = "mercury", name = "LAB_VESSEL_RACKS_OF_TUBES",
@@ -28,16 +41,16 @@ public class TubeFormation extends LabVessel implements VesselContainerEmbedder<
     private RackOfTubes.RackType rackType;
 
     @Embedded
-    private VesselContainer<TwoDBarcodedTube> vesselContainer = new VesselContainer<>(this);
+    private VesselContainer<BarcodedTube> vesselContainer = new VesselContainer<>(this);
 
     protected TubeFormation() {
     }
 
-    public TubeFormation(Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube, RackOfTubes.RackType rackType) {
+    public TubeFormation(Map<VesselPosition, BarcodedTube> mapPositionToTube, RackOfTubes.RackType rackType) {
         super(makeDigest(mapPositionToTube));
         this.rackType = rackType;
-        for (Map.Entry<VesselPosition, TwoDBarcodedTube> vesselPositionTwoDBarcodedTubeEntry : mapPositionToTube.entrySet()) {
-            vesselContainer.addContainedVessel(vesselPositionTwoDBarcodedTubeEntry.getValue(), vesselPositionTwoDBarcodedTubeEntry.getKey());
+        for (Map.Entry<VesselPosition, BarcodedTube> vesselPositionBarcodedTubeEntry : mapPositionToTube.entrySet()) {
+            vesselContainer.addContainedVessel(vesselPositionBarcodedTubeEntry.getValue(), vesselPositionBarcodedTubeEntry.getKey());
         }
     }
 
@@ -46,11 +59,11 @@ public class TubeFormation extends LabVessel implements VesselContainerEmbedder<
      * @param mapPositionToTube each entry is a position / tube pair
      * @return digest
      */
-    static String makeDigest(Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube) {
+    static String makeDigest(Map<VesselPosition, BarcodedTube> mapPositionToTube) {
         List<Pair<VesselPosition, String>> positionBarcodeList = new ArrayList<>();
-        for (Map.Entry<VesselPosition, TwoDBarcodedTube> vesselPositionTwoDBarcodedTubeEntry : mapPositionToTube.entrySet()) {
-            positionBarcodeList.add(new ImmutablePair<>(vesselPositionTwoDBarcodedTubeEntry.getKey(),
-                    vesselPositionTwoDBarcodedTubeEntry.getValue().getLabel()));
+        for (Map.Entry<VesselPosition, BarcodedTube> vesselPositionBarcodedTubeEntry : mapPositionToTube.entrySet()) {
+            positionBarcodeList.add(new ImmutablePair<>(vesselPositionBarcodedTubeEntry.getKey(),
+                    vesselPositionBarcodedTubeEntry.getValue().getLabel()));
         }
 
         return makeDigest(positionBarcodeList);
@@ -111,11 +124,11 @@ public class TubeFormation extends LabVessel implements VesselContainerEmbedder<
     }
 
     @Override
-    public VesselContainer<TwoDBarcodedTube> getContainerRole() {
+    public VesselContainer<BarcodedTube> getContainerRole() {
         return vesselContainer;
     }
 
-    public void setVesselContainer(VesselContainer<TwoDBarcodedTube> vesselContainer) {
+    public void setVesselContainer(VesselContainer<BarcodedTube> vesselContainer) {
         this.vesselContainer = vesselContainer;
     }
 

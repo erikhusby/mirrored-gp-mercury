@@ -26,7 +26,7 @@ import java.util.UUID;
 import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDaoTest.DateSpec.*;
 
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.STUBBY)
 public class ProductDaoTest extends ContainerTest {
 
     @Inject

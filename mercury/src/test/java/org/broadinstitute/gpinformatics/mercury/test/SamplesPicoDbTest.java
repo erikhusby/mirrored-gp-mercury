@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
 import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.filter.LoggingFilter;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -9,6 +10,8 @@ import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventResponseBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.TubeBean;
+import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SamplesPicoJaxbBuilder;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -26,16 +29,20 @@ import java.util.List;
 /**
  * A database test of the Samples Pico process
  */
+@Test(groups = TestGroups.STUBBY)
 public class SamplesPicoDbTest extends ContainerTest {
 
     private final SimpleDateFormat timestampFormat = new SimpleDateFormat("MMddHHmmss");
 
-    @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    @Test(enabled = true, groups = TestGroups.STUBBY, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testEndToEnd(@ArquillianResource URL baseUrl) {
+    public void testEndToEnd(@ArquillianResource URL baseUrl) throws Exception {
         String timestamp = timestampFormat.format(new Date());
 
-        Client client = Client.create();
+        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
+        clientConfig.getProperties().put(ClientConfig.PROPERTY_FOLLOW_REDIRECTS, Boolean.TRUE);
+
+        Client client = Client.create(clientConfig);
         client.addFilter(new LoggingFilter(System.out));
 
         String batchId = "BP-" + timestamp;
@@ -51,9 +58,10 @@ public class SamplesPicoDbTest extends ContainerTest {
         List<BettaLIMSMessage> messageList = samplesPicoJaxbBuilder.getMessageList();
         sendMessages(baseUrl, client, messageList);
 
-        LabEventResponseBean labEventResponseBean = client.resource(baseUrl.toExternalForm() + "rest/labevent/batch")
-                .path(batchId)
-                .get(LabEventResponseBean.class);
+        LabEventResponseBean labEventResponseBean =
+                client.resource(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/labevent/batch")
+                        .path(batchId)
+                        .get(LabEventResponseBean.class);
         List<LabEventBean> labEventBeans = labEventResponseBean.getLabEventBeans();
         Assert.assertEquals(10, labEventBeans.size(), "Wrong number of lab events");
         SamplesPicoEndToEndTest.printLabEvents(labEventBeans);
@@ -71,14 +79,14 @@ public class SamplesPicoDbTest extends ContainerTest {
      * @return bean sent to the web service
      */
     public static LabBatchBean createBatch(URL baseUrl, Client client, String batchId,
-                                           List<String> tubeBarcodes) {
+                                           List<String> tubeBarcodes) throws Exception {
         ArrayList<TubeBean> tubeBeans = new ArrayList<>();
         for (String tubeBarcode : tubeBarcodes) {
             tubeBeans.add(new TubeBean(tubeBarcode, null));
         }
         LabBatchBean labBatchBean = new LabBatchBean(batchId, null, tubeBeans);
 
-        String response = client.resource(baseUrl.toExternalForm() + "rest/labbatch")
+        String response = client.resource(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/labbatch")
                 .type(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)
                 .entity(labBatchBean)
@@ -94,15 +102,18 @@ public class SamplesPicoDbTest extends ContainerTest {
      * @param client      jersey
      * @param messageList list of messages to send
      */
-    public static void sendMessages(URL baseUrl, Client client, List<BettaLIMSMessage> messageList) {
+    public static String sendMessages(URL baseUrl, Client client, List<BettaLIMSMessage> messageList)
+            throws Exception {
+        String response = null;
         for (BettaLIMSMessage bettaLIMSMessage : messageList) {
-            String response;
-            response = client.resource(baseUrl.toExternalForm() + "rest/bettalimsmessage")
-                    .type(MediaType.APPLICATION_XML_TYPE)
-                    .accept(MediaType.APPLICATION_XML)
-                    .entity(bettaLIMSMessage)
-                    .post(String.class);
+            response =
+                    client.resource(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/bettalimsmessage")
+                            .type(MediaType.APPLICATION_XML_TYPE)
+                            .accept(MediaType.APPLICATION_XML)
+                            .entity(bettaLIMSMessage)
+                            .post(String.class);
             System.out.println(response);
         }
+        return response;
     }
 }

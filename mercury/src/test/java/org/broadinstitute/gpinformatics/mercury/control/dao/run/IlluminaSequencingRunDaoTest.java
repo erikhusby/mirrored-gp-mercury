@@ -20,7 +20,7 @@ import java.util.Date;
  *         Time: 3:06 PM
  */
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.STUBBY)
 public class IlluminaSequencingRunDaoTest extends ContainerTest {
 
 

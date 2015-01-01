@@ -14,14 +14,16 @@ import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidateNestedProperties;
 import net.sourceforge.stripes.validation.ValidationErrors;
 import net.sourceforge.stripes.validation.ValidationMethod;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
-import org.broadinstitute.gpinformatics.athena.boundary.projects.CollaborationEjb;
+import org.broadinstitute.gpinformatics.athena.boundary.projects.CollaborationService;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.RegulatoryInfoEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectEjb;
+import org.broadinstitute.gpinformatics.athena.boundary.projects.SampleKitRecipient;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryInfoDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
@@ -32,14 +34,24 @@ import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.DisplayableItem;
 import org.broadinstitute.gpinformatics.athena.presentation.converter.IrbConverter;
+import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.BioProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.CohortTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.FundingTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
+import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
+import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProjectList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationPortalException;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientService;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDtoFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionStatusDetailBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.json.JSONArray;
@@ -53,6 +65,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -66,6 +79,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     public static final String ACTIONBEAN_URL_BINDING = "/projects/project.action";
     public static final String RESEARCH_PROJECT_PARAMETER = "researchProject";
+    public static final String RESEARCH_PROJECT_TAB_PARAMETER = "rpSelectedTab";
+    public static final String RESEARCH_PROJECT_DEFAULT_TAB = "0";
+    public static final String RESEARCH_PROJECT_SUBMISSIONS_TAB = "1";
 
     private static final String PROJECT = "Research Project";
     public static final String CREATE_PROJECT = CoreActionBean.CREATE + PROJECT;
@@ -78,10 +94,13 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public static final String VIEW_REGULATORY_INFO_ACTION = "viewRegulatoryInfo";
     public static final String EDIT_REGULATORY_INFO_ACTION = "editRegulatoryInfo";
     public static final String VALIDATE_TITLE_ACTION = "validateTitle";
+    public static final String VIEW_SUBMISSIONS_ACTION = "viewSubmissions";
+    public static final String POST_SUBMISSIONS_ACTION = "postSubmissions";
 
     public static final String PROJECT_CREATE_PAGE = "/projects/create.jsp";
     public static final String PROJECT_LIST_PAGE = "/projects/list.jsp";
     public static final String PROJECT_VIEW_PAGE = "/projects/view.jsp";
+    public static final String PROJECT_SUBMISSIONS_PAGE = "/projects/submissions.jsp";
 
     private static final String BEGIN_COLLABORATION_ACTION = "beginCollaboration";
 
@@ -89,8 +108,6 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     // Reference sequence that will be used for Exome projects.
     private static final String DEFAULT_REFERENCE_SEQUENCE = "Homo_sapiens_assembly19|1";
-
-    private static final boolean COLLABORATION_ENABLED = false;
 
     @Inject
     private MercuryClientService mercuryClientService;
@@ -107,6 +124,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @Inject
     private ProjectTokenInput projectTokenInput;
 
+    @Inject
+    private BioProjectTokenInput bioProjectTokenInput;
+
     @Validate(required = true, on = {EDIT_ACTION, VIEW_ACTION, BEGIN_COLLABORATION_ACTION})
     @Inject
     private RegulatoryInfoDao regulatoryInfoDao;
@@ -114,7 +134,11 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @Inject
     private RegulatoryInfoEjb regulatoryInfoEjb;
 
-    /** The research project business key */
+    @Inject
+    private SubmissionDtoFetcher submissionDtoFetcher;
+    /**
+     * The research project business key
+     */
     @Validate(required = true, on = {EDIT_ACTION, VIEW_ACTION})
     private String researchProject;
 
@@ -122,14 +146,25 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private String specifiedCollaborator;
     private String collaborationMessage;
 
+    @Validate(required = true, on = {BEGIN_COLLABORATION_ACTION})
+    private String collaborationQuoteId;
+
+    /**
+     * This defines where kits will be sent for orders placed from the collaboration portal.
+     */
+    @Validate(required = true, on = BEGIN_COLLABORATION_ACTION)
+    private SampleKitRecipient sampleKitRecipient = SampleKitRecipient.COLLABORATOR;
+
     @ValidateNestedProperties({
             @Validate(field = "title", label = "Project", required = true, maxlength = 4000, on = {SAVE_ACTION}),
             @Validate(field = "synopsis", label = "Synopsis", required = true, maxlength = 4000, on = {SAVE_ACTION}),
             @Validate(field = "irbNotes", label = "IRB Notes", required = false, maxlength = 255, on = {SAVE_ACTION}),
-            @Validate(field = "comments", label = "Comments", maxlength = 2000, on = {SAVE_ACTION})
+            @Validate(field = "comments", label = "Comments", maxlength = 2000, on = {SAVE_ACTION}),
+            @Validate(field = "regulatoryDesignation", label = "Regulatory Designation", required = true, on = {SAVE_ACTION})
     })
     private ResearchProject editResearchProject;
 
+    private List<SubmissionDto> submissionSamples;
     /*
      * The search query.
      */
@@ -154,6 +189,18 @@ public class ResearchProjectActionBean extends CoreActionBean {
      * On demand counts of orders on the project. Map of business key to count value.
      */
     private Map<String, Long> projectOrderCounts;
+
+    private List<String> selectedSubmissionSamples;
+
+    public Map<String, String> getBioSamples() {
+        return bioSamples;
+    }
+
+    public void setBioSamples(Map<String, String> bioSamples) {
+        this.bioSamples = bioSamples;
+    }
+
+    private Map<String, String> bioSamples=new HashMap<>();
 
     @ValidateNestedProperties(
             @Validate(field = "listOfKeys", label = "Project Managers", required = true, on = {SAVE_ACTION})
@@ -186,13 +233,20 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private ResearchProjectEjb researchProjectEjb;
 
     @Inject
-    private CollaborationEjb collaborationEjb;
+    private CollaborationService collaborationService;
 
     private String irbList;
 
     private final CompletionStatusFetcher progressFetcher = new CompletionStatusFetcher();
 
     private CollaborationData collaborationData;
+
+    private boolean validCollaborationPortal;
+
+    private String rpSelectedTab;
+
+    @Inject
+    private BioProjectList bioProjectList;
 
     public ResearchProjectActionBean() {
         super(CREATE_PROJECT, EDIT_PROJECT, RESEARCH_PROJECT_PARAMETER);
@@ -216,13 +270,18 @@ public class ResearchProjectActionBean extends CoreActionBean {
             on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION, REGULATORY_INFO_QUERY_ACTION,
                     ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION, ADD_NEW_REGULATORY_INFO_ACTION,
                     REMOVE_REGULATORY_INFO_ACTION, EDIT_REGULATORY_INFO_ACTION, BEGIN_COLLABORATION_ACTION,
-                    RESEND_INVITATION_ACTION})
+                    RESEND_INVITATION_ACTION, VIEW_SUBMISSIONS_ACTION, POST_SUBMISSIONS_ACTION})
     public void init() throws Exception {
         researchProject = getContext().getRequest().getParameter(RESEARCH_PROJECT_PARAMETER);
         if (!StringUtils.isBlank(researchProject)) {
             editResearchProject = researchProjectDao.findByBusinessKey(researchProject);
-            if (COLLABORATION_ENABLED) {
-                collaborationData = collaborationEjb.getCollaboration(researchProject);
+            try {
+                collaborationData = collaborationService.getCollaboration(researchProject);
+                validCollaborationPortal = true;
+            } catch (CollaborationNotFoundException | CollaborationPortalException ex) {
+                // If there is no collaboration service, for whatever reason, set the data to null so that we
+                collaborationData = null;
+                validCollaborationPortal = false;
             }
         } else {
             if (getUserBean().isValidBspUser()) {
@@ -257,7 +316,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
         // If the research project has no original title, then it was not fetched from hibernate, so this is a create
         // OR if this was fetched and the title has been changed.
         if ((editResearchProject.getOriginalTitle() == null) ||
-                (!editResearchProject.getTitle().equalsIgnoreCase(editResearchProject.getOriginalTitle()))) {
+            (!editResearchProject.getTitle().equalsIgnoreCase(editResearchProject.getOriginalTitle()))) {
 
             // Check if there is an existing research project and error out if it already exists.
             ResearchProject existingProject = researchProjectDao.findByTitle(editResearchProject.getTitle());
@@ -274,26 +333,44 @@ public class ResearchProjectActionBean extends CoreActionBean {
      */
     @ValidationMethod(on = BEGIN_COLLABORATION_ACTION)
     public void validateCollaborationInformation(ValidationErrors errors) {
-        // Cannot start a collaboration with an outside user if there is no PM specified.
-        if (editResearchProject.getProjectManagers().length < 1) {
-            errors.add("title", new SimpleError(
-                    "The research project must have a Project Manager before starting a collaboration."));
-        }
-    }
+        String ERROR_PREFIX = "Cannot create a collaboration because ";
+        String RP_ERROR_PREFIX = ERROR_PREFIX + "this research project ";
 
-    /**
-     * Validation for beginning a collaboration.
-     *
-     * @param errors The errors object
-     */
-    @ValidationMethod(on = BEGIN_COLLABORATION_ACTION)
-    public void validateCollaboration(ValidationErrors errors) {
+
+        // Cannot start a collaboration with an outside user if there is no PM specified.
+        if (editResearchProject.getProjectManagers().length == 0) {
+            addGlobalValidationError(RP_ERROR_PREFIX + "does not have a Project Manager.");
+        }
+
+        if (editResearchProject.getBroadPIs().length == 0) {
+            addGlobalValidationError(RP_ERROR_PREFIX + "does not have a Primary Investigator.");
+        }
+
+        if (editResearchProject.getCohortIds().length == 0) {
+            addGlobalValidationError(RP_ERROR_PREFIX + "does not have a Sample Cohort.");
+        }
+
+        if (editResearchProject.getCohortIds().length > 1) {
+            addGlobalValidationError(RP_ERROR_PREFIX + "has more than one Sample Cohort.");
+        }
+
+        if (editResearchProject.getRegulatoryInfos().isEmpty()) {
+            addGlobalValidationError(RP_ERROR_PREFIX + "has no Regulatory Information.");
+        }
+
+        if (editResearchProject.getRegulatoryInfos().size() > 1) {
+            addGlobalValidationError(RP_ERROR_PREFIX + "has more than one Regulatory Information.");
+        }
+
         if ((specifiedCollaborator == null) && (selectedCollaborator == null)) {
-            errors.addGlobalError(new SimpleError("Must specify either an existing collaborator or an email address."));
+            addGlobalValidationError(ERROR_PREFIX + "an existing collaborator or an email address is required.");
         }
+
         if (specifiedCollaborator != null && !EmailValidator.getInstance(false).isValid(specifiedCollaborator)) {
-            errors.addGlobalError(new SimpleError("''{2}'' is not a valid email address.", specifiedCollaborator));
+            addGlobalValidationError(ERROR_PREFIX + "''{2}'' is not a valid email address.", specifiedCollaborator);
         }
+
+        validateQuoteId(collaborationQuoteId);
     }
 
     public Map<String, Long> getResearchProjectCounts() {
@@ -321,7 +398,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     private void validateUser(String validatingFor) {
         if (!userBean.ensureUserValid()) {
-            addGlobalValidationError(MessageFormat.format(UserBean.LOGIN_WARNING, validatingFor + " a research project"));
+            addGlobalValidationError(
+                    MessageFormat.format(UserBean.LOGIN_WARNING, validatingFor + " a research project"));
         }
     }
 
@@ -351,6 +429,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
         otherUserList.setup(editResearchProject.getOther());
         fundingSourceList.setup(editResearchProject.getFundingIds());
         cohortsList.setup(editResearchProject.getCohortIds());
+        bioProjectTokenInput.setup(bioProjectList.getBioProjectMap().keySet());
         // The parent research project doesn't need to be defined, so only pre-populate if it's present.
         if (editResearchProject.getParentResearchProject() != null) {
             projectTokenInput.setup(editResearchProject.getParentResearchProject().getBusinessKey());
@@ -391,7 +470,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
             throw e;
         }
 
-        return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION).addParameter(RESEARCH_PROJECT_PARAMETER, editResearchProject.getBusinessKey());
+        return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION)
+                .addParameter(RESEARCH_PROJECT_PARAMETER, editResearchProject.getBusinessKey());
     }
 
     private void populateTokenListFields() {
@@ -407,20 +487,27 @@ public class ResearchProjectActionBean extends CoreActionBean {
         editResearchProject.populateIrbs(IrbConverter.getIrbs(irbList));
 
         ResearchProject tokenProject = projectTokenInput.getTokenObject();
-        editResearchProject.setParentResearchProject(tokenProject != null ? researchProjectDao.findByBusinessKey(tokenProject.getBusinessKey()) : null);
+        editResearchProject.setParentResearchProject(
+                tokenProject != null ? researchProjectDao.findByBusinessKey(tokenProject.getBusinessKey()) : null);
     }
 
     @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
+
         return new ForwardResolution(PROJECT_VIEW_PAGE);
     }
 
     @HandlesEvent(BEGIN_COLLABORATION_ACTION)
     public Resolution beginCollaboration() throws Exception {
-        collaborationEjb.beginCollaboration(
-                editResearchProject, selectedCollaborator, specifiedCollaborator, collaborationMessage);
+        try {
+            collaborationService.beginCollaboration(editResearchProject, selectedCollaborator, specifiedCollaborator,
+                    collaborationQuoteId, sampleKitRecipient, collaborationMessage);
+            addMessage("Collaboration created successfully");
+        } catch (Exception e) {
+            addGlobalValidationError("Could not begin the Collaboration: {2}", e.getMessage());
+        }
 
-        // Call init again so that the updated project is retrieved.
+        // Call init again so that any changed data due to calling beginCollaboration is retrieved.
         init();
         return view();
     }
@@ -516,6 +603,11 @@ public class ResearchProjectActionBean extends CoreActionBean {
         return createTextResolution(projectTokenInput.getJsonString(getQ()));
     }
 
+    @HandlesEvent("bioProjectAutocomplete")
+    public Resolution bioProjectAutocomplete() throws Exception {
+        return createTextResolution(bioProjectTokenInput.getJsonString(getQ()));
+    }
+
     @HandlesEvent("projectHierarchyAwareAutocomplete")
     public Resolution projectHierarchyAwareAutocomplete() throws Exception {
         researchProject = getContext().getRequest().getParameter(RESEARCH_PROJECT_PARAMETER);
@@ -545,7 +637,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
      * Determines whether or not the given regulatory information is already associated with the current research
      * project. This is used to determine whether an existing regulatory information can be added to a project.
      *
-     * @param regulatoryInfo    the regulatory info to check
+     * @param regulatoryInfo the regulatory info to check
+     *
      * @return true if the regulatory info is associated with the research project; false otherwise
      */
     public boolean isRegulatoryInfoInResearchProject(RegulatoryInfo regulatoryInfo) {
@@ -557,7 +650,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
      * research project. This is used to determine whether regulatory information can be safely disassociated with the
      * project.
      *
-     * @param regulatoryInfo    the regulatory info to check
+     * @param regulatoryInfo the regulatory info to check
+     *
      * @return true if the regulatory info is in use for an order; false otherwise
      */
     public boolean isRegulatoryInfoInProductOrdersForThisResearchProject(RegulatoryInfo regulatoryInfo) {
@@ -574,27 +668,18 @@ public class ResearchProjectActionBean extends CoreActionBean {
      *
      * @return true if creating a new regulatory information; false otherwise
      */
-    public boolean isCreating() {
+    public boolean isRegulatoryInformationNew() {
         return regulatoryInfoId == null;
-    }
-
-    /**
-     * Determines whether or not the regulatory information form represents an existing record.
-     *
-     * @return true if editing an existing regulatory information; false otherwise
-     */
-    public boolean isEditing() {
-        return !isCreating();
     }
 
     /**
      * Returns all of the possible regulatory information types. This is used to access the enumeration values because
      * stripes:options-enumeration does not support a "disabled" attribute.
      *
-     * @return a collection of all values from the {@link org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo.Type} enum
+     * @return a collection of all values from the {@link RegulatoryInfo.Type} enum
      */
-    public Collection<RegulatoryInfo.Type> getAllTypes() {
-        return Arrays.asList(RegulatoryInfo.Type.values());
+    public RegulatoryInfo.Type[] getAllTypes() {
+        return RegulatoryInfo.Type.values();
     }
 
     /**
@@ -615,7 +700,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
     /**
      * Determines whether or not a regulatory information of the given type already exists with the queried identifier.
      *
-     * @param type    the type to check
+     * @param type the type to check
+     *
      * @return true if the type is already in use for the identifier; false otherwise
      */
     public boolean isTypeInUseForIdentifier(RegulatoryInfo.Type type) {
@@ -698,14 +784,42 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @HandlesEvent(VALIDATE_TITLE_ACTION)
     public Resolution validateTitle() {
         String result = "";
-        List<RegulatoryInfo> infos = regulatoryInfoDao.findByName(regulatoryInfoAlias);
-        for (RegulatoryInfo info : infos) {
-            if (!info.getRegulatoryInfoId().equals(regulatoryInfoId)) {
-                result = String.format("%s: %s", info.getType().getName(), info.getIdentifier());
-                break;
+        if (StringUtils.isBlank(regulatoryInfoAlias)) {
+            result = "Protocol Title is required.";
+        } else if (regulatoryInfoAlias.length() > RegulatoryInfo.PROTOCOL_TITLE_MAX_LENGTH) {
+            result = String.format("Protocol title exceeds maximum length of %d with %d.",
+                    RegulatoryInfo.PROTOCOL_TITLE_MAX_LENGTH, regulatoryInfoAlias.length());
+        } else {
+            List<RegulatoryInfo> infos = regulatoryInfoDao.findByName(regulatoryInfoAlias);
+            for (RegulatoryInfo info : infos) {
+                if (!info.getRegulatoryInfoId().equals(regulatoryInfoId)) {
+                    result = String.format("Title is already in use by %s: %s.", info.getType().getName(),
+                            info.getIdentifier());
+                    break;
+                }
             }
         }
         return createTextResolution(result);
+    }
+
+    @HandlesEvent(VIEW_SUBMISSIONS_ACTION)
+    public Resolution viewSubmissions() {
+        return new ForwardResolution(PROJECT_SUBMISSIONS_PAGE);
+    }
+
+    /**
+     * Forces an update of all submission DTOs associated with the current Research Project
+     */
+    @Before(stages = LifecycleStage.EventHandling,
+            on = {VIEW_SUBMISSIONS_ACTION, POST_SUBMISSIONS_ACTION})
+    public void initializeForSubmissions() {
+        updateSubmissionSamples();
+    }
+
+    private void updateSubmissionSamples() {
+        if (editResearchProject != null) {
+            submissionSamples = submissionDtoFetcher.fetch(editResearchProject);
+        }
     }
 
     /**
@@ -719,6 +833,51 @@ public class ResearchProjectActionBean extends CoreActionBean {
         regulatoryInfoEjb.editRegulatoryInfo(regulatoryInfoId, regulatoryInfoAlias);
         return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION)
                 .addParameter(RESEARCH_PROJECT_PARAMETER, editResearchProject.getBusinessKey());
+    }
+
+    /**
+     * Handles a users request to submit samples to the submissions serverice
+     *
+     * @return
+     */
+    @HandlesEvent(POST_SUBMISSIONS_ACTION)
+    public Resolution postSubmissions() {
+        boolean errors = false;
+
+        rpSelectedTab = RESEARCH_PROJECT_SUBMISSIONS_TAB;
+
+        if (CollectionUtils.isEmpty(selectedSubmissionSamples)) {
+            addGlobalValidationError("You must select at least one sample in order to post for submission.");
+            errors = true;
+        }
+        BioProject selectedProject = bioProjectTokenInput.getTokenObject();
+
+        if (selectedProject == null) {
+            addGlobalValidationError("You must select a bio project in order to post for submissions");
+            errors = true;
+        }
+        if (!errors) {
+
+            List<SubmissionDto> selectedSubmissions = new ArrayList<>();
+            for (SubmissionDto dto : submissionSamples) {
+                if (selectedSubmissionSamples.contains(dto.getSampleName())) {
+                    selectedSubmissions.add(dto);
+                }
+            }
+
+            try {
+                Collection<SubmissionStatusDetailBean> submissionStatuses =
+                        researchProjectEjb.processSubmissions(researchProject,
+                                new BioProject(selectedProject.getAccession()), selectedSubmissions);
+                addMessage("The selected samples for submission have been successfully posted to NCBI.  See the " +
+                           "Submission Requests tab for further details");
+            } catch (InformaticsServiceException | ValidationException e) {
+                addGlobalValidationError(e.getMessage());
+            }
+        }
+        return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION)
+                .addParameter(RESEARCH_PROJECT_PARAMETER, researchProject)
+                .addParameter(RESEARCH_PROJECT_TAB_PARAMETER, RESEARCH_PROJECT_SUBMISSIONS_TAB);
     }
 
     // Complete Data getters are for the prepopulates on the create.jsp
@@ -835,6 +994,14 @@ public class ResearchProjectActionBean extends CoreActionBean {
         this.regulatoryInfoAlias = regulatoryInfoAlias;
     }
 
+    public String getCollaborationQuoteId() {
+        return collaborationQuoteId;
+    }
+
+    public void setCollaborationQuoteId(String collaborationQuoteId) {
+        this.collaborationQuoteId = collaborationQuoteId;
+    }
+
     /**
      * @return true if Save is a valid operation.
      */
@@ -864,6 +1031,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
      * Get the sequence aligner.
      *
      * @param businessKey the businessKey
+     *
      * @return UI helper object {@link DisplayableItem} representing the sequence aligner
      */
     public DisplayableItem getSequenceAligner(String businessKey) {
@@ -874,6 +1042,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
      * Get the reference sequence.
      *
      * @param businessKey the businessKey
+     *
      * @return UI helper object {@link DisplayableItem} representing the reference sequence
      */
     public DisplayableItem getReferenceSequence(String businessKey) {
@@ -922,14 +1091,73 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @HandlesEvent(RESEND_INVITATION_ACTION)
     public Resolution resendInvitation() throws Exception {
         try {
-            collaborationEjb.resendInvitation(researchProject);
+            collaborationService.resendInvitation(researchProject);
             addMessage("Invitation resent successfully");
         } catch (Exception e) {
-            addGlobalValidationError("Could not resend invitation due to error: {2}", e.toString());
+            addGlobalValidationError("Could not resend invitation due to an error: {2}", e.getMessage());
         }
 
         // Call init again so that the updated project is retrieved.
         init();
         return view();
+    }
+
+    public boolean isValidCollaborationPortal() {
+        return validCollaborationPortal;
+    }
+
+    public List<SubmissionDto> getSubmissionSamples() {
+        return submissionSamples;
+    }
+
+    public void setSubmissionSamples(List<SubmissionDto> submissionSamples) {
+        this.submissionSamples = submissionSamples;
+    }
+
+    public BioProjectTokenInput getBioProjectTokenInput() {
+        return bioProjectTokenInput;
+    }
+
+
+    public void setBioProjectTokenInput(BioProjectTokenInput bioProjectTokenInput) {
+        this.bioProjectTokenInput = bioProjectTokenInput;
+    }
+
+    public void setSelectedSubmissionSamples(List<String> selectedSubmissionSamples) {
+        this.selectedSubmissionSamples = selectedSubmissionSamples;
+    }
+
+    public List<String> getSelectedSubmissionSamples() {
+        return selectedSubmissionSamples;
+    }
+
+    public String getRpSelectedTab() {
+        return rpSelectedTab;
+    }
+
+    public void setRpSelectedTab(String rpSelectedTab) {
+        this.rpSelectedTab = rpSelectedTab;
+    }
+
+    /**
+     * A collaboration with the portal can only be started by PMs or Developers for research projects.
+     *
+     * @return True if you can start a collaboration.
+     */
+    public boolean isCanBeginCollaborations() {
+        return isResearchOnly() && (getUserBean().isDeveloperUser() || getUserBean().isPMUser());
+    }
+
+    private boolean isResearchOnly() {
+        return ((editResearchProject != null) &&
+               (editResearchProject.getRegulatoryDesignation() == ResearchProject.RegulatoryDesignation.RESEARCH_ONLY));
+    }
+
+    public SampleKitRecipient getSampleKitRecipient() {
+        return sampleKitRecipient;
+    }
+
+    public void setSampleKitRecipient(SampleKitRecipient sampleKitRecipient) {
+        this.sampleKitRecipient = sampleKitRecipient;
     }
 }

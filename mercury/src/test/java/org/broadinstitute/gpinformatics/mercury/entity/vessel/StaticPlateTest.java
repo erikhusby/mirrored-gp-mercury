@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.testng.annotations.BeforeMethod;
@@ -24,11 +25,12 @@ import static org.hamcrest.Matchers.hasItems;
 /**
  * @author breilly
  */
+@Test(groups = TestGroups.DATABASE_FREE)
 public class StaticPlateTest {
 
-    private TwoDBarcodedTube tube1;
-    private TwoDBarcodedTube tube2;
-    private TwoDBarcodedTube tube3;
+    private BarcodedTube tube1;
+    private BarcodedTube tube2;
+    private BarcodedTube tube3;
 
     private StaticPlate plate1;
     private StaticPlate plate2;
@@ -36,9 +38,9 @@ public class StaticPlateTest {
 
     @BeforeMethod(groups = DATABASE_FREE)
     public void setup() {
-        tube1 = new TwoDBarcodedTube("tube1");
-        tube2 = new TwoDBarcodedTube("tube2");
-        tube3 = new TwoDBarcodedTube("tube3");
+        tube1 = new BarcodedTube("tube1");
+        tube2 = new BarcodedTube("tube2");
+        tube3 = new BarcodedTube("tube3");
 
         plate1 = new StaticPlate("plate1", Eppendorf96);
         plate2 = new StaticPlate("plate2", Eppendorf96);
@@ -143,7 +145,7 @@ public class StaticPlateTest {
     public void testGetNearestTubeAncestorsMultipleWellsSingleAncestors() {
         TubeFormation rack = makeTubeFormation(
                 new VesselPosition[]{A01, B02, C03},
-                new TwoDBarcodedTube[]{tube1, tube2, tube3});
+                new BarcodedTube[]{tube1, tube2, tube3});
         doSectionTransfer(rack, plate1);
         List<VesselAndPosition> ancestors = plate1.getNearestTubeAncestors();
         assertThat(ancestors.size(), is(3));

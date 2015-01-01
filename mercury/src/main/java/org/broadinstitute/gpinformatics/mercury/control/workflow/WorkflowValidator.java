@@ -2,10 +2,10 @@ package org.broadinstitute.gpinformatics.mercury.control.workflow;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean;
 import org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
@@ -19,7 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePl
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.BettaLimsMessageUtils;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
@@ -60,9 +60,7 @@ public class WorkflowValidator {
     @Inject
     private EmailSender emailSender;
 
-    @SuppressWarnings("CdiInjectionPointsInspection")
-    @Inject
-    private AthenaClientService athenaClientService;
+    private ProductOrderDao productOrderDao;
 
     @Inject
     private AppConfig appConfig;
@@ -128,12 +126,12 @@ public class WorkflowValidator {
      * Parameter to email template.
      */
     public static class WorkflowValidationError {
-        private final SampleInstance sampleInstance;
+        private final SampleInstanceV2 sampleInstance;
         private final List<ProductWorkflowDefVersion.ValidationError> errors;
         private final ProductOrder productOrder;
         private final AppConfig appConfig;
 
-        public WorkflowValidationError(SampleInstance sampleInstance,
+        public WorkflowValidationError(SampleInstanceV2 sampleInstance,
                                        List<ProductWorkflowDefVersion.ValidationError> errors,
                                        ProductOrder productOrder,
                                        AppConfig appConfig) {
@@ -143,7 +141,7 @@ public class WorkflowValidator {
             this.appConfig = appConfig;
         }
 
-        public SampleInstance getSampleInstance() {
+        public SampleInstanceV2 getSampleInstance() {
             return sampleInstance;
         }
 
@@ -187,20 +185,28 @@ public class WorkflowValidator {
         List<WorkflowValidationError> validationErrors = validateWorkflow(labVessels, stationEventType.getEventType());
 
         if (!validationErrors.isEmpty()) {
-            Map<String, Object> rootMap = new HashMap<>();
-            String linkToPlastic = appConfig.getUrl() + VesselSearchActionBean.ACTIONBEAN_URL_BINDING + "?" +
-                                   VesselSearchActionBean.VESSEL_SEARCH + "=&searchKey=" + labVessels.iterator().next()
-                    .getLabel();
-            rootMap.put("linkToPlastic", linkToPlastic);
-            rootMap.put("stationEvent", stationEventType);
-            rootMap.put("bspUser", bspUserList.getByUsername(stationEventType.getOperator()));
-            rootMap.put("validationErrors", validationErrors);
-            StringWriter stringWriter = new StringWriter();
-            templateEngine.processTemplate("WorkflowValidation.ftl", rootMap, stringWriter);
-            emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(), "Workflow validation failure for " +
-                                                                              stationEventType.getEventType(),
-                    stringWriter.toString());
+            String body = renderTemplate(labVessels, stationEventType, validationErrors);
+            emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
+                    "Workflow validation failure for " + stationEventType.getEventType(), body);
         }
+    }
+
+    /**
+     * Uses a template to render validation errors into an HTML email body.
+     */
+    public String renderTemplate(Collection<LabVessel> labVessels, StationEventType stationEventType,
+            List<WorkflowValidationError> validationErrors) {
+        Map<String, Object> rootMap = new HashMap<>();
+        String linkToPlastic = appConfig.getUrl() + VesselSearchActionBean.ACTIONBEAN_URL_BINDING + "?" +
+                               VesselSearchActionBean.VESSEL_SEARCH + "=&searchKey=" + labVessels.iterator().next()
+                                                                                                 .getLabel();
+        rootMap.put("linkToPlastic", linkToPlastic);
+        rootMap.put("stationEvent", stationEventType);
+        rootMap.put("bspUser", bspUserList.getByUsername(stationEventType.getOperator()));
+        rootMap.put("validationErrors", validationErrors);
+        StringWriter stringWriter = new StringWriter();
+        templateEngine.processTemplate("WorkflowValidation.ftl", rootMap, stringWriter);
+        return stringWriter.toString();
     }
 
     /**
@@ -215,11 +221,10 @@ public class WorkflowValidator {
         List<WorkflowValidationError> validationErrors = new ArrayList<>();
 
         for (LabVessel labVessel : labVessels) { // todo jmt can this be null?
-            Set<SampleInstance> sampleInstances = labVessel.getSampleInstances(LabVessel.SampleType.PREFER_PDO,
-                    LabBatch.LabBatchType.WORKFLOW);
-            for (SampleInstance sampleInstance : sampleInstances) {
+            Set<SampleInstanceV2> sampleInstances = labVessel.getSampleInstancesV2();
+            for (SampleInstanceV2 sampleInstance : sampleInstances) {
                 String workflowName = sampleInstance.getWorkflowName();
-                LabBatch effectiveBatch = sampleInstance.getLabBatch();
+                LabBatch effectiveBatch = sampleInstance.getSingleBatch();
 
                 /*
                     Not necessarily an ideal solution but validation should not necessarily cause a Null pointer which
@@ -233,9 +238,8 @@ public class WorkflowValidator {
                                 workflowVersion.validate(labVessel, eventType);
                         if (!errors.isEmpty()) {
                             ProductOrder productOrder = null;
-                            if (sampleInstance.getProductOrderKey() != null) {
-                                productOrder = athenaClientService.retrieveProductOrderDetails(
-                                        sampleInstance.getProductOrderKey());
+                            if (sampleInstance.getSingleBucketEntry() != null) {
+                                productOrder = sampleInstance.getSingleBucketEntry().getProductOrder();
                             }
                             //if this is a rework and we are at the first step of the process it was reworked from ignore the error
                             boolean ignoreErrors = false;
@@ -246,7 +250,7 @@ public class WorkflowValidator {
                             }
                             if (!ignoreErrors) {
                                 validationErrors.add(new WorkflowValidationError(sampleInstance, errors, productOrder,
-                                        appConfig));
+                                                                                 appConfig));
                             }
 
                         }
@@ -270,7 +274,8 @@ public class WorkflowValidator {
         return validationErrors;
     }
 
-    public void setAthenaClientService(AthenaClientService athenaClientService) {
-        this.athenaClientService = athenaClientService;
+    @Inject
+    public void setProductOrderDao(ProductOrderDao productOrderDao) {
+        this.productOrderDao = productOrderDao;
     }
 }

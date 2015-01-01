@@ -7,7 +7,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bettalims.BettaLimsConnec
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
-import org.broadinstitute.gpinformatics.infrastructure.ws.WsMessageStoreStub;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
@@ -17,6 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
@@ -30,7 +30,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StripTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
@@ -51,6 +51,7 @@ import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -59,7 +60,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEventTestFactory.makeTubeFormation;
 
 /**
@@ -67,7 +67,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEve
  *         Date: 2/7/13
  *         Time: 11:10 PM
  */
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.STUBBY)
 public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
     @SuppressWarnings("CdiInjectionPointsInspection")
@@ -79,6 +79,9 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
     @Inject
     private LabVesselDao vesselDao;
+
+    @Inject
+    private MercurySampleDao mercurySampleDao;
 
     private BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
 
@@ -105,14 +108,13 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
     private BettaLimsConnector mockConnector;
     private String testPrefix;
     private String ligationBarcode;
-    private StaticPlate ligationPlate;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWarWithAlternatives(DEV, WsMessageStoreStub.class);
+        return DeploymentBuilder.buildMercuryWar();
     }
 
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @BeforeMethod(groups = TestGroups.STUBBY)
     public void setUp() throws Exception {
 
         if (utx == null) {
@@ -134,7 +136,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         testPrefix = "bcode";
         ligationBarcode = "ligationPlate" + testPrefix;
 
-        ligationPlate = LabEventTest.buildIndexPlate(molecularIndexingSchemeDao, molecularIndexDao,
+        StaticPlate ligationPlate = LabEventTest.buildIndexPlate(molecularIndexingSchemeDao, molecularIndexDao,
                 Collections.singletonList(MolecularIndexingScheme.IndexPosition.ILLUMINA_P7),
                 Collections.singletonList(ligationBarcode)).get(0);
         vesselDao.persist(ligationPlate);
@@ -143,7 +145,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
     }
 
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @AfterMethod(groups = TestGroups.STUBBY)
     public void tearDown() throws Exception {
         if (utx == null) {
             return;
@@ -154,7 +156,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
     }
 
     // todo this was changed from SQUID to WORKFLOW_DEPENDENT, need another scenario that tests SQUID
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.STUBBY)
     public void testExomeExpressEvents() throws Exception {
 
         mockConnector = EasyMock.createNiceMock(BettaLimsConnector.class);
@@ -164,8 +166,8 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         testExExOrder = poDao.findByBusinessKey(exExJiraKey);
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube =
-                buildVesselsForPdo(testExExOrder, vesselDao, "Shearing Bucket", bucketDao);
+        Map<String, BarcodedTube> mapBarcodeToTube =
+                buildVesselsForPdo(testExExOrder, "Shearing Bucket");
 
         String rackBarcode = "REXEX" + (new Date()).toString();
         List<VesselPosition> vesselPositions = new ArrayList<>(mapBarcodeToTube.size());
@@ -178,7 +180,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
                 makeTubeFormation(vesselPositions.toArray(new VesselPosition[vesselPositions.size()]),
                         new ArrayList<>(mapBarcodeToTube.values())
-                                .toArray(new TwoDBarcodedTube[mapBarcodeToTube.size()]));
+                                .toArray(new BarcodedTube[mapBarcodeToTube.size()]));
         shearingSourceRack.addRackOfTubes(new RackOfTubes(rackBarcode, RackOfTubes.RackType.Matrix96));
 
         vesselDao.persist(shearingSourceRack);
@@ -230,7 +232,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.STUBBY)
     public void testNonExomeExpressTubesToPlateEvent() throws Exception {
 
         mockConnector = EasyMock.createNiceMock(BettaLimsConnector.class);
@@ -242,8 +244,8 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         squidProductOrder = poDao.findByBusinessKey(squidPdoJiraKey);
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube =
-                buildVesselsForPdo(squidProductOrder, vesselDao, null, bucketDao);
+        Map<String, BarcodedTube> mapBarcodeToTube =
+                buildVesselsForPdo(squidProductOrder, null);
 
         String rackBarcode = "RSQUID" + (new Date()).toString();
         List<VesselPosition> vesselPositions = new ArrayList<>(mapBarcodeToTube.size());
@@ -255,7 +257,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         TubeFormation shearingSourceRack =
                 makeTubeFormation(vesselPositions.toArray(new VesselPosition[vesselPositions.size()]),
                         new ArrayList<>(mapBarcodeToTube.values())
-                                .toArray(new TwoDBarcodedTube[mapBarcodeToTube.size()]));
+                                .toArray(new BarcodedTube[mapBarcodeToTube.size()]));
 
         shearingSourceRack.addRackOfTubes(new RackOfTubes(rackBarcode, RackOfTubes.RackType.Matrix96));
 
@@ -291,7 +293,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.STUBBY)
     public void testNonExomeExpressIndexPlateLigationEvent() throws Exception {
         mockConnector = EasyMock.createNiceMock(BettaLimsConnector.class);
 
@@ -302,8 +304,8 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         squidProductOrder = poDao.findByBusinessKey(squidPdoJiraKey);
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube =
-                buildVesselsForPdo(squidProductOrder, vesselDao, null, bucketDao);
+        Map<String, BarcodedTube> mapBarcodeToTube =
+                buildVesselsForPdo(squidProductOrder, null);
 
         String rackBarcode = "RSQUID" + (new Date()).toString();
         List<VesselPosition> vesselPositions = new ArrayList<>(mapBarcodeToTube.size());
@@ -315,7 +317,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         TubeFormation shearingSourceRack =
                 makeTubeFormation(vesselPositions.toArray(new VesselPosition[vesselPositions.size()]),
                         new ArrayList<>(mapBarcodeToTube.values())
-                                .toArray(new TwoDBarcodedTube[mapBarcodeToTube.size()]));
+                                .toArray(new BarcodedTube[mapBarcodeToTube.size()]));
 
         shearingSourceRack.addRackOfTubes(new RackOfTubes(rackBarcode, RackOfTubes.RackType.Matrix96));
 
@@ -369,7 +371,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
     }
 
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.STUBBY)
     public void testNonExomeExpressPlateToRackEvent() throws Exception {
 
 
@@ -382,8 +384,8 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         squidProductOrder = poDao.findByBusinessKey(squidPdoJiraKey);
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube =
-                buildVesselsForPdo(squidProductOrder, vesselDao, null, bucketDao);
+        Map<String, BarcodedTube> mapBarcodeToTube =
+                buildVesselsForPdo(squidProductOrder, null);
 
         String rackBarcode = "RSQUID" + (new Date()).toString();
         List<VesselPosition> vesselPositions = new ArrayList<>(mapBarcodeToTube.size());
@@ -395,7 +397,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         TubeFormation shearingSourceRack =
                 makeTubeFormation(vesselPositions.toArray(new VesselPosition[vesselPositions.size()]),
                         new ArrayList<>(mapBarcodeToTube.values())
-                                .toArray(new TwoDBarcodedTube[mapBarcodeToTube.size()]));
+                                .toArray(new BarcodedTube[mapBarcodeToTube.size()]));
 
         shearingSourceRack.addRackOfTubes(new RackOfTubes(rackBarcode, RackOfTubes.RackType.Matrix96));
 
@@ -456,7 +458,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         EasyMock.verify(mockConnector);
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.STUBBY)
     public void testNonExomeExpressRackToStripTubeBEvent() throws Exception {
 
         mockConnector = EasyMock.createNiceMock(BettaLimsConnector.class);
@@ -468,8 +470,8 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         squidProductOrder = poDao.findByBusinessKey(squidPdoJiraKey);
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube =
-                buildVesselsForPdo(squidProductOrder, vesselDao, null, bucketDao);
+        Map<String, BarcodedTube> mapBarcodeToTube =
+                buildVesselsForPdo(squidProductOrder, null);
 
         String rackBarcode = "RSQUID" + (new Date()).toString();
         List<VesselPosition> vesselPositions = new ArrayList<>(mapBarcodeToTube.size());
@@ -481,7 +483,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         TubeFormation shearingSourceRack =
                 makeTubeFormation(vesselPositions.toArray(new VesselPosition[vesselPositions.size()]),
                         new ArrayList<>(mapBarcodeToTube.values())
-                                .toArray(new TwoDBarcodedTube[mapBarcodeToTube.size()]));
+                                .toArray(new BarcodedTube[mapBarcodeToTube.size()]));
 
         shearingSourceRack.addRackOfTubes(new RackOfTubes(rackBarcode, RackOfTubes.RackType.Matrix96));
 
@@ -581,7 +583,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
     }
 
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.STUBBY)
     public void testNonExomeExpressStripTubeBToFlowcellEvent() throws Exception {
 
         mockConnector = EasyMock.createNiceMock(BettaLimsConnector.class);
@@ -593,8 +595,8 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         squidProductOrder = poDao.findByBusinessKey(squidPdoJiraKey);
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube =
-                buildVesselsForPdo(squidProductOrder, vesselDao, null, bucketDao);
+        Map<String, BarcodedTube> mapBarcodeToTube =
+                buildVesselsForPdo(squidProductOrder, null);
 
         String rackBarcode = "RSQUID" + (new Date()).toString();
         List<VesselPosition> vesselPositions = new ArrayList<>(mapBarcodeToTube.size());
@@ -606,7 +608,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         TubeFormation shearingSourceRack =
                 makeTubeFormation(vesselPositions.toArray(new VesselPosition[vesselPositions.size()]),
                         new ArrayList<>(mapBarcodeToTube.values())
-                                .toArray(new TwoDBarcodedTube[mapBarcodeToTube.size()]));
+                                .toArray(new BarcodedTube[mapBarcodeToTube.size()]));
 
         shearingSourceRack.addRackOfTubes(new RackOfTubes(rackBarcode, RackOfTubes.RackType.Matrix96));
 
@@ -724,7 +726,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
     }
 
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.STUBBY)
     public void testNonExomeExpressFlowcellLoadEvent() throws Exception {
 
         mockConnector = EasyMock.createNiceMock(BettaLimsConnector.class);
@@ -736,8 +738,8 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         squidProductOrder = poDao.findByBusinessKey(squidPdoJiraKey);
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube =
-                buildVesselsForPdo(squidProductOrder, vesselDao, null, bucketDao);
+        Map<String, BarcodedTube> mapBarcodeToTube =
+                buildVesselsForPdo(squidProductOrder, null);
 
         String rackBarcode = "RSQUID" + (new Date()).toString();
         List<VesselPosition> vesselPositions = new ArrayList<>(mapBarcodeToTube.size());
@@ -749,7 +751,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         TubeFormation shearingSourceRack =
                 makeTubeFormation(vesselPositions.toArray(new VesselPosition[vesselPositions.size()]),
                         new ArrayList<>(mapBarcodeToTube.values())
-                                .toArray(new TwoDBarcodedTube[mapBarcodeToTube.size()]));
+                                .toArray(new BarcodedTube[mapBarcodeToTube.size()]));
 
         shearingSourceRack.addRackOfTubes(new RackOfTubes(rackBarcode, RackOfTubes.RackType.Matrix96));
 
@@ -889,16 +891,11 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
      * TODO SGM:  this could probably be broken up better to define an alternate method to make cleaner
      *
      * @param productOrder Product order by which to determine the Samples to Create.
-     * @param vesselDao1   Assists in finding the created Tubes
      * @param bucketName   Optional:  Name of the Bucket to create.  If left null, bucket creation will be avoided
-     * @param bucketDao1   Optional:  Dao to assist in finding/persisting to a bucket
-     *
      * @return
      */
-    private Map<String, TwoDBarcodedTube> buildVesselsForPdo(@Nonnull ProductOrder productOrder,
-                                                             @Nonnull LabVesselDao vesselDao1,
-                                                             @Nullable String bucketName,
-                                                             @Nullable BucketDao bucketDao1) {
+    private Map<String, BarcodedTube> buildVesselsForPdo(@Nonnull ProductOrder productOrder,
+                                                         @Nullable String bucketName) {
 
         Date testSuffix = new Date();
         Set<LabVessel> tubes = new HashSet<>(productOrder.getTotalSampleCount());
@@ -907,7 +904,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         Bucket bucket = null;
         if (bucketName != null) {
-            bucket = bucketDao1.findByName(bucketName);
+            bucket = bucketDao.findByName(bucketName);
             if (bucket == null) {
                 bucket = new Bucket(new WorkflowBucketDef(bucketName));
             }
@@ -915,15 +912,21 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         for (ProductOrderSample currSample : productOrder.getSamples()) {
 
-            TwoDBarcodedTube newTube = (TwoDBarcodedTube) vesselDao1.findByIdentifier("R" + currSample.getName());
+            BarcodedTube newTube = (BarcodedTube) vesselDao.findByIdentifier("R" + currSample.getName());
             if (newTube == null) {
-                newTube = new TwoDBarcodedTube("R" + currSample.getName());
+                newTube = new BarcodedTube("R" + currSample.getName());
             }
-            newTube.addSample(new MercurySample(currSample.getName()));
+
+            MercurySample mercurySample = mercurySampleDao.findBySampleKey(currSample.getName());
+
+            if(mercurySample == null) {
+                mercurySample = new MercurySample(currSample.getName(), MercurySample.MetadataSource.BSP);
+            }
+            newTube.addSample(mercurySample);
             tubes.add(newTube);
             barcodes.add(newTube.getLabel());
             if (bucketName != null && bucket.findEntry(newTube) == null) {
-                bucket.addEntry(productOrder.getBusinessKey(), newTube,
+                bucket.addEntry(productOrder, newTube,
                         org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry.BucketEntryType.PDO_ENTRY);
             }
         }
@@ -941,22 +944,22 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
             }
         }
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube =
+        Map<String, BarcodedTube> mapBarcodeToTube =
                 new LinkedHashMap<>(productOrder.getTotalSampleCount());
 
         if (bucketName != null) {
-            bucketDao1.persist(bucket);
-            bucketDao1.flush();
-            bucketDao1.clear();
+            bucketDao.persist(bucket);
+            bucketDao.flush();
+            bucketDao.clear();
         } else {
-            vesselDao1.persistAll(new ArrayList<Object>(tubes));
-            vesselDao1.flush();
-            vesselDao1.clear();
+            vesselDao.persistAll(new ArrayList<Object>(tubes));
+            vesselDao.flush();
+            vesselDao.clear();
         }
 
         for (String barcode : barcodes) {
-            LabVessel foundTube = vesselDao1.findByIdentifier(barcode);
-            mapBarcodeToTube.put(barcode, (TwoDBarcodedTube) foundTube);
+            LabVessel foundTube = vesselDao.findByIdentifier(barcode);
+            mapBarcodeToTube.put(barcode, (BarcodedTube) foundTube);
         }
         return mapBarcodeToTube;
     }

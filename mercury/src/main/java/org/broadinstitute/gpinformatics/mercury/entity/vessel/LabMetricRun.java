@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
@@ -10,6 +11,9 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -27,7 +31,6 @@ import java.util.Set;
         uniqueConstraints = @UniqueConstraint(name = "UK_LMR_NAME_TYPE", columnNames = {"runName", "runDate"}))
 public class LabMetricRun {
 
-    @SuppressWarnings("UnusedDeclaration")
     @SequenceGenerator(name = "SEQ_LAB_METRIC_RUN", schema = "mercury", sequenceName = "SEQ_LAB_METRIC_RUN")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LAB_METRIC_RUN")
     @Id
@@ -44,6 +47,12 @@ public class LabMetricRun {
     @OneToMany(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY, mappedBy = "labMetricRun")
     private Set<LabMetric> labMetrics = new HashSet<>();
 
+    @ManyToMany(cascade = CascadeType.PERSIST)
+    @JoinTable(name = "lab_metric_run_metadata", schema = "mercury",
+            joinColumns = @JoinColumn(name = "LAB_METRIC_RUN_ID"),
+            inverseJoinColumns = @JoinColumn(name = "METADATA_ID"))
+    private Set<Metadata> metadata = new HashSet<>();
+
     public LabMetricRun(String runName, Date runDate, LabMetric.MetricType metricType) {
         this.runName = runName;
         this.runDate = runDate;
@@ -59,6 +68,9 @@ public class LabMetricRun {
         labMetric.setLabMetricRun(this);
     }
 
+    public Long getLabMetricRunId() {
+        return labMetricRunId;
+    }
 
     public String getRunName() {
         return runName;
@@ -72,7 +84,18 @@ public class LabMetricRun {
         return metricType;
     }
 
+    /**
+     * For fixups only.
+     */
+    void setMetricType(LabMetric.MetricType metricType) {
+        this.metricType = metricType;
+    }
+
     public Set<LabMetric> getLabMetrics() {
         return labMetrics;
+    }
+
+    public Set<Metadata> getMetadata() {
+        return metadata;
     }
 }

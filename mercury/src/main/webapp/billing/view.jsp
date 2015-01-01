@@ -15,6 +15,8 @@
                     "aaSorting": [[0,'desc']],
                     "aoColumns": [
                         {"bSortable": true},                   // Quote
+                        {"bSortable": true},                   // PDOs
+                        {"bSortable": true},                   // quote server work items
                         {"bSortable": true},                   // Platform
                         {"bSortable": true},                   // Category
                         {"bSortable": true},                   // Price Item
@@ -24,6 +26,14 @@
                         {"bSortable": false}]                  // Billed Message
                 })
             });
+
+            $j(window).load(function() {
+                var idToHighlight = '#'.concat(${actionBean.workItemIdToHighlight});
+                // if the url contains a quote server work item, highlight the corresponding row
+                $j(idToHighlight).attr('class','highlighted');
+                $('html, body').scrollTop($(idToHighlight).offset().top);
+            });
+
         </script>
     </stripes:layout-component>
 
@@ -83,29 +93,53 @@
             <h4 style="display:inline">Quote Items</h4>
         </div>
 
-        <table id="quoteReporting" class="table simple">
+        <table id="quoteReporting" class="table simple" style="table-layout: fixed;">
             <thead>
             <tr>
-                <th width="90">Quote</th>
+                <th width="60">Quote</th>
+                <th width="250">PDOs</th>
+                <th width="50">Work Items</th>
                 <th>Platform</th>
-                <th width="40">Category</th>
-                <th width="40">Price Item</th>
-                <th width="40">Quote Price Type</th>
-                <th width="60">Quantity</th>
-                <th width="100">Work Completed</th>
+                <th>Category</th>
+                <th>Price Item</th>
+                <th width="60">Quote Price Type</th>
+                <th width="40">Quantity</th>
+                <th width="70">Work Completed</th>
                 <th width="40">Work Reported</th>
-                <th width="40">Billing Message</th>
+                <th>Billing Message</th>
             </tr>
             </thead>
             <tbody>
             <c:forEach items="${actionBean.quoteImportItems}" var="item">
-                <tr>
-                    <td width="50">${item.quoteId}</td>
-                    <td width="100">${item.priceItem.platform}</td>
-                    <td width="50">${item.priceItem.category}</td>
+                <tr id="${item.singleWorkItem}">
+                    <td>
+                        <a href="${actionBean.getQuoteUrl(item.quoteId)}" class="external" target="QUOTE">
+                            ${item.quoteId}
+                        </a>
+                    </td>
+                    <td>
+                        <c:forEach items="${item.orderKeys}" var="pdoBusinessKey">
+                            <span style="white-space: nowrap">
+                                <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" event="view">
+                                    <stripes:param name="productOrder" value="${pdoBusinessKey}"/>
+                                    ${pdoBusinessKey}
+                                </stripes:link>
+                                : quantity ${item.getChargedAmountForPdo(pdoBusinessKey)} for ${item.getNumberOfSamples(pdoBusinessKey)} samples </span>
+                            <br>
+                        </c:forEach>
+                    </td>
+                    <td>
+                        <c:forEach items="${item.workItems}" var="quoteServerWorkItem">
+                            <a href="${actionBean.getQuoteWorkItemUrl(item.quoteId,quoteServerWorkItem)}" target="QUOTE">
+                                ${quoteServerWorkItem}<br>
+                            </a>
+                        </c:forEach>
+                    </td>
+                    <td>${item.priceItem.platform}</td>
+                    <td>${item.priceItem.category}</td>
                     <td>${item.priceItem.name}</td>
-                    <td width="70">${item.quotePriceType}</td>
-                    <td width="50">${item.quantity}</td>
+                    <td>${item.quotePriceType}</td>
+                    <td>${item.getRoundedQuantity()}</td>
                     <td>${item.numSamples}</td>
                     <td>
                         <fmt:formatDate value="${item.workCompleteDate}" pattern="${actionBean.datePattern}"/>

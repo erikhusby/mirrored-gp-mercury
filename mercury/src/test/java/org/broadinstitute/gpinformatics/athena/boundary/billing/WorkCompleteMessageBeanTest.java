@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
-import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.work.WorkCompleteMessageDao;
 import org.broadinstitute.gpinformatics.athena.entity.work.WorkCompleteMessage;
 import org.broadinstitute.gpinformatics.infrastructure.common.SessionContextUtility;
@@ -34,8 +33,8 @@ import java.util.HashMap;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.AUTO_BUILD;
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
+@Test(groups = TestGroups.STANDARD)
 public class WorkCompleteMessageBeanTest extends Arquillian {
 
     // These objects are not persisted, so using non-unique names is OK here.
@@ -49,7 +48,7 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
     WorkCompleteMessageDao workCompleteMessageDao;
 
     @Inject
-    ProductOrderEjb productOrderEjb;
+    BillingEjb billingEjb;
 
     @Inject
     SessionContextUtility sessionContextUtility;
@@ -66,7 +65,7 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(AUTO_BUILD);
     }
 
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @BeforeMethod(groups = TestGroups.STANDARD)
     public void setUp() throws Exception {
         // Skip if no injections, since we're not running in container.
         if (utx == null) {
@@ -76,7 +75,7 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
         utx.begin();
     }
 
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @AfterMethod(groups = TestGroups.STANDARD)
     public void tearDown() throws Exception {
         // Skip if no injections, since we're not running in container.
         if (utx == null) {
@@ -94,7 +93,7 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
      * <p/>
      * This test is only checking to see if the queue is present on the server at the specified port and host name.
      */
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.STANDARD)
     public void testSendMessage() throws Exception {
         sendMessage();
     }
@@ -105,7 +104,7 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
      * This test doesn't actually connect to the JMS queue.  The test hands the message directly
      * to the MDB handler method.
      */
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.STANDARD)
     public void testOnMessage() throws Exception {
         deliverMessage();
         List<WorkCompleteMessage> messages = workCompleteMessageDao.getNewMessages();
@@ -129,11 +128,11 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
     }
 
     // TODO: expand to test creating ledger entries from message
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+    @Test(groups = TestGroups.STANDARD, enabled = false)
     public void testOnMessageReadBack() throws Exception {
         deliverMessage();
         AutomatedBiller automatedBiller =
-                new AutomatedBiller(workCompleteMessageDao, productOrderEjb, sessionContextUtility);
+                new AutomatedBiller(workCompleteMessageDao, billingEjb, sessionContextUtility);
         automatedBiller.processMessages();
         workCompleteMessageDao.flush();
         workCompleteMessageDao.clear();
@@ -146,6 +145,11 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
     }
 
     public Session createSession() throws JMSException {
+        Connection connection = getConnection();
+        return connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+    }
+
+    private Connection getConnection() throws JMSException {
         HornetQConnectionFactory cf = HornetQJMSClient.createConnectionFactoryWithoutHA(JMSFactoryType.CF,
                 new TransportConfiguration(NettyConnectorFactory.class.getName(),
                         new HashMap<String, Object>() {{
@@ -153,9 +157,11 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
                             put(TransportConstants.HOST_PROP_NAME, appConfig.getHost());
                         }}
                 ));
+
+        cf.setClientFailureCheckPeriod(Long.MAX_VALUE);
+        cf.setConnectionTTL(-1);
         // This connection is never closed, which is probably Bad but it doesn't seem to break anything.
-        Connection connection = cf.createConnection();
-        return connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+        return cf.createConnection();
     }
 
     /**
@@ -163,11 +169,25 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
      * listener reads it, it won't get written to the database.
      */
     public void sendMessage() throws JMSException {
-        Session session = createSession();
-        Destination destination = session.createQueue("broad.queue.athena.workreporting.dev");
-        MessageProducer producer = session.createProducer(destination);
-        Message message = createMessage(session, false);
-        producer.send(destination, message);
+        Session session = null;
+        Connection connection = null;
+
+        try {
+            connection = getConnection();
+            session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+            Destination destination = session.createQueue("broad.queue.athena.workreporting.dev");
+            MessageProducer producer = session.createProducer(destination);
+            Message message = createMessage(session, false);
+            producer.send(destination, message);
+        } finally {
+            if (session != null) {
+                session.close();
+            }
+
+            if(connection != null) {
+                connection.close();
+            }
+        }
     }
 
     /**
@@ -176,10 +196,24 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
      * entity to be persisted.
      */
     public void deliverMessage() throws JMSException {
-        WorkCompleteMessageBean workCompleteMessageBean = new WorkCompleteMessageBean(workCompleteMessageDao, sessionContextUtility);
-        workCompleteMessageBean.processMessage(createMessage(createSession()));
-        workCompleteMessageDao.flush();
-        workCompleteMessageDao.clear();
+        Session session = null;
+        Connection connection = null;
+        try {
+            WorkCompleteMessageBean workCompleteMessageBean = new WorkCompleteMessageBean(workCompleteMessageDao, sessionContextUtility);
+            connection = getConnection();
+            session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+            workCompleteMessageBean.processMessage(createMessage(session));
+            workCompleteMessageDao.flush();
+            workCompleteMessageDao.clear();
+        } finally {
+            if (session != null) {
+                session.close();
+            }
+
+            if(connection != null) {
+                connection.close();
+            }
+        }
     }
 
     public static Message createMessage(Session session, boolean persist) throws JMSException {

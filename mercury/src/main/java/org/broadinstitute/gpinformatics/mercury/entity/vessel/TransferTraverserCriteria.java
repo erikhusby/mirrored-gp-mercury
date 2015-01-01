@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -19,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  * Implemented by classes that accumulate information from a traversal of transfer history
@@ -344,14 +344,11 @@ public interface TransferTraverserCriteria {
             if (context.getLabVessel() != null) {
                 if (context.getLabVessel().getMercurySamples() != null) {
                     for (BucketEntry bucketEntry : context.getLabVessel().getBucketEntries()) {
-                        if (StringUtils.isBlank(bucketEntry.getPoBusinessKey())) { // todo jmt use BucketEntry?
-                            continue;
-                        }
                         if (!productOrdersAtHopCount.containsKey(context.getHopCount())) {
                             productOrdersAtHopCount.put(context.getHopCount(), new HashSet<String>());
                         }
 
-                        String productOrderKey = bucketEntry.getPoBusinessKey();
+                        String productOrderKey = bucketEntry.getProductOrder().getBusinessKey();
                         if (productOrderKey != null) {
                             productOrdersAtHopCount.get(context.getHopCount()).add(productOrderKey);
                         }
@@ -483,7 +480,7 @@ public interface TransferTraverserCriteria {
 
     /**
      * NearestTubeAncestorsCriteria is a Traverser Criteria object intended to capture the closest (in number of hops)
-     * TwoDBarcodedTube(s) that can be found in a target vessel's event history.  When found, not only will the the tube
+     * BarcodedTube(s) that can be found in a target vessel's event history.  When found, not only will the the tube
      * be saved for access, but also an object that relates the tube to its position at its found location will be
      * returned.
      */
@@ -494,7 +491,7 @@ public interface TransferTraverserCriteria {
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
-            if (OrmUtil.proxySafeIsInstance(context.getLabVessel(), TwoDBarcodedTube.class)) {
+            if (OrmUtil.proxySafeIsInstance(context.getLabVessel(), BarcodedTube.class)) {
                 tubes.add(context.getLabVessel());
                 vesselAndPositions.add(new VesselAndPosition(context.getLabVessel(), context.getVesselPosition()));
                 return TraversalControl.StopTraversing;
@@ -522,7 +519,7 @@ public interface TransferTraverserCriteria {
 
     /**
      * Similar to NearestTubeAncestorsCriteria, this criteria object is intended to capture the closest (in number of
-     * hops) TwoDBarcodedTube(s) that can be found in a target vessels history.  The user of this method has no need
+     * hops) BarcodedTube(s) that can be found in a target vessels history.  The user of this method has no need
      * of the tubes position in the container that it is found, and sometimes creating the VesselAndPosition object
      * breaks so this is being used in its place.
      */
@@ -532,7 +529,7 @@ public interface TransferTraverserCriteria {
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
-            if (OrmUtil.proxySafeIsInstance(context.getLabVessel(), TwoDBarcodedTube.class)) {
+            if (OrmUtil.proxySafeIsInstance(context.getLabVessel(), BarcodedTube.class)) {
                 if (tube == null) {
                     tube = context.getLabVessel();
                 }
@@ -586,10 +583,16 @@ public interface TransferTraverserCriteria {
 
     public class VesselForEventTypeCriteria implements TransferTraverserCriteria {
         private List<LabEventType> types;
+        private boolean useTargetVessels = true;
         private Map<LabEvent, Set<LabVessel>> vesselsForLabEventType = new HashMap<>();
 
-        public VesselForEventTypeCriteria(List<LabEventType> type) {
-            this.types = type;
+        public VesselForEventTypeCriteria(List<LabEventType> types) {
+            this.types = types;
+        }
+
+        public VesselForEventTypeCriteria(List<LabEventType> types, boolean useTargetVessels ) {
+            this(types);
+            this.useTargetVessels = useTargetVessels;
         }
 
         @Override
@@ -602,12 +605,17 @@ public interface TransferTraverserCriteria {
             }
             if (vessel != null) {
                 //check all in place events and descendant in place events
-                for (LabEvent inPlaceEvent : vessel.getInPlaceEvents()) {
+                for (LabEvent inPlaceEvent : vessel.getInPlaceLabEvents()) {
                     evaluteEvent(vessel, inPlaceEvent);
                 }
-                Collection<LabVessel> descendantVessels = vessel.getDescendantVessels();
-                for (LabVessel descendant : descendantVessels) {
-                    Set<LabEvent> inPlaceEvents = descendant.getInPlaceEvents();
+                Collection<LabVessel> traversalVessels;
+                if( context.getTraversalDirection() == TraversalDirection.Ancestors ) {
+                    traversalVessels = vessel.getAncestorVessels();
+                } else {
+                    traversalVessels = vessel.getDescendantVessels();
+                }
+                for (LabVessel traversalVessel : traversalVessels) {
+                    Set<LabEvent> inPlaceEvents = traversalVessel.getInPlaceLabEvents();
                     for (LabEvent inPlaceEvent : inPlaceEvents) {
                         evaluteEvent(vessel, inPlaceEvent);
                     }
@@ -618,7 +626,7 @@ public interface TransferTraverserCriteria {
 
         private void evaluteEvent(LabVessel vessel, LabEvent event) {
             if (types.contains(event.getLabEventType())) {
-                //if this is in place just add the vessel
+                // If this is in place just add the vessel
                 if (event.getInPlaceLabVessel() != null) {
                     Set<LabVessel> vessels = vesselsForLabEventType.get(event);
                     if (vessels == null) {
@@ -627,8 +635,15 @@ public interface TransferTraverserCriteria {
                     vessels.add(event.getInPlaceLabVessel());
                     vesselsForLabEventType.put(event, vessels);
                 }
-                //otherwise check the target vessels
-                for (LabVessel targetVessel : event.getTargetLabVessels()) {
+                // Otherwise check the target or source vessels
+                Set<LabVessel> labXferVessels;
+                if( useTargetVessels ) {
+                    labXferVessels = event.getTargetLabVessels();
+                } else {
+                    labXferVessels = event.getSourceLabVessels();
+                }
+
+                for ( LabVessel targetVessel : labXferVessels ) {
                     Set<LabVessel> vessels = vesselsForLabEventType.get(event);
                     if (vessels == null) {
                         vessels = new HashSet<>();
@@ -661,5 +676,68 @@ public interface TransferTraverserCriteria {
         public Map<LabEvent, Set<LabVessel>> getVesselsForLabEventType() {
             return vesselsForLabEventType;
         }
+    }
+
+    /**
+     * Capture chain of events following a lab vessel
+     */
+    public class LabEventDescendantCriteria implements TransferTraverserCriteria {
+
+        private int hopCount = -1;
+
+        private final Set<LabEvent> labEvents = new TreeSet<LabEvent>( LabEvent.BY_EVENT_DATE_LOC );
+
+        @Override
+        public TraversalControl evaluateVesselPreOrder(Context context) {
+            if (context.getEvent() != null) {
+                if(!labEvents.add(context.getEvent())) {
+                    // Not sure if/how to avoid possibility of infinite looping on a circular relationship
+                    // This prunes off descendant events
+//                    return TraversalControl.StopTraversing;
+                }
+                if (context.getHopCount() > hopCount) {
+                    hopCount = context.getHopCount();
+                }
+            }
+
+            if( context.getLabVessel() != null ) {
+                for (VesselContainer containerVessel : context.getLabVessel().getContainers()) {
+                    labEvents.addAll(containerVessel.getEmbedder().getInPlaceLabEvents());
+                }
+            }
+
+            // Check for in place events on vessel container (e.g. EndRepair, ABase, APWash)
+            if( context.getVesselContainer() != null ) {
+                LabVessel containerVessel = context.getVesselContainer().getEmbedder();
+                if (containerVessel != null) {
+                    labEvents.addAll(containerVessel.getInPlaceLabEvents());
+
+                    // Look for what comes in from the side (e.g. IndexedAdapterLigation, BaitAddition)
+                    for (LabEvent containerEvent : containerVessel.getTransfersTo()) {
+                        labEvents.add(containerEvent);
+                        for (LabVessel ancestorLabVessel : containerEvent.getSourceLabVessels()) {
+                            if( ancestorLabVessel.getContainerRole() != null ){
+                                labEvents.addAll(ancestorLabVessel.getContainerRole().getEmbedder().getTransfersTo());
+                            }
+                        }
+                    }
+                }
+            }
+
+            return TraversalControl.ContinueTraversing;
+        }
+
+        @Override
+        public void evaluateVesselInOrder(Context context) {
+        }
+
+        @Override
+        public void evaluateVesselPostOrder(Context context) {
+        }
+
+        public Set<LabEvent> getAllEvents() {
+            return labEvents;
+        }
+
     }
 }

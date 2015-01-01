@@ -81,19 +81,19 @@ public class VesselContainer<T extends LabVessel> {
     @Transient
     private Map<LabVessel, VesselPosition> vesselToMapPosition;
 
-    @OneToMany(mappedBy = "sourceVessel")
+    @OneToMany(mappedBy = "sourceVessel", cascade = CascadeType.PERSIST)
     private Set<SectionTransfer> sectionTransfersFrom = new HashSet<>();
 
-    @OneToMany(mappedBy = "targetVessel")
+    @OneToMany(mappedBy = "targetVessel", cascade = CascadeType.PERSIST)
     private Set<SectionTransfer> sectionTransfersTo = new HashSet<>();
 
-    @OneToMany(mappedBy = "sourceVessel")
+    @OneToMany(mappedBy = "sourceVessel", cascade = CascadeType.PERSIST)
     private Set<CherryPickTransfer> cherryPickTransfersFrom = new HashSet<>();
 
-    @OneToMany(mappedBy = "targetVessel")
+    @OneToMany(mappedBy = "targetVessel", cascade = CascadeType.PERSIST)
     private Set<CherryPickTransfer> cherryPickTransfersTo = new HashSet<>();
 
-    @OneToMany(mappedBy = "targetVessel")
+    @OneToMany(mappedBy = "targetVessel", cascade = CascadeType.PERSIST)
     private Set<VesselToSectionTransfer> vesselToSectionTransfersTo = new HashSet<>();
 
     @SuppressWarnings("InstanceVariableMayNotBeInitialized")
@@ -111,6 +111,7 @@ public class VesselContainer<T extends LabVessel> {
      * Find the source rack for the specified LabVessel.
      */
     @Nullable
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public LabVessel getSourceRack() {
 
         // Find shortest paths to the first rack, if any.
@@ -128,12 +129,14 @@ public class VesselContainer<T extends LabVessel> {
         return firstEvent.getSourceLabVessels().iterator().next();
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     @Nullable
     public T getVesselAtPosition(VesselPosition position) {
         //noinspection unchecked
         return (T) mapPositionToVessel.get(position);
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Set<LabEvent> getTransfersFrom() {
         Set<LabEvent> transfersFrom = new HashSet<>();
         for (SectionTransfer sectionTransfer : sectionTransfersFrom) {
@@ -150,6 +153,7 @@ public class VesselContainer<T extends LabVessel> {
      *
      * @return transfers to
      */
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Set<LabEvent> getTransfersToWithRearrays() {
         Set<LabEvent> transfersTo = getTransfersTo();
         // Need to follow Re-arrays, otherwise the chain of custody is broken.  Ignore re-arrays that add tubes
@@ -172,6 +176,7 @@ public class VesselContainer<T extends LabVessel> {
      *
      * @return transfers to
      */
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Set<LabEvent> getTransfersTo() {
         Set<LabEvent> transfersTo = new HashSet<>();
         for (SectionTransfer sectionTransfer : sectionTransfersTo) {
@@ -193,6 +198,7 @@ public class VesselContainer<T extends LabVessel> {
      *
      * @return This returns a list of vessel positions within this vessel that contain the sample instances passed in.
      */
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Set<VesselPosition> getPositionsOfSampleInstance(@Nonnull SampleInstance sampleInstance) {
         Set<VesselPosition> positions = getPositions();
         Set<VesselPosition> positionList = new HashSet<>();
@@ -206,6 +212,7 @@ public class VesselContainer<T extends LabVessel> {
         return positionList;
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Set<VesselPosition> getPositionsOfSampleInstance(@Nonnull SampleInstance sampleInstance,
                                                             LabVessel.SampleType sampleType) {
         Set<VesselPosition> positions = getPositions();
@@ -220,16 +227,19 @@ public class VesselContainer<T extends LabVessel> {
         return positionList;
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Set<SampleInstance> getSampleInstancesAtPosition(VesselPosition position, LabVessel.SampleType sampleType,
                                                             @Nullable LabBatch.LabBatchType batchType) {
         LabVessel.TraversalResults traversalResults = traverseAncestors(position, sampleType, batchType);
         return traversalResults.getSampleInstances();
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Set<SampleInstance> getSampleInstancesAtPosition(VesselPosition position) {
         return getSampleInstancesAtPosition(position, LabVessel.SampleType.ANY, null);
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Set<SampleInstance> getSampleInstancesAtPosition(VesselPosition position, LabVessel.SampleType sampleType) {
         return getSampleInstancesAtPosition(position, sampleType, null);
     }
@@ -266,31 +276,32 @@ public class VesselContainer<T extends LabVessel> {
         TransferTraverserCriteria.Context context =
                 new TransferTraverserCriteria.Context(vesselAtPosition, this, position, labEvent, hopCount,
                         traversalDirection);
-        TransferTraverserCriteria.TraversalControl traversalControl =
-                transferTraverserCriteria.evaluateVesselPreOrder(context);
-        if (vesselAtPosition != null) {
-            // handle re-arrays of tubes - look in any other racks that the tube has been in
-            if (getEmbedder() instanceof TubeFormation) {
-                TubeFormation thisTubeFormation = (TubeFormation) getEmbedder();
-                for (VesselContainer<?> vesselContainer : vesselAtPosition.getContainers()) {
-                    if (OrmUtil.proxySafeIsInstance(vesselContainer.getEmbedder(), TubeFormation.class)) {
-                        TubeFormation otherTubeFormation =
-                                OrmUtil.proxySafeCast(vesselContainer.getEmbedder(), TubeFormation.class);
-                        if (!otherTubeFormation.getDigest().equals(thisTubeFormation.getDigest())) {
-                            if (traversalDirection == TransferTraverserCriteria.TraversalDirection.Ancestors) {
-                                vesselContainer.traverseAncestors(vesselContainer.getPositionOfVessel(vesselAtPosition),
-                                        transferTraverserCriteria, traversalDirection, hopCount);
-                            } else {
-                                vesselContainer
-                                        .traverseDescendants(vesselContainer.getPositionOfVessel(vesselAtPosition),
-                                                transferTraverserCriteria, traversalDirection, hopCount);
+        if (transferTraverserCriteria.evaluateVesselPreOrder(context) ==
+            TransferTraverserCriteria.TraversalControl.ContinueTraversing) {
+
+            if (vesselAtPosition != null) {
+                // handle re-arrays of tubes - look in any other racks that the tube has been in
+                if (getEmbedder() instanceof TubeFormation) {
+                    TubeFormation thisTubeFormation = (TubeFormation) getEmbedder();
+                    for (VesselContainer<?> vesselContainer : vesselAtPosition.getContainers()) {
+                        if (OrmUtil.proxySafeIsInstance(vesselContainer.getEmbedder(), TubeFormation.class)) {
+                            TubeFormation otherTubeFormation =
+                                    OrmUtil.proxySafeCast(vesselContainer.getEmbedder(), TubeFormation.class);
+                            if (!otherTubeFormation.getDigest().equals(thisTubeFormation.getDigest())) {
+                                if (traversalDirection == TransferTraverserCriteria.TraversalDirection.Ancestors) {
+                                    vesselContainer.traverseAncestors(vesselContainer.getPositionOfVessel(vesselAtPosition),
+                                            transferTraverserCriteria, traversalDirection, hopCount);
+                                } else {
+                                    vesselContainer
+                                            .traverseDescendants(vesselContainer.getPositionOfVessel(vesselAtPosition),
+                                                    transferTraverserCriteria, traversalDirection, hopCount);
+                                }
                             }
                         }
                     }
                 }
             }
-        }
-        if (traversalControl == TransferTraverserCriteria.TraversalControl.ContinueTraversing) {
+
             if (traversalDirection == TransferTraverserCriteria.TraversalDirection.Ancestors) {
                 traverseAncestors(position, transferTraverserCriteria, traversalDirection, hopCount);
             } else {
@@ -375,6 +386,7 @@ public class VesselContainer<T extends LabVessel> {
         }
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public VesselPosition getPositionOfVessel(LabVessel vesselAtPosition) {
         //construct the reverse lookup map if it doesn't exist
         if (vesselToMapPosition == null) {
@@ -386,11 +398,13 @@ public class VesselContainer<T extends LabVessel> {
         return vesselToMapPosition.get(vesselAtPosition);
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Set<SampleInstance> getSampleInstances(LabVessel.SampleType sampleType, LabBatch.LabBatchType labBatchType) {
         Set<LabVessel> sourceVessels = new HashSet<>();
         return getSampleInstances(sampleType, labBatchType, sourceVessels);
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     private Set<SampleInstance> getSampleInstances(LabVessel.SampleType sampleType, LabBatch.LabBatchType labBatchType,
                                                    Set<LabVessel> sourceVessels) {
         Set<SampleInstance> sampleInstances = new LinkedHashSet<>();
@@ -421,11 +435,12 @@ public class VesselContainer<T extends LabVessel> {
      * If this is a plate, this method could return
      * the {@link PlateWell wells}.  If this thing
      * is a {@link TubeFormation}, this method could
-     * return the {@link TwoDBarcodedTube} tubes in
+     * return the {@link BarcodedTube} tubes in
      * the rack.
      *
      * @return contained vessels
      */
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Set<T> getContainedVessels() {
         // Wrap in HashSet so equals works against other Sets
         //noinspection unchecked
@@ -437,6 +452,7 @@ public class VesselContainer<T extends LabVessel> {
         child.addToContainer(this);
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Set<VesselPosition> getPositions() {
         if (hasAnonymousVessels()) {
             Set<VesselPosition> positions = new HashSet<>();
@@ -484,6 +500,7 @@ public class VesselContainer<T extends LabVessel> {
         return vesselToSectionTransfersTo;
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public List<LabVessel.VesselEvent> getAncestors(VesselPosition position) {
         List<LabVessel.VesselEvent> vesselEvents = new ArrayList<>();
         for (SectionTransfer sectionTransfer : sectionTransfersTo) {
@@ -523,10 +540,12 @@ public class VesselContainer<T extends LabVessel> {
         return vesselEvents;
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public List<LabVessel.VesselEvent> getAncestors(LabVessel containee) {
         return getAncestors(getPositionOfVessel(containee));
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public List<LabVessel.VesselEvent> getDescendants(VesselPosition position) {
         List<LabVessel.VesselEvent> vesselEvents = new ArrayList<>();
         for (SectionTransfer sectionTransfer : sectionTransfersFrom) {
@@ -556,10 +575,12 @@ public class VesselContainer<T extends LabVessel> {
         return vesselEvents;
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public List<LabVessel.VesselEvent> getDescendants(LabVessel containee) {
         return getDescendants(getPositionOfVessel(containee));
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public boolean hasAnonymousVessels() {
         boolean anonymousVessels = false;
         LabVessel.ContainerType type = embedder.getType();
@@ -580,10 +601,12 @@ public class VesselContainer<T extends LabVessel> {
         }
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Collection<LabBatch> getAllLabBatches() {
         return getAllLabBatches(null);
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Collection<LabBatch> getAllLabBatches(@Nullable LabBatch.LabBatchType type) {
         TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
                 new TransferTraverserCriteria.NearestLabBatchFinder(type);
@@ -591,10 +614,12 @@ public class VesselContainer<T extends LabVessel> {
         return batchCriteria.getAllLabBatches();
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Collection<LabBatch> getNearestLabBatches() {
         return getNearestLabBatches(null);
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Collection<LabBatch> getNearestLabBatches(@Nullable LabBatch.LabBatchType type) {
         TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
                 new TransferTraverserCriteria.NearestLabBatchFinder(type);
@@ -602,6 +627,7 @@ public class VesselContainer<T extends LabVessel> {
         return batchCriteria.getNearestLabBatches();
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Collection<String> getNearestProductOrders() {
         TransferTraverserCriteria.NearestProductOrderCriteria productOrderCriteria =
                 new TransferTraverserCriteria.NearestProductOrderCriteria();
@@ -609,6 +635,7 @@ public class VesselContainer<T extends LabVessel> {
         return productOrderCriteria.getNearestProductOrders();
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public List<LabBatchComposition> getLabBatchCompositions() {
         List<SampleInstance> sampleInstances = new ArrayList<>();
         for (VesselPosition position : getEmbedder().getVesselGeometry().getVesselPositions()) {
@@ -640,6 +667,7 @@ public class VesselContainer<T extends LabVessel> {
      *
      * @return A collection of the nearest metrics of the given type.
      */
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Collection<LabMetric> getNearestMetricOfType(LabMetric.MetricType metricType) {
         TransferTraverserCriteria.NearestLabMetricOfTypeCriteria metricTypeCriteria =
                 new TransferTraverserCriteria.NearestLabMetricOfTypeCriteria(metricType);
@@ -656,44 +684,73 @@ public class VesselContainer<T extends LabVessel> {
      *
      * @return LCSETs, empty if no contained vessels are associated with LCSETs
      */
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Set<LabBatch> getComputedLcSetsForSection(SBSSection section) {
-        Set<LabBatch> computedLcSets = new HashSet<>();
-        // find lab batch that is used by every vessel in section
         Map<LabBatch, Integer> mapLabBatchToCount = new HashMap<>();
-        int numVesselsWithBucketEntries = 0;
+        int numSampleInstanceWithBucketEntries = 0;
         for (VesselPosition vesselPosition : section.getWells()) {
             T vesselAtPosition = getVesselAtPosition(vesselPosition);
-            if (vesselAtPosition != null) {
-                Set<BucketEntry> bucketEntries = vesselAtPosition.getBucketEntries();
-                if (!bucketEntries.isEmpty()) {
-                    numVesselsWithBucketEntries++;
-                }
-                for (BucketEntry bucketEntry : bucketEntries) {
+            numSampleInstanceWithBucketEntries = collateLcSets(mapLabBatchToCount, numSampleInstanceWithBucketEntries,
+                    vesselAtPosition);
+        }
+        return computeLcSets(mapLabBatchToCount, numSampleInstanceWithBucketEntries);
+    }
+
+    /**
+     * Calculates the number of bucket entries for each LCSET.
+     * @param mapLabBatchToCount map from LCSET to count of bucket entries
+     * @param numSampleInstanceWithBucketEntries number of sample instances that have at least one bucket entry
+     * @param labVessel vessel to evaluate
+     * @return changed numSampleInstanceWithBucketEntries
+     */
+    public static int collateLcSets(Map<LabBatch, Integer> mapLabBatchToCount, int numSampleInstanceWithBucketEntries,
+            LabVessel labVessel) {
+        if (labVessel != null) {
+            Set<LabBatch> labBatches = new HashSet<>();
+            for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                List<BucketEntry> allBucketEntries = sampleInstanceV2.getAllBucketEntries();
+                for (BucketEntry bucketEntry : allBucketEntries) {
                     if (bucketEntry.getLabBatch() != null) {
-                        LabBatch labBatch = bucketEntry.getLabBatch();
-                        if (labBatch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
-                            Integer count = mapLabBatchToCount.get(labBatch);
-                            if (count == null) {
-                                count = 1;
-                            } else {
-                                count = count + 1;
-                            }
-                            mapLabBatchToCount.put(labBatch, count);
-                        }
+                        labBatches.add(bucketEntry.getLabBatch());
                     }
                 }
+
+                if (!labBatches.isEmpty()) {
+                    numSampleInstanceWithBucketEntries++;
+                }
+            }
+            for (LabBatch labBatch : labBatches) {
+                Integer count = mapLabBatchToCount.get(labBatch);
+                if (count == null) {
+                    count = 1;
+                } else {
+                    count = count + 1;
+                }
+                mapLabBatchToCount.put(labBatch, count);
             }
         }
+        return numSampleInstanceWithBucketEntries;
+    }
+
+    /**
+     * Determine the common LCSET between sample instances.
+     * @param mapLabBatchToCount map from LCSET to count of bucket entries
+     * @param numSampleInstanceWithBucketEntries    number of sample instances that have at least one bucket entry
+     * @return LCSET that all sample instances have in common
+     */
+    public static Set<LabBatch> computeLcSets(Map<LabBatch, Integer> mapLabBatchToCount,
+            int numSampleInstanceWithBucketEntries) {
+        Set<LabBatch> computedLcSets = new HashSet<>();
         if (LabVessel.DIAGNOSTICS) {
-            System.out.println("numVesselsWithBucketEntries " + numVesselsWithBucketEntries);
+            System.out.println("numSampleInstanceWithBucketEntries " + numSampleInstanceWithBucketEntries);
         }
         for (Map.Entry<LabBatch, Integer> labBatchIntegerEntry : mapLabBatchToCount.entrySet()) {
-            if (labBatchIntegerEntry.getValue() == numVesselsWithBucketEntries) {
+            if (labBatchIntegerEntry.getValue() == numSampleInstanceWithBucketEntries) {
                 computedLcSets.add(labBatchIntegerEntry.getKey());
             }
             if (LabVessel.DIAGNOSTICS) {
                 System.out.println("LabBatch " + labBatchIntegerEntry.getKey().getBatchName() + " count " +
-                        labBatchIntegerEntry.getValue());
+                                   labBatchIntegerEntry.getValue());
             }
         }
         return computedLcSets;
@@ -706,6 +763,7 @@ public class VesselContainer<T extends LabVessel> {
      *
      * @return All of the lab vessels for each event type passed in keyed on event.
      */
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Map<LabEvent, Set<LabVessel>> getVesselsForLabEventTypes(List<LabEventType> eventTypes) {
         TransferTraverserCriteria.VesselForEventTypeCriteria vesselForEventTypeCriteria =
                 new TransferTraverserCriteria.VesselForEventTypeCriteria(eventTypes);
@@ -720,6 +778,7 @@ public class VesselContainer<T extends LabVessel> {
      *
      * @return all nearest tube ancestors
      */
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public List<VesselAndPosition> getNearestTubeAncestors() {
         TransferTraverserCriteria.NearestTubeAncestorsCriteria
                 criteria = new TransferTraverserCriteria.NearestTubeAncestorsCriteria();
@@ -892,30 +951,45 @@ public class VesselContainer<T extends LabVessel> {
     }
 
     @Transient
-    private Map<VesselPosition, List<SampleInstanceV2>> mapPositionToSampleInstances =
+    private Map<VesselPosition, Set<SampleInstanceV2>> mapPositionToSampleInstances =
             new EnumMap<>(VesselPosition.class);
 
-    public List<SampleInstanceV2> getSampleInstancesAtPositionV2(VesselPosition vesselPosition) {
-        List<SampleInstanceV2> sampleInstances = mapPositionToSampleInstances.get(vesselPosition);
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
+    public Set<SampleInstanceV2> getSampleInstancesAtPositionV2(VesselPosition vesselPosition) {
+        Set<SampleInstanceV2> sampleInstances = mapPositionToSampleInstances.get(vesselPosition);
         if (sampleInstances == null) {
             T vesselAtPosition = getVesselAtPosition(vesselPosition);
 
             // Get ancestor events
             List<LabVessel.VesselEvent> ancestorEvents;
             if (vesselAtPosition == null) {
-                ancestorEvents = getAncestors(vesselPosition);
+                if (mapPositionToVessel.isEmpty()) {
+                    ancestorEvents = getAncestors(vesselPosition);
+                } else {
+                    ancestorEvents = Collections.emptyList();
+                }
             } else {
                 ancestorEvents = vesselAtPosition.getAncestors();
             }
-            sampleInstances = getAncestorSampleInstances(vesselAtPosition, ancestorEvents);
+            if (ancestorEvents.isEmpty()) {
+                if (vesselAtPosition != null) {
+                    sampleInstances = new HashSet<>();
+                    sampleInstances.add(new SampleInstanceV2(vesselAtPosition));
+                } else {
+                    sampleInstances = Collections.emptySet();
+                }
+            } else {
+                sampleInstances = getAncestorSampleInstances(vesselAtPosition, ancestorEvents);
+            }
 
             mapPositionToSampleInstances.put(vesselPosition, sampleInstances);
         }
         return sampleInstances;
     }
 
-    public List<SampleInstanceV2> getSampleInstancesV2() {
-        List<SampleInstanceV2> sampleInstanceList = new ArrayList<>();
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
+    public Set<SampleInstanceV2> getSampleInstancesV2() {
+        Set<SampleInstanceV2> sampleInstanceList = new LinkedHashSet<>();
         VesselPosition[] vesselPositions = getEmbedder().getVesselGeometry().getVesselPositions();
         for (VesselPosition vesselPosition : vesselPositions) {
             sampleInstanceList.addAll(getSampleInstancesAtPositionV2(vesselPosition));
@@ -926,7 +1000,8 @@ public class VesselContainer<T extends LabVessel> {
     /**
      * Get the SampleInstances for a set of ancestor events.  Static so it can be shared with LabVessel.
      */
-    static List<SampleInstanceV2> getAncestorSampleInstances(LabVessel labVessel,
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
+    static Set<SampleInstanceV2> getAncestorSampleInstances(LabVessel labVessel,
             List<LabVessel.VesselEvent> ancestorEvents) {
         // Get ancestor SampleInstances
         List<SampleInstanceV2> ancestorSampleInstances = new ArrayList<>();
@@ -940,53 +1015,57 @@ public class VesselContainer<T extends LabVessel> {
             }
         }
 
-        // Filter sample instances that are reagent only
-        Iterator<SampleInstanceV2> iterator = ancestorSampleInstances.iterator();
-        List<SampleInstanceV2> reagentSampleInstances = new ArrayList<>();
-        while (iterator.hasNext()) {
-            SampleInstanceV2 sampleInstance = iterator.next();
-            if (sampleInstance.isReagentOnly()) {
-                reagentSampleInstances.add(sampleInstance);
-                iterator.remove();
-            }
-        }
-
-        // BaitSetup has a bait in the source, but no samples in the target (until BaitAddition), so avoid throwing
-        // away the bait.
-        List<SampleInstanceV2> currentSampleInstances = new ArrayList<>();
         if (ancestorSampleInstances.isEmpty()) {
-            currentSampleInstances.add(new SampleInstanceV2());
+            return new LinkedHashSet<>(ancestorSampleInstances);
         } else {
-            // Clone ancestors
-            for (SampleInstanceV2 ancestorSampleInstance : ancestorSampleInstances) {
-                currentSampleInstances.add(new SampleInstanceV2(ancestorSampleInstance));
-            }
-        }
-
-        // Apply reagents
-        for (SampleInstanceV2 reagentSampleInstance : reagentSampleInstances) {
-            for (Reagent reagent : reagentSampleInstance.getReagents()) {
-                for (SampleInstanceV2 currentSampleInstance : currentSampleInstances) {
-                    currentSampleInstance.addReagent(reagent);
+            // Filter sample instances that are reagent only
+            Iterator<SampleInstanceV2> iterator = ancestorSampleInstances.iterator();
+            List<SampleInstanceV2> reagentSampleInstances = new ArrayList<>();
+            while (iterator.hasNext()) {
+                SampleInstanceV2 sampleInstance = iterator.next();
+                if (sampleInstance.isReagentOnly()) {
+                    reagentSampleInstances.add(sampleInstance);
+                    iterator.remove();
                 }
             }
-        }
 
-        // Apply vessel changes to clones
-        if (labVessel != null) {
-            for (SampleInstanceV2 currentSampleInstance : currentSampleInstances) {
-                currentSampleInstance.applyVesselChanges(labVessel);
+            // BaitSetup has a bait in the source, but no samples in the target (until BaitAddition), so avoid throwing
+            // away the bait.
+            List<SampleInstanceV2> currentSampleInstances = new ArrayList<>();
+            if (ancestorSampleInstances.isEmpty()) {
+                currentSampleInstances.add(new SampleInstanceV2());
+            } else {
+                // Clone ancestors
+                for (SampleInstanceV2 ancestorSampleInstance : ancestorSampleInstances) {
+                    currentSampleInstances.add(new SampleInstanceV2(ancestorSampleInstance));
+                }
             }
-        }
 
-        // Apply events to clones
-        for (LabVessel.VesselEvent ancestorEvent : ancestorEvents) {
-            for (SampleInstanceV2 currentSampleInstance : currentSampleInstances) {
-                currentSampleInstance.applyEvent(ancestorEvent.getLabEvent());
+            // Apply reagents
+            for (SampleInstanceV2 reagentSampleInstance : reagentSampleInstances) {
+                for (Reagent reagent : reagentSampleInstance.getReagents()) {
+                    for (SampleInstanceV2 currentSampleInstance : currentSampleInstances) {
+                        currentSampleInstance.addReagent(reagent);
+                    }
+                }
             }
-        }
 
-        return currentSampleInstances;
+            // Apply vessel changes to clones
+            if (labVessel != null) {
+                for (SampleInstanceV2 currentSampleInstance : currentSampleInstances) {
+                    currentSampleInstance.applyVesselChanges(labVessel);
+                }
+            }
+
+            // Apply events to clones
+            for (LabVessel.VesselEvent ancestorEvent : ancestorEvents) {
+                for (SampleInstanceV2 currentSampleInstance : currentSampleInstances) {
+                    currentSampleInstance.applyEvent(ancestorEvent.getLabEvent(), labVessel);
+                }
+            }
+
+            return new LinkedHashSet<>(currentSampleInstances);
+        }
     }
 
     /**

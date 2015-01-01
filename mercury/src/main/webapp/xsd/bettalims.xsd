@@ -19,6 +19,7 @@
     <xs:attributeGroup name="reagentGroup">
         <xs:attribute name="barcode" type="xs:NMTOKEN" use="required"/>
         <xs:attribute name="kitType" type="xs:NMTOKEN" use="required"/>
+        <xs:attribute name="expiration" type="xs:dateTime"/>
     </xs:attributeGroup>
 
     <xs:complexType name="reagentType">
@@ -45,6 +46,7 @@
         <xs:sequence>
             <xs:element name="comment" type="xs:normalizedString" minOccurs="0"/>
             <xs:element name="observation" type="observationType" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="metadata" type="metadataType" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
         <xs:attribute name="eventType" type="xs:NCName" use="required"/>
         <xs:attribute name="station" type="xs:NCName" use="required"/>

@@ -1,8 +1,11 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -11,10 +14,13 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsService;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.easymock.EasyMock;
+import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
@@ -209,15 +215,33 @@ public class ResearchProjectTest {
         Assert.assertEquals(found, expected);
     }
 
-    /**
-     * Attempts to update a Jira ResearchProject which should throw an exception when the expected transition is not
-     * available.
-     */
-    @Test(expectedExceptions = NoJiraTransitionException.class)
-    public void testUpdateResearchProjectAndThrowAnException() throws IOException {
-        ResearchProjectEjb researchProjectEjb = setupMocksSoThatThereAreNotJiraTransitions();
-        researchProjectEjb.submitToJira(researchProject);
-        Assert.fail("I was expecting an exception to be thrown before I got here!");
+    @Test
+    public void testCollectAllSamples() throws Exception {
+        ProductOrder dummyProductOrder1 =
+                ProductOrderTestFactory.createProductOrder("SM-test1", "SM-test2", "SM-test3");
+        ProductOrder dummyProductOrder2 =
+                ProductOrderTestFactory.createProductOrder("SM-test5", "SM-test7", "SM-test9");
+        ProductOrder dummyProductOrder3 =
+                ProductOrderTestFactory.createProductOrder("SM-test12", "SM-test15", "SM-test18");
+
+        Set<String> sampleNames = new HashSet<>(Arrays.asList("SM-test1", "SM-test2", "SM-test3", "SM-test5",
+                "SM-test7", "SM-test9", "SM-test12", "SM-test15", "SM-test18"));
+
+        dummyProductOrder1.setResearchProject(researchProject);
+        dummyProductOrder2.setResearchProject(researchProject);
+        dummyProductOrder3.setResearchProject(researchProject);
+
+
+        Set<ProductOrderSample> sampleCollection = researchProject.collectSamples();
+
+        Assert.assertTrue(CollectionUtils.isNotEmpty(sampleCollection));
+        Assert.assertEquals(sampleCollection.size(), 9);
+
+        for(ProductOrderSample sample:sampleCollection) {
+            Assert.assertTrue(sampleNames.contains(sample.getName()));
+            sampleNames.remove(sample.getName());
+        }
+
     }
 
     private ResearchProjectEjb setupMocksSoThatThereAreNotJiraTransitions() {
@@ -226,6 +250,7 @@ public class ResearchProjectTest {
         BSPUserList bspUserList = EasyMock.createMock(BSPUserList.class);
         BSPCohortList bspCohortList = EasyMock.createMock(BSPCohortList.class);
         ResearchProjectDao researchProjectDao = EasyMock.createMock(ResearchProjectDao.class);
+        SubmissionsService submissionsService = Mockito.mock(SubmissionsService.class);
 
         researchProject = EasyMock.createMock(ResearchProject.class);
 
@@ -236,7 +261,7 @@ public class ResearchProjectTest {
 
         EasyMock.replay(userBean, bspCohortList, bspUserList, researchProject);
         return new ResearchProjectEjb(jiraService, userBean, bspUserList,
-                bspCohortList, AppConfig.produce(Deployment.STUBBY), researchProjectDao);
+                bspCohortList, AppConfig.produce(Deployment.STUBBY), researchProjectDao, submissionsService);
 
     }
 }

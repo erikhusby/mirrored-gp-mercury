@@ -45,7 +45,7 @@
         <thead>
         <tr>
             <th>Name</th>
-            <th class="columnId">ID</th>
+            <th class="columnId" style="min-width: 180px;">ID</th>
             <th class="columnStatus">Status</th>
             <th class="columnOwner">Owner</th>
             <th class="columnUpdated">Updated</th>

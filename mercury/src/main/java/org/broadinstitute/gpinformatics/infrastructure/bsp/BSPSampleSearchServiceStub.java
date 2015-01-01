@@ -35,8 +35,6 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
     public static final String SM_1P3XN_VOLUME = "1.3";
     public static final String SM_1P3XN_COLL = "Hungarian Goulash";
     public static final String SM_1P3XN_COLLAB_SAMP_ID = "CollaboratorSampleX";
-    public static final String SM_1P3XN_FP =
-            "AACTCCCCGGAAAGCTACAAAACG--AATTAGAGTTAATTCTCCAATTGTCTAG--GGACAGGGGGTTCTAAACCCAA--GTCTCCCGCTAGTTTTGGAGAGAGCCGGAGCCCTTTCCAGAGTTCTCTAGTTGGCTGGAGTTCCAAAACTTTCCAATTCTTTGTCGCCGGTTTTACCCCCGGAGAGCTCCCT";
     public static final String SM_1P3XN_DISEASE = "Malignant peripheral nerve sheath tumor";
     public static final String SM_1P3XN_DNA = "1.7717738037109374";
     public static final String SM_1P3XN_MAT_TYPE = "DNA:DNA Genomic";
@@ -46,8 +44,6 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
     public static final String SM_1P3XN_PATIENT_ID = "PT-2LK3";
 
 
-    public static final String SM_1P3WY_FP =
-            "AACTCCCCGGAAAGCTACAAAACG--AATTAGAGTTAATTCTCCAATTGTCTAG--GGACAGGGGGTTCTAAACCCAA--GTCTCCCGCTAGTTTTGGAGAGAGCCGGAGCCCTTTCCAGAGTTCTCTAGTTGGCTGGAGTTCCAAAACTTTCCAATTCTTTGTCGCCGGTTTTACCCCCGGAGAGCTCCCT";
     public static final String SM_1P3WY_DISEASE = "Carcinoid Tumor";
     public static final String SM_1P3WY_DNA = "1.7717738037109374";
     public static final String SM_1P3WY_MAT_TYPE = "DNA:DNA Genomic";
@@ -76,8 +72,6 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
     public static final String SM_12CO4_COLLAB_PID = "CHTN_CA1";
     public static final String SM_12CO4_MAT_TYPE = "DNA:DNA Somatic";
     public static final String SM_12CO4_DNA = "3.765242738037109374";
-    public static final String SM_12CO4_FP =
-            "AACTCCCCGGAAAGCTACAAAACG--AATTAGAGTTAATTCTCCAATTGTCTAG--GGACAGGGGGTTCTAAACCCAA--GTCTCCCGCTAGTTTTGGAGAGAGCCGGAGCCCTTTCCAGAGTTCTCTAGTTGGCTGGAGTTCCAAAACTTTCCAATTCTTTGTCGCCGGTTTTACCCCCGGAGAGCTCCCT";
     public static final String SM_12CO4_DISEASE = "Carcinoid Tumor";
     public static final String SM_12CO4_COLLABORATOR = "Home Simpson";
 
@@ -95,8 +89,6 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
     public static final String SM_12FO4_COLLAB_PID = "CHTN_SEW";
     public static final String SM_12FO4_MAT_TYPE = "DNA:DNA Somatic";
     public static final String SM_12FO4_DNA = "3.765242738037109374";
-    public static final String SM_12FO4_FP =
-            "AACTCCCCGGAAAGCTACAAAACG--AATTAGAGTTAATTCTCCAATTGTCTAG--GGACAGGGGGTTCTAAACCCAA--GTCTCCCGCTAGTTTTGGAGAGAGCCGGAGCCCTTTCCAGAGTTCTCTAGTTGGCTGGAGTTCCAAAACTTTCCAATTCTTTGTCGCCGGTTTTACCCCCGGAGAGCTCCCT";
     public static final String SM_12FO4_DISEASE = "Carcinoid Tumor";
 
 
@@ -113,8 +105,6 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
     public static final String SM_12DW4_COLLAB_PID = "CHTN_SEW";
     public static final String SM_12DW4_MAT_TYPE = "DNA:DNA Somatic";
     public static final String SM_12DW4_DNA = "3.765242738037109374";
-    public static final String SM_12DW4_FP =
-            "AACTCCCCGGAAAGCTACAAAACG--AATTAGAGTTAATTCTCCAATTGTCTAG--GGACAGGGGGTTCTAAACCCAA--GTCTCCCGCTAGTTTTGGAGAGAGCCGGAGCCCTTTCCAGAGTTCTCTAGTTGGCTGGAGTTCCAAAACTTTCCAATTCTTTGTCGCCGGTTTTACCCCCGGAGAGCTCCCT";
     public static final String SM_12DW4_DISEASE = "Carcinoid Tumor";
 
 
@@ -131,8 +121,6 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
     public static final String SM_12MD2_COLLAB_PID = "CHTN_SEW";
     public static final String SM_12MD2_MAT_TYPE = "DNA:DNA Somatic";
     public static final String SM_12MD2_DNA = "3.765242738037109374";
-    public static final String SM_12MD2_FP =
-            "AACTCCCCGGAAAGCTACAAAACG--AATTAGAGTTAATTCTCCAATTGTCTAG--GGACAGGGGGTTCTAAACCCAA--GTCTCCCGCTAGTTTTGGAGAGAGCCGGAGCCCTTTCCAGAGTTCTCTAGTTGGCTGGAGTTCCAAAACTTTCCAATTCTTTGTCGCCGGTTTTACCCCCGGAGAGCTCCCT";
     public static final String SM_12MD2_DISEASE = "Carcinoid Tumor";
 
 
@@ -146,7 +134,8 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
     public static final String CANINE_SPECIES = "Canine";
 
     /**
-     * Samples that this service stub knows about and can return.
+     * Samples that this service stub knows about and can return. This collection is NOT static to avoid the possibility
+     * of tests running in parallel side-effecting each other.
      */
     private final Map<String, Map<BSPSampleSearchColumn, String>> samples = new HashMap<>();
 
@@ -164,11 +153,10 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
             put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, SM_12CO4_COLLAB_PID);
             put(BSPSampleSearchColumn.MATERIAL_TYPE, SM_12CO4_MAT_TYPE);
             put(BSPSampleSearchColumn.TOTAL_DNA, SM_12CO4_DNA);
-            put(BSPSampleSearchColumn.SAMPLE_TYPE, BSPSampleDTO.TUMOR_IND);
+            put(BSPSampleSearchColumn.SAMPLE_TYPE, BspSampleData.TUMOR_IND);
             put(BSPSampleSearchColumn.PRIMARY_DISEASE, SM_12CO4_DISEASE);
-            put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.FEMALE_IND);
+            put(BSPSampleSearchColumn.GENDER, BspSampleData.FEMALE_IND);
             put(BSPSampleSearchColumn.STOCK_TYPE, "");
-            put(BSPSampleSearchColumn.FINGERPRINT, SM_12CO4_FP);
             put(BSPSampleSearchColumn.CONTAINER_ID, SM_12CO4_CONTAINER_ID);
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_12CO4);
         }});
@@ -186,11 +174,10 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
             put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, SM_1P3WY_COLLAB_PID);
             put(BSPSampleSearchColumn.MATERIAL_TYPE, SM_1P3WY_MAT_TYPE);
             put(BSPSampleSearchColumn.TOTAL_DNA, SM_1P3WY_DNA);
-            put(BSPSampleSearchColumn.SAMPLE_TYPE, BSPSampleDTO.NORMAL_IND);
+            put(BSPSampleSearchColumn.SAMPLE_TYPE, BspSampleData.NORMAL_IND);
             put(BSPSampleSearchColumn.PRIMARY_DISEASE, SM_1P3WY_DISEASE);
-            put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.MALE_IND);
-            put(BSPSampleSearchColumn.STOCK_TYPE, BSPSampleDTO.ACTIVE_IND);
-            put(BSPSampleSearchColumn.FINGERPRINT, SM_1P3WY_FP);
+            put(BSPSampleSearchColumn.GENDER, BspSampleData.MALE_IND);
+            put(BSPSampleSearchColumn.STOCK_TYPE, BspSampleData.ACTIVE_IND);
             put(BSPSampleSearchColumn.CONTAINER_ID, SM_1P3WY_CONTAINER_ID);
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_1P3WY);
         }});
@@ -208,11 +195,10 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
             put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, SM_1P3XN_COLLAB_PID);
             put(BSPSampleSearchColumn.MATERIAL_TYPE, SM_1P3XN_MAT_TYPE);
             put(BSPSampleSearchColumn.TOTAL_DNA, SM_1P3XN_DNA);
-            put(BSPSampleSearchColumn.SAMPLE_TYPE, BSPSampleDTO.NORMAL_IND);
+            put(BSPSampleSearchColumn.SAMPLE_TYPE, BspSampleData.NORMAL_IND);
             put(BSPSampleSearchColumn.PRIMARY_DISEASE, SM_1P3XN_DISEASE);
-            put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.MALE_IND);
-            put(BSPSampleSearchColumn.STOCK_TYPE, BSPSampleDTO.ACTIVE_IND);
-            put(BSPSampleSearchColumn.FINGERPRINT, SM_1P3XN_FP);
+            put(BSPSampleSearchColumn.GENDER, BspSampleData.MALE_IND);
+            put(BSPSampleSearchColumn.STOCK_TYPE, BspSampleData.ACTIVE_IND);
             put(BSPSampleSearchColumn.CONTAINER_ID, SM_1P3XN_CONTAINER_ID);
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_1P3XN);
         }});
@@ -230,11 +216,10 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
             put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, SM_12FO4_COLLAB_PID);
             put(BSPSampleSearchColumn.MATERIAL_TYPE, SM_12FO4_MAT_TYPE);
             put(BSPSampleSearchColumn.TOTAL_DNA, SM_12FO4_DNA);
-            put(BSPSampleSearchColumn.SAMPLE_TYPE, BSPSampleDTO.NORMAL_IND);
+            put(BSPSampleSearchColumn.SAMPLE_TYPE, BspSampleData.NORMAL_IND);
             put(BSPSampleSearchColumn.PRIMARY_DISEASE, SM_12FO4_DISEASE);
-            put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.MALE_IND);
-            put(BSPSampleSearchColumn.STOCK_TYPE, BSPSampleDTO.ACTIVE_IND);
-            put(BSPSampleSearchColumn.FINGERPRINT, SM_12FO4_FP);
+            put(BSPSampleSearchColumn.GENDER, BspSampleData.MALE_IND);
+            put(BSPSampleSearchColumn.STOCK_TYPE, BspSampleData.ACTIVE_IND);
             put(BSPSampleSearchColumn.CONTAINER_ID, SM_12FO4_CONTAINER_ID);
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_12FO4);
         }});
@@ -252,11 +237,10 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
             put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, SM_12DW4_COLLAB_PID);
             put(BSPSampleSearchColumn.MATERIAL_TYPE, SM_12DW4_MAT_TYPE);
             put(BSPSampleSearchColumn.TOTAL_DNA, SM_12DW4_DNA);
-            put(BSPSampleSearchColumn.SAMPLE_TYPE, BSPSampleDTO.NORMAL_IND);
+            put(BSPSampleSearchColumn.SAMPLE_TYPE, BspSampleData.NORMAL_IND);
             put(BSPSampleSearchColumn.PRIMARY_DISEASE, SM_12DW4_DISEASE);
-            put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.MALE_IND);
-            put(BSPSampleSearchColumn.STOCK_TYPE, BSPSampleDTO.ACTIVE_IND);
-            put(BSPSampleSearchColumn.FINGERPRINT, SM_12DW4_FP);
+            put(BSPSampleSearchColumn.GENDER, BspSampleData.MALE_IND);
+            put(BSPSampleSearchColumn.STOCK_TYPE, BspSampleData.ACTIVE_IND);
             put(BSPSampleSearchColumn.CONTAINER_ID, SM_12DW4_CONTAINER_ID);
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_12DW4);
         }});
@@ -274,11 +258,10 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
             put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, SM_12MD2_COLLAB_PID);
             put(BSPSampleSearchColumn.MATERIAL_TYPE, SM_12MD2_MAT_TYPE);
             put(BSPSampleSearchColumn.TOTAL_DNA, SM_12MD2_DNA);
-            put(BSPSampleSearchColumn.SAMPLE_TYPE, BSPSampleDTO.NORMAL_IND);
+            put(BSPSampleSearchColumn.SAMPLE_TYPE, BspSampleData.NORMAL_IND);
             put(BSPSampleSearchColumn.PRIMARY_DISEASE, SM_12MD2_DISEASE);
-            put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.FEMALE_IND);
-            put(BSPSampleSearchColumn.STOCK_TYPE, BSPSampleDTO.ACTIVE_IND);
-            put(BSPSampleSearchColumn.FINGERPRINT, SM_12MD2_FP);
+            put(BSPSampleSearchColumn.GENDER, BspSampleData.FEMALE_IND);
+            put(BSPSampleSearchColumn.STOCK_TYPE, BspSampleData.ACTIVE_IND);
             put(BSPSampleSearchColumn.CONTAINER_ID, SM_12MD2_CONTAINER_ID);
             put(BSPSampleSearchColumn.SAMPLE_ID, SM_12MD2);
         }});
@@ -312,5 +295,9 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
         }
 
         return sampleAttributes;
+    }
+
+    public Map<String, Map<BSPSampleSearchColumn, String>> getSamples() {
+        return samples;
     }
 }

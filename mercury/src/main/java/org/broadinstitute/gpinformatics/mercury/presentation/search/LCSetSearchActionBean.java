@@ -7,8 +7,9 @@ import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import org.apache.commons.collections4.CollectionUtils;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.common.MercuryEnumUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -21,6 +22,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -33,15 +35,15 @@ public class LCSetSearchActionBean extends SearchActionBean {
     public static final String LCSET_SEARCH = "lcsetSearch";
     private static final String LCSET_SEARCH_PAGE = "/search/lcset_search.jsp";
 
-    private Map<LabVessel, LabEvent> latestEventForVessel = new HashMap<>();
+    private final Map<LabVessel, LabEvent> latestEventForVessel = new HashMap<>();
 
     @Inject
-    private BSPSampleDataFetcher sampleDataFetcher;
+    private SampleDataFetcher sampleDataFetcher;
 
-    private Map<String, BSPSampleDTO> sampleToBspPicoValueMap = new HashMap<>();
-    private Map<LabVessel, Set<SampleInstance>> vesselToSampleInstanceMap = new HashMap<>();
+    private Map<String, SampleData> sampleToBspPicoValueMap = new HashMap<>();
+    private final Map<LabVessel, Set<SampleInstance>> vesselToSampleInstanceMap = new HashMap<>();
 
-    public Map<String, BSPSampleDTO> getSampleToBspPicoValueMap() {
+    public Map<String, SampleData> getSampleToBspPicoValueMap() {
         return sampleToBspPicoValueMap;
     }
 
@@ -64,7 +66,7 @@ public class LCSetSearchActionBean extends SearchActionBean {
     }
 
     /**
-     * Create the cache of sample names to BSPSampleDTO objects.
+     * Create the cache of sample names to BspSampleData objects.
      */
     private void generateBspPicoMap() {
         Set<String> sampleNames = new HashSet<>();
@@ -73,7 +75,7 @@ public class LCSetSearchActionBean extends SearchActionBean {
             for (LabVessel startingVessel : startingBatchLabVessels) {
                 sampleNames.addAll(startingVessel.getSampleNames());
                 Map<LabEvent, Set<LabVessel>> eventListMap =
-                        startingVessel.findVesselsForLabEventType(LabEventType.SAMPLE_IMPORT);
+                        startingVessel.findVesselsForLabEventType(LabEventType.SAMPLE_IMPORT, true);
                 for (Map.Entry<LabEvent, Set<LabVessel>> entry : eventListMap.entrySet()) {
                     for (LabVessel sourceVessel : entry.getValue()) {
                         Set<SampleInstance> sampleInstances = sourceVessel.getSampleInstances();
@@ -85,7 +87,7 @@ public class LCSetSearchActionBean extends SearchActionBean {
                 }
             }
         }
-        sampleToBspPicoValueMap = sampleDataFetcher.fetchSamplesFromBSP(sampleNames);
+        sampleToBspPicoValueMap = sampleDataFetcher.fetchSampleData(sampleNames);
     }
 
     public Double getExportedSampleConcentration(LabVessel vessel) {
@@ -107,7 +109,7 @@ public class LCSetSearchActionBean extends SearchActionBean {
     private void filterResults() {
         List<LabBatch> filteredBatches = new ArrayList<>();
         for (LabBatch batch : getFoundBatches()) {
-            if (batch.getLabBatchType().equals(LabBatch.LabBatchType.WORKFLOW)) {
+            if (batch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
                 filteredBatches.add(batch);
             }
         }
@@ -134,7 +136,7 @@ public class LCSetSearchActionBean extends SearchActionBean {
     }
 
     public String getPositionsForEvent(LabVessel vessel, LabEventType type) {
-        Map<LabEvent, Set<LabVessel>> eventMap = vessel.findVesselsForLabEventType(type);
+        Map<LabEvent, Set<LabVessel>> eventMap = vessel.findVesselsForLabEventType(type, true);
 
         Set<MercurySample> allMercurySamples = new HashSet<>();
         Collection<LabVessel> descendants = vessel.getDescendantVessels();
@@ -144,8 +146,8 @@ public class LCSetSearchActionBean extends SearchActionBean {
 
         List<String> positions = new ArrayList<>();
         for (Map.Entry<LabEvent, Set<LabVessel>> entry : eventMap.entrySet()) {
-            if (entry.getKey().getLabEventType().equals(type)) {
-                Set<VesselPosition> allPositions = new HashSet<>();
+            if (entry.getKey().getLabEventType() == type) {
+                Set<VesselPosition> allPositions = EnumSet.noneOf(VesselPosition.class);
                 for (LabVessel sourceVessel : entry.getValue()) {
                     Set<SampleInstance> sampleInstances = sourceVessel.getSampleInstances();
                     for (SampleInstance targetSampleInstance : sampleInstances) {
@@ -154,16 +156,15 @@ public class LCSetSearchActionBean extends SearchActionBean {
                                 allPositions.addAll(sourceVessel.getContainerRole()
                                         .getPositionsOfSampleInstance(targetSampleInstance));
                             } else {
-                                for (VesselContainer container : sourceVessel.getContainers()) {
+                                for (VesselContainer<?> container : sourceVessel.getContainers()) {
                                     allPositions.addAll(container.getPositionsOfSampleInstance(targetSampleInstance));
                                 }
                             }
                         }
                     }
                 }
-                for (VesselPosition position : allPositions) {
-                    positions.add(position.name());
-                }
+
+                positions.addAll(MercuryEnumUtils.convertToStrings(allPositions));
             }
         }
 

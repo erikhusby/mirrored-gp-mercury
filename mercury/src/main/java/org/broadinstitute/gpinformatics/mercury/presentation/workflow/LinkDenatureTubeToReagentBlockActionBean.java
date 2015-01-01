@@ -9,15 +9,15 @@ import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransferEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
@@ -34,14 +34,15 @@ public class LinkDenatureTubeToReagentBlockActionBean extends CoreActionBean {
     @Inject
     protected LabVesselDao labVesselDao;
     @Inject
-    protected AthenaClientService athenaClientService;
-    @Inject
     protected BettaLimsMessageResource bettaLimsMessageResource;
     @Inject
     protected VesselTransferEjb vesselTransferEjb;
+    @Inject
+    protected ProductOrderDao productOrderDao;
+
     @Validate(required = true, on = SAVE_ACTION)
     public String denatureTubeBarcode;
-    private TwoDBarcodedTube denatureTube;
+    private BarcodedTube denatureTube;
     protected String workflowName;
 
     public String getReagentBlockBarcode() {
@@ -75,7 +76,7 @@ public class LinkDenatureTubeToReagentBlockActionBean extends CoreActionBean {
 
     @ValidationMethod(on = SAVE_ACTION)
     public void validateData() {
-        setDenatureTube((TwoDBarcodedTube) labVesselDao.findByIdentifier(denatureTubeBarcode));
+        setDenatureTube((BarcodedTube) labVesselDao.findByIdentifier(denatureTubeBarcode));
         if (getDenatureTube() == null) {
             addValidationError("denatureTubeBarcode", "Could not find denature tube {0}", denatureTubeBarcode);
         }
@@ -88,7 +89,7 @@ public class LinkDenatureTubeToReagentBlockActionBean extends CoreActionBean {
         return denatureTube;
     }
 
-    public void setDenatureTube(TwoDBarcodedTube denatureTube) {
+    public void setDenatureTube(BarcodedTube denatureTube) {
         this.denatureTube = denatureTube;
     }
 
@@ -111,12 +112,12 @@ public class LinkDenatureTubeToReagentBlockActionBean extends CoreActionBean {
     }
 
     private void loadDenatureTubeAndWorkflow() {
-        denatureTube = (TwoDBarcodedTube) labVesselDao.findByIdentifier(denatureTubeBarcode);
+        denatureTube = (BarcodedTube) labVesselDao.findByIdentifier(denatureTubeBarcode);
         if (denatureTube != null) {
             for (SampleInstance sample : denatureTube.getAllSamplesOfType(LabVessel.SampleType.WITH_PDO)) {
                 String productOrderKey = sample.getProductOrderKey();
                 if (StringUtils.isNotEmpty(productOrderKey)) {
-                    ProductOrder order = athenaClientService.retrieveProductOrderDetails(productOrderKey);
+                    ProductOrder order = productOrderDao.findByBusinessKey(productOrderKey);
                     workflowName = order.getProduct().getWorkflow().getWorkflowName();
                     break;
                 }

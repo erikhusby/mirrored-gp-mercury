@@ -1,0 +1,422 @@
+package org.broadinstitute.gpinformatics.infrastructure.search;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceEjb;
+import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
+import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceDefinition;
+import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
+import org.broadinstitute.gpinformatics.athena.entity.preference.SearchInstanceList;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+
+import javax.ejb.Stateful;
+import javax.enterprise.context.RequestScoped;
+import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Persists SearchInstance.
+ */
+@Stateful
+@RequestScoped
+public class SearchInstanceEjb {
+
+    private static final Log log = LogFactory.getLog(SearchInstanceEjb.class);
+
+    /**
+     * Separator between preference level name and search instance name
+     */
+    public static final String PREFERENCE_SEPARATOR = " - ";
+
+    /**
+     * Search lookup uses delimited value
+     */
+    public static final String PREFERENCE_DELIM = "|";
+
+    @Inject
+    private UserBean userBean;
+
+    @Inject
+    private PreferenceEjb preferenceEjb;
+
+    @Inject
+    private PreferenceDao preferenceDao;
+
+    /**
+     * Map from preference type name to a method to get the preference
+     */
+    private static final Map<PreferenceType, PreferenceAccess> mapTypeToPreferenceAccess =
+            new LinkedHashMap<>();
+
+    /**
+     * Map each search entity type to its respective GLOBAL/USER preference types
+     */
+    private static final Map<ColumnEntity,PreferenceType[]> mapEntityTypeToPrefType = new LinkedHashMap<>();
+
+    /**
+     * Method to retrieve preference from the database, has a different implementation for each type
+     */
+    private interface PreferenceAccess {
+
+        List<Preference> getPreferences( Long userID, PreferenceDao preferenceDao) throws Exception;
+
+        Preference createNewPreference( Long userID );
+
+        boolean canModifyPreference( Long userID );
+
+        PreferenceType.PreferenceScope getScope();
+    }
+
+    static {
+        mapEntityTypeToPrefType.put(ColumnEntity.LAB_VESSEL,
+                new PreferenceType[]{PreferenceType.GLOBAL_LAB_VESSEL_SEARCH_INSTANCES,
+                        PreferenceType.USER_LAB_VESSEL_SEARCH_INSTANCES});
+        mapEntityTypeToPrefType.put(ColumnEntity.LAB_EVENT,
+                new PreferenceType[]{PreferenceType.GLOBAL_LAB_EVENT_SEARCH_INSTANCES,
+                        PreferenceType.USER_LAB_EVENT_SEARCH_INSTANCES});
+    }
+
+    static {
+        mapTypeToPreferenceAccess.put(PreferenceType.GLOBAL_LAB_VESSEL_SEARCH_INSTANCES, new PreferenceAccess() {
+            @Override
+            public List<Preference> getPreferences(Long userID,
+                                                   PreferenceDao preferenceDao) {
+                List<Preference> preferences = new ArrayList<Preference>();
+                Preference preference =  preferenceDao.getGlobalPreference(PreferenceType.GLOBAL_LAB_VESSEL_SEARCH_INSTANCES);
+                if( preference != null ) {
+                    preferences.add(preference);
+                }
+                return preferences;
+            }
+
+            @Override
+            public Preference createNewPreference(Long userID) {
+                return new Preference(userID, PreferenceType.GLOBAL_LAB_VESSEL_SEARCH_INSTANCES, "");
+            }
+
+            @Override
+            public boolean canModifyPreference(Long userID) {
+                return true; // actionBeanContext.isAdmin();  (BSP carryover not implemented as of 7/22/2014)
+            }
+
+            @Override
+            public PreferenceType.PreferenceScope getScope() {
+                return PreferenceType.PreferenceScope.GLOBAL;
+            }
+
+            ;
+        });
+
+        mapTypeToPreferenceAccess.put(PreferenceType.GLOBAL_LAB_EVENT_SEARCH_INSTANCES, new PreferenceAccess() {
+            @Override
+            public List<Preference> getPreferences(Long userID,
+                                                   PreferenceDao preferenceDao) {
+                List<Preference> preferences = new ArrayList<Preference>();
+                Preference preference =  preferenceDao.getGlobalPreference(PreferenceType.GLOBAL_LAB_EVENT_SEARCH_INSTANCES);
+                if( preference != null ) {
+                    preferences.add(preference);
+                }
+                return preferences;
+            }
+
+            @Override
+            public Preference createNewPreference(Long userID) {
+                return new Preference(userID, PreferenceType.GLOBAL_LAB_EVENT_SEARCH_INSTANCES, "");
+            }
+
+            @Override
+            public boolean canModifyPreference(Long userID) {
+                return true;
+            }
+
+            @Override
+            public PreferenceType.PreferenceScope getScope() {
+                return PreferenceType.PreferenceScope.GLOBAL;
+            }
+
+            ;
+        });
+
+        mapTypeToPreferenceAccess.put(PreferenceType.USER_LAB_VESSEL_SEARCH_INSTANCES, new PreferenceAccess() {
+            @Override
+            public List<Preference> getPreferences(Long userID,
+                                                   PreferenceDao preferenceDao) throws Exception {
+                return preferenceDao.getPreferences(userID, PreferenceType.USER_LAB_VESSEL_SEARCH_INSTANCES);
+            }
+
+            @Override
+            public Preference createNewPreference(Long userID) {
+                return new Preference(userID, PreferenceType.USER_LAB_VESSEL_SEARCH_INSTANCES, "");
+            }
+
+            @Override
+            public boolean canModifyPreference(Long userID) {
+                return true;
+            }
+
+            @Override
+            public PreferenceType.PreferenceScope getScope() {
+                return PreferenceType.PreferenceScope.USER;
+            }
+
+            ;
+        });
+
+        mapTypeToPreferenceAccess.put(PreferenceType.USER_LAB_EVENT_SEARCH_INSTANCES, new PreferenceAccess() {
+            @Override
+            public List<Preference> getPreferences(Long userID,
+                                                   PreferenceDao preferenceDao) throws Exception {
+                return preferenceDao.getPreferences(userID, PreferenceType.USER_LAB_EVENT_SEARCH_INSTANCES);
+            }
+
+            @Override
+            public Preference createNewPreference(Long userID) {
+                return new Preference(userID, PreferenceType.USER_LAB_EVENT_SEARCH_INSTANCES, "");
+            }
+
+            @Override
+            public boolean canModifyPreference(Long userID) {
+                return true;
+            }
+
+            @Override
+            public PreferenceType.PreferenceScope getScope() {
+                return PreferenceType.PreferenceScope.USER;
+            }
+
+            ;
+        });
+    }
+
+    /**
+     * @param entityType the target search entity type
+     * @param mapTypeToPreference output, maps preference type to preference
+     * @param searchInstanceNames output, maps name of search instances (with scope prefi)
+     *                            to pipe delimited values
+     * @param newSearchLevels output, map of scopes (GLOBAL/USER) to the preference name for  each
+     */
+    public void fetchInstances( ColumnEntity entityType,
+            Map<PreferenceType, Preference> mapTypeToPreference,
+            Map<String,String> searchInstanceNames, Map<String,String> newSearchLevels) throws Exception {
+
+        // Required for user defined searches
+        Long userID = userBean.getBspUser().getUserId();
+
+        // Entity types available for GLOBAL and USER scopes
+        PreferenceType[] types = mapEntityTypeToPrefType.get(entityType);
+        if( types == null || types.length == 0 ) {
+            String msg = "No search preference types declared for entity type " + entityType;
+            log.error( msg );
+            throw new RuntimeException( msg );
+        }
+
+        for ( PreferenceType type : types ) {
+            PreferenceAccess preferenceAccess  = mapTypeToPreferenceAccess.get(type);
+            // An entity can only have USER and GLOBAL scope
+            if (preferenceAccess.canModifyPreference(userID )) {
+                newSearchLevels.put(preferenceAccess.getScope().toString(), type.toString());
+            }
+            List<Preference> preferences = preferenceAccess.getPreferences( userID, preferenceDao);
+            if ( preferences == null ) continue;
+            for( Preference preference : preferences ) {
+                SearchInstanceList searchInstanceList;
+                try {
+                    searchInstanceList = (SearchInstanceList) preference.getPreferenceDefinition().getDefinitionValue();
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+
+                for (SearchInstance instance : searchInstanceList.getSearchInstances()) {
+                    searchInstanceNames.put( preferenceAccess.getScope().toString() + PREFERENCE_SEPARATOR + instance.getName(),
+                            preferenceAccess.getScope().toString() + PREFERENCE_DELIM + type + PREFERENCE_DELIM + instance.getName() );
+                }
+
+                mapTypeToPreference.put(type, preference);
+
+            }
+        }
+    }
+
+
+    /**
+     * Builds a list of all available saved search instances at USER and GLOBAL scopes
+     * TODO: Consider caching this data somewhere:
+     *       Global searches application scope, User searches session scope?
+     *       Refreshes triggered by deleteSearch and persistSearch methods
+     * @param searchInstances the target search entity type
+     *                        [LabVessel, LabEvent]
+     *                                       '-> [Global Type, User Type]
+     *                                                             '-> [Saved Search Names]
+     *
+     */
+    public void fetchAllInstances( Map<ColumnEntity, Map<PreferenceType,List<String>>> searchInstances ) throws Exception {
+
+        // Required for user defined searches
+        Long userID = userBean.getBspUser().getUserId();
+
+        for( Map.Entry<ColumnEntity,PreferenceType[]> mapEntry : mapEntityTypeToPrefType.entrySet() ) {
+            Map<PreferenceType,List<String>> typeMap = new LinkedHashMap<>();
+            for( PreferenceType preferenceType : mapEntry.getValue() ) {
+                PreferenceAccess preferenceAccess  = mapTypeToPreferenceAccess.get(preferenceType);
+
+                // An entity can only have USER and GLOBAL scope
+                List<Preference> preferences = preferenceAccess.getPreferences( userID, preferenceDao);
+                if ( preferences == null ) continue;
+                if( preferences.isEmpty() ){
+                    typeMap.put( preferenceType, new ArrayList<String>());
+                } else {
+                    for (Preference preference : preferences) {
+                        SearchInstanceList searchInstanceList;
+                        try {
+                            searchInstanceList =
+                                    (SearchInstanceList) preference.getPreferenceDefinition().getDefinitionValue();
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                        List<String> searchNames = new ArrayList<>();
+                        for (SearchInstance instance : searchInstanceList.getSearchInstances()) {
+                            searchNames.add(instance.getName());
+                        }
+                        typeMap.put(preferenceType, searchNames);
+                    }
+                }
+            }
+            searchInstances.put(mapEntry.getKey(), typeMap);
+        }
+    }
+
+
+    /**
+     * Save a search into a preference.
+     *
+     * @param newSearch true if inserting a new search, false if updating an existing
+     *                  search
+     */
+    public void persistSearch( boolean newSearch, SearchInstance searchInstance, MessageCollection messageCollection,
+            PreferenceType newSearchType, String searchName,
+            Map<PreferenceType, Preference> mapTypeToPreference) {
+
+        try {
+            boolean save = true;
+
+            // Flag to create a brand new global or user preference
+            //    (vs. adding/updating a search instance in an existing preference)
+            boolean preferenceExists = true;
+
+            // Required for user defined searches
+            Long userID = userBean.getBspUser().getUserId();
+
+            // Check the user's authorization
+            if (!mapTypeToPreferenceAccess.get(newSearchType).canModifyPreference(userID)) {
+                messageCollection.addError("You are not authorized to save searches at level {2}", newSearchType);
+                save = false;
+            }
+
+            Preference preference = null;
+
+            if (save) {
+                // Find the existing preference (if any) for the type
+                //   (each preference holds many searches)
+                preference = mapTypeToPreference.get(newSearchType);
+
+                SearchInstanceList searchInstanceList;
+                if (preference == null) {
+                    // Didn't find an existing preference, so create a new one
+                    preference = mapTypeToPreferenceAccess.get(newSearchType)
+                            .createNewPreference(userID);
+                    searchInstanceList = new SearchInstanceList();
+                    preferenceExists = false;
+                } else {
+                    searchInstanceList = (SearchInstanceList) preference.getPreferenceDefinition().getDefinitionValue();
+                }
+
+                if (newSearch) {
+                    // Check for uniqueness
+                    for (SearchInstance searchInstanceLocal : searchInstanceList.getSearchInstances()) {
+                        if (searchInstanceLocal.getName().equals(searchName)) {
+                            messageCollection.addError("There is already a search called " + searchName + " in the "
+                                                       + newSearchType + " level");
+                            save = false;
+                            break;
+                        }
+                    }
+                    searchInstance.setName(searchName);
+                    searchInstanceList.getSearchInstances().add(searchInstance);
+                } else {
+                    // Find the search we're updating
+                    boolean found = false;
+                    for (int i = 0; i < searchInstanceList.getSearchInstances().size(); i++) {
+                        if (searchInstanceList.getSearchInstances().get(i).getName().equals(searchName)) {
+                            searchInstance.setName(searchName);
+                            searchInstanceList.getSearchInstances().set(i, searchInstance);
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        // We didn't find it, so add it. Arguably this should be an error.
+                        searchInstance.setName(searchName);
+                        searchInstanceList.getSearchInstances().add(searchInstance);
+                    }
+                }
+                if (save) {
+                    if(!preferenceExists) {
+                        preferenceEjb.add(userID,
+                                newSearchType, searchInstanceList);
+                    } else {
+                        preference.markModified(searchInstanceList.marshal());
+                        // Changing the preference definition doesn't seem to make the
+                        // Hibernate object "dirty", so change something else too
+                        preference.setModifiedDate(new Date());
+                    }
+
+                    messageCollection.addInfo("The search was saved");
+                }
+            }
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            messageCollection.addError("Failed to save the search");
+        }
+    }
+
+    public void deleteSearch(MessageCollection messageCollection, PreferenceType preferenceType, String searchName,
+            Map<PreferenceType, Preference> mapTypeToPreference) {
+        Preference preference = mapTypeToPreference.get(preferenceType);
+
+        // Required for user defined searches
+        Long userID = userBean.getBspUser().getUserId();
+
+        if (!mapTypeToPreferenceAccess.get(preferenceType).canModifyPreference( userID )) {
+            messageCollection.addError("You are not authorized to delete this search");
+        } else {
+            SearchInstanceList searchInstanceList;
+            try {
+                searchInstanceList = (SearchInstanceList) preference.getPreferenceDefinition().getDefinitionValue();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            for (SearchInstance instance : searchInstanceList.getSearchInstances()) {
+                if (instance.getName().equals(searchName)) {
+                    searchInstanceList.getSearchInstances().remove(instance);
+                    break;
+                }
+            }
+            preference.markModified(searchInstanceList.marshal());
+            preference.setModifiedDate(new Date());
+            try {
+                preferenceDao.persist(preference);
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+                messageCollection.addError("Failed to delete the search");
+            }
+            messageCollection.addInfo("The search was deleted");
+        }
+    }
+}

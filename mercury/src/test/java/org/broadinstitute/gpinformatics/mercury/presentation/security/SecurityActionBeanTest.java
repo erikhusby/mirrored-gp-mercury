@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.ActionBeanBaseTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class SecurityActionBeanTest extends ActionBeanBaseTest<SecurityActionBean> {
 
     private static final String TEST_USERNAME = "QADudeTest";

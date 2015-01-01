@@ -12,7 +12,9 @@
                     iGroupingColumnIndex: 1,
                     sGroupLabelPrefix: 'Barcode: ',
                     iGroupingColumnIndex2: 2,
-                    sGroupLabelPrefix2: 'Sample(s): '
+                    sGroupLabelPrefix2: 'PDO Sample(s): ',
+                    iGroupingColumnIndex4: 4,
+                    sGroupLabelPrefix4:  'Vessel Sample(s)'
                 });
 
         $j('.bucketCandidate-checkbox').enableCheckboxRangeSelection({
@@ -79,11 +81,12 @@
                                 <span id="count" class="bucketCandidate-checkedCount"/>
                             </th>
                             <th>Barcode</th>
-                            <th>Sample</th>
+                            <th>PDO Sample</th>
                             <th>
                                 <input type="checkbox" class="rework-checkAll"/>
                                 <span id="reworkcount" class="rework-checkedCount"/> Rework(s)?
                             </th>
+                            <th>Vessel Sample</th>
                             <th>PDO</th>
                             <th>Product</th>
                             <th>Batches</th>
@@ -104,6 +107,7 @@
                                     <stripes:checkbox class="rework-checkbox" name="selectedReworkVessels"
                                                       value="${candidate}"/>
                                 </td>
+                                <td>${candidate.currentSampleKey}</td>
                                 <td>${candidate.productOrder.businessKey}</td>
                                 <td>${candidate.productOrder.product.productName}</td>
                                 <td>

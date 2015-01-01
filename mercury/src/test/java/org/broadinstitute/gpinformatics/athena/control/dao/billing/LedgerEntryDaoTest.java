@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Set;
 
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.STUBBY)
 public class LedgerEntryDaoTest extends ContainerTest {
 
     @Inject
@@ -56,7 +56,7 @@ public class LedgerEntryDaoTest extends ContainerTest {
     private final ProductOrder[] dupeOrders = new ProductOrder[1];
 
 
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @BeforeMethod(groups = TestGroups.STUBBY)
     public void setUp() throws Exception {
         // Skip if no injections, it means we're not running in container.
         if (utx == null) {
@@ -107,7 +107,7 @@ public class LedgerEntryDaoTest extends ContainerTest {
 
     }
 
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @AfterMethod(groups = TestGroups.STUBBY)
     public void tearDown() throws Exception {
         // Skip if no injections, it means we're not running in container.
         if (utx == null) {
@@ -117,20 +117,6 @@ public class LedgerEntryDaoTest extends ContainerTest {
         utx.rollback();
     }
 
-    //
-    public void testFindLedgerEntries() {
-        // In one test run, execution time without join fetch callback was 227472 ms.
-        // Execution time with join fetch callback was 51921 ms.
-        List<LedgerEntry> ledgerEntries = ledgerEntryDao.findAll(LedgerEntry.class, new GenericDao.GenericDaoCallback<LedgerEntry>() {
-            @Override
-            public void callback(CriteriaQuery<LedgerEntry> criteriaQuery, Root<LedgerEntry> root) {
-                root.fetch(LedgerEntry_.productOrderSample);
-            }
-        });
-        Assert.assertTrue(!ledgerEntries.isEmpty(), "The specified order should find at one test ledger");
-    }
-
-    //
     public void testFindLedgerEntriesForPDOs() {
         Set<LedgerEntry> ledgerEntries = ledgerEntryDao.findByOrderList(orders);
         Assert.assertEquals(1, ledgerEntries.size(), "The specified order should find one test ledger") ;

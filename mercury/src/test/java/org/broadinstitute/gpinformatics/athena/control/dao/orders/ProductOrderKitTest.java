@@ -19,7 +19,7 @@ import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+@Test(groups = TestGroups.STUBBY, enabled = true)
 public class ProductOrderKitTest extends ContainerTest {
 
     @Inject
@@ -40,7 +40,7 @@ public class ProductOrderKitTest extends ContainerTest {
     public static final String bspName = "adsfasdf";
     public static final MaterialInfoDto materialInfoDto = new MaterialInfoDto(kitType.getKitName(), bspName);
 
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @BeforeMethod(groups = TestGroups.STUBBY)
     public void setUp() throws Exception {
         // Skip if no injections, meaning we're not running in container.
         if (utx == null) {
@@ -60,7 +60,7 @@ public class ProductOrderKitTest extends ContainerTest {
         productOrderDao.clear();
     }
 
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @AfterMethod(groups = TestGroups.STUBBY)
     public void tearDown() throws Exception {
         // Skip if no injections, meaning we're not running in container.
         if (utx == null) {

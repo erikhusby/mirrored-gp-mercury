@@ -1,25 +1,44 @@
 package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
+import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.hibernate.SQLQuery;
+import org.hibernate.type.LongType;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.persistence.Query;
+import javax.transaction.UserTransaction;
+import java.util.Collection;
 import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
 /**
  * Fixups to LabEvent entities
  */
+@Test(groups = TestGroups.FIXUP)
 public class LabEventFixupTest extends Arquillian {
 
     @Inject
@@ -30,6 +49,19 @@ public class LabEventFixupTest extends Arquillian {
 
     @Inject
     private GenericReagentDao reagentDao;
+
+    @Inject
+    private BarcodedTubeDao barcodedTubeDao;
+
+    @Inject
+    private StaticPlateDao staticPlateDao;
+
+    @Inject
+    private UserBean userBean;
+
+    @SuppressWarnings("CdiInjectionPointsInspection")
+    @Inject
+    private UserTransaction utx;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -238,6 +270,24 @@ public class LabEventFixupTest extends Arquillian {
         labEventDao.flush();
     }
 
+    @Test(enabled = false)
+    public void fixupGplim2706() {
+        // Override routing for shearing transfer
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 445419L);
+        LabBatch labBatch = labBatchDao.findByName("LCSET-5390");
+        labEvent.setManualOverrideLcSet(labBatch);
+        labEventDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupIpi61190() {
+        // Override routing for shearing transfer
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 477915L);
+        LabBatch labBatch = labBatchDao.findByName("LCSET-5496");
+        labEvent.setManualOverrideLcSet(labBatch);
+        labEventDao.flush();
+    }
+
     /**
      * Delete a transfer that was resubmitted with a changed disambiguator.
      */
@@ -259,4 +309,276 @@ public class LabEventFixupTest extends Arquillian {
         }
     }
 
+    @Test(enabled = false)
+    public void fixupFct18386() {
+        // Delete BSP UI daughter plate transfer, which duplicates earlier deck automation transfer.
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 524316L);
+        labEventDao.remove(labEvent);
+    }
+
+    @Test(enabled = false)
+    public void fixupFct18237() {
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 516658L);
+        labEvent.getReagents().clear();
+        labEventDao.remove(labEvent);
+        labEvent = labEventDao.findById(LabEvent.class, 516659L);
+        labEvent.getReagents().clear();
+        labEventDao.remove(labEvent);
+    }
+
+    @Test(enabled = false)
+    public void fixupPo743 () {
+        BarcodedTube tube = barcodedTubeDao.findByBarcode("0168281750");
+        Assert.assertEquals(tube.getTransfersTo().size(), 1);
+        LabEvent labEvent = tube.getTransfersTo().iterator().next();
+        for (CherryPickTransfer cherryPickTransfer : labEvent.getCherryPickTransfers()) {
+            switch (cherryPickTransfer.getTargetPosition()) {
+                case A02:
+                    cherryPickTransfer.setSourcePosition(VesselPosition.C01);
+                    break;
+                case C01:
+                    cherryPickTransfer.setSourcePosition(VesselPosition.A01);
+                    break;
+                case B02:
+                    cherryPickTransfer.setSourcePosition(VesselPosition.C01);
+                    break;
+                case G01:
+                    cherryPickTransfer.setSourcePosition(VesselPosition.B01);
+                    break;
+                case H01:
+                    cherryPickTransfer.setSourcePosition(VesselPosition.B01);
+                    break;
+            }
+        }
+        barcodedTubeDao.flush();
+    }
+
+    /**
+     * This is done after importing index plates from Squid.
+     */
+    @Test(enabled = false)
+    public void fixupGplim3164() {
+        userBean.loginOSUser();
+        StaticPlate staticPlateEmpty = staticPlateDao.findByBarcode("000001814423-GPLIM-3164");
+        StaticPlate staticPlateIndexed = staticPlateDao.findByBarcode("000001814423");
+        for (LabEvent labEvent : staticPlateEmpty.getTransfersFrom()) {
+            for (SectionTransfer sectionTransfer : labEvent.getSectionTransfers()) {
+                System.out.println("Changing source for labEvent " + labEvent.getLabEventId());
+                sectionTransfer.setSourceVesselContainer(staticPlateIndexed.getContainerRole());
+            }
+        }
+        staticPlateDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void gplim3126fixupMachineName() {
+        userBean.loginOSUser();
+        for (long id : new Long[] {687513L, 687557L}) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, id);
+            if (labEvent == null) {
+                throw new RuntimeException("cannot find " + id);
+            }
+            System.out.println("LabEvent " + id + " location " + labEvent.getEventLocation());
+            labEvent.setEventLocation("JON_HAMM");
+            System.out.println("   updated to " + labEvent.getEventLocation());
+            labEventDao.persist(new FixupCommentary(
+                    "GPLIM-3126 incorrect machine configuration caused messages to be sent with the wrong machine name."));
+            labEventDao.flush();
+        }
+    }
+
+    @Test(enabled = false)
+    public void gplim3208fixupEventType() {
+        userBean.loginOSUser();
+        for (long id : new Long[] {710100L, 710156L}) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, id);
+            if (labEvent == null || labEvent.getLabEventType() != LabEventType.FINGERPRINTING_ALIQUOT) {
+                throw new RuntimeException("cannot find " + id + " or is not FINGERPRINTING_ALIQUOT");
+            }
+            System.out.println("LabEvent " + id + " type " + labEvent.getLabEventType());
+            labEvent.setLabEventType(LabEventType.SHEARING_ALIQUOT);
+            System.out.println("   updated to " + labEvent.getLabEventType());
+            labEventDao.persist(new FixupCommentary(
+                    "GPLIM-3208 incorrect selection at the janus app caused wrong type of aliquot event."));
+            // Next time move this flush out of the loop so that both fixups are on one rev and
+            // share one FixupCommentary.
+            labEventDao.flush();
+        }
+    }
+
+    // Change lab events' eventLocation changed from BUNSEN to BEAKER.
+    @Test(enabled = false)
+    public void gplim3248fixupEventType() {
+        userBean.loginOSUser();
+        for (long id : new Long[] {724636L, 724050L, 724047L, 723648L}) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, id);
+            if (labEvent == null || !labEvent.getEventLocation().equals("BUNSEN")) {
+                throw new RuntimeException("cannot find " + id + " or location not BUNSEN");
+            }
+            System.out.println("LabEvent " + id + " location " + labEvent.getEventLocation());
+            labEvent.setEventLocation("BEAKER");
+            System.out.println("   updated to " + labEvent.getEventLocation());
+        }
+        labEventDao.persist(new FixupCommentary(
+                "GPLIM-3248 machine script set location to BUNSEN but it was actually BEAKER."));
+        labEventDao.flush();
+    }
+
+
+    /**
+     * Unlinks FCT from dilution tube and flowcell, by deleting the denature to dilution event,
+     * deleting the dilution to flowcell event, removing the tube from the FCT batch, and deleting
+     * the flowcell.
+     */
+    @Test(enabled = false)
+    public void gplim3258fixupDenatureAndFlowcellEvents() throws Exception {
+        userBean.loginOSUser();
+
+        // Finds the dilution tube and its position.
+        String dilutionTubeBarcode = "0113964182";
+
+        BarcodedTube dilutionTube = barcodedTubeDao.findByBarcode(dilutionTubeBarcode);
+        Assert.assertNotNull(dilutionTube);
+
+        Collection<VesselContainer<?>> containers = dilutionTube.getContainers();
+        Assert.assertEquals(containers.size(), 1);
+        VesselContainer<?> vesselContainer = containers.iterator().next();
+        String vesselPositionName = null;
+        for (Map.Entry<VesselPosition,? extends LabVessel> mapEntry : vesselContainer.getMapPositionToVessel().entrySet()) {
+            if (mapEntry.getValue().getLabel().equals(dilutionTubeBarcode)) {
+                Assert.assertNull(vesselPositionName, "Multiple occurrences in tube formation.");
+                vesselPositionName = mapEntry.getKey().name();
+            }
+        }
+        Assert.assertNotNull(vesselPositionName);
+        Long dilutionTubeFormationId = vesselContainer.getEmbedder().getLabVesselId();
+        System.out.println("Using dilution tube " + dilutionTube.getLabVesselId() + " at position " +
+                           vesselPositionName + " in tubeFormation " + dilutionTubeFormationId);
+
+        // Finds the cherry pick transfer into the dilution tube.  The DenatureToDilution lab event
+        // has multiple cherry picks and all but one must remain.
+        // Cannot use hibernate for this because the lab event somehow remains managed by entity manager
+        // and consequently cannot delete its cherry pick transfer without Hibernate resurrecting it.
+        Query queryCherryPick = labEventDao.getEntityManager().createNativeQuery(
+                "select vessel_transfer_id from vessel_transfer " +
+                "where target_vessel = :targetVessel and target_position = :targetPosition");
+        queryCherryPick.setParameter("targetVessel", dilutionTubeFormationId);
+        queryCherryPick.setParameter("targetPosition", vesselPositionName);
+        // Fixes the return types.
+        queryCherryPick.unwrap(SQLQuery.class).addScalar("vessel_transfer_id", LongType.INSTANCE);
+        Long transferToTubeId = (Long)queryCherryPick.getSingleResult();
+        Assert.assertNotNull(transferToTubeId);
+
+        // Finds the dilution to flowcell transfer.
+        // Cannot use hibernate for this because the lab event somehow remains managed by entity manager
+        // and consequently cannot delete its vessel transfer without Hibernate resurrecting it.  That in
+        // turn causes the attempted event deletion due to its foreign key constraint in vessel transfer.
+        Query queryVesselTransfer = labEventDao.getEntityManager().createNativeQuery(
+                "select vessel_transfer_id, target_vessel from vessel_transfer where source_vessel = :dilutionTubeId");
+        queryVesselTransfer.setParameter("dilutionTubeId", dilutionTube.getLabVesselId());
+        // Fixes the return types.
+        queryVesselTransfer.unwrap(SQLQuery.class)
+                .addScalar("vessel_transfer_id", LongType.INSTANCE)
+                .addScalar("target_vessel", LongType.INSTANCE);
+        Long transferFromTubeId = null;
+        Long flowcellVesselId = null;
+        for (Object[] result : (List<Object[]>)queryVesselTransfer.getResultList()) {
+            Assert.assertNull(transferFromTubeId, "Multiple transfers from tube.");
+            transferFromTubeId = (Long)result[0];
+            flowcellVesselId = (Long)result[1];
+        }
+        Assert.assertNotNull(transferFromTubeId);
+
+        // Finds the FCT batch starting vessel association and the batch id.
+        // Cannot use hibernate for this because the lab batch staring vessel is claimed to be a detached entity
+        // regardless of its being immediately gotten from the dao by its id.
+        Query queryLbsv = labEventDao.getEntityManager().createNativeQuery(
+                "select batch_starting_vessel_id, lab_vessel, lab_batch from batch_starting_vessels " +
+                " where dilution_vessel = :dilutionTubeId");
+        queryLbsv.setParameter("dilutionTubeId", dilutionTube.getLabVesselId());
+        // Fixes the return types.
+        queryLbsv.unwrap(SQLQuery.class)
+                .addScalar("batch_starting_vessel_id", LongType.INSTANCE)
+                .addScalar("lab_vessel", LongType.INSTANCE)
+                .addScalar("lab_batch", LongType.INSTANCE);
+        Long labBatchStartingVesselId = null;
+        Long denatureTubeId = null;
+        Long fctBatchId = null;
+        for (Object[] result : (List<Object[]>)queryLbsv.getResultList()) {
+            Assert.assertNull(labBatchStartingVesselId, "Multiple labBatchStartingVessel.");
+            labBatchStartingVesselId = (Long)result[0];
+            denatureTubeId = (Long)result[1];
+            fctBatchId = (Long)result[2];
+        }
+        Assert.assertNotNull(labBatchStartingVesselId);
+
+        // Must use a user transaction in order to have all of the fixups in one transaction.
+        utx.begin();
+
+        // Unlinks the DenatureToDilution event for the one dilution tube by deleting the transfer to the tube.
+        CherryPickTransfer cpt = labEventDao.findById(CherryPickTransfer.class, transferToTubeId);
+        Assert.assertNotNull(cpt);
+        System.out.println("Deleting DenatureToDilution cherry pick transfer " + cpt.getVesselTransferId());
+        //cpt.getLabEvent().getCherryPickTransfers().remove(cpt);
+        labEventDao.remove(cpt);
+
+        // Unlinks the DilutionToFlowcell event by deleting transfers from the tube.
+        VesselToSectionTransfer vt = labEventDao.findById(VesselToSectionTransfer.class, transferFromTubeId);
+        Assert.assertNotNull(vt);
+        System.out.println("Deleting DilutionToFlowcell transfer " + vt.getVesselTransferId());
+        vt.getLabEvent().getVesselToSectionTransfers().remove(vt);
+        Long transferFromEventId = vt.getLabEvent().getLabEventId();
+        labEventDao.remove(vt);
+
+        LabEvent transferFromTubeEvent = labEventDao.findById(LabEvent.class, transferFromEventId);
+        Assert.assertNotNull(transferFromTubeEvent);
+        System.out.println("Deleting DilutionToFlowcell event " + transferFromEventId);
+        labEventDao.remove(transferFromTubeEvent);
+
+        // Removes the dilution tube from the FCT batch.  Hibernate removes the denature tube's
+        // reference to the FCT batch and the FCT batch reference to the dilution tube.
+        LabBatchStartingVessel lbsvDelete = labEventDao.findById(LabBatchStartingVessel.class, labBatchStartingVesselId);
+        Assert.assertNotNull(lbsvDelete);
+        System.out.println("Removing labBatchStartingVessel " + labBatchStartingVesselId + " from FCT batch " + fctBatchId);
+        labEventDao.remove(lbsvDelete);
+
+        // The flowcell is left in place, but a vessel search on it indicates it has no contents.
+        // It may be necessary to delete it from the database in order to allow the lab to reuse it.
+        System.out.println("Orphan flowcell is " + flowcellVesselId);
+
+        labEventDao.persist(new FixupCommentary(
+                "GPLIM-3258 remove two events to unlink tube and flowcell due to error during template creation."));
+
+        utx.commit();
+    }
+
+    /** Failed to solve the problem; later discovered that the sample had been through shearing 3 times. */
+    @Test(enabled = false)
+    public void fixupGplim3279Try1() {
+        lcsetOverride(717989L, LabEventType.SHEARING_TRANSFER, "LCSET-6507", "GPLIM-3279");
+    }
+
+    /** Failed to solve the problem; later discovered that the sample had been through shearing 3 times. */
+    @Test(enabled = false)
+    public void fixupGplim3279Try2() {
+        lcsetOverride(717910L, LabEventType.SHEARING_ALIQUOT, "LCSET-6507", "GPLIM-3279");
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim3279Try3() {
+        // Zims was returning LCSET-6611, but I think it should have been 6507.
+        lcsetOverride(722534L, LabEventType.SHEARING_ALIQUOT, "LCSET-6507", "GPLIM-3279");
+    }
+
+    private void lcsetOverride(long labEventId, LabEventType labEventType, String lcsetName, String jiraTicket) {
+        userBean.loginOSUser();
+        // Override routing for shearing transfer
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, labEventId);
+        Assert.assertEquals(labEvent.getLabEventType(), labEventType);
+        LabBatch labBatch = labBatchDao.findByName(lcsetName);
+        labEvent.setManualOverrideLcSet(labBatch);
+        labEventDao.persist(new FixupCommentary(
+                jiraTicket + " manual override to " + lcsetName + " for " + labEventType));
+        labEventDao.flush();
+    }
 }

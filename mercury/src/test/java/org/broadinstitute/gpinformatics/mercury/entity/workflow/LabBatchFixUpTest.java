@@ -11,8 +11,11 @@
 
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkDetail;
@@ -31,15 +34,21 @@ import java.util.List;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 
 /**
  * A Test to backpopulate a column which ought to be not null.
  */
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.FIXUP)
 public class LabBatchFixUpTest extends Arquillian {
+
     @Inject
     private LabBatchDao labBatchDao;
+
+    @Inject
+    private LabVesselDao labVesselDao;
+
+    @Inject
+    private ProductOrderDao productOrderDao;
 
     // Use (RC, "rc"), (PROD, "prod") to push the backfill to RC and production respectively.
     @Deployment
@@ -107,7 +116,7 @@ public class LabBatchFixUpTest extends Arquillian {
     }
 
     /** Rename Exome Express to Agilent Exome Express. */
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void updateWorkflowName() {
         List<LabBatch> updates = new ArrayList<>();
         for (LabBatch batch : labBatchDao.findAll(LabBatch.class)) {
@@ -185,4 +194,14 @@ public class LabBatchFixUpTest extends Arquillian {
         labBatchDao.flush();
     }
 
+    @Test(enabled = false)
+    public void fixupGplim2921() {
+        LabBatch labBatch = labBatchDao.findByName("LCSET-5704");
+        LabVessel labVessel = labVesselDao.findByIdentifier("0156349196");
+        ProductOrder productOrder = productOrderDao.findByBusinessKey("PDO-3974");
+        BucketEntry bucketEntry = new BucketEntry(labVessel, productOrder, BucketEntry.BucketEntryType.PDO_ENTRY);
+        bucketEntry.setStatus(BucketEntry.Status.Archived);
+        labBatch.addBucketEntry(bucketEntry);
+        labBatchDao.flush();
+    }
 }

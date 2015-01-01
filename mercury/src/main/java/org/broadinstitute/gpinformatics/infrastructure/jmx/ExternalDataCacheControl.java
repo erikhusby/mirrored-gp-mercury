@@ -1,5 +1,9 @@
 package org.broadinstitute.gpinformatics.infrastructure.jmx;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import javax.annotation.Nonnull;
 import javax.ejb.Schedule;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
@@ -14,6 +18,8 @@ import java.util.List;
 @Startup
 public class ExternalDataCacheControl extends AbstractCacheControl {
 
+    private static final Log logger = LogFactory.getLog(ExternalDataCacheControl.class);
+
     private final List<AbstractCache> caches = new ArrayList<>();
 
     private static final int MAX_SIZE = 100000;
@@ -21,10 +27,10 @@ public class ExternalDataCacheControl extends AbstractCacheControl {
     private int maxCacheSize = MAX_SIZE;
 
     @Override
-    @Schedule(minute = "*/5", hour = "*", persistent = false)
+    @Schedule(minute = "2/5", hour = "*", persistent = false)
     public void invalidateCache() {
         for (AbstractCache cache : caches) {
-            cache.refreshCache();
+            refreshCacheAndLogException(cache);
         }
     }
 
@@ -34,7 +40,7 @@ public class ExternalDataCacheControl extends AbstractCacheControl {
      */
     public void registerCache(AbstractCache cache) {
         caches.add(cache);
-        cache.refreshCache();
+        refreshCacheAndLogException(cache);
     }
 
     /**
@@ -44,6 +50,15 @@ public class ExternalDataCacheControl extends AbstractCacheControl {
      */
     public boolean unRegisterCache(AbstractCache cache) {
         return caches.remove(cache);
+    }
+
+    private void refreshCacheAndLogException(@Nonnull AbstractCache cache) {
+        try {
+            cache.refreshCache();
+        }
+        catch(Exception e) {
+            logger.error("Could not refresh cache " + cache.getClass().getName(),e);
+        }
     }
 
     @Override

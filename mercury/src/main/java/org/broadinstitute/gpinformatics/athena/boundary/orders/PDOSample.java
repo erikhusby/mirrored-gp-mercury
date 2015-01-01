@@ -2,27 +2,33 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 
 /**
- * Bean used by web service to get billing status
- * for a product order sample
+ * Bean used by web service to get billing status for a product order sample
  */
 public class PDOSample {
 
-    public PDOSample() {}
+    private List<String> riskInformation = new ArrayList<>();
 
-    public PDOSample(String pdoKey, String sampleName, Boolean hasPrimaryPriceItemBeenBilled) {
-        this(pdoKey, sampleName, hasPrimaryPriceItemBeenBilled, null);
+    public PDOSample() {
     }
 
-    public PDOSample(String pdoKey, String sampleName, Boolean hasPrimaryPriceItemBeenBilled, Boolean onRisk) {
+    public PDOSample(String pdoKey, String sampleName, Boolean hasPrimaryPriceItemBeenBilled) {
+        this(pdoKey, sampleName, hasPrimaryPriceItemBeenBilled, null, false);
+    }
+
+    public PDOSample(String pdoKey, String sampleName, Boolean hasPrimaryPriceItemBeenBilled, Boolean onRisk,
+                     boolean isRiskCalculated) {
         this.pdoKey = pdoKey;
         this.sampleName = sampleName;
         this.hasPrimaryPriceItemBeenBilled = hasPrimaryPriceItemBeenBilled;
         this.onRisk = onRisk;
+        this.isRiskCalculated = isRiskCalculated;
+    }
+
+    public PDOSample(String pdoKey, String sampleName, Boolean hasPrimaryPriceItemBeenBilled, Boolean onRisk) {
+        this(pdoKey, sampleName, hasPrimaryPriceItemBeenBilled, onRisk, true);
     }
 
     private String pdoKey;
@@ -32,6 +38,8 @@ public class PDOSample {
     private Boolean hasPrimaryPriceItemBeenBilled;
 
     private Boolean onRisk;
+
+    private boolean isRiskCalculated;
 
     private List<String> riskCategories;
 
@@ -73,5 +81,22 @@ public class PDOSample {
 
     public void setOnRisk(Boolean onRisk) {
         this.onRisk = onRisk;
+    }
+
+
+    public void setRiskInformation(List<String> riskInformation) {
+        this.riskInformation = riskInformation;
+    }
+
+    public List<String> getRiskInformation() {
+        return riskInformation;
+    }
+
+    public boolean isRiskCalculated() {
+        return isRiskCalculated;
+    }
+
+    public void setRiskCalculated(boolean isRiskCalculated) {
+        this.isRiskCalculated = isRiskCalculated;
     }
 }

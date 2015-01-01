@@ -25,8 +25,11 @@ $j(document).ready(function () {
         success: showSummary
     });
 
-    // Initializes the previously chosen sample kit detail info in the sample kit display section
-    <c:if test="${actionBean.editOrder.isSampleInitiation()}">
+    // Only show the fill kit detail information for sample initiation PDOs. With the collaboration portal, there
+    // can be kit definitions but since that is all automated, we do not want to show that. It is fairly irrelevant
+    // after the work request happens. Adding a work request id field to the UI when there is a work request with
+    // a non-sample initiation PDO.
+    <c:if test="${actionBean.editOrder.sampleInitiation}">
     <c:forEach items="${actionBean.editOrder.productOrderKit.kitOrderDetails}" var="kitDetail">
     showKitDetail('${kitDetail.numberOfSamples}', '${kitDetail.kitType.displayName}',
             '${kitDetail.organismName}', '${kitDetail.bspMaterialName}',
@@ -54,6 +57,8 @@ $j(document).ready(function () {
             updateBspInformation(tempArray);
         }
     }
+
+    $j('div.onRisk').popover();
 });
 
 var bspDataCount = 0;
@@ -154,6 +159,31 @@ function setupDialogs() {
         ]
     });
 
+    $j("#unAbandonDialog").dialog({
+        modal: true,
+        autoOpen: false,
+        buttons: [
+            {
+                id: "unAbandonOkButton",
+                text: "OK",
+                click: function () {
+                    $j(this).dialog("close");
+                    $j("#unAbandonOkButton").attr("disabled", "disabled");
+                    $j("#abandonStatus").attr("value", $j("#unAbandonDialogId").attr("checked") != undefined);
+                    $j("#unAbandonComment").attr("value", $j("#unAbandonSampleCommentId").val());
+
+                    $j("#orderForm").submit();
+                }
+            },
+            {
+                text: "Cancel",
+                click: function () {
+                    $j(this).dialog("close");
+                }
+            }
+        ]
+    });
+
     $j("#deleteConfirmation").dialog({
         modal: true,
         autoOpen: false,
@@ -165,6 +195,31 @@ function setupDialogs() {
                     $j(this).dialog("close");
 
                     $j("#deleteOKButton").attr("disabled", "disabled");
+                    $j("#orderForm").submit();
+                }
+            },
+            {
+                text: "Cancel",
+                click: function () {
+                    $j(this).dialog("close");
+                }
+            }
+        ]
+    });
+
+    $j("#placeConfirmation").dialog({
+        modal: true,
+        autoOpen: false,
+        width: 600,
+        height: 260,
+        buttons: [
+            {
+                id: "placeOrderOKButton",
+                text: "OK",
+                click: function () {
+                    $j(this).dialog("close");
+                    $j("#placeOrderOKButton").attr("disabled", "disabled");
+                    $j("#attestationConfirmed").attr("value", $j("#placeConfirmAttestation").prop("checked"));
                     $j("#orderForm").submit();
                 }
             },
@@ -232,15 +287,14 @@ function showSamples(sampleData) {
         $j('#patient-' + sampleId).text(sampleData[x].patientId);
         $j('#collab-patient-' + sampleId).text(sampleData[x].collaboratorParticipantId);
         $j('#volume-' + sampleId).text(sampleData[x].volume);
+        $j('#sample-type-' + sampleId).text(sampleData[x].sampleType);
         $j('#concentration-' + sampleId).text(sampleData[x].concentration);
         $j('#rin-' + sampleId).text(sampleData[x].rin);
+        $j('#rqs-' + sampleId).text(sampleData[x].rqs);
         $j('#total-' + sampleId).text(sampleData[x].total);
         $j('#picoDate-' + sampleId).text(sampleData[x].picoDate);
         $j('#picoDate-' + sampleId).attr("title", sampleData[x].picoDate);
 
-        if (sampleData[x].hasFingerprint) {
-            $j('#fingerprint-' + sampleId).html('<img src="${ctxpath}/images/check.png" title="Yes"/>');
-        }
 
         if (sampleData[x].hasSampleKitUploadRackscanMismatch) {
             $j('#sampleKitUploadRackscanMismatch-' + sampleId).html('<img src="${ctxpath}/images/error.png" title="Yes"/>');
@@ -266,20 +320,21 @@ function showSamples(sampleData) {
                 {"bSortable": true},                            // Collaborator Sample ID
                 {"bSortable": true},                            // Participant ID
                 {"bSortable": true},                            // Collaborator Participant ID
-                {"bSortable": true},                            // Shipped Date
-                {"bSortable": true},                            // Received Date
-                {"bSortable": true, "sType": "numeric"},        // Volume
+                {"bSortable": true, "sType": "numeric"},        // Shipped Date
+                {"bSortable": true, "sType": "numeric"},        // Received Date
+                {"bSortable": true},                            // Collaborator Participant ID
+                {"bSortable": true, "sType": "numeric"},        // Sample Type
                 {"bSortable": true, "sType": "numeric"},        // Concentration
 
                 <c:if test="${actionBean.supportsRin}">
                 {"bSortable": true, "sType": "numeric"},        // RIN
+                {"bSortable": true, "sType": "numeric"},        // RQS
                 </c:if>
 
                 <c:if test="${actionBean.supportsPico}">
                 {"bSortable": true, "sType": "title-us-date"},  // Pico Run Date
                 </c:if>
                 {"bSortable": true, "sType": "numeric"},        // Yield Amount
-                {"bSortable": true, "sType": "title-string"},   // FP Status
                 {"bSortable": true},                            // sample kit upload/rackscan mismatch
                 {"bSortable": true},                            // On Risk
                 {"bSortable": true},                            // Status
@@ -388,9 +443,26 @@ function showAbandonDialog() {
     }
 }
 
+function showUnAbandonDialog() {
+    var numChecked = $("input.shiftCheckbox:checked").size();
+    if (numChecked) {
+        $j("#dialogAction").attr("name", "unAbandonSamples");
+        $j("#unAbandonSelectedSamplesCountId").text(numChecked);
+        $j("#unAbandonDialog").dialog("open").dialog("option", "width", 600);
+    } else {
+        $j("#noneSelectedDialogMessage").text("Un-Abandon Samples");
+        $j("#noneSelectedDialog").dialog("open");
+    }
+}
+
 function showDeleteConfirm(action) {
     $j("#dialogAction").attr("name", action);
     $j("#deleteConfirmation").dialog("open");
+}
+
+function showPlaceConfirm(action) {
+    $j("#dialogAction").attr("name", action);
+    $j("#placeConfirmation").dialog("open");
 }
 
 function showConfirm(action, actionPrompt) {
@@ -545,6 +617,16 @@ function formatInput(item) {
     <textarea id="abandonSampleCommentId" name="comment" class="controlledText" cols="80" rows="4"> </textarea>
 </div>
 
+<div id="unAbandonDialog" style="width:600px;display:none;">
+    <p>Un-Abandon Samples (<span id="unAbandonSelectedSamplesCountId"> </span> selected)</p>
+
+    <p style="clear:both">
+        <label for="unAbandonSampleCommentId">Comment:</label>
+    </p>
+
+    <textarea id="unAbandonSampleCommentId" name="comment" class="controlledText" cols="80" rows="4"> </textarea>
+</div>
+
 <div id="recalculateRiskDialog" style="width:600px;display:none;">
     <p>Recalculate Risk (<span id="recalculateRiskSelectedCountId"> </span> selected)</p>
 
@@ -564,11 +646,50 @@ function formatInput(item) {
 </div>
 
 <stripes:form action="/orders/order.action" id="orderForm" class="form-horizontal">
+
+<div id="placeConfirmation" style="display:none;" title="Place Order">
+    <p>Click OK to place the order and make it available for lab work.</p>
+    <c:choose>
+        <c:when test="${actionBean.numberSamplesNotReceived == null}">
+            <p>N/A</p>
+        </c:when>
+        <c:when test="${actionBean.numberSamplesNotReceived == 1}">
+            <p>
+                <em>NOTE:</em> There is one sample that has not yet been received. If the order is placed,
+                this sample will be removed from the order.
+            </p>
+        </c:when>
+        <c:when test="${actionBean.numberSamplesNotReceived > 1}">
+            <p>
+                <em>NOTE:</em> There are ${actionBean.numberSamplesNotReceived} samples that have not yet been received.
+                If the order is placed, these samples will be removed from the order.
+            </p>
+        </c:when>
+    </c:choose>
+
+    <div>
+        Regulatory Info: ${actionBean.regulatoryInfoForPendingOrder.displayText}
+    </div>
+
+    <span class="control-group">
+        <span class="controls">
+            <stripes:checkbox id="placeConfirmAttestation" name="editOrder.attestationConfirmed"
+                              class="controls controls-text" style="margin-top: 0px; margin-right: 5px;"/>
+        </span>
+        <stripes:label for="placeConfirmAttestation" class="controls control-label"
+                       style="display: inline; position: absolute;">
+            ${actionBean.attestationMessage}
+        </stripes:label>
+    </span>
+</div>
+
 <stripes:hidden name="productOrder" value="${actionBean.editOrder.businessKey}"/>
 <stripes:hidden id="dialogAction" name=""/>
 <stripes:hidden id="riskStatus" name="riskStatus" value=""/>
 <stripes:hidden id="riskComment" name="riskComment" value=""/>
 <stripes:hidden id="abandonComment" name="abandonComment" value=""/>
+<stripes:hidden id="unAbandonComment" name="unAbandonComment" value=""/>
+<stripes:hidden id="attestationConfirmed" name="editOrder.attestationConfirmed" value=""/>
 
 <div class="actionButtons">
     <c:choose>
@@ -595,10 +716,15 @@ function formatInput(item) {
             </security:authorizeBlock>
         </c:when>
         <c:otherwise>
-            <%-- Do not show abandon button at all for DRAFTs, do show for Submitted *or later states* --%>
-            <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+            <c:if test="${actionBean.canPlaceOrder}">
+                <security:authorizeBlock roles="<%= roles(Developer, PDM, PM) %>">
+                    <stripes:button onclick="showPlaceConfirm('placeOrder')" name="placeOrder"
+                                    value="Place Order" class="btn"/>
+                </security:authorizeBlock>
+            </c:if>
+            <security:authorizeBlock roles="${actionBean.modifyOrderRoles}">
                 <c:choose>
-                    <c:when test="${actionBean.abandonable}">
+                    <c:when test="${actionBean.canAbandonOrder}">
                         <c:set var="abandonTitle" value="Click to abandon ${actionBean.editOrder.title}"/>
                         <c:set var="abandonDisable" value="false"/>
                         <stripes:hidden name="selectedProductOrderBusinessKeys"
@@ -615,19 +741,24 @@ function formatInput(item) {
                                 class="btn padright" title="${abandonTitle}" disabled="${abandonDisable}"/>
             </security:authorizeBlock>
 
-            <security:authorizeBlock roles="<%= roles(Developer, PDM, BillingManager) %>">
-                <stripes:param name="selectedProductOrderBusinessKeys" value="${actionBean.editOrder.businessKey}"/>
-                <stripes:submit name="downloadBillingTracker" value="Download Billing Tracker" class="btn"
-                                style="margin-right:5px;"/>
-            </security:authorizeBlock>
+            <c:if test="${actionBean.editOrder.orderStatus.canBill()}">
 
-            <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
-                <stripes:link
-                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.UploadTrackerActionBean"
-                        event="view">
-                    Upload Billing Tracker
-                </stripes:link>
-            </security:authorizeBlock>
+                <security:authorizeBlock roles="<%= roles(Developer, PDM, BillingManager) %>">
+                    <stripes:param name="selectedProductOrderBusinessKeys" value="${actionBean.editOrder.businessKey}"/>
+                    <stripes:submit name="downloadBillingTracker" value="Download Billing Tracker" class="btn"
+                                    style="margin-right:5px;"/>
+                </security:authorizeBlock>
+
+                <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+                    <stripes:link
+                            beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.UploadTrackerActionBean"
+                            event="view">
+                        Upload Billing Tracker
+                    </stripes:link>
+                </security:authorizeBlock>
+
+            </c:if>
+
         </c:otherwise>
     </c:choose>
 
@@ -684,6 +815,22 @@ function formatInput(item) {
     </div>
 </div>
 
+<c:if test="${actionBean.editOrder.product.supportsNumberOfLanes}">
+    <c:if test="${actionBean.editOrder.squidWorkRequest != null}">
+        <div>
+            <div class="control-group view-control-group">
+                <label class="control-label label-form">Squid Work Request</label>
+
+                <div class="controls">
+                    <div class="form-value">
+                        <a target="SQUID" href="${actionBean.squidWorkRequestUrl}"
+                           class="external">${actionBean.editOrder.squidWorkRequest}</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </c:if>
+</c:if>
 
 <div class="view-control-group control-group">
     <label class="control-label label-form">Product Family</label>
@@ -697,15 +844,26 @@ function formatInput(item) {
     </div>
 </div>
 
+<!-- If this order has a work request created by the collaboration portal, then display the work request as a link. -->
+<c:if test="${actionBean.collaborationKitRequest}">
+    <div class="view-control-group control-group">
+        <label class="control-label label-form">Work Request</label>
+
+        <div class="controls">
+            <div class="form-value">
+                <a href="${actionBean.workRequestUrl}" class="external" target="BSP">
+                        ${actionBean.editOrder.productOrderKit.workRequestId}</a>
+            </div>
+        </div>
+    </div>
+</c:if>
 
 <div class="view-control-group control-group">
     <label class="control-label label-form">Order Status</label>
 
     <div class="controls">
         <div class="form-value">
-            <c:if test="${actionBean.editOrder.draft}"><span class="label label-info"></c:if>
-                                    ${actionBean.editOrder.orderStatus}
-            <c:if test="${actionBean.editOrder.draft}"></span></c:if>
+            <span class="${actionBean.editOrder.orderStatus.cssClass}">${actionBean.editOrder.orderStatus}</span>
         </div>
     </div>
 </div>
@@ -738,11 +896,11 @@ function formatInput(item) {
     <div class="controls">
         <div class="form-value">
             <c:choose>
-            <c:when test="${fn:length(actionBean.editOrder.regulatoryInfos) ne 0}">
-                <c:forEach var="regulatoryInfo" items="${actionBean.editOrder.regulatoryInfos}">
+                <c:when test="${fn:length(actionBean.editOrder.regulatoryInfos) ne 0}">
+                    <c:forEach var="regulatoryInfo" items="${actionBean.editOrder.regulatoryInfos}">
                         ${regulatoryInfo.displayText}<br/>
-                </c:forEach>
-            </c:when>
+                    </c:forEach>
+                </c:when>
 
                 <c:otherwise>
                     <c:choose><c:when test="${actionBean.editOrder.canSkipRegulatoryRequirements()}">
@@ -888,7 +1046,6 @@ function formatInput(item) {
         </div>
     </div>
 </div>
-
 <div class="view-control-group control-group">
     <label class="control-label label-form">Description</label>
 
@@ -898,7 +1055,7 @@ function formatInput(item) {
 </div>
 </div>
 
-<c:if test="${actionBean.editOrder.isSampleInitiation()}">
+<c:if test="${actionBean.editOrder.sampleInitiation}">
     <div class="form-horizontal span5">
         <fieldset>
             <legend>
@@ -983,42 +1140,57 @@ function formatInput(item) {
 </c:if>
 </div>
 
-<c:if test="${!actionBean.editOrder.draft || !actionBean.editOrder.isSampleInitiation()}">
+<c:if test="${!actionBean.editOrder.draft || !actionBean.editOrder.sampleInitiation}">
 
     <div class="borderHeader">
         <h4 style="display:inline">Samples</h4>
 
         <c:if test="${!actionBean.editOrder.draft}">
-            <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
-                            <span class="actionButtons">
-                                <stripes:button name="deleteSamples" value="Delete Samples" class="btn"
-                                                style="margin-left:30px;"
-                                                onclick="showConfirm('deleteSamples', 'delete')"/>
+            <span class="actionButtons">
+                <security:authorizeBlock roles="${actionBean.modifyOrderRoles}">
+                    <stripes:button name="deleteSamples" value="Delete Samples" class="btn"
+                                    style="margin-left:30px;"
+                                    onclick="showConfirm('deleteSamples', 'delete')"/>
 
-                                <stripes:button name="abandonSamples" value="Abandon Samples" class="btn"
-                                                style="margin-left:15px;"
-                                                onclick="showAbandonDialog()"/>
+                    <c:if test="${!actionBean.editOrder.pending}">
+                        <stripes:button name="abandonSamples" value="Abandon Samples" class="btn"
+                                        style="margin-left:15px;"
+                                        onclick="showAbandonDialog()"/>
 
-                                <stripes:button name="recalculateRisk" value="Recalculate Risk" class="btn"
-                                                style="margin-left:15px;" onclick="showRecalculateRiskDialog()"/>
+                        <stripes:button name="unAbandonSamples" value="Un-Abandon Samples" class="btn"
+                                        style="margin-left:15px;"
+                                        onclick="showUnAbandonDialog()"/>
+                    </c:if>
+                    <stripes:button name="recalculateRisk" value="Recalculate Risk" class="btn"
+                                    style="margin-left:15px;" onclick="showRecalculateRiskDialog()"/>
 
-                                <stripes:button name="setRisk" value="Set Risk" class="btn"
-                                                style="margin-left:5px;" onclick="showRiskDialog()"/>
+                    <stripes:button name="setRisk" value="Set Risk" class="btn"
+                                    style="margin-left:5px;" onclick="showRiskDialog()"/>
 
-                                <security:authorizeBlock roles="<%= roles(All) %>"
-                                                         context="<%= ApplicationInstance.CRSP %>">
-                                    <stripes:button name="addSamplesToBucket" value="Add Samples to Bucket" class="btn"
-                                                    style="margin-left:5px;" id="addToBucketButton"
-                                                    onclick="showConfirm('addSamplesToBucket', 'add to bucket')"/>
-                                </security:authorizeBlock>
+                    <security:authorizeBlock roles="<%= roles(All) %>"
+                                             context="<%= ApplicationInstance.CRSP %>">
+                        <stripes:button name="addSamplesToBucket" value="Add Samples to Bucket" class="btn"
+                                        style="margin-left:5px;" id="addToBucketButton"
+                                        onclick="showConfirm('addSamplesToBucket', 'add to bucket')"/>
+                    </security:authorizeBlock>
+                </security:authorizeBlock>
+                <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+                    <c:if test="${actionBean.editOrder.product.supportsNumberOfLanes}">
+                        <stripes:link beanclass="${actionBean.class.name}" event="<%= ProductOrderActionBean.SQUID_COMPONENTS_ACTION %>">
+                            <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
+                            Build Squid Components
+                        </stripes:link>
+                    </c:if>
+                </security:authorizeBlock>
+            </span>
 
-                            </span>
-
+            <security:authorizeBlock roles="${actionBean.modifyOrderRoles}">
                 <div class="pull-right">
                     <stripes:text size="100" name="addSamplesText" style="margin-left:15px;"/>
                     <stripes:submit name="addSamples" value="Add Samples" class="btn" style="margin-right:15px;"/>
                 </div>
             </security:authorizeBlock>
+
         </c:if>
     </div>
 
@@ -1043,18 +1215,19 @@ function formatInput(item) {
                 <th width="110">Collaborator Participant ID</th>
                 <th width="40">Shipped Date</th>
                 <th width="40">Received Date</th>
+                <th width="40">Sample Type</th>
                 <th width="40">Volume</th>
                 <th width="40">Concentration</th>
 
                 <c:if test="${actionBean.supportsRin}">
                     <th width="40">RIN</th>
+                    <th width="40">RQS</th>
                 </c:if>
 
                 <c:if test="${actionBean.supportsPico}">
                     <th width="70">Last Pico Run Date</th>
                 </c:if>
                 <th width="40">Yield Amount</th>
-                <th width="60">FP Status</th>
                 <th width="60"><abbr title="Sample Kit Upload/Rackscan Mismatch">Rackscan Mismatch</abbr></th>
                 <th>On Risk</th>
                 <th width="40">Status</th>
@@ -1101,11 +1274,13 @@ function formatInput(item) {
                             ${sample.labEventSampleDTO.sampleReceiptDate}
                     </td>
 
+                    <td id="sample-type-${sample.productOrderSampleId}"></td>
                     <td id="volume-${sample.productOrderSampleId}"></td>
                     <td id="concentration-${sample.productOrderSampleId}"></td>
 
                     <c:if test="${actionBean.supportsRin}">
                         <td id="rin-${sample.productOrderSampleId}"></td>
+                        <td id="rqs-${sample.productOrderSampleId}"></td>
                     </c:if>
 
                     <c:if test="${actionBean.supportsPico}">
@@ -1116,10 +1291,15 @@ function formatInput(item) {
                     </c:if>
 
                     <td id="total-${sample.productOrderSampleId}"></td>
-                    <td id="fingerprint-${sample.productOrderSampleId}" style="text-align: center"></td>
                     <td id="sampleKitUploadRackscanMismatch-${sample.productOrderSampleId}" style="text-align: center">
                     </td>
-                    <td>${sample.riskString}</td>
+                    <td style="text-align: center">
+                        <c:if test="${sample.onRisk}">
+                            <div class="onRisk" title="On Risk Details for ${sample.name}" rel="popover" data-trigger="hover" data-placement="left" data-html="true" data-content="<div style='text-align: left'>${sample.riskString}</div>">
+                                <img src="${ctxpath}/images/check.png"> ...
+                            </div>
+                        </c:if>
+                    </td>
                     <td>${sample.deliveryStatus.displayName}</td>
                     <td id="completelyBilled-${sample.productOrderSampleId}" style="text-align: center"></td>
                     <td>${sample.sampleComment}</td>

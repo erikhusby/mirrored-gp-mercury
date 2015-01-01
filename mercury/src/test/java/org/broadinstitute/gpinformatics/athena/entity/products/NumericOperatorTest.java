@@ -6,15 +6,6 @@ import org.testng.annotations.Test;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class NumericOperatorTest {
-    @Test
-    public void testApply() throws Exception {
-        Assert.assertTrue(Operator.LESS_THAN.apply(1.0, 2.0));
-        Assert.assertTrue(Operator.LESS_THAN_OR_EQUAL_TO.apply(1.0, 1.0));
-        Assert.assertTrue(Operator.LESS_THAN_OR_EQUAL_TO.apply(1.0, 2.0));
-        Assert.assertTrue(Operator.GREATER_THAN.apply(2.0, 1.0));
-        Assert.assertTrue(Operator.GREATER_THAN_OR_EQUAL_TO.apply(1.0, 1.0));
-        Assert.assertTrue(Operator.GREATER_THAN_OR_EQUAL_TO.apply(2.0, 1.0));
-    }
 
     @Test
     public void testFromLabel() throws Exception {

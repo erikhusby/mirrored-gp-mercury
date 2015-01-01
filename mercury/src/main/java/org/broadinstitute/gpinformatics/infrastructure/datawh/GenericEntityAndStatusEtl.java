@@ -2,10 +2,8 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo;
 
-import javax.persistence.EntityNotFoundException;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -58,9 +56,8 @@ public abstract class GenericEntityAndStatusEtl<AUDITED_ENTITY_CLASS, ETL_DATA_S
     }
 
     @Override
-    protected void addRevInfoPairs(Collection<RevInfoPair<AUDITED_ENTITY_CLASS>> revInfoPairs, Object[] enversTriple,
+    protected void addRevInfoPairs(Collection<RevInfoPair<AUDITED_ENTITY_CLASS>> revInfoPairs, RevInfo revInfo,
                                    AUDITED_ENTITY_CLASS entity) {
-        RevInfo revInfo = (RevInfo) enversTriple[AuditReaderDao.AUDIT_READER_REV_INFO_IDX];
         revInfoPairs.add(new RevInfoPair(entity, revInfo.getRevDate()));
     }
 

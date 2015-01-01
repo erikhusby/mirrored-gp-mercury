@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
@@ -25,6 +26,7 @@ import java.util.Map;
 /**
  * Test Message Driven Bean
  */
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class BettaLimsMessageBeanTest {
 
     @Test(enabled = false)
@@ -38,7 +40,8 @@ public class BettaLimsMessageBeanTest {
         sendJmsMessage(message, "broad.queue.mercury.bettalims.dev");
     }
 
-    public static void sendJmsMessage(String message, String queueName) {
+    // Have to return something other than void, otherwise TestNG will think it's a test.
+    public static boolean sendJmsMessage(String message, String queueName) {
         Connection connection = null;
         Session session = null;
         try {
@@ -50,6 +53,9 @@ public class BettaLimsMessageBeanTest {
                     NettyConnectorFactory.class.getName(), connectionParams);
             HornetQConnectionFactory connectionFactory = HornetQJMSClient.createConnectionFactoryWithoutHA(
                     JMSFactoryType.CF, transportConfiguration);
+
+            connectionFactory.setConnectionTTL(-1);
+            connectionFactory.setClientFailureCheckPeriod(Long.MAX_VALUE);
 
             connection = connectionFactory.createConnection();
             connection.start();
@@ -64,6 +70,7 @@ public class BettaLimsMessageBeanTest {
             System.out.println("Sent message: " + textMessage.hashCode() + " : " + Thread.currentThread().getName());
             producer.send(textMessage);
 
+            return true;
         } catch (JMSException e) {
             throw new RuntimeException(e);
         } finally {

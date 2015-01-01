@@ -5,9 +5,12 @@ import edu.mit.broad.prodinfo.thrift.lims.TZamboniLibrary;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceStub;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.MockThriftService;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftFileAccessor;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
@@ -34,6 +37,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DA
  * loads a pre-serialized thrift run from local disk, converts it
  * to {@link ZimsIlluminaRun}, and does some basic assertions.
  */
+@Test(groups = TestGroups.DATABASE_FREE)
 public class DbFreeIlluminaRunResourceTest {
 
 
@@ -113,7 +117,7 @@ public class DbFreeIlluminaRunResourceTest {
                 new MockThriftService(),
                 new BSPSampleDataFetcher(new BSPSampleSearchServiceStub()),
                 illuminaSequencingRunDao
-        ).getRun(thriftRun, new HashMap<String, BSPSampleDTO>(), new SquidThriftLibraryConverter(), getMockDao()
+        ).getRun(thriftRun, new HashMap<String, SampleData>(), new SquidThriftLibraryConverter(), getMockDao()
         );
         IlluminaRunResourceTest.doAssertions(thriftRun, runBean, new HashMap<Long, ProductOrder>());
     }
@@ -121,10 +125,17 @@ public class DbFreeIlluminaRunResourceTest {
     @Test(groups = DATABASE_FREE)
     public void test_known_good_bsp_sample_run() throws Exception {
         TZamboniRun thriftRun = ThriftFileAccessor.deserializeRun();
-        BSPSampleDataFetcher sampleDataFetcher = new BSPSampleDataFetcher(new BSPSampleSearchServiceStub());
+        BSPSampleSearchService sampleSearchService = new BSPSampleSearchServiceStub();
+        BSPSampleDataFetcher sampleDataFetcher = new BSPSampleDataFetcher(sampleSearchService) {
+            @Override
+            public BspSampleData fetchSingleSampleFromBSP(String sampleName) {
+                Assert.assertEquals(sampleName, BSPSampleSearchServiceStub.SM_12CO4);
+                return super.fetchSingleSampleFromBSP(sampleName);
+            }
+        };
         String sample = BSPSampleSearchServiceStub.SM_12CO4;
-        BSPSampleDTO sampleDTO = sampleDataFetcher.fetchSingleSampleFromBSP(sample);
-        Map<String, BSPSampleDTO> lsidToSampleDTO = new HashMap<>();
+        SampleData sampleDTO = sampleDataFetcher.fetchSingleSampleFromBSP(sample);
+        Map<String, SampleData> lsidToSampleDTO = new HashMap<>();
         lsidToSampleDTO.put(sampleDTO.getSampleLsid(), sampleDTO);
 
         IlluminaSequencingRunDao illuminaSequencingRunDao = EasyMock.createMock(IlluminaSequencingRunDao.class);

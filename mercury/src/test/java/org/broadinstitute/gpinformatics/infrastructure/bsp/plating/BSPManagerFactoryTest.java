@@ -2,30 +2,17 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp.plating;
 
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.users.UserManager;
-import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.testng.Arquillian;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import javax.inject.Inject;
 import java.util.List;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+public class BSPManagerFactoryTest {
 
-@Test(enabled = false)
-public class BSPManagerFactoryTest extends Arquillian {
-
-    @Inject
-    private BSPManagerFactory bspManagerFactory;
-
-
-    @Deployment
-    public static WebArchive deployment() {
-        return DeploymentBuilder.buildMercuryWar(DEV);
-    }
+    private BSPManagerFactory bspManagerFactory=BSPManagerFactoryProducer.testInstance();;
 
     public void testGetProjectManagers() {
         Assert.assertNotNull(bspManagerFactory);

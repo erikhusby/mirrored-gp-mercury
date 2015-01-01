@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.zims;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.testng.Arquillian;
@@ -9,6 +10,7 @@ import org.testng.annotations.Test;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 
+@Test(groups = TestGroups.STANDARD)
 public class StartPipelineAPITest extends Arquillian {
 
     @Deployment

@@ -296,7 +296,7 @@
             <column name="lanes_sequenced" type="varchar(255)"></column>
         </addColumn>
     </changeSet>
-    
+
     <changeSet author="scottmat" id="GPLIM-1698-1">
         <preConditions onFail="MARK_RAN">
             <not>
@@ -394,7 +394,7 @@
                 baseTableSchemaName="mercury" baseTableName="lab_event" baseColumnNames="manual_override_lc_set"
                 referencedTableSchemaName="mercury" referencedTableName="lab_batch" referencedColumnNames="lab_batch_id"/>
     </changeSet>
-    
+
     <changeSet id="GPLIM-2079-1" author="thompson">
         <addColumn schemaName="mercury" tableName="LAB_VESSEL">
             <column name="receptacle_weight" type="number(19,2)"/>
@@ -535,4 +535,1286 @@
         <createSequence schemaName="mercury" sequenceName="SEQ_SEQUENCING_RUN_CHAMBER" incrementBy="50" startValue="1"/>
     </changeSet>
 
+    <changeSet author="scottmat" id="GPLIM-2711-add-product-order-reference">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists columnName="product_order" tableName="bucket_entry" schemaName="mercury" />
+            </not>
+        </preConditions>
+        <addColumn tableName="bucket_entry" schemaName="mercury">
+            <column name="product_order_id" type="number(19,0)" />
+        </addColumn>
+    </changeSet>
+    <changeSet author="scottmat" id="GPLIM-2711-add-product-order-reference-aud">
+
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists columnName="product_order" tableName="bucket_entry_aud" schemaName="mercury" />
+            </not>
+        </preConditions>
+        <addColumn tableName="bucket_entry_aud" schemaName="mercury">
+            <column name="product_order_id" type="number(19,0)" />
+        </addColumn>
+    </changeSet>
+    <!--Uncoment after the proper grants are applied on next build-->
+    <!--<changeSet author="scottmat" id="GPLIM-2711-product-order-fk">-->
+        <!--<preConditions onFail="MARK_RAN">-->
+            <!--<not>-->
+                <!--<foreignKeyConstraintExists foreignKeyName="FK_BUCKET_ENTRY_TO_PDO" foreignKeyTableName="bucket_entry"-->
+                                            <!--schemaName="Mercury"/>-->
+            <!--</not>-->
+        <!--</preConditions>-->
+        <!--<addForeignKeyConstraint constraintName="FK_BUCKET_ENTRY_TO_PDO" baseColumnNames="product_order"-->
+                                 <!--baseTableName="bucket_entry" baseTableSchemaName="mercury"-->
+                                 <!--referencedColumnNames="product_order_id" referencedTableName="product_order"-->
+                                 <!--referencedTableSchemaName="athena" />-->
+    <!--</changeSet>-->
+
+    <changeSet author="epolk" id="GPLIM-2683-1a">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists columnName="tube_type" tableName="lab_vessel" schemaName="mercury" />
+            </not>
+        </preConditions>
+        <addColumn tableName="lab_vessel" schemaName="mercury">
+            <column name="tube_type" type="varchar2(255)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="epolk" id="GPLIM-2683-2a">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists columnName="tube_type" tableName="lab_vessel_aud" schemaName="mercury" />
+            </not>
+        </preConditions>
+        <addColumn tableName="lab_vessel_aud" schemaName="mercury">
+            <column name="tube_type" type="varchar2(255)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="epolk" id="GPLIM-2683-3c">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+	        SELECT distinct 1 FROM lab_vessel WHERE dtype = 'TwoDBarcodedTube';
+            </sqlCheck>
+        </preConditions>
+        <sql>
+            UPDATE lab_vessel SET dtype = 'BarcodedTube', tube_type = 'MatrixTube' WHERE dtype = 'TwoDBarcodedTube';
+        </sql>
+    </changeSet>
+
+    <changeSet author="epolk" id="GPLIM-2683-4a">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+	        SELECT distinct 1 FROM lab_vessel_aud WHERE dtype = 'TwoDBarcodedTube';
+            </sqlCheck>
+        </preConditions>
+        <sql>
+            UPDATE lab_vessel_aud SET dtype = 'BarcodedTube', tube_type = 'MatrixTube' WHERE dtype = 'TwoDBarcodedTube';
+        </sql>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-2679-1">
+        <createTable schemaName="mercury" tableName="le_metadata">
+            <column name="lab_event_metadata_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="lab_event_metadata_type" type="varchar(255)" />
+            <column name="value" type="varchar(255)" />
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="le_metadata" columnNames="lab_event_metadata_id"/>
+        <createSequence sequenceName="SEQ_LAB_EVENT_METADATA" schemaName="mercury" startValue="1"
+                        incrementBy="50"/>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-2679-2">
+        <createTable schemaName="mercury" tableName="le_metadata_aud">
+            <column name="lab_event_metadata_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)" />
+            <column name="lab_event_metadata_type" type="varchar(255)" />
+            <column name="value" type="varchar(255)" />
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="le_metadata_aud" columnNames="lab_event_metadata_id, rev"/>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-2679-3">
+        <createTable schemaName="mercury" tableName="le_lab_event_metadatas">
+            <column name="lab_event" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="lab_event_metadatas" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="le_lab_event_metadatas" columnNames="lab_event, lab_event_metadatas"/>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-2679-4">
+        <createTable schemaName="mercury" tableName="le_lab_event_metadatas_aud">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="lab_event" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="lab_event_metadatas" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)" />
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="le_lab_event_metadatas_aud" columnNames="rev, lab_event, lab_event_metadatas"/>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-2679-5">
+        <addForeignKeyConstraint baseTableName="le_metadata_aud" baseTableSchemaName="mercury" baseColumnNames="rev"
+                                 constraintName="fk_lem_aud_rev_info"
+                                 referencedTableName="rev_info" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="rev_info_id"/>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-2679-6">
+        <addForeignKeyConstraint baseTableName="le_lab_event_metadatas" baseTableSchemaName="mercury" baseColumnNames="lab_event"
+                                 constraintName="fk_lelem_le"
+                                 referencedTableName="lab_event" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="lab_event_id"/>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-2679-7">
+        <addForeignKeyConstraint baseTableName="le_lab_event_metadatas" baseTableSchemaName="mercury" baseColumnNames="lab_event_metadatas"
+                                 constraintName="fk_lelem_lem"
+                                 referencedTableName="le_metadata" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="lab_event_metadata_id"/>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-2679-8">
+        <addForeignKeyConstraint baseTableName="le_lab_event_metadatas_aud" baseTableSchemaName="mercury" baseColumnNames="rev"
+                                 constraintName="fk_lelem_aud_rev_info"
+                                 referencedTableName="rev_info" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="rev_info_id"/>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-2841-1">
+        <preConditions>
+            <not>
+                <columnExists tableName="reagent" columnName="expiration" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="reagent" schemaName="mercury">
+            <column name="expiration" type="timestamp"></column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-2841-2">
+        <preConditions>
+            <not>
+                <columnExists tableName="reagent_aud" columnName="expiration" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="reagent_aud" schemaName="mercury">
+            <column name="expiration" type="timestamp"></column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="thompson" id="GPLIM-2908-1">
+        <createIndex schemaName="mercury" tableName="LAB_VESSEL_CONTAINERS" indexName="IX_LVC_CONTAINERS">
+            <column name="CONTAINERS"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet author="thompson" id="GPLIM-2908-2">
+        <createIndex schemaName="mercury" tableName="LAB_VESSEL" indexName="IX_LV_FLOWCELL">
+            <column name="FLOWCELL"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-2906-2" author="epolk">
+        <createTable tableName="revchanges" schemaName="mercury">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="entityname" type="varchar2(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="revchanges" schemaName="mercury" columnNames="rev, entityname"/>
+	<addForeignKeyConstraint baseTableName="revchanges" baseTableSchemaName="mercury"
+                                 baseColumnNames="rev"
+                                 constraintName="fk_revchanges"
+                                 referencedTableName="rev_info" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="rev_info_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-2906-3" author="epolk">
+        <dropTable tableName="quote" schemaName="mercury"/>
+        <dropTable tableName="quote_aud" schemaName="mercury"/>
+    </changeSet>
+
+    <changeSet author="thompson" id="GPLIM-2803-1">
+        <addColumn schemaName="mercury" tableName="vessel_transfer">
+            <column name="ancillary_source_vessel" type="number(19,0)"/>
+            <column name="ancillary_target_vessel" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="thompson" id="GPLIM-2803-2">
+        <addColumn schemaName="mercury" tableName="vessel_transfer_aud">
+            <column name="ancillary_source_vessel" type="number(19,0)"/>
+            <column name="ancillary_target_vessel" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="thompson" id="GPLIM-2803-3">
+        <addForeignKeyConstraint constraintName="FK_VT_ANCILLARY_SOURCE_VESSEL"
+                baseTableSchemaName="mercury" baseTableName="vessel_transfer" baseColumnNames="ancillary_source_vessel"
+                referencedTableSchemaName="mercury" referencedTableName="lab_Vessel" referencedColumnNames="lab_vessel_id"/>
+    </changeSet>
+
+    <changeSet author="thompson" id="GPLIM-2803-4">
+        <addForeignKeyConstraint constraintName="FK_VT_ANCILLARY_TARGET_VESSEL"
+                baseTableSchemaName="mercury" baseTableName="vessel_transfer" baseColumnNames="ancillary_target_vessel"
+                referencedTableSchemaName="mercury" referencedTableName="lab_Vessel" referencedColumnNames="lab_vessel_id"/>
+    </changeSet>
+
+    <changeSet author="thompson" id="GPLIM-2941-1">
+        <addColumn schemaName="mercury" tableName="mercury_sample">
+            <column name="metadata_source" type="varchar2(255 char)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="thompson" id="GPLIM-2941-2">
+        <addColumn schemaName="mercury" tableName="mercury_sample_aud">
+            <column name="metadata_source" type="varchar2(255 char)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="thompson" id="GPLIM-2941-3">
+        <sql>update mercury_sample set metadata_source = 'BSP' where metadata_source is null</sql>
+        <addNotNullConstraint schemaName="mercury" tableName="mercury_sample" columnName="metadata_source"/>
+    </changeSet>
+    <changeSet author="thompson" id="GPLIM-2941-4">
+        <sql>update mercury_sample_aud set metadata_source = 'BSP' where metadata_source is null</sql>
+    </changeSet>
+    <!-- Fix the row migration resulting from expanding the size of the rows. -->
+    <!-- First rename primary keys that start with SYS_C because they're different in every database instance. -->
+    <changeSet id="GPLIM-2941-4.5" author="thompson">
+        <sql endDelimiter="--go">
+            declare
+              cursor constraints_cur is
+                select constraint_name, table_name
+                from user_constraints
+                where constraint_type = 'P' and constraint_name like 'SYS_C%';
+
+              l_constraints_row constraints_cur%rowtype;
+              l_new_name varchar2(30);
+              l_command varchar2(255);
+            begin
+              open constraints_cur;
+              loop
+                fetch constraints_cur into l_constraints_row;
+                exit when constraints_cur%notfound;
+
+                if length(l_constraints_row.table_name) > 27 then
+                  l_new_name := substr(l_constraints_row.table_name, -27, 27);
+                else
+                  l_new_name := l_constraints_row.table_name;
+                end if;
+                l_new_name := 'PK_' || l_new_name;
+
+                l_command := 'ALTER TABLE '||l_constraints_row.table_name||' RENAME CONSTRAINT '||l_constraints_row.constraint_name||' TO '||l_new_name;
+                dbms_output.put_line(l_command);
+                execute immediate l_command;
+                l_command := 'alter index '|| l_constraints_row.constraint_name||' rename to '||l_new_name;
+                dbms_output.put_line(l_command);
+                execute immediate l_command;
+              end loop;
+              close constraints_cur;
+            end;
+            --go
+        </sql>
+    </changeSet>
+    <changeSet author="thompson" id="GPLIM-2941-5">
+        <sql>alter table mercury_sample move tablespace MERCURY_DAT PCTFREE 1</sql>
+        <sql>alter table mercury_sample PCTFREE 10</sql>
+        <sql>alter index PK_MERCURY_SAMPLE rebuild</sql>
+        <sql>alter index IX_MS_SAMPLE_KEY rebuild</sql>
+    </changeSet>
+    <changeSet author="thompson" id="GPLIM-2941-6">
+        <sql>alter table mercury_sample_aud move tablespace MERCURY_DAT PCTFREE 1</sql>
+        <sql>alter table mercury_sample_aud PCTFREE 10</sql>
+        <sql>alter index PK_MERCURY_SAMPLE_AUD rebuild</sql>
+    </changeSet>
+    <changeSet author="thompson" id="GPLIM-2941-7">
+        <sql>call DBMS_STATS.GATHER_TABLE_STATS (
+            ownname => 'mercury',
+            tabname => 'mercury_sample',
+            estimate_percent => 15
+            )</sql>
+        <sql>call DBMS_STATS.GATHER_TABLE_STATS (
+            ownname => 'mercury',
+            tabname => 'mercury_sample_aud',
+            estimate_percent => 15
+            )</sql>
+    </changeSet>
+
+    <changeSet author="mcovarr" id="GPLIM-2885-1">
+        <createTable tableName="metadata" schemaName="mercury">
+            <column name="metadata_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="key" type="varchar2(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="value" type="varchar2(255)" />
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="metadata" columnNames="metadata_id" constraintName="PK_METADATA"/>
+    </changeSet>
+
+    <changeSet author="mcovarr" id="GPLIM-2885-2">
+        <createTable tableName="metadata_aud" schemaName="mercury">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)" />
+            <column name="metadata_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="key" type="varchar2(255)" />
+            <column name="value" type="varchar2(255)"/>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="metadata_aud" columnNames="rev, metadata_id"
+                       constraintName="PK_METADATA_AUD"/>
+        <addForeignKeyConstraint baseTableName="metadata_aud" baseTableSchemaName="mercury" baseColumnNames="rev"
+                                 constraintName="fk_metadata_ref_info"
+                                 referencedTableName="rev_info" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="rev_info_id"/>
+    </changeSet>
+
+    <changeSet author="mcovarr" id="GPLIM-2885-3">
+        <createSequence sequenceName="SEQ_METADATA" schemaName="mercury" startValue="1" incrementBy="50"/>
+    </changeSet>
+
+    <changeSet author="mcovarr" id="GPLIM-2885-4">
+        <createTable tableName="mercury_sample_metadata" schemaName="mercury">
+            <column name="sample_key" type="varchar2(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="metadata_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="mercury_sample_metadata" columnNames="sample_key, metadata_id"
+                       constraintName="PK_SAMPLE_TO_METADATA_JOIN"/>
+        <!-- There cannot be a foreign key constraint to MERCURY_SAMPLE.SAMPLE_KEY as that is neither a key nor unique. -->
+        <addForeignKeyConstraint constraintName="FK_MERCURY_SAMPLE_METADATA_ID"
+                                 baseTableSchemaName="mercury" baseTableName="mercury_sample_metadata" baseColumnNames="metadata_id"
+                                 referencedTableSchemaName="mercury" referencedTableName="metadata" referencedColumnNames="metadata_id"/>
+    </changeSet>
+
+    <changeSet author="mcovarr" id="GPLIM-2885-5">
+        <createTable tableName="mercury_sample_metadata_aud" schemaName="mercury">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)" />
+            <column name="sample_key" type="varchar2(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="metadata_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="mercury_sample_metadata_aud"
+                       columnNames="rev, sample_key, metadata_id" constraintName="PK_SAMPLE_TO_METADATA_JOIN_AUD"/>
+        <addForeignKeyConstraint baseTableName="mercury_sample_metadata_aud" baseTableSchemaName="mercury" baseColumnNames="rev"
+                                 constraintName="fk_sample_metadata_ref_info"
+                                 referencedTableName="rev_info" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="rev_info_id"/>
+    </changeSet>
+
+    <changeSet author="mcovarr" id="GPLIM-2885-6">
+        <createTable tableName="manifest_session" schemaName="mercury">
+            <column name="manifest_session_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="session_prefix" type="varchar2(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="varchar(30)">
+                <constraints nullable="false" />
+            </column>
+            <column name="research_project_id" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
+            <column name="created_by" type="numeric(15, 0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="modified_by" type="numeric(15, 0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_date" type="timestamp(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="modified_date" type="timestamp(6)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="manifest_session" columnNames="manifest_session_id"
+                       constraintName="PK_MANIFEST_SESSION" />
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-6-RPFK" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="FK_MANIFEST_SESSION_RP" schemaName="mercury" foreignKeyTableName="manifest_session" />
+            </not>
+        </preConditions>
+        <addForeignKeyConstraint baseTableName="manifest_session" baseColumnNames="research_project_id"
+                                 constraintName="FK_MANIFEST_SESSION_RP" referencedTableName="research_project"
+                                 referencedColumnNames="research_project_id" baseTableSchemaName="mercury"
+                                 referencedTableSchemaName="athena" />
+    </changeSet>
+
+    <changeSet author="mcovarr" id="GPLIM-2885-7">
+        <createTable tableName="manifest_session_aud" schemaName="mercury">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)" />
+            <column name="manifest_session_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="session_prefix" type="varchar2(255)"/>
+            <column name="status" type="varchar(30)"/>
+            <column name="research_project_id" type="number(19,0)" />
+            <column name="created_by" type="numeric(15, 0)"/>
+            <column name="modified_by" type="numeric(15, 0)"/>
+            <column name="created_date" type="timestamp(6)"/>
+            <column name="modified_date" type="timestamp(6)"/>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="manifest_session_aud" columnNames="rev, manifest_session_id"
+                constraintName="PK_MANIFEST_SESSION_AUD"/>
+        <addForeignKeyConstraint baseTableName="manifest_session_aud" baseTableSchemaName="mercury" baseColumnNames="rev"
+                                 constraintName="fk_manifest_session_ref_info"
+                                 referencedTableName="rev_info" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="rev_info_id"/>
+    </changeSet>
+
+    <changeSet author="mcovarr" id="GPLIM-2885-8">
+        <createSequence sequenceName="SEQ_MANIFEST_SESSION" schemaName="mercury" startValue="1" incrementBy="50"/>
+    </changeSet>
+
+    <changeSet author="mcovarr" id="GPLIM-2885-9">
+        <createTable tableName="manifest_record" schemaName="mercury">
+            <column name="manifest_record_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="manifest_session_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="varchar2(30)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="error_status" type="varchar2(30)"/>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="manifest_record" columnNames="manifest_record_id"
+                constraintName="PK_MANIFEST_RECORD"/>
+        <addForeignKeyConstraint constraintName="FK_MANREC_MANSESSION_ID"
+                                 baseTableSchemaName="mercury" baseTableName="manifest_record" baseColumnNames="manifest_session_id"
+                                 referencedTableSchemaName="mercury" referencedTableName="manifest_session" referencedColumnNames="manifest_session_id"/>
+    </changeSet>
+
+    <changeSet author="mcovarr" id="GPLIM-2885-10">
+        <createTable tableName="manifest_record_aud" schemaName="mercury">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)" />
+            <column name="manifest_record_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="manifest_session_id" type="number(19,0)"/>
+            <column name="status" type="varchar2(30)"/>
+            <column name="error_status" type="varchar2(30)"/>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="manifest_record_aud" columnNames="rev, manifest_record_id"
+                constraintName="PK_MANIFEST_RECORD_AUD"/>
+        <addForeignKeyConstraint baseTableName="manifest_record_aud" baseTableSchemaName="mercury" baseColumnNames="rev"
+                                 constraintName="fk_manifest_record_ref_info"
+                                 referencedTableName="rev_info" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="rev_info_id"/>
+    </changeSet>
+
+    <changeSet author="mcovarr" id="GPLIM-2885-11">
+        <createSequence sequenceName="SEQ_MANIFEST_RECORD" schemaName="mercury" startValue="1" incrementBy="50"/>
+    </changeSet>
+
+    <changeSet author="mcovarr" id="GPLIM-2885-12">
+        <createTable tableName="manifest_record_metadata" schemaName="mercury">
+            <column name="manifest_record_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="metadata_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="manifest_record_metadata"
+                       columnNames="manifest_record_id, metadata_id" constraintName="PK_MAN_REC_METADATA_JOIN"/>
+        <addForeignKeyConstraint constraintName="FK_MANREC_METADATA_MANREC_ID"
+                                 baseTableSchemaName="mercury" baseTableName="manifest_record_metadata" baseColumnNames="manifest_record_id"
+                                 referencedTableSchemaName="mercury" referencedTableName="manifest_record" referencedColumnNames="manifest_record_id"/>
+        <addForeignKeyConstraint constraintName="FK_MANREC_METADATA_METADATA_ID"
+                                 baseTableSchemaName="mercury" baseTableName="manifest_record_metadata" baseColumnNames="metadata_id"
+                                 referencedTableSchemaName="mercury" referencedTableName="metadata" referencedColumnNames="metadata_id"/>
+    </changeSet>
+
+    <changeSet author="mcovarr" id="GPLIM-2885-13">
+        <createTable tableName="manifest_record_metadata_aud" schemaName="mercury">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)" />
+            <column name="manifest_record_id" type="varchar2(255)" >
+                <constraints nullable="false"/>
+            </column>
+            <column name="metadata_id" type="number(19,0)" >
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="manifest_record_metadata_aud"
+                       columnNames="rev, manifest_record_id, metadata_id"
+                       constraintName="PK_MAN_REC_METADATA_JOIN_AUD"/>
+        <addForeignKeyConstraint baseTableName="manifest_record_metadata_aud" baseTableSchemaName="mercury" baseColumnNames="rev"
+                                 constraintName="fk_manrec_metadata_ref_info"
+                                 referencedTableName="rev_info" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="rev_info_id"/>
+    </changeSet>
+
+    <changeSet author="mcovarr" id="GPLIM-2885-14">
+        <createTable tableName="manifest_event" schemaName="mercury">
+            <column name="manifest_event_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="manifest_session_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="message" type="varchar2(255)"/>
+            <column name="manifest_record_id" type="number(19,0)"/>
+            <column name="log_type" type="varchar(30)" />
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="manifest_event" columnNames="manifest_event_id"
+                constraintName="PK_MANIFEST_EVENT"/>
+        <createIndex tableName="manifest_event" indexName="ix_maneventlog_manrecord">
+            <column name="manifest_record_id"/>
+        </createIndex>
+        <addForeignKeyConstraint constraintName="FK_MANLOG_MANREC_ID"
+                                 baseTableSchemaName="mercury" baseTableName="manifest_event" baseColumnNames="manifest_record_id"
+                                 referencedTableSchemaName="mercury" referencedTableName="manifest_record" referencedColumnNames="manifest_record_id"/>
+        <addForeignKeyConstraint baseTableName="manifest_event" baseColumnNames="manifest_session_id"
+                                 constraintName="FK_MANLOG_MANSESS" referencedTableName="manifest_session"
+                                 referencedColumnNames="manifest_session_id" baseTableSchemaName="mercury"
+                                 referencedTableSchemaName="mercury" />
+    </changeSet>
+
+    <changeSet author="mcovarr" id="GPLIM-2885-15">
+        <createTable tableName="manifest_event_aud" schemaName="mercury">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)" />
+            <column name="manifest_event_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="manifest_session_id" type="number(19,0)"/>
+            <column name="message" type="varchar2(255)"/>
+            <column name="manifest_record_id" type="number(19,0)"/>
+            <column name="log_type" type="varchar(30)" />
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="manifest_event_aud" columnNames="rev, manifest_event_id"
+                constraintName="PK_MANIFEST_EVENT_AUD"/>
+        <addForeignKeyConstraint baseTableName="manifest_event_aud" baseTableSchemaName="mercury" baseColumnNames="rev"
+                                 constraintName="fk_manifest_event_ref_info"
+                                 referencedTableName="rev_info" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="rev_info_id"/>
+    </changeSet>
+
+    <changeSet author="mcovarr" id="GPLIM-2885-16">
+        <createSequence sequenceName="SEQ_MANIFEST_EVENT" schemaName="mercury" startValue="1" incrementBy="50"/>
+    </changeSet>
+
+    <changeSet author="mcovarr" id="GPLIM-2885-17">
+        <dropColumn columnName="error_status" tableName="manifest_record" schemaName="mercury"/>
+    </changeSet>
+
+    <changeSet author="mcovarr" id="GPLIM-2885-18">
+        <dropColumn columnName="error_status" tableName="manifest_record_aud" schemaName="mercury"/>
+    </changeSet>
+
+    <changeSet author="mcovarr" id="GPLIM-2885-19">
+        <renameColumn tableName="manifest_event" oldColumnName="log_type" newColumnName="severity" schemaName="mercury"/>
+    </changeSet>
+
+    <changeSet author="mcovarr" id="GPLIM-2885-20">
+        <renameColumn tableName="manifest_event_aud" oldColumnName="log_type" newColumnName="severity" schemaName="mercury"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-2887-drop-sample-metadata" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="mercury_sample_metadata" schemaName="mercury" />
+        </preConditions>
+        <sql>drop table mercury_sample_metadata cascade constraints</sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-2887-drop-sample-metadata-aud" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="mercury_sample_metadata_aud" schemaName="mercury" />
+        </preConditions>
+        <sql>drop table mercury_sample_metadata_aud cascade constraints</sql>
+    </changeSet>
+
+    <changeSet author="scottmat" id="GPLIM-2887-re-add-mercury_sample">
+        <createTable tableName="mercury_sample_metadata" schemaName="mercury">
+            <column name="mercury_sample" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
+            <column name="metadata" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="mercury_sample_metadata" columnNames="mercury_sample, metadata"
+                       constraintName="PK_SAMPLE_TO_METADATA_JOIN"/>
+        <addForeignKeyConstraint constraintName="FK_MERCURY_SAMP_METADATA_META"
+                                 baseTableSchemaName="mercury" baseTableName="mercury_sample_metadata" baseColumnNames="metadata"
+                                 referencedTableSchemaName="mercury" referencedTableName="metadata" referencedColumnNames="metadata_id"/>
+        <addForeignKeyConstraint constraintName="FK_MERCURY_SAMP_METADATA_SAMP"
+                                 baseTableSchemaName="mercury" baseTableName="mercury_sample_metadata" baseColumnNames="mercury_sample"
+                                 referencedTableSchemaName="mercury" referencedTableName="mercury_sample" referencedColumnNames="mercury_sample_id"/>
+    </changeSet>
+
+    <changeSet author="scottmat" id="GPLIM-2887-re-add-mercury-sample-aud">
+        <createTable tableName="mercury_sample_metadata_aud" schemaName="mercury">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)" />
+            <column name="mercury_sample" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="metadata" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="mercury_sample_metadata_aud"
+                       columnNames="rev, mercury_sample, metadata" constraintName="PK_SAMPLE_TO_METADATA_JOIN_AUD"/>
+        <addForeignKeyConstraint baseTableName="mercury_sample_metadata_aud" baseTableSchemaName="mercury" baseColumnNames="rev"
+                                 constraintName="fk_sample_metadata_ref_info"
+                                 referencedTableName="rev_info" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="rev_info_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-add-man-record-created-by" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="manifest_record" columnName="created_by" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="manifest_record" schemaName="mercury">
+            <column name="created_by" type="number(19,0)" />
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2885-add-man-record-aud-created-by" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="manifest_record_aud" columnName="created_by" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="manifest_record_aud" schemaName="mercury">
+            <column name="created_by" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-add-man-record-created-date" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="manifest_record" columnName="created_date" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="manifest_record" schemaName="mercury">
+            <column name="created_date" type="timestamp(6)" />
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2885-add-man-record-aud-created-date" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="manifest_record_aud" columnName="created_date" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="manifest_record_aud" schemaName="mercury">
+            <column name="created_date" type="timestamp(6)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-add-man-record-modified-by" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="manifest_record" columnName="modified_by" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="manifest_record" schemaName="mercury">
+            <column name="modified_by" type="number(19,0)" />
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2885-add-man-record-aud-modified-by" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="manifest_record_aud" columnName="modified_by" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="manifest_record_aud" schemaName="mercury">
+            <column name="modified_by" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-add-man-record-modified_date" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="manifest_record" columnName="modified_date" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="manifest_record" schemaName="mercury">
+            <column name="modified_date" type="timestamp(6)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2885-add-man-record-aud-modified-date" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="manifest_record_aud" columnName="modified_date" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="manifest_record_aud" schemaName="mercury">
+            <column name="modified_date" type="timestamp(6)"/>
+        </addColumn>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-2885-add-man-event-created-by" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="manifest_event" columnName="created_by" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="manifest_event" schemaName="mercury">
+            <column name="created_by" type="number(19,0)" />
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2885-add-man-event-aud-created-by" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="manifest_event_aud" columnName="created_by" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="manifest_event_aud" schemaName="mercury">
+            <column name="created_by" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-add-man-event-created-date" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="manifest_event" columnName="created_date" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="manifest_event" schemaName="mercury">
+            <column name="created_date" type="timestamp(6)" />
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2885-add-man-event-aud-created-date" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="manifest_event_aud" columnName="created_date" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="manifest_event_aud" schemaName="mercury">
+            <column name="created_date" type="timestamp(6)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-add-man-event-modified-by" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="manifest_event" columnName="modified_by" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="manifest_event" schemaName="mercury">
+            <column name="modified_by" type="number(19,0)" />
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2885-add-man-event-aud-modified-by" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="manifest_event_aud" columnName="modified_by" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="manifest_event_aud" schemaName="mercury">
+            <column name="modified_by" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-add-man-event-modified_date" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="manifest_event" columnName="modified_date" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="manifest_event" schemaName="mercury">
+            <column name="modified_date" type="timestamp(6)" />
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2885-add-man-event-aud-modified-date" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="manifest_event_aud" columnName="modified_date" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="manifest_event_aud" schemaName="mercury">
+            <column name="modified_date" type="timestamp(6)"/>
+        </addColumn>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-2885-add-not-null-constraint-man-rec-created-by" author="scottmat">
+        <addNotNullConstraint tableName="manifest_record" columnName="created_by" schemaName="mercury" defaultNullValue="5176"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-add-not-null-constraint-man-rec-created-date" author="scottmat">
+        <sql>update manifest_record set created_date = sysdate where created_date is null</sql>
+        <addNotNullConstraint tableName="manifest_record" columnName="created_date" schemaName="mercury" />
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-add-not-null-constraint-man-rec-modified-by" author="scottmat">
+        <sql>update manifest_record set modified_by = 5176 where modified_by is null</sql>
+        <addNotNullConstraint tableName="manifest_record" columnName="modified_by" schemaName="mercury" />
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-add-not-null-constraint-man-rec-modified-date" author="scottmat">
+        <sql>update manifest_record set modified_date = TO_DATE('09/11/2014', 'MM/DD/YYYY') where modified_date is null</sql>
+        <addNotNullConstraint tableName="manifest_record" columnName="modified_date" schemaName="mercury" />
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-add-not-null-constraint-man-event-created-by" author="scottmat">
+        <sql>update manifest_event set created_by = 5176 where created_by is null</sql>
+        <addNotNullConstraint tableName="manifest_event" columnName="created_by" schemaName="mercury" />
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-add-not-null-constraint-man-event-created-date" author="scottmat">
+        <sql>update manifest_event set created_date = TO_DATE('09/11/2014', 'MM/DD/YYYY') where created_date is null</sql>
+        <addNotNullConstraint tableName="manifest_event" columnName="created_date" schemaName="mercury" />
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-add-not-null-constraint-man-event-modified-by" author="scottmat">
+        <sql>update manifest_event set modified_by = 5176 where modified_by is null</sql>
+        <addNotNullConstraint tableName="manifest_event" columnName="modified_by" schemaName="mercury" />
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-add-not-null-constraint-man-event-modified-date" author="scottmat">
+        <sql>update manifest_event set modified_date = TO_DATE('09/11/2014', 'MM/DD/YYYY') where modified_date is null</sql>
+        <addNotNullConstraint tableName="manifest_event" columnName="modified_date" schemaName="mercury" />
+    </changeSet>
+
+    <changeSet id="GPLIM-2950-1" author="thompson">
+        <createTable schemaName="mercury" tableName="lab_metric_run_metadata">
+            <column name="lab_metric_run_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="metadata_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet id="GPLIM-2950-2" author="thompson">
+        <addPrimaryKey constraintName="PK_lab_metric_run_metadata" schemaName="mercury"
+                tableName="lab_metric_run_metadata" columnNames="lab_metric_run_id, metadata_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-2950-3" author="thompson">
+        <createTable schemaName="mercury" tableName="lab_metric_run_metadata_aud">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="lab_metric_run_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="metadata_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="GPLIM-2950-4" author="thompson">
+        <addPrimaryKey constraintName="PK_lab_metric_run_metadata_aud" schemaName="mercury"
+                tableName="lab_metric_run_metadata_aud" columnNames="rev, lab_metric_run_id, metadata_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-2950-5" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_LMRM_LAB_METRIC_RUN"
+                baseTableSchemaName="mercury" baseTableName="lab_metric_run_metadata" baseColumnNames="lab_metric_run_id"
+                referencedTableSchemaName="mercury" referencedTableName="lab_metric_run" referencedColumnNames="lab_metric_run_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-2950-6" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_LMRM_METADATA"
+                baseTableSchemaName="mercury" baseTableName="lab_metric_run_metadata" baseColumnNames="metadata_id"
+                referencedTableSchemaName="mercury" referencedTableName="metadata" referencedColumnNames="metadata_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-2950-7" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_LMRMA_REV_INFO"
+                baseTableSchemaName="mercury" baseTableName="lab_metric_run_metadata_aud" baseColumnNames="rev"
+                referencedTableSchemaName="mercury" referencedTableName="rev_info" referencedColumnNames="REV_INFO_ID"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-2879-1" author="thompson">
+        <createTable tableName="lab_metric_decision" schemaName="mercury">
+            <column name="lab_metric_decision_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="decided_date" type="timestamp"/>
+            <column name="decider_user_id" type="number(19,0)"/>
+            <column name="decision" type="varchar2(255)"/>
+            <column name="override_reason" type="varchar2(255)"/>
+        </createTable>
+        <addPrimaryKey tableName="lab_metric_decision" columnNames="lab_metric_decision_id"
+                       constraintName="PK_LAB_METRIC_DECISION"/>
+    </changeSet>
+    <changeSet id="GPLIM-2879-2" author="thompson">
+        <createTable tableName="lab_metric_decision_aud" schemaName="mercury">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="lab_metric_decision_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)"/>
+            <column name="decided_date" type="timestamp"/>
+            <column name="decider_user_id" type="number(19,0)"/>
+            <column name="decision" type="varchar2(255)"/>
+            <column name="override_reason" type="varchar2(255)"/>
+        </createTable>
+        <addPrimaryKey tableName="lab_metric_decision_aud" columnNames="rev, lab_metric_decision_id"
+                       constraintName="PK_LAB_METRIC_DECISION_AUD"/>
+    </changeSet>
+    <changeSet id="GPLIM-2879-3" author="thompson">
+        <addColumn tableName="lab_metric">
+            <column name="lab_metric_decision" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2879-4" author="thompson">
+        <addColumn tableName="lab_metric_aud">
+            <column name="lab_metric_decision" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2879-5" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_LM_DECISION"
+                baseTableName="lab_metric" baseColumnNames="lab_metric_decision"
+                referencedTableName="lab_metric_decision" referencedColumnNames="lab_metric_decision_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-2879-6" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_LMDA_REV_INFO"
+                baseTableName="lab_metric_decision_aud" baseColumnNames="rev"
+                referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-2879-7" author="thompson">
+        <createSequence sequenceName="SEQ_LAB_METRIC_DECISION" incrementBy="50"/>
+    </changeSet>
+    <changeSet id="GPLIM-2885-add-manifest-record-index" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="manifest_record" columnName="manifest_record_index" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="manifest_record" schemaName="mercury">
+            <column name="manifest_record_index" type="integer"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-add-manifest-record-index-aud" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="manifest_record_aud" columnName="manifest_record_index" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="manifest_record_aud" schemaName="mercury">
+            <column name="manifest_record_index" type="integer"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-manifest-record-audit-join-table" author="mcovarr">
+        <preConditions>
+            <not>
+                <tableExists tableName="manifest_record_join_aud" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <createTable tableName="manifest_record_join_aud" schemaName="mercury">
+            <column name="rev" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="manifest_session_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="manifest_record_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="manifest_record_index" type="integer">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="manifest_record_join_aud" columnNames="rev, manifest_record_id, manifest_session_id, manifest_record_index"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-manifest_record_index-backfill" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+                select decode(count(*), 0, 0, 1) from manifest_record where manifest_record_index is null;
+            </sqlCheck>
+        </preConditions>
+        <comment>
+          Update to backfill manifest record indexes in manifest records where the manifest record index is currently
+          null.  Manifest record indexes are assigned starting at 0 for the manifest record with the smallest ID within
+          a manifest session and increasing monotonically to N - 1 for the manifest record with the largest ID within a
+          manifest session.
+
+          The precondition above will return 1 if there are any records with null manifest_record_indexes.  It will
+          return 0 otherwise.
+        </comment>
+        <sql>
+            update manifest_record mr set manifest_record_index = (
+                select row_num - 1 from (
+                    select manifest_record_id, row_number() over (partition by manifest_session_id order by manifest_record_id) row_num from manifest_record
+            ) sub where sub.manifest_record_id = mr.manifest_record_id) where manifest_record_index is null
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-manifest-event-msg-bigger" author="scottmat">
+        <preConditions>
+            <columnExists tableName="manifest_event" columnName="message" schemaName="mercury"/>
+        </preConditions>
+        <modifyDataType tableName="manifest_event" columnName="message" newDataType="varchar(4000)"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-2885-manifest-event-aud-msg-bigger-too" author="mcovarr">
+        <preConditions>
+            <columnExists tableName="manifest_event_aud" columnName="message" schemaName="mercury"/>
+        </preConditions>
+        <modifyDataType tableName="manifest_event_aud" columnName="message" newDataType="varchar(4000)"/>
+    </changeSet>
+
+    
+    <changeSet id="GPLIM-2996-1" author="thompson">
+        <createTable schemaName="mercury" tableName="lab_metric_metadata">
+            <column name="lab_metric_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="metadata_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey constraintName="pk_lab_metric_metadata" tableName="lab_metric_metadata"
+                columnNames="lab_metric_id, metadata_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-2996-2" author="thompson">
+        <createTable schemaName="mercury" tableName="lab_metric_metadata_aud">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="lab_metric_id" type="number(19,0)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="metadata_id" type="number(19,0)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="revtype" type="number(3,0)"/>
+        </createTable>
+        <addPrimaryKey constraintName="pk_lab_metric_metadata_aud" tableName="lab_metric_metadata_aud"
+                columnNames="rev, lab_metric_id, metadata_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-2996-3" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_LMM_LAB_METRIC"
+                baseTableName="lab_metric_metadata" baseColumnNames="lab_metric_id"
+                referencedTableName="lab_metric" referencedColumnNames="lab_metric_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-2996-4" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_LMM_METADATA"
+                baseTableName="lab_metric_metadata" baseColumnNames="metadata_id"
+                referencedTableName="metadata" referencedColumnNames="metadata_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-2996-5" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_LMMA_REV_INFO"
+                baseTableName="lab_metric_metadata_aud" baseColumnNames="rev"
+                referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-2996-6" author="thompson">
+        <addColumn schemaName="mercury" tableName="metadata">
+            <column name="date_value" type="timestamp"/>
+            <column name="number_value" type="number(19,2)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2996-7" author="thompson">
+        <addColumn schemaName="mercury" tableName="metadata_aud">
+            <column name="date_value" type="timestamp"/>
+            <column name="number_value" type="number(19,2)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2959-1" author="jsacco">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists schemaName="MERCURY" indexName="IDX_MERCURY_SAMPLES_LAB_VESSEL"/>
+            </not>
+        </preConditions>
+        <createIndex indexName="IDX_MERCURY_SAMPLES_LAB_VESSEL"
+                     schemaName="MERCURY" tableName="LAB_VESSEL_MERCURY_SAMPLES" unique="true">
+            <column name="MERCURY_SAMPLES"/>
+            <column name="LAB_VESSEL"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-2980-1" author="thompson">
+        <addColumn schemaName="mercury" tableName="reagent">
+            <column name="control" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2980-2" author="thompson">
+        <addColumn schemaName="mercury" tableName="reagent_aud">
+            <column name="control" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2980-3" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_R_MERCURY_CONTROL" baseTableName="reagent" baseColumnNames="control"
+                referencedTableName="mercury_control" referencedColumnNames="mercury_control_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-3029-1" author="jsacco">
+        <!-- Support user defined search queries by lab event type -->
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists schemaName="MERCURY" indexName="IDX_LAB_EVENT_TYPE"/>
+            </not>
+        </preConditions>
+        <createIndex indexName="IDX_LAB_EVENT_TYPE"
+                     schemaName="MERCURY" tableName="LAB_EVENT" unique="false">
+            <column name="LAB_EVENT_TYPE"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="scottmat" id="GPLIM-3028-control-uses-prod">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="mercury_control" columnName="collaborator_participant_id" schemaName="mercury" />
+            </not>
+        </preConditions>
+        <renameColumn tableName="mercury_control" oldColumnName="collaborator_sample_id"
+                      newColumnName="collaborator_participant_id" schemaName="mercury" />
+    </changeSet>
+    <changeSet author="scottmat" id="GPLIM-3028-control-aud-uses-prod">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="mercury_control_aud" columnName="collaborator_participant_id" schemaName="mercury" />
+            </not>
+        </preConditions>
+        <renameColumn tableName="mercury_control_aud" oldColumnName="collaborator_sample_id"
+                      newColumnName="collaborator_participant_id" schemaName="mercury" />
+    </changeSet>
+    
+    <changeSet id="GPLIM-2881-1" author="thompson">
+        <createIndex tableName="LAB_VESSEL_CONTAINERS_AUD" indexName="IX_LVCA_LAB_VESSEL">
+            <column name="LAB_VESSEL"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-2881-2" author="thompson">
+        <createIndex tableName="LAB_VESSEL_AUD" indexName="IX_LVA_LAB_VESSEL">
+            <column name="LAB_VESSEL_ID"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-2881-3" author="thompson">
+        <createIndex tableName="LAB_EVENT_AUD" indexName="IX_LEA_IN_PLACE_LAB_VESSEL">
+            <column name="IN_PLACE_LAB_VESSEL"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-2881-4" author="thompson">
+        <createIndex tableName="BATCH_STARTING_VESSELS_AUD" indexName="IX_BSVA_DILUTION_VESSEL">
+            <column name="DILUTION_VESSEL"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-2881-5" author="thompson">
+        <createIndex tableName="LAB_VESSEL_MERCURY_SAMPLES_AUD" indexName="IX_LVMS_LAB_VESSEL">
+            <column name="LAB_VESSEL"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-2881-6" author="thompson">
+        <createIndex tableName="MERCURY_SAMPLE_AUD" indexName="IX_MSA_MERCURY_SAMPLE_ID">
+            <column name="MERCURY_SAMPLE_ID"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-2881-7" author="thompson">
+        <createIndex tableName="LV_REAGENT_CONTENTS_AUD" indexName="IX_LVRCA_LAB_VESSEL">
+            <column name="LAB_VESSEL"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-2881-8" author="thompson">
+        <createIndex tableName="REAGENT_AUD" indexName="IX_RA_REAGENT_ID">
+            <column name="REAGENT_ID"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-2881-9" author="thompson">
+        <createIndex tableName="BATCH_STARTING_VESSELS_AUD" indexName="IX_BSVA_LAB_VESSEL">
+            <column name="LAB_VESSEL"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-2884-1" author="epolk">
+        <createTable tableName="FIXUP_COMMENTARY" schemaName="mercury">
+            <column name="FIXUP_COMMENTARY_ID" type="number(19,0)">
+	        <constraints nullable="false" primaryKey="true" primaryKeyName="PK_FIXUP_COMMENTARY"/>
+	    </column>
+            <column name="REASON" type="varchar2(1023)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-2884-2" author="epolk">
+        <createSequence sequenceName="SEQ_FIXUP_COMMENTARY" schemaName="mercury" startValue="1" incrementBy="50"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-2884-3" author="epolk">
+        <createTable tableName="FIXUP_COMMENTARY_AUD" schemaName="mercury">
+            <column name="REV" type="number(19,0)">
+                <constraints nullable="false"/>
+	    </column>
+            <column name="REVTYPE" type="number(3,0)">
+                <constraints nullable="false"/>
+	    </column>
+            <column name="FIXUP_COMMENTARY_ID" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="REASON" type="varchar2(1023)"/>
+        </createTable>
+
+	<addPrimaryKey tableName="FIXUP_COMMENTARY_AUD" schemaName="mercury"
+		       constraintName="PK_FIXUP_COMMENTARY_AUD"
+		       columnNames="rev, fixup_commentary_id"/>
+
+	<createIndex tableName="FIXUP_COMMENTARY_AUD" indexName="IX_FIXUP_COMMENTARY_AUD">
+            <column name="fixup_commentary_id"/>
+        </createIndex>
+
+    </changeSet>
+    <!--
+       ##################################################################
+       ##################################################################
+
+                    NO MORE CHANGES FOR THIS FILE
+
+       ##################################################################
+       ##################################################################
+    -->
 </databaseChangeLog>

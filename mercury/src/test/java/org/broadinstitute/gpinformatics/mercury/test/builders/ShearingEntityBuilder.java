@@ -8,7 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.testng.Assert;
@@ -22,7 +22,7 @@ import java.util.Set;
  * Builds entity graph for Shearing events
  */
 public class ShearingEntityBuilder {
-    private final Map<String, TwoDBarcodedTube> mapBarcodeToTube;
+    private final Map<String, BarcodedTube> mapBarcodeToTube;
     private       TubeFormation                 preflightRack;
     private final BettaLimsMessageTestFactory   bettaLimsMessageTestFactory;
     private final LabEventFactory               labEventFactory;
@@ -33,7 +33,7 @@ public class ShearingEntityBuilder {
     private StaticPlate shearingCleanupPlate;
     private String testPrefix;
 
-    public ShearingEntityBuilder(Map<String, TwoDBarcodedTube> mapBarcodeToTube, TubeFormation preflightRack,
+    public ShearingEntityBuilder(Map<String, BarcodedTube> mapBarcodeToTube, TubeFormation preflightRack,
                                  BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
                                  LabEventFactory labEventFactory,
                                  LabEventHandler labEventHandler, String rackBarcode, String testPrefix) {
@@ -67,8 +67,8 @@ public class ShearingEntityBuilder {
         LabEventTest.validateWorkflow("ShearingTransfer", mapBarcodeToTube.values());
         Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
         mapBarcodeToVessel.put(preflightRack.getLabel(), preflightRack);
-        for (TwoDBarcodedTube twoDBarcodedTube : preflightRack.getContainerRole().getContainedVessels()) {
-            mapBarcodeToVessel.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
+        for (BarcodedTube barcodedTube : preflightRack.getContainerRole().getContainedVessels()) {
+            mapBarcodeToVessel.put(barcodedTube.getLabel(), barcodedTube);
         }
 
         LabEvent shearingTransferEventEntity = labEventFactory.buildFromBettaLims(

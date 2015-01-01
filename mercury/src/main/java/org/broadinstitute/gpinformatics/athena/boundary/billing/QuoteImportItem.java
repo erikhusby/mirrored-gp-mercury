@@ -1,13 +1,17 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 
+import javax.annotation.Nonnull;
+import java.text.DecimalFormat;
 import java.text.MessageFormat;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -17,6 +21,7 @@ import java.util.Set;
  * A flattened structure of information needed to import an item into the quote server.
  */
 public class QuoteImportItem {
+    private static final String PDO_QUANTITY_FORMAT = "###,###,###.##";
     private final String quoteId;
     private final PriceItem priceItem;
     private String quotePriceType;
@@ -24,6 +29,7 @@ public class QuoteImportItem {
     private final List<LedgerEntry> ledgerItems;
     private Date startRange;
     private Date endRange;
+    private final Set<String> workItems = new HashSet<>();
 
     public QuoteImportItem(
             String quoteId, PriceItem priceItem, String quotePriceType, List<LedgerEntry> ledgerItems, Date billToDate) {
@@ -34,9 +40,38 @@ public class QuoteImportItem {
         this.ledgerItems = ledgerItems;
         this.billToDate = billToDate;
 
-        for (LedgerEntry ledger : ledgerItems) {
-            updateDateRange(ledger.getWorkCompleteDate());
+        if (ledgerItems != null) {
+            for (LedgerEntry ledger : ledgerItems) {
+                updateDateRange(ledger.getWorkCompleteDate());
+                if (StringUtils.isNotBlank(ledger.getWorkItem())) {
+                    workItems.add(ledger.getWorkItem());
+                }
+            }
         }
+    }
+
+    public Collection<String> getWorkItems() {
+        return Collections.unmodifiableCollection(workItems);
+    }
+
+    public String getChargedAmountForPdo(@Nonnull String pdoBusinessKey) {
+        double quantity = 0;
+        for (LedgerEntry ledgerItem : ledgerItems) {
+            if (pdoBusinessKey.equals(ledgerItem.getProductOrderSample().getProductOrder().getBusinessKey())) {
+                quantity += ledgerItem.getQuantity();
+            }
+        }
+        return new DecimalFormat(PDO_QUANTITY_FORMAT).format(quantity);
+    }
+
+    public int getNumberOfSamples(@Nonnull String pdoBusinessKey) {
+        Set<String> sampleNames = new HashSet<>();
+        for (LedgerEntry ledgerItem : ledgerItems) {
+            if (pdoBusinessKey.equals(ledgerItem.getProductOrderSample().getProductOrder().getBusinessKey())) {
+                sampleNames.add(ledgerItem.getProductOrderSample().getSampleKey());
+            }
+        }
+        return sampleNames.size();
     }
 
     private void updateDateRange(Date completedDate) {
@@ -69,6 +104,10 @@ public class QuoteImportItem {
             quantity += ledgerItem.getQuantity();
         }
         return quantity;
+    }
+
+    public String getRoundedQuantity() {
+        return new DecimalFormat(PDO_QUANTITY_FORMAT).format(getQuantity());
     }
 
     public Date getWorkCompleteDate() {
@@ -183,5 +222,17 @@ public class QuoteImportItem {
             keys.add(entry.getProductOrderSample().getProductOrder().getJiraTicketKey());
         }
         return keys;
+    }
+
+    /**
+     * If there is a single work item, it is returned.  Otherwise,
+     * null is returned.
+     */
+    public String getSingleWorkItem() {
+        String workItem = null;
+        if (workItems.size() == 1) {
+            workItem = workItems.iterator().next();
+        }
+        return workItem;
     }
 }

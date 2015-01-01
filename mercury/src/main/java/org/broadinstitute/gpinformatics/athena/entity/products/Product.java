@@ -29,6 +29,7 @@ import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -55,6 +56,8 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     /** The part number for the sample initiation product. */
     public static final String SAMPLE_INITIATION_PART_NUMBER = "P-ESH-0001";
     public static final String EXOME_EXPRESS_V2_PART_NUMBER = "P-EX-0007";
+    public static final String EXOME_EXPRESS = "Exome Express";
+    public static final String EXOME = "Exome";
 
     @Id
     @SequenceGenerator(name = "SEQ_PRODUCT", schema = "athena", sequenceName = "SEQ_PRODUCT")
@@ -666,5 +669,31 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     public boolean getSupportsSkippingQuote() {
         return getProductFamily().isSupportsSkippingQuote();
+    }
+
+    @Transient
+    public static Comparator<Product> BY_PRODUCT_NAME = new Comparator<Product>() {
+        @Override
+        public int compare(Product product, Product anotherProduct) {
+            return product.getName().compareTo(anotherProduct.getName());
+        }
+    };
+    @Transient
+    public static Comparator<Product> BY_FAMILY_THEN_PRODUCT_NAME = new Comparator<Product>() {
+        @Override
+        public int compare(Product product, Product anotherProduct) {
+            int compare = product.getProductFamily().getName().compareTo(anotherProduct.getProductFamily().getName());
+            if (compare!=0){
+                return compare;
+            }
+            return BY_PRODUCT_NAME.compare(product, anotherProduct);
+        }
+    };
+
+    /**
+     * @return Whether this is an exome express product or not.
+     */
+    public boolean isExomeExpress() {
+        return productFamily.getName().equals(ProductFamily.ProductFamilyName.EXOME.getFamilyName()) && productName.startsWith(EXOME_EXPRESS);
     }
 }

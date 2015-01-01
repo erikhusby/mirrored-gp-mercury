@@ -41,11 +41,12 @@ public class PDOSamplesTest {
 
         ProductOrderSample pdoSample1 = new ProductOrderSample(sample1);
         Product dummyProduct = ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "partNumber");
-        riskyProduct = ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "partNumber", true);
+        riskyProduct = ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "partNumber", true, false);
         ProductOrder pdo1 = new ProductOrder(ResearchProjectTestFactory.TEST_CREATOR, "containerTest Product Order Test1",
                 Arrays.asList(pdoSample1),
                         "newQuote", dummyProduct,
-                new ResearchProject(ResearchProjectTestFactory.TEST_CREATOR, null, "test research project", true));
+                new ResearchProject(ResearchProjectTestFactory.TEST_CREATOR, null, "test research project", true,
+                                    ResearchProject.RegulatoryDesignation.RESEARCH_ONLY));
         pdo1.setJiraTicketKey(pdoKey);
         pdoSample1.calculateRisk();
 
@@ -55,7 +56,8 @@ public class PDOSamplesTest {
         ProductOrder pdo2 = new ProductOrder(ResearchProjectTestFactory.TEST_CREATOR, "containerTest Product Order Test2",
                         Arrays.asList(pdoSample2),
                                 "newQuote", riskyProduct,
-                        new ResearchProject(ResearchProjectTestFactory.TEST_CREATOR, null, "test research project", true));
+                        new ResearchProject(ResearchProjectTestFactory.TEST_CREATOR, null, "test research project", true,
+                                            ResearchProject.RegulatoryDesignation.RESEARCH_ONLY));
         pdo2.setJiraTicketKey(pdoKey);
         pdoSample2.calculateRisk();
         pdo2.addSample(pdoSample2);

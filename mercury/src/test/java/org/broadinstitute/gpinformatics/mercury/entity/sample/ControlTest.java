@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -11,6 +12,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DA
  *         Date: 2/21/13
  *         Time: 10:52 AM
  */
+@Test(groups = TestGroups.DATABASE_FREE)
 public class ControlTest {
 
     private final String na12878 = "NA12878";
@@ -22,7 +24,7 @@ public class ControlTest {
 
         Assert.assertNotNull(testCtrl);
 
-        Assert.assertEquals(na12878, testCtrl.getCollaboratorSampleId());
+        Assert.assertEquals(na12878, testCtrl.getCollaboratorParticipantId());
         Assert.assertEquals(na12878, testCtrl.getBusinessKey());
 
         Assert.assertEquals(Control.ControlType.POSITIVE, testCtrl.getType());
@@ -31,9 +33,9 @@ public class ControlTest {
 
         final String sampleId2 = "dummy_part_2";
 
-        testCtrl.setCollaboratorSampleId(sampleId2);
+        testCtrl.setCollaboratorParticipantId(sampleId2);
 
-        Assert.assertEquals(testCtrl.getCollaboratorSampleId(), sampleId2);
+        Assert.assertEquals(testCtrl.getCollaboratorParticipantId(), sampleId2);
         Assert.assertEquals(testCtrl.getBusinessKey(), sampleId2);
     }
 
@@ -46,9 +48,9 @@ public class ControlTest {
 
         Assert.assertEquals(testCtrl.getState(), Control.ControlState.ACTIVE);
 
-        testCtrl.setCollaboratorSampleId(testId);
+        testCtrl.setCollaboratorParticipantId(testId);
 
-        Assert.assertEquals(testCtrl.getCollaboratorSampleId(), testId);
+        Assert.assertEquals(testCtrl.getCollaboratorParticipantId(), testId);
         Assert.assertEquals(testCtrl.getBusinessKey(), testId);
 
         testCtrl.setType(Control.ControlType.NEGATIVE);

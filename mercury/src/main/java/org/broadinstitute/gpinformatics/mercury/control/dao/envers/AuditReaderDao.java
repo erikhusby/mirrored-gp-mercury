@@ -1,30 +1,38 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.envers;
 
 import com.sun.xml.ws.developer.Stateful;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.datawh.ExtractTransform;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo_;
+import org.hibernate.SQLQuery;
 import org.hibernate.envers.AuditReader;
 import org.hibernate.envers.AuditReaderFactory;
+import org.hibernate.envers.RevisionType;
 import org.hibernate.envers.exception.AuditException;
 import org.hibernate.envers.query.AuditEntity;
 import org.hibernate.envers.query.AuditQuery;
+import org.hibernate.type.LongType;
+import org.hibernate.type.StringType;
+import org.hibernate.type.TimestampType;
 
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.NoResultException;
-import javax.persistence.Tuple;
+import javax.persistence.Query;
+import javax.persistence.TemporalType;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Path;
-import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -50,62 +58,121 @@ public class AuditReaderDao extends GenericDao {
     /** Indicates the change type. */
     public static final int AUDIT_READER_TYPE_IDX = 2;
 
+    public static final String IS_ANY_USER = "IS_ANY_USER";
+    public static final String IS_NULL_USER = "IS_NULL_USER";
+
     /**
      * Finds the audit info ids for data changes that happened in the given interval.
      *
      * @param startTimeSec     start of interval, in seconds
+     * Audit revDate has 10 mSec resolution but JPA on our RevInfo table empirically only
+     * permits comparing revDate with a param that has whole second resolution.
      * @param endTimeSec  end of interval, in seconds
      * @return Map of rev info id and the rev's timestamp.
      * @throws IllegalArgumentException if params are not whole second values.
      */
     public SortedMap<Long, Date> fetchAuditIds(long startTimeSec, long endTimeSec) {
-        Date startDate = new Date(startTimeSec * MSEC_IN_SEC);
-        Date endDate = new Date(endTimeSec * MSEC_IN_SEC);
-
-        // Typical AuditReader usage would use audit rev id to determine where to start
-        // the new etl.  But in Mercury the ids were observed to be not always monotonic,
-        // so the audit timestamp must be used instead.
-
-        // Audit revDate has 10 mSec resolution but JPA on our RevInfo table empirically only
-        // permits comparing revDate with a param that has whole second resolution.  That
-        // means etl must have a time interval defined on whole second boundaries.  This
-        // can possibly leave the very most recent events to be picked up in the next etl.
-
-        CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
-        CriteriaQuery<Tuple> criteriaQuery = criteriaBuilder.createTupleQuery();
-        Root<RevInfo> root = criteriaQuery.from(RevInfo.class);
-        Path<Long> revId = root.get(RevInfo_.revInfoId);
-        Path<Date> revDate = root.get(RevInfo_.revDate);
-        criteriaQuery.multiselect(revId, revDate);
-        // Includes the start of interval but excludes the end of interval.
-        Predicate predicate = criteriaBuilder.and(
-                criteriaBuilder.greaterThanOrEqualTo(root.get(RevInfo_.revDate), startDate),
-                criteriaBuilder.lessThan(root.get(RevInfo_.revDate), endDate));
-        criteriaQuery.where(predicate);
-
-        SortedMap<Long, Date> map = new TreeMap<>();
-        try {
-            List<Tuple> list = getEntityManager().createQuery(criteriaQuery).getResultList();
-            for (Tuple tuple : list) {
-                map.put(tuple.get(revId), tuple.get(revDate));
-            }
-        } catch (NoResultException ignored) {}
-        return map;
+        SortedMap<Long, Date> revs = new TreeMap<>();
+        for (AuditedRevDto auditedRevDto : fetchAuditIds(startTimeSec, endTimeSec, IS_ANY_USER, null)) {
+            revs.put(auditedRevDto.getRevId(), auditedRevDto.getRevDate());
+        }
+        return revs;
     }
 
     /**
-     * Finds and records all data changes for the given audit revision ids.
+     * Finds the audit info ids for data changes that happened in the given interval
+     * by the given user.
      *
-     * @param revIds      audit revision ids
-     * @param entityClass the class of entity to process
-     * @return list of Object[3].  Array elements are {entity, RevInfo, RevisionType}.
+     * @param startTimeSec   Start of interval, in seconds.
+     * Audit revDate has 10 mSec resolution but JPA on our RevInfo table empirically only
+     * permits comparing revDate with a param that has whole second resolution.
+     * @param endTimeSec  End of interval, in seconds.
+     * @param username    Name of the user making the change, or IS_ANY_USER for any user,
+     *                    or IS_NULL_USER to find revs where user is null.
+     * @param classname  if non-null, finds only revs of this type of class
+     * @return List of audited revs, sorted by descending date.
+     * @throws IllegalArgumentException if params are not whole second values.
      */
-    public List<Object[]> fetchDataChanges(Collection<Long> revIds, Class<?> entityClass) {
-        return fetchDataChanges(revIds, entityClass, true);
+    public List<AuditedRevDto> fetchAuditIds(long startTimeSec, long endTimeSec, String username, String classname) {
+        // This was changed to a native query in GPLIM-3098 because AuditReader is excessively verbose with sql,
+        // possibly due to revchanges being a optional Envers feature and not fully or well integrated.  For a
+        // comparison, a UI audit trail search of two months with AuditReader code took 3238 sql queries and
+        // 10.0 seconds.  The same search with this native query code took 1 sql query and under 0.5 second.
+        String queryString = " select rev, rev_date, username, entityname from revchanges, rev_info " +
+                             " where rev_info_id = rev and rev_date >= :startDate  and rev_date < :endDate ";
+        if (IS_NULL_USER.equals(username)) {
+            queryString += " and username is null ";
+        } else if (StringUtils.isNotBlank(username) && !IS_ANY_USER.equals(username)) {
+            queryString += " and username = :username ";
+        }
+        if (StringUtils.isNotBlank(classname)) {
+            queryString += " and entityname = :entityname ";
+        }
+        queryString += " order by rev_date desc ";
+
+        Query query = getEntityManager().createNativeQuery(queryString);
+        query.setParameter("startDate", new Date(startTimeSec * MSEC_IN_SEC), TemporalType.TIMESTAMP);
+        query.setParameter("endDate", new Date(endTimeSec * MSEC_IN_SEC), TemporalType.TIMESTAMP);
+        if (queryString.contains(":username")) {
+            //noinspection JpaQueryApiInspection
+            query.setParameter("username", username);
+        }
+        if (queryString.contains(":entityname")) {
+            //noinspection JpaQueryApiInspection
+            query.setParameter("entityname", classname);
+        }
+        // Fixes the return types.
+        query.unwrap(SQLQuery.class)
+                .addScalar("rev", LongType.INSTANCE)
+                .addScalar("rev_date", TimestampType.INSTANCE)
+                .addScalar("username", StringType.INSTANCE)
+                .addScalar("entityname", StringType.INSTANCE);
+
+        try {
+            List<AuditedRevDto> audits = new ArrayList<>();
+            // Aggregates entity name by rev in the AuditedRevDtos.
+            AuditedRevDto auditedRevDto = null;
+            for (Object[] result : (List<Object[]>)query.getResultList()) {
+                Long revId = (Long)result[0];
+                if (auditedRevDto != null && auditedRevDto.getRevId().compareTo(revId) != 0) {
+                    audits.add(auditedRevDto);
+                    auditedRevDto = null;
+                }
+                if (auditedRevDto == null) {
+                    auditedRevDto = new AuditedRevDto(revId, (Date)result[1], (String)result[2], new HashSet<String>());
+                }
+                auditedRevDto.getEntityTypeNames().add((String)result[3]);
+            }
+            if (auditedRevDto != null) {
+                audits.add(auditedRevDto);
+            }
+            return audits;
+        } catch (NoResultException ignored) {
+            return Collections.emptyList();
+        }
+    }
+
+    /**
+     * Finds EnversAudit dtos for one entity type over a collection of revision ids.
+     *
+     * @param revIds collection of audit revision ids to search through.
+     * @param entityClassName the class name of the entity.
+     * @return list of EnversAudit objects.
+     */
+    public List<EnversAudit> fetchEnversAudits(Set<Long> revIds, Class entityClassName) {
+        List<EnversAudit> enversAudits = new ArrayList<>();
+        // Does the AuditReader query and converts each object array into EnversAudit.
+        for (Object[] enversTriple : fetchEnversAudits(revIds, entityClassName, true)) {
+            Object obj = enversTriple[AuditReaderDao.AUDIT_READER_ENTITY_IDX];
+            RevInfo revInfo = (RevInfo) enversTriple[AuditReaderDao.AUDIT_READER_REV_INFO_IDX];
+            RevisionType revType = (RevisionType) enversTriple[AuditReaderDao.AUDIT_READER_TYPE_IDX];
+            enversAudits.add(new EnversAudit(obj, revInfo, revType));
+        }
+        return enversAudits;
     }
 
     // Allows "unrolling" the batch to handle AuditReader failures on individual records.
-    private List<Object[]> fetchDataChanges(Collection<Long> revIds, Class<?> entityClass, boolean doChunks) {
+    private List<Object[]> fetchEnversAudits(Collection<Long> revIds, Class<?> entityClass, boolean doChunks) {
         List<Object[]> dataChanges = new ArrayList<>();
 
         if (revIds == null || revIds.size() == 0) {
@@ -128,7 +195,7 @@ public class AuditReaderDao extends GenericDao {
                 } catch (AuditException e) {
                     if (doChunks) {
                         // Retries sublist one rev at a time in order to skip the one causing problems.
-                        List<Object[]> objects = fetchDataChanges(sublist, entityClass, false);
+                        List<Object[]> objects = fetchEnversAudits(sublist, entityClass, false);
                         dataChanges.addAll(objects);
                     } else {
                         // Log and ignore single rev id problem.
@@ -142,4 +209,58 @@ public class AuditReaderDao extends GenericDao {
         }
         return dataChanges;
     }
+
+    /**
+     * Returns a version of the entity at the given revision id, or null
+     * if entity doesn't have a Long primary key, or entity not found at that version.
+     */
+    public <T> T getEntityAtVersion(Long entityId, Class cls, long revId) {
+        if (entityId != null) {
+            return (T) getAuditReader().find(cls, entityId, revId);
+        }
+        return null;
+    }
+
+    /**
+     * Returns the revId of an entity immediately prior to the version at the given revision id.
+     * Returns null if entity can't be found, or doesn't have a Long primary key.
+     */
+    public Long getPreviousVersionRevId(Long entityId, Class cls, long revId) {
+        RevInfo revInfo = getEntityManager().find(RevInfo.class, revId);
+        if (revInfo == null) {
+            return null;
+        }
+        boolean ONLY_RETURN_ENTITIES = false;
+        boolean INCLUDE_DELETES = true;
+        Date previousRevDate = (Date)getAuditReader().createQuery()
+                .forRevisionsOfEntity(cls, ONLY_RETURN_ENTITIES, INCLUDE_DELETES)
+                .addProjection(AuditEntity.revisionProperty("revDate").function("max"))
+                .add(AuditEntity.id().eq(entityId))
+                .add(AuditEntity.revisionProperty("revDate").lt(revInfo.getRevDate()))
+                .getSingleResult();
+        Long previousRevId = (Long)getAuditReader().createQuery()
+                .forRevisionsOfEntity(cls, ONLY_RETURN_ENTITIES, INCLUDE_DELETES)
+                .addProjection(AuditEntity.revisionNumber().max())
+                .add(AuditEntity.id().eq(entityId))
+                .add(AuditEntity.revisionProperty("revDate").eq(previousRevDate))
+                .getSingleResult();
+        return previousRevId;
+    }
+
+    /** Returns sorted list of all usernames found in REV_INFO. */
+    public List<String> getAllAuditUsername() {
+        CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<String> criteriaQuery = criteriaBuilder.createQuery(String.class);
+        Root<RevInfo> root = criteriaQuery.from(RevInfo.class);
+        criteriaQuery.select(root.get(RevInfo_.username));
+        criteriaQuery.distinct(true);
+        criteriaQuery.orderBy(criteriaBuilder.asc(criteriaBuilder.upper(root.get(RevInfo_.username))));
+        try {
+            return getEntityManager().createQuery(criteriaQuery).getResultList();
+        } catch (NoResultException ignored) {
+            logger.warn("No usernames found in REV_INFO.");
+        }
+        return (Collections.emptyList());
+    }
+
 }

@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.products;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
@@ -149,7 +149,7 @@ public class RiskCriterion implements Serializable {
 
             @Override
             public String getValue(ProductOrderSample sample) {
-                return String.valueOf(sample.getBspSampleDTO().getVolume());
+                return String.valueOf(sample.getSampleData().getVolume());
             }
         }),
         CONCENTRATION("Concentration", Operator.OperatorType.NUMERIC, new ValueProvider() {
@@ -157,7 +157,7 @@ public class RiskCriterion implements Serializable {
 
             @Override
             public String getValue(ProductOrderSample sample) {
-                return String.valueOf(sample.getBspSampleDTO().getConcentration());
+                return String.valueOf(sample.getSampleData().getConcentration());
             }
         }),
         WGA("Is WGA", Operator.OperatorType.BOOLEAN, new ValueProvider() {
@@ -165,7 +165,7 @@ public class RiskCriterion implements Serializable {
 
             @Override
             public String getValue(ProductOrderSample sample) {
-                return String.valueOf(sample.getBspSampleDTO().getMaterialType().contains("WGA"));
+                return String.valueOf(sample.getSampleData().getMaterialType().contains("WGA"));
             }
         }),
         FFPE("Is FFPE", Operator.OperatorType.BOOLEAN, new ValueProvider() {
@@ -173,7 +173,7 @@ public class RiskCriterion implements Serializable {
 
             @Override
             public String getValue(ProductOrderSample sample) {
-                return String.valueOf(sample.getBspSampleDTO().getFfpeStatus());
+                return String.valueOf(sample.getSampleData().getFfpeStatus());
             }
         }),
         MANUAL("Manual", Operator.OperatorType.BOOLEAN, new ValueProvider() {
@@ -196,7 +196,7 @@ public class RiskCriterion implements Serializable {
 
             @Override
             public String getValue(ProductOrderSample sample) {
-                return String.valueOf(sample.getBspSampleDTO().getTotal());
+                return String.valueOf(sample.getSampleData().getTotal());
             }
         }),
         PICO_AGE("Last Pico over a year ago", Operator.OperatorType.BOOLEAN, new ValueProvider() {
@@ -204,7 +204,7 @@ public class RiskCriterion implements Serializable {
 
             @Override
             public String getValue(ProductOrderSample sample) {
-                BSPSampleDTO sampleDTO = sample.getBspSampleDTO();
+                SampleData sampleDTO = sample.getSampleData();
 
                 // On risk if there is no pico date or if the run date is older than one year ago.
                 return String.valueOf(((sampleDTO.getPicoRunDate() == null) ||
@@ -217,9 +217,23 @@ public class RiskCriterion implements Serializable {
 
             @Override
             public String getValue(ProductOrderSample sample) {
-                return String.valueOf(sample.getBspSampleDTO().getRin());
+                return getStringValueOfOrNull(sample.getSampleData().getRin());
+            }
+        }),
+        RQS("RQS", Operator.OperatorType.NUMERIC, new ValueProvider() {
+            @Override
+            public String getValue(ProductOrderSample sample) {
+                return getStringValueOfOrNull(sample.getSampleData().getRqs());
             }
         });
+
+        private static String getStringValueOfOrNull(Double value) {
+            if (value == null) {
+                return null;
+            } else {
+                return String.valueOf(value);
+            }
+        }
 
         private final Operator.OperatorType operatorType;
         private final String label;
@@ -244,7 +258,13 @@ public class RiskCriterion implements Serializable {
         }
 
         public boolean getRiskStatus(ProductOrderSample sample, Operator operator, String value) {
-            return operator.apply(valueProvider.getValue(sample), value);
+            String valueFromSample = valueProvider.getValue(sample);
+            if (valueFromSample == null) {
+                // Sample is on risk if it has no data to apply the comparison to.
+                return true;
+            } else {
+                return operator.apply(valueFromSample, value);
+            }
         }
 
         public List<Operator> getOperators() {

@@ -32,7 +32,7 @@ import java.util.Set;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled=true)
+@Test(groups = TestGroups.STANDARD, enabled=true)
 public class BillingTrackerImporterContainerTest extends Arquillian {
 
     public static final String BILLING_TRACKER_TEST_FILENAME = "BillingTracker-ContainerTest.xlsx";
@@ -122,17 +122,18 @@ public class BillingTrackerImporterContainerTest extends Arquillian {
             String rnaOrderId = "PDO-23";
             Assert.assertEquals(productOrders.get(0).getBusinessKey(), rnaOrderId, "Should have products");
 
+            // iterator().next() is OK here because there's only one PDO in the spreadsheet.
             Set<Map.Entry<BillableRef, OrderBillSummaryStat>> entries =
                 processor.getChargesMapByPdo().values().iterator().next().entrySet();
 
             // Primary Product data
-            String rnaPriceItemName = "Strand Specific RNA-Seq (high coverage-50M paired reads)";
+            String rnaPriceItemName = "Materials";
             OrderBillSummaryStat productStatData = getOrderBillSummaryStat(entries, rnaPriceItemName);
-            Assert.assertEquals(productStatData.getCharge(), 0.0, "Charge mismatch");
-            Assert.assertEquals(productStatData.getCredit(), 2.0, "Credit mismatch");
+            Assert.assertEquals(productStatData.getCharge(), 2.0, "Charge mismatch");
+            Assert.assertEquals(productStatData.getCredit(), 0.0, "Credit mismatch");
 
             // First AddOn data
-            String rnaAddonPriceItemName = "DNA or RNA Extract from Blood, Fresh Frozen Tissue, cell pellet, stool, saliva";
+            String rnaAddonPriceItemName = "DNA or RNA Extract from Fresh Frozen Tissue, Cell Pellet, Stool, Saliva";
             productStatData = getOrderBillSummaryStat(entries, rnaAddonPriceItemName);
             Assert.assertEquals(productStatData.getCharge(), 4.0, "Charge mismatch");
             Assert.assertEquals(productStatData.getCredit(), 0.0, "Credit mismatch");
@@ -155,13 +156,17 @@ public class BillingTrackerImporterContainerTest extends Arquillian {
         // Find the price item.
         Map.Entry<BillableRef, OrderBillSummaryStat> entry = null;
         Iterator<Map.Entry<BillableRef, OrderBillSummaryStat>> entryIterator = entries.iterator();
+        List<String> allPriceItemNames = new ArrayList<>();
         while ((entry == null) && entryIterator.hasNext()) {
             entry = entryIterator.next();
+            allPriceItemNames.add(entry.getKey().getPriceItemName());
             if (!entry.getKey().getPriceItemName().equals(rnaPriceItemName)) {
                 entry = null;
             }
         }
-        Assert.assertNotNull(entry, "Could not find the matching price item for: " + rnaPriceItemName);
+        Assert.assertNotNull(entry,
+                String.format("Could not find the matching price item for: '%s'. Did not match any of [%s].",
+                        rnaPriceItemName, StringUtils.join(allPriceItemNames, ", ")));
         return entry.getValue();
     }
 

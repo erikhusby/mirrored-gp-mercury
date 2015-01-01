@@ -1,8 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.BSPExportsService;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatMessageSender;
@@ -24,7 +23,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.test.BaseEventTest;
@@ -83,12 +82,12 @@ public class SolexaRunRoutingTest extends BaseEventTest {
                 ProductOrderTestFactory.buildWholeGenomeProductOrder(NUM_POSITIONS_IN_RACK);
         productOrder.getResearchProject().setJiraTicketKey("RP-123");
 
-        AthenaClientServiceStub.addProductOrder(productOrder);
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
 
         LabBatch workflowBatch = new LabBatch("Whole Genome Batch",
-                new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
+                                              new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                                              LabBatch.LabBatchType.WORKFLOW);
         workflowBatch.setWorkflow(Workflow.WHOLE_GENOME);
         workflowBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
 
@@ -96,30 +95,34 @@ public class SolexaRunRoutingTest extends BaseEventTest {
         PreFlightEntityBuilder preFlightEntityBuilder = runPreflightProcess(mapBarcodeToTube, "1");
         ShearingEntityBuilder shearingEntityBuilder =
                 runShearingProcess(mapBarcodeToTube, preFlightEntityBuilder.getTubeFormation(),
-                        preFlightEntityBuilder.getRackBarcode(), "1");
+                                   preFlightEntityBuilder.getRackBarcode(), "1");
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
                 runLibraryConstructionProcess(shearingEntityBuilder.getShearingCleanupPlate(),
-                        shearingEntityBuilder.getShearCleanPlateBarcode(), shearingEntityBuilder.getShearingPlate(),
-                        "1");
+                                              shearingEntityBuilder.getShearCleanPlateBarcode(),
+                                              shearingEntityBuilder.getShearingPlate(),
+                                              "1");
         SageEntityBuilder sageEntityBuilder = runSageProcess(libraryConstructionEntityBuilder.getPondRegRack(),
-                libraryConstructionEntityBuilder.getPondRegRackBarcode(),
-                libraryConstructionEntityBuilder.getPondRegTubeBarcodes());
+                                                             libraryConstructionEntityBuilder.getPondRegRackBarcode(),
+                                                             libraryConstructionEntityBuilder.getPondRegTubeBarcodes());
 
         Assert.assertEquals(sageEntityBuilder.getSageCleanupRack().getSampleInstances().size(), NUM_POSITIONS_IN_RACK,
-                "Wrong number of sage cleanup samples");
+                            "Wrong number of sage cleanup samples");
 
         QtpEntityBuilder qtpEntityBuilder =
                 runQtpProcess(sageEntityBuilder.getSageCleanupRack(), sageEntityBuilder.getSageCleanupTubeBarcodes(),
-                        sageEntityBuilder.getMapBarcodeToSageUnloadTubes(), "1");
+                              sageEntityBuilder.getMapBarcodeToSageUnloadTubes(), "1");
 
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", null,
-                        ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "designation", Workflow.WHOLE_GENOME);
+                                            ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "designation",
+                                            Workflow.WHOLE_GENOME);
 
-        Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
+        Map.Entry<String, BarcodedTube> stringBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         LabEventTest.ListTransfersFromStart transferTraverserCriteria = new LabEventTest.ListTransfersFromStart();
-        stringTwoDBarcodedTubeEntry.getValue().evaluateCriteria(transferTraverserCriteria,
+
+        stringBarcodedTubeEntry.getValue().evaluateCriteria(transferTraverserCriteria,
                 TransferTraverserCriteria.TraversalDirection.Descendants);
+
         @SuppressWarnings("UnusedDeclaration")
         List<String> labEventNames = transferTraverserCriteria.getLabEventNames();
 
@@ -128,10 +131,10 @@ public class SolexaRunRoutingTest extends BaseEventTest {
 
         SolexaRunBean runBean =
                 new SolexaRunBean(flowcell.getCartridgeBarcode(),
-                        flowcell.getCartridgeBarcode() + dateFormat.format(runDate),
-                        runDate, "Superman",
-                        File.createTempFile("tempRun" + dateFormat.format(runDate), ".txt")
-                                .getAbsolutePath(), null);
+                                  flowcell.getCartridgeBarcode() + dateFormat.format(runDate),
+                                  runDate, "Superman",
+                                  File.createTempFile("tempRun" + dateFormat.format(runDate), ".txt")
+                                      .getAbsolutePath(), null);
 
         IlluminaSequencingRunDao runDao = EasyMock.createMock(IlluminaSequencingRunDao.class);
 
@@ -147,15 +150,16 @@ public class SolexaRunRoutingTest extends BaseEventTest {
         BSPExportsService bspExportsService = EasyMock.createMock(BSPExportsService.class);
 
         SystemRouter router = new SystemRouter(vesselDao, EasyMock.createNiceMock(ControlDao.class),
-                new WorkflowLoader(),
-                EasyMock.createNiceMock(BSPSampleDataFetcher.class), bspExportsService);
+                                               new WorkflowLoader(),
+                                               EasyMock.createNiceMock(SampleDataFetcher.class), bspExportsService);
         HipChatMessageSender hipChatMsgSender = EasyMock.createNiceMock(HipChatMessageSender.class);
         MiSeqReagentKitDao reagentKitDao = EasyMock.createNiceMock(MiSeqReagentKitDao.class);
 
         SolexaRunResource runResource =
                 new SolexaRunResource(runDao, runFactory, flowcellDao, vesselTransferEjb, router,
-                        SquidConnectorProducer.stubInstance(), hipChatMsgSender, SquidConfig.produce(Deployment.STUBBY),
-                        reagentKitDao);
+                                      SquidConnectorProducer.stubInstance(), hipChatMsgSender, SquidConfig.produce(
+                        Deployment.STUBBY),
+                                      reagentKitDao);
 
         UriInfo uriInfoMock = EasyMock.createNiceMock(UriInfo.class);
         EasyMock.expect(uriInfoMock.getAbsolutePathBuilder()).andReturn(UriBuilder.fromPath(""));
@@ -183,8 +187,8 @@ public class SolexaRunRoutingTest extends BaseEventTest {
         BSPExportsService bspExportsService = EasyMock.createMock(BSPExportsService.class);
 
         SystemRouter router = new SystemRouter(vesselDao, EasyMock.createNiceMock(ControlDao.class),
-                new WorkflowLoader(),
-                EasyMock.createNiceMock(BSPSampleDataFetcher.class), bspExportsService);
+                                               new WorkflowLoader(),
+                                               EasyMock.createNiceMock(SampleDataFetcher.class), bspExportsService);
         HipChatMessageSender hipChatMsgSender = EasyMock.createNiceMock(HipChatMessageSender.class);
         UriInfo uriInfoMock = EasyMock.createNiceMock(UriInfo.class);
 
@@ -193,33 +197,34 @@ public class SolexaRunRoutingTest extends BaseEventTest {
                 ProductOrderTestFactory.buildWholeGenomeProductOrder(NUM_POSITIONS_IN_RACK);
         productOrder.getResearchProject().setJiraTicketKey("RP-123");
 
-        AthenaClientServiceStub.addProductOrder(productOrder);
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
 
         LabBatch workflowBatch = new LabBatch("Whole Genome Batch",
-                new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
+                                              new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                                              LabBatch.LabBatchType.WORKFLOW);
         workflowBatch.setWorkflow(Workflow.WHOLE_GENOME);
 
         bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
         PreFlightEntityBuilder preFlightEntityBuilder = runPreflightProcess(mapBarcodeToTube, "1");
         ShearingEntityBuilder shearingEntityBuilder =
                 runShearingProcess(mapBarcodeToTube, preFlightEntityBuilder.getTubeFormation(),
-                        preFlightEntityBuilder.getRackBarcode(), "1");
+                                   preFlightEntityBuilder.getRackBarcode(), "1");
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
                 runLibraryConstructionProcess(shearingEntityBuilder.getShearingCleanupPlate(),
-                        shearingEntityBuilder.getShearCleanPlateBarcode(), shearingEntityBuilder.getShearingPlate(),
-                        "1");
+                                              shearingEntityBuilder.getShearCleanPlateBarcode(),
+                                              shearingEntityBuilder.getShearingPlate(),
+                                              "1");
         SageEntityBuilder sageEntityBuilder = runSageProcess(libraryConstructionEntityBuilder.getPondRegRack(),
-                libraryConstructionEntityBuilder.getPondRegRackBarcode(),
-                libraryConstructionEntityBuilder.getPondRegTubeBarcodes());
+                                                             libraryConstructionEntityBuilder.getPondRegRackBarcode(),
+                                                             libraryConstructionEntityBuilder.getPondRegTubeBarcodes());
 
         Assert.assertEquals(sageEntityBuilder.getSageCleanupRack().getSampleInstances().size(), NUM_POSITIONS_IN_RACK,
-                "Wrong number of sage cleanup samples");
+                            "Wrong number of sage cleanup samples");
 
         QtpEntityBuilder qtpEntityBuilder =
                 runQtpProcess(sageEntityBuilder.getSageCleanupRack(), sageEntityBuilder.getSageCleanupTubeBarcodes(),
-                        sageEntityBuilder.getMapBarcodeToSageUnloadTubes(), "1");
+                              sageEntityBuilder.getMapBarcodeToSageUnloadTubes(), "1");
 
         MiSeqReagentKitEntityBuilder miseqReagentBuilder =
                 runMiSeqReagentEntityBuilder(qtpEntityBuilder.getDenatureRack(), "1", reagentBlockBarcode);
@@ -235,16 +240,16 @@ public class SolexaRunRoutingTest extends BaseEventTest {
         final String miseqFlowcellBarcode = "A143C";
         SolexaRunBean miseqRunBean =
                 new SolexaRunBean(miseqFlowcellBarcode,
-                        miseqFlowcellBarcode + dateFormat.format(runDate),
-                        runDate, "Superman",
-                        File.createTempFile("tempMiSeqRun" + dateFormat.format(runDate), ".txt")
-                                .getAbsolutePath(), "reagentBlk" + runDate.getTime());
+                                  miseqFlowcellBarcode + dateFormat.format(runDate),
+                                  runDate, "Superman",
+                                  File.createTempFile("tempMiSeqRun" + dateFormat.format(runDate), ".txt")
+                                      .getAbsolutePath(), "reagentBlk" + runDate.getTime());
 
         SolexaRunResource miseqRunResource =
                 new SolexaRunResource(runDao, runFactory, miseqFlowcellDao, vesselTransferEjb, router,
-                        SquidConnectorProducer.failureStubInstance(), hipChatMsgSender,
-                        SquidConfig.produce(Deployment.STUBBY),
-                        reagentKitDao);
+                                      SquidConnectorProducer.failureStubInstance(), hipChatMsgSender,
+                                      SquidConfig.produce(Deployment.STUBBY),
+                                      reagentKitDao);
 
 
         javax.ws.rs.core.Response miseqResponse = miseqRunResource.createRun(miseqRunBean, uriInfoMock);
@@ -254,22 +259,24 @@ public class SolexaRunRoutingTest extends BaseEventTest {
 
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", null,
-                        ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "designation", Workflow.WHOLE_GENOME);
+                                            ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "designation",
+                                            Workflow.WHOLE_GENOME);
 
-        Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
+        Map.Entry<String, BarcodedTube> stringBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         LabEventTest.ListTransfersFromStart transferTraverserCriteria = new LabEventTest.ListTransfersFromStart();
-        stringTwoDBarcodedTubeEntry.getValue().evaluateCriteria(transferTraverserCriteria,
+        stringBarcodedTubeEntry.getValue().evaluateCriteria(transferTraverserCriteria,
                 TransferTraverserCriteria.TraversalDirection.Descendants);
+
         @SuppressWarnings("UnusedDeclaration")
         List<String> labEventNames = transferTraverserCriteria.getLabEventNames();
 
         IlluminaFlowcell flowcell = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell();
         SolexaRunBean runBean =
                 new SolexaRunBean(flowcell.getCartridgeBarcode(),
-                        flowcell.getCartridgeBarcode() + dateFormat.format(runDate),
-                        runDate, "Superman",
-                        File.createTempFile("tempRun" + dateFormat.format(runDate), ".txt")
-                                .getAbsolutePath(), null);
+                                  flowcell.getCartridgeBarcode() + dateFormat.format(runDate),
+                                  runDate, "Superman",
+                                  File.createTempFile("tempRun" + dateFormat.format(runDate), ".txt")
+                                      .getAbsolutePath(), null);
 
         IlluminaFlowcellDao flowcellDao = EasyMock.createNiceMock(IlluminaFlowcellDao.class);
         EasyMock.expect(flowcellDao.findByBarcode(EasyMock.anyObject(String.class))).andReturn(flowcell);
@@ -277,8 +284,9 @@ public class SolexaRunRoutingTest extends BaseEventTest {
         MiSeqReagentKitDao placeHolderReagentKitDao = EasyMock.createNiceMock(MiSeqReagentKitDao.class);
         SolexaRunResource runResource =
                 new SolexaRunResource(runDao, runFactory, flowcellDao, vesselTransferEjb, router,
-                        SquidConnectorProducer.stubInstance(), hipChatMsgSender, SquidConfig.produce(Deployment.STUBBY),
-                        placeHolderReagentKitDao);
+                                      SquidConnectorProducer.stubInstance(), hipChatMsgSender, SquidConfig.produce(
+                        Deployment.STUBBY),
+                                      placeHolderReagentKitDao);
 
         EasyMock.expect(uriInfoMock.getAbsolutePathBuilder()).andReturn(UriBuilder.fromPath(""));
         EasyMock.replay(runDao, runFactory, flowcellDao, vesselDao, uriInfoMock, hipChatMsgSender, reagentKitDao);
@@ -296,10 +304,10 @@ public class SolexaRunRoutingTest extends BaseEventTest {
         IlluminaFlowcell flowcell = new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.HiSeqFlowcell, flowcellBarcode);
         SolexaRunBean runBean =
                 new SolexaRunBean(flowcellBarcode,
-                        flowcellBarcode + dateFormat.format(runDate),
-                        runDate, "Superman",
-                        File.createTempFile("tempRun" + dateFormat.format(runDate), ".txt")
-                                .getAbsolutePath(), null);
+                                  flowcellBarcode + dateFormat.format(runDate),
+                                  runDate, "Superman",
+                                  File.createTempFile("tempRun" + dateFormat.format(runDate), ".txt")
+                                      .getAbsolutePath(), null);
 
         IlluminaSequencingRunDao runDao = EasyMock.createMock(IlluminaSequencingRunDao.class);
 
@@ -312,16 +320,17 @@ public class SolexaRunRoutingTest extends BaseEventTest {
         IlluminaSequencingRunFactory runFactory = EasyMock.createMock(IlluminaSequencingRunFactory.class);
         BSPExportsService bspExportsService = EasyMock.createMock(BSPExportsService.class);
         SystemRouter router = new SystemRouter(vesselDao, EasyMock.createNiceMock(ControlDao.class),
-                new WorkflowLoader(),
-                EasyMock.createNiceMock(BSPSampleDataFetcher.class), bspExportsService);
+                                               new WorkflowLoader(),
+                                               EasyMock.createNiceMock(SampleDataFetcher.class), bspExportsService);
 
         HipChatMessageSender hipChatMsgSender = EasyMock.createNiceMock(HipChatMessageSender.class);
         VesselTransferEjb vesselTransferEjb = EasyMock.createMock(VesselTransferEjb.class);
         MiSeqReagentKitDao reagentKitDao = EasyMock.createNiceMock(MiSeqReagentKitDao.class);
 
         SolexaRunResource runResource = new SolexaRunResource(runDao, runFactory, flowcellDao, vesselTransferEjb,
-                router, SquidConnectorProducer.stubInstance(), hipChatMsgSender, SquidConfig.produce(Deployment.STUBBY),
-                reagentKitDao);
+                                                              router, SquidConnectorProducer.stubInstance(),
+                                                              hipChatMsgSender, SquidConfig.produce(Deployment.STUBBY),
+                                                              reagentKitDao);
 
         UriInfo uriInfoMock = EasyMock.createNiceMock(UriInfo.class);
         EasyMock.expect(uriInfoMock.getAbsolutePathBuilder()).andReturn(UriBuilder.fromPath(""));

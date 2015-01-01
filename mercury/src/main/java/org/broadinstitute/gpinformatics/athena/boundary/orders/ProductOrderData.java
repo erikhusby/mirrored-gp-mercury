@@ -1,9 +1,17 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.athena.boundary.projects.ApplicationValidationException;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.LongDateTimeAdapter;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 
 import javax.annotation.Nonnull;
 import javax.xml.bind.annotation.XmlElementWrapper;
@@ -20,9 +28,12 @@ import java.util.List;
 @SuppressWarnings("UnusedDeclaration")
 @XmlRootElement
 public class ProductOrderData {
+    public static final boolean INCLUDE_SAMPLES = true;
+
     private String title;
     private String id;
     private String comments;
+    private Date createdDate;
     private Date placedDate;
     private Date modifiedDate;
     private String product;
@@ -34,15 +45,34 @@ public class ProductOrderData {
     private String username;
     private String requisitionName;
     private String productOrderKey;
+    private String workRequestId;
+    private int riskNotCalculatedCount;
+
+    /** Even if includeSamples == false this will still contain the number of samples in the PDO. */
+    private int numberOfSamples;
+
+    // These are "in" parameters only, used to create a PDO with sample kits.
+    private List<ProductOrderKitDetailData> kitDetailData = new ArrayList<>();
+    private long siteId;
 
     /**
      * This is really a list of sample IDs.
      */
-    private List<String> samples;
+    private List<String> samples = new ArrayList<>();
 
     @SuppressWarnings("UnusedDeclaration")
     /** Required by JAXB. */
     ProductOrderData() {
+    }
+
+    /**
+     * Constructor with the {@link ProductOrder} passed in for initialization. This constructor defaults the include
+     * flag to true because if we don't have samples, including will just include nothing.
+     *
+     * @param productOrder the {@link ProductOrder}
+     */
+    public ProductOrderData(@Nonnull ProductOrder productOrder) {
+        this(productOrder, INCLUDE_SAMPLES);
     }
 
     /**
@@ -56,7 +86,6 @@ public class ProductOrderData {
 
         // This duplicates productOrderKey; need to remove this field completely.
         id = productOrder.getBusinessKey();
-
         productOrderKey = productOrder.getBusinessKey();
         comments = productOrder.getComments();
         placedDate = productOrder.getPlacedDate();
@@ -64,6 +93,7 @@ public class ProductOrderData {
         quoteId = productOrder.getQuoteId();
         status = productOrder.getOrderStatus().name();
         requisitionName = productOrder.getRequisitionName();
+        createdDate = productOrder.getCreatedDate();
 
         Product product = productOrder.getProduct();
         if (product != null) {
@@ -77,13 +107,24 @@ public class ProductOrderData {
             researchProjectId = productOrder.getResearchProject().getBusinessKey();
         }
 
+        if (productOrder.getProductOrderKit() != null) {
+            workRequestId = productOrder.getProductOrderKit().getWorkRequestId();
+        }
+
         if (includeSamples) {
             samples = getSampleList(productOrder.getSamples());
+            for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
+                if (productOrderSample.getRiskItems().isEmpty()) {
+                    riskNotCalculatedCount++;
+                }
+            }
         } else {
             // Explicit set of null into a List<String> field, this duplicates what the existing code was doing when
             // includeSamples = false.  Is the JAXB behavior with an empty List undesirable?
             samples = null;
         }
+
+        numberOfSamples = productOrder.getSampleCount();
     }
 
     private static List<String> getSampleList(List<ProductOrderSample> productOrderSamples) {
@@ -96,11 +137,7 @@ public class ProductOrderData {
     }
 
     public String getTitle() {
-        if (title == null) {
-            return "";
-        }
-
-        return title;
+        return (title == null) ? "" : title;
     }
 
     public void setTitle(String title) {
@@ -108,11 +145,7 @@ public class ProductOrderData {
     }
 
     public String getId() {
-        if (id == null) {
-            return "";
-        }
-
-        return id;
+        return (id == null) ? "" : id;
     }
 
     public void setId(String id) {
@@ -120,11 +153,7 @@ public class ProductOrderData {
     }
 
     public String getComments() {
-        if (comments == null) {
-            return "";
-        }
-
-        return comments;
+        return (comments == null) ? "" : comments;
     }
 
     public void setComments(String comments) {
@@ -150,11 +179,7 @@ public class ProductOrderData {
     }
 
     public String getProduct() {
-        if (product == null) {
-            return "";
-        }
-
-        return product;
+        return (product == null) ? "" : product;
     }
 
     public void setProduct(String product) {
@@ -162,11 +187,7 @@ public class ProductOrderData {
     }
 
     public String getStatus() {
-        if (status == null) {
-            return "";
-        }
-
-        return status;
+        return (status == null) ? "" : status;
     }
 
     public void setStatus(String status) {
@@ -182,10 +203,6 @@ public class ProductOrderData {
      */
     @XmlElementWrapper
     public List<String> getSamples() {
-        if (samples == null) {
-            return new ArrayList<>();
-        }
-
         return samples;
     }
 
@@ -203,11 +220,7 @@ public class ProductOrderData {
     }
 
     public String getAggregationDataType() {
-        if (aggregationDataType == null) {
-            return "";
-        }
-
-        return aggregationDataType;
+        return (aggregationDataType == null) ? "" : aggregationDataType;
     }
 
     public void setResearchProjectId(String researchProjectId) {
@@ -215,11 +228,16 @@ public class ProductOrderData {
     }
 
     public String getResearchProjectId() {
-        if (researchProjectId == null) {
-            return "";
-        }
+        return (researchProjectId == null) ? "" : researchProjectId;
+    }
 
-        return researchProjectId;
+
+    public void setWorkRequestId(String workRequestId) {
+        this.workRequestId = workRequestId;
+    }
+
+    public String getWorkRequestId() {
+        return (workRequestId == null) ? "" : workRequestId;
     }
 
     public void setProductName(String productName) {
@@ -227,11 +245,7 @@ public class ProductOrderData {
     }
 
     public String getProductName() {
-        if (productName == null) {
-            return "";
-        }
-
-        return productName;
+        return (productName == null) ? "" : productName;
     }
 
     public void setQuoteId(String quoteId) {
@@ -239,19 +253,11 @@ public class ProductOrderData {
     }
 
     public String getQuoteId() {
-        if (quoteId == null) {
-            return "";
-        }
-
-        return quoteId;
+        return (quoteId == null) ? "" : quoteId;
     }
 
     public String getUsername() {
-        if (username == null) {
-            return "";
-        }
-
-        return username;
+        return (username == null) ? "" : username;
     }
 
     public void setUsername(String username) {
@@ -259,17 +265,12 @@ public class ProductOrderData {
     }
 
     public String getRequisitionName() {
-        if (requisitionName == null) {
-            return "";
-        }
-
-        return requisitionName;
+        return (requisitionName == null) ? "" : requisitionName;
     }
 
     public void setRequisitionName(String requisitionName) {
         this.requisitionName = requisitionName;
     }
-
 
     public String getProductOrderKey() {
         return productOrderKey;
@@ -277,5 +278,103 @@ public class ProductOrderData {
 
     public void setProductOrderKey(String productOrderKey) {
         this.productOrderKey = productOrderKey;
+    }
+
+    /**
+     * Create a ProductOrder from this ProductOrderData
+     *
+     * @return the populated {@link ProductOrder}
+     */
+    public ProductOrder toProductOrder(ProductOrderDao productOrderDao, ResearchProjectDao researchProjectDao,
+                                       ProductDao productDao)
+            throws DuplicateTitleException, NoSamplesException, QuoteNotFoundException, ApplicationValidationException {
+
+        // Make sure the title/name is supplied and unique
+        if (StringUtils.isBlank(title)) {
+            throw new ApplicationValidationException("Title required for Product Order");
+        }
+
+        // Make sure the title is unique
+        if (productOrderDao.findByTitle(title) != null) {
+            throw new DuplicateTitleException();
+        }
+
+        ProductOrder productOrder = new ProductOrder(title, comments, quoteId);
+
+        // Find the product by the product name.
+        if (!StringUtils.isBlank(productName)) {
+            productOrder.setProduct(productDao.findByName(productName));
+        }
+
+        if (!StringUtils.isBlank(researchProjectId)) {
+            ResearchProject researchProject =
+                    researchProjectDao.findByBusinessKey(researchProjectId);
+
+            // Make sure the required research project is present.
+            if (researchProject == null) {
+                throw new ApplicationValidationException(
+                        "The required research project is not associated to the product order");
+            }
+
+            productOrder.setResearchProject(researchProject);
+        }
+
+        // Find and add the product order samples.
+        List<ProductOrderSample> productOrderSamples = new ArrayList<>(samples.size());
+        for (String sample : samples) {
+            productOrderSamples.add(new ProductOrderSample(sample));
+        }
+
+        // Make sure the required sample(s) are present FOR CLIA. For others, adding later is valid.
+        if (productOrderSamples.isEmpty() && ApplicationInstance.CRSP.isCurrent()) {
+            throw new NoSamplesException();
+        }
+
+        productOrder.addSamples(productOrderSamples);
+
+        // Set the requisition name so one can look up the requisition in the Portal.
+        productOrder.setRequisitionName(requisitionName);
+
+        return productOrder;
+    }
+
+    public int getNumberOfSamples() {
+        return numberOfSamples;
+    }
+
+    public void setNumberOfSamples(int numberOfSamples) {
+        this.numberOfSamples = numberOfSamples;
+    }
+
+    public int getRiskNotCalculatedCount() {
+        return riskNotCalculatedCount;
+    }
+
+    public void setRiskNotCalculatedCount(int riskNotCalculatedCount) {
+        this.riskNotCalculatedCount = riskNotCalculatedCount;
+    }
+
+    public List<ProductOrderKitDetailData> getKitDetailData() {
+        return kitDetailData;
+    }
+
+    public void setKitDetailData(List<ProductOrderKitDetailData> kitDetailData) {
+        this.kitDetailData = kitDetailData;
+    }
+
+    public long getSiteId() {
+        return siteId;
+    }
+
+    public void setSiteId(long siteId) {
+        this.siteId = siteId;
+    }
+
+    public Date getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(Date createdDate) {
+        this.createdDate = createdDate;
     }
 }

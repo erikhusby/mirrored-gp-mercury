@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.zims;
 
 import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.config.DefaultClientConfig;
+import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
 import edu.mit.broad.prodinfo.thrift.lims.IndexPosition;
 import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
@@ -13,12 +13,15 @@ import edu.mit.broad.prodinfo.thrift.lims.TZamboniRead;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.MockThriftService;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftFileAccessor;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
+import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ImportFromSquidTest;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.DevExperimentDataBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.IndexComponent;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
@@ -28,6 +31,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.zims.ZamboniRead;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZamboniReadType;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
+import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -47,8 +51,9 @@ import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
-import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.ALTERNATIVES;
 
+@Test(groups = TestGroups.ALTERNATIVES)
 public class IlluminaRunResourceTest extends Arquillian {
 
     @Inject
@@ -75,19 +80,21 @@ public class IlluminaRunResourceTest extends Arquillian {
     /**
      * Hack alert: we rely on fabricated squid data for this test.
      * If QA squid has been updated, you may need to run this:
-     *
-         update work_request_material_descr wrmd set wrmd.product_order_name = 'PDO-36'
-         where
-         wrmd.work_request_material_id in
-         (select wrm.work_request_material_id from work_request_material wrm where wrm.work_request_id = 29225)
+     * <p/>
+     * update work_request_material_descr wrmd set wrmd.product_order_name = 'PDO-36'
+     * where
+     * wrmd.work_request_material_id in
+     * (select wrm.work_request_material_id from work_request_material wrm where wrm.work_request_id = 29225)
      */
-    public static final String PDO_COMPARISON_ERROR_MESSAGE = "check run " + RUN_NAME + " in serialized .thrift file to make sure WRs are linked to " + PDO_KEY;
+    public static final String PDO_COMPARISON_ERROR_MESSAGE =
+            "check run " + RUN_NAME + " in serialized .thrift file to make sure WRs are linked to " + PDO_KEY;
 
-    private Map<Long,ProductOrder> wrIdToPDO = new HashMap<>();
+    private Map<Long, ProductOrder> wrIdToPDO = new HashMap<>();
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWarWithAlternatives(TEST,MockThriftService.class).addAsResource(ThriftFileAccessor.RUN_FILE);
+        return DeploymentBuilder.buildMercuryWarWithAlternatives(TEST, MockThriftService.class)
+                .addAsResource(ThriftFileAccessor.RUN_FILE);
     }
 
 
@@ -95,14 +102,14 @@ public class IlluminaRunResourceTest extends Arquillian {
      * Does a test of {@link #RUN_NAME} {@link #CHAMBER}
      * directly in container.
      */
-    @Test(groups = EXTERNAL_INTEGRATION)
+    @Test(groups = ALTERNATIVES)
     public void testZimsInContainer() throws Exception {
         // todo arz update the run in QA squid to link all WRS to the PDO
-        wrIdToPDO.put(29225L,pdoDao.findByBusinessKey(PDO_KEY));
+        wrIdToPDO.put(29225L, pdoDao.findByBusinessKey(PDO_KEY));
 
         ZimsIlluminaRun runBean = runLaneResource.getRun(RUN_NAME);
 
-        doAssertions(zamboniRun,runBean,wrIdToPDO);
+        doAssertions(zamboniRun, runBean, wrIdToPDO);
     }
 
     /**
@@ -110,14 +117,15 @@ public class IlluminaRunResourceTest extends Arquillian {
      * out to HTTP
      */
     @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER,
-          groups = EXTERNAL_INTEGRATION)
+            groups = ALTERNATIVES)
     @RunAsClient
-    public void testErrorHandling(@ArquillianResource URL baseUrl) throws Exception {
-        String url = baseUrl.toExternalForm() + WEBSERVICE_URL;
+    public void testErrorHandling(@ArquillianResource URL baseUrl)
+            throws Exception {
+        String url = RestServiceContainerTest.convertUrlToSecure(baseUrl) + WEBSERVICE_URL;
 
-        DefaultClientConfig clientConfig = new DefaultClientConfig();
+        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
         clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
-
+        clientConfig.getProperties().put(ClientConfig.PROPERTY_FOLLOW_REDIRECTS, Boolean.TRUE);
 
         ZimsIlluminaRun run = Client.create(clientConfig).resource(url)
                 .accept(MediaType.APPLICATION_JSON).get(ZimsIlluminaRun.class);
@@ -127,23 +135,25 @@ public class IlluminaRunResourceTest extends Arquillian {
 
 
     /**
-    * Does the same test as {@link #testZimsInContainer()},
-    * but does it over http, which means it's actually checking
-    * that various annotations like {@link javax.xml.bind.annotation.XmlAttribute}
-    * are applied properly in {@link LibraryBean}.
-    * @param baseUrl
-    */
+     * Does the same test as {@link #testZimsInContainer()},
+     * but does it over http, which means it's actually checking
+     * that various annotations like {@link javax.xml.bind.annotation.XmlAttribute}
+     * are applied properly in {@link LibraryBean}.
+     *
+     * @param baseUrl
+     */
     @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER,
-        groups = EXTERNAL_INTEGRATION)
+            groups = ALTERNATIVES)
     @RunAsClient
-    public void testZimsOverHttp(@ArquillianResource URL baseUrl) throws Exception {
-        String url = baseUrl.toExternalForm() + WEBSERVICE_URL;
+    public void testZimsOverHttp(@ArquillianResource URL baseUrl)
+            throws Exception {
+        String url = RestServiceContainerTest.convertUrlToSecure(baseUrl) + WEBSERVICE_URL;
 
-        DefaultClientConfig clientConfig = new DefaultClientConfig();
+        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
         clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
+        clientConfig.getProperties().put(ClientConfig.PROPERTY_FOLLOW_REDIRECTS, Boolean.TRUE);
 
-
-         ZimsIlluminaRun run = Client.create(clientConfig).resource(url)
+        ZimsIlluminaRun run = Client.create(clientConfig).resource(url)
                 .queryParam("runName", RUN_NAME)
                 .accept(MediaType.APPLICATION_JSON).get(ZimsIlluminaRun.class);
 
@@ -159,11 +169,16 @@ public class IlluminaRunResourceTest extends Arquillian {
         Assert.assertTrue(rawJson.contains("\"productPartNumber\""));
         Assert.assertTrue(rawJson.contains("\"workRequestType\""));
         Assert.assertTrue(rawJson.contains("\"workRequestDomain\""));
+        Assert.assertTrue(rawJson.contains("\"metadataSource\""));
+        Assert.assertTrue(rawJson.contains("\"regulatoryDesignation\""));
+        Assert.assertTrue(rawJson.contains("\"testType\""));
+        Assert.assertTrue(rawJson.contains("\"buickCollectionDate\""));
+        Assert.assertTrue(rawJson.contains("\"buickVisit\""));
 
         Assert.assertNotNull(run);
-        Assert.assertEquals(run.getName(),RUN_NAME);
+        Assert.assertEquals(run.getName(), RUN_NAME);
 
-        doAssertions(zamboniRun,run,new HashMap<Long,ProductOrder>());
+        doAssertions(zamboniRun, run, new HashMap<Long, ProductOrder>());
 
         boolean foundBspSample = false;
         boolean foundLcSet = false;
@@ -171,6 +186,11 @@ public class IlluminaRunResourceTest extends Arquillian {
         boolean foundTumor = false;
         for (ZimsIlluminaChamber zimsIlluminaChamber : run.getLanes()) {
             for (LibraryBean libraryBean : zimsIlluminaChamber.getLibraries()) {
+                Assert.assertEquals(libraryBean.getRegulatoryDesignation(), "RESEARCH_ONLY");
+                Assert.assertNull(libraryBean.getBuickVisit());
+                Assert.assertNull(libraryBean.getBuickCollectionDate());
+                Assert.assertNull(libraryBean.getBuickVisit());
+                Assert.assertNull(libraryBean.getBuickCollectionDate());
                 if (libraryBean.getLsid() != null) {
                     if (libraryBean.getLsid().contains("bsp")) {
                         foundBspSample = true;
@@ -180,7 +200,7 @@ public class IlluminaRunResourceTest extends Arquillian {
                     }
                     if ("broadinstitute.org:bsp.prod.sample:12MD2".equals(libraryBean.getLsid())) {
                         foundTumor = true;
-                        Assert.assertEquals(libraryBean.getSampleType(), BSPSampleDTO.TUMOR_IND);
+                        Assert.assertEquals(libraryBean.getSampleType(), BspSampleData.TUMOR_IND);
                     }
                     if (libraryBean.getLcSet() != null) {
                         foundLcSet = true;
@@ -188,6 +208,8 @@ public class IlluminaRunResourceTest extends Arquillian {
                     if (libraryBean.getProductOrderTitle() != null) {
                         foundPdo = true;
                     }
+                    Assert.assertEquals(libraryBean.getMetadataSource(), MercurySample.BSP_METADATA_SOURCE);
+                    Assert.assertNull(libraryBean.getTestType());
                 }
             }
         }
@@ -208,13 +230,12 @@ public class IlluminaRunResourceTest extends Arquillian {
     /**
      * Tests Mercury chain of custody, over HTTP.  BettalimsMessageResourceTest.test8Lcsets can be used to create
      * test data.
-     *
      */
-    @Test(groups = EXTERNAL_INTEGRATION, enabled = false)
+    @Test(groups = ALTERNATIVES, enabled = false)
     public void testZimsMercury() throws Exception {
         String url = ImportFromSquidTest.TEST_MERCURY_URL + "/rest/IlluminaRun/queryMercury";
 
-        DefaultClientConfig clientConfig = new DefaultClientConfig();
+        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
         clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
 
         ZimsIlluminaRun run = Client.create(clientConfig).resource(url)
@@ -223,15 +244,18 @@ public class IlluminaRunResourceTest extends Arquillian {
         Assert.assertEquals(run.getLanes().size(), 8, "Wrong number of lanes");
     }
 
-    public static void doAssertions(TZamboniRun thriftRun,ZimsIlluminaRun runBean,Map<Long,ProductOrder> wrIdToPDO) {
+    // Have to return something other than void, otherwise TestNG will think it's a test.
+    public static boolean doAssertions(TZamboniRun thriftRun, ZimsIlluminaRun runBean,
+                                       Map<Long, ProductOrder> wrIdToPDO) {
         Assert.assertNull(runBean.getError());
         Assert.assertEquals(runBean.getLanes().size(), thriftRun.getLanes().size());
         Assert.assertEquals(runBean.getFlowcellBarcode(), thriftRun.getFlowcellBarcode());
         Assert.assertEquals(runBean.getSequencer(), thriftRun.getSequencer());
         Assert.assertEquals(runBean.getSequencerModel(), thriftRun.getSequencerModel());
-        Assert.assertEquals(runBean.getPairedRun().booleanValue(),thriftRun.isPairedRun());
+        Assert.assertEquals(runBean.getPairedRun().booleanValue(), thriftRun.isPairedRun());
         Assert.assertEquals(runBean.getActualReadStructure(), thriftRun.getActualReadStructure());
-        Assert.assertEquals(runBean.getImagedAreaPerLaneMM2(), ThriftConversionUtil.zeroAsNull(thriftRun.getImagedAreaPerLaneMM2())); //actual,exp
+        Assert.assertEquals(runBean.getImagedAreaPerLaneMM2(),
+                ThriftConversionUtil.zeroAsNull(thriftRun.getImagedAreaPerLaneMM2())); //actual,exp
         Assert.assertEquals(runBean.getSystemOfRecord(), SystemRouter.System.SQUID);
         Assert.assertEquals(runBean.getSetupReadStructure(), thriftRun.getSetupReadStructure());
         Assert.assertEquals(runBean.getLanesSequenced(), thriftRun.getLanesSequenced());
@@ -239,19 +263,19 @@ public class IlluminaRunResourceTest extends Arquillian {
 
         for (ZimsIlluminaChamber lane : runBean.getLanes()) {
             int laneNum = Integer.parseInt(lane.getName());
-            TZamboniLane zamboniLane = thriftRun.getLanes().get(laneNum-1);
+            TZamboniLane zamboniLane = thriftRun.getLanes().get(laneNum - 1);
             Assert.assertEquals(lane.getSequencedLibrary(), zamboniLane.getSequencedLibraryName());
         }
 
-        doReadAssertions(thriftRun,runBean);
+        doReadAssertions(thriftRun, runBean);
 
-        Assert.assertEquals(runBean.getRunDateString(),thriftRun.getRunDate());
+        Assert.assertEquals(runBean.getRunDateString(), thriftRun.getRunDate());
         boolean hasRealPreCircSize = false;
         boolean hasRealLabInsertSize = false;
         boolean hasDevAliquotData = false;
         for (TZamboniLane thriftLane : thriftRun.getLanes()) {
-            ZimsIlluminaChamber lane = getLane(Short.toString(thriftLane.getLaneNumber()),runBean);
-            doAssertions(thriftLane, lane,wrIdToPDO);
+            ZimsIlluminaChamber lane = getLane(Short.toString(thriftLane.getLaneNumber()), runBean);
+            doAssertions(thriftLane, lane, wrIdToPDO);
 
             for (TZamboniLane zamboniLane : thriftRun.getLanes()) {
                 for (TZamboniLibrary thriftLib : zamboniLane.getLibraries()) {
@@ -276,11 +300,12 @@ public class IlluminaRunResourceTest extends Arquillian {
         Assert.assertTrue(hasDevAliquotData);
         Assert.assertTrue(hasRealLabInsertSize);
         Assert.assertTrue(hasRealPreCircSize);
+        return true;
     }
 
-    private static void doReadAssertions(TZamboniRun thriftRun,ZimsIlluminaRun runBean) {
-        if (thriftRun.getReads() != null && runBean.getReads() != null ) {
-            Assert.assertEquals(runBean.getReads().size(),thriftRun.getReads().size());
+    private static void doReadAssertions(TZamboniRun thriftRun, ZimsIlluminaRun runBean) {
+        if (thriftRun.getReads() != null && runBean.getReads() != null) {
+            Assert.assertEquals(runBean.getReads().size(), thriftRun.getReads().size());
             for (TZamboniRead thriftRead : thriftRun.getReads()) {
                 boolean haveIt = false;
                 for (ZamboniRead beanRead : runBean.getReads()) {
@@ -303,26 +328,24 @@ public class IlluminaRunResourceTest extends Arquillian {
                                 Assert.fail("Read type " + thriftRead.getReadType() + " is unknown");
                                 break;
                             }
-                        }
-                        else {
+                        } else {
                             Assert.assertNull(beanRead.getReadType());
                         }
                     }
                 }
                 Assert.assertTrue(haveIt);
             }
-        }
-        else if (thriftRun.getReads() == null && runBean.getReads() == null) {
+        } else if (thriftRun.getReads() == null && runBean.getReads() == null) {
             // ok
-        }
-        else {
+        } else {
             Assert.fail("Reads are not the same");
         }
     }
-    
-    private static void doAssertions(TZamboniLane zLane,ZimsIlluminaChamber laneBean,Map<Long,ProductOrder> wrIdToPDO) {
-        Assert.assertEquals(laneBean.getName(),Short.toString(zLane.getLaneNumber()));
-        Assert.assertEquals(laneBean.getPrimer(),zLane.getPrimer());
+
+    private static void doAssertions(TZamboniLane zLane, ZimsIlluminaChamber laneBean,
+                                     Map<Long, ProductOrder> wrIdToPDO) {
+        Assert.assertEquals(laneBean.getName(), Short.toString(zLane.getLaneNumber()));
+        Assert.assertEquals(laneBean.getPrimer(), zLane.getPrimer());
         Assert.assertEquals(laneBean.getLibraries().size(), zLane.getLibraries().size());
 
         Assert.assertNotNull(laneBean.getSequencedLibrary());
@@ -330,11 +353,11 @@ public class IlluminaRunResourceTest extends Arquillian {
         Assert.assertEquals(laneBean.getSequencedLibrary(), zLane.getSequencedLibraryName());
 
         for (TZamboniLibrary thriftLib : zLane.getLibraries()) {
-            doAssertions(thriftLib,laneBean.getLibraries(),wrIdToPDO.get(thriftLib.getWorkRequestId()));
+            doAssertions(thriftLib, laneBean.getLibraries(), wrIdToPDO.get(thriftLib.getWorkRequestId()));
         }
     }
-    
-    private static void doAssertions(TZamboniLibrary zLib,Collection<LibraryBean> libBeans,ProductOrder pdo) {
+
+    private static void doAssertions(TZamboniLibrary zLib, Collection<LibraryBean> libBeans, ProductOrder pdo) {
         boolean foundIt = false;
         boolean foundPDO = false;
         boolean foundLcSet = false;
@@ -343,60 +366,64 @@ public class IlluminaRunResourceTest extends Arquillian {
             Assert.assertNotNull(libBean.getLibrary());
             if (libBean.getLibrary().equals(zLib.getLibrary())) {
                 foundIt = true;
-                Assert.assertEquals(libBean.getProject(),zLib.getProject());
-                Assert.assertEquals(libBean.getWorkRequestId().longValue(),zLib.getWorkRequestId());
+                Assert.assertEquals(libBean.getProject(), zLib.getProject());
+                Assert.assertEquals(libBean.getWorkRequestId().longValue(), zLib.getWorkRequestId());
                 if (libBean.getIsGssrSample()) {
-                    Assert.assertEquals(libBean.getCollaboratorSampleId(),zLib.getSampleAlias());
-                    Assert.assertEquals(libBean.getCollaboratorParticipantId(),zLib.getIndividual());
-                    Assert.assertEquals(libBean.getMaterialType(),zLib.getGssrSampleType());
+                    Assert.assertEquals(libBean.getCollaboratorSampleId(), zLib.getSampleAlias());
+                    Assert.assertEquals(libBean.getCollaboratorParticipantId(), zLib.getIndividual());
+                    Assert.assertEquals(libBean.getMaterialType(), zLib.getGssrSampleType());
                 }
                 // else gssr copy and bsp copy may be different, and this is not reliable in our testing environment
-                Assert.assertEquals(libBean.getAligner(),zLib.getAligner());
-                Assert.assertEquals(libBean.getAnalysisType(),zLib.getAnalysisType());
-                Assert.assertEquals(libBean.getBaitSetName(),zLib.getBaitSetName());
-                Assert.assertEquals(libBean.getExpectedInsertSize(),zLib.getExpectedInsertSize());
-                Assert.assertEquals(libBean.getInitiative(),zLib.getInitiative());
-                Assert.assertEquals(libBean.getLabMeasuredInsertSize(),zLib.getLabMeasuredInsertSize() == 0 ? null : zLib.getLabMeasuredInsertSize());
-                Assert.assertEquals(libBean.getLibrary(),zLib.getLibrary());
-                Assert.assertEquals(libBean.getReferenceSequence(),zLib.getReferenceSequence());
-                Assert.assertEquals(libBean.getReferenceSequenceVersion(),zLib.getReferenceSequenceVersion());
-                Assert.assertEquals(libBean.getRestrictionEnzyme(),zLib.getRestrictionEnzyme());
-                Assert.assertEquals(libBean.getRrbsSizeRange(),zLib.getRrbsSizeRange());
-                Assert.assertEquals(libBean.doAggregation().booleanValue(),zLib.aggregate);
+                Assert.assertEquals(libBean.getAligner(), zLib.getAligner());
+                Assert.assertEquals(libBean.getAnalysisType(), zLib.getAnalysisType());
+                Assert.assertEquals(libBean.getBaitSetName(), zLib.getBaitSetName());
+                Assert.assertEquals(libBean.getExpectedInsertSize(), zLib.getExpectedInsertSize());
+                Assert.assertEquals(libBean.getInitiative(), zLib.getInitiative());
+                Assert.assertEquals(libBean.getLabMeasuredInsertSize(),
+                        zLib.getLabMeasuredInsertSize() == 0 ? null : zLib.getLabMeasuredInsertSize());
+                Assert.assertEquals(libBean.getLibrary(), zLib.getLibrary());
+                Assert.assertEquals(libBean.getReferenceSequence(), zLib.getReferenceSequence());
+                Assert.assertEquals(libBean.getReferenceSequenceVersion(), zLib.getReferenceSequenceVersion());
+                Assert.assertEquals(libBean.getRestrictionEnzyme(), zLib.getRestrictionEnzyme());
+                Assert.assertEquals(libBean.getRrbsSizeRange(), zLib.getRrbsSizeRange());
+                Assert.assertEquals(libBean.doAggregation().booleanValue(), zLib.aggregate);
 
                 if (libBean.getIsGssrSample()) {
-                    Assert.assertEquals(libBean.getSpecies(),zLib.getOrganism() + ":" + zLib.getSpecies() + ":" + zLib.getStrain());
-                }
-                else {
+                    Assert.assertEquals(libBean.getSpecies(),
+                            zLib.getOrganism() + ":" + zLib.getSpecies() + ":" + zLib.getStrain());
+                } else {
                     if (HUMAN.equals(zLib.getOrganism())) {
                         if (!(HUMAN.equals(libBean.getSpecies()) || BSP_HUMAN.equals(libBean.getSpecies()))) {
                             Assert.fail("Not the right human:" + libBean.getSpecies());
                         }
-                    }
-                    else {
+                    } else {
                         Assert.fail("Can't grok organism " + zLib.getOrganism());
                     }
                 }
-                Assert.assertEquals(libBean.getLsid(),zLib.getLsid());
+                Assert.assertEquals(libBean.getLsid(), zLib.getLsid());
                 checkEquality(zLib.getMolecularIndexes(), libBean.getMolecularIndexingScheme());
-                Assert.assertEquals(libBean.getGssrBarcodes(),zLib.getGssrBarcodes());
-                checkEquality(libBean.getDevExperimentData(),zLib.getDevExperimentData());
+                Assert.assertEquals(libBean.getGssrBarcodes(), zLib.getGssrBarcodes());
+                checkEquality(libBean.getDevExperimentData(), zLib.getDevExperimentData());
                 Assert.assertEquals(libBean.getCustomAmpliconSetNames(), zLib.getCustomAmpliconSetNames());
 
                 if (zLib.getPdoKey() != null) {
                     foundPDO = true;
                     if (pdo != null) {
-                        Assert.assertEquals(libBean.getProductOrderTitle(),pdo.getTitle(),PDO_COMPARISON_ERROR_MESSAGE);
-                        Assert.assertEquals(libBean.getResearchProjectId(),pdo.getResearchProject().getBusinessKey(),PDO_COMPARISON_ERROR_MESSAGE);
-                        Assert.assertEquals(libBean.getProductOrderKey(),pdo.getBusinessKey(),PDO_COMPARISON_ERROR_MESSAGE);
-                        Assert.assertEquals(libBean.getResearchProjectName(),pdo.getResearchProject().getTitle(),PDO_COMPARISON_ERROR_MESSAGE);
+                        Assert.assertEquals(libBean.getProductOrderTitle(), pdo.getTitle(),
+                                PDO_COMPARISON_ERROR_MESSAGE);
+                        Assert.assertEquals(libBean.getResearchProjectId(), pdo.getResearchProject().getBusinessKey(),
+                                PDO_COMPARISON_ERROR_MESSAGE);
+                        Assert.assertEquals(libBean.getProductOrderKey(), pdo.getBusinessKey(),
+                                PDO_COMPARISON_ERROR_MESSAGE);
+                        Assert.assertEquals(libBean.getResearchProjectName(), pdo.getResearchProject().getTitle(),
+                                PDO_COMPARISON_ERROR_MESSAGE);
                         Assert.assertEquals(libBean.getProductPartNumber(), pdo.getProduct().getPartNumber());
                     }
                 }
 
                 if (zLib.getLcset() != null) {
                     foundLcSet = true;
-                    Assert.assertEquals(libBean.getLcSet(),zLib.getLcset());
+                    Assert.assertEquals(libBean.getLcSet(), zLib.getLcset());
                 }
 
                 if (libBean.getLcSet() != null && zLib.getLcset() == null) {
@@ -407,50 +434,48 @@ public class IlluminaRunResourceTest extends Arquillian {
             }
         }
 
-        Assert.assertTrue((foundLcSet && zLib.getLcset() != null)  || (zLib.getLcset() == null));
+        Assert.assertTrue((foundLcSet && zLib.getLcset() != null) || (zLib.getLcset() == null));
         Assert.assertTrue(foundIt);
         Assert.assertTrue(foundPDO || pdo == null);
 
     }
 
-    private static void checkEquality(DevExperimentDataBean devExperimentBean,TZDevExperimentData thriftExperimentData) {
+    private static void checkEquality(DevExperimentDataBean devExperimentBean,
+                                      TZDevExperimentData thriftExperimentData) {
         if (devExperimentBean != null && thriftExperimentData != null) {
-            Assert.assertEquals(devExperimentBean.getConditions().size(),thriftExperimentData.getConditionChain().size());
+            Assert.assertEquals(devExperimentBean.getConditions().size(),
+                    thriftExperimentData.getConditionChain().size());
             Collection<String> thriftConditions = thriftExperimentData.getConditionChain();
             for (String condition : devExperimentBean.getConditions()) {
                 Assert.assertTrue(thriftConditions.contains(condition));
             }
-            Assert.assertEquals(devExperimentBean.getExperiment(),thriftExperimentData.getExperiment());
-        }
-        else if (devExperimentBean == null && thriftExperimentData == null) {
+            Assert.assertEquals(devExperimentBean.getExperiment(), thriftExperimentData.getExperiment());
+        } else if (devExperimentBean == null && thriftExperimentData == null) {
             return;
-        }
-        else {
+        } else {
             Assert.fail("dev experiment bean and thrift bean do not agree.");
         }
     }
 
-    private static void checkEquality(MolecularIndexingScheme thriftScheme,MolecularIndexingSchemeBean beanScheme) {
+    private static void checkEquality(MolecularIndexingScheme thriftScheme, MolecularIndexingSchemeBean beanScheme) {
         if (thriftScheme == null && beanScheme == null) {
-            return;    
-        }
-        else {
+            return;
+        } else {
             if (thriftScheme != null && beanScheme != null) {
-                Assert.assertEquals(beanScheme.getName(),thriftScheme.getName());
-                Assert.assertEquals(beanScheme.getSequences().size(),thriftScheme.getSequences().size());
+                Assert.assertEquals(beanScheme.getName(), thriftScheme.getName());
+                Assert.assertEquals(beanScheme.getSequences().size(), thriftScheme.getSequences().size());
 
                 for (Map.Entry<IndexPosition, String> thriftEntry : thriftScheme.getSequences().entrySet()) {
-                    IndexComponent singleIndex = new IndexComponent(thriftEntry.getKey(),thriftEntry.getValue());
+                    IndexComponent singleIndex = new IndexComponent(thriftEntry.getKey(), thriftEntry.getValue());
                     Assert.assertTrue(beanScheme.getSequences().contains(singleIndex));
                 }
-            }
-            else {
+            } else {
                 Assert.fail("Thrift scheme " + thriftScheme + " is different from scheme bean " + beanScheme);
             }
         }
     }
 
-    private static ZimsIlluminaChamber getLane(String laneName,ZimsIlluminaRun run) {
+    private static ZimsIlluminaChamber getLane(String laneName, ZimsIlluminaRun run) {
         for (ZimsIlluminaChamber lane : run.getLanes()) {
             if (laneName.equals(lane.getName())) {
                 return lane;
@@ -459,7 +484,7 @@ public class IlluminaRunResourceTest extends Arquillian {
         return null;
     }
 
-    @BeforeClass
+    @BeforeClass(groups = ALTERNATIVES)
     private void getZamboniRun() throws Exception {
         zamboniRun = new MockThriftService().fetchRun(RUN_NAME);
     }

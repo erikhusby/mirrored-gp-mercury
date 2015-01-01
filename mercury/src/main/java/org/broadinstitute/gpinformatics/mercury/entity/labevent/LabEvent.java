@@ -1,10 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.envers.Audited;
 
@@ -17,6 +17,7 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
@@ -90,6 +91,20 @@ public class LabEvent {
         }
     };
 
+    public static final Comparator<LabEvent> BY_EVENT_DATE_LOC = new Comparator<LabEvent>() {
+        @Override
+        public int compare(LabEvent o1, LabEvent o2) {
+            int dateComparison = o1.getEventDate().compareTo(o2.getEventDate());
+            if (dateComparison == 0) {
+                dateComparison = o1.getEventLocation().compareTo(o2.getEventLocation());
+            }
+            if (dateComparison == 0) {
+                dateComparison = o1.getDisambiguator().compareTo(o2.getDisambiguator());
+            }
+            return dateComparison;
+        }
+    };
+
     @Id
     @SequenceGenerator(name = "SEQ_LAB_EVENT", schema = "mercury", sequenceName = "SEQ_LAB_EVENT")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LAB_EVENT")
@@ -148,14 +163,14 @@ public class LabEvent {
      * instrument, entry into a bucket
      */
     @ManyToOne(cascade = {CascadeType.PERSIST}, fetch = FetchType.LAZY)
+    @JoinColumn(name = "IN_PLACE_LAB_VESSEL")
     private LabVessel inPlaceLabVessel;
 
-    // todo jmt delete productOrderId?
     /**
-     * Business Key of a product order to which this event is associated
+     * Required for configurable search nested criteria
      */
-    @Column(name = "PRODUCT_ORDER_ID")
-    private String productOrderId;
+    @Column(name = "IN_PLACE_LAB_VESSEL", insertable = false, updatable = false)
+    private Long inPlaceLabVesselId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "LAB_EVENT_TYPE")
@@ -163,6 +178,10 @@ public class LabEvent {
 
     @ManyToOne(cascade = {CascadeType.PERSIST}, fetch = FetchType.LAZY)
     private LabBatch labBatch;
+
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+    @JoinTable(schema = "mercury", name = "le_lab_event_metadatas")
+    private Set<LabEventMetadata> labEventMetadatas = new HashSet<>();
 
     /**
      * Set by transfer traversal, based on ancestor lab batches and transfers.
@@ -191,6 +210,21 @@ public class LabEvent {
         this.disambiguator = disambiguator;
         this.eventOperator = operator;
         this.programName = programName;
+    }
+
+    /**
+     * Helper method to search a collection of events for the existence of a particular lab event
+     * @param allEvents     Collection of events in which to search for an event
+     * @param targetEvent   the specific event to look for
+     * @return  true if the event is present in the given collection
+     */
+    public static boolean isEventPresent(Collection<LabEvent> allEvents, LabEventType targetEvent) {
+        for (LabEvent labEvent : allEvents) {
+            if (labEvent.getLabEventType() == targetEvent) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -276,6 +310,10 @@ public class LabEvent {
         reagents.add(reagent);
     }
 
+    public void addMetadata(LabEventMetadata labEventMetadata) {
+        labEventMetadatas.add(labEventMetadata);
+    }
+
     /**
      * Returns all the lab vessels involved in this
      * operation, regardless of source/destination.
@@ -299,6 +337,10 @@ public class LabEvent {
      */
     public String getEventLocation() {
         return eventLocation;
+    }
+
+    void setEventLocation(String eventLocation) {
+        this.eventLocation = eventLocation;
     }
 
     public Long getEventOperator() {
@@ -360,6 +402,14 @@ todo jmt adder methods
         this.disambiguator = disambiguator;
     }
 
+    public Set<LabEventMetadata> getLabEventMetadatas() {
+        return labEventMetadatas;
+    }
+
+    public void setLabEventMetadatas(Set<LabEventMetadata> labEventMetadatas) {
+        this.labEventMetadatas = labEventMetadatas;
+    }
+
     public LabVessel getInPlaceLabVessel() {
         return inPlaceLabVessel;
     }
@@ -368,28 +418,13 @@ todo jmt adder methods
         this.inPlaceLabVessel = inPlaceLabVessel;
     }
 
-    /**
-     * When vessels are placed in a bucket, an association is made
-     * between the vessel and the PO that is driving the work.  When
-     * vessels are pulled out of a bucket, we record an event.  That
-     * event associates zero or one {@link String product orders}.
-     * <p/>
-     * This method is the way to mark the transfer graph such that all
-     * downstream nodes are considered to be "for" the product order
-     * returned here.
-     * <p/>
-     * Most events will return null.
-     */
-    public String getProductOrderId() {
-        return productOrderId;
-    }
-
-    public void setProductOrderId(String productOrder) {
-        productOrderId = productOrder;
-    }
-
     public LabEventType getLabEventType() {
         return labEventType;
+    }
+
+    /** For data fixup use only. */
+    void setLabEventType(LabEventType labEventType) {
+        this.labEventType = labEventType;
     }
 
     public void setLabBatch(LabBatch labBatch) {
@@ -444,39 +479,15 @@ todo jmt adder methods
     }
 
     private Set<LabBatch> computeLcSetsForCherryPickTransfers() {
-        Set<LabBatch> computedLcSets = new HashSet<>();
         Map<LabBatch, Integer> mapLabBatchToCount = new HashMap<>();
         int numVesselsWithBucketEntries = 0;
         for (CherryPickTransfer cherryPickTransfer : cherryPickTransfers) {
             LabVessel sourceVessel = cherryPickTransfer.getSourceVesselContainer()
                     .getVesselAtPosition(cherryPickTransfer.getSourcePosition());
-            if (sourceVessel != null) {
-                Set<BucketEntry> bucketEntries = sourceVessel.getBucketEntries();
-                if (!bucketEntries.isEmpty()) {
-                    numVesselsWithBucketEntries++;
-                }
-                for (BucketEntry bucketEntry : bucketEntries) {
-                    if (bucketEntry.getLabBatch() != null) {
-                        LabBatch labBatch = bucketEntry.getLabBatch();
-                        if (labBatch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
-                            Integer count = mapLabBatchToCount.get(labBatch);
-                            if (count == null) {
-                                count = 1;
-                            } else {
-                                count = count + 1;
-                            }
-                            mapLabBatchToCount.put(labBatch, count);
-                        }
-                    }
-                }
-            }
+            numVesselsWithBucketEntries = VesselContainer.collateLcSets(mapLabBatchToCount, numVesselsWithBucketEntries,
+                    sourceVessel);
         }
-        for (Map.Entry<LabBatch, Integer> labBatchIntegerEntry : mapLabBatchToCount.entrySet()) {
-            if (labBatchIntegerEntry.getValue() == numVesselsWithBucketEntries) {
-                computedLcSets.add(labBatchIntegerEntry.getKey());
-            }
-        }
-        return computedLcSets;
+        return VesselContainer.computeLcSets(mapLabBatchToCount, numVesselsWithBucketEntries);
     }
 
     /**

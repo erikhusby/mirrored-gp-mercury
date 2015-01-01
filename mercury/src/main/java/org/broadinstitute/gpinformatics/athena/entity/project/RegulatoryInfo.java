@@ -31,15 +31,16 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 
 @Entity
 @Audited
-
 @Table(name = "REGULATORY_INFO", schema = "athena",
         uniqueConstraints = @UniqueConstraint(columnNames = {"identifier", "type"}))
 public class RegulatoryInfo implements Serializable, BusinessObject {
+    public static final int PROTOCOL_TITLE_MAX_LENGTH=255;
     public enum Type {
         IRB("IRB Protocol"),
         ORSP_NOT_ENGAGED("ORSP Not Engaged"),
@@ -119,6 +120,20 @@ public class RegulatoryInfo implements Serializable, BusinessObject {
         return researchProjects;
     }
 
+    /**
+     * Since RegulatoryInfo can be used not only for associated ResearchProjects, but also their children, it is
+     * helpful to be able to get a list lf all ResearchProjects and their children.
+     *
+     * @return all ResearchProjects this RegulatoryInfo is associated with, including child ResearchProjects.
+     */
+    public Collection<ResearchProject> getResearchProjectsIncludingChildren() {
+        Collection<ResearchProject> allProjects = new ArrayList<>(getResearchProjects());
+        for (ResearchProject project : getResearchProjects()) {
+            allProjects.addAll(project.getAllChildren());
+        }
+        return allProjects;
+    }
+
     public void addResearchProject(ResearchProject researchProject) {
         researchProjects.add(researchProject);
     }
@@ -150,5 +165,9 @@ public class RegulatoryInfo implements Serializable, BusinessObject {
     @Override
     public int hashCode() {
         return new HashCodeBuilder().append(getIdentifier()).append(getType()).toHashCode();
+    }
+
+    public String printFriendlyValue() {
+        return String.format("OSRP/IRB Identifier: %s Type: %s Title: %s", identifier, type.getName(), name);
     }
 }

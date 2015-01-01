@@ -104,11 +104,16 @@ public class SampleInstance {
         addReagent(newReagent, reagents);
     }
 
-    static void addReagent(Reagent newReagent, List<Reagent> reagents) {
+    static MolecularIndexingScheme addReagent(Reagent newReagent, List<Reagent> reagents) {
+        MolecularIndexingScheme returnMolecularIndexingScheme = null;
         // If we're adding a molecular index
         if (OrmUtil.proxySafeIsInstance(newReagent, MolecularIndexReagent.class)) {
             MolecularIndexReagent newMolecularIndexReagent =
                     OrmUtil.proxySafeCast(newReagent, MolecularIndexReagent.class);
+            // Avoid adding the same index twice
+            if (reagents.contains(newMolecularIndexReagent)) {
+                return returnMolecularIndexingScheme;
+            }
             boolean foundExistingIndex = false;
             boolean foundMergedScheme = false;
             // The new index has to be merged with other indexes encountered, if any.
@@ -136,6 +141,7 @@ public class SampleInstance {
                                 foundMergedScheme = true;
                                 iterator.remove();
                                 reagents.add(new MolecularIndexReagent(molecularIndexingScheme));
+                                returnMolecularIndexingScheme = molecularIndexingScheme;
                                 break;
                             }
                         }
@@ -145,12 +151,14 @@ public class SampleInstance {
             }
             if (!foundExistingIndex) {
                 reagents.add(newReagent);
+                returnMolecularIndexingScheme = newMolecularIndexReagent.getMolecularIndexingScheme();
             } else if (!foundMergedScheme) {
                 throw new RuntimeException("Failed to find merged molecular index scheme");
             }
         } else {
             reagents.add(newReagent);
         }
+        return returnMolecularIndexingScheme;
     }
 
     public List<Reagent> getReagents() {
@@ -176,7 +184,7 @@ public class SampleInstance {
 
     public void setBucketEntry(@Nonnull BucketEntry bucketEntry) {
         this.bucketEntry = bucketEntry;
-        productOrderKey = bucketEntry.getPoBusinessKey();
+        productOrderKey = bucketEntry.getProductOrder().getBusinessKey();
     }
 
     public Collection<LabBatch> getAllLabBatches() {

@@ -32,7 +32,7 @@ public class QuantificationEJB {
 
             // Create a POI backed excel spreadsheet parser to handle this upload.
             LabMetricProcessor labMetricProcessor = new LabMetricProcessor(labVesselDao, metricType);
-            PoiSpreadsheetParser.processSingleWorksheet(quantSpreadsheet, null, labMetricProcessor);
+            PoiSpreadsheetParser.processSingleWorksheet(quantSpreadsheet, labMetricProcessor);
 
             // Get the metrics that were read in from the spreadsheet.
             Set<LabMetric> labMetrics = labMetricProcessor.getMetrics();
@@ -43,10 +43,10 @@ public class QuantificationEJB {
                 // Do not need to add an error for no lab vessel because the parser will already have that.
                 if (labVessel != null) {
                     for (LabMetric persistedMetric : labVessel.getMetrics()) {
-                        if (persistedMetric.getName().equals(metricType)) {
+                        if (persistedMetric.getName() == metricType) {
                             validationErrors.add("Lab metric " + metric.getName().getDisplayName()
-                                                 + " already exists for lab vessel " + metric.getLabVessel()
-                                    .getLabel());
+                                                 + " already exists for lab vessel "
+                                                 + metric.getLabVessel().getLabel());
                         }
                     }
                 }
@@ -54,7 +54,7 @@ public class QuantificationEJB {
             for (String message : labMetricProcessor.getMessages()) {
                 validationErrors.add(message);
             }
-            if (validationErrors.size() > 0) {
+            if (!validationErrors.isEmpty()) {
                 throw new ValidationException("Error during upload validation : ", validationErrors);
             }
 

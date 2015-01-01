@@ -11,11 +11,13 @@
 
 package org.broadinstitute.gpinformatics.athena.control.dao.admin;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.PublicMessage;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
+import javax.persistence.Query;
 import java.util.List;
 
 @Stateful
@@ -28,12 +30,17 @@ public class PublicMessageDao extends GenericDao {
      */
     public PublicMessage getMessage() {
         List<PublicMessage> publicMessages = findAll(PublicMessage.class);
-        if (publicMessages.size() > 1) {
-            throw new RuntimeException("Should have returned a maximum of one result.");
-        } else if (publicMessages.isEmpty()) {
+        if (publicMessages.isEmpty()){
             return null;
-        } else {
-            return publicMessages.iterator().next();
         }
+        return CollectionUtils.extractSingleton(publicMessages);
+    }
+
+    /**
+     * Clears all PublicMessages. Ensures there are no PublicMessages persisted to the database.
+     */
+    public void clearMessage() {
+        Query query = getEntityManager().createQuery("delete from PublicMessage");
+        query.executeUpdate();
     }
 }

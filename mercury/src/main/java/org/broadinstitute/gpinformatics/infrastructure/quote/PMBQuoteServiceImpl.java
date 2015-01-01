@@ -1,15 +1,19 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
-import com.sun.jersey.api.client.*;
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientHandlerException;
+import com.sun.jersey.api.client.GenericType;
+import com.sun.jersey.api.client.UniformInterfaceException;
+import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
+import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.w3c.dom.Document;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
-import javax.xml.parsers.ParserConfigurationException;
 import java.util.Set;
 
 @Impl
@@ -49,7 +53,7 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
 
     @Override
     protected void customizeConfig(ClientConfig clientConfig) {
-        acceptAllServerCertificates(clientConfig);
+        JerseyUtils.acceptAllServerCertificates(clientConfig);
     }
 
     @Override
@@ -95,7 +99,8 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
         } catch (UniformInterfaceException e) {
             throw new QuoteNotFoundException("Could not find quote " + id + " at " + url);
         } catch (ClientHandlerException e) {
-            throw new QuoteServerException("Could not communicate with quote server at " + url, e);
+            throw new QuoteServerException(String.format("Could not communicate with quote server at %s: %s",
+                    url, e.getLocalizedMessage()));
         }
         return quote;
     }
@@ -118,14 +123,16 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
         } catch (UniformInterfaceException e) {
             throw new QuoteNotFoundException("Could not find any quotes at " + url);
         } catch (ClientHandlerException e) {
-            throw new QuoteServerException("Could not communicate with quote server at " + url, e);
+            throw new QuoteServerException(String.format("Could not communicate with quote server at %s: %s", url,
+                                e.getLocalizedMessage()));
+
         }
 
         return quotes;
     }
 
     @Override
-    public Set<Funding> getAllFundingSources() throws QuoteServerException, QuoteNotFoundException, ParserConfigurationException {
+    public Set<Funding> getAllFundingSources() throws QuoteServerException, QuoteNotFoundException {
         String url = url( Endpoint.ALL_FUNDINGS);
         WebResource resource = getJerseyClient().resource(url);
 
@@ -136,7 +143,8 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
         } catch (UniformInterfaceException e) {
             throw new QuoteNotFoundException("Could not find any quotes at " + url);
         } catch (ClientHandlerException e) {
-            throw new QuoteServerException("Could not communicate with quote server at " + url, e);
+            throw new QuoteServerException(String.format("Could not communicate with quote server at %s: %s", url,
+                                e.getLocalizedMessage()));
         }
 
     }
@@ -166,7 +174,9 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
         } catch (UniformInterfaceException e) {
             throw new QuoteNotFoundException("Could not find price list at " + url);
         } catch (ClientHandlerException e) {
-            throw new QuoteServerException("Could not communicate with quote server at " + url, e);
+            throw new QuoteServerException(String.format("Could not communicate with quote server at %s: %s", url,
+                                e.getLocalizedMessage()));
+
         }
         return prices;
     }

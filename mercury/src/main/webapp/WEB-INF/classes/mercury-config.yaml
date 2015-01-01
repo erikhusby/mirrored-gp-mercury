@@ -5,36 +5,37 @@ app:
 
     DEV:
       host:     localhost
-      port:     8080
+      port:     8443
       jmsPort:  5445
       workflowValidationEmail:
 
     AUTO_BUILD:
       host:     mercurydev.broadinstitute.org
-      port:     8081
+      port:     8444
       jmsPort:  5446
       workflowValidationEmail:
 
     TEST:
       host:     mercurydev.broadinstitute.org
-      port:     8080
+      port:     8443
       jmsPort:  5445
       workflowValidationEmail:
 
     QA:
       host:     mercuryqa.broadinstitute.org
-      port:     8081
+      port:     8444
       jmsPort:  5445
       workflowValidationEmail:
 
     RC:
       host:     mercuryrc.broadinstitute.org
-      port:     8082
+      port:     8445
       jmsPort:  5447
       workflowValidationEmail:
 
     PROD:
       host:     mercury.broadinstitute.org
+      port:     8443
       jmsPort:  5445
       workflowValidationEmail: mercury-dev@broadinstitute.org
       #limsworkflowvalidation@broadinstitute.org
@@ -79,13 +80,13 @@ jira:
 collaborate:
 
     DEV:
-      urlBase:      http://localhost:8080/portal/collaborate
+      urlBase:      http://gpportal-dev:8080/portal/collaborate
 
     RC:
-      urlBase:      http://gapdev:8080/portal/collaborate
+      urlBase:      http://gpportal-qa:8080/portal/collaborate
 
     PROD:
-      urlBase:      http://gap:8080/portal/collaborate
+      urlBase:      http://gpportal-prod:8080/portal/collaborate
 
 
 portal:
@@ -221,9 +222,23 @@ hipchat:
         gpLimsRoom: Mercury & Athena (GPInfx)
         authorizationToken: db3e86c451ef8ac0cddb94133e0455
 
+bass:
+    PROD:
+      login:    mercury-bass
+      password: LszkUJSGyb!
+      host:     bass.broadinstitute.org
+      port:     443
+
+submission:
+    DEV:
+      host:     picard01
+      port:     33333
+
+    PROD:
+      host:     seqsubmission01.broadinstitute.org
+      port:     8080
+
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
-
-
 mercury:
 
     DEV:
@@ -231,8 +246,8 @@ mercury:
       app:      DEV
       bsp:      DEV
       jira:     TEST
-      quote:    QA
-      squid:    DEV
+      quote:    DEV # temp change, due to QA down 
+      squid:    TEST
       tableau:  PROD
       thrift:   TEST
       deckMsgs: DEV
@@ -240,6 +255,8 @@ mercury:
       bettaLimsServer: DEV
       hipchat: DEV
       collaborate: DEV
+      bass: PROD
+      submission: DEV
 
 
     AUTO_BUILD:
@@ -247,7 +264,7 @@ mercury:
       app:      AUTO_BUILD
       bsp:      DEV
       jira:     TEST
-      quote:    QA
+      quote:    DEV  # temp change, due to QA down
       squid:    DEV
       tableau:  PROD
       thrift:   TEST
@@ -256,14 +273,15 @@ mercury:
       bettaLimsServer: DEV
       hipchat: DEV
       collaborate: DEV
-
+      bass: PROD
+      submission: DEV
 
     TEST:
 
       app:      TEST
       bsp:      DEV
       jira:     TEST
-      quote:    DEV
+      quote:    DEV  # temp change, due to QA down
       squid:    TEST
       tableau:  PROD
       thrift:   TEST
@@ -272,14 +290,14 @@ mercury:
       bettaLimsServer: TEST
       hipchat: DEV
       collaborate: DEV
-
+      bass:     PROD
+      submission: DEV
 
     QA:
-
       app:      QA
       bsp:      RC
       jira:     TEST
-      quote:    QA
+      quote:    DEV  # temp change, due to QA down
       squid:    QA
       tableau:  PROD
       thrift:   QA
@@ -288,14 +306,15 @@ mercury:
       bettaLimsServer: QA
       hipchat: DEV
       collaborate: RC
-
+      bass:     PROD
+      submission: DEV
 
     RC:
 
       app:      RC
       bsp:      RC
       jira:     TEST
-      quote:    QA
+      quote:    DEV  # temp change, due to QA down
       squid:    QA
       tableau:  PROD
       thrift:   QA
@@ -304,6 +323,8 @@ mercury:
       bettaLimsServer: QA
       hipchat: DEV
       collaborate: RC
+      bass:     PROD
+      submission: DEV
 
 
     PROD:
@@ -320,3 +341,6 @@ mercury:
       bettaLimsServer: PROD
       hipchat: PROD
       collaborate: PROD
+      bass:     PROD
+      submission: PROD
+

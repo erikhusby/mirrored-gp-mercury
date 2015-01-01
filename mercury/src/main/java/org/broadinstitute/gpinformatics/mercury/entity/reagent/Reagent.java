@@ -4,12 +4,13 @@ import org.hibernate.envers.Audited;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
+import java.util.Date;
 
 /**
- * Some chemistry bits applied to Goop to help transform it into a sequenceable state.
+ * Some chemistry bits applied to a Sample to help transform it into a sequenceable state.
  * 
- * Basic rule of thumb: Things that you want to sequence are Goop.  Things that the lab consumes from other
- * vendors (IDT, Fluidigm, Illumina, etc.) are {@link Reagent}s.  Oligos like primers and baits are not Goop.
+ * Basic rule of thumb: Things that you want to sequence are Samples.  Things that the lab consumes from other
+ * vendors (IDT, Fluidigm, Illumina, etc.) are {@link Reagent}s.  Oligos like primers and baits are not Samples.
  * Although they contain DNA, they are considered {@link Reagent}s.
  */
 @Entity
@@ -27,9 +28,13 @@ public abstract class Reagent {
     @Column(name = "LOT", nullable = true)
     private String lot;
 
-    protected Reagent(@Nullable String reagentName, @Nullable String lot) {
+    @Column(name = "EXPIRATION", nullable = true)
+    private Date expiration;
+
+    protected Reagent(@Nullable String reagentName, @Nullable String lot, @Nullable Date expiration) {
         this.name = reagentName;
         this.lot = lot;
+        this.expiration = expiration;
     }
 
     protected Reagent() {
@@ -49,5 +54,13 @@ public abstract class Reagent {
 
     public void setLot(String lot) {
         this.lot = lot;
+    }
+
+    public Date getExpiration() {
+        return expiration;
+    }
+
+    public void setExpiration(Date expiration) {
+        this.expiration = expiration;
     }
 }

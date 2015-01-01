@@ -7,7 +7,9 @@ import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.hamcrest.Matchers;
 import org.meanbean.lang.EquivalentFactory;
 import org.meanbean.test.BeanTester;
 import org.meanbean.test.Configuration;
@@ -27,11 +29,15 @@ import java.util.Random;
 
 import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderStatus;
 import static org.broadinstitute.gpinformatics.infrastructure.matchers.InBspFormatSample.inBspFormat;
+import static org.broadinstitute.gpinformatics.infrastructure.matchers.MetadataMatcher.isMetadataSource;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.everyItem;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.nullValue;
 
 
 @Test(groups = TestGroups.DATABASE_FREE)
@@ -39,18 +45,23 @@ public class ProductOrderTest {
 
     private static final Long TEST_CREATOR = 1111L;
     public static final String PDO_JIRA_KEY = "PDO-8";
-    private final List<ProductOrderSample> sixBspSamplesNoDupes =
+    private static final String PDO_TITLE = "title";
+    private static final String QUOTE = "quote";
+    private final List<ProductOrderSample> sixSamplesWithNamesInBspFormatNoDupes =
             ProductOrderSampleTestFactory
-                    .createDBFreeSampleList("SM-2ACGC", "SM-2ABDD", "SM-2ACKV", "SM-2AB1B", "SM-2ACJC", "SM-2AD5D");
+                    .createDBFreeSampleList(MercurySample.MetadataSource.BSP, "SM-2ACGC", "SM-2ABDD", "SM-2ACKV", "SM-2AB1B", "SM-2ACJC", "SM-2AD5D");
+    private final List<ProductOrderSample> sixMercurySamplesNoDupes =
+            ProductOrderSampleTestFactory
+                    .createDBFreeSampleList(MercurySample.MetadataSource.MERCURY, "SM-2ACGC", "SM-2ABDD", "SM-2ACKV", "SM-2AB1B", "SM-2ACJC", "SM-2AD5D");
     private final List<ProductOrderSample> fourBspSamplesWithDupes =
             ProductOrderSampleTestFactory
-                    .createDBFreeSampleList("SM-2ACGC", "SM-2ABDD", "SM-2ACGC", "SM-2AB1B", "SM-2ACJC", "SM-2ACGC");
-    private final List<ProductOrderSample> sixMixedSampleProducts =
+                    .createDBFreeSampleList(MercurySample.MetadataSource.BSP, "SM-2ACGC", "SM-2ABDD", "SM-2ACGC", "SM-2AB1B", "SM-2ACJC", "SM-2ACGC");
+    private final List<ProductOrderSample> sixSamplesWithNotAllNamesInBspFormat =
             ProductOrderSampleTestFactory
-                    .createDBFreeSampleList("SM-2ACGC", "SM2ABDD", "SM2ACKV", "SM-2AB1B", "SM-2ACJC", "SM-2AD5D");
-    private final List<ProductOrderSample> nonBspSampleProducts =
+                    .createDBFreeSampleList(MercurySample.MetadataSource.BSP, "SM-2ACGC", "SM2ABDD", "SM2ACKV", "SM-2AB1B", "SM-2ACJC", "SM-2AD5D");
+    private final List<ProductOrderSample> sixSamplesWithNoNamesInBspFormat =
             ProductOrderSampleTestFactory
-                    .createDBFreeSampleList("SSM-2ACGC1", "SM--2ABDDD", "SM-2AB", "SM-2AB1B-", "SM-2ACJCACB",
+                    .createDBFreeSampleList(MercurySample.MetadataSource.BSP, "SSM-2ACGC1", "SM--2ABDDD", "SM-2AB", "SM-2AB1B-", "SM-2ACJCACB",
                             "SM-SM-SM");
     private ProductOrder productOrder;
 
@@ -70,14 +81,13 @@ public class ProductOrderTest {
     public void tearDown() throws Exception {
     }
 
-    @Test
     public void testBeaniness() {
 
         BeanTester tester = new BeanTester();
         // Currently ProductOrder is equivalent based only on RP and title.
         Configuration configuration = new ConfigurationBuilder()
                 .ignoreProperty("samples")
-                .ignoreProperty("title")
+                .ignoreProperty(PDO_TITLE)
                         // TODO: jiraTicketKey is part of businessKey which is what equals() uses. should it really be ignored?
                 .ignoreProperty("jiraTicketKey")
                 .ignoreProperty("orderStatus")
@@ -101,21 +111,22 @@ public class ProductOrderTest {
                 .ignoreProperty("skipRegulatoryReason")
                 .ignoreProperty("attestationConfirmed")
                 .ignoreProperty("regulatoryInfos")
+                .ignoreProperty("squidWorkRequest")
                 .build();
         tester.testBean(ProductOrder.class, configuration);
 
         class ProductOrderFactory implements EquivalentFactory<ProductOrder> {
             public final long ID = new Random().nextInt(Integer.MAX_VALUE);
-            public String title = "title";
 
             @Override
             public ProductOrder create() {
                 Product product = new Product("Exome Express", null, "Exome Express", "P-EX-0002", new Date(), null,
                         1814400, 1814400, 184, null, null, null, true, Workflow.AGILENT_EXOME_EXPRESS, false, "agg type");
                 ResearchProject researchProject =
-                        new ResearchProject(ID, title, "RP title", ResearchProject.IRB_NOT_ENGAGED);
+                        new ResearchProject(ID, PDO_TITLE, "RP title", ResearchProject.IRB_NOT_ENGAGED,
+                                            ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
 
-                return new ProductOrder(ID, "PO title", sixBspSamplesNoDupes, "quoteId", product, researchProject);
+                return new ProductOrder(ID, "PO title", sixSamplesWithNamesInBspFormatNoDupes, "quoteId", product, researchProject);
             }
         }
 
@@ -126,41 +137,89 @@ public class ProductOrderTest {
 
     }
 
-    @Test
     public void testOrder() throws Exception {
         assertThat(productOrder.getJiraTicketKey(), is(equalTo(PDO_JIRA_KEY)));
     }
 
-    @Test
     public void testGetUniqueSampleCount() throws Exception {
-        productOrder = new ProductOrder(TEST_CREATOR, "title", sixBspSamplesNoDupes, "quote", null, null);
+        productOrder = new ProductOrder(TEST_CREATOR, PDO_TITLE, sixSamplesWithNamesInBspFormatNoDupes, QUOTE, null, null);
         assertThat(productOrder.getUniqueSampleCount(), is(equalTo(6)));
 
-        productOrder = new ProductOrder(TEST_CREATOR, "title", fourBspSamplesWithDupes, "quote", null, null);
+        productOrder = new ProductOrder(TEST_CREATOR, PDO_TITLE, fourBspSamplesWithDupes, QUOTE, null, null);
         assertThat(productOrder.getUniqueSampleCount(), is(equalTo(4)));
     }
 
-    @Test
     public void testGetTotalSampleCount() throws Exception {
-        productOrder = new ProductOrder(TEST_CREATOR, "title", sixBspSamplesNoDupes, "quote", null, null);
+        productOrder = new ProductOrder(TEST_CREATOR, PDO_TITLE, sixSamplesWithNamesInBspFormatNoDupes, QUOTE, null, null);
         assertThat(productOrder.getTotalSampleCount(), is(equalTo(6)));
 
-        productOrder = new ProductOrder(TEST_CREATOR, "title", fourBspSamplesWithDupes, "quote", null, null);
+        productOrder = new ProductOrder(TEST_CREATOR, PDO_TITLE, fourBspSamplesWithDupes, QUOTE, null, null);
         assertThat(productOrder.getTotalSampleCount(), is(equalTo(6)));
     }
 
-    @Test
     public void testGetDuplicateCount() throws Exception {
-        productOrder = new ProductOrder(TEST_CREATOR, "title", fourBspSamplesWithDupes, "quote", null, null);
+        productOrder = new ProductOrder(TEST_CREATOR, PDO_TITLE, fourBspSamplesWithDupes, QUOTE, null, null);
         assertThat(productOrder.getDuplicateCount(), is(equalTo(2)));
     }
 
-    @Test
+    @SuppressWarnings("unchecked")
+    public void testGetProductOrderWithMixedSampleMetadata() throws Exception {
+        List<ProductOrderSample> sampleList = ProductOrderSampleTestFactory
+                .createDBFreeSampleList(MercurySample.MetadataSource.BSP, "SM-2ACGC", "SM-2ABDD", "SM-2ACKV");
+        sampleList.addAll(ProductOrderSampleTestFactory
+                .createDBFreeSampleList(MercurySample.MetadataSource.MERCURY, "SM-2AB1B", "SM-2ACJC", "SM-2AD5D"));
+
+        productOrder = new ProductOrder(TEST_CREATOR, PDO_TITLE, sampleList, QUOTE, null, null);
+        assertThat(productOrder.getSamples().size(), Matchers.is(6));
+        assertThat(productOrder.getSamples(), not(everyItem(isMetadataSource(MercurySample.MetadataSource.BSP))));
+        assertThat(productOrder.getSamples(), not(everyItem(isMetadataSource(MercurySample.MetadataSource.MERCURY))));
+
+        List<String> sampleSummaryComments = productOrder.getSampleSummaryComments();
+        assertThat(sampleSummaryComments, hasItems(
+                "Total: 6",
+                "Unique: All",
+                "Duplicate: None",
+                "Unique BSP: 3",
+                "Unique Mercury: 3",
+                "On Risk: None"));
+    }
+
+    @SuppressWarnings("unchecked")
+    public void testGetProductOrderBspSampleMetadata() throws Exception {
+        productOrder = new ProductOrder(TEST_CREATOR, PDO_TITLE, sixSamplesWithNamesInBspFormatNoDupes, QUOTE, null, null);
+        assertThat(productOrder.getSamples(), everyItem(isMetadataSource(MercurySample.MetadataSource.BSP)));
+        List<String> sampleSummaryComments = productOrder.getSampleSummaryComments();
+        assertThat(sampleSummaryComments, hasItems(
+                "Total: 6",
+                "Unique: All",
+                "Duplicate: None",
+                "From BSP: All",
+                "Unique BSP: 6",
+                "On Risk: None"
+        ));
+    }
+
+    @SuppressWarnings("unchecked")
+    public void testGetProductOrderMercurySampleMetadata() throws Exception {
+        productOrder = new ProductOrder(TEST_CREATOR, PDO_TITLE, sixMercurySamplesNoDupes, QUOTE, null, null);
+        assertThat(productOrder.getSamples(), everyItem(isMetadataSource(MercurySample.MetadataSource.MERCURY)));
+
+        List<String> sampleSummaryComments = productOrder.getSampleSummaryComments();
+        assertThat(sampleSummaryComments, hasItems(
+                "Total: 6",
+                "Unique: All",
+                "Duplicate: None",
+                "From Mercury: All",
+                "Unique Mercury: 6",
+                "On Risk: None"
+                ));
+    }
+
     public void testAreAllSampleBSPFormat() throws Exception {
         assertThat(fourBspSamplesWithDupes, everyItem(is(inBspFormat())));
-        assertThat(sixBspSamplesNoDupes, everyItem(is(inBspFormat())));
-        assertThat(nonBspSampleProducts, everyItem(is(not(inBspFormat()))));
-        assertThat(sixMixedSampleProducts, not(everyItem(is(inBspFormat()))));
+        assertThat(sixSamplesWithNamesInBspFormatNoDupes, everyItem(is(inBspFormat())));
+        assertThat(sixSamplesWithNoNamesInBspFormat, everyItem(is(not(inBspFormat()))));
+        assertThat(sixSamplesWithNotAllNamesInBspFormat, not(everyItem(is(inBspFormat()))));
     }
 
     @DataProvider(name = "testUpdateOrderStatus")
@@ -204,7 +263,6 @@ public class ProductOrderTest {
         Assert.assertEquals(order.getOrderStatus(), status);
     }
 
-    @Test
     public void testQuoteStringForJira() {
         ProductOrder pdo = new ProductOrder();
         Assert.assertEquals(pdo.getQuoteStringForJiraTicket(),ProductOrder.QUOTE_TEXT_USED_IN_JIRA_WHEN_QUOTE_FIELD_IS_EMPTY);
@@ -213,9 +271,7 @@ public class ProductOrderTest {
         Assert.assertEquals(pdo.getQuoteStringForJiraTicket(),quoteId);
     }
 
-    @Test
-    public void
-    testQuoteRequired() {
+    public void testQuoteRequired() {
         boolean hasQuote = false;
         String quoteOrNoQuoteString = "just because";
         int numberOfSamples = 4;
@@ -230,4 +286,21 @@ public class ProductOrderTest {
 
     }
 
+    public void testSetResearchProject() {
+        ResearchProject researchProject = new ResearchProject(0L, "ProductOrderTest Research Project", "Test", true,
+                                                              ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
+
+        productOrder.setResearchProject(researchProject);
+        assertThat(productOrder.getResearchProject(), equalTo(researchProject));
+        assertThat(researchProject.getProductOrders(), hasItem(productOrder));
+
+        productOrder.setResearchProject(null);
+        assertThat(productOrder.getResearchProject(), nullValue());
+        assertThat(researchProject.getProductOrders(), not(hasItem(productOrder)));
+    }
+
+    @Test(expectedExceptions = RuntimeException.class)
+    public void testNullRegulatoryDesignationThrowsException() {
+        new ProductOrder("Foo","Bar","Baz").getRegulatoryDesignationCodeForPipeline();
+    }
 }

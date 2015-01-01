@@ -38,6 +38,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -106,8 +107,6 @@ public class BucketViewActionBean extends CoreActionBean {
     private final List<BucketEntry> bucketEntries = new ArrayList<>();
     private final List<BucketEntry> reworkEntries = new ArrayList<>();
     private final List<BucketEntry> collectiveEntries = new ArrayList<>();
-    private final Map<String, ProductOrder> mapPdoKeyToPdo = new HashMap<>();
-    private final Map<String, Workflow> mapPdoKeyToWorkflow = new HashMap<>();
     private final Map<String, List<ProductWorkflowDef>> mapBucketToWorkflowDefs = new HashMap<>();
 
     private List<BucketEntry> selectedEntries = new ArrayList<>();
@@ -125,18 +124,277 @@ public class BucketViewActionBean extends CoreActionBean {
     private String selectedLcset;
     private LabBatch batch;
 
-    public LabBatch getBatch() {
-        return batch;
+    @Before(stages = LifecycleStage.BindingAndValidation)
+    public void init() {
+        WorkflowConfig workflowConfig = workflowLoader.load();
+        // Gets bucket names for supported products (workflows), and associates workflow(s) for each bucket.
+        for (Workflow workflow : Workflow.SUPPORTED_WORKFLOWS) {
+            ProductWorkflowDef workflowDef = workflowConfig.getWorkflowByName(workflow.getWorkflowName());
+            ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
+            for (WorkflowBucketDef bucket : workflowVersion.getCreationBuckets()) {
+                String bucketName = bucket.getName();
+                List<ProductWorkflowDef> bucketWorkflows;
+                if (buckets.add(bucketName)) {
+                    bucketWorkflows = new ArrayList<>();
+                    mapBucketToWorkflowDefs.put(bucketName, bucketWorkflows);
+                } else {
+                    bucketWorkflows = mapBucketToWorkflowDefs.get(bucketName);
+                }
+                bucketWorkflows.add(workflowDef);
+            }
+        }
     }
 
-    public void setBatch(LabBatch batch) {
-        this.batch = batch;
+    @DefaultHandler
+    public Resolution view() {
+        return new ForwardResolution(VIEW_PAGE);
     }
 
-    public List<String> getBuckets() {
-        List<String> list = new ArrayList<>(buckets);
-        Collections.sort(list);
-        return list;
+    @ValidationMethod(on = CREATE_BATCH_ACTION)
+    public void createBatchValidation() {
+
+        if (!getUserBean().isValidJiraUser()) {
+            addValidationError("jiraTicketId", "You must be A valid Jira user to create an LCSet.");
+            viewBucket();
+        }
+
+        if (CollectionUtils.isEmpty(selectedEntryIds)) {
+            addValidationError("selectedEntryIds",
+                               "At least one vessel or rework must be selected to create a batch.");
+            viewBucket();
+        }
+
+        if (StringUtils.isBlank(summary)) {
+            addValidationError("summary", "You must provide at least a summary to create a Jira Ticket.");
+            viewBucket();
+        }
+    }
+
+    @ValidationMethod(on = ADD_TO_BATCH_ACTION)
+    public void addReworkToBatchValidation() {
+        if (StringUtils.isBlank(selectedLcset)) {
+            addValidationError("selectedLcset", "You must provide an LCSET to add to a batch.");
+            viewBucket();
+        }
+    }
+
+    @ValidationMethod(on = {ADD_TO_BATCH_ACTION})
+    public void batchValidation() {
+        if (CollectionUtils.isEmpty(selectedEntryIds)) {
+            addValidationError("selectedEntryIds", "At least one item must be selected.");
+            addValidationError("bucketEntryView", "At least one sample must be selected to add to the batch.");
+            viewBucket();
+        }
+    }
+
+    @ValidationMethod(on = REMOVE_FROM_BUCKET_ACTION)
+    public void removeSampleFromBucketValidation() {
+
+        if (CollectionUtils.isEmpty(selectedEntryIds)) {
+            addValidationError("bucketEntryView", "At least one sample must be selected to remove from the bucket.");
+            viewBucket();
+        }
+    }
+
+    @HandlesEvent("setBucket")
+    public Resolution setBucket() {
+        if (selectedBucket != null) {
+            // Sets the workflow selection list for this bucket.
+            possibleWorkflows = mapBucketToWorkflowDefs.get(selectedBucket);
+            if (possibleWorkflows.size() == 1) {
+                setSelectedWorkflowDef(possibleWorkflows.get(0));
+                return viewBucket();
+            }
+
+        }
+        return view();
+    }
+
+    @HandlesEvent("viewBucket")
+    public Resolution viewBucket() {
+        if (selectedBucket != null && selectedWorkflowDef != null) {
+            possibleWorkflows = mapBucketToWorkflowDefs.get(selectedBucket);
+
+            // Gets the bucket entries that are in the selected bucket.
+            Bucket bucket = bucketDao.findByName(selectedBucket);
+            if (bucket != null) {
+                bucketEntries.clear();
+                reworkEntries.clear();
+                collectiveEntries.clear();
+
+                bucketEntries.addAll(bucket.getBucketEntries());
+                reworkEntries.addAll(bucket.getReworkEntries());
+                collectiveEntries.addAll(bucketEntries);
+                collectiveEntries.addAll(reworkEntries);
+
+                // Filters out entries whose product workflow doesn't match the selected workflow.
+                for (Iterator<BucketEntry> iter = collectiveEntries.iterator(); iter.hasNext(); ) {
+                    BucketEntry entry = iter.next();
+                    if (!selectedWorkflowDef.getName().equals(
+                            entry.getProductOrder().getProduct().getWorkflow().getWorkflowName())) {
+                        iter.remove();
+                        bucketEntries.remove(entry);
+                        reworkEntries.remove(entry);
+                    }
+                }
+                // Doesn't show JIRA details if there are no bucket entries.
+                jiraEnabled = !collectiveEntries.isEmpty();
+            }
+        }
+        return view();
+    }
+
+    public Set<String> getSampleNames(LabVessel vessel) {
+        Set<SampleInstance> allSamples = vessel.getAllSamples();
+        Set<String> sampleNames = new HashSet<>();
+        for (SampleInstance sampleInstance : allSamples) {
+            sampleNames.add(sampleInstance.getStartingSample().getSampleKey());
+        }
+        return sampleNames;
+    }
+
+    @HandlesEvent(ADD_TO_BATCH_ACTION)
+    public Resolution addToBatch() {
+        loadReworkVessels();
+        if (batch == null) {
+            addValidationError("selectedLcset", String.format("Could not find %s.", selectedLcset));
+            return new ForwardResolution(VIEW_PAGE);
+        }
+        // Cannot mix workfows in an LCSET.
+        Set<String> batchWorkflows = getWorkflowNames();
+        if (!batchWorkflows.contains(selectedWorkflowDef.getName())) {
+            addValidationError("incompatibleWorkflows",
+                               "The selected workflow (" + selectedWorkflowDef.getName() +
+                               ") is different than LCSET's workflow (" + StringUtils.join(batchWorkflows, ", ") + ")");
+            return new ForwardResolution(VIEW_PAGE);
+        }
+        return new ForwardResolution(CONFIRMATION_PAGE);
+    }
+
+    private void loadReworkVessels() {
+        if (!selectedLcset.startsWith("LCSET-")) {
+            selectedLcset = "LCSET-" + selectedLcset;
+        }
+        batch = labBatchDao.findByBusinessKey(selectedLcset);
+        separateEntriesByType();
+    }
+
+    // Returns the workflow name for entries in the batch.
+    private Set<String> getWorkflowNames() {
+        Set<String> pdoKeys = new HashSet<>();
+        for (BucketEntry entry : batch.getBucketEntries()) {
+            pdoKeys.add(entry.getProductOrder().getBusinessKey());
+        }
+        Collection<ProductOrder> pdos = productOrderDao.findListByBusinessKeys(pdoKeys);
+        Set<String> workflowNames = new HashSet<>();
+        for (ProductOrder pdo : pdos) {
+            workflowNames.add(pdo.getProduct().getWorkflow().getWorkflowName());
+        }
+        return workflowNames;
+    }
+
+    @HandlesEvent(REWORK_CONFIRMED_ACTION)
+    public Resolution reworkConfirmed() {
+        separateEntriesByType();
+        try {
+            if (!selectedLcset.startsWith("LCSET-")) {
+                selectedLcset = "LCSET-" + selectedLcset;
+            }
+            labBatchEjb.addToLabBatch(selectedLcset, bucketEntryIds, reworkEntryIds);
+        } catch (IOException e) {
+            addGlobalValidationError("IOException contacting JIRA service." + e.getMessage());
+            return new RedirectResolution(VIEW_PAGE);
+        }
+        addMessage(String.format("Successfully added %d sample(s) and %d rework(s) to %s at the '%s'.",
+                                 bucketEntryIds.size(), reworkEntryIds.size(), selectedLcset, selectedBucket));
+        return new RedirectResolution(BucketViewActionBean.class, VIEW_ACTION);
+    }
+
+    /**
+     * Supports the submission for the page.  Will forward to confirmation page on success
+     *
+     * @return The resolution
+     */
+    @HandlesEvent(CREATE_BATCH_ACTION)
+    public Resolution createBatch() {
+        separateEntriesByType();
+        try {
+            batch = labBatchEjb
+                    .createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
+                                                       selectedWorkflowDef.getName(), bucketEntryIds, reworkEntryIds,
+                                                       summary.trim(),
+                                                       description, dueDate, important,
+                                                       userBean.getBspUser().getUsername());
+        } catch (ValidationException e) {
+            addGlobalValidationError(e.getMessage());
+            return view();
+        }
+
+        addMessage(MessageFormat.format("Lab batch ''{0}'' has been created.", batch.getJiraTicket().getTicketName()));
+
+        return new ForwardResolution(BATCH_CONFIRM_PAGE);
+    }
+
+    @HandlesEvent(REMOVE_FROM_BUCKET_ACTION)
+    public Resolution removeFromBucket() {
+
+        separateEntriesByType();
+
+        return new ForwardResolution(REMOVE_FROM_BUCKET_CONFIRM_PAGE);
+    }
+
+    @HandlesEvent(CONFIRM_REMOVE_FROM_BUCKET_ACTION)
+    public Resolution confirmRemoveFromBucket() {
+        separateEntriesByType();
+
+        bucketEjb.removeEntriesByIds(selectedEntryIds, "");
+
+        addMessage(String.format("Successfully removed %d sample(s) and %d rework(s) from bucket '%s'.",
+                                 bucketEntryIds.size(), reworkEntryIds.size(), selectedBucket));
+
+        return new RedirectResolution(BucketViewActionBean.class, VIEW_ACTION);
+    }
+
+    public Set<String> findPotentialPdos() {
+        // Use a TreeSet so it can returned sorted;
+        return new TreeSet<>(reworkEjb.findBucketCandidatePdos(selectedEntryIds));
+    }
+
+    private void separateEntriesByType() {
+        // Iterate through the selected entries and separate the pdo entries from rework entries.
+        selectedEntries = bucketEntryDao.findByIds(selectedEntryIds);
+        for (BucketEntry entry : selectedEntries) {
+            switch (entry.getEntryType()) {
+            case PDO_ENTRY:
+                bucketEntryIds.add(entry.getBucketEntryId());
+                break;
+            case REWORK_ENTRY:
+                reworkEntryIds.add(entry.getBucketEntryId());
+                break;
+            }
+        }
+    }
+
+    @HandlesEvent(FIND_PDO)
+    public Resolution findPdoForVessel() throws JSONException {
+        JSONArray pdoArray = new JSONArray(findPotentialPdos());
+        return new StreamingResolution("text", new StringReader(pdoArray.toString()));
+    }
+
+    @HandlesEvent(CHANGE_PDO)
+    public Resolution changePdo() throws JSONException {
+        String newPdoValue = getContext().getRequest().getParameter("newPdoValue");
+        List<BucketEntry> bucketEntries = bucketEntryDao.findByIds(selectedEntryIds);
+        bucketEjb.updateEntryPdo(bucketEntries, newPdoValue);
+
+        ProductOrder newPdo = productOrderDao.findByBusinessKey(newPdoValue);
+        JSONObject newPdoValues = new JSONObject();
+
+        newPdoValues.put("jiraKey", newPdoValue);
+        newPdoValues.put("pdoOwner", getUserFullName(newPdo.getCreatedBy()));
+        newPdoValues.put("pdoTitle", newPdo.getTitle());
+
+        return new StreamingResolution("text", new StringReader(newPdoValues.toString()));
     }
 
     public String getSelectedBucket() {
@@ -255,293 +513,18 @@ public class BucketViewActionBean extends CoreActionBean {
         return reworkEntryIds;
     }
 
-    @Before(stages = LifecycleStage.BindingAndValidation)
-    public void init() {
-        WorkflowConfig workflowConfig = workflowLoader.load();
-        // Gets bucket names for supported products (workflows), and associates workflow(s) for each bucket.
-        for (Workflow workflow : Workflow.SUPPORTED_WORKFLOWS) {
-            ProductWorkflowDef workflowDef = workflowConfig.getWorkflowByName(workflow.getWorkflowName());
-            ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
-            for (WorkflowBucketDef bucket : workflowVersion.getCreationBuckets()) {
-                String bucketName = bucket.getName();
-                List<ProductWorkflowDef> bucketWorkflows;
-                if (buckets.add(bucketName)) {
-                    bucketWorkflows = new ArrayList<>();
-                    mapBucketToWorkflowDefs.put(bucketName, bucketWorkflows);
-                } else {
-                    bucketWorkflows = mapBucketToWorkflowDefs.get(bucketName);
-                }
-                bucketWorkflows.add(workflowDef);
-            }
-        }
+    public LabBatch getBatch() {
+        return batch;
     }
 
-    @DefaultHandler
-    public Resolution view() {
-        return new ForwardResolution(VIEW_PAGE);
+    public void setBatch(LabBatch batch) {
+        this.batch = batch;
     }
 
-    @ValidationMethod(on = CREATE_BATCH_ACTION)
-    public void createBatchValidation() {
-
-        if (!getUserBean().isValidJiraUser()) {
-            addValidationError("jiraTicketId", "You must be A valid Jira user to create an LCSet.");
-            viewBucket();
-        }
-
-        if (CollectionUtils.isEmpty(selectedEntryIds)) {
-            addValidationError("selectedEntryIds",
-                    "At least one vessel or rework must be selected to create a batch.");
-            viewBucket();
-        }
-
-        if (StringUtils.isBlank(summary)) {
-            addValidationError("summary", "You must provide at least a summary to create a Jira Ticket.");
-            viewBucket();
-        }
+    public List<String> getBuckets() {
+        List<String> list = new ArrayList<>(buckets);
+        Collections.sort(list);
+        return list;
     }
 
-    @ValidationMethod(on = ADD_TO_BATCH_ACTION)
-    public void addReworkToBatchValidation() {
-        if (StringUtils.isBlank(selectedLcset)) {
-            addValidationError("selectedLcset", "You must provide an LCSET to add to a batch.");
-            viewBucket();
-        }
-    }
-
-    @ValidationMethod(on = {ADD_TO_BATCH_ACTION})
-    public void batchValidation() {
-        if (CollectionUtils.isEmpty(selectedEntryIds)) {
-            addValidationError("selectedEntryIds", "At least one item must be selected.");
-            addValidationError("bucketEntryView", "At least one sample must be selected to add to the batch.");
-            viewBucket();
-        }
-    }
-
-    @ValidationMethod(on = REMOVE_FROM_BUCKET_ACTION)
-    public void removeSampleFromBucketValidation() {
-
-        if (CollectionUtils.isEmpty(selectedEntryIds)) {
-            addValidationError("bucketEntryView", "At least one sample must be selected to remove from the bucket.");
-            viewBucket();
-        }
-    }
-
-    @HandlesEvent("setBucket")
-    public Resolution setBucket() {
-        if (selectedBucket != null) {
-            // Sets the workflow selection list for this bucket.
-            possibleWorkflows = mapBucketToWorkflowDefs.get(selectedBucket);
-            if (possibleWorkflows.size() == 1) {
-                setSelectedWorkflowDef(possibleWorkflows.get(0));
-                return viewBucket();
-            }
-
-        }
-        return view();
-    }
-
-    @HandlesEvent("viewBucket")
-    public Resolution viewBucket() {
-        if (selectedBucket != null && selectedWorkflowDef != null) {
-            possibleWorkflows = mapBucketToWorkflowDefs.get(selectedBucket);
-
-            // Gets the bucket entries that are in the selected bucket.
-            Bucket bucket = bucketDao.findByName(selectedBucket);
-            if (bucket != null) {
-                bucketEntries.clear();
-                reworkEntries.clear();
-                collectiveEntries.clear();
-
-                bucketEntries.addAll(bucket.getBucketEntries());
-                reworkEntries.addAll(bucket.getReworkEntries());
-                collectiveEntries.addAll(bucketEntries);
-                collectiveEntries.addAll(reworkEntries);
-
-                // Filters out entries whose product workflow doesn't match the selected workflow.
-                Set<String> pdoKeys = new HashSet<>();
-                for (BucketEntry entry : collectiveEntries) {
-                    pdoKeys.add(entry.getPoBusinessKey());
-                }
-                Collection<ProductOrder> pdos = productOrderDao.findListByBusinessKeys(pdoKeys);
-                for (ProductOrder pdo : pdos) {
-                    mapPdoKeyToPdo.put(pdo.getBusinessKey(), pdo);
-                    mapPdoKeyToWorkflow.put(pdo.getBusinessKey(), pdo.getProduct().getWorkflow());
-                }
-                for (Iterator<BucketEntry> iter = collectiveEntries.iterator(); iter.hasNext(); ) {
-                    BucketEntry entry = iter.next();
-                    if (mapPdoKeyToWorkflow.get(entry.getPoBusinessKey()) == null) {
-                        addGlobalValidationError(String.format("%s for %s does not exist within mercury",
-                                entry.getPoBusinessKey(), entry.getLabVessel().getLabel()));
-                        iter.remove();
-                        bucketEntries.remove(entry);
-                        reworkEntries.remove(entry);
-                    } else {
-                        if (!selectedWorkflowDef.getName().equals(
-                                mapPdoKeyToWorkflow.get(entry.getPoBusinessKey()).getWorkflowName())) {
-                            iter.remove();
-                            bucketEntries.remove(entry);
-                            reworkEntries.remove(entry);
-                        }
-                    }
-                }
-                // Doesn't show JIRA details if there are no bucket entries.
-                jiraEnabled = !collectiveEntries.isEmpty();
-            }
-        }
-        return view();
-    }
-
-
-    public ProductOrder getPDODetails(String pdoKey) {
-        if (!mapPdoKeyToPdo.containsKey(pdoKey)) {
-            mapPdoKeyToPdo.put(pdoKey, productOrderDao.findByBusinessKey(pdoKey));
-        }
-        return mapPdoKeyToPdo.get(pdoKey);
-    }
-
-    public Set<String> getSampleNames(LabVessel vessel) {
-        Set<SampleInstance> allSamples = vessel.getAllSamples();
-        Set<String> sampleNames = new HashSet<>();
-        for (SampleInstance sampleInstance : allSamples) {
-            sampleNames.add(sampleInstance.getStartingSample().getSampleKey());
-        }
-        return sampleNames;
-    }
-
-    @HandlesEvent(ADD_TO_BATCH_ACTION)
-    public Resolution addToBatch() {
-        loadReworkVessels();
-        if (batch == null) {
-            addValidationError("selectedLcset", String.format("Could not find %s.", selectedLcset));
-            return new ForwardResolution(VIEW_PAGE);
-        }
-        // Cannot mix workfows in an LCSET.
-        Set<String> batchWorkflows = getWorkflowNames();
-        if (!batchWorkflows.contains(selectedWorkflowDef.getName())) {
-            addValidationError("incompatibleWorkflows",
-                    "The selected workflow (" + selectedWorkflowDef.getName() +
-                    ") is different than LCSET's workflow (" + StringUtils.join(batchWorkflows, ", ") + ")");
-            return new ForwardResolution(VIEW_PAGE);
-        }
-        return new ForwardResolution(CONFIRMATION_PAGE);
-    }
-
-    private void loadReworkVessels() {
-        if (!selectedLcset.startsWith("LCSET-")) {
-            selectedLcset = "LCSET-" + selectedLcset;
-        }
-        batch = labBatchDao.findByBusinessKey(selectedLcset);
-        separateEntriesByType();
-    }
-
-    // Returns the workflow name for entries in the batch.
-    private Set<String> getWorkflowNames() {
-        Set<String> pdoKeys = new HashSet<>();
-        for (BucketEntry entry : batch.getBucketEntries()) {
-            pdoKeys.add(entry.getPoBusinessKey());
-        }
-        Collection<ProductOrder> pdos = productOrderDao.findListByBusinessKeys(pdoKeys);
-        Set<String> workflowNames = new HashSet<>();
-        for (ProductOrder pdo : pdos) {
-            workflowNames.add(pdo.getProduct().getWorkflow().getWorkflowName());
-        }
-        return workflowNames;
-    }
-
-    @HandlesEvent(REWORK_CONFIRMED_ACTION)
-    public Resolution reworkConfirmed() {
-        separateEntriesByType();
-        try {
-            if (!selectedLcset.startsWith("LCSET-")) {
-                selectedLcset = "LCSET-" + selectedLcset;
-            }
-            labBatchEjb.addToLabBatch(selectedLcset, bucketEntryIds, reworkEntryIds);
-        } catch (IOException e) {
-            addGlobalValidationError("IOException contacting JIRA service." + e.getMessage());
-            return new RedirectResolution(VIEW_PAGE);
-        }
-        addMessage(String.format("Successfully added %d sample(s) and %d rework(s) to %s at the '%s'.",
-                bucketEntryIds.size(), reworkEntryIds.size(), selectedLcset, selectedBucket));
-        return new RedirectResolution(BucketViewActionBean.class, VIEW_ACTION);
-    }
-
-    /**
-     * Supports the submission for the page.  Will forward to confirmation page on success
-     *
-     * @return The resolution
-     */
-    @HandlesEvent(CREATE_BATCH_ACTION)
-    public Resolution createBatch() {
-        separateEntriesByType();
-        try {
-            batch = labBatchEjb
-                    .createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
-                            selectedWorkflowDef.getName(), bucketEntryIds, reworkEntryIds, summary.trim(),
-                            description, dueDate, important, userBean.getBspUser().getUsername());
-        } catch (ValidationException e) {
-            addGlobalValidationError(e.getMessage());
-            return view();
-        }
-
-        addMessage(MessageFormat
-                .format("Lab batch ''{0}'' has been created.", batch.getJiraTicket().getTicketName()));
-
-        return new ForwardResolution(BATCH_CONFIRM_PAGE);
-    }
-
-    @HandlesEvent(REMOVE_FROM_BUCKET_ACTION)
-    public Resolution removeFromBucket() {
-
-        separateEntriesByType();
-
-        return new ForwardResolution(REMOVE_FROM_BUCKET_CONFIRM_PAGE);
-    }
-
-    @HandlesEvent(CONFIRM_REMOVE_FROM_BUCKET_ACTION)
-    public Resolution confirmRemoveFromBucket() {
-        separateEntriesByType();
-
-        bucketEjb.removeEntriesByIds(selectedEntryIds, "");
-
-        addMessage(String.format("Successfully removed %d sample(s) and %d rework(s) from bucket '%s'.",
-                bucketEntryIds.size(), reworkEntryIds.size(), selectedBucket));
-
-        return new RedirectResolution(BucketViewActionBean.class, VIEW_ACTION);
-    }
-
-    public Set<String> findPotentialPdos() {
-        // Use a TreeSet so it can returned sorted;
-        return new TreeSet<>(reworkEjb.findBucketCandidatePdos(selectedEntryIds));
-    }
-
-    private void separateEntriesByType() {
-        // Iterate through the selected entries and separate the pdo entries from rework entries.
-        selectedEntries = bucketEntryDao.findByIds(selectedEntryIds);
-        for (BucketEntry entry : selectedEntries) {
-            switch (entry.getEntryType()) {
-            case PDO_ENTRY:
-                bucketEntryIds.add(entry.getBucketEntryId());
-                break;
-            case REWORK_ENTRY:
-                reworkEntryIds.add(entry.getBucketEntryId());
-                break;
-            }
-        }
-    }
-
-    @HandlesEvent(FIND_PDO)
-    public Resolution findPdoForVessel() throws JSONException {
-        JSONArray pdoArray = new JSONArray(findPotentialPdos());
-        return new StreamingResolution("text", new StringReader(pdoArray.toString()));
-    }
-
-    @HandlesEvent(CHANGE_PDO)
-    public Resolution changePdo() throws JSONException {
-        String newPdoValue = getContext().getRequest().getParameter("newPdoValue");
-        List<BucketEntry> bucketEntries = bucketEntryDao.findByIds(selectedEntryIds);
-        bucketEjb.updateEntryPdo(bucketEntries, newPdoValue);
-
-        return new StreamingResolution("text", newPdoValue);
-    }
 }

@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.control.zims;
 
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniLibrary;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 
 /**
@@ -15,16 +15,7 @@ public class SquidThriftLibraryConverter implements ThriftLibraryConverter {
     }
 
     @Override
-    public LibraryBean convertLibrary(TZamboniLibrary zamboniLibrary, BSPSampleDTO bspDTO, ProductOrder pdo) {
-        // todo arz extract more fields from bsp here.
-
-        // todo arz test with all bsp data, some bsp samples and some gssr samples
-        // test with null PDO and real PDOs
-        // test flowcell query method
-        // benchmark performance
-
-        // todo arz figure out integration test w/ bsp service, get rid of EverythingYouAskForAndItsHuman mock
-
+    public LibraryBean convertLibrary(TZamboniLibrary zamboniLibrary, SampleData sampleData, ProductOrder pdo) {
         return new LibraryBean(zamboniLibrary.getLibrary(),
                 zamboniLibrary.getProject(),
                 zamboniLibrary.getInitiative(),
@@ -55,11 +46,13 @@ public class SquidThriftLibraryConverter implements ThriftLibraryConverter {
                 zamboniLibrary.getCustomAmpliconSetNames(),
                 pdo,
                 zamboniLibrary.getLcset(),
-                bspDTO,
+                sampleData,
                 zamboniLibrary.getLabWorkflow(),
                 zamboniLibrary.getPdoSample(),
                 zamboniLibrary.getLibraryCreationDate(),
                 zamboniLibrary.getWorkRequestType(),
-                zamboniLibrary.getWorkRequestDomain());
+                zamboniLibrary.getWorkRequestDomain(),
+                null,
+                null);
     }
 }

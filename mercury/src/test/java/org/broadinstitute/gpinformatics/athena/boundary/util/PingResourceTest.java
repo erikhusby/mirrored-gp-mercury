@@ -13,23 +13,24 @@ import java.util.List;
 /**
  *
  */
+@Test(groups = TestGroups.STUBBY)
 public class PingResourceTest extends ContainerTest {
 
     @Inject
     PingResource pingResource;
 
 
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @BeforeMethod(groups = TestGroups.STUBBY)
     public void setUp() throws Exception {
 
     }
 
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @AfterMethod(groups = TestGroups.STUBBY)
     public void tearDown() throws Exception {
 
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.STUBBY)
     public void testPing() throws Exception {
         List<String> results = pingResource.ping();
         Assert.assertNotNull(results);

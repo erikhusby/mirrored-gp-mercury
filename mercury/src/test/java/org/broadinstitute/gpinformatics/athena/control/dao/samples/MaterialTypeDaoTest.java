@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.samples;
 
 
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
@@ -14,7 +15,7 @@ import javax.transaction.UserTransaction;
 import java.util.List;
 
 
-@Test
+@Test(groups = {TestGroups.STUBBY})
 public class MaterialTypeDaoTest extends ContainerTest {
 
     @Inject

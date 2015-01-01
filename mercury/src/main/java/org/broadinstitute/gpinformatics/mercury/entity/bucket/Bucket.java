@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.bucket;
 
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.hibernate.annotations.BatchSize;
@@ -111,14 +112,14 @@ public class Bucket {
     /**
      * Helper method to add a new item into the bucket
      *
-     * @param productOrderKey Business key of a Product order to associate with the new entry
+     * @param productOrder    a Product order to associate with the new entry
      * @param vessel          Lab Vessel to enter into the bucket.
      * @param entryType
      *
      * @return an instance of a Bucket entry which represents the lab vessel and the product order for that entry
      */
-    public BucketEntry addEntry(String productOrderKey, LabVessel vessel, BucketEntry.BucketEntryType entryType) {
-        BucketEntry newEntry = new BucketEntry(vessel, productOrderKey, this, entryType);
+    public BucketEntry addEntry(ProductOrder productOrder, LabVessel vessel, BucketEntry.BucketEntryType entryType) {
+        BucketEntry newEntry = new BucketEntry(vessel, productOrder, this, entryType);
         newEntry.setProductOrderRanking(getBucketEntries().size() + 1);
         bucketEntries.add(newEntry);
         vessel.addBucketEntry(newEntry);
@@ -181,7 +182,7 @@ public class Bucket {
         BucketEntry foundEntry = null;
         for (BucketEntry currentEntry : bucketEntries) {
             if (currentEntry.getLabVessel().equals(entryVessel) &&
-                currentEntry.getPoBusinessKey().equals(productOrderKey)) {
+                currentEntry.getProductOrder().getBusinessKey().equals(productOrderKey)) {
                 foundEntry = currentEntry;
                 break;
             }

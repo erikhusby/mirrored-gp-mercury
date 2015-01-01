@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.thrift;
 
+import edu.mit.broad.prodinfo.thrift.lims.ConcentrationAndVolume;
 import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
 import edu.mit.broad.prodinfo.thrift.lims.LIMQueries;
 import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
@@ -253,6 +254,21 @@ public class LiveThriftService implements ThriftService {
     }
 
     @Override
+    public double fetchQpcrForTubeAndType(final String tubeBarcode, final String qpcrType) {
+        return thriftConnection.call(new ThriftConnection.Call<Double>() {
+            @Override
+            public Double call(LIMQueries.Client client) {
+                try {
+                    return client.fetchQpcrForTubeAndType(tubeBarcode, qpcrType);
+                } catch (TException e) {
+                    log.error("Thrift error. Probably couldn't find tube '" + tubeBarcode + "': " + e.getMessage(), e);
+                    throw new RuntimeException("Tube or QPCR not found for barcode: " + tubeBarcode, e);
+                }
+            }
+        });
+    }
+
+    @Override
     public double fetchQuantForTube(final String tubeBarcode, final String quantType) {
         return thriftConnection.call(new ThriftConnection.Call<Double>() {
             @Override
@@ -357,6 +373,27 @@ public class LiveThriftService implements ThriftService {
             public List<PoolGroup> call(LIMQueries.Client client) {
                 try {
                     return client.fetchPoolGroups(tubeBarcoces);
+                } catch (TTransportException e) {
+                    if (e.getType() == TTransportException.END_OF_FILE) {
+                        throw new RuntimeException("Some or all of the tubes were not found.");
+                    } else {
+                        throw handleThriftException(e);
+                    }
+                } catch (TException e) {
+                    throw handleThriftException(e);
+                }
+            }
+        });
+    }
+
+    @Override
+    public Map<String, ConcentrationAndVolume> fetchConcentrationAndVolumeForTubeBarcodes(final List<String> tubeBarcodes) {
+        return thriftConnection.call(new ThriftConnection.Call<Map<String, ConcentrationAndVolume> >(){
+
+            @Override
+            public Map<String, ConcentrationAndVolume> call(LIMQueries.Client client) {
+                try {
+                    return client.fetchConcentrationAndVolumeForTubeBarcodes(tubeBarcodes);
                 } catch (TTransportException e) {
                     if (e.getType() == TTransportException.END_OF_FILE) {
                         throw new RuntimeException("Some or all of the tubes were not found.");

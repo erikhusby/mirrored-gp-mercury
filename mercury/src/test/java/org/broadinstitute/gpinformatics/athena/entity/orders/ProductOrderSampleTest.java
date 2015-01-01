@@ -3,23 +3,21 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntryTest;
-import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.hamcrest.Matcher;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -30,7 +28,6 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.matchers.InBspFormat.inBspFormat;
-import static org.broadinstitute.gpinformatics.infrastructure.matchers.NullOrEmptyString.nullOrEmptyString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -71,26 +68,6 @@ public class ProductOrderSampleTest {
         Assert.assertEquals(sample.isCompletelyBilled(), isBilled);
     }
 
-    @DataProvider(name = "testIsInBspFormat")
-    public Object[][] createIsInBspFormatData() {
-        return new Object[][] {
-                {"SM-2ACG", inBspFormat()},
-                {"SM-2ACG5", inBspFormat()},
-                {"SM-2ACG6", inBspFormat()},
-                {"Blahblahblah", not(inBspFormat())},
-                {"12345", not(inBspFormat())},
-                {"12345.0", not(inBspFormat())}, // that's a GSSR id, not a BSP id
-                {"4FHTK", not(inBspFormat())}, // "bare ids" are not considered valid BSP barcodes
-                {"SM-ABC0", not(inBspFormat())},
-                {"SM-ABCO", inBspFormat()}
-        };
-    }
-
-    @Test(dataProvider = "testIsInBspFormat")
-    public void testIsInBspFormat(String sampleName, Matcher<String> matcher) throws Exception {
-        assertThat(sampleName, is(matcher));
-    }
-
     static final org.broadinstitute.bsp.client.sample.MaterialType BSP_MATERIAL_TYPE =
             new org.broadinstitute.bsp.client.sample.MaterialType("Cells", "Red Blood Cells");
 
@@ -115,12 +92,12 @@ public class ProductOrderSampleTest {
             Map<BSPSampleSearchColumn, String> dataMap = new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
                 put(BSPSampleSearchColumn.MATERIAL_TYPE, BSP_MATERIAL_TYPE.getFullName());
             }};
-            sample1 = new ProductOrderSample("Sample1", new BSPSampleDTO(dataMap));
+            sample1 = new ProductOrderSample("Sample1", new BspSampleData(dataMap));
 
             dataMap = new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
                 put(BSPSampleSearchColumn.MATERIAL_TYPE, "XXX:XXX");
             }};
-            sample2 = new ProductOrderSample("Sample2", new BSPSampleDTO(dataMap));
+            sample2 = new ProductOrderSample("Sample2", new BspSampleData(dataMap));
 
             List<ProductOrderSample> samples = new ArrayList<>();
             samples.add(sample1);
@@ -183,35 +160,33 @@ public class ProductOrderSampleTest {
         assertThat(sample.getBillableLedgerItems(), is(equalTo(ledgerEntries)));
     }
 
-    @DataProvider(name = "riskSample")
-    public static Object[][] makeRiskSample() {
-        TestPDOData data = new TestPDOData("GSP-123");
-
-        // sample 1 has risk items and sample 2 does not
-        RiskCriterion riskCriterion =
-                new RiskCriterion(RiskCriterion.RiskCriteriaType.CONCENTRATION, Operator.LESS_THAN, "250.0");
-        RiskItem riskItem = new RiskItem(riskCriterion, "240.0");
-        riskItem.setRemark("Bad Concentration found");
-
-        data.sample1.setRiskItems(Collections.singletonList(riskItem));
-        return new Object[][]{
-                new Object[]{data.sample1},
-                new Object[]{data.sample2}
-        };
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void test_getMetadataSource_throws_exception_when_not_yet_set() {
+        ProductOrderSample sample = new ProductOrderSample("ABC");
+        sample.getMetadataSource();
     }
 
-    @Test(dataProvider = "riskSample")
-    public void testRisk(ProductOrderSample sample) {
-        if (sample.isOnRisk()) {
-            String message =
-                    MessageFormat.format("Sample {0} is on risk but has no risk string.", sample.getName());
+    /**
+     * The two options for handling explicit setting to null are to treat it as having not been set or to treat it as a
+     * valid value. Treating it as a valid value is currently done for 2 reasons:
+     * <ol>
+     *     <li>There is not a {@link MercurySample.MetadataSource} value for "none" or "unknown"</li>
+     *     <li>Treating null as unset would expose an implementation detail of {@link ProductOrderSample}
+     *     unnecessarily</li>
+     * </ol>
+     * This may be revisited at a later time provided that the effect on callers that depend on metadataSource being set
+     * is considered.
+     */
+    public void test_setMetadataSource_to_null_value() {
+        ProductOrderSample sample = new ProductOrderSample("ABC");
+        sample.setMetadataSource(null);
+        assertThat(sample.getMetadataSource(), nullValue());
+    }
 
-            assertThat(message, sample.getRiskString(), is(not(nullOrEmptyString())));
-        } else {
-            String message =
-                    MessageFormat.format("Sample {0} is not on risk but has a risk string.", sample.getName());
-
-            assertThat(message, sample.getRiskString(), is(nullOrEmptyString()));
-        }
+    public void test_setMetadataSource_to_nonnull_value() {
+        ProductOrderSample sample = new ProductOrderSample("ABC");
+        MercurySample.MetadataSource metadataSource = MercurySample.MetadataSource.MERCURY;
+        sample.setMetadataSource(metadataSource);
+        assertThat(sample.getMetadataSource(), equalTo(metadataSource));
     }
 }

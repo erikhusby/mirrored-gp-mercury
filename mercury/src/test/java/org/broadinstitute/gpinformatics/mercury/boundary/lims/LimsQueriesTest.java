@@ -1,13 +1,15 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ConcentrationAndVolumeAndWeightType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LibraryDataType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SampleInfoType;
@@ -43,11 +45,12 @@ import static org.hamcrest.Matchers.instanceOf;
  *
  * @author breilly
  */
+@Test(groups = TestGroups.DATABASE_FREE)
 public class LimsQueriesTest {
 
     private StaticPlateDao staticPlateDao;
     private LabVesselDao labVesselDao;
-    private TwoDBarcodedTubeDao twoDBarcodedTubeDao;
+    private BarcodedTubeDao barcodedTubeDao;
     private LimsQueries limsQueries;
 
     private StaticPlate plate3;
@@ -57,29 +60,29 @@ public class LimsQueriesTest {
         // todo jmt mocks could be removed by small refactoring into @DaoFree methods
         staticPlateDao = createMock(StaticPlateDao.class);
         labVesselDao = createMock(LabVesselDao.class);
-        twoDBarcodedTubeDao = createMock(TwoDBarcodedTubeDao.class);
+        barcodedTubeDao = createMock(BarcodedTubeDao.class);
 
         plate3 = new StaticPlate("plate3", Eppendorf96);
 
-        doSectionTransfer(makeTubeFormation(new TwoDBarcodedTube("tube")), plate3);
+        doSectionTransfer(makeTubeFormation(new BarcodedTube("tube")), plate3);
         doSectionTransfer(new StaticPlate("plate1", Eppendorf96), plate3);
         doSectionTransfer(new StaticPlate("plate2", Eppendorf96), plate3);
-        limsQueries = new LimsQueries(staticPlateDao, labVesselDao, twoDBarcodedTubeDao);
+        limsQueries = new LimsQueries(staticPlateDao, labVesselDao, barcodedTubeDao);
     }
 
     @Test(groups = DATABASE_FREE)
     public void testFetchLibraryDetailsByTubeBarcode() {
         Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
-        String twoDBarcode = "1234";
-        TwoDBarcodedTube twoDBarcodedTube = new TwoDBarcodedTube(twoDBarcode);
+        String barcode = "1234";
+        BarcodedTube barcodedTube = new BarcodedTube(barcode);
         String sampleKey = "SM-1234";
-        twoDBarcodedTube.addSample(new MercurySample(sampleKey));
-        mapBarcodeToVessel.put(twoDBarcode, twoDBarcodedTube);
+        barcodedTube.addSample(new MercurySample(sampleKey, MercurySample.MetadataSource.BSP));
+        mapBarcodeToVessel.put(barcode, barcodedTube);
         List<LibraryDataType> libraryDataTypes = limsQueries.fetchLibraryDetailsByTubeBarcode(mapBarcodeToVessel);
         assertThat(libraryDataTypes.size(), equalTo(1));
         LibraryDataType libraryDataType = libraryDataTypes.get(0);
-        assertThat(libraryDataType.getLibraryName(), Matchers.equalTo(twoDBarcode));
-        assertThat(libraryDataType.getTubeBarcode(), Matchers.equalTo(twoDBarcode));
+        assertThat(libraryDataType.getLibraryName(), Matchers.equalTo(barcode));
+        assertThat(libraryDataType.getTubeBarcode(), Matchers.equalTo(barcode));
         assertThat(libraryDataType.getSampleDetails().size(), equalTo(1));
         SampleInfoType sampleInfoType = libraryDataType.getSampleDetails().get(0);
         assertThat(sampleInfoType.getSampleName(), Matchers.equalTo(sampleKey));
@@ -112,8 +115,8 @@ public class LimsQueriesTest {
 
     @Test(groups = DATABASE_FREE)
     public void testFetchParentRackContentsForPlate() {
-        TwoDBarcodedTube tube1 = new TwoDBarcodedTube("tube1");
-        TwoDBarcodedTube tube2 = new TwoDBarcodedTube("tube2");
+        BarcodedTube tube1 = new BarcodedTube("tube1");
+        BarcodedTube tube2 = new BarcodedTube("tube2");
         StaticPlate plate = new StaticPlate("plate1", Eppendorf96);
         expect(staticPlateDao.findByBarcode("plate1")).andReturn(plate);
         doSectionTransfer(makeTubeFormation(tube1, tube2), plate);
@@ -135,9 +138,9 @@ public class LimsQueriesTest {
 
     @Test(groups = DATABASE_FREE)
     public void testFetchSourceTubesForPlate() {
-        TwoDBarcodedTube tube1 = new TwoDBarcodedTube("tube1");
-        TwoDBarcodedTube tube2 = new TwoDBarcodedTube("tube2");
-        TwoDBarcodedTube tube3 = new TwoDBarcodedTube("tube3");
+        BarcodedTube tube1 = new BarcodedTube("tube1");
+        BarcodedTube tube2 = new BarcodedTube("tube2");
+        BarcodedTube tube3 = new BarcodedTube("tube3");
         StaticPlate plate = new StaticPlate("plate1", Eppendorf96);
         expect(staticPlateDao.findByBarcode("plate1")).andReturn(plate);
         doSectionTransfer(makeTubeFormation(tube1, tube2), plate);
@@ -191,7 +194,7 @@ public class LimsQueriesTest {
 
     @Test(groups = DATABASE_FREE)
     public void testFetchQuantForTube() {
-        TwoDBarcodedTube tube = new TwoDBarcodedTube("tube1");
+        BarcodedTube tube = new BarcodedTube("tube1");
         expect(labVesselDao.findByIdentifier("tube1")).andReturn(tube);
         replay(labVesselDao);
 
@@ -206,7 +209,7 @@ public class LimsQueriesTest {
 
     @Test(groups = DATABASE_FREE)
     public void testFetchQPCRForTube() {
-        TwoDBarcodedTube tube = new TwoDBarcodedTube("tube1");
+        BarcodedTube tube = new BarcodedTube("tube1");
         expect(labVesselDao.findByIdentifier("tube1")).andReturn(tube);
         replay(labVesselDao);
 
@@ -221,18 +224,60 @@ public class LimsQueriesTest {
 
     @Test(groups = DATABASE_FREE)
     public void testDoesLimsRecognizeAllTubes() {
-        Map<String, TwoDBarcodedTube> mercuryTubes = new HashMap<>();
+        Map<String, BarcodedTube> mercuryTubes = new HashMap<>();
         String barcode = "mercury_barcode";
-        mercuryTubes.put(barcode, new TwoDBarcodedTube(barcode));
-        expect(twoDBarcodedTubeDao.findByBarcodes(Arrays.asList(barcode))).andReturn(mercuryTubes);
-        Map<String, TwoDBarcodedTube> badTubes = new HashMap<>();
+        mercuryTubes.put(barcode, new BarcodedTube(barcode));
+        expect(barcodedTubeDao.findByBarcodes(Arrays.asList(barcode))).andReturn(mercuryTubes);
+        Map<String, BarcodedTube> badTubes = new HashMap<>();
         String badBarcode = "bad_barcode";
         badTubes.put(badBarcode, null);
-        expect(twoDBarcodedTubeDao.findByBarcodes(Arrays.asList(badBarcode))).andReturn(badTubes);
-        replay(twoDBarcodedTubeDao);
+        expect(barcodedTubeDao.findByBarcodes(Arrays.asList(badBarcode))).andReturn(badTubes);
+        replay(barcodedTubeDao);
 
         Assert.assertTrue(limsQueries.doesLimsRecognizeAllTubes(Arrays.asList(barcode)), "Wrong return");
         Assert.assertFalse(limsQueries.doesLimsRecognizeAllTubes(Arrays.asList(badBarcode)), "Wrong return");
-        verify(twoDBarcodedTubeDao);
+        verify(barcodedTubeDao);
+    }
+
+    @Test(groups = DATABASE_FREE)
+    public void testFetchConcentrationAndVolumeAndWeightForTubeBarcodes() {
+        String barcode = "tube1";
+        Map<String, LabVessel> mercuryTubes = new HashMap<>();
+        BarcodedTube tube = new BarcodedTube(barcode);
+        mercuryTubes.put(barcode, tube);
+
+        //Should not find Final Library Size since its not a concentration
+        LabMetric finalLibrarySizeMetric =
+                new LabMetric(new BigDecimal(224), LabMetric.MetricType.FINAL_LIBRARY_SIZE, LabMetric.LabUnit.UG_PER_ML,
+                        "A01", new Date());
+        tube.addMetric(finalLibrarySizeMetric);
+        Map<String, ConcentrationAndVolumeAndWeightType> concentrationAndVolumeTypeMap =
+                limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(mercuryTubes);
+        assertThat(concentrationAndVolumeTypeMap.size(), equalTo(1));
+        ConcentrationAndVolumeAndWeightType concentrationAndVolumeType = concentrationAndVolumeTypeMap.get(barcode);
+        assertThat(concentrationAndVolumeType.isWasFound(), equalTo(true));
+        assertThat(concentrationAndVolumeType.getConcentration(), equalTo(null));
+
+        BigDecimal labMetricQuant = BigDecimal.valueOf(22.21);
+        LabMetric quantMetric =
+                new LabMetric(labMetricQuant, LabMetric.MetricType.INITIAL_PICO, LabMetric.LabUnit.UG_PER_ML,
+                        "A02", new Date());
+        tube.addMetric(quantMetric);
+        BigDecimal volume = BigDecimal.valueOf(40.04);
+        tube.setVolume(volume);
+        BigDecimal receptacleWeight = BigDecimal.valueOf(.002);
+        tube.setReceptacleWeight(receptacleWeight);
+
+        concentrationAndVolumeTypeMap =
+                limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(mercuryTubes);
+        assertThat(concentrationAndVolumeTypeMap.size(), equalTo(1));
+        concentrationAndVolumeType = concentrationAndVolumeTypeMap.get(barcode);
+        assertThat(concentrationAndVolumeType.isWasFound(), equalTo(true));
+        assertThat(concentrationAndVolumeType.getTubeBarcode(), equalTo(barcode));
+        assertThat(concentrationAndVolumeType.getConcentration(), equalTo(labMetricQuant));
+        assertThat(concentrationAndVolumeType.getVolume(), equalTo(volume));
+        assertThat(concentrationAndVolumeType.getWeight(), equalTo(receptacleWeight));
+        assertThat(concentrationAndVolumeType.getConcentrationUnits(),
+                equalTo(LabMetric.LabUnit.UG_PER_ML.getDisplayName()));
     }
 }

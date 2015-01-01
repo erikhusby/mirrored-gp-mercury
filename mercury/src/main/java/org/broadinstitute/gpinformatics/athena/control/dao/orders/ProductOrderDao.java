@@ -68,18 +68,24 @@ public class ProductOrderDao extends GenericDao {
         return hourOfDay >= AutomatedBiller.PROCESSING_START_HOUR || hourOfDay < AutomatedBiller.PROCESSING_END_HOUR;
     }
 
+    /**
+     * Use this to specify which tables should be fetched (joined) with ProductOrder when it's loaded from the
+     * database. Using it can have a major performance benefit when retrieving many PDOs that will in turn need
+     * a related table loaded.
+     */
     public enum FetchSpec {
         PRODUCT,
         PRODUCT_FAMILY,
         RESEARCH_PROJECT,
         SAMPLES,
         RISK_ITEMS,
-        LEDGER_ITEMS
+        LEDGER_ITEMS,
+        PRODUCT_ORDER_KIT
     }
 
     private static class ProductOrderDaoCallback implements GenericDaoCallback<ProductOrder> {
 
-        private Set<FetchSpec> fetchSpecs;
+        private final Set<FetchSpec> fetchSpecs;
 
         ProductOrderDaoCallback(FetchSpec... fs) {
             if (fs.length != 0) {
@@ -101,7 +107,7 @@ public class ProductOrderDao extends GenericDao {
                 if (fetchSpecs.contains(FetchSpec.RISK_ITEMS)) {
                     pdoSampleFetch.fetch(ProductOrderSample_.riskItems, JoinType.LEFT);
                 }
-                if (fetchSpecs.contains(FetchSpec.PRODUCT.LEDGER_ITEMS)) {
+                if (fetchSpecs.contains(FetchSpec.LEDGER_ITEMS)) {
                     pdoSampleFetch.fetch(ProductOrderSample_.ledgerItems, JoinType.LEFT);
                 }
             }
@@ -117,6 +123,10 @@ public class ProductOrderDao extends GenericDao {
 
             if (fetchSpecs.contains(FetchSpec.RESEARCH_PROJECT)) {
                 productOrder.fetch(ProductOrder_.researchProject);
+            }
+
+            if (fetchSpecs.contains(FetchSpec.PRODUCT_ORDER_KIT)) {
+                productOrder.fetch(ProductOrder_.productOrderKit, JoinType.LEFT);
             }
         }
     }
@@ -153,13 +163,8 @@ public class ProductOrderDao extends GenericDao {
 
     /**
      * Wraps a call to the main findByBusinessKey with a lock mode of NONE for generic calls
-     *
-     * @param key
-     * @param fetchSpecs
-     *
-     * @return
      */
-    public ProductOrder findByBusinessKey(@Nonnull final String key, FetchSpec... fetchSpecs) {
+    public ProductOrder findByBusinessKey(@Nonnull String key, FetchSpec... fetchSpecs) {
         return findByBusinessKey(key, LockModeType.NONE, fetchSpecs);
     }
 

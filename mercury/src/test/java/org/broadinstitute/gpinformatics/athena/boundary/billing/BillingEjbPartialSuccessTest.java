@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import com.google.common.collect.Multimap;
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
@@ -11,9 +10,12 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.common.TestLogHandler;
+import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFundingList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
@@ -26,16 +28,22 @@ import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderD
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 
 import static org.broadinstitute.gpinformatics.infrastructure.matchers.NullOrEmptyCollection.nullOrEmptyCollection;
 import static org.broadinstitute.gpinformatics.infrastructure.matchers.SuccessfullyBilled.successfullyBilled;
@@ -46,9 +54,10 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+@Test(groups = TestGroups.ALTERNATIVES, enabled = true)
 public class BillingEjbPartialSuccessTest extends Arquillian {
 
     @Inject
@@ -79,23 +88,35 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
     public static final Log log = LogFactory.getLog(BillingEjbPartialSuccessTest.class);
     protected static final Object lockBox = new Object();
 
+
+    private TestLogHandler testLogHandler;
+    private Logger billingAdaptorLogger;
+
+    @BeforeTest
+    public void setUpTestLogger() {
+        billingAdaptorLogger = Logger.getLogger(BillingAdaptor.class.getName());
+        billingAdaptorLogger.setLevel(Level.ALL);
+        testLogHandler = new TestLogHandler();
+        billingAdaptorLogger.addHandler(testLogHandler);
+        testLogHandler.setLevel(Level.ALL);
+    }
+
     /**
      * This will succeed in billing some but not all work to make sure our Billing Session is left in the state we
      * expect.
      */
     @Alternative
     protected static class PartiallySuccessfulQuoteServiceStub implements QuoteService {
-
         private static final long serialVersionUID = 6093273925949722169L;
-
+        private Log log = LogFactory.getLog(QuoteFundingList.class);
         @Override
         public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
-            throw new NotImplementedException();
+            return new PriceList();
         }
 
         @Override
         public Quotes getAllSequencingPlatformQuotes() throws QuoteServerException, QuoteNotFoundException {
-            throw new NotImplementedException();
+            return new Quotes();
         }
 
         @Override
@@ -106,7 +127,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
                                       double numWorkUnits,
                                       String callbackUrl, String callbackParameterName, String callbackParameterValue) {
             // Simulate failure only for one particular PriceItem.
-            System.out.println("In register New work");
+            log.debug("In register New work");
             if (FAILING_PRICE_ITEM_NAME.equals(quotePriceItem.getName())) {
                 throw new RuntimeException("Intentional Work Registration Failure!");
             }
@@ -127,7 +148,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
             synchronized (lockBox) {
                 quoteCount++;
                 /*log.debug*/
-                System.out.println("Quote count is now " + quoteCount);
+                log.debug("Quote count is now " + quoteCount);
                 assertThat(quoteCount, is(lessThanOrEqualTo(totalItems)));
             }
             return workId;
@@ -135,13 +156,13 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
 
         @Override
         public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
-            throw new NotImplementedException();
+            return new Quote();
         }
     }
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWarWithAlternatives(PartiallySuccessfulQuoteServiceStub.class);
+        return DeploymentBuilder.buildMercuryWarWithAlternatives(DummyPMBQuoteService.class, PartiallySuccessfulQuoteServiceStub.class);
     }
 
     /**
@@ -253,8 +274,8 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
      * persisted.</li>
      * </ul>
      */
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
-    public void testPositive() {
+    @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
+      public void testPositive() {
 
         cycleFails = false;
 
@@ -275,6 +296,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         assertThat(ledgerEntryItems, is(not(nullOrEmptyCollection())));
         assertThat(ledgerEntryItems, hasSize(2));
 
+        String failMessage = null;
         for (LedgerEntry ledgerEntry : billingSession.getLedgerEntryItems()) {
             if (SM_1234.equals(ledgerEntry.getProductOrderSample().getName())) {
                 assertThat(ledgerEntry, is(successfullyBilled()));
@@ -283,11 +305,23 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
             if (SM_5678.equals(ledgerEntry.getProductOrderSample().getName())) {
                 assertThat(ledgerEntry, is(unsuccessfullyBilled()));
                 assertThat(ledgerEntry.getWorkItem(), is(nullValue()));
+                failMessage = "A problem occurred attempting to post to the quote server for " +
+                              ledgerEntry.getBillingSession().getBusinessKey() +
+                              ".java.lang.RuntimeException: Intentional Work Registration Failure!";
             }
+        }
+        String successMessagePattern = "Work item \'" + GOOD_WORK_ID + "\' with completion date .*";
+        assertThat(failMessage, notNullValue());
+
+        assertThat(testLogHandler.messageMatches(failMessage), is(true));
+        Collection<LogRecord> successLogs = testLogHandler.findLogs(successMessagePattern);
+        assertThat(successLogs.isEmpty(), is(false));
+        for (LogRecord successLog : successLogs) {
+            assertThat(successLog.getLevel(), is(Level.INFO));
         }
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+    @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
     public void testMultipleFailure() {
 
         String[] sampleNameList = {"SM-2342", "SM-9291", "SM-2349", "SM-9944", "SM-4444", "SM-4441", "SM-1112",
@@ -334,10 +368,10 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
                    quoteImportItems.size(), is(equalTo(0)));
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+    @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
     public void testNoForcedFailures() {
 
-        System.out.println("Running no forced failures threaded");
+        log.debug("Running no forced failures threaded");
 
         String[] sampleNameList = {"SM-2342", "SM-9291", "SM-2349", "SM-9944", "SM-4444", "SM-4441", "SM-1112",
                 "SM-4488"};
@@ -357,5 +391,21 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
 
         List<QuoteImportItem> quoteImportItems = billingSession.getUnBilledQuoteImportItems(priceListCache);
+    }
+
+    @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
+    public void testBillingAdaptorLog() {
+        BillingAdaptor adaptor = new BillingAdaptor();
+        PriceItem priceItem = new PriceItem("quoteServerId", "myPlatform", "myCategory", "importItemName");
+        LedgerEntry ledgerEntry1 = new LedgerEntry(new ProductOrderSample("SM-1234"), priceItem, new Date(), 5);
+        LedgerEntry ledgerEntry2 = new LedgerEntry(new ProductOrderSample("SM-5678"), priceItem, new Date(), 5);
+        List<LedgerEntry> ledgerItems = Arrays.asList(ledgerEntry1, ledgerEntry2);
+        QuoteImportItem quoteImportItem =
+                new QuoteImportItem("QUOTE-1", priceItem, "priceType", ledgerItems, new Date());
+        QuotePriceItem quotePriceItem = new QuotePriceItem();
+
+        adaptor.logBilling("1243", quoteImportItem, quotePriceItem, new HashSet<>(Arrays.asList("PDO-1", "PDO-2")));
+        Assert.assertEquals(testLogHandler.getLogs().size(), 1);
+        Assert.assertEquals(TestUtils.getFirst(testLogHandler.getLogs()).getLevel(), Level.INFO);
     }
 }

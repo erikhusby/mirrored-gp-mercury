@@ -4,7 +4,7 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"/>
 
-<c:if test="${actionBean.creating}">
+<c:if test="${actionBean.regulatoryInformationNew}">
     <p id="addRegInfoInstructions">Fill in the details below to add new regulatory information to Mercury and this research project.</p>
 </c:if>
 
@@ -20,7 +20,7 @@
 
         <div class="controls">
             <div id="identifierDisplay" class="form-value">${actionBean.regulatoryInfoIdentifier}</div>
-            <c:if test="${actionBean.creating}">
+            <c:if test="${actionBean.regulatoryInformationNew}">
                 <stripes:hidden id="identifier" name="regulatoryInfoIdentifier" value="${actionBean.regulatoryInfoIdentifier}"/>
             </c:if>
         </div>
@@ -28,7 +28,7 @@
 
     <%-- Type --%>
     <c:choose>
-        <c:when test="${actionBean.creating}">
+        <c:when test="${actionBean.regulatoryInformationNew}">
             <div id="regInfoTypeEdit" class="control-group">
                 <stripes:label for="regulatoryInfoType" class="control-label">Type</stripes:label>
                 <div class="controls">
@@ -56,6 +56,10 @@
         <stripes:label for="alias" class="control-label">Protocol Title</stripes:label>
         <div class="controls">
             <d-stripes:text id="titleInput" name="regulatoryInfoAlias" required="required"/>
+            <span class="help-inline">
+                <i class="icon-question-sign" title="Examples" rel="popover" data-trigger="hover" data-placement="right" data-html="true"
+                   data-content="<ul><li>NHGRI Medical Sequencing Program</li><li>Exome Sequencing of Vienna Colorectal Cancer Cohort</li><li>Genetics of Epilepsy and Related Disorders</li></ul>"></i>
+            </span>
             <p id="titleValidationError"></p>
         </div>
     </div>
@@ -64,7 +68,7 @@
     <div class="control-group">
         <div class="controls">
             <c:choose>
-                <c:when test="${actionBean.creating}">
+                <c:when test="${actionBean.regulatoryInformationNew}">
                     <stripes:submit id="addNewSubmit" name="addNewRegulatoryInfo" value="Add" class="btn btn-primary"/>
                     <%-- Hidden action is needed because of the validateTitle() submit handler. See below. --%>
                     <input type="hidden" name="<%= ResearchProjectActionBean.ADD_NEW_REGULATORY_INFO_ACTION %>">
@@ -80,6 +84,8 @@
 </stripes:form>
 
 <script type="text/javascript">
+    $j('i.icon-question-sign').popover();
+
     function validateTitle(event) {
         event.preventDefault();
         var form = this;
@@ -93,7 +99,7 @@
             dataType: 'text',
             success: function handleTitleValidation(result) {
                 if (result) {
-                    $j('#titleValidationError').text('Title is already in use by ' + result + '.');
+                    $j('#titleValidationError').text(result);
                 } else {
                     /*
                      * When submitting the form this way, the submit button's name does not get submitted with the rest

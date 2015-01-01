@@ -5,6 +5,7 @@ import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
 import javax.persistence.ManyToMany;
+import java.util.Date;
 import java.util.Set;
 
 /**
@@ -17,8 +18,10 @@ public class GenericReagent extends Reagent {
     @ManyToMany(mappedBy = "reagentContents")
     private Set<LabVessel> containers;
 
-    public GenericReagent(String reagentName, String lot/*, MolecularEnvelope molecularEnvelope*/) {
-        super(reagentName, lot);
+    public GenericReagent(String reagentName,
+                          String lot, /*, MolecularEnvelope molecularEnvelope*/
+                          Date expiration) {
+        super(reagentName, lot, expiration);
     }
 
     protected GenericReagent() {

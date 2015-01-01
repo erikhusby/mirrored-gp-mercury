@@ -1,12 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -200,8 +200,8 @@ public class WorkflowTest {
             put(BSPSampleSearchColumn.PARTICIPANT_ID, "PT-1234");
         }};
 
-        TwoDBarcodedTube twoDBarcodedTube = new TwoDBarcodedTube("00001234");
-        twoDBarcodedTube.addSample(new MercurySample("SM-1234", new BSPSampleDTO(dataMap)));
+        BarcodedTube barcodedTube = new BarcodedTube("00001234");
+        barcodedTube.addSample(new MercurySample("SM-1234", new BspSampleData(dataMap)));
 
         WorkflowLoader workflowLoader = new WorkflowLoader();
         WorkflowConfig workflowConfig1 = workflowLoader.load();
@@ -209,7 +209,7 @@ public class WorkflowTest {
         boolean meetsCriteria = false;
         for (WorkflowBucketDef workflowBucketDef : exomeExpressWorkflow.getEffectiveVersion().getBuckets()) {
             if (workflowBucketDef.getName().equals("Pico/Plating Bucket")) {
-                meetsCriteria = workflowBucketDef.meetsBucketCriteria(twoDBarcodedTube);
+                meetsCriteria = workflowBucketDef.meetsBucketCriteria(barcodedTube);
             }
         }
         Assert.assertTrue(meetsCriteria, "Meets criteria is not true");
@@ -228,8 +228,8 @@ public class WorkflowTest {
                     put(BSPSampleSearchColumn.PARTICIPANT_ID, "PT-2345");
                 }};
 
-        TwoDBarcodedTube twoDBarcodedTube = new TwoDBarcodedTube("00002345");
-        twoDBarcodedTube.addSample(new MercurySample("SM-2345", new BSPSampleDTO(dataMap)));
+        BarcodedTube barcodedTube = new BarcodedTube("00002345");
+        barcodedTube.addSample(new MercurySample("SM-2345", new BspSampleData(dataMap)));
 
         WorkflowLoader workflowLoader = new WorkflowLoader();
         WorkflowConfig workflowConfig1 = workflowLoader.load();
@@ -237,7 +237,7 @@ public class WorkflowTest {
         boolean meetsCriteria = true;
         for (WorkflowBucketDef workflowBucketDef : exomeExpressWorkflow.getEffectiveVersion().getBuckets()) {
             if (workflowBucketDef.getName().equals("Pico/Plating Bucket")) {
-                meetsCriteria = workflowBucketDef.meetsBucketCriteria(twoDBarcodedTube);
+                meetsCriteria = workflowBucketDef.meetsBucketCriteria(barcodedTube);
             }
         }
         Assert.assertFalse(meetsCriteria, "Bucket criteria should have failed.");

@@ -5,7 +5,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import java.util.Date;
@@ -33,22 +33,22 @@ public class LabEventTestFactory {
         return event;
     }
 
-    public static TubeFormation makeTubeFormation(TwoDBarcodedTube... tubes) {
-        Map<VesselPosition, TwoDBarcodedTube> positionMap = new HashMap<>();
+    public static TubeFormation makeTubeFormation(BarcodedTube... tubes) {
+        Map<VesselPosition, BarcodedTube> positionMap = new HashMap<>();
         int i = 0;
-        for (TwoDBarcodedTube tube : tubes) {
+        for (BarcodedTube tube : tubes) {
             positionMap.put(VesselPosition.values()[i], tube);
             i++;
         }
         return new TubeFormation(positionMap, Matrix96);
     }
 
-    public static TubeFormation makeTubeFormation(VesselPosition[] positions, TwoDBarcodedTube[] tubes) {
+    public static TubeFormation makeTubeFormation(VesselPosition[] positions, BarcodedTube[] tubes) {
         assertThat("There must be at least as many positions as tubes",
                 positions.length, greaterThanOrEqualTo(tubes.length));
-        Map<VesselPosition, TwoDBarcodedTube> positionMap = new HashMap<>();
+        Map<VesselPosition, BarcodedTube> positionMap = new HashMap<>();
         for (int i = 0; i < tubes.length; i++) {
-            TwoDBarcodedTube tube = tubes[i];
+            BarcodedTube tube = tubes[i];
             VesselPosition position = positions[i];
             positionMap.put(position, tube);
         }
@@ -57,19 +57,19 @@ public class LabEventTestFactory {
 
     public static LabEvent doSectionTransfer(LabVessel source, LabVessel destination) {
         LabEvent event = new LabEvent(A_BASE, new Date(), "StaticPlateTest", 1L, 1L, "labEventTestFactory");
-        event.getSectionTransfers().add(
-                new SectionTransfer(source.getContainerRole(), ALL96, destination.getContainerRole(), ALL96, event));
+        event.getSectionTransfers().add(new SectionTransfer(source.getContainerRole(), ALL96, null,
+                destination.getContainerRole(), ALL96, null, event));
         return event;
     }
 
-    public static TubeFormation makeTubeFormation(TubeFormation normTubeFormation, TwoDBarcodedTube... tubes) {
-        Map<VesselPosition, TwoDBarcodedTube> positionMap = new HashMap<>();
+    public static TubeFormation makeTubeFormation(TubeFormation normTubeFormation, BarcodedTube... tubes) {
+        Map<VesselPosition, BarcodedTube> positionMap = new HashMap<>();
         int i = 0;
-        for (TwoDBarcodedTube tube : normTubeFormation.getContainerRole().getContainedVessels()) {
+        for (BarcodedTube tube : normTubeFormation.getContainerRole().getContainedVessels()) {
             positionMap.put(VesselPosition.values()[i], tube);
             i++;
         }
-        for (TwoDBarcodedTube tube : tubes) {
+        for (BarcodedTube tube : tubes) {
             positionMap.put(VesselPosition.values()[i], tube);
             i++;
         }

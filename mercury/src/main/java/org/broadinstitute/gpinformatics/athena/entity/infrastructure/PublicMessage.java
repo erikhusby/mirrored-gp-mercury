@@ -25,6 +25,13 @@ import javax.persistence.Table;
 @Entity
 @Table(schema = "athena")
 public class PublicMessage {
+    private PublicMessage() {
+    }
+
+    public PublicMessage(String message) {
+        this.message=message;
+    }
+
     @Id
     @SequenceGenerator(name = "SEQ_PUBLIC_MESSAGE", schema = "athena", sequenceName = "SEQ_PUBLIC_MESSAGE")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PUBLIC_MESSAGE")

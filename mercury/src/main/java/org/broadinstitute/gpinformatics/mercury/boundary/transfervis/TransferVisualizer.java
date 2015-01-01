@@ -15,7 +15,8 @@ public interface TransferVisualizer {
 
     enum AlternativeId {
         SAMPLE_ID("Sample ID"),
-        LCSET("LCSET");
+        LCSET("LCSET"),
+        BUCKET_ENTRY("Bucket Entry");
 
         private String displayName;
 

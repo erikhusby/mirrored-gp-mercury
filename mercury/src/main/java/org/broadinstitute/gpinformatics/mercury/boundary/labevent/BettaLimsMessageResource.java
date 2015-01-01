@@ -3,11 +3,9 @@ package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bettalims.BettaLimsConnector;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
-import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
 import org.broadinstitute.gpinformatics.infrastructure.ws.WsMessageStore;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
@@ -15,10 +13,10 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventTy
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.BettaLimsMessageUtils;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
@@ -26,6 +24,7 @@ import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidat
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -90,16 +89,7 @@ public class BettaLimsMessageResource {
     private BettaLimsConnector bettaLimsConnector;
 
     @Inject
-    private ThriftService thriftService;
-
-    @Inject
     private SystemRouter systemRouter;
-
-    @Inject
-    private LabVesselDao labVesselDao;
-
-    @Inject
-    private BSPUserList bspUserList;
 
     @Inject
     private WorkflowValidator workflowValidator;
@@ -109,6 +99,9 @@ public class BettaLimsMessageResource {
 
     @Inject
     private EmailSender emailSender;
+
+    @Inject
+    private UserBean userBean;
 
     /**
      * Accepts a message from (typically) a liquid handling deck.  We unmarshal ourselves, rather than letting JAX-RS
@@ -152,15 +145,16 @@ public class BettaLimsMessageResource {
 
             boolean processInMercury = false;
             boolean processInSquid = false;
+            // This has the side effect of setting the user for the audit trail.
+            LabEventType labEventType = getLabEventType(bettaLIMSMessage);
+            if (labEventType == null) {
+                throw new RuntimeException("Failed to find event type");
+            }
             if (bettaLIMSMessage.getMode() != null && bettaLIMSMessage.getMode().equals(LabEventFactory.MODE_MERCURY)) {
                 // Don't route Mercury test messages to BettalIMS/Squid
                 processInMercury = true;
                 processInSquid = false;
             } else {
-                LabEventType labEventType = getLabEventType(bettaLIMSMessage);
-                if (labEventType == null) {
-                    throw new RuntimeException("Failed to find event type");
-                }
                 LabEventType.SystemOfRecord systemOfRecord = labEventType.getSystemOfRecord();
                 if (ApplicationInstance.CRSP.isCurrent() && systemOfRecord == LabEventType.SystemOfRecord.BOTH) {
                     systemOfRecord = LabEventType.SystemOfRecord.MERCURY;
@@ -306,7 +300,7 @@ public class BettaLimsMessageResource {
     }
 
     /**
-     * Find the first event type in the message
+     * Find the first event type in the message.  Has side effect of setting the user for the audit trail.
      *
      * @param bettaLIMSMessage from deck
      *
@@ -317,6 +311,7 @@ public class BettaLimsMessageResource {
         for (PlateCherryPickEvent plateCherryPickEvent : bettaLIMSMessage.getPlateCherryPickEvent()) {
             labEventType = LabEventType.getByName(plateCherryPickEvent.getEventType());
             if (labEventType != null) {
+                login(plateCherryPickEvent);
                 break;
             }
         }
@@ -324,6 +319,7 @@ public class BettaLimsMessageResource {
             for (PlateEventType plateEventType : bettaLIMSMessage.getPlateEvent()) {
                 labEventType = LabEventType.getByName(plateEventType.getEventType());
                 if (labEventType != null) {
+                    login(plateEventType);
                     break;
                 }
             }
@@ -332,6 +328,7 @@ public class BettaLimsMessageResource {
             for (PlateTransferEventType plateTransferEventType : bettaLIMSMessage.getPlateTransferEvent()) {
                 labEventType = LabEventType.getByName(plateTransferEventType.getEventType());
                 if (labEventType != null) {
+                    login(plateTransferEventType);
                     break;
                 }
             }
@@ -341,6 +338,7 @@ public class BettaLimsMessageResource {
                     .getReceptaclePlateTransferEvent()) {
                 labEventType = LabEventType.getByName(receptaclePlateTransferEvent.getEventType());
                 if (labEventType != null) {
+                    login(receptaclePlateTransferEvent);
                     break;
                 }
             }
@@ -349,11 +347,19 @@ public class BettaLimsMessageResource {
             for (ReceptacleEventType receptacleEventType : bettaLIMSMessage.getReceptacleEvent()) {
                 labEventType = LabEventType.getByName(receptacleEventType.getEventType());
                 if (labEventType != null) {
+                    login(receptacleEventType);
                     break;
                 }
             }
         }
         return labEventType;
+    }
+
+    /**
+     * Login, so the audit trail shows the user from the message.
+     */
+    private void login(StationEventType stationEventType) {
+        userBean.login(stationEventType.getOperator());
     }
 
     /**

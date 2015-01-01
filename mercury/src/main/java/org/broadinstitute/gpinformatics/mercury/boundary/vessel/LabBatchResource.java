@@ -3,12 +3,12 @@ package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.ejb.Stateful;
@@ -34,7 +34,7 @@ public class LabBatchResource {
     static final String BSP_BATCH_PREFIX = "BP";
 
     @Inject
-    private TwoDBarcodedTubeDao twoDBarcodedTubeDao;
+    private BarcodedTubeDao barcodedTubeDao;
 
     @Inject
     private MercurySampleDao mercurySampleDao;
@@ -53,11 +53,11 @@ public class LabBatchResource {
         for (TubeBean tubeBean : labBatchBean.getTubeBeans()) {
             tubeBarcodes.add(tubeBean.getBarcode());
             if (tubeBean.getSampleBarcode() != null) {
-                mercurySampleKeys.add(new MercurySample(tubeBean.getSampleBarcode()));
+                mercurySampleKeys.add(new MercurySample(tubeBean.getSampleBarcode(), MercurySample.MetadataSource.BSP));
             }
         }
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = twoDBarcodedTubeDao.findByBarcodes(tubeBarcodes);
+        Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(tubeBarcodes);
         Map<MercurySample, MercurySample> mapSampleToSample = mercurySampleDao.findByMercurySample(mercurySampleKeys);
         LabBatch labBatch = buildLabBatch(labBatchBean, mapBarcodeToTube, mapSampleToSample);
 
@@ -82,26 +82,27 @@ public class LabBatchResource {
      * @return entity
      */
     @DaoFree
-    public LabBatch buildLabBatch(LabBatchBean labBatchBean, Map<String, TwoDBarcodedTube> mapBarcodeToTube,
+    public LabBatch buildLabBatch(LabBatchBean labBatchBean, Map<String, BarcodedTube> mapBarcodeToTube,
                                   Map<MercurySample, MercurySample> mapBarcodeToSample) {
         Set<LabVessel> starters = new HashSet<>();
         for (TubeBean tubeBean : labBatchBean.getTubeBeans()) {
-            TwoDBarcodedTube twoDBarcodedTube = mapBarcodeToTube.get(tubeBean.getBarcode());
-            if (twoDBarcodedTube == null) {
-                twoDBarcodedTube = new TwoDBarcodedTube(tubeBean.getBarcode());
-                mapBarcodeToTube.put(tubeBean.getBarcode(), twoDBarcodedTube);
+            BarcodedTube barcodedTube = mapBarcodeToTube.get(tubeBean.getBarcode());
+            if (barcodedTube == null) {
+                barcodedTube = new BarcodedTube(tubeBean.getBarcode());
+                mapBarcodeToTube.put(tubeBean.getBarcode(), barcodedTube);
             }
 
             if (tubeBean.getSampleBarcode() != null) {
-                MercurySample mercurySampleKey = new MercurySample(tubeBean.getSampleBarcode());
+                MercurySample mercurySampleKey = new MercurySample(tubeBean.getSampleBarcode(),
+                        MercurySample.MetadataSource.BSP);
                 MercurySample mercurySample = mapBarcodeToSample.get(mercurySampleKey);
                 if (mercurySample == null) {
                     mercurySample = mercurySampleKey;
                     mapBarcodeToSample.put(mercurySampleKey, mercurySample);
                 }
-                twoDBarcodedTube.addSample(mercurySample);
+                barcodedTube.addSample(mercurySample);
             }
-            starters.add(twoDBarcodedTube);
+            starters.add(barcodedTube);
         }
         return new LabBatch(labBatchBean.getBatchId(), starters,
                 labBatchBean.getBatchId().startsWith(BSP_BATCH_PREFIX) ?

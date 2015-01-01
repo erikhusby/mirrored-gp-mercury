@@ -2,9 +2,12 @@ package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.api.client.config.ClientConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactoryTest;
+import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
@@ -20,18 +23,22 @@ import java.util.Date;
 /**
  * Database test of receiving samples from BSP
  */
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.STUBBY)
 public class SampleReceiptResourceDbTest extends ContainerTest {
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("MMddHHmmss");
 
-    @Test(enabled=true, groups=TestGroups.EXTERNAL_INTEGRATION, dataProvider= Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    @Test(enabled = true, groups = TestGroups.STUBBY, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testReceiveTubes(@ArquillianResource URL baseUrl) {
+    public void testReceiveTubes(@ArquillianResource URL baseUrl) throws Exception {
         SampleReceiptBean sampleReceiptBean = LabVesselFactoryTest.buildTubes(dateFormat.format(new Date()));
         // POST to the resource
-        WebResource resource = Client.create().resource(baseUrl.toExternalForm() + "rest/samplereceipt");
-        String response= resource.type(MediaType.APPLICATION_XML_TYPE)
+
+        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
+
+        WebResource resource = Client.create(clientConfig)
+                .resource(RestServiceContainerTest.convertUrlToSecure(baseUrl) + "rest/samplereceipt");
+        String response = resource.type(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)
                 .entity(sampleReceiptBean)
                 .post(String.class);
@@ -42,4 +49,5 @@ public class SampleReceiptResourceDbTest extends ContainerTest {
         Assert.assertEquals(sampleReceiptBeanGet.getParentVesselBeans().size(),
                 sampleReceiptBean.getParentVesselBeans().size(), "Wrong number of tubes");
     }
+
 }

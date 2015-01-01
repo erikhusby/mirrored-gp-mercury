@@ -3,9 +3,9 @@ package org.broadinstitute.gpinformatics.mercury.control.vessel;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -53,11 +53,9 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
      * work is only done once.
      *
      * @param batch               instance of the Lab Batch entity for which a new LCSetT Ticket is to be created
-     * @param athenaClientService Infrastructure service to allow this factory the ability to retrieve
-     *                            {@link ProductOrder} information for the {@link LabVessel}s that comprise the
-     *                            batch entity
+     * @param productOrderDao
      */
-    public LCSetJiraFieldFactory(@Nonnull LabBatch batch, @Nonnull AthenaClientService athenaClientService) {
+    public LCSetJiraFieldFactory(@Nonnull LabBatch batch, @Nonnull ProductOrderDao productOrderDao) {
         super(batch, CreateFields.ProjectType.LCSET_PROJECT);
 
         WorkflowLoader wfLoader = new WorkflowLoader();
@@ -66,7 +64,7 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
         if (!batch.getBucketEntries().isEmpty()) {
             for (BucketEntry bucketEntry : batch.getBucketEntries()) {
-                String pdoKey = bucketEntry.getPoBusinessKey();
+                String pdoKey = bucketEntry.getProductOrder().getBusinessKey();
                 if (!pdoToVesselMap.containsKey(pdoKey)) {
                     pdoToVesselMap.put(pdoKey, new HashSet<LabVessel>());
                 }
@@ -86,7 +84,7 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
         }
 
         for (String currPdo : pdoToVesselMap.keySet()) {
-            ProductOrder pdo = athenaClientService.retrieveProductOrderDetails(currPdo);
+            ProductOrder pdo = productOrderDao.findByBusinessKey(currPdo);
 
             if (pdo != null) {
                 foundResearchProjectList.put(currPdo, pdo.getResearchProject());
@@ -220,7 +218,7 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
             int sampleCount = 0;
 
             for (LabVessel currVessel : pdoKey.getValue()) {
-                sampleCount += currVessel.getSampleInstanceCount(LabVessel.SampleType.WITH_PDO, null);
+                sampleCount += currVessel.getSampleInstanceCount(LabVessel.SampleType.PREFER_PDO, null);
             }
 
             ticketDescription.append(sampleCount).append(" samples ");

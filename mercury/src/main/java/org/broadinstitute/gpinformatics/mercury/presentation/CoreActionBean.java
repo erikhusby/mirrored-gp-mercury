@@ -36,14 +36,19 @@ import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.infrastructure.presentation.JiraLink;
 import org.broadinstitute.gpinformatics.infrastructure.presentation.PortalLink;
 import org.broadinstitute.gpinformatics.infrastructure.presentation.SampleLink;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import javax.servlet.RequestDispatcher;
 import javax.servlet.http.HttpServletResponse;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /*
  * This class is a core class to extend Stripes actions from, providing some basic functionality for
@@ -51,7 +56,7 @@ import java.util.List;
  *
  * Converted this from abstract because the report.jsp needs to instantiate to get context info
  */
-public class CoreActionBean implements ActionBean, MessageReporter {
+public abstract class CoreActionBean implements ActionBean, MessageReporter {
     private static final Log log = LogFactory.getLog(CoreActionBean.class);
 
     public static final String DATE_PATTERN = "MM/dd/yyyy";
@@ -109,6 +114,10 @@ public class CoreActionBean implements ActionBean, MessageReporter {
     // needed, this will work for any action bean. If more are needed, then ids should be used and configured directly.
     private DateRangeSelector dateRange = new DateRangeSelector(DateRangeSelector.THIS_MONTH);
 
+    @SuppressWarnings("CdiInjectionPointsInspection")
+    @Inject
+    private QuoteService quoteService;
+
     // Needed for managed bean.
     public CoreActionBean() {
     }
@@ -127,12 +136,10 @@ public class CoreActionBean implements ActionBean, MessageReporter {
         return context;
     }
 
-    @SuppressWarnings("unused")  // This is used by layout.jsp which does not know about the bean it is using.
     public String getCreateAction() {
         return CREATE_ACTION;
     }
 
-    @SuppressWarnings("unused")  // This is used by layout.jsp which does not know about the bean it is using.
     public String getEditAction() {
         return EDIT_ACTION;
     }
@@ -373,6 +380,14 @@ public class CoreActionBean implements ActionBean, MessageReporter {
         return buildInfoBean;
     }
 
+    public String getError(Map<String, Object> requestScope) {
+        return ((Throwable)requestScope.get(RequestDispatcher.ERROR_EXCEPTION)).getMessage();
+    }
+
+    public StackTraceElement[] getStackTrace(Map<String, Object> requestScope) {
+        return ((Throwable)requestScope.get(RequestDispatcher.ERROR_EXCEPTION)).getStackTrace();
+    }
+
     /**
      * Get the user bean.
      *
@@ -571,6 +586,16 @@ public class CoreActionBean implements ActionBean, MessageReporter {
      */
     public String getCreateTitle() {
         return createTitle;
+    }
+
+    protected void validateQuoteId(String quoteId) {
+        try {
+            quoteService.getQuoteByAlphaId(quoteId);
+        } catch (QuoteServerException e) {
+            addGlobalValidationError("The quote ''{2}'' is not valid: {3}", quoteId, e.getMessage());
+        } catch (QuoteNotFoundException e) {
+            addGlobalValidationError("The quote ''{2}'' was not found ", quoteId);
+        }
     }
 
     /**

@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.products;
 
+import org.apache.commons.lang3.BooleanUtils;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
@@ -49,7 +50,11 @@ public class ProductDao extends GenericDao implements Serializable {
 
     public enum IncludePDMOnly {
         YES,
-        NO
+        NO;
+
+        public static IncludePDMOnly toIncludePDMOnly(boolean bool) {
+           return IncludePDMOnly.valueOf(BooleanUtils.toStringYesNo(bool).toUpperCase());
+        }
     }
 
     /**

@@ -7,7 +7,7 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.testng.Assert;
 
@@ -41,11 +41,11 @@ public class MiSeqReagentKitEntityBuilder {
 
     public MiSeqReagentKitEntityBuilder invoke() {
 
-        Map<VesselPosition, TwoDBarcodedTube> mapPositionToVessel = denatureRack.getContainerRole().getMapPositionToVessel();
+        Map<VesselPosition, BarcodedTube> mapPositionToVessel = denatureRack.getContainerRole().getMapPositionToVessel();
 
         Map<String, VesselPosition> mapBarcodeToPosition = new HashMap<>();
 
-        for (Map.Entry<VesselPosition, TwoDBarcodedTube> vesselToPosition : mapPositionToVessel.entrySet()) {
+        for (Map.Entry<VesselPosition, BarcodedTube> vesselToPosition : mapPositionToVessel.entrySet()) {
             mapBarcodeToPosition.put(vesselToPosition.getValue().getLabel(), vesselToPosition.getKey());
         }
 

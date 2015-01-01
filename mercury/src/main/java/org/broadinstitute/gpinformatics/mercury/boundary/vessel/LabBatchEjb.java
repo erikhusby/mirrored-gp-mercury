@@ -5,8 +5,8 @@ import org.apache.commons.collections4.map.LazyMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -56,8 +56,6 @@ public class LabBatchEjb {
 
     private LabBatchDao labBatchDao;
 
-    private AthenaClientService athenaClientService;
-
     private JiraService jiraService;
 
     private JiraTicketDao jiraTicketDao;
@@ -69,6 +67,8 @@ public class LabBatchEjb {
     private BucketEntryDao bucketEntryDao;
 
     private BucketEjb bucketEjb;
+
+    private ProductOrderDao productOrderDao;
 
     /**
      * Alternate create lab batch method to allow a user to define the vessels for use by their barcode.
@@ -162,7 +162,7 @@ public class LabBatchEjb {
                                    @Nonnull Set<LabVessel> vessels, @Nonnull Set<LabVessel> reworkVessels) {
         LabBatch batch =
                 new LabBatch(batchName, vessels, reworkVessels, labBatchType, workflowName, description, dueDate,
-                        important);
+                             important);
         labBatchDao.persist(batch);
 
         return batch;
@@ -249,7 +249,7 @@ public class LabBatchEjb {
             vessels.add(bucketEntry.getLabVessel());
             String tubeBarcode = bucketEntry.getLabVessel().getLabel();
             tubeBarcodeCounts.put(tubeBarcode, tubeBarcodeCounts.get(tubeBarcode) + 1);
-            pdoKeys.add(bucketEntry.getPoBusinessKey());
+            pdoKeys.add(bucketEntry.getProductOrder().getBusinessKey());
         }
 
         Set<LabVessel> reworkVessels = new HashSet<>();
@@ -257,7 +257,7 @@ public class LabBatchEjb {
             reworkVessels.add(bucketEntry.getLabVessel());
             String tubeBarcode = bucketEntry.getLabVessel().getLabel();
             tubeBarcodeCounts.put(tubeBarcode, tubeBarcodeCounts.get(tubeBarcode) + 1);
-            pdoKeys.add(bucketEntry.getPoBusinessKey());
+            pdoKeys.add(bucketEntry.getProductOrder().getBusinessKey());
         }
 
         // Validate that no tubes appear in the proposed batch more than once
@@ -275,7 +275,7 @@ public class LabBatchEjb {
 
         LabBatch batch =
                 createLabBatch(labBatchType, workflowName, batchName, description, dueDate, important, username,
-                        vessels, reworkVessels);
+                               vessels, reworkVessels);
 
         Set<BucketEntry> allBucketEntries = new HashSet<>(bucketEntries);
         allBucketEntries.addAll(reworkBucketEntries);
@@ -331,7 +331,7 @@ public class LabBatchEjb {
                             @Nonnull CreateFields.IssueType issueType) {
         try {
             AbstractBatchJiraFieldFactory fieldBuilder = AbstractBatchJiraFieldFactory
-                    .getInstance(newBatch, athenaClientService);
+                    .getInstance(newBatch, productOrderDao);
 
             if (StringUtils.isBlank(newBatch.getBatchDescription())) {
                 newBatch.setBatchDescription(fieldBuilder.generateDescription());
@@ -347,7 +347,7 @@ public class LabBatchEjb {
                 }
                 JiraIssue jiraIssue = jiraService
                         .createIssue(fieldBuilder.getProjectType(), reporter, issueType, fieldBuilder.getSummary(),
-                                fieldBuilder.getCustomFields(submissionFields));
+                                     fieldBuilder.getCustomFields(submissionFields));
 
                 JiraTicket ticket = new JiraTicket(jiraService, jiraIssue.getKey());
 
@@ -369,13 +369,13 @@ public class LabBatchEjb {
         try {
             if (childBatch.getJiraTicket() != null) {
                 jiraService.addLink(AddIssueLinkRequest.LinkType.Parentage, parentBatch.getJiraTicket().getTicketName(),
-                        childBatch.getJiraTicket()
-                                .getTicketName());
+                                    childBatch.getJiraTicket()
+                                              .getTicketName());
             }
         } catch (Exception ioe) {
             logger.error("Error attempting to link batch " + childBatch.getJiraTicket().getTicketName()
                          + " to product order " + parentBatch,
-                    ioe);
+                         ioe);
         }
     }
 
@@ -389,13 +389,13 @@ public class LabBatchEjb {
         try {
             if (childBatch.getJiraTicket() != null) {
                 jiraService.addLink(AddIssueLinkRequest.LinkType.Parentage, parentTicket,
-                        childBatch.getJiraTicket()
-                                .getTicketName());
+                                    childBatch.getJiraTicket()
+                                              .getTicketName());
             }
         } catch (Exception ioe) {
             logger.error("Error attempting to link batch " + childBatch.getJiraTicket().getTicketName()
                          + " to product order " + parentTicket,
-                    ioe);
+                         ioe);
         }
     }
 
@@ -441,7 +441,7 @@ public class LabBatchEjb {
         Set<LabVessel> labVessels = new HashSet<>();
         for (BucketEntry bucketEntry : bucketEntries) {
             labVessels.add(bucketEntry.getLabVessel());
-            pdoKeys.add(bucketEntry.getPoBusinessKey());
+            pdoKeys.add(bucketEntry.getProductOrder().getBusinessKey());
             bucketEntry.getBucket().removeEntry(bucketEntry);
         }
 
@@ -454,7 +454,7 @@ public class LabBatchEjb {
 
         for (BucketEntry entry : reworkBucketEntries) {
             reworkVessels.add(entry.getLabVessel());
-            pdoKeys.add(entry.getPoBusinessKey());
+            pdoKeys.add(entry.getProductOrder().getBusinessKey());
             entry.getBucket().removeEntry(entry);
             reworkFromBucket = entry.getBucket();
         }
@@ -465,14 +465,14 @@ public class LabBatchEjb {
         Set<CustomField> customFields = new HashSet<>();
         Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
         customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.GSSR_IDS,
-                LCSetJiraFieldFactory.buildSamplesListString(batch, reworkFromBucket)));
+                                         LCSetJiraFieldFactory.buildSamplesListString(batch, reworkFromBucket)));
 
         int sampleCount = batch.getStartingBatchLabVessels().size();
         customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.NUMBER_OF_SAMPLES,
-                sampleCount));
+                                         sampleCount));
 
         AbstractBatchJiraFieldFactory fieldBuilder = AbstractBatchJiraFieldFactory
-                .getInstance(batch, athenaClientService);
+                .getInstance(batch, productOrderDao);
 
         if (StringUtils.isBlank(batch.getBatchDescription())) {
             batch.setBatchDescription(fieldBuilder.generateDescription());
@@ -482,7 +482,7 @@ public class LabBatchEjb {
         }
 
         customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.DESCRIPTION,
-                batch.getBatchDescription()));
+                                         batch.getBatchDescription()));
 
         jiraService.updateIssue(batch.getJiraTicket().getTicketName(), customFields);
 
@@ -499,11 +499,6 @@ public class LabBatchEjb {
     @Inject
     public void setLabBatchDao(LabBatchDao labBatchDao) {
         this.labBatchDao = labBatchDao;
-    }
-
-    @Inject
-    public void setAthenaClientService(AthenaClientService athenaClientService) {
-        this.athenaClientService = athenaClientService;
     }
 
     @Inject
@@ -534,5 +529,10 @@ public class LabBatchEjb {
     @Inject
     public void setBucketEntryDao(BucketEntryDao bucketEntryDao) {
         this.bucketEntryDao = bucketEntryDao;
+    }
+
+    @Inject
+    public void setProductOrderDao(ProductOrderDao productOrderDao) {
+        this.productOrderDao = productOrderDao;
     }
 }

@@ -1,18 +1,21 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
 import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -35,6 +38,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 /**
  * Tests InitialTare and SampleReceipt messages
  */
+@Test(groups = TestGroups.STANDARD)
 public class VesselWeightTest extends Arquillian {
 
     @Inject
@@ -44,10 +48,10 @@ public class VesselWeightTest extends Arquillian {
     private BettaLimsMessageResource bettaLimsMessageResource;
 
     @Inject
-    private BSPSampleDataFetcher bspSampleDataFetcher;
+    private SampleDataFetcher sampleDataFetcher;
 
     @Inject
-    private TwoDBarcodedTubeDao twoDBarcodedTubeDao;
+    private BarcodedTubeDao barcodedTubeDao;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -63,8 +67,8 @@ public class VesselWeightTest extends Arquillian {
         BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(false);
         // Can't find a BSP web service to create tubes, so have to use existing
         List<String> tubeBarcodes = new ArrayList<>();
-        tubeBarcodes.add("1073785008");
-        tubeBarcodes.add("1069803776");
+        tubeBarcodes.add("1075671760");
+        tubeBarcodes.add("1075671761");
         PlateEventType initialTareEvent = bettaLimsMessageTestFactory.buildRackEvent(
                 LabEventType.INITIAL_TARE.getName(), "TARETEST", tubeBarcodes);
         Random random = new SecureRandom();
@@ -76,13 +80,15 @@ public class VesselWeightTest extends Arquillian {
         initialTareMessage.getPlateEvent().add(initialTareEvent);
         bettaLimsMessageResource.processMessage(initialTareMessage);
 
-        TwoDBarcodedTube tube1 = twoDBarcodedTubeDao.findByBarcode(tubeBarcodes.get(0));
+        BarcodedTube tube1 = barcodedTubeDao.findByBarcode(tubeBarcodes.get(0));
         Assert.assertEquals(tube1.getReceptacleWeight(), tube1Tare);
 
         // Verify that BSP Tare Weight annotation is set
         // http://bsp/ws/bsp/sample/gettareweight?manufacturer_barcodes=1082117278
         String getTareWeightUrl = bspConfig.getWSUrl("sample/gettareweight");
-        Client client = Client.create();
+        ClientConfig clientConfig = JerseyUtils.getClientConfigAcceptCertificate();
+
+        Client client = Client.create(clientConfig);
         client.addFilter(new HTTPBasicAuthFilter(bspConfig.getLogin(), bspConfig.getPassword()));
         String response = client.resource(getTareWeightUrl)
                 .queryParam("manufacturer_barcodes", tubeBarcodes.get(0))
@@ -115,7 +121,7 @@ public class VesselWeightTest extends Arquillian {
 
         // Verify that BSP volume is set
         Map<String, GetSampleDetails.SampleInfo> mapBarcodeToSampleInfo =
-                bspSampleDataFetcher.fetchSampleDetailsByMatrixBarcodes(tubeBarcodes);
+                sampleDataFetcher.fetchSampleDetailsByBarcode(tubeBarcodes);
         Assert.assertEquals(mapBarcodeToSampleInfo.get(tubeBarcodes.get(0)).getVolume(), tube1Volume.floatValue());
     }
 }

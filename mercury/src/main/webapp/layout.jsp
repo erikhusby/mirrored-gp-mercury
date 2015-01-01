@@ -1,8 +1,13 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
-<stripes:useActionBean var="bean"
-                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean"/>
+<%--@elvariable id="pageTitle" type="java.lang.String"--%>
+<%--@elvariable id="sectionTitle" type="java.lang.String"--%>
+<%--@elvariable id="businessKeyValue" type="java.lang.String"--%>
+<%--@elvariable id="showCreate" type="java.lang.Boolean"--%>
+<%--@elvariable id="buildInfoBean" type="org.broadinstitute.gpinformatics.athena.boundary.BuildInfoBean"--%>
+<%--@elvariable id="userBean" type="org.broadinstitute.gpinformatics.mercury.presentation.UserBean"--%>
+<%--@elvariable id="actionBean" type="org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean"--%>
 
 <stripes:layout-definition>
 
@@ -90,6 +95,14 @@
 
                 // add clear box to filter
                 $j('.dataTables_filter input').clearable();
+
+                // Capture session timeouts in ajax calls
+                $j(document).ajaxSuccess(function(evt, request, settings){
+                    if (request.responseText.indexOf('timeout_page_flag') != -1)
+                        // Force signin to not forward to ajax request
+                        location.href = "${ctxpath}/security/security.action?ajax=reset";
+                });
+
                 setupMercuryMessage();
             });
 
@@ -141,18 +154,19 @@
                 <img src="${ctxpath}/images/broad_logo.png" alt="Broad Institute"/>
                 <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.security.SecurityActionBean"
                               style="padding-left: 30px;text-decoration: none; font-family: 'Carrois Gothic SC', sans-serif; font-size: 2.2em;">
-                    <img src="${ctxpath}/images/mercury_helmet_${bean.buildInfoBean.deployment}.png"
+                    <img src="${ctxpath}/images/mercury_helmet_${buildInfoBean.deployment}.png"
                          alt="Mercury Helmet" width="40" height="30"/> Mercury</stripes:link>
             </div>
             <div id="navbarForm" class="nav pull-right">
                         <span id="jiraProblem" class="badge" style="cursor: pointer;"
                               title="Click here to send a bug report or feedback">Feedback</span>
 
-                <c:if test="${bean.context.username ne null}">
+                <c:if test="${userBean.loginUserName ne null}">
                     |
-                         <span id="userBadge" class="badge ${bean.userBean.badgeClass}" style="cursor: help;"
+                         <span id="userBadge" class="badge ${userBean.badgeClass}" style="cursor: help;"
                                data-original-title="Account Info" rel="popover" data-placement="bottom"
-                               data-content="<b class='${bean.userBean.bspStatusClass}'>${bean.userBean.bspStatus}</b><br/><b class='${bean.userBean.jiraStatusClass}'>${bean.userBean.jiraStatus}</b><br/>${bean.userBean.rolesString}">${bean.userBean.loginUserName}</span>
+                               data-content="<b class='${userBean.bspStatusClass}'>${userBean.bspStatus}</b><br/>
+                               <b class='${userBean.jiraStatusClass}'>${userBean.jiraStatus}</b><br/>${userBean.rolesString}">${userBean.loginUserName}</span>
 
                     &#160;
                     <stripes:link
@@ -168,7 +182,7 @@
 
     <nav class="row-fluid">
         <stripes:layout-component name="menu">
-            <c:if test="${bean.context.username ne null}">
+            <c:if test="${userBean.loginUserName ne null}">
                 <jsp:include page="/navigation.jsp"/>
             </c:if>
         </stripes:layout-component>
@@ -212,8 +226,8 @@
     <footer>
         <p>Copyright © 2012-2013 Eli and Edythe L. Broad Institute. All rights reserved. No unauthorized use or
             disclosure is permitted.<br/>
-            Genomics Platform. ${bean.buildInfoBean.buildInformation}. Deployment
-            - ${bean.buildInfoBean.deployment}.</p>
+            Genomics Platform. ${buildInfoBean.buildInformation}. Deployment
+            - ${buildInfoBean.deployment}.</p>
     </footer>
 
     </html>

@@ -12,6 +12,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.MiSeqReagentKitDao;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -25,6 +26,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 /**
  * Fixup production Lab Vessel entities
  */
+@Test(groups = TestGroups.FIXUP)
 public class ReagentKitFixupTest extends Arquillian {
     @Inject
     private MiSeqReagentKitDao miSeqReagentKitDao;

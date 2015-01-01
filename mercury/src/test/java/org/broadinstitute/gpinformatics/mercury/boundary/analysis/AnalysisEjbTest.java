@@ -20,7 +20,7 @@ import javax.inject.Inject;
  * This test class works the analysis ejb and the associated DAOs to cover the kinds of queries and saves that
  * will typically be perormed.
  */
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+@Test(groups = TestGroups.STUBBY, enabled = true)
 public class AnalysisEjbTest extends ContainerTest {
 
     @Inject

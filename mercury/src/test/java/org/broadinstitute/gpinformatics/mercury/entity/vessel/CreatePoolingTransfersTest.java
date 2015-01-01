@@ -2,8 +2,9 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
@@ -19,15 +20,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STUBBY;
 
 /**
  * Imports from Squid the pooling transfers that were done in the user interface, before this transfer was messaged.
  */
+@Test(groups = TestGroups.STUBBY)
 public class CreatePoolingTransfersTest extends ContainerTest {
 
     @Inject
-    private TwoDBarcodedTubeDao twoDBarcodedTubeDao;
+    private BarcodedTubeDao barcodedTubeDao;
 
     @Inject
     private LabEventDao labEventDao;
@@ -38,7 +40,7 @@ public class CreatePoolingTransfersTest extends ContainerTest {
     @Inject
     BSPUserList bspUserList;
 
-    @Test(enabled = false, groups = EXTERNAL_INTEGRATION)
+    @Test(enabled = false, groups = STUBBY)
     public void testImport() throws ParseException {
         Query nativeQuery = entityManager.createNativeQuery("SELECT " +
                                                             "    r.barcode as source_tube_barcode, " +
@@ -125,17 +127,17 @@ public class CreatePoolingTransfersTest extends ContainerTest {
                             eventDate, eventLocation, 1L, bspUserList.getByUsername(operator).getUserId(),
                             "createPoolingTransfersTest");
 
-                    TwoDBarcodedTube targetTube = twoDBarcodedTubeDao.findByBarcode(targetTubeBarcode);
+                    BarcodedTube targetTube = barcodedTubeDao.findByBarcode(targetTubeBarcode);
                     if (targetTube == null) {
-                        targetTube = new TwoDBarcodedTube(targetTubeBarcode);
+                        targetTube = new BarcodedTube(targetTubeBarcode);
                     }
 
-                    Map<String, TwoDBarcodedTube> mapBarcodeToSourceTube =
-                            twoDBarcodedTubeDao.findByBarcodes(sourceTubeBarcodes);
+                    Map<String, BarcodedTube> mapBarcodeToSourceTube =
+                            barcodedTubeDao.findByBarcodes(sourceTubeBarcodes);
                     for (String tubeBarcode : sourceTubeBarcodes) {
-                        TwoDBarcodedTube sourceTube = mapBarcodeToSourceTube.get(tubeBarcode);
+                        BarcodedTube sourceTube = mapBarcodeToSourceTube.get(tubeBarcode);
                         if (sourceTube == null) {
-                            sourceTube = new TwoDBarcodedTube(tubeBarcode);
+                            sourceTube = new BarcodedTube(tubeBarcode);
                         }
                         genericLabEvent.getVesselToVesselTransfers().add(new VesselToVesselTransfer(
                                 sourceTube,

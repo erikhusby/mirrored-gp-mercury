@@ -1,5 +1,3 @@
-<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
-<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
@@ -13,7 +11,27 @@
 
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
+            function getParameterByName(name) {
+                name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+                var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+                    results = regex.exec(location.search);
+                return results == null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+            }
+
             $j(document).ready(function () {
+                $j( "#tabs" ).tabs({
+                active: getParameterByName("rpSelectedTab"),
+                    beforeLoad: function(event, ui) {
+                        if (ui.panel.children('form').length == 0) {
+                            if (ui.panel.children('p.loading').length == 0) {
+                                $j('<p>').addClass('loading').append('Loading...').appendTo(ui.panel);
+                            }
+                        } else {
+                            event.preventDefault();
+                        }
+                    }
+                });
+
                 $j('#addRegulatoryInfoDialog').dialog({
                     autoOpen: false,
                     height: 500,
@@ -34,10 +52,19 @@
                 });
 
                 setupDialogs();
+
+                var selectedTabValue = '${actionBean.rpSelectedTab}';
+
+                if(selectedTabValue !== "") {
+                    $j("#tabs").tabs("load",'${actionBean.rpSelectedTab}');
+                    $j("#tabs").tabs({active: eval('${actionBean.rpSelectedTab}')});
+                }
             });
 
             function showBeginCollaboration() {
                 $j("#dialogAction").attr("name", "beginCollaboration");
+                // Make sure email field's show/hide state is correct.
+                updateEmailField();
                 $j("#confirmDialog").dialog("open");
             }
 
@@ -60,10 +87,13 @@
                             text: "OK",
                             click: function () {
                                 $j(this).dialog("close");
+                                <% // This sets  up the hidden fields with the values from the dialog. %>
                                 $j("#confirmOkButton").attr("disabled", "disabled");
                                 $j("#selectedCollaborator").attr("value", $j("#collaboratorId").val());
                                 $j("#specifiedCollaborator").attr("value", $j("#emailTextId").val());
                                 $j("#collaborationMessage").attr("value", $j("#collaborationMessageId").val());
+                                $j("#collaborationQuoteId").attr("value", $j("#collaborationQuoteIdId").val());
+                                $j("#sampleKitShipping").attr("value", $j("#sampleKitShippingId").val());
                                 $j("#projectForm").submit();
                             }
                         },
@@ -142,34 +172,56 @@
         <stripes:form beanclass="${actionBean.class.name}" id="projectForm" class="form-horizontal">
 
             <div id="confirmDialog" style="width:600px;display:none;">
-                <p>
-                    Publish this Research Project on the Collaboration Portal. If the collaborator is not set up on the
-                    Portal an invitation will be sent.
+                <p style="margin-bottom: 10px">
+                    Begin a collaboration on the Portal with this Research Project.
                 </p>
+                <div class="form-horizontal">
+                    <div class="control-group">
+                        <%-- Hardcoded values to override the settings from control-label so this dialog looks OK. --%>
+                        <%-- Someday we should add classes to generally handle forms in dialogs. --%>
+                        <stripes:label style="width:80px" class="control-label" for="collaboratorId">Collaborator *</stripes:label>
+                        <div class="controls" style="margin-left:90px">
+                            <stripes:select id="collaboratorId" name="selectedCollaborator" onchange="updateEmailField()">
+                                <stripes:option label="Choose a Collaborator" value=""/>
+                                <c:if test="${not empty actionBean.externalCollaboratorList.tokenObjects}">
+                                    <optgroup label="Project Collaborators">
+                                        <stripes:options-collection collection="${actionBean.externalCollaboratorList.tokenObjects}"
+                                                                    value="userId" label="fullName"/>
+                                    </optgroup>
+                                </c:if>
 
-                <label style="float:left;margin-right:10px;width:auto;" for="collaboratorId">Collaborator *</label>
-                <stripes:select id="collaboratorId" name="selectedCollaborator" onchange="updateEmailField()">
-                    <stripes:option  label="Choose a Collaborator" value=""/>
+                                <optgroup label="Other">
+                                    <stripes:option id="emailId" label="Email Address" value=""/>
+                                </optgroup>
+                            </stripes:select>
+                            <stripes:text class="defaultText" id="emailTextId"
+                                          name="specifiedCollaborator" maxlength="250"/>
+                        </div>
+                    </div>
 
-                    <c:if test="${not empty actionBean.externalCollaboratorList.tokenObjects}">
-                        <optgroup label="Project Collaborators">
-                            <stripes:options-collection collection="${actionBean.externalCollaboratorList.tokenObjects}"
-                                                        value="userId" label="fullName"/>
-                        </optgroup>
-                    </c:if>
+                    <div class="control-group">
+                        <stripes:label style="width:80px" class="control-label" for="collaborationQuoteIdId">Quote *</stripes:label>
+                        <div class="controls" style="margin-left:90px">
+                            <stripes:text id="collaborationQuoteIdId" name="collaborationQuoteId" class="defaultText" title="Enter the Quote ID"/>
+                        </div>
+                    </div>
 
-                    <optgroup label="Other">
-                        <stripes:option id="emailId" label="Email Address" value=""/>
-                    </optgroup>
-                </stripes:select>
-                <stripes:text class="defaultText" style="display:none;margin-left:4px;width:240px;" id="emailTextId"
-                              name="specifiedCollaborator" maxlength="250"/>
+                    <div class="control-group">
+                        <stripes:label style="width:80px" class="control-label" for="sampleKitShippingId">Send Kits To *</stripes:label>
+                        <div class="controls" style="margin-left:90px">
+                            <stripes:select id="sampleKitShippingId" name="sampleKitRecipient">
+                                <stripes:options-enumeration label="displayName"
+                                        enum="org.broadinstitute.gpinformatics.athena.boundary.projects.SampleKitRecipient"/>
+                            </stripes:select>
+                        </div>
+                    </div>
 
-                <p style="clear:both">
-                    <label for="collaborationMessage">Optional message to send to collaborator</label>
-                </p>
+                    <p style="clear:both">
+                        <label for="collaborationMessageId">Optional message to send to collaborator</label>
+                    </p>
 
-                <textarea id="collaborationMessageId" name="message" class="controlledText" cols="80" rows="4"> </textarea>
+                    <textarea id="collaborationMessageId" name="message" class="controlledText" cols="80" rows="4"> </textarea>
+                </div>
             </div>
 
             <!-- Hidden fields that are needed for operating on the current research project -->
@@ -185,7 +237,7 @@
                                     ${actionBean.editResearchProject.title}
                             </div>
 
-                            <security:authorizeBlock roles="<%= roles(Developer) %>">
+                            <c:if test="${actionBean.validCollaborationPortal}">
                                 <c:choose>
                                     <c:when test="${actionBean.invitationPending}">
                                         <div class="notificationText">
@@ -194,11 +246,13 @@
                                             </stripes:link>
                                             invitation sent to ${actionBean.getUserFullName(actionBean.collaborationData.collaboratorId)}, expires on
                                             <fmt:formatDate value="${actionBean.collaborationData.expirationDate}" pattern="${actionBean.datePattern}"/>
-                                            (<stripes:link beanclass="${actionBean.class.name}" style="font-size: x-small; font-weight: normal;">
-                                            <stripes:param name="researchProject" value="${actionBean.researchProject}"/>
-                                            <stripes:param name="resendInvitation" value=""/>
-                                            Resend Invitation
-                                        </stripes:link>)
+                                            <c:if test="${actionBean.canBeginCollaborations}">
+                                                (<stripes:link beanclass="${actionBean.class.name}" style="font-size: x-small; font-weight: normal;">
+                                                    <stripes:param name="researchProject" value="${actionBean.researchProject}"/>
+                                                    <stripes:param name="resendInvitation" value=""/>
+                                                    Resend Invitation
+                                                </stripes:link>)
+                                            </c:if>
                                         </div>
                                     </c:when>
                                     <c:when test="${actionBean.collaborationData != null}">
@@ -210,20 +264,22 @@
                                         </div>
                                     </c:when>
                                     <c:otherwise>
-                                        <div style="float:left">
-                                            <stripes:hidden id="dialogAction" name="" value=""/>
-                                            <stripes:hidden id="selectedCollaborator" name="selectedCollaborator" value=""/>
-                                            <stripes:hidden id="specifiedCollaborator" name="specifiedCollaborator" value=""/>
-                                            <stripes:hidden id="collaborationMessage" name="collaborationMessage" value=""/>
+                                        <c:if test="${actionBean.canBeginCollaborations}">
+                                            <div style="float:left">
+                                                <stripes:hidden id="dialogAction" name="" value=""/>
+                                                <stripes:hidden id="selectedCollaborator" name="selectedCollaborator" value=""/>
+                                                <stripes:hidden id="specifiedCollaborator" name="specifiedCollaborator" value=""/>
+                                                <stripes:hidden id="collaborationMessage" name="collaborationMessage" value=""/>
+                                                <stripes:hidden id="collaborationQuoteId" name="collaborationQuoteId" value=""/>
+                                                <stripes:hidden id="sampleKitShipping" name="sampleKitRecipient" value=""/>
 
-                                            <security:authorizeBlock roles="<%= roles(Developer, PM) %>">
                                                 <stripes:button name="collaborate" value="Begin Collaboration" class="btn-mini"
                                                                 style="margin-left: 10px;" onclick="showBeginCollaboration()"/>
-                                            </security:authorizeBlock>
-                                        </div>
+                                            </div>
+                                        </c:if>
                                     </c:otherwise>
                                 </c:choose>
-                            </security:authorizeBlock>
+                            </c:if>
                         </div>
                     </div>
                 </div>
@@ -236,7 +292,8 @@
                             <c:if test="${actionBean.editResearchProject.jiraTicketKey != null}">
                                 <stripes:link target="JIRA"
                                               href="${actionBean.jiraUrl(actionBean.editResearchProject.jiraTicketKey)}"
-                                              class="external">
+                                              class="external"
+                                              id="rpId">
                                     ${actionBean.editResearchProject.jiraTicketKey}
                                 </stripes:link>
                             </c:if>
@@ -250,6 +307,13 @@
 
                     <div class="controls">
                         <div class="form-value">${actionBean.editResearchProject.synopsis}</div>
+                    </div>
+                </div>
+
+                <div class="control-group view-control-group">
+                    <label class="control-label label-form">Regulatory Designation</label>
+                    <div class="controls">
+                        <div class="form-value" id="regulatoryDesignation">${actionBean.editResearchProject.regulatoryDesignationDescription}</div>
                     </div>
                 </div>
 
@@ -475,11 +539,11 @@
             <input type="hidden" id="removeRegulatoryInfoId" name="regulatoryInfoId">
             <table class="table simple">
                 <thead>
-                    <th style="width:10em">Identifier</th>
-                    <th>Protocol Title</th>
-                    <th style="width:25em">Type</th>
-                    <th style="width:5em"></th>
-                    <th style="width:9em"></th>
+                        <th style="width:10em">Identifier</th>
+                        <th>Protocol Title</th>
+                        <th style="width:25em">Type</th>
+                        <th style="width:5em"></th>
+                        <th style="width:9em"></th>
                 </thead>
                 <tbody>
                     <c:forEach items="${actionBean.editResearchProject.regulatoryInfos}" var="regulatoryInfo">
@@ -495,16 +559,23 @@
             </table>
         </stripes:form>
 
-        <div class="tableBar" style="clear:both;">
-            <h4 style="display:inline">Orders</h4>
+        <div id="tabs" class="simpletab">
+            <ul>
+                <li><a href="#ordersTab">Orders</a></li>
+                <li><stripes:link beanclass="${actionBean.class.name}" event="viewSubmissions">Submission Requests
+                        <stripes:param name="researchProject" value="${actionBean.researchProject}" />
+                        <stripes:param name="rpSelectedTab" value="<%= ResearchProjectActionBean.RESEARCH_PROJECT_SUBMISSIONS_TAB%>" />
+                    </stripes:link></li>
+            </ul>
 
-            <stripes:link title="Create product with research project ${actionBean.editResearchProject.title}"
+            <div id="ordersTab">
+
+            <stripes:link title="Create product order with research project ${actionBean.editResearchProject.title}"
                           beanclass="<%=ProductOrderActionBean.class.getName()%>" event="create" class="pull-right">
                 <stripes:param name="researchProjectKey" value="${actionBean.editResearchProject.businessKey}"/>
                 <i class="icon-plus"></i>
                 Add New Product Order
             </stripes:link>
-        </div>
 
         <table id="orderList" class="table simple">
             <thead>
@@ -554,6 +625,10 @@
                 </c:forEach>
             </tbody>
         </table>
+            </div>
+        </div>
+
+
 
     </stripes:layout-component>
 </stripes:layout-render>

@@ -3,17 +3,20 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.RackOfTubesDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
+import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -36,6 +39,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 /**
  * Fixup production Lab Vessel entities
  */
+@Test(groups = TestGroups.FIXUP)
 public class LabVesselFixupTest extends Arquillian {
 
     @Inject
@@ -54,7 +58,10 @@ public class LabVesselFixupTest extends Arquillian {
     private StaticPlateDao staticPlateDao;
 
     @Inject
-    private TwoDBarcodedTubeDao twoDBarcodedTubeDao;
+    private BarcodedTubeDao barcodedTubeDao;
+
+    @Inject
+    private UserBean userBean;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -128,6 +135,13 @@ public class LabVesselFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
+    public void fixupBsp1914() {
+        LabVessel labVessel = labVesselDao.findByIdentifier("CO-9202643");
+        labVessel.setLabel("CO-9624594");
+        labVesselDao.flush();
+    }
+
+    @Test(enabled = false)
     public void fixupZeroRacks() {
         TubeFormation tubeFormation = tubeFormationDao.findByDigest("31003665b6e8cf20071a0f6c530da6e7");
         deleteZeroRack(tubeFormation);
@@ -157,15 +171,15 @@ public class LabVesselFixupTest extends Arquillian {
      */
     @Test(enabled = false)
     public void insertWaterControls() {
-        Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube = new EnumMap<>(VesselPosition.class);
+        Map<VesselPosition, BarcodedTube> mapPositionToTube = new EnumMap<>(VesselPosition.class);
 
-        TwoDBarcodedTube twoDBarcodedTube = new TwoDBarcodedTube("0114382737");
-        twoDBarcodedTube.addSample(new MercurySample("SM-2AY8L"));
-        mapPositionToTube.put(VesselPosition.A01, twoDBarcodedTube);
+        BarcodedTube barcodedTube = new BarcodedTube("0114382737");
+        barcodedTube.addSample(new MercurySample("SM-2AY8L", MercurySample.MetadataSource.BSP));
+        mapPositionToTube.put(VesselPosition.A01, barcodedTube);
 
-        TwoDBarcodedTube twoDBarcodedTube1 = new TwoDBarcodedTube("SM-22GXJ");
-        twoDBarcodedTube.addSample(new MercurySample("SM-22GXJ"));
-        mapPositionToTube.put(VesselPosition.A02, twoDBarcodedTube1);
+        BarcodedTube barcodedTube1 = new BarcodedTube("SM-22GXJ");
+        barcodedTube.addSample(new MercurySample("SM-22GXJ", MercurySample.MetadataSource.BSP));
+        mapPositionToTube.put(VesselPosition.A02, barcodedTube1);
 
         TubeFormation tubeFormation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
         tubeFormation.addRackOfTubes(new RackOfTubes("CO-5971666", RackOfTubes.RackType.Matrix96));
@@ -173,9 +187,9 @@ public class LabVesselFixupTest extends Arquillian {
         labVesselDao.persist(tubeFormation);
 
         mapPositionToTube.clear();
-        TwoDBarcodedTube twoDBarcodedTube2 = new TwoDBarcodedTube("SM-29FPE");
-        twoDBarcodedTube2.addSample(new MercurySample("SM-29FPE"));
-        mapPositionToTube.put(VesselPosition.A01, twoDBarcodedTube2);
+        BarcodedTube barcodedTube2 = new BarcodedTube("SM-29FPE");
+        barcodedTube2.addSample(new MercurySample("SM-29FPE", MercurySample.MetadataSource.BSP));
+        mapPositionToTube.put(VesselPosition.A01, barcodedTube2);
 
         tubeFormation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
         tubeFormation.addRackOfTubes(new RackOfTubes("CO-3468604", RackOfTubes.RackType.Matrix96));
@@ -365,15 +379,15 @@ public class LabVesselFixupTest extends Arquillian {
     public void fixupGplim2367() {
         // the source tubeformation for the ShearingTransfer doesn't seem to have been used in any other transfer,
         // so it can be altered
-        TwoDBarcodedTube twoDBarcodedTube = twoDBarcodedTubeDao.findByBarcode("0159873624");
+        BarcodedTube barcodedTube = barcodedTubeDao.findByBarcode("0159873624");
         boolean found = false;
-        for (VesselContainer<?> vesselContainer : twoDBarcodedTube.getContainers()) {
+        for (VesselContainer<?> vesselContainer : barcodedTube.getContainers()) {
             for (LabEvent labEvent : vesselContainer.getTransfersFrom()) {
                 if (labEvent.getLabEventType() == LabEventType.SHEARING_TRANSFER) {
                     found = true;
                     TubeFormation tubeFormation = (TubeFormation) vesselContainer.getEmbedder();
-                    Map<VesselPosition, TwoDBarcodedTube> mapPositionToVessel =
-                            (Map<VesselPosition, TwoDBarcodedTube>) vesselContainer.getMapPositionToVessel();
+                    Map<VesselPosition, BarcodedTube> mapPositionToVessel =
+                            (Map<VesselPosition, BarcodedTube>) vesselContainer.getMapPositionToVessel();
                     changePosition(mapPositionToVessel, VesselPosition.A01, VesselPosition.A10);
                     changePosition(mapPositionToVessel, VesselPosition.A02, VesselPosition.A11);
                     changePosition(mapPositionToVessel, VesselPosition.A03, VesselPosition.A12);
@@ -401,37 +415,45 @@ public class LabVesselFixupTest extends Arquillian {
         if (!found) {
             throw new RuntimeException("Failed to find tube formation for shearing transfer");
         }
-        twoDBarcodedTubeDao.flush();
+        barcodedTubeDao.flush();
     }
 
-    private void changePosition(Map<VesselPosition, TwoDBarcodedTube> mapPositionToVessel, VesselPosition oldPosition,
+    private void changePosition(Map<VesselPosition, BarcodedTube> mapPositionToVessel, VesselPosition oldPosition,
             VesselPosition newPosition) {
-        TwoDBarcodedTube twoDBarcodedTube1 = mapPositionToVessel.get(oldPosition);
-        mapPositionToVessel.put(newPosition, twoDBarcodedTube1);
+        BarcodedTube barcodedTube1 = mapPositionToVessel.get(oldPosition);
+        mapPositionToVessel.put(newPosition, barcodedTube1);
         mapPositionToVessel.remove(oldPosition);
     }
 
     @Test(enabled = false)
     public void fixupGplim2375() {
-        TwoDBarcodedTube twoDBarcodedTube = twoDBarcodedTubeDao.findByBarcode("0116400440");
-        LabMetric labMetric = twoDBarcodedTube.getMetrics().iterator().next();
+        BarcodedTube barcodedTube = barcodedTubeDao.findByBarcode("0116400440");
+        LabMetric labMetric = barcodedTube.getMetrics().iterator().next();
         labMetric.setValue(new BigDecimal("21.75"));
-        twoDBarcodedTubeDao.flush();
+        barcodedTubeDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim2926() {
+        BarcodedTube barcodedTube = barcodedTubeDao.findByBarcode("0116404348");
+        LabMetric labMetric = barcodedTube.getMetrics().iterator().next();
+        labMetric.setValue(new BigDecimal("25.35"));
+        barcodedTubeDao.flush();
     }
 
     @Test(enabled = false)
     public void fixupGplim2367Part2() {
-        TwoDBarcodedTube twoDBarcodedTube = twoDBarcodedTubeDao.findByBarcode("0156349661");
+        BarcodedTube barcodedTube = barcodedTubeDao.findByBarcode("0156349661");
         boolean found = false;
-        for (VesselContainer<?> vesselContainer : twoDBarcodedTube.getContainers()) {
+        for (VesselContainer<?> vesselContainer : barcodedTube.getContainers()) {
             for (LabEvent labEvent : vesselContainer.getTransfersTo()) {
                 if (labEvent.getLabEventType() == LabEventType.SAMPLES_DAUGHTER_PLATE_CREATION) {
                     found = true;
                     // Intended to change position of two tubes, but discovered that the changed tube formation already
                     // exists.
 //                    TubeFormation tubeFormation = (TubeFormation) vesselContainer.getEmbedder();
-//                    Map<VesselPosition, TwoDBarcodedTube> mapPositionToVessel =
-//                            (Map<VesselPosition, TwoDBarcodedTube>) vesselContainer.getMapPositionToVessel();
+//                    Map<VesselPosition, BarcodedTube> mapPositionToVessel =
+//                            (Map<VesselPosition, BarcodedTube>) vesselContainer.getMapPositionToVessel();
 //                    changePosition(mapPositionToVessel, VesselPosition.F02, VesselPosition.B01);
 //                    changePosition(mapPositionToVessel, VesselPosition.E02, VesselPosition.F01);
 //                    tubeFormation.setLabel(TubeFormation.makeDigest(mapPositionToVessel));
@@ -444,13 +466,492 @@ public class LabVesselFixupTest extends Arquillian {
         if (!found) {
             throw new RuntimeException("Failed to find tube formation for daughter plate transfer");
         }
-        twoDBarcodedTubeDao.flush();
+        barcodedTubeDao.flush();
+    }
+
+    /*
+    * BSP had a rearray done prior to pico, and Mercury must reflect it so quant upload works.
+    */
+    @Test(enabled = false)
+    public void fixupIpi612227() {
+        BarcodedTube tube5558 = barcodedTubeDao.findByBarcode("1107705558");
+        BarcodedTube tube5548 = barcodedTubeDao.findByBarcode("1107705548");
+        BarcodedTube tube1537 = barcodedTubeDao.findByBarcode("1107851537");
+        BarcodedTube tube5557 = barcodedTubeDao.findByBarcode("1107705557");
+
+        // Get rack & tube formation from database, just because I had already done the query.
+        // select v2.label, pv.mapkey, vc.containers, v.label tube_barcode
+        // from lab_vessel v, lab_vessel_containers vc, lab_vessel_racks_of_tubes rot,
+        //      lab_vessel v2, lv_map_position_to_vessel pv
+        // where v.lab_vessel_id = vc.lab_vessel
+        // and v.lab_vessel_id = pv.map_position_to_vessel
+        // and vc.containers = rot.lab_vessel
+        // and rot.racks_of_tubes = v2.lab_vessel_id
+        // and rot.lab_vessel = pv.lab_vessel
+        // and v2.label in ('CO-9565972', 'CO-9604477')
+        // and v.label  in ('1107705558', '1107705548', '1107851537', '1107705557')
+        // order by tube_barcode;
+        //
+        // CO-9565972 B02 1221051 1107705548
+        // CO-9604477 A01 1221054 1107705548
+        // CO-9565972 H01 1221051 1107705557
+        // CO-9604477 C01 1221054 1107705557
+        // CO-9565972 A02 1221051 1107705558
+        // CO-9565972 C02 1221051 1107851537
+        // CO-9604477 B01 1221054 1107851537
+
+        VesselContainer<?> co72 = getContainerForTube(tube5548, 1221051L);
+        VesselContainer<?> co77 = getContainerForTube(tube5548, 1221054L);
+
+        Assert.assertNotNull(co72);
+        Assert.assertNotNull(co77);
+
+        TubeFormation tf72 = (TubeFormation) co72.getEmbedder();
+        TubeFormation tf77 = (TubeFormation) co77.getEmbedder();
+
+        Assert.assertNotNull(tf72);
+        Assert.assertNotNull(tf77);
+
+        Map<VesselPosition, BarcodedTube> mapPv72 =
+                (Map<VesselPosition, BarcodedTube>) co72.getMapPositionToVessel();
+        Map<VesselPosition, BarcodedTube> mapPv77 =
+                (Map<VesselPosition, BarcodedTube>) co77.getMapPositionToVessel();
+
+        // Want this:
+        //CO-9565972.H01 1107705558  SM-6AI7J
+        //CO-9565972.A02 null
+        //CO-9565972.B02 null
+        //CO-9565972.C02 null
+        //CO-9604477.A01 1107705548  SM-6AI7K
+        //CO-9604477.B01 1107851537  SM-6AI92
+        //CO-9604477.C01 1107705557  SM-6AI7I
+
+        mapPv72.put(VesselPosition.H01, tube5558);
+        mapPv72.remove(VesselPosition.A02);
+        mapPv72.remove(VesselPosition.B02);
+        mapPv72.remove(VesselPosition.C02);
+        mapPv77.put(VesselPosition.A01, tube5548);
+        mapPv77.put(VesselPosition.B01, tube1537);
+        mapPv77.put(VesselPosition.C01, tube5557);
+
+        tf72.setLabel(TubeFormation.makeDigest(mapPv72));
+        tf77.setLabel(TubeFormation.makeDigest(mapPv77));
+
+        barcodedTubeDao.flush();
+    }
+
+    private VesselContainer<?> getContainerForTube(BarcodedTube barcodedTube, Long tubeFormationId) {
+        for (VesselContainer<?> container : barcodedTube.getContainers()) {
+            if (container.getEmbedder().getLabVesselId().equals(tubeFormationId)) {
+                return container;
+            }
+        }
+        return null;
     }
 
     @Test(enabled = false)
     public void fixupGplim2449() {
         // SM-4VFD1 is in the Pico bucket twice: 0150466237, 0156371090
-        TwoDBarcodedTube oldTube = twoDBarcodedTubeDao.findByBarcode("0156371090");
-        twoDBarcodedTubeDao.remove(oldTube);
+        BarcodedTube oldTube = barcodedTubeDao.findByBarcode("0156371090");
+        barcodedTubeDao.remove(oldTube);
     }
+
+    /**
+     * This is done before importing index plates from Squid.
+     */
+    @Test(enabled = false)
+    public void fixupGplim3164() {
+        userBean.loginOSUser();
+        StaticPlate staticPlate = staticPlateDao.findByBarcode("000001814423");
+        System.out.println("Renaming plate " + staticPlate.getLabel());
+        staticPlate.setLabel("000001814423-GPLIM-3164");
+        staticPlateDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void gplim3103UpdateVolumes() {
+        userBean.loginOSUser();
+        Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(Arrays.asList(
+                "0175362322",
+                "0175362261",
+                "0175362291",
+                "0175362304",
+                "0175362254",
+                "0175362302",
+                "0175362332",
+                "0175362266",
+                "0175362256",
+                "0175362249",
+                "0175362320",
+                "0175362281",
+                "0175362316",
+                "0175362293",
+                "0175362279",
+                "0175362308",
+                "0175362257",
+                "0175362309",
+                "0175362298",
+                "0175362271",
+                "0175362314",
+                "0175362295",
+                "0175362306",
+                "0175362334",
+                "0175362258",
+                "0175362268",
+                "0175362286",
+                "0175362319",
+                "0175362335",
+                "0175362312",
+                "0175362297",
+                "0175362274",
+                "0175362326",
+                "0175362289",
+                "0175362310",
+                "0175362246",
+                "0175362255",
+                "0175362273",
+                "0175362270",
+                "0175362294",
+                "0175362305",
+                "0175362265",
+                "0175362260",
+                "0175362267",
+                "0175362243",
+                "0175362247",
+                "0175362282",
+                "0175362292",
+                "0175362245",
+                "0175362330",
+                "0175362325",
+                "0175362290",
+                "0175362315",
+                "0175362301",
+                "0175362285",
+                "0175362303",
+                "0175362283",
+                "0175362280",
+                "0175358893",
+                "0175362327",
+                "0175362263",
+                "0175362277",
+                "0175362264",
+                "0175362272",
+                "0175362262",
+                "0175362288",
+                "0175362328",
+                "0175362248",
+                "0175362311",
+                "0175362296",
+                "0175362318",
+                "0175362284",
+                "0175362241",
+                "0175362331",
+                "0175362329",
+                "0175362278",
+                "0175362269",
+                "0175362244",
+                "0175362333",
+                "0175362287",
+                "0175362317",
+                "0175362307",
+                "0175362313",
+                "0175362242",
+                "0175362259"));
+        for (Map.Entry<String, BarcodedTube> stringBarcodedTubeEntry : mapBarcodeToTube.entrySet()) {
+            BarcodedTube barcodedTube = stringBarcodedTubeEntry.getValue();
+            if (barcodedTube == null) {
+                throw new RuntimeException("Failed to find tube " + stringBarcodedTubeEntry.getKey());
+            }
+            System.out.println("Updating volume in " + barcodedTube.getLabel());
+            barcodedTube.setVolume(new BigDecimal("61"));
+        }
+        barcodedTubeDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void gplim3103UpdateVolumesNegControl() {
+        userBean.loginOSUser();
+        Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(Arrays.asList(
+                "0175362285"));
+        for (Map.Entry<String, BarcodedTube> stringBarcodedTubeEntry : mapBarcodeToTube.entrySet()) {
+            BarcodedTube barcodedTube = stringBarcodedTubeEntry.getValue();
+            if (barcodedTube == null) {
+                throw new RuntimeException("Failed to find tube " + stringBarcodedTubeEntry.getKey());
+            }
+            System.out.println("Updating volume in " + barcodedTube.getLabel());
+            barcodedTube.setVolume(new BigDecimal("131.3"));
+        }
+        barcodedTubeDao.flush();
+    }
+
+
+    @Test(enabled = false)
+    public void gplim3106FixupVolumes() {
+        userBean.loginOSUser();
+        Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(Arrays.asList(
+                "0175362322",
+                "0175362261",
+                "0175362291",
+                "0175362304",
+                "0175362254",
+                "0175362302",
+                "0175362332",
+                "0175362266",
+                "0175362256",
+                "0175362249",
+                "0175362320",
+                "0175362281",
+                "0175362316",
+                "0175362293",
+                "0175362279",
+                "0175362308",
+                "0175362257",
+                "0175362309",
+                "0175362298",
+                "0175362271",
+                "0175362314",
+                "0175362295",
+                "0175362306",
+                "0175362334",
+                "0175362258",
+                "0175362268",
+                "0175362286",
+                "0175362319",
+                "0175362335",
+                "0175362312",
+                "0175362297",
+                "0175362274",
+                "0175362326",
+                "0175362289",
+                "0175362310",
+                "0175362246",
+                "0175362255",
+                "0175362273",
+                "0175362270",
+                "0175362294",
+                "0175362305",
+                "0175362265",
+                "0175362260",
+                "0175362267",
+                "0175362243",
+                "0175362247",
+                "0175362282",
+                "0175362292",
+                "0175362245",
+                "0175362330",
+                "0175362325",
+                "0175362290",
+                "0175362315",
+                "0175362301",
+                "0175362285",
+                "0175362303",
+                "0175362283",
+                "0175362280",
+                "0175358893",
+                "0175362327",
+                "0175362263",
+                "0175362277",
+                "0175362264",
+                "0175362272",
+                "0175362262",
+                "0175362288",
+                "0175362328",
+                "0175362248",
+                "0175362311",
+                "0175362296",
+                "0175362318",
+                "0175362284",
+                "0175362241",
+                "0175362331",
+                "0175362329",
+                "0175362278",
+                "0175362269",
+                "0175362244",
+                "0175362333",
+                "0175362287",
+                "0175362317",
+                "0175362307",
+                "0175362313",
+                "0175362242",
+                "0175362259"));
+        for (Map.Entry<String, BarcodedTube> stringBarcodedTubeEntry : mapBarcodeToTube.entrySet()) {
+            BarcodedTube barcodedTube = stringBarcodedTubeEntry.getValue();
+            if (barcodedTube == null) {
+                throw new RuntimeException("Failed to find tube " + stringBarcodedTubeEntry.getKey());
+            }
+            System.out.println("Updating volume in " + barcodedTube.getLabel());
+            barcodedTube.setVolume(barcodedTube.getVolume().subtract(new BigDecimal("2.50")));
+        }
+        barcodedTubeDao.flush();
+    }
+
+
+    @Test(enabled = false)
+    public void gplim3139FixupVolumes() {
+        userBean.loginOSUser();
+        Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(Arrays.asList(
+                "0173519367","0173519410","0173519344","0173519391","0173519387","0173519377","0173519390","0173519385"
+        ));
+        BigDecimal expectedVolume = new BigDecimal("41");
+        BigDecimal correctVolume = new BigDecimal("36");
+        for (String barcode : mapBarcodeToTube.keySet()) {
+            BarcodedTube barcodedTube = mapBarcodeToTube.get(barcode);
+            if (barcodedTube == null) {
+                throw new RuntimeException("Failed to find tube " + barcode);
+            }
+            if (barcodedTube.getVolume().compareTo(expectedVolume) == 0) {
+                System.out.println("Updating volume in " + barcodedTube.getLabel() +
+                                   " from " + barcodedTube.getVolume().toString() +
+                                   " to " + correctVolume.toString());
+                barcodedTube.setVolume(correctVolume);
+            } else {
+                throw new RuntimeException("tube " + barcode + " has unexpected volume " + barcodedTube.getVolume());
+            }
+        }
+        barcodedTubeDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void gplim3140FixupVolumes() {
+        userBean.loginOSUser();
+        Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(Arrays.asList(
+                "0175358893", "0175362241", "0175362242", "0175362243", "0175362244", "0175362245", "0175362246",
+                "0175362247", "0175362248", "0175362249", "0175362254", "0175362255", "0175362256", "0175362257",
+                "0175362258", "0175362259", "0175362260", "0175362261", "0175362262", "0175362263", "0175362264",
+                "0175362265", "0175362266", "0175362267", "0175362268", "0175362269", "0175362270", "0175362271",
+                "0175362272", "0175362273", "0175362274", "0175362277", "0175362278", "0175362279", "0175362280",
+                "0175362281", "0175362282", "0175362283", "0175362284", "0175362285", "0175362286", "0175362287",
+                "0175362288", "0175362289", "0175362290", "0175362291", "0175362292", "0175362293", "0175362294",
+                "0175362295", "0175362296", "0175362297", "0175362298", "0175362301", "0175362302", "0175362303",
+                "0175362304", "0175362305", "0175362306", "0175362307", "0175362308", "0175362309", "0175362310",
+                "0175362311", "0175362312", "0175362313", "0175362314", "0175362315", "0175362316", "0175362317",
+                "0175362318", "0175362319", "0175362320", "0175362322", "0175362325", "0175362326", "0175362327",
+                "0175362328", "0175362329", "0175362330", "0175362331", "0175362332", "0175362333", "0175362334",
+                "0175362335"
+        ));
+        BigDecimal diffVolume = new BigDecimal("2.5");
+        for (String barcode : mapBarcodeToTube.keySet()) {
+            BarcodedTube barcodedTube = mapBarcodeToTube.get(barcode);
+            if (barcodedTube == null) {
+                throw new RuntimeException("Failed to find tube " + barcode);
+            }
+            System.out.println(barcodedTube.getLabel() + " has volume " + barcodedTube.getVolume());
+            barcodedTube.setVolume(barcodedTube.getVolume().add(diffVolume));
+            System.out.println("Updated to " + barcodedTube.getVolume());
+        }
+        barcodedTubeDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void gplim3154relabelTubes() {
+        userBean.loginOSUser();
+        Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(Arrays.asList(
+                "0175596971", "0175596970", "0175596969", "0175596968", "0175596967", "0175596966", "0175596965",
+                "0175596964", "0175596963", "0175596962", "0175596961", "0175596960", "0175596972", "0175596973",
+                "0175596974", "0175596975", "0175596976", "0175596977", "0175596978", "0175596979", "0175596980",
+                "0175596981", "0175596982", "0175596983", "0175596995", "0175596994", "0175596993", "0175596992",
+                "0175596991", "0175596990", "0175596989", "0175596988", "0175596987", "0175596986", "0175596985",
+                "0175596984", "0175596996", "0175596997", "0175596998", "0175596999", "0175597000", "0175597001",
+                "0175597002", "0175597003", "0175597004", "0175597005", "0175597006", "0175597007", "0175597019",
+                "0175597018", "0175597017", "0175597016", "0175597015", "0175597014", "0175597013", "0175597012",
+                "0175597011", "0175597010", "0175597009", "0175597008", "0175597020", "0175597021", "0175597022",
+                "0175597023", "0175597024", "0175597025", "0175597026", "0175597027", "0175597028", "0175597029",
+                "0175597030", "0175597031", "0175597043", "0175597042", "0175597041", "0175597040", "0175597039",
+                "0175597038", "0175597037", "0175597036", "0175597035", "0175597034", "0175597033", "0175597032",
+                "0175597044", "0175597045", "0175597046", "0175597047", "0175597048", "0175597049", "0175597050",
+                "0175597051", "0175597052", "0175597053", "0175597054", "0175597055"));
+        for (String barcode : mapBarcodeToTube.keySet()) {
+            System.out.println("Relabeling tube " + barcode);
+            BarcodedTube tube = mapBarcodeToTube.get(barcode);
+            if (tube == null) {
+                throw new RuntimeException("cannot find tube " + barcode);
+            }
+            tube.setLabel(barcode + "gplim3154");
+        }
+        barcodedTubeDao.flush();
+    }
+
+    private static class BarcodeVolume {
+        private final String barcode;
+        private final BigDecimal volume;
+
+        BarcodeVolume(String barcode, BigDecimal volume) {
+            this.barcode = barcode;
+            this.volume = volume;
+        }
+
+        public String getBarcode() {
+            return barcode;
+        }
+
+        public BigDecimal getVolume() {
+            return volume;
+        }
+    }
+
+    @Test(enabled = false)
+    public void gplim3269FixupVolumes() {
+        userBean.loginOSUser();
+        BarcodeVolume[] barcodeVolumes = {
+                new BarcodeVolume("0175349826", new BigDecimal("35.00")),
+                new BarcodeVolume("0175359203", new BigDecimal("32.00")),
+                new BarcodeVolume("0175349846", new BigDecimal("37.00")),
+                new BarcodeVolume("0175349790", new BigDecimal("18.00")),
+                new BarcodeVolume("0175349772", new BigDecimal("45.00")),
+                new BarcodeVolume("0175349817", new BigDecimal("28.00")),
+                new BarcodeVolume("0175349839", new BigDecimal("36.00"))
+        };
+        for (BarcodeVolume barcodeVolume : barcodeVolumes) {
+            BarcodedTube barcodedTube = barcodedTubeDao.findByBarcode(barcodeVolume.getBarcode());
+            if (barcodedTube == null) {
+                throw new RuntimeException("Failed to find tube " + barcodeVolume.getBarcode());
+            }
+            System.out.println("Updating " + barcodeVolume.getBarcode() + " to " + barcodeVolume.getVolume());
+            barcodedTube.setVolume(barcodeVolume.getVolume());
+        }
+        barcodedTubeDao.persist(new FixupCommentary("GPLIM-3269 volume fixup"));
+        barcodedTubeDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void gplim3247FixupVolumes() {
+        userBean.loginOSUser();
+        Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(Arrays.asList(
+                "0175569248",
+                "0175569269",
+                "0175569227",
+                "0175569290"
+        ));
+        for (Map.Entry<String, BarcodedTube> stringBarcodedTubeEntry : mapBarcodeToTube.entrySet()) {
+            if (stringBarcodedTubeEntry.getValue() == null) {
+                throw new RuntimeException("Failed to find tube " + stringBarcodedTubeEntry.getKey());
+            }
+            System.out.println("Setting " + stringBarcodedTubeEntry.getKey() + " to 0");
+            stringBarcodedTubeEntry.getValue().setVolume(new BigDecimal("0.00"));
+        }
+        barcodedTubeDao.persist(new FixupCommentary("GPLIM-3247 set volumes to 0"));
+        barcodedTubeDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void gplim3257FixupVolumes() {
+        userBean.loginOSUser();
+        Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(Arrays.asList(
+                "0175569240", "0175569239", "0175569306", "0175547419", "0175569302"
+        ));
+        BigDecimal correctVolume = BigDecimal.ZERO;
+        for (String barcode : mapBarcodeToTube.keySet()) {
+            BarcodedTube barcodedTube = mapBarcodeToTube.get(barcode);
+            if (barcodedTube == null) {
+                throw new RuntimeException("Failed to find tube " + barcode);
+            }
+            System.out.println("Updating volume for tube " + barcodedTube.getLabel() +
+                    " from " + barcodedTube.getVolume().toString() +
+                    " to " + correctVolume.toString());
+            barcodedTube.setVolume(correctVolume);
+        }
+        barcodedTubeDao.persist(new FixupCommentary("GPLIM-3257 fixup manually adjusted tube volumes."));
+        barcodedTubeDao.flush();
+    }
+
 }

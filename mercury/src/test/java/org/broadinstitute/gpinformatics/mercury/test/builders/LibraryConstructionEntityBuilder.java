@@ -75,7 +75,7 @@ public class LibraryConstructionEntityBuilder {
     public LibraryConstructionEntityBuilder invoke() {
         final LibraryConstructionJaxbBuilder libraryConstructionJaxbBuilder = new LibraryConstructionJaxbBuilder(
                 bettaLimsMessageTestFactory, testPrefix, shearCleanPlateBarcode, "IndexPlateP7", "IndexPlateP5",
-                numSamples).invoke();
+                numSamples, LibraryConstructionJaxbBuilder.TargetSystem.SQUID_VIA_MERCURY).invoke();
         pondRegRackBarcode = libraryConstructionJaxbBuilder.getPondRegRackBarcode();
         pondRegTubeBarcodes = libraryConstructionJaxbBuilder.getPondRegTubeBarcodes();
 
@@ -143,6 +143,8 @@ public class LibraryConstructionEntityBuilder {
         LabEvent indexedAdapterLigationEntity = labEventFactory.buildFromBettaLims(
                 libraryConstructionJaxbBuilder.getIndexedAdapterLigationJaxb(), mapBarcodeToVessel);
         labEventHandler.processEvent(indexedAdapterLigationEntity);
+        shearingCleanupPlate.clearCaches();
+
         // asserts
         Set<SampleInstance> postIndexingSampleInstances =
                 shearingCleanupPlate.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
@@ -191,6 +193,7 @@ public class LibraryConstructionEntityBuilder {
             LabEvent indexP5PondEnrichmentEntity = labEventFactory.buildFromBettaLims(
                     libraryConstructionJaxbBuilder.getIndexP5PondEnrichmentJaxb(), mapBarcodeToVessel);
             labEventHandler.processEvent(indexP5PondEnrichmentEntity);
+            ligationCleanupPlate.clearCaches();
         }
 
         // PostPondEnrichmentThermoCyclerLoaded

@@ -31,9 +31,38 @@ public class RackOfTubes extends LabVessel {
 
     // todo jmt create interface implemented by this and PlateType, to get display name and geometry.
     public enum RackType {
-        Matrix96("Matrix96", VesselGeometry.G12x8),
+        Abgene96SlotRack("Abgene96SlotRack", VesselGeometry.G12x8),
+        CBSStraw_Box("CBSStraw_Box", VesselGeometry.G12x8),
+        Conical15ml_10x5rack("Conical15ml_10x5rack", VesselGeometry.G4x10_NUM),
+        Conical15ml_6x6box("Conical15ml_6x6box", VesselGeometry.G6x6_NUM),
+        Conical15ml_6x6rack("Conical15ml_6x6rack", VesselGeometry.G6x6_NUM),
+        Conical50ml_3x4rack("Conical50ml_3x4rack", VesselGeometry.G4x3_NUM),
+        Conical50ml_4x4rack("Conical50ml_4x4rack", VesselGeometry.G4x4_NUM),
+        Conical50ml_8x12_quad_rack("Conical50ml_8x12_quad_rack", VesselGeometry.G12x8),
+        Conical50ml_8x3rack("Conical50ml_8x3rack", VesselGeometry.G3x8_NUM),
+        Eppendorf10x10Box("Eppendorf10x10Box", VesselGeometry.G10x10_NUM),
+        Eppendorf12x8Box("Eppendorf12x8Box", VesselGeometry.G12x8),
+        FourInch3x5Box("FourInch3x5Box", VesselGeometry.G5x3_NUM),
+        FourInch7x7Box("FourInch7x7Box", VesselGeometry.G7x7_NUM),
+        HamiltonSampleCarrier24("HamiltonSampleCarrier24", VesselGeometry.G24x1),
         HamiltonSampleCarrier32("HamiltonSampleCarrier32", VesselGeometry.G32x1),
-        HamiltonSampleCarrier24("HamiltonSampleCarrier24", VesselGeometry.G24x1);
+        Matrix48SlotRack2mL("Matrix48SlotRack2mL", VesselGeometry.G12x8),
+        Matrix96("Matrix96", VesselGeometry.G12x8),
+        Matrix96SlotRack040("Matrix96SlotRack040", VesselGeometry.G12x8),
+        Matrix96SlotRack075("Matrix96SlotRack075", VesselGeometry.G12x8),
+        Matrix96SlotRack14("Matrix96SlotRack14", VesselGeometry.G12x8),
+        Matrix96SlotRackSC05("Matrix96SlotRackSC05", VesselGeometry.G12x8),
+        Matrix96SlotRackSC14("Matrix96SlotRackSC14", VesselGeometry.G12x8),
+        SlideBox_1x10("SlideBox_1x10", VesselGeometry.G1x10_NUM),
+        SlideBox_1x25("SlideBox_1x25", VesselGeometry.G1x25_NUM),
+        SlideBox_2x50("SlideBox_2x50", VesselGeometry.G2x50_NUM),
+        ThreeInch9x9box("ThreeInch9x9box", VesselGeometry.G9x9_NUM),
+        ThreeInch_FTA_Box("ThreeInch_FTA_Box", VesselGeometry.G1x100_NUM),
+        TissueCassetteBox("TissueCassetteBox", VesselGeometry.G2x50_NUM),
+        TissueCassetteBox_7x3("TissueCassetteBox_7x3", VesselGeometry.G3x7_NUM),
+        TwoInch9x9box("TwoInch9x9box", VesselGeometry.G9x9_NUM),
+        Vacutainer12x6Rack("Vacutainer12x6Rack", VesselGeometry.G12x6_NUM),
+        Voucher_Box("Voucher_Box", VesselGeometry.G10x1_NUM);
 
         private static final Map<String, RackType> MAP_NAME_TO_RACK_TYPE =
                 new HashMap<>(RackType.values().length);
@@ -51,8 +80,8 @@ public class RackOfTubes extends LabVessel {
             }
         }
 
-        public static RackType getByName(String positionName) {
-            return MAP_NAME_TO_RACK_TYPE.get(positionName);
+        public static RackType getByName(String automationName) {
+            return MAP_NAME_TO_RACK_TYPE.get(automationName);
         }
 
         public String getDisplayName() {

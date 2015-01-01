@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
+import org.broadinstitute.gpinformatics.athena.boundary.projects.SampleKitRecipient;
+
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.Date;
 
@@ -15,6 +17,9 @@ import java.util.Date;
 @SuppressWarnings("UnusedDeclaration")
 @XmlRootElement
 public class CollaborationData {
+
+    // The person to send sample kits to.
+    private SampleKitRecipient sampleKitRecipient;
 
     // The name of the collaboration space (mercury will send this from the research project).
     private String name;
@@ -35,6 +40,8 @@ public class CollaborationData {
 
     private Date expirationDate;
 
+    private String quoteId;
+
     /** URL to view the collaboration in the portal */
     private String viewCollaborationUrl;
 
@@ -53,13 +60,16 @@ public class CollaborationData {
      * @param emailMessage The email message to the collaborator
      */
     public CollaborationData(String name, String description, String researchProjectKey, Long collaboratorId,
-                             Long projectManagerId, String emailMessage) {
+                             Long projectManagerId, String quoteId, SampleKitRecipient sampleKitRecipient,
+                             String emailMessage) {
         this.name = name;
         this.description = description;
         this.researchProjectKey = researchProjectKey;
         this.collaboratorId = collaboratorId;
         this.projectManagerId = projectManagerId;
+        this.quoteId = quoteId;
         this.emailMessage = emailMessage;
+        this.sampleKitRecipient = sampleKitRecipient;
     }
 
     public String getName() {
@@ -124,5 +134,21 @@ public class CollaborationData {
 
     public void setViewCollaborationUrl(String viewCollaborationUrl) {
         this.viewCollaborationUrl = viewCollaborationUrl;
+    }
+
+    public String getQuoteId() {
+        return quoteId;
+    }
+
+    public void setQuoteId(String quoteId) {
+        this.quoteId = quoteId;
+    }
+
+    public SampleKitRecipient getSampleKitRecipient() {
+        return sampleKitRecipient;
+    }
+
+    public void setSampleKitRecipient(SampleKitRecipient sampleKitRecipient) {
+        this.sampleKitRecipient = sampleKitRecipient;
     }
 }

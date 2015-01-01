@@ -1,20 +1,24 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.bucket;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
+import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
@@ -52,18 +56,24 @@ public class BucketEjb {
     private final LabEventFactory labEventFactory;
     private final JiraService jiraService;
     private final BucketDao bucketDao;
-    private AthenaClientService athenaClientService;
     private final LabVesselDao labVesselDao;
     private final BucketEntryDao bucketEntryDao;
     private final WorkflowLoader workflowLoader;
     private final BSPUserList bspUserList;
     private final LabVesselFactory labVesselFactory;
+    private final MercurySampleDao mercurySampleDao;
+
+    /*
+     * Uses BSPSampleDataFetcher (rather than SampleDataFetcher) to create LabVessels for samples that are in BSP but
+     * are not yet known to Mercury.
+     */
     private final BSPSampleDataFetcher bspSampleDataFetcher;
+    private final ProductOrderDao productOrderDao;
 
     private static final Log logger = LogFactory.getLog(BucketEjb.class);
 
     public BucketEjb() {
-        this(null, null, null, null, null, null, null, null, null, null);
+        this(null, null, null, null, null, null, null, null, null, null, null);
     }
 
     @Inject
@@ -71,52 +81,52 @@ public class BucketEjb {
                      JiraService jiraService,
                      BucketDao bucketDao,
                      BucketEntryDao bucketEntryDao,
-                     AthenaClientService athenaClientService,
                      LabVesselDao labVesselDao,
                      LabVesselFactory labVesselFactory,
                      BSPSampleDataFetcher bspSampleDataFetcher,
                      BSPUserList bspUserList,
-                     WorkflowLoader workflowLoader) {
+                     WorkflowLoader workflowLoader, ProductOrderDao productOrderDao, MercurySampleDao mercurySampleDao) {
         this.labEventFactory = labEventFactory;
         this.jiraService = jiraService;
         this.bucketDao = bucketDao;
         this.bucketEntryDao = bucketEntryDao;
-        this.athenaClientService = athenaClientService;
         this.labVesselDao = labVesselDao;
         this.labVesselFactory = labVesselFactory;
         this.bspSampleDataFetcher = bspSampleDataFetcher;
         this.bspUserList = bspUserList;
         this.workflowLoader = workflowLoader;
+        this.productOrderDao = productOrderDao;
+        this.mercurySampleDao = mercurySampleDao;
     }
 
     /**
      * Adds a pre-defined collection of {@link LabVessel}s to the given bucket using the specified pdoBusinessKey.
      *
-     * @param entriesToAdd         Collection of LabVessels to be added to a bucket
-     * @param bucket               the bucket that will receive the vessels (as bucket entries)
-     * @param entryType            the type of bucket entry to add
-     * @param operator             Represents the user that initiated adding the vessels to the bucket
-     * @param labEventLocation     Machine location from which operator initiated this action
-     * @param programName          Name of the program that initiated this action
-     * @param eventType            Type of the Lab Event that initiated this bucket add request
-     * @param pdoKey               Product order key for all vessels
+     * @param entriesToAdd     Collection of LabVessels to be added to a bucket
+     * @param bucket           the bucket that will receive the vessels (as bucket entries)
+     * @param entryType        the type of bucket entry to add
+     * @param operator         Represents the user that initiated adding the vessels to the bucket
+     * @param labEventLocation Machine location from which operator initiated this action
+     * @param programName      Name of the program that initiated this action
+     * @param eventType        Type of the Lab Event that initiated this bucket add request
+     * @param pdo              Product order for all vessels
      */
     public Collection<BucketEntry> add(@Nonnull Collection<LabVessel> entriesToAdd, @Nonnull Bucket bucket,
                                        BucketEntry.BucketEntryType entryType, @Nonnull String operator,
                                        @Nonnull String labEventLocation,
                                        @Nonnull String programName, LabEventType eventType,
-                                       @Nonnull String pdoKey) {
+                                       @Nonnull ProductOrder pdo) {
 
         List<BucketEntry> listOfNewEntries = new ArrayList<>(entriesToAdd.size());
         for (LabVessel currVessel : entriesToAdd) {
-            listOfNewEntries.add(bucket.addEntry(pdoKey, currVessel, entryType));
+            listOfNewEntries.add(bucket.addEntry(pdo, currVessel, entryType));
         }
 
         Set<LabEvent> eventList = new HashSet<>();
 
         //TODO SGM: Pass in Latest Batch?
         eventList.addAll(labEventFactory.buildFromBatchRequests(listOfNewEntries, operator, null, labEventLocation,
-                programName, eventType));
+                                                                programName, eventType));
 
         return listOfNewEntries;
     }
@@ -125,8 +135,8 @@ public class BucketEjb {
      * Creates batch entries for the vessels, then moves the entries from the given bucket to the given batch.
      * This is primarily used by messaging.
      *
-     * @param vesselsToBatch  the vessels to be processed
-     * @param bucket   the bucket containing the vessels
+     * @param vesselsToBatch the vessels to be processed
+     * @param bucket         the bucket containing the vessels
      */
     public void createEntriesAndBatchThem(@Nonnull Collection<LabVessel> vesselsToBatch, @Nonnull Bucket bucket) {
         moveFromBucketToCommonBatch(selectEntries(vesselsToBatch, bucket));
@@ -146,7 +156,9 @@ public class BucketEjb {
         }
     }
 
-    /** Returns the bucket entries that correspond to the specified vessels in the bucket. */
+    /**
+     * Returns the bucket entries that correspond to the specified vessels in the bucket.
+     */
     public Set<BucketEntry> selectEntries(Collection<LabVessel> vessels, Bucket bucket) {
         Set<BucketEntry> entries = new HashSet<>();
 
@@ -155,63 +167,23 @@ public class BucketEjb {
             BucketEntry entry = bucket.findEntry(vessel);
             if (entry != null) {
                 logger.debug("Adding entry " + entry.getBucketEntryId() + " for vessel " +
-                             entry.getLabVessel().getLabCentricName() + " and PDO " + entry.getPoBusinessKey() +
+                             entry.getLabVessel().getLabCentricName() + " and PDO " + entry.getProductOrder()
+                                                                                           .getBusinessKey() +
                              " to be popped from bucket.");
                 entries.add(entry);
             } else {
                 logger.debug("Attempting to pull a vessel, " + vessel.getLabel() + ", from a bucket, " +
-                        bucket.getBucketDefinitionName() + ", when it does not exist in that bucket");
+                             bucket.getBucketDefinitionName() + ", when it does not exist in that bucket");
             }
         }
         return entries;
     }
 
     /**
-     * Used for test purposes.  Takes the given number of samples from the bucket having the given product
-     * workflow and moves them into a new batch.  The batch may end up having fewer samples if the bucket
-     * runs out of suitable entries.
-     *
-     * @param numberOfSamples the number of samples to be taken.
-     * @param bucket the bucket containing the samples.
-     * @param workflow the product workflow desired
-     * @return the batch that contains the samples.
-     */
-    @DaoFree
-    public LabBatch selectEntriesAndBatchThem(int numberOfSamples, @Nonnull Bucket bucket, Workflow workflow) {
-        Set<BucketEntry> bucketEntrySet = new HashSet<>();
-        int count = 0;
-
-        // Selects entries whose product workflow matched the specified workflow.
-        Set<String> pdoKeys = new HashSet<>();
-        for (BucketEntry entry : bucket.getBucketEntries()) {
-            pdoKeys.add(entry.getPoBusinessKey());
-        }
-        Collection<ProductOrder> pdos = athenaClientService.retrieveMultipleProductOrderDetails(pdoKeys);
-        for (ProductOrder pdo : pdos) {
-            if (workflow != null && pdo.getProduct() == null ||
-                workflow == null && pdo.getProduct() != null ||
-                workflow != pdo.getProduct().getWorkflow()) {
-                    pdoKeys.remove(pdo.getBusinessKey());
-            }
-        }
-
-        for (BucketEntry entry : bucket.getBucketEntries()) {
-            if (pdoKeys.contains(entry.getPoBusinessKey())) {
-                bucketEntrySet.add(entry);
-                ++count;
-            }
-            if (count >= numberOfSamples) {
-                break;
-            }
-        }
-        return moveFromBucketToCommonBatch(bucketEntrySet);
-    }
-
-
-    /**
      * Selects the appropriate batch for the given bucket entries and moves the entries from the bucket to the batch.
      *
      * @param bucketEntries the bucket entries to be moved.
+     *
      * @return the lab batch that the entries were put into.
      */
     @DaoFree
@@ -243,13 +215,17 @@ public class BucketEjb {
         return bucketBatch;
     }
 
-    /** Removes entries from a bucket and marks them as having been extracted. */
+    /**
+     * Removes entries from a bucket and marks them as having been extracted.
+     */
     //TODO SGM  Move to a bucket factory class
     private void removeEntries(@Nonnull Collection<BucketEntry> bucketEntries) {
         removeEntries(bucketEntries, "Extracted for Batch");
     }
 
-    /** Removes entry from a bucket and gives the reason why. */
+    /**
+     * Removes entry from a bucket and gives the reason why.
+     */
     public void removeEntry(@Nonnull BucketEntry bucketEntry, String reason) {
         removeEntries(Collections.singletonList(bucketEntry), reason);
     }
@@ -259,29 +235,33 @@ public class BucketEjb {
         removeEntries(bucketEntries, reason);
     }
 
-    /** Removes entries from a bucket and gives the reason why. */
+    /**
+     * Removes entries from a bucket and gives the reason why.
+     */
     private void removeEntries(@Nonnull Collection<BucketEntry> bucketEntries, String reason) {
         for (BucketEntry currEntry : bucketEntries) {
             logger.debug("Removing entry " + currEntry.getBucketEntryId() +
                          " for vessel " + currEntry.getLabVessel().getLabCentricName() +
-                         " and PDO " + currEntry.getPoBusinessKey() +
+                         " and PDO " + currEntry.getProductOrder().getBusinessKey() +
                          " from bucket " + currEntry.getBucket().getBucketDefinitionName());
             currEntry.getBucket().removeEntry(currEntry);
         }
         jiraRemovalUpdate(bucketEntries, reason);
     }
 
-    /** Updates the product order Jira ticket for bucket entry removals. */
+    /**
+     * Updates the product order Jira ticket for bucket entry removals.
+     */
     private void jiraRemovalUpdate(@Nonnull Collection<BucketEntry> entries, String reason) {
 
         boolean isSingleEntry = (entries.size() == 1);
 
         Map<String, Collection<BucketEntry>> pdoToEntries = new HashMap<>();
         for (BucketEntry entry : entries) {
-            Collection<BucketEntry> pdoEntries = pdoToEntries.get(entry.getPoBusinessKey());
+            Collection<BucketEntry> pdoEntries = pdoToEntries.get(entry.getProductOrder().getBusinessKey());
             if (pdoEntries == null) {
                 pdoEntries = new ArrayList<>();
-                pdoToEntries.put(entry.getPoBusinessKey(), pdoEntries);
+                pdoToEntries.put(entry.getProductOrder().getBusinessKey(), pdoEntries);
             }
             pdoEntries.add(entry);
         }
@@ -324,26 +304,28 @@ public class BucketEjb {
 
     /**
      * Update the PDO for the provided {@link BucketEntry}(s)
+     *
      * @param bucketEntries Collection of bucket entries to update
-     * @param newPdoValue new value for PDO
+     * @param newPdoValue   new value for PDO
      */
     public void updateEntryPdo(@Nonnull Collection<BucketEntry> bucketEntries, @Nonnull String newPdoValue) {
         List<String> updatingList = new ArrayList<>(bucketEntries.size());
         for (BucketEntry bucketEntry : bucketEntries) {
-            bucketEntry.setPoBusinessKey(newPdoValue);
+            bucketEntry.setProductOrder(productOrderDao.findByBusinessKey(newPdoValue));
             updatingList.add(bucketEntry.getLabVessel().getLabel());
         }
         logger.info(String.format("Changing PDO to %s for %d bucket entries (%s)", newPdoValue, updatingList.size(),
-                StringUtils.join(updatingList, ", ")));
+                                  StringUtils.join(updatingList, ", ")));
 
         bucketDao.persistAll(bucketEntries);
     }
 
     /**
      * Puts the product order samples from productOrder into the appropriate bucket
+     *
      * @return the samples that were actually added to the bucket.
      */
-    public Collection<ProductOrderSample> addSamplesToBucket(ProductOrder productOrder){
+    public Collection<ProductOrderSample> addSamplesToBucket(ProductOrder productOrder) {
         return addSamplesToBucket(productOrder, productOrder.getSamples());
     }
 
@@ -385,24 +367,18 @@ public class BucketEjb {
         // Finds existing vessels for the pdo samples, or if none, then either the sample has not been received
         // or the sample is a derived stock that has not been seen by Mercury.  Creates both standalone vessel and
         // MercurySample for the latter.
-        Map<String, Collection<ProductOrderSample>> nameToSampleMap = new HashMap<>();
-        Set<String> sampleKeyList = new HashSet<>();
+        Multimap<String, ProductOrderSample> nameToSampleMap = ArrayListMultimap.create();
         for (ProductOrderSample pdoSample : samples) {
             // A pdo can have multiple samples all with same sample name but with different sample position.
             // Each one will get a MercurySample and LabVessel put into the bucket.
-            Collection<ProductOrderSample> pdoSampleList = nameToSampleMap.get(pdoSample.getName());
-            if (pdoSampleList == null) {
-                pdoSampleList = new ArrayList<>();
-                nameToSampleMap.put(pdoSample.getName(), pdoSampleList);
-            }
-            pdoSampleList.add(pdoSample);
-            sampleKeyList.add(pdoSample.getName());
+
+            nameToSampleMap.put(pdoSample.getName(), pdoSample);
         }
 
-        List<LabVessel> vessels = labVesselDao.findBySampleKeyList(sampleKeyList);
+        List<LabVessel> vessels = labVesselDao.findBySampleKeyList(nameToSampleMap.keys());
 
         // Finds samples with no existing vessels.
-        Collection<String> samplesWithoutVessel = new ArrayList<>(sampleKeyList);
+        Collection<String> samplesWithoutVessel = new ArrayList<>(nameToSampleMap.keys());
         for (LabVessel vessel : vessels) {
             for (MercurySample sample : vessel.getMercurySamples()) {
                 samplesWithoutVessel.remove(sample.getSampleKey());
@@ -413,12 +389,18 @@ public class BucketEjb {
             vessels.addAll(createInitialVessels(samplesWithoutVessel, username));
         }
 
+        Map<String, MercurySample> existingSamples = mercurySampleDao.findMapIdToMercurySample(nameToSampleMap.keys());
+
+        for (ProductOrderSample productOrderSample : nameToSampleMap.values()) {
+            if(productOrderSample.getMercurySample() == null) {
+                productOrderSample.setMercurySample(existingSamples.get(productOrderSample.getSampleKey()));
+            }
+        }
+
         Collection<LabVessel> validVessels = applyBucketCriteria(vessels, initialBucketDef);
 
         add(validVessels, initialBucket, BucketEntry.BucketEntryType.PDO_ENTRY, username,
-                LabEvent.UI_EVENT_LOCATION, LabEvent.UI_PROGRAM_NAME, initialBucketDef.getBucketEventType(),
-                order.getBusinessKey()
-        );
+            LabEvent.UI_EVENT_LOCATION, LabEvent.UI_PROGRAM_NAME, initialBucketDef.getBucketEventType(), order);
 
         if (initialBucket.getBucketId() == null) {
             bucketDao.persist(initialBucket);
@@ -443,23 +425,41 @@ public class BucketEjb {
         }
         return validVessels;
     }
+
     /**
-         * Creates LabVessels to mirror BSP receptacles based on the given BSP sample IDs.
-         *
-         * @param samplesWithoutVessel    BSP sample IDs that need LabVessels
-         * @param username                the user performing the operation leading to the LabVessels being created
-         * @return the created LabVessels
-         */
-        public Collection<LabVessel> createInitialVessels(Collection<String>samplesWithoutVessel, String username) {
-            Collection<LabVessel> vessels = new ArrayList<>();
-            Map<String, BSPSampleDTO> bspDtoMap = bspSampleDataFetcher.fetchSamplesFromBSP(samplesWithoutVessel);
-            for (String sampleName : samplesWithoutVessel) {
-                BSPSampleDTO bspDto = bspDtoMap.get(sampleName);
-                if (bspDto != null && bspDto.isSampleReceived()) {
-                    vessels.addAll(labVesselFactory
-                            .buildInitialLabVessels(sampleName, bspDto.getBarcodeForLabVessel(), username, new Date()));
+     * Creates LabVessels to mirror BSP receptacles based on the given BSP sample IDs.
+     *
+     * @param samplesWithoutVessel BSP sample IDs that need LabVessels
+     * @param username             the user performing the operation leading to the LabVessels being created
+     *
+     * @return the created LabVessels
+     */
+    public Collection<LabVessel> createInitialVessels(Collection<String> samplesWithoutVessel, String username) {
+        Map<String, BspSampleData> bspSampleDataMap = bspSampleDataFetcher.fetchSampleData(samplesWithoutVessel);
+        Collection<LabVessel> vessels = new ArrayList<>();
+        List<String> cannotAddToBucket = new ArrayList<>();
+
+        for (String sampleName : samplesWithoutVessel) {
+            BspSampleData bspSampleData = bspSampleDataMap.get(sampleName);
+
+            if (bspSampleData != null &&
+                StringUtils.isNotBlank(bspSampleData.getBarcodeForLabVessel())) {
+                if (bspSampleData.isSampleReceived()) {
+                    vessels.addAll(labVesselFactory.buildInitialLabVessels(sampleName, bspSampleData.getBarcodeForLabVessel(),
+                            username, new Date(), MercurySample.MetadataSource.BSP));
                 }
+            } else {
+                cannotAddToBucket.add(sampleName);
             }
-            return vessels;
         }
+
+        if (!cannotAddToBucket.isEmpty()) {
+            throw new BucketException(
+                    String.format("Some of the samples for the order could not be added to the bucket.  " +
+                                  "Could not find the manufacturer label for: %s",
+                                  StringUtils.join(cannotAddToBucket, ", ")));
+        }
+
+        return vessels;
+    }
 }

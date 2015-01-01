@@ -2,10 +2,13 @@ package org.broadinstitute.gpinformatics.mercury.presentation.vessel;
 
 import net.sourceforge.stripes.action.After;
 import net.sourceforge.stripes.action.DefaultHandler;
+import net.sourceforge.stripes.action.FileBean;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.controller.LifecycleStage;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.rackscan.RackScanner;
@@ -13,12 +16,14 @@ import org.broadinstitute.bsp.client.rackscan.ScannerException;
 import org.broadinstitute.bsp.client.rackscan.geometry.Dimension;
 import org.broadinstitute.bsp.client.rackscan.geometry.Geometry;
 import org.broadinstitute.bsp.client.rackscan.geometry.index.AlphaNumeric;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.RackScannerEjb;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
-import java.util.Arrays;
+import java.io.IOException;
+import java.io.Reader;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.SortedSet;
@@ -34,7 +39,7 @@ import java.util.TreeSet;
 public abstract class RackScanActionBean extends CoreActionBean {
     private static final Log log = LogFactory.getLog(CoreActionBean.class);
 
-    public static final String SHOW_SCANNING_JSP = "/vessel/rack_scanner_list.jsp";
+    public static final String SHOW_SCANNER_SELECTION_JSP = "/vessel/rack_scanner_list.jsp";
     public static final String SCAN_RESULTS_JSP = "/vessel/rack_scan_results.jsp";
     public static final String SHOW_LAB_SELECTION_JSP = "/vessel/rack_scan_lab_select.jsp";
     public static final String SCAN_EVENT = "scan";
@@ -46,18 +51,32 @@ public abstract class RackScanActionBean extends CoreActionBean {
      */
     @After(stages = LifecycleStage.BindingAndValidation)
     public void loadRackScanners() {
+        rackScanners.clear();
+        rackScanners.addAll(RackScanner.getRackScannersByLab(labToFilterBy, deployment != Deployment.PROD));
+    }
 
-        if (labToFilterBy == null) {
-            rackScanners.addAll(Arrays.asList(RackScanner.values()));
-        } else {
-            rackScanners.addAll(RackScanner.getRackScannersByLab(labToFilterBy));
+    /** Returns the rack scanner devices formatted into html dropdown option elements. */
+    @HandlesEvent("getScannersForLab")
+    public Resolution getScannerOptionTags() {
+        StringBuilder optionTags = new StringBuilder("<option value=''>Select One</option>");
+        for (RackScanner rs : rackScanners) {
+            optionTags.append("<option value='").append(rs.getName()).append("'>").
+                    append(rs.getScannerName()).append("</option>");
         }
+        return new StreamingResolution("application/html", optionTags.toString());
     }
 
     private SortedSet<RackScanner> rackScanners = new TreeSet<>(RackScanner.BY_NAME);
 
+    /** FileBean of the uploaded user-defined csv file used for rack scan simulation. */
+    private FileBean simulatedScanCsv;
+
     @Inject
     protected RackScannerEjb rackScannerEjb;
+
+    @Inject
+    protected Deployment deployment;
+
 
     /** Selected rack scanner. */
     private RackScanner rackScanner;
@@ -84,15 +103,20 @@ public abstract class RackScanActionBean extends CoreActionBean {
      */
     @HandlesEvent(SHOW_SCAN_SELECTION_EVENT)
     public Resolution showScanSelection() throws Exception {
-        return new ForwardResolution(SHOW_SCANNING_JSP);
+        return new ForwardResolution(SHOW_SCANNER_SELECTION_JSP);
     }
 
     /** Does a rack scan and sets the rackScan variable. Returns a default results jsp. */
     @HandlesEvent(SCAN_EVENT)
     public Resolution scan() throws ScannerException {
-
+        Reader reader = null;
         try {
-            rackScan = rackScannerEjb.runRackScanner(rackScanner);
+            if (simulatedScanCsv == null) {
+                rackScan = rackScannerEjb.runRackScanner(rackScanner, null);
+            } else {
+                reader = simulatedScanCsv.getReader();
+                rackScan = rackScannerEjb.runRackScanner(rackScanner, reader);
+            }
         } catch (Exception e) {
             log.error(e);
             addGlobalValidationError("Error connecting to the rack scanner. " + e.getMessage());
@@ -100,6 +124,15 @@ public abstract class RackScanActionBean extends CoreActionBean {
             rackScan = new LinkedHashMap<>();
             for (String position : getMatrixPositions()) {
                 rackScan.put(position, "");
+            }
+        } finally {
+            IOUtils.closeQuietly(reader);
+            if (simulatedScanCsv != null) {
+                try {
+                    simulatedScanCsv.delete();
+                } catch (IOException e) {
+                    log.error("Fail deleting tmp file.", e);
+                }
             }
         }
 
@@ -113,6 +146,9 @@ public abstract class RackScanActionBean extends CoreActionBean {
         if (ApplicationInstance.CRSP.isCurrent()) {
             labsBySoftwareSystems =
                     RackScanner.RackScannerLab.getLabsBySoftwareSystems(RackScanner.SoftwareSystem.CRSP_BSP);
+        } else if (deployment != Deployment.PROD) {
+            labsBySoftwareSystems = RackScanner.RackScannerLab.getLabsBySoftwareSystems(RackScanner.SoftwareSystem.BSP,
+                    RackScanner.SoftwareSystem.MERCURY_NON_PROD, RackScanner.SoftwareSystem.MERCURY);
         } else {
             labsBySoftwareSystems = RackScanner.RackScannerLab.getLabsBySoftwareSystems(RackScanner.SoftwareSystem.BSP,
                     RackScanner.SoftwareSystem.MERCURY);
@@ -124,7 +160,7 @@ public abstract class RackScanActionBean extends CoreActionBean {
         Geometry geometry = new Geometry();
         geometry.setDimension(new Dimension(8, 12));
         geometry.setIndexing(new AlphaNumeric('A', 1));
-        return geometry.getPositions();
+        return geometry.getValidPositions();
     }
 
     /** Event for the lab selection. */
@@ -175,5 +211,13 @@ public abstract class RackScanActionBean extends CoreActionBean {
 
     public void setRackScanners(SortedSet<RackScanner> rackScanners) {
         this.rackScanners = rackScanners;
+    }
+
+    public FileBean getSimulatedScanCsv() {
+        return simulatedScanCsv;
+    }
+
+    public void setSimulatedScanCsv(FileBean simulatedScanCsv) {
+        this.simulatedScanCsv = simulatedScanCsv;
     }
 }

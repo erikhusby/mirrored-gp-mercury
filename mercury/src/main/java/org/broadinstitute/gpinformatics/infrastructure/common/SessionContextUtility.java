@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.common;
 
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.weld.context.ManagedContext;
 import org.jboss.weld.context.bound.BoundSessionContext;
 
@@ -12,7 +13,7 @@ import java.util.HashMap;
 /**
  * Use this class if you need to execute some code inside a Session Context, when no current session context
  * exists.  This is useful in cases such as JMS message handlers and EJB Timers, where we need to call code
- * that injects {@link org.broadinstitute.gpinformatics.mercury.presentation.UserBean}.
+ * that injects {@link UserBean}.
  */
 public class SessionContextUtility implements Serializable {
     private static final long serialVersionUID = 20130517L;

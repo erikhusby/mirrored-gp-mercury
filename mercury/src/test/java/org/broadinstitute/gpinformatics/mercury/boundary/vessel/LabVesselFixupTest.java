@@ -23,7 +23,7 @@ import java.util.List;
 /**
  * TODO scottmat fill in javadoc!!!
  */
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.FIXUP)
 public class LabVesselFixupTest extends Arquillian {
 
     @Inject
@@ -46,7 +46,7 @@ public class LabVesselFixupTest extends Arquillian {
                 org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV, "dev");
     }
 
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @BeforeMethod(groups = TestGroups.FIXUP)
     public void setUp() throws Exception {
         if (utx == null) {
             return;
@@ -54,7 +54,7 @@ public class LabVesselFixupTest extends Arquillian {
         utx.begin();
     }
 
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @AfterMethod(groups = TestGroups.FIXUP)
     public void tearDown() throws Exception {
         // Skip if no injections, since we're not running in container.
         if (utx == null) {
@@ -65,7 +65,7 @@ public class LabVesselFixupTest extends Arquillian {
     }
 
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+    @Test(groups = TestGroups.FIXUP, enabled = false)
     public void updateNullDatesToJan1() throws Exception {
 
         List<LabVessel> fixupVessels = labVesselDao.findList(LabVessel.class, LabVessel_.createdOn, null);

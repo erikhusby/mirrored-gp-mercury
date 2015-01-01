@@ -1,32 +1,24 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
-import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.bsp.client.sample.MaterialInfoDto;
+import org.broadinstitute.bsp.client.collection.SampleCollection;
+import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.Audited;
 
-import javax.annotation.Nonnull;
 import javax.persistence.CascadeType;
-import javax.persistence.CollectionTable;
 import javax.persistence.Column;
-import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -60,7 +52,7 @@ public class ProductOrderKit implements Serializable {
 
 
     @OneToMany(mappedBy = "productOrderKit", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
-    private Set<ProductOrderKitDetail> kitOrderDetails = new HashSet();
+    private Set<ProductOrderKitDetail> kitOrderDetails = new HashSet<> ();
 
     @Column(name = "work_request_id")
     private String workRequestId;
@@ -82,6 +74,22 @@ public class ProductOrderKit implements Serializable {
 
     // Required by JPA and used when creating new pdo.
     public ProductOrderKit() {
+    }
+
+    /**
+     * This is used by the web service call that sets up work requests (in ProductOrderResource).
+     */
+    public ProductOrderKit(SampleCollection sampleCollection, Site site,
+                           List<ProductOrderKitDetail> kitDetails, boolean exomeExpress) {
+        sampleCollectionId = sampleCollection.getCollectionId();
+        sampleCollectionName = sampleCollection.getCollectionName();
+        siteId = site.getId();
+        siteName = site.getName();
+        kitOrderDetails.addAll(kitDetails);
+        this.exomeExpress = exomeExpress;
+        for (ProductOrderKitDetail kitDetail : kitDetails) {
+            kitDetail.setProductOrderKit(this);
+        }
     }
 
     // Only used by tests.

@@ -1,17 +1,15 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
@@ -31,10 +29,8 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 /**
  * This test fakes adding tubes to a pico bucket
  */
+@Test(groups = TestGroups.STANDARD)
 public class AddEntriesToPicoBucketTest extends Arquillian {
-
-    @Inject
-    private AthenaClientService athenaClientService;
 
     @Inject
     private BucketDao bucketDao;
@@ -44,6 +40,10 @@ public class AddEntriesToPicoBucketTest extends Arquillian {
     private UserTransaction utx;
     @Inject
     private WorkflowLoader workflowLoader;
+    @Inject
+    private ProductOrderDao productOrderDao;
+    @Inject
+    private SampleDataFetcher sampleDataFetcher;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -64,7 +64,7 @@ public class AddEntriesToPicoBucketTest extends Arquillian {
 
     @Test(enabled = false)
     public void addExomeExpressPicoBucketEntries() {
-        ProductOrder order = athenaClientService.retrieveProductOrderDetails("PDO-107");   //183
+        ProductOrder order = productOrderDao.findByBusinessKey("PDO-107");   //183
 
         if (order != null) {
             WorkflowConfig workflowConfig = workflowLoader.load();
@@ -83,20 +83,24 @@ public class AddEntriesToPicoBucketTest extends Arquillian {
                 }
                 for (ProductOrderSample sample : order.getSamples()) {
 
-                    MercurySample mercurySample = new MercurySample(sample.getName());
-                    String tubeBarcode = sample.getBspSampleDTO().getBarcodeForLabVessel();
-                    if (tubeBarcode != null) {
-                        //lookup the vessel... if it doesn't exist create one
-                        LabVessel vessel = labVesselDao.findByIdentifier(tubeBarcode);
-                        if (vessel == null) {
-                            vessel = new TwoDBarcodedTube(tubeBarcode);
-                        }
-                        vessel.addSample(mercurySample);
-                        // if (workingBucketIdentifier.getEntryMaterialType().getName().equals(materialType)) {
-                        workingBucket.addEntry(sample.getProductOrder().getBusinessKey(), vessel,
-                                BucketEntry.BucketEntryType.PDO_ENTRY);
-                        // }
-                    }
+/*
+The following code is commented out because it no longer compiles. It was originally was part of a fixup test which
+is now disabled. The date it was disabled was 2/7/13 with the comment "Disable fixup test."
+*/
+//                    MercurySample mercurySample = new MercurySample(sample.getName(), MercurySample.MetadataSource.BSP);
+//                    String tubeBarcode = sample.getSampleData().getBarcodeForLabVessel();
+//                    if (tubeBarcode != null) {
+//                        //lookup the vessel... if it doesn't exist create one
+//                        LabVessel vessel = labVesselDao.findByIdentifier(tubeBarcode);
+//                        if (vessel == null) {
+//                            vessel = new BarcodedTube(tubeBarcode);
+//                        }
+//                        vessel.addSample(mercurySample);
+//                        // if (workingBucketIdentifier.getEntryMaterialType().getName().equals(materialType)) {
+//                        workingBucket.addEntry(sample.getProductOrder(), vessel,
+//                                               BucketEntry.BucketEntryType.PDO_ENTRY);
+//                        // }
+//                    }
                 }
                 bucketDao.persist(workingBucket);
             }

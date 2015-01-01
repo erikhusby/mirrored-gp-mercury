@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.jira;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -139,7 +140,8 @@ public class JiraServiceStub implements JiraService {
                 new Transition("5", "Cancel", new NextTransition("", "Closed", "Closed", "", "6")),
                 new Transition("7", "Start Progress", new NextTransition("", "In Progress", "In Progress", "", "8")),
                 new Transition("9", "Put On Hold", new NextTransition("", "held", "held", "", "10")),
-                new Transition("11", "Order Complete", new NextTransition("", "Complete", "Complete", "", "12"))
+                new Transition("11", "Order Complete", new NextTransition("", "Complete", "Complete", "", "12")),
+                new Transition("13", ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName(), new NextTransition("", "In Progress", "In Progress", "", "14"))
         };
 
         return new IssueTransitionListResponse("", Arrays.asList(transitions));

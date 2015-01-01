@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 import org.easymock.EasyMock;
 import org.testng.annotations.Test;
@@ -14,6 +15,7 @@ import java.util.Date;
  * Utility to apply some 7/25 production data to dev database
  * for testing the pipeline API.
  */
+@Test(groups = TestGroups.FIXUP)
 public class Seven25MiSeqFixupTest extends ContainerTest {
 
     @Inject

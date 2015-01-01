@@ -1,14 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestOptions;
@@ -16,6 +15,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingReq
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.ControlWell;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraCustomFieldsUtil;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
@@ -27,10 +27,13 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bsp.BSPSampleFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
@@ -52,9 +55,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.queue.AliquotParameters;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
@@ -71,6 +74,9 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuil
 import org.broadinstitute.gpinformatics.mercury.test.entity.bsp.BSPSampleExportTest;
 import org.broadinstitute.gpinformatics.mocks.EverythingYouAskForYouGetAndItsHuman;
 import org.easymock.EasyMock;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -92,10 +98,11 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DA
  * A container free test of Exome Express
  */
 @SuppressWarnings("OverlyCoupledClass")
+@Test(groups = TestGroups.DATABASE_FREE)
 public class ExomeExpressEndToEndTest {
 
 
-
+    private final CrspPipelineUtils crspPipelineUtils = new CrspPipelineUtils(Deployment.DEV);
     // if this bombs because of a jira refresh, just switch it to JiraServiceProducer.stubInstance();
     // for integration test fun where we post things back to a real jira, try JiraServiceProducer.testInstance();
     private JiraService jiraService = JiraServiceProducer.stubInstance();
@@ -116,8 +123,9 @@ public class ExomeExpressEndToEndTest {
         ProductOrder productOrder1 = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
                 "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
                 40, null, null, true, Workflow.AGILENT_EXOME_EXPRESS, false, "agg type"),
-                new ResearchProject(101L, "Test RP", "Test synopsis",
-                        false));
+                                                      new ResearchProject(101L, "Test RP", "Test synopsis",
+                                                                          false,
+                                                                          ResearchProject.RegulatoryDesignation.RESEARCH_ONLY));
         String jiraTicketKey = "PD0-1";
         productOrder1.setJiraTicketKey(jiraTicketKey);
         productOrder1.setOrderStatus(ProductOrder.OrderStatus.Submitted);
@@ -159,7 +167,7 @@ public class ExomeExpressEndToEndTest {
                 Temporarily adding from ProjectPlanFromPassTest to move test case content along.
              */
 
-            BSPSampleDataFetcher bspDataFetcher = new BSPSampleDataFetcher(new EverythingYouAskForYouGetAndItsHuman());
+            SampleDataFetcher bspDataFetcher = new SampleDataFetcher(new EverythingYouAskForYouGetAndItsHuman());
             //            BaitSetListResult baitsCache = new BaitSetListResult();
             //            BaitSet baitSet = new BaitSet();
             //            baitSet.setDesignName(BAIT_DESIGN_NAME);
@@ -169,7 +177,7 @@ public class ExomeExpressEndToEndTest {
             // todo when R3_725 comes out, revert to looking this up via the pass
             QuotePriceItem
                     quotePriceItem = new QuotePriceItem("Illumina Sequencing", "1", "Illumina HiSeq Run 44 Base", "15",
-                    "Bananas", "DNA Sequencing");
+                                                        "Bananas", "DNA Sequencing");
             //            WorkflowDescription workflowDescription = new WorkflowDescription("HybridSelection", quotePriceItem,
             //                    CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
 
@@ -229,9 +237,9 @@ public class ExomeExpressEndToEndTest {
 
             for (LabBatch labBatch : labBatches) {
                 JiraIssue jira = jiraService.createIssue(null, //Project.JIRA_PROJECT_PREFIX,
-                        "hrafal", CreateFields.IssueType.WHOLE_EXOME_HYBSEL,
-                        labBatch.getBatchName(),
-                        allCustomFields);
+                                                         "hrafal", CreateFields.IssueType.WHOLE_EXOME_HYBSEL,
+                                                         labBatch.getBatchName(),
+                                                         allCustomFields);
                 Assert.assertNotNull(jira);
                 Assert.assertNotNull(jira.getKey());
                 jiraTicket = new JiraTicket(jiraService, jira.getKey());
@@ -262,18 +270,19 @@ public class ExomeExpressEndToEndTest {
             BSPPlatingRequestService bspPlatingService = new BSPPlatingRequestServiceStub();
             BSPPlatingRequestOptions options = bspPlatingService.getBSPPlatingRequestDefaultOptions();
             BSPPlatingRequestResult platingResult = bspPlatingService.issueBSPPlatingRequest(options, bspRequests,
-                    controls, "sampath",
-                    "EE-BSP-PLATING-1",
-                    "BSP Plating Exome Express Test",
-                    "Solexa", "EE-TEST-1");
+                                                                                             controls, "sampath",
+                                                                                             "EE-BSP-PLATING-1",
+                                                                                             "BSP Plating Exome Express Test",
+                                                                                             "Solexa", "EE-TEST-1");
             Assert.assertNotNull(platingResult); //just Stub any way
             BSPPlatingReceipt platingReceipt = bspSampleFactory.buildPlatingReceipt(bspRequests, platingResult);
             Assert.assertNotNull(platingReceipt);
             Assert.assertEquals(platingReceipt.getPlatingRequests().size(), bspRequests.size(),
-                    "BSP Plating Requests in receipt & passed requests count does not match");
+                                "BSP Plating Requests in receipt & passed requests count does not match");
 
             Assert.assertEquals(platingReceipt.getPlatingRequests().size(), STARTER_COUNT,
-                    "Started with " + STARTER_COUNT + " samples. BSP Plating requests should be " + STARTER_COUNT);
+                                "Started with " + STARTER_COUNT + " samples. BSP Plating requests should be "
+                                + STARTER_COUNT);
             //Test BSP Plating EXPORT
             BSPSampleExportTest.runBSPExportTest(platingReceipt, testLabBatch);
             //new GSSRSampleKitRequest();
@@ -317,7 +326,6 @@ public class ExomeExpressEndToEndTest {
             BucketDao mockBucketDao = EasyMock.createMock(BucketDao.class);
 
             LabBatchEjb labBatchEJB = new LabBatchEjb();
-            labBatchEJB.setAthenaClientService(AthenaClientProducer.stubInstance());
             labBatchEJB.setJiraService(JiraServiceProducer.stubInstance());
 
             LabVesselDao tubeDao = EasyMock.createNiceMock(LabVesselDao.class);
@@ -328,6 +336,18 @@ public class ExomeExpressEndToEndTest {
 
             LabBatchDao labBatchDao = EasyMock.createNiceMock(LabBatchDao.class);
             labBatchEJB.setLabBatchDao(labBatchDao);
+
+            ProductOrderDao mockProductOrderDao = Mockito.mock(ProductOrderDao.class);
+            Mockito.when(mockProductOrderDao.findByBusinessKey(Mockito.anyString())).thenAnswer(new Answer<Object>() {
+                @Override
+                public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+
+                    Object[] arguments = invocationOnMock.getArguments();
+
+                    return ProductOrderTestFactory.createDummyProductOrder((String) arguments[0]);
+                }
+            });
+            labBatchEJB.setProductOrderDao(mockProductOrderDao);
 
             ReworkEjb reworkEjb = EasyMock.createNiceMock(ReworkEjb.class);
             BucketDao bucketDao = EasyMock.createNiceMock(BucketDao.class);
@@ -341,14 +361,14 @@ public class ExomeExpressEndToEndTest {
 
             TemplateEngine templateEngine = new TemplateEngine();
             templateEngine.postConstruct();
-            LabEventHandler labEventHandler = new LabEventHandler(new WorkflowLoader(),
-                    AthenaClientProducer.stubInstance());
+            LabEventHandler labEventHandler = new LabEventHandler(new WorkflowLoader()
+            );
             BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
-            Map<String, TwoDBarcodedTube> mapBarcodeToTube = new HashMap<>();
+            Map<String, BarcodedTube> mapBarcodeToTube = new HashMap<>();
 
             for (Map.Entry<String, LabVessel> stockToAliquotEntry : stockSampleAliquotMap.entrySet()) {
                 mapBarcodeToTube.put(stockToAliquotEntry.getValue().getLabel(),
-                        (TwoDBarcodedTube) stockToAliquotEntry.getValue());
+                                     (BarcodedTube) stockToAliquotEntry.getValue());
             }
 
             PreFlightEntityBuilder preFlightEntityBuilder = new PreFlightEntityBuilder(
@@ -362,19 +382,20 @@ public class ExomeExpressEndToEndTest {
 
             LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
                     new LibraryConstructionEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, labEventHandler,
-                            shearingEntityBuilder.getShearingCleanupPlate(),
-                            shearingEntityBuilder.getShearCleanPlateBarcode(),
-                            shearingEntityBuilder.getShearingPlate(), mapBarcodeToTube.size(), "testPrefix",
-                            LibraryConstructionEntityBuilder.Indexing.DUAL).invoke();
+                                                         shearingEntityBuilder.getShearingCleanupPlate(),
+                                                         shearingEntityBuilder.getShearCleanPlateBarcode(),
+                                                         shearingEntityBuilder.getShearingPlate(),
+                                                         mapBarcodeToTube.size(), "testPrefix",
+                                                         LibraryConstructionEntityBuilder.Indexing.DUAL).invoke();
 
             HybridSelectionEntityBuilder hybridSelectionEntityBuilder =
                     new HybridSelectionEntityBuilder(bettaLimsMessageTestFactory, labEventFactory,
-                            labEventHandler,
-                            libraryConstructionEntityBuilder.getPondRegRack(),
-                            libraryConstructionEntityBuilder
-                                    .getPondRegRackBarcode(),
-                            libraryConstructionEntityBuilder
-                                    .getPondRegTubeBarcodes(), "testPrefix").invoke(false);
+                                                     labEventHandler,
+                                                     libraryConstructionEntityBuilder.getPondRegRack(),
+                                                     libraryConstructionEntityBuilder
+                                                             .getPondRegRackBarcode(),
+                                                     libraryConstructionEntityBuilder
+                                                             .getPondRegTubeBarcodes(), "testPrefix").invoke(false);
 
             TubeFormation pondRack = libraryConstructionEntityBuilder.getPondRegRack();
             Assert.assertEquals(pondRack.getSampleInstances().size(), 2);
@@ -420,25 +441,27 @@ public class ExomeExpressEndToEndTest {
             qtpEntityBuilder.invoke();
 
             TubeFormation poolingResult = qtpEntityBuilder.getDenatureRack();
-            TwoDBarcodedTube denatureTube =
+            BarcodedTube denatureTube =
                     qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
 
 
             LabBatch fctBatch = new LabBatch("FCT-3", Collections.singleton((LabVessel) denatureTube),
-                    LabBatch.LabBatchType.FCT, BigDecimal.valueOf(12.33f));
+                                             LabBatch.LabBatchType.FCT, BigDecimal.valueOf(12.33f));
 
             HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                     new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageTestFactory,
-                            labEventFactory, labEventHandler, qtpEntityBuilder.getDenatureRack(),
-                            fctBatch.getBusinessKey(),
-                            "testPrefix", "", ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "", 2);
+                                                       labEventFactory, labEventHandler,
+                                                       qtpEntityBuilder.getDenatureRack(),
+                                                       fctBatch.getBusinessKey(),
+                                                       "testPrefix", "", ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL,
+                                                       "", 2);
 
             // LC metrics - upload page?
             // LabVessel.addMetric?
             // Post "work done" to Quote Server
             // MockQuoteService.registerNewWork
 
-            final TwoDBarcodedTube currEntry = poolingResult.getContainerRole().getVesselAtPosition(VesselPosition.A01);
+            final BarcodedTube currEntry = poolingResult.getContainerRole().getVesselAtPosition(VesselPosition.A01);
 
 
             int numStartersFromSampleInstances = 0;
@@ -510,27 +533,34 @@ public class ExomeExpressEndToEndTest {
                         hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell().getCartridgeBarcode(), "Run1", new Date(),
                         "SL-HAL",
                         File.createTempFile("RunDir", ".txt").getAbsolutePath(), null), hiSeq2500FlowcellEntityBuilder
-                        .getIlluminaFlowcell());
+                                                                                         .getIlluminaFlowcell());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
             Assert.assertNotNull(illuminaSequencingRun.getSampleCartridge(),
-                    "No registered flowcell");
-
-            // We're container-free, so we have to populate the BSPSampleDTO ourselves
-            //            for (Starter starter : projectPlan.getStarters()) {
-            //                BSPSampleAuthorityTwoDTube aliquot = (BSPSampleAuthorityTwoDTube) projectPlan.getAliquotForStarter(starter);
-            //                BSPStartingSample bspStartingSample = (BSPStartingSample) aliquot.getAliquot();
-            //                bspStartingSample.setBspDTO(new BSPSampleDTO("1", "", "", "", "", "", "", "", "", "", "lsid:" + bspStartingSample.getSampleName(),
-            //                        "", "", "","", "", "", "",""));
-            //            }
+                                 "No registered flowcell");
 
             // ZIMS
-            ZimsIlluminaRunFactory zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(new BSPSampleDataFetcher(),
-                    new AthenaClientServiceStub(), null, new SequencingTemplateFactory());
+            ProductOrderDao productOrderDao = Mockito.mock(ProductOrderDao.class);
+            Mockito.when(productOrderDao.findByBusinessKey(Mockito.anyString())).then(new Answer<Object>() {
+                @Override
+                public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+
+                    Object[] arguments = invocationOnMock.getArguments();
+
+                    return ProductOrderTestFactory.createDummyProductOrder((String) arguments[0]);
+                }
+            });
+
+            ZimsIlluminaRunFactory zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(new SampleDataFetcher(),
+                                                                                       null,
+                                                                                       new SequencingTemplateFactory(),
+                                                                                       productOrderDao,
+                                                                                       null,
+                                                                                       crspPipelineUtils);
             ZimsIlluminaRun zimsRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);
 
-            // how to populate BSPSampleDTO?  Ease of use from EL suggests an entity that can load itself, but this
+            // how to populate BspSampleData?  Ease of use from EL suggests an entity that can load itself, but this
             // would require injecting a service, or using a singleton
 
             Assert.assertNotNull(zimsRun);

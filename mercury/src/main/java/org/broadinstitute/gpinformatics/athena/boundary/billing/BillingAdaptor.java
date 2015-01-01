@@ -1,11 +1,13 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
@@ -47,6 +49,9 @@ public class BillingAdaptor implements Serializable {
     QuoteService quoteService;
 
     BillingSessionAccessEjb billingSessionAccessEjb;
+
+    private static final FastDateFormat BILLING_DATE_FORMAT =
+            FastDateFormat.getDateTimeInstance(FastDateFormat.SHORT, FastDateFormat.SHORT);
 
     @Inject
     public BillingAdaptor(BillingEjb billingEjb, BillingSessionDao billingSessionDao,PriceListCache priceListCache,
@@ -108,7 +113,6 @@ public class BillingAdaptor implements Serializable {
         List<BillingEjb.BillingResult> results = new ArrayList<>();
 
         BillingSession billingSession = billingSessionAccessEjb.findAndLockSession(sessionKey);
-
         try {
             List<QuoteImportItem> unBilledQuoteImportItems =
                     billingSession.getUnBilledQuoteImportItems(priceListCache);
@@ -137,15 +141,14 @@ public class BillingAdaptor implements Serializable {
                                                                  pageUrl, "billingSession", sessionKey);
 
                     result.setWorkId(workId);
-                    log.info("workId" + workId + " for " + item.getLedgerItems().size() + " ledger items at "
-                             + new Date());
-
-                    billingEjb.updateLedgerEntries(item, quoteIsReplacing,workId);
+                    Set<String> billedPdoKeys = getBilledPdoKeys(result);
+                    logBilling(workId, item, quotePriceItem, billedPdoKeys);
+                    billingEjb.updateLedgerEntries(item, quoteIsReplacing, workId);
                 } catch (Exception ex) {
 
                     String errorMessage;
                     if (StringUtils.isBlank(result.getWorkId())) {
-                        errorMessage = "A Problem occurred attempting to post to the quote server for " +
+                        errorMessage = "A problem occurred attempting to post to the quote server for " +
                                        billingSession.getBusinessKey() + ".";
                     } else {
                         errorMessage = "A problem occurred saving the ledger entries for " +
@@ -154,7 +157,7 @@ public class BillingAdaptor implements Serializable {
                                        "The quote for this item may have been successfully sent to the quote server";
                     }
 
-                    log.error(errorMessage, ex);
+                    log.error(errorMessage + ex.toString());
 
                     item.setBillingMessages(errorMessage + ex.getMessage());
                     result.setErrorMessage(errorMessage + ex
@@ -173,6 +176,31 @@ public class BillingAdaptor implements Serializable {
         }
 
         return results;
+    }
+
+    void logBilling(String workId, QuoteImportItem quoteImportItem, QuotePriceItem quotePriceItem, Set<String> billedPdoKeys) {
+        String billingLogText = String.format(
+                "Work item '%s' with completion date of '%s' posted at '%s' for '%2.2f' units of '%s' on behalf of %s in '%s'",
+                workId,
+                BILLING_DATE_FORMAT.format(quoteImportItem.getWorkCompleteDate()),
+                BILLING_DATE_FORMAT.format(new Date()),
+                quoteImportItem.getQuantity(),
+                quotePriceItem.getName(),
+                quoteImportItem.getNumSamples(),
+                billedPdoKeys);
+        log.info(billingLogText);
+    }
+
+    /**
+     * @return returns a list of unique PDO keys for a list of billing results.
+     */
+    private Set<String> getBilledPdoKeys(BillingEjb.BillingResult billingResult) {
+        Set<String> pdoKeys = new HashSet<>();
+        for (LedgerEntry ledgerEntry : billingResult.getQuoteImportItem().getLedgerItems()) {
+            pdoKeys.add(ledgerEntry.getProductOrderSample().getProductOrder().getBusinessKey());
+        }
+
+        return pdoKeys;
     }
 
     /**

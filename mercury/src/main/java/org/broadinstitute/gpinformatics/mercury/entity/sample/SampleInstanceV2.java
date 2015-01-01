@@ -1,10 +1,16 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 
@@ -21,13 +27,21 @@ import java.util.Set;
  */
 public class SampleInstanceV2 {
 
+    private static final Log log = LogFactory.getLog(SampleInstanceV2.class);
+
     private Set<MercurySample> rootMercurySamples = new HashSet<>();
+    private List<MercurySample> mercurySamples = new ArrayList<>();
     private List<Reagent> reagents = new ArrayList<>();
     private BucketEntry singleBucketEntry;
     private List<BucketEntry> allBucketEntries = new ArrayList<>();
     private LabBatch singleInferredBucketedBatch;
     private List<ProductOrderSample> allProductOrderSamples = new ArrayList<>();
     private List<LabBatchStartingVessel> allLabBatchStartingVessels = new ArrayList<>();
+    private LabVessel labVessel;
+    private LabVessel initialLabVessel;
+    private boolean examinedContainers;
+    private MolecularIndexingScheme molecularIndexingScheme;
+    private LabVessel firstPcrVessel;
 
     /**
      * For a reagent-only sample instance.
@@ -39,7 +53,18 @@ public class SampleInstanceV2 {
      * Constructs a sample instance from a LabVessel.
      */
     public SampleInstanceV2(LabVessel labVessel) {
+        this.initialLabVessel = labVessel;
+        this.labVessel = labVessel;
         rootMercurySamples.addAll(labVessel.getMercurySamples());
+        mercurySamples.addAll(labVessel.getMercurySamples());
+        if (LabVessel.DIAGNOSTICS) {
+            String message = "Created sample instance ";
+            if (!labVessel.getMercurySamples().isEmpty()) {
+                message += labVessel.getMercurySamples().iterator().next().getSampleKey();
+            }
+            message += " from " + labVessel.getLabel();
+            log.info(message);
+        }
         applyVesselChanges(labVessel);
     }
 
@@ -49,24 +74,50 @@ public class SampleInstanceV2 {
     @SuppressWarnings("AccessingNonPublicFieldOfAnotherObject")
     public SampleInstanceV2(SampleInstanceV2 other) {
         rootMercurySamples.addAll(other.rootMercurySamples);
+        mercurySamples.addAll(other.mercurySamples);
         reagents.addAll(other.reagents);
         singleBucketEntry = other.singleBucketEntry;
         allBucketEntries.addAll(other.allBucketEntries);
         singleInferredBucketedBatch = other.singleInferredBucketedBatch;
         allProductOrderSamples.addAll(other.allProductOrderSamples);
         allLabBatchStartingVessels.addAll(other.allLabBatchStartingVessels);
+        molecularIndexingScheme = other.molecularIndexingScheme;
+        initialLabVessel = other.initialLabVessel;
+        firstPcrVessel = other.firstPcrVessel;
     }
 
     /**
      * Returns the sample that has no incoming transfers.  This is typically the sample that BSP received from the
      * collaborator, but in the absence of extraction transfers, Mercury may not be able to follow the transfer chain
-     * that far.  May be null for a vessel that holds only reagents.
+     * that far.  May be null for a vessel that holds only reagents.  May be null for BSP samples that pre-date Mercury.
      */
     public String getMercuryRootSampleName() {
         if (rootMercurySamples.isEmpty()) {
             return null;
         }
         return rootMercurySamples.iterator().next().getSampleKey();
+    }
+
+    /**
+     * Returns the earliest Mercury sample.  Tolerates unknown root sample.
+     */
+    public String getEarliestMercurySampleName() {
+        return mercurySamples.isEmpty() ? null : mercurySamples.get(0).getSampleKey();
+    }
+
+    /**
+     * Returns the root sample or if none, the earliest Mercury sample.
+     */
+    public MercurySample getRootOrEarliestMercurySample() {
+        return CollectionUtils.isNotEmpty(rootMercurySamples) ?
+                rootMercurySamples.iterator().next() : (mercurySamples.isEmpty() ? null : mercurySamples.get(0));
+    }
+
+    /** Returns the name of the root sample or if none, the earliest Mercury sample. */
+    public String getRootOrEarliestMercurySampleName() {
+        return CollectionUtils.isNotEmpty(rootMercurySamples) ?
+                rootMercurySamples.iterator().next().getSampleKey() :
+                (mercurySamples.isEmpty() ? null : mercurySamples.get(0).getSampleKey());
     }
 
     /**
@@ -108,6 +159,13 @@ public class SampleInstanceV2 {
     }
 
     /**
+     * Returns the vessel associated with this sample instance.
+     */
+    public LabVessel getInitialLabVessel() {
+        return initialLabVessel;
+    }
+
+    /**
      * Returns the nearest batch of the given type.
      */
     public LabBatchStartingVessel getSingleBatchVessel(LabBatch.LabBatchType labBatchType) {
@@ -145,7 +203,42 @@ public class SampleInstanceV2 {
      * calculated for each transfer.
      */
     public LabBatch getSingleInferredBucketedBatch() {
+        if (singleInferredBucketedBatch == null && !examinedContainers) {
+            if (labVessel != null) {
+                // look at other tubes in same container(s).  If they're all of same LCSET, use it.
+                Set<LabBatch> containedLabBatches = new HashSet<>();
+                for (VesselContainer<?> vesselContainer : labVessel.getContainers()) {
+                    for (LabVessel containedVessel : vesselContainer.getContainedVessels()) {
+                        if (!containedVessel.equals(labVessel)) {
+                            Set<SampleInstanceV2> sampleInstances = containedVessel.getSampleInstancesV2();
+                            if (sampleInstances.size() == 1) {
+                                BucketEntry containedSingleBucketEntry =
+                                        sampleInstances.iterator().next().getSingleBucketEntry();
+                                if (containedSingleBucketEntry != null) {
+                                    containedLabBatches.add(containedSingleBucketEntry.getLabBatch());
+                                }
+                            }
+                        }
+                    }
+                }
+                if (containedLabBatches.size() == 1) {
+                    singleInferredBucketedBatch = containedLabBatches.iterator().next();
+                }
+            }
+            examinedContainers = true;
+        }
         return singleInferredBucketedBatch;
+    }
+
+    /**
+     * Returns the batch from the single bucket entry, or the single inferred batch.
+     */
+    public LabBatch getSingleBatch() {
+        BucketEntry singleBucketEntryLocal = singleBucketEntry;
+        if (singleBucketEntryLocal != null) {
+            return singleBucketEntryLocal.getLabBatch();
+        }
+        return getSingleInferredBucketedBatch();
     }
 
     /**
@@ -182,8 +275,9 @@ public class SampleInstanceV2 {
         if (singleBucketEntry != null && singleBucketEntry.getLabBatch() != null) {
             return singleBucketEntry.getLabBatch().getWorkflowName();
         }
-        if (singleInferredBucketedBatch != null && singleInferredBucketedBatch.getWorkflowName() != null) {
-            return singleInferredBucketedBatch.getWorkflowName();
+        LabBatch singleInferredBucketedBatchLocal = getSingleInferredBucketedBatch();
+        if (singleInferredBucketedBatchLocal != null && singleInferredBucketedBatchLocal.getWorkflowName() != null) {
+            return singleInferredBucketedBatchLocal.getWorkflowName();
         }
 /*
 todo jmt not sure if this applies.
@@ -205,7 +299,7 @@ todo jmt not sure if this applies.
     }
 
     public boolean isReagentOnly() {
-        return rootMercurySamples.isEmpty() && !reagents.isEmpty();
+        return mercurySamples.isEmpty() && !reagents.isEmpty();
     }
 
     /**
@@ -215,19 +309,31 @@ todo jmt not sure if this applies.
      */
     public void addReagent(Reagent newReagent) {
         if (LabVessel.DIAGNOSTICS) {
-            System.out.println("Adding reagent " + newReagent);
+            log.info("Adding reagent " + newReagent);
         }
-        SampleInstance.addReagent(newReagent, reagents);
+        MolecularIndexingScheme molecularIndexingSchemeLocal = SampleInstance.addReagent(newReagent, reagents);
+        if (molecularIndexingSchemeLocal != null) {
+            molecularIndexingScheme = molecularIndexingSchemeLocal;
+        }
     }
 
     /**
      * Applies to a clone any new information in a LabVessel.
      */
     public final void applyVesselChanges(LabVessel labVessel) {
+        this.labVessel = labVessel;
+        mercurySamples.addAll(labVessel.getMercurySamples());
         reagents.addAll(labVessel.getReagentContents());
+        if (!labVessel.getBucketEntries().isEmpty()) {
+            allBucketEntries.clear();
+        }
         allBucketEntries.addAll(labVessel.getBucketEntries());
         if (labVessel.getBucketEntries().size() == 1) {
             singleBucketEntry = labVessel.getBucketEntries().iterator().next();
+            if (LabVessel.DIAGNOSTICS) {
+                log.info("Setting singleBucketEntry to " + singleBucketEntry.getLabBatch().getBatchName() +
+                        " in " + labVessel.getLabel());
+            }
         }
         allLabBatchStartingVessels.addAll(labVessel.getLabBatchStartingVesselsByDate());
         for (MercurySample mercurySample : labVessel.getMercurySamples()) {
@@ -238,7 +344,12 @@ todo jmt not sure if this applies.
     /**
      * Applies a LabEvent, specifically computed LCSets.
      */
-    public void applyEvent(LabEvent labEvent) {
+    public void applyEvent(LabEvent labEvent, LabVessel labVessel) {
+        if (labEvent.getLabEventType().getPipelineTransformation() == LabEventType.PipelineTransformation.PCR) {
+            if (firstPcrVessel == null && labVessel != null) {
+                firstPcrVessel = labVessel;
+            }
+        }
         Set<LabBatch> computedLcsets = labEvent.getComputedLcSets();
         // A single computed LCSET can help resolve ambiguity of multiple bucket entries.
         if (computedLcsets.size() == 1) {
@@ -252,12 +363,75 @@ todo jmt not sure if this applies.
                         if (bucketEntry.getLabBatch() != null &&
                                 bucketEntry.getLabBatch().equals(singleInferredBucketedBatch)) {
                             singleBucketEntry = bucketEntry;
+                            if (LabVessel.DIAGNOSTICS) {
+                                log.info("Setting singleBucketEntry to " +
+                                        singleBucketEntry.getLabBatch().getBatchName() + " in " +
+                                        labEvent.getLabEventType().getName());
+                            }
                             break;
                         }
                     }
                 }
             }
         }
+    }
+
+    public Set<MercurySample> getRootMercurySamples() {
+        return rootMercurySamples;
+    }
+
+    public LabVessel getFirstPcrVessel() {
+        return firstPcrVessel;
+    }
+
+    /**
+     * Returns a text description of the source
+     * of the metadata.  Do not alter this string
+     * without consulting the pipeline team.
+     */
+    public String getMetadataSourceForPipelineAPI() {
+        Set<String> metadataSources = new HashSet<>();
+        for (MercurySample mercurySample : mercurySamples) {
+            metadataSources.add(mercurySample.getMetadataSourceForPipelineAPI());
+        }
+        if (metadataSources.isEmpty()) {
+            throw new RuntimeException("Could not determine metadata source");
+        }
+        else if (metadataSources.size() > 1) {
+            throw new RuntimeException(String.format("Found %s metadata sources",metadataSources.size()));
+        }
+        return metadataSources.iterator().next();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+
+        SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) obj;
+
+        if (molecularIndexingScheme != null ? !molecularIndexingScheme.equals(sampleInstanceV2.molecularIndexingScheme) :
+                sampleInstanceV2.molecularIndexingScheme != null) {
+            return false;
+        }
+        if (getEarliestMercurySampleName() != null ?
+                !getEarliestMercurySampleName().equals(sampleInstanceV2.getEarliestMercurySampleName()) :
+                sampleInstanceV2.getEarliestMercurySampleName() != null) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = getEarliestMercurySampleName() != null ? getEarliestMercurySampleName().hashCode() : 0;
+        result = 31 * result + (molecularIndexingScheme != null ? molecularIndexingScheme.hashCode() : 0);
+        return result;
     }
 
 }

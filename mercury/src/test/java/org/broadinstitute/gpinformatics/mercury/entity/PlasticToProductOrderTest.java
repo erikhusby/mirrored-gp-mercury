@@ -9,7 +9,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDa
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -23,7 +23,7 @@ import javax.transaction.UserTransaction;
 
 import static org.testng.Assert.fail;
 
-@Test(groups = {TestGroups.EXTERNAL_INTEGRATION})
+@Test(groups = {TestGroups.STUBBY})
 public class PlasticToProductOrderTest extends ContainerTest {
 
     @Inject
@@ -36,7 +36,7 @@ public class PlasticToProductOrderTest extends ContainerTest {
     private BucketEjb bucketResource;
 
     @Inject
-    private TwoDBarcodedTubeDao tubeDao;
+    private BarcodedTubeDao tubeDao;
 
     @Inject
     private TubeFormationDao rackDao;
@@ -58,7 +58,7 @@ public class PlasticToProductOrderTest extends ContainerTest {
     private String tubeBarcode;
     private WorkflowBucketDef bucketDef;
 
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @BeforeMethod(groups = TestGroups.STUBBY)
     public void setUp() throws Exception {
         // Skip if no injections, meaning we're not running in container
         if (utx == null) {
@@ -78,7 +78,7 @@ public class PlasticToProductOrderTest extends ContainerTest {
 
     }
 
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @AfterMethod(groups = TestGroups.STUBBY)
     public void tearDown() throws Exception {
         // Skip if no injections, meaning we're not running in container
         if (utx == null) {

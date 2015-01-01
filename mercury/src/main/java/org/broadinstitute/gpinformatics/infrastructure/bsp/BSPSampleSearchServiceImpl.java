@@ -5,6 +5,7 @@ import com.sun.jersey.api.client.ClientHandlerException;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
+import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 
 import javax.inject.Inject;
@@ -34,7 +35,14 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
     protected void customizeClient(Client client) {
         specifyHttpAuthCredentials(client, bspConfig);
     }
-
+    private static List<List<String>> chopped(List<String> list, final int maxLength) {
+            List<List<String>> parts = new ArrayList<>();
+            final int N = list.size();
+            for (int i = 0; i < N; i += maxLength) {
+                parts.add(new ArrayList<>(list.subList(i, Math.min(N, i + maxLength))));
+            }
+            return parts;
+        }
     @Override
     public List<Map<BSPSampleSearchColumn, String>> runSampleSearch(Collection<String> sampleIDs,
                                                                     final BSPSampleSearchColumn... queryColumns) {
@@ -72,7 +80,6 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
                     Map<BSPSampleSearchColumn, String> newMap = new HashMap<>();
 
                     // It turns out that BSP truncates the rest of the columns, if there are no more values, which
-                    // is consistent with what Excel does, so it probably comes from that. SO, need to make all
                     // values "", once i >= the length of the bspData
                     int i = 0;
                     for (BSPSampleSearchColumn column : queryColumns) {
@@ -83,9 +90,15 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
                 }
             });
         } catch (ClientHandlerException clientException) {
-            throw new RuntimeException("Error connecting to BSP", clientException);
+            throw new BSPLookupException("Error connecting to BSP", clientException);
         } catch (UnsupportedEncodingException uex) {
             throw new RuntimeException(uex);
+        }
+
+        // Sample IDs were provided, BSP service should at minimum return the same set of IDs with blank data.
+        // An empty return set represents a service failure
+        if(ret.isEmpty()) {
+            throw new BSPLookupException("BSP sample service failed");
         }
 
         return ret;

@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -20,6 +21,7 @@ import javax.inject.Inject;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
 
+@Test(groups = TestGroups.STANDARD)
 public class ProductOrderJiraUtilTest extends Arquillian {
 
     @Inject
@@ -43,7 +45,7 @@ public class ProductOrderJiraUtilTest extends Arquillian {
         Assert.assertTrue(StringUtils.isEmpty(pdo.getJiraTicketKey()),
                 "PDO already has a jira id, but we want it blank for our test.");
 
-        ProductOrderJiraUtil.placeOrder(pdo,jiraService);
+        ProductOrderJiraUtil.createIssueForOrder(pdo, jiraService);
 
         Assert.assertFalse(StringUtils.isEmpty(pdo.getJiraTicketKey()),
                 "When the PDO is created in jira, we expected the PDO's business key to be assigned.");

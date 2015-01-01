@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
-import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
@@ -9,20 +8,24 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
+import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -31,13 +34,26 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.persistence.Query;
+import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.ParameterExpression;
+import javax.persistence.criteria.Root;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.text.DateFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -46,11 +62,13 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 
 /**
  * This "test" is an example of how to fixup some data.  Each fix method includes the JIRA ticket ID.
  * Set @Test(enabled=false) after running once.
  */
+@Test(groups = TestGroups.FIXUP)
 public class ProductOrderFixupTest extends Arquillian {
 
     @Inject
@@ -78,6 +96,9 @@ public class ProductOrderFixupTest extends Arquillian {
 
     @Inject
     private ResearchProjectDao projectDao;
+
+    @Inject
+    private UserBean userBean;
 
     // When you run this on prod, change to PROD and prod.
     @Deployment
@@ -331,7 +352,7 @@ public class ProductOrderFixupTest extends Arquillian {
         }
     }
 
-    public void changeProjectForPdo(String pdoKey, String newProjectKey) throws IOException {
+    private void changeProjectForPdo(String pdoKey, String newProjectKey) throws IOException {
         ProductOrder order = productOrderDao.findByBusinessKey(pdoKey);
         Assert.assertNotNull(order, "Could not find " + pdoKey);
 
@@ -399,31 +420,6 @@ public class ProductOrderFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
-    public void unAbandonPDOSamples() throws Exception {
-        unAbandonPDOSamples("PDO-2670",
-                "SM-55WGG",
-                "SM-55WGJ",
-                "SM-55WGM",
-                "SM-55WGN");
-    }
-
-    private void unAbandonPDOSamples(String pdo, String... samplesToUnAbandon)
-            throws ProductOrderEjb.NoSuchPDOException, IOException {
-        List<String> samples = Arrays.asList(samplesToUnAbandon);
-        ProductOrder productOrder = productOrderDao.findByBusinessKey(pdo);
-        List<ProductOrderSample> sampleList = productOrder.getSamples();
-
-        for (ProductOrderSample sample : sampleList) {
-            if (samples.contains(sample.getName())) {
-                sample.setDeliveryStatus(ProductOrderSample.DeliveryStatus.NOT_STARTED);
-            }
-        }
-
-        productOrderSampleDao.persistAll(sampleList);
-        productOrderEjb.updateOrderStatus(productOrder.getJiraTicketKey(), new MessageReporter.LogReporter(log));
-    }
-
-    @Test(enabled = false)
     public void fixupSampleNames() throws Exception {
 
         // Renames samples that have some type of non-printable ASCII at the end (e.g. char(160)).
@@ -466,5 +462,139 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrderSampleDao.remove(sample);
 
         productOrderSampleDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim2627() throws ParseException {
+        // Complete PDO that was not auto-completed
+        ProductOrder order = productOrderDao.findByBusinessKey("PDO-2611");
+        if (order != null) {
+            order.setOrderStatus(ProductOrder.OrderStatus.Completed);
+            productOrderDao.persist(order);
+        }
+    }
+
+    @Test(enabled = false)
+    public void updateQuotesGPLIM2830() throws Exception {
+        List<ProductOrder> ordersToUpdate = productOrderDao.findListByBusinessKeys(Arrays.asList("PDO-2693", "PDO-2771",
+                "PDO-2686", "PDO-2635"));
+
+        for (ProductOrder productOrder : ordersToUpdate) {
+            productOrder.setQuoteId("GP87U");
+        }
+        productOrderDao.persistAll(ordersToUpdate);
+        productOrderDao.flush();
+
+    }
+
+    @Test(enabled = false)
+    public void gplim2893ManuallyCompletePDO() throws ProductOrderEjb.NoSuchPDOException, IOException {
+        MessageReporter.LogReporter reporter = new MessageReporter.LogReporter(log);
+        productOrderEjb.updateOrderStatus("PDO-2635", reporter);
+    }
+
+    @Test(enabled = false)
+    public void gplim2969UpdatePriceItemType() {
+        userBean.loginOSUser();
+        Set<String> samples = new HashSet<>();
+        samples.add("SM-2CCZM");
+        samples.add("SM-2CD1I");
+        ProductOrder order = productOrderDao.findByBusinessKey("PDO-3475");
+
+        for (ProductOrderSample productOrderSample : order.getSamples()) {
+            if (samples.contains(productOrderSample.getSampleKey())) {
+                for (LedgerEntry ledgerEntry : productOrderSample.getLedgerItems()) {
+                    if (ledgerEntry.getBillingSession().getBillingSessionId() == 3728) {
+                        if (ledgerEntry.getPriceItemType() == LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM) {
+                            ledgerEntry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
+                            samples.remove(productOrderSample.getSampleKey());
+                            System.out.println(
+                                    "Updated leger entry " + ledgerEntry.getLedgerId() + " for " + productOrderSample
+                                            .getSampleKey());
+                        }
+                    }
+                }
+            }
+        }
+
+        productOrderDao.flush();
+        Assert.assertTrue(samples.isEmpty());
+    }
+
+    @Test(enabled = false)
+    public void gplim3221ReportProductOrderCompliance() {
+
+        CriteriaQuery<ProductOrder> criteriaQuery = productOrderDao.getEntityManager().getCriteriaBuilder().createQuery(
+                ProductOrder.class);
+        Root<ProductOrder> root = criteriaQuery.from(ProductOrder.class);
+
+        Calendar malleableCalendar = new GregorianCalendar();
+        malleableCalendar.set(Calendar.DAY_OF_MONTH, 1);
+        malleableCalendar.add(Calendar.MONTH, -3);
+
+        Date startDate = malleableCalendar.getTime();
+
+        CriteriaBuilder builder = productOrderDao.getEntityManager().getCriteriaBuilder();
+
+        ParameterExpression<Date> rangeStart = builder.parameter(Date.class);
+
+        criteriaQuery.where(builder.lessThanOrEqualTo(rangeStart, root.get(ProductOrder_.createdDate)),
+                builder.notEqual(root.get(ProductOrder_.orderStatus), ProductOrder.OrderStatus.Draft));
+        criteriaQuery.orderBy(builder.asc(root.get(ProductOrder_.createdDate)),
+                builder.asc(root.get(ProductOrder_.skipRegulatoryReason)));
+
+        TypedQuery<ProductOrder> query = productOrderDao.getEntityManager().createQuery(criteriaQuery);
+
+        query.setParameter(rangeStart, startDate);
+        Collection<ProductOrder> productOrders = query.getResultList();
+
+        log.info("Found product order records: " + productOrders.size());
+        OutputStream outputStream = null;
+        try {
+            File output = File.createTempFile("compliance_rpt", ".csv");
+            outputStream = new FileOutputStream(output);
+            log.info("The filestream path is: " + output.getAbsolutePath() + output.getName());
+        } catch (IOException e) {
+            Assert.fail("Problem opening the output file.");
+        }
+
+        PrintStream fileWriter = new PrintStream(outputStream);
+
+        fileWriter.print("PDO key\tProduct order name\t Create Date\tOwner\tOwner Email\tQuote ID\t" +
+                         "Reason Regulatory info is not required\tIRB/OSRP Number\tRegulatory Type\n");
+
+        DateFormat creationDate = new SimpleDateFormat("yyyy-MM-dd");
+        for (ProductOrder productOrder : productOrders) {
+            if (productOrder.getRegulatoryInfos().isEmpty()) {
+                fileWriter.print(String.format("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+                        productOrder.getBusinessKey(),
+                        productOrder.getName(),
+                        creationDate.format(productOrder.getCreatedDate()),
+                        bspUserList.getById(productOrder.getCreatedBy()).getFullName(),
+                        bspUserList.getById(productOrder.getCreatedBy()).getEmail(),
+                        productOrder.getQuoteId(),
+                        (StringUtils.isBlank(productOrder.getSkipRegulatoryReason())) ? " " :
+                                productOrder.getSkipRegulatoryReason(),
+                        " ",
+                        " "));
+
+            } else {
+                for (RegulatoryInfo regulatoryInfo : productOrder.getRegulatoryInfos()) {
+
+                    fileWriter.print(String.format("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+                            productOrder.getBusinessKey(),
+                            productOrder.getName(),
+                            creationDate.format(productOrder.getCreatedDate()),
+                            bspUserList.getById(productOrder.getCreatedBy()).getFullName(),
+                            bspUserList.getById(productOrder.getCreatedBy()).getEmail(),
+                            productOrder.getQuoteId(),
+                            (StringUtils.isBlank(productOrder.getSkipRegulatoryReason())) ? " " :
+                                    productOrder.getSkipRegulatoryReason(),
+                            StringUtils.replaceChars(regulatoryInfo.getIdentifier(), "\t", " "),
+                            StringUtils.replaceChars(regulatoryInfo.getType().getName(), "\t", " ")));
+                }
+            }
+        }
+        fileWriter.close();
     }
 }

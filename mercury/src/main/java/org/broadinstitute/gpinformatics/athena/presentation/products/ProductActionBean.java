@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.presentation.products;
 
+import com.lowagie.text.DocumentException;
 import net.sourceforge.stripes.action.After;
 import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
@@ -7,13 +8,17 @@ import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.RedirectResolution;
 import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidateNestedProperties;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
+import org.broadinstitute.gpinformatics.athena.boundary.products.ProductPdfFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
@@ -30,17 +35,25 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.inject.Inject;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao.IncludePDMOnly;
+import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao.TopLevelOnly;
 
 /**
  * This class supports all the actions done on products.
  */
 @UrlBinding(ProductActionBean.ACTIONBEAN_URL_BINDING)
 public class ProductActionBean extends CoreActionBean {
+    private static final Log log = LogFactory.getLog(ProductActionBean.class);
     public static final String ACTIONBEAN_URL_BINDING = "/products/product.action";
     public static final String PRODUCT_PARAMETER = "product";
 
@@ -51,6 +64,7 @@ public class ProductActionBean extends CoreActionBean {
     public static final String PRODUCT_CREATE_PAGE = "/products/create.jsp";
     public static final String PRODUCT_LIST_PAGE = "/products/list.jsp";
     public static final String PRODUCT_VIEW_PAGE = "/products/view.jsp";
+    private static final String DOWNLOAD_PRODUCT_LIST = "downloadProductDescriptions";
 
     @Inject
     private MercuryClientService mercuryClientService;
@@ -91,15 +105,24 @@ public class ProductActionBean extends CoreActionBean {
     private Long productFamilyId;
 
     @ValidateNestedProperties({
-        @Validate(field="productName", required = true, maxlength=255, on={SAVE_ACTION}, label = "Product Name"),
-        @Validate(field="partNumber", required = true, maxlength=255, on={SAVE_ACTION}, label="Part Number"),
-        @Validate(field="description", required = true, maxlength = 2000, on={SAVE_ACTION}, label = "Description"),
-        @Validate(field="availabilityDate", required = true, on={SAVE_ACTION}, label = "Availability Date")
+            @Validate(field = "productName", required = true, maxlength = 255, on = {SAVE_ACTION},
+                    label = "Product Name"),
+            @Validate(field = "partNumber", required = true, maxlength = 255, on = {SAVE_ACTION},
+                    label = "Part Number"),
+            @Validate(field = "description", required = true, maxlength = 2000, on = {SAVE_ACTION},
+                    label = "Description"),
+            @Validate(field = "availabilityDate", required = true, on = {SAVE_ACTION}, label = "Availability Date")
     })
     private Product editProduct;
 
     public ProductActionBean() {
         super(CREATE_PRODUCT, EDIT_PRODUCT, PRODUCT_PARAMETER);
+    }
+
+    public ProductActionBean(UserBean userBean, ProductDao productDao) {
+        super(CREATE_PRODUCT, EDIT_PRODUCT, PRODUCT_PARAMETER);
+        this.userBean = userBean;
+        this.productDao = productDao;
     }
 
     private String q;
@@ -115,7 +138,9 @@ public class ProductActionBean extends CoreActionBean {
     /**
      * Initialize the product with the passed in key for display in the form.
      */
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION, "addOnsAutocomplete", "materialTypesAutocomplete"})
+    @Before(stages = LifecycleStage.BindingAndValidation,
+            on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION, "addOnsAutocomplete",
+                    "materialTypesAutocomplete"})
     public void init() {
         product = getContext().getRequest().getParameter(PRODUCT_PARAMETER);
         if (!StringUtils.isBlank(product)) {
@@ -134,7 +159,8 @@ public class ProductActionBean extends CoreActionBean {
             // will tell the user that they need to select a product family
             return;
         }
-        if ((editProduct.getProductFamily() == null) || !productFamilyId.equals(editProduct.getProductFamily().getProductFamilyId())) {
+        if ((editProduct.getProductFamily() == null) || !productFamilyId.equals(
+                editProduct.getProductFamily().getProductFamilyId())) {
             editProduct.setProductFamily(productFamilyDao.find(productFamilyId));
         }
     }
@@ -160,8 +186,8 @@ public class ProductActionBean extends CoreActionBean {
         }
     }
 
-    @After(stages = LifecycleStage.BindingAndValidation, on = {LIST_ACTION})
-    public void listInit() {
+    @After(stages = LifecycleStage.BindingAndValidation, on = LIST_ACTION)
+    public void allProductsInit() {
         allProducts = productDao.findAll(Product.class);
     }
 
@@ -172,7 +198,8 @@ public class ProductActionBean extends CoreActionBean {
     public void validateForSave() {
         String[] duplicatePriceItems = editProduct.getDuplicatePriceItemNames();
         if (duplicatePriceItems != null) {
-            addGlobalValidationError("Cannot save with duplicate price items: " + StringUtils.join(duplicatePriceItems, ", "));
+            addGlobalValidationError(
+                    "Cannot save with duplicate price items: " + StringUtils.join(duplicatePriceItems, ", "));
         }
 
         // check for existing name for create or name change on edit.
@@ -180,7 +207,7 @@ public class ProductActionBean extends CoreActionBean {
             (!editProduct.getPartNumber().equalsIgnoreCase(editProduct.getOriginalPartNumber()))) {
 
             Product existingProduct = productDao.findByPartNumber(editProduct.getPartNumber());
-            if (existingProduct != null && ! existingProduct.getProductId().equals(editProduct.getProductId())) {
+            if (existingProduct != null && !existingProduct.getProductId().equals(editProduct.getProductId())) {
                 addValidationError("partNumber", "Part number '" + editProduct.getPartNumber() + "' is already in use");
             }
         }
@@ -211,7 +238,8 @@ public class ProductActionBean extends CoreActionBean {
                     try {
                         Double.parseDouble(values[matchingValueIndex]);
                     } catch (NumberFormatException e) {
-                        addGlobalValidationError("Not a valid number for risk calculation: ''{2}''", values[matchingValueIndex]);
+                        addGlobalValidationError("Not a valid number for risk calculation: ''{2}''",
+                                values[matchingValueIndex]);
                     }
                 }
             }
@@ -220,7 +248,7 @@ public class ProductActionBean extends CoreActionBean {
             // and validated as any other criterion.
             if ((type == RiskCriterion.RiskCriteriaType.RIN) && !editProduct.isSupportsRin()) {
                 addGlobalValidationError("Cannot add a RIN criterion for product: {2} of family {3}",
-                    editProduct.getDisplayName(), editProduct.getProductFamily().getName());
+                        editProduct.getDisplayName(), editProduct.getProductFamily().getName());
             }
 
             // If requesting pico age but does not support it, error it out.
@@ -312,6 +340,53 @@ public class ProductActionBean extends CoreActionBean {
         addMessage("Product \"" + editProduct.getProductName() + "\" has been saved");
         return new RedirectResolution(ProductActionBean.class, VIEW_ACTION).addParameter(PRODUCT_PARAMETER,
                 editProduct.getPartNumber());
+    }
+
+    @HandlesEvent(DOWNLOAD_PRODUCT_LIST)
+    public Resolution downloadProductDescriptions() {
+        final List<Product> productDownloadList = getProductsForPdfDownload();
+        String fileName = getPdfFilename(productDownloadList);
+
+        if (productDownloadList.isEmpty()) {
+            addGlobalValidationError("Could not create PDF file. No products found.");
+            return getSourcePageResolution();
+        }
+        return new StreamingResolution("application/pdf") {
+            @Override
+            public void stream(final HttpServletResponse response) {
+                Collections.sort(productDownloadList, Product.BY_FAMILY_THEN_PRODUCT_NAME);
+                try {
+                    setAttachment(true);
+                    ProductPdfFactory.toPdf(response.getOutputStream(),
+                            productDownloadList.toArray(new Product[productDownloadList.size()]));
+                } catch (IOException | DocumentException e) {
+                    String errorMessage = "Error generating PDF file.";
+                    log.error(errorMessage, e);
+                    addGlobalValidationError(errorMessage);
+                }
+            }
+        }.setFilename(fileName);
+    }
+
+    public static String getPdfFilename(List<Product> productList) {
+        String fileName = "Product Descriptions.pdf";
+        if (productList.size() == 1) {
+            fileName = productList.iterator().next().getName() + ".pdf";
+        }
+        return fileName;
+
+    }
+
+    protected List<Product> getProductsForPdfDownload() {
+        List<Product> productDownloadList;
+        if (!(editProduct == null || StringUtils.isBlank(editProduct.getPartNumber()))) {
+            Product downloadProduct = productDao.findByPartNumber(editProduct.getPartNumber());
+            productDownloadList = Arrays.asList(downloadProduct);
+        } else {
+            productDownloadList = productDao.findProducts(ProductDao.Availability.CURRENT, TopLevelOnly.NO,
+                    IncludePDMOnly.toIncludePDMOnly(userBean.isPDMUser()));
+        }
+        return productDownloadList;
     }
 
     public Product getEditProduct() {
@@ -435,6 +510,7 @@ public class ProductActionBean extends CoreActionBean {
      * Get the reagent design.
      *
      * @param businessKey the businessKey
+     *
      * @return UI helper object {@link DisplayableItem} representing the reagent design
      */
     public DisplayableItem getReagentDesign(String businessKey) {
@@ -445,6 +521,7 @@ public class ProductActionBean extends CoreActionBean {
      * Get the analysis type.
      *
      * @param businessKey the businessKey
+     *
      * @return UI helper object {@link DisplayableItem} representing the analysis type
      */
     public DisplayableItem getAnalysisType(String businessKey) {

@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
@@ -74,17 +73,16 @@ public abstract class AbstractBatchJiraFieldFactory {
     /**
      * Provides the user the ability to retrieve a concrete factory class specific to the given Project Type.
      *
-     * @param projectType         type of JIRA Project for which the user needs to generate submission values
-     * @param batch               an instance of a {@link LabBatch} entity and is the primary source of the data from
-     *                            which the custom submission fields will be generated
-     * @param athenaClientService infrastructure service which will provide access to entity information found on the
-     *                            "Athena" side of the Mercury system (e.g. {@link ProductOrder}s)
      *
+     * @param projectType         type of JIRA Project for which the user needs to generate submission values
+     * @param batch               an instance of a {@link org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch} entity and is the primary source of the data from
+     *                            which the custom submission fields will be generated
+     * @param productOrderDao
      * @return The instance of the JIRA field factory for the given project type
      */
     public static AbstractBatchJiraFieldFactory getInstance(@Nonnull CreateFields.ProjectType projectType,
                                                             @Nonnull LabBatch batch,
-                                                            AthenaClientService athenaClientService) {
+                                                            ProductOrderDao productOrderDao) {
         AbstractBatchJiraFieldFactory builder;
 
         switch (projectType) {
@@ -93,7 +91,7 @@ public abstract class AbstractBatchJiraFieldFactory {
             break;
         case LCSET_PROJECT:
         default:
-            builder = new LCSetJiraFieldFactory(batch, athenaClientService);
+            builder = new LCSetJiraFieldFactory(batch, productOrderDao);
             break;
         }
 
@@ -101,7 +99,7 @@ public abstract class AbstractBatchJiraFieldFactory {
     }
 
     public static AbstractBatchJiraFieldFactory getInstance(LabBatch batch,
-                                                            AthenaClientService athenaClientService) {
+                                                            ProductOrderDao productOrderDao) {
         AbstractBatchJiraFieldFactory builder;
         switch (batch.getLabBatchType()) {
         case MISEQ:
@@ -110,7 +108,7 @@ public abstract class AbstractBatchJiraFieldFactory {
             break;
         case WORKFLOW:
         default:
-            builder = new LCSetJiraFieldFactory(batch, athenaClientService);
+            builder = new LCSetJiraFieldFactory(batch, productOrderDao);
             break;
         }
         return builder;

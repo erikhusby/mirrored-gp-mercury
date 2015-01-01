@@ -50,6 +50,10 @@ public class HipChatMessageSender implements Serializable {
 
     public HipChatMessageSender() {}
 
+    public HipChatMessageSender(HipChatConfig config) {
+        this.config = config;
+    }
+
     /**
      * Posts a simple text message to the given room, using the default
      * color.  See https://www.hipchat.com/docs/api/method/rooms/message for

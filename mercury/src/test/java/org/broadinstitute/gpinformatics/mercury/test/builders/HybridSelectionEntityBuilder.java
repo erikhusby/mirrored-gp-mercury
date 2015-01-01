@@ -12,7 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
@@ -40,7 +40,7 @@ public class HybridSelectionEntityBuilder {
 
     private String normCatchRackBarcode;
     private List<String> normCatchBarcodes;
-    private Map<String, TwoDBarcodedTube> mapBarcodeToNormCatchTubes = new HashMap<>();
+    private Map<String, BarcodedTube> mapBarcodeToNormCatchTubes = new HashMap<>();
     private TubeFormation normCatchRack;
 
     public HybridSelectionEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
@@ -64,7 +64,7 @@ public class HybridSelectionEntityBuilder {
         return normCatchRackBarcode;
     }
 
-    public Map<String, TwoDBarcodedTube> getMapBarcodeToNormCatchTubes() {
+    public Map<String, BarcodedTube> getMapBarcodeToNormCatchTubes() {
         return mapBarcodeToNormCatchTubes;
     }
 
@@ -87,19 +87,19 @@ public class HybridSelectionEntityBuilder {
         // rearray right half of pond rack into left half of a new rack, then transfer these
         // two racks into a third rack, making a 2-plex pool.
         LabEventTest.validateWorkflow("PreSelectionPool", pondRegRack); //todo jmt should be mapBarcodeToPondRegTube.values());
-        Map<String, TwoDBarcodedTube> mapBarcodeToPondTube = new HashMap<>();
-        for (TwoDBarcodedTube twoDBarcodedTube : pondRegRack.getContainerRole().getContainedVessels()) {
-            mapBarcodeToPondTube.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
+        Map<String, BarcodedTube> mapBarcodeToPondTube = new HashMap<>();
+        for (BarcodedTube barcodedTube : pondRegRack.getContainerRole().getContainedVessels()) {
+            mapBarcodeToPondTube.put(barcodedTube.getLabel(), barcodedTube);
         }
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToPreSelSource1Tube = new HashMap<>();
+        Map<String, BarcodedTube> mapBarcodeToPreSelSource1Tube = new HashMap<>();
         for (ReceptacleType receptacleType : hybridSelectionJaxbBuilder.getPreSelPoolJaxb().getSourcePositionMap()
                 .getReceptacle()) {
             mapBarcodeToPreSelSource1Tube.put(receptacleType.getBarcode(), mapBarcodeToPondTube.get(
                     receptacleType.getBarcode()));
         }
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToPreSelSource2Tube = new HashMap<>();
+        Map<String, BarcodedTube> mapBarcodeToPreSelSource2Tube = new HashMap<>();
         for (ReceptacleType receptacleType : hybridSelectionJaxbBuilder.getPreSelPoolJaxb2().getSourcePositionMap()
                 .getReceptacle()) {
             mapBarcodeToPreSelSource2Tube.put(receptacleType.getBarcode(), mapBarcodeToPondTube.get(
@@ -115,8 +115,8 @@ public class HybridSelectionEntityBuilder {
         mapBarcodeToVessel.clear();
         mapBarcodeToVessel.putAll(mapBarcodeToPreSelSource2Tube);
         mapBarcodeToVessel.put(preSelPoolRack.getLabel(), preSelPoolRack);
-        for (TwoDBarcodedTube twoDBarcodedTube : preSelPoolRack.getContainerRole().getContainedVessels()) {
-            mapBarcodeToVessel.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
+        for (BarcodedTube barcodedTube : preSelPoolRack.getContainerRole().getContainedVessels()) {
+            mapBarcodeToVessel.put(barcodedTube.getLabel(), barcodedTube);
         }
         LabEvent preSelPoolEntity2 = labEventFactory.buildFromBettaLims(hybridSelectionJaxbBuilder.getPreSelPoolJaxb2(),
                 mapBarcodeToVessel);
@@ -140,8 +140,8 @@ public class HybridSelectionEntityBuilder {
         LabEventTest.validateWorkflow("Hybridization", preSelPoolRack);
         mapBarcodeToVessel.clear();
         mapBarcodeToVessel.put(preSelPoolRack.getLabel(), preSelPoolRack);
-        for (TwoDBarcodedTube twoDBarcodedTube : preSelPoolRack.getContainerRole().getContainedVessels()) {
-            mapBarcodeToVessel.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
+        for (BarcodedTube barcodedTube : preSelPoolRack.getContainerRole().getContainedVessels()) {
+            mapBarcodeToVessel.put(barcodedTube.getLabel(), barcodedTube);
         }
 
         LabEvent hybridizationEntity = labEventFactory.buildFromBettaLims(
@@ -153,7 +153,7 @@ public class HybridSelectionEntityBuilder {
         ReagentDesign baitDesign =
                 new ReagentDesign(BAIT_DESIGN_NAME, ReagentDesign.ReagentType.BAIT);
 
-        TwoDBarcodedTube baitTube = LabEventTest
+        BarcodedTube baitTube = LabEventTest
                                             .buildBaitTube(hybridSelectionJaxbBuilder.getBaitTubeBarcode(), baitDesign);
         LabEvent baitSetupEntity = labEventFactory.buildVesselToSectionDbFree(
                 hybridSelectionJaxbBuilder.getBaitSetupJaxb(), baitTube, null, SBSSection.ALL96.getSectionName());
@@ -174,6 +174,7 @@ public class HybridSelectionEntityBuilder {
         LabEvent baitAdditionEntity = labEventFactory.buildFromBettaLims(
                 hybridSelectionJaxbBuilder.getBaitAdditionJaxb(), mapBarcodeToVessel);
         labEventHandler.processEvent(baitAdditionEntity);
+        hybridizationPlate.clearCaches();
 
         // BeadAddition
         LabEventTest.validateWorkflow("BeadAddition", hybridizationPlate);
@@ -297,8 +298,8 @@ public class HybridSelectionEntityBuilder {
                 mapBarcodeToVessel);
         labEventHandler.processEvent(normCatchEntity);
         normCatchRack = (TubeFormation) normCatchEntity.getTargetLabVessels().iterator().next();
-        for (TwoDBarcodedTube twoDBarcodedTube : normCatchRack.getContainerRole().getContainedVessels()) {
-            mapBarcodeToNormCatchTubes.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
+        for (BarcodedTube barcodedTube : normCatchRack.getContainerRole().getContainedVessels()) {
+            mapBarcodeToNormCatchTubes.put(barcodedTube.getLabel(), barcodedTube);
         }
         return this;
     }

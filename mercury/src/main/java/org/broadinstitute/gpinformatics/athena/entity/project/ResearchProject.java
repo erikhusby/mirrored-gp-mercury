@@ -7,14 +7,18 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
+import javax.annotation.Nonnull;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -52,9 +56,31 @@ import java.util.TreeSet;
 @Audited
 @Table(name = "RESEARCH_PROJECT", schema = "athena")
 public class ResearchProject implements BusinessObject, JiraProject, Comparable<ResearchProject>, Serializable {
+
+    public enum RegulatoryDesignation {
+        // changing enum names requires integration testing with the pipeline,
+        // but descriptions can change without impacting the pipeline
+        RESEARCH_ONLY("Research Grade"),
+        CLINICAL_DIAGNOSTICS("Clinical Diagnostics"),
+        GENERAL_CLIA_CAP("General CLIA/CAP Quality System");
+
+        // this field is what is stored in the database
+        private final String description;
+
+        private RegulatoryDesignation(String description) {
+            this.description = description;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+    }
+
     public static final boolean IRB_ENGAGED = false;
 
     public static final boolean IRB_NOT_ENGAGED = true;
+    public static final String PREFIX = "RP-";
 
     private static final long serialVersionUID = 937268527371239980L;
 
@@ -139,6 +165,7 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     private String irbNotes;
 
     @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+    @BatchSize(size = 100)
     private List<ProductOrder> productOrders = new ArrayList<>();
     /**
      * True if access to this Project's data should be restricted based on user.
@@ -160,15 +187,47 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     @Transient
     private String originalTitle;
 
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "regulatory_designation")
+    private RegulatoryDesignation regulatoryDesignation;
+
+    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
+            orphanRemoval = true)
+    private List<SubmissionTracker> submissionTrackers = new ArrayList<>();
+
+    /**
+     * The Buick ManifestSessions linked to this ResearchProject.
+     */
+    @OneToMany(mappedBy = "researchProject", cascade = CascadeType.PERSIST)
+    private Set<ManifestSession> manifestSessions = new HashSet<>();
+
+    // todo: we can cache the submissiontrackers in a static map
+    public SubmissionTracker getSubmissionTracker(SubmissionTuple tuple){
+        Set<SubmissionTracker> foundSubmissionTrackers = new HashSet<>();
+        for (SubmissionTracker submissionTracker : getSubmissionTrackers()) {
+            if (submissionTracker.getTuple().equals(tuple)) {
+                if (!foundSubmissionTrackers.add(submissionTracker)) {
+                    throw new RuntimeException("More then one result found");
+                }
+            }
+        }
+
+        if (foundSubmissionTrackers.size() == 0) {
+            return null;
+        }
+        return foundSubmissionTrackers.iterator().next();
+    }
+
     /**
      * no arg constructor.
      */
     public ResearchProject() {
-        this(null, null, null, false);
+        this(null, null, null, false, null);
     }
 
     public ResearchProject(BspUser user) {
-        this(user.getUserId(), null, null, false);
+        this(user.getUserId(), null, null, false, null);
     }
 
     /**
@@ -178,8 +237,10 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
      * @param title         The title (name) of the project
      * @param synopsis      A description of the project
      * @param irbNotEngaged Is this project set up for NO IRB?
+     * @param regulatoryDesignation The regulatory designation for this research project
      */
-    public ResearchProject(Long createdBy, String title, String synopsis, boolean irbNotEngaged) {
+    public ResearchProject(Long createdBy, String title, String synopsis, boolean irbNotEngaged,
+                           RegulatoryDesignation regulatoryDesignation) {
         createdDate = new Date();
         modifiedDate = createdDate;
         irbNotes = "";
@@ -189,6 +250,7 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         this.createdBy = createdBy;
         this.modifiedBy = createdBy;
         this.irbNotEngaged = irbNotEngaged;
+        this.regulatoryDesignation = regulatoryDesignation;
         if (createdBy != null) {
             addPerson(RoleType.PM, createdBy);
         }
@@ -314,6 +376,30 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         this.regulatoryInfos = regulatoryInfos;
     }
 
+    public RegulatoryDesignation getRegulatoryDesignation() {
+        return regulatoryDesignation;
+    }
+    public void setRegulatoryDesignation(RegulatoryDesignation regulatoryDesignation) {
+        this.regulatoryDesignation = regulatoryDesignation;
+    }
+
+    public String getRegulatoryDesignationDescription() {
+        return getRegulatoryDesignation().getDescription();
+    }
+
+    /**
+     * Returns a stable code for the regulatory designation so that
+     * the UI description can change independent of the underlying
+     * code by which the pipeline knows the regulatory designation.
+     */
+    public String getRegulatoryDesignationCodeForPipeline() {
+        String regulatoryDesignationCode = null;
+        if (regulatoryDesignation != null) {
+            regulatoryDesignationCode = regulatoryDesignation.name();
+        }
+        return regulatoryDesignationCode;
+    }
+
     /**
      * Sets the last modified by property to the specified user and the last modified date to the current date.
      *
@@ -365,6 +451,19 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         return cohorts;
     }
 
+    /**
+     * @return a full list of cohorts in the same way cohort Ids are retrieved.
+     */
+
+    public ResearchProjectCohort[] getCohorts() {
+        int i = 0;
+        ResearchProjectCohort[] cohorts = new ResearchProjectCohort[sampleCohorts.size()];
+        for (ResearchProjectCohort researchProjectCohort : sampleCohorts) {
+            cohorts[i++] = researchProjectCohort;
+        }
+        return cohorts;
+    }
+
     public void addCohort(ResearchProjectCohort sampleCohort) {
         sampleCohorts.add(sampleCohort);
     }
@@ -398,17 +497,20 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         associatedPeople.clear();
     }
 
-    public boolean addPeople(RoleType role, Collection<BspUser> people) {
-        boolean added = false;
+    /**
+     * Add to the list of people associated with this project.
+     * @param role the role of the people being added
+     * @param people the people to add
+     * @return true if any people were added
+     */
+    public boolean addPeople(@Nonnull RoleType role, @Nonnull Collection<BspUser> people) {
+        int peopleSize = associatedPeople.size();
 
-        if (people != null) {
-            for (BspUser user : people) {
-                associatedPeople.add(new ProjectPerson(this, role, user.getUserId()));
-                added = true;
-            }
+        for (BspUser user : people) {
+            associatedPeople.add(new ProjectPerson(this, role, user.getUserId()));
         }
 
-        return added;
+        return peopleSize != associatedPeople.size();
     }
 
     /**
@@ -528,6 +630,13 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         return productOrders;
     }
 
+    public void addProductOrder(ProductOrder productOrder) {
+        productOrders.add(productOrder);
+    }
+
+    public void removeProductOrder(ProductOrder productOrder) {
+        productOrders.remove(productOrder);
+    }
 
     public String getOriginalTitle() {
         return originalTitle;
@@ -738,6 +847,53 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     public void removeRegulatoryInfo(RegulatoryInfo regulatoryInfo) {
         regulatoryInfos.remove(regulatoryInfo);
         regulatoryInfo.removeResearchProject(this);
+    }
+
+    public Set<ProductOrderSample> collectSamples() {
+
+        Set<ProductOrderSample> allProductOrderSamples = new HashSet<>();
+        for(ProductOrder order:productOrders) {
+            allProductOrderSamples.addAll(order.getSamples());
+        }
+        return allProductOrderSamples;
+    }
+
+    public List<SubmissionTracker> getSubmissionTrackers() {
+        return submissionTrackers;
+    }
+
+    public void setSubmissionTrackers(List<SubmissionTracker> submissionTrackers) {
+        this.submissionTrackers = submissionTrackers;
+    }
+
+    public void addSubmissionTracker(SubmissionTracker... submissionTracker) {
+        submissionTrackers.addAll(Arrays.asList(submissionTracker));
+
+        for(SubmissionTracker tracker:submissionTracker) {
+            tracker.setResearchProject(this);
+        }
+    }
+
+    public Set<ManifestSession> getManifestSessions() {
+        return manifestSessions;
+    }
+
+    public void addManifestSession(ManifestSession manifestSession) {
+        this.manifestSessions.add(manifestSession);
+    }
+
+    /**
+     * Collects all manifest records eligible for validation.  Records for which validation has been
+     * run and has found errors are not eligible for validation.
+     */
+    public List<ManifestRecord> collectNonQuarantinedManifestRecords() {
+        List<ManifestRecord> allRecords = new ArrayList<>();
+
+        for (ManifestSession manifestSession : getManifestSessions()) {
+            allRecords.addAll(manifestSession.getNonQuarantinedRecords());
+        }
+
+        return allRecords;
     }
 
     public enum Status implements StatusType {

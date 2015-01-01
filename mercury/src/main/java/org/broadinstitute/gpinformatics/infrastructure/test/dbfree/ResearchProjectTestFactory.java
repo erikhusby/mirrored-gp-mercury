@@ -27,9 +27,16 @@ public class ResearchProjectTestFactory {
         return createDummyResearchProject(TEST_CREATOR, "title " + uuid, "synopsis " + uuid, true);
     }
 
+    public static ResearchProject createTestResearchProject(String jiraTicketId) {
+        ResearchProject testResearchProject = createTestResearchProject();
+        testResearchProject.setJiraTicketKey(jiraTicketId);
+        return testResearchProject;
+    }
+
     public static ResearchProject createDummyResearchProject(long createdBy, String title, String synopsis,
                                                              boolean irbNotEngaged) {
-        ResearchProject researchProject = new ResearchProject(createdBy, title, synopsis, irbNotEngaged);
+        ResearchProject researchProject = new ResearchProject(createdBy, title, synopsis, irbNotEngaged,
+                                                              ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
 
         Set<Funding> fundingList =
                 Collections.singleton(new Funding(Funding.PURCHASE_ORDER, "A piece of Funding", "POFunding"));
@@ -57,6 +64,7 @@ public class ResearchProjectTestFactory {
                 new RegulatoryInfo("Consent for " + title, RegulatoryInfo.Type.ORSP_NOT_HUMAN_SUBJECTS_RESEARCH,
                         "ABC-" + identifier);
         researchProject.getRegulatoryInfos().add(regulatoryInfo);
+        researchProject.setRegulatoryDesignation(ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
 
         return researchProject;
     }
@@ -64,14 +72,15 @@ public class ResearchProjectTestFactory {
 
     /**
      * This code is in the dbfree version of the ResearchProject factory despite the fact that
-     * {@link org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList} is currently written as an EJB.
+     * {@link BSPUserList} is currently written as an EJB.
      * It's possible that test code could mock out BSPUserList, although at the time of this writing none of the
      * callers currently does.
      */
     public static ResearchProject createDummyResearchProject(
             ResearchProjectEjb researchProjectEjb, BSPUserList userList, String researchProjectTitle) throws IOException {
         ResearchProject dummyProject =
-                new ResearchProject(TEST_CREATOR, researchProjectTitle, "Simple test object for unit tests", true);
+                new ResearchProject(TEST_CREATOR, researchProjectTitle, "Simple test object for unit tests", true,
+                                    ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
         RegulatoryInfo regulatoryInfo =
                         new RegulatoryInfo("IRB Consent for " + researchProjectTitle, RegulatoryInfo.Type.IRB, "8675309");
         dummyProject.getRegulatoryInfos().add(regulatoryInfo);

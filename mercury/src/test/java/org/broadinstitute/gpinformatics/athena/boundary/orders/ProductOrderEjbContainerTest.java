@@ -18,6 +18,7 @@ import java.io.IOException;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
 
+@Test(groups = TestGroups.ALTERNATIVES)
 public class ProductOrderEjbContainerTest extends Arquillian {
 
     @Inject
@@ -37,7 +38,7 @@ public class ProductOrderEjbContainerTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWarWithAlternatives(TEST, HappyQuoteServiceMock.class);
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.ALTERNATIVES)
     public void testNullQuotePropagatesToJira() throws Exception {
         String pdoName = "PDO-310";
         ProductOrder pdo = pdoDao.findByBusinessKey(pdoName);
@@ -56,7 +57,7 @@ public class ProductOrderEjbContainerTest extends Arquillian {
         Assert.assertEquals(quoteFromJira, ProductOrder.QUOTE_TEXT_USED_IN_JIRA_WHEN_QUOTE_FIELD_IS_EMPTY);
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.ALTERNATIVES)
     public void testSummaryFieldPropagatesToJira() throws Exception {
         String pdoName = "PDO-310";
         ProductOrder pdo = pdoDao.findByBusinessKey(pdoName);

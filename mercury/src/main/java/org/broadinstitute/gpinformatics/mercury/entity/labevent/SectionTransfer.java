@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
+import javax.annotation.Nullable;
 import javax.persistence.*;
 
 /**
@@ -22,24 +23,36 @@ public class SectionTransfer extends VesselTransfer {
     @Enumerated(EnumType.STRING)
     private SBSSection sourceSection;
 
+    /** Typically a RackOfTubes. */
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    private LabVessel ancillarySourceVessel;
+
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private LabVessel targetVessel;
 
     @Enumerated(EnumType.STRING)
     private SBSSection targetSection;
 
+    /** Typically a RackOfTubes. */
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    private LabVessel ancillaryTargetVessel;
+
     @Index(name = "ix_st_lab_event")
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private LabEvent labEvent;
 
-    public SectionTransfer(VesselContainer sourceVesselContainer, SBSSection sourceSection,
-            VesselContainer targetVesselContainer, SBSSection targetSection, LabEvent labEvent) {
+    public SectionTransfer(VesselContainer sourceVesselContainer, SBSSection sourceSection, LabVessel ancillarySourceVessel,
+            VesselContainer targetVesselContainer, SBSSection targetSection, LabVessel ancillaryTargetVessel, LabEvent labEvent) {
+        this.ancillarySourceVessel = ancillarySourceVessel;
+        this.ancillaryTargetVessel = ancillaryTargetVessel;
         this.labEvent = labEvent;
-        this.sourceVessel = sourceVesselContainer.getEmbedder();
+        sourceVessel = sourceVesselContainer.getEmbedder();
         sourceVesselContainer.getSectionTransfersFrom().add(this);
         this.sourceSection = sourceSection;
-        this.targetVessel = targetVesselContainer.getEmbedder();
+        targetVessel = targetVesselContainer.getEmbedder();
         targetVesselContainer.getSectionTransfersTo().add(this);
+        // In case we're adding molecular indexes, clear the cached sample instances.
+        targetVesselContainer.clearCaches();
         this.targetSection = targetSection;
     }
 
@@ -47,35 +60,45 @@ public class SectionTransfer extends VesselTransfer {
     }
 
     public VesselContainer getSourceVesselContainer() {
-        return this.sourceVessel.getContainerRole();
+        return sourceVessel.getContainerRole();
     }
 
     public void setSourceVesselContainer(VesselContainer sourceVesselContainer) {
-        this.sourceVessel = sourceVesselContainer.getEmbedder();
+        sourceVessel = sourceVesselContainer.getEmbedder();
     }
 
     public SBSSection getSourceSection() {
-        return this.sourceSection;
+        return sourceSection;
     }
 
     public void setSourceSection(SBSSection sourceSection) {
         this.sourceSection = sourceSection;
     }
 
+    @Nullable
+    public LabVessel getAncillarySourceVessel() {
+        return ancillarySourceVessel;
+    }
+
     public VesselContainer getTargetVesselContainer() {
-        return this.targetVessel.getContainerRole();
+        return targetVessel.getContainerRole();
     }
 
     public void setTargetVesselContainer(VesselContainer targetVesselContainer) {
-        this.targetVessel = targetVesselContainer.getEmbedder();
+        targetVessel = targetVesselContainer.getEmbedder();
     }
 
     public SBSSection getTargetSection() {
-        return this.targetSection;
+        return targetSection;
     }
 
     public void setTargetSection(SBSSection targetSection) {
         this.targetSection = targetSection;
+    }
+
+    @Nullable
+    public LabVessel getAncillaryTargetVessel() {
+        return ancillaryTargetVessel;
     }
 
     public LabEvent getLabEvent() {
@@ -87,7 +110,7 @@ public class SectionTransfer extends VesselTransfer {
      * @return concatenation of critical fields
      */
     public String getKey() {
-        return sourceVessel.getLabel() + "|" + sourceSection.getSectionName() + "|" + targetVessel.getLabel() + "|" +
-                targetSection.getSectionName();
+        return getVesselTransferId() + "|" + sourceVessel.getLabel() + "|" + sourceSection.getSectionName() + "|" +
+               targetVessel.getLabel() + "|" + targetSection.getSectionName();
     }
 }

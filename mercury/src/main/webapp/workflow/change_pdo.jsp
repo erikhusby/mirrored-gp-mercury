@@ -113,13 +113,13 @@
                         <stripes:select name="selectedPdo" >
                             <stripes:options-collection collection="${actionBean.findPdoForVessel(entry.labVessel.label)}"></stripes:options-collection>
                         </stripes:select>
-                            ${entry.poBusinessKey}
+                            ${entry.productOrder.businessKey}
                     </td>
                     <td>
-                        <div class="ellipsis" style="width: 300px">${actionBean.getPDODetails(entry.poBusinessKey).title}</div>
+                        <div class="ellipsis" style="width: 300px">${entry.productOrder.title}</div>
                     </td>
                     <td>
-                            ${actionBean.getUserFullName(actionBean.getPDODetails(entry.poBusinessKey).createdBy)}
+                            ${actionBean.getUserFullName(entry.productOrder.createdBy)}
                     </td>
                     <td>
                         <c:forEach items="${entry.labVessel.nearestWorkflowLabBatches}" var="batch"

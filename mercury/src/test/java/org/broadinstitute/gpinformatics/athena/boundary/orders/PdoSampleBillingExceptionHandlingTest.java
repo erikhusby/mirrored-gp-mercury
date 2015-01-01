@@ -14,6 +14,7 @@ import java.util.Set;
  * Uses a DAO that throws exceptions to confirm the
  * exception handling of the pdoSampleBillingStatus web service.
  */
+@Test(groups = TestGroups.DATABASE_FREE)
 public class PdoSampleBillingExceptionHandlingTest {
 
     private static final String EXCEPTION_TEXT = "Boom!";

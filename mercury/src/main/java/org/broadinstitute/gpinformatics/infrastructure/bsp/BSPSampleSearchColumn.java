@@ -28,8 +28,10 @@ public enum BSPSampleSearchColumn {
     ETHNICITY("Ethnicity"),
     RACKSCAN_MISMATCH("Sample Kit Data Upload/Rackscan Mismatch"),
     RIN("RIN Number"),
+    RQS("RNA Quality Score (RQS)"),
     PICO_RUN_DATE("Pico Run Date"),
-    RECEIPT_DATE("Receipt Date");
+    RECEIPT_DATE("Receipt Date"),
+    ORIGINAL_MATERIAL_TYPE("Original Material Type");
 
     private final String columnName;
     public String columnName() { return columnName; }
@@ -55,7 +57,6 @@ public enum BSPSampleSearchColumn {
         BSPSampleSearchColumn.PRIMARY_DISEASE,
         BSPSampleSearchColumn.GENDER,
         BSPSampleSearchColumn.STOCK_TYPE,
-        BSPSampleSearchColumn.FINGERPRINT,
         BSPSampleSearchColumn.CONTAINER_ID,
         BSPSampleSearchColumn.SAMPLE_ID,
         BSPSampleSearchColumn.COLLABORATOR_NAME,
@@ -63,6 +64,7 @@ public enum BSPSampleSearchColumn {
         BSPSampleSearchColumn.RACE,
         BSPSampleSearchColumn.RACKSCAN_MISMATCH,
         BSPSampleSearchColumn.RIN,
+        BSPSampleSearchColumn.RQS,
         BSPSampleSearchColumn.PICO_RUN_DATE,
         BSPSampleSearchColumn.RECEIPT_DATE
     };

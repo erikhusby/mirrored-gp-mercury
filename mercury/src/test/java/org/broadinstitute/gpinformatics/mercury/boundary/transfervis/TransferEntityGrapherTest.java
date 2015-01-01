@@ -12,6 +12,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 /**
  * Start a server that deploys the EJB
  */
+@Test(groups = TestGroups.STANDARD)
 public class TransferEntityGrapherTest extends Arquillian {
 
     @Deployment
@@ -19,7 +20,7 @@ public class TransferEntityGrapherTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
-    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = false, groups = TestGroups.STANDARD)
     public void testRun() {
         try {
             // Put the test to sleep, to keep the EJB deployed

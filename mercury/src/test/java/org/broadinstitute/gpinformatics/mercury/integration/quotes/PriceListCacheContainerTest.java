@@ -1,32 +1,19 @@
 package org.broadinstitute.gpinformatics.mercury.integration.quotes;
 
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PMBQuoteServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
-import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.testng.Arquillian;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import javax.inject.Inject;
 import java.util.Collection;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+@Test(groups = TestGroups.STANDARD)
+public class PriceListCacheContainerTest {
+    private PriceListCache priceListCache=new PriceListCache(PMBQuoteServiceProducer.testInstance());
 
-public class PriceListCacheContainerTest extends Arquillian {
-
-    @Inject
-    private PriceListCache priceListCache;
-
-    @Deployment
-    public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(DEV);
-    }
-
-
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.STANDARD)
     public void testSanity() {
 
         Assert.assertNotNull(priceListCache);
@@ -43,7 +30,5 @@ public class PriceListCacheContainerTest extends Arquillian {
             Assert.assertNotNull(quotePriceItem.getSubmittedDate(), quotePriceItem.toString());
             Assert.assertNotNull(quotePriceItem.getEffectiveDate(), quotePriceItem.toString());
         }
-
     }
-
 }

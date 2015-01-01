@@ -11,17 +11,13 @@
 
 package org.broadinstitute.gpinformatics.mercury.presentation.admin;
 
-import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
-import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
-import net.sourceforge.stripes.validation.ValidateNestedProperties;
-import org.broadinstitute.gpinformatics.athena.control.dao.admin.PublicMessageDao;
-import org.broadinstitute.gpinformatics.athena.entity.infrastructure.PublicMessage;
+import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.PublicMessageEjb;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
@@ -31,22 +27,15 @@ import javax.inject.Inject;
  */
 @UrlBinding("/admin/public_message.action")
 public class PublicMessageAdminActionBean extends CoreActionBean {
-    private static final String ADD_MESSAGE = "addMessage";
+    private static final String SET_MESSAGE = "setMessage";
     private static final String CLEAR_MESSAGE = "clearMessage";
     private static final String MANAGE_PUBLIC_MESSAGE = "/admin/manage_public_message.jsp";
-    private static final String TEXT = "text";
 
     @Inject
-    private PublicMessageDao publicMessageDao;
+    private PublicMessageEjb publicMessageEjb;
 
-    @ValidateNestedProperties(@Validate(
-            field = "message", label = "Public message text", required = true, maxlength = 255, on = ADD_MESSAGE))
-    private PublicMessage publicMessage;
-
-    @Before(stages = LifecycleStage.BindingAndValidation)
-    public void init() {
-        publicMessage = publicMessageDao.getMessage();
-    }
+    @Validate(label = "Public message text", required = true, maxlength = 255, on = SET_MESSAGE)
+    private String messageText;
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -54,25 +43,23 @@ public class PublicMessageAdminActionBean extends CoreActionBean {
         return new ForwardResolution(MANAGE_PUBLIC_MESSAGE);
     }
 
-    @HandlesEvent(ADD_MESSAGE)
-    public Resolution addMessage() {
-        publicMessageDao.persist(publicMessage);
+    @HandlesEvent(SET_MESSAGE)
+    public Resolution setMessage() {
+        publicMessageEjb.setPublicMessage(messageText);
         return getSourcePageResolution();
     }
 
     @HandlesEvent(CLEAR_MESSAGE)
     public Resolution clearMessage() {
-        if (publicMessage != null) {
-            publicMessageDao.remove(publicMessage);
-        }
+        publicMessageEjb.clearPublicMessage();
         return getSourcePageResolution();
     }
 
-    public PublicMessage getPublicMessage() {
-        return publicMessage;
+    public String getMessageText() {
+        return messageText;
     }
 
-    public void setPublicMessage(PublicMessage publicMessage) {
-        this.publicMessage = publicMessage;
+    public void setMessageText(String messageText) {
+        this.messageText = messageText;
     }
 }

@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
+import javax.annotation.Nullable;
 import javax.persistence.*;
 
 /**
@@ -22,30 +23,46 @@ public class CherryPickTransfer extends VesselTransfer {
     @Enumerated(EnumType.STRING)
     private VesselPosition sourcePosition;
 
+    /** Typically a RackOfTubes. */
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    private LabVessel ancillarySourceVessel;
+
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private LabVessel targetVessel;
 
     @Enumerated(EnumType.STRING)
     private VesselPosition targetPosition;
 
+    /** Typically a RackOfTubes. */
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    private LabVessel ancillaryTargetVessel;
+
     @Index(name = "ix_cpt_lab_event")
     @ManyToOne
     private LabEvent labEvent;
 
-    public CherryPickTransfer(VesselContainer<?> sourceVesselContainer, VesselPosition sourcePosition,
-            VesselContainer<?> targetVesselContainer, VesselPosition targetPosition, LabEvent labEvent) {
+    public CherryPickTransfer(
+            VesselContainer<?> sourceVesselContainer,
+            VesselPosition sourcePosition,
+            @Nullable LabVessel ancillarySourceVessel,
+            VesselContainer<?> targetVesselContainer,
+            VesselPosition targetPosition,
+            @Nullable LabVessel ancillaryTargetVessel,
+            LabEvent labEvent) {
         if (sourceVesselContainer == null) {
             throw new RuntimeException("sourceVesselContainer must not be null");
         }
         if (sourcePosition == null) {
             throw new RuntimeException("sourcePosition must not be null");
         }
+        this.ancillarySourceVessel = ancillarySourceVessel;
         if (targetVesselContainer == null) {
             throw new RuntimeException("targetVesselContainer must not be null");
         }
         if (targetPosition == null) {
             throw new RuntimeException("targetPosition must not be null");
         }
+        this.ancillaryTargetVessel = ancillaryTargetVessel;
         this.labEvent = labEvent;
         sourceVessel = sourceVesselContainer.getEmbedder();
         sourceVesselContainer.getCherryPickTransfersFrom().add(this);
@@ -66,12 +83,29 @@ public class CherryPickTransfer extends VesselTransfer {
         return sourcePosition;
     }
 
+    /**
+     * For fixups only.
+     */
+    void setSourcePosition(VesselPosition sourcePosition) {
+        this.sourcePosition = sourcePosition;
+    }
+
+    @Nullable
+    public LabVessel getAncillarySourceVessel() {
+        return ancillarySourceVessel;
+    }
+
     public VesselContainer<?> getTargetVesselContainer() {
         return targetVessel.getContainerRole();
     }
 
     public VesselPosition getTargetPosition() {
         return targetPosition;
+    }
+
+    @Nullable
+    public LabVessel getAncillaryTargetVessel() {
+        return ancillaryTargetVessel;
     }
 
     public LabEvent getLabEvent() {
@@ -83,7 +117,7 @@ public class CherryPickTransfer extends VesselTransfer {
      * @return concatenation of key fields
      */
     public String getKey() {
-        return sourceVessel.getLabel() + "|" + sourcePosition + "|" + targetVessel.getLabel() + "|" +
-                targetPosition;
+        return getVesselTransferId() + "|" + sourceVessel.getLabel() + "|" + sourcePosition + "|" +
+               targetVessel.getLabel() + "|" + targetPosition;
     }
 }

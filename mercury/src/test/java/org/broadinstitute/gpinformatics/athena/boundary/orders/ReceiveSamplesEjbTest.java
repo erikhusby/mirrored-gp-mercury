@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+@Test(groups = TestGroups.STUBBY)
 public class ReceiveSamplesEjbTest extends ContainerTest {
 
     @Inject
@@ -44,7 +44,7 @@ public class ReceiveSamplesEjbTest extends ContainerTest {
     private List<ProductOrderSample> samplesToDelete;
     private ProductOrder testProductOrder;
 
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+    @BeforeMethod(groups = TestGroups.STUBBY, enabled = false)
     public void setUp() throws Exception {
 
         if(productOrderSampleDao == null) {
@@ -79,7 +79,7 @@ public class ReceiveSamplesEjbTest extends ContainerTest {
         productOrderDao.flush();
     }
 
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+    @AfterMethod(groups = TestGroups.STUBBY, enabled = false)
     public void tearDown() throws Exception {
 
         if(productOrderSampleDao == null) {
@@ -108,7 +108,7 @@ public class ReceiveSamplesEjbTest extends ContainerTest {
         samplesToDelete.clear();
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+    @Test(groups = TestGroups.STUBBY, enabled = false)
     public void testValidationOneSampleShort() throws Exception {
 
         List<String> testSampleRequestList = new ArrayList<>();
@@ -140,7 +140,7 @@ public class ReceiveSamplesEjbTest extends ContainerTest {
         }
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+    @Test(groups = TestGroups.STUBBY, enabled = false)
     public void testValidationNoIssues() throws Exception {
 
         List<String> testSampleRequestList = new ArrayList<>();

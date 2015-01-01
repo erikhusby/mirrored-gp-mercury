@@ -1,14 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.control.labevent;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
@@ -48,33 +47,34 @@ public class DenatureToDilutionHandlerTest extends BaseEventTest {
 
         final ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
         Long pdoId = 9202938094820L;
-        AthenaClientServiceStub.addProductOrder(productOrder);
         runDate = new Date();
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
-                new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
+                                              new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                                              LabBatch.LabBatchType.WORKFLOW);
         workflowBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
         workflowBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
 
         //Build Event History
         bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
         PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube,
-                String.valueOf(runDate.getTime()), "1", true);
+                                                                                  String.valueOf(runDate.getTime()),
+                                                                                  "1", true);
         ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
                 runExomeExpressShearingProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
-                        picoPlatingEntityBuilder.getNormTubeFormation(),
-                        picoPlatingEntityBuilder.getNormalizationBarcode(), "1");
+                                               picoPlatingEntityBuilder.getNormTubeFormation(),
+                                               picoPlatingEntityBuilder.getNormalizationBarcode(), "1");
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
                 runLibraryConstructionProcess(exomeExpressShearingEntityBuilder.getShearingCleanupPlate(),
-                        exomeExpressShearingEntityBuilder.getShearCleanPlateBarcode(),
-                        exomeExpressShearingEntityBuilder.getShearingPlate(), "1");
+                                              exomeExpressShearingEntityBuilder.getShearCleanPlateBarcode(),
+                                              exomeExpressShearingEntityBuilder.getShearingPlate(), "1");
         HybridSelectionEntityBuilder hybridSelectionEntityBuilder =
                 runHybridSelectionProcess(libraryConstructionEntityBuilder.getPondRegRack(),
-                        libraryConstructionEntityBuilder.getPondRegRackBarcode(),
-                        libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "1");
+                                          libraryConstructionEntityBuilder.getPondRegRackBarcode(),
+                                          libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "1");
         qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
-                hybridSelectionEntityBuilder.getNormCatchBarcodes(),
-                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "1");
+                                         hybridSelectionEntityBuilder.getNormCatchBarcodes(),
+                                         hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "1");
         denatureSource = qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
 
 
@@ -96,21 +96,12 @@ public class DenatureToDilutionHandlerTest extends BaseEventTest {
         LabBatch fctBatch =
                 new LabBatch(fctBatchName, Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
 
-        HiSeq2500JaxbBuilder dilutionBuilder = new HiSeq2500JaxbBuilder(getBettaLimsMessageTestFactory(),
-                "dilutionTest" + runDate.getTime(), Collections.singletonList(denatureSource.getLabel()),
-                qtpEntityBuilder.getDenatureRack().getLabel(), fctBatchName,
-                ProductionFlowcellPath.DILUTION_TO_FLOWCELL, denatureSource.getSampleInstanceCount(), null, 2).invoke();
-        PlateCherryPickEvent dilutionEvent = dilutionBuilder.getDilutionJaxb();
-        LabEvent dilutionTransferEntity =
-                getLabEventFactory().buildFromBettaLims(dilutionEvent, new HashMap<String, LabVessel>() {{
-                    put(qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01)
-                            .getLabel(),
-                            qtpEntityBuilder.getDenatureRack().getContainerRole()
-                                    .getVesselAtPosition(VesselPosition.A01));
-                    put(qtpEntityBuilder.getDenatureRack().getLabel(), qtpEntityBuilder.getDenatureRack());
-                }});
+        Dilution dilution = new Dilution(fctBatchName).invoke();
+        LabEvent dilutionTransferEntity = dilution.getDilutionTransferEntity();
+        PlateCherryPickEvent dilutionEvent = dilution.getDilutionEvent();
 
-        getLabEventFactory().getEventHandlerSelector().applyEventSpecificHandling(dilutionTransferEntity, dilutionEvent);
+        getLabEventFactory().getEventHandlerSelector().applyEventSpecificHandling(dilutionTransferEntity,
+                                                                                  dilutionEvent);
     }
 
     @Test(groups = {TestGroups.DATABASE_FREE})
@@ -119,22 +110,13 @@ public class DenatureToDilutionHandlerTest extends BaseEventTest {
         LabBatch fctBatch =
                 new LabBatch(fctBatchName, Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
 
-        HiSeq2500JaxbBuilder dilutionBuilder = new HiSeq2500JaxbBuilder(getBettaLimsMessageTestFactory(),
-                "dilutionTest" + runDate.getTime(), Collections.singletonList(denatureSource.getLabel()),
-                qtpEntityBuilder.getDenatureRack().getLabel(), fctBatchName + "bad",
-                ProductionFlowcellPath.DILUTION_TO_FLOWCELL, denatureSource.getSampleInstanceCount(), null, 2).invoke();
-        PlateCherryPickEvent dilutionEvent = dilutionBuilder.getDilutionJaxb();
-        LabEvent dilutionTransferEntity =
-                getLabEventFactory().buildFromBettaLims(dilutionEvent, new HashMap<String, LabVessel>() {{
-                    put(qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01)
-                            .getLabel(),
-                            qtpEntityBuilder.getDenatureRack().getContainerRole()
-                                    .getVesselAtPosition(VesselPosition.A01));
-                    put(qtpEntityBuilder.getDenatureRack().getLabel(), qtpEntityBuilder.getDenatureRack());
-                }});
+        Dilution dilution = new Dilution(fctBatchName+"bad").invoke();
+        LabEvent dilutionTransferEntity = dilution.getDilutionTransferEntity();
+        PlateCherryPickEvent dilutionEvent = dilution.getDilutionEvent();
 
         try {
-            getLabEventFactory().getEventHandlerSelector().applyEventSpecificHandling(dilutionTransferEntity, dilutionEvent);
+            getLabEventFactory().getEventHandlerSelector().applyEventSpecificHandling(dilutionTransferEntity,
+                                                                                      dilutionEvent);
             Assert.fail("Different FCT tickets should have caused a failure");
         } catch (Exception e) {
             e.printStackTrace();
@@ -148,25 +130,16 @@ public class DenatureToDilutionHandlerTest extends BaseEventTest {
                 new LabBatch(fctBatchName, Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
 
         for (LabBatchStartingVessel startingVessel : fctBatch.getLabBatchStartingVessels()) {
-            startingVessel.setDilutionVessel(new TwoDBarcodedTube("PreviousDilutionTube" + runDate.getTime()));
+            startingVessel.setDilutionVessel(new BarcodedTube("PreviousDilutionTube" + runDate.getTime()));
         }
 
-        HiSeq2500JaxbBuilder dilutionBuilder = new HiSeq2500JaxbBuilder(getBettaLimsMessageTestFactory(),
-                "dilutionTest" + runDate.getTime(), Collections.singletonList(denatureSource.getLabel()),
-                qtpEntityBuilder.getDenatureRack().getLabel(), fctBatchName,
-                ProductionFlowcellPath.DILUTION_TO_FLOWCELL, denatureSource.getSampleInstanceCount(), null, 2).invoke();
-        PlateCherryPickEvent dilutionEvent = dilutionBuilder.getDilutionJaxb();
-        LabEvent dilutionTransferEntity =
-                getLabEventFactory().buildFromBettaLims(dilutionEvent, new HashMap<String, LabVessel>() {{
-                    put(qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01)
-                            .getLabel(),
-                            qtpEntityBuilder.getDenatureRack().getContainerRole()
-                                    .getVesselAtPosition(VesselPosition.A01));
-                    put(qtpEntityBuilder.getDenatureRack().getLabel(), qtpEntityBuilder.getDenatureRack());
-                }});
+        Dilution dilution = new Dilution(fctBatchName).invoke();
+        LabEvent dilutionTransferEntity = dilution.getDilutionTransferEntity();
+        PlateCherryPickEvent dilutionEvent = dilution.getDilutionEvent();
 
         try {
-            getLabEventFactory().getEventHandlerSelector().applyEventSpecificHandling(dilutionTransferEntity, dilutionEvent);
+            getLabEventFactory().getEventHandlerSelector().applyEventSpecificHandling(dilutionTransferEntity,
+                                                                                      dilutionEvent);
             Assert.fail("FCT ticket having a different dilution tube should have caused a failure");
         } catch (Exception e) {
             e.printStackTrace();
@@ -181,33 +154,58 @@ public class DenatureToDilutionHandlerTest extends BaseEventTest {
 
         final String altFctTicketName = fctBatchName + "ALT";
 
-        HiSeq2500JaxbBuilder dilutionBuilder = new HiSeq2500JaxbBuilder(getBettaLimsMessageTestFactory(),
-                "dilutionTest" + runDate.getTime(), Collections.singletonList(denatureSource.getLabel()),
-                qtpEntityBuilder.getDenatureRack().getLabel(), fctBatchName,
-                ProductionFlowcellPath.DILUTION_TO_FLOWCELL, denatureSource.getSampleInstanceCount(), null, 2).invoke();
-        PlateCherryPickEvent dilutionEvent = dilutionBuilder.getDilutionJaxb();
-        LabEvent dilutionTransferEntity =
-                getLabEventFactory().buildFromBettaLims(dilutionEvent, new HashMap<String, LabVessel>() {{
-                    put(qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01)
-                            .getLabel(),
-                            qtpEntityBuilder.getDenatureRack().getContainerRole()
-                                    .getVesselAtPosition(VesselPosition.A01));
-                    put(qtpEntityBuilder.getDenatureRack().getLabel(), qtpEntityBuilder.getDenatureRack());
-                }});
+        Dilution dilution = new Dilution(fctBatchName).invoke();
+        LabEvent dilutionTransferEntity = dilution.getDilutionTransferEntity();
+        PlateCherryPickEvent dilutionEvent = dilution.getDilutionEvent();
 
         LabBatch fctBatch2 =
                 new LabBatch(altFctTicketName,
-                        Collections.singleton((LabVessel) new TwoDBarcodedTube(denatureSource.getLabel() + "ALT")),
+                        Collections.singleton((LabVessel) new BarcodedTube(denatureSource.getLabel() + "ALT")),
                         LabBatch.LabBatchType.FCT);
         fctBatch2.getLabBatchStartingVessels().iterator().next().setDilutionVessel(
                 dilutionTransferEntity.getTargetVesselTubes().iterator().next());
 
         try {
-            getLabEventFactory().getEventHandlerSelector().applyEventSpecificHandling(dilutionTransferEntity, dilutionEvent);
+            getLabEventFactory().getEventHandlerSelector().applyEventSpecificHandling(dilutionTransferEntity,
+                                                                                      dilutionEvent);
             Assert.fail("Dilution registered to a Different FCT ticket should have caused a failure");
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
+    private class Dilution {
+        private String fctBatchName;
+        private PlateCherryPickEvent dilutionEvent;
+        private LabEvent dilutionTransferEntity;
+
+        public Dilution(String fctBatchName) {
+            this.fctBatchName = fctBatchName;
+        }
+
+        public PlateCherryPickEvent getDilutionEvent() {
+            return dilutionEvent;
+        }
+
+        public LabEvent getDilutionTransferEntity() {
+            return dilutionTransferEntity;
+        }
+
+        public Dilution invoke() {
+            HiSeq2500JaxbBuilder dilutionBuilder = new HiSeq2500JaxbBuilder(getBettaLimsMessageTestFactory(),
+                    "dilutionTest" + runDate.getTime(), Collections.singletonList( denatureSource.getLabel()),
+                    qtpEntityBuilder.getDenatureRack().getRacksOfTubes().iterator().next().getLabel(), fctBatchName,
+                    ProductionFlowcellPath.DILUTION_TO_FLOWCELL, denatureSource.getSampleInstanceCount(), null,
+                    2).invoke();
+            dilutionEvent = dilutionBuilder.getDilutionJaxb();
+            dilutionTransferEntity = getLabEventFactory().buildFromBettaLims(dilutionEvent,
+                    new HashMap<String, LabVessel>() {{
+                        BarcodedTube denatureTube = qtpEntityBuilder.getDenatureRack().getContainerRole()
+                                .getVesselAtPosition(VesselPosition.A01);
+                        put(denatureTube.getLabel(), denatureTube);
+                        put(qtpEntityBuilder.getDenatureRack().getLabel(), qtpEntityBuilder.getDenatureRack());
+                    }});
+            return this;
+        }
+    }
 }

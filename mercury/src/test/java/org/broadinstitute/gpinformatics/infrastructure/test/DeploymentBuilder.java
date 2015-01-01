@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.test;
 
 import org.apache.commons.io.FileUtils;
+import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.DeploymentProducer;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
@@ -50,6 +51,7 @@ public class DeploymentBuilder {
                 .addAsWebInfResource(new File("src/test/resources/" + ((ApplicationInstance.CRSP.isCurrent()) ? "crsp-" : "") + "mercury-"
                                               + dataSourceEnvironment + "-ds.xml"))
                 .addAsWebInfResource(new File("src/test/resources/squid-" + dataSourceEnvironment + "-ds.xml"))
+                .addAsWebInfResource(new File("src/test/resources/metrics-prod-ds.xml"))
                 .addAsResource(new File("src/main/resources/META-INF/persistence.xml"), "META-INF/persistence.xml")
                 .addAsWebInfResource(new File("src/main/webapp/WEB-INF/ejb-jar.xml"))
                         //TODO  Cherry Picking resources is not Ideal.  When we have more auto front end tests, we will need everything in resources.
@@ -57,9 +59,10 @@ public class DeploymentBuilder {
                 .addAsResource(new File("src/main/resources/templates/WorkflowValidation.ftl"),
                         "templates/WorkflowValidation.ftl")
                 .addPackages(true, "org.broadinstitute.gpinformatics")
+                .addPackages(true, "edu.mit.broad.prodinfo.bean.generated")
                 .addAsWebInfResource(new StringAsset(DeploymentProducer.MERCURY_DEPLOYMENT + "=" + deployment.name()),
                         "classes/jndi.properties");
-        addWebResourcesTo(war, "src/test/resources/testdata");
+        addWebResourcesTo(war, TestUtils.TEST_DATA_LOCATION);
         war = addWarDependencies(war);
         return war;
     }
@@ -76,7 +79,7 @@ public class DeploymentBuilder {
     public static WebArchive buildCRSPMercuryWar(Deployment deployment, String dataSourceEnvironment) {
         WebArchive war = buildMercuryWar(deployment, dataSourceEnvironment);
 
-        war.addAsWebInfResource(new StringAsset(DeploymentProducer.CRSP + "=true" ), "classes/jndi.properties");
+        war.addAsWebInfResource(new StringAsset(DeploymentProducer.CRSP + "=true"), "classes/jndi.properties");
 
         return war;
     }
@@ -141,6 +144,30 @@ public class DeploymentBuilder {
     public static WebArchive buildMercuryWarWithAlternatives(Deployment deployment,
                                                              String dataSourceEnvironment,
                                                              Class... alternatives) {
+        if (deployment == null && dataSourceEnvironment != null) {
+            throw new UnsupportedOperationException(
+                    "Must specify a deployment when specifying a dataSourceEnvironment");
+        }
+
+        String beansXml = buildBeansXml(alternatives);
+
+        if (deployment == null) {
+            return buildMercuryWar(beansXml);
+        } else if (dataSourceEnvironment == null) {
+            return buildMercuryWar(beansXml, deployment);
+        } else {
+            return buildMercuryWar(beansXml, dataSourceEnvironment, deployment);
+        }
+    }
+
+    /**
+     * Generates the contents for beans.xml with the given alternatives. An alternative that is an annotation will be
+     * included as a &lt;stereotype&gt; while any other type will be a &lt;class&gt;.
+     *
+     * @param alternatives the alternatives and stereotypes to include in the beans.xml content
+     * @return the string contents for a beans.xml file
+     */
+    public static String buildBeansXml(Class... alternatives) {
         StringBuilder sb = new StringBuilder();
         sb.append("<beans>\n")
                 .append("  <alternatives>\n");
@@ -153,14 +180,7 @@ public class DeploymentBuilder {
         }
         sb.append("  </alternatives>\n")
                 .append("</beans>");
-
-        if (deployment == null) {
-            return buildMercuryWar(sb.toString());
-        } else if (dataSourceEnvironment == null) {
-            return buildMercuryWar(sb.toString(), deployment);
-        } else {
-            return buildMercuryWar(sb.toString(), dataSourceEnvironment, deployment);
-        }
+        return sb.toString();
     }
 
     @SuppressWarnings("UnusedDeclaration")

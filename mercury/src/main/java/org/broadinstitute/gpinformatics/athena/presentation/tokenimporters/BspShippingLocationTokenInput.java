@@ -39,6 +39,7 @@ public class BspShippingLocationTokenInput extends TokenInput<Site> {
             BspSiteManager siteManager = bspManagerFactory.createSiteManager();
             sites = siteManager.getApplicableSites(cachedCollectionId).getResult();
         }
+
         return createItemListString(BSPSiteList.find(sites, query));
     }
 
