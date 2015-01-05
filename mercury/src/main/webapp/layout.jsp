@@ -48,7 +48,7 @@
         <script src="${ctxpath}/resources/scripts/bootstrap-dt.js"></script>
         <script src="${ctxpath}/resources/scripts/json2.js"></script>
 
-        <script src="${ctxpath}/resources/scripts/jquery.tokeninput-1.7.0.js"></script>
+        <script src="${ctxpath}/resources/scripts/jquery.tokeninput.min.js"></script>
         <script src="${ctxpath}/resources/scripts/jquery.autosize-min.js"></script>
 
         <link rel="Shortcut Icon" type="image/x-icon" href="${ctxpath}/favicon.ico"/>
