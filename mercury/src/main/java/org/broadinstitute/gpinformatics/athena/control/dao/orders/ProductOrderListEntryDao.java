@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
-import com.google.common.collect.Sets;
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession_;
@@ -156,7 +155,8 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
         // create the and terms for the status and the dates
         List<Predicate> listOfAndTerms = new ArrayList<>();
 
-        Set<ProductOrder.OrderStatus> filteredStatuses = Sets.difference(fixedOrderStatuses, NO_DATE_STATUSES);
+        Collection<ProductOrder.OrderStatus> filteredStatuses =
+                CollectionUtils.removeAll(fixedOrderStatuses, NO_DATE_STATUSES);
 
         Predicate statusAndDate;
 
@@ -186,8 +186,8 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
         }
 
         // If there were any non-date range statuses, handle them here.
-        Sets.SetView<ProductOrder.OrderStatus> remainingStatuses =
-                Sets.intersection(fixedOrderStatuses, NO_DATE_STATUSES);
+        Collection<ProductOrder.OrderStatus> remainingStatuses =
+                CollectionUtils.retainAll(fixedOrderStatuses, NO_DATE_STATUSES);
         if (!remainingStatuses.isEmpty()) {
             // Now add the orders by doing an in query with the statuses.
             statusAndDate = cb.or(statusAndDate, productOrderRoot.get(ProductOrder_.orderStatus).in(remainingStatuses));
