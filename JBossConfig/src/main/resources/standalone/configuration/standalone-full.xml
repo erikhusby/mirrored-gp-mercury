@@ -368,25 +368,6 @@
         <subsystem xmlns="urn:jboss:domain:sar:1.0"/>
         <subsystem xmlns="urn:jboss:domain:security:1.1">
 
-            <security-domain name="mercury-prod-encrypted-ds" cache-type="default">
-                <authentication>
-                    <login-module code="org.picketbox.datasource.security.SecureIdentityLoginModule" flag="required">
-                        <module-option name="username" value="mercury"/>
-                        <module-option name="password" value="-2fad44c65f6fd147fec4319bb19fcee5"/>
-                        <module-option name="managedConnectionFactoryName" value="jboss.jca:service=LocalTxCM,name=mercury_pool"/>
-                    </login-module>
-                </authentication>
-            </security-domain>
-            <security-domain name="mercury-qa-encrypted-ds" cache-type="default">
-                <authentication>
-                    <login-module code="org.picketbox.datasource.security.SecureIdentityLoginModule" flag="required">
-                        <module-option name="username" value="mercury"/>
-                        <module-option name="password" value="7eacb55e1cf90012541c10b42cb6cc59"/>
-                        <module-option name="managedConnectionFactoryName" value="jboss.jca:service=LocalTxCM,name=mercury_pool"/>
-                    </login-module>
-                </authentication>
-            </security-domain>
-
             <security-domains>
                 <security-domain name="COLLABORATE-Realm">
                     <authentication>
