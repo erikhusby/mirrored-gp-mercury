@@ -319,7 +319,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                                 // pattern is used in other fact table etl that are exposed in ExtractTransformResource.
 
                                 dtos.add(new EventFactDto(entity, vessel,
-                                        MolecularIndexReagent.getIndexesString(vessel.getIndexes(si)).trim(),
+                                        MolecularIndexReagent.getIndexesString(vessel.getIndexesForSampleInstance(si)).trim(),
                                         null, null, null, pdo, null, false));
                             }
                         }

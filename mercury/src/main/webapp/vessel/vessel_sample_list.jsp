@@ -53,7 +53,8 @@
                 </td>
                 <td style="padding: 0;">
                     <table style="padding: 0;">
-                        <c:forEach items="${vessel.indexes(sample)}" var="curIndex">
+                        <c:forEach items="${vessel.getIndexesForSampleInstance(sample)}" var="curIndex">
+                            <%--@elvariable id="curIndex" type="org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent"--%>
                             <tr>
                                 <td style="border: none">
                                     <c:forEach items="${curIndex.molecularIndexingScheme.indexes}" var="innerIndex">
