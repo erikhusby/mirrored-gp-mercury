@@ -171,7 +171,7 @@ public class EventEtlDbFreeTest {
         EasyMock.expect(bucketEntry.getLabBatch()).andReturn(null);
         EasyMock.expect(sampleInst.getRootOrEarliestMercurySample()).andReturn(null);
         EasyMock.expect(obj.getEventDate()).andReturn(eventDate).anyTimes();
-        EasyMock.expect(vessel.getIndexes(sampleInst)).andReturn(reagents);
+        EasyMock.expect(vessel.getIndexesForSampleInstance(sampleInst)).andReturn(reagents);
         EasyMock.expect(wfLookup.lookupWorkflowConfig(LabEventType.A_BASE.getName(), null, eventDate)).andReturn(null);
         EasyMock.replay(mocks);
 
