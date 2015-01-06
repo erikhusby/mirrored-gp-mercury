@@ -1135,8 +1135,6 @@
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
                 <database.url>jdbc:oracle:thin:@gpinfoprod:1521:gpinfprd</database.url>
                 <passwords.properties>${user.home}/mercuryPasswords.properties</passwords.properties>
-                <!--<mercury.password>mercury_prod</mercury.password>-->
-                <!--<athena.password>athena_prod</athena.password>-->
             </properties>
             <build>
                 <!-- This allows us to overwrite the ejb-jar.xml for development with the special version for production -->
@@ -1144,7 +1142,6 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-war-plugin</artifactId>
-                        <version>2.2</version>
                         <configuration>
                             <webResources>
                                 <resource>
@@ -1196,7 +1193,6 @@
                     <plugin>
                         <groupId>org.liquibase</groupId>
                         <artifactId>liquibase-maven-plugin</artifactId>
-                        <version>2.0.5</version>
                         <executions>
                             <execution>
                                 <id>Mercury</id>
@@ -1949,6 +1945,12 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
                     <version>2.4</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-war-plugin</artifactId>
+                    <version>2.2</version>
                 </plugin>
 
                 <plugin>
