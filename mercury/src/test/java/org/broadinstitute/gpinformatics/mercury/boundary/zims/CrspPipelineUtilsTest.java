@@ -3,23 +3,33 @@ package org.broadinstitute.gpinformatics.mercury.boundary.zims;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
+import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class CrspPipelineUtilsTest {
 
-    private ProductOrderSample CrspSample;
+    private static final String BUICK_COLLECTION_DATE = "some date as a string";
+
+    private static final String BUICK_VISIT = "Some visit info";
+
+    private ProductOrderSample crspSample;
 
     private ProductOrderSample nonCrspSampleWithGSSRMetadata;
 
@@ -27,13 +37,23 @@ public class CrspPipelineUtilsTest {
 
     private ProductOrderSample nonCrspSampleWithBSPMetadata;
 
-    private CrspPipelineUtils crspPipelineAPIUtils = new CrspPipelineUtils();
+    private CrspPipelineUtils crspPipelineAPIUtils = new CrspPipelineUtils(Deployment.DEV);
+
+    private SampleData sampleDataWithNonBspSample = new MercurySampleData("Not from BSP", Collections.<Metadata>emptySet());
 
     private ProductOrderSample createPdoSample(MercurySample.MetadataSource metadataSource,
                                                String sampleName) {
         ProductOrder pdo = new ProductOrder();
         ProductOrderSample pdoSample = new ProductOrderSample(sampleName);
-        pdoSample.setMercurySample(new MercurySample(pdoSample.getSampleKey(),metadataSource));
+        MercurySample mercurySample = new MercurySample(pdoSample.getSampleKey(), metadataSource);
+
+        Set<Metadata> metadata = new HashSet<>();
+        metadata.add(new Metadata(Metadata.Key.BUICK_COLLECTION_DATE,BUICK_COLLECTION_DATE));
+        metadata.add(new Metadata(Metadata.Key.BUICK_VISIT,BUICK_VISIT));
+        MercurySampleData mercurySampleData = new MercurySampleData(pdoSample.getSampleKey(),metadata);
+
+        pdoSample.setMercurySample(mercurySample);
+        pdoSample.setSampleData(mercurySampleData);
         pdo.addSample(pdoSample);
         ResearchProject crspProject = new ResearchProject();
         pdo.setResearchProject(crspProject);
@@ -46,8 +66,8 @@ public class CrspPipelineUtilsTest {
 
     @BeforeMethod
     public void setUp() {
-        CrspSample = createPdoSample(MercurySample.MetadataSource.MERCURY,"sample1");
-        setRegulatoryDesignation(CrspSample, ResearchProject.RegulatoryDesignation.GENERAL_CLIA_CAP);
+        crspSample = createPdoSample(MercurySample.MetadataSource.MERCURY,"sample1");
+        setRegulatoryDesignation(crspSample, ResearchProject.RegulatoryDesignation.GENERAL_CLIA_CAP);
         nonCrspSampleWithGSSRMetadata = createPdoSample(null,"123.5");
         setRegulatoryDesignation(nonCrspSampleWithGSSRMetadata, ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
         nonCrspSampleWithUnknownMetadata = createPdoSample(null,"Crazy Sample!");
@@ -79,27 +99,27 @@ public class CrspPipelineUtilsTest {
 
     public void testMercuryMetadatasource() {
         Assert.assertEquals(MercurySample.MERCURY_METADATA_SOURCE,
-                            CrspSample.getMercurySample().getMetadataSourceForPipelineAPI());
+                            crspSample.getMercurySample().getMetadataSourceForPipelineAPI());
     }
 
     public void testAllSamplesAreForCrsp() {
-        boolean hasAllCrspSamples = new CrspPipelineUtils().areAllSamplesForCrsp(createSampleInstances(
-                CrspSample));
+        boolean hasAllCrspSamples = crspPipelineAPIUtils.areAllSamplesForCrsp(createSampleInstances(
+                crspSample));
 
         Assert.assertTrue(hasAllCrspSamples);
     }
 
     public void testNoSamplesAreForCrsp() {
-        boolean hasAllCrspSamples = new CrspPipelineUtils().areAllSamplesForCrsp(createSampleInstances(
+        boolean hasAllCrspSamples = crspPipelineAPIUtils.areAllSamplesForCrsp(createSampleInstances(
                 nonCrspSampleWithGSSRMetadata));
 
         Assert.assertFalse(hasAllCrspSamples);
     }
 
     public void testMixOfCrspAndNonCrspSamplesShouldThrowException() {
-        Set<SampleInstanceV2> sampleInstances = createSampleInstances(nonCrspSampleWithGSSRMetadata, CrspSample);
+        Set<SampleInstanceV2> sampleInstances = createSampleInstances(nonCrspSampleWithGSSRMetadata, crspSample);
         try {
-            new CrspPipelineUtils().areAllSamplesForCrsp(sampleInstances);
+            crspPipelineAPIUtils.areAllSamplesForCrsp(sampleInstances);
             Assert.fail("Mixture of samples");
         }
         catch(RuntimeException e) {
@@ -112,15 +132,37 @@ public class CrspPipelineUtilsTest {
                             crspPipelineAPIUtils.getCrspLSIDForBSPSampleId("SM-5FGZM"));
     }
 
-    public void testGetCrspLSIDForNonSampleIdThrowsException() {
-        String nonBspSampleId = "b";
+    public void testSetFieldsForCrspThrowsExceptionForNonBspSampleInProduction() {
         try {
-            crspPipelineAPIUtils.getCrspLSIDForBSPSampleId(nonBspSampleId);
+            new CrspPipelineUtils(Deployment.PROD).setFieldsForCrsp(new LibraryBean(), sampleDataWithNonBspSample, null, null);
+            Assert.fail("Should have thrown an exception because " + sampleDataWithNonBspSample.getSampleId() + " is not a bsp sample");
         }
-        catch(RuntimeException e) {
-            Assert.assertTrue(e.getMessage().contains("Cannot transform non-BSP sample id"));
-            Assert.assertTrue(e.getMessage().contains(nonBspSampleId));
-        }
+        catch(RuntimeException ignored){}
+    }
+
+    public void testSetFieldsSetsTestTypeToSomatic() {
+        LibraryBean libraryBean = new LibraryBean();
+        SampleData sampleData = new MercurySampleData("sampleId", Collections.<Metadata>emptySet());
+
+        crspPipelineAPIUtils.setFieldsForCrsp(libraryBean,sampleData,null,null);
+
+        Assert.assertEquals(libraryBean.getTestType(),"Somatic");
+    }
+
+    public void testControlsProjectIsRP805() {
+        Assert.assertEquals(crspPipelineAPIUtils.getResearchProjectForCrspPositiveControls(),"RP-805");
+    }
+
+    public void testSetFieldsForCrspDoesNotThrowExceptionForNonBspSampleInDevelopment() {
+        new CrspPipelineUtils(Deployment.DEV).setFieldsForCrsp(new LibraryBean(),sampleDataWithNonBspSample,null,null);
+    }
+
+    public void testBuickCollectionAndVisitDateFields() {
+        LibraryBean libraryBean = new LibraryBean();
+        new CrspPipelineUtils(Deployment.DEV).setFieldsForCrsp(libraryBean,crspSample.getSampleData(),null,null);
+
+        Assert.assertEquals(libraryBean.getBuickVisit(),BUICK_VISIT);
+        Assert.assertEquals(libraryBean.getBuickCollectionDate(),BUICK_COLLECTION_DATE);
     }
 
     private class TestSampleInstance {

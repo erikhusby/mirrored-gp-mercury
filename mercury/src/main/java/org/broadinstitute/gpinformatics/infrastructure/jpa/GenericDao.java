@@ -25,8 +25,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao.GenericDaoCallback;
-
 /**
  * Superclass for Data Access Objects. Makes use of a request-scoped extended persistence context. Scoped session beans
  * can't be parameterized types (JSR-299 3.2), so this DAO can't be type-safe.
@@ -38,6 +36,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao.Gen
 @TransactionAttribute(TransactionAttributeType.SUPPORTS)
 @RequestScoped
 public class GenericDao {
+
     /**
      * Interface for callbacks that want to specify fetches from the specified {@link Root}, make the query distinct,
      * etc.
@@ -156,19 +155,34 @@ public class GenericDao {
      */
     public <ENTITY_TYPE> List<ENTITY_TYPE> findAll(Class<ENTITY_TYPE> entity,
                                                    @Nullable GenericDaoCallback<ENTITY_TYPE> callback) {
-        CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
-        CriteriaQuery<ENTITY_TYPE> criteriaQuery = criteriaBuilder.createQuery(entity);
-        Root<ENTITY_TYPE> root = criteriaQuery.from(entity);
-
-        if (callback != null) {
-            callback.callback(criteriaQuery, root);
-        }
+        CriteriaQuery<ENTITY_TYPE> criteriaQuery = buildBasicCriteriaQuery(entity, callback);
 
         try {
             return getQuery(criteriaQuery, LockModeType.NONE).getResultList();
         } catch (NoResultException ignored) {
             return Collections.emptyList();
         }
+    }
+
+    /**
+     * Builds a criteria query, executes a generic call back (if there is one) and returns the Criteria Query.   This
+     * method pulls in common code that was used in all finder methods here
+     *
+     * @param entity            Class of the entity to be retrieved
+     * @param callback          extra criteria to be executed
+     * @param <ENTITY_TYPE>     Generic type of the entity to be retrieved
+     * @return CritieriaQuery to execute for find operation
+     */
+    private <ENTITY_TYPE> CriteriaQuery<ENTITY_TYPE> buildBasicCriteriaQuery(Class<ENTITY_TYPE> entity,
+                                                                             GenericDaoCallback<ENTITY_TYPE> callback) {
+
+        CriteriaQuery<ENTITY_TYPE> criteriaQuery = getCriteriaBuilder().createQuery(entity);
+        Root<ENTITY_TYPE> root = criteriaQuery.from(entity);
+
+        if (callback != null) {
+            callback.callback(criteriaQuery, root);
+        }
+        return criteriaQuery;
     }
 
     /**
@@ -182,13 +196,24 @@ public class GenericDao {
      * @return list of entities, or empty list if none found
      */
     public <ENTITY_TYPE> List<ENTITY_TYPE> findAll(Class<ENTITY_TYPE> entity, int first, int max) {
-        CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
-        CriteriaQuery<ENTITY_TYPE> criteriaQuery = criteriaBuilder.createQuery(entity);
-        Root<ENTITY_TYPE> from = criteriaQuery.from(entity);
-        CriteriaQuery<ENTITY_TYPE> select = criteriaQuery.select(from);
-        TypedQuery<ENTITY_TYPE> typedQuery = getQuery(select, LockModeType.NONE);
-        typedQuery.setFirstResult(first);
-        typedQuery.setMaxResults(max);
+
+        return findAll(entity, null, first, max);
+    }
+
+    /**
+     * Finder method to return a list of entities in a set range of records
+     *
+     * @param entity            Class of the entity to be retrieved
+     * @param callback          extra criteria to be executed
+     * @param first             index of the first record to be returned
+     * @param max               amount of records in the range to be returned
+     * @param <ENTITY_TYPE>     Generic type of the entity to be retrieved
+     * @return list of entities, or empty list if none found
+     */
+    public <ENTITY_TYPE> List<ENTITY_TYPE> findAll(Class<ENTITY_TYPE> entity, GenericDaoCallback<ENTITY_TYPE> callback,
+                                                    int first, int max) {
+        CriteriaQuery<ENTITY_TYPE> select = buildBasicCriteriaQuery(entity, callback);
+        TypedQuery<ENTITY_TYPE> typedQuery = getQuery(select, LockModeType.NONE, true, first, max);
 
         try {
             return typedQuery.getResultList();
@@ -196,7 +221,6 @@ public class GenericDao {
             return Collections.emptyList();
         }
     }
-
 
     /**
      * Returns a single entity that matches a specified value for a specified property.
@@ -216,7 +240,7 @@ public class GenericDao {
     ENTITY_TYPE findSingleSafely(Class<ENTITY_TYPE> entity,
                                  SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute, VALUE_TYPE value,
                                  LockModeType lockModeType) {
-        CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
+        CriteriaBuilder criteriaBuilder = getCriteriaBuilder();
         CriteriaQuery<ENTITY_TYPE> criteriaQuery = criteriaBuilder.createQuery(entity);
         Root<ENTITY_TYPE> root = criteriaQuery.from(entity);
 
@@ -260,14 +284,29 @@ public class GenericDao {
      *
      * @param criteriaQuery Criteria Query object that contains conditions for the query
      * @param lockModeType
-     * @param <ENTITY_TYPE>
-     *
-     * @return
      */
     public <ENTITY_TYPE> TypedQuery<ENTITY_TYPE> getQuery(
             CriteriaQuery<ENTITY_TYPE> criteriaQuery, LockModeType lockModeType) {
 
+        return getQuery(criteriaQuery, lockModeType, false, 0, 0);
+    }
+
+    /**
+     * Extracts a type query specifying a range of records to return
+     *
+     * @param lockModeType      Level of row locking to put on the record for the query
+     * @param withPagination    indicates that the caller intends to return records over a specified range
+     * @param firstResult       index of the first record in the range to return
+     * @param maxResults        Amount of records to return in the range
+     * @param <ENTITY_TYPE>     the type of the entity to return
+     */
+    private <ENTITY_TYPE> TypedQuery<ENTITY_TYPE> getQuery(CriteriaQuery<ENTITY_TYPE> criteriaQuery,
+                                                           LockModeType lockModeType, boolean withPagination,
+                                                           int firstResult, int maxResults) {
         TypedQuery<ENTITY_TYPE> query = getEntityManager().createQuery(criteriaQuery);
+        if(withPagination) {
+            query.setFirstResult(firstResult).setMaxResults(maxResults);
+        }
         if (lockModeType == LockModeType.NONE) {
             return query;
         } else {
@@ -292,13 +331,7 @@ public class GenericDao {
             ENTITY_TYPE extends METADATA_TYPE> ENTITY_TYPE findSingle(Class<ENTITY_TYPE> entity,
                                                                       @Nullable GenericDaoCallback<ENTITY_TYPE> genericDaoCallback,
                                                                       LockModeType lockModeType) {
-        CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
-        CriteriaQuery<ENTITY_TYPE> criteriaQuery = criteriaBuilder.createQuery(entity);
-        Root<ENTITY_TYPE> root = criteriaQuery.from(entity);
-
-        if (genericDaoCallback != null) {
-            genericDaoCallback.callback(criteriaQuery, root);
-        }
+        CriteriaQuery<ENTITY_TYPE> criteriaQuery = buildBasicCriteriaQuery(entity, genericDaoCallback);
 
         try {
             return getQuery(criteriaQuery, lockModeType).getSingleResult();
@@ -341,29 +374,36 @@ public class GenericDao {
             Collection<VALUE_TYPE> values,
             @Nullable GenericDaoCallback<ENTITY_TYPE> genericDaoCallback) {
 
+        return findListForPagination(entity, singularAttribute, values, genericDaoCallback, false, 0, 0);
+    }
+
+    private <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> List<ENTITY_TYPE> findListForPagination(
+            Class<ENTITY_TYPE> entity, final SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute,
+            Collection<VALUE_TYPE> values, GenericDaoCallback<ENTITY_TYPE> genericDaoCallback,
+            final boolean withPagination, final int firstResult, final int maxResults) {
         List<ENTITY_TYPE> resultList = new ArrayList<>();
         if (values.isEmpty()) {
             return resultList;
         }
 
-        CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
-        final CriteriaQuery<ENTITY_TYPE> criteriaQuery = criteriaBuilder.createQuery(entity);
+        final CriteriaQuery<ENTITY_TYPE> criteriaQuery = getCriteriaBuilder().createQuery(entity);
         final Root<ENTITY_TYPE> root = criteriaQuery.from(entity);
 
         if (genericDaoCallback != null) {
             genericDaoCallback.callback(criteriaQuery, root);
         }
 
-        return JPASplitter.runCriteriaQuery(
+        List<ENTITY_TYPE> entity_types = JPASplitter.runCriteriaQuery (
                 values,
                 new CriteriaInClauseCreator<VALUE_TYPE>() {
                     @Override
                     public Query createCriteriaInQuery(Collection<VALUE_TYPE> parameterList) {
                         criteriaQuery.where(root.get(singularAttribute).in(parameterList));
-                        return getQuery(criteriaQuery, LockModeType.NONE);
+                        return getQuery(criteriaQuery, LockModeType.NONE, withPagination, firstResult, maxResults);
                     }
                 }
         );
+        return entity_types;
     }
 
     public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> List<ENTITY_TYPE> findListByList(
@@ -429,7 +469,7 @@ public class GenericDao {
     public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> List<ENTITY_TYPE> findListWithWildcard(
             Class<ENTITY_TYPE> entity, String value, boolean ignoreCase,
             SingularAttribute<METADATA_TYPE, VALUE_TYPE>... singularAttributes) {
-        CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
+        CriteriaBuilder criteriaBuilder = getCriteriaBuilder();
         CriteriaQuery<ENTITY_TYPE> criteriaQuery = criteriaBuilder.createQuery(entity);
         Root<ENTITY_TYPE> root = criteriaQuery.from(entity);
         Predicate[] predicates = new Predicate[singularAttributes.length];

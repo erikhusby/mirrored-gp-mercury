@@ -144,10 +144,7 @@ public class DateRangeSelector implements Serializable {
         if (stopDate == null) {
             stopDate = new Date();
         }
-        StringBuilder dateString = new StringBuilder(DATE_FORMATTER.format(startDate));
-        dateString.append(" - ");
-        dateString.append(DATE_FORMATTER.format(stopDate));
-        return dateString.toString();
+        return DATE_FORMATTER.format(startDate) + " - " + DATE_FORMATTER.format(stopDate);
     }
 
     /**
@@ -317,6 +314,11 @@ public class DateRangeSelector implements Serializable {
         this.rangeSelector = rangeSelector;
 
         switch (this.rangeSelector) {
+        case ALL:
+            this.naturalLanguageString = RangeDefinition.AllRange.naturalLanguageString;
+            this.end = null;
+            this.start = null;
+            break;
         case AFTER:
             this.naturalLanguageString = "After";
             this.end = null;
@@ -329,16 +331,8 @@ public class DateRangeSelector implements Serializable {
             break;
         case CREATE_CUSTOM:
             this.naturalLanguageString = "Custom";
-            if (start != null) {
-                this.start = start;
-            } else {
-                this.start = new Date();
-            }
-            if (end != null) {
-                this.end = end;
-            } else {
-                this.end = new Date();
-            }
+            this.start = (start == null) ? new Date() : start;
+            this.start = (end == null) ? new Date() : end;
             break;
         default:
             RangeDefinition range = RangeDefinition.fromSelector(this.rangeSelector);

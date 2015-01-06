@@ -10,6 +10,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -113,7 +114,7 @@ public class LabMetricParserTest extends ContainerTest {
         for (LabMetric testMetric : createdMetrics) {
             int i = ArrayUtils.indexOf(barcodes, testMetric.getLabVessel().getLabel());
             Assert.assertTrue(i >= 0);
-            Assert.assertEquals(testMetric.getValue().setScale(2), BigDecimal.valueOf(quants[i]));
+            Assert.assertEquals(MathUtils.scaleTwoDecimalPlaces(testMetric.getValue()), BigDecimal.valueOf(quants[i]));
             Assert.assertEquals(testMetric.getVesselPosition(), positions[i]);
             Assert.assertFalse(testMetric.getCreatedDate().before(startDate));
             Assert.assertFalse(testMetric.getCreatedDate().after(endDate));

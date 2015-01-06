@@ -36,7 +36,7 @@ public class CollaboratorControlsActionBean extends CoreActionBean {
     private static final String VIEW_PAGE = "/sample/view_control.jsp";
     private static final String CREATE_PAGE = "/sample/create_control.jsp";
     private static final String CONTROL_LIST_PAGE = "/sample/list_controls.jsp";
-    private static final String controlParameter = "sampleCollaboratorId";
+    private static final String controlParameter = "collaboratorParticipantId";
     public static final String ACTIONBEAN_URL_BINDING = "/sample/controls.action";
     private static final String CURRENT_OBJECT = "Control";
     public static final String CREATE_CONTROL = CoreActionBean.CREATE + CURRENT_OBJECT;
@@ -61,7 +61,7 @@ public class CollaboratorControlsActionBean extends CoreActionBean {
         controlReference = getContext().getRequest().getParameter(controlParameter);
 
         if (StringUtils.isNotBlank(controlReference)) {
-            workingControl = controlDao.findBySampleId(controlReference);
+            workingControl = controlDao.findByCollaboratorParticipantId(controlReference);
         } else {
             workingControl = new Control();
         }
@@ -117,11 +117,11 @@ public class CollaboratorControlsActionBean extends CoreActionBean {
     @ValidationMethod(on = SAVE_ACTION)
     public void makeControlInactiveValidation() {
 
-        Control inactiveVersion = controlDao.findInactiveBySampleId(controlReference);
+        Control inactiveVersion = controlDao.findInactiveByCollaboratorParticipantId(controlReference);
 
 
         if (isCreating()) {
-            Control existingVersion = controlDao.findBySampleId(workingControl.getBusinessKey());
+            Control existingVersion = controlDao.findByCollaboratorParticipantId(workingControl.getBusinessKey());
 
             if (existingVersion != null) {
                 addValidationError("controlName", "An active control with this name already exists.  Please either " +
@@ -129,7 +129,7 @@ public class CollaboratorControlsActionBean extends CoreActionBean {
                                                   "different name");
             }
             if (StringUtils.isBlank(workingControl.getBusinessKey())) {
-                addValidationError("controlName", "The Collaborator Sample ID is required for a new control");
+                addValidationError("controlName", "The Collaborator Participant ID is required for a new control");
             }
 
             if (createControlType == null) {

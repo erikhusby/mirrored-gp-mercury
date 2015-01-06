@@ -1182,5 +1182,49 @@
         <addNotNullConstraint tableName="RESEARCH_PROJECT" columnName="REGULATORY_DESIGNATION" defaultNullValue="RESEARCH_ONLY"/>
     </changeSet>
 
+    <changeSet id="GPLIM-2888-set-rp805-clia-cap" author="andrew">
+        <!-- Data updates should be done via a fixup script, not via direct SQL in liquibase! -->
+        <sql>
+            update research_project set regulatory_designation = 'GENERAL_CLIA_CAP' where jira_ticket_key = 'RP-805'
+        </sql>
+    </changeSet>
 
+    <changeSet id="GPLIM-3030-add-request-date-to-submission-tracker" author="breilly">
+        <addColumn tableName="SUBMISSION_TRACKER" schemaName="athena">
+            <column name="REQUEST_DATE" type="timestamp"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-3030-add-request-date-to-submission-tracker-aud" author="breilly">
+        <addColumn tableName="SUBMISSION_TRACKER_AUD" schemaName="athena">
+            <column name="REQUEST_DATE" type="timestamp"/>
+        </addColumn>
+    </changeSet>
+
+
+    <!-- Adds missing rows in _AUD table using rev_info_id of the earliest reference of the entity. -->
+    <changeSet author="epolk" id="GPLIM-3033-1">
+        <sql>
+	  insert into PRODUCT_FAMILY_AUD (product_family_id, name, rev, revtype)
+	  select pf.product_family_id, pf.name, min(pa.rev), 0
+	  from PRODUCT_FAMILY pf
+	  join PRODUCT_AUD pa on pa.product_family = pf.product_family_id
+	  where not exists
+	  (select 1 from PRODUCT_FAMILY_AUD pfa where pfa.product_family_id = pf.product_family_id)
+	  group by pf.product_family_id, pf.name;
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-3083-1" author="epolk">
+      <dropTable cascadeConstraints="true"  schemaName="athena"  tableName="PREF_PREFERENCE_AUD"/>
+    </changeSet>
+    <!--
+   ##################################################################
+   ##################################################################
+
+                NO MORE CHANGES FOR THIS FILE
+
+   ##################################################################
+   ##################################################################
+    -->
 </databaseChangeLog>

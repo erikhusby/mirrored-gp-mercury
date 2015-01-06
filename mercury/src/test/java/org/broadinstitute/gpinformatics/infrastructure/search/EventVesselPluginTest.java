@@ -16,12 +16,12 @@ import java.util.HashMap;
 /**
  * Validate that the event vessel plugin locates and builds container arrays correctly
  */
+@Test(groups = TestGroups.STANDARD)
 public class EventVesselPluginTest extends ContainerTest {
 
     @Inject
     private LabEventDao labEventDao;
 
-    @Test(groups = TestGroups.STANDARD)
     public void testNestedTablePlugin() {
 
         LabEvent labEvent = labEventDao.findById(LabEvent.class, new Long(617246));
@@ -53,7 +53,7 @@ public class EventVesselPluginTest extends ContainerTest {
         Assert.assertEquals( resultList.getHeaders().get(12).getViewHeader(), "12");
         Assert.assertEquals( resultList.getResultRows().get(0).getRenderableCells().get(0), "A");
         Assert.assertEquals( resultList.getResultRows().get(7).getRenderableCells().get(0), "H");
-        Assert.assertEquals( resultList.getResultRows().get(0).getRenderableCells().get(2), "0173524221");
+        Assert.assertEquals( resultList.getResultRows().get(0).getRenderableCells().get(2), "Vessel Barcode: 0173524221");
 
         EventVesselTargetPositionPlugin eventVesselTargetPositionPlugin;
         try {
@@ -74,7 +74,7 @@ public class EventVesselPluginTest extends ContainerTest {
         Assert.assertEquals( resultList.getHeaders().get(12).getViewHeader(), "12");
         Assert.assertEquals( resultList.getResultRows().get(0).getRenderableCells().get(0), "A");
         Assert.assertEquals( resultList.getResultRows().get(7).getRenderableCells().get(0), "H");
-        Assert.assertEquals( resultList.getResultRows().get(0).getRenderableCells().get(1), "0116404353");
+        Assert.assertEquals( resultList.getResultRows().get(0).getRenderableCells().get(1), "Vessel Barcode: 0116404353");
 
     }
 

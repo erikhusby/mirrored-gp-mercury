@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.parsers.poi;
 
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
@@ -22,23 +23,32 @@ import org.testng.annotations.Test;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.emptyCollectionOf;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class PoiSpreadsheetParserTest {
     private static final String POI_TEST_XLS = "poi-test.xls";
     private static final String POI_TEST_XLSX = "poi-test.xlsx";
+    private static final String POI_TEST_TRAILING_BLANK_LINES = "poi-test-trailing-blank-lines.xlsx";
+    private static final String POI_TEST_INTERVENING_BLANK_LINES = "poi-test-intervening-blank-lines.xlsx";
+
     private TestProcessor testProcessor;
+    private TestProcessor testProcessorIgnoreTrailingBlankLines;
 
     @BeforeMethod
     public void setUp() throws Exception {
         testProcessor = new TestProcessor();
+        testProcessorIgnoreTrailingBlankLines = new TestProcessor(TableProcessor.IgnoreTrailingBlankLines.YES);
     }
 
     @DataProvider(name = "excelFileDataProvider")
@@ -47,7 +57,6 @@ public class PoiSpreadsheetParserTest {
                 {new FileInputStream(TestUtils.getTestData(POI_TEST_XLS))},
                 {new FileInputStream(TestUtils.getTestData(POI_TEST_XLSX))},
         };
-
     }
 
     @Test(dataProvider = "excelFileDataProvider")
@@ -67,7 +76,6 @@ public class PoiSpreadsheetParserTest {
                 throw new ValidationException("No, No!, Noooooooeoo!");
             }
         });
-
     }
 
     @Test(dataProvider = "excelFileDataProvider")
@@ -77,38 +85,36 @@ public class PoiSpreadsheetParserTest {
         assertThat(testProcessor.getWarnings(), emptyCollectionOf(String.class));
     }
 
+    private static final boolean IS_DATE = true;
+    private static final boolean NON_DATE = false;
+
     enum TestHeaders implements ColumnHeader {
-        testname(0, ColumnHeader.NON_DATE, ColumnHeader.IS_STRING, ColumnHeader.REQUIRED_VALUE),
-        stringData1(1, ColumnHeader.NON_DATE, ColumnHeader.IS_STRING, ColumnHeader.OPTIONAL_VALUE),
-        stringData2(2, ColumnHeader.NON_DATE, ColumnHeader.IS_STRING, ColumnHeader.OPTIONAL_VALUE),
-        numericData1(3, ColumnHeader.NON_DATE, ColumnHeader.NON_STRING, ColumnHeader.OPTIONAL_VALUE),
-        numericData2(4, ColumnHeader.NON_DATE, ColumnHeader.NON_STRING, ColumnHeader.OPTIONAL_VALUE),
-        calculated(5, ColumnHeader.NON_DATE, ColumnHeader.IS_STRING, ColumnHeader.OPTIONAL_VALUE),
-        expected(6, ColumnHeader.NON_DATE, ColumnHeader.IS_STRING, ColumnHeader.OPTIONAL_VALUE),
-        aBoolean(7, ColumnHeader.NON_DATE, ColumnHeader.NON_STRING, ColumnHeader.OPTIONAL_VALUE),
-        aDate(8, ColumnHeader.IS_DATE, ColumnHeader.NON_STRING, ColumnHeader.OPTIONAL_VALUE);
-        private final int index;
+        testname(NON_DATE, ColumnHeader.IS_STRING, ColumnHeader.REQUIRED_VALUE),
+        stringData1(NON_DATE, ColumnHeader.IS_STRING),
+        stringData2(NON_DATE, ColumnHeader.IS_STRING),
+        numericData1(NON_DATE, ColumnHeader.NON_STRING),
+        numericData2(NON_DATE, ColumnHeader.NON_STRING),
+        calculated(NON_DATE, ColumnHeader.IS_STRING),
+        expected(NON_DATE, ColumnHeader.IS_STRING),
+        aBoolean(NON_DATE, ColumnHeader.NON_STRING),
+        aDate(IS_DATE, ColumnHeader.NON_STRING);
         private final boolean isDateColumn;
         private final boolean isStringColumn;
         private final boolean requiredValue;
-        private final String text;
 
-        TestHeaders(int index, boolean isDateColumn, boolean isStringColumn, boolean requiredValue) {
-            this.index = index;
+        TestHeaders(boolean isDateColumn, boolean isStringColumn) {
+            this(isDateColumn, isStringColumn, ColumnHeader.OPTIONAL_VALUE);
+        }
+
+        TestHeaders(boolean isDateColumn, boolean isStringColumn, boolean requiredValue) {
             this.isDateColumn = isDateColumn;
             this.isStringColumn = isStringColumn;
             this.requiredValue = requiredValue;
-            this.text = name();
         }
 
         @Override
         public String getText() {
-            return text;
-        }
-
-        @Override
-        public int getIndex() {
-            return index;
+            return name();
         }
 
         @Override
@@ -133,11 +139,15 @@ public class PoiSpreadsheetParserTest {
 
     }
 
-    private class TestProcessor extends TableProcessor {
-        private List<Map<String, String>> spreadsheetValues = new ArrayList<>();
+    private static class TestProcessor extends TableProcessor {
+        private final List<Map<String, String>> spreadsheetValues = new ArrayList<>();
 
         private TestProcessor() {
-            super(null);
+            this(IgnoreTrailingBlankLines.NO);
+        }
+
+        private TestProcessor(IgnoreTrailingBlankLines ignoreTrailingBlankLines) {
+            super(null, ignoreTrailingBlankLines);
         }
 
         @Override
@@ -172,5 +182,44 @@ public class PoiSpreadsheetParserTest {
         public List<Map<String, String>> getSpreadsheetValues() {
             return spreadsheetValues;
         }
+    }
+
+    public void representsBlankLine() {
+        List<String> line = new ArrayList<>();
+        assertThat(PoiSpreadsheetParser.representsBlankLine(line), is(true));
+
+        line.add("");
+        assertThat(PoiSpreadsheetParser.representsBlankLine(line), is(true));
+        line.add("  ");
+        assertThat(PoiSpreadsheetParser.representsBlankLine(line), is(true));
+        line.add("\t");
+        assertThat(PoiSpreadsheetParser.representsBlankLine(line), is(true));
+
+        line.add("  \tx");
+        assertThat(PoiSpreadsheetParser.representsBlankLine(line), is(false));
+    }
+
+    public void trailingBlankLines() throws IOException, InvalidFormatException, ValidationException {
+        String testData = TestUtils.getTestData(POI_TEST_TRAILING_BLANK_LINES);
+        List<String> messages;
+
+        messages = PoiSpreadsheetParser.processSingleWorksheet(new FileInputStream(testData),
+                testProcessorIgnoreTrailingBlankLines);
+        assertThat(messages, is(empty()));
+
+        messages = PoiSpreadsheetParser.processSingleWorksheet(new FileInputStream(testData), testProcessor);
+        assertThat(messages, is(not(empty())));
+    }
+
+    public void interveningBlankLines() throws IOException, InvalidFormatException, ValidationException {
+        String testData = TestUtils.getTestData(POI_TEST_INTERVENING_BLANK_LINES);
+        List<String> messages;
+
+        messages = PoiSpreadsheetParser.processSingleWorksheet(new FileInputStream(testData),
+                testProcessorIgnoreTrailingBlankLines);
+        assertThat(messages, is(not(empty())));
+
+        messages = PoiSpreadsheetParser.processSingleWorksheet(new FileInputStream(testData), testProcessor);
+        assertThat(messages, is(not(empty())));
     }
 }

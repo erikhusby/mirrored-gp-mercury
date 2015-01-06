@@ -68,10 +68,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
+import org.broadinstitute.gpinformatics.mercury.test.builders.CrspPicoEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.IceEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.IceJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PreFlightEntityBuilder;
@@ -974,7 +976,8 @@ public class LabEventTest extends BaseEventTest {
         workflowBatch.setCreatedOn(new Date());
         workflowBatch.setWorkflow(Workflow.ICE_EXOME_EXPRESS);
 
-        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
+        String lcsetSuffix = "1";
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, lcsetSuffix);
 
         TubeFormation daughterTubeFormation = daughterPlateTransfer(mapBarcodeToTube);
 
@@ -984,29 +987,28 @@ public class LabEventTest extends BaseEventTest {
         }
 
         PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToDaughterTube,
-                                                                                  String.valueOf(runDate.getTime()),
-                                                                                  "1", true);
+                String.valueOf(runDate.getTime()), lcsetSuffix, true);
         ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
                 runExomeExpressShearingProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
                                                picoPlatingEntityBuilder.getNormTubeFormation(),
-                                               picoPlatingEntityBuilder.getNormalizationBarcode(), "1");
+                                               picoPlatingEntityBuilder.getNormalizationBarcode(), lcsetSuffix);
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
                 runLibraryConstructionProcess(exomeExpressShearingEntityBuilder.getShearingCleanupPlate(),
                                               exomeExpressShearingEntityBuilder.getShearCleanPlateBarcode(),
-                                              exomeExpressShearingEntityBuilder.getShearingPlate(), "1");
+                                              exomeExpressShearingEntityBuilder.getShearingPlate(), lcsetSuffix);
 
         IceEntityBuilder iceEntityBuilder = runIceProcess(libraryConstructionEntityBuilder.getPondRegRack(),
-                                                          libraryConstructionEntityBuilder.getPondRegRackBarcode(),
-                                                          libraryConstructionEntityBuilder.getPondRegTubeBarcodes(),
-                                                          "1");
+                libraryConstructionEntityBuilder.getPondRegRackBarcode(),
+                libraryConstructionEntityBuilder.getPondRegTubeBarcodes(),
+                lcsetSuffix);
 
         // Need a version of QTP that jumps over pooling to normalization
         QtpEntityBuilder qtpEntityBuilder = new QtpEntityBuilder(
                 getBettaLimsMessageTestFactory(), getLabEventFactory(), getLabEventHandler(),
                 Collections.singletonList(iceEntityBuilder.getCatchEnrichRack()),
-                Collections.singletonList(iceEntityBuilder.getCatchEnrichRack().getLabel()),
+                Collections.singletonList(iceEntityBuilder.getCatchEnrichRack().getRacksOfTubes().iterator().next().getLabel()),
                 Collections.singletonList(iceEntityBuilder.getCatchEnrichBarcodes()),
-                iceEntityBuilder.getMapBarcodeToCatchEnrichTubes(), "1").invoke(false, true);
+                iceEntityBuilder.getMapBarcodeToCatchEnrichTubes(), lcsetSuffix).invoke(true, true);
 
         final LabVessel denatureSource = qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(
                 VesselPosition.A01);
@@ -1014,7 +1016,7 @@ public class LabEventTest extends BaseEventTest {
 
         // todo jmt denature rack has 8 source tubes, but 2500 builder is expecting only 1
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
-                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", FCT_TICKET,
+                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), lcsetSuffix + "ADXX", FCT_TICKET,
                                             ProductionFlowcellPath.DILUTION_TO_FLOWCELL, null,
                                             Workflow.AGILENT_EXOME_EXPRESS);
 
@@ -1069,6 +1071,14 @@ public class LabEventTest extends BaseEventTest {
         Assert.assertEquals(zimsIlluminaRun.getImagedAreaPerLaneMM2(), readStructureRequest.getImagedArea());
         Assert.assertEquals(zimsIlluminaRun.getLanesSequenced(), "3,6");
         Assert.assertEquals(zimsIlluminaRun.getSystemOfRecord(), SystemRouter.System.MERCURY);
+        for (ZimsIlluminaChamber zimsIlluminaChamber : zimsIlluminaRun.getLanes()) {
+            Assert.assertEquals(zimsIlluminaChamber.getLibraries().size(), NUM_POSITIONS_IN_RACK);
+            for (LibraryBean libraryBean : zimsIlluminaChamber.getLibraries()) {
+                Assert.assertTrue(libraryBean.getLibrary().startsWith(
+                        POND_REGISTRATION_TUBE_PREFIX + lcsetSuffix));
+            }
+        }
+
 
         Map.Entry<String, BarcodedTube> stringBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
@@ -1087,19 +1097,19 @@ public class LabEventTest extends BaseEventTest {
                 "HybSelPondEnrichmentCleanup",
                 "PondRegistration",
                 "IcePoolingTransfer",
-                "IceSPRIConcentration",
+                "Ice96PlexSpriConcentration",
                 "IcePoolTest",
                 "Ice1stHybridization",
                 "Ice1stCapture",
                 "Ice2ndCapture",
                 "IceCatchCleanup",
                 "IceCatchEnrichmentCleanup",
-//                "EcoTransfer",
+                "PoolingTransfer",
+                "EcoTransfer",
                 "NormalizationTransfer",
                 "DenatureTransfer",
-                // todo jmt why aren't these events found?
-//                "DenatureToDilutionTransfer",
-//                "DilutionToFlowcellTransfer",
+                "DenatureToDilutionTransfer",
+                "DilutionToFlowcellTransfer",
         };
         verifyEventSequence(labEventNames, expectedEventNames);
 
@@ -1310,6 +1320,35 @@ public class LabEventTest extends BaseEventTest {
         runPicoPlatingProcess(mapBarcodeToDaughterTube,
                               String.valueOf(runDate.getTime()), "1", true);
 //        Controller.stopCPURecording();
+    }
+
+
+    @Test(groups = TestGroups.DATABASE_FREE)
+    public void testCrspPico() {
+        expectedRouting = SystemRouter.System.MERCURY;
+
+        // Use Standard Exome product, to verify that workflow is taken from LCSet, not Product
+        int numSamples = NUM_POSITIONS_IN_RACK - 2;
+        ProductOrder productOrder = ProductOrderTestFactory.buildIceProductOrder(numSamples);
+        Date runDate = new Date();
+        // todo jmt create bucket, then batch, rather than rack then batch then bucket
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+        LabBatch workflowBatch = new LabBatch("Exome Express Batch",
+                new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setCreatedOn(new Date());
+        workflowBatch.setWorkflow(Workflow.ICE_CRSP);
+
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
+
+        CrspPicoEntityBuilder crspPicoEntityBuilder = new CrspPicoEntityBuilder(getBettaLimsMessageTestFactory(),
+                getLabEventFactory(), getLabEventHandler(), "", "CRSP", mapBarcodeToTube).invoke();
+
+        TubeFormation shearingTf = (TubeFormation) crspPicoEntityBuilder.getShearingAliquotEntity().
+                getTargetLabVessels().iterator().next();
+        Assert.assertEquals(shearingTf.getContainerRole().getSampleInstancesV2().size(), numSamples);
+
+        runTransferVisualizer(mapBarcodeToTube.values().iterator().next());
     }
 
     /**

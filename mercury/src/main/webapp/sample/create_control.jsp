@@ -16,25 +16,25 @@
     <stripes:layout-component name="content">
         <stripes:form beanclass="${actionBean.class.name}" id="createForm">
             <div class="form-horizontal span6">
-                <stripes:hidden name="sampleCollaboratorId"/>
+                <stripes:hidden name="collaboratorParticipantId"/>
                 <stripes:hidden name="submitString"/>
 
                 <c:choose>
                     <c:when test="${actionBean.creating}">
                         <div class="control-group">
                             <stripes:label for="controlName" class="control-label">
-                                Collaborator Sample ID *
+                                Collaborator Participant ID *
                             </stripes:label>
                             <div class="controls">
-                                <stripes:text name="workingControl.collaboratorSampleId" id="controlName"
+                                <stripes:text name="workingControl.collaboratorParticipantId" id="controlName"
                                               class="defaultText input-xlarge"
-                                              title="Enter a Collaborator Sample Id"/>
+                                              title="Enter a Collaborator Participant Id"/>
                             </div>
                         </div>
                     </c:when>
                     <c:otherwise>
                         <div class="view-control-group control-group">
-                            <label class="control-label label-form">Collaborator Sample Id</label>
+                            <label class="control-label label-form">Collaborator Participant Id</label>
 
                             <div class="controls">
                                 <div class="form-value">${actionBean.workingControl.businessKey}</div>
@@ -54,14 +54,10 @@
                             <div class="controls">
                                 <stripes:radio value="${actionBean.positiveTypeValue}" id="positiveValue"
                                                name="createControlType"/>
-                                    <%--<stripes:label for="positiveValue">--%>
                                     ${actionBean.positiveTypeValue}
-                                    <%--</stripes:label>--%>
                                 <stripes:radio value="${actionBean.negativeTypeValue}" id="negativeValue"
                                                name="createControlType"/>
-                                    <%--<stripes:label for="negativeValue">--%>
                                     ${actionBean.negativeTypeValue}
-                                    <%--</stripes:label>--%>
                             </div>
                         </div>
 
@@ -102,7 +98,7 @@
                             </c:when>
                             <c:otherwise>
                                 <stripes:link beanclass="${actionBean.class.name}" event="view">
-                                    <stripes:param name="sampleCollaboratorId"
+                                    <stripes:param name="collaboratorParticipantId"
                                                    value="${actionBean.workingControl.businessKey}"/>
                                     Cancel
                                 </stripes:link>

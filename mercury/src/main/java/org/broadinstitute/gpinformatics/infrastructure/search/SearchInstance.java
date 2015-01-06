@@ -17,6 +17,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -342,17 +343,17 @@ public class SearchInstance implements Serializable {
                 for (String value : getValues()) {
                     if (searchTerm.getValueConversionExpression() != null) {
                         Map<String, Object> localContext = new HashMap<>();
-                        localContext.putAll(searchInstance.getEvalContext());
+                        if( searchInstance.getEvalContext() != null ) {
+                            localContext.putAll(searchInstance.getEvalContext());
+                        }
                         localContext.put(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_VALUE, this);
                         localContext.put(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_STRING, value);
                         propertyValues.add(searchTerm.getValueConversionExpression().evaluate(null, localContext));
                     } else {
                         if (getDataType().equals("String")) {
                             propertyValues.add(value);
-                        } else if (getDataType().equals("Float")) {
-                            propertyValues.add(new Float(value));
-                        } else if (getDataType().equals("Double")) {
-                            propertyValues.add(new Double(value));
+                        } else if (getDataType().equals("BigDecimal")) {
+                            propertyValues.add(new BigDecimal(value));
                         } else if (getDataType().equals("Long")) {
                             propertyValues.add(new Long(value));
                         } else if (getDataType().equals("Date")) {
@@ -735,6 +736,11 @@ public class SearchInstance implements Serializable {
     private Map<String, Object> evalContext;
 
     /**
+     * Should searches include ancestors/descendants of directly located base entities?
+     */
+    private Map<String,Boolean> traversalEvaluatorValues = new HashMap<>();
+
+    /**
      * Default constructor for Stripes.
      */
     public SearchInstance() {
@@ -804,6 +810,24 @@ public class SearchInstance implements Serializable {
      */
     public void establishRelationships(ConfigurableSearchDefinition configurableSearchDefinition) {
         recurseRelationships(configurableSearchDefinition, searchValues, null);
+        buildTraversalOptions(configurableSearchDefinition);
+    }
+
+    /**
+     * Builds out traversal options to include all available options,
+     *    not just the ones set as true with user checkbox selections.
+     * @param configurableSearchDefinition
+     */
+    private void buildTraversalOptions(ConfigurableSearchDefinition configurableSearchDefinition) {
+        Map<String,TraversalEvaluator> evaluators = configurableSearchDefinition.getTraversalEvaluators();
+        if( evaluators != null ) {
+            for (String id : evaluators.keySet() ) {
+                Boolean isSelected = traversalEvaluatorValues.get(id);
+                if (isSelected == null) {
+                    traversalEvaluatorValues.put(id, Boolean.FALSE);
+                }
+            }
+        }
     }
 
     /**
@@ -994,5 +1018,9 @@ public class SearchInstance implements Serializable {
 
     public void setOrderByList(List<SearchOrderBy> orderByList) {
         this.orderByList = orderByList;
+    }
+
+    public Map<String,Boolean> getTraversalEvaluatorValues(){
+        return traversalEvaluatorValues;
     }
 }

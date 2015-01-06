@@ -1,8 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure;
 
 import com.google.common.collect.ImmutableMap;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
+import com.google.common.collect.ImmutableSet;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
@@ -11,11 +13,11 @@ import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleDataFetcher;
 import org.hamcrest.Matchers;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -29,7 +31,6 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.mockito.Matchers.anyCollectionOf;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
@@ -73,11 +74,16 @@ public class SampleDataFetcherTest {
      * A sample that was exported from BSP for which Mercury is the metadata source.
      */
     private static final String CLINICAL_SAMPLE_ID = "SM-MERC1";
-    private static final String FUBAR_SAMPLE_ID = "SM-FUBAR";
+    private static final String CLINICAL_PATIENT_ID = "ZB12345";
+    public MercurySample bspBareMercurySample;
 
     private BspSampleData bspOnlySampleData;
     private BspSampleData bspSampleData;
-    private MercurySampleData clinicalSampleData;
+    private Map<String, SampleData> presetSampleToSampleDataMap = new HashMap<>();
+    private MercurySampleData clinicalSampleData = new MercurySampleData(CLINICAL_SAMPLE_ID, ImmutableSet.of(
+            new Metadata(Metadata.Key.SAMPLE_ID, CLINICAL_SAMPLE_ID),
+            new Metadata(Metadata.Key.PATIENT_ID, CLINICAL_PATIENT_ID)
+    ));
 
     private MercurySampleDao mockMercurySampleDao;
     private BSPSampleDataFetcher mockBspSampleDataFetcher;
@@ -88,52 +94,35 @@ public class SampleDataFetcherTest {
     private MercurySample bspMercurySample;
     private MercurySample clinicalMercurySample;
 
+    private Map<String, MercurySample> presetSampleToMercurySampleMap = new HashMap<>();
+
     @BeforeMethod
     public void setUp() {
+        bspBareMercurySample = new MercurySample(BSP_BARE_SAMPLE_ID, MercurySample.MetadataSource.BSP);
         gssrMercurySample = new MercurySample(GSSR_SAMPLE_ID, MercurySample.MetadataSource.BSP);
         bspMercurySample = new MercurySample(BSP_SAMPLE_ID, MercurySample.MetadataSource.BSP);
         clinicalMercurySample = new MercurySample(CLINICAL_SAMPLE_ID, MercurySample.MetadataSource.MERCURY);
         bspOnlySampleData = new BspSampleData();
         bspSampleData = new BspSampleData();
+        presetSampleToSampleDataMap.put(BSP_BARE_SAMPLE_ID, bspSampleData);
+        presetSampleToSampleDataMap.put(BSP_SAMPLE_ID, bspSampleData);
         clinicalSampleData = new MercurySampleData(CLINICAL_SAMPLE_ID, Collections.<Metadata>emptySet());
+        clinicalMercurySample.setSampleData(clinicalSampleData);
+        presetSampleToSampleDataMap.put(CLINICAL_SAMPLE_ID, clinicalSampleData );
 
         mockMercurySampleDao = Mockito.mock(MercurySampleDao.class);
-        /*
-         * findMapIdToListMercurySample returns a map with an entry for every sample ID key. If no MercurySamples are
-         * found, the entry's value is an empty collection. The stub behavior here configures the mock to respond
-         * correctly for any input, assuming that there are no MercurySamples for any sample ID.
-         *
-         * Where needed, different behavior can be stubbed for specific sample IDs.
-         */
-        when(mockMercurySampleDao.findMapIdToListMercurySample(anyCollectionOf(String.class)))
-                .thenAnswer(new Answer<Object>() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                @SuppressWarnings("unchecked")
-                Collection<String> sampleKeys = (Collection<String>) invocation.getArguments()[0];
-
-                /*
-                 * This won't generally be null. However, when doing further stubbing for specific sample IDs, use of
-                 * argument matchers will cause null to be passed in. Simply returning null in these cases seems to be
-                 * in the spirit of stubbing with argument matchers.
-                 */
-                if (sampleKeys == null) {
-                    return null;
-                }
-
-                Map<String, List<MercurySample>> result = new HashMap<>();
-                for (String sampleKey : sampleKeys) {
-                    result.put(sampleKey, Collections.<MercurySample>emptyList());
-                }
-                return result;
-            }
-        });
 
         mockBspSampleDataFetcher = Mockito.mock(BSPSampleDataFetcher.class);
         mockMercurySampleDataFetcher = Mockito.mock(MercurySampleDataFetcher.class);
-
+        SampleDataSourceResolver sampleDataSourceResolver = new SampleDataSourceResolver(mockMercurySampleDao);
         sampleDataFetcher =
-                new SampleDataFetcher(mockMercurySampleDao, mockBspSampleDataFetcher, mockMercurySampleDataFetcher);
+                new SampleDataFetcher(mockMercurySampleDao, sampleDataSourceResolver, mockBspSampleDataFetcher,
+                        mockMercurySampleDataFetcher);
+
+        presetSampleToMercurySampleMap.put(GSSR_SAMPLE_ID, gssrMercurySample);
+        presetSampleToMercurySampleMap.put(BSP_SAMPLE_ID, bspMercurySample);
+        presetSampleToMercurySampleMap.put(CLINICAL_SAMPLE_ID, clinicalMercurySample);
+        presetSampleToMercurySampleMap.put(BSP_BARE_SAMPLE_ID, bspBareMercurySample);
     }
 
     /*
@@ -179,7 +168,7 @@ public class SampleDataFetcherTest {
 
         SampleData sampleData = sampleDataFetcher.fetchSampleData(CLINICAL_SAMPLE_ID);
 
-        assertThat(sampleData, equalTo((SampleData) clinicalSampleData));
+        assertThat(sampleData.getSampleId(), equalTo(CLINICAL_SAMPLE_ID));
         verifyZeroInteractions(mockBspSampleDataFetcher);
     }
 
@@ -188,85 +177,116 @@ public class SampleDataFetcherTest {
 
     }
 
+    @DataProvider(name = "gssrFetch_data_provider")
+    public Object[][] gssrFetch_data_provider() {
+        List<Object[]> dataList = new ArrayList<>();
+
+        dataList.add(new Object[]{GSSR_ONLY_SAMPLE_ID});
+        dataList.add(new Object[]{GSSR_SAMPLE_ID});
+
+        return dataList.toArray(new Object[dataList.size()][]);
+    }
+
     /*
      * Test cases for SampleDataFetcher#fetchSampleData(Collection<String>).
      */
 
-    public void fetch_GSSR_samples_without_MercurySample_should_query_nothing() {
-        when(mockBspSampleDataFetcher.fetchSampleData(argThat(contains(GSSR_ONLY_SAMPLE_ID)))).thenReturn(
+    @Test(dataProvider = "gssrFetch_data_provider")
+    public void fetch_GSSR_samples_without_MercurySample_should_query_nothing(String sampleId) {
+
+        when(mockBspSampleDataFetcher.fetchSampleData(argThat(contains(sampleId)))).thenReturn(
                 Collections.<String, BspSampleData>emptyMap());
 
-        Map<String, SampleData> sampleDataBySampleId =
-                sampleDataFetcher.fetchSampleData(Collections.singleton(GSSR_ONLY_SAMPLE_ID));
-
-        assertThat(sampleDataBySampleId.size(), equalTo(0));
-        verify(mockBspSampleDataFetcher).fetchSampleData(argThat(contains(GSSR_ONLY_SAMPLE_ID)));
-    }
-
-    public void fetch_GSSR_samples_with_MercurySample_should_query_nothing() {
-        configureMercurySampleDao(gssrMercurySample);
-        when(mockBspSampleDataFetcher.fetchSampleData(argThat(contains(GSSR_SAMPLE_ID)))).thenReturn(
-                Collections.<String, BspSampleData>emptyMap());
-
-        Map<String, SampleData> sampleDataBySampleId =
-                sampleDataFetcher.fetchSampleData(Collections.singleton(GSSR_SAMPLE_ID));
-
-        assertThat(sampleDataBySampleId.size(), equalTo(0));
-        verify(mockBspSampleDataFetcher).fetchSampleData(argThat(contains(GSSR_SAMPLE_ID)));
-    }
-
-    public void test_BSP_bare_sample_should_query_BSP_and_return_nothing() {
-        configureMercurySampleDao(new MercurySample(BSP_BARE_SAMPLE_ID, MercurySample.MetadataSource.BSP));
-
-        Map<String, SampleData> sampleDataBySampleId =
-                sampleDataFetcher.fetchSampleData(Collections.singleton(BSP_BARE_SAMPLE_ID));
+        Map<String, SampleData> sampleDataBySampleId;
+        sampleDataBySampleId =
+                sampleDataFetcher.fetchSampleData(Collections.singleton(sampleId));
+        verify(mockBspSampleDataFetcher).fetchSampleData(argThat(contains(sampleId)));
 
         assertThat(sampleDataBySampleId.size(), equalTo(0));
     }
 
-    public void fetch_BSP_samples_without_MercurySample_should_query_BSP() {
-        configureBspFetcher(BSP_ONLY_SAMPLE_ID, bspOnlySampleData);
+    @DataProvider(name = "bsp_bare_sample_fetch_data_provider")
+    public Object[][] bsp_bare_sample_fetch_data_provider () {
+        List<Object[]> dataList = new ArrayList<>();
 
-        Map<String, SampleData> sampleData =
-                sampleDataFetcher.fetchSampleData(Collections.singleton(BSP_ONLY_SAMPLE_ID));
+        dataList.add(new Object[]{BSP_BARE_SAMPLE_ID, true});
+        dataList.add(new Object[]{BSP_BARE_SAMPLE_ID, false});
+        dataList.add(new Object[]{BSP_SAMPLE_ID, true});
+        dataList.add(new Object[]{BSP_SAMPLE_ID, false});
+        dataList.add(new Object[]{build_product_order_sample_with_mercury_sample_bound(MercurySample.MetadataSource.BSP,
+                BSP_SAMPLE_ID), true});
+        dataList.add(new Object[]{build_product_order_sample_without_mercury_sample_bound(BSP_SAMPLE_ID), false});
 
-        assertThat(sampleData.size(), equalTo(1));
-        assertThat(sampleData.get(BSP_ONLY_SAMPLE_ID), equalTo((SampleData) bspOnlySampleData));
+        return dataList.toArray(new Object[dataList.size()][]);
     }
 
-    public void fetch_BSP_samples_with_MercurySample_should_query_BSP() {
-        configureMercurySampleDao(bspMercurySample); // TODO: figure out how to make the test fail when this is not done!
-        configureBspFetcher(BSP_SAMPLE_ID, bspSampleData);
+    @Test(dataProvider = "bsp_bare_sample_fetch_data_provider")
+    public void test_BSP_sample_should_query_BSP(Object sample, Boolean configureDao) {
 
-        Map<String, SampleData> sampleData =
-                sampleDataFetcher.fetchSampleData(Collections.singleton(BSP_SAMPLE_ID));
+        String sampleId = (sample instanceof String) ? (String) sample : ((ProductOrderSample) sample).getSampleKey();
 
-        assertThat(sampleData.size(), equalTo(1));
-        assertThat(sampleData.get(BSP_SAMPLE_ID), equalTo((SampleData) bspSampleData));
+        if(configureDao) {
+            configureMercurySampleDao(presetSampleToMercurySampleMap.get(sampleId));
+        }
+        configureBspFetcher(sampleId, (BspSampleData) presetSampleToSampleDataMap.get(sampleId));
+
+        Map<String, SampleData> sampleDataBySampleId;
+        if(sample instanceof String) {
+            sampleDataBySampleId = sampleDataFetcher.fetchSampleData(Collections.singleton((String) sample));
+        } else {
+            sampleDataBySampleId = sampleDataFetcher.fetchSampleDataForProductOrderSample(
+                    Collections.singleton((ProductOrderSample) sample));
+        }
+
+        verify(mockMercurySampleDao).findMapIdToMercurySample(Collections.singleton(sampleId));
+
+        assertThat(sampleDataBySampleId.size(), equalTo(1));
+        assertThat(sampleDataBySampleId.get(sampleId), equalTo((SampleData) presetSampleToSampleDataMap.get(sampleId)));
     }
 
-    public void fetch_clinical_samples_with_MercurySample_should_query_Mercury() {
-        configureMercurySampleDao(clinicalMercurySample);
-        configureMercuryFetcher(clinicalMercurySample, clinicalSampleData);
+    @DataProvider(name = "clinicalSampleFetchProvider")
+    public Object[][] clinicalSampleFetchProvider() {
+        List<Object[]> dataList = new ArrayList<>();
 
-        Map<String, SampleData> sampleData =
-                sampleDataFetcher.fetchSampleData(Collections.singleton(CLINICAL_SAMPLE_ID));
+        dataList.add(new Object[]{CLINICAL_SAMPLE_ID});
+        dataList.add(new Object[]{build_product_order_sample_without_mercury_sample_bound(CLINICAL_SAMPLE_ID)});
+        dataList.add(new Object[]{build_product_order_sample_with_mercury_sample_bound(
+                MercurySample.MetadataSource.MERCURY,
+                CLINICAL_SAMPLE_ID)});
+
+        return dataList.toArray(new Object[dataList.size()][]);
+    }
+
+    @Test(dataProvider = "clinicalSampleFetchProvider")
+    public void fetch_clinical_samples_with_MercurySample_should_query_Mercury(Object sample) {
+
+        String sampleId = (sample instanceof String) ? (String) sample : ((ProductOrderSample) sample).getSampleKey();
+
+        configureMercurySampleDao(presetSampleToMercurySampleMap.get(sampleId));
+        configureMercuryFetcher(presetSampleToMercurySampleMap.get(sampleId),
+                (MercurySampleData) presetSampleToSampleDataMap.get(sampleId));
+
+        Map<String, SampleData> sampleData;
+        if(sample instanceof String) {
+            sampleData = sampleDataFetcher.fetchSampleData(Collections.singleton((String)sample));
+        } else {
+            sampleData = sampleDataFetcher.fetchSampleDataForProductOrderSample(
+                    Collections.singleton((ProductOrderSample) sample));
+        }
 
         assertThat(sampleData.size(), equalTo(1));
-        assertThat(sampleData.get(CLINICAL_SAMPLE_ID), Matchers.equalTo((SampleData) clinicalSampleData));
+        assertThat(sampleData.get(sampleId), Matchers.equalTo(presetSampleToSampleDataMap.get(sampleId)));
         verifyZeroInteractions(mockBspSampleDataFetcher);
     }
 
     public void fetch_mixed_samples_should_query_appropriate_sources() {
         // @formatter:off
-        when(mockMercurySampleDao.findMapIdToListMercurySample(argThat(containsInAnyOrder(
-                    GSSR_ONLY_SAMPLE_ID, GSSR_SAMPLE_ID, BSP_ONLY_SAMPLE_ID, BSP_SAMPLE_ID, CLINICAL_SAMPLE_ID))))
+        when(mockMercurySampleDao.findMapIdToMercurySample(argThat(containsInAnyOrder(
+                GSSR_ONLY_SAMPLE_ID, GSSR_SAMPLE_ID, BSP_ONLY_SAMPLE_ID, BSP_SAMPLE_ID, CLINICAL_SAMPLE_ID))))
             .thenReturn(ImmutableMap.of(
-                    GSSR_ONLY_SAMPLE_ID, Collections.<MercurySample>emptyList(),
-                    GSSR_SAMPLE_ID, Collections.singletonList(gssrMercurySample),
-                    BSP_ONLY_SAMPLE_ID, Collections.<MercurySample>emptyList(),
-                    BSP_SAMPLE_ID, Collections.singletonList(bspMercurySample),
-                    CLINICAL_SAMPLE_ID, Collections.singletonList(clinicalMercurySample)
+                    GSSR_SAMPLE_ID, gssrMercurySample,
+                    BSP_SAMPLE_ID, bspMercurySample,
+                    CLINICAL_SAMPLE_ID, clinicalMercurySample
             ));
         // @formatter:on
         when(mockBspSampleDataFetcher
@@ -282,7 +302,50 @@ public class SampleDataFetcherTest {
         assertThat(sampleData.size(), equalTo(3));
         assertThat(sampleData.get(BSP_ONLY_SAMPLE_ID), equalTo((SampleData) bspOnlySampleData));
         assertThat(sampleData.get(BSP_SAMPLE_ID), equalTo((SampleData) bspSampleData));
-        assertThat(sampleData.get(CLINICAL_SAMPLE_ID), equalTo((SampleData) clinicalSampleData));
+        assertThat(sampleData.get(CLINICAL_SAMPLE_ID).getSampleId(), equalTo(CLINICAL_SAMPLE_ID));
+    }
+
+    @DataProvider(name = "mixedProductOrderSampleDataProvider")
+    private Object[][] mixedProductOrderSampleDataProvider() {
+        List<Object[]> dataList = new ArrayList<>();
+
+        dataList.add(new Object[]{Arrays.asList(build_product_order_sample_without_mercury_sample_bound(
+                        BSP_ONLY_SAMPLE_ID),
+                build_product_order_sample_without_mercury_sample_bound(BSP_SAMPLE_ID),
+                build_product_order_sample_without_mercury_sample_bound(CLINICAL_SAMPLE_ID))});
+        dataList.add(new Object[]{Arrays.asList(build_product_order_sample_with_mercury_sample_bound(
+                        MercurySample.MetadataSource.BSP, BSP_ONLY_SAMPLE_ID),
+                build_product_order_sample_with_mercury_sample_bound(MercurySample.MetadataSource.BSP, BSP_SAMPLE_ID),
+                build_product_order_sample_with_mercury_sample_bound(MercurySample.MetadataSource.MERCURY,
+                        CLINICAL_SAMPLE_ID))});
+
+        return dataList.toArray(new Object[dataList.size()][]);
+    }
+
+    @Test(dataProvider = "mixedProductOrderSampleDataProvider")
+    public void fetch_mixed_product_order_samples_should_query_appropriate_sources(Collection<ProductOrderSample> samples) {
+        // @formatter:off
+        when(mockMercurySampleDao.findMapIdToMercurySample(argThat(containsInAnyOrder(BSP_ONLY_SAMPLE_ID, BSP_SAMPLE_ID,
+                CLINICAL_SAMPLE_ID))))
+            .thenReturn(ImmutableMap.of(
+                    GSSR_SAMPLE_ID, gssrMercurySample,
+                    BSP_SAMPLE_ID, bspMercurySample,
+                    CLINICAL_SAMPLE_ID, clinicalMercurySample
+            ));
+        // @formatter:on
+        when(mockBspSampleDataFetcher
+                .fetchSampleData(argThat(containsInAnyOrder(BSP_ONLY_SAMPLE_ID,
+                        BSP_SAMPLE_ID))))
+                .thenReturn(ImmutableMap.of(BSP_ONLY_SAMPLE_ID, bspOnlySampleData, BSP_SAMPLE_ID, bspSampleData));
+        configureMercurySampleDao(clinicalMercurySample);
+        configureMercuryFetcher(clinicalMercurySample, clinicalSampleData);
+
+        Map<String, SampleData> sampleData = sampleDataFetcher.fetchSampleDataForProductOrderSample(samples);
+
+        assertThat(sampleData.size(), equalTo(3));
+        assertThat(sampleData.get(BSP_ONLY_SAMPLE_ID), equalTo((SampleData) bspOnlySampleData));
+        assertThat(sampleData.get(BSP_SAMPLE_ID), equalTo((SampleData) bspSampleData));
+        assertThat(sampleData.get(CLINICAL_SAMPLE_ID).getSampleId(), equalTo(CLINICAL_SAMPLE_ID));
     }
 
     // TODO: fetch_clinical_samples_without_MercurySample_should_..._throw_exception?_return_no_data?
@@ -345,22 +408,13 @@ public class SampleDataFetcherTest {
 
     public void test_getStockIdForAliquotId_for_clinical_sample_should_return_itself() {
         configureMercurySampleDao(clinicalMercurySample);
-        when(mockMercurySampleDataFetcher.getStockIdForAliquotId(clinicalMercurySample)).thenReturn(CLINICAL_SAMPLE_ID);
+       when(mockMercurySampleDataFetcher.getStockIdByAliquotId(argThat(contains(clinicalMercurySample))))
+                .thenReturn(ImmutableMap.of(CLINICAL_SAMPLE_ID, CLINICAL_SAMPLE_ID));
 
         String stockId = sampleDataFetcher.getStockIdForAliquotId(CLINICAL_SAMPLE_ID);
 
         verifyZeroInteractions(mockBspSampleDataFetcher);
         assertThat(stockId, equalTo(CLINICAL_SAMPLE_ID));
-    }
-
-    @Test(expectedExceptions = RuntimeException.class)
-    public void test_getStockIdForAliquotId_for_ambiguous_sample_should_throw_exception() {
-        when(mockMercurySampleDao.findMapIdToListMercurySample(argThat(contains(FUBAR_SAMPLE_ID))))
-                .thenReturn(ImmutableMap.of(FUBAR_SAMPLE_ID, Arrays.asList(
-                        new MercurySample(FUBAR_SAMPLE_ID, MercurySample.MetadataSource.BSP),
-                        new MercurySample(FUBAR_SAMPLE_ID, MercurySample.MetadataSource.MERCURY))));
-
-        sampleDataFetcher.getStockIdForAliquotId(FUBAR_SAMPLE_ID);
     }
 
     /*
@@ -395,6 +449,7 @@ public class SampleDataFetcherTest {
 
         assertThat(stockIdByAliquotId.size(), equalTo(1));
         assertThat(stockIdByAliquotId.get(BSP_ONLY_SAMPLE_ID), equalTo(BSP_STOCK_ID));
+        verifyZeroInteractions(mockMercurySampleDataFetcher);
     }
 
     public void test_getStockIdByAliquotId_for_BSP_sample_should_query_BSP() {
@@ -410,8 +465,7 @@ public class SampleDataFetcherTest {
     }
 
     public void test_getStockIdByAliquotId_for_clinical_sample_should_return_itself() {
-        when(mockMercurySampleDao.findBySampleKeys(argThat(contains(CLINICAL_SAMPLE_ID))))
-                .thenReturn(Collections.singletonList(clinicalMercurySample));
+        configureMercurySampleDao(clinicalMercurySample);
         when(mockMercurySampleDataFetcher.getStockIdByAliquotId(argThat(contains(clinicalMercurySample))))
                 .thenReturn(ImmutableMap.of(CLINICAL_SAMPLE_ID, CLINICAL_SAMPLE_ID));
 
@@ -429,8 +483,8 @@ public class SampleDataFetcherTest {
 
     private void configureMercurySampleDao(MercurySample mercurySample) {
         String sampleKey = mercurySample.getSampleKey();
-        when(mockMercurySampleDao.findMapIdToListMercurySample(argThat(contains(sampleKey))))
-                .thenReturn(ImmutableMap.of(sampleKey, Collections.singletonList(mercurySample)));
+        when(mockMercurySampleDao.findMapIdToMercurySample(argThat(contains(sampleKey))))
+                .thenReturn(ImmutableMap.of(sampleKey, mercurySample));
     }
 
     private void configureBspFetcher(String sampleId, BspSampleData sampleData) {
@@ -440,11 +494,35 @@ public class SampleDataFetcherTest {
 
     private void configureMercuryFetcher(MercurySample mercurySample, MercurySampleData sampleData) {
         when(mockMercurySampleDataFetcher.fetchSampleData(argThat(contains(mercurySample))))
-                .thenReturn(ImmutableMap.of(CLINICAL_SAMPLE_ID, sampleData));
+                .thenReturn(ImmutableMap.of(mercurySample.getSampleKey(), sampleData));
     }
 
     private void configureBspFetcher(String aliquotId, String stockId) {
-        when(mockBspSampleDataFetcher.getStockIdForAliquotId(aliquotId)).thenReturn(stockId);
+        when(mockBspSampleDataFetcher.getStockIdByAliquotId(argThat(contains(aliquotId))))
+                .thenReturn(ImmutableMap.of(aliquotId, stockId));
     }
 
+    private ProductOrderSample build_product_order_sample_without_mercury_sample_bound(String sampleId) {
+
+        return new ProductOrderSample(sampleId);
+    }
+
+    private ProductOrderSample build_product_order_sample_with_mercury_sample_bound(
+            MercurySample.MetadataSource metadataSource,
+            String sampleId) {
+
+        ProductOrderSample productOrderSample = new ProductOrderSample(sampleId);
+        MercurySample mercurySample = presetSampleToMercurySampleMap.get(sampleId);
+        if(mercurySample == null) {
+            mercurySample = new MercurySample(sampleId, metadataSource);
+        }
+        SampleData sampleData = presetSampleToSampleDataMap.get(sampleId);
+        if(sampleData != null) {
+            mercurySample.setSampleData(sampleData);
+        }
+        productOrderSample.setMercurySample(mercurySample);
+
+
+        return productOrderSample;
+    }
 }

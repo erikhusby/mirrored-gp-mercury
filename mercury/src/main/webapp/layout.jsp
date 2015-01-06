@@ -48,7 +48,7 @@
         <script src="${ctxpath}/resources/scripts/bootstrap-dt.js"></script>
         <script src="${ctxpath}/resources/scripts/json2.js"></script>
 
-        <script src="${ctxpath}/resources/scripts/jquery.tokeninput-1.6.0.js"></script>
+        <script src="${ctxpath}/resources/scripts/jquery.tokeninput.min.js"></script>
         <script src="${ctxpath}/resources/scripts/jquery.autosize-min.js"></script>
 
         <link rel="Shortcut Icon" type="image/x-icon" href="${ctxpath}/favicon.ico"/>
@@ -99,7 +99,8 @@
                 // Capture session timeouts in ajax calls
                 $j(document).ajaxSuccess(function(evt, request, settings){
                     if (request.responseText.indexOf('timeout_page_flag') != -1)
-                        location.href = "${ctxpath}";
+                        // Force signin to not forward to ajax request
+                        location.href = "${ctxpath}/security/security.action?ajax=reset";
                 });
 
                 setupMercuryMessage();

@@ -26,7 +26,7 @@ public class SampleVesselProcessor extends TableProcessor {
     private Set<String> sampleIds = new HashSet<>();
 
     public SampleVesselProcessor(String sheetName) {
-        super(sheetName);
+        super(sheetName, IgnoreTrailingBlankLines.YES);
     }
 
     @Override
@@ -71,29 +71,16 @@ public class SampleVesselProcessor extends TableProcessor {
     }
 
     private enum Headers implements ColumnHeader {
-        SAMPLE_ID("Sample ID", 0, REQUIRED_HEADER, REQUIRED_VALUE),
-        MANUFACTURER_TUBE_BARCODE("Manufacturer Tube Barcode", 1, REQUIRED_HEADER, REQUIRED_VALUE),
-        CONTAINER_BARCODE("Container", 2, REQUIRED_HEADER, REQUIRED_VALUE),
-        POSITION("Position", 3, REQUIRED_HEADER, REQUIRED_VALUE),
+        SAMPLE_ID("Sample ID"),
+        MANUFACTURER_TUBE_BARCODE("Manufacturer Tube Barcode"),
+        CONTAINER_BARCODE("Container"),
+        POSITION("Position"),
         ;
 
         private final String text;
-        private final int index;
-        private final boolean requiredHeader;
-        private final boolean requiredValue;
-        private boolean isString;
 
-        Headers(String text, int index, boolean requiredHeader, boolean requiredValue) {
-            this(text, index, requiredHeader, requiredValue, false);
-        }
-
-        Headers(String text, int index, boolean requiredHeader, boolean requiredValue,
-                boolean isString) {
+        Headers(String text) {
             this.text = text;
-            this.index = index;
-            this.requiredHeader = requiredHeader;
-            this.requiredValue = requiredValue;
-            this.isString = isString;
         }
 
         @Override
@@ -102,18 +89,13 @@ public class SampleVesselProcessor extends TableProcessor {
         }
 
         @Override
-        public int getIndex() {
-            return index;
-        }
-
-        @Override
         public boolean isRequiredHeader() {
-            return requiredHeader;
+            return true;
         }
 
         @Override
         public boolean isRequiredValue() {
-            return requiredValue;
+            return true;
         }
 
         @Override
@@ -123,7 +105,7 @@ public class SampleVesselProcessor extends TableProcessor {
 
         @Override
         public boolean isStringColumn() {
-            return isString;
+            return false;
         }
     }
 

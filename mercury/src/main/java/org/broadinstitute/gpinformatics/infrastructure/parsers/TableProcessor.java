@@ -2,7 +2,9 @@ package org.broadinstitute.gpinformatics.infrastructure.parsers;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.jvnet.inflector.Noun;
 
+import javax.annotation.Nonnull;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -12,15 +14,23 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- *
  * This abstract class provides spreadsheet/table parsers with the logic for turning rows of data into objects and
  * processing these into actions that can be communicated, whether it is a preview of what was built or actually
  * saving information into the database. This processes headers and data specific to the import desired.
  */
 public abstract class TableProcessor implements Serializable {
 
+    /**
+     * If a TableProcessor is constructed with IgnoreTrailingBlankLines.YES, it will silently ignore trailing rows of
+     * all-blank cells.
+     */
+    public enum IgnoreTrailingBlankLines {
+        YES,
+        NO
+    }
+
     private static final long serialVersionUID = 8122298462727182883L;
-    public static final String REQUIRED_VALUE_IS_MISSING = "Required value for %s is missing";
+    public static final String REQUIRED_VALUE_IS_MISSING = "Required value for %s is missing.";
 
     private final List<String> validationMessages = new ArrayList<>();
 
@@ -28,8 +38,22 @@ public abstract class TableProcessor implements Serializable {
 
     private final String sheetName;
 
+    private final IgnoreTrailingBlankLines ignoreTrailingBlankLines;
+
+    /**
+     * Legacy constructor that creates a TableProcessor with TolerateBlankLines.NO, so blank lines in the
+     * spreadsheet will generate errors.
+     */
     protected TableProcessor(String sheetName) {
+        this(sheetName, IgnoreTrailingBlankLines.NO);
+    }
+
+    /**
+     * Constructor that allows for specification of whether trailing blank lines are ignored.
+     */
+    protected TableProcessor(String sheetName, @Nonnull IgnoreTrailingBlankLines ignoreTrailingBlankLines) {
         this.sheetName = sheetName;
+        this.ignoreTrailingBlankLines = ignoreTrailingBlankLines;
     }
 
     /**
@@ -59,7 +83,7 @@ public abstract class TableProcessor implements Serializable {
      * header enums. We often have columns that are data specific (Like price items on products in the tracker).
      *
      * @param headers The header strings in this row
-     * @param row The row
+     * @param row     The row
      */
     public abstract void processHeader(List<String> headers, int row);
 
@@ -83,35 +107,47 @@ public abstract class TableProcessor implements Serializable {
      * This method defines the specific logic necessary to parse the data in the given table.  The concrete parser will
      * be responsible for constructing any  necessary entities to represent the data found in this table row.
      *
-     * @param dataRow The row of data mapped by header name.
+     * @param dataRow      The row of data mapped by header name.
      * @param dataRowIndex The current row of data we are working with.
      */
     public abstract void processRowDetails(Map<String, String> dataRow, int dataRowIndex);
 
-    public final boolean validateHeaders(List<String> headers) {
+    public final boolean validateColumnHeaders(List<String> headers) {
+
         // If any of the required headers are NOT in the header list, then return false.
+        List<String> missingHeaders = new ArrayList<>();
         for (ColumnHeader header : getColumnHeaders()) {
             if (header.isRequiredHeader() && !headers.contains(header.getText())) {
-                validationMessages.add("Required header: " + header.getText() + " is missing");
-                return false;
+                missingHeaders.add(header.getText());
             }
         }
-
-        return true;
+        if (!missingHeaders.isEmpty()) {
+            validationMessages.add(
+                    String.format("Required %s missing: %s.", Noun.pluralOf("header", missingHeaders.size()),
+                            StringUtils.join(missingHeaders, ", ")));
+        }
+        validateHeaderRow(headers);
+        return validationMessages.isEmpty();
     }
+
+    /**
+     * If Processor specific header validation is required, override this method and perform it there.
+     */
+    @SuppressWarnings("unused")
+    public void validateHeaderRow(List<String> headers) { }
 
     /**
      * This method makes sure that all values in the row that are deemed 'required' have values. This means that
      * subclasses need not litter their code with these easy validations.
      *
-     * @param dataRow The row of data
+     * @param dataRow      The row of data
      * @param dataRowIndex The index into the row
      *
      * @return Is the required value there?
      */
     private boolean hasRequiredValues(Map<String, String> dataRow, int dataRowIndex) {
-        boolean hasValue = true;
 
+        boolean hasValue = true;
         // If any of the required values are empty or missing in the data row, return false.
         for (ColumnHeader header : getColumnHeaders()) {
             if (header.isRequiredValue() &&
@@ -168,8 +204,8 @@ public abstract class TableProcessor implements Serializable {
         ColumnHeader columnHeader = findColumnHeaderByName(headerNameAtIndex);
         return columnHeader != null && columnHeader.isStringColumn();
     }
-    
-    private ColumnHeader findColumnHeaderByName(String headerName) {
+
+    protected ColumnHeader findColumnHeaderByName(String headerName) {
         for (ColumnHeader columnHeader : getColumnHeaders()) {
             if (headerName.equals(columnHeader.getText())) {
                 return columnHeader;
@@ -178,7 +214,6 @@ public abstract class TableProcessor implements Serializable {
 
         return null;
     }
-
 
     /**
      * If your requirements state that a workbook must have a certain amount of worksheets you can override
@@ -190,4 +225,7 @@ public abstract class TableProcessor implements Serializable {
      */
     public void validateNumberOfWorksheets(int actualNumberOfSheets) throws ValidationException {    }
 
+    public boolean shouldIgnoreTrailingBlankLines() {
+        return ignoreTrailingBlankLines == IgnoreTrailingBlankLines.YES;
+    }
 }

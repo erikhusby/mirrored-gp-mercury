@@ -112,11 +112,9 @@
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.LinkDenatureTubeToReagentBlockActionBean"
                                           event="view">Link Denature Tube to Reagent Block</stripes:link>
                         </li>
-                        <security:authorizeBlock roles="<%= roles(Developer) %>">
-                            <li>
-                                <a tabindex="-1" href="${ctxpath}/reagent/design.action?list">Reagent Designs</a>
-                            </li>
-                        </security:authorizeBlock>
+                        <li>
+                            <a tabindex="-1" href="${ctxpath}/reagent/design.action?list">Reagent Designs</a>
+                        </li>
                         <security:authorizeBlock roles="<%= roles(LabUser, LabManager, Developer) %>" context="<%= ApplicationInstance.CRSP %>">
                             <li>
                                 <a tabindex="-1" href="${ctxpath}/reagent/molindscheme.action">Molecular Index Schemes</a>
@@ -134,6 +132,11 @@
                             <stripes:link id="nextStepsAfterInitialPico"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.PicoDispositionActionBean"
                                           event="view">Pico Next Steps</stripes:link>
+                        </li>
+                        <li>
+                            <stripes:link id="fingerprintSpreadsheet"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.FingerprintingSpreadsheetActionBean"
+                                          event="view">Create Fingerprinting Spreadsheet</stripes:link>
                         </li>
                         <security:authorizeBlock roles="<%= roles(LabUser, LabManager, PDM, Developer) %>">
                             <li>
@@ -165,6 +168,11 @@
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.ManifestTubeTransferActionBean">
                             Transfer Tubes from Manifest
                             </stripes:link>
+                        <li>
+                            <stripes:link id="uploadReagents"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.ReagentActionBean"
+                                          event="view">Upload Reagents</stripes:link>
+                        </li>
                     </ul>
                 </li>
             </security:authorizeBlock>
@@ -193,9 +201,6 @@
                             <li><stripes:link
                                     beanclass="org.broadinstitute.gpinformatics.mercury.presentation.admin.PublicMessageAdminActionBean"
                                     event="view">Manage Public Message</stripes:link></li>
-                            <li><stripes:link
-                                    beanclass="org.broadinstitute.gpinformatics.mercury.presentation.audit.AuditTrailActionBean"
-                                    event="view">View Audit Trail</stripes:link></li>
                         </security:authorizeBlock>
                     </ul>
                 </li>
@@ -234,6 +239,11 @@
                         <stripes:link id="userDefSearch"
                                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.ConfigurableSearchActionBean"
                                       event="entitySelection">User-Defined</stripes:link>
+                    </li>
+                    <li>
+                        <stripes:link id="auditTrailSearch"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.audit.AuditTrailActionBean"
+                                      event="view">Audit Trail</stripes:link>
                     </li>
                 </ul>
             </li>

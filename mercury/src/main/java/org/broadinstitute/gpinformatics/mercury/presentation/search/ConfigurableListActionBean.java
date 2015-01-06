@@ -9,7 +9,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.columns.BspSampleSearchAddRowsListener;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
@@ -98,10 +97,16 @@ public class ConfigurableListActionBean extends CoreActionBean {
 
             ConfigurableList configurableList = new ConfigurableList(columnTabulations, 0, "ASC",
                     ColumnEntity.getByName(entityName));
-            // todo jmt adding the BSP stuff needs to be configurable
-            if (entityName.equals("LabVessel")) {
-                configurableList.addListener(new BspSampleSearchAddRowsListener(bspSampleSearchService));
+
+            // Add any row listeners
+            ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(entityName);
+            ConfigurableSearchDefinition.AddRowsListenerFactory addRowsListenerFactory = configurableSearchDef.getAddRowsListenerFactory();
+            if( addRowsListenerFactory != null ) {
+                for( Map.Entry<String,ConfigurableList.AddRowsListener> entry : addRowsListenerFactory.getAddRowsListeners().entrySet() ) {
+                    configurableList.addAddRowsListener(entry.getKey(), entry.getValue());
+                }
             }
+
             configurableList.addRows(entityList, buildSearchContext());
             ConfigurableList.ResultList resultList = configurableList.getResultList(false);
             return streamResultList(resultList);
@@ -131,9 +136,14 @@ public class ConfigurableListActionBean extends CoreActionBean {
                 .getAttribute(ConfigurableSearchActionBean.PAGINATION_PREFIX + sessionKey);
         ConfigurableList configurableList = new ConfigurableList(columnTabulations, 0, "ASC",
                 ColumnEntity.getByName(entityName));
-        // todo jmt adding the BSP stuff needs to be configurable
-        if (entityName.equals("LabVessel")) {
-            configurableList.addListener(new BspSampleSearchAddRowsListener(bspSampleSearchService));
+
+        // Add any row listeners
+        ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(entityName);
+        ConfigurableSearchDefinition.AddRowsListenerFactory addRowsListenerFactory = configurableSearchDef.getAddRowsListenerFactory();
+        if( addRowsListenerFactory != null ) {
+            for( Map.Entry<String,ConfigurableList.AddRowsListener> entry : addRowsListenerFactory.getAddRowsListeners().entrySet() ) {
+                configurableList.addAddRowsListener(entry.getKey(), entry.getValue());
+            }
         }
 
         // Get each page and add it to the configurable list
@@ -198,7 +208,7 @@ public class ConfigurableListActionBean extends CoreActionBean {
         } else {
             columnNameList = searchInstance.getColumnSetColumnNameList();
         }
-        ConfigurableSearchDefinition configurableSearchDef = new SearchDefinitionFactory().getForEntity(entityName);
+        ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(entityName);
         List<ColumnTabulation> columnTabulations = new ArrayList<>();
         for (String columnName : columnNameList) {
             columnTabulations.add(configurableSearchDef.getSearchTerm(columnName));

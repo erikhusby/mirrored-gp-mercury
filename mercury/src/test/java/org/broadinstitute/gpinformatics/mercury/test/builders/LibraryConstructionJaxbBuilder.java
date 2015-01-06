@@ -4,9 +4,14 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMess
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 
 /**
@@ -15,12 +20,15 @@ import java.util.List;
 public class LibraryConstructionJaxbBuilder {
     public static final String P_7_INDEX_PLATE_BARCODE = "000002715223";
     public static final String P_5_INDEX_PLATE_BARCODE = "000002655323";
+
     private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
     private final String testPrefix;
     private final String shearCleanPlateBarcode;
-
     private final String p7IndexPlateBarcode;
     private final String p5IndexPlateBarcode;
+    private int numSamples;
+    private TargetSystem targetSystem;
+
     private String pondRegRackBarcode;
     private List<String> pondRegTubeBarcodes;
     private String pondPico1Barcode;
@@ -40,17 +48,23 @@ public class LibraryConstructionJaxbBuilder {
     private PlateEventType postIdxAdapterLigationThermoCyclerLoadedJaxb;
     private PlateEventType postPondEnrichmentThermoCyclerLoadedJaxb;
     private final List<BettaLIMSMessage> messageList = new ArrayList<>();
-    private int numSamples;
 
+    public enum TargetSystem {
+        /** Messages that might be routed to Squid must have pre-registered lab machines and reagent kit types. */
+        SQUID_VIA_MERCURY,
+        /** Mercury doesn't pre-register machines and reagent types, so the messages have fewer constraints. */
+        MERCURY_ONLY
+    }
     public LibraryConstructionJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory, String testPrefix,
                                           String shearCleanPlateBarcode, String p7IndexPlateBarcode,
-                                          String p5IndexPlateBarcode, int numSamples) {
+                                          String p5IndexPlateBarcode, int numSamples, TargetSystem targetSystem) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.testPrefix = testPrefix;
         this.shearCleanPlateBarcode = shearCleanPlateBarcode;
         this.p7IndexPlateBarcode = p7IndexPlateBarcode;
         this.p5IndexPlateBarcode = p5IndexPlateBarcode;
         this.numSamples = numSamples;
+        this.targetSystem = targetSystem;
     }
 
     public PlateEventType getEndRepairJaxb() {
@@ -134,10 +148,25 @@ public class LibraryConstructionJaxbBuilder {
     }
 
     public LibraryConstructionJaxbBuilder invoke() {
-        endRepairJaxb = bettaLimsMessageTestFactory.buildPlateEvent("EndRepair", shearCleanPlateBarcode);
+        List<BettaLimsMessageTestFactory.ReagentDto> reagentDtos = new ArrayList<>();
+        GregorianCalendar gregorianCalendar = new GregorianCalendar();
+        gregorianCalendar.add(Calendar.MONTH, 6);
+        Date expiration = gregorianCalendar.getTime();
+        if (targetSystem == TargetSystem.MERCURY_ONLY) {
+            reagentDtos.add(new BettaLimsMessageTestFactory.ReagentDto("KAPA Reagent Box", "0009753252", expiration));
+        }
+        endRepairJaxb = bettaLimsMessageTestFactory.buildPlateEvent("EndRepair", shearCleanPlateBarcode, reagentDtos);
         bettaLimsMessageTestFactory.addMessage(messageList, endRepairJaxb);
 
-        endRepairCleanupJaxb = bettaLimsMessageTestFactory.buildPlateEvent("EndRepairCleanup", shearCleanPlateBarcode);
+        reagentDtos.clear();
+        if (targetSystem == TargetSystem.MERCURY_ONLY) {
+            reagentDtos.add(new BettaLimsMessageTestFactory.ReagentDto("PEG", "0009753352", expiration));
+            reagentDtos.add(new BettaLimsMessageTestFactory.ReagentDto("70% Ethanol", "LCEtohTest", expiration));
+            reagentDtos.add(new BettaLimsMessageTestFactory.ReagentDto("EB", "0009753452", expiration));
+            reagentDtos.add(new BettaLimsMessageTestFactory.ReagentDto("SPRI", "LCSpriTest", expiration));
+        }
+        endRepairCleanupJaxb = bettaLimsMessageTestFactory.buildPlateEvent("EndRepairCleanup", shearCleanPlateBarcode,
+                reagentDtos);
         bettaLimsMessageTestFactory.addMessage(messageList, endRepairCleanupJaxb);
 
         aBaseJaxb = bettaLimsMessageTestFactory.buildPlateEvent("ABase", shearCleanPlateBarcode);
@@ -167,8 +196,13 @@ public class LibraryConstructionJaxbBuilder {
                 ligationCleanupBarcode);
         bettaLimsMessageTestFactory.addMessage(messageList, ligationCleanupJaxb);
 
+        reagentDtos.clear();
         if (p5IndexPlateBarcode == null) {
-            pondEnrichmentJaxb = bettaLimsMessageTestFactory.buildPlateEvent("PondEnrichment", ligationCleanupBarcode);
+            if (targetSystem == TargetSystem.MERCURY_ONLY) {
+                reagentDtos.add(new BettaLimsMessageTestFactory.ReagentDto("KAPA Amp Kit", "0009753250", expiration));
+            }
+            pondEnrichmentJaxb = bettaLimsMessageTestFactory.buildPlateEvent("PondEnrichment", ligationCleanupBarcode,
+                    reagentDtos);
             bettaLimsMessageTestFactory.addMessage(messageList, pondEnrichmentJaxb);
         } else {
             indexP5PondEnrichmentJaxb = bettaLimsMessageTestFactory.buildPlateToPlate("IndexP5PondEnrichment",
@@ -192,6 +226,9 @@ public class LibraryConstructionJaxbBuilder {
         }
         pondRegistrationJaxb = bettaLimsMessageTestFactory.buildPlateToRack("PondRegistration", pondCleanupBarcode,
                 pondRegRackBarcode, pondRegTubeBarcodes);
+        for (ReceptacleType receptacleType : pondRegistrationJaxb.getPositionMap().getReceptacle()) {
+            receptacleType.setVolume(new BigDecimal("50"));
+        }
         bettaLimsMessageTestFactory.addMessage(messageList, pondRegistrationJaxb);
 
         // Pico plate barcodes must be all numeric to be accepted by the Varioskan parser

@@ -41,9 +41,13 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 @Test(groups = TestGroups.ALTERNATIVES)
 public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
@@ -111,13 +115,13 @@ public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
         int numErrors = 0;
         if (placePdoThread.getError() != null) {
             pdoJiraError = placePdoThread.getError();
-            Assert.assertTrue(pdoJiraError instanceof InformaticsServiceException);
+            assertThat(pdoJiraError, instanceOf(InformaticsServiceException.class));
             logger.info("Error found in Thread 1: " + pdoJiraError.getMessage());
             numErrors++;
         }
         if (placePdoThread2.getError() != null) {
             pdoJiraError = placePdoThread2.getError();
-            Assert.assertTrue(pdoJiraError instanceof InformaticsServiceException);
+            assertThat(pdoJiraError, instanceOf(InformaticsServiceException.class));
             logger.info("Error found in Thread 2: " + pdoJiraError.getMessage());
             numErrors++;
         }
@@ -203,7 +207,14 @@ public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
 
         @Override
         public JiraIssue getIssue(String key) throws IOException {
-            return null;
+            // This mock object is required to support the initial transition of a PDO from Submitted to Open.
+            return new JiraIssue(key, this) {
+                @Override
+                public Object getField(String fieldName) throws IOException {
+                    Assert.assertEquals(fieldName, ProductOrder.JiraField.STATUS.getName());
+                    return Collections.singletonMap("name", ProductOrderEjb.JiraStatus.OPEN.name());
+                }
+            };
         }
 
         @Override

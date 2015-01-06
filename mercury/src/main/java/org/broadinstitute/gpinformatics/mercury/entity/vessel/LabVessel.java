@@ -8,6 +8,8 @@ import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -17,9 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTr
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.UserRemarks;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -164,6 +164,14 @@ public abstract class LabVessel implements Serializable {
     @OneToMany(mappedBy = "labVessel", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @BatchSize(size = 100)
     private Set<BucketEntry> bucketEntries = new HashSet<>();
+
+    /**
+     * Counts the number of bucketEntries this vessel is assigned to.
+     * Primary use-case to ID samples that have been transferred from collaborator tubes, but not added to a product order.
+     */
+    @NotAudited
+    @Formula("(select count(*) from bucket_entry where bucket_entry.lab_vessel_id = lab_vessel_id)")
+    private Integer bucketEntriesCount = 0;
 
     @Embedded
     private UserRemarks userRemarks;
@@ -939,9 +947,7 @@ public abstract class LabVessel implements Serializable {
                 if (mercurySamples.size() > 1) {
                     throw new RuntimeException("No support for pooled sample imports.");
                 }
-                for (MercurySample mercurySample : mercurySamples) {
-                    traversalResults.setBspExportSample(mercurySamples.iterator().next());
-                }
+                traversalResults.setBspExportSample(mercurySamples.iterator().next());
             }
         }
 
@@ -1039,7 +1045,7 @@ public abstract class LabVessel implements Serializable {
     }
 
     public BigDecimal getVolume() {
-        return volume;
+        return MathUtils.scaleTwoDecimalPlaces(volume);
     }
 
     public void setVolume(BigDecimal volume) {
@@ -1064,6 +1070,10 @@ public abstract class LabVessel implements Serializable {
 
     public Set<BucketEntry> getBucketEntries() {
         return Collections.unmodifiableSet(bucketEntries);
+    }
+
+    public Integer getBucketEntriesCount(){
+        return bucketEntriesCount;
     }
 
     /** For fixups only. */
@@ -1174,7 +1184,7 @@ public abstract class LabVessel implements Serializable {
     }
 
     @SuppressWarnings("unused")
-    public void addAllSamples(Set<MercurySample> mercurySamples) {
+    public void addAllSamples(Collection<MercurySample> mercurySamples) {
         this.mercurySamples.addAll(mercurySamples);
     }
 
@@ -1414,13 +1424,14 @@ public abstract class LabVessel implements Serializable {
      * when the event matches the type given.
      *
      * @param type The type of event to filter the ancestors and descendants by.
+     * @param useTargetVessels True if the vessels returned are event targets (vs. sources).
      *
      * @return A map of lab vessels keyed off the event they were present at filtered by type.
      */
-    public Map<LabEvent, Set<LabVessel>> findVesselsForLabEventType(LabEventType type) {
+    public Map<LabEvent, Set<LabVessel>> findVesselsForLabEventType(LabEventType type, boolean useTargetVessels) {
         List<LabEventType> eventTypeList = new ArrayList<>();
         eventTypeList.add(type);
-        return findVesselsForLabEventTypes(eventTypeList);
+        return findVesselsForLabEventTypes(eventTypeList, useTargetVessels);
     }
 
     /**
@@ -1428,15 +1439,16 @@ public abstract class LabVessel implements Serializable {
      * when the event matches the type given.
      *
      * @param types A list of types of event to filter the ancestors and descendants by.
+     * @param useTargetVessels True if the vessels returned are event targets (vs. sources).
      *
      * @return A map of lab vessels keyed off the event they were present at filterd by types.
      */
-    public Map<LabEvent, Set<LabVessel>> findVesselsForLabEventTypes(List<LabEventType> types) {
+    public Map<LabEvent, Set<LabVessel>> findVesselsForLabEventTypes(List<LabEventType> types, boolean useTargetVessels) {
         if (getContainerRole() != null) {
             return getContainerRole().getVesselsForLabEventTypes(types);
         }
         TransferTraverserCriteria.VesselForEventTypeCriteria vesselForEventTypeCriteria =
-                new TransferTraverserCriteria.VesselForEventTypeCriteria(types);
+                new TransferTraverserCriteria.VesselForEventTypeCriteria(types, useTargetVessels);
         evaluateCriteria(vesselForEventTypeCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
         evaluateCriteria(vesselForEventTypeCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
         return vesselForEventTypeCriteria.getVesselsForLabEventType();
@@ -1523,61 +1535,31 @@ public abstract class LabVessel implements Serializable {
     }
 
     /**
-     * This method gets index information only for the single sample instance passed in.
+     * This method gets indexes for the single sample instance passed in.
      *
      * @param sampleInstance The sample instance to get the index information for.
      *
      * @return A set of indexes for the sample instance passed in.
      */
     public Set<MolecularIndexReagent> getIndexesForSampleInstance(SampleInstance sampleInstance) {
+        return getIndexes(sampleInstance.getReagents());
+    }
+
+    /** This method gets indexes for the single sample instance passed in. */
+    public Set<MolecularIndexReagent> getIndexesForSampleInstance(SampleInstanceV2 sampleInstance) {
+        return getIndexes(sampleInstance.getReagents());
+    }
+
+    /** This method gets indexes for the reagents passed in. */
+    public Set<MolecularIndexReagent> getIndexes(Collection<Reagent> reagents) {
         Set<MolecularIndexReagent> indexes = new HashSet<>();
-        for (Reagent reagent : sampleInstance.getReagents()) {
+        for (Reagent reagent : reagents) {
             if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
                 MolecularIndexReagent indexReagent = (MolecularIndexReagent) reagent;
                 indexes.add(indexReagent);
             }
         }
         return indexes;
-    }
-
-    /**
-     * This method gets a string concatenated representation of all the indexes for a given sample instance.
-     *
-     * @param sampleInstance Gets indexes for this sample instance, or if null, for all sample instances in the vessel.
-     *
-     * @return A string containing information about all the indexes.
-     */
-    public String getIndexesString(SampleInstance sampleInstance) {
-        Collection<MolecularIndexReagent> indexes =
-                (sampleInstance == null ? getIndexes() : getIndexesForSampleInstance(sampleInstance));
-
-        if ((indexes == null) || indexes.isEmpty()) {
-            return "";
-        }
-
-        StringBuilder indexInfo = new StringBuilder();
-        for (MolecularIndexReagent indexReagent : indexes) {
-            indexInfo.append(indexReagent.getMolecularIndexingScheme().getName());
-            indexInfo.append(" - ");
-            for (MolecularIndexingScheme.IndexPosition hint : indexReagent.getMolecularIndexingScheme()
-                    .getIndexes().keySet()) {
-                MolecularIndex index = indexReagent.getMolecularIndexingScheme().getIndexes().get(hint);
-                indexInfo.append(index.getSequence());
-                indexInfo.append("\n");
-            }
-        }
-
-        return indexInfo.toString();
-    }
-
-    /**
-     * This method gets a string concatenated representation of all the indexes.
-     *
-     * @return A string containing information about all the indexes.
-     */
-    @SuppressWarnings("unused")
-    public String getIndexesString() {
-        return getIndexesString(null);
     }
 
     @SuppressWarnings("unused")
@@ -1669,6 +1651,9 @@ public abstract class LabVessel implements Serializable {
         return sampleNames;
     }
 
+    public String[] getSampleNamesArray() {
+        return getSampleNames().toArray(new String[]{});
+    }
 
     /**
      * Helper method to determine if a given vessel or any of its ancestors are currently in a bucket.
@@ -1877,5 +1862,24 @@ public abstract class LabVessel implements Serializable {
         evaluateCriteria(eventTraversalCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
 
         return LabEvent.isEventPresent(eventTraversalCriteria.getAllEvents(), LabEventType.COLLABORATOR_TRANSFER);
+    }
+
+    /**
+     * Get metadata values for the given key.
+     * @param key e.g. SAMPLE_ID
+     * @return array (JSP-friendly)
+     */
+    public String[] getMetadataValues(Metadata.Key key) {
+        List<String> values = new ArrayList<>();
+        for (SampleInstanceV2 sampleInstanceV2 : getSampleInstancesV2()) {
+            for (MercurySample mercurySample : sampleInstanceV2.getRootMercurySamples()) {
+                for (Metadata metadata : mercurySample.getMetadata()) {
+                    if (metadata.getKey() == key) {
+                        values.add(metadata.getStringValue());
+                    }
+                }
+            }
+        }
+        return values.toArray(new String[values.size()]);
     }
 }

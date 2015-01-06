@@ -339,6 +339,10 @@ public class LabEvent {
         return eventLocation;
     }
 
+    void setEventLocation(String eventLocation) {
+        this.eventLocation = eventLocation;
+    }
+
     public Long getEventOperator() {
         return eventOperator;
     }
@@ -416,6 +420,11 @@ todo jmt adder methods
 
     public LabEventType getLabEventType() {
         return labEventType;
+    }
+
+    /** For data fixup use only. */
+    void setLabEventType(LabEventType labEventType) {
+        this.labEventType = labEventType;
     }
 
     public void setLabBatch(LabBatch labBatch) {

@@ -10,6 +10,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -187,10 +188,9 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     private Boolean multipleForParent;
 
     /**
-     * True if the constrained values should be added to the list of search terms, e.g.
-     * phenotype names
+     * True if dependent search terms should be added to the list of criteria and result columns.
      */
-    private Boolean addConstrainedValuesToSearchTermList;
+    private Boolean addDependentTermsToSearchTermList = Boolean.FALSE;
 
     /**
      * The maximum number of values that will be returned by the constrained values
@@ -214,6 +214,12 @@ public class SearchTerm implements Serializable, ColumnTabulation {
      * Flag this term as a parent to a nested table
      */
     private Boolean isNestedParent = Boolean.FALSE;
+
+    /**
+     * Flag this for search criteria only, do not display as column option.
+     * (Don't want parent term to show up in columns list)
+     */
+    private Boolean isExcludedFromResultColumns = Boolean.FALSE;
 
     /**
      * Evaluate the expression that returns constrained values, e.g. list of phenotypes
@@ -302,6 +308,18 @@ public class SearchTerm implements Serializable, ColumnTabulation {
         this.isNestedParent = isNestedParent;
     }
 
+    /**
+     * In certain cases, terms usable as search criteria need to be excluded from result column list.
+     * @return
+     */
+    public Boolean isExcludedFromResultColumns(){
+        return  isExcludedFromResultColumns;
+    }
+
+    public void setIsExcludedFromResultColumns(Boolean isExcludedFromResultColumns) {
+        this.isExcludedFromResultColumns = isExcludedFromResultColumns;
+    }
+
     @Override
     public List<? extends ColumnTabulation> getNestedEntityColumns() {
         return nestedEntityColumns;
@@ -371,12 +389,12 @@ public class SearchTerm implements Serializable, ColumnTabulation {
         this.multipleForParent = multipleForParent;
     }
 
-    public Boolean getAddConstrainedValuesToSearchTermList() {
-        return addConstrainedValuesToSearchTermList;
+    public Boolean getAddDependentTermsToSearchTermList() {
+        return addDependentTermsToSearchTermList;
     }
 
-    public void setAddConstrainedValuesToSearchTermList(Boolean addConstrainedValuesToSearchTermList) {
-        this.addConstrainedValuesToSearchTermList = addConstrainedValuesToSearchTermList;
+    public void setAddDependentTermsToSearchTermList(Boolean addDependentTermsToSearchTermList) {
+        this.addDependentTermsToSearchTermList = addDependentTermsToSearchTermList;
     }
 
     public List<CriteriaPath> getCriteriaPaths() {
@@ -428,11 +446,17 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
     @Override
     public Object evalPlainTextExpression(Object entity, Map<String, Object> context) {
-        return getDisplayExpression().evaluate(entity, context);
+        // Both methods identical 10/17/2014
+        return evalFormattedExpression(entity, context);
     }
 
     @Override
     public Object evalFormattedExpression(Object entity, Map<String, Object> context) {
+        if( context == null ) {
+            context = new HashMap<>();
+        }
+        // May require this SearchTerm to extract metadata key from column name
+        context.put(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_TERM, this);
         return getDisplayExpression().evaluate(entity, context);
     }
 
@@ -440,8 +464,13 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     public Object evalViewHeaderExpression(Object entity, Map<String, Object> context) {
         if (getViewHeader() == null) {
             return getName();
+        } else {
+            if( context == null ) {
+                context = new HashMap<>();
+            }
+            context.put(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_VALUE, this);
+            return getViewHeader().evaluate(entity, context);
         }
-        return getViewHeader().evaluate(entity, context);
     }
 
     /**

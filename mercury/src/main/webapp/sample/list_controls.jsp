@@ -16,7 +16,7 @@
                         [1, 'desc']
                     ],
                     "aoColumns":[
-                        {"bSortable":true}//Collaborator Sample ID
+                        {"bSortable":true}//Collaborator Participant ID
                     ]
                 });
 
@@ -26,7 +26,7 @@
                         [1, 'desc']
                     ],
                     "aoColumns":[
-                        {"bSortable":true}//Collaborator Sample ID
+                        {"bSortable":true}//Collaborator Participant ID
                     ]
                 });
 
@@ -53,7 +53,7 @@
         <table id="positiveControlList" class="table simple">
             <thead>
             <tr>
-                <th>Collaborator Sample ID</th>
+                <th>Collaborator Participant ID</th>
             </tr>
             </thead>
             <tbody>
@@ -78,7 +78,7 @@
         <table id="negativeControlList" class="table simple">
             <thead>
             <tr>
-                <th>Collaborator Sample ID</th>
+                <th>Collaborator Participant ID</th>
             </tr>
             </thead>
             <tbody>

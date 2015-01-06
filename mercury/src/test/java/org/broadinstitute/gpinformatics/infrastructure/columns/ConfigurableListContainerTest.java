@@ -45,7 +45,6 @@ public class ConfigurableListContainerTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
-    @Test(groups= TestGroups.STANDARD)
     public void testTrackingSheet() {
         List<ColumnTabulation> columnTabulations = new ArrayList<>();
         LabBatch labBatch = labBatchDao.findByBusinessKey("LCSET-5102");
@@ -54,17 +53,28 @@ public class ConfigurableListContainerTest extends Arquillian {
             labVessels.add(bucketEntry.getLabVessel());
         }
 
-        ConfigurableSearchDefinition configurableSearchDefinition =
-                new SearchDefinitionFactory().buildLabVesselSearchDef();
+        ConfigurableSearchDefinition configurableSearchDef =
+                SearchDefinitionFactory.getForEntity( ColumnEntity.LAB_VESSEL.getEntityName());
         for (Map.Entry<String, List<ColumnTabulation>> groupListSearchTermEntry :
-                configurableSearchDefinition.getMapGroupToColumnTabulations().entrySet()) {
+                configurableSearchDef.getMapGroupToColumnTabulations().entrySet()) {
             for (ColumnTabulation searchTerm : groupListSearchTermEntry.getValue()) {
-                columnTabulations.add(searchTerm);
+                // Some search terms are not available for selection in result list
+                // TODO Push method from SearchTerm to ColumnTabulation superclass (or consolidate)
+                if( !((SearchTerm) searchTerm).isExcludedFromResultColumns() ) {
+                    columnTabulations.add(searchTerm);
+                }
             }
         }
 
         ConfigurableList configurableList = new ConfigurableList(columnTabulations, 1, "ASC", ColumnEntity.LAB_VESSEL);
-        configurableList.addListener(new BspSampleSearchAddRowsListener(bspSampleSearchService));
+
+        // Add any row listeners
+        ConfigurableSearchDefinition.AddRowsListenerFactory addRowsListenerFactory = configurableSearchDef.getAddRowsListenerFactory();
+        if( addRowsListenerFactory != null ) {
+            for( Map.Entry<String,ConfigurableList.AddRowsListener> entry : addRowsListenerFactory.getAddRowsListeners().entrySet() ) {
+                configurableList.addAddRowsListener(entry.getKey(), entry.getValue());
+            }
+        }
 
         Map<String, Object> context = buildSearchContext();
         configurableList.addRows(labVessels, context);

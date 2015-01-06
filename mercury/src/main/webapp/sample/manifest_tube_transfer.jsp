@@ -13,15 +13,16 @@
             $j('#sessionList').dataTable({
                 "oTableTools": ttExportDefines,
                 "aaSorting": [
-                    [8, 'desc']
+                    [9, 'desc']
                 ],
                 "asStripeClasses": [ '' ],
                 "aoColumns": [
                     {"bSortable": true}, // Radio Button
                     {"bSortable": true}, // RP Key
                     {"bSortable": true}, // Name
-                    {"bSortable": true}, // Tubes Transferred
-                    {"bSortable": true}, // Total Tubes for transfer
+                    {"bSortable": true}, // # Tubes Transferred
+                    {"bSortable": true}, // # Total Tubes for transfer
+                    {"bsortable": false}, // # tubes quarantined
                     {"bSortable": true}, // Created By
                     {"bSortable": true, "sType": "date"}, // Creation Date
                     {"bSortable": true}, // Last Modified By
@@ -49,6 +50,11 @@
             });
 
             $j("#sourceTube").focus();
+
+            // If the user tabs off the submit button, reset the focus loop on the first #sourceTube field.
+            $j("#recordTransfer").blur(function () {
+               $j("#sourceTube").focus();
+            });
 
             // Prevent posting the form for an enter key press in the input text fields.  Also
             // blur out of the current text field so an enter key press essentially behaves the
@@ -158,8 +164,9 @@
                     <th></th>
                     <th>Research Project</th>
                     <th>Session Name</th>
-                    <th>Tubes Transferred</th>
-                    <th>Total Tubes to be Transferred</th>
+                    <th># Tubes Transferred</th>
+                    <th># Tubes Available for Transfer</th>
+                    <th># Tubes Quarantined</th>
                     <th>Creator</th>
                     <th>Creation Date</th>
                     <th>Last Modified By</th>
@@ -184,6 +191,9 @@
                         </td>
                         <td name="tubesForXfer">
                             ${closedSession.numberOfTubesAvailableForTransfer}
+                        </td>
+                        <td name="quarantinedTubes">
+                            ${closedSession.numberOfQuarantinedRecords}
                         </td>
                         <td name="createdByColumn">
                                 ${actionBean.getUserFullName(closedSession.updateData.createdBy)}
@@ -242,7 +252,7 @@
                 </div>
 
                 <div class="actionButtons">
-                    <stripes:submit name="recordTransfer" value="Record Transfer" class="btn"/>
+                    <stripes:submit id="recordTransfer" name="recordTransfer" value="Record Transfer" class="btn" tabindex="4"/>
                 </div>
             </div>
 

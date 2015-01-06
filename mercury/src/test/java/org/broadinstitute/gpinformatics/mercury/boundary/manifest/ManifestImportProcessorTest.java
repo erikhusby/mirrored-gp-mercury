@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
+import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -26,10 +27,12 @@ import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContainingInAnyOrder;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 
 
 @Test(groups = TestGroups.DATABASE_FREE)
@@ -57,6 +60,16 @@ public class ManifestImportProcessorTest {
         assertThat(processor.getHeaderNames(), containsInAnyOrder(allHeaders));
     }
 
+    public void testGetHeaderNameWithNonexistentHeader() {
+        String unknownHeaderName = "who, me?";
+        try {
+            ManifestHeader.fromColumnName(unknownHeaderName);
+            Assert.fail();
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage(), is(ManifestHeader.NO_MANIFEST_HEADER_FOUND_FOR_COLUMN + unknownHeaderName));
+        }
+    }
+
     public void testGetColumns() throws Exception {
         processor.processHeader(new ArrayList<>(dataRow.keySet()), 0);
 
@@ -73,6 +86,15 @@ public class ManifestImportProcessorTest {
         }
 
         assertThat(processor.getHeaderNames(), containsInAnyOrder(allHeaders.toArray()));
+    }
+
+    public void testValidateHeader_Several_Bad_Headers() throws Exception {
+        List<String> headers = new ArrayList<>(makeDataRow().keySet());
+        List<String> unknownHeaders = Arrays.asList("bad header 1", "bad header 2");
+        headers.addAll(unknownHeaders);
+        boolean headersAreValid = processor.validateColumnHeaders(headers);
+        assertThat(headersAreValid, is(not(true)));
+        assertThat(processor.getMessages(), contains("Unknown headers '[bad header 1, bad header 2]' present."));
     }
 
     public void testProcessRowDetailsShouldPass() throws Exception {

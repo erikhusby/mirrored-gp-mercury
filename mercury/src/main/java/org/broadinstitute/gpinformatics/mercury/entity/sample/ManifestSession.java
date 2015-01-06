@@ -92,10 +92,19 @@ public class ManifestSession implements Updatable {
     private UpdateData updateData = new UpdateData();
 
     @NotAudited
-    @Formula("(select count(*) from mercury.manifest_record where manifest_record.status != 'SAMPLE_TRANSFERRED_TO_TUBE'" +
+    @Formula("(select count(*) from mercury.manifest_record where manifest_record.status = 'SAMPLE_TRANSFERRED_TO_TUBE'" +
              " and manifest_record.manifest_session_id = manifest_session_id)")
-    private int tubesRemainingToBeTransferred;
+    private int numberOfTubesTransferred;
 
+    @NotAudited
+    @Formula("(select count(*) from mercury.manifest_record rec where rec.manifest_session_id = manifest_session_id)")
+    private int totalNumberOfRecords;
+
+    @NotAudited
+    @Formula("(select count(*) from mercury.manifest_record record"
+             + " join mercury.manifest_event evt on evt.MANIFEST_RECORD_ID = record.MANIFEST_RECORD_ID and evt.SEVERITY = 'QUARANTINED'"
+             + " where record.manifest_session_id = manifest_session_id)")
+    private int numberOfQuarantinedRecords;
     /**
      * For JPA.
      */
@@ -375,26 +384,27 @@ public class ManifestSession implements Updatable {
     }
 
     /**
-     * Finds the total number of records that have been transferred to a mercury vessel
+     * Returns the total number of records that have been transferred to a mercury vessel.
      */
     public int getNumberOfTubesTransferred() {
-        return eligibleRecordsBasedOnStatus(getNonQuarantinedRecords(),
-                ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
+        return numberOfTubesTransferred;
     }
 
     /**
-     * finds the total number of records that can be transferred to a mercury vessel
-     * @return
+     * Returns the total number of records that can be transferred to a mercury vessel.
      */
     public int getNumberOfTubesAvailableForTransfer() {
-        return getNonQuarantinedRecords().size();
+        return totalNumberOfRecords - numberOfTubesTransferred - numberOfQuarantinedRecords;
+    }
+
+    public int getNumberOfQuarantinedRecords() {
+        return numberOfQuarantinedRecords;
     }
 
     /**
      * finds the total number of records that match a given status
      * @param totalRecords          a collection of records within which to search for records of the given status
      * @param statusOfEligibility   status of records to consider in the count
-     * @return
      */
     private static int eligibleRecordsBasedOnStatus(Collection<ManifestRecord> totalRecords,
                                                     ManifestRecord.Status statusOfEligibility) {

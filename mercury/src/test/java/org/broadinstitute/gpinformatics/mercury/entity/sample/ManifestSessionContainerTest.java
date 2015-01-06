@@ -22,6 +22,7 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -88,6 +89,8 @@ public class ManifestSessionContainerTest extends Arquillian {
     private Map<String, LabVessel> sourceSampleToTargetVessel;
     @Inject
     private MercurySampleDao mercurySampleDao;
+    public ManifestSession uploadedSession;
+    public ManifestSession uploadedSession2;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -201,6 +204,36 @@ public class ManifestSessionContainerTest extends Arquillian {
         }
     }
 
+    /**
+     * Previously this test would leave some sessions, and the records in them, in an uncompleted state.  This affects
+     * the front end on the mercury dev instance by building a lfong list of "to be worked on" sessions.  This clean up
+     * will ensure that the to be worked on session list does not grow.
+     * @throws Exception
+     */
+    @AfterMethod
+    public void tearDown() throws Exception {
+        if(userBean == null) {
+            return;
+        }
+
+        for(ManifestSession sessionToCleanup :
+                Arrays.asList(manifestSessionI, manifestSessionII, uploadedSession, uploadedSession2)) {
+            cleanupSession(sessionToCleanup);
+        }
+
+    }
+
+    private void cleanupSession(ManifestSession sessionToCleanup) {
+        if (sessionToCleanup != null && sessionToCleanup.getManifestSessionId() != null) {
+            sessionToCleanup = manifestSessionDao.find(sessionToCleanup.getManifestSessionId());
+            sessionToCleanup.setStatus(ManifestSession.SessionStatus.COMPLETED);
+            for (ManifestRecord manifestRecord : sessionToCleanup.getNonQuarantinedRecords()) {
+                manifestRecord.setStatus(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
+            }
+            manifestSessionDao.flush();
+        }
+    }
+
     private ManifestRecord createManifestRecord(Metadata.Key key1, String value1, Metadata.Key key2, String value2,
                                                 Metadata.Key key3, String value3) {
         return new ManifestRecord(new Metadata(key1, value1), new Metadata(key2, value2),
@@ -297,9 +330,8 @@ public class ManifestSessionContainerTest extends Arquillian {
         String excelFilePath = "manifest-upload/duplicates/good-manifest-1.xlsx";
         InputStream testStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(excelFilePath);
 
-        ManifestSession uploadedSession =
-                manifestSessionEjb.uploadManifest(researchProject.getBusinessKey(), testStream, excelFilePath,
-                        testUser);
+        uploadedSession = manifestSessionEjb.uploadManifest(researchProject.getBusinessKey(), testStream, excelFilePath,
+                testUser);
         UpdateData updateData = uploadedSession.getUpdateData();
         assertThat(updateData.getModifiedBy(), is(not(equalTo(updateData.getCreatedBy()))));
         assertThat(updateData.getModifiedDate(), is(equalTo(updateData.getCreatedDate())));
@@ -504,7 +536,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         String pathToTestFile2 = "manifest-upload/duplicates/good-manifest-3.xlsx";
         InputStream testStream2 = Thread.currentThread().getContextClassLoader().getResourceAsStream(pathToTestFile2);
         ResearchProject rpSecondUpload = researchProjectDao.findByBusinessKey(researchProject.getBusinessKey());
-        ManifestSession uploadedSession2 =
+        uploadedSession2 =
                 manifestSessionEjb.uploadManifest(rpSecondUpload.getBusinessKey(), testStream2, pathToTestFile2,
                         testUser);
 
@@ -765,6 +797,72 @@ public class ManifestSessionContainerTest extends Arquillian {
 
         List<ManifestSession> closedSessions2 = manifestSessionDao.findSessionsEligibleForTubeTransfer();
         assertThat(closedSessions2, not(hasItem(manifestSessionI)));
+    }
+
+    public void testNonQuarantineRecordCount() throws Exception {
+
+        researchProjectDao.persist(researchProject);
+        int counter = 0;
+        manifestSessionDao.clear();
+        ManifestSession retrievedSession = manifestSessionDao.find(manifestSessionI.getManifestSessionId());
+
+        int totalRecords = retrievedSession.getRecords().size();
+
+        while(counter < retrievedSession.getRecords().size()) {
+
+            assertThat(retrievedSession.getNumberOfTubesAvailableForTransfer(), is(equalTo(totalRecords-counter)));
+            retrievedSession.addManifestEvent(
+                    new ManifestEvent(ManifestEvent.Severity.QUARANTINED, "testing Formula",
+                            retrievedSession.getRecords().get(counter)));
+
+            manifestSessionDao.flush();
+            manifestSessionDao.clear();
+            retrievedSession = manifestSessionDao.find(retrievedSession.getManifestSessionId());
+            retrievedSession.getRecords();
+            counter++;
+        }
+        assertThat(retrievedSession.getNumberOfTubesAvailableForTransfer(), is(equalTo(totalRecords - counter)));
+    }
+
+    public void testNumberTubesTransferred() throws Exception {
+        researchProjectDao.persist(researchProject);
+        int counter = 0;
+        manifestSessionDao.clear();
+        ManifestSession retrievedSession = manifestSessionDao.find(manifestSessionI.getManifestSessionId());
+
+        int numRecords = retrievedSession.getRecords().size();
+        if (numRecords < 2) {
+            String message =
+                    "At least 2 records required to test quarantine logic, one record will be quarantined and at" +
+                    " least one non-quarantined record is required to test tube transfer";
+            throw new RuntimeException(message);
+        }
+
+        int indexOfRecordToQuarantine = numRecords / 2;
+        int transferredTubeCounter = 0;
+
+        while (counter < numRecords) {
+
+            assertThat(retrievedSession.getNumberOfTubesTransferred(), is(equalTo(transferredTubeCounter)));
+
+            ManifestRecord manifestRecord = retrievedSession.getRecords().get(counter);
+
+            if (counter == indexOfRecordToQuarantine) {
+                retrievedSession.addManifestEvent(new ManifestEvent(ManifestEvent.Severity.QUARANTINED,
+                        "No good reason, just for testing", manifestRecord));
+            } else {
+                manifestRecord.setStatus(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
+                transferredTubeCounter++;
+            }
+
+            manifestSessionDao.flush();
+            manifestSessionDao.clear();
+            retrievedSession = manifestSessionDao.find(retrievedSession.getManifestSessionId());
+            counter++;
+        }
+        assertThat(retrievedSession.getNumberOfTubesTransferred(), is(equalTo(transferredTubeCounter)));
+        // One record should have been quarantined.
+        assertThat(counter, is(equalTo(transferredTubeCounter + 1)));
     }
 
     /**

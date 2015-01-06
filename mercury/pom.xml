@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>Mercury</groupId>
     <artifactId>Mercury</artifactId>
@@ -12,7 +11,7 @@
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
-    <version>1.57-SNAPSHOT</version>
+    <version>1.60-SNAPSHOT</version>
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
@@ -187,7 +186,7 @@
         was not really possible.
         -->
         <tests.excludedGroups>UI</tests.excludedGroups>
-        <tests.groups/>
+        <tests.groups />
 
         <build.resultKey>${project.version}</build.resultKey>
         <maven.build.timestamp.format>yyyyMMdd-HHmm</maven.build.timestamp.format>
@@ -213,6 +212,9 @@
         <keystoreFile>../JBossConfig/src/main/resources/keystore/.keystore</keystoreFile>
         <keystorePassword>changeit</keystorePassword>
 
+        <jboss.socket.https>8443</jboss.socket.https>
+
+        <bspclient.version>[1.3,)</bspclient.version>
     </properties>
 
     <profiles>
@@ -477,6 +479,13 @@
 
                         <configuration>
                             <groups>arquillian, ExternalIntegration</groups>
+                            <systemProperties>
+                                <property>
+                                    <name>jbossHttpsPort</name>
+                                    <value>${jboss.socket.https}</value>
+                                </property>
+                            </systemProperties>
+
                         </configuration>
                     </plugin>
 
@@ -493,6 +502,13 @@
                         <artifactId>maven-surefire-plugin</artifactId>
                         <configuration>
                             <groups>DatabaseFree</groups>
+                            <systemProperties>
+                                <property>
+                                    <name>jbossHttpsPort</name>
+                                    <value>${jboss.socket.https}</value>
+                                </property>
+                            </systemProperties>
+
                             <!--<parallel>methods</parallel>-->
                             <!--<threadCount>10</threadCount>-->
                         </configuration>
@@ -513,6 +529,13 @@
                             <runOrder>failedFirst</runOrder>
                             <parallel>methods</parallel>
                             <threadCount>10</threadCount>
+                            <systemProperties>
+                                <property>
+                                    <name>jbossHttpsPort</name>
+                                    <value>${jboss.socket.https}</value>
+                                </property>
+                            </systemProperties>
+
                         </configuration>
                     </plugin>
                 </plugins>
@@ -523,7 +546,7 @@
         <profile>
             <id>Tests.UI</id>
             <properties>
-                <tests.excludedGroups/>
+                <tests.excludedGroups />
                 <tests.groups>UI,arquillian</tests.groups>
             </properties>
         </profile>
@@ -539,24 +562,24 @@
             </dependencies>
             <build>
                 <plugins>
-                      <plugin>
+                    <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>build-helper-maven-plugin</artifactId>
                         <executions>
-                          <execution>
-                            <id>add-test-source</id>
-                            <phase>generate-test-sources</phase>
-                            <goals>
-                              <goal>add-test-source</goal>
-                            </goals>
-                            <configuration>
-                              <sources>
-                                <source>src/test/arquillianSuiteExtension</source>
-                              </sources>
-                            </configuration>
-                          </execution>
+                            <execution>
+                                <id>add-test-source</id>
+                                <phase>generate-test-sources</phase>
+                                <goals>
+                                    <goal>add-test-source</goal>
+                                </goals>
+                                <configuration>
+                                    <sources>
+                                        <source>src/test/arquillianSuiteExtension</source>
+                                    </sources>
+                                </configuration>
+                            </execution>
                         </executions>
-                      </plugin>
+                    </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
@@ -566,6 +589,10 @@
                                 <property>
                                     <name>ArqSuiteGroup</name>
                                     <value>Stubby</value>
+                                </property>
+                                <property>
+                                    <name>jbossHttpsPort</name>
+                                    <value>${jboss.socket.https}</value>
                                 </property>
                             </systemProperties>
                             <groups>arquillian, Stubby</groups>
@@ -587,22 +614,22 @@
             <build>
                 <plugins>
                     <plugin>
-                      <groupId>org.codehaus.mojo</groupId>
-                      <artifactId>build-helper-maven-plugin</artifactId>
-                      <executions>
-                        <execution>
-                          <id>add-test-source</id>
-                          <phase>generate-test-sources</phase>
-                          <goals>
-                            <goal>add-test-source</goal>
-                          </goals>
-                          <configuration>
-                            <sources>
-                              <source>src/test/arquillianSuiteExtension</source>
-                            </sources>
-                          </configuration>
-                        </execution>
-                      </executions>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>build-helper-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>add-test-source</id>
+                                <phase>generate-test-sources</phase>
+                                <goals>
+                                    <goal>add-test-source</goal>
+                                </goals>
+                                <configuration>
+                                    <sources>
+                                        <source>src/test/arquillianSuiteExtension</source>
+                                    </sources>
+                                </configuration>
+                            </execution>
+                        </executions>
                     </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
@@ -614,6 +641,10 @@
                                 <property>
                                     <name>ArqSuiteGroup</name>
                                     <value>Standard</value>
+                                </property>
+                                <property>
+                                    <name>jbossHttpsPort</name>
+                                    <value>${jboss.socket.https}</value>
                                 </property>
                             </systemProperties>
                             <groups>arquillian, Standard</groups>
@@ -633,6 +664,12 @@
                         <!-- "arquillian" test group is used by Arquillian itself and needs to be active to run Arquillian tests -->
                         <configuration>
                             <groups>arquillian, Alternatives</groups>
+                            <systemProperties>
+                                <property>
+                                    <name>jbossHttpsPort</name>
+                                    <value>${jboss.socket.https}</value>
+                                </property>
+                            </systemProperties>
                         </configuration>
                     </plugin>
                 </plugins>
@@ -718,6 +755,10 @@
                             <argLine>-Xmx2048m</argLine>
                             <systemProperties>
                                 <jboss.version>${jbossas_7.version}</jboss.version>
+                                <property>
+                                    <name>jbossHttpsPort</name>
+                                    <value>${jboss.socket.https}</value>
+                                </property>
                             </systemProperties>
                         </configuration>
                     </plugin>
@@ -886,8 +927,8 @@
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
                 <database.url>jdbc:oracle:thin:@crsp-db-prod-vm:1521:gpinfprd</database.url>
-                <mercury.password></mercury.password>
-                <athena.password></athena.password>
+                <mercury.password />
+                <athena.password />
             </properties>
             <build>
                 <!-- This allows us to overwrite the ejb-jar.xml for development with the special version for crsp production -->
@@ -950,24 +991,15 @@
                 <database.delimiterType>row</database.delimiterType>
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
-                <database.url>jdbc:oracle:thin:@192.168.195.18:1521:gpinfprd</database.url>
+                <database.url>jdbc:oracle:thin:@192.168.195.61:1521:gpinfprd</database.url>
                 <mercury.password>guest</mercury.password>
                 <athena.password>guest</athena.password>
             </properties>
             <build>
                 <testResources>
                     <testResource>
-                        <directory>src/test/resources</directory>
-                    </testResource>
-                    <testResource>
                         <directory>src/test/resources-build</directory>
                         <filtering>true</filtering>
-                    </testResource>
-                    <testResource>
-                        <directory>src/main/webapp/WEB-INF/classes</directory>
-                        <includes>
-                            <include>mercury-config.yaml</include>
-                        </includes>
                     </testResource>
                 </testResources>
             </build>
@@ -1365,12 +1397,12 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-                <dependency>
-                    <groupId>org.eu.ingwar.tools</groupId>
-                    <artifactId>arquillian-suite-extension</artifactId>
-                    <version>1.1.1</version>
-                    <scope>test</scope>
-                </dependency>
+            <dependency>
+                <groupId>org.eu.ingwar.tools</groupId>
+                <artifactId>arquillian-suite-extension</artifactId>
+                <version>1.1.1</version>
+                <scope>test</scope>
+            </dependency>
 
             <!-- this is needed for any seam 3 dependencies to work -->
             <!--
@@ -1385,8 +1417,8 @@
         </dependencies>
     </dependencyManagement>
 
-   <dependencies>
-       <dependency>
+    <dependencies>
+        <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
             <version>6.1.1</version>
@@ -1610,9 +1642,9 @@
         </dependency>
 
         <dependency>
-        	<groupId>commons-validator</groupId>
-        	<artifactId>commons-validator</artifactId>
-        	<version>1.4.0</version>
+            <groupId>commons-validator</groupId>
+            <artifactId>commons-validator</artifactId>
+            <version>1.4.0</version>
         </dependency>
 
         <dependency>
@@ -1709,7 +1741,7 @@
             <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
             <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
             <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
-            <version>[1.3,)</version>
+            <version>${bspclient.version}</version>
             <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
             <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
             <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
@@ -1863,11 +1895,17 @@
             <scope>test</scope>
         </dependency>
 
-       <dependency>
-           <groupId>org.jboss</groupId>
-           <artifactId>jboss-vfs</artifactId>
-           <version>3.2.2.Final</version>
-       </dependency>
+        <dependency>
+            <groupId>org.jboss</groupId>
+            <artifactId>jboss-vfs</artifactId>
+            <version>3.2.2.Final</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.aerogear.test.arquillian</groupId>
+            <artifactId>arquillian-smart-url</artifactId>
+            <version>0.2.0</version>
+        </dependency>
 
     </dependencies>
 
@@ -1965,15 +2003,21 @@
                     <version>2.1</version>
                 </plugin>
                 <plugin>
-                  <groupId>org.codehaus.mojo</groupId>
-                  <artifactId>build-helper-maven-plugin</artifactId>
-                  <version>1.9</version>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>build-helper-maven-plugin</artifactId>
+                    <version>1.9</version>
                 </plugin>
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>properties-maven-plugin</artifactId>
                     <version>1.0-alpha-2</version>
                 </plugin>
+
+                <plugin>
+                     <groupId>external.atlassian.jgitflow</groupId>
+                     <artifactId>jgitflow-maven-plugin</artifactId>
+                     <version>1.0-m4.3</version>
+                 </plugin>
 
                 <!--
                                 <plugin>
@@ -2210,7 +2254,8 @@
                             <!-- each execution needs to specify the schemaFile(s) to use -->
                             <schemaFiles>VesselRegistration.xsd</schemaFiles>
                             <schemaDirectory>src/main/webapp/xsd</schemaDirectory>
-                            <packageName>org.broadinstitute.gpinformatics.mercury.boundary.vessel.generated</packageName>
+                            <packageName>org.broadinstitute.gpinformatics.mercury.boundary.vessel.generated
+                            </packageName>
                             <!-- each execution must have a unique staleFile -->
                             <staleFile>${project.build.directory}/jaxb2/.VesselRegistrationXjcStaleFlag</staleFile>
                             <!-- all executions, except the first, need clearOutputDir set to false -->
@@ -2436,10 +2481,8 @@
                         <configuration>
                             <target>
                                 <propertyfile file="${pom.basedir}/target/classes/build.properties">
-                                    <entry key="build.resultKey" type="string" value="${build.resultKey}"
-                                           operation="="/>
-                                    <entry key="build.buildTimeStamp" type="string" value="${build.buildTimeStamp}"
-                                           operation="="/>
+                                    <entry key="build.resultKey" type="string" value="${build.resultKey}" operation="=" />
+                                    <entry key="build.buildTimeStamp" type="string" value="${build.buildTimeStamp}" operation="=" />
                                 </propertyfile>
                             </target>
                         </configuration>
@@ -2448,16 +2491,30 @@
             </plugin>
 
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-release-plugin</artifactId>
+                <groupId>external.atlassian.jgitflow</groupId>
+                <artifactId>jgitflow-maven-plugin</artifactId>
                 <configuration>
-                    <tagNameFormat>@{project.version}</tagNameFormat>
-                    <preparationGoals>clean validate</preparationGoals>
-                    <goals>help:active-profiles validate</goals>
-                    <allowTimestampedSnapshots>true</allowTimestampedSnapshots>
+                    <!-- Allow untracked files during the release process -->
+                    <allowUntracked>true</allowUntracked>
+                    <!-- Allow snapshots when we start the release because the limsThrift version will be fixed during the release process -->
+                    <allowSnapshots>true</allowSnapshots>
+                    <pushFeatures>true</pushFeatures>
+                    <noFeatureBuild>true</noFeatureBuild>
+                    <enableFeatureVersions>true</enableFeatureVersions>
+                    <releaseBranchVersionSuffix>RC</releaseBranchVersionSuffix>
+                    <!--Do NOT do a build during the release-finish process -->
+                    <noReleaseBuild>true</noReleaseBuild>
+                    <!-- Do NOT use the Maven default release profile during the release process -->
                     <useReleaseProfile>false</useReleaseProfile>
-                    <scmCommentPrefix>[REL-000 Production Release]</scmCommentPrefix>
-                    <!--<arguments>-X</arguments>-->
+                    <!-- Do NOT use the Maven deploy goal during the release process. -->
+                    <noDeploy>true</noDeploy>
+                    <!-- Do push the release branches to the remote upstream -->
+                    <pushReleases>true</pushReleases>
+                    <!-- Do push the hotfix branches to the remote upstream --> 
+                    <pushHotfixes>true</pushHotfixes>
+                    <noHotfixBuild>true</noHotfixBuild>
+		    <!-- Keep the hot fix branch to avoid the error https://ecosystem.atlassian.net/browse/MJF-207	    -->
+		    <keepBranch>true</keepBranch>
                 </configuration>
             </plugin>
 
@@ -2467,6 +2524,14 @@
             </plugin>
 
         </plugins>
+
+        <extensions>
+            <extension>
+                <groupId>org.apache.maven.wagon</groupId>
+                <artifactId>wagon-ssh</artifactId>
+                <version>2.6</version>
+            </extension>
+        </extensions>
 
         <testResources>
             <!-- Filtering corrupts the xlsx test files -->

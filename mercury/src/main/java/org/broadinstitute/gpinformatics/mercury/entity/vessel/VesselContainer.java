@@ -276,31 +276,32 @@ public class VesselContainer<T extends LabVessel> {
         TransferTraverserCriteria.Context context =
                 new TransferTraverserCriteria.Context(vesselAtPosition, this, position, labEvent, hopCount,
                         traversalDirection);
-        TransferTraverserCriteria.TraversalControl traversalControl =
-                transferTraverserCriteria.evaluateVesselPreOrder(context);
-        if (vesselAtPosition != null) {
-            // handle re-arrays of tubes - look in any other racks that the tube has been in
-            if (getEmbedder() instanceof TubeFormation) {
-                TubeFormation thisTubeFormation = (TubeFormation) getEmbedder();
-                for (VesselContainer<?> vesselContainer : vesselAtPosition.getContainers()) {
-                    if (OrmUtil.proxySafeIsInstance(vesselContainer.getEmbedder(), TubeFormation.class)) {
-                        TubeFormation otherTubeFormation =
-                                OrmUtil.proxySafeCast(vesselContainer.getEmbedder(), TubeFormation.class);
-                        if (!otherTubeFormation.getDigest().equals(thisTubeFormation.getDigest())) {
-                            if (traversalDirection == TransferTraverserCriteria.TraversalDirection.Ancestors) {
-                                vesselContainer.traverseAncestors(vesselContainer.getPositionOfVessel(vesselAtPosition),
-                                        transferTraverserCriteria, traversalDirection, hopCount);
-                            } else {
-                                vesselContainer
-                                        .traverseDescendants(vesselContainer.getPositionOfVessel(vesselAtPosition),
-                                                transferTraverserCriteria, traversalDirection, hopCount);
+        if (transferTraverserCriteria.evaluateVesselPreOrder(context) ==
+            TransferTraverserCriteria.TraversalControl.ContinueTraversing) {
+
+            if (vesselAtPosition != null) {
+                // handle re-arrays of tubes - look in any other racks that the tube has been in
+                if (getEmbedder() instanceof TubeFormation) {
+                    TubeFormation thisTubeFormation = (TubeFormation) getEmbedder();
+                    for (VesselContainer<?> vesselContainer : vesselAtPosition.getContainers()) {
+                        if (OrmUtil.proxySafeIsInstance(vesselContainer.getEmbedder(), TubeFormation.class)) {
+                            TubeFormation otherTubeFormation =
+                                    OrmUtil.proxySafeCast(vesselContainer.getEmbedder(), TubeFormation.class);
+                            if (!otherTubeFormation.getDigest().equals(thisTubeFormation.getDigest())) {
+                                if (traversalDirection == TransferTraverserCriteria.TraversalDirection.Ancestors) {
+                                    vesselContainer.traverseAncestors(vesselContainer.getPositionOfVessel(vesselAtPosition),
+                                            transferTraverserCriteria, traversalDirection, hopCount);
+                                } else {
+                                    vesselContainer
+                                            .traverseDescendants(vesselContainer.getPositionOfVessel(vesselAtPosition),
+                                                    transferTraverserCriteria, traversalDirection, hopCount);
+                                }
                             }
                         }
                     }
                 }
             }
-        }
-        if (traversalControl == TransferTraverserCriteria.TraversalControl.ContinueTraversing) {
+
             if (traversalDirection == TransferTraverserCriteria.TraversalDirection.Ancestors) {
                 traverseAncestors(position, transferTraverserCriteria, traversalDirection, hopCount);
             } else {
@@ -971,7 +972,12 @@ public class VesselContainer<T extends LabVessel> {
                 ancestorEvents = vesselAtPosition.getAncestors();
             }
             if (ancestorEvents.isEmpty()) {
-                sampleInstances = Collections.emptySet();
+                if (vesselAtPosition != null) {
+                    sampleInstances = new HashSet<>();
+                    sampleInstances.add(new SampleInstanceV2(vesselAtPosition));
+                } else {
+                    sampleInstances = Collections.emptySet();
+                }
             } else {
                 sampleInstances = getAncestorSampleInstances(vesselAtPosition, ancestorEvents);
             }
@@ -1054,7 +1060,7 @@ public class VesselContainer<T extends LabVessel> {
             // Apply events to clones
             for (LabVessel.VesselEvent ancestorEvent : ancestorEvents) {
                 for (SampleInstanceV2 currentSampleInstance : currentSampleInstances) {
-                    currentSampleInstance.applyEvent(ancestorEvent.getLabEvent());
+                    currentSampleInstance.applyEvent(ancestorEvent.getLabEvent(), labVessel);
                 }
             }
 

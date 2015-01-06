@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -108,7 +109,7 @@ public class VarioskanPlateProcessor extends TableProcessor {
                     } else {
                         bigDecimal = new BigDecimal(result);
                     }
-                    bigDecimal = bigDecimal.setScale(SCALE, BigDecimal.ROUND_HALF_UP);
+                    bigDecimal = MathUtils.scaleTwoDecimalPlaces(bigDecimal);
                     plateWellResults.add(new PlateWellResult(paddedBarcode, vesselPosition, bigDecimal));
                 } catch (NumberFormatException e) {
                     addDataMessage("Failed to find position " + well, dataRowIndex);
@@ -131,29 +132,22 @@ public class VarioskanPlateProcessor extends TableProcessor {
     }
 
     private enum Headers implements ColumnHeader {
-        PLATE("Plate", 0, REQUIRED_HEADER, OPTIONAL_VALUE),
-        WELL("Well", 1, REQUIRED_HEADER, OPTIONAL_VALUE),
-        SAMPLE("Sample", 2, REQUIRED_HEADER, OPTIONAL_VALUE),
-        VALUE("Value", 3, REQUIRED_HEADER, OPTIONAL_VALUE),
-        RESULT("Result", 4, REQUIRED_HEADER, OPTIONAL_VALUE);
+        PLATE("Plate", IS_STRING),
+        WELL("Well", IS_STRING),
+        SAMPLE("Sample", IS_STRING),
+        VALUE("Value"),
+        RESULT("Result");
 
         private final String text;
-        private final int index;
-        private final boolean requiredHeader;
-        private final boolean requiredValue;
-        private boolean isString;
+        private final boolean isString;
 
-        Headers(String text, int index, boolean requiredHeader, boolean requiredValue) {
-            this(text, index, requiredHeader, requiredValue, false);
+        Headers(String text, boolean isString) {
+            this.text = text;
+            this.isString = isString;
         }
 
-        Headers(String text, int index, boolean requiredHeader, boolean requiredValue,
-                boolean isString) {
-            this.text = text;
-            this.index = index;
-            this.requiredHeader = requiredHeader;
-            this.requiredValue = requiredValue;
-            this.isString = isString;
+        Headers(String text) {
+            this(text, false);
         }
 
         @Override
@@ -162,18 +156,13 @@ public class VarioskanPlateProcessor extends TableProcessor {
         }
 
         @Override
-        public int getIndex() {
-            return index;
-        }
-
-        @Override
         public boolean isRequiredHeader() {
-            return requiredHeader;
+            return true;
         }
 
         @Override
         public boolean isRequiredValue() {
-            return requiredValue;
+            return false;
         }
 
         @Override

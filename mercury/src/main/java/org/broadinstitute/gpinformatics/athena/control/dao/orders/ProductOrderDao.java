@@ -68,6 +68,11 @@ public class ProductOrderDao extends GenericDao {
         return hourOfDay >= AutomatedBiller.PROCESSING_START_HOUR || hourOfDay < AutomatedBiller.PROCESSING_END_HOUR;
     }
 
+    /**
+     * Use this to specify which tables should be fetched (joined) with ProductOrder when it's loaded from the
+     * database. Using it can have a major performance benefit when retrieving many PDOs that will in turn need
+     * a related table loaded.
+     */
     public enum FetchSpec {
         PRODUCT,
         PRODUCT_FAMILY,

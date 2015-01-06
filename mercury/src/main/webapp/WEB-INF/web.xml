@@ -37,74 +37,57 @@
 
     <!-- END for JBoss AS 7 -->
 
-    <context-param>
-        <param-name>resteasy.scan.resources</param-name>
-        <!-- we don't scan for test performance reasons.  use resteasy.resources explicitly instead. -->
-        <param-value>false</param-value>
-    </context-param>
-    <context-param>
-        <param-name>resteasy.resources</param-name>
-        <!-- comma separated list of jax-rs resource classes -->
-        <param-value>
-            org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderResource,
-            org.broadinstitute.gpinformatics.athena.boundary.products.ProductResource,
-            org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectResource,
-            org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectResourceForBass,
-            org.broadinstitute.gpinformatics.athena.boundary.util.PingResource,
-            org.broadinstitute.gpinformatics.infrastructure.datawh.ExtractTransformResource,
-            org.broadinstitute.gpinformatics.mercury.boundary.zims.IlluminaRunResource,
-            org.broadinstitute.gpinformatics.mercury.boundary.lims.LimsQueryResource,
-            org.broadinstitute.gpinformatics.mercury.boundary.lims.LimsQueryTypesResource,
-            org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchResource,
-            org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleImportResource,
-            org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleReceiptResource,
-            org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselMetricResource,
-            org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource,
-            org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventResource,
-            org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunResource,
-            org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselResource,
-            org.broadinstitute.gpinformatics.mercury.boundary.sample.CrspInfoResource
-        </param-value>
-    </context-param>
-    <context-param>
-        <param-name>resteasy.providers</param-name>
-        <param-value>
-            org.broadinstitute.gpinformatics.infrastructure.jaxrs.JacksonConfigurator,
-            org.broadinstitute.gpinformatics.infrastructure.jaxrs.CatchAllExceptionMapper,
-            org.broadinstitute.gpinformatics.infrastructure.jaxrs.EJBExceptionMapper
-        </param-value>
-    </context-param>
-
     <security-constraint>
         <web-resource-collection>
-            <!-- mlc this is a straight up hack to force JBoss 7.1.1 to create a SecurityConstraint so
-                 we can do programmatic authentication.  The url-pattern is a dummy that we intend never to
-                 match.  see
-
-                 https://community.jboss.org/thread/161511
+            <!--
+            This block helps enforce that all rest calls are expected as either a GET or a POST request.
             -->
-            <web-resource-name>SecuredArea</web-resource-name>
-            <url-pattern>/dummy-url/*</url-pattern>
-        </web-resource-collection>
-        <!--  for SSL forwarding, we could have done it using the forwarding that is specified in the JBoss
-            configuration.  If we did, we would have to specify the roles for auth constraint (all applicable roles) and
-            implement a user-data-constraint tag in here with a transport guarantee of CONFIDENTIAL.  Since CLIA needs
-            the SSL forwarding but research (currently) does not, utilizing this approach would have been an
-            unnecessary impact to the research implementation.  To get around this, a Security filter was added
-            to redirect unsecured traffic to the SSL port-->
-        <auth-constraint>
-        </auth-constraint>
-    </security-constraint>
-
-    <security-constraint>
-
-        <web-resource-collection>
-            <web-resource-name>SecuredRestArea</web-resource-name>
-            <url-pattern>/rest/crspinfo/*</url-pattern>
+            <web-resource-name>UnAuthenticatedRestArea</web-resource-name>
+            <url-pattern>/rest/*</url-pattern>
             <http-method>GET</http-method>
             <http-method>POST</http-method>
         </web-resource-collection>
+        <!--
+            By defining the user-data-constraint, we make use of the redirect setting on JBOSS, reducing the chance
+            that a request may be rendered over an non secure port.  With out this, we would have to redirect the
+            request utilizing the SecurityFilter which would be a bit too late if security is truly a concern
+          -->
+        <user-data-constraint>
+            <transport-guarantee>CONFIDENTIAL</transport-guarantee>
+        </user-data-constraint>
     </security-constraint>
+
+    <security-constraint>
+        <!--
+           This constraint is meant to represent all traffic coming into the Mercury application.  We define this to
+           not only assist us in retrieving a principal (User login info) during authentication, but also to assist
+           the configuration of a server side redirect for HTTPS.  The User data Constraint is necessary for JBOSS
+           to successfully redirect a non secure request to a secure request and have the application retrieve it.
+        -->
+        <web-resource-collection>
+            <web-resource-name>SECURE</web-resource-name>
+            <url-pattern>/*</url-pattern>
+        </web-resource-collection>
+        <!--  By defining the user-data-constraint, we make use of the redirect setting on JBOSS.  With out this,
+          we would have to redirect the request utilizing the SecurityFilter -->
+        <user-data-constraint>
+            <transport-guarantee>CONFIDENTIAL</transport-guarantee>
+        </user-data-constraint>
+    </security-constraint>
+
+    <security-constraint>
+        <web-resource-collection>
+            <!-- https://issues.jboss.org/browse/ARQ-1426
+                Unable to force Arquillian tests to redirect to ssl, so we are creating a hole to allow arquillian
+                tests to still utilize http when initiating.
+            -->
+            <web-resource-name>ArquillianTestRunnerAccess</web-resource-name>
+            <url-pattern>/ArquillianServletRunner</url-pattern>
+        </web-resource-collection>
+        <!--  By defining the user-data-constraint, we make use of the redirect setting on JBOSS.  With out this,
+              we can guarantee that Arquillian supported tests will not redirect to the SSL port-->
+    </security-constraint>
+
 
     <welcome-file-list>
         <welcome-file>/security/login.jsp</welcome-file>
@@ -119,21 +102,6 @@
         </form-login-config>
     </login-config>
 
-    <!-- jsp-config>
-        <taglib>
-            <taglib-uri>http://mercury.broadinstitute.org/authorization</taglib-uri>
-            <taglib-location>/WEB-INF/classes/META-INF/mercurysecurity.tld</taglib-location>
-        </taglib>
-    </jsp-config -->
-
-    <filter>
-        <filter-name>SecurityFilter</filter-name>
-        <filter-class>org.broadinstitute.gpinformatics.mercury.presentation.security.SecurityFilter</filter-class>
-        <init-param>
-            <param-name>securePort</param-name>
-            <param-value>8443</param-value>
-        </init-param>
-    </filter>
     <filter>
         <filter-name>CacheFilter</filter-name>
         <filter-class>org.broadinstitute.gpinformatics.athena.presentation.filters.CacheFilter</filter-class>
@@ -171,7 +139,8 @@
         </init-param>
         <init-param>
             <param-name>Extension.Packages</param-name>
-            <param-value>com.samaxes.stripes.inject,org.broadinstitute.gpinformatics.infrastructure.presentation</param-value>
+            <param-value>com.samaxes.stripes.inject,org.broadinstitute.gpinformatics.infrastructure.presentation
+            </param-value>
         </init-param>
         <init-param>
             <param-name>ActionBeanContext.Class</param-name>
@@ -240,11 +209,6 @@
     <filter-mapping>
         <filter-name>AuthorizationFilter</filter-name>
         <url-pattern>*.jsp</url-pattern>
-        <dispatcher>REQUEST</dispatcher>
-    </filter-mapping>
-    <filter-mapping>
-        <filter-name>SecurityFilter</filter-name>
-        <url-pattern>/*</url-pattern>
         <dispatcher>REQUEST</dispatcher>
     </filter-mapping>
 

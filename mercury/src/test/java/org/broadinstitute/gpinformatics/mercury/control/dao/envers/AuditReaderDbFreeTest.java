@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.notice.UserRemarks;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -22,12 +23,11 @@ import java.util.List;
 @Test(enabled = true, groups = TestGroups.DATABASE_FREE)
 public class AuditReaderDbFreeTest {
 
-    // Exceptions to the Entity classes.
+    // Exceptions to the Entity classes.  The Audit Trail UI requires a Long entity id in order to
+    // show data audits that changed or deleted the entity.
     private final Collection<Class> unauditableClasses = new ArrayList<Class>() {{
         add(JiraTicket.class);   // todo make a Long primary key and remove this special case.
-        add(UserRemarks.class);
     }};
-
 
     @Test
     public void areAllEntitiesAuditable() throws Exception {
@@ -46,13 +46,14 @@ public class AuditReaderDbFreeTest {
         Assert.assertTrue(entityClasses.size() > 0);
 
         for (Class cls : entityClasses) {
-            if (ReflectionUtil.getEntityIdField(cls) == null) {
-                failingClasses.add(cls.getName());
+            Field field = ReflectionUtil.getEntityIdField(cls);
+            if (field == null || !field.getGenericType().equals(Long.class)) {
+                failingClasses.add(cls.getSimpleName());
             }
         }
 
         if (failingClasses.size() > 0) {
-            Assert.fail("Entity definition error -- missing @Id on Long field which is the primary key in class " +
+            Assert.fail("Entity definition error. Primary key must have '@Id' and type must be 'Long' in class: " +
                         StringUtils.join(failingClasses, ", "));
         }
     }
@@ -119,4 +120,10 @@ public class AuditReaderDbFreeTest {
         }
     }
 
+    @Test
+    public void testAbstractClass() throws Exception {
+        Assert.assertTrue(ReflectionUtil.getAbstractEntities().contains(LabVessel.class));
+        Assert.assertTrue(ReflectionUtil.getAbstractEntityClassnames().contains(
+                LabVessel.class.getCanonicalName()));
+    }
 }

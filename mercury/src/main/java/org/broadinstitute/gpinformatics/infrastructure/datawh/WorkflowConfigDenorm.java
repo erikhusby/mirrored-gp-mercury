@@ -3,7 +3,12 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowProcessDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowProcessDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -27,6 +32,7 @@ public class WorkflowConfigDenorm implements Serializable {
     private final String workflowStepName;
     private final String workflowStepEventName;
     private final boolean productOrderNeeded;
+    private final boolean batchNeeded;
 
 
     public WorkflowConfigDenorm(Date effectiveDate,
@@ -36,7 +42,8 @@ public class WorkflowConfigDenorm implements Serializable {
                                 String workflowProcessVersion,
                                 String workflowStepName,
                                 String workflowStepEventName,
-                                boolean productOrderNeeded) {
+                                boolean productOrderNeeded,
+                                boolean batchNeeded) {
 
         this.effectiveDate = effectiveDate;
         this.productWorkflowName = productWorkflowName;
@@ -46,23 +53,12 @@ public class WorkflowConfigDenorm implements Serializable {
         this.workflowStepName = workflowStepName;
         this.workflowStepEventName = workflowStepEventName;
         this.productOrderNeeded = productOrderNeeded;
+        this.batchNeeded = batchNeeded;
 
         workflowConfigDenormId = calculateId();
         workflowId = calculateWorkflowId(productWorkflowName, productWorkflowVersion);
         processId = calculateProcessId(
                 workflowProcessName, workflowProcessVersion, workflowStepName, workflowStepEventName);
-    }
-
-    public WorkflowConfigDenorm(Date effectiveDate,
-                                String productWorkflowName,
-                                String productWorkflowVersion,
-                                String workflowProcessName,
-                                String workflowProcessVersion,
-                                String workflowStepName,
-                                String workflowStepEventName) {
-
-        this(effectiveDate, productWorkflowName, productWorkflowVersion, workflowProcessName,
-                workflowProcessVersion, workflowStepName, workflowStepEventName, false);
     }
 
     public long calculateProcessId(String processName, String version, String stepName, String eventName) {
@@ -121,12 +117,17 @@ public class WorkflowConfigDenorm implements Serializable {
         return productOrderNeeded;
     }
 
+    public boolean isBatchNeeded() {
+        return batchNeeded;
+    }
+
     /**
      * Calculates a workflowConfigDenormId using a deterministic algorithm.
      */
     public long calculateId() {
         return GenericEntityEtl.hash(String.valueOf(effectiveDate.getTime()), productWorkflowName, productWorkflowVersion,
-                workflowProcessName, workflowProcessVersion, workflowStepName, workflowStepEventName);
+                workflowProcessName, workflowProcessVersion, workflowStepName, workflowStepEventName,
+                String.valueOf(productOrderNeeded), String.valueOf(batchNeeded));
     }
 
     /**
@@ -177,7 +178,8 @@ public class WorkflowConfigDenorm implements Serializable {
 
                                 list.add(new WorkflowConfigDenorm(netEffectiveDate, productWorkflowName,
                                         productWorkflowVersion, workflowProcessName, workflowProcessVersion,
-                                        workflowStepName, workflowStepEventName));
+                                        workflowStepName, workflowStepEventName, NEEDS_PDO,
+                                        WorkflowConfigLookup.needsBatch(workflowStepEventName)));
                             }
                         }
                     }
@@ -188,6 +190,7 @@ public class WorkflowConfigDenorm implements Serializable {
         }
         return list;
     }
+    private static final boolean NEEDS_PDO = true;
 
     @Override
     public String toString() {
@@ -199,7 +202,9 @@ public class WorkflowConfigDenorm implements Serializable {
                 ", workflowProcessName='" + workflowProcessName + '\'' +
                 ", workflowProcessVersion='" + workflowProcessVersion + '\'' +
                 ", workflowStepName='" + workflowStepName + '\'' +
-                ", workflowStepEventName='" + workflowStepEventName + '\'';
+                ", workflowStepEventName='" + workflowStepEventName + '\'' +
+                ", pdoNeeded='" + productOrderNeeded + '\'' +
+                ", batchNeeded='" + batchNeeded + '\'';
     }
 
 

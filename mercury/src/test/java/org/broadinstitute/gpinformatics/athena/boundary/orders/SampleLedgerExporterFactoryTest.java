@@ -15,6 +15,7 @@ import org.mockito.Mockito;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -61,8 +62,14 @@ public class SampleLedgerExporterFactoryTest {
         factory = new SampleLedgerExporterFactory(null, mockBspUserList, null, null, null, null, null, null);
     }
 
+    private List<SampleLedgerRow> createLedgerRows() {
+        List<SampleLedgerRow> ledgerRows = new ArrayList<>();
+        factory.gatherSampleRowData(productOrder, ledgerRows);
+        return ledgerRows;
+    }
+
     public void gatherNoSamplesForEmptyProductOrder() {
-        List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
+        List<SampleLedgerRow> data = createLedgerRows();
         assertThat(data.size(), equalTo(0));
     }
 
@@ -70,7 +77,7 @@ public class SampleLedgerExporterFactoryTest {
         String sampleId = "SM-1234";
         productOrder.addSample(new ProductOrderSample(sampleId, new BspSampleData()));
 
-        List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
+        List<SampleLedgerRow> data = createLedgerRows();
         assertThat(data.size(), equalTo(1));
         assertThat(data.get(0).getSampleId(), equalTo(sampleId));
     }
@@ -81,7 +88,7 @@ public class SampleLedgerExporterFactoryTest {
         productOrder.addSample(new ProductOrderSample(sampleId1, new BspSampleData()));
         productOrder.addSample(new ProductOrderSample(sampleId2, new BspSampleData()));
 
-        List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
+        List<SampleLedgerRow> data = createLedgerRows();
         assertThat(data.size(), equalTo(2));
         assertThat(data.get(0).getSampleId(), equalTo(sampleId1));
         assertThat(data.get(1).getSampleId(), equalTo(sampleId2));
@@ -92,7 +99,7 @@ public class SampleLedgerExporterFactoryTest {
         productOrder.addSample(new ProductOrderSample("SM-1234", new BspSampleData(Collections.singletonMap(
                 BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, collaboratorSampleId))));
 
-        List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
+        List<SampleLedgerRow> data = createLedgerRows();
         assertThat(data.get(0).getCollaboratorSampleId(), equalTo(collaboratorSampleId));
     }
 
@@ -101,14 +108,14 @@ public class SampleLedgerExporterFactoryTest {
         productOrder.addSample(new ProductOrderSample("SM-1234",
                 new BspSampleData(Collections.singletonMap(BSPSampleSearchColumn.MATERIAL_TYPE, materialType))));
 
-        List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
+        List<SampleLedgerRow> data = createLedgerRows();
         assertThat(data.get(0).getMaterialType(), equalTo(materialType));
     }
 
     public void gatherRiskWhenNoRisk() {
         productOrder.addSample(new ProductOrderSample("SM-1234", new BspSampleData()));
 
-        List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
+        List<SampleLedgerRow> data = createLedgerRows();
         assertThat(data.get(0).getRiskText(), equalTo(""));
     }
 
@@ -117,7 +124,7 @@ public class SampleLedgerExporterFactoryTest {
         sample.setManualOnRisk(RiskCriterion.createManual(), "Test risk");
         productOrder.addSample(sample);
 
-        List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
+        List<SampleLedgerRow> data = createLedgerRows();
         assertThat(data.get(0).getRiskText(),
                 pattern("At \\d{1,2}:\\d{2}:\\d{2} [AP]M on \\w+ \\d{1,2}, \\d{4}, calculated Manual with comment: Test risk"));
     }
@@ -127,7 +134,7 @@ public class SampleLedgerExporterFactoryTest {
         sample.setDeliveryStatus(ProductOrderSample.DeliveryStatus.DELIVERED);
         productOrder.addSample(sample);
 
-        List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
+        List<SampleLedgerRow> data = createLedgerRows();
         assertThat(data.get(0).getDeliveryStatus(),
                 equalTo(ProductOrderSample.DeliveryStatus.DELIVERED.getDisplayName()));
     }
@@ -135,7 +142,7 @@ public class SampleLedgerExporterFactoryTest {
     public void gatherProductName() {
         productOrder.addSample(new ProductOrderSample("SM-1234", new BspSampleData()));
 
-        List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
+        List<SampleLedgerRow> data = createLedgerRows();
         assertThat(data.get(0).getProductName(), equalTo(TEST_PRODUCT_NAME));
     }
 
@@ -144,21 +151,21 @@ public class SampleLedgerExporterFactoryTest {
         String jiraTicketKey = "PDO-123";
         productOrder.setJiraTicketKey(jiraTicketKey);
 
-        List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
+        List<SampleLedgerRow> data = createLedgerRows();
         assertThat(data.get(0).getProductOrderKey(), equalTo(jiraTicketKey));
     }
 
     public void gatherProductOrderTitle() {
         productOrder.addSample(new ProductOrderSample("SM-1234", new BspSampleData()));
 
-        List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
+        List<SampleLedgerRow> data = createLedgerRows();
         assertThat(data.get(0).getProductOrderTitle(), equalTo(TEST_PRODUCT_ORDER_TITLE));
     }
 
     public void gatherProjectManager() {
         productOrder.addSample(new ProductOrderSample("SM-1234", new BspSampleData()));
 
-        List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
+        List<SampleLedgerRow> data = createLedgerRows();
         assertThat(data.get(0).getProjectManagerName(), equalTo(productOrderCreator.getFullName()));
     }
 
@@ -166,7 +173,7 @@ public class SampleLedgerExporterFactoryTest {
         productOrder.addSample(new ProductOrderSample("SM-1234", new BspSampleData()));
         productOrder.setLaneCount(8);
 
-        List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
+        List<SampleLedgerRow> data = createLedgerRows();
         assertThat(data.get(0).getNumberOfLanes(), equalTo(8));
     }
 
@@ -178,7 +185,7 @@ public class SampleLedgerExporterFactoryTest {
         sample.addAutoLedgerItem(workCompleteDate, new PriceItem("Quote-1", "Crush", "Test", "Test Price Item"), 1,
                 autoLedgerDate);
 
-        List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
+        List<SampleLedgerRow> data = createLedgerRows();
         assertThat(data.get(0).getAutoLedgerDate(), equalTo(autoLedgerDate));
     }
 
@@ -190,7 +197,7 @@ public class SampleLedgerExporterFactoryTest {
         sample.addAutoLedgerItem(workCompleteDate, new PriceItem("Quote-1", "Crush", "Test", "Test Price Item"), 1,
                 autoLedgerDate);
 
-        List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
+        List<SampleLedgerRow> data = createLedgerRows();
         assertThat(data.get(0).getWorkCompleteDate(), equalTo(workCompleteDate));
     }
 }

@@ -13,10 +13,10 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
-import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcherStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
@@ -153,10 +153,7 @@ public class ReworkEjbTest extends Arquillian {
     private AppConfig appConfig;
 
     @Inject
-    private BSPSampleSearchService bspSampleSearchService;
-
-    @Inject
-    private SampleDataFetcher sampleDataFetcher;
+    private BSPSampleDataFetcher bspSampleDataFetcher;
 
     @Inject
     private LabBatchEjb labBatchEJB;
@@ -192,10 +189,15 @@ public class ReworkEjbTest extends Arquillian {
     private String somaticSample2;
     private String somaticSample3;
 
+    /**
+     * Local map of SampleData to use when creating MercurySamples for ProductOrderSamples.
+     */
+    private Map<String, BspSampleData> sampleDataMap;
+
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder
-                .buildMercuryWarWithAlternatives(DEV, BSPSampleSearchServiceStub.class, JiraServiceStub.class);
+                .buildMercuryWarWithAlternatives(DEV, JiraServiceStub.class, BSPSampleDataFetcherStub.class);
     }
 
     @BeforeMethod(groups = TestGroups.ALTERNATIVES)
@@ -223,11 +225,10 @@ public class ReworkEjbTest extends Arquillian {
         final String SM_SGM_Test_Somatic_2_CONTAINER_ID = "A0-" + testPrefix + currDate.getTime() + "2854";
         final String SM_SGM_Test_Somatic_3_CONTAINER_ID = "A0-" + testPrefix + currDate.getTime() + "2856";
 
-        // The injected BSPSampleSearchService must be a stub because it's requested when building the Mercury WAR.
-        BSPSampleSearchServiceStub bspSampleSearchServiceStub = (BSPSampleSearchServiceStub) bspSampleSearchService;
+        sampleDataMap = new HashMap<>();
 
-        bspSampleSearchServiceStub
-                .addToMap(somaticSample2, new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
+        sampleDataMap.put(somaticSample2,
+                new BspSampleData(new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
                     put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_SGM_Test_Somatic_2_PATIENT_ID);
                     put(BSPSampleSearchColumn.ROOT_SAMPLE, BSPSampleSearchServiceStub.ROOT);
                     put(BSPSampleSearchColumn.STOCK_SAMPLE, SM_SGM_Test_Somatic_2_STOCK_SAMP);
@@ -246,10 +247,10 @@ public class ReworkEjbTest extends Arquillian {
                     put(BSPSampleSearchColumn.STOCK_TYPE, BspSampleData.ACTIVE_IND);
                     put(BSPSampleSearchColumn.CONTAINER_ID, SM_SGM_Test_Somatic_2_CONTAINER_ID);
                     put(BSPSampleSearchColumn.SAMPLE_ID, somaticSample2);
-                }});
+                }}));
 
-        bspSampleSearchServiceStub
-                .addToMap(somaticSample1, new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
+        sampleDataMap.put(somaticSample1,
+                new BspSampleData(new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
                     put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_SGM_Test_Somatic_1_PATIENT_ID);
                     put(BSPSampleSearchColumn.ROOT_SAMPLE, BSPSampleSearchServiceStub.ROOT);
                     put(BSPSampleSearchColumn.STOCK_SAMPLE, SM_SGM_Test_Somatic_1_STOCK_SAMP);
@@ -268,9 +269,10 @@ public class ReworkEjbTest extends Arquillian {
                     put(BSPSampleSearchColumn.STOCK_TYPE, BspSampleData.ACTIVE_IND);
                     put(BSPSampleSearchColumn.CONTAINER_ID, SM_SGM_Test_Somatic_1_CONTAINER_ID);
                     put(BSPSampleSearchColumn.SAMPLE_ID, somaticSample1);
-                }});
-        bspSampleSearchServiceStub
-                .addToMap(somaticSample3, new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
+                }}));
+
+        sampleDataMap.put(somaticSample3,
+                new BspSampleData(new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
                     put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_SGM_Test_Somatic_1_PATIENT_ID);
                     put(BSPSampleSearchColumn.ROOT_SAMPLE, BSPSampleSearchServiceStub.ROOT);
                     put(BSPSampleSearchColumn.STOCK_SAMPLE, SM_SGM_Test_Somatic_3_STOCK_SAMP);
@@ -289,9 +291,10 @@ public class ReworkEjbTest extends Arquillian {
                     put(BSPSampleSearchColumn.STOCK_TYPE, BspSampleData.ACTIVE_IND);
                     put(BSPSampleSearchColumn.CONTAINER_ID, SM_SGM_Test_Somatic_3_CONTAINER_ID);
                     put(BSPSampleSearchColumn.SAMPLE_ID, somaticSample3);
-                }});
-        bspSampleSearchServiceStub
-                .addToMap(genomicSample2, new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
+                }}));
+
+        sampleDataMap.put(genomicSample2,
+                new BspSampleData(new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
                     put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_SGM_Test_Genomic_2_PATIENT_ID);
                     put(BSPSampleSearchColumn.ROOT_SAMPLE, BSPSampleSearchServiceStub.ROOT);
                     put(BSPSampleSearchColumn.STOCK_SAMPLE, SM_SGM_Test_Genomic_2_STOCK_SAMP);
@@ -310,10 +313,10 @@ public class ReworkEjbTest extends Arquillian {
                     put(BSPSampleSearchColumn.STOCK_TYPE, BspSampleData.ACTIVE_IND);
                     put(BSPSampleSearchColumn.CONTAINER_ID, SM_SGM_Test_Genomic_2_CONTAINER_ID);
                     put(BSPSampleSearchColumn.SAMPLE_ID, genomicSample2);
-                }});
+                }}));
 
-        bspSampleSearchServiceStub
-                .addToMap(genomicSample1, new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
+        sampleDataMap.put(genomicSample1,
+                new BspSampleData(new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
                     put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_SGM_Test_Genomic_1_PATIENT_ID);
                     put(BSPSampleSearchColumn.ROOT_SAMPLE, BSPSampleSearchServiceStub.ROOT);
                     put(BSPSampleSearchColumn.STOCK_SAMPLE, SM_SGM_Test_Genomic_1_STOCK_SAMP);
@@ -332,9 +335,10 @@ public class ReworkEjbTest extends Arquillian {
                     put(BSPSampleSearchColumn.STOCK_TYPE, BspSampleData.ACTIVE_IND);
                     put(BSPSampleSearchColumn.CONTAINER_ID, SM_SGM_Test_Genomic_1_CONTAINER_ID);
                     put(BSPSampleSearchColumn.SAMPLE_ID, genomicSample1);
-                }});
-        bspSampleSearchServiceStub
-                .addToMap(genomicSample3, new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
+                }}));
+
+        BspSampleData genomicSample3SampleData =
+                new BspSampleData(new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
                     put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_SGM_Test_Genomic_1_PATIENT_ID);
                     put(BSPSampleSearchColumn.ROOT_SAMPLE, BSPSampleSearchServiceStub.ROOT);
                     put(BSPSampleSearchColumn.STOCK_SAMPLE, SM_SGM_Test_Genomic_3_STOCK_SAMP);
@@ -354,8 +358,14 @@ public class ReworkEjbTest extends Arquillian {
                     put(BSPSampleSearchColumn.CONTAINER_ID, SM_SGM_Test_Genomic_3_CONTAINER_ID);
                     put(BSPSampleSearchColumn.SAMPLE_ID, genomicSample3);
                 }});
-        bspSampleSearchServiceStub
-                .addToMap(genomicSampleDraft, new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
+        sampleDataMap.put(genomicSample3, genomicSample3SampleData);
+
+        // This test asks for a BSPSampleDataFetcherStub in its @Deployment, so this cast is safe.
+        ((BSPSampleDataFetcherStub) bspSampleDataFetcher)
+                .stubFetchSampleData(genomicSample3, genomicSample3SampleData, SM_SGM_Test_Genomic_3_CONTAINER_ID);
+
+        sampleDataMap.put(genomicSampleDraft,
+                new BspSampleData(new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
                     put(BSPSampleSearchColumn.PARTICIPANT_ID, SM_SGM_Test_Genomic_1_PATIENT_ID);
                     put(BSPSampleSearchColumn.ROOT_SAMPLE, BSPSampleSearchServiceStub.ROOT);
                     put(BSPSampleSearchColumn.STOCK_SAMPLE, SM_SGM_Test_Genomic_3_STOCK_SAMP);
@@ -364,7 +374,7 @@ public class ReworkEjbTest extends Arquillian {
                     put(BSPSampleSearchColumn.VOLUME, SM_SGM_Test_Genomic_1_VOLUME);
                     put(BSPSampleSearchColumn.CONCENTRATION, SM_SGM_Test_Genomic_1_CONC);
                     put(BSPSampleSearchColumn.SPECIES, BSPSampleSearchServiceStub.CANINE_SPECIES);
-                    put(BSPSampleSearchColumn.LSID, BSPSampleSearchServiceStub.LSID_PREFIX + genomicSample3);
+                    put(BSPSampleSearchColumn.LSID, BSPSampleSearchServiceStub.LSID_PREFIX + genomicSampleDraft);
                     put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, SM_SGM_Test_Genomic_1_COLLAB_PID);
                     put(BSPSampleSearchColumn.MATERIAL_TYPE, BSPSampleSearchServiceStub.GENOMIC_MAT_TYPE);
                     put(BSPSampleSearchColumn.TOTAL_DNA, SM_SGM_Test_Genomic_1_DNA);
@@ -374,7 +384,7 @@ public class ReworkEjbTest extends Arquillian {
                     put(BSPSampleSearchColumn.STOCK_TYPE, BspSampleData.ACTIVE_IND);
                     put(BSPSampleSearchColumn.CONTAINER_ID, SM_SGM_Test_Genomic_3_CONTAINER_ID);
                     put(BSPSampleSearchColumn.SAMPLE_ID, genomicSampleDraft);
-                }});
+                }}));
 
 
         String rpJiraTicketKey = "RP-SGM-Rework_tst1" + currDate.getTime() + "RP";
@@ -1327,7 +1337,7 @@ public class ReworkEjbTest extends Arquillian {
                                     @Nonnull String barcodePrefix) {
 
         for (ProductOrderSample currSamp : pos) {
-            SampleData sampleData = sampleDataFetcher.fetchSampleData(currSamp.getSampleKey());
+            BspSampleData sampleData = sampleDataMap.get(currSamp.getSampleKey());
             String barcode = sampleData.getContainerId();
 
             BarcodedTube aliquot = new BarcodedTube(barcode);

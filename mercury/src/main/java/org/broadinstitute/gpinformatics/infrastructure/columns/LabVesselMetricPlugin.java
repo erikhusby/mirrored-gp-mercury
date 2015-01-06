@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
+import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -25,10 +27,12 @@ public class LabVesselMetricPlugin implements ListPlugin {
     static {
         for( LabMetric.MetricType metricType : LabMetric.MetricType.values() ) {
             if(metricType.getCategory() == LabMetric.MetricType.Category.CONCENTRATION ) {
+                String headerText = metricType.getDisplayName();
                 QUANT_VALUE_HEADERS
-                        .put(metricType, new ConfigurableList.Header(metricType.getDisplayName(), "", "", ""));
+                        .put(metricType, new ConfigurableList.Header(headerText, headerText, "", ""));
+                headerText += " Decision";
                 QUANT_DECISION_HEADERS.put(metricType,
-                        new ConfigurableList.Header(metricType.getDisplayName() + " Decision", "", "", ""));
+                        new ConfigurableList.Header(headerText, headerText, "", ""));
             }
         }
     }
@@ -41,7 +45,8 @@ public class LabVesselMetricPlugin implements ListPlugin {
      * @return A list of rows, each corresponding to a LabVessel row in search results.
      */
     @Override
-    public List<ConfigurableList.Row> getData(List<?> entityList, ConfigurableList.HeaderGroup headerGroup) {
+    public List<ConfigurableList.Row> getData(List<?> entityList, ConfigurableList.HeaderGroup headerGroup
+            , @Nonnull Map<String, Object> context) {
         List<LabVessel> labVesselList = (List<LabVessel>) entityList;
         List<ConfigurableList.Row> metricRows = new ArrayList<>();
 
@@ -102,7 +107,7 @@ public class LabVesselMetricPlugin implements ListPlugin {
                 metric = latestMetric;
             }
         }
-        value = metric.getValue().toPlainString() + " " + metric.getUnits().getDisplayName();
+        value = MathUtils.scaleTwoDecimalPlaces(metric.getValue()).toPlainString() + " " + metric.getUnits().getDisplayName();
         valueCell = new ConfigurableList.Cell(QUANT_VALUE_HEADERS.get(metric.getName()), value, value);
         decision = metric.getLabMetricDecision();
         if (decision != null) {

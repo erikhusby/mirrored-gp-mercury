@@ -113,7 +113,7 @@ Move the mouse over the question marks to see details about each section.
                         <optgroup label="${entry.key}">
                             <c:forEach items="${entry.value}" var="searchTerm">
                                 <option value="${searchTerm.name}">${searchTerm.name}</option>
-                                <c:if test="${searchTerm.addConstrainedValuesToSearchTermList}">
+                                <c:if test="${searchTerm.addDependentTermsToSearchTermList}">
                                     <c:forEach items="${searchTerm.constrainedValues}" var="constrainedValue">
                                         <option value="${constrainedValue.code}"
                                                 searchTerm="${searchTerm.name}">${constrainedValue.label}</option>
@@ -181,6 +181,13 @@ function validateNewSearch() {
     return true;
 }
 
+/*
+ Several places need entity name
+ */
+function getEntityName() {
+    return $j('#searchForm :input[name=entityName]' ).val();
+}
+
 
 /*
  Add a top level term by making an AJAX request.
@@ -193,10 +200,10 @@ function addTerm() {
     var parameters;
     if (searchTerm == null) {
         searchTermName = option.value;
-        parameters = 'addTopLevelTerm&searchTermName=' + option.value + '&entityName=' + $j('#searchForm :input[name=entityName]' ).val();
+        parameters = 'addTopLevelTerm&searchTermName=' + option.value + '&entityName=' + getEntityName();
     } else {
         parameters = 'addTopLevelTermWithValue&searchTermName=' + searchTerm + '&searchTermFirstValue=' + option.value
-                + '&entityName=' + $j.url('?entityName');
+                + '&entityName=' + getEntityName();
     }
     new $j.ajax({
         url: '${ctxpath}/search/ConfigurableSearch.action',
@@ -219,8 +226,7 @@ function addTerm() {
  */
 function nextTerm(link) {
     var startDiv = link.parentNode;
-    // Find out how deeply nested the divs are, so we can build the Stripes
-    // parameter correctly
+    // Find out how deeply nested the divs are, so we can build the Stripes parameter correctly
     var div = startDiv;
     var termDepth = 0;
     // for each ancestor div
@@ -264,7 +270,7 @@ function nextTerm(link) {
         parameters = parameterFragment + parameters;
         div = div.parentNode;
     }
-    parameters = 'addChildTerm&readOnly=' + $j.url('?readOnly') + '&entityName=' + $j.url('?entityName') + '&' + parameters;
+    parameters = 'addChildTerm&readOnly=' + $j.url('?readOnly') + '&entityName=' + getEntityName() + '&' + parameters;
     // AJAX append to current div
     new $j.ajax({
         url: '${ctxpath}/search/ConfigurableSearch.action',
@@ -417,7 +423,25 @@ function removeTerm(link) {
     if (br != null) {
         searchTerm.parentNode.removeChild(br);
     }
+
+    if( searchTerm.parentNode.nodeName.toLowerCase() == 'div' ) {
+        if( searchTerm.parentNode.classList.contains('searchterm')) {
+            // Restore the "Add sub-term" link
+            var button = document.createElement("input");
+            button.setAttribute("type","button");
+            button.setAttribute("id","addSubTermBtn");
+            button.setAttribute("class", "btn btn-primary");
+            button.setAttribute("value","Add Sub-Term");
+            button.onclick = function () {
+                nextTerm(this);
+                return false;
+            };
+            searchTerm.parentNode.appendChild(button);
+        }
+    }
+
     searchTerm.parentNode.removeChild(searchTerm);
+
 }
 
 /**
@@ -442,15 +466,16 @@ function changeDependee(select) {
     }
     if (foundChildren) {
         // Restore the "Add sub-term" link
-        var link = document.createElement("A");
-        var text = document.createTextNode("Add sub-term");
-        link.onclick = function () {
+        var button = document.createElement("input");
+        button.setAttribute("type","button");
+        button.setAttribute("id","addSubTermBtn");
+        button.setAttribute("class", "btn btn-primary");
+        button.setAttribute("value","Add Sub-Term");
+        button.onclick = function () {
             nextTerm(this);
             return false;
         };
-        link.setAttribute("href", "#");
-        link.appendChild(text);
-        select.parentNode.appendChild(link);
+        select.parentNode.appendChild(button);
     }
 }
 
@@ -548,6 +573,16 @@ function chooseColumnSet() {
         <li>Down arrow: moves selected Chosen columns lower in the order</li>
     </ul>
 </div>
+<div id="traversalOptionDescription" style="display: none;">
+    <c:if test="${actionBean.configurableSearchDef.traversalEvaluators != null}">
+        <p>Available Options:</p>
+        <ul>
+        <c:forEach items="${actionBean.configurableSearchDef.traversalEvaluators}" var="traversalMapEntry">
+            <li>${traversalMapEntry.value.helpNote}</li>
+        </c:forEach>
+        </ul>
+    </c:if>
+</div>
 <script type="text/javascript">
     $j(function(){
         // This is required in order to render HTML in title attributes.
@@ -572,6 +607,9 @@ function chooseColumnSet() {
         });
         $j('#resultColumnsTooltip').attr('title', function(){
             return $j('#resultColumnsDescription').remove().html();
+        });
+        $j('#traversalOptionTooltip').attr('title', function(){
+            return $j('#traversalOptionDescription').remove().html();
         });
 
         $j(document).tooltip();

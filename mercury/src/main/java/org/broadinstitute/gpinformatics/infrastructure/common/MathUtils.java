@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.common;
 
+import java.math.BigDecimal;
+
 /**
  * A collection of utility functions for working with numbers.
  */
@@ -29,5 +31,15 @@ public class MathUtils {
     public static boolean isSame(float actual, float expected) {
         return Float.compare(actual, expected) == 0
                || (Math.abs(actual - expected) <= 5 * Math.ulp(expected));
+    }
+
+    /**
+     * Mercury uses a (semi) standard scaling of BigDecimal values to 2 decimal places.
+     */
+    public static BigDecimal scaleTwoDecimalPlaces( BigDecimal input ) {
+        if( input == null ) {
+            return null;
+        }
+        return input.setScale(2, BigDecimal.ROUND_HALF_UP);
     }
 }

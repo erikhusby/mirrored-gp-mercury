@@ -370,7 +370,7 @@ public class ManifestRecord implements Updatable {
          * This cannot directly apply to an actual record.  Represents a sample tube that is
          * received for which there is no previously uploaded manifest record.
          */
-        NOT_IN_MANIFEST("The scanned source sample is not found in any manifest.", ManifestEvent.Severity.ERROR),
+        NOT_IN_MANIFEST("The scanned source sample is not found in this manifest.", ManifestEvent.Severity.ERROR),
         /**
          * Encapsulates the error message to indicate to the user that they have already scanned the tube
          */

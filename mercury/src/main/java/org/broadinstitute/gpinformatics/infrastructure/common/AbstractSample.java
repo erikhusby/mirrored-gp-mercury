@@ -7,9 +7,13 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 
 import javax.annotation.Nonnull;
 import javax.persistence.Transient;
+import java.util.Collections;
 
 /**
  * This abstraction describes a sample in both project management and LIMS in Mercury. Put code in here that will be
@@ -33,6 +37,8 @@ public abstract class AbstractSample {
     public AbstractSample(@Nonnull SampleData sampleData) {
         setSampleData(sampleData);
     }
+
+    public abstract MercurySample.MetadataSource getMetadataSource();
 
     /**
      * @return the unique key for this sample, can be user visible
@@ -59,18 +65,13 @@ public abstract class AbstractSample {
     @Nonnull
     public SampleData getSampleData() {
         if (!hasBspSampleDataBeenInitialized) {
-            // We allow non-BSP samples through for test cases only.
-            // FIXME: update tests to produce BSP sample names so this check is unnecessary.
-            if (isInBspFormat() ||
-                ServiceAccessUtility.getBean(BSPConfig.class).getMercuryDeployment() != Deployment.PROD) {
 
-                SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
-                sampleData = sampleDataFetcher.fetchSampleData(getSampleKey());
+            SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
+            sampleData = sampleDataFetcher.fetchSampleData(getSampleKey());
 
-                // If there is no DTO, create one with no data populated.
-                if (sampleData == null) {
-                    sampleData = makeSampleData();
-                }
+            // If there is no DTO, create one with no data populated.
+            if (sampleData == null) {
+                sampleData = makeSampleData();
             }
 
             hasBspSampleDataBeenInitialized = true;
@@ -79,9 +80,7 @@ public abstract class AbstractSample {
         return sampleData;
     }
 
-    protected SampleData makeSampleData() {
-        return new BspSampleData();
-    }
+    protected abstract SampleData makeSampleData();
 
     /**
      * Set the BSP sample data manually. This is used when loading the sample data for a group of samples at once.
@@ -91,7 +90,7 @@ public abstract class AbstractSample {
     public void setSampleData(@Nonnull SampleData sampleData) {
         //noinspection ConstantConditions
         if (sampleData == null) {
-            throw new NullPointerException("BSP Sample DTO cannot be null");
+            throw new NullPointerException("SampleData cannot be null");
         }
 
         this.sampleData = sampleData;
