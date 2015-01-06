@@ -199,6 +199,7 @@
         <mercury.password>mercury_local</mercury.password>
         <athena.password>athena_local</athena.password>
         <database.delimiterType>normal</database.delimiterType>
+        <!--<passwords.properties>must be specified as the location of the password properties file</passwords.properties>-->
 
         <!-- Note - For the RC builds, the mercury.rc.ip must contain an @ otherwise the mercury-rc-ds.xml will not be syntactically correct. The @ is a meta character to the maven filtering such that the combination of
         @${mercury.rc.ip} does not get subsituted at all. Hence mercury-rc-ds.xml only contains ${mercury.rc.ip} -->
@@ -811,6 +812,9 @@
 
         <profile>
             <id>DEV</id>
+            <properties>
+                <passwords.properties>src/test/resources/mercury-dev-passwords.properties</passwords.properties>
+            </properties>
             <build>
                 <testResources>
                     <testResource>
@@ -1096,8 +1100,7 @@
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
                 <database.url>jdbc:oracle:thin:@vmgpinform:1521:gpinfdev</database.url>
-                <mercury.password>mercury_dev</mercury.password>
-                <athena.password>athena_dev</athena.password>
+                <passwords.properties>src/test/resources/mercury-dev-passwords.properties</passwords.properties>
             </properties>
             <build>
                 <testResources>
@@ -1118,8 +1121,7 @@
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
                 <database.url>jdbc:oracle:thin:@gpinfqa:1521:gpinfqa</database.url>
-                <mercury.password>mercury_qa</mercury.password>
-                <athena.password>athena_qa</athena.password>
+                <passwords.properties>src/test/resources/mercury-qa-passwords.properties</passwords.properties>
                 <!--<database.url>jdbc:oracle:thin:@mercuryrc.cloud.broad:1521:gpinfprd</database.url>-->
                 <!--<database.url>jdbc:oracle:thin:${mercury.rc.ip}:1521:gpinfprd</database.url>-->
                 <!--<mercury.password>guest</mercury.password>-->
@@ -1144,8 +1146,7 @@
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
                 <database.url>jdbc:oracle:thin:@gpinfqa:1521:gpinfqa</database.url>
-                <mercury.password>mercury_qa</mercury.password>
-                <athena.password>athena_qa</athena.password>
+                <passwords.properties>src/test/resources/mercury-qa-passwords.properties</passwords.properties>
             </properties>
         </profile>
         <profile>
@@ -1154,11 +1155,7 @@
   other profiles and the -prod-ds.xml files.  This profile pulls from production JMS queues, so using
    it for a debug server may cause message loss.
 
-   The production passwords are expected to be in the property file ${user.home}/mercuryPasswords.properties.
-
-   See GPLIM-2890 for a discussion on the need to encrypt the production passwords.
-
-   -->
+  -->
             <properties>
                 <!-- Oracle Dev -->
                 <database>oracle</database>
@@ -1166,7 +1163,8 @@
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
                 <database.url>jdbc:oracle:thin:@gpinfoprod:1521:gpinfprd</database.url>
-                <passwords.properties>${user.home}/mercuryPasswords.properties</passwords.properties>
+                <!-- The production password is stored outside of the GIT repo in the Release Engineer's home directory -->
+                <passwords.properties>${user.home}/mercury-prod-passwords.properties</passwords.properties>
             </properties>
             <build>
                 <!-- This allows us to overwrite the ejb-jar.xml for development with the special version for production -->
@@ -1182,8 +1180,17 @@
                             </webResources>
                         </configuration>
                     </plugin>
-                    <!-- Pick up the PROD password from the home directory of the user running the build (usually releng) -->
+
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>Liquibase</id>
+            <build>
+                <plugins>
                     <plugin>
+                        <!-- Pick up the DB passwords from the particular password file DEV, QA, RC or PROD -->
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>properties-maven-plugin</artifactId>
                         <executions>
@@ -1214,14 +1221,6 @@
                         </executions>
                     </plugin>
 
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
-            <id>Liquibase</id>
-            <build>
-                <plugins>
                     <plugin>
                         <groupId>org.liquibase</groupId>
                         <artifactId>liquibase-maven-plugin</artifactId>
