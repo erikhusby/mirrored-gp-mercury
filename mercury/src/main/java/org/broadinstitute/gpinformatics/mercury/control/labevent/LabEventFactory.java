@@ -22,6 +22,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEv
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationSetupEvent;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsObjectFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
@@ -129,6 +130,7 @@ public class LabEventFactory implements Serializable {
      * we set this to false so Mercury fails in the same way as Squid / BettaLIMS.
      */
     private static final boolean CREATE_SOURCES = false;
+    public static final String ACTIVITY_USER_ID = "seqsystem";
 
     @Inject
     private BarcodedTubeDao barcodedTubeDao;
@@ -406,6 +408,11 @@ public class LabEventFactory implements Serializable {
                 updateReceptacles.add(receptacleEventType.getReceptacle());
             }
         }
+        StationSetupEvent stationSetupEvent = bettaLIMSMessage.getStationSetupEvent();
+        LabEvent labEvent = buildFromBettaLims(stationSetupEvent);
+        eventHandlerSelector.applyEventSpecificHandling(labEvent, stationSetupEvent);
+        persistLabEvent(uniqueEvents, labEvent, true);
+        labEvents.add(labEvent);
 
         updateVolumeConcentration(updateReceptacles.toArray(new ReceptacleType[updateReceptacles.size()]));
         return labEvents;
@@ -1257,6 +1264,10 @@ public class LabEventFactory implements Serializable {
                 receptacleEventType.getReceptacle().getBarcode()));
     }
 
+    private LabEvent buildFromBettaLims(StationSetupEvent stationSetupEvent) {
+        return constructReferenceData(stationSetupEvent, labEventRefDataFetcher);
+    }
+
     /**
      * Database free (i.e. entities have already been fetched from the database, or constructed in tests) building of
      * lab event entity for an in-place event on a tube.
@@ -1284,11 +1295,16 @@ public class LabEventFactory implements Serializable {
             throw new RuntimeException("Unexpected event type " + stationEventType.getEventType());
         }
 
-        BspUser bspUser = labEventRefDataFetcher.getOperator(stationEventType.getOperator());
-        if (bspUser == null) {
-            throw new RuntimeException("Failed to find operator " + stationEventType.getOperator());
+        Long operator;
+        if (stationEventType instanceof StationSetupEvent) {
+            operator = labEventRefDataFetcher.getOperator(ACTIVITY_USER_ID).getUserId();
+        } else {
+            BspUser bspUser = labEventRefDataFetcher.getOperator(stationEventType.getOperator());
+            if (bspUser == null) {
+                throw new RuntimeException("Failed to find operator " + stationEventType.getOperator());
+            }
+            operator = bspUser.getUserId();
         }
-        Long operator = bspUser.getUserId();
 
         Long disambiguator = stationEventType.getDisambiguator();
         if (disambiguator == null) {

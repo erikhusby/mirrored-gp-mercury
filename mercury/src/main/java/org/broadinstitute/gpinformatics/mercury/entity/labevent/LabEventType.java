@@ -826,7 +826,16 @@ public enum LabEventType {
 //    SHEARING_BUCKET_EXIT ("ShearingBucketExit", ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY),
     COLLABORATOR_TRANSFER("CollaboratorTransfer", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE,
             SystemOfRecord.MERCURY, CreateSources.FALSE, PlasticToValidate.TARGET, PipelineTransformation.NONE,
-            SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY);
+            SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+
+    // Activity - sent by decks for otherwise non-messaged protocols (technology development); used by Analytics to
+    // track usage.
+    ACTIVITY_BEGIN("ActivityBegin",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+    ACTIVITY_END("ActivityEnd",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY);
 
     private final String name;
 
