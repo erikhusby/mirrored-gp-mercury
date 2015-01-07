@@ -1715,7 +1715,7 @@ public class SearchDefinitionFactory {
                 }
             }
 
-            return value;
+            return value.trim();
         }
     }
 
