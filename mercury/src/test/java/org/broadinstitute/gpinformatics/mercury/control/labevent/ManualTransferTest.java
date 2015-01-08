@@ -19,23 +19,26 @@ public class ManualTransferTest {
 
         // ignore multiple events per message for now
 
-        // StationEvent
         // ReceptacleEvent
         // PlateEvent
         // PlateTransferEvent
         // PlateCherryPickEvent
         // ReceptaclePlateTransferEvent
+        // No JAXB representation for tube to tube transfer?  Create ReceptacleTransferEvent?
+
+        // receptacle type
 
         // GET: enter page
-        // render drop down of lab event types
+        // render drop downs of lab event types, machine names
         // user chooses lab event type (set mode mercury), clicks button
-        // POST: render skeleton of section message (or cherry, tube to tube) including machine names, default reagents
+        // POST: render skeleton of section message (or cherry, tube to tube) including default reagents and default vessel types
         // user scans rack barcode
         // user clicks rack scan button (manual alternative?)
         // AJAX: render tube barcodes in geometry, with volume text box
         // user chooses source section
         // user sets volumes (need bulk change)
         // user scans destination plate
+        // AJAX: render existing plate, if any
         // user chooses section
         // set volume on plate wells
         // user enters date, machine etc.

@@ -488,8 +488,6 @@ public class LabEventFactory implements Serializable {
             Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
             labEvent = buildFromBettaLims(plateCherryPickEvent, mapBarcodeToVessel);
         }
-        addReagents(labEvent, plateCherryPickEvent.getReagent());
-        addMetadatas(labEvent, plateCherryPickEvent.getMetadata());
 
         return labEvent;
     }
@@ -914,8 +912,6 @@ public class LabEventFactory implements Serializable {
                     plateEventType.getPositionMap()),
                     rackOfTubesDao.findByBarcode(plateEventType.getPlate().getBarcode()));
         }
-        addReagents(labEvent, plateEventType.getReagent());
-        addMetadatas(labEvent, plateEventType.getMetadata());
         return labEvent;
     }
 
@@ -935,8 +931,6 @@ public class LabEventFactory implements Serializable {
             IlluminaFlowcell illuminaFlowcell = illuminaFlowcellDao.findByBarcode(
                     plateTransferEvent.getPlate().getBarcode());
             LabEvent labEvent = buildFromBettaLimsPlateToPlateDbFree(plateTransferEvent, stripTube, illuminaFlowcell);
-            addReagents(labEvent, plateTransferEvent.getReagent());
-            addMetadatas(labEvent, plateTransferEvent.getMetadata());
             return labEvent;
         }
         List<String> barcodes = new ArrayList<>();
@@ -950,8 +944,6 @@ public class LabEventFactory implements Serializable {
         }
         Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
         LabEvent labEvent = buildFromBettaLims(plateTransferEvent, mapBarcodeToVessel);
-        addReagents(labEvent, plateTransferEvent.getReagent());
-        addMetadatas(labEvent, plateTransferEvent.getMetadata());
         return labEvent;
     }
 
@@ -1104,10 +1096,12 @@ public class LabEventFactory implements Serializable {
         for (ReagentType reagentType : reagentTypes) {
             GenericReagent genericReagent = genericReagentDao.findByReagentNameAndLot(
                     reagentType.getKitType(), reagentType.getBarcode());
+            // todo jmt what if expiration date is different?
             if (genericReagent == null) {
                 Date expiration = null;
-                if(reagentType.getExpiration() != null)
+                if (reagentType.getExpiration() != null) {
                     expiration = reagentType.getExpiration().toGregorianCalendar().getTime();
+                }
                 genericReagent = new GenericReagent(
                         reagentType.getKitType(), reagentType.getBarcode(), expiration);
             }
@@ -1245,11 +1239,12 @@ public class LabEventFactory implements Serializable {
      * @return entity
      */
     public LabEvent buildFromBettaLims(ReceptaclePlateTransferEvent receptaclePlateTransferEvent) {
-        return buildVesselToSectionDbFree(receptaclePlateTransferEvent,
+        VesselContainerEmbedder destination = (VesselContainerEmbedder) labVesselDao.findByIdentifier(
+                receptaclePlateTransferEvent.getDestinationPlate().getBarcode());
+        LabEvent labEvent = buildVesselToSectionDbFree(receptaclePlateTransferEvent,
                 barcodedTubeDao.findByBarcode(receptaclePlateTransferEvent.getSourceReceptacle().getBarcode()),
-                (VesselContainerEmbedder) labVesselDao
-                        .findByIdentifier(receptaclePlateTransferEvent.getDestinationPlate().getBarcode()),
-                receptaclePlateTransferEvent.getDestinationPlate().getSection());
+                destination, receptaclePlateTransferEvent.getDestinationPlate().getSection());
+        return labEvent;
     }
 
     public LabEvent buildFromBettaLims(ReceptacleEventType receptacleEventType) {
@@ -1305,6 +1300,8 @@ public class LabEventFactory implements Serializable {
             genericLabEvent.setLabBatch(labBatch);
             labBatch.getLabEvents().add(genericLabEvent);
         }
+        addReagents(genericLabEvent, stationEventType.getReagent());
+        addMetadatas(genericLabEvent, stationEventType.getMetadata());
         return genericLabEvent;
     }
 
