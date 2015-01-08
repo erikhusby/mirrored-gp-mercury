@@ -1528,7 +1528,7 @@ public abstract class LabVessel implements Serializable {
         Set<MolecularIndexReagent> indexes = new HashSet<>();
         for (SampleInstance sampleInstance : getAllSamplesOfType(SampleType.ANY)) {
             if (sampleInstance.getStartingSample().equals(sample)) {
-                indexes.addAll(getIndexes(sampleInstance));
+                indexes.addAll(getIndexesForSampleInstanceV1(sampleInstance));
             }
         }
         return indexes;
@@ -1541,12 +1541,12 @@ public abstract class LabVessel implements Serializable {
      *
      * @return A set of indexes for the sample instance passed in.
      */
-    public Set<MolecularIndexReagent> getIndexes(SampleInstance sampleInstance) {
+    public Set<MolecularIndexReagent> getIndexesForSampleInstanceV1(SampleInstance sampleInstance) {
         return getIndexes(sampleInstance.getReagents());
     }
 
     /** This method gets indexes for the single sample instance passed in. */
-    public Set<MolecularIndexReagent> getIndexes(SampleInstanceV2 sampleInstance) {
+    public Set<MolecularIndexReagent> getIndexesForSampleInstance(SampleInstanceV2 sampleInstance) {
         return getIndexes(sampleInstance.getReagents());
     }
 
