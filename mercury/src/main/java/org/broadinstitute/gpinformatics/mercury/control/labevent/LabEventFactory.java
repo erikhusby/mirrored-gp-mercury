@@ -323,16 +323,18 @@ public class LabEventFactory implements Serializable {
         }
         if (labEventType.getVolumeConcUpdate() == LabEventType.VolumeConcUpdate.BSP_AND_MERCURY) {
             if (labVessel.getContainerRole() != null) {
-                labVessel = labVessel.getContainerRole().getContainedVessels().iterator().next();
-            }
-            Set<SampleInstanceV2> sampleInstances = labVessel.getSampleInstancesV2();
-            if (!sampleInstances.isEmpty()) {
-                Set<MercurySample> mercurySamples = sampleInstances.iterator().next().getRootMercurySamples();
-                if (!mercurySamples.isEmpty()) {
-                    if (mercurySamples.iterator().next().getMetadataSource() == MercurySample.MetadataSource.BSP) {
-                        return true;
+                for (LabVessel testVessel : labVessel.getContainerRole().getContainedVessels()) {
+                    for (SampleInstanceV2 sampleInstance : testVessel.getSampleInstancesV2()) {
+                        MercurySample mercurySample = sampleInstance.getRootOrEarliestMercurySample();
+                        if (mercurySample != null) {
+                            return (mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP);
+                        }
                     }
                 }
+                // This line of code can only be reached when none of the sample instances have a root or earliest
+                // mercury sample.  Assume these are derived from old BSP samples that haven't been exported to
+                // Mercury and that are to be processed by Squid, since CRSP/Buick samples would have mercury samples.
+                return true;
             }
         }
         return false;
