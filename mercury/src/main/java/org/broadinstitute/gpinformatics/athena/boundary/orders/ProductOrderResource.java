@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.MaterialInfo;
 import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -31,6 +32,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.work.WorkCompleteMessage;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPGroupCollectionList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSiteList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
@@ -60,6 +62,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -137,6 +140,9 @@ public class ProductOrderResource {
     @Inject
     private UserBean userBean;
 
+    @Inject
+    private BSPUserList bspUserList;
+
     /**
      * Should be used only by test code
      */
@@ -191,11 +197,32 @@ public class ProductOrderResource {
 
         try {
             productOrderEjb.submitSampleKitRequest(productOrder, messageCollection);
+            addProjectManagersToJIRA(productOrder, productOrder.getResearchProject().getProjectManagers());
         } catch (Exception ex) {
             throw new WorkRequestCreationException(ex);
         }
 
         return new ProductOrderData(productOrder);
+    }
+
+    /**
+     * Add all the PMs to the order in JIRA.
+     */
+    private void addProjectManagersToJIRA(ProductOrder productOrder, Long[] projectManagers) throws IOException {
+        // Remove the PDO owner from the list of PMs.
+        projectManagers = ArrayUtils.removeElement(projectManagers, productOrder.getCreatedBy());
+
+        // Convert IDs to Users.
+        List<BspUser> managers = new ArrayList<>(projectManagers.length);
+        for (Long projectManager : projectManagers) {
+            BspUser user = bspUserList.getById(projectManager);
+            if (user != null) {
+                managers.add(user);
+            }
+        }
+        if (!managers.isEmpty()) {
+            productOrderEjb.addProjectManagersToJIRA(productOrder, managers);
+        }
     }
 
     private void validateAndLoginUser(ProductOrderData productOrderData) {
