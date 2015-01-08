@@ -196,8 +196,6 @@
         <database>postgres</database>
         <database.driver>org.postgresql.Driver</database.driver>
         <database.url>jdbc:postgresql://localhost/postgres</database.url>
-        <mercury.password>mercury_local</mercury.password>
-        <athena.password>athena_local</athena.password>
         <database.delimiterType>normal</database.delimiterType>
         <!--<passwords.properties>must be specified as the location of the password properties file</passwords.properties>-->
 
