@@ -17,8 +17,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -85,6 +89,12 @@ public class SearchDefinitionFactory {
     }
 
     public static ConfigurableSearchDefinition getForEntity(String entity) {
+        /* **** Uncomment during development to rebuild for hot-swap changes **** */
+        SearchDefinitionFactory fact = new SearchDefinitionFactory();
+        fact.buildLabEventSearchDef();
+        fact.buildLabVesselSearchDef();
+        /* */
+
         return MAP_NAME_TO_DEF.get(entity);
     }
 
@@ -211,6 +221,7 @@ public class SearchDefinitionFactory {
 
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("inPlaceLabEvents", "inPlaceLabVesselId",
                 "inPlaceLabEvents", LabVessel.class.getName()));
+
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("bucketEntries", "labVesselId",
                 "labVessel", BucketEntry.class.getName()));
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection( "labBatch", "bucketEntries",
@@ -228,6 +239,16 @@ public class SearchDefinitionFactory {
                 "mercurySamples", LabVessel.class.getName()));
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("mercurySamples", "mercurySamples",
                 "mercurySampleId", MercurySample.class.getName()));
+
+        // LabVessel to transfer
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("sectXfer", "labEventId",
+                "labEvent", SectionTransfer.class.getName()));
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("vessSectXfer", "labEventId",
+                "labEvent", VesselToSectionTransfer.class.getName()));
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("vessVessXfer", "labEventId",
+                "labEvent", VesselToVesselTransfer.class.getName()));
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("cherryPickXfer", "labEventId",
+                "labEvent", CherryPickTransfer.class.getName()));
 
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
                 ColumnEntity.LAB_EVENT, 100, criteriaProjections, mapGroupSearchTerms);
@@ -1204,30 +1225,6 @@ public class SearchDefinitionFactory {
         });
         searchTerms.add(searchTerm);
 
-        searchTerm = new SearchTerm();
-        searchTerm.setName("In-Place Vessel Barcode");
-        criteriaPaths = new ArrayList<>();
-        criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setCriteria(Arrays.asList("inPlaceLabEvents"));
-        criteriaPath.setPropertyName("label");
-        criteriaPaths.add(criteriaPath);
-        searchTerm.setCriteriaPaths(criteriaPaths);
-        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public Object evaluate(Object entity, Map<String, Object> context) {
-                LabEvent labEvent = (LabEvent) entity;
-
-                LabVessel labVessel = labEvent.getInPlaceLabVessel();
-                // Test req'd, DB columns are nullable
-                if (labVessel != null) {
-                    return labVessel.getLabel();
-                }
-                return "";
-            }
-        });
-        searchTerms.add(searchTerm);
-
-
         return searchTerms;
     }
 
@@ -1238,6 +1235,115 @@ public class SearchDefinitionFactory {
         List<SearchTerm> searchTerms = new ArrayList<>();
 
         SearchTerm searchTerm = new SearchTerm();
+        searchTerm.setName("In-Place Vessel Barcode");
+        List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
+        SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("inPlaceLabEvents"));
+        criteriaPath.setPropertyName("label");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                LabEvent labEvent = (LabEvent) entity;
+                LabVessel labVessel = labEvent.getInPlaceLabVessel();
+                if (labVessel != null) {
+                    return labVessel.getLabel();
+                }
+                return "";
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Event Vessel Barcode");
+        criteriaPaths = new ArrayList<>();
+//        // Search by in place lab vessel
+//        criteriaPath = new SearchTerm.CriteriaPath();
+//        criteriaPath.setCriteria(Arrays.asList("inPlaceLabEvents"));
+//        criteriaPath.setPropertyName("label");
+//        criteriaPaths.add(criteriaPath);
+//
+//        // Search by section transfer target lab vessel
+//        criteriaPath = new SearchTerm.CriteriaPath();
+//        criteriaPath.setCriteria(Arrays.asList( "sectXfer", "targetVessel" ));
+//        criteriaPath.setPropertyName("label");
+//        criteriaPaths.add(criteriaPath);
+//
+//        // Search by section transfer source lab vessel
+//        criteriaPath = new SearchTerm.CriteriaPath();
+//        criteriaPath.setCriteria(Arrays.asList( "sectXfer", "sourceVessel" ));
+//        criteriaPath.setPropertyName("label");
+//        criteriaPaths.add(criteriaPath);
+//
+//        // Search by vessel to section transfer target lab vessel
+//        criteriaPath = new SearchTerm.CriteriaPath();
+//        criteriaPath.setCriteria(Arrays.asList( "vessSectXfer", "targetVessel" ));
+//        criteriaPath.setPropertyName("label");
+//        criteriaPaths.add(criteriaPath);
+//
+//        // Search by vessel to section transfer source lab vessel
+//        criteriaPath = new SearchTerm.CriteriaPath();
+//        criteriaPath.setCriteria(Arrays.asList( "vessSectXfer", "sourceVessel" ));
+//        criteriaPath.setPropertyName("label");
+//        criteriaPaths.add(criteriaPath);
+//
+//        // Search by vessel to vessel transfer target lab vessel
+//        criteriaPath = new SearchTerm.CriteriaPath();
+//        criteriaPath.setCriteria(Arrays.asList( "vessVessXfer", "targetVessel" ));
+//        criteriaPath.setPropertyName("label");
+//        criteriaPaths.add(criteriaPath);
+//
+//        // Search by vessel to vessel transfer source lab vessel
+//        criteriaPath = new SearchTerm.CriteriaPath();
+//        criteriaPath.setCriteria(Arrays.asList( "vessVessXfer", "sourceVessel" ));
+//        criteriaPath.setPropertyName("label");
+//        criteriaPaths.add(criteriaPath);
+//
+        // Search by cherry pick transfer target lab vessel
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList( "cherryPickXfer", "targetVessel" ));
+        criteriaPath.setPropertyName("label");
+        criteriaPaths.add(criteriaPath);
+
+        // Search by cherry pick transfer source lab vessel
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList( "cherryPickXfer", "sourceVessel" ));
+        criteriaPath.setPropertyName("label");
+        criteriaPaths.add(criteriaPath);
+
+        // Search by barcoded tube in a rack of tubes
+//        criteriaPath = new SearchTerm.CriteriaPath();
+//        criteriaPath.setCriteria(Arrays.asList( "cherryPickXfer", "sourceVessel", "vesselContainer" ));
+//        criteriaPath.setPropertyName("label");
+//        LabEvent labEvent;
+//        labEvent.getSectionTransfers().iterator().next().getTargetVesselContainer().getMapPositionToVessel().values().iterator().next();
+//        labEvent.getCherryPickTransfers().iterator().next().getTargetVesselContainer()
+                //getTargetVesselContainer().getMapPositionToVessel().values().iterator().next().getLabel().
+//        criteriaPaths.add(criteriaPath);
+
+//        criteriaPath = new SearchTerm.CriteriaPath();
+//        criteriaPath.setCriteria(Arrays.asList( "cherryPickXfer", "targetVessel.vesselContainer" ));
+//        criteriaPath.setPropertyName("label");
+//        criteriaPaths.add(criteriaPath);
+
+
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                // No way to discover which path provided a hit - regurgitate criteria (if available);
+                SearchInstance.SearchValue searchValue =
+                        (SearchInstance.SearchValue) context.get(CONTEXT_KEY_SEARCH_VALUE);
+                if( searchValue != null ) {
+                    return searchValue.getValues();
+                }
+                return "";
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
         searchTerm.setName("Source Lab Vessel Type");
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override

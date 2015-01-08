@@ -62,7 +62,11 @@ public class ConfigurableSearchDao extends GenericDao {
             ConfigurableSearchDefinition configurableSearchDefinition, SearchInstance searchInstance, String orderPath,
             String orderDirection) {
 
-        searchInstance.checkValues();
+        if( !searchInstance.checkValues() ) {
+            // This will percolate up to UI error screen, if we allow blanks, a table scan is performed
+            // TODO JMS Validate this in client side JavaScript first...
+            throw new RuntimeException("*** A value is required for each selected search term. ***");
+        }
         HibernateEntityManager hibernateEntityManager = getEntityManager().unwrap(HibernateEntityManager.class);
         Session hibernateSession = hibernateEntityManager.getSession();
         Criteria criteria = hibernateSession.createCriteria(configurableSearchDefinition.getResultEntity().getEntityClass());
@@ -187,8 +191,9 @@ public class ConfigurableSearchDao extends GenericDao {
 
                         // Do we need a new subquery?
                         if (depth == 1
-                            || (searchValue.getSearchTerm().isNewDetachedCriteria() != null && searchValue
-                                .getSearchTerm().isNewDetachedCriteria())) {
+                                || ( searchValue.getSearchTerm().isNewDetachedCriteria() != null
+                                     && searchValue.getSearchTerm().isNewDetachedCriteria()))
+                        {
                             if (criteriaPathsIndex == 0) {
                                 resultCriteria.add(disjunction);
                             }
@@ -388,8 +393,7 @@ public class ConfigurableSearchDao extends GenericDao {
                                                    SearchTerm.CriteriaPath criteriaPath,
                                                    DetachedCriteria nestedCriteria) {
 
-        // Step over the first criteria, because we already created the detached criteria
-        // for it
+        // Step over the first criteria, because we already created the detached criteria for it
         for (int i = 1; i < criteriaPath.getCriteria().size(); i++) {
 
             String criteriaKey = getCriteriaKey(criteriaPath.getCriteria().get(i));
@@ -397,6 +401,7 @@ public class ConfigurableSearchDao extends GenericDao {
             // Have we created this criteria already?
             DetachedCriteria existingCriteria = mapPathToCriteria.get(criteriaKey);
             if (existingCriteria == null) {
+                // Simply uses the criteria name as a property, ignores all else! (super, sub, class name)
                 nestedCriteria = nestedCriteria.createCriteria(criteriaPath.getCriteria().get(i));
                 mapPathToCriteria.put(criteriaKey, nestedCriteria);
             } else {

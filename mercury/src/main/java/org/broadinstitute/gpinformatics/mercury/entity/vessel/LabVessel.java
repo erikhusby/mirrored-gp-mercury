@@ -186,7 +186,7 @@ public abstract class LabVessel implements Serializable {
     @BatchSize(size = 100)
     private Set<VesselToVesselTransfer> vesselToVesselTransfersThisAsSource = new HashSet<>();
 
-    @OneToMany(mappedBy = "targetLabVessel", cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "targetVessel", cascade = CascadeType.PERSIST)
     @BatchSize(size = 100)
     private Set<VesselToVesselTransfer> vesselToVesselTransfersThisAsTarget = new HashSet<>();
 
@@ -1015,7 +1015,7 @@ public abstract class LabVessel implements Serializable {
     private List<VesselEvent> getDescendants() {
         List<VesselEvent> vesselEvents = new ArrayList<>();
         for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsSource) {
-            vesselEvents.add(new VesselEvent(vesselToVesselTransfer.getTargetLabVessel(), null, null,
+            vesselEvents.add(new VesselEvent(vesselToVesselTransfer.getTargetVessel(), null, null,
                     vesselToVesselTransfer.getLabEvent()));
         }
         for (VesselToSectionTransfer vesselToSectionTransfer : vesselToSectionTransfersThisAsSource) {
