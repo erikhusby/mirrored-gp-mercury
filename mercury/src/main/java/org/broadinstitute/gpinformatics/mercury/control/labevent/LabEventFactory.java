@@ -409,10 +409,12 @@ public class LabEventFactory implements Serializable {
             }
         }
         StationSetupEvent stationSetupEvent = bettaLIMSMessage.getStationSetupEvent();
-        LabEvent labEvent = buildFromBettaLims(stationSetupEvent);
-        eventHandlerSelector.applyEventSpecificHandling(labEvent, stationSetupEvent);
-        persistLabEvent(uniqueEvents, labEvent, true);
-        labEvents.add(labEvent);
+        if (stationSetupEvent != null) {
+            LabEvent labEvent = buildFromBettaLims(stationSetupEvent);
+            eventHandlerSelector.applyEventSpecificHandling(labEvent, stationSetupEvent);
+            persistLabEvent(uniqueEvents, labEvent, true);
+            labEvents.add(labEvent);
+        }
 
         updateVolumeConcentration(updateReceptacles.toArray(new ReceptacleType[updateReceptacles.size()]));
         return labEvents;
