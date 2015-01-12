@@ -19,7 +19,8 @@
                             resultsFormatter: formatInput,
                             tokenDelimiter: "${actionBean.projectTokenInput.separator}",
                             tokenLimit: 1,
-                            preventDuplicates: true
+                            preventDuplicates: true,
+                            autoSelectFirstResult: true
                         }
                 );
 
