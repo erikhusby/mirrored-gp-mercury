@@ -403,7 +403,10 @@ public class SystemRouter implements Serializable {
                                             routingOptions.add(productWorkflowDef.getRouting());
                                         } else {
                                             // Route the control the same way as the other vessels in the container(s).
-                                            routingOptions.add(routesForAccompanyingVessels(vessel, intent));
+                                            System system = routesForAccompanyingVessels(vessel, intent);
+                                            if (system != null) {
+                                                routingOptions.add(system);
+                                            }
                                         }
                                     } else {
                                         badCrspRouting();
@@ -433,7 +436,6 @@ public class SystemRouter implements Serializable {
     /** Returns the routing for the other vessels that accompany the given vessel. */
     private System routesForAccompanyingVessels(@Nonnull LabVessel labVessel, @Nonnull Intent intent) {
         Set<LabVessel> accompanyingVessels = new HashSet<>();
-        Set<System> routes = new HashSet<>();
         for (VesselContainer<?> vesselContainer : labVessel.getContainers()) {
             for (LabVessel containedVessel : vesselContainer.getContainedVessels()) {
                 if (!containedVessel.equals(labVessel)) {
@@ -441,7 +443,7 @@ public class SystemRouter implements Serializable {
                 }
             }
         }
-        return routeForVessels(accompanyingVessels, intent);
+        return accompanyingVessels.size() > 0 ? routeForVessels(accompanyingVessels, intent) : null;
     }
 
     /**
