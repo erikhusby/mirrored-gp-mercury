@@ -16,7 +16,8 @@
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.projectManagerList.completeData)},
                                 tokenDelimiter: "${actionBean.projectManagerList.separator}",
                                 preventDuplicates: true,
-                                resultsFormatter: formatInput
+                                resultsFormatter: formatInput,
+                                autoSelectFirstResult: true
                             }
                         );
 
@@ -26,7 +27,8 @@
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.scientistList.completeData)},
                                 tokenDelimiter: "${actionBean.scientistList.separator}",
                                 preventDuplicates: true,
-                                resultsFormatter: formatInput
+                                resultsFormatter: formatInput,
+                                autoSelectFirstResult: true
                             }
                         );
 
@@ -36,7 +38,8 @@
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.externalCollaboratorList.completeData)},
                                 tokenDelimiter: "${actionBean.externalCollaboratorList.separator}",
                                 preventDuplicates: true,
-                                resultsFormatter: formatInput
+                                resultsFormatter: formatInput,
+                                autoSelectFirstResult: true
                             }
                         );
 
@@ -46,7 +49,8 @@
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.broadPiList.completeData)},
                                 tokenDelimiter: "${actionBean.broadPiList.separator}",
                                 preventDuplicates: true,
-                                resultsFormatter: formatInput
+                                resultsFormatter: formatInput,
+                                autoSelectFirstResult: true
                             }
                         );
 
@@ -56,7 +60,8 @@
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.otherUserList.completeData)},
                                 tokenDelimiter: "${actionBean.otherUserList.separator}",
                                 preventDuplicates: true,
-                                resultsFormatter: formatInput
+                                resultsFormatter: formatInput,
+                                autoSelectFirstResult: true
                             }
                         );
 
@@ -65,7 +70,8 @@
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.fundingSourceList.completeData)},
                                 tokenDelimiter: "${actionBean.fundingSourceList.separator}",
                                 preventDuplicates: true,
-                                resultsFormatter: formatInput
+                                resultsFormatter: formatInput,
+                                autoSelectFirstResult: true
                             }
                         );
 
@@ -75,7 +81,8 @@
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.cohortsList.completeData)},
                                 tokenDelimiter: "${actionBean.cohortsList.separator}",
                                 preventDuplicates: true,
-                                resultsFormatter: formatInput
+                                resultsFormatter: formatInput,
+                                autoSelectFirstResult: true
                             }
                         );
 
@@ -84,7 +91,8 @@
                                     hintText: "Type a project name",
                                     prePopulate: ${actionBean.ensureStringResult(actionBean.projectTokenInput.completeData)},
                                     resultsFormatter: formatInput,
-                                    tokenLimit: 1
+                                    tokenLimit: 1,
+                                    autoSelectFirstResult: true
                                 }
                         );
                     }
