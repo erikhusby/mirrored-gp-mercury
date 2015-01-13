@@ -962,6 +962,17 @@ public enum LabEventType {
     }
     private final VolumeConcUpdate volumeConcUpdate;
 
+    public enum MessageType {
+        PLATE_EVENT,
+        PLATE_TRANSFER_EVENT,
+        STATION_SETUP_EVENT,
+        PLATE_CHERRY_PICK_EVENT,
+        RECEPTACLE_PLATE_TRANSFER_EVENT,
+        RECEPTACLE_EVENT
+    }
+
+    private final MessageType messageType;
+    
     /**
      * One attempt at trying to make a very generic
      * {@link LabEvent} to handle lots of different
@@ -989,6 +1000,7 @@ public enum LabEventType {
         this.pipelineTransformation = pipelineTransformation;
         this.sendToBsp = sendToBsp;
         this.volumeConcUpdate = volumeConcUpdate;
+        this.messageType = MessageType.PLATE_TRANSFER_EVENT;
     }
 
     public String getName() {
@@ -1022,5 +1034,9 @@ public enum LabEventType {
 
     public VolumeConcUpdate getVolumeConcUpdate() {
         return volumeConcUpdate;
+    }
+
+    public MessageType getMessageType() {
+        return messageType;
     }
 }

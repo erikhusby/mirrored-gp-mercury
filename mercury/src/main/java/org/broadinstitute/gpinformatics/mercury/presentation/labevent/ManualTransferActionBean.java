@@ -7,11 +7,16 @@ import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationSetupEvent;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
@@ -28,6 +33,10 @@ public class ManualTransferActionBean extends CoreActionBean {
     public static final String TRANSFER_ACTION = "transfer";
 
     private StationEventType stationEvent;
+
+    // machine names
+    // reagent types?
+    // metadata types?
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -72,11 +81,48 @@ public class ManualTransferActionBean extends CoreActionBean {
 
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
-        stationEvent = new PlateTransferEventType();
+        String eventType = getContext().getRequest().getParameter("stationEvent.eventType");
+        if (eventType == null) {
+            throw new RuntimeException("Failed to find eventType");
+        }
+        LabEventType labEventType = LabEventType.getByName(eventType);
+        // todo jmt move this to a factory
+        switch (labEventType.getMessageType()) {
+            case PLATE_EVENT:
+                stationEvent = new PlateEventType();
+                break;
+            case PLATE_TRANSFER_EVENT:
+                stationEvent = new PlateTransferEventType();
+                break;
+            case STATION_SETUP_EVENT:
+                stationEvent = new StationSetupEvent();
+                break;
+            case PLATE_CHERRY_PICK_EVENT:
+                stationEvent = new PlateCherryPickEvent();
+                break;
+            case RECEPTACLE_PLATE_TRANSFER_EVENT:
+                stationEvent = new ReceptaclePlateTransferEvent();
+                break;
+            case RECEPTACLE_EVENT:
+                stationEvent = new ReceptacleEventType();
+                break;
+            default:
+                throw new RuntimeException("Unknown labEventType " + labEventType.getMessageType());
+        }
+        /* How to determine geometry of  */
+//        labEventType.getSourceVesselType;
+//        labEventType.getTargetVesselType;
     }
 
+    // choose lab event type
+    // choose transfer type?
+    // choose vessel type?
+    // fetch by barcode (source or destination)
+    // add / remove reagents?
+    // add / remove metadata?
+
     @HandlesEvent(TRANSFER_ACTION)
-    public Resolution upload() {
+    public Resolution transfer() {
         stationEvent.getOperator();
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
     }

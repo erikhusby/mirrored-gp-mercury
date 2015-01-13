@@ -32,9 +32,11 @@ public class ManualTransferTest {
         // render drop downs of lab event types, machine names
         // user chooses lab event type (set mode mercury), clicks button
         // POST: render skeleton of section message (or cherry, tube to tube) including default reagents and default vessel types
+        // allow user to change message type, e.g. from section to cherry?
         // user scans rack barcode
         // user clicks rack scan button (manual alternative?)
         // AJAX: render tube barcodes in geometry, with volume text box
+        // user changes vessel type / geometry?
         // user chooses source section
         // user sets volumes (need bulk change)
         // user scans destination plate
