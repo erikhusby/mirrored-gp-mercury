@@ -14,12 +14,14 @@ import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceExcep
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
@@ -399,6 +401,9 @@ public class SystemRouter implements Serializable {
                                             ProductWorkflowDefVersion productWorkflowDef =
                                                     getWorkflowVersion(workflowName, effectiveBatch.getCreatedOn());
                                             routingOptions.add(productWorkflowDef.getRouting());
+                                        } else {
+                                            // Route the control the same way as the other vessels in the container(s).
+                                            routingOptions.add(routesForAccompanyingVessels(vessel, intent));
                                         }
                                     } else {
                                         badCrspRouting();
@@ -423,6 +428,20 @@ public class SystemRouter implements Serializable {
         if(ApplicationInstance.CRSP.isCurrent()) {
             throw new RouterException("For a CRSP Deployment, Squid should never be a routing option")  ;
         }
+    }
+
+    /** Returns the routing for the other vessels that accompany the given vessel. */
+    private System routesForAccompanyingVessels(@Nonnull LabVessel labVessel, @Nonnull Intent intent) {
+        Set<LabVessel> accompanyingVessels = new HashSet<>();
+        Set<System> routes = new HashSet<>();
+        for (VesselContainer<?> vesselContainer : labVessel.getContainers()) {
+            for (LabVessel containedVessel : vesselContainer.getContainedVessels()) {
+                if (!containedVessel.equals(labVessel)) {
+                    accompanyingVessels.add(containedVessel);
+                }
+            }
+        }
+        return routeForVessels(accompanyingVessels, intent);
     }
 
     /**
