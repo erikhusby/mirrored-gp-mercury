@@ -55,7 +55,7 @@ public class ProductOrderContainerTest extends Arquillian {
     public static ProductOrder createSimpleProductOrder(ResearchProjectEjb researchProjectEjb,
                                                         BSPUserList userList) throws Exception {
         return new ProductOrder(ResearchProjectTestFactory.TEST_CREATOR, "containerTest Product Order Test1",
-                ProductOrderSampleTestFactory.createSampleList("SM-1P3X9", "SM-1P3WY", "SM-1P3XN"),
+                ProductOrderSampleTestFactory.createSampleListWithMercurySamples("SM-1P3X9", "SM-1P3WY", "SM-1P3XN"),
                 "newQuote", ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "partNumber"),
                 ResearchProjectTestFactory.createDummyResearchProject(researchProjectEjb, userList, "Test Research Project"));
     }
@@ -70,7 +70,6 @@ public class ProductOrderContainerTest extends Arquillian {
 
         Assert.assertEquals(testOrder.getTotalSampleCount(), 3);
         Assert.assertEquals(testOrder.getDuplicateCount(), 0);
-        Assert.assertEquals(testOrder.getBspSampleCount(), 3);
         Assert.assertEquals(testOrder.getFemaleCount(), 3);
         Assert.assertEquals(testOrder.getMaleCount(), 0);
 
@@ -107,7 +106,8 @@ public class ProductOrderContainerTest extends Arquillian {
     public void testSimpleNonBspProductOrder() throws Exception {
         ProductOrder testOrder =
                 new ProductOrder(ResearchProjectTestFactory.TEST_CREATOR, "containerTest Product Order Test2",
-                        ProductOrderSampleTestFactory.createSampleList("SM_12CO4", "SM_1P3WY", "SM_1P3XN"),
+                        ProductOrderSampleTestFactory.createSampleListWithMercurySamples("SM_12CO4", "SM_1P3WY",
+                                "SM_1P3XN"),
                         "newQuote",
                         ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "partNumber"),
                         ResearchProjectTestFactory.createDummyResearchProject(researchProjectEjb, userList, "Test Research Project"));
@@ -116,7 +116,7 @@ public class ProductOrderContainerTest extends Arquillian {
 
         Assert.assertEquals(testOrder.getTotalSampleCount(), 3);
         Assert.assertEquals(testOrder.getDuplicateCount(), 0);
-        Assert.assertEquals(testOrder.getBspSampleCount(), 0);
+        Assert.assertEquals(testOrder.getSampleCount(), 0);
     }
 
 }

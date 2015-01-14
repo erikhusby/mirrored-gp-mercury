@@ -21,6 +21,8 @@ import java.util.List;
  */
 public class IceJaxbBuilder {
 
+    public static final String ICE_CATCH_ENRICH = "IceCatchEnrich";
+
     public enum PlexType {
         PLEX12,
         PLEX96
@@ -117,9 +119,9 @@ public class IceJaxbBuilder {
         }
         for (int i = 1; i <= pondRegTubeBarcodes.size(); i++) {
             spriTubeBarcodes.add(i % 12 == 1 ? testPrefix + "IceSpri" + (i / 12) : null);
-            catchEnrichSparseTubeBarcodes.add(i % 12 == 1 ? testPrefix + "IceCatchEnrich" + (i / 12) : null);
+            catchEnrichSparseTubeBarcodes.add(i % 12 == 1 ? testPrefix + ICE_CATCH_ENRICH + (i / 12) : null);
             if (i % 12 == 1) {
-                catchEnrichTubeBarcodes.add(testPrefix + "IceCatchEnrich" + (i / 12));
+                catchEnrichTubeBarcodes.add(testPrefix + ICE_CATCH_ENRICH + (i / 12));
             }
         }
         icePoolingTransfer = bettaLimsMessageTestFactory.buildCherryPick("IcePoolingTransfer",
@@ -279,7 +281,7 @@ public class IceJaxbBuilder {
         bettaLimsMessageTestFactory.addMessage(messageList, postIceCatchEnrichmentSetupThermoCyclerLoaded);
 
         // IceCatchEnrichmentCleanup
-        catchEnrichRackBarcode = testPrefix + "IceCatchEnrich";
+        catchEnrichRackBarcode = testPrefix + ICE_CATCH_ENRICH;
         iceCatchEnrichmentCleanup = bettaLimsMessageTestFactory.buildPlateToRack(
                 "IceCatchEnrichmentCleanup", catchCleanupPlateBarcode, catchEnrichRackBarcode,
                 catchEnrichSparseTubeBarcodes);

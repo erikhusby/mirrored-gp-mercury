@@ -48,7 +48,8 @@
                             resultsFormatter: formatInput,
                             tokenLimit: 1,
                             tokenDelimiter: "${actionBean.priceItemTokenInput.separator}",
-                            preventDuplicates: true
+                            preventDuplicates: true,
+                            autoSelectFirstResult: true
                         }
                     );
 
@@ -58,7 +59,8 @@
                             prePopulate: ${actionBean.ensureStringResult(actionBean.addOnTokenInput.completeData)},
                             resultsFormatter: formatInput,
                             tokenDelimiter: "${actionBean.addOnTokenInput.separator}",
-                            preventDuplicates: true
+                            preventDuplicates: true,
+                            autoSelectFirstResult: true
                         }
                     );
 
@@ -68,7 +70,8 @@
                             prePopulate: ${actionBean.ensureStringResult(actionBean.materialTypeTokenInput.completeData)},
                             preventDuplicates: true,
                             tokenDelimiter: "${actionBean.materialTypeTokenInput.separator}",
-                            resultsFormatter: formatInput
+                            resultsFormatter: formatInput,
+                            autoSelectFirstResult: true
                         }
                     );
 

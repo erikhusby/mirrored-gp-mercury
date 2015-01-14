@@ -227,6 +227,11 @@ public class ProductOrderActionBeanTest {
         Assert.assertTrue(goodRinScoreSample.canRinScoreBeUsedForOnRiskCalculation());
     }
 
+    public void testCanEmptyRinScoreBeUsedForOnRiskCalculation() {
+        SampleData emptyRinScoreSample = getSampleDTOWithEmptyRinScore();
+        Assert.assertTrue(emptyRinScoreSample.canRinScoreBeUsedForOnRiskCalculation());
+    }
+
     public void testPostReceiveOptions() throws Exception {
         Product product = new Product();
         pdo.setProduct(product);
@@ -312,6 +317,15 @@ public class ProductOrderActionBeanTest {
         Map<BSPSampleSearchColumn, String> dataMap = new EnumMap<BSPSampleSearchColumn, String>(
                 BSPSampleSearchColumn.class) {{
             put(BSPSampleSearchColumn.RIN, String.valueOf(expectedNumericValue));
+            put(BSPSampleSearchColumn.SAMPLE_ID, "SM-99D2A");
+        }};
+        return new BspSampleData(dataMap);
+    }
+
+    private SampleData getSampleDTOWithEmptyRinScore() {
+        Map<BSPSampleSearchColumn, String> dataMap = new EnumMap<BSPSampleSearchColumn, String>(
+                BSPSampleSearchColumn.class) {{
+            put(BSPSampleSearchColumn.RIN, "");
             put(BSPSampleSearchColumn.SAMPLE_ID, "SM-99D2A");
         }};
         return new BspSampleData(dataMap);

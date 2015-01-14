@@ -34,7 +34,8 @@
                         tokenDelimiter: "${actionBean.bioProjectTokenInput.separator}",
                         preventDuplicates: true,
                         tokenLimit: 1,
-                        resultsFormatter: formatInput
+                        resultsFormatter: formatInput,
+                        autoSelectFirstResult: true
                     }
             );
 

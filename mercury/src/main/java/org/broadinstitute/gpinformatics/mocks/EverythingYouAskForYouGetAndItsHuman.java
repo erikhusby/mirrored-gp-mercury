@@ -14,8 +14,11 @@ import java.util.Map;
  * Mock {@link BSPSampleSearchService} that finds everything
  * you ask for.  Various return bsp columns are hardcoded, in particular
  * species (homo sapiens) and material type (genomic dna).
+ *
+ * @deprecated Use SampleDataFetcherStub.EverythingYouAskForYouGetAndItsHuman instead.
  */
 @Alternative
+@Deprecated
 public class EverythingYouAskForYouGetAndItsHuman implements BSPSampleSearchService {
     @Override
     public List<Map<BSPSampleSearchColumn, String>> runSampleSearch(Collection<String> sampleIDs, BSPSampleSearchColumn... resultColumns) {

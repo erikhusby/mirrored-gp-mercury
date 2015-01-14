@@ -245,7 +245,7 @@ public class LabEvent {
             targetLabVessels.add(vesselToSectionTransfer.getTargetVesselContainer().getEmbedder());
         }
         for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfers) {
-            targetLabVessels.add(vesselToVesselTransfer.getTargetLabVessel());
+            targetLabVessels.add(vesselToVesselTransfer.getTargetVessel());
         }
 
         return targetLabVessels;

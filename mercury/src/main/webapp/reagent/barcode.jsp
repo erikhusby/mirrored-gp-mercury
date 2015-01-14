@@ -16,7 +16,8 @@
                             resultsFormatter: formatInput,
                             tokenLimit: 1,
                             tokenDelimiter: "${actionBean.reagentDesignTokenInput.separator}",
-                            preventDuplicates: true
+                            preventDuplicates: true,
+                            autoSelectFirstResult: true
                         });
             });
 

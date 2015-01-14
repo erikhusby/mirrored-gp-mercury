@@ -257,7 +257,7 @@ public class LabEventResource {
                 TransferBean transferBean = new TransferBean();
                 transferBean.setType("VesselToVesselTransfer");
                 transferBean.setSourceBarcode(vesselToVesselTransfer.getSourceVessel().getLabel());
-                transferBean.setTargetBarcode(vesselToVesselTransfer.getTargetLabVessel().getLabel());
+                transferBean.setTargetBarcode(vesselToVesselTransfer.getTargetVessel().getLabel());
                 labEventBean.getTransfers().add(transferBean);
             }
 

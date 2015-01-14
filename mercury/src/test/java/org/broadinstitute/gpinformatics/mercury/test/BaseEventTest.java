@@ -7,12 +7,12 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentration;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentrationProducer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
@@ -55,11 +55,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -254,10 +254,19 @@ public class BaseEventTest {
      */
     protected Bucket createAndPopulateBucket(Map<String, BarcodedTube> mapBarcodeToTube, ProductOrder productOrder,
                                              String bucketName) {
+        // Uses map of sample name to pdoSample for making the link between pdoSample to MercurySample.
+        Map<String, ProductOrderSample> mapSampleNameToPdoSample = new HashMap<>();
+        for (ProductOrderSample pdoSample : productOrder.getSamples()) {
+            mapSampleNameToPdoSample.put(pdoSample.getSampleKey(), pdoSample);
+        }
         Bucket workingBucket = new Bucket(bucketName);
-
         for (BarcodedTube tube : mapBarcodeToTube.values()) {
             workingBucket.addEntry(productOrder, tube, BucketEntry.BucketEntryType.PDO_ENTRY);
+            for (MercurySample mercurySample : tube.getMercurySamples()) {
+                if (mapSampleNameToPdoSample.containsKey(mercurySample.getSampleKey())) {
+                    mercurySample.addProductOrderSample(mapSampleNameToPdoSample.get(mercurySample.getSampleKey()));
+                }
+            }
         }
         return workingBucket;
     }
@@ -609,7 +618,7 @@ public class BaseEventTest {
 
         // Controls are added in a re-array
         BarcodedTube posControlTube = new BarcodedTube("C1");
-        SampleData bspSampleDataPos = new BspSampleData(
+        BspSampleData bspSampleDataPos = new BspSampleData(
                 new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
                     put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, POSITIVE_CONTROL);
                 }});
@@ -618,7 +627,7 @@ public class BaseEventTest {
         mapBarcodeToDaughterTube.put(VesselPosition.H11, posControlTube);
 
         BarcodedTube negControlTube = new BarcodedTube("C2");
-        SampleData bspSampleDataNeg = new BspSampleData(
+        BspSampleData bspSampleDataNeg = new BspSampleData(
                 new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
                     put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, NEGATIVE_CONTROL);
                 }});
@@ -697,7 +706,7 @@ public class BaseEventTest {
 
         // Controls are added in a re-array
         BarcodedTube posControlTube = new BarcodedTube("C1");
-        SampleData bspSampleDataPos = new BspSampleData(
+        BspSampleData bspSampleDataPos = new BspSampleData(
                 new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
                     put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, POSITIVE_CONTROL);
                     put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, POSITIVE_CONTROL);
@@ -707,7 +716,7 @@ public class BaseEventTest {
         mapBarcodeToDaughterTube.put(VesselPosition.H11, posControlTube);
 
         BarcodedTube negControlTube = new BarcodedTube("C2");
-        SampleData bspSampleDataNeg = new BspSampleData(
+        BspSampleData bspSampleDataNeg = new BspSampleData(
                 new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
                     put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, NEGATIVE_CONTROL);
                     put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID, NEGATIVE_CONTROL);

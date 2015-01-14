@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
@@ -52,7 +53,7 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
 
         labVessel = new BarcodedTube("22834023", BarcodedTube.BarcodedTubeType.MatrixTube);
 
-        sampleList1 = ProductOrderSampleTestFactory.createDBFreeSampleList("SM-test1");
+        sampleList1 = ProductOrderSampleTestFactory.createDBFreeSampleList(MercurySample.MetadataSource.BSP, "SM-test1");
         testPdo1 = ProductOrderTestFactory.buildExExProductOrder(1);
         testPdo1.setJiraTicketKey("PDO-14");
         testPdo1.setSamples(sampleList1);
@@ -60,7 +61,7 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
         testPdo1.getProduct().setProductFamily(new ProductFamily(
                 ProductFamily.ProductFamilyName.EXOME.getFamilyName()));
 
-        sampleList2 = ProductOrderSampleTestFactory.createDBFreeSampleList("SM-test2");
+        sampleList2 = ProductOrderSampleTestFactory.createDBFreeSampleList(MercurySample.MetadataSource.BSP, "SM-test2");
         testPdo2 = ProductOrderTestFactory.buildExExProductOrder(1);
         testPdo2.setJiraTicketKey("PDO-15");
         testPdo2.setSamples(sampleList2);
@@ -68,7 +69,7 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
         testPdo2.getProduct().setProductFamily(new ProductFamily(
                 ProductFamily.ProductFamilyName.EXOME.getFamilyName()));
 
-        sampleList3 = ProductOrderSampleTestFactory.createDBFreeSampleList("SM-test3");
+        sampleList3 = ProductOrderSampleTestFactory.createDBFreeSampleList(MercurySample.MetadataSource.BSP, "SM-test3");
         testPdo3 = ProductOrderTestFactory.buildExExProductOrder(1);
         testPdo3.setJiraTicketKey("PDO-16");
         testPdo3.setSamples(sampleList3);
@@ -76,7 +77,7 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
         testPdo3.getProduct().setProductFamily(new ProductFamily(
                 ProductFamily.ProductFamilyName.EXOME.getFamilyName()));
 
-        sampleList4 = ProductOrderSampleTestFactory.createDBFreeSampleList("SM-test4");
+        sampleList4 = ProductOrderSampleTestFactory.createDBFreeSampleList(MercurySample.MetadataSource.BSP, "SM-test4");
         draftPDO = ProductOrderTestFactory.buildExExProductOrder(1);
         draftPDO.setJiraTicketKey("PDO-17");
         draftPDO.setSamples(sampleList4);
@@ -127,7 +128,8 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
         ProductOrderSample poSample4 = draftPDO.getSamples().get(0);
         sampleSet.add(poSample4);
 
-        List<ProductOrderSample> sampleList5 = ProductOrderSampleTestFactory.createDBFreeSampleList("SM-test5");
+        List<ProductOrderSample> sampleList5 = ProductOrderSampleTestFactory.createDBFreeSampleList(
+                MercurySample.MetadataSource.BSP, "SM-test5");
         ProductOrder nonExomeExpressPdo = ProductOrderTestFactory.buildHybridSelectionProductOrder(1, "PDO-18");
         ProductOrderSample nonExomeExpressSample5 = nonExomeExpressPdo.getSamples().get(0);
         nonExomeExpressPdo.setJiraTicketKey("PDO-18");
@@ -215,7 +217,8 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
         ProductOrderSample poSample4 = draftPDO.getSamples().get(0);
         productOrderSampleSet.add(poSample4);
 
-        List<ProductOrderSample> sampleList5 = ProductOrderSampleTestFactory.createDBFreeSampleList("SM-test5");
+        List<ProductOrderSample> sampleList5 = ProductOrderSampleTestFactory.createDBFreeSampleList(
+                MercurySample.MetadataSource.BSP, "SM-test5");
         ProductOrder nonExomeExpressPdo = ProductOrderTestFactory.buildHybridSelectionProductOrder(1, "PDO-18");
 
         ProductOrderSample nonExomesample = nonExomeExpressPdo.getSamples().get(0);
