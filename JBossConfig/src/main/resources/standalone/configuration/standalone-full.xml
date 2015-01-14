@@ -380,7 +380,6 @@
                     </authentication>
                 </security-domain>
 
-
                 <security-domain name="other" cache-type="default">
                     <authentication>
                         <login-module code="Remoting" flag="optional">

@@ -186,7 +186,7 @@ public abstract class LabVessel implements Serializable {
     @BatchSize(size = 100)
     private Set<VesselToVesselTransfer> vesselToVesselTransfersThisAsSource = new HashSet<>();
 
-    @OneToMany(mappedBy = "targetLabVessel", cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "targetVessel", cascade = CascadeType.PERSIST)
     @BatchSize(size = 100)
     private Set<VesselToVesselTransfer> vesselToVesselTransfersThisAsTarget = new HashSet<>();
 
@@ -1015,7 +1015,7 @@ public abstract class LabVessel implements Serializable {
     private List<VesselEvent> getDescendants() {
         List<VesselEvent> vesselEvents = new ArrayList<>();
         for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsSource) {
-            vesselEvents.add(new VesselEvent(vesselToVesselTransfer.getTargetLabVessel(), null, null,
+            vesselEvents.add(new VesselEvent(vesselToVesselTransfer.getTargetVessel(), null, null,
                     vesselToVesselTransfer.getLabEvent()));
         }
         for (VesselToSectionTransfer vesselToSectionTransfer : vesselToSectionTransfersThisAsSource) {
@@ -1528,7 +1528,7 @@ public abstract class LabVessel implements Serializable {
         Set<MolecularIndexReagent> indexes = new HashSet<>();
         for (SampleInstance sampleInstance : getAllSamplesOfType(SampleType.ANY)) {
             if (sampleInstance.getStartingSample().equals(sample)) {
-                indexes.addAll(getIndexesForSampleInstance(sampleInstance));
+                indexes.addAll(getIndexesForSampleInstanceV1(sampleInstance));
             }
         }
         return indexes;
@@ -1541,7 +1541,7 @@ public abstract class LabVessel implements Serializable {
      *
      * @return A set of indexes for the sample instance passed in.
      */
-    public Set<MolecularIndexReagent> getIndexesForSampleInstance(SampleInstance sampleInstance) {
+    public Set<MolecularIndexReagent> getIndexesForSampleInstanceV1(SampleInstance sampleInstance) {
         return getIndexes(sampleInstance.getReagents());
     }
 

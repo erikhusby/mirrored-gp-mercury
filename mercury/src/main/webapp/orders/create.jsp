@@ -97,7 +97,8 @@
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.owner.completeData)},
                                 tokenLimit: 1,
                                 tokenDelimiter: "${actionBean.owner.separator}",
-                                resultsFormatter: formatInput
+                                resultsFormatter: formatInput,
+                                autoSelectFirstResult: true
                             }
                     );
 
@@ -109,7 +110,8 @@
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.projectTokenInput.completeData)},
                                 resultsFormatter: formatInput,
                                 tokenDelimiter: "${actionBean.projectTokenInput.separator}",
-                                tokenLimit: 1
+                                tokenLimit: 1,
+                                autoSelectFirstResult: true
                             }
                     );
 
@@ -121,19 +123,20 @@
                                 resultsFormatter: formatInput,
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.productTokenInput.completeData)},
                                 tokenDelimiter: "${actionBean.productTokenInput.separator}",
-                                tokenLimit: 1
+                                tokenLimit: 1,
+                                autoSelectFirstResult: true
                             }
                     );
                     $j("#kitCollection").tokenInput(
                             "${ctxpath}/orders/order.action?groupCollectionAutocomplete=", {
                                 hintText: "Search for group and collection",
-                                prePopulate: ${actionBean.ensureStringResult(actionBean.bspGroupCollectionTokenInput.getCompleteData(!actionBean.editOrder.draft))
-                            },
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.bspGroupCollectionTokenInput.getCompleteData(!actionBean.editOrder.draft)) },
                                 onAdd: updateUIForCollectionChoice,
                                 onDelete: updateUIForCollectionChoice,
                                 resultsFormatter: formatInput,
                                 tokenDelimiter: "${actionBean.bspGroupCollectionTokenInput.separator}",
-                                tokenLimit: 1
+                                tokenLimit: 1,
+                                autoSelectFirstResult: true
                             }
                     );
 
@@ -143,7 +146,8 @@
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.bspShippingLocationTokenInput.getCompleteData(!actionBean.editOrder.draft))},
                                 resultsFormatter: formatInput,
                                 tokenDelimiter: "${actionBean.bspShippingLocationTokenInput.separator}",
-                                tokenLimit: 1
+                                tokenLimit: 1,
+                                autoSelectFirstResult: true
                             }
                     );
 
@@ -153,7 +157,8 @@
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.notificationListTokenInput.getCompleteData(!actionBean.editOrder.draft))},
                                 tokenDelimiter: "${actionBean.notificationListTokenInput.separator}",
                                 preventDuplicates: true,
-                                resultsFormatter: formatInput
+                                resultsFormatter: formatInput,
+                                autoSelectFirstResult: true
                             }
                     );
 

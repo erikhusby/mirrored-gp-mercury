@@ -322,20 +322,34 @@ public class LabEventFactory implements Serializable {
             labVessel = labEvent.getSourceLabVessels().iterator().next();
         }
         if (labEventType.getVolumeConcUpdate() == LabEventType.VolumeConcUpdate.BSP_AND_MERCURY) {
+            MercurySample mercurySample = null;
             if (labVessel.getContainerRole() != null) {
-                labVessel = labVessel.getContainerRole().getContainedVessels().iterator().next();
-            }
-            Set<SampleInstanceV2> sampleInstances = labVessel.getSampleInstancesV2();
-            if (!sampleInstances.isEmpty()) {
-                Set<MercurySample> mercurySamples = sampleInstances.iterator().next().getRootMercurySamples();
-                if (!mercurySamples.isEmpty()) {
-                    if (mercurySamples.iterator().next().getMetadataSource() == MercurySample.MetadataSource.BSP) {
-                        return true;
+                for (LabVessel testVessel : labVessel.getContainerRole().getContainedVessels()) {
+                    mercurySample = extractSample(testVessel.getSampleInstancesV2());
+                    if (mercurySample != null) {
+                        break;
                     }
                 }
+            } else {
+                mercurySample = extractSample(labVessel.getSampleInstancesV2());
             }
+            // If no mercury samples found, assumes samples are derived from old BSP samples that haven't
+            // been exported to Mercury.  This is OK provided they are processed by Squid
+            // CRSP/Buick samples are expected to be already accessioned and therefore have mercury samples.
+            return (mercurySample == null || mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP);
         }
         return false;
+    }
+
+    private MercurySample extractSample(Collection<SampleInstanceV2> sampleInstances) {
+        MercurySample mercurySample = null;
+        for (SampleInstanceV2 sampleInstance : sampleInstances) {
+            mercurySample = sampleInstance.getRootOrEarliestMercurySample();
+            if (mercurySample != null) {
+                break;
+            }
+        }
+        return mercurySample;
     }
 
     /**
