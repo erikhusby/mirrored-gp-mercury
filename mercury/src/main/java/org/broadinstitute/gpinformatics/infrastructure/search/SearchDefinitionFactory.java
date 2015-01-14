@@ -89,11 +89,12 @@ public class SearchDefinitionFactory {
     }
 
     public static ConfigurableSearchDefinition getForEntity(String entity) {
-        /* **** Uncomment during development to rebuild for hot-swap changes ****
-        SearchDefinitionFactory fact = new SearchDefinitionFactory();
-        fact.buildLabEventSearchDef();
-        fact.buildLabVesselSearchDef();
-        */
+        /* **** Change condition to true during development to rebuild for JVM hot-swap changes **** */
+        if( false ) {
+            SearchDefinitionFactory fact = new SearchDefinitionFactory();
+            fact.buildLabEventSearchDef();
+            fact.buildLabVesselSearchDef();
+        }
 
         return MAP_NAME_TO_DEF.get(entity);
     }

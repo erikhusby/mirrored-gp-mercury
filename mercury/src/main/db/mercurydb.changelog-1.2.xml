@@ -184,12 +184,20 @@
 
     </changeSet>
     <changeSet id="GPLIM-3267-1" author="jsacco">
-        <preConditions onFail="MARK_RAN">
-            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM USER_INDEXES WHERE INDEX_NAME = 'IX_VT_SOURCE_VESSEL'</sqlCheck>
-        </preConditions>
         <createIndex tableName="VESSEL_TRANSFER" indexName="IX_VT_SOURCE_VESSEL">
             <column name="SOURCE_VESSEL"/>
         </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-3267-2" author="jsacco">
+        <preConditions onFail="CONTINUE">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM VESSEL_TRANSFER
+                 WHERE TARGET_LAB_VESSEL IS NOT NULL
+                    OR DTYPE = 'VesselToVesselTransfer'
+            </sqlCheck>
+        </preConditions>
+        <dropColumn columnName="TARGET_LAB_VESSEL"
+                    tableName="VESSEL_TRANSFER"/>
     </changeSet>
 
 </databaseChangeLog>
