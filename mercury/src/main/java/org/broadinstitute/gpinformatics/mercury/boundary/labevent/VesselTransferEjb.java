@@ -167,6 +167,7 @@ public class VesselTransferEjb {
         return labEvent;
     }
 
+    // todo jmt delete?
     public ReceptaclePlateTransferEvent buildDenatureTubeToFlowcell(String eventType, String denatureTubeBarcode,
                                                                     String flowcellBarcode, String username,
                                                                     String eventStationName) {

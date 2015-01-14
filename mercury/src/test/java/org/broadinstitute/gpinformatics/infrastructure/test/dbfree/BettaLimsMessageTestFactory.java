@@ -492,6 +492,7 @@ public class BettaLimsMessageTestFactory {
         return plateTransferEvent;
     }
 
+    // todo jmt delete?
     @SuppressWarnings("UnusedDeclaration")
     public ReceptaclePlateTransferEvent buildDenatureTubeToFlowcell(String eventType, String denatureTubeBarcode,
                                                                     String flowcellBarcode, String flowcellType,
@@ -513,6 +514,7 @@ public class BettaLimsMessageTestFactory {
         return event;
     }
 
+    // todo jmt delete?
     @SuppressWarnings("UnusedDeclaration")
     public PlateEventType buildFlowcellEvent(String eventType, String flowcellBarcode) {
 

@@ -1,5 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.ContainerGeometryType;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -972,7 +975,10 @@ public enum LabEventType {
     }
 
     private final MessageType messageType;
-    
+
+    private final ContainerGeometryType sourceContainerGeometryType;
+    private final ContainerGeometryType targetContainerGeometryType;
+
     /**
      * One attempt at trying to make a very generic
      * {@link LabEvent} to handle lots of different
@@ -1001,6 +1007,8 @@ public enum LabEventType {
         this.sendToBsp = sendToBsp;
         this.volumeConcUpdate = volumeConcUpdate;
         this.messageType = MessageType.PLATE_TRANSFER_EVENT;
+        this.sourceContainerGeometryType = StaticPlate.PlateType.Eppendorf96;
+        this.targetContainerGeometryType = StaticPlate.PlateType.Eppendorf96;
     }
 
     public String getName() {
@@ -1038,5 +1046,13 @@ public enum LabEventType {
 
     public MessageType getMessageType() {
         return messageType;
+    }
+
+    public ContainerGeometryType getSourceContainerGeometryType() {
+        return sourceContainerGeometryType;
+    }
+
+    public ContainerGeometryType getTargetContainerGeometryType() {
+        return targetContainerGeometryType;
     }
 }

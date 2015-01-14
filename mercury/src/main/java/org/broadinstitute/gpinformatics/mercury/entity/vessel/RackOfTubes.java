@@ -29,8 +29,7 @@ public class RackOfTubes extends LabVessel {
     protected RackOfTubes() {
     }
 
-    // todo jmt create interface implemented by this and PlateType, to get display name and geometry.
-    public enum RackType {
+    public enum RackType implements ContainerGeometryType {
         Abgene96SlotRack("Abgene96SlotRack", VesselGeometry.G12x8),
         CBSStraw_Box("CBSStraw_Box", VesselGeometry.G12x8),
         Conical15ml_10x5rack("Conical15ml_10x5rack", VesselGeometry.G4x10_NUM),
@@ -84,10 +83,12 @@ public class RackOfTubes extends LabVessel {
             return MAP_NAME_TO_RACK_TYPE.get(automationName);
         }
 
+        @Override
         public String getDisplayName() {
             return displayName;
         }
 
+        @Override
         public VesselGeometry getVesselGeometry() {
             return vesselGeometry;
         }
