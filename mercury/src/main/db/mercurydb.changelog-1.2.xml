@@ -183,5 +183,13 @@
         </createIndex>
 
     </changeSet>
+    <changeSet id="GPLIM-3267-1" author="jsacco">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM USER_INDEXES WHERE INDEX_NAME = 'IX_VT_SOURCE_VESSEL'</sqlCheck>
+        </preConditions>
+        <createIndex tableName="VESSEL_TRANSFER" indexName="IX_VT_SOURCE_VESSEL">
+            <column name="SOURCE_VESSEL"/>
+        </createIndex>
+    </changeSet>
 
 </databaseChangeLog>
