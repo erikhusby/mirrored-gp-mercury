@@ -20,17 +20,16 @@ public class VesselToVesselTransfer extends VesselTransfer {
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private LabVessel sourceVessel;
 
-    // todo jmt should be targetVessel
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
-    private LabVessel targetLabVessel;
+    private LabVessel targetVessel;
 
     @Index(name = "ix_vtvt_lab_event")
     @ManyToOne
     private LabEvent labEvent;
 
-    public VesselToVesselTransfer(LabVessel sourceVessel, LabVessel targetLabVessel, LabEvent labEvent) {
+    public VesselToVesselTransfer(LabVessel sourceVessel, LabVessel targetVessel, LabEvent labEvent) {
         this.sourceVessel = sourceVessel;
-        this.targetLabVessel = targetLabVessel;
+        this.targetVessel = targetVessel;
         this.labEvent = labEvent;
     }
 
@@ -41,8 +40,8 @@ public class VesselToVesselTransfer extends VesselTransfer {
         return sourceVessel;
     }
 
-    public LabVessel getTargetLabVessel() {
-        return targetLabVessel;
+    public LabVessel getTargetVessel() {
+        return targetVessel;
     }
 
     public LabEvent getLabEvent() {
