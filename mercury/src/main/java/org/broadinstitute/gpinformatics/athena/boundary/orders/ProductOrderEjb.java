@@ -826,15 +826,11 @@ public class ProductOrderEjb {
     }
 
     /**
-     * Sample abandonment method with parameter types guessed as appropriate for use with Stripes.
+     * Abandon a list of samples and add a message to the JIRA ticket to reflect this change.
      *
-     * @param jiraTicketKey JIRA ticket key of the PDO in question
+     * @param jiraTicketKey the order's JIRA key
      * @param samples       the samples to abandon
      * @param comment       optional user supplied comment about this action.
-     *
-     * @throws IOException
-     * @throws SampleDeliveryStatusChangeException
-     * @throws NoSuchPDOException
      */
     public void abandonSamples(@Nonnull String jiraTicketKey, @Nonnull Collection<ProductOrderSample> samples,
                                @Nonnull String comment)
@@ -846,15 +842,11 @@ public class ProductOrderEjb {
     }
 
     /**
-     * Sample abandonment method with parameter types guessed as appropriate for use with Stripes.
+     * Un-abandon a list of samples and add a message to the JIRA ticket to reflect this change.
      *
-     * @param jiraTicketKey JIRA ticket key of the PDO in question
-     * @param sampleIds       the samples to abandon
+     * @param jiraTicketKey the order's JIRA key
+     * @param sampleIds       the samples to un-abandon
      * @param comment       optional user supplied comment about this action.
-     *
-     * @throws IOException
-     * @throws SampleDeliveryStatusChangeException
-     * @throws NoSuchPDOException
      */
     public void unAbandonSamples(@Nonnull String jiraTicketKey, @Nonnull Collection<Long> sampleIds,
                                  @Nonnull String comment, @Nonnull MessageReporter reporter)
