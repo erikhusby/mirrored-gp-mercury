@@ -213,9 +213,6 @@ public class ProductOrderResource {
      */
     private void addProjectManagersToJIRA(@Nonnull ProductOrder productOrder, Long[] projectManagers)
             throws IOException {
-        // Remove the PDO owner from the list of PMs.
-        projectManagers = ArrayUtils.removeElement(projectManagers, productOrder.getCreatedBy());
-
         // Convert IDs to Users.
         List<BspUser> managers = new ArrayList<>(projectManagers.length);
         for (Long projectManager : projectManagers) {
