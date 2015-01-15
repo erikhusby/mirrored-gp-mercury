@@ -40,7 +40,7 @@
                 <c:choose>
                     <c:when test="${empty plateTransfer.sourcePositionMap}">
                         Source section:
-                        <stripes:select name="plateTransfer.sourcePlate.section" id="sourceSection">
+                        <stripes:select name="stationEvent.sourcePlate.section" id="sourceSection">
                             <stripes:options-enumeration
                                     enum="org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection" label="sectionName"/>
                         </stripes:select>
@@ -64,7 +64,7 @@
                 <c:choose>
                     <c:when test="${empty plateTransfer.sourcePositionMap}">
                         Destination section:
-                        <stripes:select name="plateTransfer.plate.section" id="destSection">
+                        <stripes:select name="stationEvent.plate.section" id="destSection">
                             <stripes:options-enumeration
                                     enum="org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection" label="sectionName"/>
                         </stripes:select>
