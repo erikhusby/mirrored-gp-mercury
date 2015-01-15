@@ -100,6 +100,8 @@ public class ProductOrderEjb {
 
     private MercurySampleDao mercurySampleDao;
 
+    private ProductOrderJiraUtil productOrderJiraUtil;
+
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
     public ProductOrderEjb() {
@@ -114,7 +116,8 @@ public class ProductOrderEjb {
                            BSPUserList userList,
                            BucketEjb bucketEjb,
                            SquidConnector squidConnector,
-                           MercurySampleDao mercurySampleDao) {
+                           MercurySampleDao mercurySampleDao,
+                           ProductOrderJiraUtil productOrderJiraUtil) {
         this.productOrderDao = productOrderDao;
         this.productDao = productDao;
         this.quoteService = quoteService;
@@ -124,6 +127,7 @@ public class ProductOrderEjb {
         this.bucketEjb = bucketEjb;
         this.squidConnector = squidConnector;
         this.mercurySampleDao = mercurySampleDao;
+        this.productOrderJiraUtil = productOrderJiraUtil;
     }
 
     private final Log log = LogFactory.getLog(ProductOrderEjb.class);
@@ -471,22 +475,6 @@ public class ProductOrderEjb {
 
         updatedProductOrder.setProductOrderAddOns(productOrderAddOns);
 
-    }
-
-    /**
-     * Add the provided list of users as PMs on the JIRA issue associated with this order.
-     */
-    public void addProjectManagersToJIRA(ProductOrder productOrder, List<BspUser> projectManagers) throws IOException {
-        JiraIssue issue = jiraService.getIssue(productOrder.getJiraTicketKey());
-        List<CustomField.NameContainer> managers = new ArrayList<>(projectManagers.size());
-        for (BspUser manager : projectManagers) {
-            managers.add(new CustomField.NameContainer(manager.getUsername()));
-        }
-        setCustomField(issue, ProductOrder.JiraField.PMS, managers);
-    }
-
-    private void setCustomField(JiraIssue issue, ProductOrder.JiraField field, Object value) throws IOException {
-        issue.setCustomFieldUsingTransition(field, value, JiraTransition.DEVELOPER_EDIT.stateName);
     }
 
     public static class NoSuchPDOException extends Exception {
@@ -906,8 +894,8 @@ public class ProductOrderEjb {
         String nameList = StringUtils.join(ProductOrderSample.getSampleNames(samples), ",");
         issue.addComment(MessageFormat.format("{0} {1} samples: {2}.",
                 userBean.getLoginUserName(), operation, nameList));
-        setCustomField(issue, ProductOrder.JiraField.SAMPLE_IDS, order.getSampleString());
-        setCustomField(issue, ProductOrder.JiraField.NUMBER_OF_SAMPLES, order.getSamples().size());
+        productOrderJiraUtil.setCustomField(issue, ProductOrder.JiraField.SAMPLE_IDS, order.getSampleString());
+        productOrderJiraUtil.setCustomField(issue, ProductOrder.JiraField.NUMBER_OF_SAMPLES, order.getSamples().size());
 
         reporter.addMessage("{0} samples: {1}.", WordUtils.capitalize(operation), nameList);
 
@@ -996,14 +984,14 @@ public class ProductOrderEjb {
         try {
             if (editOrder.isDraft()) {
                 // Only Draft orders are not already created in JIRA.
-                ProductOrderJiraUtil.createIssueForOrder(editOrder, jiraService);
+                productOrderJiraUtil.createIssueForOrder(editOrder);
             }
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
             editOrder.setPlacedDate(new Date());
             transitionIssueToSameOrderStatus(editOrder);
 
             // Now that the order is placed, add the comments about the samples to the issue.
-            ProductOrderJiraUtil.addSampleComments(editOrder, jiraService.getIssue(editOrder.getJiraTicketKey()));
+            productOrderJiraUtil.addSampleComments(editOrder);
 
         } catch (IOException e) {
             String message = "Unable to create the Product Order in Jira";

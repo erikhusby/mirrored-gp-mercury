@@ -166,6 +166,9 @@ public class BettaLimsMessageResourceTest extends Arquillian {
     private JiraService jiraService;
 
     @Inject
+    private ProductOrderJiraUtil productOrderJiraUtil;
+
+    @Inject
     private WorkflowValidator workflowValidator;
 
     @Inject
@@ -642,7 +645,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         productOrderDao.persist(productOrder);
         try {
-            ProductOrderJiraUtil.createIssueForOrder(productOrder, jiraService);
+            productOrderJiraUtil.createIssueForOrder(productOrder);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

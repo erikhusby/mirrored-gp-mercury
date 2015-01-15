@@ -143,6 +143,9 @@ public class ProductOrderResource {
     @Inject
     private BSPUserList bspUserList;
 
+    @Inject
+    private ProductOrderJiraUtil productOrderJiraUtil;
+
     /**
      * Should be used only by test code
      */
@@ -206,9 +209,10 @@ public class ProductOrderResource {
     }
 
     /**
-     * Add all the PMs to the order in JIRA.
+     * Add all the PMs to the order in JIRA, so they're notified when the issue is modified.
      */
-    private void addProjectManagersToJIRA(ProductOrder productOrder, Long[] projectManagers) throws IOException {
+    private void addProjectManagersToJIRA(@Nonnull ProductOrder productOrder, Long[] projectManagers)
+            throws IOException {
         // Remove the PDO owner from the list of PMs.
         projectManagers = ArrayUtils.removeElement(projectManagers, productOrder.getCreatedBy());
 
@@ -218,10 +222,13 @@ public class ProductOrderResource {
             BspUser user = bspUserList.getById(projectManager);
             if (user != null) {
                 managers.add(user);
+            } else {
+                log.error("setJiraPMsField: unexpected null user for ID " + projectManager
+                          + " from research project " + productOrder.getResearchProject().getBusinessKey());
             }
         }
         if (!managers.isEmpty()) {
-            productOrderEjb.addProjectManagersToJIRA(productOrder, managers);
+            productOrderJiraUtil.setJiraPMsField(productOrder, managers);
         }
     }
 
@@ -315,7 +322,7 @@ public class ProductOrderResource {
         try {
             productOrder.setCreatedBy(user.getUserId());
             productOrder.prepareToSave(user, ProductOrder.SaveType.CREATING);
-            ProductOrderJiraUtil.createIssueForOrder(productOrder, jiraService);
+            productOrderJiraUtil.createIssueForOrder(productOrder);
             productOrder.setOrderStatus(initialStatus);
 
             // Not supplying add-ons at this point, just saving what we defined above and then flushing to make sure
