@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.apache.commons.lang3.time.FastDateFormat;
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -656,15 +657,46 @@ public class SearchDefinitionFactory {
     }
 
     /**
-     * Traverse lab vessel events looking for specific types
+     * Traverse lab vessel events looking for specific types and extract the vessel position
      * @param labVessel
      * @param labEventTypes Mutually exclusive event types
      * @param useTargetContainer Should target container (vs. source container) be used for positions?
      * @return
      */
-    private Object getEventPosition(LabVessel labVessel, List<LabEventType> labEventTypes, boolean useTargetContainer ) {
-
+    private List<String> getEventPosition(LabVessel labVessel, List<LabEventType> labEventTypes, boolean useTargetContainer ) {
         List<String> results = new ArrayList<>();
+        for( Pair<VesselPosition,String> pair : getVesselPositionForEvent(labVessel, labEventTypes, useTargetContainer ) ) {
+            results.add(pair.getLeft().toString());
+        }
+        return results;
+    }
+
+    /**
+     * Traverse lab vessel events looking for specific types and extract the vessel barcode
+     * @param labVessel
+     * @param labEventTypes Mutually exclusive event types
+     * @param useTargetContainer Should target container (vs. source container) be used for positions?
+     * @return
+     */
+    private List<String> getEventLabel(LabVessel labVessel, List<LabEventType> labEventTypes, boolean useTargetContainer) {
+        List<String> results = new ArrayList<>();
+        for( Pair<VesselPosition,String> pair : getVesselPositionForEvent(labVessel, labEventTypes, useTargetContainer ) ) {
+            results.add(pair.getRight());
+        }
+        return results;
+    }
+
+    /**
+     * Shared logic to traverse lab vessel events looking for specific types and extract the vessel position and barcode
+     * TODO jms Should we cache in row context to avoid duplications if/when position and label are in results?
+     * @param labVessel
+     * @param labEventTypes Mutually exclusive event types
+     * @param useTargetContainer Should target container (vs. source container) be used for positions?
+     * @return
+     */
+    private List<Pair<VesselPosition,String>> getVesselPositionForEvent(LabVessel labVessel, List<LabEventType> labEventTypes, boolean useTargetContainer ) {
+
+        List<Pair<VesselPosition,String>> results = new ArrayList<>();
 
         // Look for in-place
         Set<LabEvent> inPlaceEvents = labVessel.getInPlaceEventsWithContainers();
@@ -673,7 +705,7 @@ public class SearchDefinitionFactory {
                 VesselContainer container = event.getInPlaceLabVessel().getContainerRole();
                 VesselPosition position = container.getPositionOfVessel(labVessel);
                 if( position != null ) {
-                    results.add(position.toString());
+                    results.add( Pair.of(position, labVessel.getLabel() ) );
                 }
             }
         }
@@ -687,7 +719,7 @@ public class SearchDefinitionFactory {
                 = labVessel.findVesselsForLabEventTypes( labEventTypes, useTargetContainer );
 
         if( mapEventToVessels.isEmpty() ) {
-            return "";
+            return results;
         }
 
         LabEvent labEvent = mapEventToVessels.entrySet().iterator().next().getKey();
@@ -720,28 +752,21 @@ public class SearchDefinitionFactory {
         }
 
         if( vesselContainer == null || vesselContainer.getMapPositionToVessel().isEmpty() ) {
-            return "";
+            return results;
         }
 
         VesselPosition position = vesselContainer.getPositionOfVessel(labVessel);
-        results.add(position == null ? "" : position.toString());
+        if( position != null) {
+            results.add( Pair.of(position, labVessel.getLabel() ) );
+        }
 
         for (LabVessel descendantVessel : descendantLabVessels) {
             position = vesselContainer.getPositionOfVessel(descendantVessel);
-            results.add(position == null ? "" : position.toString());
-        }
-
-        return results;
-    }
-
-    private List<String> getEventLabel(LabVessel labVessel, List<LabEventType> labEventTypes, boolean useTargetContainer) {
-        List<String> results = new ArrayList<>();
-        Map<LabEvent, Set<LabVessel>> mapEventToVessels = labVessel.findVesselsForLabEventTypes(labEventTypes, useTargetContainer);
-        for (Map.Entry<LabEvent, Set<LabVessel>> eventVesselEntry : mapEventToVessels.entrySet()) {
-            for (LabVessel vessel : eventVesselEntry.getValue()) {
-                results.add(vessel.getLabel());
+            if( position != null) {
+                results.add( Pair.of(position, descendantVessel.getLabel()) );
             }
         }
+
         return results;
     }
 
