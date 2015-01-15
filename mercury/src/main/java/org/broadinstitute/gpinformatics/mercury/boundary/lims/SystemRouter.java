@@ -244,7 +244,7 @@ public class SystemRouter implements Serializable {
         // None of the above short cuts succeeded, so do the full vessel analysis.
         Set<System> routingOptions = EnumSet.noneOf(System.class);
         System system = routeForVessels(labVessels, getControlCollaboratorSampleIds(),
-                getMapSampleNameToSampleData(labVessels), intent, false);
+                fetchPossibleControlsSampleData(labVessels), intent, false);
         if (system != null) {
             routingOptions.add(system);
         }
@@ -286,9 +286,9 @@ public class SystemRouter implements Serializable {
      *
      * @param vessels a collection of LabVessel.
      * @param controlCollaboratorSampleIds list of collaborator IDs for active controls.
-     * @param mapSampleNameToSampleData has all of the control samples found in the vessels.
+     * @param mapSampleNameToSampleData sample data for the control samples and may include non-controls.
      * @param intent whether to return one routing option, or multiple
-     * @param excludeControlsWithoutWorkflow whether code should ignore contols whose routing cannot be determined
+     * @param excludeControlsWithoutWorkflow whether code should ignore controls whose routing cannot be determined
      *                                       from workflow
      * @return determines which system or systems serve the vessels.
      */
@@ -412,16 +412,13 @@ public class SystemRouter implements Serializable {
                                                 List<String> controlCollaboratorSampleIds) {
         Set<LabVessel> accompanyingVessels = new HashSet<>();
         for (VesselContainer<?> vesselContainer : labVessel.getContainers()) {
-            for (LabVessel containedVessel : vesselContainer.getContainedVessels()) {
-                if (!containedVessel.equals(labVessel)) {
-                    accompanyingVessels.add(containedVessel);
-                }
-            }
+            accompanyingVessels.addAll(vesselContainer.getContainedVessels());
         }
+        accompanyingVessels.remove(labVessel);
         if (accompanyingVessels.size() > 0) {
             // Gets the routing for accompanying vessels, excluding controls without a known workflow.
             return routeForVessels(accompanyingVessels, controlCollaboratorSampleIds,
-                    getMapSampleNameToSampleData(accompanyingVessels), intent, true);
+                    fetchPossibleControlsSampleData(accompanyingVessels), intent, true);
         } else {
             return null;
         }
@@ -485,11 +482,11 @@ public class SystemRouter implements Serializable {
     }
 
     /**
-     * Returns any controls found in the given vessels.
+     * Returns sample data for controls and possibly some non-controls also.
      *
-     * @return map of control sample id -> control sample data.
+     * @return map of sample id -> sample data.
      */
-    private Map<String, SampleData> getMapSampleNameToSampleData(Collection<LabVessel> labVessels) {
+    private Map<String, SampleData> fetchPossibleControlsSampleData(Collection<LabVessel> labVessels) {
         Collection<String> controlSampleNames = new ArrayList<>();
         Set<SampleInstanceV2> controlSampleInstances = new HashSet<>();
         for (LabVessel labVessel : labVessels) {
