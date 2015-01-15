@@ -871,12 +871,12 @@ public class SearchInstance implements Serializable {
     }
 
     /**
-     * Prior to calling the DAO, we must determine which terms have values specified. The
-     * user might add a term solely to have it appear in the results, and might not
-     * specify a value to search on.
+     * Prior to calling the DAO, we must determine which terms have values specified.
+     * All terms must have values to prevent Oracle table scans.
+     * @return false if any terms have empty values
      */
-    public void checkValues() {
-        recurseCheckValues(searchValues);
+    public boolean checkValues() {
+        return recurseCheckValues(searchValues);
     }
 
     private boolean recurseCheckValues(List<SearchValue> valuesToSearch) {
