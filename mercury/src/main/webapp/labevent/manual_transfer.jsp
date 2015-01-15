@@ -24,15 +24,20 @@
             <stripes:submit name="chooseEventType" value="Choose Event Type" class="btn btn-primary"/>
 
             ${actionBean.stationEvent.station}
-            <c:forEach items="${actionBean.stationEvent.reagent}" var="reagent">
+            <c:forEach items="${actionBean.stationEvent.reagent}" var="reagent" varStatus="loop">
+                <p>
                 <%--@elvariable id="reagent" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReagentType"--%>
-                ${reagent.kitType}
+                <stripes:text name="stationEvent.reagent[${loop.index}].kitType" value="${reagent.kitType}"/>
+                <stripes:text name="stationEvent.reagent[${loop.index}].barcode" value="${reagent.barcode}"/>
+                <stripes:text name="stationEvent.reagent[${loop.index}].expiration" value="${reagent.expiration}" />
+                </p>
             </c:forEach>
 
             <c:if test="${actionBean.stationEvent.class.simpleName == 'PlateTransferEventType'}">
                 <c:set var="plateTransfer" value="${actionBean.stationEvent}" />
                 <%--@elvariable id="plateTransfer" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType"--%>
 
+                <p>
                 Source type:
                 <stripes:hidden name="stationEvent.sourcePlate.physType" value="${plateTransfer.sourcePlate.physType}"/>
                 Source barcode:
@@ -55,7 +60,9 @@
                         </c:forEach>
                     </c:otherwise>
                 </c:choose>
+                </p>
 
+                <p>
                 Destination type:
                 <stripes:hidden name="stationEvent.plate.physType" value="${plateTransfer.plate.physType}"/>
                 Destination barcode:
@@ -79,6 +86,7 @@
                         </c:forEach>
                     </c:otherwise>
                 </c:choose>
+                </p>
 
             </c:if>
             <stripes:submit name="transfer" value="Transfer" class="btn btn-primary"/>

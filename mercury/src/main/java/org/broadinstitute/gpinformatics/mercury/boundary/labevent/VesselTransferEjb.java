@@ -23,9 +23,9 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import javax.annotation.Nonnull;
@@ -33,10 +33,8 @@ import javax.annotation.Nullable;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeFactory;
 import java.util.ArrayList;
-import java.util.GregorianCalendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -87,12 +85,7 @@ public class VesselTransferEjb {
 
         PlateCherryPickEvent transferEvent = new PlateCherryPickEvent();
         transferEvent.setEventType(LabEventType.DENATURE_TO_REAGENT_KIT_TRANSFER.getName());
-        GregorianCalendar gregorianCalendar = new GregorianCalendar();
-        try {
-            transferEvent.setStart(DatatypeFactory.newInstance().newXMLGregorianCalendar(gregorianCalendar));
-        } catch (DatatypeConfigurationException e) {
-            throw new RuntimeException(e);
-        }
+        transferEvent.setStart(new Date());
         transferEvent.setDisambiguator(1L);
         transferEvent.setOperator(username);
         transferEvent.setStation(stationName);
@@ -173,12 +166,7 @@ public class VesselTransferEjb {
                                                                     String eventStationName) {
         ReceptaclePlateTransferEvent event = new ReceptaclePlateTransferEvent();
         event.setEventType(eventType);
-        GregorianCalendar gregorianCalendar = new GregorianCalendar();
-        try {
-            event.setStart(DatatypeFactory.newInstance().newXMLGregorianCalendar(gregorianCalendar));
-        } catch (DatatypeConfigurationException e) {
-            throw new RuntimeException(e);
-        }
+        event.setStart(new Date());
         event.setDisambiguator(1L);
         event.setOperator(username);
         event.setStation(eventStationName);

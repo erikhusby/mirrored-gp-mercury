@@ -15,9 +15,9 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleTy
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransferEjb;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 
@@ -25,13 +25,9 @@ import javax.annotation.Nonnull;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
-import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeFactory;
 import java.io.StringWriter;
-import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -270,13 +266,7 @@ public class BettaLimsMessageTestFactory {
             ReagentType reagentType = new ReagentType();
             reagentType.setBarcode(reagentDto.getLot());
             reagentType.setKitType(reagentDto.getType());
-            GregorianCalendar gregorianCalendar = new GregorianCalendar();
-            gregorianCalendar.setTime(reagentDto.getExpiration());
-            try {
-                reagentType.setExpiration(DatatypeFactory.newInstance().newXMLGregorianCalendar(gregorianCalendar));
-            } catch (DatatypeConfigurationException e) {
-                throw new RuntimeException(e);
-            }
+            reagentType.setExpiration(reagentDto.getExpiration());
             plateEventType.getReagent().add(reagentType);
         }
         return plateEventType;
@@ -532,13 +522,7 @@ public class BettaLimsMessageTestFactory {
 
     private void setStationEventData(String eventType, StationEventType plateTransferEvent) {
         plateTransferEvent.setEventType(eventType);
-        GregorianCalendar gregorianCalendar = new GregorianCalendar();
-        gregorianCalendar.setTimeInMillis(time);
-        try {
-            plateTransferEvent.setStart(DatatypeFactory.newInstance().newXMLGregorianCalendar(gregorianCalendar));
-        } catch (DatatypeConfigurationException e) {
-            throw new RuntimeException(e);
-        }
+        plateTransferEvent.setStart(new Date(time));
         plateTransferEvent.setDisambiguator(1L);
         plateTransferEvent.setOperator("pdunlea");
         plateTransferEvent.setStation("ZAN");

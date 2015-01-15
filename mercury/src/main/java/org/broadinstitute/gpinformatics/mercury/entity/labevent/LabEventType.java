@@ -979,6 +979,8 @@ public enum LabEventType {
     private final ContainerGeometryType sourceContainerGeometryType;
     private final ContainerGeometryType targetContainerGeometryType;
 
+    private final String[] reagentNames;
+
     /**
      * One attempt at trying to make a very generic
      * {@link LabEvent} to handle lots of different
@@ -1009,6 +1011,7 @@ public enum LabEventType {
         this.messageType = MessageType.PLATE_TRANSFER_EVENT;
         this.sourceContainerGeometryType = StaticPlate.PlateType.Eppendorf96;
         this.targetContainerGeometryType = StaticPlate.PlateType.Eppendorf96;
+        this.reagentNames = new String[]{"SPRI", "70% Ethanol", "EB"};
     }
 
     public String getName() {
@@ -1054,5 +1057,9 @@ public enum LabEventType {
 
     public ContainerGeometryType getTargetContainerGeometryType() {
         return targetContainerGeometryType;
+    }
+
+    public String[] getReagentNames() {
+        return reagentNames;
     }
 }

@@ -7,6 +7,8 @@ import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.ObjectMarshaller;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
@@ -14,6 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventTy
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReagentType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
@@ -27,25 +30,25 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
-import javax.xml.datatype.DatatypeFactory;
-import java.util.GregorianCalendar;
+import java.util.Date;
 
 /**
  * A Stripes Action Bean to record manual transfers.
  */
 @UrlBinding("/labevent/manualtransfer.action")
 public class ManualTransferActionBean extends CoreActionBean {
+    private static final Log log = LogFactory.getLog(ManualTransferActionBean.class);
 
     public static final String MANUAL_TRANSFER_PAGE = "/labevent/manual_transfer.jsp";
     public static final String CHOOSE_EVENT_TYPE_ACTION = "chooseEventType";
     public static final String TRANSFER_ACTION = "transfer";
 
+    private BettaLIMSMessage bettaLIMSMessage;
     private StationEventType stationEvent;
     private LabEventType labEventType;
 
     @Inject
     private BettaLimsMessageResource bettaLimsMessageResource;
-    private BettaLIMSMessage bettaLIMSMessage;
 
     // machine names?
     // reagent types?
@@ -140,6 +143,12 @@ public class ManualTransferActionBean extends CoreActionBean {
 
     @HandlesEvent(CHOOSE_EVENT_TYPE_ACTION)
     public Resolution chooseLabEventType() {
+        for (String reagentName : labEventType.getReagentNames()) {
+            ReagentType reagentType = new ReagentType();
+            reagentType.setKitType(reagentName);
+            stationEvent.getReagent().add(reagentType);
+        }
+
         switch (labEventType.getMessageType()) {
             case PLATE_EVENT:
                 PlateEventType plateEventType = (PlateEventType) stationEvent;
@@ -195,13 +204,14 @@ public class ManualTransferActionBean extends CoreActionBean {
         stationEvent.setProgram(LabEvent.UI_PROGRAM_NAME);
         stationEvent.setStation(LabEvent.UI_EVENT_LOCATION);
         stationEvent.setDisambiguator(1L);
+        stationEvent.setStart(new Date());
         try {
-            stationEvent.setStart(DatatypeFactory.newInstance().newXMLGregorianCalendar(new GregorianCalendar()));
             ObjectMarshaller<BettaLIMSMessage> bettaLIMSMessageObjectMarshaller =
                     new ObjectMarshaller<>(BettaLIMSMessage.class);
             bettaLimsMessageResource.storeAndProcess(bettaLIMSMessageObjectMarshaller.marshal(bettaLIMSMessage));
             addMessage("Transfer recorded successfully.");
         } catch (Exception e) {
+            log.error("Failed to process message", e);
             addGlobalValidationError(e.getMessage());
         }
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);

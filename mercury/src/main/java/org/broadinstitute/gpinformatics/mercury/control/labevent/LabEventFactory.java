@@ -25,13 +25,13 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEvent
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsObjectFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.RackOfTubesDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StripTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.EventHandlerSelector;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -46,6 +46,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
@@ -53,7 +54,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StripTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainerEmbedder;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -61,15 +61,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
-import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeFactory;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumMap;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -187,11 +184,7 @@ public class LabEventFactory implements Serializable {
                                                                 String username, String stationName) {
         PlateCherryPickEvent transferEvent = new PlateCherryPickEvent();
         transferEvent.setEventType(LabEventType.REAGENT_KIT_TO_FLOWCELL_TRANSFER.getName());
-        try {
-            transferEvent.setStart(DatatypeFactory.newInstance().newXMLGregorianCalendar(new GregorianCalendar()));
-        } catch (DatatypeConfigurationException e) {
-            throw new RuntimeException(e);
-        }
+        transferEvent.setStart(new Date());
         transferEvent.setDisambiguator(1L);
         transferEvent.setOperator(username);
         transferEvent.setStation(stationName);
@@ -1114,7 +1107,7 @@ public class LabEventFactory implements Serializable {
             if (genericReagent == null) {
                 Date expiration = null;
                 if (reagentType.getExpiration() != null) {
-                    expiration = reagentType.getExpiration().toGregorianCalendar().getTime();
+                    expiration = reagentType.getExpiration();
                 }
                 genericReagent = new GenericReagent(
                         reagentType.getKitType(), reagentType.getBarcode(), expiration);
@@ -1303,9 +1296,8 @@ public class LabEventFactory implements Serializable {
         if (disambiguator == null) {
             disambiguator = 1L;
         }
-        LabEvent genericLabEvent =
-                new LabEvent(labEventType, stationEventType.getStart().toGregorianCalendar().getTime(),
-                        stationEventType.getStation(), disambiguator, operator, stationEventType.getProgram());
+        LabEvent genericLabEvent = new LabEvent(labEventType, stationEventType.getStart(),
+                stationEventType.getStation(), disambiguator, operator, stationEventType.getProgram());
         if (stationEventType.getBatchId() != null) {
             LabBatch labBatch = labEventRefDataFetcher.getLabBatch(stationEventType.getBatchId());
             if (labBatch == null) {
