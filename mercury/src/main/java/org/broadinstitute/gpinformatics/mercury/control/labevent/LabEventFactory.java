@@ -354,17 +354,6 @@ public class LabEventFactory implements Serializable {
         return mercurySample;
     }
 
-    private MercurySample extractSample(Collection<SampleInstanceV2> sampleInstances) {
-        MercurySample mercurySample = null;
-        for (SampleInstanceV2 sampleInstance : sampleInstances) {
-            mercurySample = sampleInstance.getRootOrEarliestMercurySample();
-            if (mercurySample != null) {
-                break;
-            }
-        }
-        return mercurySample;
-    }
-
     /**
      * Builds one or more lab event entities from a JAXB message bean that contains one or more event beans
      *
