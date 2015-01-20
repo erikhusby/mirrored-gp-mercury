@@ -1221,7 +1221,8 @@ public class SearchDefinitionFactory {
                                 }
                             }
                         }
-                        for( BucketEntry bucketEntry : labVessel.getBucketEntries() ){
+                        // In place vessel is not a container (could also be static plate)
+                        for (BucketEntry bucketEntry : labVessel.getBucketEntries()) {
                             LabBatch batch = bucketEntry.getLabBatch();
                             if (batch != null) {
                                 lcSetNames.add(batch.getBatchName());
