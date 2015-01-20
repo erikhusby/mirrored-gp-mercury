@@ -28,8 +28,10 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionT
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
@@ -81,6 +83,7 @@ import static org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventT
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate.PlateType.Eppendorf96;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.anyCollectionOf;
 import static org.mockito.Mockito.mock;
@@ -113,6 +116,8 @@ public class SystemRouterTest extends BaseEventTest {
     private static final String MERCURY_TUBE_2 = "mercuryTube2";
     private static final String MERCURY_TUBE_3 = "mercuryTube3";
     private static final String CONTROL_TUBE = "controlTube";
+    private static final String CONTROL_WITHOUT_WORKFLOW1 = "controlWoWorkflow1";
+    private static final String CONTROL_WITHOUT_WORKFLOW2 = "controlWoWorkflow2";
     public static final String CONTROL_SAMPLE_ID = "SM-CONTROL1";
     public static final String NA12878 = "NA12878";
     public static final String MERCURY_PLATE = "mercuryPlate";
@@ -132,6 +137,8 @@ public class SystemRouterTest extends BaseEventTest {
     private BarcodedTube tube2;
     private BarcodedTube tube3;
     private BarcodedTube controlTube;
+    private BarcodedTube controlWithoutWorkflow1;
+    private BarcodedTube controlWithoutWorkflow2;
     private StaticPlate plate;
     private ResearchProject testProject;
     private Product testProduct;
@@ -233,6 +240,51 @@ public class SystemRouterTest extends BaseEventTest {
                     put(MERCURY_TUBE_1, tube1);
                     put(MERCURY_TUBE_2, tube2);
                     put(CONTROL_TUBE, controlTube);
+                }});
+
+        controlWithoutWorkflow1 = new BarcodedTube(CONTROL_WITHOUT_WORKFLOW1);
+        controlWithoutWorkflow1.addSample(new MercurySample(CONTROL_SAMPLE_ID, MercurySample.MetadataSource.BSP));
+        controlWithoutWorkflow2 = new BarcodedTube(CONTROL_WITHOUT_WORKFLOW2);
+        controlWithoutWorkflow2.addSample(new MercurySample(CONTROL_SAMPLE_ID, MercurySample.MetadataSource.BSP));
+
+        when(mockLabVesselDao.findByBarcodes(new ArrayList<String>() {{
+            add(CONTROL_WITHOUT_WORKFLOW1);
+        }})).thenReturn(
+                new HashMap<String, LabVessel>() {{
+                    put(CONTROL_WITHOUT_WORKFLOW1, controlWithoutWorkflow1);
+                }});
+
+        when(mockLabVesselDao.findByBarcodes(new ArrayList<String>() {{
+            add(CONTROL_WITHOUT_WORKFLOW1);
+            add(MERCURY_TUBE_1);
+            add(MERCURY_TUBE_2);
+        }})).thenReturn(
+                new HashMap<String, LabVessel>() {{
+                    put(CONTROL_WITHOUT_WORKFLOW1, controlWithoutWorkflow1);
+                    put(MERCURY_TUBE_1, tube1);
+                    put(MERCURY_TUBE_2, tube2);
+                }});
+
+        when(mockLabVesselDao.findByBarcodes(new ArrayList<String>() {{
+            add(CONTROL_WITHOUT_WORKFLOW1);
+            add(CONTROL_WITHOUT_WORKFLOW2);
+            add(MERCURY_TUBE_1);
+            add(MERCURY_TUBE_2);
+        }})).thenReturn(
+                new HashMap<String, LabVessel>() {{
+                    put(CONTROL_WITHOUT_WORKFLOW1, controlWithoutWorkflow1);
+                    put(CONTROL_WITHOUT_WORKFLOW2, controlWithoutWorkflow2);
+                    put(MERCURY_TUBE_1, tube1);
+                    put(MERCURY_TUBE_2, tube2);
+                }});
+
+        when(mockLabVesselDao.findByBarcodes(new ArrayList<String>() {{
+            add("squidTube");
+            add(CONTROL_WITHOUT_WORKFLOW1);
+        }})).thenReturn(
+                new HashMap<String, LabVessel>() {{
+                    put("squidTube", null);
+                    put(CONTROL_WITHOUT_WORKFLOW1, controlWithoutWorkflow1);
                 }});
 
         when(mockControlDao.findAllActive())
@@ -387,6 +439,106 @@ public class SystemRouterTest extends BaseEventTest {
         verify(mockLabVesselDao).findByBarcodes(testBarcodes);
         verify(mockControlDao).findAllActive();
         verify(mockSampleDataFetcher).fetchSampleData(Arrays.asList(CONTROL_SAMPLE_ID));
+    }
+
+    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
+    public void testControlWithoutWorkflowAndMercuryTubes(ApplicationInstance instance) {
+        // Make a mixed LCSET rack so that control's implied batch is null.
+        placeOrderForTubesAndBatch(new HashSet<LabVessel>(Arrays.asList(tube1)), exomeExpress, picoBucket);
+        placeOrderForTubesAndBatch(new HashSet<LabVessel>(Arrays.asList(tube2)), exomeExpress, picoBucket);
+        final List<String> testBarcodes = Arrays.asList(CONTROL_WITHOUT_WORKFLOW1, MERCURY_TUBE_1, MERCURY_TUBE_2);
+
+        // Need to have tubes in a container for this test.
+        TubeFormation tubeFormation = new TubeFormation(new HashMap<VesselPosition, BarcodedTube>(){{
+            put(VesselPosition.A01, controlWithoutWorkflow1);
+            put(VesselPosition.A02, tube1);
+            put(VesselPosition.A03, tube2);
+        }}, RackOfTubes.RackType.Matrix96);
+        controlWithoutWorkflow1.addToContainer(tubeFormation.getContainerRole());
+        tube1.addToContainer(tubeFormation.getContainerRole());
+        tube2.addToContainer(tubeFormation.getContainerRole());
+
+        assertThat(controlWithoutWorkflow1.getSampleInstancesV2().iterator().next().getSingleInferredBucketedBatch(),
+                is(nullValue()));
+
+        assertThat(systemRouter.routeForVesselBarcodes(testBarcodes), is(MERCURY));
+
+        // This verify not strictly needed since MERCURY routes require the mockSampleDataFetcher to have run.
+        verify(mockSampleDataFetcher).fetchSampleData(Arrays.asList(CONTROL_SAMPLE_ID));
+    }
+
+    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
+    public void testControlWithoutWorkflowAndSquidTube(ApplicationInstance instance) {
+        final List<String> testBarcodes = Arrays.asList("squidTube", CONTROL_WITHOUT_WORKFLOW1);
+
+        // Need to have tubes in a container for this test.
+        TubeFormation tubeFormation = new TubeFormation(new HashMap<VesselPosition, BarcodedTube>(){{
+            put(VesselPosition.A01, tube1);
+            put(VesselPosition.A02, controlWithoutWorkflow1);
+        }}, RackOfTubes.RackType.Matrix96);
+        tube1.addToContainer(tubeFormation.getContainerRole());
+        controlWithoutWorkflow1.addToContainer(tubeFormation.getContainerRole());
+
+        assertThat(controlWithoutWorkflow1.getSampleInstancesV2().iterator().next().getSingleInferredBucketedBatch(),
+                is(nullValue()));
+
+        assertThat(systemRouter.routeForVesselBarcodes(testBarcodes), is(SQUID));
+
+        // This verify is needed to avoid a false positive if there is a missing setup for this test's
+        // testBarcodes contents.  The setup code starts like this: when(mockLabVesselDao.findByBarcodes.
+        verify(mockSampleDataFetcher).fetchSampleData(Arrays.asList(CONTROL_SAMPLE_ID));
+    }
+
+    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
+    public void testControlWithoutWorkflowAlone(ApplicationInstance instance) {
+        final List<String> testBarcodes = Arrays.asList(CONTROL_WITHOUT_WORKFLOW1);
+
+        // Need to have tubes in a container for this test.
+        TubeFormation tubeFormation = new TubeFormation(new HashMap<VesselPosition, BarcodedTube>(){{
+            put(VesselPosition.A01, controlWithoutWorkflow1);
+        }}, RackOfTubes.RackType.Matrix96);
+        controlWithoutWorkflow1.addToContainer(tubeFormation.getContainerRole());
+
+        assertThat(controlWithoutWorkflow1.getSampleInstancesV2().iterator().next().getSingleInferredBucketedBatch(),
+                is(nullValue()));
+
+        assertThat(systemRouter.routeForVesselBarcodes(testBarcodes), is(SQUID));
+
+        // This verify is needed to avoid a false positive if there is a missing setup for this test's
+        // testBarcodes contents.  The setup code starts like this: when(mockLabVesselDao.findByBarcodes.
+        verify(mockSampleDataFetcher).fetchSampleData(Arrays.asList(CONTROL_SAMPLE_ID));
+
+    }
+
+    // This test uses two controls without workflow in a rack in order to check the code
+    // that tries to determine routing for accompanying vessels.
+    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
+    public void testTwoControlsWithoutWorkflowAndMercuryTubes(ApplicationInstance instance) {
+        // Make a mixed LCSET rack so that control's implied batch is null.
+        placeOrderForTubesAndBatch(new HashSet<LabVessel>(Arrays.asList(tube1)), exomeExpress, picoBucket);
+        placeOrderForTubesAndBatch(new HashSet<LabVessel>(Arrays.asList(tube2)), exomeExpress, picoBucket);
+        final List<String> testBarcodes = Arrays.asList(CONTROL_WITHOUT_WORKFLOW1, CONTROL_WITHOUT_WORKFLOW2,
+                MERCURY_TUBE_1, MERCURY_TUBE_2);
+
+        // Need to have tubes in a container for this test.
+        TubeFormation tubeFormation = new TubeFormation(new HashMap<VesselPosition, BarcodedTube>(){{
+            put(VesselPosition.A01, controlWithoutWorkflow1);
+            put(VesselPosition.A02, controlWithoutWorkflow2);
+            put(VesselPosition.A03, tube1);
+            put(VesselPosition.A04, tube2);
+        }}, RackOfTubes.RackType.Matrix96);
+
+        controlWithoutWorkflow1.addToContainer(tubeFormation.getContainerRole());
+        controlWithoutWorkflow2.addToContainer(tubeFormation.getContainerRole());
+        tube1.addToContainer(tubeFormation.getContainerRole());
+        tube2.addToContainer(tubeFormation.getContainerRole());
+
+        assertThat(controlWithoutWorkflow1.getSampleInstancesV2().iterator().next().getSingleInferredBucketedBatch(),
+                is(nullValue()));
+        assertThat(controlWithoutWorkflow2.getSampleInstancesV2().iterator().next().getSingleInferredBucketedBatch(),
+                is(nullValue()));
+
+        assertThat(systemRouter.routeForVesselBarcodes(testBarcodes), is(MERCURY));
     }
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")

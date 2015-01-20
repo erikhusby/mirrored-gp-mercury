@@ -784,7 +784,7 @@ public class BaseEventTest {
         SystemRouter systemRouter = new SystemRouter(null, null, new WorkflowLoader(), null, null);
         SystemRouter.System system = systemRouter.routeForVessels(labVessels,
                 controlCollaboratorIdList, nameToSampleData,
-                SystemRouter.Intent.ROUTE);
+                SystemRouter.Intent.ROUTE, false);
         Assert.assertEquals(system, expectedRouting);
 
         WorkflowValidator workflowValidator = new WorkflowValidator();
