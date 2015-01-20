@@ -8,6 +8,7 @@ import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.DetachedCriteria;
 import org.hibernate.criterion.Disjunction;
 import org.hibernate.criterion.Order;
+import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Property;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.criterion.Subqueries;
@@ -62,7 +63,11 @@ public class ConfigurableSearchDao extends GenericDao {
             ConfigurableSearchDefinition configurableSearchDefinition, SearchInstance searchInstance, String orderPath,
             String orderDirection) {
 
-        searchInstance.checkValues();
+        if( !searchInstance.checkValues() ) {
+            // This will percolate up to UI error screen, if we allow blanks, a table scan is performed
+            // TODO JMS Validate this in client side JavaScript first...
+            throw new RuntimeException("*** A value is required for each selected search term. ***");
+        }
         HibernateEntityManager hibernateEntityManager = getEntityManager().unwrap(HibernateEntityManager.class);
         Session hibernateSession = hibernateEntityManager.getSession();
         Criteria criteria = hibernateSession.createCriteria(configurableSearchDefinition.getResultEntity().getEntityClass());
@@ -187,8 +192,9 @@ public class ConfigurableSearchDao extends GenericDao {
 
                         // Do we need a new subquery?
                         if (depth == 1
-                            || (searchValue.getSearchTerm().isNewDetachedCriteria() != null && searchValue
-                                .getSearchTerm().isNewDetachedCriteria())) {
+                                || ( searchValue.getSearchTerm().isNewDetachedCriteria() != null
+                                     && searchValue.getSearchTerm().isNewDetachedCriteria()))
+                        {
                             if (criteriaPathsIndex == 0) {
                                 resultCriteria.add(disjunction);
                             }
@@ -201,7 +207,7 @@ public class ConfigurableSearchDao extends GenericDao {
                                 throw new RuntimeException("Failed to find criteria projection for "
                                                               + firstCriteriaName);
                             }
-                            detachedCriteria = DetachedCriteria.forEntityName(criteriaProjection.getEntityName());
+                            detachedCriteria = DetachedCriteria.forClass(criteriaProjection.getSubEntityClass());
 
                             // Start a new map for the new detached criteria (the map avoids duplicate paths)
                             mapPathToCriteria = new HashMap<>();
@@ -214,10 +220,25 @@ public class ConfigurableSearchDao extends GenericDao {
                         DetachedCriteria nestedCriteria = createCriteria(mapPathToCriteria, criteriaPath,
                                 detachedCriteria);
 
-                        // Add operator and value
+                       // Add operator and value
                         Criterion criterion = buildCriterion(searchValue);
-                        if (criterion != null) {
-                            nestedCriteria.add(criterion);
+
+                        // Check for a nested subquery and append criterion to it
+                        DetachedCriteria nestedSubCriteria = tryCreateSubQueryCriteria( criteriaPath
+                                , configurableSearchDefinition, mapPathToCriteria );
+                        if( nestedSubCriteria != null ) {
+                            // The criterion gets attached to the subquery, not the parent
+                            if (criterion != null) {
+                                nestedSubCriteria.add(criterion);
+                            }
+                            // Append the subquery to the parent criteria
+                            String parentProp = criteriaPath.getCriteria().get(criteriaPath.getCriteria().size() - 1);
+                            nestedCriteria.add( Subqueries.propertyIn( parentProp, nestedSubCriteria ) );
+                        } else {
+                            // Append the criterion to the parent criteria
+                            if (criterion != null) {
+                                nestedCriteria.add(criterion);
+                            }
                         }
                     } else {
                         Criterion criterion = buildCriterion(searchValue);
@@ -388,15 +409,22 @@ public class ConfigurableSearchDao extends GenericDao {
                                                    SearchTerm.CriteriaPath criteriaPath,
                                                    DetachedCriteria nestedCriteria) {
 
-        // Step over the first criteria, because we already created the detached criteria
-        // for it
-        for (int i = 1; i < criteriaPath.getCriteria().size(); i++) {
+        // Step over the first criteria, because we already created the detached criteria for it
+        // Ignore last criteria if nested criteria exist (use as property for nested subquery)
+        int buildCriteriaIndex;
+        if( criteriaPath.getNestedCriteriaPath() != null ) {
+            buildCriteriaIndex = criteriaPath.getCriteria().size() - 1;
+        } else {
+            buildCriteriaIndex = criteriaPath.getCriteria().size();
+        }
+        for (int i = 1; i < buildCriteriaIndex; i++) {
 
             String criteriaKey = getCriteriaKey(criteriaPath.getCriteria().get(i));
 
             // Have we created this criteria already?
             DetachedCriteria existingCriteria = mapPathToCriteria.get(criteriaKey);
             if (existingCriteria == null) {
+                // Simply uses the criteria name as a property, ignores all else! (super, sub, class name)
                 nestedCriteria = nestedCriteria.createCriteria(criteriaPath.getCriteria().get(i));
                 mapPathToCriteria.put(criteriaKey, nestedCriteria);
             } else {
@@ -404,6 +432,35 @@ public class ConfigurableSearchDao extends GenericDao {
             }
         }
         return nestedCriteria;
+    }
+
+    /**
+     * Criteria path may rely on a subquery against unrelated entities.
+     * Criteria path will include a nested criteria path if so.
+     * Note:  Child search terms and nested criteria paths are mutually exclusive.
+     * @param criteriaPath
+     * @param configurableSearchDefinition
+     * @param mapPathToCriteria
+     * @return A detached criteria representing the subquery or null if not configured
+     */
+    private DetachedCriteria tryCreateSubQueryCriteria( SearchTerm.CriteriaPath criteriaPath
+            , ConfigurableSearchDefinition configurableSearchDefinition, Map<String, DetachedCriteria> mapPathToCriteria ) {
+
+        // Check for a nested subquery
+        DetachedCriteria nestedSubCriteria = null;
+        if (criteriaPath.getNestedCriteriaPath() != null){
+            SearchTerm.CriteriaPath nestedCriteriaPath = criteriaPath.getNestedCriteriaPath();
+            String rootCriteriaName = nestedCriteriaPath.getCriteria().get(0);
+            ConfigurableSearchDefinition.CriteriaProjection rootCriteriaProj =
+                    configurableSearchDefinition.getCriteriaProjection(rootCriteriaName);
+            nestedSubCriteria = DetachedCriteria
+                    .forClass(rootCriteriaProj.getSubEntityClass())
+                    .createAlias(rootCriteriaProj.getSubProperty(), rootCriteriaProj.getSubPropertyAlias())
+                    .setProjection(Projections.property(rootCriteriaProj.getSuperProperty()));
+
+            nestedSubCriteria = createCriteria(mapPathToCriteria, nestedCriteriaPath, nestedSubCriteria);
+        }
+        return nestedSubCriteria;
     }
 
     private String getCriteriaKey(String path) {

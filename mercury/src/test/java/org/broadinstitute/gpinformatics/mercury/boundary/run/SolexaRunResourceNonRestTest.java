@@ -243,8 +243,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
                                                                                                    .getNormCatchRackBarcode()),
                                                                  true, false).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
-            BettaLimsMessageResourceTest.sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl()
-            );
+            BettaLimsMessageResourceTest.sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
         }
 
         MiSeqReagentKitJaxbBuilder miseqJaxbBuilder =
@@ -253,8 +252,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
                 }}, reagentKitBarcode, null, bettaLimsMessageFactory).invoke();
 
         for (BettaLIMSMessage bettaLIMSMessage : miseqJaxbBuilder.getMessageList()) {
-            BettaLimsMessageResourceTest.sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl()
-            );
+            BettaLimsMessageResourceTest.sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
         }
 
         HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder = new HiSeq2500JaxbBuilder(bettaLimsMessageFactory, testPrefix,
@@ -262,8 +260,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
                 qtpJaxbBuilder.getDenatureRackBarcode(), "FCT-1", ProductionFlowcellPath.DENATURE_TO_FLOWCELL,
                 BaseEventTest.NUM_POSITIONS_IN_RACK, null, 2).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : hiSeq2500JaxbBuilder.getMessageList()) {
-            BettaLimsMessageResourceTest.sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl()
-            );
+            BettaLimsMessageResourceTest.sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
         }
 
         flowcellBarcode = hiSeq2500JaxbBuilder.getFlowcellBarcode();

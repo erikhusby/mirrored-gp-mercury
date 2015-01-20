@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcherStub;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
@@ -26,6 +27,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationSetupEvent;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunResource;
@@ -42,9 +44,9 @@ import org.broadinstitute.gpinformatics.mercury.control.vessel.IndexedPlateFacto
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.ImportFromSquidTest;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -67,7 +69,6 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.PreFlightJaxbBuild
 import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcellPath;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingJaxbBuilder;
-import org.broadinstitute.gpinformatics.mocks.EverythingYouAskForYouGetAndItsHuman;
 import org.easymock.EasyMock;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
@@ -81,6 +82,8 @@ import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -94,6 +97,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumMap;
+import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -102,7 +106,6 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.ALTERNATIVES;
 
 /**
  * Test the web service
@@ -165,6 +168,9 @@ public class BettaLimsMessageResourceTest extends Arquillian {
     @Inject
     private WorkflowValidator workflowValidator;
 
+    @Inject
+    private AppConfig appConfig;
+
     private final SimpleDateFormat testPrefixDateFormat = new SimpleDateFormat("MMddHHmmss");
 
     public static final Map<Workflow, String> mapWorkflowToPartNum = new EnumMap<Workflow, String>(Workflow.class) {{
@@ -191,7 +197,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         try {
             BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
             bettaLIMSMessage.getPlateTransferEvent().add(transfer);
-            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, ImportFromSquidTest.TEST_MERCURY_URL);
+            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
         } catch (Exception e) {
             Assert.assertTrue(e.getMessage().contains("Failed to find tube"));
             exception = true;
@@ -210,7 +216,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         try {
             BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
             bettaLIMSMessage.getPlateTransferEvent().add(transfer);
-            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, ImportFromSquidTest.TEST_MERCURY_URL);
+            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
         } catch (Exception e) {
             Assert.assertTrue(e.getMessage().contains("Failed to find plate"));
             exception = true;
@@ -221,7 +227,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
     /**
      * Sends messages for one PDO, then reworks two of those samples along with a second PDO.
      */
-    @Test(enabled = false, groups = ALTERNATIVES)
+    @Test(enabled = false)
     public void testRework() throws ValidationException {
         // Set up one PDO / bucket / batch
         String testPrefix = testPrefixDateFormat.format(new Date());
@@ -234,16 +240,14 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory(false);
         HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = sendMessagesUptoCatch(testPrefix,
                 mapBarcodeToTube, bettaLimsMessageFactory, Workflow.AGILENT_EXOME_EXPRESS, bettaLimsMessageResource,
-                reagentDesignDao, barcodedTubeDao,
-                ImportFromSquidTest.TEST_MERCURY_URL, BaseEventTest.NUM_POSITIONS_IN_RACK);
+                reagentDesignDao, barcodedTubeDao, appConfig.getUrl(), BaseEventTest.NUM_POSITIONS_IN_RACK);
 
         QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
                 Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchBarcodes()),
                 Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchRackBarcode()),
                 true, false).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
-            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, ImportFromSquidTest.TEST_MERCURY_URL
-            );
+            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
         }
 
         HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder = new HiSeq2500JaxbBuilder(bettaLimsMessageFactory, testPrefix,
@@ -251,8 +255,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                 qtpJaxbBuilder.getDenatureRackBarcode(), "FCT-1", ProductionFlowcellPath.DENATURE_TO_FLOWCELL,
                 BaseEventTest.NUM_POSITIONS_IN_RACK, null, 2).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : hiSeq2500JaxbBuilder.getMessageList()) {
-            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, ImportFromSquidTest.TEST_MERCURY_URL
-            );
+            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
         }
 
         // Create second PDO
@@ -296,16 +299,14 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         // message
         hybridSelectionJaxbBuilder = sendMessagesUptoCatch(testPrefix, mapBarcodeToTube2, bettaLimsMessageFactory,
                 Workflow.AGILENT_EXOME_EXPRESS, bettaLimsMessageResource,
-                reagentDesignDao, barcodedTubeDao, ImportFromSquidTest.TEST_MERCURY_URL,
-                BaseEventTest.NUM_POSITIONS_IN_RACK);
+                reagentDesignDao, barcodedTubeDao, appConfig.getUrl(), BaseEventTest.NUM_POSITIONS_IN_RACK);
 
         qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
                 Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchBarcodes()),
                 Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchRackBarcode()),
                 true, false).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
-            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, ImportFromSquidTest.TEST_MERCURY_URL
-            );
+            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
         }
 
         hiSeq2500JaxbBuilder = new HiSeq2500JaxbBuilder(bettaLimsMessageFactory, testPrefix,
@@ -313,8 +314,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                 qtpJaxbBuilder.getDenatureRackBarcode(), "FCT-1", ProductionFlowcellPath.DENATURE_TO_FLOWCELL,
                 BaseEventTest.NUM_POSITIONS_IN_RACK, null, 2).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : hiSeq2500JaxbBuilder.getMessageList()) {
-            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, ImportFromSquidTest.TEST_MERCURY_URL
-            );
+            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
         }
 
     }
@@ -322,7 +322,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
     /**
      * Message one LCSET, and register run.
      */
-    @Test(enabled = true, groups = ALTERNATIVES)
+    @Test(enabled = true)
     public void testProcessMessage() {
         String testPrefix = testPrefixDateFormat.format(new Date());
 //        Controller.startCPURecording(true);
@@ -334,8 +334,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
 
         HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = sendMessagesUptoCatch(testPrefix,
                 mapBarcodeToTube, bettaLimsMessageFactory, Workflow.AGILENT_EXOME_EXPRESS, bettaLimsMessageResource,
-                reagentDesignDao, barcodedTubeDao,
-                ImportFromSquidTest.TEST_MERCURY_URL, BaseEventTest.NUM_POSITIONS_IN_RACK);
+                reagentDesignDao, barcodedTubeDao, appConfig.getUrl(), BaseEventTest.NUM_POSITIONS_IN_RACK);
 
         StaticPlate staticPlate = staticPlateDao.findByBarcode(
                 hybridSelectionJaxbBuilder.getGsWash1Jaxb().getPlate().getBarcode());
@@ -350,8 +349,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                 Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchRackBarcode()),
                 true, false).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
-            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, ImportFromSquidTest.TEST_MERCURY_URL
-            );
+            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
         }
 
         HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder = new HiSeq2500JaxbBuilder(bettaLimsMessageFactory, testPrefix,
@@ -359,8 +357,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                 qtpJaxbBuilder.getDenatureRackBarcode(), "FCT-1", ProductionFlowcellPath.DENATURE_TO_FLOWCELL,
                 BaseEventTest.NUM_POSITIONS_IN_RACK, null, 2).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : hiSeq2500JaxbBuilder.getMessageList()) {
-            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, ImportFromSquidTest.TEST_MERCURY_URL
-            );
+            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
         }
         BarcodedTube poolTube = barcodedTubeDao.findByBarcode(qtpJaxbBuilder.getPoolTubeBarcodes().get(0));
         Assert.assertEquals(poolTube.getSampleInstancesV2().size(), BaseEventTest.NUM_POSITIONS_IN_RACK,
@@ -390,7 +387,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
     /**
      * Message one LCSET, and register run.
      */
-    @Test(enabled = true, groups = ALTERNATIVES)
+    @Test(enabled = true)
     public void testIce() {
         String testPrefix = testPrefixDateFormat.format(new Date());
 //        Controller.startCPURecording(true);
@@ -404,7 +401,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         ShearingJaxbBuilder shearingJaxbBuilder = new ShearingJaxbBuilder(bettaLimsMessageFactory,
                 new ArrayList<>(mapBarcodeToTube.keySet()), testPrefix, shearingRackBarcode).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : shearingJaxbBuilder.getMessageList()) {
-            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, ImportFromSquidTest.TEST_MERCURY_URL);
+            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
         }
 
         LibraryConstructionJaxbBuilder libraryConstructionJaxbBuilder = new LibraryConstructionJaxbBuilder(
@@ -414,7 +411,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                 LibraryConstructionJaxbBuilder.TargetSystem.MERCURY_ONLY).invoke();
 
         for (BettaLIMSMessage bettaLIMSMessage : libraryConstructionJaxbBuilder.getMessageList()) {
-            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, ImportFromSquidTest.TEST_MERCURY_URL);
+            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
         }
 
         IceJaxbBuilder iceJaxbBuilder = new IceJaxbBuilder(bettaLimsMessageFactory,
@@ -432,7 +429,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                 baitDesign));
 
         for (BettaLIMSMessage bettaLIMSMessage : iceJaxbBuilder.getMessageList()) {
-            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, ImportFromSquidTest.TEST_MERCURY_URL);
+            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
         }
 
         QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
@@ -440,8 +437,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                 Collections.singletonList(iceJaxbBuilder.getCatchEnrichRackBarcode()),
                 true, false).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
-            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, ImportFromSquidTest.TEST_MERCURY_URL
-            );
+            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
         }
 
         HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder = new HiSeq2500JaxbBuilder(bettaLimsMessageFactory, testPrefix,
@@ -449,8 +445,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                 qtpJaxbBuilder.getDenatureRackBarcode(), "FCT-1", ProductionFlowcellPath.DENATURE_TO_FLOWCELL,
                 BaseEventTest.NUM_POSITIONS_IN_RACK, null, 2).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : hiSeq2500JaxbBuilder.getMessageList()) {
-            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, ImportFromSquidTest.TEST_MERCURY_URL
-            );
+            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
         }
         BarcodedTube poolTube = barcodedTubeDao.findByBarcode(qtpJaxbBuilder.getPoolTubeBarcodes().get(0));
         Assert.assertEquals(poolTube.getSampleInstancesV2().size(), BaseEventTest.NUM_POSITIONS_IN_RACK,
@@ -718,7 +713,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
             HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder =
                     sendMessagesUptoCatch(testPrefix, mapBarcodeToTube, bettaLimsMessageFactory,
                             Workflow.HYBRID_SELECTION, bettaLimsMessageResource,
-                            reagentDesignDao, barcodedTubeDao, ImportFromSquidTest.TEST_MERCURY_URL,
+                            reagentDesignDao, barcodedTubeDao, appConfig.getUrl(),
                             BaseEventTest.NUM_POSITIONS_IN_RACK);
             listLcsetListNormCatchBarcodes.add(hybridSelectionJaxbBuilder.getNormCatchBarcodes());
             normCatchRackBarcodes.add(hybridSelectionJaxbBuilder.getNormCatchRackBarcode());
@@ -731,8 +726,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                 normCatchRackBarcodes,
                 true, false).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
-            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, ImportFromSquidTest.TEST_MERCURY_URL
-            );
+            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
         }
 
         HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder = new HiSeq2500JaxbBuilder(bettaLimsMessageFactory, testPrefix,
@@ -746,6 +740,22 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                 BaseEventTest.NUM_POSITIONS_IN_RACK * 8, "Wrong number of sample instances");
         ZimsIlluminaRun zimsIlluminaRun = illuminaRunResource.getRun(illuminaSequencingRun.getRunName());
         Assert.assertEquals(zimsIlluminaRun.getLanes().size(), 8, "Wrong number of lanes");
+    }
+
+    @Test
+    public void testActivity() {
+        BettaLIMSMessage beginMessage = new BettaLIMSMessage();
+        StationSetupEvent beginEvent = new StationSetupEvent();
+        beginEvent.setDisambiguator(1L);
+        beginEvent.setEventType(LabEventType.ACTIVITY_BEGIN.getName());
+        try {
+            beginEvent.setStart(DatatypeFactory.newInstance().newXMLGregorianCalendar(new GregorianCalendar()));
+        } catch (DatatypeConfigurationException e) {
+            throw new RuntimeException(e);
+        }
+        beginEvent.setStation("BUZZ");
+        beginMessage.setStationSetupEvent(beginEvent);
+        sendMessage(beginMessage, bettaLimsMessageResource, appConfig.getUrl());
     }
 
     public static String sendMessage(BettaLIMSMessage bettaLIMSMessage,
@@ -791,7 +801,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
      *
      * @param baseUrl URL of arquillian server
      */
-    @Test(enabled = false, groups = ALTERNATIVES, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    @Test(enabled = false, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testHttp(@ArquillianResource URL baseUrl) {
         File inboxDirectory = new File("C:/Temp/seq/lims/bettalims/production/inbox");
@@ -819,7 +829,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
      *
      * @param baseUrl URL of deployed server
      */
-    @Test(enabled = false, groups = ALTERNATIVES, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    @Test(enabled = false, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testSingleFile(@ArquillianResource URL baseUrl) {
         File file = new File(
@@ -827,7 +837,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         sendFile(baseUrl, file);
     }
 
-    @Test(enabled = false, groups = ALTERNATIVES, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    @Test(enabled = false, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFileList(@ArquillianResource URL baseUrl) {
         try {
