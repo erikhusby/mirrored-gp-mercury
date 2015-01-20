@@ -127,6 +127,8 @@ public class ProductActionBean extends CoreActionBean {
 
     private String q;
 
+    private String availability = ProductDao.Availability.CURRENT.name();
+
     public String getQ() {
         return q;
     }
@@ -188,7 +190,8 @@ public class ProductActionBean extends CoreActionBean {
 
     @After(stages = LifecycleStage.BindingAndValidation, on = LIST_ACTION)
     public void allProductsInit() {
-        allProducts = productDao.findAll(Product.class);
+        ProductDao.Availability productAvailability = ProductDao.Availability.valueOf(availability);
+        allProducts = productDao.findProducts(productAvailability, TopLevelOnly.NO, IncludePDMOnly.YES);
     }
 
     /**

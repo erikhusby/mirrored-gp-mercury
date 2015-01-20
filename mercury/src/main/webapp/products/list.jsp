@@ -1,4 +1,6 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
+<%@ page import="static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao.Availability.*" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao" %>
 
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean"/>
@@ -14,9 +16,15 @@
                         {"bSortable": true, "sType": "title-string"},
                         {"bSortable": true},
                         {"bSortable": true},
+                        {"bSortable": true, "sType" : "title-string"},
                         {"bSortable": true, "sType" : "title-string"}]
                 })
             });
+
+            function changeAvailability() {
+                $j("#list").submit();
+            }
+
         </script>
     </stripes:layout-component>
 
@@ -26,13 +34,21 @@
             <img src="${ctxpath}/images/pdficon_small.png" alt=""/>
             <stripes:link beanclass="${actionBean.class.name}" event="downloadProductDescriptions">
                 Download Product Descriptions</stripes:link>
+            <stripes:form id="list" beanclass="${actionBean.class.name}">
+
+                <stripes:radio onchange="changeAvailability()" value="<%= ProductDao.Availability.ALL%>" name="availability"/> All Products
+                <stripes:radio onchange="changeAvailability()" value="<%= ProductDao.Availability.CURRENT%>" checked="checked"
+                               name="availability"/> Available Products Only
+            </stripes:form>
         </div>
+
         <table id="productList" class="table simple">
             <thead>
             <tr>
                 <th>Part Number</th>
                 <th>Product Name</th>
                 <th>Product Family</th>
+                <th>PDM Orderable</th>
                 <th>Available</th>
             </tr>
             </thead>
@@ -47,6 +63,11 @@
                     </td>
                     <td>${product.productName}</td>
                     <td>${product.productFamily.name}</td>
+                    <td>
+                        <c:if test="${product.pdmOrderableOnly}">
+                            <img src="${ctxpath}/images/check.png" alt="yes" title="yes"/>
+                        </c:if>
+                    </td>
                     <td>
                         <c:if test="${product.available}">
                             <img src="${ctxpath}/images/check.png" alt="yes" title="yes"/>
