@@ -17,7 +17,8 @@
                             hintText: "Type a name",
                             prePopulate: ${actionBean.ensureStringResult(actionBean.owner.completeData)},
                             tokenDelimiter: "${actionBean.owner.separator}",
-                            resultsFormatter: formatInput
+                            resultsFormatter: formatInput,
+                            autoSelectFirstResult: true
                         }
                 );
 
@@ -26,7 +27,8 @@
                             hintText: "Type a Product name or Part Number   ",
                             resultsFormatter: formatInput,
                             prePopulate: ${actionBean.ensureStringResult(actionBean.productTokenInput.completeData)},
-                            tokenDelimiter: "${actionBean.productTokenInput.separator}"
+                            tokenDelimiter: "${actionBean.productTokenInput.separator}",
+                            autoSelectFirstResult: true
                         }
                 );
 
