@@ -1,22 +1,26 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
+import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactoryTest;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
 import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.SampleType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch.LabBatchType;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -27,6 +31,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 
@@ -42,7 +47,6 @@ public class EventEtlDbFreeTest {
     private final long entityId = 1122334455L;
     private final long workflowId = -1234123412341234123L;
     private final long processId = 3412341234123412312L;
-    private final String pdoKey = "PDO-0000";
     private final long pdoId = 3344551122L;
     private final String sampleKey = "SMID-000000";
     private final String labBatchName = "LCSET-123";
@@ -50,35 +54,36 @@ public class EventEtlDbFreeTest {
     private final String programName = "FlowcellLoader";
     private final long vesselId = 5511223344L;
     private final Date eventDate = new Date(1350000000000L);
-    private final LabEventType eventType = LabEventType.PICO_PLATING_BUCKET;
-    private final String workflowName = "ExEx";
+    private final String workflowName = Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName();
     private LabEventEtl tst;
 
     private final AuditReaderDao auditReader = EasyMock.createMock(AuditReaderDao.class);
     private final LabEventDao dao = EasyMock.createMock(LabEventDao.class);
-    private final ProductOrderDao pdoDao = EasyMock.createMock(ProductOrderDao.class);
     private final WorkflowConfigLookup wfLookup = EasyMock.createMock(WorkflowConfigLookup.class);
     private final WorkflowConfigDenorm wfConfig = EasyMock.createMock(WorkflowConfigDenorm.class);
     private final LabEvent obj = EasyMock.createMock(LabEvent.class);
+    private final Product product = EasyMock.createMock(Product.class);
     private final ProductOrder pdo = EasyMock.createMock(ProductOrder.class);
+    private final ProductOrderSample pdoSample = EasyMock.createMock(ProductOrderSample.class);
     private final LabVessel vessel = EasyMock.createMock(LabVessel.class);
-    private final SampleInstance sampleInst = EasyMock.createMock(SampleInstance.class);
+    private final SampleInstanceV2 sampleInst = EasyMock.createMock(SampleInstanceV2.class);
     private final MercurySample sample = EasyMock.createMock(MercurySample.class);
     private final LabBatch labBatch = EasyMock.createMock(LabBatch.class);
-    private final LabBatch bspBatch = EasyMock.createMock(LabBatch.class);
-    private final SequencingSampleFactEtl sequencingSampleFactEtl = EasyMock.createNiceMock(SequencingSampleFactEtl.class);
+    private final SequencingSampleFactEtl sequencingSampleFactEtl = EasyMock.createNiceMock(
+            SequencingSampleFactEtl.class);
     private final LabEvent modEvent = EasyMock.createNiceMock(LabEvent.class);
     private final LabVessel denature = EasyMock.createNiceMock(LabVessel.class);
     private final RunCartridge cartridge = EasyMock.createNiceMock(RunCartridge.class);
     private final LabEvent cartridgeEvent = EasyMock.createNiceMock(LabEvent.class);
     private final IlluminaFlowcell flowcell = EasyMock.createNiceMock(IlluminaFlowcell.class);
+    private final BucketEntry bucketEntry = EasyMock.createNiceMock(BucketEntry.class);
 
-    private final Object[] mocks = new Object[]{auditReader, dao, pdoDao, wfLookup, wfConfig, obj, pdo, vessel,
-            sampleInst, sample, labBatch, sequencingSampleFactEtl, modEvent, denature, cartridge, cartridgeEvent,
-            flowcell};
+    private final Object[] mocks = new Object[]{auditReader, dao, wfLookup, wfConfig, obj, product, pdo,
+            pdoSample, vessel, sampleInst, sample, labBatch, sequencingSampleFactEtl, modEvent, denature, cartridge,
+            cartridgeEvent, flowcell, bucketEntry};
 
     private final Set<LabVessel> vesselList = new HashSet<>();
-    private final Set<SampleInstance> sampleInstList = new HashSet<>();
+    private final Set<SampleInstanceV2> sampleInstList = new HashSet<>();
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
@@ -89,7 +94,7 @@ public class EventEtlDbFreeTest {
         sampleInstList.clear();
         sampleInstList.add(sampleInst);
 
-        tst = new LabEventEtl(wfLookup, dao, pdoDao, sequencingSampleFactEtl);
+        tst = new LabEventEtl(wfLookup, dao, sequencingSampleFactEtl);
         tst.setAuditReaderDao(auditReader);
     }
 
@@ -127,7 +132,7 @@ public class EventEtlDbFreeTest {
 
     public void testNoVessels() throws Exception {
         EasyMock.expect(dao.findById(LabEvent.class, entityId)).andReturn(obj);
-        EasyMock.expect(obj.getLabEventType()).andReturn(eventType).times(2);
+        EasyMock.expect(obj.getLabEventType()).andReturn(LabEventType.A_BASE).times(2);
         vesselList.clear();
         EasyMock.expect(obj.getTargetLabVessels()).andReturn(vesselList);
         EasyMock.expect(obj.getInPlaceLabVessel()).andReturn(null);
@@ -140,10 +145,9 @@ public class EventEtlDbFreeTest {
 
     public void testEtlNoSampleInstances() throws Exception {
         EasyMock.expect(dao.findById(LabEvent.class, entityId)).andReturn(obj);
-        EasyMock.expect(obj.getLabEventType()).andReturn(eventType).times(2);
+        EasyMock.expect(obj.getLabEventType()).andReturn(LabEventType.A_BASE).times(2);
         EasyMock.expect(obj.getTargetLabVessels()).andReturn(vesselList);
-        EasyMock.expect(vessel.getSampleInstances(EasyMock.anyObject(SampleType.class),
-                EasyMock.anyObject(LabBatchType.class))).andReturn(new HashSet<SampleInstance>());
+        EasyMock.expect(vessel.getSampleInstancesV2()).andReturn(new HashSet<SampleInstanceV2>());
 
         EasyMock.replay(mocks);
 
@@ -154,39 +158,81 @@ public class EventEtlDbFreeTest {
     }
 
     public void testMissingSampleRecord() throws Exception {
+        // ETL uses index name instead of a null sample name in its debug UI.
+        Set<MolecularIndexReagent> reagents = new HashSet<>(ZimsIlluminaRunFactoryTest.makeTestReagents(1, false));
+        String misName = reagents.iterator().next().getMolecularIndexingScheme().getName();
+
         EasyMock.expect(dao.findById(LabEvent.class, entityId)).andReturn(obj);
-        EasyMock.expect(obj.getLabEventType()).andReturn(eventType).times(2);
+        EasyMock.expect(obj.getLabEventType()).andReturn(LabEventType.A_BASE).times(2);
         EasyMock.expect(obj.getTargetLabVessels()).andReturn(vesselList);
-        EasyMock.expect(vessel.getSampleInstances(EasyMock.anyObject(SampleType.class),
-                EasyMock.anyObject(LabBatchType.class))).andReturn(sampleInstList);
-        EasyMock.expect(sampleInst.getProductOrderKey()).andReturn(pdoKey);
-        EasyMock.expect(sampleInst.getStartingSample()).andReturn(null);
-        EasyMock.expect(vessel.getIndexesString(sampleInst)).andReturn("dummy string");
-        EasyMock.expect(pdoDao.findByBusinessKey(pdoKey)).andReturn(pdo);
+        EasyMock.expect(vessel.getSampleInstancesV2()).andReturn(sampleInstList);
+        EasyMock.expect(sampleInst.getSingleBucketEntry()).andReturn(bucketEntry);
+        EasyMock.expect(bucketEntry.getProductOrder()).andReturn(null);
+        EasyMock.expect(bucketEntry.getLabBatch()).andReturn(null);
+        EasyMock.expect(sampleInst.getRootOrEarliestMercurySample()).andReturn(null);
+        EasyMock.expect(obj.getEventDate()).andReturn(eventDate).anyTimes();
+        EasyMock.expect(vessel.getIndexesForSampleInstance(sampleInst)).andReturn(reagents);
+        EasyMock.expect(wfLookup.lookupWorkflowConfig(LabEventType.A_BASE.getName(), null, eventDate)).andReturn(null);
+        EasyMock.replay(mocks);
+
+        // Tests the output seen by debug UI.
+        List<LabEventEtl.EventFactDto> dtos = tst.makeEventFacts(entityId);
+        Assert.assertEquals(dtos.size(), 1);
+        Assert.assertFalse(dtos.get(0).canEtl());
+        Assert.assertTrue(dtos.get(0).getSampleInstanceIndexes().startsWith(misName));
+
+        EasyMock.verify(mocks);
+    }
+    public void testPicoPlatingNoBatch() throws Exception {
+        EasyMock.expect(dao.findById(LabEvent.class, entityId)).andReturn(obj);
+        EasyMock.expect(obj.getLabEventType()).andReturn(LabEventType.PICO_PLATING_BUCKET).times(2);
+        EasyMock.expect(obj.getTargetLabVessels()).andReturn(vesselList);
+        EasyMock.expect(vessel.getSampleInstancesV2()).andReturn(sampleInstList);
+        EasyMock.expect(sampleInst.getSingleBucketEntry()).andReturn(bucketEntry);
+        EasyMock.expect(bucketEntry.getProductOrder()).andReturn(pdo);
+        EasyMock.expect(bucketEntry.getLabBatch()).andReturn(null);
+        EasyMock.expect(pdo.getProduct()).andReturn(product);
+        EasyMock.expect(product.getWorkflow()).andReturn(Workflow.AGILENT_EXOME_EXPRESS);
+        EasyMock.expect(sampleInst.getRootOrEarliestMercurySample()).andReturn(sample);
+        EasyMock.expect(wfLookup.lookupWorkflowConfig(LabEventType.PICO_PLATING_BUCKET.getName(), workflowName,
+                eventDate)).andReturn(wfConfig);
+        EasyMock.expect(wfConfig.isBatchNeeded()).andReturn(false);
+        EasyMock.expect(sample.getSampleKey()).andReturn(sampleKey);
+        EasyMock.expect(pdo.getProductOrderId()).andReturn(pdoId);
+        EasyMock.expect(wfConfig.getWorkflowId()).andReturn(workflowId);
+        EasyMock.expect(wfConfig.getProcessId()).andReturn(processId);
+        EasyMock.expect(obj.getLabEventId()).andReturn(entityId);
+        EasyMock.expect(obj.getEventLocation()).andReturn(location);
+        EasyMock.expect(obj.getProgramName()).andReturn(programName);
+        EasyMock.expect(vessel.getLabVesselId()).andReturn(vesselId);
+        EasyMock.expect(obj.getEventDate()).andReturn(eventDate).times(2);
 
         EasyMock.replay(mocks);
 
-        Assert.assertEquals(tst.dataRecords(etlDateStr, false, entityId).size(), 0);
+        Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
+        Assert.assertEquals(records.size(), 1);
+        verifyRecord(records.iterator().next(), LabEventEtl.NONE);
 
         EasyMock.verify(mocks);
     }
 
-    public void testIncrementalEtl() throws Exception {
+    public void testPicoPlating() throws Exception {
         EasyMock.expect(dao.findById(LabEvent.class, entityId)).andReturn(obj);
-        EasyMock.expect(obj.getLabEventType()).andReturn(eventType).times(2);
+        EasyMock.expect(obj.getLabEventType()).andReturn(LabEventType.PICO_PLATING_BUCKET).times(2);
         EasyMock.expect(obj.getTargetLabVessels()).andReturn(vesselList);
-        EasyMock.expect(vessel.getSampleInstances(EasyMock.anyObject(SampleType.class),
-                EasyMock.anyObject(LabBatchType.class))).andReturn(sampleInstList);
-        EasyMock.expect(sampleInst.getStartingSample()).andReturn(sample);
-        EasyMock.expect(sampleInst.getLabBatch()).andReturn(labBatch);
-        EasyMock.expect(sampleInst.getProductOrderKey()).andReturn(pdoKey);
-
+        EasyMock.expect(vessel.getSampleInstancesV2()).andReturn(sampleInstList);
+        EasyMock.expect(sampleInst.getSingleBucketEntry()).andReturn(bucketEntry);
+        EasyMock.expect(bucketEntry.getProductOrder()).andReturn(pdo);
+        EasyMock.expect(bucketEntry.getLabBatch()).andReturn(labBatch);
+        EasyMock.expect(sampleInst.getRootOrEarliestMercurySample()).andReturn(sample);
         EasyMock.expect(labBatch.getBatchName()).andReturn(labBatchName);
         EasyMock.expect(labBatch.getWorkflowName()).andReturn(workflowName);
+        EasyMock.expect(wfLookup.lookupWorkflowConfig(LabEventType.PICO_PLATING_BUCKET.getName(), workflowName,
+                eventDate)).andReturn(wfConfig);
+        EasyMock.expect(labBatch.getLabBatchType()).andReturn(LabBatchType.WORKFLOW);
+
         EasyMock.expect(sample.getSampleKey()).andReturn(sampleKey);
-        EasyMock.expect(pdoDao.findByBusinessKey(pdoKey)).andReturn(pdo);
         EasyMock.expect(pdo.getProductOrderId()).andReturn(pdoId);
-        EasyMock.expect(wfLookup.lookupWorkflowConfig(eventType.getName(), workflowName, eventDate)).andReturn(wfConfig);
         EasyMock.expect(wfConfig.getWorkflowId()).andReturn(workflowId);
         EasyMock.expect(wfConfig.getProcessId()).andReturn(processId);
         EasyMock.expect(obj.getLabEventId()).andReturn(entityId);
@@ -204,24 +250,23 @@ public class EventEtlDbFreeTest {
         EasyMock.verify(mocks);
     }
 
-    public void testSampleImport() throws Exception {
+    public void testSampleImportNoProduct() throws Exception {
         EasyMock.expect(dao.findById(LabEvent.class, entityId)).andReturn(obj);
         EasyMock.expect(obj.getLabEventType()).andReturn(LabEventType.SAMPLE_IMPORT).times(2);
         EasyMock.expect(obj.getTargetLabVessels()).andReturn(vesselList);
-        EasyMock.expect(vessel.getSampleInstances(EasyMock.anyObject(SampleType.class),
-                EasyMock.anyObject(LabBatchType.class))).andReturn(sampleInstList);
-        EasyMock.expect(sampleInst.getStartingSample()).andReturn(sample);
-        EasyMock.expect(sampleInst.getLabBatch()).andReturn(null);
-        EasyMock.expect(sampleInst.getProductOrderKey()).andReturn(null);
-
-        EasyMock.expect(bspBatch.getBatchName()).andReturn(labBatchName);
-        EasyMock.expect(bspBatch.getWorkflowName()).andReturn(workflowName);
-        EasyMock.expect(sample.getSampleKey()).andReturn(sampleKey);
+        EasyMock.expect(vessel.getSampleInstancesV2()).andReturn(sampleInstList);
+        EasyMock.expect(sampleInst.getSingleBucketEntry()).andReturn(bucketEntry);
+        EasyMock.expect(bucketEntry.getProductOrder()).andReturn(null);
+        EasyMock.expect(bucketEntry.getLabBatch()).andReturn(null);
+        EasyMock.expect(sampleInst.getRootOrEarliestMercurySample()).andReturn(sample);
         EasyMock.expect(wfLookup.lookupWorkflowConfig(LabEventType.SAMPLE_IMPORT.getName(), null, eventDate))
                 .andReturn(wfConfig);
+        EasyMock.expect(wfConfig.isBatchNeeded()).andReturn(false);
         EasyMock.expect(wfConfig.isProductOrderNeeded()).andReturn(false);
         EasyMock.expect(wfConfig.getWorkflowId()).andReturn(workflowId);
         EasyMock.expect(wfConfig.getProcessId()).andReturn(processId);
+
+        EasyMock.expect(sample.getSampleKey()).andReturn(sampleKey);
         EasyMock.expect(obj.getLabEventId()).andReturn(entityId);
         EasyMock.expect(obj.getEventLocation()).andReturn(location);
         EasyMock.expect(obj.getProgramName()).andReturn(programName);
@@ -236,24 +281,93 @@ public class EventEtlDbFreeTest {
         Assert.assertEquals(records.size(), 1);
     }
 
+    public void testSampleImport() throws Exception {
+        EasyMock.expect(dao.findById(LabEvent.class, entityId)).andReturn(obj);
+        EasyMock.expect(obj.getLabEventType()).andReturn(LabEventType.SAMPLE_IMPORT).times(2);
+        EasyMock.expect(obj.getTargetLabVessels()).andReturn(vesselList);
+        EasyMock.expect(vessel.getSampleInstancesV2()).andReturn(sampleInstList);
+        EasyMock.expect(sampleInst.getSingleBucketEntry()).andReturn(bucketEntry);
+        EasyMock.expect(bucketEntry.getProductOrder()).andReturn(pdo);
+        EasyMock.expect(bucketEntry.getLabBatch()).andReturn(labBatch);
+        EasyMock.expect(pdo.getProduct()).andReturn(product);
+        EasyMock.expect(product.getWorkflow()).andReturn(Workflow.AGILENT_EXOME_EXPRESS);
+        EasyMock.expect(sampleInst.getRootOrEarliestMercurySample()).andReturn(sample);
+        EasyMock.expect(labBatch.getBatchName()).andReturn(null);
+        EasyMock.expect(labBatch.getWorkflowName()).andReturn(null);
+        EasyMock.expect(wfLookup.lookupWorkflowConfig(LabEventType.SAMPLE_IMPORT.getName(), workflowName, eventDate))
+                .andReturn(wfConfig);
+        EasyMock.expect(wfConfig.isBatchNeeded()).andReturn(false);
+        EasyMock.expect(labBatch.getLabBatchType()).andReturn(LabBatchType.SAMPLES_IMPORT);
+        EasyMock.expect(wfConfig.getWorkflowId()).andReturn(workflowId);
+        EasyMock.expect(wfConfig.getProcessId()).andReturn(processId);
+
+        EasyMock.expect(sample.getSampleKey()).andReturn(sampleKey);
+        EasyMock.expect(pdo.getProductOrderId()).andReturn(pdoId);
+        EasyMock.expect(obj.getLabEventId()).andReturn(entityId);
+        EasyMock.expect(obj.getEventLocation()).andReturn(location);
+        EasyMock.expect(obj.getProgramName()).andReturn(programName);
+        EasyMock.expect(vessel.getLabVesselId()).andReturn(vesselId);
+        EasyMock.expect(obj.getEventDate()).andReturn(eventDate).times(2);
+
+        EasyMock.replay(mocks);
+
+        Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
+        EasyMock.verify(mocks);
+
+        Assert.assertEquals(records.size(), 1);
+    }
+
+    public void testPicoPlatingBucket() throws Exception {
+        EasyMock.expect(dao.findById(LabEvent.class, entityId)).andReturn(obj);
+        EasyMock.expect(obj.getLabEventType()).andReturn(LabEventType.PICO_PLATING_BUCKET).times(2);
+        EasyMock.expect(obj.getTargetLabVessels()).andReturn(vesselList);
+        EasyMock.expect(vessel.getSampleInstancesV2()).andReturn(sampleInstList);
+
+        EasyMock.expect(sampleInst.getSingleBucketEntry()).andReturn(bucketEntry);
+        EasyMock.expect(bucketEntry.getProductOrder()).andReturn(pdo);
+        EasyMock.expect(bucketEntry.getLabBatch()).andReturn(null);
+        EasyMock.expect(pdo.getProduct()).andReturn(product);
+        EasyMock.expect(product.getWorkflow()).andReturn(Workflow.AGILENT_EXOME_EXPRESS);
+        EasyMock.expect(sampleInst.getRootOrEarliestMercurySample()).andReturn(sample);
+
+        EasyMock.expect(wfLookup.lookupWorkflowConfig(LabEventType.PICO_PLATING_BUCKET.getName(),
+                Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(), eventDate)).andReturn(wfConfig);
+        EasyMock.expect(wfConfig.isBatchNeeded()).andReturn(false);
+
+        EasyMock.expect(obj.getEventDate()).andReturn(eventDate).anyTimes();
+
+        EasyMock.replay(mocks);
+
+        List<LabEventEtl.EventFactDto> dtos = tst.makeEventFacts(entityId);
+        Assert.assertEquals(dtos.size(), 1);
+        Assert.assertTrue(dtos.get(0).canEtl());
+        Assert.assertEquals(dtos.get(0).getBatchName(), LabEventEtl.NONE);
+        Assert.assertEquals(dtos.get(0).getSample(), sample);
+
+        EasyMock.verify(mocks);
+    }
+
     public void testInPlaceLabVessel() throws Exception {
         EasyMock.expect(dao.findById(LabEvent.class, entityId)).andReturn(obj);
-        EasyMock.expect(obj.getLabEventType()).andReturn(eventType).times(2);
+        EasyMock.expect(obj.getLabEventType()).andReturn(LabEventType.PICO_PLATING_BUCKET).times(2);
         EasyMock.expect(obj.getTargetLabVessels()).andReturn(new HashSet<LabVessel>());
         EasyMock.expect(obj.getInPlaceLabVessel()).andReturn(vessel).times(2);
-        EasyMock.expect(vessel.getSampleInstances(EasyMock.anyObject(SampleType.class),
-                EasyMock.anyObject(LabBatchType.class))).andReturn(sampleInstList);
-        EasyMock.expect(sampleInst.getStartingSample()).andReturn(sample);
-        EasyMock.expect(sampleInst.getLabBatch()).andReturn(labBatch);
-        EasyMock.expect(sampleInst.getProductOrderKey()).andReturn(pdoKey);
+        EasyMock.expect(vessel.getSampleInstancesV2()).andReturn(sampleInstList);
 
+        EasyMock.expect(sampleInst.getSingleBucketEntry()).andReturn(bucketEntry);
+        EasyMock.expect(bucketEntry.getProductOrder()).andReturn(pdo);
+        EasyMock.expect(bucketEntry.getLabBatch()).andReturn(labBatch);
+        EasyMock.expect(sampleInst.getRootOrEarliestMercurySample()).andReturn(sample);
         EasyMock.expect(labBatch.getBatchName()).andReturn(labBatchName);
         EasyMock.expect(labBatch.getWorkflowName()).andReturn(workflowName);
+        EasyMock.expect(wfLookup.lookupWorkflowConfig(LabEventType.PICO_PLATING_BUCKET.getName(), workflowName,
+                eventDate)).andReturn(wfConfig);
+        EasyMock.expect(labBatch.getLabBatchType()).andReturn(LabBatchType.WORKFLOW);
+
         EasyMock.expect(sample.getSampleKey()).andReturn(sampleKey);
-        EasyMock.expect(pdoDao.findByBusinessKey(pdoKey)).andReturn(pdo);
         EasyMock.expect(pdo.getProductOrderId()).andReturn(pdoId);
         EasyMock.expect(obj.getEventDate()).andReturn(eventDate);
-        EasyMock.expect(wfLookup.lookupWorkflowConfig(eventType.getName(), workflowName, eventDate)).andReturn(wfConfig);
+
         EasyMock.expect(wfConfig.getWorkflowId()).andReturn(workflowId);
         EasyMock.expect(wfConfig.getProcessId()).andReturn(processId);
         EasyMock.expect(obj.getLabEventId()).andReturn(entityId);
@@ -338,9 +452,13 @@ public class EventEtlDbFreeTest {
 
 
     private void verifyRecord(String record) {
+        verifyRecord(record, labBatchName);
+    }
+
+    private void verifyRecord(String record, String expectedLabBatchName) {
         EtlTestUtilities.verifyRecord(record, etlDateStr,"F", String.valueOf(entityId), String.valueOf(workflowId),
-                String.valueOf(processId), String.valueOf(pdoId), sampleKey, String.valueOf(labBatchName), location,
-                String.valueOf(vesselId), ExtractTransform.formatTimestamp(eventDate), programName);
+                String.valueOf(processId), String.valueOf(pdoId), sampleKey, String.valueOf(expectedLabBatchName),
+                location, String.valueOf(vesselId), ExtractTransform.formatTimestamp(eventDate), programName);
     }
 }
 

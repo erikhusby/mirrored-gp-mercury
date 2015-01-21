@@ -1615,4 +1615,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         // Submitted state.
         return orderStatus != OrderStatus.Draft && orderStatus != OrderStatus.Pending;
     }
+
+    public Collection<String> getPrintFriendlyRegulatoryInfo() {
+        Set<String> regInfo = new HashSet<>();
+
+        for (RegulatoryInfo regulatoryInfo : regulatoryInfos) {
+            regInfo.add(regulatoryInfo.printFriendlyValue());
+        }
+        return regInfo;
+    }
 }

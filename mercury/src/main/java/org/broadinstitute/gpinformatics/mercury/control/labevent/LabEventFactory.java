@@ -22,6 +22,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEv
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationSetupEvent;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsObjectFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
@@ -129,6 +130,7 @@ public class LabEventFactory implements Serializable {
      * we set this to false so Mercury fails in the same way as Squid / BettaLIMS.
      */
     private static final boolean CREATE_SOURCES = false;
+    public static final String ACTIVITY_USER_ID = "seqsystem";
 
     @Inject
     private BarcodedTubeDao barcodedTubeDao;
@@ -322,20 +324,34 @@ public class LabEventFactory implements Serializable {
             labVessel = labEvent.getSourceLabVessels().iterator().next();
         }
         if (labEventType.getVolumeConcUpdate() == LabEventType.VolumeConcUpdate.BSP_AND_MERCURY) {
+            MercurySample mercurySample = null;
             if (labVessel.getContainerRole() != null) {
-                labVessel = labVessel.getContainerRole().getContainedVessels().iterator().next();
-            }
-            Set<SampleInstanceV2> sampleInstances = labVessel.getSampleInstancesV2();
-            if (!sampleInstances.isEmpty()) {
-                Set<MercurySample> mercurySamples = sampleInstances.iterator().next().getRootMercurySamples();
-                if (!mercurySamples.isEmpty()) {
-                    if (mercurySamples.iterator().next().getMetadataSource() == MercurySample.MetadataSource.BSP) {
-                        return true;
+                for (LabVessel testVessel : labVessel.getContainerRole().getContainedVessels()) {
+                    mercurySample = extractSample(testVessel.getSampleInstancesV2());
+                    if (mercurySample != null) {
+                        break;
                     }
                 }
+            } else {
+                mercurySample = extractSample(labVessel.getSampleInstancesV2());
             }
+            // If no mercury samples found, assumes samples are derived from old BSP samples that haven't
+            // been exported to Mercury.  This is OK provided they are processed by Squid
+            // CRSP/Buick samples are expected to be already accessioned and therefore have mercury samples.
+            return (mercurySample == null || mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP);
         }
         return false;
+    }
+
+    private MercurySample extractSample(Collection<SampleInstanceV2> sampleInstances) {
+        MercurySample mercurySample = null;
+        for (SampleInstanceV2 sampleInstance : sampleInstances) {
+            mercurySample = sampleInstance.getRootOrEarliestMercurySample();
+            if (mercurySample != null) {
+                break;
+            }
+        }
+        return mercurySample;
     }
 
     /**
@@ -405,6 +421,13 @@ public class LabEventFactory implements Serializable {
             if (isUpdateVolConcInBsp(labEvent)) {
                 updateReceptacles.add(receptacleEventType.getReceptacle());
             }
+        }
+        StationSetupEvent stationSetupEvent = bettaLIMSMessage.getStationSetupEvent();
+        if (stationSetupEvent != null) {
+            LabEvent labEvent = buildFromBettaLims(stationSetupEvent);
+            eventHandlerSelector.applyEventSpecificHandling(labEvent, stationSetupEvent);
+            persistLabEvent(uniqueEvents, labEvent, true);
+            labEvents.add(labEvent);
         }
 
         updateVolumeConcentration(updateReceptacles.toArray(new ReceptacleType[updateReceptacles.size()]));
@@ -1257,6 +1280,10 @@ public class LabEventFactory implements Serializable {
                 receptacleEventType.getReceptacle().getBarcode()));
     }
 
+    private LabEvent buildFromBettaLims(StationSetupEvent stationSetupEvent) {
+        return constructReferenceData(stationSetupEvent, labEventRefDataFetcher);
+    }
+
     /**
      * Database free (i.e. entities have already been fetched from the database, or constructed in tests) building of
      * lab event entity for an in-place event on a tube.
@@ -1284,11 +1311,16 @@ public class LabEventFactory implements Serializable {
             throw new RuntimeException("Unexpected event type " + stationEventType.getEventType());
         }
 
-        BspUser bspUser = labEventRefDataFetcher.getOperator(stationEventType.getOperator());
-        if (bspUser == null) {
-            throw new RuntimeException("Failed to find operator " + stationEventType.getOperator());
+        Long operator;
+        if (stationEventType instanceof StationSetupEvent) {
+            operator = labEventRefDataFetcher.getOperator(ACTIVITY_USER_ID).getUserId();
+        } else {
+            BspUser bspUser = labEventRefDataFetcher.getOperator(stationEventType.getOperator());
+            if (bspUser == null) {
+                throw new RuntimeException("Failed to find operator " + stationEventType.getOperator());
+            }
+            operator = bspUser.getUserId();
         }
-        Long operator = bspUser.getUserId();
 
         Long disambiguator = stationEventType.getDisambiguator();
         if (disambiguator == null) {

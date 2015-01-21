@@ -7,12 +7,12 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentration;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentrationProducer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
@@ -55,11 +55,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -254,10 +254,19 @@ public class BaseEventTest {
      */
     protected Bucket createAndPopulateBucket(Map<String, BarcodedTube> mapBarcodeToTube, ProductOrder productOrder,
                                              String bucketName) {
+        // Uses map of sample name to pdoSample for making the link between pdoSample to MercurySample.
+        Map<String, ProductOrderSample> mapSampleNameToPdoSample = new HashMap<>();
+        for (ProductOrderSample pdoSample : productOrder.getSamples()) {
+            mapSampleNameToPdoSample.put(pdoSample.getSampleKey(), pdoSample);
+        }
         Bucket workingBucket = new Bucket(bucketName);
-
         for (BarcodedTube tube : mapBarcodeToTube.values()) {
             workingBucket.addEntry(productOrder, tube, BucketEntry.BucketEntryType.PDO_ENTRY);
+            for (MercurySample mercurySample : tube.getMercurySamples()) {
+                if (mapSampleNameToPdoSample.containsKey(mercurySample.getSampleKey())) {
+                    mercurySample.addProductOrderSample(mapSampleNameToPdoSample.get(mercurySample.getSampleKey()));
+                }
+            }
         }
         return workingBucket;
     }
@@ -775,7 +784,7 @@ public class BaseEventTest {
         SystemRouter systemRouter = new SystemRouter(null, null, new WorkflowLoader(), null, null);
         SystemRouter.System system = systemRouter.routeForVessels(labVessels,
                 controlCollaboratorIdList, nameToSampleData,
-                SystemRouter.Intent.ROUTE);
+                SystemRouter.Intent.ROUTE, false);
         Assert.assertEquals(system, expectedRouting);
 
         WorkflowValidator workflowValidator = new WorkflowValidator();

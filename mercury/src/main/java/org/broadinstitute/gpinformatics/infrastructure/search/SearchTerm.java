@@ -62,6 +62,12 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
         private Evaluator<String> propertyNameExpression;
 
+        /**
+         * Optional nested subquery criteria definition
+         * Note:  Nested criteria path and child search terms are mutually exclusive
+         */
+        private CriteriaPath nestedCriteriaPath;
+
         public List<String> getCriteria() {
             return criteria;
         }
@@ -92,6 +98,14 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
         public void setPropertyNameExpression(Evaluator<String> propertyNameExpression) {
             this.propertyNameExpression = propertyNameExpression;
+        }
+
+        public CriteriaPath getNestedCriteriaPath(){
+            return nestedCriteriaPath;
+        }
+
+        public void setNestedCriteriaPath( CriteriaPath nestedCriteriaPath ) {
+            this.nestedCriteriaPath = nestedCriteriaPath;
         }
     }
 
