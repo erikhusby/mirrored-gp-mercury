@@ -58,7 +58,8 @@
             });
 
             function statusChange() {
-                if ($j(".selectedStatuses[value='Draft']").attr('checked')) {
+                if ($j(".selectedStatuses[value='Draft']").attr('checked')
+                        || $j(".selectedStatuses[value='Pending']").attr('checked')) {
                     $j("#draftMessage").show();
                 } else {
                     $j("#draftMessage").hide();
@@ -199,7 +200,7 @@
                              endString="${actionBean.dateRange.endStr}">
                         </div>
                         <div id="draftMessage" class="help-text" style="margin-left: 10px;margin-top: -10px; margin-bottom: 5px; display: none;">
-                            Matching Draft Orders are displayed for any date selection
+                            Matching Draft or Pending Orders are displayed for any date selection
                         </div>
                     </div>
                 </div>
