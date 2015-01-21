@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapT
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReagentType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsObjectFactory;
@@ -42,6 +43,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -411,6 +413,15 @@ public class LabEventFactory implements Serializable {
             labEvents.add(labEvent);
             if (isUpdateVolConcInBsp(labEvent)) {
                 updateReceptacles.add(receptacleEventType.getReceptacle());
+            }
+        }
+        for (ReceptacleTransferEventType receptacleTransferEventType : bettaLIMSMessage.getReceptacleTransferEvent()) {
+            LabEvent labEvent = buildFromBettaLims(receptacleTransferEventType);
+            eventHandlerSelector.applyEventSpecificHandling(labEvent, receptacleTransferEventType);
+            persistLabEvent(uniqueEvents, labEvent, true);
+            labEvents.add(labEvent);
+            if (isUpdateVolConcInBsp(labEvent)) {
+                updateReceptacles.add(receptacleTransferEventType.getReceptacle());
             }
         }
 
@@ -1275,6 +1286,36 @@ public class LabEventFactory implements Serializable {
             throw new RuntimeException("Source tube not found for " + receptacleEventType.getReceptacle().getBarcode());
         }
         labEvent.setInPlaceLabVessel(labVessel);
+        return labEvent;
+    }
+
+    public LabEvent buildFromBettaLims(ReceptacleTransferEventType receptacleTransferEventType) {
+        List<String> barcodes = new ArrayList<>();
+        barcodes.add(receptacleTransferEventType.getSourceReceptacle().getBarcode());
+        barcodes.add(receptacleTransferEventType.getReceptacle().getBarcode());
+        Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
+        return buildReceptacleTransferEventDbFree(receptacleTransferEventType, mapBarcodeToVessel);
+    }
+
+    @DaoFree
+    private LabEvent buildReceptacleTransferEventDbFree(ReceptacleTransferEventType receptacleTransferEventType,
+            Map<String, LabVessel> mapBarcodeToVessel) {
+        LabEvent labEvent = constructReferenceData(receptacleTransferEventType, labEventRefDataFetcher);
+        LabVessel sourceLabVessel = mapBarcodeToVessel.get(receptacleTransferEventType.getSourceReceptacle().getBarcode());
+        if (sourceLabVessel == null) {
+            throw new RuntimeException("Source tube not found for " +
+                    receptacleTransferEventType.getSourceReceptacle().getBarcode());
+        }
+        LabVessel targetLabVessel = mapBarcodeToVessel.get(receptacleTransferEventType.getReceptacle().getBarcode());
+        if (targetLabVessel == null) {
+            BarcodedTube.BarcodedTubeType tubeType = BarcodedTube.BarcodedTubeType.getByAutomationName(
+                    receptacleTransferEventType.getReceptacle().getReceptacleType());
+            if (tubeType == null) {
+                tubeType = BarcodedTube.BarcodedTubeType.MatrixTube;
+            }
+            targetLabVessel = new BarcodedTube(receptacleTransferEventType.getReceptacle().getBarcode(), tubeType);
+        }
+        labEvent.getVesselToVesselTransfers().add(new VesselToVesselTransfer(sourceLabVessel, targetLabVessel, labEvent));
         return labEvent;
     }
 

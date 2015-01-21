@@ -34,7 +34,9 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
     POST_SHEARING_TRANSFER_CLEANUP("PostShearingTransferCleanup",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            MessageType.PLATE_TRANSFER_EVENT, StaticPlate.PlateType.Eppendorf96, StaticPlate.PlateType.Eppendorf96,
+            new String[]{"SPRI", "70% Ethanol", "EB"}),
     SHEARING_QC("ShearingQC",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
@@ -829,7 +831,29 @@ public enum LabEventType {
 //    SHEARING_BUCKET_EXIT ("ShearingBucketExit", ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY),
     COLLABORATOR_TRANSFER("CollaboratorTransfer", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE,
             SystemOfRecord.MERCURY, CreateSources.FALSE, PlasticToValidate.TARGET, PipelineTransformation.NONE,
-            SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY);
+            SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+
+    // Draft CRSP extraction transfers, todo jmt get input from lab.
+    // Transfer blood to micro centrifuge tube
+    EXTRACT_BLOOD_TO_MICRO("ExtractBloodToMicro",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            MessageType.RECEPTACLE_TRANSFER_EVENT, null, null, new String[]{"SPRI", "70% Ethanol", "EB"}),
+    // Transfer to spin column
+    EXTRACT_MICRO_TO_SPIN("ExtractMicroToSpin",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            MessageType.RECEPTACLE_TRANSFER_EVENT, null, null, new String[]{"SPRI", "70% Ethanol", "EB"}),
+    // Transfer to micro centrifuge tube
+    EXTRACT_SPIN_TO_MICRO("ExtractSpinToMicro",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            MessageType.RECEPTACLE_TRANSFER_EVENT, null, null, new String[]{"SPRI", "70% Ethanol", "EB"}),
+    // Transfer to matrix tube
+    EXTRACT_MICRO_TO_MATRIX("ExtractMicroToMatrix",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            MessageType.RECEPTACLE_TRANSFER_EVENT, null, null, new String[]{"SPRI", "70% Ethanol", "EB"});
 
     private final String name;
 
@@ -971,15 +995,16 @@ public enum LabEventType {
         STATION_SETUP_EVENT,
         PLATE_CHERRY_PICK_EVENT,
         RECEPTACLE_PLATE_TRANSFER_EVENT,
-        RECEPTACLE_EVENT
+        RECEPTACLE_EVENT,
+        RECEPTACLE_TRANSFER_EVENT
     }
 
-    private final MessageType messageType;
+    private MessageType messageType;
 
-    private final ContainerGeometryType sourceContainerGeometryType;
-    private final ContainerGeometryType targetContainerGeometryType;
+    private ContainerGeometryType sourceContainerGeometryType;
+    private ContainerGeometryType targetContainerGeometryType;
 
-    private final String[] reagentNames;
+    private String[] reagentNames;
 
     /**
      * One attempt at trying to make a very generic
@@ -1008,13 +1033,23 @@ public enum LabEventType {
         this.pipelineTransformation = pipelineTransformation;
         this.sendToBsp = sendToBsp;
         this.volumeConcUpdate = volumeConcUpdate;
-        this.messageType = MessageType.PLATE_TRANSFER_EVENT;
-        this.sourceContainerGeometryType = StaticPlate.PlateType.Eppendorf96;
-        this.targetContainerGeometryType = StaticPlate.PlateType.Eppendorf96;
-        this.reagentNames = new String[]{"SPRI", "70% Ethanol", "EB"};
     }
 
-    public String getName() {
+    LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
+                 SystemOfRecord systemOfRecord, CreateSources createSources, PlasticToValidate plasticToValidate,
+                 PipelineTransformation pipelineTransformation, SendToBsp sendToBsp,
+                 VolumeConcUpdate volumeConcUpdate, MessageType messageType,
+                 ContainerGeometryType sourceContainerGeometryType, ContainerGeometryType targetContainerGeometryType,
+                 String[] reagentNames) {
+        this(name, expectSourcesEmpty, expectTargetsEmpty, systemOfRecord, createSources, plasticToValidate,
+                pipelineTransformation, sendToBsp, volumeConcUpdate);
+        this.messageType = messageType;
+        this.sourceContainerGeometryType = sourceContainerGeometryType;
+        this.targetContainerGeometryType = targetContainerGeometryType;
+        this.reagentNames = reagentNames;
+    }
+
+        public String getName() {
         return name;
     }
 

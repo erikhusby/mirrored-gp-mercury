@@ -18,8 +18,7 @@
         <stripes:form beanclass="${actionBean.class.name}" id="transferForm">
 
             <stripes:select name="stationEvent.eventType" id="eventType">
-                <stripes:options-enumeration
-                        enum="org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType" label="name"/>
+                <stripes:options-collection collection="${actionBean.manualEventTypes}" label="name"/>
             </stripes:select>
             <stripes:submit name="chooseEventType" value="Choose Event Type" class="btn btn-primary"/>
 
@@ -33,62 +32,69 @@
                 </p>
             </c:forEach>
 
-            <c:if test="${actionBean.stationEvent.class.simpleName == 'PlateTransferEventType'}">
-                <c:set var="plateTransfer" value="${actionBean.stationEvent}" />
-                <%--@elvariable id="plateTransfer" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType"--%>
+            <c:choose>
+                <c:when test="${actionBean.stationEvent.class.simpleName == 'PlateTransferEventType'}">
+                    <c:set var="plateTransfer" value="${actionBean.stationEvent}" />
+                    <%--@elvariable id="plateTransfer" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType"--%>
 
-                <p>
-                Source type:
-                <stripes:hidden name="stationEvent.sourcePlate.physType" value="${plateTransfer.sourcePlate.physType}"/>
-                Source barcode:
-                <stripes:text name="stationEvent.sourcePlate.barcode" value="${plateTransfer.sourcePlate.barcode}"/>
-                <c:choose>
-                    <c:when test="${empty plateTransfer.sourcePositionMap}">
-                        Source section:
-                        <stripes:select name="stationEvent.sourcePlate.section" id="sourceSection">
-                            <stripes:options-enumeration
-                                    enum="org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection" label="sectionName"/>
-                        </stripes:select>
-                    </c:when>
-                    <c:otherwise>
-                        <%-- todo jmt set this with javascript --%>
-                        <stripes:hidden name="stationEvent.sourcePositionMap.barcode" value="dummy"/>
-                        <c:forEach items="${plateTransfer.sourcePositionMap.receptacle}" var="receptacle" varStatus="loop">
-                            <%--@elvariable id="receptacle" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType"--%>
-                            <stripes:text name="stationEvent.sourcePositionMap.receptacle[${loop.index}].barcode"
-                                    value="${receptacle.barcode}"/>
-                        </c:forEach>
-                    </c:otherwise>
-                </c:choose>
-                </p>
+                    <p>
+                        Source type:
+                        <stripes:hidden name="stationEvent.sourcePlate.physType" value="${plateTransfer.sourcePlate.physType}"/>
+                        Source barcode:
+                        <stripes:text name="stationEvent.sourcePlate.barcode" value="${plateTransfer.sourcePlate.barcode}"/>
+                        <c:choose>
+                            <c:when test="${empty plateTransfer.sourcePositionMap}">
+                                Source section:
+                                <stripes:select name="stationEvent.sourcePlate.section" id="sourceSection">
+                                    <stripes:options-enumeration
+                                            enum="org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection" label="sectionName"/>
+                                </stripes:select>
+                            </c:when>
+                            <c:otherwise>
+                                <%-- todo jmt set this with javascript --%>
+                                <stripes:hidden name="stationEvent.sourcePositionMap.barcode" value="dummy"/>
+                                <c:forEach items="${plateTransfer.sourcePositionMap.receptacle}" var="receptacle" varStatus="loop">
+                                    <%--@elvariable id="receptacle" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType"--%>
+                                    <stripes:text name="stationEvent.sourcePositionMap.receptacle[${loop.index}].barcode"
+                                            value="${receptacle.barcode}"/>
+                                </c:forEach>
+                            </c:otherwise>
+                        </c:choose>
+                    </p>
 
-                <p>
-                Destination type:
-                <stripes:hidden name="stationEvent.plate.physType" value="${plateTransfer.plate.physType}"/>
-                Destination barcode:
-                <stripes:text name="stationEvent.plate.barcode" value="${plateTransfer.plate.barcode}"/>
+                    <p>
+                        Destination type:
+                        <stripes:hidden name="stationEvent.plate.physType" value="${plateTransfer.plate.physType}"/>
+                        Destination barcode:
+                        <stripes:text name="stationEvent.plate.barcode" value="${plateTransfer.plate.barcode}"/>
 
-                <c:choose>
-                    <c:when test="${empty plateTransfer.sourcePositionMap}">
-                        Destination section:
-                        <stripes:select name="stationEvent.plate.section" id="destSection">
-                            <stripes:options-enumeration
-                                    enum="org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection" label="sectionName"/>
-                        </stripes:select>
-                    </c:when>
-                    <c:otherwise>
-                        <%-- todo jmt set this with javascript --%>
-                        <stripes:hidden name="stationEvent.sourcePositionMap.barcode" value="dummy"/>
-                        <c:forEach items="${plateTransfer.sourcePositionMap.receptacle}" var="receptacle" varStatus="loop">
-                            <%--@elvariable id="receptacle" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType"--%>
-                            <stripes:text name="stationEvent.sourcePositionMap.receptacle[${loop.index}].barcode"
-                                    value="${receptacle.barcode}"/>
-                        </c:forEach>
-                    </c:otherwise>
-                </c:choose>
-                </p>
-
-            </c:if>
+                        <c:choose>
+                            <c:when test="${empty plateTransfer.sourcePositionMap}">
+                                Destination section:
+                                <stripes:select name="stationEvent.plate.section" id="destSection">
+                                    <stripes:options-enumeration
+                                            enum="org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection" label="sectionName"/>
+                                </stripes:select>
+                            </c:when>
+                            <c:otherwise>
+                                <%-- todo jmt set this with javascript --%>
+                                <stripes:hidden name="stationEvent.sourcePositionMap.barcode" value="dummy"/>
+                                <c:forEach items="${plateTransfer.sourcePositionMap.receptacle}" var="receptacle" varStatus="loop">
+                                    <%--@elvariable id="receptacle" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType"--%>
+                                    <stripes:text name="stationEvent.sourcePositionMap.receptacle[${loop.index}].barcode"
+                                            value="${receptacle.barcode}"/>
+                                </c:forEach>
+                            </c:otherwise>
+                        </c:choose>
+                    </p>
+                </c:when>
+                <c:when test="${actionBean.stationEvent.class.simpleName == 'ReceptacleTransferEventType'}">
+                    <%--@elvariable id="receptacleTransfer" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleTransferEventType"--%>
+                    <!-- todo jmt specify tube types -->
+                    Source: <stripes:text name="stationEvent.sourceReceptacle.barcode" value="${receptacleTransfer.sourceReceptacle.barcode}"/>
+                    Destination: <stripes:text name="stationEvent.receptacle.barcode" value="${receptacleTransfer.receptacle.barcode}"/>
+                </c:when>
+            </c:choose>
             <stripes:submit name="transfer" value="Transfer" class="btn btn-primary"/>
         </stripes:form>
 

@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapT
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReagentType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationSetupEvent;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
@@ -30,7 +31,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
  * A Stripes Action Bean to record manual transfers.
@@ -135,6 +138,11 @@ public class ManualTransferActionBean extends CoreActionBean {
                     stationEvent = receptacleEventType;
                     bettaLIMSMessage.getReceptacleEvent().add(receptacleEventType);
                     break;
+                case RECEPTACLE_TRANSFER_EVENT:
+                    ReceptacleTransferEventType receptacleTransferEventType = new ReceptacleTransferEventType();
+                    stationEvent = receptacleTransferEventType;
+                    bettaLIMSMessage.getReceptacleTransferEvent().add(receptacleTransferEventType);
+                    break;
                 default:
                     throw new RuntimeException("Unknown labEventType " + labEventType.getMessageType());
             }
@@ -183,6 +191,9 @@ public class ManualTransferActionBean extends CoreActionBean {
             case RECEPTACLE_EVENT:
                 ReceptacleEventType receptacleEventType = (ReceptacleEventType) stationEvent;
                 break;
+            case RECEPTACLE_TRANSFER_EVENT:
+                ReceptacleTransferEventType receptacleTransferEventType = (ReceptacleTransferEventType) stationEvent;
+                break;
             default:
                 throw new RuntimeException("Unknown labEventType " + labEventType.getMessageType());
         }
@@ -224,5 +235,15 @@ public class ManualTransferActionBean extends CoreActionBean {
 
     public void setStationEvent(StationEventType stationEvent) {
         this.stationEvent = stationEvent;
+    }
+
+    public List<LabEventType> getManualEventTypes() {
+        ArrayList<LabEventType> manualLabEventTypes = new ArrayList<>();
+        for (LabEventType eventType : LabEventType.values()) {
+            if (eventType.getMessageType() != null) {
+                manualLabEventTypes.add(eventType);
+            }
+        }
+        return manualLabEventTypes;
     }
 }

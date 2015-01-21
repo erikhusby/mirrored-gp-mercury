@@ -267,6 +267,16 @@
         </xs:complexContent>
     </xs:complexType>
 
+    <xs:complexType name="receptacleTransferEventType">
+        <xs:complexContent>
+            <xs:extension base="receptacleEventType">
+                <xs:sequence>
+                    <xs:element name="sourceReceptacle" type="receptacleType"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
     <xs:element name="bettaLIMSMessage">
         <xs:complexType>
             <xs:choice>
@@ -277,6 +287,7 @@
                 <xs:element ref="receptaclePlateTransferEvent" maxOccurs="unbounded"/>
                 <xs:element name="receptacleEvent" type="receptacleEventType" minOccurs="0" maxOccurs="unbounded"/>
                 <xs:element name="receptacleSampleEvent" type="receptacleSampleEventType" minOccurs="0" maxOccurs="1"/>
+                <xs:element name="receptacleTransferEvent" type="receptacleTransferEventType" minOccurs="0" maxOccurs="unbounded"/>
             </xs:choice>
             <xs:attribute name="mode" type="xs:NCName"/>
         </xs:complexType>
