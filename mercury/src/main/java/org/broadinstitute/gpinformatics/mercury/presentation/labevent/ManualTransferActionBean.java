@@ -62,44 +62,9 @@ public class ManualTransferActionBean extends CoreActionBean {
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
-/*
-        PlateTransferEventType plateTransferEventType = new PlateTransferEventType();
-        plateTransferEventType.setEventType(LabEventType.SHEARING_TRANSFER.getName());
-        plateTransferEventType.setStation("SPIDERMAN");
-
-        PlateType sourcePlate = new PlateType();
-        String rack1Barcode = "RACK1";
-        sourcePlate.setBarcode(rack1Barcode);
-        sourcePlate.setPhysType(LabEventFactory.PHYS_TYPE_TUBE_RACK);
-        sourcePlate.setSection(LabEventFactory.SECTION_ALL_96);
-        plateTransferEventType.setSourcePlate(sourcePlate);
-
-        PositionMapType sourcePositionMap = new PositionMapType();
-        sourcePositionMap.setBarcode(rack1Barcode);
-        ReceptacleType receptacleType = new ReceptacleType();
-        receptacleType.setBarcode("TUBE1");
-        receptacleType.setPosition("A01");
-        receptacleType.setReceptacleType("tube");
-        receptacleType.setVolume(new BigDecimal("20.00"));
-        sourcePositionMap.getReceptacle().add(receptacleType);
-        plateTransferEventType.setSourcePositionMap(sourcePositionMap);
-
-        PlateType destinationPlateType = new PlateType();
-        destinationPlateType.setBarcode("PLATE1");
-        destinationPlateType.setPhysType(LabEventFactory.PHYS_TYPE_EPPENDORF_96);
-        destinationPlateType.setSection(LabEventFactory.SECTION_ALL_96);
-        plateTransferEventType.setPlate(destinationPlateType);
-
-        PositionMapType destinationPositionMapType = new PositionMapType();
-        plateTransferEventType.setPositionMap(destinationPositionMapType);
-
-        stationEvent = plateTransferEventType;
-*/
-
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
     }
 
-    // Where to add the child
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
         String eventType = getContext().getRequest().getParameter("stationEvent.eventType");
@@ -149,6 +114,7 @@ public class ManualTransferActionBean extends CoreActionBean {
         }
     }
 
+    // todo jmt when choose lab event type is called twice, how to avoid adding duplicate reagents?
     @HandlesEvent(CHOOSE_EVENT_TYPE_ACTION)
     public Resolution chooseLabEventType() {
         for (String reagentName : labEventType.getReagentNames()) {
