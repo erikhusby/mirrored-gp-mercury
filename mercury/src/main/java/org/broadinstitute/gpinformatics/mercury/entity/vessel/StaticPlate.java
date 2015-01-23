@@ -26,7 +26,7 @@ import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.C
 @Audited
 public class StaticPlate extends LabVessel implements VesselContainerEmbedder<PlateWell>, Serializable {
 
-    public enum PlateType implements ContainerGeometryType {
+    public enum PlateType implements VesselTypeGeometry {
         CovarisRack("CovarisRack", VesselGeometry.G12x8),
         Eco48("Eco48", VesselGeometry.G8x6),
         Eppendorf96("Eppendorf96", VesselGeometry.G12x8),

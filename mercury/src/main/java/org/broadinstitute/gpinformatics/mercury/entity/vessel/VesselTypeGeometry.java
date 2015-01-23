@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 /**
  * Abstraction over PlateType and RackType.
  */
-public interface ContainerGeometryType {
+public interface VesselTypeGeometry {
 
     String getDisplayName();
 

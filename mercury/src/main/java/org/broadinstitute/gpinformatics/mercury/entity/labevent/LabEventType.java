@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.ContainerGeometryType;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselTypeGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 
 import java.util.HashMap;
@@ -838,22 +839,26 @@ public enum LabEventType {
     EXTRACT_BLOOD_TO_MICRO("ExtractBloodToMicro",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
-            MessageType.RECEPTACLE_TRANSFER_EVENT, null, null, new String[]{"SPRI", "70% Ethanol", "EB"}),
+            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.VacutainerBloodTube3,
+            BarcodedTube.BarcodedTubeType.EppendoffFliptop15, new String[]{"Proteinase K", "Buffer AL", "100% Ethanol"}),
     // Transfer to spin column
     EXTRACT_MICRO_TO_SPIN("ExtractMicroToSpin",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
-            MessageType.RECEPTACLE_TRANSFER_EVENT, null, null, new String[]{"SPRI", "70% Ethanol", "EB"}),
+            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.EppendoffFliptop15,
+            BarcodedTube.BarcodedTubeType.SpinColumn, new String[]{"Buffer AW1", "Buffer AW2", "EB"}),
     // Transfer to micro centrifuge tube
     EXTRACT_SPIN_TO_MICRO("ExtractSpinToMicro",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
-            MessageType.RECEPTACLE_TRANSFER_EVENT, null, null, new String[]{"SPRI", "70% Ethanol", "EB"}),
+            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.SpinColumn,
+            BarcodedTube.BarcodedTubeType.EppendoffFliptop15, new String[]{"Buffer AW"}),
     // Transfer to matrix tube
     EXTRACT_MICRO_TO_MATRIX("ExtractMicroToMatrix",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
-            MessageType.RECEPTACLE_TRANSFER_EVENT, null, null, new String[]{"SPRI", "70% Ethanol", "EB"});
+            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.EppendoffFliptop15,
+            BarcodedTube.BarcodedTubeType.MatrixTube075, new String[]{});
 
     private final String name;
 
@@ -1001,8 +1006,8 @@ public enum LabEventType {
 
     private MessageType messageType;
 
-    private ContainerGeometryType sourceContainerGeometryType;
-    private ContainerGeometryType targetContainerGeometryType;
+    private VesselTypeGeometry sourceVesselTypeGeometry;
+    private VesselTypeGeometry targetVesselTypeGeometry;
 
     private String[] reagentNames;
 
@@ -1039,13 +1044,13 @@ public enum LabEventType {
                  SystemOfRecord systemOfRecord, CreateSources createSources, PlasticToValidate plasticToValidate,
                  PipelineTransformation pipelineTransformation, SendToBsp sendToBsp,
                  VolumeConcUpdate volumeConcUpdate, MessageType messageType,
-                 ContainerGeometryType sourceContainerGeometryType, ContainerGeometryType targetContainerGeometryType,
+                 VesselTypeGeometry sourceVesselTypeGeometry, VesselTypeGeometry targetVesselTypeGeometry,
                  String[] reagentNames) {
         this(name, expectSourcesEmpty, expectTargetsEmpty, systemOfRecord, createSources, plasticToValidate,
                 pipelineTransformation, sendToBsp, volumeConcUpdate);
         this.messageType = messageType;
-        this.sourceContainerGeometryType = sourceContainerGeometryType;
-        this.targetContainerGeometryType = targetContainerGeometryType;
+        this.sourceVesselTypeGeometry = sourceVesselTypeGeometry;
+        this.targetVesselTypeGeometry = targetVesselTypeGeometry;
         this.reagentNames = reagentNames;
     }
 
@@ -1086,12 +1091,12 @@ public enum LabEventType {
         return messageType;
     }
 
-    public ContainerGeometryType getSourceContainerGeometryType() {
-        return sourceContainerGeometryType;
+    public VesselTypeGeometry getSourceVesselTypeGeometry() {
+        return sourceVesselTypeGeometry;
     }
 
-    public ContainerGeometryType getTargetContainerGeometryType() {
-        return targetContainerGeometryType;
+    public VesselTypeGeometry getTargetVesselTypeGeometry() {
+        return targetVesselTypeGeometry;
     }
 
     public String[] getReagentNames() {

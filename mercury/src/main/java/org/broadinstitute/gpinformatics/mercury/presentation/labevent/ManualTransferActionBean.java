@@ -20,13 +20,14 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReagentType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationSetupEvent;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.ContainerGeometryType;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselTypeGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
@@ -114,7 +115,6 @@ public class ManualTransferActionBean extends CoreActionBean {
         }
     }
 
-    // todo jmt when choose lab event type is called twice, how to avoid adding duplicate reagents?
     @HandlesEvent(CHOOSE_EVENT_TYPE_ACTION)
     public Resolution chooseLabEventType() {
         for (String reagentName : labEventType.getReagentNames()) {
@@ -130,18 +130,18 @@ public class ManualTransferActionBean extends CoreActionBean {
             case PLATE_TRANSFER_EVENT:
                 PlateTransferEventType plateTransferEventType = (PlateTransferEventType) stationEvent;
                 PlateType sourcePlate = new PlateType();
-                ContainerGeometryType sourceContainerGeometryType = labEventType.getSourceContainerGeometryType();
-                sourcePlate.setPhysType(sourceContainerGeometryType.getDisplayName());
+                VesselTypeGeometry sourceVesselTypeGeometry = labEventType.getSourceVesselTypeGeometry();
+                sourcePlate.setPhysType(sourceVesselTypeGeometry.getDisplayName());
                 plateTransferEventType.setSourcePlate(sourcePlate);
-                if (sourceContainerGeometryType instanceof RackOfTubes.RackType) {
+                if (sourceVesselTypeGeometry instanceof RackOfTubes.RackType) {
                     plateTransferEventType.setSourcePositionMap(new PositionMapType());
                 }
 
                 PlateType destinationPlateType = new PlateType();
-                ContainerGeometryType targetContainerGeometryType = labEventType.getTargetContainerGeometryType();
-                destinationPlateType.setPhysType(targetContainerGeometryType.getDisplayName());
+                VesselTypeGeometry targetVesselTypeGeometry = labEventType.getTargetVesselTypeGeometry();
+                destinationPlateType.setPhysType(targetVesselTypeGeometry.getDisplayName());
                 plateTransferEventType.setPlate(destinationPlateType);
-                if (targetContainerGeometryType instanceof RackOfTubes.RackType) {
+                if (targetVesselTypeGeometry instanceof RackOfTubes.RackType) {
                     plateTransferEventType.setPositionMap(new PositionMapType());
                 }
                 break;
@@ -159,6 +159,13 @@ public class ManualTransferActionBean extends CoreActionBean {
                 break;
             case RECEPTACLE_TRANSFER_EVENT:
                 ReceptacleTransferEventType receptacleTransferEventType = (ReceptacleTransferEventType) stationEvent;
+                ReceptacleType sourceReceptacle = new ReceptacleType();
+                sourceReceptacle.setReceptacleType(labEventType.getSourceVesselTypeGeometry().getDisplayName());
+                receptacleTransferEventType.setSourceReceptacle(sourceReceptacle);
+
+                ReceptacleType destinationReceptacle = new ReceptacleType();
+                destinationReceptacle.setReceptacleType(labEventType.getTargetVesselTypeGeometry().getDisplayName());
+                receptacleTransferEventType.setReceptacle(destinationReceptacle);
                 break;
             default:
                 throw new RuntimeException("Unknown labEventType " + labEventType.getMessageType());

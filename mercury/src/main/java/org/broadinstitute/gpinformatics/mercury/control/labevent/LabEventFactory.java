@@ -1080,16 +1080,20 @@ public class LabEventFactory implements Serializable {
         for (ReceptacleType receptacleType : positionMap.getReceptacle()) {
             BarcodedTube barcodedTube = mapBarcodeToTubes.get(receptacleType.getBarcode());
             if (barcodedTube != null) {
-                if (receptacleType.getVolume() != null) {
-                    barcodedTube.setVolume(receptacleType.getVolume());
-                }
-                if (receptacleType.getConcentration() != null) {
-                    barcodedTube.setConcentration(receptacleType.getConcentration());
-                }
-                if (receptacleType.getReceptacleWeight() != null) {
-                    barcodedTube.setReceptacleWeight(receptacleType.getReceptacleWeight());
-                }
+                setTubeQuantities(receptacleType, barcodedTube);
             }
+        }
+    }
+
+    private void setTubeQuantities(ReceptacleType receptacleType, BarcodedTube barcodedTube) {
+        if (receptacleType.getVolume() != null) {
+            barcodedTube.setVolume(receptacleType.getVolume());
+        }
+        if (receptacleType.getConcentration() != null) {
+            barcodedTube.setConcentration(receptacleType.getConcentration());
+        }
+        if (receptacleType.getReceptacleWeight() != null) {
+            barcodedTube.setReceptacleWeight(receptacleType.getReceptacleWeight());
         }
     }
 
@@ -1315,6 +1319,10 @@ public class LabEventFactory implements Serializable {
             }
             targetLabVessel = new BarcodedTube(receptacleTransferEventType.getReceptacle().getBarcode(), tubeType);
         }
+        setTubeQuantities(receptacleTransferEventType.getSourceReceptacle(),
+                OrmUtil.proxySafeCast(sourceLabVessel, BarcodedTube.class));
+        setTubeQuantities(receptacleTransferEventType.getReceptacle(),
+                OrmUtil.proxySafeCast(targetLabVessel, BarcodedTube.class));
         labEvent.getVesselToVesselTransfers().add(new VesselToVesselTransfer(sourceLabVessel, targetLabVessel, labEvent));
         return labEvent;
     }

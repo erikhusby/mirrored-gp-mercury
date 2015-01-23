@@ -29,7 +29,7 @@ public class RackOfTubes extends LabVessel {
     protected RackOfTubes() {
     }
 
-    public enum RackType implements ContainerGeometryType {
+    public enum RackType implements VesselTypeGeometry {
         Abgene96SlotRack("Abgene96SlotRack", VesselGeometry.G12x8),
         CBSStraw_Box("CBSStraw_Box", VesselGeometry.G12x8),
         Conical15ml_10x5rack("Conical15ml_10x5rack", VesselGeometry.G4x10_NUM),

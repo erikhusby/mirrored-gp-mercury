@@ -16,7 +16,7 @@ import java.util.Map;
  */
 public class BarcodedTube extends LabVessel {
 
-    public enum BarcodedTubeType {
+    public enum BarcodedTubeType implements VesselTypeGeometry {
         AbgeneTube96plugcap065("AbgeneTube96plugcap065", "2D Abgene Tube - 96 per rack format plug cap [0.65mL]"),
         AbgeneTube96screwcap05("AbgeneTube96screwcap05", "2D Abgene Tube - 96 per rack format screw cap [0.5mL]"),
         Aluminum_Pack("Aluminum_Pack", "Aluminum Pack"),
@@ -103,6 +103,11 @@ public class BarcodedTube extends LabVessel {
 
         public String getDisplayName() {
             return displayName;
+        }
+
+        @Override
+        public VesselGeometry getVesselGeometry() {
+            return VesselGeometry.TUBE;
         }
 
         private static final Map<String, BarcodedTubeType> MAP_NAME_TO_TYPE =

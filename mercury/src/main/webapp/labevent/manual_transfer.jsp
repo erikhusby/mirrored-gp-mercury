@@ -21,13 +21,16 @@
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
-        <stripes:form beanclass="${actionBean.class.name}" id="transferForm">
-
+        <stripes:form beanclass="${actionBean.class.name}" id="eventForm">
             <stripes:select name="stationEvent.eventType" id="eventType">
                 <stripes:options-collection collection="${actionBean.manualEventTypes}" label="name"/>
             </stripes:select>
             <stripes:submit name="chooseEventType" value="Choose Event Type" class="btn btn-primary"/>
+        </stripes:form>
+
+        <stripes:form beanclass="${actionBean.class.name}" id="transferForm">
             <c:if test="${not empty actionBean.stationEvent}">
+                <stripes:hidden name="stationEvent.eventType" value="${actionBean.stationEvent.eventType}"/>
                 <h5>Reagents</h5>
                 <c:forEach items="${actionBean.stationEvent.reagent}" var="reagent" varStatus="loop">
                     <%--@elvariable id="reagent" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReagentType"--%>
@@ -87,7 +90,8 @@
                             <label>Type </label>${plateTransfer.plate.physType}
                             <stripes:hidden name="stationEvent.plate.physType" value="${plateTransfer.plate.physType}"/>
                             <stripes:label for="dstPltBcd">Barcode</stripes:label>
-                            <stripes:text id="dstPltBcd" name="stationEvent.plate.barcode" value="${plateTransfer.plate.barcode}"/>
+                            <stripes:text id="dstPltBcd" name="stationEvent.plate.barcode"
+                                    value="${plateTransfer.plate.barcode}"/>
 
                             <c:choose>
                                 <c:when test="${empty plateTransfer.sourcePositionMap}">
@@ -113,16 +117,31 @@
                         </p>
                     </c:when>
                     <c:when test="${actionBean.stationEvent.class.simpleName == 'ReceptacleTransferEventType'}">
+                        <c:set var="receptacleTransfer" value="${actionBean.stationEvent}"/>
                         <%--@elvariable id="receptacleTransfer" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleTransferEventType"--%>
-                        <h5>Tube Transfer</h5>
+                        <h4>Tube Transfer</h4>
+
                         <p>
-                        <!-- todo jmt specify tube types -->
-                        <stripes:label for="srcRcpBcd">Source</stripes:label>
+                        <h5>Source</h5>
+                        <label>Type</label>
+                        ${receptacleTransfer.sourceReceptacle.receptacleType}
+                        <stripes:label for="srcRcpBcd">Barcode</stripes:label>
                         <stripes:text id="srcRcpBcd" name="stationEvent.sourceReceptacle.barcode"
                                 value="${receptacleTransfer.sourceReceptacle.barcode}"/>
-                        <stripes:label for="destRcpBcd">Destination</stripes:label>
+                        <stripes:label for="srcRcpVol">Volume</stripes:label>
+                        <stripes:text id="srcRcpVol" name="stationEvent.sourceReceptacle.volume"
+                                value="${receptacleTransfer.sourceReceptacle.volume}"/>
+                        </p>
+                        <p>
+                        <h5>Destination</h5>
+                        <label>Type</label>
+                        ${receptacleTransfer.receptacle.receptacleType}
+                        <stripes:label for="destRcpBcd">Barcode</stripes:label>
                         <stripes:text id="destRcpBcd" name="stationEvent.receptacle.barcode"
                                 value="${receptacleTransfer.receptacle.barcode}"/>
+                        <stripes:label for="destRcpVol">Volume</stripes:label>
+                        <stripes:text id="destRcpVol" name="stationEvent.receptacle.volume"
+                                value="${receptacleTransfer.receptacle.volume}"/>
                         </p>
                     </c:when>
                 </c:choose>
