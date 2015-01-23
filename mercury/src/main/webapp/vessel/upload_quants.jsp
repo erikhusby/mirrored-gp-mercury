@@ -133,10 +133,14 @@
                                     ${labMetric.labVessel.label}
                                 </td>
                                 <td>
-                                    ${fn:join(labMetric.labVessel.sampleNamesArray, " ")}
+                                    <c:if test="${!actionBean.hasErrors()}">
+                                        ${fn:join(labMetric.labVessel.sampleNamesArray, " ")}
+                                    </c:if>
                                 </td>
                                 <td>
-                                    ${fn:join(labMetric.labVessel.getMetadataValues("PATIENT_ID"), " ")}
+                                    <c:if test="${!actionBean.hasErrors()}">
+                                        ${fn:join(labMetric.labVessel.getMetadataValues("PATIENT_ID"), " ")}
+                                    </c:if>
                                 </td>
                                 <td>
                                     ${labMetric.value}
