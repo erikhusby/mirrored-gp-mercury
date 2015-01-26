@@ -196,9 +196,8 @@
         <database>postgres</database>
         <database.driver>org.postgresql.Driver</database.driver>
         <database.url>jdbc:postgresql://localhost/postgres</database.url>
-        <mercury.password>mercury_local</mercury.password>
-        <athena.password>athena_local</athena.password>
         <database.delimiterType>normal</database.delimiterType>
+        <!--<passwords.properties>must be specified as the location of the password properties file</passwords.properties>-->
 
         <!-- Note - For the RC builds, the mercury.rc.ip must contain an @ otherwise the mercury-rc-ds.xml will not be syntactically correct. The @ is a meta character to the maven filtering such that the combination of
         @${mercury.rc.ip} does not get subsituted at all. Hence mercury-rc-ds.xml only contains ${mercury.rc.ip} -->
@@ -811,6 +810,9 @@
 
         <profile>
             <id>DEV</id>
+            <properties>
+                <passwords.properties>src/test/resources/mercury-dev-passwords.properties</passwords.properties>
+            </properties>
             <build>
                 <testResources>
                     <testResource>
@@ -943,8 +945,7 @@
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
                 <database.url>jdbc:oracle:thin:@vmgpinform:1521:gpinfdev</database.url>
-                <mercury.password>mercury_dev</mercury.password>
-                <athena.password>athena_dev</athena.password>
+                <passwords.properties>src/test/resources/mercury-dev-passwords.properties</passwords.properties>
             </properties>
             <build>
                 <testResources>
@@ -965,8 +966,7 @@
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
                 <database.url>jdbc:oracle:thin:@gpinfqa:1521:gpinfqa</database.url>
-                <mercury.password>mercury_qa</mercury.password>
-                <athena.password>athena_qa</athena.password>
+                <passwords.properties>src/test/resources/mercury-qa-passwords.properties</passwords.properties>
                 <!--<database.url>jdbc:oracle:thin:@mercuryrc.cloud.broad:1521:gpinfprd</database.url>-->
                 <!--<database.url>jdbc:oracle:thin:${mercury.rc.ip}:1521:gpinfprd</database.url>-->
                 <!--<mercury.password>guest</mercury.password>-->
@@ -991,15 +991,16 @@
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
                 <database.url>jdbc:oracle:thin:@gpinfqa:1521:gpinfqa</database.url>
-                <mercury.password>mercury_qa</mercury.password>
-                <athena.password>athena_qa</athena.password>
+                <passwords.properties>src/test/resources/mercury-qa-passwords.properties</passwords.properties>
             </properties>
         </profile>
         <profile>
             <id>PROD</id>
             <!-- This is for PRODUCTION ONLY.  If you need to debug against production, use one of the
   other profiles and the -prod-ds.xml files.  This profile pulls from production JMS queues, so using
-   it for a debug server may cause message loss. -->
+   it for a debug server may cause message loss.
+
+  -->
             <properties>
                 <!-- Oracle Dev -->
                 <database>oracle</database>
@@ -1007,8 +1008,8 @@
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
                 <database.url>jdbc:oracle:thin:@gpinfoprod:1521:gpinfprd</database.url>
-                <mercury.password>mercury_prod</mercury.password>
-                <athena.password>athena_prod</athena.password>
+                <!-- The production password is stored outside of the GIT repo in the Release Engineer's home directory -->
+                <passwords.properties>${user.home}/mercury-prod-passwords.properties</passwords.properties>
             </properties>
             <build>
                 <!-- This allows us to overwrite the ejb-jar.xml for development with the special version for production -->
@@ -1016,7 +1017,6 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-war-plugin</artifactId>
-                        <version>2.2</version>
                         <configuration>
                             <webResources>
                                 <resource>
@@ -1025,6 +1025,7 @@
                             </webResources>
                         </configuration>
                     </plugin>
+
                 </plugins>
             </build>
         </profile>
@@ -1034,9 +1035,40 @@
             <build>
                 <plugins>
                     <plugin>
+                        <!-- Pick up the DB passwords from the particular password file DEV, QA, RC or PROD -->
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>properties-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>read</id>
+                                <phase>initialize</phase>
+                                <goals>
+                                    <goal>read-project-properties</goal>
+                                </goals>
+                                <configuration>
+                                    <files>
+                                        <file>${passwords.properties}</file>
+                                    </files>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>write</id>
+                                <phase>initialize</phase>
+                                <goals>
+                                    <goal>write-project-properties</goal>
+                                </goals>
+                                <configuration>
+                                    <outputFile>
+                                        ${project.build.directory}/build.properties
+                                    </outputFile>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
                         <groupId>org.liquibase</groupId>
                         <artifactId>liquibase-maven-plugin</artifactId>
-                        <version>2.0.5</version>
                         <executions>
                             <execution>
                                 <id>Mercury</id>
@@ -1799,6 +1831,12 @@
 
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-war-plugin</artifactId>
+                    <version>2.2</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-deploy-plugin</artifactId>
                     <version>2.7</version>
                 </plugin>
@@ -1813,6 +1851,12 @@
                     <artifactId>build-helper-maven-plugin</artifactId>
                     <version>1.9</version>
                 </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>properties-maven-plugin</artifactId>
+                    <version>1.0-alpha-2</version>
+                </plugin>
+
                 <plugin>
                      <groupId>external.atlassian.jgitflow</groupId>
                      <artifactId>jgitflow-maven-plugin</artifactId>
