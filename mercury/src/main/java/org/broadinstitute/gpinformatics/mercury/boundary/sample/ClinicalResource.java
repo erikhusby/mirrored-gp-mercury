@@ -44,9 +44,6 @@ import java.util.Map;
 @Stateful
 @RequestScoped
 public class ClinicalResource {
-    private static final String SEARCH_CRSP_PHI = "sample/getcrspphenotypes";
-    private static final String SEARCH_CRSP_CLINICIAN_INFO = "getclinicianinfo";
-
     private static final Log log = LogFactory.getLog(ClinicalResource.class);
 
     @Inject
