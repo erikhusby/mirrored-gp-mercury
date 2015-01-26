@@ -35,7 +35,13 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.persistence.criteria.SetJoin;
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @RequestScoped
 @Stateful
@@ -60,7 +66,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
             @Nullable String jiraTicketKey,
             @Nullable Long productFamilyId,
             @Nullable List<String> productBusinessKeys,
-            @Nullable List<ProductOrder.OrderStatus> orderStatuses,
+            @Nullable Set<ProductOrder.OrderStatus> orderStatuses,
             @Nullable DateRangeSelector placedDate,
             @Nullable List<Long> ownerIds) {
 
@@ -103,14 +109,13 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
         }
 
         if (!CollectionUtils.isEmpty(productBusinessKeys)) {
-            listOfAndTerms
-                    .add(createOrTerms(cb, productOrderProductJoin.get(Product_.partNumber), productBusinessKeys));
+            listOfAndTerms.add(productOrderProductJoin.get(Product_.partNumber).in(productBusinessKeys));
         }
 
         listOfAndTerms.add(createStatusTerms(cb, placedDate, orderStatuses, productOrderRoot));
 
         if (!CollectionUtils.isEmpty(ownerIds)) {
-            listOfAndTerms.add(createOrTerms(cb, productOrderRoot.get(ProductOrder_.createdBy), ownerIds));
+            listOfAndTerms.add(productOrderRoot.get(ProductOrder_.createdBy).in(ownerIds));
         }
 
         if (!CollectionUtils.isEmpty(listOfAndTerms)) {
@@ -120,8 +125,15 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
         return getEntityManager().createQuery(cq).getResultList();
     }
 
+
+    // PDOs with these statuses don't have a Placed Date, and will always be excluded from date range searches.
+    private static final Set<ProductOrder.OrderStatus> NO_DATE_STATUSES =
+            EnumSet.of(ProductOrder.OrderStatus.Draft, ProductOrder.OrderStatus.Pending);
+
+
     /**
-     * To get draft to work, we must run the statuses with the dates as an AND query and then OR in all drafts.
+     * To get draft to work, we must run the statuses with the dates as an AND query and then OR in all draft
+     * and pending orders.
      *
      * @param cb The criteria builder object.
      * @param placedDate The data placed range object.
@@ -132,46 +144,56 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
      */
     private Predicate createStatusTerms(
         CriteriaBuilder cb, DateRangeSelector placedDate,
-        List<ProductOrder.OrderStatus> orderStatuses, Root<ProductOrder> productOrderRoot) {
+        Set<ProductOrder.OrderStatus> orderStatuses, Root<ProductOrder> productOrderRoot) {
 
         // If there are no order statuses, add them all so that the inner query on data/draft will work.
-        List<ProductOrder.OrderStatus> fixedOrderStatuses = orderStatuses;
+        Set<ProductOrder.OrderStatus> fixedOrderStatuses = orderStatuses;
         if (CollectionUtils.isEmpty(fixedOrderStatuses)) {
-            fixedOrderStatuses = Arrays.asList(ProductOrder.OrderStatus.values());
+            fixedOrderStatuses = EnumSet.allOf(ProductOrder.OrderStatus.class);
         }
 
         // create the and terms for the status and the dates
         List<Predicate> listOfAndTerms = new ArrayList<>();
 
-        // No matter what and the order statuses with the date rage
-        listOfAndTerms.add(createOrTerms(cb, productOrderRoot.get(ProductOrder_.orderStatus), fixedOrderStatuses));
+        Collection<ProductOrder.OrderStatus> filteredStatuses =
+                CollectionUtils.removeAll(fixedOrderStatuses, NO_DATE_STATUSES);
 
-        // If there is a placed date range and the range has at least a start or end date, then add a date range.
-        if ((placedDate != null) && ((placedDate.getStart() != null) || (placedDate.getEnd() != null))) {
-            if (placedDate.getStart() == null) {
-                listOfAndTerms
-                        .add(cb.lessThan(productOrderRoot.get(ProductOrder_.placedDate), placedDate.getEndTime()));
-            } else if (placedDate.getEnd() == null) {
-                listOfAndTerms
-                        .add(cb.greaterThan(productOrderRoot.get(ProductOrder_.placedDate), placedDate.getStartTime()));
-            } else {
-                listOfAndTerms.add(
-                        cb.between(productOrderRoot.get(
-                                ProductOrder_.placedDate), placedDate.getStartTime(), placedDate.getEndTime()));
+        Predicate statusAndDate;
+
+        if (!filteredStatuses.isEmpty()) {
+            // Match for the statuses that support date ranges.
+            listOfAndTerms.add(productOrderRoot.get(ProductOrder_.orderStatus).in(filteredStatuses));
+
+            // If there is a placed date range and the range has at least a start or end date, then add a date range.
+            if ((placedDate != null) && ((placedDate.getStart() != null) || (placedDate.getEnd() != null))) {
+                if (placedDate.getStart() == null) {
+                    listOfAndTerms
+                            .add(cb.lessThan(productOrderRoot.get(ProductOrder_.placedDate), placedDate.getEndTime()));
+                } else if (placedDate.getEnd() == null) {
+                    listOfAndTerms.add(
+                            cb.greaterThan(productOrderRoot.get(ProductOrder_.placedDate), placedDate.getStartTime()));
+                } else {
+                    listOfAndTerms
+                            .add(cb.between(productOrderRoot.get(ProductOrder_.placedDate), placedDate.getStartTime(),
+                                    placedDate.getEndTime()));
+                }
             }
+            // AND the order statuses with the date ranges.
+            statusAndDate = cb.and(listOfAndTerms.toArray(new Predicate[listOfAndTerms.size()]));
+        } else {
+            // Create an expression for FALSE.
+            statusAndDate = cb.or();
         }
 
-        Predicate statusAndDate = cb.and(listOfAndTerms.toArray(new Predicate[listOfAndTerms.size()]));
-
-        // return the status and date, if not looking for Drafts
-        if (!fixedOrderStatuses.contains(ProductOrder.OrderStatus.Draft)) {
-            return statusAndDate;
+        // If there were any non-date range statuses, handle them here.
+        Collection<ProductOrder.OrderStatus> remainingStatuses =
+                CollectionUtils.retainAll(fixedOrderStatuses, NO_DATE_STATUSES);
+        if (!remainingStatuses.isEmpty()) {
+            // Now add the orders by doing an in query with the statuses.
+            statusAndDate = cb.or(statusAndDate, productOrderRoot.get(ProductOrder_.orderStatus).in(remainingStatuses));
         }
 
-        // Now add all the drafts by doing an OR query with just drafts
-        return cb.or(
-                statusAndDate,
-                cb.equal(productOrderRoot.get(ProductOrder_.orderStatus), ProductOrder.OrderStatus.Draft));
+        return statusAndDate;
     }
 
     /**
@@ -270,7 +292,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
     public List<ProductOrderListEntry> findProductOrderListEntries(
             @Nullable Long productFamilyId,
             @Nullable List<String> productKeys,
-            @Nullable List<ProductOrder.OrderStatus> orderStatuses,
+            @Nullable Set<ProductOrder.OrderStatus> orderStatuses,
             @Nullable DateRangeSelector placedDate,
             @Nullable List<Long> ownerIds,
             @Nullable List<ProductOrderListEntry.LedgerStatus> ledgerStatuses) {

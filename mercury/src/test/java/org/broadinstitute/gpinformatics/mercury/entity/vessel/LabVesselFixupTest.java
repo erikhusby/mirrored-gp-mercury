@@ -871,6 +871,24 @@ public class LabVesselFixupTest extends Arquillian {
         barcodedTubeDao.flush();
     }
 
+    @Test(enabled = false)
+    public void qual525FixupVolumes() {
+        userBean.loginOSUser();
+        Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(Arrays.asList(
+                "0175568232",
+                "0175568229"
+        ));
+        for (Map.Entry<String, BarcodedTube> stringBarcodedTubeEntry : mapBarcodeToTube.entrySet()) {
+            if (stringBarcodedTubeEntry.getValue() == null) {
+                throw new RuntimeException("Failed to find tube " + stringBarcodedTubeEntry.getKey());
+            }
+            System.out.println("Setting " + stringBarcodedTubeEntry.getKey() + " to 65");
+            stringBarcodedTubeEntry.getValue().setVolume(new BigDecimal("65.00"));
+        }
+        barcodedTubeDao.persist(new FixupCommentary("QUAL-525 set volumes to 65"));
+        barcodedTubeDao.flush();
+    }
+
     private static class BarcodeVolume {
         private final String barcode;
         private final BigDecimal volume;
