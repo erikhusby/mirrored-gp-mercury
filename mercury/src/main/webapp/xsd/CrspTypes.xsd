@@ -1,41 +1,24 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:jxb="http://java.sun.com/xml/ns/jaxb">
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
 
-
-    <xs:complexType name="crspPhiDTO">
-        <xs:all>
-            <xs:element name="sampleID" type="xs:normalizedString"/>
-            <xs:element name="caseId" type="xs:normalizedString"/>
-            <xs:element name="patientFirstName" type="xs:normalizedString"/>
-            <xs:element name="patientDob" type="xs:normalizedString"/>
-            <xs:element name="patientLastName" type="xs:normalizedString"/>
-            <xs:element name="patientGender" type="xs:normalizedString"/>
-            <xs:element name="clinicianName" type="xs:normalizedString"/>
-            <xs:element name="clinicianPhone" type="xs:normalizedString"/>
-            <xs:element name="clinicianFax" type="xs:normalizedString"/>
-            <xs:element name="clinicianAddress1" type="xs:normalizedString"/>
-            <xs:element name="clinicianAddress2" type="xs:normalizedString"/>
-            <xs:element name="clinicianCity" type="xs:normalizedString"/>
-            <xs:element name="clinicianState" type="xs:normalizedString"/>
-            <xs:element name="clinicianZipCode" type="xs:normalizedString"/>
-            <xs:element name="clinicianCountry" type="xs:normalizedString"/>
-            <xs:element name="clinicianEmail" type="xs:normalizedString"/>
-            <xs:element name="clinicianInstitution" type="xs:normalizedString"/>
-            <xs:element name="stateOfPatientResidence" type="xs:normalizedString"/>
-            <xs:element name="receiptDate" type="xs:normalizedString" />
-            <xs:element name="clinicianPatientId" type="xs:normalizedString"/>
-            <xs:element name="clinicianSampleId" type="xs:normalizedString"/>
-        </xs:all>
-
+    <xs:complexType name="metaData">
+        <xs:attribute name="name" type="xs:normalizedString"/>
+        <xs:attribute name="value" type="xs:normalizedString"/>
     </xs:complexType>
 
-    <xs:element name="crspPhiInfo">
+    <xs:complexType name="sample">
+        <xs:sequence>
+            <xs:element name="metadata" type="metaData" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
 
+    <xs:element name="accessionSamples">
         <xs:complexType>
             <xs:sequence>
-                <xs:element name="phiData" type="crspPhiDTO" maxOccurs="unbounded"/>
+                <xs:element name="samples" type="sample" maxOccurs="unbounded"/>
             </xs:sequence>
         </xs:complexType>
     </xs:element>
+
 
 </xs:schema>
