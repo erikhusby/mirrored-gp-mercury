@@ -325,6 +325,10 @@ public class BaseEventTest {
         bucketEjb.moveFromBucketToCommonBatch(workingBucket.getBucketEntries());
     }
 
+    public void drainBucket(Bucket workingBucket, LabBatch labBatch) {
+        bucketEjb.moveFromBucketToBatch(workingBucket.getBucketEntries(), labBatch);
+    }
+
     public void archiveBucketEntries(Bucket bucket) {
         for (BucketEntry picoEntries : bucket.getBucketEntries()) {
             picoEntries.setStatus(BucketEntry.Status.Archived);

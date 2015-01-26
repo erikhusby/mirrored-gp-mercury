@@ -1,7 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
@@ -76,6 +79,7 @@ import java.util.Set;
         uniqueConstraints = @UniqueConstraint(columnNames = {"EVENT_LOCATION", "EVENT_DATE", "DISAMBIGUATOR"}),
         name = "lab_event")
 public class LabEvent {
+    private static final Log log = LogFactory.getLog(LabEvent.class);
 
     public static final String UI_EVENT_LOCATION = "User Interface";
     public static final String UI_PROGRAM_NAME = "Mercury";
@@ -509,6 +513,25 @@ todo jmt adder methods
             }
         }
         return null;
+    }
+
+    /**
+     * Tests if a single lcset can be determined for every sample instance on every target vessel of the lab event.
+     * The LCSET can still vary from vessel to vessel, i.e. the lab event can be for multiple LCSETS.
+     */
+    @Transient
+    public boolean vesselsHaveSingleLcsets() {
+        for (LabVessel labVessel : getTargetLabVessels()) {
+            for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                if (sampleInstanceV2.getSingleBatch() == null) {
+                    log.info("Unknown LCSET for vessel " + labVessel.getLabel() +
+                             ", sample " + sampleInstanceV2.getRootOrEarliestMercurySampleName() +
+                             ", eventId " + getLabEventId());
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
 }
