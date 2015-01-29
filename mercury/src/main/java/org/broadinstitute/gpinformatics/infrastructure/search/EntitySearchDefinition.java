@@ -1,7 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
@@ -9,8 +12,10 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Shared functionality for mercury search definitions
@@ -105,6 +110,64 @@ public abstract class EntitySearchDefinition {
         @Override
         public Object evaluate(Object entity, Map<String, Object> context) {
             return Enum.valueOf(LabEventType.class, (String) context.get(SearchInstance.CONTEXT_KEY_SEARCH_STRING));
+        }
+    }
+
+    /**
+     * Shared display expression for sample metadata (supports LabVessel and MercurySample)
+     */
+    protected class SampleMetadataDisplayExpression extends SearchTerm.Evaluator<Object> {
+
+        // Put a quick way to lookup key by display name in place
+        // TODO: With only this one use-case, should this be part of Metadata.Key?
+        private Map<String,Metadata.Key> keyMap = new HashMap<>();
+
+        public SampleMetadataDisplayExpression(){
+            for(Metadata.Key key : Metadata.Key.values() ){
+                if( key.getCategory() == Metadata.Category.SAMPLE ) {
+                    keyMap.put(key.getDisplayName(), key);
+                }
+            }
+        }
+
+        @Override
+        public Object evaluate(Object entity, Map<String, Object> context) {
+            SearchTerm searchTerm = (SearchTerm) context.get(SearchInstance.CONTEXT_KEY_SEARCH_TERM);
+            String metaName = searchTerm.getName();
+            String value;
+
+            if( entity instanceof LabVessel ) {
+                LabVessel labVessel = (LabVessel) entity;
+                value = "";
+                // A vessel can end up with more than 1 sample in it
+                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                    MercurySample sample = sampleInstanceV2.getRootOrEarliestMercurySample();
+                    value += getSampleMetadataForDisplay(sample, metaName) + " ";
+                }
+                value = value.trim();
+            } else {
+                MercurySample sample = (MercurySample) entity;
+                value = getSampleMetadataForDisplay(sample, metaName);
+            }
+
+            return value;
+        }
+
+        private String getSampleMetadataForDisplay( MercurySample sample, String metaName ){
+            String value = "";
+            Set<Metadata> metadata = sample.getMetadata();
+            if( metadata != null && !metadata.isEmpty() ) {
+                Metadata.Key key = keyMap.get(metaName);
+                for( Metadata meta : metadata){
+                    if( meta.getKey() == key ) {
+                        value = meta.getValue();
+                        // Assume only one metadata type (e.g. Gender, Sample ID) per sample.
+                        break;
+                    }
+                }
+            }
+
+            return value;
         }
     }
 }

@@ -114,9 +114,6 @@ public class LabVesselSearchDefinition extends EntitySearchDefinition {
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("bucketEntries", "labVesselId",
                 "labVessel", BucketEntry.class));
 
-        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("labMetric", "labVesselId",
-                "labMetrics", LabVessel.class));
-
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("mercurySample", "labVesselId",
                 "mercurySamples", LabVessel.class));
 
@@ -650,13 +647,6 @@ public class LabVesselSearchDefinition extends EntitySearchDefinition {
                 return new BigDecimal( (String) context.get(SearchInstance.CONTEXT_KEY_SEARCH_STRING));
             }
         });
-        criteriaPaths = new ArrayList<>();
-        criteriaPath = new SearchTerm.CriteriaPath();
-        // TODO jms Child term required to choose LabMetric.metricType = "INITIAL_PICO"?
-        criteriaPath.setCriteria(Arrays.asList( "labMetric" /* LabVessel */, "labMetrics" /* LabMetric */, "metadataSet" /* Metadata */ ));
-        criteriaPath.setPropertyName("numberValue");
-        criteriaPaths.add(criteriaPath);
-        searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerms.add(searchTerm);
 
         // ***** Build sample metadata child search term (the metadata value) ***** //
@@ -816,49 +806,6 @@ public class LabVesselSearchDefinition extends EntitySearchDefinition {
         searchTerms.add(searchTerm);
 
         return searchTerms;
-    }
-
-    /**
-     * Shared display expression for sample metadata
-     */
-    private class SampleMetadataDisplayExpression extends SearchTerm.Evaluator<Object> {
-
-        // Put a quick way to lookup key by display name in place
-        // TODO: With only this one use-case, should this be part of Metadata.Key?
-        private Map<String,Metadata.Key> keyMap = new HashMap<>();
-
-        public SampleMetadataDisplayExpression(){
-            for(Metadata.Key key : Metadata.Key.values() ){
-                if( key.getCategory() == Metadata.Category.SAMPLE ) {
-                    keyMap.put(key.getDisplayName(), key);
-                }
-            }
-        }
-
-        @Override
-        public Object evaluate(Object entity, Map<String, Object> context) {
-            SearchTerm searchTerm = (SearchTerm) context.get(SearchInstance.CONTEXT_KEY_SEARCH_TERM);
-            String metaName = searchTerm.getName();
-            String value = "";
-            LabVessel labVessel = (LabVessel) entity;
-
-            for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-                MercurySample sample = sampleInstanceV2.getRootOrEarliestMercurySample();
-                Set<Metadata> metadata = sample.getMetadata();
-                if( metadata != null && !metadata.isEmpty() ) {
-                    Metadata.Key key = keyMap.get(metaName);
-                    for( Metadata meta : metadata){
-                        if( meta.getKey() == key ) {
-                            value = value + meta.getValue() + " ";
-                            // Assume only one metadata type (e.g. Gender, Sample ID) per vessel.
-                            break;
-                        }
-                    }
-                }
-            }
-
-            return value.trim();
-        }
     }
 
     /**
