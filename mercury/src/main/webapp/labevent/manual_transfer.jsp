@@ -125,26 +125,31 @@
                         <h5>Source</h5>
                         <label>Type</label>
                         ${receptacleTransfer.sourceReceptacle.receptacleType}
+                        <stripes:hidden name="stationEvent.sourceReceptacle.receptacleType"
+                                value="${receptacleTransfer.sourceReceptacle.receptacleType}"/>
                         <stripes:label for="srcRcpBcd">Barcode</stripes:label>
                         <stripes:text id="srcRcpBcd" name="stationEvent.sourceReceptacle.barcode"
                                 value="${receptacleTransfer.sourceReceptacle.barcode}"/>
                         <stripes:label for="srcRcpVol">Volume</stripes:label>
-                        <stripes:text id="srcRcpVol" name="stationEvent.sourceReceptacle.volume"
+                        <input type="text" id="srcRcpVol" name="stationEvent.sourceReceptacle.volume"
                                 value="${receptacleTransfer.sourceReceptacle.volume}"/>
                         </p>
                         <p>
                         <h5>Destination</h5>
                         <label>Type</label>
                         ${receptacleTransfer.receptacle.receptacleType}
+                        <stripes:hidden name="stationEvent.receptacle.receptacleType"
+                                value="${receptacleTransfer.receptacle.receptacleType}"/>
                         <stripes:label for="destRcpBcd">Barcode</stripes:label>
                         <stripes:text id="destRcpBcd" name="stationEvent.receptacle.barcode"
                                 value="${receptacleTransfer.receptacle.barcode}"/>
                         <stripes:label for="destRcpVol">Volume</stripes:label>
-                        <stripes:text id="destRcpVol" name="stationEvent.receptacle.volume"
+                        <input type="text" id="destRcpVol" name="stationEvent.receptacle.volume"
                                 value="${receptacleTransfer.receptacle.volume}"/>
                         </p>
                     </c:when>
                 </c:choose>
+                <stripes:submit name="fetchExisting" value="Fetch Existing" class="btn"/>
                 <stripes:submit name="transfer" value="Transfer" class="btn btn-primary"/>
             </c:if>
         </stripes:form>

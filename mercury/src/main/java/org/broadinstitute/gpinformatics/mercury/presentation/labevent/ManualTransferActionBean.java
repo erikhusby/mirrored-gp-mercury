@@ -7,6 +7,7 @@ import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.ObjectMarshaller;
@@ -24,9 +25,13 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleTy
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationSetupEvent;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselTypeGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
@@ -46,6 +51,7 @@ public class ManualTransferActionBean extends CoreActionBean {
     public static final String MANUAL_TRANSFER_PAGE = "/labevent/manual_transfer.jsp";
     public static final String CHOOSE_EVENT_TYPE_ACTION = "chooseEventType";
     public static final String TRANSFER_ACTION = "transfer";
+    public static final String FETCH_EXISTING_ACTION = "fetchExisting";
 
     private BettaLIMSMessage bettaLIMSMessage;
     private StationEventType stationEvent;
@@ -53,6 +59,9 @@ public class ManualTransferActionBean extends CoreActionBean {
 
     @Inject
     private BettaLimsMessageResource bettaLimsMessageResource;
+
+    @Inject
+    private LabVesselDao labVesselDao;
 
     // machine names?
     // reagent types?
@@ -180,8 +189,64 @@ public class ManualTransferActionBean extends CoreActionBean {
     // add / remove reagents?
     // add / remove metadata?
 
+    /**
+     * Called after the user has entered barcodes.  Fetches existing data, if any.
+     * @return JSP
+     */
+    @HandlesEvent(FETCH_EXISTING_ACTION)
+    public Resolution fetchExisting() {
+        // fetch by barcode
+        // Should this be AJAX?  If multiple barcodes, hard to populate multiple areas of the page.
+        // If not AJAX, switch on message type, fetch LabVessels, copy values into JAXB DTOs.
+        // Add messages about existing or not, and whether expected.
+        switch (labEventType.getMessageType()) {
+            case PLATE_EVENT:
+                break;
+            case PLATE_TRANSFER_EVENT:
+                break;
+            case STATION_SETUP_EVENT:
+                break;
+            case PLATE_CHERRY_PICK_EVENT:
+                break;
+            case RECEPTACLE_PLATE_TRANSFER_EVENT:
+                break;
+            case RECEPTACLE_EVENT:
+                break;
+            case RECEPTACLE_TRANSFER_EVENT:
+                ReceptacleTransferEventType receptacleTransferEventType = (ReceptacleTransferEventType) stationEvent;
+                loadReceptacleFromDb(receptacleTransferEventType.getSourceReceptacle());
+                loadReceptacleFromDb(receptacleTransferEventType.getReceptacle());
+                break;
+        }
+        return new ForwardResolution(MANUAL_TRANSFER_PAGE);
+    }
+
+    private void loadReceptacleFromDb(ReceptacleType receptacleType) {
+        if (receptacleType != null) {
+            String barcode = receptacleType.getBarcode();
+            if (!StringUtils.isBlank(barcode)) {
+                LabVessel labVessel = labVesselDao.findByIdentifier(barcode);
+                if (labVessel == null) {
+                    addGlobalValidationError("{2} is not in the database", barcode);
+                } else {
+                    if (OrmUtil.proxySafeIsInstance(labVessel, BarcodedTube.class)) {
+                        BarcodedTube barcodedTube = OrmUtil.proxySafeCast(labVessel, BarcodedTube.class);
+                        receptacleType.setReceptacleType(barcodedTube.getTubeType().getDisplayName());
+                        receptacleType.setVolume(barcodedTube.getVolume());
+                        receptacleType.setConcentration(barcodedTube.getConcentration());
+                        receptacleType.setReceptacleWeight(barcodedTube.getReceptacleWeight());
+                    } else {
+                        addGlobalValidationError(barcode + " is not a tube");
+                    }
+                }
+            }
+        }
+    }
+
     @HandlesEvent(TRANSFER_ACTION)
     public Resolution transfer() {
+        // specify begin / end datetimes in form?
+        // todo jmt handle unique constraint violation, increment disambiguator?
         bettaLIMSMessage.setMode(LabEventFactory.MODE_MERCURY);
         stationEvent.setEventType(labEventType.getName());
         stationEvent.setOperator(getUserBean().getLoginUserName());
@@ -189,6 +254,7 @@ public class ManualTransferActionBean extends CoreActionBean {
         stationEvent.setStation(LabEvent.UI_EVENT_LOCATION);
         stationEvent.setDisambiguator(1L);
         stationEvent.setStart(new Date());
+//        stationEvent.setEnd();
         try {
             ObjectMarshaller<BettaLIMSMessage> bettaLIMSMessageObjectMarshaller =
                     new ObjectMarshaller<>(BettaLIMSMessage.class);
@@ -211,7 +277,7 @@ public class ManualTransferActionBean extends CoreActionBean {
     }
 
     public List<LabEventType> getManualEventTypes() {
-        ArrayList<LabEventType> manualLabEventTypes = new ArrayList<>();
+        List<LabEventType> manualLabEventTypes = new ArrayList<>();
         for (LabEventType eventType : LabEventType.values()) {
             if (eventType.getMessageType() != null) {
                 manualLabEventTypes.add(eventType);
