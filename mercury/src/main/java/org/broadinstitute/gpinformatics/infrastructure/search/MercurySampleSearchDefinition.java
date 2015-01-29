@@ -21,9 +21,8 @@ import java.util.Set;
 /**
  * Builds ConfigurableSearchDefinition for mercury sample user defined search logic
  */
-public class MercurySampleSearchDefinition extends EntitySearchDefinition {
+public class MercurySampleSearchDefinition {
 
-    @Override
     public ConfigurableSearchDefinition buildSearchDefinition() {
         Map<String, List<SearchTerm>> mapGroupSearchTerms = new LinkedHashMap<>();
 
@@ -58,7 +57,7 @@ public class MercurySampleSearchDefinition extends EntitySearchDefinition {
 
         SearchTerm searchTerm = new SearchTerm();
         searchTerm.setName("PDO");
-        searchTerm.setValueConversionExpression(getPdoInputConverter());
+        searchTerm.setValueConversionExpression(SearchDefinitionFactory.getPdoInputConverter());
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
         SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setCriteria( Arrays.asList( "PDOSamples", "productOrderSamples", "productOrder" ) );
@@ -77,7 +76,7 @@ public class MercurySampleSearchDefinition extends EntitySearchDefinition {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("LCSET");
-        searchTerm.setValueConversionExpression(getLcsetInputConverter());
+        searchTerm.setValueConversionExpression(SearchDefinitionFactory.getLcsetInputConverter());
         criteriaPaths = new ArrayList<>();
         criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setCriteria(Arrays.asList("SampleBucketEntries", "labVessel", "bucketEntries", "labBatch"));
@@ -259,7 +258,7 @@ public class MercurySampleSearchDefinition extends EntitySearchDefinition {
         searchTerms.add(searchTerm);
 
         // ******** Allow individual selectable result columns for each sample metadata value *******
-        SampleMetadataDisplayExpression sampleMetadataDisplayExpression = new SampleMetadataDisplayExpression();
+        SearchDefinitionFactory.SampleMetadataDisplayExpression sampleMetadataDisplayExpression = new SearchDefinitionFactory.SampleMetadataDisplayExpression();
         for (Metadata.Key meta : Metadata.Key.values()) {
             if (meta.getCategory() == Metadata.Category.SAMPLE) {
                 searchTerm = new SearchTerm();

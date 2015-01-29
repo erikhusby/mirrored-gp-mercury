@@ -38,10 +38,9 @@ import java.util.Set;
 /**
  * Builds ConfigurableSearchDefinition for lab vessel user defined search logic
  */
-public class LabVesselSearchDefinition extends EntitySearchDefinition {
+public class LabVesselSearchDefinition {
     public LabVesselSearchDefinition(){}
 
-    @Override
     public ConfigurableSearchDefinition buildSearchDefinition(){
 
         LabVesselSearchDefinition srchDef = new LabVesselSearchDefinition();
@@ -181,7 +180,7 @@ public class LabVesselSearchDefinition extends EntitySearchDefinition {
                 return results;
             }
         });
-        searchTerm.setValueConversionExpression(getLcsetInputConverter());
+        searchTerm.setValueConversionExpression(SearchDefinitionFactory.getLcsetInputConverter());
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -206,7 +205,7 @@ public class LabVesselSearchDefinition extends EntitySearchDefinition {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
                 LabVessel labVessel = (LabVessel) entity;
-                return findVesselType(labVessel);
+                return SearchDefinitionFactory.findVesselType(labVessel);
             }
         });
         searchTerms.add(searchTerm);
@@ -343,7 +342,7 @@ public class LabVesselSearchDefinition extends EntitySearchDefinition {
         // PDO
         searchTerm = new SearchTerm();
         searchTerm.setName("PDO");
-        searchTerm.setValueConversionExpression(getPdoInputConverter());
+        searchTerm.setValueConversionExpression(SearchDefinitionFactory.getPdoInputConverter());
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
         SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
         //new CriteriaProjection("bucketEntries", "labVesselId", "labVessel", BucketEntry.class));
@@ -413,8 +412,8 @@ public class LabVesselSearchDefinition extends EntitySearchDefinition {
                 return labEventNames;
             }
         });
-        searchTerm.setValuesExpression( new EventTypeValuesExpression() );
-        searchTerm.setValueConversionExpression( new EventTypeValueConversionExpression() );
+        searchTerm.setValuesExpression( new SearchDefinitionFactory.EventTypeValuesExpression() );
+        searchTerm.setValueConversionExpression( new SearchDefinitionFactory.EventTypeValueConversionExpression() );
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -770,12 +769,12 @@ public class LabVesselSearchDefinition extends EntitySearchDefinition {
         searchTerms.add(searchTerm);
 
         // ******** Allow individual selectable result columns for each sample metadata value *******
-        SampleMetadataDisplayExpression sampleMetadataDisplayExpression = new SampleMetadataDisplayExpression();
+        SearchDefinitionFactory.SampleMetadataDisplayExpression sampleMetadataDisplayExpression = new SearchDefinitionFactory.SampleMetadataDisplayExpression();
         for (Metadata.Key meta : Metadata.Key.values()) {
             if (meta.getCategory() == Metadata.Category.SAMPLE) {
                 searchTerm = new SearchTerm();
                 searchTerm.setName(meta.getDisplayName());
-                searchTerm.setDisplayExpression(sampleMetadataDisplayExpression);
+                searchTerm.setDisplayExpression(new SearchDefinitionFactory.SampleMetadataDisplayExpression());
                 searchTerms.add(searchTerm);
             }
         }

@@ -32,11 +32,10 @@ import java.util.Set;
 /**
  * Builds ConfigurableSearchDefinition for lab event user defined search logic
  */
-public class LabEventSearchDefinition extends EntitySearchDefinition {
+public class LabEventSearchDefinition {
 
     public LabEventSearchDefinition(){}
 
-    @Override
     public ConfigurableSearchDefinition buildSearchDefinition() {
         Map<String, List<SearchTerm>> mapGroupSearchTerms = new LinkedHashMap<>();
 
@@ -224,8 +223,8 @@ public class LabEventSearchDefinition extends EntitySearchDefinition {
                 return labEvent.getLabEventType().getName();
             }
         });
-        searchTerm.setValuesExpression( new EventTypeValuesExpression() );
-        searchTerm.setValueConversionExpression( new EventTypeValueConversionExpression() );
+        searchTerm.setValuesExpression( new SearchDefinitionFactory.EventTypeValuesExpression() );
+        searchTerm.setValueConversionExpression( new SearchDefinitionFactory.EventTypeValueConversionExpression() );
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -441,7 +440,7 @@ public class LabEventSearchDefinition extends EntitySearchDefinition {
 
         SearchTerm searchTerm = new SearchTerm();
         searchTerm.setName("PDO");
-        searchTerm.setValueConversionExpression(getPdoInputConverter());
+        searchTerm.setValueConversionExpression(SearchDefinitionFactory.getPdoInputConverter());
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
         SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setCriteria(Arrays.asList(/* LabEvent*/ "inPlaceLabEvents", /* LabVessel */ "bucketEntries", /* BucketEntry */ "productOrder" /* ProductOrder */));
@@ -455,8 +454,6 @@ public class LabEventSearchDefinition extends EntitySearchDefinition {
                 labEvent.getProgramName();
                 Set<String> productNames = new HashSet<String>();
                 LabVessel labVessel = labEvent.getInPlaceLabVessel();
-
-                // Test req'd, DB columns are nullable
                 if (labVessel != null) {
                     Set<BucketEntry> bucketEntries = labVessel.getBucketEntries();
                     if ( bucketEntries != null && !bucketEntries.isEmpty() ) {
@@ -473,7 +470,7 @@ public class LabEventSearchDefinition extends EntitySearchDefinition {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("LCSET");
-        searchTerm.setValueConversionExpression(getLcsetInputConverter());
+        searchTerm.setValueConversionExpression(SearchDefinitionFactory.getLcsetInputConverter());
         criteriaPaths = new ArrayList<>();
         criteriaPath = new SearchTerm.CriteriaPath();
 
@@ -495,7 +492,6 @@ public class LabEventSearchDefinition extends EntitySearchDefinition {
 
                 if (lcSetNames.isEmpty()) {
                     LabVessel labVessel = labEvent.getInPlaceLabVessel();
-                    // Test req'd, DB columns are nullable
                     if (labVessel != null) {
                         Set<BucketEntry> bucketEntries = labVessel.getBucketEntries();
                         if (bucketEntries != null && !bucketEntries.isEmpty()) {
@@ -529,7 +525,6 @@ public class LabEventSearchDefinition extends EntitySearchDefinition {
                 List<String> results = new ArrayList<>();
 
                 LabVessel labVessel = labEvent.getInPlaceLabVessel();
-                // Test req'd, DB columns are nullable
                 if (labVessel != null) {
                     for (MercurySample sample : labVessel.getMercurySamples()) {
                         results.add(sample.getSampleKey());
@@ -836,7 +831,7 @@ public class LabEventSearchDefinition extends EntitySearchDefinition {
         }
 
         if( vessel != null ) {
-            vesselTypeName = findVesselType( vessel );
+            vesselTypeName = SearchDefinitionFactory.findVesselType( vessel );
         }
 
         return vesselTypeName;
@@ -862,7 +857,7 @@ public class LabEventSearchDefinition extends EntitySearchDefinition {
         }
 
         if( vessel != null ) {
-            vesselTypeName = findVesselType( vessel );
+            vesselTypeName = SearchDefinitionFactory.findVesselType( vessel );
         }
 
         return vesselTypeName;
