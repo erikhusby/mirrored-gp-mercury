@@ -1,8 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -523,10 +525,16 @@ todo jmt adder methods
     public boolean vesselsHaveSingleLcsets() {
         for (LabVessel labVessel : getTargetLabVessels()) {
             for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-                if (sampleInstanceV2.getSingleBatch() == null) {
-                    log.info("Unknown LCSET for vessel " + labVessel.getLabel() +
-                             ", sample " + sampleInstanceV2.getRootOrEarliestMercurySampleName() +
-                             ", eventId " + getLabEventId());
+                if (sampleInstanceV2.getSingleBatch() == null &&
+                    CollectionUtils.isNotEmpty(labVessel.getAllLabBatches(LabBatch.LabBatchType.WORKFLOW))) {
+                    String batchNames = "";
+                    for (BucketEntry bucketEntry : sampleInstanceV2.getAllBucketEntries()) {
+                        batchNames += bucketEntry.getLabBatch().getBatchName() + " ";
+                    }
+                    log.info("Cannot determine LCSET after " + getLabEventType().getName() +
+                             " event for vessel=" + labVessel.getLabel() +
+                             " sample=" + sampleInstanceV2.getRootOrEarliestMercurySampleName() +
+                             " having batches=" + (batchNames.length() > 0 ? batchNames : "(None)"));
                     return false;
                 }
             }
