@@ -1,19 +1,15 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimap;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.jboss.weld.bean.builtin.ee.UserTransactionBean;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
