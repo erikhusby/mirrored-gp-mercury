@@ -24,6 +24,7 @@ import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.NotAudited;
 
+import javax.annotation.Nonnull;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Embedded;
@@ -105,17 +106,22 @@ public class ManifestSession implements Updatable {
              + " join mercury.manifest_event evt on evt.MANIFEST_RECORD_ID = record.MANIFEST_RECORD_ID and evt.SEVERITY = 'QUARANTINED'"
              + " where record.manifest_session_id = manifest_session_id)")
     private int numberOfQuarantinedRecords;
+
+    @Column(name = "FROM_SAMPLE_KIT")
+    private boolean fromSampleKit;
     /**
      * For JPA.
      */
     protected ManifestSession() {
     }
 
-    public ManifestSession(ResearchProject researchProject, String pathToManifestFile, BspUser createdBy) {
+    public ManifestSession(ResearchProject researchProject, String pathToManifestFile, BspUser createdBy,
+                           boolean fromSampleKit) {
         this.researchProject = researchProject;
         researchProject.addManifestSession(this);
         sessionPrefix = FilenameUtils.getBaseName(pathToManifestFile);
         updateData.setCreatedBy(createdBy.getUserId());
+        this.fromSampleKit = fromSampleKit;
     }
 
     public ResearchProject getResearchProject() {
@@ -165,6 +171,10 @@ public class ManifestSession implements Updatable {
 
     public List<ManifestEvent> getManifestEvents() {
         return manifestEvents;
+    }
+
+    public boolean isFromSampleKit() {
+        return fromSampleKit;
     }
 
     /**
@@ -336,10 +346,10 @@ public class ManifestSession implements Updatable {
     /**
      * Method to find the manifest record that has the specified collaborator barcode.
      */
-    public ManifestRecord findRecordByCollaboratorId(String collaboratorBarcode)
+    public ManifestRecord findRecordByKey(String collaboratorBarcode, Metadata.Key keyToFindRecordBy)
             throws TubeTransferException {
         for (ManifestRecord record : records) {
-            if (record.getValueByKey(Metadata.Key.SAMPLE_ID).equals(collaboratorBarcode)) {
+            if (record.getValueByKey(keyToFindRecordBy).equals(collaboratorBarcode)) {
                 return record;
             }
         }
@@ -490,31 +500,34 @@ public class ManifestSession implements Updatable {
      * from this record such as the record is quarantined, or not in the correct state within the session, or just
      * not found
      *
+     *
+     * @param keyForRecord
      * @param sourceForTransfer Sample ID for which the caller wishes to find the corresponding record
      *
      * @return The record that matches the source sample
      */
-    public ManifestRecord findRecordForTransfer(String sourceForTransfer) {
+    public ManifestRecord findRecordForTransferByKey(Metadata.Key keyForRecord, @Nonnull String sourceForTransfer) {
 
         if (StringUtils.isBlank(sourceForTransfer)) {
-            throw new TubeTransferException("A collaborator sample ID is required for the transfer to a lab vessel");
+            throw new TubeTransferException("A " + keyForRecord.getDisplayName() +
+                                            " is required for the transfer to a lab vessel");
         }
 
-        ManifestRecord recordForTransfer = findRecordByCollaboratorId(sourceForTransfer);
+        ManifestRecord recordForTransfer = findRecordByKey(sourceForTransfer, keyForRecord);
 
         if (recordForTransfer.isQuarantined()) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE,
-                    Metadata.Key.SAMPLE_ID, sourceForTransfer);
+                    keyForRecord, sourceForTransfer);
         }
 
         if (ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE == recordForTransfer.getStatus()) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.SOURCE_ALREADY_TRANSFERRED,
-                    Metadata.Key.SAMPLE_ID, sourceForTransfer);
+                    keyForRecord, sourceForTransfer);
         }
 
         if (ManifestRecord.Status.ACCESSIONED != recordForTransfer.getStatus()) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.NOT_READY_FOR_TUBE_TRANSFER,
-                    Metadata.Key.SAMPLE_ID, sourceForTransfer);
+                    keyForRecord, sourceForTransfer);
         }
 
         return recordForTransfer;
@@ -533,7 +546,7 @@ public class ManifestSession implements Updatable {
     public void performTransfer(String sourceCollaboratorSample, MercurySample targetSample, LabVessel targetVessel,
                                 BspUser user) {
 
-        ManifestRecord sourceRecord = findRecordForTransfer(sourceCollaboratorSample);
+        ManifestRecord sourceRecord = findRecordForTransferByKey(Metadata.Key.SAMPLE_ID, sourceCollaboratorSample);
 
         targetSample.addMetadata(sourceRecord.getMetadata());
         sourceRecord.setStatus(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
@@ -548,14 +561,15 @@ public class ManifestSession implements Updatable {
      * Scan the specified sample as part of the accessioning process.
      *
      * @param collaboratorSampleId The collaborator sample ID the current sample
+     * @param recordSampleKey
      */
-    public void accessionScan(String collaboratorSampleId) {
-        ManifestRecord manifestRecord = getRecordWithMatchingValueForKey(Metadata.Key.SAMPLE_ID, collaboratorSampleId);
+    public void accessionScan(String collaboratorSampleId, Metadata.Key recordSampleKey) {
+        ManifestRecord manifestRecord = getRecordWithMatchingValueForKey(recordSampleKey, collaboratorSampleId);
 
         if (manifestRecord == null) {
             throw new InformaticsServiceException(
                     ManifestRecord.ErrorStatus.NOT_IN_MANIFEST.formatMessage(
-                            Metadata.Key.SAMPLE_ID, collaboratorSampleId));
+                            recordSampleKey, collaboratorSampleId));
         }
         manifestRecord.accessionScan();
     }
@@ -565,7 +579,7 @@ public class ManifestSession implements Updatable {
      * process.
      */
     public enum SessionStatus {
-        OPEN, ACCESSIONING, COMPLETED
+        OPEN, PENDING_SAMPLE_INFO, ACCESSIONING, COMPLETED
     }
 
     public UpdateData getUpdateData() {

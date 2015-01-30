@@ -78,6 +78,9 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     @Validate(required = true, on = SCAN_ACCESSION_SOURCE_ACTION, label = "Source sample is required for accessioning")
     private String accessionSource;
 
+    @Validate(required = true, on = SCAN_ACCESSION_SOURCE_ACTION, label = "Source tube barcode is required for accessioning")
+    private String accessionTube;
+
     private List<ManifestSession> openSessions;
     private List<ManifestSession> closedSessions;
 
@@ -188,7 +191,12 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     public Resolution scanAccessionSource() {
 
         try {
-            manifestSessionEjb.accessionScan(selectedSessionId, accessionSource);
+
+            if(selectedSession.isFromSampleKit()) {
+                manifestSessionEjb.validateTargetSampleAndVessel(accessionSource, accessionTube);
+            }
+
+            manifestSessionEjb.accessionScan(selectedSessionId, accessionSource, accessionTube);
             scanMessages = String.format("Sample %s scanned successfully", accessionSource);
         } catch (Exception e) {
             scanErrors = e.getMessage();
@@ -206,7 +214,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     public Resolution closeSession() {
 
         try {
-            manifestSessionEjb.closeSession(selectedSessionId);
+            manifestSessionEjb.closeSession(selectedSessionId, userBean.getBspUser());
             addMessage("The session {0} has successfully been marked as completed", selectedSession.getSessionName());
         } catch (Exception e) {
             addGlobalValidationError(e.getMessage());

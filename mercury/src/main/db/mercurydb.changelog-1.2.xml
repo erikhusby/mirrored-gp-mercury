@@ -200,4 +200,15 @@
                     tableName="VESSEL_TRANSFER"/>
     </changeSet>
 
+    <changeSet id="GPLIM-3331" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="MANIFEST_SESSION" columnName="FROM_SAMPLE_KIT" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="MANIFEST_SESSION" schemaName="mercury">
+            <column name="FROM_SAMPLE_KIT" type="number(1,0)" />
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

@@ -142,7 +142,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         String SAMPLE_ID_12 = COLLAB_PREFIX + today.getTime() + "12";
 
 
-        manifestSessionI = new ManifestSession(researchProject, "BUICK-TEST", testUser);
+        manifestSessionI = new ManifestSession(researchProject, "BUICK-TEST", testUser, false);
         manifestRecordI = createManifestRecord(Metadata.Key.PATIENT_ID, PATIENT_1, Metadata.Key.GENDER, GENDER_MALE,
                 Metadata.Key.SAMPLE_ID, SAMPLE_ID_1);
         manifestSessionI.addRecord(manifestRecordI);
@@ -163,7 +163,7 @@ public class ManifestSessionContainerTest extends Arquillian {
                 createManifestRecord(Metadata.Key.SAMPLE_ID, SAMPLE_ID_6, Metadata.Key.GENDER, GENDER_MALE,
                         Metadata.Key.PATIENT_ID, PATIENT_1 + "6"));
 
-        manifestSessionII = new ManifestSession(researchProject, "BUICK-TEST2", testUser);
+        manifestSessionII = new ManifestSession(researchProject, "BUICK-TEST2", testUser, false);
 
         manifestSessionII.addRecord(
                 createManifestRecord(Metadata.Key.PATIENT_ID, PATIENT_1 + "7", Metadata.Key.GENDER, GENDER_MALE,
@@ -356,7 +356,7 @@ public class ManifestSessionContainerTest extends Arquillian {
 
         String UPLOADED_COLLABORATOR_SESSION_1 = "03101067213";
         String UPLOADED_PATIENT_ID_SESSION_1 = "001-001";
-        assertThat(uploadedSession.findRecordByCollaboratorId(UPLOADED_COLLABORATOR_SESSION_1)
+        assertThat(uploadedSession.findRecordByKey(UPLOADED_COLLABORATOR_SESSION_1, Metadata.Key.SAMPLE_ID)
                 .getValueByKey(Metadata.Key.PATIENT_ID), is(UPLOADED_PATIENT_ID_SESSION_1));
 
         manifestSessionDao.clear();
@@ -394,12 +394,13 @@ public class ManifestSessionContainerTest extends Arquillian {
          */
         for (String sourceSampleToTest : firstUploadedScannedSamples) {
 
-            manifestSessionEjb.accessionScan(sessionOfScan.getManifestSessionId(), sourceSampleToTest);
+            manifestSessionEjb.accessionScan(sessionOfScan.getManifestSessionId(), sourceSampleToTest, null);
             manifestSessionDao.clear();
 
             ManifestSession reFetchedSessionOfScan = manifestSessionDao.find(sessionOfScan.getManifestSessionId());
 
-            ManifestRecord sourceRecordToTest = reFetchedSessionOfScan.findRecordByCollaboratorId(sourceSampleToTest);
+            ManifestRecord sourceRecordToTest = reFetchedSessionOfScan.findRecordByKey(sourceSampleToTest,
+                    Metadata.Key.SAMPLE_ID);
 
             assertThat(sourceRecordToTest.getStatus(), is(ManifestRecord.Status.SCANNED));
             assertThat(reFetchedSessionOfScan.hasErrors(), is(false));
@@ -423,7 +424,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         /*
          * Mimic a user closing the session, and the ramifications of that.
          */
-        manifestSessionEjb.closeSession(sessionOfScan.getManifestSessionId());
+        manifestSessionEjb.closeSession(sessionOfScan.getManifestSessionId(), null);
 
         // Clear to force a reload.
         manifestSessionDao.clear();
@@ -552,12 +553,14 @@ public class ManifestSessionContainerTest extends Arquillian {
         }
 
         for (String dupeSampleId : secondUploadedSamplesDupes) {
-            ManifestRecord dupeRecord = uploadedSession2.findRecordByCollaboratorId(dupeSampleId);
+            ManifestRecord dupeRecord = uploadedSession2.findRecordByKey(dupeSampleId,
+                    Metadata.Key.SAMPLE_ID);
             assertThat(dupeRecord.isQuarantined(), is(true));
             assertThat(dupeRecord.getSampleId(), is(dupeSampleId));
         }
         for (String genderSample : secondUploadPatientsWithMismatchedGender) {
-            ManifestRecord dupeRecord = uploadedSession2.findRecordByCollaboratorId(genderSample);
+            ManifestRecord dupeRecord = uploadedSession2.findRecordByKey(genderSample,
+                    Metadata.Key.SAMPLE_ID);
             assertThat(dupeRecord.isQuarantined(), is(false));
             assertThat(dupeRecord.getSampleId(), is(genderSample));
         }
@@ -587,19 +590,22 @@ public class ManifestSessionContainerTest extends Arquillian {
         assertThat(acceptedSession2.hasErrors(), is(true));
 
         for (String collaboratorSampleId : secondUploadedSamplesDupes) {
-            ManifestRecord record = acceptedSession2.findRecordByCollaboratorId(collaboratorSampleId);
+            ManifestRecord record = acceptedSession2.findRecordByKey(collaboratorSampleId,
+                    Metadata.Key.SAMPLE_ID);
             assertThat(record.isQuarantined(), is(true));
             assertThat(record.getStatus(), is(ManifestRecord.Status.UPLOADED));
         }
 
         for (String collaboratorSampleId : secondUploadPatientsWithMismatchedGender) {
-            ManifestRecord record = acceptedSession2.findRecordByCollaboratorId(collaboratorSampleId);
+            ManifestRecord record = acceptedSession2.findRecordByKey(collaboratorSampleId,
+                    Metadata.Key.SAMPLE_ID);
             assertThat(record.isQuarantined(), is(false));
             assertThat(record.getManifestEvents(), hasSize(1));
             assertThat(record.getStatus(), is(ManifestRecord.Status.UPLOAD_ACCEPTED));
         }
         for (String collaboratorSampleId : secondUploadedSamplesGood) {
-            ManifestRecord record = acceptedSession2.findRecordByCollaboratorId(collaboratorSampleId);
+            ManifestRecord record = acceptedSession2.findRecordByKey(collaboratorSampleId,
+                    Metadata.Key.SAMPLE_ID);
             assertThat(record.getManifestEvents(), is(empty()));
             assertThat(record.getStatus(), is(ManifestRecord.Status.UPLOAD_ACCEPTED));
         }
@@ -611,11 +617,12 @@ public class ManifestSessionContainerTest extends Arquillian {
          * Mimic the user Scanning the tubes to complete accessioning
          */
         for (String sampleId : secondUploadedSamplesGood) {
-            manifestSessionEjb.accessionScan(sessionOfScan2.getManifestSessionId(), sampleId);
+            manifestSessionEjb.accessionScan(sessionOfScan2.getManifestSessionId(), sampleId, null);
 
             manifestSessionDao.clear();
             ManifestSession reFetchedSessionOfScan2 = manifestSessionDao.find(sessionOfScan2.getManifestSessionId());
-            ManifestRecord sourceToTest = reFetchedSessionOfScan2.findRecordByCollaboratorId(sampleId);
+            ManifestRecord sourceToTest = reFetchedSessionOfScan2.findRecordByKey(sampleId,
+                    Metadata.Key.SAMPLE_ID);
 
             assertThat(sourceToTest.getStatus(), is(ManifestRecord.Status.SCANNED));
             assertThat(sourceToTest.getManifestEvents(), is(empty()));
@@ -627,7 +634,7 @@ public class ManifestSessionContainerTest extends Arquillian {
          */
         for (String sampleId : secondUploadedSamplesDupes) {
             try {
-                manifestSessionEjb.accessionScan(sessionOfScan2.getManifestSessionId(), sampleId);
+                manifestSessionEjb.accessionScan(sessionOfScan2.getManifestSessionId(), sampleId, null);
                 Assert.fail();
             } catch (Exception e) {
                 assertThat(e, containsMessage(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getBaseMessage()));
@@ -640,11 +647,12 @@ public class ManifestSessionContainerTest extends Arquillian {
          */
         sessionOfScan2 = manifestSessionDao.find(acceptedSession2.getManifestSessionId());
         for (String sampleId : secondUploadPatientsWithMismatchedGender) {
-            manifestSessionEjb.accessionScan(sessionOfScan2.getManifestSessionId(), sampleId);
+            manifestSessionEjb.accessionScan(sessionOfScan2.getManifestSessionId(), sampleId, null);
 
             manifestSessionDao.clear();
             ManifestSession reFetchedSessionOfScan2 = manifestSessionDao.find(sessionOfScan2.getManifestSessionId());
-            ManifestRecord sourceToTest = reFetchedSessionOfScan2.findRecordByCollaboratorId(sampleId);
+            ManifestRecord sourceToTest = reFetchedSessionOfScan2.findRecordByKey(sampleId,
+                    Metadata.Key.SAMPLE_ID);
 
             assertThat(sourceToTest.getStatus(), is(ManifestRecord.Status.SCANNED));
             assertThat(sourceToTest.getManifestEvents(), hasSize(NUM_MISMATCHED_GENDERS_IN_SESSION_2));
@@ -667,7 +675,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         /*
          * Mimic the user closing the session
          */
-        manifestSessionEjb.closeSession(sessionOfScan2.getManifestSessionId());
+        manifestSessionEjb.closeSession(sessionOfScan2.getManifestSessionId(), null);
         manifestSessionDao.clear();
         ManifestSession closedSession2 = manifestSessionDao.find(sessionOfScan2.getManifestSessionId());
 
@@ -892,10 +900,11 @@ public class ManifestSessionContainerTest extends Arquillian {
 
         manifestSessionEjb.acceptManifestUpload(manifestSessionI.getManifestSessionId());
         for (ManifestRecord manifestRecord : manifestSessionI.getRecords()) {
-            manifestSessionEjb.accessionScan(manifestSessionI.getManifestSessionId(), manifestRecord.getSampleId());
+            manifestSessionEjb.accessionScan(manifestSessionI.getManifestSessionId(), manifestRecord.getSampleId(),
+                    null);
         }
 
-        manifestSessionEjb.closeSession(manifestSessionI.getManifestSessionId());
+        manifestSessionEjb.closeSession(manifestSessionI.getManifestSessionId(), null);
 
         for (LabVessel vessel : sourceSampleToTargetVessel.values()) {
             labVesselDao.persist(vessel);

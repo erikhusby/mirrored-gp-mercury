@@ -236,7 +236,7 @@ public class ManifestRecordTest {
 
     private ManifestSession buildTestSession(ResearchProject testProject, String... testRecords) {
         ManifestSession newTestSession =
-                new ManifestSession(testProject, "DUPLICATE_TEST", new BSPUserList.QADudeUser("LU", 33L));
+                new ManifestSession(testProject, "DUPLICATE_TEST", new BSPUserList.QADudeUser("LU", 33L), false);
         for (String recordSampleId : testRecords) {
             buildManifestRecord(newTestSession, recordSampleId);
         }

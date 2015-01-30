@@ -145,6 +145,17 @@ public class ManifestRecord implements Updatable {
         return null;
     }
 
+    public void addMetadata(Metadata.Key key, String value) {
+        Metadata metadata = getMetadataByKey(key);
+
+        if (metadata != null) {
+            throw new InformaticsServiceException(key.getDisplayName() +
+                                                  " is already set for the record " + toString());
+        }
+
+        getMetadataMap().put(key, new Metadata(key, value));
+    }
+
     public Status getStatus() {
         return status;
     }

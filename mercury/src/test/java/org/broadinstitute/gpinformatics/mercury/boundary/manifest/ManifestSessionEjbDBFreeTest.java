@@ -672,7 +672,7 @@ public class ManifestSessionEjbDBFreeTest {
         addRecord(holder, NO_ERROR, ManifestRecord.Status.UPLOAD_ACCEPTED, Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE);
 
         try {
-            holder.ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, tubeBarcode);
+            holder.ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, tubeBarcode, null);
             if (!successExpected) {
                 Assert.fail();
             }
@@ -704,7 +704,7 @@ public class ManifestSessionEjbDBFreeTest {
             // Take an arbitrary one of the duplicated sample IDs.
             String duplicatedSampleId = DUPLICATED_SAMPLE_IDS.iterator().next();
 
-            holder.ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, duplicatedSampleId);
+            holder.ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, duplicatedSampleId, null);
             Assert.fail();
         } catch (InformaticsServiceException e) {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getBaseMessage()));
@@ -735,7 +735,7 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(manifestEvent.getSeverity(), is(ManifestEvent.Severity.ERROR));
 
         holder.ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID,
-                manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID));
+                manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID), null);
 
         assertThat(manifestSession.getManifestEvents(), hasSize(EXPECTED_NUMBER_OF_EVENTS_ON_SESSION));
         assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.SCANNED));
@@ -746,12 +746,12 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionEjb ejb = holder.ejb;
 
         String goodTubeBarcode = "SAMPLE_ID_11";
-        ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, goodTubeBarcode);
+        ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, goodTubeBarcode, null);
         // The results of this are checked in accessionScanGoodManifest
 
         try {
             // Should fail on a second scan.
-            ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, goodTubeBarcode);
+            ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, goodTubeBarcode, null);
             Assert.fail();
         } catch (InformaticsServiceException e) {
             assertThat(e.getMessage(),
@@ -850,7 +850,7 @@ public class ManifestSessionEjbDBFreeTest {
 
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.SCANNED, 20);
 
-        holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
+        holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID, null);
 
         assertThat(holder.manifestSession.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
         assertThat(holder.manifestSession.getManifestEvents(), is(empty()));
@@ -866,7 +866,7 @@ public class ManifestSessionEjbDBFreeTest {
         addRecord(holder, ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
                 Metadata.Key.SAMPLE_ID, duplicateSampleId);
 
-        holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
+        holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID, null);
         assertThat(holder.manifestSession.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
 
         assertThat(holder.manifestSession.getManifestEvents(), hasSize(1));
@@ -885,7 +885,7 @@ public class ManifestSessionEjbDBFreeTest {
         String unScannedBarcode = GOOD_TUBE_BARCODE;
         addRecord(holder, NO_ERROR, ManifestRecord.Status.UPLOAD_ACCEPTED, Metadata.Key.SAMPLE_ID, unScannedBarcode);
 
-        holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
+        holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID, null);
 
         assertThat(holder.manifestSession.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
 
@@ -912,7 +912,7 @@ public class ManifestSessionEjbDBFreeTest {
         addRecord(holder, ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
                 Metadata.Key.SAMPLE_ID, dupeSampleId);
 
-        holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
+        holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID, null);
 
         assertThat(holder.manifestSession.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
 
@@ -944,7 +944,7 @@ public class ManifestSessionEjbDBFreeTest {
                 ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.SCANNED,
                 Metadata.Key.SAMPLE_ID, misMatch2Barcode);
 
-        holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
+        holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID, null);
 
         ManifestSession manifestSession = holder.manifestSession;
         assertThat(manifestSession.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
@@ -1156,7 +1156,8 @@ public class ManifestSessionEjbDBFreeTest {
 
         addRecord(holder, NO_ERROR, ManifestRecord.Status.ACCESSIONED, Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE);
 
-        ManifestRecord usedRecord = holder.manifestSession.findRecordByCollaboratorId(GOOD_TUBE_BARCODE);
+        ManifestRecord usedRecord = holder.manifestSession.findRecordByKey(GOOD_TUBE_BARCODE,
+                Metadata.Key.SAMPLE_ID);
         assertThat(usedRecord.getStatus(), is(equalTo(ManifestRecord.Status.ACCESSIONED)));
 
         MercurySample testSample = mercurySampleDao.findBySampleKey(TEST_SAMPLE_KEY);
@@ -1195,7 +1196,8 @@ public class ManifestSessionEjbDBFreeTest {
 
         addRecord(holder, NO_ERROR, ManifestRecord.Status.ACCESSIONED, Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE);
 
-        ManifestRecord usedRecord = holder.manifestSession.findRecordByCollaboratorId(GOOD_TUBE_BARCODE);
+        ManifestRecord usedRecord = holder.manifestSession.findRecordByKey(GOOD_TUBE_BARCODE,
+                Metadata.Key.SAMPLE_ID);
         assertThat(usedRecord.getStatus(), is(equalTo(ManifestRecord.Status.ACCESSIONED)));
 
         try {
@@ -1214,7 +1216,8 @@ public class ManifestSessionEjbDBFreeTest {
 
         addRecord(holder, NO_ERROR, ManifestRecord.Status.ACCESSIONED, Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE);
 
-        ManifestRecord usedRecord = holder.manifestSession.findRecordByCollaboratorId(GOOD_TUBE_BARCODE);
+        ManifestRecord usedRecord = holder.manifestSession.findRecordByKey(GOOD_TUBE_BARCODE,
+                Metadata.Key.SAMPLE_ID);
         assertThat(usedRecord.getStatus(), is(equalTo(ManifestRecord.Status.ACCESSIONED)));
 
         MercurySample testSample = mercurySampleDao.findBySampleKey(TEST_SAMPLE_KEY);
@@ -1237,7 +1240,8 @@ public class ManifestSessionEjbDBFreeTest {
 
         addRecord(holder, NO_ERROR, ManifestRecord.Status.ACCESSIONED, Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE);
 
-        ManifestRecord usedRecord = holder.manifestSession.findRecordByCollaboratorId(GOOD_TUBE_BARCODE);
+        ManifestRecord usedRecord = holder.manifestSession.findRecordByKey(GOOD_TUBE_BARCODE,
+                Metadata.Key.SAMPLE_ID);
         assertThat(usedRecord.getStatus(), is(equalTo(ManifestRecord.Status.ACCESSIONED)));
 
         MercurySample testSample = mercurySampleDao.findBySampleKey(TEST_SAMPLE_KEY_UNASSOCIATED);
@@ -1261,7 +1265,8 @@ public class ManifestSessionEjbDBFreeTest {
         addRecord(holder, ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
                 Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE);
 
-        ManifestRecord usedRecord = holder.manifestSession.findRecordByCollaboratorId(GOOD_TUBE_BARCODE);
+        ManifestRecord usedRecord = holder.manifestSession.findRecordByKey(GOOD_TUBE_BARCODE,
+                Metadata.Key.SAMPLE_ID);
         assertThat(usedRecord.getStatus(), is(equalTo(ManifestRecord.Status.UPLOADED)));
 
         MercurySample testSample = mercurySampleDao.findBySampleKey(TEST_SAMPLE_KEY);
@@ -1285,7 +1290,8 @@ public class ManifestSessionEjbDBFreeTest {
         addRecord(holder, ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.ACCESSIONED,
                 Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE);
 
-        ManifestRecord usedRecord = holder.manifestSession.findRecordByCollaboratorId(GOOD_TUBE_BARCODE);
+        ManifestRecord usedRecord = holder.manifestSession.findRecordByKey(GOOD_TUBE_BARCODE,
+                Metadata.Key.SAMPLE_ID);
         assertThat(usedRecord.getStatus(), is(equalTo(ManifestRecord.Status.ACCESSIONED)));
 
         MercurySample testSample = mercurySampleDao.findBySampleKey(TEST_SAMPLE_KEY);
@@ -1306,7 +1312,8 @@ public class ManifestSessionEjbDBFreeTest {
         addRecord(holder, ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
                 Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE);
 
-        ManifestRecord usedRecord = holder.manifestSession.findRecordByCollaboratorId(GOOD_TUBE_BARCODE);
+        ManifestRecord usedRecord = holder.manifestSession.findRecordByKey(GOOD_TUBE_BARCODE,
+                Metadata.Key.SAMPLE_ID);
         assertThat(usedRecord.getStatus(), is(equalTo(ManifestRecord.Status.UPLOADED)));
 
         MercurySample testSample = mercurySampleDao.findBySampleKey(TEST_SAMPLE_ALREADY_TRANSFERRED);

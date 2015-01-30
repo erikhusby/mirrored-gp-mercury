@@ -15,7 +15,13 @@
 
             $j(document).ready(function () {
                 $j("#accessionSourceText").blur(function () {
-                    if ($j(this).val() != '') {
+                    if ($j(this).val() != '' && $j("#accessionTubeText").val() != '') {
+                        performAccessionScan();
+                    }
+                });
+
+                $j("#accessionTubeText").blur(function () {
+                    if ($j(this).val() != '' && $j("#accessionSourceText").val() != '') {
                         performAccessionScan();
                     }
                 });
@@ -51,12 +57,14 @@
                     data: {
                         '<%= ManifestAccessioningActionBean.SCAN_ACCESSION_SOURCE_ACTION %>': '',
                         '<%= ManifestAccessioningActionBean.SELECTED_SESSION_ID %>': '${actionBean.selectedSessionId}',
-                        accessionSource: $j("#accessionSourceText").val()
+                        accessionSource: $j("#accessionSourceText").val(),
+                        accessionTube: $j("#accessionTubeText").val()
                     },
                     datatype: 'html',
                     success: function (html) {
                         $j('#scanResults').html(html);
                         $j('#accessionSourceText').val('');
+                        $j('#accessionTubeText').val('');
                         $j('#accessionSourceText').focus();
                     }
                 });
@@ -96,12 +104,30 @@
                 <div class="control-group">
                     <label class="control-label" for="accessionSourceText">Scan or input specimen number *</label>
                     <div class="controls">
-                        <input type="text" class="input-xlarge" name="accessionSource" maxlength="255"
-                               placeholder="Enter the clinical sample ID" id="accessionSourceText">
+                        <c:choose>
+                            <c:when test="${actionBean.selectedSession.fromSampleKit}">
+                                <input type="text" class="input-xlarge" name="accessionSource" maxlength="255"
+                                       placeholder="Enter the Broad sample ID" id="accessionSourceText">
+                            </c:when>
+                            <c:otherwise>
+                                <input type="text" class="input-xlarge" name="accessionSource" maxlength="255"
+                                       placeholder="Enter the clinical sample ID" id="accessionSourceText">
+                            </c:otherwise>
+                        </c:choose>
                     </div>
                 </div>
+                <c:if test="${actionBean.selectedSession.fromSampleKit}">
+                    <div class="control-group">
+                        <label class="control-label" for="accessionTubeText">Scan or input tube barcode *</label>
+
+                        <div class="controls">
+                            <input type="text" class="input-xlarge" name="accessionTube" maxlength="255"
+                                   placholder="Enter the 2d barcode" id="accessionTubeText">
+                        </div>
+                    </div>
+                </c:if>
                 <div class="actionButtons">
-                    <stripes:submit id="previewSessionClose"
+                <stripes:submit id="previewSessionClose"
                                     name="<%= ManifestAccessioningActionBean.PREVIEW_SESSION_CLOSE_ACTION %>"
                                     value="Submit Session" class="btn"/>
                     <stripes:link beanclass="${actionBean.class.name}">

@@ -168,31 +168,42 @@ public class Metadata {
         LAB_METRIC
     }
 
+    public enum Visibility {
+        USER,
+        SYSTEM,
+        NONE
+    }
+
     public enum Key implements Displayable {
         // The Category.SAMPLE keys are currently all used for uploads of the "modified" (edited) manifest during
         // Buick sample registration.
-        GENDER(Category.SAMPLE, DataType.STRING, "Gender"),
-        PATIENT_ID(Category.SAMPLE, DataType.STRING, "Patient ID"),
-        SAMPLE_TYPE(Category.SAMPLE, DataType.STRING, "Sample Type"),
-        TUMOR_NORMAL(Category.SAMPLE, DataType.STRING, "Tumor/Normal"),
-        BUICK_COLLECTION_DATE(Category.SAMPLE, DataType.STRING, "Collection Date"),
-        SAMPLE_ID(Category.SAMPLE, DataType.STRING, "Sample ID"),
-        BUICK_VISIT(Category.SAMPLE, DataType.STRING, "Visit"),
+        GENDER(Category.SAMPLE, DataType.STRING, "Gender", Visibility.USER),
+        PATIENT_ID(Category.SAMPLE, DataType.STRING, "Patient ID", Visibility.USER),
+        SAMPLE_TYPE(Category.SAMPLE, DataType.STRING, "Sample Type", Visibility.USER),
+        TUMOR_NORMAL(Category.SAMPLE, DataType.STRING, "Tumor/Normal", Visibility.USER),
+        BUICK_COLLECTION_DATE(Category.SAMPLE, DataType.STRING, "Collection Date", Visibility.USER),
+        SAMPLE_ID(Category.SAMPLE, DataType.STRING, "Sample ID", Visibility.USER),
+        BUICK_VISIT(Category.SAMPLE, DataType.STRING, "Visit", Visibility.USER),
 
-        CORRELATION_COEFFICIENT_R2(Category.LAB_METRIC_RUN, DataType.STRING, "R Squared Correlation Coefficient"),
-        INSTRUMENT_NAME(Category.LAB_METRIC_RUN, DataType.STRING, "Instrument Name"),
-        INSTRUMENT_SERIAL_NUMBER(Category.LAB_METRIC_RUN, DataType.STRING, "Serial Number"),
+        CORRELATION_COEFFICIENT_R2(Category.LAB_METRIC_RUN, DataType.STRING, "R Squared Correlation Coefficient",
+                Visibility.USER),
+        INSTRUMENT_NAME(Category.LAB_METRIC_RUN, DataType.STRING, "Instrument Name", Visibility.USER),
+        INSTRUMENT_SERIAL_NUMBER(Category.LAB_METRIC_RUN, DataType.STRING, "Serial Number", Visibility.USER),
 
-        TOTAL_NG(Category.LAB_METRIC, DataType.NUMBER, "Total ng");
+        TOTAL_NG(Category.LAB_METRIC, DataType.NUMBER, "Total ng", Visibility.USER),
+        BROAD_SAMPLE_ID(Category.SAMPLE, DataType.STRING, "SM ID", Visibility.SYSTEM),
+        BROAD_2D_BARCODE(Category.SAMPLE, DataType.STRING, "2D Barcode", Visibility.SYSTEM);
 
         private final Category category;
         private final DataType dataType;
         private final String displayName;
+        private final Visibility visibility;
 
-        Key(Category category, DataType dataType, String displayName) {
+        Key(Category category, DataType dataType, String displayName, Visibility visibility) {
             this.category = category;
             this.dataType = dataType;
             this.displayName = displayName;
+            this.visibility = visibility;
         }
 
         public Category getCategory() {

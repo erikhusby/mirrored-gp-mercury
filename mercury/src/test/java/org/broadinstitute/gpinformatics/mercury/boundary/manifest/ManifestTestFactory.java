@@ -35,7 +35,7 @@ public class ManifestTestFactory {
                                                        ManifestRecord.Status defaultStatus) {
         ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(researchProjectKey);
         ManifestSession manifestSession = new ManifestSession(researchProject, sessionPrefix,
-                createdBy);
+                createdBy, false);
 
         for (int i = 1; i <= numberOfRecords; i++) {
             ManifestRecord manifestRecord = buildManifestRecord(i);
