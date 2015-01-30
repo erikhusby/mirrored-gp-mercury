@@ -43,7 +43,7 @@ public class LimsQueryResourceResponseFactoryTest {
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() throws Exception {
         // TODO: better test data that includes lists of size > 1
-        sampleInfo = new SampleInfo("SM-1234", "TestSample", (short) 6, "CATTAG", "TestReference");
+        sampleInfo = new SampleInfo("SM-1234", "TestSample", (short) 6, "CATTAG", "TestReference", "lsid");
         GregorianCalendar calendar = new GregorianCalendar(2012, 3, 15, 13, 23);
         libraryDateCreated = calendar.getTime();
         libraryData = new LibraryData(true, "TestLibrary-1", "TestLibrary", "12345678", Arrays.asList(sampleInfo), new SimpleDateFormat("yyyy/MM/dd HH:mm").format(libraryDateCreated), true, true);

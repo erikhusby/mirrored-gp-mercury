@@ -7,6 +7,7 @@ import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 import org.jboss.arquillian.testng.Arquillian;
 import org.testng.annotations.BeforeMethod;
 
@@ -56,6 +57,7 @@ public abstract class RestServiceContainerTest extends Arquillian {
         clientConfig = new DefaultClientConfig();
         clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
         clientConfig.getProperties().put(ClientConfig.PROPERTY_FOLLOW_REDIRECTS, Boolean.TRUE);
+        clientConfig.getClasses().add(JacksonJsonProvider.class);
         JerseyUtils.acceptAllServerCertificates(clientConfig);
     }
 
