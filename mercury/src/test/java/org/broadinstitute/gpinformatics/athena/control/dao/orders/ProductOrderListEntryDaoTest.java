@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -65,6 +66,9 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
 
         order = ProductOrderDBTestFactory.createTestProductOrder(researchProjectDao, productDao);
 
+        ProductOrder pendingOrder = ProductOrderDBTestFactory.createTestProductOrder(researchProjectDao, productDao);
+        pendingOrder.setOrderStatus(ProductOrder.OrderStatus.Pending);
+
         // We need to initialize the price items here as we will be exercising their hashCode methods when we create
         // LedgerEntry entities in some of our tests.
 
@@ -75,10 +79,23 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
             quotePriceItem.hashCode();
         }
         productOrderDao.persist(order);
+        productOrderDao.persist(pendingOrder);
 
         productOrderDao.flush();
         productOrderDao.clear();
+    }
 
+    public void testFindPendingWithDateRange() {
+        ProductOrder.OrderStatus status = ProductOrder.OrderStatus.Pending;
+        DateRangeSelector dateRange = new DateRangeSelector(DateRangeSelector.LAST_YEAR);
+        List<ProductOrderListEntry> orders =
+                productOrderListEntryDao.findProductOrderListEntries(
+                        null, null, Collections.singleton(status), dateRange, null, null);
+
+        Assert.assertFalse(orders.isEmpty());
+        for (ProductOrderListEntry orderEntry : orders) {
+            Assert.assertEquals(orderEntry.getOrderStatus(), status);
+        }
     }
 
     /**
@@ -129,7 +146,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
             @Override
             public boolean evaluate(ProductOrderListEntry productOrderListEntry) {
                 return productOrderListEntry.getJiraTicketKey() != null &&
-                       productOrderListEntry.getJiraTicketKey().equals(ProductOrderListEntryDaoTest.this.order.getJiraTicketKey());
+                       productOrderListEntry.getJiraTicketKey().equals(order.getJiraTicketKey());
             }
         });
 

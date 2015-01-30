@@ -14,7 +14,6 @@ import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Expression;
-import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.persistence.metamodel.SingularAttribute;
@@ -515,15 +514,5 @@ public class GenericDao {
         }
 
         return foundValues;
-    }
-
-    protected Predicate createOrTerms(CriteriaBuilder builder, Path<?> fieldExpression, List<?> values) {
-        Predicate[] listOfOrTerms = new Predicate[values.size()];
-        int i = 0;
-        for (Object value : values) {
-            listOfOrTerms[i++] = builder.equal(fieldExpression, value);
-        }
-
-        return builder.or(listOfOrTerms);
     }
 }
