@@ -518,14 +518,6 @@ todo jmt adder methods
             numVesselsWithBucketEntries = VesselContainer.collateLcSets(mapLabBatchToCount, numVesselsWithBucketEntries,
                     sampleInstancesAtPositionV2);
         }
-        /*if( numVesselsWithBucketEntries == 0 ) {
-            for (CherryPickTransfer cherryPickTransfer : cherryPickTransfers) {
-                Set<SampleInstanceV2> sampleInstancesAtPositionV2 = cherryPickTransfer.getTargetVesselContainer()
-                        .getSampleInstancesAtPositionV2(cherryPickTransfer.getTargetPosition());
-                numVesselsWithBucketEntries = VesselContainer.collateLcSets(mapLabBatchToCount, numVesselsWithBucketEntries,
-                        sampleInstancesAtPositionV2);
-            }
-        }*/
         return VesselContainer.computeLcSets(mapLabBatchToCount, numVesselsWithBucketEntries);
     }
 
