@@ -484,7 +484,7 @@ public class LabEventSearchDefinition {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
                 LabEvent labEvent = (LabEvent) entity;
-                List<String> lcSetNames = new ArrayList<>();
+                Set<String> lcSetNames = new HashSet<>();
 
                 for (LabBatch labBatch : labEvent.getComputedLcSets()) {
                     lcSetNames.add(labBatch.getBatchName());
@@ -493,15 +493,38 @@ public class LabEventSearchDefinition {
                 if (lcSetNames.isEmpty()) {
                     LabVessel labVessel = labEvent.getInPlaceLabVessel();
                     if (labVessel != null) {
-                        Set<BucketEntry> bucketEntries = labVessel.getBucketEntries();
-                        if (bucketEntries != null && !bucketEntries.isEmpty()) {
-                            Iterator<BucketEntry> iterator = bucketEntries.iterator();
-                            BucketEntry bucketEntry = iterator.next();
+                        if( labVessel.getContainerRole() != null ) {
+                            for( LabVessel containedVessel : labVessel.getContainerRole().getContainedVessels() ) {
+                                for( BucketEntry bucketEntry : containedVessel.getBucketEntries() ) {
+                                    LabBatch batch = bucketEntry.getLabBatch();
+                                    if (batch != null) {
+                                        lcSetNames.add(batch.getBatchName());
+                                    }
+                                }
+                                if( lcSetNames.isEmpty()){
+                                    for( LabEvent xferEvent : containedVessel.getTransfersTo() ) {
+                                        for (LabBatch labBatch : xferEvent.getComputedLcSets()) {
+                                            lcSetNames.add(labBatch.getBatchName());
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        // In place vessel is not a container (could also be static plate)
+                        for (BucketEntry bucketEntry : labVessel.getBucketEntries()) {
                             LabBatch batch = bucketEntry.getLabBatch();
                             if (batch != null) {
                                 lcSetNames.add(batch.getBatchName());
                             }
                         }
+                        if( lcSetNames.isEmpty()){
+                            for( LabEvent xferEvent : labVessel.getTransfersTo() ) {
+                                for (LabBatch labBatch : xferEvent.getComputedLcSets()) {
+                                    lcSetNames.add(labBatch.getBatchName());
+                                }
+                            }
+                        }
+
                     }
                 }
 
