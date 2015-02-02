@@ -218,5 +218,9 @@ public class Metadata {
         public String getDisplayName() {
             return displayName;
         }
+
+        public Visibility getVisibility() {
+            return visibility;
+        }
     }
 }

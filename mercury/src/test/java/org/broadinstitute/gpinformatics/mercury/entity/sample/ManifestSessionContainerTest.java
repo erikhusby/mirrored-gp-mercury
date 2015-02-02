@@ -394,7 +394,8 @@ public class ManifestSessionContainerTest extends Arquillian {
          */
         for (String sourceSampleToTest : firstUploadedScannedSamples) {
 
-            manifestSessionEjb.accessionScan(sessionOfScan.getManifestSessionId(), sourceSampleToTest, null);
+            manifestSessionEjb.accessionScan(sessionOfScan.getManifestSessionId(), sourceSampleToTest,
+                    sourceSampleToTest);
             manifestSessionDao.clear();
 
             ManifestSession reFetchedSessionOfScan = manifestSessionDao.find(sessionOfScan.getManifestSessionId());
@@ -617,7 +618,7 @@ public class ManifestSessionContainerTest extends Arquillian {
          * Mimic the user Scanning the tubes to complete accessioning
          */
         for (String sampleId : secondUploadedSamplesGood) {
-            manifestSessionEjb.accessionScan(sessionOfScan2.getManifestSessionId(), sampleId, null);
+            manifestSessionEjb.accessionScan(sessionOfScan2.getManifestSessionId(), sampleId, sampleId);
 
             manifestSessionDao.clear();
             ManifestSession reFetchedSessionOfScan2 = manifestSessionDao.find(sessionOfScan2.getManifestSessionId());
@@ -634,7 +635,7 @@ public class ManifestSessionContainerTest extends Arquillian {
          */
         for (String sampleId : secondUploadedSamplesDupes) {
             try {
-                manifestSessionEjb.accessionScan(sessionOfScan2.getManifestSessionId(), sampleId, null);
+                manifestSessionEjb.accessionScan(sessionOfScan2.getManifestSessionId(), sampleId, sampleId);
                 Assert.fail();
             } catch (Exception e) {
                 assertThat(e, containsMessage(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getBaseMessage()));
@@ -647,7 +648,7 @@ public class ManifestSessionContainerTest extends Arquillian {
          */
         sessionOfScan2 = manifestSessionDao.find(acceptedSession2.getManifestSessionId());
         for (String sampleId : secondUploadPatientsWithMismatchedGender) {
-            manifestSessionEjb.accessionScan(sessionOfScan2.getManifestSessionId(), sampleId, null);
+            manifestSessionEjb.accessionScan(sessionOfScan2.getManifestSessionId(), sampleId, sampleId);
 
             manifestSessionDao.clear();
             ManifestSession reFetchedSessionOfScan2 = manifestSessionDao.find(sessionOfScan2.getManifestSessionId());
@@ -901,7 +902,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         manifestSessionEjb.acceptManifestUpload(manifestSessionI.getManifestSessionId());
         for (ManifestRecord manifestRecord : manifestSessionI.getRecords()) {
             manifestSessionEjb.accessionScan(manifestSessionI.getManifestSessionId(), manifestRecord.getSampleId(),
-                    null);
+                    manifestRecord.getSampleId());
         }
 
         manifestSessionEjb.closeSession(manifestSessionI.getManifestSessionId(), null);

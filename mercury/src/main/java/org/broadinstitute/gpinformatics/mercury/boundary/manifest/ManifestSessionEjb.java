@@ -205,7 +205,7 @@ public class ManifestSessionEjb {
      * @param manifestSessionId Database ID of the session which should be accepted
      * @param user
      */
-    public void closeSession(@Nonnull long manifestSessionId, @Nonnull BspUser user) {
+    public void closeSession(long manifestSessionId, @Nonnull BspUser user) {
         ManifestSession manifestSession = findManifestSession(manifestSessionId);
         manifestSession.completeSession();
 

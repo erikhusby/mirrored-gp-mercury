@@ -672,7 +672,7 @@ public class ManifestSessionEjbDBFreeTest {
         addRecord(holder, NO_ERROR, ManifestRecord.Status.UPLOAD_ACCEPTED, Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE);
 
         try {
-            holder.ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, tubeBarcode, null);
+            holder.ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, tubeBarcode, tubeBarcode);
             if (!successExpected) {
                 Assert.fail();
             }
@@ -704,7 +704,7 @@ public class ManifestSessionEjbDBFreeTest {
             // Take an arbitrary one of the duplicated sample IDs.
             String duplicatedSampleId = DUPLICATED_SAMPLE_IDS.iterator().next();
 
-            holder.ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, duplicatedSampleId, null);
+            holder.ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, duplicatedSampleId, duplicatedSampleId);
             Assert.fail();
         } catch (InformaticsServiceException e) {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID.getBaseMessage()));
@@ -735,7 +735,8 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(manifestEvent.getSeverity(), is(ManifestEvent.Severity.ERROR));
 
         holder.ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID,
-                manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID), null);
+                manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID),
+                manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID));
 
         assertThat(manifestSession.getManifestEvents(), hasSize(EXPECTED_NUMBER_OF_EVENTS_ON_SESSION));
         assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.SCANNED));
@@ -746,12 +747,12 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionEjb ejb = holder.ejb;
 
         String goodTubeBarcode = "SAMPLE_ID_11";
-        ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, goodTubeBarcode, null);
+        ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, goodTubeBarcode, goodTubeBarcode);
         // The results of this are checked in accessionScanGoodManifest
 
         try {
             // Should fail on a second scan.
-            ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, goodTubeBarcode, null);
+            ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, goodTubeBarcode, goodTubeBarcode);
             Assert.fail();
         } catch (InformaticsServiceException e) {
             assertThat(e.getMessage(),
