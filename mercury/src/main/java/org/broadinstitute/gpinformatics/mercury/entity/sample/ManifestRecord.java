@@ -119,14 +119,18 @@ public class ManifestRecord implements Updatable {
         // This is constructed lazily as it can't be built within the no-arg constructor since the 'metadata' field
         // upon which it depends will not have been initialized.
         if (metadataMap == null) {
-            metadataMap = Maps.uniqueIndex(getMetadata(), new Function<Metadata, Metadata.Key>() {
-                @Override
-                public Metadata.Key apply(Metadata metadata) {
-                    return metadata.getKey();
-                }
-            });
+            updateMetadataMap();
         }
         return metadataMap;
+    }
+
+    private void updateMetadataMap() {
+        metadataMap = Maps.uniqueIndex(getMetadata(), new Function<Metadata, Metadata.Key>() {
+            @Override
+            public Metadata.Key apply(Metadata metadata) {
+                return metadata.getKey();
+            }
+        });
     }
 
     public Set<Metadata> getMetadata() {
@@ -152,8 +156,8 @@ public class ManifestRecord implements Updatable {
             throw new InformaticsServiceException(key.getDisplayName() +
                                                   " is already set for the record " + toString());
         }
-
-        getMetadataMap().put(key, new Metadata(key, value));
+        this.metadata.add(new Metadata(key, value));
+        updateMetadataMap();
     }
 
     public Status getStatus() {

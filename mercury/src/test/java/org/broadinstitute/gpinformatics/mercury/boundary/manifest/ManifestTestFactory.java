@@ -32,10 +32,10 @@ public class ManifestTestFactory {
 
     public static ManifestSession buildManifestSession(String researchProjectKey, String sessionPrefix,
                                                        BspUser createdBy, int numberOfRecords,
-                                                       ManifestRecord.Status defaultStatus) {
+                                                       ManifestRecord.Status defaultStatus, boolean fromSampleKit) {
         ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(researchProjectKey);
         ManifestSession manifestSession = new ManifestSession(researchProject, sessionPrefix,
-                createdBy, false);
+                createdBy, fromSampleKit);
 
         for (int i = 1; i <= numberOfRecords; i++) {
             ManifestRecord manifestRecord = buildManifestRecord(i);
@@ -53,7 +53,8 @@ public class ManifestTestFactory {
         ManifestRecord manifestRecord = new ManifestRecord();
 
         for (Metadata.Key key : Metadata.Key.values()) {
-            if (key.getCategory() == Metadata.Category.SAMPLE) {
+            if (key.getCategory() == Metadata.Category.SAMPLE &&
+                key != Metadata.Key.BROAD_2D_BARCODE) {
                 String value;
                 if (initialData != null && initialData.containsKey(key)) {
                     value = initialData.get(key);

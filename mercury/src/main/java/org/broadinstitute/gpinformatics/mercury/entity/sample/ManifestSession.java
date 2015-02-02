@@ -122,6 +122,9 @@ public class ManifestSession implements Updatable {
         sessionPrefix = FilenameUtils.getBaseName(pathToManifestFile);
         updateData.setCreatedBy(createdBy.getUserId());
         this.fromSampleKit = fromSampleKit;
+        if(fromSampleKit) {
+            status = SessionStatus.PENDING_SAMPLE_INFO;
+        }
     }
 
     public ResearchProject getResearchProject() {
@@ -460,7 +463,7 @@ public class ManifestSession implements Updatable {
      */
     public ManifestRecord getRecordWithMatchingValueForKey(Metadata.Key key, String value) {
         for (ManifestRecord record : records) {
-            if (record.getValueByKey(key).equals(value)) {
+            if (StringUtils.equals(record.getValueByKey(key),value)) {
                 return record;
             }
         }
@@ -560,16 +563,16 @@ public class ManifestSession implements Updatable {
     /**
      * Scan the specified sample as part of the accessioning process.
      *
-     * @param collaboratorSampleId The collaborator sample ID the current sample
+     * @param recordReferenceValue The collaborator sample ID the current sample
      * @param recordSampleKey
      */
-    public void accessionScan(String collaboratorSampleId, Metadata.Key recordSampleKey) {
-        ManifestRecord manifestRecord = getRecordWithMatchingValueForKey(recordSampleKey, collaboratorSampleId);
+    public void accessionScan(String recordReferenceValue, Metadata.Key recordSampleKey) {
+        ManifestRecord manifestRecord = getRecordWithMatchingValueForKey(recordSampleKey, recordReferenceValue);
 
         if (manifestRecord == null) {
             throw new InformaticsServiceException(
                     ManifestRecord.ErrorStatus.NOT_IN_MANIFEST.formatMessage(
-                            recordSampleKey, collaboratorSampleId));
+                            recordSampleKey, recordReferenceValue));
         }
         manifestRecord.accessionScan();
     }

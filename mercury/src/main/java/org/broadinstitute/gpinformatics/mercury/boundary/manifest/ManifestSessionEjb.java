@@ -191,7 +191,7 @@ public class ManifestSessionEjb {
         ManifestSession manifestSession = findManifestSession(manifestSessionId);
 
         Metadata.Key referenceScanKey =
-                (manifestSession.isFromSampleKit())?Metadata.Key.BROAD_2D_BARCODE:Metadata.Key.SAMPLE_ID;
+                (manifestSession.isFromSampleKit())?Metadata.Key.BROAD_SAMPLE_ID:Metadata.Key.SAMPLE_ID;
         manifestSession.accessionScan(referenceSampleId, referenceScanKey);
         if(manifestSession.isFromSampleKit()) {
             manifestSession.getRecordWithMatchingValueForKey(referenceScanKey, referenceSampleId)
