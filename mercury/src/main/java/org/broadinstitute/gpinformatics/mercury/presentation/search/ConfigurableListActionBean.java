@@ -162,7 +162,7 @@ public class ConfigurableListActionBean extends CoreActionBean {
      */
     private Map<String, Object> buildSearchContext(){
         Map<String, Object> evalContext = new HashMap<>();
-        evalContext.put(SearchDefinitionFactory.CONTEXT_KEY_BSP_USER_LIST, bspUserList );
+        evalContext.put(SearchInstance.CONTEXT_KEY_BSP_USER_LIST, bspUserList );
 
         return evalContext;
     }
