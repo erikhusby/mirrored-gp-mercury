@@ -427,7 +427,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         /*
          * Mimic a user closing the session, and the ramifications of that.
          */
-        manifestSessionEjb.closeSession(sessionOfScan.getManifestSessionId(), null);
+        manifestSessionEjb.closeSession(sessionOfScan.getManifestSessionId(), testUser);
 
         // Clear to force a reload.
         manifestSessionDao.clear();
@@ -678,7 +678,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         /*
          * Mimic the user closing the session
          */
-        manifestSessionEjb.closeSession(sessionOfScan2.getManifestSessionId(), null);
+        manifestSessionEjb.closeSession(sessionOfScan2.getManifestSessionId(), testUser);
         manifestSessionDao.clear();
         ManifestSession closedSession2 = manifestSessionDao.find(sessionOfScan2.getManifestSessionId());
 
@@ -977,19 +977,17 @@ public class ManifestSessionContainerTest extends Arquillian {
         ManifestStatus sessionStatus = manifestSessionEjb.getSessionStatus(sessionOfScan.getManifestSessionId());
 
         assertThat(sessionStatus, is(notNullValue()));
-        assertThat(sessionStatus.getSamplesInManifest(), is(NUM_RECORDS_IN_SPREADSHEET));
+        assertThat(sessionStatus.getSamplesInManifest(), is(firstUploadedScannedSamples.size()));
         // Deliberately missed one scan.
-        assertThat(sessionStatus.getSamplesSuccessfullyScanned(), is(NUM_RECORDS_IN_SPREADSHEET - 1));
+        assertThat(sessionStatus.getSamplesSuccessfullyScanned(), is(firstUploadedScannedSamples.size()));
         // All records (except for one) have been scanned so there is only 1 considered eligible for scanning
-        assertThat(sessionStatus.getSamplesEligibleForAccessioningInManifest(), is(1));
-        assertThat(sessionStatus.getErrorMessages(), is(not(empty())));
-        assertThat(sessionStatus.getErrorMessages(), hasItem(ManifestRecord.ErrorStatus.MISSING_SAMPLE
-                .formatMessage(Metadata.Key.SAMPLE_ID, firstUploadedOmittedScan)));
+        assertThat(sessionStatus.getSamplesEligibleForAccessioningInManifest(), is(0));
+        assertThat(sessionStatus.getErrorMessages(), is(empty()));
 
         /*
          * Mimic a user closing the session, and the ramifications of that.
          */
-        manifestSessionEjb.closeSession(sessionOfScan.getManifestSessionId(), null);
+        manifestSessionEjb.closeSession(sessionOfScan.getManifestSessionId(), testUser);
 
         // Clear to force a reload.
         manifestSessionDao.clear();
@@ -1000,8 +998,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         assertThat(closedSession, is(notNullValue()));
 
         assertThat(closedSession.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
-        assertThat(closedSession.getManifestEvents(), hasSize(1));
-        assertThat(closedSession.getManifestEvents(), hasEventError(ManifestRecord.ErrorStatus.MISSING_SAMPLE));
+        assertThat(closedSession.getManifestEvents(), hasSize(0));
 
         for (ManifestRecord manifestRecord : closedSession.getRecords()) {
             assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE));
@@ -1048,7 +1045,7 @@ public class ManifestSessionContainerTest extends Arquillian {
                     manifestRecord.getSampleId());
         }
 
-        manifestSessionEjb.closeSession(manifestSessionI.getManifestSessionId(), null);
+        manifestSessionEjb.closeSession(manifestSessionI.getManifestSessionId(), testUser);
 
         for (LabVessel vessel : sourceSampleToTargetVessel.values()) {
             labVesselDao.persist(vessel);
