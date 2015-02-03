@@ -30,7 +30,8 @@ public class ManifestSessionDao extends GenericDao {
 
     public List<ManifestSession> findOpenSessions() {
         return findListByList(ManifestSession.class, ManifestSession_.status, EnumSet.of(
-                ManifestSession.SessionStatus.OPEN, ManifestSession.SessionStatus.ACCESSIONING));
+                ManifestSession.SessionStatus.OPEN, ManifestSession.SessionStatus.ACCESSIONING,
+                ManifestSession.SessionStatus.PENDING_SAMPLE_INFO));
     }
 
     /**

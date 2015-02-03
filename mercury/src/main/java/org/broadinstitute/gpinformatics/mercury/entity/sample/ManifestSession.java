@@ -115,11 +115,11 @@ public class ManifestSession implements Updatable {
     protected ManifestSession() {
     }
 
-    public ManifestSession(ResearchProject researchProject, String pathToManifestFile, BspUser createdBy,
+    public ManifestSession(ResearchProject researchProject, String manifestSessionName, BspUser createdBy,
                            boolean fromSampleKit) {
         this.researchProject = researchProject;
         researchProject.addManifestSession(this);
-        sessionPrefix = FilenameUtils.getBaseName(pathToManifestFile);
+        sessionPrefix = FilenameUtils.getBaseName(manifestSessionName);
         updateData.setCreatedBy(createdBy.getUserId());
         this.fromSampleKit = fromSampleKit;
         if(fromSampleKit) {
@@ -155,6 +155,11 @@ public class ManifestSession implements Updatable {
     public void addRecord(ManifestRecord record) {
         records.add(record);
         record.setManifestSession(this);
+        if(isFromSampleKit()) {
+            if(status == SessionStatus.PENDING_SAMPLE_INFO) {
+                setStatus(SessionStatus.ACCESSIONING);
+            }
+        }
     }
 
     public void addRecords(Collection<ManifestRecord> manifestRecords) {
@@ -463,7 +468,7 @@ public class ManifestSession implements Updatable {
      */
     public ManifestRecord getRecordWithMatchingValueForKey(Metadata.Key key, String value) {
         for (ManifestRecord record : records) {
-            if (StringUtils.equals(record.getValueByKey(key),value)) {
+            if (StringUtils.equals(record.getValueByKey(key), value)) {
                 return record;
             }
         }

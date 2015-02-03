@@ -15,9 +15,11 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySample
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.hamcrest.CoreMatchers;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -874,12 +876,153 @@ public class ManifestSessionContainerTest extends Arquillian {
         assertThat(counter, is(equalTo(transferredTubeCounter + 1)));
     }
 
-    /**
-     * Creates useful test data for manual UI testing.
-     * Keep it disabled in source control.
-     *
-     * @throws Exception
-     */
+    @Test(groups = TestGroups.STANDARD)
+    public void endToEndFromSampleKit() throws Exception {
+        /*
+         * Setup required preliminary entities
+         */
+        for (LabVessel targetVessel : sourceSampleToTargetVessel.values()) {
+            labVesselDao.persist(targetVessel);
+        }
+        researchProjectDao.persist(researchProject);
+
+        /*
+         * Mimic portal initial creation of manifest
+         */
+        uploadedSession = new ManifestSession(researchProject, "With Sample Kit Manifest", testUser, true);
+        manifestSessionDao.persist(uploadedSession);
+
+        UpdateData updateData = uploadedSession.getUpdateData();
+        assertThat(updateData.getModifiedBy(), is(not(equalTo(updateData.getCreatedBy()))));
+        assertThat(updateData.getModifiedDate(), is(equalTo(updateData.getCreatedDate())));
+
+        assertThat(uploadedSession, is(notNullValue()));
+        assertThat(uploadedSession.getManifestSessionId(), is(notNullValue()));
+        assertThat(uploadedSession.hasErrors(), is(false));
+        assertThat(uploadedSession.getResearchProject(), is(equalTo(researchProject)));
+        assertThat(uploadedSession.getStatus(), is(equalTo(ManifestSession.SessionStatus.PENDING_SAMPLE_INFO)));
+
+        /*
+         *  Test that the session is listed in all open sessions and not listed in the closed sessions
+         */
+        List<ManifestSession> openSessions = manifestSessionDao.findOpenSessions();
+
+        assertThat(openSessions, hasItem(uploadedSession));
+        assertThat(manifestSessionDao.findSessionsEligibleForTubeTransfer(), not(hasItem(uploadedSession)));
+
+        for(String collabSample:firstUploadedScannedSamples) {
+
+            uploadedSession.addRecord(new ManifestRecord(new Metadata(Metadata.Key.SAMPLE_ID, collabSample),
+                    new Metadata(Metadata.Key.PATIENT_ID, "PT_" + collabSample),
+                    new Metadata(Metadata.Key.BROAD_SAMPLE_ID,
+                            sourceSampleToMercurySample.get(collabSample).getSampleKey()),
+                    new Metadata(Metadata.Key.TUMOR_NORMAL, "T")));
+        }
+
+        assertThat(uploadedSession.getStatus(), is(equalTo(ManifestSession.SessionStatus.ACCESSIONING)));
+        manifestSessionDao.persist(uploadedSession);
+
+//        assertThat(uploadedSession.getRecords(), hasSize(NUM_RECORDS_IN_SPREADSHEET));
+
+        for (ManifestRecord manifestRecord : uploadedSession.getRecords()) {
+            assertThat(manifestRecord.getManifestRecordId(), is(notNullValue()));
+        }
+
+        /*
+         *  Test that the session is listed in all open sessions and not listed in the closed sessions
+         */
+        openSessions = manifestSessionDao.findOpenSessions();
+
+        assertThat(openSessions, hasItem(uploadedSession));
+        assertThat(manifestSessionDao.findSessionsEligibleForTubeTransfer(), not(hasItem(uploadedSession)));
+
+        String UPLOADED_COLLABORATOR_SESSION_1 = "03101067213";
+        String UPLOADED_PATIENT_ID_SESSION_1 = "PT_" + UPLOADED_COLLABORATOR_SESSION_1;
+        assertThat(uploadedSession.findRecordByKey(UPLOADED_COLLABORATOR_SESSION_1, Metadata.Key.SAMPLE_ID)
+                .getValueByKey(Metadata.Key.PATIENT_ID), is(UPLOADED_PATIENT_ID_SESSION_1));
+
+        manifestSessionDao.clear();
+
+        ManifestSession acceptedSession = manifestSessionDao.find(uploadedSession.getManifestSessionId());
+
+        assertThat(acceptedSession, is(notNullValue()));
+        assertThat(acceptedSession.getManifestSessionId(), is(notNullValue()));
+        assertThat(acceptedSession.hasErrors(), is(false));
+
+        ManifestSession sessionOfScan = manifestSessionDao.find(uploadedSession.getManifestSessionId());
+
+        /*
+         *  Mimic the scan of all samples in the manifest... except One (to test closing and validating with an
+         *  omitted scan.
+         */
+        for (String sourceSampleToTest : firstUploadedScannedSamples) {
+
+            manifestSessionEjb.accessionScan(sessionOfScan.getManifestSessionId(),
+                    sourceSampleToMercurySample.get(sourceSampleToTest).getSampleKey(),
+                    sourceSampleToTargetVessel.get(sourceSampleToTest).getLabel());
+            manifestSessionDao.clear();
+
+            ManifestSession reFetchedSessionOfScan = manifestSessionDao.find(sessionOfScan.getManifestSessionId());
+
+            ManifestRecord sourceRecordToTest = reFetchedSessionOfScan.findRecordByKey(sourceSampleToMercurySample.get(sourceSampleToTest).getSampleKey(),
+                    Metadata.Key.BROAD_SAMPLE_ID);
+
+            assertThat(sourceRecordToTest.getStatus(), is(ManifestRecord.Status.SCANNED));
+            assertThat(reFetchedSessionOfScan.hasErrors(), is(false));
+        }
+
+        /*
+         * Mimic the user getting a "Pre-close" validation
+         */
+        ManifestStatus sessionStatus = manifestSessionEjb.getSessionStatus(sessionOfScan.getManifestSessionId());
+
+        assertThat(sessionStatus, is(notNullValue()));
+        assertThat(sessionStatus.getSamplesInManifest(), is(NUM_RECORDS_IN_SPREADSHEET));
+        // Deliberately missed one scan.
+        assertThat(sessionStatus.getSamplesSuccessfullyScanned(), is(NUM_RECORDS_IN_SPREADSHEET - 1));
+        // All records (except for one) have been scanned so there is only 1 considered eligible for scanning
+        assertThat(sessionStatus.getSamplesEligibleForAccessioningInManifest(), is(1));
+        assertThat(sessionStatus.getErrorMessages(), is(not(empty())));
+        assertThat(sessionStatus.getErrorMessages(), hasItem(ManifestRecord.ErrorStatus.MISSING_SAMPLE
+                .formatMessage(Metadata.Key.SAMPLE_ID, firstUploadedOmittedScan)));
+
+        /*
+         * Mimic a user closing the session, and the ramifications of that.
+         */
+        manifestSessionEjb.closeSession(sessionOfScan.getManifestSessionId(), null);
+
+        // Clear to force a reload.
+        manifestSessionDao.clear();
+        ManifestSession closedSession = manifestSessionDao.find(sessionOfScan.getManifestSessionId());
+
+        assertThat(closedSession.getUpdateData().getModifiedDate(), is(not(equalTo(updateData.getModifiedDate()))));
+
+        assertThat(closedSession, is(notNullValue()));
+
+        assertThat(closedSession.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
+        assertThat(closedSession.getManifestEvents(), hasSize(1));
+        assertThat(closedSession.getManifestEvents(), hasEventError(ManifestRecord.ErrorStatus.MISSING_SAMPLE));
+
+        for (ManifestRecord manifestRecord : closedSession.getRecords()) {
+            assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE));
+            LabVessel transferedVessel = labVesselDao.findByIdentifier(sourceSampleToTargetVessel.get(manifestRecord.getValueByKey(
+                    Metadata.Key.SAMPLE_ID)).getLabel());
+            assertThat(transferedVessel.doesChainOfCustodyInclude(LabEventType.COLLABORATOR_TRANSFER), is(true));
+        }
+
+        /*
+         * Validate that the session is in the list of closed sessions.
+         */
+        List<ManifestSession> sessionsEligibleForTubeTransfer = manifestSessionDao.findSessionsEligibleForTubeTransfer();
+        assertThat(sessionsEligibleForTubeTransfer, not(hasItem(closedSession)));
+    }
+
+        /**
+         * Creates useful test data for manual UI testing.
+         * Keep it disabled in source control.
+         *
+         * @throws Exception
+         */
     @Test(groups = TestGroups.STANDARD, enabled = false)
     public void setupTestDataForTestCases() throws Exception {
         // Persist everything.

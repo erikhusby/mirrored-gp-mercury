@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.bsp.client.users.BspUser;
@@ -128,7 +129,8 @@ public class ManifestSessionEjb {
         } catch (ValidationException e) {
             throw new InformaticsServiceException(StringUtils.join(e.getValidationMessages(), "\n"));
         }
-        ManifestSession manifestSession = new ManifestSession(researchProject, pathToFile, bspUser, false);
+        ManifestSession manifestSession = new ManifestSession(researchProject, FilenameUtils
+                .getBaseName(pathToFile), bspUser, false);
         // Persist here so an ID will be generated for the ManifestSession.  This ID is used for the
         // ManifestSession's name which is displayed on the UI.
         manifestSessionDao.persist(manifestSession);
