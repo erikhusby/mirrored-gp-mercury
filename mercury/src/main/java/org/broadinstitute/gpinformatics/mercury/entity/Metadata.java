@@ -163,20 +163,78 @@ public class Metadata {
     }
 
     public enum Category {
+
+        /**
+         * Sample data stored in Mercury. Typically imported from some sort of manifest spreadsheet, e.g., the "Buick"
+         * manifest or the CRSP sample data spreadsheet (via web service call from the CRSP Portal).
+         */
         SAMPLE,
         LAB_METRIC_RUN,
         LAB_METRIC
     }
 
+    /**
+     * Metadata keys for storing sample data. The data stored under each key should have consistent meaning across all
+     * samples containing data for that key.
+     */
     public enum Key implements Displayable {
-        // The Category.SAMPLE keys are currently all used for uploads of the "modified" (edited) manifest during
-        // Buick sample registration.
-        GENDER(Category.SAMPLE, DataType.STRING, "Gender"),
-        PATIENT_ID(Category.SAMPLE, DataType.STRING, "Patient ID"),
-        SAMPLE_TYPE(Category.SAMPLE, DataType.STRING, "Sample Type"),
-        TUMOR_NORMAL(Category.SAMPLE, DataType.STRING, "Tumor/Normal"),
-        BUICK_COLLECTION_DATE(Category.SAMPLE, DataType.STRING, "Collection Date"),
+
+        /**
+         * The collaborator-assigned sample ID.
+         */
         SAMPLE_ID(Category.SAMPLE, DataType.STRING, "Sample ID"),
+
+        /**
+         * The Broad-assigned sample ID (e.g., an SM- ID).
+         */
+        BROAD_SAMPLE_ID(Category.SAMPLE, DataType.STRING, "Broad Sample ID"),
+
+        /**
+         * The sample's material type, e.g. DNA, Blood, FFPE, etc.
+         */
+        MATERIAL_TYPE(Category.SAMPLE, DataType.STRING, "Material Type"),
+
+        /**
+         * The type of material from which the sample was derived.
+         */
+        ORIGINAL_MATERIAL_TYPE(Category.SAMPLE, DataType.STRING, "Original Material Type"),
+
+        /**
+         * A unique ID for the patient. Should not contain PHI.
+         */
+        PATIENT_ID(Category.SAMPLE, DataType.STRING, "Patient ID"),
+
+        /**
+         * The gender of the patient.
+         */
+        GENDER(Category.SAMPLE, DataType.STRING, "Gender"),
+
+        /**
+         * The type of sample, tumor or normal. Sometimes called "Sample Type" in other systems.
+         */
+        TUMOR_NORMAL(Category.SAMPLE, DataType.STRING, "Tumor/Normal"),
+
+        /**
+         * The estimated % of tumor in the sample.
+         */
+        PERCENT_TUMOR(Category.SAMPLE, DataType.STRING, "Estimated % Tumor"),
+
+        /**
+         * The date that the sample was collected.
+         */
+        COLLECTION_DATE(Category.SAMPLE, DataType.STRING, "Collection Date"), // DataType.DATE?
+
+        /**
+         * The date that the sample was shipped to Broad.
+         */
+        SHIPMENT_DATE(Category.SAMPLE, DataType.STRING, "Shipment Date"), // DataType.DATE?
+
+        /**
+         * BUICK_COLLECTION_DATE is stored separately from COLLECTION_DATE because we intend to not use this data for
+         * any reason except to pass-through to the final report. Since this is something that the collaborator asked us
+         * to store and repeat back, there is no guarantee that it has the same meaning as our own COLLECTION_DATE.
+         */
+        BUICK_COLLECTION_DATE(Category.SAMPLE, DataType.STRING, "Collection Date"),
         BUICK_VISIT(Category.SAMPLE, DataType.STRING, "Visit"),
 
         CORRELATION_COEFFICIENT_R2(Category.LAB_METRIC_RUN, DataType.STRING, "R Squared Correlation Coefficient"),
