@@ -5,7 +5,8 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.portal.PortalConfig;
-import org.broadinstitute.gpinformatics.mercury.control.LoginAndPassword;
+import org.broadinstitute.gpinformatics.mercury.boundary.UnknownUserException;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -25,6 +26,9 @@ public class ClinicalResource {
     private static final Log log = LogFactory.getLog(ClinicalResource.class);
 
     @Inject
+    private UserBean userBean;
+
+    @Inject
     private BSPConfig bspConfig;
 
     @Inject
@@ -36,10 +40,19 @@ public class ClinicalResource {
     @Context
     SecurityContext sc;
 
-    private LoginAndPassword currentConfig;
+    @SuppressWarnings("unused")
+    public ClinicalResource() {}
+
+    public ClinicalResource(UserBean userBean) {
+        this.userBean = userBean;
+    }
 
     public void createAccessioningSession(String username, String manifestName, String researchProjectKey,
                                           Boolean isFromSampleKit) {
+        userBean.login(username);
+        if (userBean.getBspUser() == null) {
+            throw new UnknownUserException(username);
+        }
         throw new UnsupportedOperationException(
                 "Samples in containers other than from Broad sample kits are currently not supported.");
     }
