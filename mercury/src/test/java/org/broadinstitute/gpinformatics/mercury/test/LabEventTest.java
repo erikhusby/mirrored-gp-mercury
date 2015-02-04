@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransfe
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.boundary.graph.Graph;
+import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferEntityGrapher;
@@ -33,9 +34,9 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
-import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.AmbiguousLcsetException;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -92,6 +93,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import javax.annotation.Nullable;
+import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -1046,14 +1048,30 @@ public class LabEventTest extends BaseEventTest {
         mapBarcodeToCombined.putAll(picoPlatingBuilder1.getNormBarcodeToTubeMap());
         mapBarcodeToCombined.putAll(picoPlatingBuilder2.getNormBarcodeToTubeMap());
 
-        try {
-            tube3.clearCaches();
-            runExomeExpressShearingProcess(mapBarcodeToCombined, null, picoPlatingBuilder2.getNormalizationBarcode(),
-                    String.valueOf(counter++));
-            Assert.fail("Failed to detect ambiguous LCSET on rework tube.");
-        } catch (AmbiguousLcsetException e) {
-            // expected exception
+        tube3.clearCaches();
+        ExomeExpressShearingEntityBuilder builder = runExomeExpressShearingProcess(mapBarcodeToCombined, null,
+                picoPlatingBuilder2.getNormalizationBarcode(), String.valueOf(counter++));
+        StaticPlate plate = builder.getShearingPlate();
+
+        BettaLimsMessageResource bettaLimsMessageResource = new BettaLimsMessageResource();
+        bettaLimsMessageResource.setWorkflowLoader(new WorkflowLoader());
+        bettaLimsMessageResource.setupEventTypesThatCanFollowBucket();
+
+        // Checks the shearing event to see if
+        boolean foundShearingTransfer = false;
+        boolean foundCovarisLoaded = false;
+        for (LabEvent event : plate.getEvents()) {
+            switch (event.getLabEventType()) {
+            case SHEARING_TRANSFER:
+                Assert.assertTrue(bettaLimsMessageResource.emailIfAmbiguousLcset(event));
+                foundShearingTransfer = true;
+                break;
+            case COVARIS_LOADED:
+                foundCovarisLoaded = true;
+            }
         }
+        Assert.assertTrue(foundShearingTransfer, "Failed to find shearing transfer event");
+        Assert.assertTrue(foundCovarisLoaded, "Failed to process beyond shearing transfer event");
     }
 
     @Test(groups = {TestGroups.DATABASE_FREE})

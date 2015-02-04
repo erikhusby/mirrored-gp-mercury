@@ -21,10 +21,20 @@ import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.BettaLimsMessageUtils;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowProcessDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowProcessDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
@@ -103,6 +113,15 @@ public class BettaLimsMessageResource {
 
     @Inject
     private UserBean userBean;
+
+    @Inject
+    private WorkflowLoader workflowLoader;
+
+    public BettaLimsMessageResource() {
+        if (workflowLoader != null) {
+            setupEventTypesThatCanFollowBucket();
+        }
+    }
 
     /**
      * Accepts a message from (typically) a liquid handling deck.  We unmarshal ourselves, rather than letting JAX-RS
@@ -422,6 +441,11 @@ public class BettaLimsMessageResource {
         List<LabEvent> labEvents = labEventFactory.buildFromBettaLims(message);
         for (LabEvent labEvent : labEvents) {
             labEventHandler.processEvent(labEvent);
+            if (emailIfAmbiguousLcset(labEvent)) {
+                emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
+                        "[Mercury] Vessels have ambiguous LCSET", "After " + labEvent.getLabEventType().getName() +
+                                                                  " (" + labEvent.getLabEventId() + ")");
+            }
         }
     }
 
@@ -484,6 +508,46 @@ public class BettaLimsMessageResource {
 
     public void setBettaLimsConnector(BettaLimsConnector connector) {
         this.bettaLimsConnector = connector;
+    }
+
+    public void setWorkflowLoader(WorkflowLoader workflowLoader) {
+        this.workflowLoader = workflowLoader;
+    }
+
+    /**
+     * For lab events that can possibly follow a bucket, checks that all sample instances of all target lab vessels
+     * in the event have a single lcset.
+     *
+     * @return true if an ambiguous lcset is found.
+     */
+    public boolean emailIfAmbiguousLcset(LabEvent labEvent) {
+        return (eventTypesThatCanFollowBucket.contains(labEvent.getLabEventType()) &&
+                !labEvent.vesselsHaveSingleLcsets());
+    }
+
+    private Set<LabEventType> eventTypesThatCanFollowBucket = new HashSet<>();
+
+    public void setupEventTypesThatCanFollowBucket() {
+        WorkflowConfig workflowConfig = workflowLoader.load();
+        for (Workflow workflow : Workflow.SUPPORTED_WORKFLOWS) {
+            ProductWorkflowDef workflowDef  = workflowConfig.getWorkflowByName(workflow.getWorkflowName());
+            ProductWorkflowDefVersion effectiveWorkflow = workflowDef.getEffectiveVersion();
+            boolean collectEvents = false;
+            for (WorkflowProcessDef processDef : effectiveWorkflow.getWorkflowProcessDefs()) {
+                WorkflowProcessDefVersion effectiveProcess = processDef.getEffectiveVersion();
+                for (WorkflowStepDef step : effectiveProcess.getWorkflowStepDefs()) {
+                    if (OrmUtil.proxySafeIsInstance(step, WorkflowBucketDef.class)) {
+                        // We've hit a bucket. Set the flag to start collecting step's events.
+                        collectEvents = true;
+                    } else if (collectEvents) {
+                        eventTypesThatCanFollowBucket.addAll(step.getLabEventTypes());
+                        if (!step.isOptional()) {
+                            collectEvents = false;
+                        }
+                    }
+                }
+            }
+        }
     }
 
 }

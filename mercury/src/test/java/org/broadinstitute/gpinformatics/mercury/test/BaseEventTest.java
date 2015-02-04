@@ -273,7 +273,7 @@ public class BaseEventTest {
 
 
     protected LabEventHandler getLabEventHandler() {
-        return new LabEventHandler(new WorkflowLoader());
+        return new LabEventHandler();
     }
 
     /**
