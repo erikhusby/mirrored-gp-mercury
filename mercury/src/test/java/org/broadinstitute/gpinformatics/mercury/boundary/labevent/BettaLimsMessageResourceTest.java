@@ -6,7 +6,6 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
@@ -112,7 +111,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -497,15 +495,10 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         // A03  0109784822  SM-1Z8XB
         String[] barcodes = new String[] {"0109784754", "0109784741", "0109784822"};
         String[] sampleNames = new String[] {"SM-1Z8XY", "SM-1Z8XN", "SM-1Z8XB"};
-        // Verify none of the samples are known to mercury, but it's not a failure if for some reason
-        // Mercury dev gains awareness of these samples.  Expect that after a db refresh Mercury dev
-        // will forget them and then this test will run normally.
-        if (CollectionUtils.isNotEmpty(barcodedTubeDao.findListByList(MercurySample.class, MercurySample_.sampleKey,
-                Arrays.asList(sampleNames)))) {
-            Logger.getLogger(this.getClass().getName()).warning("Skip test because Mercury knows about samples " +
-                                                                StringUtils.join(sampleNames, ","));
-            return;
-        }
+        // Verify none of the samples are known to mercury.  It's not really a code failure if for some reason
+        // Mercury dev gains awareness of these samples, but the test cannot continue.
+        Assert.assertTrue(CollectionUtils.isEmpty(barcodedTubeDao.findListByList(MercurySample.class,
+                MercurySample_.sampleKey, Arrays.asList(sampleNames))));
         PlateEventType plateEvent = bettaLimsMessageFactory.buildRackEvent("SeqPlatingNormalization",
                 "CO-11200063" + testPrefix, Arrays.asList(barcodes));
         BettaLIMSMessage bettaLIMSMessage = bettaLimsMessageFactory.addMessage(new ArrayList<BettaLIMSMessage>(),
