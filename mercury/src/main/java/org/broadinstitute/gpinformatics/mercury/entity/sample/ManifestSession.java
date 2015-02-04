@@ -159,6 +159,7 @@ public class ManifestSession implements Updatable {
             if(status == SessionStatus.PENDING_SAMPLE_INFO) {
                 setStatus(SessionStatus.ACCESSIONING);
             }
+            record.setStatus(ManifestRecord.Status.UPLOAD_ACCEPTED);
         }
     }
 

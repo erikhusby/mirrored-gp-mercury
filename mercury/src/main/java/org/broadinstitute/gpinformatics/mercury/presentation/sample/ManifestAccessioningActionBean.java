@@ -286,4 +286,12 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     public ProjectTokenInput getProjectTokenInput() {
         return projectTokenInput;
     }
+
+    public String getAccessionTube() {
+        return accessionTube;
+    }
+
+    public void setAccessionTube(String accessionTube) {
+        this.accessionTube = accessionTube;
+    }
 }

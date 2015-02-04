@@ -49,6 +49,16 @@
                         return false;
                     }
                 });
+                // Prevent posting the form for an enter key press in the accession source field.  Also
+                // blur out of the accession source field so an enter key press essentially behaves the
+                // same as a blurring tab.
+                $j('#accessionTubeText').keydown(function(event) {
+                    if (event.which == 13) {
+                        event.preventDefault();
+                        $j(this).blur();
+                        return false;
+                    }
+                });
             });
 
             function performAccessionScan() {
@@ -57,14 +67,19 @@
                     data: {
                         '<%= ManifestAccessioningActionBean.SCAN_ACCESSION_SOURCE_ACTION %>': '',
                         '<%= ManifestAccessioningActionBean.SELECTED_SESSION_ID %>': '${actionBean.selectedSessionId}',
-                        accessionSource: $j("#accessionSourceText").val(),
+                        accessionSource: $j("#accessionSourceText").val()
+                        <c:if test="${actionBean.selectedSession.fromSampleKit}">
+                        ,
                         accessionTube: $j("#accessionTubeText").val()
+                        </c:if>
                     },
                     datatype: 'html',
                     success: function (html) {
                         $j('#scanResults').html(html);
                         $j('#accessionSourceText').val('');
+                        <c:if test="${actionBean.selectedSession.fromSampleKit}">
                         $j('#accessionTubeText').val('');
+                        </c:if>
                         $j('#accessionSourceText').focus();
                     }
                 });
@@ -107,11 +122,11 @@
                         <c:choose>
                             <c:when test="${actionBean.selectedSession.fromSampleKit}">
                                 <input type="text" class="input-xlarge" name="accessionSource" maxlength="255"
-                                       placeholder="Enter the Broad sample ID" id="accessionSourceText">
+                                       placeholder="Enter the Broad sample ID" id="accessionSourceText" tabindex="1">
                             </c:when>
                             <c:otherwise>
                                 <input type="text" class="input-xlarge" name="accessionSource" maxlength="255"
-                                       placeholder="Enter the clinical sample ID" id="accessionSourceText">
+                                       placeholder="Enter the clinical sample ID" id="accessionSourceText" tabindex="1">
                             </c:otherwise>
                         </c:choose>
                     </div>
@@ -122,7 +137,7 @@
 
                         <div class="controls">
                             <input type="text" class="input-xlarge" name="accessionTube" maxlength="255"
-                                   placholder="Enter the 2d barcode" id="accessionTubeText">
+                                   placeholder="Enter the 2d barcode" id="accessionTubeText" tabindex="2">
                         </div>
                     </div>
                 </c:if>
