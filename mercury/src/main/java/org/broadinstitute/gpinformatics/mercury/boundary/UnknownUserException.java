@@ -9,6 +9,7 @@ public class UnknownUserException extends ResourceException {
     private final String username;
 
     public UnknownUserException(String username) {
+        //todo: FORBIDDEN or UNAUTHORIZED?
         super(Response.Status.FORBIDDEN);
         this.username = username;
     }

@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.portal.PortalConfig;
 import org.broadinstitute.gpinformatics.mercury.boundary.UnknownUserException;
+import org.broadinstitute.gpinformatics.mercury.crsp.generated.AccessionSamples;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.ejb.Stateful;
@@ -49,11 +50,23 @@ public class ClinicalResource {
 
     public void createAccessioningSession(String username, String manifestName, String researchProjectKey,
                                           Boolean isFromSampleKit) {
-        userBean.login(username);
-        if (userBean.getBspUser() == null) {
-            throw new UnknownUserException(username);
-        }
+        login(username);
         throw new UnsupportedOperationException(
                 "Samples in containers other than from Broad sample kits are currently not supported.");
     }
+
+    public void addSamplesToManifest(String username, String manifestName, AccessionSamples accessionSamples) {
+        login(username);
+
+        throw new UnsupportedOperationException("Unimplemented.");
+    }
+
+    private void login(String username) {
+        userBean.login(username);
+
+        if (userBean.getBspUser() == UserBean.UNKNOWN) {
+            throw new UnknownUserException(username);
+        }
+    }
+
 }
