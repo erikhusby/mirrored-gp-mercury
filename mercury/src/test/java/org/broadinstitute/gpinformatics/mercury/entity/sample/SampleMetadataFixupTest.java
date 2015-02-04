@@ -193,8 +193,8 @@ class MetaDataFixupItem {
             if (metadata.getKey() == metadataKey) {
                 if (!metadata.getValue().equals(expected)) {
                     String errorMessage =
-                            String.format("Metadata value %s does not match expected value of %s", metadata.getValue(),
-                                    expected);
+                            String.format("Metadata value %s does not match expected value of %s for sample %s", metadata.getValue(),
+                                    expected, mercurySample.getSampleKey());
                     log.error(errorMessage);
                     errors.put(sampleKey, metadataKey);
                 }
