@@ -80,7 +80,32 @@ public class SampleMetadataFixupTest extends Arquillian {
                 .persist(new FixupCommentary("see https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-3107"));
         mercurySampleDao.flush();
     }
+
+    @Test(enabled = false)
+    public void fixupGPLIM_3355_CRSP_ICE_Validation_sample_repatienting() {
+        Map<String, MetaDataFixupItem> fixupItems = new HashMap<>();
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-74P3C", Metadata.Key.PATIENT_ID, "NA12878_2", "NA12878_1"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-74P57", Metadata.Key.PATIENT_ID, "NA12878_3", "NA12878_1"));
+
+        userBean.loginOSUser();
+        Map<String, Metadata.Key> fixUpErrors = new HashMap<>();
+        Map<String, List<MercurySample>> samplesById =
+                mercurySampleDao.findMapIdToListMercurySample(fixupItems.keySet());
+        for (MetaDataFixupItem fixupItem : fixupItems.values()) {
+            List<MercurySample> mercurySamples = samplesById.get(fixupItem.getSampleKey());
+            assertThat(mercurySamples.size(), equalTo(1));
+            fixUpErrors.putAll(fixupItem.updateMetadataForSamples(mercurySamples.get(0)));
+        }
+        String assertFailureReason =
+                String.format("Error updating some or all samples: %s. Please consult server log for more information.",
+                        fixUpErrors);
+        assertThat(assertFailureReason, fixUpErrors, equalTo(Collections.EMPTY_MAP));
+        mercurySampleDao
+                .persist(new FixupCommentary("see https://gpinfojira.broadinstitute.org:8443/jira/browse/GPLIM-3355"));
+        mercurySampleDao.flush();
+    }
 }
+
 
 
 class MetaDataFixupItem {
