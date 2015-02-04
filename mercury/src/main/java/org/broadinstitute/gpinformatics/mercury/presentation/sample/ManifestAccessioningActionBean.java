@@ -11,6 +11,7 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -78,7 +79,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     @Validate(required = true, on = SCAN_ACCESSION_SOURCE_ACTION, label = "Source sample is required for accessioning")
     private String accessionSource;
 
-    @Validate(required = true, on = SCAN_ACCESSION_SOURCE_ACTION, label = "Source tube barcode is required for accessioning")
+//    @Validate(required = true, on = SCAN_ACCESSION_SOURCE_ACTION, label = "Source tube barcode is required for accessioning")
     private String accessionTube;
 
     private List<ManifestSession> openSessions;
@@ -191,11 +192,13 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     public Resolution scanAccessionSource() {
 
         try {
-
             if(selectedSession.isFromSampleKit()) {
+                if(StringUtils.isBlank(accessionTube)) {
+                    addGlobalValidationError("Source tube barcode is required for accessioning sample kits");
+                    return getContext().getSourcePageResolution();
+                }
                 manifestSessionEjb.validateTargetSampleAndVessel(accessionSource, accessionTube);
             }
-
             manifestSessionEjb.accessionScan(selectedSessionId, accessionSource, accessionTube);
             scanMessages = String.format("Sample %s scanned successfully", accessionSource);
         } catch (Exception e) {
