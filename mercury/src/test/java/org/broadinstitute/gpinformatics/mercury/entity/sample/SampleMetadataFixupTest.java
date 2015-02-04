@@ -82,7 +82,7 @@ public class SampleMetadataFixupTest extends Arquillian {
         mercurySampleDao.flush();
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void fixupGPLIM_3355_CRSP_ICE_Validation_sample_repatienting() {
         Map<String, MetaDataFixupItem> fixupItems = new HashMap<>();
         fixupItems.putAll(MetaDataFixupItem.mapOf("SM-74P3C", Metadata.Key.PATIENT_ID, "NA12878_2", "NA12878_1"));
