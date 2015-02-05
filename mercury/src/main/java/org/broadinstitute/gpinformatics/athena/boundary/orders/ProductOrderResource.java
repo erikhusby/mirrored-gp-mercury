@@ -31,6 +31,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.work.WorkCompleteMessage;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPGroupCollectionList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSiteList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
@@ -60,6 +61,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -137,6 +139,12 @@ public class ProductOrderResource {
     @Inject
     private UserBean userBean;
 
+    @Inject
+    private BSPUserList bspUserList;
+
+    @Inject
+    private ProductOrderJiraUtil productOrderJiraUtil;
+
     /**
      * Should be used only by test code
      */
@@ -191,11 +199,33 @@ public class ProductOrderResource {
 
         try {
             productOrderEjb.submitSampleKitRequest(productOrder, messageCollection);
+            addProjectManagersToJIRA(productOrder, productOrder.getResearchProject().getProjectManagers());
         } catch (Exception ex) {
             throw new WorkRequestCreationException(ex);
         }
 
         return new ProductOrderData(productOrder);
+    }
+
+    /**
+     * Add all the PMs to the order in JIRA, so they're notified when the issue is modified.
+     */
+    private void addProjectManagersToJIRA(@Nonnull ProductOrder productOrder, Long[] projectManagers)
+            throws IOException {
+        // Convert IDs to Users.
+        List<BspUser> managers = new ArrayList<>(projectManagers.length);
+        for (Long projectManager : projectManagers) {
+            BspUser user = bspUserList.getById(projectManager);
+            if (user != null) {
+                managers.add(user);
+            } else {
+                log.error("Unexpected null BSPUser for project manager ID " + projectManager
+                          + " from research project " + productOrder.getResearchProject().getBusinessKey());
+            }
+        }
+        if (!managers.isEmpty()) {
+            productOrderJiraUtil.setJiraPMsField(productOrder, managers);
+        }
     }
 
     private void validateAndLoginUser(ProductOrderData productOrderData) {
@@ -288,7 +318,7 @@ public class ProductOrderResource {
         try {
             productOrder.setCreatedBy(user.getUserId());
             productOrder.prepareToSave(user, ProductOrder.SaveType.CREATING);
-            ProductOrderJiraUtil.createIssueForOrder(productOrder, jiraService);
+            productOrderJiraUtil.createIssueForOrder(productOrder);
             productOrder.setOrderStatus(initialStatus);
 
             // Not supplying add-ons at this point, just saving what we defined above and then flushing to make sure
