@@ -5,6 +5,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
+import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
@@ -17,7 +18,9 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcherStub;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
@@ -26,7 +29,9 @@ import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationSetupEvent;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
@@ -50,6 +55,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
@@ -88,6 +94,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -173,6 +180,9 @@ public class BettaLimsMessageResourceTest extends Arquillian {
 
     @Inject
     private AppConfig appConfig;
+
+    @Inject
+    private BSPSampleDataFetcher bspSampleDataFetcher;
 
     private final SimpleDateFormat testPrefixDateFormat = new SimpleDateFormat("MMddHHmmss");
 
@@ -275,8 +285,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         reworkEjb.addAndValidateCandidates(
                 Collections.singleton(
                         new ReworkEjb.BucketCandidate(barcodeTubeEntry.getValue().getLabel(), productOrder1)),
-                ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue(), "Pico/Plating Bucket", "Test",
-                "jowalsh");
+                ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue(), "Test", "jowalsh", "Pico/Plating Bucket");
         mapBarcodeToTube2.put(barcodeTubeEntry.getKey(), barcodeTubeEntry.getValue());
         reworks.add(barcodeTubeEntry.getValue());
 
@@ -284,8 +293,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         reworkEjb.addAndValidateCandidates(
                 Collections.singleton(
                         new ReworkEjb.BucketCandidate(barcodeTubeEntry.getValue().getLabel(), productOrder1)),
-                ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue(), "Pico/Plating Bucket", "Test",
-                "jowalsh");
+                ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue(), "Test", "jowalsh", "Pico/Plating Bucket");
         mapBarcodeToTube2.put(barcodeTubeEntry.getKey(), barcodeTubeEntry.getValue());
         reworks.add(barcodeTubeEntry.getValue());
 
@@ -473,6 +481,51 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         }
 
 //        Controller.stopCPURecording();
+    }
+
+    /**
+     * Send Mercury a seq plating norm message for tubes/samples that Mercury does not know about.
+     * Mercury should still update vol/conc in BSP (GPLIM-3304).
+     */
+    @Test(enabled = true)
+    public void testUpdateBspForNonMercurySamples() {
+        String testPrefix = testPrefixDateFormat.format(new Date());
+        BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory(false);
+        List<BettaLIMSMessage> messages = new ArrayList<>();
+        // Uses these tubes from BSP rack CO-11200063
+        // A01  0109784754  SM-1Z8XY
+        // A02  0109784741  SM-1Z8XN
+        // A03  0109784822  SM-1Z8XB
+        String[] barcodes = new String[] {"0109784754", "0109784741", "0109784822"};
+        String[] sampleNames = new String[] {"SM-1Z8XY", "SM-1Z8XN", "SM-1Z8XB"};
+        // Verify none of the samples are known to mercury.  It's not really a code failure if for some reason
+        // Mercury dev gains awareness of these samples, but the test cannot continue.
+        Assert.assertTrue(CollectionUtils.isEmpty(barcodedTubeDao.findListByList(MercurySample.class,
+                MercurySample_.sampleKey, Arrays.asList(sampleNames))));
+        PlateEventType plateEvent = bettaLimsMessageFactory.buildRackEvent("SeqPlatingNormalization",
+                "CO-11200063" + testPrefix, Arrays.asList(barcodes));
+        BettaLIMSMessage bettaLIMSMessage = bettaLimsMessageFactory.addMessage(new ArrayList<BettaLIMSMessage>(),
+                plateEvent);
+        // Override routing to prevent this message from going to Squid, where it could fail.
+        bettaLIMSMessage.setMode(LabEventFactory.MODE_MERCURY);
+        PositionMapType positionMapType = bettaLIMSMessage.getPlateEvent().iterator().next().getPositionMap();
+        Assert.assertEquals(positionMapType.getReceptacle().size(), 3);
+        // Sets the volume from parts of month, day, hour, minute, second string.
+        Assert.assertEquals(testPrefix.length(), 10);
+        BigDecimal[] volumes = new BigDecimal[]{
+                new BigDecimal("1" + testPrefix.substring(0, 2) + "." + testPrefix.substring(6, 8)),
+                new BigDecimal("1" + testPrefix.substring(2, 4) + "." + testPrefix.substring(7, 9)),
+                new BigDecimal("1" + testPrefix.substring(4, 6) + "." + testPrefix.substring(8, 10))};
+        for (int i = 0; i < volumes.length; ++i) {
+            positionMapType.getReceptacle().get(i).setVolume(volumes[i]);
+        }
+        sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
+        Map<String, BspSampleData> sampleDataMap = bspSampleDataFetcher.fetchSampleData(Arrays.asList(sampleNames));
+        for (int i = 0; i < volumes.length; ++i) {
+            // Should have 2 digit accuracy.
+            Assert.assertTrue(Math.abs(volumes[i].doubleValue() - sampleDataMap.get(sampleNames[i]).getVolume()) < 0.01,
+                    "Expect " + volumes[i].doubleValue() + " Actual " + sampleDataMap.get(sampleNames[i]).getVolume());
+        }
     }
 
     /**
