@@ -6,8 +6,8 @@
 
 <c:set var="session" value="${actionBean.selectedSession}"/>
 <stripes:layout-render name="/layout.jsp"
-                       pageTitle="${session.researchProject.businessKey}: Buick Sample Accessioning: ${session.sessionName}"
-                       sectionTitle="${session.researchProject.businessKey}: Buick Sample Accessioning: ${session.sessionName}"
+                       pageTitle="${session.researchProject.businessKey}: Sample Accessioning: ${session.sessionName}"
+                       sectionTitle="${session.researchProject.businessKey}: Sample Accessioning: ${session.sessionName}"
                        showCreate="false">
 
     <stripes:layout-component name="extraHead">
