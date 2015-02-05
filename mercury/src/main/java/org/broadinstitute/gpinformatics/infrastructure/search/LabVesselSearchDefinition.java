@@ -417,40 +417,6 @@ public class LabVesselSearchDefinition {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
-        searchTerm.setName("Imported Sample Position");
-        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public Object evaluate(Object entity, Map<String, Object> context) {
-                List<String> results = new ArrayList<>();
-                LabVessel labVessel = (LabVessel) entity;
-                Map<LabEvent, Set<LabVessel>> mapEventToVessels = labVessel.findVesselsForLabEventType(
-                        LabEventType.SAMPLE_IMPORT, true);
-                for (Map.Entry<LabEvent, Set<LabVessel>> eventVesselEntry : mapEventToVessels.entrySet()) {
-                    for (LabVessel vessel : eventVesselEntry.getValue()) {
-                        Set<VesselContainer<?>> containers = vessel.getContainers();
-                        VesselContainer<?> container = null;
-                        if (containers.size() > 1) {
-                            for (VesselContainer<?> vesselContainer : containers) {
-                                // todo jmt this comparison is not safe
-                                if (vesselContainer.getEmbedder().getCreatedOn().getTime() / 1000L ==
-                                    eventVesselEntry.getKey().getEventDate().getTime() / 1000L) {
-                                    container = vesselContainer;
-                                }
-                            }
-                        } else {
-                            container = containers.iterator().next();
-                        }
-                        if (container != null) {
-                            results.add(container.getPositionOfVessel(vessel).toString());
-                        }
-                    }
-                }
-                return results;
-            }
-        });
-        searchTerms.add(searchTerm);
-
-        searchTerm = new SearchTerm();
         searchTerm.setName("Imported Sample Tube Barcode");
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
@@ -488,6 +454,7 @@ public class LabVesselSearchDefinition {
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
+                // Uses InitialTare to return position in rack (CollaboratorTransfer event has no position)
                 return getEventPosition((LabVessel) entity
                         , Collections.singletonList(LabEventType.INITIAL_TARE), false);
             }
@@ -816,21 +783,23 @@ public class LabVesselSearchDefinition {
      */
     private List<String> getEventLabel(LabVessel labVessel, List<LabEventType> labEventTypes, boolean useTargetContainer) {
         List<String> results = new ArrayList<>();
-        for( Pair<VesselPosition,String> pair : getVesselPositionForEvent(labVessel, labEventTypes, useTargetContainer ) ) {
+        for( Pair<VesselPosition,String> pair : getSamplePositionForEvent(labVessel, labEventTypes, useTargetContainer) ) {
             results.add(pair.getRight());
         }
         return results;
     }
 
     /**
-     * Shared logic to traverse lab vessel events looking for specific types and extract the vessel position and barcode
-     * TODO jms Should we cache in row context to avoid duplications if/when position and label are in results?
-     * @param labVessel
+     * Shared logic to traverse lab vessel events looking for specific types and extract
+     *  the vessel position and barcode for a given sample
+     * @param labVessel The sample tube
      * @param labEventTypes Mutually exclusive event types
      * @param useTargetContainer Should target container (vs. source container) be used for positions?
      * @return
      */
-    private List<Pair<VesselPosition,String>> getVesselPositionForEvent(LabVessel labVessel, List<LabEventType> labEventTypes, boolean useTargetContainer ) {
+    private List<Pair<VesselPosition,String>> getSamplePositionForEvent(LabVessel labVessel,
+                                                                        List<LabEventType> labEventTypes,
+                                                                        boolean useTargetContainer) {
 
         List<Pair<VesselPosition,String>> results = new ArrayList<>();
 
@@ -858,6 +827,7 @@ public class LabVesselSearchDefinition {
             return results;
         }
 
+        // Only a single event will (or at least should) be found for a vessel and event type
         LabEvent labEvent = mapEventToVessels.entrySet().iterator().next().getKey();
         Set<LabVessel> descendantLabVessels = mapEventToVessels.entrySet().iterator().next().getValue();
         VesselContainer vesselContainer = null;
@@ -903,6 +873,34 @@ public class LabVesselSearchDefinition {
             }
         }
 
+        if( results.isEmpty() ) {
+            // Dig through  samples to get a match
+            for( LabVessel containedVessel : (Set<LabVessel>)vesselContainer.getContainedVessels() ) {
+                boolean foundSample = false;
+                for (SampleInstanceV2 sampleInstanceV2 : containedVessel.getSampleInstancesV2()) {
+                    MercurySample sample = sampleInstanceV2.getRootOrEarliestMercurySample();
+                    if (sample != null) {
+                        for( LabVessel sampleVessel : sample.getLabVessel() ) {
+                            if( labVessel.getLabel().equals( sampleVessel.getLabel() ) ) {
+                                position = vesselContainer.getPositionOfVessel(containedVessel);
+                                if( position != null) {
+                                    results.add( Pair.of(position, containedVessel.getLabel() ) );
+                                    foundSample = true;
+                                    // Stop parsing vessels for this sample
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if( foundSample ) {
+                        // Stop parsing samples for this contained vessel
+                        // TODO jms Should we stop wading through contained vessels?
+                        break;
+                    }
+                }
+            }
+        }
+
         return results;
     }
 
@@ -915,7 +913,7 @@ public class LabVesselSearchDefinition {
      */
     private List<String> getEventPosition(LabVessel labVessel, List<LabEventType> labEventTypes, boolean useTargetContainer ) {
         List<String> results = new ArrayList<>();
-        for( Pair<VesselPosition,String> pair : getVesselPositionForEvent(labVessel, labEventTypes, useTargetContainer ) ) {
+        for( Pair<VesselPosition,String> pair : getSamplePositionForEvent(labVessel, labEventTypes, useTargetContainer) ) {
             results.add(pair.getLeft().toString());
         }
         return results;
