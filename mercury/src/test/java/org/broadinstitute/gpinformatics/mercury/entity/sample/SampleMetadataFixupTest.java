@@ -101,11 +101,13 @@ public class SampleMetadataFixupTest extends Arquillian {
         Map<String, Metadata.Key> fixUpErrors = new HashMap<>();
         Map<String, MercurySample> samplesById = mercurySampleDao.findMapIdToMercurySample(fixupItems.keySet());
         for (MetaDataFixupItem fixupItem : fixupItems.values()) {
+            Map<String, Metadata.Key> fixupItemErrors = new HashMap<>();
             MercurySample mercurySample = samplesById.get(fixupItem.getSampleKey());
-            fixUpErrors.putAll(fixupItem.validateOriginalValue(mercurySample));
-            if (fixUpErrors.isEmpty()) {
-                fixUpErrors.putAll(fixupItem.updateMetadataForSample(mercurySample));
+            fixupItemErrors.putAll(fixupItem.validateOriginalValue(mercurySample));
+            if (fixupItemErrors.isEmpty()) {
+                fixupItemErrors.putAll(fixupItem.updateMetadataForSample(mercurySample));
             }
+            fixUpErrors.putAll(fixupItemErrors);
         }
         String assertFailureReason =
                 String.format("Error updating some or all samples: %s. Please consult server log for more information.",
