@@ -216,6 +216,7 @@ public class LabEventTest extends BaseEventTest {
     @Override
     @BeforeClass(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
+        new BettaLimsMessageResource(new WorkflowLoader());
         templateEngine.postConstruct();
         super.setUp();
     }
@@ -1012,6 +1013,9 @@ public class LabEventTest extends BaseEventTest {
                 picoPlatingBuilder3.getNormBarcodeToTubeMap(),
                 picoPlatingBuilder3.getNormTubeFormation(),
                 picoPlatingBuilder3.getNormalizationBarcode(), String.valueOf(counter++));
+        for (LabEvent event : shearingBuilder3.getShearingPlate().getEvents()) {
+            Assert.assertFalse(event.hasAmbiguousLcsetProblem());
+        }
 
         // Chooses a tube from the third batch, puts it into shearing bucket as rework, and takes it out of
         // the shearing bucket so it can be part of the second batch.
@@ -1053,17 +1057,13 @@ public class LabEventTest extends BaseEventTest {
                 picoPlatingBuilder2.getNormalizationBarcode(), String.valueOf(counter++));
         StaticPlate plate = builder.getShearingPlate();
 
-        BettaLimsMessageResource bettaLimsMessageResource = new BettaLimsMessageResource();
-        bettaLimsMessageResource.setWorkflowLoader(new WorkflowLoader());
-        bettaLimsMessageResource.setupEventTypesThatCanFollowBucket();
-
         // Checks the shearing event to see if
         boolean foundShearingTransfer = false;
         boolean foundCovarisLoaded = false;
         for (LabEvent event : plate.getEvents()) {
             switch (event.getLabEventType()) {
             case SHEARING_TRANSFER:
-                Assert.assertTrue(bettaLimsMessageResource.emailIfAmbiguousLcset(event));
+                Assert.assertTrue(event.hasAmbiguousLcsetProblem());
                 foundShearingTransfer = true;
                 break;
             case COVARIS_LOADED:
