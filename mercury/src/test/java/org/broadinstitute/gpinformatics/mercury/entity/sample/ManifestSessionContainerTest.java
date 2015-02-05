@@ -19,7 +19,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
-import org.hamcrest.CoreMatchers;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -427,7 +426,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         /*
          * Mimic a user closing the session, and the ramifications of that.
          */
-        manifestSessionEjb.closeSession(sessionOfScan.getManifestSessionId(), testUser);
+        manifestSessionEjb.closeSession(sessionOfScan.getManifestSessionId());
 
         // Clear to force a reload.
         manifestSessionDao.clear();
@@ -678,7 +677,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         /*
          * Mimic the user closing the session
          */
-        manifestSessionEjb.closeSession(sessionOfScan2.getManifestSessionId(), testUser);
+        manifestSessionEjb.closeSession(sessionOfScan2.getManifestSessionId());
         manifestSessionDao.clear();
         ManifestSession closedSession2 = manifestSessionDao.find(sessionOfScan2.getManifestSessionId());
 
@@ -987,7 +986,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         /*
          * Mimic a user closing the session, and the ramifications of that.
          */
-        manifestSessionEjb.closeSession(sessionOfScan.getManifestSessionId(), testUser);
+        manifestSessionEjb.closeSession(sessionOfScan.getManifestSessionId());
 
         // Clear to force a reload.
         manifestSessionDao.clear();
@@ -1045,7 +1044,7 @@ public class ManifestSessionContainerTest extends Arquillian {
                     manifestRecord.getSampleId());
         }
 
-        manifestSessionEjb.closeSession(manifestSessionI.getManifestSessionId(), testUser);
+        manifestSessionEjb.closeSession(manifestSessionI.getManifestSessionId());
 
         for (LabVessel vessel : sourceSampleToTargetVessel.values()) {
             labVesselDao.persist(vessel);

@@ -217,7 +217,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     public Resolution closeSession() {
 
         try {
-            manifestSessionEjb.closeSession(selectedSessionId, userBean.getBspUser());
+            manifestSessionEjb.closeSession(selectedSessionId);
             addMessage("The session {0} has successfully been marked as completed", selectedSession.getSessionName());
         } catch (Exception e) {
             addGlobalValidationError(e.getMessage());

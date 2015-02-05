@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestStatus;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.TubeTransferException;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
@@ -59,6 +60,8 @@ public class ManifestSessionEjb {
 
     private LabVesselDao labVesselDao;
 
+    private UserBean userBean;
+
     /**
      * For CDI.
      */
@@ -68,11 +71,12 @@ public class ManifestSessionEjb {
 
     @Inject
     public ManifestSessionEjb(ManifestSessionDao manifestSessionDao, ResearchProjectDao researchProjectDao,
-                              MercurySampleDao mercurySampleDao, LabVesselDao labVesselDao) {
+                              MercurySampleDao mercurySampleDao, LabVesselDao labVesselDao, UserBean userBean) {
         this.manifestSessionDao = manifestSessionDao;
         this.researchProjectDao = researchProjectDao;
         this.mercurySampleDao = mercurySampleDao;
         this.labVesselDao = labVesselDao;
+        this.userBean = userBean;
     }
 
     /**
@@ -203,11 +207,10 @@ public class ManifestSessionEjb {
 
     /**
      * Close the specified accessioning session.
+     *  @param manifestSessionId Database ID of the session which should be accepted
      *
-     * @param manifestSessionId Database ID of the session which should be accepted
-     * @param user
      */
-    public void closeSession(long manifestSessionId, @Nonnull BspUser user) {
+    public void closeSession(long manifestSessionId) {
         ManifestSession manifestSession = findManifestSession(manifestSessionId);
         manifestSession.completeSession();
 
@@ -217,7 +220,7 @@ public class ManifestSessionEjb {
 
                     transferSample(manifestSessionId, record.getValueByKey(Metadata.Key.SAMPLE_ID),
                             record.getValueByKey(Metadata.Key.BROAD_SAMPLE_ID),
-                            record.getValueByKey(Metadata.Key.BROAD_2D_BARCODE), user);
+                            record.getValueByKey(Metadata.Key.BROAD_2D_BARCODE), userBean.getBspUser());
                 }
             }
         }
