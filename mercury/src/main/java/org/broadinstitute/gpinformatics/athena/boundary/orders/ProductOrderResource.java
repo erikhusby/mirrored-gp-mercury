@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.MaterialInfo;
 import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -220,7 +219,7 @@ public class ProductOrderResource {
             if (user != null) {
                 managers.add(user);
             } else {
-                log.error("setJiraPMsField: unexpected null user for ID " + projectManager
+                log.error("Unexpected null BSPUser for project manager ID " + projectManager
                           + " from research project " + productOrder.getResearchProject().getBusinessKey());
             }
         }
