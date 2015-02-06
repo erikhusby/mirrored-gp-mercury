@@ -63,12 +63,6 @@ public class ManualTransferActionBean extends CoreActionBean {
     @Inject
     private LabVesselDao labVesselDao;
 
-    // machine names?
-    // reagent types?
-    // metadata types?
-    // sections?
-    // phys types?
-
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
@@ -182,13 +176,6 @@ public class ManualTransferActionBean extends CoreActionBean {
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
     }
 
-    // choose transfer type?
-    // choose vessel type?
-    // AJAX fetch by barcode (source or destination), parameter for error if not exists
-    // rack scan (source or destination)
-    // add / remove reagents?
-    // add / remove metadata?
-
     /**
      * Called after the user has entered barcodes.  Fetches existing data, if any.
      * @return JSP
@@ -245,7 +232,6 @@ public class ManualTransferActionBean extends CoreActionBean {
 
     @HandlesEvent(TRANSFER_ACTION)
     public Resolution transfer() {
-        // specify begin / end datetimes in form?
         // todo jmt handle unique constraint violation, increment disambiguator?
         bettaLIMSMessage.setMode(LabEventFactory.MODE_MERCURY);
         stationEvent.setEventType(labEventType.getName());
@@ -254,15 +240,29 @@ public class ManualTransferActionBean extends CoreActionBean {
         stationEvent.setStation(LabEvent.UI_EVENT_LOCATION);
         stationEvent.setDisambiguator(1L);
         stationEvent.setStart(new Date());
-//        stationEvent.setEnd();
-        try {
-            ObjectMarshaller<BettaLIMSMessage> bettaLIMSMessageObjectMarshaller =
-                    new ObjectMarshaller<>(BettaLIMSMessage.class);
-            bettaLimsMessageResource.storeAndProcess(bettaLIMSMessageObjectMarshaller.marshal(bettaLIMSMessage));
-            addMessage("Transfer recorded successfully.");
-        } catch (Exception e) {
-            log.error("Failed to process message", e);
-            addGlobalValidationError(e.getMessage());
+
+        for (ReagentType reagentType : stationEvent.getReagent()) {
+            if (StringUtils.isBlank(reagentType.getKitType())) {
+                addGlobalValidationError("Reagent type is required");
+            }
+            if (StringUtils.isBlank(reagentType.getBarcode())) {
+                addGlobalValidationError("Reagent barcode is required");
+            }
+            if (reagentType.getExpiration() == null) {
+                addGlobalValidationError("Reagent expiration is required");
+            }
+        }
+
+        if (getContext().getValidationErrors().isEmpty()) {
+            try {
+                ObjectMarshaller<BettaLIMSMessage> bettaLIMSMessageObjectMarshaller =
+                        new ObjectMarshaller<>(BettaLIMSMessage.class);
+                bettaLimsMessageResource.storeAndProcess(bettaLIMSMessageObjectMarshaller.marshal(bettaLIMSMessage));
+                addMessage("Transfer recorded successfully.");
+            } catch (Exception e) {
+                log.error("Failed to process message", e);
+                addGlobalValidationError(e.getMessage());
+            }
         }
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
     }
