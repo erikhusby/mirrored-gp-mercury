@@ -785,6 +785,33 @@ public class VesselContainer<T extends LabVessel> {
         return new ArrayList<>(criteria.getVesselAndPositions());
     }
 
+    @Transient
+    private Set<LabBatch> containedLabBatches;
+
+    /**
+     * This is primarily used by getSampleInstances in inference of LCSETs for controls.
+     */
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
+    public LabBatch getSingleBatch() {
+        if (containedLabBatches == null) {
+            containedLabBatches = new HashSet<>();
+            for (LabVessel containedVessel : getContainedVessels()) {
+                Set<SampleInstanceV2> sampleInstances = containedVessel.getSampleInstancesV2();
+                if (sampleInstances.size() == 1) {
+                    BucketEntry containedSingleBucketEntry =
+                            sampleInstances.iterator().next().getSingleBucketEntry();
+                    if (containedSingleBucketEntry != null) {
+                        containedLabBatches.add(containedSingleBucketEntry.getLabBatch());
+                    }
+                }
+            }
+        }
+        if (containedLabBatches.size() == 1) {
+            return containedLabBatches.iterator().next();
+        }
+        return null;
+    }
+
     /**
      * Internal utility class to abstract a time ordered sequence of {@code LabEvent} transfers.
      * LabEvents are stored in time order, oldest to newest.
@@ -1072,6 +1099,7 @@ public class VesselContainer<T extends LabVessel> {
      */
     public void clearCaches() {
         mapPositionToSampleInstances.clear();
+        containedLabBatches = null;
     }
 
 }
