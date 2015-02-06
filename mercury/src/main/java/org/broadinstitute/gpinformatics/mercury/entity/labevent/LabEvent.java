@@ -487,9 +487,13 @@ todo jmt adder methods
                 // Use the LCSET(s) from incoming events
                 for (LabVessel labVessel : getSourceLabVessels()) {
                     for (LabEvent labEvent : labVessel.getTransfersToWithReArrays()) {
-                        computedLcSets.addAll(labEvent.getComputedLcSets());
+                        if (!labEvent.equals(this)) {
+                            computedLcSets.addAll(labEvent.getComputedLcSets());
+                        }
                     }
                 }
+/*
+                todo jmt revisit after we remove inference of LCSETs for controls.  The performance penalty is too high now.
                 // Handle issue with orphan source vessels (e.g. bait)
                 if (computedLcSets.isEmpty()) {
                     for (LabVessel labVessel : getTargetLabVessels()) {
@@ -501,6 +505,7 @@ todo jmt adder methods
                         }
                     }
                 }
+*/
             }
             if (LabVessel.DIAGNOSTICS) {
                 System.out.println("computedLcSets for " + labEventType.getName() + " " + computedLcSets);

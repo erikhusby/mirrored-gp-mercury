@@ -34,6 +34,21 @@ public class CustomField {
         }
     }
 
+    /**
+     * Use this class to create a JSON stream for fields that are keyed off of 'name', such as a user field.
+     */
+    public static class NameContainer {
+        private final String name;
+
+        public NameContainer(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+    }
+
     public static class SelectOption extends ValueContainer {
         private String id;
 

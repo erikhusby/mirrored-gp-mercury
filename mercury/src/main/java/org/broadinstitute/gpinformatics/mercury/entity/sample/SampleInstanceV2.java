@@ -204,28 +204,17 @@ public class SampleInstanceV2 {
      */
     public LabBatch getSingleInferredBucketedBatch() {
         if (singleInferredBucketedBatch == null && !examinedContainers) {
+            examinedContainers = true;
             if (labVessel != null) {
                 // look at other tubes in same container(s).  If they're all of same LCSET, use it.
-                Set<LabBatch> containedLabBatches = new HashSet<>();
                 for (VesselContainer<?> vesselContainer : labVessel.getContainers()) {
-                    for (LabVessel containedVessel : vesselContainer.getContainedVessels()) {
-                        if (!containedVessel.equals(labVessel)) {
-                            Set<SampleInstanceV2> sampleInstances = containedVessel.getSampleInstancesV2();
-                            if (sampleInstances.size() == 1) {
-                                BucketEntry containedSingleBucketEntry =
-                                        sampleInstances.iterator().next().getSingleBucketEntry();
-                                if (containedSingleBucketEntry != null) {
-                                    containedLabBatches.add(containedSingleBucketEntry.getLabBatch());
-                                }
-                            }
-                        }
+                    LabBatch singleBatch = vesselContainer.getSingleBatch();
+                    if (singleBatch != null) {
+                        singleInferredBucketedBatch = singleBatch;
+                        break;
                     }
                 }
-                if (containedLabBatches.size() == 1) {
-                    singleInferredBucketedBatch = containedLabBatches.iterator().next();
-                }
             }
-            examinedContainers = true;
         }
         return singleInferredBucketedBatch;
     }

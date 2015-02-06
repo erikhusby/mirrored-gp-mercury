@@ -1,12 +1,12 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
-import com.google.common.collect.ImmutableSet;
 import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderKitTest;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
@@ -32,7 +32,6 @@ import org.hamcrest.Matchers;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.mockito.verification.VerificationMode;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -58,7 +57,8 @@ public class ProductOrderEjbTest {
     private ProductOrderDao productOrderDaoMock = Mockito.mock(ProductOrderDao.class);
     public final MercurySampleDao mockMercurySampleDao = Mockito.mock(MercurySampleDao.class);
     ProductOrderEjb productOrderEjb = new ProductOrderEjb(productOrderDaoMock, null, null,
-            JiraServiceProducer.stubInstance(), mockUserBean, null, null, null, mockMercurySampleDao);
+            JiraServiceProducer.stubInstance(), mockUserBean, null, null, null, mockMercurySampleDao,
+            new ProductOrderJiraUtil(JiraServiceProducer.stubInstance(), mockUserBean));
     private static final String[] sampleNames = {"SM-1234", "SM-5678", "SM-9101", "SM-1112"};
     ProductOrder productOrder = null;
     private Log logger = LogFactory.getLog(ProductOrderEjbTest.class);
