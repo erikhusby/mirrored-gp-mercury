@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
@@ -22,7 +21,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.TubeTransferExcept
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
-import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -87,15 +85,12 @@ public class ManifestSessionEjb {
      * @param inputStream        File Input stream that contains the manifest being uploaded
      * @param pathToFile         Full path of the manifest as it was uploaded.  This is used to extract the
      *                           manifest name which will help to identify the accessioning session
-     * @param bspUser            represents the user that is initiating the manifest upload
-     *
      * @return the newly created manifest session
      */
-    public ManifestSession uploadManifest(String researchProjectKey, InputStream inputStream, String pathToFile,
-                                          BspUser bspUser) {
+    public ManifestSession uploadManifest(String researchProjectKey, InputStream inputStream, String pathToFile) {
 
         ResearchProject researchProject = findResearchProject(researchProjectKey);
-        return uploadManifest(inputStream, pathToFile, bspUser, researchProject);
+        return uploadManifest(inputStream, pathToFile, researchProject);
     }
 
     /**
@@ -105,14 +100,13 @@ public class ManifestSessionEjb {
      * @param inputStream     File Input stream that contains the manifest being uploaded
      * @param pathToFile      Full path of the manifest as it was uploaded.  This is used to extract the
      *                        manifest name which will help to identify the accessioning session
-     * @param bspUser         represents the user that is initiating the manifest upload
      * @param researchProject an existing research project to which the created accessioning session is to be
      *                        associated
      *
      * @return the newly created manifest session
      */
     @DaoFree
-    private ManifestSession uploadManifest(InputStream inputStream, String pathToFile, BspUser bspUser,
+    private ManifestSession uploadManifest(InputStream inputStream, String pathToFile,
                                            ResearchProject researchProject) {
         ManifestImportProcessor manifestImportProcessor = new ManifestImportProcessor();
         List<String> messages;
@@ -134,7 +128,7 @@ public class ManifestSessionEjb {
             throw new InformaticsServiceException(StringUtils.join(e.getValidationMessages(), "\n"));
         }
         ManifestSession manifestSession = new ManifestSession(researchProject, FilenameUtils
-                .getBaseName(pathToFile), bspUser, false);
+                .getBaseName(pathToFile), userBean.getBspUser(), false);
         // Persist here so an ID will be generated for the ManifestSession.  This ID is used for the
         // ManifestSession's name which is displayed on the UI.
         manifestSessionDao.persist(manifestSession);
@@ -191,7 +185,7 @@ public class ManifestSessionEjb {
      * Scan the sample specified by collaborator barcode for the specified manifest session.
      * @param manifestSessionId    Database ID of the session
      * @param referenceSampleId sample identifier for a source clinical sample
-     * @param barcode
+     * @param barcode 2d vessel barcode.  Expected only if accessioning a sample kit
      */
     public void accessionScan(long manifestSessionId, String referenceSampleId, String barcode) {
         ManifestSession manifestSession = findManifestSession(manifestSessionId);
@@ -220,7 +214,7 @@ public class ManifestSessionEjb {
 
                     transferSample(manifestSessionId, record.getValueByKey(Metadata.Key.SAMPLE_ID),
                             record.getValueByKey(Metadata.Key.BROAD_SAMPLE_ID),
-                            record.getValueByKey(Metadata.Key.BROAD_2D_BARCODE), userBean.getBspUser());
+                            record.getValueByKey(Metadata.Key.BROAD_2D_BARCODE));
                 }
             }
         }
@@ -319,14 +313,13 @@ public class ManifestSessionEjb {
      * @param sourceCollaboratorSample sample identifier for a source clinical sample
      * @param sampleKey                The sample Key for the target mercury sample for the tube transfer
      * @param vesselLabel              The label of the lab vessel that should be associated with the given mercury sample
-     * @param user                     represents the user that is initiating the manifest upload
      */
     public void transferSample(long manifestSessionId, String sourceCollaboratorSample, String sampleKey,
-                               String vesselLabel, BspUser user) {
+                               String vesselLabel) {
         ManifestSession session = findManifestSession(manifestSessionId);
         MercurySample targetSample = validateTargetSample(sampleKey);
 
         LabVessel targetVessel = findAndValidateTargetVessel(vesselLabel, targetSample);
-        session.performTransfer(sourceCollaboratorSample, targetSample, targetVessel, user);
+        session.performTransfer(sourceCollaboratorSample, targetSample, targetVessel, userBean.getBspUser());
     }
 }

@@ -163,7 +163,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
 
             selectedSession =
                     manifestSessionEjb.uploadManifest(researchProject.getBusinessKey(), manifestFile.getInputStream(),
-                            manifestFile.getFileName(), userBean.getBspUser());
+                            manifestFile.getFileName());
 
         } catch (IOException | InformaticsServiceException e) {
             addGlobalValidationError("Unable to upload the manifest file: {2}", e.getMessage());

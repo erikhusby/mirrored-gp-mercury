@@ -29,7 +29,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -163,8 +162,8 @@ public class ManifestSessionEjbDBFreeTest {
                                            ResearchProject researchProject) throws Exception {
         String PATH_TO_SPREADSHEET = TestUtils.getTestData(pathToManifestFile);
         InputStream inputStream = new FileInputStream(PATH_TO_SPREADSHEET);
-        return manifestSessionEjb.uploadManifest(researchProject.getBusinessKey(), inputStream, PATH_TO_SPREADSHEET,
-                TEST_USER);
+        return manifestSessionEjb.uploadManifest(researchProject.getBusinessKey(), inputStream, PATH_TO_SPREADSHEET
+        );
     }
 
     /**
@@ -283,7 +282,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao,
                 labVesselDao, mockUserBean);
         try {
-            ejb.uploadManifest(null, null, null, TEST_USER);
+            ejb.uploadManifest(null, null, null);
             Assert.fail();
         } catch (InformaticsServiceException ignored) {
         }
@@ -1175,8 +1174,8 @@ public class ManifestSessionEjbDBFreeTest {
 
         assertThat(testSample.getMetadata(), is(empty()));
 
-        holder.ejb.transferSample(ARBITRARY_MANIFEST_SESSION_ID, GOOD_TUBE_BARCODE, TEST_SAMPLE_KEY, TEST_VESSEL_LABEL,
-                testLabUser);
+        holder.ejb.transferSample(ARBITRARY_MANIFEST_SESSION_ID, GOOD_TUBE_BARCODE, TEST_SAMPLE_KEY, TEST_VESSEL_LABEL
+        );
 
         assertThat(usedRecord.getStatus(), is(equalTo(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE)));
 
@@ -1192,7 +1191,7 @@ public class ManifestSessionEjbDBFreeTest {
 
         try {
             holder.ejb.transferSample(ARBITRARY_MANIFEST_SESSION_ID, GOOD_TUBE_BARCODE, TEST_SAMPLE_KEY,
-                    TEST_VESSEL_LABEL, testLabUser);
+                    TEST_VESSEL_LABEL);
             Assert.fail();
         } catch (Exception e) {
             assertThat(e.getMessage(),
@@ -1213,7 +1212,7 @@ public class ManifestSessionEjbDBFreeTest {
 
         try {
             holder.ejb.transferSample(ARBITRARY_MANIFEST_SESSION_ID, GOOD_TUBE_BARCODE, TEST_SAMPLE_KEY + "BAD",
-                    TEST_VESSEL_LABEL, testLabUser);
+                    TEST_VESSEL_LABEL);
             Assert.fail();
         } catch (Exception e) {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
@@ -1237,7 +1236,7 @@ public class ManifestSessionEjbDBFreeTest {
 
         try {
             holder.ejb.transferSample(ARBITRARY_MANIFEST_SESSION_ID, GOOD_TUBE_BARCODE, TEST_SAMPLE_KEY,
-                    TEST_VESSEL_LABEL + "BAD", testLabUser);
+                    TEST_VESSEL_LABEL + "BAD");
             Assert.fail();
         } catch (Exception e) {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
@@ -1261,7 +1260,7 @@ public class ManifestSessionEjbDBFreeTest {
 
         try {
             holder.ejb.transferSample(ARBITRARY_MANIFEST_SESSION_ID, GOOD_TUBE_BARCODE,
-                    TEST_SAMPLE_KEY_UNASSOCIATED, TEST_VESSEL_LABEL, testLabUser);
+                    TEST_SAMPLE_KEY_UNASSOCIATED, TEST_VESSEL_LABEL);
             Assert.fail();
         } catch (Exception e) {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
@@ -1286,7 +1285,7 @@ public class ManifestSessionEjbDBFreeTest {
 
         try {
             holder.ejb.transferSample(ARBITRARY_MANIFEST_SESSION_ID, GOOD_TUBE_BARCODE, TEST_SAMPLE_KEY,
-                    TEST_VESSEL_LABEL, testLabUser);
+                    TEST_VESSEL_LABEL);
         } catch (Exception e) {
             assertThat(e.getMessage(),
                     containsString(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE
@@ -1309,8 +1308,8 @@ public class ManifestSessionEjbDBFreeTest {
 
         assertThat(testSample.getMetadata(), is(empty()));
 
-        holder.ejb.transferSample(ARBITRARY_MANIFEST_SESSION_ID, GOOD_TUBE_BARCODE, TEST_SAMPLE_KEY, TEST_VESSEL_LABEL,
-                testLabUser);
+        holder.ejb.transferSample(ARBITRARY_MANIFEST_SESSION_ID, GOOD_TUBE_BARCODE, TEST_SAMPLE_KEY, TEST_VESSEL_LABEL
+        );
 
         assertThat(usedRecord.getStatus(), is(equalTo(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE)));
 
@@ -1333,7 +1332,7 @@ public class ManifestSessionEjbDBFreeTest {
 
         try {
             holder.ejb.transferSample(ARBITRARY_MANIFEST_SESSION_ID, GOOD_TUBE_BARCODE, TEST_SAMPLE_ALREADY_TRANSFERRED,
-                    TEST_VESSEL_LABEL_ALREADY_TRANSFERRED, testLabUser);
+                    TEST_VESSEL_LABEL_ALREADY_TRANSFERRED);
         } catch (Exception e) {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET.getBaseMessage()));
             assertThat(e.getMessage(), containsString(ManifestSessionEjb.VESSEL_USED_FOR_PREVIOUS_TRANSFER));

@@ -331,10 +331,9 @@ public class ManifestSessionContainerTest extends Arquillian {
         String excelFilePath = "manifest-upload/duplicates/good-manifest-1.xlsx";
         InputStream testStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(excelFilePath);
 
-        uploadedSession = manifestSessionEjb.uploadManifest(researchProject.getBusinessKey(), testStream, excelFilePath,
-                testUser);
+        uploadedSession =
+                manifestSessionEjb.uploadManifest(researchProject.getBusinessKey(), testStream, excelFilePath);
         UpdateData updateData = uploadedSession.getUpdateData();
-        assertThat(updateData.getModifiedBy(), is(not(equalTo(updateData.getCreatedBy()))));
         assertThat(updateData.getModifiedDate(), is(equalTo(updateData.getCreatedDate())));
 
         assertThat(uploadedSession, is(notNullValue()));
@@ -480,7 +479,7 @@ public class ManifestSessionContainerTest extends Arquillian {
 
             MercurySample mercurySample = sourceSampleToMercurySample.get(sourceSampleToTest);
             manifestSessionEjb.transferSample(closedSession.getManifestSessionId(), sourceSampleToTest,
-                    mercurySample.getSampleKey(), sourceSampleLabel, testUser);
+                    mercurySample.getSampleKey(), sourceSampleLabel);
 
             // Make sure the metadata was persisted with the sample.
             manifestSessionDao.clear();
@@ -516,7 +515,7 @@ public class ManifestSessionContainerTest extends Arquillian {
 
         try {
             manifestSessionEjb.transferSample(closedSession.getManifestSessionId(), firstUploadedOmittedScan,
-                    omittedScanSampleKey, omittedScanSampleLabel, testUser);
+                    omittedScanSampleKey, omittedScanSampleLabel);
         } catch (Exception e) {
             assertThat(e,
                     containsMessage(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE.getBaseMessage()));
@@ -540,8 +539,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         InputStream testStream2 = Thread.currentThread().getContextClassLoader().getResourceAsStream(pathToTestFile2);
         ResearchProject rpSecondUpload = researchProjectDao.findByBusinessKey(researchProject.getBusinessKey());
         uploadedSession2 =
-                manifestSessionEjb.uploadManifest(rpSecondUpload.getBusinessKey(), testStream2, pathToTestFile2,
-                        testUser);
+                manifestSessionEjb.uploadManifest(rpSecondUpload.getBusinessKey(), testStream2, pathToTestFile2);
 
         assertThat(uploadedSession2, is(notNullValue()));
         assertThat(uploadedSession2.getManifestSessionId(), is(notNullValue()));
@@ -729,13 +727,13 @@ public class ManifestSessionContainerTest extends Arquillian {
             assertThat(targetVessel, is(notNullValue()));
 
             manifestSessionEjb.transferSample(closedSession2.getManifestSessionId(), sourceSampleToTest,
-                    sourceSampleKey, sourceSampleLabel, testUser);
+                    sourceSampleKey, sourceSampleLabel);
 
             assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE));
 
             try {
                 manifestSessionEjb.transferSample(closedSession2.getManifestSessionId(), sourceSampleToTest,
-                        sourceSampleKey, sourceSampleLabel, testUser);
+                        sourceSampleKey, sourceSampleLabel);
                 Assert.fail();
             } catch (TubeTransferException e) {
                 assertThat(e, containsMessage(ManifestRecord.ErrorStatus.INVALID_TARGET.getBaseMessage()));
@@ -757,12 +755,12 @@ public class ManifestSessionContainerTest extends Arquillian {
             assertThat(targetVessel, is(notNullValue()));
 
             manifestSessionEjb.transferSample(closedSession2.getManifestSessionId(), sourceSampleToTest,
-                    sourceSampleKey, sourceSampleLabel, testUser);
+                    sourceSampleKey, sourceSampleLabel);
 
             assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE));
             try {
                 manifestSessionEjb.transferSample(closedSession2.getManifestSessionId(), sourceSampleToTest,
-                        sourceSampleKey, sourceSampleLabel, testUser);
+                        sourceSampleKey, sourceSampleLabel);
                 Assert.fail();
             } catch (TubeTransferException e) {
                 assertThat(e, containsMessage(ManifestRecord.ErrorStatus.INVALID_TARGET.getBaseMessage()));
