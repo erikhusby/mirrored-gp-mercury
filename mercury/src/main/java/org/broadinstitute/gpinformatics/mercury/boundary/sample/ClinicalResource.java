@@ -5,8 +5,10 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.portal.PortalConfig;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.UnknownUserException;
-import org.broadinstitute.gpinformatics.mercury.crsp.generated.AccessionSamples;
+import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
+import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.ejb.Stateful;
@@ -15,6 +17,7 @@ import javax.inject.Inject;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.SecurityContext;
+import java.util.Collection;
 
 /**
  * ClinicalResource provides web services related to accessioning samples into Mercury along with sample data used for
@@ -41,6 +44,9 @@ public class ClinicalResource {
     @Context
     SecurityContext sc;
 
+    @Inject
+    private ManifestSessionEjb manifestSessionEjb;
+
     @SuppressWarnings("unused")
     public ClinicalResource() {}
 
@@ -55,10 +61,16 @@ public class ClinicalResource {
                 "Samples in containers other than from Broad sample kits are currently not supported.");
     }
 
-    public void addSamplesToManifest(String username, String manifestName, AccessionSamples accessionSamples) {
+    public void addSamplesToManifest(String username, Long manifestId, Collection<Sample> samples) {
         login(username);
-
-        throw new UnsupportedOperationException("Unimplemented.");
+        String requiredParameterMissing = "Required parameter %s is missing.";
+        if (manifestId == null) {
+            throw new InformaticsServiceException(String.format(requiredParameterMissing, "manifestId"));
+        }
+        if (samples.isEmpty()) {
+            throw new InformaticsServiceException(String.format(requiredParameterMissing, "samples"));
+        }
+        manifestSessionEjb.addSamplesToManifest(manifestId, samples);
     }
 
     private void login(String username) {

@@ -18,6 +18,8 @@ import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceExcep
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.crsp.generated.MetaData;
+import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -1322,4 +1324,59 @@ public class ManifestSessionEjbDBFreeTest {
             assertThat(testSample.getMetadata(), is(empty()));
         }
     }
+
+    private static Sample createCrspSample(Map<String, String> metaDataPairs) {
+        Sample crspSample = new Sample();
+
+        for (Map.Entry<String, String> metaDataEntry : metaDataPairs.entrySet()) {
+            MetaData metaDataItem = new MetaData();
+            metaDataItem.setName(metaDataEntry.getKey());
+            metaDataItem.setValue(metaDataEntry.getValue());
+            crspSample.getMetadata().add(metaDataItem);
+        }
+        return crspSample;
+    }
+
+    public void convertToMercuryMetadataNoSuchKey() throws Exception {
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20);
+        String key = "a";
+        Sample crspSample = createCrspSample(ImmutableMap.of(key, "b"));
+        String shouldHaveThrownExceptionErrorMessage = "You should have thrown a InformaticsServiceException";
+        try {
+            holder.ejb.convertToMercuryMetadata(crspSample);
+            Assert.fail(shouldHaveThrownExceptionErrorMessage);
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage(), is(String.format(Metadata.METADATA_KEY_NOT_FOUND, key)));
+        } catch (Exception e) {
+            Assert.fail("Wrong exception thrown, " + shouldHaveThrownExceptionErrorMessage);
+        }
+    }
+
+    public void convertToMercury() throws Exception {
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.UPLOAD_ACCEPTED, 1);
+        String sampleId = "SM-0234";
+        Sample crspSample = createCrspSample(ImmutableMap.of(Metadata.Key.SAMPLE_ID.getDisplayName(), sampleId));
+
+        List<Metadata> metadatas = holder.ejb.convertToMercuryMetadata(crspSample);
+        assertThat(metadatas.size(), is(1));
+        assertThat(metadatas.get(0).getKey(), is(Metadata.Key.SAMPLE_ID));
+        assertThat(metadatas.get(0).getStringValue(), is(sampleId));
+    }
+
+    public void testAddSamplesToManifestSession() throws Exception {
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.UPLOAD_ACCEPTED, 0);
+
+        List<Sample> samples = new ArrayList<>();
+        samples.add(createCrspSample(ImmutableMap.of(
+                Metadata.Key.SAMPLE_ID.getDisplayName(), "SM-1",
+                Metadata.Key.PATIENT_ID.getDisplayName(), "patient-1")
+        ));
+        samples.add(createCrspSample(ImmutableMap.of(
+                Metadata.Key.SAMPLE_ID.getDisplayName(), "SM-2",
+                Metadata.Key.PATIENT_ID.getDisplayName(), "patient-2")
+        ));
+        holder.ejb.addSamplesToManifest(1234l, samples);
+        // todo: useful assertions
+    }
 }
+
