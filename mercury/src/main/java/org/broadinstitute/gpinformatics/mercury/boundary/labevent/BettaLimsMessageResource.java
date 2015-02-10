@@ -21,6 +21,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.BettaLimsMessageUtils;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -33,6 +34,7 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLFilterImpl;
 import org.xml.sax.helpers.XMLReaderFactory;
 
+import javax.annotation.PostConstruct;
 import javax.ejb.Stateful;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
@@ -103,6 +105,24 @@ public class BettaLimsMessageResource {
 
     @Inject
     private UserBean userBean;
+
+    @Inject
+    private WorkflowLoader workflowLoader;
+
+    public BettaLimsMessageResource() {
+    }
+
+    /** Constructor used for test purposes. */
+    public BettaLimsMessageResource(WorkflowLoader workflowLoader) {
+        this.workflowLoader = workflowLoader;
+        postConstructor();
+    }
+
+    @PostConstruct
+    public void postConstructor() {
+        // Does the one-time lab event setup that is needed when processing messages.
+        LabEvent.setupEventTypesThatCanFollowBucket(workflowLoader);
+    }
 
     /**
      * Accepts a message from (typically) a liquid handling deck.  We unmarshal ourselves, rather than letting JAX-RS
@@ -375,12 +395,8 @@ public class BettaLimsMessageResource {
     /**
      * Builds a collection of {@link LabVessel} barcodes from a JAXB message bean that contains one or more event
      * beans.
-     * Since this method is used to validate the system of record for existing vessels, the vessels returned will be
-     * Source vessles, In place vessels, and some target vessels If the setting for the associated
-     * {@link LabEventType#expectExistingTarget} determines it is possible.
      *
      * @param bettaLIMSMessage JAXB bean
-     *
      * @return list of barcodes
      */
     private Collection<String> getRegisteredBarcodesFromMessage(BettaLIMSMessage bettaLIMSMessage) {
@@ -422,6 +438,11 @@ public class BettaLimsMessageResource {
         List<LabEvent> labEvents = labEventFactory.buildFromBettaLims(message);
         for (LabEvent labEvent : labEvents) {
             labEventHandler.processEvent(labEvent);
+            if (labEvent.hasAmbiguousLcsetProblem()) {
+                emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
+                        "[Mercury] Vessels have ambiguous LCSET", "After " + labEvent.getLabEventType().getName() +
+                                                                  " (" + labEvent.getLabEventId() + ")");
+            }
         }
     }
 
