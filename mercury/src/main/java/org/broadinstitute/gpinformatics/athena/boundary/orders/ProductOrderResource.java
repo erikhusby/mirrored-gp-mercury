@@ -35,7 +35,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
@@ -169,7 +168,7 @@ public class ProductOrderResource {
     @Produces(MediaType.APPLICATION_XML)
     @Consumes(MediaType.APPLICATION_XML)
     public ProductOrderData createWithKitRequest(@Nonnull ProductOrderData productOrderData)
-            throws DuplicateTitleException, ApplicationValidationException, QuoteNotFoundException, NoSamplesException,
+            throws DuplicateTitleException, ApplicationValidationException, NoSamplesException,
             WorkRequestCreationException {
 
         ProductOrder productOrder = createProductOrder(productOrderData);
@@ -287,7 +286,7 @@ public class ProductOrderResource {
     @Produces(MediaType.APPLICATION_XML)
     @Consumes(MediaType.APPLICATION_XML)
     public ProductOrderData create(@Nonnull ProductOrderData productOrderData)
-            throws DuplicateTitleException, NoSamplesException, QuoteNotFoundException, ApplicationValidationException {
+            throws DuplicateTitleException, NoSamplesException, ApplicationValidationException {
         return new ProductOrderData(createProductOrder(productOrderData), true);
     }
 
@@ -295,7 +294,7 @@ public class ProductOrderResource {
      * Create a product order in Pending state, and create its corresponding JIRA ticket.
      */
     private ProductOrder createProductOrder(ProductOrderData productOrderData)
-            throws DuplicateTitleException, NoSamplesException, QuoteNotFoundException, ApplicationValidationException {
+            throws DuplicateTitleException, NoSamplesException, ApplicationValidationException {
 
         validateAndLoginUser(productOrderData);
 
