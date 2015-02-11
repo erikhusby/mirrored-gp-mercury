@@ -201,20 +201,24 @@ public class ManualTransferActionBean extends CoreActionBean {
                 break;
             case RECEPTACLE_TRANSFER_EVENT:
                 ReceptacleTransferEventType receptacleTransferEventType = (ReceptacleTransferEventType) stationEvent;
-                loadReceptacleFromDb(receptacleTransferEventType.getSourceReceptacle());
-                loadReceptacleFromDb(receptacleTransferEventType.getReceptacle());
+                loadReceptacleFromDb(receptacleTransferEventType.getSourceReceptacle(), true);
+                loadReceptacleFromDb(receptacleTransferEventType.getReceptacle(), false);
                 break;
         }
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
     }
 
-    private void loadReceptacleFromDb(ReceptacleType receptacleType) {
+    private void loadReceptacleFromDb(ReceptacleType receptacleType, boolean source) {
         if (receptacleType != null) {
             String barcode = receptacleType.getBarcode();
             if (!StringUtils.isBlank(barcode)) {
                 LabVessel labVessel = labVesselDao.findByIdentifier(barcode);
                 if (labVessel == null) {
-                    addGlobalValidationError("{2} is not in the database", barcode);
+                    if (source) {
+                        addGlobalValidationError("{2} is not in the database", barcode);
+                    } else {
+                        addMessage("{0} is not in the database", barcode);
+                    }
                 } else {
                     if (OrmUtil.proxySafeIsInstance(labVessel, BarcodedTube.class)) {
                         BarcodedTube barcodedTube = OrmUtil.proxySafeCast(labVessel, BarcodedTube.class);
@@ -222,6 +226,7 @@ public class ManualTransferActionBean extends CoreActionBean {
                         receptacleType.setVolume(barcodedTube.getVolume());
                         receptacleType.setConcentration(barcodedTube.getConcentration());
                         receptacleType.setReceptacleWeight(barcodedTube.getReceptacleWeight());
+                        addMessage("{0} is in the database", barcode);
                     } else {
                         addGlobalValidationError(barcode + " is not a tube");
                     }
