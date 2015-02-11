@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEv
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationSetupEvent;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
@@ -350,6 +351,15 @@ public class BettaLimsMessageResource {
                 if (labEventType != null) {
                     login(receptacleEventType);
                     break;
+                }
+            }
+        }
+        if (labEventType == null) {
+            StationSetupEvent stationSetupEvent = bettaLIMSMessage.getStationSetupEvent();
+            if (stationSetupEvent != null) {
+                labEventType = LabEventType.getByName(stationSetupEvent.getEventType());
+                if (labEventType != null) {
+                    userBean.login(LabEventFactory.ACTIVITY_USER_ID);
                 }
             }
         }

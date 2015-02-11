@@ -87,6 +87,7 @@ public class MercurySample extends AbstractSample {
     @ManyToMany
     private Set<Metadata> metadata = new HashSet<>();
 
+    // TODO: jms Shouldn't this be plural?
     @ManyToMany(mappedBy = "mercurySamples", cascade = CascadeType.PERSIST)
     protected Set<LabVessel> labVessel = new HashSet<>();
 
@@ -176,6 +177,10 @@ public class MercurySample extends AbstractSample {
 
     public Long getMercurySampleId() {
         return mercurySampleId;
+    }
+
+    public Set<LabVessel> getLabVessel() {
+        return labVessel;
     }
 
     /**

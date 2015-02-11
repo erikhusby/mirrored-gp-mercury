@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.columns;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.athena.entity.preference.ColumnSetsPreference;
-import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.SpreadsheetCreator;
 
@@ -118,7 +118,7 @@ public class ConfigurableList {
             ColumnSetsPreference columnSets) {
 
         Map<String, Object> context = new HashMap<>();
-        context.put(SearchDefinitionFactory.CONTEXT_KEY_COLUMN_SET_TYPE, columnSetType);
+        context.put(SearchInstance.CONTEXT_KEY_COLUMN_SET_TYPE, columnSetType);
 /*
         context.put("bspDomainUser", bspDomainUser);
         context.put("group", group);

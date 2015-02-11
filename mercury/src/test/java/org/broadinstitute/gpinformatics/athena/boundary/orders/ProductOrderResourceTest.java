@@ -8,6 +8,10 @@ import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceImpl;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
@@ -27,6 +31,7 @@ import java.util.Date;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.AUTO_BUILD;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STANDARD;
 
 @Test(groups = TestGroups.STANDARD)
@@ -38,7 +43,8 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
 
     private static final String VALID_PDO_ID = "PDO-10";
     private static final String WIDELY_USED_QUOTE_ID = "MMMAC1";
-    private static final String RP_CONTAINING_COHORTS = "RP-31";
+    // This RP has a Cohort and has two PMs. Both features are needed for testing.
+    private static final String RP_CONTAINING_COHORTS = "RP-40";
     private static final String RP_WITHOUT_COHORTS = "RP-32";
     private static final String EXOME_EXPRESS_V3_PRODUCT_NAME = "Exome Express v3";
     
@@ -134,6 +140,16 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
     public void testCreateProductOrderWithKit(@ArquillianResource URL baseUrl) throws Exception {
         ProductOrderData data = sendCreateWithKitRequest(baseUrl, "scottmat");
         Assert.assertEquals(data.getStatus(), ProductOrder.OrderStatus.Pending.name());
+
+        // Read data from JIRA.
+        JiraConfig jiraConfig = new JiraConfig(DEV);
+        JiraService jiraService = new JiraServiceImpl(jiraConfig);
+        JiraIssue jiraIssue = jiraService.getIssue(data.getProductOrderKey());
+        @SuppressWarnings("unchecked")
+        Collection<String> projectManagers =
+                (Collection<String>) jiraIssue.getField(ProductOrder.JiraField.PMS.getName());
+        // There should be two PMs in the PMs field.
+        Assert.assertEquals(projectManagers.size(), 2);
     }
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, expectedExceptions = UniformInterfaceException.class)

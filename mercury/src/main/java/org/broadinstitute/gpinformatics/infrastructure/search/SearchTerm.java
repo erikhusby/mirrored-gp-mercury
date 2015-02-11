@@ -470,7 +470,7 @@ public class SearchTerm implements Serializable, ColumnTabulation {
             context = new HashMap<>();
         }
         // May require this SearchTerm to extract metadata key from column name
-        context.put(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_TERM, this);
+        context.put(SearchInstance.CONTEXT_KEY_SEARCH_TERM, this);
         return getDisplayExpression().evaluate(entity, context);
     }
 
@@ -482,7 +482,7 @@ public class SearchTerm implements Serializable, ColumnTabulation {
             if( context == null ) {
                 context = new HashMap<>();
             }
-            context.put(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_VALUE, this);
+            context.put(SearchInstance.CONTEXT_KEY_SEARCH_VALUE, this);
             return getViewHeader().evaluate(entity, context);
         }
     }

@@ -834,6 +834,15 @@ public enum LabEventType {
             SystemOfRecord.MERCURY, CreateSources.FALSE, PlasticToValidate.TARGET, PipelineTransformation.NONE,
             SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
 
+    // Activity - sent by decks for otherwise non-messaged protocols (technology development); used by Analytics to
+    // track usage.
+    ACTIVITY_BEGIN("ActivityBegin",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+    ACTIVITY_END("ActivityEnd",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+
     // Draft CRSP extraction transfers, todo jmt get input from lab.
     // Transfer blood to micro centrifuge tube
     EXTRACT_BLOOD_TO_MICRO("ExtractBloodToMicro",

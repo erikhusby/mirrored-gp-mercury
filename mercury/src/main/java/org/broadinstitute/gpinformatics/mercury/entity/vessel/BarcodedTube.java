@@ -137,6 +137,10 @@ public class BarcodedTube extends LabVessel {
             }
         }
 
+        public static BarcodedTubeType getByDisplayName(String displayName) {
+            return MAP_DISPLAY_NAME_TO_TYPE.get(displayName);
+        }
+
     }
 
     @Enumerated(EnumType.STRING)

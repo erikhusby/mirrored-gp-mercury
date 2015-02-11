@@ -89,6 +89,7 @@ public class LimsQueries {
                 for (SampleInstance sampleInstance : stringLabVesselEntry.getValue().getSampleInstances()) {
                     SampleInfoType sampleInfoType = new SampleInfoType();
                     sampleInfoType.setSampleName(sampleInstance.getStartingSample().getSampleKey());
+                    sampleInfoType.setLsid("not implemented yet");
                     libraryDataType.getSampleDetails().add(sampleInfoType);
                 }
             }

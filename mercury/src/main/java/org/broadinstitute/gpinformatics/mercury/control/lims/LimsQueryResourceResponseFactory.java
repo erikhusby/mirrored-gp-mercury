@@ -99,6 +99,7 @@ public class LimsQueryResourceResponseFactory {
         outSampleInfo.setIndexLength(sampleInfo.getIndexLength());
         outSampleInfo.setIndexSequence(sampleInfo.getIndexSequence());
         outSampleInfo.setReferenceSequence(sampleInfo.getReferenceSequence());
+        outSampleInfo.setLsid(sampleInfo.getLsid());
         return outSampleInfo;
     }
 
