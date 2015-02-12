@@ -804,11 +804,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         StationSetupEvent beginEvent = new StationSetupEvent();
         beginEvent.setDisambiguator(1L);
         beginEvent.setEventType(LabEventType.ACTIVITY_BEGIN.getName());
-        try {
-            beginEvent.setStart(DatatypeFactory.newInstance().newXMLGregorianCalendar(new GregorianCalendar()));
-        } catch (DatatypeConfigurationException e) {
-            throw new RuntimeException(e);
-        }
+        beginEvent.setStart(new Date());
         beginEvent.setStation("BUZZ");
         beginMessage.setStationSetupEvent(beginEvent);
         sendMessage(beginMessage, bettaLimsMessageResource, appConfig.getUrl());

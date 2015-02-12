@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventTy
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationSetupEvent;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
@@ -382,6 +383,15 @@ public class BettaLimsMessageResource {
                 }
             }
         }
+        if (labEventType == null) {
+            for (ReceptacleTransferEventType receptacleTransferEventType : bettaLIMSMessage.getReceptacleTransferEvent()) {
+                labEventType = LabEventType.getByName(receptacleTransferEventType.getEventType());
+                if (labEventType != null) {
+                    login(receptacleTransferEventType);
+                    break;
+                }
+            }
+        }
         return labEventType;
     }
 
@@ -418,6 +428,9 @@ public class BettaLimsMessageResource {
         }
         for (ReceptacleEventType receptacleEventType : bettaLIMSMessage.getReceptacleEvent()) {
             barcodes.addAll(BettaLimsMessageUtils.getBarcodesForReceptacleEvent(receptacleEventType));
+        }
+        for (ReceptacleTransferEventType receptacleTransferEventType : bettaLIMSMessage.getReceptacleTransferEvent()) {
+            barcodes.addAll(BettaLimsMessageUtils.getBarcodesForReceptacleTransferEvent(receptacleTransferEventType));
         }
 
         return barcodes;

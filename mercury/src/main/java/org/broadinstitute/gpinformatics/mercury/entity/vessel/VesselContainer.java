@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Parent;
 
 import javax.annotation.Nonnull;
@@ -75,6 +76,7 @@ public class VesselContainer<T extends LabVessel> {
     @MapKeyEnumerated(EnumType.STRING)
     // hbm2ddl always uses mapkey
     @MapKeyColumn(name = "mapkey")
+    @BatchSize(size = 100)
     // the map value has to be LabVessel, not T, because JPAMetaModelEntityProcessor can't handle type parameters
     private final Map<VesselPosition, LabVessel> mapPositionToVessel = new LinkedHashMap<>();
 
@@ -82,18 +84,23 @@ public class VesselContainer<T extends LabVessel> {
     private Map<LabVessel, VesselPosition> vesselToMapPosition;
 
     @OneToMany(mappedBy = "sourceVessel", cascade = CascadeType.PERSIST)
+    @BatchSize(size = 100)
     private Set<SectionTransfer> sectionTransfersFrom = new HashSet<>();
 
     @OneToMany(mappedBy = "targetVessel", cascade = CascadeType.PERSIST)
+    @BatchSize(size = 100)
     private Set<SectionTransfer> sectionTransfersTo = new HashSet<>();
 
     @OneToMany(mappedBy = "sourceVessel", cascade = CascadeType.PERSIST)
+    @BatchSize(size = 100)
     private Set<CherryPickTransfer> cherryPickTransfersFrom = new HashSet<>();
 
     @OneToMany(mappedBy = "targetVessel", cascade = CascadeType.PERSIST)
+    @BatchSize(size = 100)
     private Set<CherryPickTransfer> cherryPickTransfersTo = new HashSet<>();
 
     @OneToMany(mappedBy = "targetVessel", cascade = CascadeType.PERSIST)
+    @BatchSize(size = 100)
     private Set<VesselToSectionTransfer> vesselToSectionTransfersTo = new HashSet<>();
 
     @SuppressWarnings("InstanceVariableMayNotBeInitialized")
