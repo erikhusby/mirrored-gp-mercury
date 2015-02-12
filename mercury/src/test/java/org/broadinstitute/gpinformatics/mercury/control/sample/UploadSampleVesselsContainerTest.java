@@ -72,9 +72,9 @@ public class UploadSampleVesselsContainerTest extends Arquillian {
                 column = 0;
                 int rowNum = i + (j * 10);
                 row = sheet.createRow(rowNum);
-                row.createCell(column++).setCellValue("SM-" + timestamp + rowNum);
-                row.createCell(column++).setCellValue(timestamp + rowNum);
-                row.createCell(column++).setCellValue("CO-" + timestamp + j);
+                row.createCell(column++).setCellValue("SM-" + timestamp + "pc" + rowNum);
+                row.createCell(column++).setCellValue(timestamp + "pc" + rowNum);
+                row.createCell(column++).setCellValue("CO-" + timestamp + "pc" + j);
                 row.createCell(column++).setCellValue(vesselPositions[rowNum].toString());
             }
         }
@@ -88,11 +88,11 @@ public class UploadSampleVesselsContainerTest extends Arquillian {
             Assert.assertEquals(messageCollection.getErrors().size(), 0);
 
             // Check tube and sample
-            BarcodedTube barcodedTube = barcodedTubeDao.findByBarcode(timestamp + 1);
+            BarcodedTube barcodedTube = barcodedTubeDao.findByBarcode(timestamp + "pc" + 1);
             Assert.assertNotNull(barcodedTube);
             Assert.assertEquals(barcodedTube.getMercurySamples().size(), 1);
             MercurySample mercurySample = barcodedTube.getMercurySamples().iterator().next();
-            Assert.assertEquals(mercurySample.getSampleKey(), "SM-" + timestamp + 1);
+            Assert.assertEquals(mercurySample.getSampleKey(), "SM-" + timestamp + "pc" + 1);
             Assert.assertEquals(mercurySample.getMetadataSource(), MercurySample.MetadataSource.MERCURY);
 
             // Check that attempting to create again the same tubes and samples gives errors.
@@ -125,7 +125,7 @@ public class UploadSampleVesselsContainerTest extends Arquillian {
         for (int rowNum = 1; rowNum <= 10; rowNum++) {
             column = 0;
             row = sheet.createRow(rowNum);
-            row.createCell(column++).setCellValue("SM-" + timestamp + rowNum);
+            row.createCell(column++).setCellValue("SM-" + timestamp + "l" + rowNum);
             row.createCell(column++).setCellValue("Cryo vial [1.5mL]");
         }
         try {
@@ -138,11 +138,11 @@ public class UploadSampleVesselsContainerTest extends Arquillian {
             Assert.assertEquals(messageCollection.getErrors().size(), 0);
 
             // Check tube and sample
-            BarcodedTube barcodedTube = barcodedTubeDao.findByBarcode("SM-" + timestamp + 1);
+            BarcodedTube barcodedTube = barcodedTubeDao.findByBarcode("SM-" + timestamp + "l" + 1);
             Assert.assertNotNull(barcodedTube);
             Assert.assertEquals(barcodedTube.getMercurySamples().size(), 1);
             MercurySample mercurySample = barcodedTube.getMercurySamples().iterator().next();
-            Assert.assertEquals(mercurySample.getSampleKey(), "SM-" + timestamp + 1);
+            Assert.assertEquals(mercurySample.getSampleKey(), "SM-" + timestamp + "l" + 1);
             Assert.assertEquals(mercurySample.getMetadataSource(), MercurySample.MetadataSource.MERCURY);
 
             // Check that attempting to create again the same tubes and samples gives errors.
