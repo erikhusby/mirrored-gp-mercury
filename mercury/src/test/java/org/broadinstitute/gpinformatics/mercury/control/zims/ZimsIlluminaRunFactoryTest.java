@@ -415,14 +415,12 @@ public class ZimsIlluminaRunFactoryTest {
             Assert.assertEquals(libraryBean.getReferenceSequenceVersion(), "1");
             Assert.assertEquals(libraryBean.getAnalysisType(), "HybridSelection.Resequencing");
             Assert.assertEquals(libraryBean.getDataType(), "agg type");
+            Assert.assertTrue(libraryBean.doAggregation());
 
             if (Boolean.TRUE.equals(libraryBean.isPositiveControl())) {
                 hasPositiveControl = true;
                 Assert.assertTrue(libraryBean.getLsid().startsWith("org.broadinstitute:crsp:"));
                 Assert.assertEquals(libraryBean.getCollaboratorParticipantId(),libraryBean.getCollaboratorSampleId());
-                Assert.assertFalse(libraryBean.doAggregation());
-            } else {
-                Assert.assertTrue(libraryBean.doAggregation());
             }
         }
         Assert.assertTrue(hasPositiveControl);
