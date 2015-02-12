@@ -11,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.Updatable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.UpdatedEntityInterceptor;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
@@ -119,7 +120,7 @@ public class ManifestSession implements Updatable {
                            boolean fromSampleKit) {
         this.researchProject = researchProject;
         researchProject.addManifestSession(this);
-        sessionPrefix = FilenameUtils.getBaseName(manifestSessionName);
+        sessionPrefix = manifestSessionName;
         updateData.setCreatedBy(createdBy.getUserId());
         this.fromSampleKit = fromSampleKit;
         if(fromSampleKit) {
@@ -355,15 +356,14 @@ public class ManifestSession implements Updatable {
     /**
      * Method to find the manifest record that has the specified collaborator barcode.
      */
-    public ManifestRecord findRecordByKey(String collaboratorBarcode, Metadata.Key keyToFindRecordBy)
+    public ManifestRecord findRecordByKey(String value, Metadata.Key keyToFindRecordBy)
             throws TubeTransferException {
         for (ManifestRecord record : records) {
-            if (record.getValueByKey(keyToFindRecordBy).equals(collaboratorBarcode)) {
+            if (record.getValueByKey(keyToFindRecordBy).equals(value)) {
                 return record;
             }
         }
-        throw new TubeTransferException(ManifestRecord.ErrorStatus.NOT_IN_MANIFEST, Metadata.Key.SAMPLE_ID,
-                collaboratorBarcode);
+        throw new TubeTransferException(ManifestRecord.ErrorStatus.NOT_IN_MANIFEST, Metadata.Key.SAMPLE_ID, value);
     }
 
     /**
@@ -587,8 +587,20 @@ public class ManifestSession implements Updatable {
      * Indicator to denote the availability (complete or otherwise) of a manifest session for the sample registration
      * process.
      */
-    public enum SessionStatus {
-        OPEN, PENDING_SAMPLE_INFO, ACCESSIONING, COMPLETED
+    public enum SessionStatus implements Displayable {
+        OPEN("Manifest Uploaded"), PENDING_SAMPLE_INFO("Awaiting manifest"),
+        ACCESSIONING("Accessioning samples"), COMPLETED("Accessioning completed");
+
+        private final String displayName;
+        SessionStatus(String displayName) {
+            this.displayName = displayName;
+        }
+
+
+        @Override
+        public String getDisplayName() {
+            return displayName;
+        }
     }
 
     public UpdateData getUpdateData() {

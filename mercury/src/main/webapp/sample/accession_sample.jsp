@@ -15,7 +15,7 @@
 
             $j(document).ready(function () {
                 $j("#accessionSourceText").blur(function () {
-                    if ($j(this).val() != '' && $j("#accessionTubeText").val() != '') {
+                    if (!($j(this).val() == '' || $j("#accessionTubeText").val() == '')) {
                         performAccessionScan();
                     }
                 });
@@ -119,16 +119,13 @@
                 <div class="control-group">
                     <label class="control-label" for="accessionSourceText">Scan or input specimen number *</label>
                     <div class="controls">
-                        <c:choose>
-                            <c:when test="${actionBean.selectedSession.fromSampleKit}">
-                                <input type="text" class="input-xlarge" name="accessionSource" maxlength="255"
-                                       placeholder="Enter the Broad sample ID" id="accessionSourceText" tabindex="1">
-                            </c:when>
-                            <c:otherwise>
-                                <input type="text" class="input-xlarge" name="accessionSource" maxlength="255"
-                                       placeholder="Enter the clinical sample ID" id="accessionSourceText" tabindex="1">
-                            </c:otherwise>
-                        </c:choose>
+                        <c:set var="sourcePlaceholderText" value="Enter the clinical sample ID"/>
+                        <c:if test="${actionBean.selectedSession.fromSampleKit}">
+                            <c:set var="sourcePlaceholderText" value="Enter the Broad sample ID"/>
+                        </c:if>
+
+                        <input type="text" class="input-xlarge" name="accessionSource" maxlength="255"
+                               placeholder="${sourcePlaceholderText}" id="accessionSourceText" tabindex="1">
                     </div>
                 </div>
                 <c:if test="${actionBean.selectedSession.fromSampleKit}">

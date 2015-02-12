@@ -84,7 +84,7 @@
                                 </c:otherwise>
                             </c:choose>
                         </td>
-                        <td>
+                        <td style="font-weight: bold">
                                 ${openSession.status}
                         </td>
                         <td>

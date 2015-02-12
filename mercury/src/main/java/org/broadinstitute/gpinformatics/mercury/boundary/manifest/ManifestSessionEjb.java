@@ -127,8 +127,8 @@ public class ManifestSessionEjb {
         } catch (ValidationException e) {
             throw new InformaticsServiceException(StringUtils.join(e.getValidationMessages(), "\n"));
         }
-        ManifestSession manifestSession = new ManifestSession(researchProject, FilenameUtils
-                .getBaseName(pathToFile), userBean.getBspUser(), false);
+        ManifestSession manifestSession = new ManifestSession(researchProject, FilenameUtils.getBaseName(pathToFile),
+                userBean.getBspUser(), false);
         // Persist here so an ID will be generated for the ManifestSession.  This ID is used for the
         // ManifestSession's name which is displayed on the UI.
         manifestSessionDao.persist(manifestSession);
