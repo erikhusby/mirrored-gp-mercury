@@ -919,8 +919,6 @@ public class ManifestSessionContainerTest extends Arquillian {
         assertThat(uploadedSession.getStatus(), is(equalTo(ManifestSession.SessionStatus.ACCESSIONING)));
         manifestSessionDao.persist(uploadedSession);
 
-//        assertThat(uploadedSession.getRecords(), hasSize(NUM_RECORDS_IN_SPREADSHEET));
-
         for (ManifestRecord manifestRecord : uploadedSession.getRecords()) {
             assertThat(manifestRecord.getManifestRecordId(), is(notNullValue()));
         }
@@ -949,8 +947,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         ManifestSession sessionOfScan = manifestSessionDao.find(uploadedSession.getManifestSessionId());
 
         /*
-         *  Mimic the scan of all samples in the manifest... except One (to test closing and validating with an
-         *  omitted scan.
+         *  Mimic the scan of all samples in the manifest.
          */
         for (String sourceSampleToTest : firstUploadedScannedSamples) {
 
@@ -977,7 +974,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         assertThat(sessionStatus.getSamplesInManifest(), is(firstUploadedScannedSamples.size()));
         // Deliberately missed one scan.
         assertThat(sessionStatus.getSamplesSuccessfullyScanned(), is(firstUploadedScannedSamples.size()));
-        // All records (except for one) have been scanned so there is only 1 considered eligible for scanning
+        // All records have been scanned
         assertThat(sessionStatus.getSamplesEligibleForAccessioningInManifest(), is(0));
         assertThat(sessionStatus.getErrorMessages(), is(empty()));
 
