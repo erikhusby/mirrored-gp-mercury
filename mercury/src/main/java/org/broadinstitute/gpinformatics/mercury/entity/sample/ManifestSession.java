@@ -354,7 +354,7 @@ public class ManifestSession implements Updatable {
     }
 
     /**
-     * Method to find the manifest record that has the specified collaborator barcode.
+     * Method to find the manifest record that has the specified Key value combo as one of it's records.
      */
     public ManifestRecord findRecordByKey(String value, Metadata.Key keyToFindRecordBy)
             throws TubeTransferException {

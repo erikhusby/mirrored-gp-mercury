@@ -161,9 +161,10 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
                 return getContext().getSourcePageResolution();
             }
 
-            selectedSession =
-                    manifestSessionEjb.uploadManifest(researchProject.getBusinessKey(), manifestFile.getInputStream(),
-                            manifestFile.getFileName(), false);
+            //Uploads from the accessioning page will (as of this writing) always be considered to have Collaborator
+            //originated tubes (no sample kit)
+            selectedSession = manifestSessionEjb.uploadManifest(researchProject.getBusinessKey(),
+                    manifestFile.getInputStream(), manifestFile.getFileName(), false);
 
         } catch (IOException | InformaticsServiceException e) {
             addGlobalValidationError("Unable to upload the manifest file: {2}", e.getMessage());

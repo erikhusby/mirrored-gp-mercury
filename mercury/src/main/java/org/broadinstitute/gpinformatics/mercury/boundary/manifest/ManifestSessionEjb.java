@@ -131,7 +131,6 @@ public class ManifestSessionEjb {
             throw new InformaticsServiceException(StringUtils.join(e.getValidationMessages(), "\n"));
         }
 
-        // as of now, when a manifest is uploaded via Mercury, it will always be assumed
         ManifestSession manifestSession = new ManifestSession(researchProject, FilenameUtils.getBaseName(pathToFile),
                 userBean.getBspUser(), fromSampleKit);
         // Persist here so an ID will be generated for the ManifestSession.  This ID is used for the
