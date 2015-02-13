@@ -361,8 +361,8 @@ public class ExomeExpressEndToEndTest {
 
             TemplateEngine templateEngine = new TemplateEngine();
             templateEngine.postConstruct();
-            LabEventHandler labEventHandler = new LabEventHandler(new WorkflowLoader()
-            );
+            LabEventHandler labEventHandler = new LabEventHandler();
+
             BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
             Map<String, BarcodedTube> mapBarcodeToTube = new HashMap<>();
 

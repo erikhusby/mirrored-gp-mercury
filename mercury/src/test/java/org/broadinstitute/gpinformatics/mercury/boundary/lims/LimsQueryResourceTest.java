@@ -1,21 +1,29 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.GenericType;
 import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LibraryDataType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SampleInfoType;
+import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.List;
 
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
-import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STANDARD;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
@@ -41,7 +49,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         return "limsQuery";
     }
 
-    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFetchLibraryDetailsByTubeBarcode(@ArquillianResource URL baseUrl)
             throws Exception {
@@ -70,7 +78,24 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         assertThat(index, equalTo(-1));
     }
 
-    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFetchLibraryDetailsObjectByTubeBarcode(@ArquillianResource URL baseUrl) throws MalformedURLException {
+        WebResource webResource = makeWebResource(baseUrl, "fetchLibraryDetailsByTubeBarcode")
+                .queryParam("includeWorkRequestDetails", "true");
+        webResource = webResource.queryParam("q", "0124675527");
+
+        List<LibraryDataType> libraryDataTypes = webResource.queryParam("includeWorkRequestDetails", "true").
+                accept(APPLICATION_JSON_TYPE).get(new GenericType<List<LibraryDataType>>() {});
+        Assert.assertEquals(libraryDataTypes.size(), 1);
+        List<SampleInfoType> sampleDetails = libraryDataTypes.get(0).getSampleDetails();
+        Assert.assertEquals(sampleDetails.size(), 19);
+        SampleInfoType sampleInfoType = sampleDetails.get(0);
+        Assert.assertEquals(sampleInfoType.getSampleName(), "238468.0");
+        Assert.assertEquals(sampleInfoType.getLsid(), "broadinstitute.org:bsp.prod.sample:3HR2S");
+    }
+
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testDoesLimsRecognizeAllTubes(@ArquillianResource URL baseUrl)
             throws Exception {
@@ -83,7 +108,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         assertThat(result2, equalTo("false"));
     }
 
-    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFetchMaterialTypesForTubeBarcodes(@ArquillianResource URL baseUrl)
             throws Exception {
@@ -94,7 +119,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
                 equalTo("[\"454 Material-Diluted ssDNA Library\",\"454 Beads-Recovered Sequencing Beads\"]"));
     }
 
-    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFindFlowcellDesignationByTaskName(@ArquillianResource URL baseUrl)
             throws Exception {
@@ -104,7 +129,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         assertThat(result, notNullValue());
     }
 
-    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFindFlowcellDesignationByTaskNameInvalid(@ArquillianResource URL baseUrl)
             throws Exception {
@@ -115,7 +140,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         assertThat(getResponseContent(caught), equalTo("Designation not found for task name: invalid_task"));
     }
 
-    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFindFlowcellDesignationByFlowcellBarcode(@ArquillianResource URL baseUrl)
             throws Exception {
@@ -125,7 +150,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         assertThat(result, notNullValue());
     }
 
-    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFindFlowcellDesignationByFlowcellBarcodeInvalid(@ArquillianResource URL baseUrl)
             throws Exception {
@@ -136,7 +161,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         assertThat(getResponseContent(caught), equalTo("Designation not found for flowcell barcode: invalid_flowcell"));
     }
 
-    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFindFlowcellDesignationByReagentBlockBarcode(@ArquillianResource URL baseUrl)
             throws Exception {
@@ -147,7 +172,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         assertThat(result, containsString("9A_10.26.2011"));
     }
 
-    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFindImmediatePlateParents(@ArquillianResource URL baseUrl)
             throws Exception {
@@ -158,7 +183,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         assertThat(result, containsString("\"000002458823\""));
     }
 
-    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFetchUserIdForBadgeId(@ArquillianResource URL baseUrl)
             throws Exception {
@@ -175,7 +200,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 //        assertThat(result, equalTo("QADudeTest"));
     }
 
-    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFetchUserIdForBadgeIdNotFound(@ArquillianResource URL baseUrl)
             throws Exception {
@@ -186,7 +211,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         assertThat(getResponseContent(caught), equalTo("User not found for badge ID: invalid_badge_id"));
     }
 
-    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFetchParentRackContentsForPlate(@ArquillianResource URL baseUrl)
             throws Exception {
@@ -199,7 +224,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         assertThat(result, not(containsString("\"B01\":false")));
     }
 
-    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFetchParentRackContentsForPlateNotFound(@ArquillianResource URL baseUrl)
             throws Exception {
@@ -210,7 +235,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         assertThat(getResponseContent(caught), equalTo("Plate not found for barcode: invalid_plate"));
     }
 
-    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFetchQpcrForTube(@ArquillianResource URL baseUrl)
             throws Exception {
@@ -219,7 +244,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         assertThat(result, equalTo("19.37698653"));
     }
 
-    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void fetchQpcrForTubeAndType(@ArquillianResource URL baseUrl)
             throws Exception {
@@ -230,7 +255,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         assertThat(result, equalTo("38.87261345"));
     }
 
-    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFetchQpcrForTubeNotFound(@ArquillianResource URL baseUrl)
             throws Exception {
@@ -240,7 +265,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         assertThat(getResponseContent(caught), equalTo("Tube or QPCR not found for barcode: invalid_tube"));
     }
 
-    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFetchQpcrForTubeNoQpcr(@ArquillianResource URL baseUrl)
             throws Exception {
@@ -250,7 +275,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         assertThat(getResponseContent(caught), equalTo("Tube or QPCR not found for barcode: 000001848862"));
     }
 
-    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFetchQuantForTube(@ArquillianResource URL baseUrl)
             throws Exception {
@@ -260,7 +285,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         assertThat(result, equalTo("5.33803"));
     }
 
-    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFetchQuantForTubeNotFound(@ArquillianResource URL baseUrl)
             throws Exception {
@@ -272,7 +297,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
                 equalTo("Tube or quant not found for barcode: invalid_tube, quant type: Catch Pico"));
     }
 
-    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFetchQuantForTubeUnknownQuant(@ArquillianResource URL baseUrl)
             throws Exception {
@@ -284,7 +309,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
                 equalTo("Tube or quant not found for barcode: 0108462600, quant type: Bogus Pico"));
     }
 
-    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFetchQuantForTubeNoQuant(@ArquillianResource URL baseUrl)
             throws Exception {
@@ -296,7 +321,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
                 equalTo("Tube or quant not found for barcode: 000001859062, quant type: Catch Pico"));
     }
 
-    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFetchUnfulfilledDesignations(@ArquillianResource URL baseUrl)
             throws Exception {
@@ -306,7 +331,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         assertThat(result, notNullValue());
     }
 
-    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFetchSourceTubesForPlate(@ArquillianResource URL baseUrl)
             throws Exception {
@@ -321,7 +346,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
      * Test that fetchTransfersForPlate fetches and returns the correct data from Squid. Relies on some existing data in
      * the Squid database.
      */
-    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFetchTransfersForPlateFromSquid(@ArquillianResource URL baseUrl)
             throws Exception {
@@ -333,7 +358,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         assertThat(result, containsString("000009891873"));
     }
 
-    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFetchPoolGroups(@ArquillianResource URL baseUrl)
             throws Exception {
@@ -345,7 +370,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
 
     // todo: Re-enable when we have some test data
-    @Test(enabled = false, groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(enabled = false, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFetchIlluminaSeqTemplateWithFlowCell(@ArquillianResource URL baseUrl)
             throws Exception {
@@ -364,7 +389,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     }
 
     // todo: Re-enable when we have some test data
-    @Test(enabled = false, groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(enabled = false, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFetchIlluminaSeqTemplateWithStripTube(@ArquillianResource URL baseUrl)
             throws Exception {
@@ -382,7 +407,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         }
     }
 
-    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFetchIlluminaSeqTemplateBadEnum(@ArquillianResource URL baseUrl)
             throws Exception {
@@ -398,7 +423,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
                         "Unable to extract parameter from http request: javax.ws.rs.QueryParam(\"idType\") value is 'THISWILLFAIL'"));
     }
 
-    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFetchConcentrationAndVolumeAndWeightForTubeBarcodes(@ArquillianResource URL baseUrl)
             throws Exception {

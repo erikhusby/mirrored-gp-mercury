@@ -405,7 +405,6 @@ public class ZimsIlluminaRunFactory {
                 switch (control.getType()) {
                 case POSITIVE:
                     positiveControl = true;
-                    doAggregation = Boolean.FALSE;
                     if (analysisTypes.size() == 1 && referenceSequenceKeys.size() == 1 &&
                             aggregationDataTypes.size() == 1) {
                         // horrible 7/25 hack.  todo fixme with workflow

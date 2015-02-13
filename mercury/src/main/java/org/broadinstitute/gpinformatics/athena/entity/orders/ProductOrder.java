@@ -1105,7 +1105,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         REQUISITION_NAME("Requisition Name"),
         NUMBER_OF_SAMPLES("Number of Samples"),
         ADD_ONS("Add-ons"),
-        SUMMARY("Summary");
+        SUMMARY("Summary"),
+        PMS("PMs", true);
 
         private final String fieldName;
         private final boolean nullable;

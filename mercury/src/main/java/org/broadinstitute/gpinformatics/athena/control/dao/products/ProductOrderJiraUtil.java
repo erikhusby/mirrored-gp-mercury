@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.products;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -11,8 +13,11 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.annotation.Nonnull;
+import javax.ejb.Stateful;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,7 +27,26 @@ import java.util.Map;
 /**
  * Utility class that manages interactions between PDOs and jira.
  */
+@Stateful
 public class ProductOrderJiraUtil {
+
+    @Inject
+    private JiraService jiraService;
+
+    @Inject
+    private UserBean userBean;
+
+    // EJBs require a no arg constructor.
+    @SuppressWarnings("unused")
+    public ProductOrderJiraUtil() {
+    }
+
+    @Inject
+    public ProductOrderJiraUtil(JiraService jiraService,
+                                UserBean userBean) {
+        this.jiraService = jiraService;
+        this.userBean = userBean;
+    }
 
     private static class ProductOrderFields {
         private final Map<String, CustomFieldDefinition> submissionFields;
@@ -45,8 +69,7 @@ public class ProductOrderJiraUtil {
      * <li>link the research project to the JIRA issue</li>
      * </ul>
      */
-    public static void createIssueForOrder(@Nonnull ProductOrder order, @Nonnull JiraService jiraService)
-            throws IOException {
+    public void createIssueForOrder(@Nonnull ProductOrder order) throws IOException {
         Product product = order.getProduct();
         List<ProductOrderAddOn> addOns = order.getAddOns();
         Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
@@ -119,8 +142,26 @@ public class ProductOrderJiraUtil {
      * comments until the order is Submitted. The reason for this is that the information about samples
      * is not complete until the samples have been received and processed in the lab.
      */
-    public static void addSampleComments(ProductOrder order, JiraIssue issue) throws IOException {
+    public void addSampleComments(ProductOrder order) throws IOException {
+        JiraIssue issue = jiraService.getIssue(order.getJiraTicketKey());
         issue.addComment(StringUtils.join(order.getSampleSummaryComments(), "\n"));
         issue.addComment(StringUtils.join(order.getSampleValidationComments(), "\n"));
+    }
+
+    /**
+     * Replace the PMs field in the JIRA issue for this order with the provided list of users.
+     */
+    public void setJiraPMsField(ProductOrder productOrder, List<BspUser> projectManagers) throws IOException {
+        List<CustomField.NameContainer> managers = new ArrayList<>(projectManagers.size());
+        for (BspUser manager : projectManagers) {
+            managers.add(new CustomField.NameContainer(manager.getUsername()));
+        }
+
+        JiraIssue issue = jiraService.getIssue(productOrder.getJiraTicketKey());
+        setCustomField(issue, ProductOrder.JiraField.PMS, managers);
+    }
+
+    public void setCustomField(JiraIssue issue, ProductOrder.JiraField field, Object value) throws IOException {
+        issue.setCustomFieldUsingTransition(field, value, ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
     }
 }

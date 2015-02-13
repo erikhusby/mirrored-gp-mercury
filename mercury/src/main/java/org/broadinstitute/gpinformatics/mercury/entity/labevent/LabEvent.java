@@ -1,11 +1,25 @@
 package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowProcessDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowProcessDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
@@ -36,37 +50,23 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * A lab event isn't just at the granularity
- * of what we now consider a station event.
+ * A lab event is an informatics model of some of the types of operations that occur in the lab.
+ * Some of the operations captured by informatics in a LabEvent are
+ * <ul>
+ * <li>Sample identification (sample import)</li>
+ * <li>Vessel-sample association</li>
+ * <li>Vessel content and properties (volume, concentration)</li>
+ * <li>Vessel chain of custody (transfer events)</li>
+ * <li>Reagent additions</li>
+ * <li>Workflow process sequence, including bucketing and rework</li>
+ * <li>and others</li>
+ * </ul>
+ * Lab events originate from liquid handling deck messages (bettalims messages), web services invoked by BSP
+ * or other systems, user gestures in the Mercury UI, and others sources.
  * <p/>
- * Any lab event has the potential to change the
- * molecular state (see MolecularEnvelope) of the
- * lab vessels it references.  Some lab events may
- * not change the molecular envelope, but for those
- * that do, we expect the LabEvent to know the "expected"
- * molecular envelope of the input materials.  The event
- * itself can also alter the molecular envelope.
- * <p/>
- * This isn't too far off base: a Bravo protocol might
- * add adaptors.  The covaris event shears target DNA.
- * Both events change the molecular state; in order for
- * the lab operation to do its job, there are certain
- * input requirements that need to be met, such as
- * a concentration range, or the presence of adaptors
- * of a particular type.  If the incoming samples do not
- * meet the requirements, bad things happen, which
- * we expose via throwing InvalidPriorMolecularStateException
- * in applyMolecularStateChanges() method.
- * <p/>
- * In this model, LabEvents have to be quite aware of
- * the particulars of their inputs and outputs.  This
- * means it must be easy for lab staff to change expected
- * inputs and outputs based both on the event definition
- * (think: Bravo protocol file) as well as the workflow.
- * <p/>
- * LabEvents can be re-used in different workflows, with
- * different expected ranges, and project managers might
- * want to override these ranges.
+ * Any lab event has the potential to change the lab vessel's molecular state which is the aggregate of all
+ * samples and reagents in the vessel.  The molecular state is modeled by one or more SampleInstances in the
+ * vessel.
  */
 // todo rename to "Event"--everything is an event, including
 // deltas in an aggregation in zamboni
@@ -76,6 +76,7 @@ import java.util.Set;
         uniqueConstraints = @UniqueConstraint(columnNames = {"EVENT_LOCATION", "EVENT_DATE", "DISAMBIGUATOR"}),
         name = "lab_event")
 public class LabEvent {
+    private static final Log log = LogFactory.getLog(LabEvent.class);
 
     public static final String UI_EVENT_LOCATION = "User Interface";
     public static final String UI_PROGRAM_NAME = "Mercury";
@@ -195,6 +196,8 @@ public class LabEvent {
      */
     @ManyToOne
     private LabBatch manualOverrideLcSet;
+
+    private static Set<LabEventType> eventTypesThatCanFollowBucket = new HashSet<>();
 
     /**
      * For JPA
@@ -466,11 +469,46 @@ todo jmt adder methods
     Set<LabBatch> computeLcSets() {
         if (computedLcSets == null) {
             computedLcSets = new HashSet<>();
+
+            // First attempt to find the LCSET that all single-sample vessels have in common
             for (SectionTransfer sectionTransfer : sectionTransfers) {
-                computedLcSets.addAll(sectionTransfer.getSourceVesselContainer().getComputedLcSetsForSection(
-                        sectionTransfer.getSourceSection()));
+                Set<LabBatch> sectionLcsets = sectionTransfer.getSourceVesselContainer().getComputedLcSetsForSection(
+                        sectionTransfer.getSourceSection());
+                if( !sectionLcsets.isEmpty() ) {
+                    computedLcSets.addAll(sectionLcsets);
+                } else {
+                    // Try target vessel container(s) when section transfer source vessel container comes up blank
+                    // (e.g. IndexedAdapterLigation event from IndexedAdapterPlate96 source)
+                    computedLcSets.addAll(sectionTransfer.getTargetVesselContainer().getComputedLcSetsForSection(
+                            sectionTransfer.getSourceSection()));
+                }
             }
             computedLcSets.addAll(computeLcSetsForCherryPickTransfers());
+
+            if (computedLcSets.isEmpty()) {
+                // Use the LCSET(s) from incoming events
+                for (LabVessel labVessel : getSourceLabVessels()) {
+                    for (LabEvent labEvent : labVessel.getTransfersToWithReArrays()) {
+                        if (!labEvent.equals(this)) {
+                            computedLcSets.addAll(labEvent.getComputedLcSets());
+                        }
+                    }
+                }
+/*
+                todo jmt revisit after we remove inference of LCSETs for controls.  The performance penalty is too high now.
+                // Handle issue with orphan source vessels (e.g. bait)
+                if (computedLcSets.isEmpty()) {
+                    for (LabVessel labVessel : getTargetLabVessels()) {
+                        for (LabEvent labEvent : labVessel.getTransfersTo()) {
+                            // Stop this from being called when traversing from same lab event
+                            if( !labEvent.equals( this ) ) {
+                                computedLcSets.addAll(labEvent.getComputedLcSets());
+                            }
+                        }
+                    }
+                }
+*/
+            }
             if (LabVessel.DIAGNOSTICS) {
                 System.out.println("computedLcSets for " + labEventType.getName() + " " + computedLcSets);
             }
@@ -482,10 +520,10 @@ todo jmt adder methods
         Map<LabBatch, Integer> mapLabBatchToCount = new HashMap<>();
         int numVesselsWithBucketEntries = 0;
         for (CherryPickTransfer cherryPickTransfer : cherryPickTransfers) {
-            LabVessel sourceVessel = cherryPickTransfer.getSourceVesselContainer()
-                    .getVesselAtPosition(cherryPickTransfer.getSourcePosition());
+            Set<SampleInstanceV2> sampleInstancesAtPositionV2 = cherryPickTransfer.getSourceVesselContainer()
+                    .getSampleInstancesAtPositionV2(cherryPickTransfer.getSourcePosition());
             numVesselsWithBucketEntries = VesselContainer.collateLcSets(mapLabBatchToCount, numVesselsWithBucketEntries,
-                    sourceVessel);
+                    sampleInstancesAtPositionV2);
         }
         return VesselContainer.computeLcSets(mapLabBatchToCount, numVesselsWithBucketEntries);
     }
@@ -509,6 +547,67 @@ todo jmt adder methods
             }
         }
         return null;
+    }
+
+    /**
+     * Tests if a single lcset can be determined for every sample instance on every target vessel of the lab event.
+     * The LCSET can still vary from vessel to vessel, i.e. the lab event can be for multiple LCSETS.
+     */
+    public boolean vesselsHaveSingleLcsets() {
+        for (LabVessel labVessel : getTargetLabVessels()) {
+            for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                if (sampleInstanceV2.getSingleBatch() == null &&
+                    CollectionUtils.isNotEmpty(labVessel.getAllLabBatches(LabBatch.LabBatchType.WORKFLOW))) {
+                    String batchNames = "";
+                    for (BucketEntry bucketEntry : sampleInstanceV2.getAllBucketEntries()) {
+                        batchNames += bucketEntry.getLabBatch().getBatchName() + " ";
+                    }
+                    log.info("Cannot determine LCSET after " + getLabEventType().getName() +
+                             " event for vessel=" + labVessel.getLabel() +
+                             " sample=" + sampleInstanceV2.getRootOrEarliestMercurySampleName() +
+                             " having batches=" + (batchNames.length() > 0 ? batchNames : "(None)"));
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Lab events following a bucketing step should have well defined LCSET(s) on sample instances of all
+     * target lab vessels.
+     *
+     * @return true if an ambiguous lcset is found.
+     */
+    public boolean hasAmbiguousLcsetProblem() {
+        return (eventTypesThatCanFollowBucket.contains(getLabEventType()) && !vesselsHaveSingleLcsets());
+    }
+
+    /**
+     * Using workflow config, searches the Mercury supported workflows for events that can follow a bucketing
+     * step. Takes into account that the optional steps after a bucket may be skipped.
+     */
+    public static void setupEventTypesThatCanFollowBucket(WorkflowLoader workflowLoader) {
+        WorkflowConfig workflowConfig = workflowLoader.load();
+        for (Workflow workflow : Workflow.SUPPORTED_WORKFLOWS) {
+            ProductWorkflowDef workflowDef  = workflowConfig.getWorkflowByName(workflow.getWorkflowName());
+            ProductWorkflowDefVersion effectiveWorkflow = workflowDef.getEffectiveVersion();
+            boolean collectEvents = false;
+            for (WorkflowProcessDef processDef : effectiveWorkflow.getWorkflowProcessDefs()) {
+                WorkflowProcessDefVersion effectiveProcess = processDef.getEffectiveVersion();
+                for (WorkflowStepDef step : effectiveProcess.getWorkflowStepDefs()) {
+                    if (OrmUtil.proxySafeIsInstance(step, WorkflowBucketDef.class)) {
+                        // We've hit a bucket. Set the flag to start collecting step's events.
+                        collectEvents = true;
+                    } else if (collectEvents) {
+                        eventTypesThatCanFollowBucket.addAll(step.getLabEventTypes());
+                        if (!step.isOptional()) {
+                            collectEvents = false;
+                        }
+                    }
+                }
+            }
+        }
     }
 
 }

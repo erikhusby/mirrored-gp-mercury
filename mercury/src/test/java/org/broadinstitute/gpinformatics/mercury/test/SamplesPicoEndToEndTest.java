@@ -211,8 +211,7 @@ public class SamplesPicoEndToEndTest {
 
             TemplateEngine templateEngine = new TemplateEngine();
             templateEngine.postConstruct();
-            LabEventHandler labEventHandler = new LabEventHandler(new WorkflowLoader()
-            );
+            LabEventHandler labEventHandler = new LabEventHandler();
 
             Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
             mapBarcodeToVessel.putAll(mapBarcodeToTube);

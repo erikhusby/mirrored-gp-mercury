@@ -1,16 +1,26 @@
 package org.broadinstitute.gpinformatics.mercury.control.lims;
 
-import edu.mit.broad.prodinfo.thrift.lims.*;
 import edu.mit.broad.prodinfo.thrift.lims.ConcentrationAndVolume;
-import org.broadinstitute.gpinformatics.mercury.limsquery.generated.*;
+import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
+import edu.mit.broad.prodinfo.thrift.lims.Lane;
+import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
+import edu.mit.broad.prodinfo.thrift.lims.PlateTransfer;
+import edu.mit.broad.prodinfo.thrift.lims.PoolGroup;
+import edu.mit.broad.prodinfo.thrift.lims.SampleInfo;
+import edu.mit.broad.prodinfo.thrift.lims.WellAndSourceTube;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ConcentrationAndVolumeAndWeightType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.FlowcellDesignationType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LaneType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LibraryDataType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PoolGroupType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SampleInfoType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.WellAndSourceTubeType;
 
-import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeFactory;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.GregorianCalendar;
 
 /**
  * @author breilly
@@ -64,22 +74,16 @@ public class LimsQueryResourceResponseFactory {
             }
         }
 
-        Date createDateTime;
         String dateCreated = libraryData.getDateCreated();
         if (dateCreated != null) {
+            Date createDateTime;
             try {
                 createDateTime = createDateFormat.parse(dateCreated);
             } catch (ParseException e) {
                 throw new RuntimeException("Unexpected date format. Wanted: " + CREATE_DATE_FORMAT_STRING
                                            + ". Got: " + dateCreated, e);
             }
-            GregorianCalendar calendar = new GregorianCalendar();
-            calendar.setTime(createDateTime);
-            try {
-                outLibraryData.setDateCreated(DatatypeFactory.newInstance().newXMLGregorianCalendar(calendar));
-            } catch (DatatypeConfigurationException e) {
-                throw new RuntimeException(e);
-            }
+            outLibraryData.setDateCreated(createDateTime);
         }
 
         outLibraryData.setDiscarded(libraryData.isIsDiscarded());
@@ -95,6 +99,7 @@ public class LimsQueryResourceResponseFactory {
         outSampleInfo.setIndexLength(sampleInfo.getIndexLength());
         outSampleInfo.setIndexSequence(sampleInfo.getIndexSequence());
         outSampleInfo.setReferenceSequence(sampleInfo.getReferenceSequence());
+        outSampleInfo.setLsid(sampleInfo.getLsid());
         return outSampleInfo;
     }
 
