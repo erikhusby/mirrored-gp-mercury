@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.UnknownUserException;
+import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.mockito.Mockito;
 import org.testng.annotations.BeforeMethod;
@@ -19,7 +20,7 @@ public class ClinicalResourceDbFreeTest {
     public void setUp() throws Exception {
         testUser = new BspUser();
         userBean = Mockito.mock(UserBean.class);
-        clinicalResource = new ClinicalResource(userBean);
+        clinicalResource = new ClinicalResource(userBean, null); // TODO: provide a (mock?) ManifestSessionEjb
     }
 
     /**

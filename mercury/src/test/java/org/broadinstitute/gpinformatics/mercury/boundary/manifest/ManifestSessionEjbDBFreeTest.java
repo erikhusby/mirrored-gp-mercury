@@ -19,7 +19,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.sample.ClinicalSampleFa
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.crsp.generated.SampleData;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -1498,7 +1497,8 @@ public class ManifestSessionEjbDBFreeTest {
         String sessionName = "test session";
 
         ManifestSessionEjb manifestSessionEjb =
-                new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao);
+                new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao,
+                        mockUserBean);
 
         ManifestSession manifestSession = manifestSessionEjb
                 .createManifestSession(researchProject.getBusinessKey(), sessionName, TEST_USER);
@@ -1517,7 +1517,8 @@ public class ManifestSessionEjbDBFreeTest {
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testCreateManifestManifestBadResearchProject() {
         ManifestSessionEjb manifestSessionEjb =
-                new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao);
+                new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao,
+                        mockUserBean);
 
         manifestSessionEjb.createManifestSession("BadRP", "test session", TEST_USER);
     }

@@ -12,8 +12,10 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
 import com.google.common.collect.ImmutableMap;
+import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.GenericType;
 import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;

@@ -4,6 +4,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
@@ -159,7 +160,7 @@ public class ManifestSessionEjb {
             if (sample == null){
                 throw new InformaticsServiceException("Sample is null.");
             }
-            if (CollectionUtils.isEmpty(sample.getMetadata())) {
+            if (CollectionUtils.isEmpty(sample.getSampleData())) {
                 throw new InformaticsServiceException("Sample contains no metadata.");
             }
             List<Metadata> metadata = convertToMercuryMetadata(sample);
@@ -379,7 +380,7 @@ public class ManifestSessionEjb {
             throw new IllegalArgumentException("Research project not found: " + researchProjectKey);
         }
 
-        ManifestSession manifestSession = new ManifestSession(researchProject, sessionName, user);
+        ManifestSession manifestSession = new ManifestSession(researchProject, sessionName, user, true); // TODO: add fromSampleKit parameter
         manifestSessionDao.persist(manifestSession);
         return manifestSession;
     }

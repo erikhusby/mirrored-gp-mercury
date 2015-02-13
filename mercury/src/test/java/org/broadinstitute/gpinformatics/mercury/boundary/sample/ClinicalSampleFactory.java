@@ -12,8 +12,8 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
 import com.google.common.collect.ImmutableMap;
-import org.broadinstitute.gpinformatics.mercury.crsp.generated.MetaData;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
+import org.broadinstitute.gpinformatics.mercury.crsp.generated.SampleData;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 
 import java.util.Map;
@@ -23,10 +23,10 @@ public class ClinicalSampleFactory {
         Sample crspSample = new Sample();
 
         for (Map.Entry<Metadata.Key, String> metaDataEntry : metaDataPairs.entrySet()) {
-            MetaData metaDataItem = new MetaData();
+            SampleData metaDataItem = new SampleData();
             metaDataItem.setName(metaDataEntry.getKey().getDisplayName());
             metaDataItem.setValue(metaDataEntry.getValue());
-            crspSample.getMetadata().add(metaDataItem);
+            crspSample.getSampleData().add(metaDataItem);
         }
         return crspSample;
     }
