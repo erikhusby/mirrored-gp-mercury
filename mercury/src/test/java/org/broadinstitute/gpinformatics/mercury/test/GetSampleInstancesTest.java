@@ -32,6 +32,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -169,8 +170,24 @@ public class GetSampleInstancesTest {
         StaticPlate shearingPlate1 = sequencing(tube1, tube2, sampleInitProductOrder, extractionProductOrder,
                 sequencingProductOrder, rootSample1, false, 1);
 
-        // Clear cached bucket entry.
+        // Clear cached bucket entries and computed LCSETS from previous run.
         tube2.clearCaches();
+        sourceTubeFormation.clearCaches();
+        targetTubeFormation.clearCaches();
+        for( LabVessel receivedVessel : receivedVessels ) {
+            receivedVessel.clearCaches();
+        }
+
+        // Set transfer event computed LCSET back to null so it's recalculated
+        try {
+            Field toNull = extractionTransfer.getClass().getDeclaredField("computedLcSets");
+            toNull.setAccessible(true);
+            toNull.set(extractionTransfer, null);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new RuntimeException( "Fail to null out event computedLcSets", e);
+        }
+
+
         StaticPlate shearingPlate2 = sequencing(tube2, tube3, sampleInitProductOrder, extractionProductOrder,
                 sequencingProductOrder, rootSample2, true, 2);
 
@@ -215,20 +232,9 @@ public class GetSampleInstancesTest {
                     matchedSamples++;
                     break;
                 case "Illumina_P5-C_P7-C":
-                    // This sample is in both LCSET buckets
                     //noinspection ConstantConditions
-                    Assert.assertEquals( poolSampleInstance.getAllBucketEntries().size(), 2 );
-                    int foundCount1 = 0;
-                    int foundCount2 = 0;
-                    for( BucketEntry bucketEntry : poolSampleInstance.getAllBucketEntries() ) {
-                        if( bucketEntry.getLabBatch().getBatchName().equals(LCSET_1) ){
-                            foundCount1++;
-                        } else if( bucketEntry.getLabBatch().getBatchName().equals(LCSET_2) ){
-                            foundCount2++;
-                        }
-                    }
-                    Assert.assertEquals(foundCount1, 1);
-                    Assert.assertEquals(foundCount2, 1);
+                    Assert.assertEquals(poolSampleInstance.getSingleBucketEntry().getLabBatch().getBatchName(),
+                            LCSET_2);
                     matchedSamples++;
                     break;
                 default:
@@ -262,15 +268,18 @@ public class GetSampleInstancesTest {
         Set<LabVessel> extractedVessels = new HashSet<>();
         extractedVessels.add(tube1);
         extractedVessels.add(tube2);
+
         LabBatch lcsetBatch = new LabBatch("LCSET-" + lcsetNum, extractedVessels, LabBatch.LabBatchType.WORKFLOW);
         lcsetBatch.setCreatedOn(new Date(now++));
         lcsetBatch.setWorkflowName("Exome Express");
-        BucketEntry bucketEntry1 = new BucketEntry(tube1, sequencingProductOrder, new Bucket("Shearing"),
+
+        Bucket lcsetBucket = new Bucket("Shearing" + lcsetNum);
+        BucketEntry bucketEntry1 = new BucketEntry(tube1, sequencingProductOrder, lcsetBucket,
                 BucketEntry.BucketEntryType.PDO_ENTRY);
         bucketEntry1.setLabBatch(lcsetBatch);
         tube1.addBucketEntry(bucketEntry1);
 
-        BucketEntry bucketEntry2 = new BucketEntry(tube2, sequencingProductOrder, new Bucket("Shearing"),
+        BucketEntry bucketEntry2 = new BucketEntry(tube2, sequencingProductOrder, lcsetBucket,
                 BucketEntry.BucketEntryType.PDO_ENTRY);
         bucketEntry2.setLabBatch(lcsetBatch);
         tube2.addBucketEntry(bucketEntry2);
@@ -297,6 +306,7 @@ public class GetSampleInstancesTest {
         LabBatch importLabBatch = new LabBatch("EX-" + lcsetNum, new HashSet<LabVessel>(mapPositionToExtractTubeControl.values()),
                 LabBatch.LabBatchType.SAMPLES_IMPORT);
         importLabBatch.setCreatedOn(new Date(now++));
+
         // Add the rework after the import
         if (tube1Rework) {
             mapPositionToExtractTubeControl.put(position1, tube1);
@@ -304,19 +314,8 @@ public class GetSampleInstancesTest {
         TubeFormation extractControlTubeFormation = new TubeFormation(mapPositionToExtractTubeControl,
                 RackOfTubes.RackType.Matrix96);
 
-        Set<SampleInstanceV2> samples = controlTube.getSampleInstancesV2();
-        for( SampleInstanceV2 sample : samples ) {
-            if( sample.getInitialLabVessel().getLabel().equals("X1") || sample.getInitialLabVessel().getLabel().equals("X3")) {
-                // X1 and X3 are not reworked so LCSET is unique
-                Assert.assertEquals(sample.getSingleBatch().getBatchName(), "LCSET-" + lcsetNum);
-            } else if( !tube1Rework && sample.getInitialLabVessel().getLabel().equals("X2")) {
-                // X2 and not reworked yields unique LCSET
-                Assert.assertEquals(sample.getSingleBatch().getBatchName(), "LCSET-" + lcsetNum);
-            } else if ( tube1Rework && sample.getInitialLabVessel().getLabel().equals("X2") ) {
-                // Reworked X2 will yields multiple LCSETs so getSingleBatch() returns null
-                Assert.assertNull(sample.getSingleBatch());
-            }
-        }
+        Assert.assertEquals(controlTube.getSampleInstancesV2().iterator().next().getSingleBatch().getBatchName(),
+                "LCSET-" + lcsetNum);
 
         LabEvent shearingTransfer = new LabEvent(LabEventType.SHEARING_TRANSFER, new Date(now++), "SUPERMAN", 1L, 101L,
                 "Bravo");
@@ -358,13 +357,7 @@ public class GetSampleInstancesTest {
         SampleInstanceV2 sampleInstance = sampleInstances.iterator().next();
         Assert.assertEquals(sampleInstance.getMercuryRootSampleName(), tube1RootSample);
         verifyReagents(sampleInstance, lcsetNum == 1 ? "Illumina_P5-M_P7-M" : "Illumina_P5-C_P7-C");
-        if (!tube1Rework) {
-            // Tube X1 sample at position 1 has a single bucket entry
-            Assert.assertEquals(sampleInstance.getSingleBucketEntry(), bucketEntry1);
-        } else {
-            // Tube X2 sample at position 1 has 2 bucket entries
-            Assert.assertEquals( sampleInstance.getAllBucketEntries().size(), 2 );
-        }
+        Assert.assertEquals(sampleInstance.getSingleBucketEntry(), bucketEntry1);
         List<LabBatchStartingVessel> importBatchVessels = new ArrayList<>();
         if (!tube1Rework) {
             for (LabBatchStartingVessel labBatchStartingVessel : importLabBatch.getLabBatchStartingVessels()) {
@@ -423,7 +416,7 @@ public class GetSampleInstancesTest {
     /**
      * Test that reworking every tube in a rack is reflected in the computed LCSET.
      */
-    @Test(enabled = false)
+    @Test
     public void testLcSetOverride() {
         ProductOrder sampleInitProductOrder = ProductOrderTestFactory.createDummyProductOrder(3, "PDO-SI",
                 Workflow.ICE, 101L, "Test research project", "Test research project", false, "SamInit", "1",
@@ -495,7 +488,6 @@ public class GetSampleInstancesTest {
         Assert.assertEquals(labEvent2.getComputedLcSets().iterator().next(), lcSet2);
     }
 
-    @Test(enabled = false)
     public void testGetMetadataSourceForPipeline() {
         Assert.assertEquals(createSampleInstanceForPipelineAPIMetadataTesting(MercurySample.MetadataSource.BSP,"sample").getMetadataSourceForPipelineAPI(),
                                                                               MercurySample.BSP_METADATA_SOURCE);
