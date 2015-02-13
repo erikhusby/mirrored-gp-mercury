@@ -85,12 +85,14 @@ public class ManifestSessionEjb {
      * @param inputStream        File Input stream that contains the manifest being uploaded
      * @param pathToFile         Full path of the manifest as it was uploaded.  This is used to extract the
      *                           manifest name which will help to identify the accessioning session
+     * @param fromSampleKit
      * @return the newly created manifest session
      */
-    public ManifestSession uploadManifest(String researchProjectKey, InputStream inputStream, String pathToFile) {
+    public ManifestSession uploadManifest(String researchProjectKey, InputStream inputStream, String pathToFile,
+                                          boolean fromSampleKit) {
 
         ResearchProject researchProject = findResearchProject(researchProjectKey);
-        return uploadManifest(inputStream, pathToFile, researchProject);
+        return uploadManifest(inputStream, pathToFile, researchProject, fromSampleKit);
     }
 
     /**
@@ -103,11 +105,12 @@ public class ManifestSessionEjb {
      * @param researchProject an existing research project to which the created accessioning session is to be
      *                        associated
      *
+     * @param fromSampleKit
      * @return the newly created manifest session
      */
     @DaoFree
     private ManifestSession uploadManifest(InputStream inputStream, String pathToFile,
-                                           ResearchProject researchProject) {
+                                           ResearchProject researchProject, boolean fromSampleKit) {
         ManifestImportProcessor manifestImportProcessor = new ManifestImportProcessor();
         List<String> messages;
         try {
@@ -127,8 +130,10 @@ public class ManifestSessionEjb {
         } catch (ValidationException e) {
             throw new InformaticsServiceException(StringUtils.join(e.getValidationMessages(), "\n"));
         }
+
+        // as of now, when a manifest is uploaded via Mercury, it will always be assumed
         ManifestSession manifestSession = new ManifestSession(researchProject, FilenameUtils.getBaseName(pathToFile),
-                userBean.getBspUser(), false);
+                userBean.getBspUser(), fromSampleKit);
         // Persist here so an ID will be generated for the ManifestSession.  This ID is used for the
         // ManifestSession's name which is displayed on the UI.
         manifestSessionDao.persist(manifestSession);

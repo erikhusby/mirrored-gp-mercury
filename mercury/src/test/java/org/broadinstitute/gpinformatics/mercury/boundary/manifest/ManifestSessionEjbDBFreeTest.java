@@ -162,7 +162,8 @@ public class ManifestSessionEjbDBFreeTest {
                                            ResearchProject researchProject) throws Exception {
         String PATH_TO_SPREADSHEET = TestUtils.getTestData(pathToManifestFile);
         InputStream inputStream = new FileInputStream(PATH_TO_SPREADSHEET);
-        return manifestSessionEjb.uploadManifest(researchProject.getBusinessKey(), inputStream, PATH_TO_SPREADSHEET
+        return manifestSessionEjb.uploadManifest(researchProject.getBusinessKey(), inputStream, PATH_TO_SPREADSHEET,
+                false
         );
     }
 
@@ -282,7 +283,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao,
                 labVesselDao, mockUserBean);
         try {
-            ejb.uploadManifest(null, null, null);
+            ejb.uploadManifest(null, null, null, false);
             Assert.fail();
         } catch (InformaticsServiceException ignored) {
         }

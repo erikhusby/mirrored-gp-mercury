@@ -332,7 +332,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         InputStream testStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(excelFilePath);
 
         uploadedSession =
-                manifestSessionEjb.uploadManifest(researchProject.getBusinessKey(), testStream, excelFilePath);
+                manifestSessionEjb.uploadManifest(researchProject.getBusinessKey(), testStream, excelFilePath, false);
         UpdateData updateData = uploadedSession.getUpdateData();
         assertThat(updateData.getModifiedDate(), is(equalTo(updateData.getCreatedDate())));
 
@@ -539,7 +539,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         InputStream testStream2 = Thread.currentThread().getContextClassLoader().getResourceAsStream(pathToTestFile2);
         ResearchProject rpSecondUpload = researchProjectDao.findByBusinessKey(researchProject.getBusinessKey());
         uploadedSession2 =
-                manifestSessionEjb.uploadManifest(rpSecondUpload.getBusinessKey(), testStream2, pathToTestFile2);
+                manifestSessionEjb.uploadManifest(rpSecondUpload.getBusinessKey(), testStream2, pathToTestFile2, false);
 
         assertThat(uploadedSession2, is(notNullValue()));
         assertThat(uploadedSession2.getManifestSessionId(), is(notNullValue()));
