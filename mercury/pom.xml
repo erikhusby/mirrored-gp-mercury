@@ -823,138 +823,6 @@
         </profile>
 
         <profile>
-            <id>CRSP-DEV</id>
-            <dependencies>
-                <dependency>
-                    <groupId>javax</groupId>
-                    <artifactId>javaee-api</artifactId>
-                    <version>6.0</version>
-                    <scope>provided</scope>
-                </dependency>
-            </dependencies>
-            <properties>
-                <!--  Oracle Dev database -->
-                <database>oracle</database>
-                <database.delimiterType>row</database.delimiterType>
-
-                <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
-                <database.url>jdbc:oracle:thin:@crsp-db-dev-vm:1521:crspdev</database.url>
-                <mercury.password>welcome1</mercury.password>
-                <athena.password>welcome1</athena.password>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-war-plugin</artifactId>
-                        <configuration>
-                            <webResources>
-                                <resource>
-                                    <directory>src/main/webapp-crsp</directory>
-                                </resource>
-                            </webResources>
-                        </configuration>
-                    </plugin>
-                </plugins>
-                <testResources>
-                    <testResource>
-                        <directory>src/test/resources-dev</directory>
-                    </testResource>
-                    <testResource>
-                        <directory>src/main/webapp/WEB-INF/classes</directory>
-                        <includes>
-                            <include>crsp-mercury-config.yaml</include>
-                        </includes>
-                    </testResource>
-                </testResources>
-            </build>
-        </profile>
-
-
-        <profile>
-            <id>CRSP-QA</id>
-            <dependencies>
-                <dependency>
-                    <groupId>javax</groupId>
-                    <artifactId>javaee-api</artifactId>
-                    <version>6.0</version>
-                    <scope>provided</scope>
-                </dependency>
-            </dependencies>
-            <properties>
-                <!--  Oracle QA database -->
-                <database>oracle</database>
-                <database.delimiterType>row</database.delimiterType>
-
-                <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
-                <database.url>jdbc:oracle:thin:@crsp-db-qa-vm:1521:crspqa</database.url>
-                <mercury.password>m3lb3c</mercury.password>
-                <athena.password>welcome</athena.password>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-war-plugin</artifactId>
-                        <configuration>
-                            <webResources>
-                                <resource>
-                                    <directory>src/main/webapp-crsp</directory>
-                                </resource>
-                            </webResources>
-                        </configuration>
-                    </plugin>
-                </plugins>
-                <testResources>
-                    <testResource>
-                        <directory>src/test/resources-qa</directory>
-                    </testResource>
-                    <testResource>
-                        <directory>src/main/webapp/WEB-INF/classes</directory>
-                        <includes>
-                            <include>crsp-mercury-config.yaml</include>
-                        </includes>
-                    </testResource>
-                </testResources>
-            </build>
-        </profile>
-
-        <profile>
-            <id>CRSP-PROD</id>
-            <!-- This is for CRSP PRODUCTION ONLY -->
-            <properties>
-                <!-- Oracle Dev -->
-                <database>oracle</database>
-                <database.delimiterType>row</database.delimiterType>
-
-                <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
-                <database.url>jdbc:oracle:thin:@crsp-db-prod-vm:1521:gpinfprd</database.url>
-                <mercury.password />
-                <athena.password />
-            </properties>
-            <build>
-                <!-- This allows us to overwrite the ejb-jar.xml for development with the special version for crsp production -->
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-war-plugin</artifactId>
-                        <configuration>
-                            <webResources>
-                                <resource>
-                                    <directory>src/main/webapp-crsp</directory>
-                                </resource>
-
-                                <resource>
-                                    <directory>src/main/webapp-crsp-prod</directory>
-                                </resource>
-                            </webResources>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
             <id>HOW</id>
             <properties>
                 <!--  Oracle Dev database -->
@@ -1068,27 +936,6 @@
             </build>
         </profile>
 
-        <profile>
-            <id>CRSPBUILD</id>
-            <properties>
-                <!--  Oracle Dev database -->
-                <database>oracle</database>
-                <database.delimiterType>row</database.delimiterType>
-
-                <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
-                <database.url>jdbc:oracle:thin:@crsp-db-dev-vm:1521:crspdev</database.url>
-                <mercury.password>welcome1</mercury.password>
-                <athena.password>welcome1</athena.password>
-            </properties>
-            <build>
-                <testResources>
-                    <testResource>
-                        <directory>src/test/resources-build</directory>
-                        <filtering>true</filtering>
-                    </testResource>
-                </testResources>
-            </build>
-        </profile>
         <profile>
             <id>BUILD</id>
             <properties>
@@ -2225,7 +2072,6 @@
                     </execution>
 
                     <execution>
-
                         <id>CrspTypes</id>
                         <goals>
                             <goal>xjc</goal>

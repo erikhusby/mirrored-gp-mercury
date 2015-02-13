@@ -11,6 +11,7 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -77,6 +78,9 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
 
     @Validate(required = true, on = SCAN_ACCESSION_SOURCE_ACTION, label = "Source sample is required for accessioning")
     private String accessionSource;
+
+//    @Validate(required = true, on = SCAN_ACCESSION_SOURCE_ACTION, label = "Source tube barcode is required for accessioning")
+    private String accessionTube;
 
     private List<ManifestSession> openSessions;
     private List<ManifestSession> closedSessions;
@@ -157,9 +161,10 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
                 return getContext().getSourcePageResolution();
             }
 
-            selectedSession =
-                    manifestSessionEjb.uploadManifest(researchProject.getBusinessKey(), manifestFile.getInputStream(),
-                            manifestFile.getFileName(), userBean.getBspUser());
+            //Uploads from the accessioning page will (as of this writing) always be considered to have Collaborator
+            //originated tubes (no sample kit)
+            selectedSession = manifestSessionEjb.uploadManifest(researchProject.getBusinessKey(),
+                    manifestFile.getInputStream(), manifestFile.getFileName(), false);
 
         } catch (IOException | InformaticsServiceException e) {
             addGlobalValidationError("Unable to upload the manifest file: {2}", e.getMessage());
@@ -188,7 +193,14 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     public Resolution scanAccessionSource() {
 
         try {
-            manifestSessionEjb.accessionScan(selectedSessionId, accessionSource);
+            if(selectedSession.isFromSampleKit()) {
+                if(StringUtils.isBlank(accessionTube)) {
+                    addGlobalValidationError("Source tube barcode is required for accessioning sample kits");
+                    return getContext().getSourcePageResolution();
+                }
+                manifestSessionEjb.validateTargetSampleAndVessel(accessionSource, accessionTube);
+            }
+            manifestSessionEjb.accessionScan(selectedSessionId, accessionSource, accessionTube);
             scanMessages = String.format("Sample %s scanned successfully", accessionSource);
         } catch (Exception e) {
             scanErrors = e.getMessage();
@@ -277,5 +289,13 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
 
     public ProjectTokenInput getProjectTokenInput() {
         return projectTokenInput;
+    }
+
+    public String getAccessionTube() {
+        return accessionTube;
+    }
+
+    public void setAccessionTube(String accessionTube) {
+        this.accessionTube = accessionTube;
     }
 }

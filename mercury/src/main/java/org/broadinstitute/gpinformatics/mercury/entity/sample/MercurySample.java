@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.RapSheet;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
@@ -77,6 +78,7 @@ public class MercurySample extends AbstractSample {
     private RapSheet rapSheet;
 
     @OneToMany(mappedBy = "mercurySample", fetch = FetchType.LAZY,  cascade = CascadeType.PERSIST)
+    @BatchSize(size = 100)
     private Set<ProductOrderSample> productOrderSamples = new HashSet<>();
 
     @Enumerated(EnumType.STRING)
@@ -85,6 +87,7 @@ public class MercurySample extends AbstractSample {
     @ManyToMany
     private Set<Metadata> metadata = new HashSet<>();
 
+    // TODO: jms Shouldn't this be plural?
     @ManyToMany(mappedBy = "mercurySamples", cascade = CascadeType.PERSIST)
     protected Set<LabVessel> labVessel = new HashSet<>();
 
@@ -174,6 +177,10 @@ public class MercurySample extends AbstractSample {
 
     public Long getMercurySampleId() {
         return mercurySampleId;
+    }
+
+    public Set<LabVessel> getLabVessel() {
+        return labVessel;
     }
 
     /**

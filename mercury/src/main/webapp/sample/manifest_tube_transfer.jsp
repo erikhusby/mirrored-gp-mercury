@@ -3,8 +3,8 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.ManifestTubeTransferActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="Buick Sample Tube Transfer"
-                       sectionTitle="Buick Sample Tube Transfer" showCreate="false">
+<stripes:layout-render name="/layout.jsp" pageTitle="Post Accessioning Sample Tube Transfer"
+                       sectionTitle="Post Accessioning Sample Tube Transfer" showCreate="false">
 <stripes:layout-component name="extraHead">
     <script type="text/javascript">
 

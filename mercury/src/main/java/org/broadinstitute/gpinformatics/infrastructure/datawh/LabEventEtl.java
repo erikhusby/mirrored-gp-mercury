@@ -85,10 +85,10 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                             format(fact.getWfDenorm().getWorkflowId()),
                             format(fact.getWfDenorm().getProcessId()),
                             format(pdo != null ? pdo.getProductOrderId() : null),
-                            format(fact.getSample().getSampleKey()),
+                            format(fact.getSample() == null ? null : fact.getSample().getSampleKey()),
                             format(fact.getBatchName()),
                             format(fact.getLabEvent().getEventLocation()),
-                            format(fact.getLabVessel().getLabVesselId()),
+                            format(fact.getLabVessel() == null ? null : fact.getLabVessel().getLabVesselId()),
                             format(ExtractTransform.formatTimestamp(fact.getLabEvent().getEventDate())),
                             format(fact.getLabEvent().getProgramName())
                     ));
@@ -282,7 +282,9 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                 // Use of the full constructor which in this case has multiple nulls is intentional
                 // since exactly which fields are null is used as indicator in postEtlLogging, and this
                 // pattern is used in other fact table etl that are exposed in ExtractTransformResource.
-                dtos.add(new EventFactDto(entity, null, null, null, null, null, null, null, false));
+                WorkflowConfigDenorm wfDenorm = workflowConfigLookup.lookupWorkflowConfig(
+                        eventName, null, entity.getEventDate());
+                dtos.add(new EventFactDto(entity, null, null, null, null, null, null, wfDenorm, true));
             }
 
             for (LabVessel vessel : vessels) {

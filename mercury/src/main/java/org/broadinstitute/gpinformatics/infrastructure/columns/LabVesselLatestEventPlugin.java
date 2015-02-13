@@ -4,7 +4,7 @@ import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
@@ -62,7 +62,7 @@ public class LabVesselLatestEventPlugin implements ListPlugin {
             , @Nonnull Map<String, Object> context) {
         List<LabVessel> labVesselList = (List<LabVessel>) entityList;
         List<ConfigurableList.Row> eventRows = new ArrayList<>();
-        BSPUserList bspUserList = (BSPUserList)context.get(SearchDefinitionFactory.CONTEXT_KEY_BSP_USER_LIST);
+        BSPUserList bspUserList = (BSPUserList)context.get(SearchInstance.CONTEXT_KEY_BSP_USER_LIST);
         String cellValue;
 
         // Append headers for event data of interest.

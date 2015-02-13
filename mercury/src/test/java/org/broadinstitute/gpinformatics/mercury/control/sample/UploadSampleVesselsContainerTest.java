@@ -38,7 +38,8 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 @Test(groups = TestGroups.STANDARD)
 public class UploadSampleVesselsContainerTest extends Arquillian {
 
-    private String[] headers = {"Sample ID", "Manufacturer Tube Barcode", "Container", "Position"};
+    private String[] parentChildHeaders = {"Sample ID", "Manufacturer Tube Barcode", "Container", "Position"};
+    private String[] looseTubeHeaders = {"Sample ID", "Vessel Type"};
 
     @Inject
     private VesselEjb vesselEjb;
@@ -52,7 +53,7 @@ public class UploadSampleVesselsContainerTest extends Arquillian {
     }
 
     @Test
-    public void testPersistence() {
+    public void testParentChild() {
         // Create a spreadsheet with IDs that aren't in the database.
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
         String timestamp = simpleDateFormat.format(new Date());
@@ -61,7 +62,7 @@ public class UploadSampleVesselsContainerTest extends Arquillian {
         int currentRow = 0;
         Row row = sheet.createRow(currentRow);
         int column = 0;
-        for (String header : headers) {
+        for (String header : parentChildHeaders) {
             Cell cell = row.createCell(column++);
             cell.setCellValue(header);
         }
@@ -71,9 +72,9 @@ public class UploadSampleVesselsContainerTest extends Arquillian {
                 column = 0;
                 int rowNum = i + (j * 10);
                 row = sheet.createRow(rowNum);
-                row.createCell(column++).setCellValue("SM-" + timestamp + rowNum);
-                row.createCell(column++).setCellValue(timestamp + rowNum);
-                row.createCell(column++).setCellValue("CO-" + timestamp + j);
+                row.createCell(column++).setCellValue("SM-" + timestamp + "pc" + rowNum);
+                row.createCell(column++).setCellValue(timestamp + "pc" + rowNum);
+                row.createCell(column++).setCellValue("CO-" + timestamp + "pc" + j);
                 row.createCell(column++).setCellValue(vesselPositions[rowNum].toString());
             }
         }
@@ -82,19 +83,71 @@ public class UploadSampleVesselsContainerTest extends Arquillian {
             workbook.write(new FileOutputStream(tempFile));
             MessageCollection messageCollection = new MessageCollection();
             // Persist the samples
-            vesselEjb.createSampleVessels(new FileInputStream(tempFile), "thompson", messageCollection);
+            vesselEjb.createSampleVessels(new FileInputStream(tempFile), "thompson", messageCollection,
+                    new SampleParentChildVesselProcessor("Sheet1"));
             Assert.assertEquals(messageCollection.getErrors().size(), 0);
 
             // Check tube and sample
-            BarcodedTube barcodedTube = barcodedTubeDao.findByBarcode(timestamp + 1);
+            BarcodedTube barcodedTube = barcodedTubeDao.findByBarcode(timestamp + "pc" + 1);
             Assert.assertNotNull(barcodedTube);
             Assert.assertEquals(barcodedTube.getMercurySamples().size(), 1);
             MercurySample mercurySample = barcodedTube.getMercurySamples().iterator().next();
-            Assert.assertEquals(mercurySample.getSampleKey(), "SM-" + timestamp + 1);
+            Assert.assertEquals(mercurySample.getSampleKey(), "SM-" + timestamp + "pc" + 1);
             Assert.assertEquals(mercurySample.getMetadataSource(), MercurySample.MetadataSource.MERCURY);
 
             // Check that attempting to create again the same tubes and samples gives errors.
-            vesselEjb.createSampleVessels(new FileInputStream(tempFile), "thompson", messageCollection);
+            vesselEjb.createSampleVessels(new FileInputStream(tempFile), "thompson", messageCollection,
+                    new SampleParentChildVesselProcessor("Sheet1"));
+            Assert.assertFalse(messageCollection.getErrors().isEmpty());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (InvalidFormatException e) {
+            throw new RuntimeException(e);
+        } catch (ValidationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    public void testLooseTubes() {
+        // Create a spreadsheet with IDs that aren't in the database.
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+        String timestamp = simpleDateFormat.format(new Date());
+        Workbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet();
+        int currentRow = 0;
+        Row row = sheet.createRow(currentRow);
+        int column = 0;
+        for (String header : looseTubeHeaders) {
+            Cell cell = row.createCell(column++);
+            cell.setCellValue(header);
+        }
+        for (int rowNum = 1; rowNum <= 10; rowNum++) {
+            column = 0;
+            row = sheet.createRow(rowNum);
+            row.createCell(column++).setCellValue("SM-" + timestamp + "l" + rowNum);
+            row.createCell(column++).setCellValue("Cryo vial [1.5mL]");
+        }
+        try {
+            File tempFile = File.createTempFile("SampleVessels", ".xlsx");
+            workbook.write(new FileOutputStream(tempFile));
+            MessageCollection messageCollection = new MessageCollection();
+            // Persist the samples
+            vesselEjb.createSampleVessels(new FileInputStream(tempFile), "thompson", messageCollection,
+                    new SampleLooseVesselProcessor("Sheet1"));
+            Assert.assertEquals(messageCollection.getErrors().size(), 0);
+
+            // Check tube and sample
+            BarcodedTube barcodedTube = barcodedTubeDao.findByBarcode("SM-" + timestamp + "l" + 1);
+            Assert.assertNotNull(barcodedTube);
+            Assert.assertEquals(barcodedTube.getMercurySamples().size(), 1);
+            MercurySample mercurySample = barcodedTube.getMercurySamples().iterator().next();
+            Assert.assertEquals(mercurySample.getSampleKey(), "SM-" + timestamp + "l" + 1);
+            Assert.assertEquals(mercurySample.getMetadataSource(), MercurySample.MetadataSource.MERCURY);
+
+            // Check that attempting to create again the same tubes and samples gives errors.
+            vesselEjb.createSampleVessels(new FileInputStream(tempFile), "thompson", messageCollection,
+                    new SampleLooseVesselProcessor("Sheet1"));
             Assert.assertFalse(messageCollection.getErrors().isEmpty());
         } catch (IOException e) {
             throw new RuntimeException(e);

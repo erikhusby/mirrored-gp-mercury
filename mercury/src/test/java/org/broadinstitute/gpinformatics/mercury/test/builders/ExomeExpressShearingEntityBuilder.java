@@ -78,6 +78,10 @@ public class ExomeExpressShearingEntityBuilder {
             mapBarcodeToVessel.put(preflightRack.getLabel(), preflightRack);
         }
         for (BarcodedTube barcodedTube : mapBarcodeToTube.values()) {
+            // The calculation of singleInferredBucketedBatch for routing purposes should not carry over when sample
+            // instances have multiple bucket entries.  If it is permitted, it may cause a rework tube just coming
+            // out of a bucket to keep its old LCSET (GPLIM-3313).
+            barcodedTube.clearCaches();
             mapBarcodeToVessel.put(barcodedTube.getLabel(), barcodedTube);
         }
 

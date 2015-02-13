@@ -87,6 +87,7 @@
             <xsd:element name="indexLength" type="xsd:int"/>
             <xsd:element name="indexSequence" type="xsd:string"/>
             <xsd:element name="referenceSequence" type="xsd:string"/>
+            <xsd:element name="lsid" type="xsd:string"/>
         </xsd:sequence>
     </xsd:complexType>
 

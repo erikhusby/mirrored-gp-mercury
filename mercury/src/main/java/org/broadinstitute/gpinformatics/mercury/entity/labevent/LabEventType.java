@@ -1,5 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselTypeGeometry;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,7 +35,9 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
     POST_SHEARING_TRANSFER_CLEANUP("PostShearingTransferCleanup",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            MessageType.PLATE_TRANSFER_EVENT, StaticPlate.PlateType.Eppendorf96, StaticPlate.PlateType.Eppendorf96,
+            new String[]{"SPRI", "70% Ethanol", "EB"}),
     SHEARING_QC("ShearingQC",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
@@ -835,7 +841,33 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
     ACTIVITY_END("ActivityEnd",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY);
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+
+    // Draft CRSP extraction transfers, todo jmt get input from lab.
+    // Transfer blood to micro centrifuge tube
+    EXTRACT_BLOOD_TO_MICRO("ExtractBloodToMicro",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.VacutainerBloodTube3,
+            BarcodedTube.BarcodedTubeType.EppendoffFliptop15, new String[]{"Proteinase K", "Buffer AL", "100% Ethanol"}),
+    // Transfer to spin column
+    EXTRACT_MICRO_TO_SPIN("ExtractMicroToSpin",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.EppendoffFliptop15,
+            BarcodedTube.BarcodedTubeType.SpinColumn, new String[]{"Buffer AW1", "Buffer AW2", "EB"}),
+    // Transfer to micro centrifuge tube
+    EXTRACT_SPIN_TO_MICRO("ExtractSpinToMicro",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.SpinColumn,
+            BarcodedTube.BarcodedTubeType.EppendoffFliptop15, new String[]{"Buffer AW"}),
+    // Transfer to matrix tube
+    EXTRACT_MICRO_TO_MATRIX("ExtractMicroToMatrix",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.EppendoffFliptop15,
+            BarcodedTube.BarcodedTubeType.MatrixTube075, new String[]{});
 
     private final String name;
 
@@ -971,6 +1003,23 @@ public enum LabEventType {
     }
     private final VolumeConcUpdate volumeConcUpdate;
 
+    public enum MessageType {
+        PLATE_EVENT,
+        PLATE_TRANSFER_EVENT,
+        STATION_SETUP_EVENT,
+        PLATE_CHERRY_PICK_EVENT,
+        RECEPTACLE_PLATE_TRANSFER_EVENT,
+        RECEPTACLE_EVENT,
+        RECEPTACLE_TRANSFER_EVENT
+    }
+
+    private MessageType messageType;
+
+    private VesselTypeGeometry sourceVesselTypeGeometry;
+    private VesselTypeGeometry targetVesselTypeGeometry;
+
+    private String[] reagentNames;
+
     /**
      * One attempt at trying to make a very generic
      * {@link LabEvent} to handle lots of different
@@ -1000,7 +1049,21 @@ public enum LabEventType {
         this.volumeConcUpdate = volumeConcUpdate;
     }
 
-    public String getName() {
+    LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
+                 SystemOfRecord systemOfRecord, CreateSources createSources, PlasticToValidate plasticToValidate,
+                 PipelineTransformation pipelineTransformation, SendToBsp sendToBsp,
+                 VolumeConcUpdate volumeConcUpdate, MessageType messageType,
+                 VesselTypeGeometry sourceVesselTypeGeometry, VesselTypeGeometry targetVesselTypeGeometry,
+                 String[] reagentNames) {
+        this(name, expectSourcesEmpty, expectTargetsEmpty, systemOfRecord, createSources, plasticToValidate,
+                pipelineTransformation, sendToBsp, volumeConcUpdate);
+        this.messageType = messageType;
+        this.sourceVesselTypeGeometry = sourceVesselTypeGeometry;
+        this.targetVesselTypeGeometry = targetVesselTypeGeometry;
+        this.reagentNames = reagentNames;
+    }
+
+        public String getName() {
         return name;
     }
 
@@ -1031,5 +1094,21 @@ public enum LabEventType {
 
     public VolumeConcUpdate getVolumeConcUpdate() {
         return volumeConcUpdate;
+    }
+
+    public MessageType getMessageType() {
+        return messageType;
+    }
+
+    public VesselTypeGeometry getSourceVesselTypeGeometry() {
+        return sourceVesselTypeGeometry;
+    }
+
+    public VesselTypeGeometry getTargetVesselTypeGeometry() {
+        return targetVesselTypeGeometry;
+    }
+
+    public String[] getReagentNames() {
+        return reagentNames;
     }
 }
