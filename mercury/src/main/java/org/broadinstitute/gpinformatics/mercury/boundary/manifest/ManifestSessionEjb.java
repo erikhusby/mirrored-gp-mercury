@@ -304,4 +304,24 @@ public class ManifestSessionEjb {
         LabVessel targetVessel = findAndValidateTargetVessel(vesselLabel, targetSample);
         session.performTransfer(sourceCollaboratorSample, targetSample, targetVessel, user);
     }
+
+    /**
+     * Creates a new manifest session for the given research project.
+     *
+     * @param researchProjectKey    the business key of the research project for these samples
+     * @param sessionName           the name to give the manifest session
+     * @param user                  the user initiating the session
+     * @return the newly created (and persisted) ManifestSession
+     */
+    // TODO: change BspUser parameter to String of username after merging develop with Scott's changes
+    public ManifestSession createManifestSession(String researchProjectKey, String sessionName, BspUser user) {
+        ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
+        if (researchProject == null) {
+            throw new IllegalArgumentException("Research project not found: " + researchProjectKey);
+        }
+
+        ManifestSession manifestSession = new ManifestSession(researchProject, sessionName, user);
+        manifestSessionDao.persist(manifestSession);
+        return manifestSession;
+    }
 }

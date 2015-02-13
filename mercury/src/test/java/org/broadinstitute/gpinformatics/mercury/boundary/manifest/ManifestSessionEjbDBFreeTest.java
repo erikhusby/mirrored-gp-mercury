@@ -171,7 +171,8 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     private ManifestSessionEjb buildEjbForUpload(ResearchProject researchProject) {
-        Mockito.when(researchProjectDao.findByBusinessKey(Mockito.anyString())).thenReturn(researchProject);
+        Mockito.when(researchProjectDao.findByBusinessKey(researchProject.getBusinessKey()))
+                .thenReturn(researchProject);
 
         return new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao);
     }
@@ -234,7 +235,8 @@ public class ManifestSessionEjbDBFreeTest {
                 return holder.manifestSession;
             }
         });
-        Mockito.when(researchProjectDao.findByBusinessKey(Mockito.anyString())).thenReturn(researchProject);
+        Mockito.when(researchProjectDao.findByBusinessKey(researchProject.getBusinessKey()))
+                .thenReturn(researchProject);
 
         Mockito.when(mercurySampleDao.findBySampleKey(Mockito.eq(TEST_SAMPLE_KEY))).thenReturn(
                 testSampleForAccessioning);
@@ -1321,5 +1323,43 @@ public class ManifestSessionEjbDBFreeTest {
             assertThat(e.getMessage(), containsString(ManifestSessionEjb.VESSEL_USED_FOR_PREVIOUS_TRANSFER));
             assertThat(testSample.getMetadata(), is(empty()));
         }
+    }
+
+    /* ************************************************** *
+     * createManifestSession tests
+     * ************************************************** */
+
+    /**
+     * Test creation of a valid manifest session.
+     */
+    public void testCreateValidManifest() {
+        ResearchProject researchProject = createTestResearchProject();
+        Mockito.when(researchProjectDao.findByBusinessKey(researchProject.getBusinessKey()))
+                .thenReturn(researchProject);
+        String sessionName = "test session";
+
+        ManifestSessionEjb manifestSessionEjb =
+                new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao);
+
+        ManifestSession manifestSession = manifestSessionEjb
+                .createManifestSession(researchProject.getBusinessKey(), sessionName, TEST_USER);
+
+        assertThat(manifestSession.getResearchProject(), equalTo(researchProject));
+        assertThat(manifestSession.getSessionName(),
+                equalTo(sessionName + "-" + manifestSession.getManifestSessionId()));
+        assertThat(manifestSession.getUpdateData().getCreatedBy(), equalTo(TEST_USER.getUserId()));
+
+        Mockito.verify(manifestSessionDao).persist(manifestSession);
+    }
+
+    /**
+     * Test creation of a manifest session when the research project doesn't exist.
+     */
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testCreateManifestManifestBadResearchProject() {
+        ManifestSessionEjb manifestSessionEjb =
+                new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao);
+
+        manifestSessionEjb.createManifestSession("BadRP", "test session", TEST_USER);
     }
 }

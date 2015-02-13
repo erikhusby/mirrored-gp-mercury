@@ -105,6 +105,7 @@ public class ManifestSession implements Updatable {
              + " join mercury.manifest_event evt on evt.MANIFEST_RECORD_ID = record.MANIFEST_RECORD_ID and evt.SEVERITY = 'QUARANTINED'"
              + " where record.manifest_session_id = manifest_session_id)")
     private int numberOfQuarantinedRecords;
+
     /**
      * For JPA.
      */
@@ -116,6 +117,28 @@ public class ManifestSession implements Updatable {
         researchProject.addManifestSession(this);
         sessionPrefix = FilenameUtils.getBaseName(pathToManifestFile);
         updateData.setCreatedBy(createdBy.getUserId());
+    }
+
+    /**
+     * Creates a new ManifestSession with the given research project, name, and creator. While the parameters are similar
+     * @param researchProject
+     * @param name
+     * @param createdBy
+     * @return
+     */
+    public static ManifestSession createWithName(ResearchProject researchProject, String name, BspUser createdBy) {
+        ManifestSession manifestSession = new ManifestSession();
+        manifestSession.researchProject = researchProject;
+        manifestSession.sessionPrefix = name;
+        manifestSession.updateData.setCreatedBy(createdBy);
+        return manifestSession;
+    }
+
+    /**
+     * For database-free tests ONLY.
+     */
+    public ManifestSession(long manifestSessionId) {
+        this.manifestSessionId = manifestSessionId;
     }
 
     public ResearchProject getResearchProject() {

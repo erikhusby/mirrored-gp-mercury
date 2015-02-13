@@ -21,6 +21,7 @@ import static org.broadinstitute.gpinformatics.mercury.boundary.manifest.Manifes
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.not;
@@ -262,6 +263,19 @@ public class ManifestSessionTest {
             assertThat(e.getMessage(),
                     containsString(ManifestRecord.ErrorStatus.SOURCE_ALREADY_TRANSFERRED.getBaseMessage()));
         }
+    }
+
+    /**
+     * Test of static method that creates an empty session with the intention that it will be filled in via web service
+     * calls. In this case, there isn't a path to a manifest file to extract the sessionPrefix from, so the argument is
+     * instead taken as-is.
+     */
+    public void testCreateEmptySession() {
+        String sessionName = "session name";
+        ManifestSession session = ManifestSession.createWithName(testRp, sessionName, testUser);
+        assertThat(session.getResearchProject(), equalTo(testRp));
+        assertThat(session.getSessionName(), startsWith(sessionName + "-"));
+        assertThat(session.getUpdateData().getCreatedBy(), equalTo(testUser.getUserId()));
     }
 
     private void addDuplicateManifestRecord() {
