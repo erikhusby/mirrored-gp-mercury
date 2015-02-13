@@ -333,4 +333,14 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
     public String getSequencerModel() {
         return getFlowcellType().getSequencerModel();
     }
+
+    /** Should only be used by a data fixup test. */
+    void setFlowcellType(FlowcellType flowcellType) {
+        this.flowcellType = flowcellType;
+    }
+
+    /** Should only be used by a data fixup test. */
+    void setFlowcellBarcode(String flowcellBarcode) {
+        this.flowcellBarcode = flowcellBarcode;
+    }
 }
