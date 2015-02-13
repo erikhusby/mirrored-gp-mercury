@@ -151,7 +151,7 @@ public class LimsQueryResourceResponseFactoryTest {
         for (int i = 0; i < expected.getSampleDetailsSize(); i++) {
             assertSampleInfo(outLibraryData.getSampleDetails().get(i), expected.getSampleDetails().get(i));
         }
-        assertThat(outLibraryData.getDateCreated().toGregorianCalendar().getTime(), equalTo(libraryDateCreated));
+        assertThat(outLibraryData.getDateCreated(), equalTo(libraryDateCreated));
         assertThat(outLibraryData.isDiscarded(), equalTo(expected.isIsDiscarded()));
         assertThat(outLibraryData.isDestroyed(), equalTo(expected.isIsDestroyed()));
     }
