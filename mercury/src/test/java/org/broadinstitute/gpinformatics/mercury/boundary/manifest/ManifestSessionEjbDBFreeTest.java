@@ -15,10 +15,10 @@ import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
+import org.broadinstitute.gpinformatics.mercury.boundary.sample.ClinicalSampleFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.crsp.generated.MetaData;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -42,6 +42,7 @@ import org.testng.annotations.Test;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -99,6 +100,10 @@ public class ManifestSessionEjbDBFreeTest {
     private static final String FEMALE = "Female";
     private static final String MALE = "Male";
     private static final ManifestRecord.ErrorStatus NO_ERROR = null;
+    private static final String SM_1 = "SM-1";
+    private static final String PATIENT_1 = "patient-1";
+    private static final String SM_2 = "SM-2";
+    private static final String PATIENT_2 = "patient-2";
     private ManifestSessionDao manifestSessionDao;
     private ResearchProjectDao researchProjectDao;
     private String sourceForTransfer = "9294923";
@@ -242,6 +247,9 @@ public class ManifestSessionEjbDBFreeTest {
         Mockito.when(manifestSessionDao.find(Mockito.anyLong())).thenAnswer(new Answer<ManifestSession>() {
             @Override
             public ManifestSession answer(InvocationOnMock invocation) throws Throwable {
+                if ((long)invocation.getArguments()[0] == 0) {
+                    return null;
+                }
                 return holder.manifestSession;
             }
         });
@@ -1368,58 +1376,109 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(testSample.getMetadata(), is(not(empty())));
     }
 
-    private static Sample createCrspSample(Map<String, String> metaDataPairs) {
-        Sample crspSample = new Sample();
-
-        for (Map.Entry<String, String> metaDataEntry : metaDataPairs.entrySet()) {
-            MetaData metaDataItem = new MetaData();
-            metaDataItem.setName(metaDataEntry.getKey());
-            metaDataItem.setValue(metaDataEntry.getValue());
-            crspSample.getMetadata().add(metaDataItem);
-        }
-        return crspSample;
-    }
-
-    public void convertToMercuryMetadataNoSuchKey() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20);
-        String key = "a";
-        Sample crspSample = createCrspSample(ImmutableMap.of(key, "b"));
-        String shouldHaveThrownExceptionErrorMessage = "You should have thrown a InformaticsServiceException";
-        try {
-            holder.ejb.convertToMercuryMetadata(crspSample);
-            Assert.fail(shouldHaveThrownExceptionErrorMessage);
-        } catch (IllegalArgumentException e) {
-            assertThat(e.getMessage(), is(String.format(Metadata.METADATA_KEY_NOT_FOUND, key)));
-        } catch (Exception e) {
-            Assert.fail("Wrong exception thrown, " + shouldHaveThrownExceptionErrorMessage);
-        }
-    }
-
     public void convertToMercury() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.UPLOAD_ACCEPTED, 1);
-        String sampleId = "SM-0234";
-        Sample crspSample = createCrspSample(ImmutableMap.of(Metadata.Key.SAMPLE_ID.getDisplayName(), sampleId));
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.UPLOAD_ACCEPTED, 1, true);
+        Sample crspSample = ClinicalSampleFactory
+                .createCrspSample(ImmutableMap.of(Metadata.Key.SAMPLE_ID, SM_1));
 
-        List<Metadata> metadatas = holder.ejb.convertToMercuryMetadata(crspSample);
-        assertThat(metadatas.size(), is(1));
-        assertThat(metadatas.get(0).getKey(), is(Metadata.Key.SAMPLE_ID));
-        assertThat(metadatas.get(0).getStringValue(), is(sampleId));
+        List<Metadata> metadata = holder.ejb.convertToMercuryMetadata(crspSample);
+        assertThat(metadata.size(), is(1));
+        Metadata metadataItem = metadata.get(0);
+        assertThat(metadataItem.getValue(), is(SM_1));
+        assertThat(metadataItem.getKey(), is(Metadata.Key.SAMPLE_ID));
+    }
+
+    @Test(expectedExceptions = InformaticsServiceException.class)
+    public void testAddSampleToManifestSessionSessionDoesNotExist() throws Exception {
+        long manifestId = 0l;
+        try {
+            ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.UPLOAD_ACCEPTED, 0, true);
+            Sample crspSample = ClinicalSampleFactory.createCrspSample(ImmutableMap.of(
+                            Metadata.Key.SAMPLE_ID, SM_1,
+                            Metadata.Key.PATIENT_ID, PATIENT_1)
+            );
+            holder.ejb.addSamplesToManifest(manifestId, Arrays.asList(crspSample));
+        } catch (InformaticsServiceException e) {
+            assertThat(e.getMessage(), is(String.format(ManifestSessionEjb.MANIFEST_SESSION_NOT_FOUND, manifestId)));
+            throw e;
+        }
+    }
+
+    @Test(expectedExceptions = InformaticsServiceException.class)
+    public void testAddSampleToManifestSessionNoSamples() throws Exception {
+        try {
+            ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.UPLOAD_ACCEPTED, 0, true);
+            holder.ejb.addSamplesToManifest(1234l, Collections.<Sample>emptyList());
+        } catch (InformaticsServiceException e) {
+            assertThat(e.getMessage(), is("Empty list of samples not allowed."));
+            throw e;
+        }
+    }
+
+    @Test(expectedExceptions = InformaticsServiceException.class)
+    public void testAddSampleToManifestSessionEmptySample() throws Exception {
+        try {
+            ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.UPLOAD_ACCEPTED, 0, true);
+            Sample crspSample = new Sample();
+            holder.ejb.addSamplesToManifest(1234l, Arrays.asList(crspSample));
+        } catch (InformaticsServiceException e) {
+            assertThat(e.getMessage(), is("Sample contains no metadata."));
+            throw e;
+        }
+    }
+
+    @Test(expectedExceptions = InformaticsServiceException.class)
+    public void testAddSampleToManifestNullSamples() throws Exception {
+        try {
+            ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.UPLOAD_ACCEPTED, 0, true);
+            Sample crspSample = null;
+            holder.ejb.addSamplesToManifest(1234l, Arrays.asList(crspSample));
+        } catch (InformaticsServiceException e) {
+            assertThat(e.getMessage(), is("Sample is null."));
+            throw e;
+        }
+    }
+
+    public void testAddSampleToManifestSession() throws Exception {
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.UPLOAD_ACCEPTED, 0, true);
+
+        Sample crspSample = ClinicalSampleFactory.createCrspSample(ImmutableMap.of(
+                        Metadata.Key.SAMPLE_ID, SM_1, Metadata.Key.PATIENT_ID, PATIENT_1));
+        holder.ejb.addSamplesToManifest(1234l, Arrays.asList(crspSample));
+        assertThat(holder.manifestSession.getRecords().size(), equalTo(1));
+        ManifestRecord manifestRecord = holder.manifestSession.getRecords().get(0);
+        assertThat(manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID), equalTo(SM_1));
+        assertThat(manifestRecord.getValueByKey(Metadata.Key.PATIENT_ID), equalTo( PATIENT_1));
     }
 
     public void testAddSamplesToManifestSession() throws Exception {
-        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.UPLOAD_ACCEPTED, 0);
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.UPLOAD_ACCEPTED, 0, true);
 
         List<Sample> samples = new ArrayList<>();
-        samples.add(createCrspSample(ImmutableMap.of(
-                Metadata.Key.SAMPLE_ID.getDisplayName(), "SM-1",
-                Metadata.Key.PATIENT_ID.getDisplayName(), "patient-1")
-        ));
-        samples.add(createCrspSample(ImmutableMap.of(
-                Metadata.Key.SAMPLE_ID.getDisplayName(), "SM-2",
-                Metadata.Key.PATIENT_ID.getDisplayName(), "patient-2")
-        ));
+        samples.add(ClinicalSampleFactory
+                .createCrspSample(ImmutableMap.of(Metadata.Key.SAMPLE_ID, SM_1, Metadata.Key.PATIENT_ID, PATIENT_1)));
+        samples.add(ClinicalSampleFactory
+                .createCrspSample(ImmutableMap.of(Metadata.Key.SAMPLE_ID, SM_2, Metadata.Key.PATIENT_ID, PATIENT_2)));
         holder.ejb.addSamplesToManifest(1234l, samples);
-        // todo: useful assertions
+        assertThat(holder.manifestSession.getRecords().size(), equalTo(samples.size()));
+        ManifestRecord manifestRecord = holder.manifestSession.getRecords().get(0);
+        assertThat(manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID), equalTo(SM_1));
+        assertThat(manifestRecord.getValueByKey(Metadata.Key.PATIENT_ID), equalTo(PATIENT_1));
+        assertThat(holder.manifestSession.getStatus(), is(ManifestSession.SessionStatus.ACCESSIONING));
+    }
+
+    public void testAddDuplicateSamplesToManifestSession() throws Exception {
+        ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.UPLOAD_ACCEPTED, 0, true);
+
+        List<Sample> samples = new ArrayList<>();
+        Sample crspSample = ClinicalSampleFactory
+                .createCrspSample(ImmutableMap.of(Metadata.Key.SAMPLE_ID, SM_1, Metadata.Key.PATIENT_ID, PATIENT_1));
+        samples.add(crspSample);
+        crspSample = ClinicalSampleFactory
+                .createCrspSample(ImmutableMap.of(Metadata.Key.SAMPLE_ID, SM_1, Metadata.Key.PATIENT_ID, PATIENT_1));
+        samples.add(crspSample);
+        holder.ejb.addSamplesToManifest(1234l, samples);
+        assertThat(holder.manifestSession.getRecords().size(), is(2));
     }
 }
 

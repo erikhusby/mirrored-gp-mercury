@@ -85,7 +85,7 @@ public class ManifestSessionTest {
     private ManifestRecord buildManifestRecord(ManifestSession manifestSession, String sampleId) {
         ManifestRecord manifestRecord = new ManifestRecord(ManifestTestFactory.buildMetadata(ImmutableMap.of(
                 Metadata.Key.SAMPLE_ID, sampleId,
-                Metadata.Key.MATERIAL_TYPE, "value1",
+                Metadata.Key.SAMPLE_TYPE, "value1",
                 Metadata.Key.TUMOR_NORMAL, "value2",
                 Metadata.Key.BUICK_COLLECTION_DATE, "value3")));
         manifestSession.addRecord(manifestRecord);

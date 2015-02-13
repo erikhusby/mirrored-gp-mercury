@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
@@ -63,11 +64,11 @@ public class ClinicalResource {
 
     public void addSamplesToManifest(String username, Long manifestId, Collection<Sample> samples) {
         login(username);
-        String requiredParameterMissing = "Required parameter %s is missing.";
+        String requiredParameterMissing = "Required parameter \'%s\' is missing.";
         if (manifestId == null) {
             throw new InformaticsServiceException(String.format(requiredParameterMissing, "manifestId"));
         }
-        if (samples.isEmpty()) {
+        if (CollectionUtils.isEmpty(samples)) {
             throw new InformaticsServiceException(String.format(requiredParameterMissing, "samples"));
         }
         manifestSessionEjb.addSamplesToManifest(manifestId, samples);

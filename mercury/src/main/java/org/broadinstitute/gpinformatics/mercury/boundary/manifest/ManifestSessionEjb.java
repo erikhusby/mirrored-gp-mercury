@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -11,6 +12,9 @@ import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceExcep
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.crsp.generated.MetaData;
+import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
@@ -20,6 +24,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.TubeTransferExcept
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
+import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -136,28 +141,31 @@ public class ManifestSessionEjb {
         // Persist here so an ID will be generated for the ManifestSession.  This ID is used for the
         // ManifestSession's name which is displayed on the UI.
         manifestSessionDao.persist(manifestSession);
-        addAndValidateManifestRecords(manifestSession, manifestRecords);
+        manifestSession.addRecords(manifestRecords);
+        manifestSession.validateManifest();
         return manifestSession;
     }
 
-    public void addSamplesToManifest(Long manifestId, Collection<Sample> samples) {
+    /**
+     * Add a collection of samples to existing manifest.
+     */
+    public void addSamplesToManifest(@Nonnull Long manifestId, @Nonnull Collection<Sample> samples) {
         ManifestSession manifestSession = findManifestSession(manifestId);
-        if (manifestSession == null) {
-            String errorMessage = String.format("No manifestSession with id %d exists", manifestId);
-            throw new InformaticsServiceException(errorMessage);
+        if (samples.isEmpty()) {
+            throw new InformaticsServiceException("Empty list of samples not allowed.");
         }
-
         List<ManifestRecord> manifestRecords = new ArrayList<>(samples.size());
         for (Sample sample : samples) {
+            if (sample == null){
+                throw new InformaticsServiceException("Sample is null.");
+            }
+            if (CollectionUtils.isEmpty(sample.getMetadata())) {
+                throw new InformaticsServiceException("Sample contains no metadata.");
+            }
             List<Metadata> metadata = convertToMercuryMetadata(sample);
             manifestRecords.add(new ManifestRecord(metadata.toArray(new Metadata[metadata.size()])));
         }
-        addAndValidateManifestRecords(manifestSession, manifestRecords);
-    }
-
-    private void addAndValidateManifestRecords(ManifestSession manifestSession, Collection<ManifestRecord> manifestRecords) {
         manifestSession.addRecords(manifestRecords);
-        manifestSession.validateManifest();
     }
 
     List<Metadata> convertToMercuryMetadata(Sample crspSample) {
