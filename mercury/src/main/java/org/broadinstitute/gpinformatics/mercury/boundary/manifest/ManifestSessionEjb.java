@@ -11,6 +11,9 @@ import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceExcep
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.crsp.generated.MetaData;
+import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
@@ -24,6 +27,7 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -130,9 +134,38 @@ public class ManifestSessionEjb {
         // Persist here so an ID will be generated for the ManifestSession.  This ID is used for the
         // ManifestSession's name which is displayed on the UI.
         manifestSessionDao.persist(manifestSession);
+        addAndValidateManifestRecords(manifestSession, manifestRecords);
+        return manifestSession;
+    }
+
+    public void addSamplesToManifest(Long manifestId, Collection<Sample> samples) {
+        ManifestSession manifestSession = findManifestSession(manifestId);
+        if (manifestSession == null) {
+            String errorMessage = String.format("No manifestSession with id %d exists", manifestId);
+            throw new InformaticsServiceException(errorMessage);
+        }
+
+        List<ManifestRecord> manifestRecords = new ArrayList<>(samples.size());
+        for (Sample sample : samples) {
+            List<Metadata> metadata = convertToMercuryMetadata(sample);
+            manifestRecords.add(new ManifestRecord(metadata.toArray(new Metadata[metadata.size()])));
+        }
+        addAndValidateManifestRecords(manifestSession, manifestRecords);
+    }
+
+    private void addAndValidateManifestRecords(ManifestSession manifestSession, Collection<ManifestRecord> manifestRecords) {
         manifestSession.addRecords(manifestRecords);
         manifestSession.validateManifest();
-        return manifestSession;
+    }
+
+    List<Metadata> convertToMercuryMetadata(Sample crspSample) {
+        List<Metadata> mercuryMetadata = new ArrayList<>(crspSample.getMetadata().size());
+        for (MetaData crspMetadata : crspSample.getMetadata()) {
+            Metadata.Key metadataKey = Metadata.Key.fromDisplayName(crspMetadata.getName());
+            Metadata mercuryMetadataItem = new Metadata(metadataKey, crspMetadata.getValue());
+            mercuryMetadata.add(mercuryMetadataItem);
+        }
+        return mercuryMetadata;
     }
 
     private ResearchProject findResearchProject(String researchProjectKey) {

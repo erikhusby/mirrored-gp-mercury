@@ -28,6 +28,7 @@ import java.util.Date;
 @Table(schema = "mercury", name = "METADATA")
 public class Metadata {
     public static final Format DATE_FORMAT = FastDateFormat.getInstance("yyyy-MM-dd-HH:mm:ss");
+    public static final String METADATA_KEY_NOT_FOUND = "No metadata key found with name %s";
 
     @Id
     @SequenceGenerator(name = "SEQ_METADATA", schema = "mercury", sequenceName = "SEQ_METADATA")
@@ -265,5 +266,15 @@ public class Metadata {
         public String getDisplayName() {
             return displayName;
         }
+
+        public static Metadata.Key fromDisplayName(String displayName) {
+            for (Key key : Key.values()) {
+                if (key.getDisplayName().equals(displayName)) {
+                    return key;
+                }
+            }
+            throw new IllegalArgumentException(String.format(METADATA_KEY_NOT_FOUND, displayName));
+        }
+
     }
 }

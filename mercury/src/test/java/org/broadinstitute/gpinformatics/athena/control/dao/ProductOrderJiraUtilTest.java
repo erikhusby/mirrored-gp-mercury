@@ -33,6 +33,9 @@ public class ProductOrderJiraUtilTest extends Arquillian {
     @Inject
     JiraService jiraService;
 
+    @Inject
+    ProductOrderJiraUtil productOrderJiraUtil;
+
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(TEST);
@@ -45,7 +48,7 @@ public class ProductOrderJiraUtilTest extends Arquillian {
         Assert.assertTrue(StringUtils.isEmpty(pdo.getJiraTicketKey()),
                 "PDO already has a jira id, but we want it blank for our test.");
 
-        ProductOrderJiraUtil.createIssueForOrder(pdo, jiraService);
+        productOrderJiraUtil.createIssueForOrder(pdo);
 
         Assert.assertFalse(StringUtils.isEmpty(pdo.getJiraTicketKey()),
                 "When the PDO is created in jira, we expected the PDO's business key to be assigned.");
