@@ -51,7 +51,7 @@ public class ManifestSessionTest {
         sessionPrefix = "testPrefix";
         testUser = new BSPUserList.QADudeUser("LU", 33L);
 
-        session = new ManifestSession(testRp, sessionPrefix, testUser);
+        session = new ManifestSession(testRp, sessionPrefix, testUser, false);
 
         for (String sampleId : SAMPLES_IN_MANIFEST) {
             ManifestRecord manifestRecord = buildManifestRecord(session, sampleId);
@@ -86,7 +86,7 @@ public class ManifestSessionTest {
     private ManifestRecord buildManifestRecord(ManifestSession manifestSession, String sampleId) {
         ManifestRecord manifestRecord = new ManifestRecord(ManifestTestFactory.buildMetadata(ImmutableMap.of(
                 Metadata.Key.SAMPLE_ID, sampleId,
-                Metadata.Key.MATERIAL_TYPE, "value1",
+                Metadata.Key.SAMPLE_TYPE, "value1",
                 Metadata.Key.TUMOR_NORMAL, "value2",
                 Metadata.Key.BUICK_COLLECTION_DATE, "value3")));
         manifestSession.addRecord(manifestRecord);
@@ -244,7 +244,8 @@ public class ManifestSessionTest {
         setAllManifestRecordStatus(ManifestRecord.Status.ACCESSIONED);
 
         ManifestRecord testRecord = session.getRecords().iterator().next();
-        ManifestRecord recordForTransfer = session.findRecordForTransfer(testRecord.getSampleId());
+        ManifestRecord recordForTransfer = session.findRecordForTransferByKey(Metadata.Key.SAMPLE_ID,
+                testRecord.getSampleId());
 
         assertThat(testRecord, is(equalTo(recordForTransfer)));
 
@@ -257,7 +258,7 @@ public class ManifestSessionTest {
 
         ManifestRecord testRecord = session.getRecords().iterator().next();
         try {
-            session.findRecordForTransfer(testRecord.getSampleId());
+            session.findRecordForTransferByKey(Metadata.Key.SAMPLE_ID, testRecord.getSampleId());
             Assert.fail();
         } catch (Exception e) {
             assertThat(e.getMessage(),

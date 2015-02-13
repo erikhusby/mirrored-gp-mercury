@@ -11,6 +11,14 @@
         <stripes:form beanclass="${actionBean.class.name}" id="uploadForm" class="form-horizontal">
             <div class="form-horizontal">
                 <div class="control-group">
+                    <stripes:label for="spreadsheetType" class="control-label">Spreadsheet Type</stripes:label>
+                    <div class="controls">
+                        <stripes:select name="spreadsheetType">
+                            <stripes:options-enumeration
+                                    enum="org.broadinstitute.gpinformatics.mercury.presentation.sample.SampleVesselActionBean.SpreadsheetType"
+                                    label="displayName"/>
+                        </stripes:select>
+                    </div>
                     <stripes:label for="samplesSpreadsheet" class="control-label">
                         Samples Spreadsheet
                     </stripes:label>

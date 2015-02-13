@@ -25,6 +25,7 @@ import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.util.Collections;
 import java.util.HashMap;
@@ -70,7 +71,7 @@ public class SampleMetadataFixupTest extends Arquillian {
         for (MetaDataFixupItem fixupItem : fixupItems.values()) {
             List<MercurySample> mercurySamples = samplesById.get(fixupItem.getSampleKey());
             assertThat(mercurySamples.size(), equalTo(1));
-            fixUpErrors.putAll(fixupItem.updateMetadataForSamples(mercurySamples.get(0)));
+            fixUpErrors.putAll(fixupItem.updateMetadataForSample(mercurySamples.get(0)));
         }
         String assertFailureReason =
                 String.format("Error updating some or all samples: %s. Please consult server log for more information.",
@@ -80,8 +81,53 @@ public class SampleMetadataFixupTest extends Arquillian {
                 .persist(new FixupCommentary("see https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-3107"));
         mercurySampleDao.flush();
     }
-}
 
+    @Test(enabled = false)
+    public void fixupGPLIM_3355_CRSP_ICE_Validation_sample_repatienting() {
+        Map<String, MetaDataFixupItem> fixupItems = new HashMap<>();
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-74P3C", Metadata.Key.PATIENT_ID, "NA12878_2", "NA12878_1"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-74P57", Metadata.Key.PATIENT_ID, "NA12878_3", "NA12878_1"));
+
+        String fixupComment = "see https://gpinfojira.broadinstitute.org:8443/jira/browse/GPLIM-3355";
+        updateMetadataAndValidate(fixupItems, fixupComment);
+    }
+
+    /**
+     * Perform actual fixup and validate.
+     */
+    private void updateMetadataAndValidate(@Nonnull Map<String, MetaDataFixupItem> fixupItems,
+                                           @Nonnull String fixupComment) {
+        userBean.loginOSUser();
+        Map<String, Metadata.Key> fixUpErrors = new HashMap<>();
+        Map<String, MercurySample> samplesById = mercurySampleDao.findMapIdToMercurySample(fixupItems.keySet());
+        for (MetaDataFixupItem fixupItem : fixupItems.values()) {
+            Map<String, Metadata.Key> fixupItemErrors = new HashMap<>();
+            MercurySample mercurySample = samplesById.get(fixupItem.getSampleKey());
+            fixupItemErrors.putAll(fixupItem.validateOriginalValue(mercurySample));
+            if (fixupItemErrors.isEmpty()) {
+                fixupItemErrors.putAll(fixupItem.updateMetadataForSample(mercurySample));
+            }
+            fixUpErrors.putAll(fixupItemErrors);
+        }
+        String assertFailureReason =
+                String.format("Error updating some or all samples: %s. Please consult server log for more information.",
+                        fixUpErrors);
+        assertThat(assertFailureReason, fixUpErrors, equalTo(Collections.EMPTY_MAP));
+        mercurySampleDao.persist(new FixupCommentary(fixupComment));
+        mercurySampleDao.flush();
+
+        samplesById = mercurySampleDao.findMapIdToMercurySample(fixupItems.keySet());
+        for (MetaDataFixupItem fixupItem : fixupItems.values()) {
+            MercurySample mercurySample = samplesById.get(fixupItem.getSampleKey());
+            fixUpErrors.putAll(fixupItem.validateUpdatedValue(mercurySample));
+        }
+        assertFailureReason =
+                        String.format("Updated values do not match expected values for some or all samples: %s. Please consult server log for more information.",
+                                fixUpErrors);
+        assertThat(assertFailureReason, fixUpErrors, equalTo(Collections.EMPTY_MAP));
+
+    }
+}
 
 class MetaDataFixupItem {
     private static Log log = LogFactory.getLog(MetaDataFixupItem.class);
@@ -103,7 +149,7 @@ class MetaDataFixupItem {
         return ImmutableMap.of(sampleId, new MetaDataFixupItem(sampleId, metadataKey, oldValue, newValue));
     }
 
-    public Map<String, Metadata.Key> updateMetadataForSamples(MercurySample mercurySample) {
+    public Map<String, Metadata.Key> updateMetadataForSample(MercurySample mercurySample) {
         Map<String, Metadata.Key> errors = new HashMap<>();
         if (!mercurySample.getSampleKey().equals(sampleKey)) {
             throw new RuntimeException(
@@ -112,17 +158,49 @@ class MetaDataFixupItem {
 
         Metadata metadataRecord = findMetadataRecord(mercurySample);
 
-        if (metadataRecord!=null && metadataRecord.getValue()!=null) {
+        if (metadataRecord != null && metadataRecord.getValue() != null) {
             metadataRecord.setStringValue(newValue);
             log.info(String.format("Successfully updated metadata for sample '%s': '[%s, %s]", sampleKey,
                     metadataRecord.getKey(), metadataRecord.getValue()));
         } else {
             errors.put(sampleKey, metadataKey);
-
             String errorString = String.format(
                     "Could not find metadata matching original metadata '[%s, %s]' for sample '%s'. Please verify the oldValue and newValue are correct for this sample.",
                     metadataKey, oldValue, sampleKey);
             log.error(errorString);
+        }
+        return errors;
+    }
+
+    /**
+     * test if metadata value matches original value. If there are errors it logs them
+     */
+    protected Map<String, Metadata.Key> validateOriginalValue(MercurySample mercurySample){
+        return validateMetadataValue(mercurySample, oldValue);
+    }
+
+    /**
+     * test if metadata value matches updated value. If there are errors it logs them.
+     */
+    protected Map<String, Metadata.Key> validateUpdatedValue(MercurySample mercurySample){
+        return validateMetadataValue(mercurySample, newValue);
+    }
+
+    /**
+     * test if metadata value matches expected value. If there are errors it logs them
+     */
+    private Map<String, Metadata.Key> validateMetadataValue(MercurySample mercurySample, String expected){
+        Map<String, Metadata.Key> errors=new HashMap<>();
+        for (Metadata metadata : mercurySample.getMetadata()) {
+            if (metadata.getKey() == metadataKey) {
+                if (!metadata.getValue().equals(expected)) {
+                    String errorMessage =
+                            String.format("Metadata value %s does not match expected value of %s for sample %s", metadata.getValue(),
+                                    expected, mercurySample.getSampleKey());
+                    log.error(errorMessage);
+                    errors.put(sampleKey, metadataKey);
+                }
+            }
         }
         return errors;
     }

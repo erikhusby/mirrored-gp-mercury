@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 
@@ -153,6 +154,28 @@ public class BettaLimsMessageUtils {
         case SOURCE:
             barcodes.add(receptacleEventType.getReceptacle().getBarcode());
             break;
+        }
+        return barcodes;
+    }
+
+    /**
+     * Based on LabEventType, get tube barcodes for validation or routing
+     *
+     * @param receptacleTransferEventType from deck
+     *
+     * @return tube barcodes
+     */
+    public static Set<String> getBarcodesForReceptacleTransferEvent(ReceptacleTransferEventType receptacleTransferEventType) {
+        Set<String> barcodes = new HashSet<>();
+        LabEventType.PlasticToValidate plasticToValidate =
+                LabEventType.getByName(receptacleTransferEventType.getEventType()).getPlasticToValidate();
+        if (plasticToValidate == LabEventType.PlasticToValidate.SOURCE ||
+                plasticToValidate == LabEventType.PlasticToValidate.BOTH) {
+            barcodes.add(receptacleTransferEventType.getSourceReceptacle().getBarcode());
+        }
+        if (plasticToValidate == LabEventType.PlasticToValidate.TARGET ||
+                plasticToValidate == LabEventType.PlasticToValidate.BOTH) {
+            barcodes.add(receptacleTransferEventType.getReceptacle().getBarcode());
         }
         return barcodes;
     }

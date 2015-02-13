@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.RapSheet;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
@@ -77,6 +78,7 @@ public class MercurySample extends AbstractSample {
     private RapSheet rapSheet;
 
     @OneToMany(mappedBy = "mercurySample", fetch = FetchType.LAZY,  cascade = CascadeType.PERSIST)
+    @BatchSize(size = 100)
     private Set<ProductOrderSample> productOrderSamples = new HashSet<>();
 
     @Enumerated(EnumType.STRING)

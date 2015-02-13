@@ -1,8 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
@@ -21,7 +22,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestStatus;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.TubeTransferException;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
+import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -60,6 +63,8 @@ public class ManifestSessionEjb {
 
     private LabVesselDao labVesselDao;
 
+    private UserBean userBean;
+
     /**
      * For CDI.
      */
@@ -69,11 +74,12 @@ public class ManifestSessionEjb {
 
     @Inject
     public ManifestSessionEjb(ManifestSessionDao manifestSessionDao, ResearchProjectDao researchProjectDao,
-                              MercurySampleDao mercurySampleDao, LabVesselDao labVesselDao) {
+                              MercurySampleDao mercurySampleDao, LabVesselDao labVesselDao, UserBean userBean) {
         this.manifestSessionDao = manifestSessionDao;
         this.researchProjectDao = researchProjectDao;
         this.mercurySampleDao = mercurySampleDao;
         this.labVesselDao = labVesselDao;
+        this.userBean = userBean;
     }
 
     /**
@@ -84,15 +90,14 @@ public class ManifestSessionEjb {
      * @param inputStream        File Input stream that contains the manifest being uploaded
      * @param pathToFile         Full path of the manifest as it was uploaded.  This is used to extract the
      *                           manifest name which will help to identify the accessioning session
-     * @param bspUser            represents the user that is initiating the manifest upload
-     *
+     * @param fromSampleKit
      * @return the newly created manifest session
      */
     public ManifestSession uploadManifest(String researchProjectKey, InputStream inputStream, String pathToFile,
-                                          BspUser bspUser) {
+                                          boolean fromSampleKit) {
 
         ResearchProject researchProject = findResearchProject(researchProjectKey);
-        return uploadManifest(inputStream, pathToFile, bspUser, researchProject);
+        return uploadManifest(inputStream, pathToFile, researchProject, fromSampleKit);
     }
 
     /**
@@ -102,15 +107,15 @@ public class ManifestSessionEjb {
      * @param inputStream     File Input stream that contains the manifest being uploaded
      * @param pathToFile      Full path of the manifest as it was uploaded.  This is used to extract the
      *                        manifest name which will help to identify the accessioning session
-     * @param bspUser         represents the user that is initiating the manifest upload
      * @param researchProject an existing research project to which the created accessioning session is to be
      *                        associated
      *
+     * @param fromSampleKit
      * @return the newly created manifest session
      */
     @DaoFree
-    private ManifestSession uploadManifest(InputStream inputStream, String pathToFile, BspUser bspUser,
-                                           ResearchProject researchProject) {
+    private ManifestSession uploadManifest(InputStream inputStream, String pathToFile,
+                                           ResearchProject researchProject, boolean fromSampleKit) {
         ManifestImportProcessor manifestImportProcessor = new ManifestImportProcessor();
         List<String> messages;
         try {
@@ -130,32 +135,37 @@ public class ManifestSessionEjb {
         } catch (ValidationException e) {
             throw new InformaticsServiceException(StringUtils.join(e.getValidationMessages(), "\n"));
         }
-        ManifestSession manifestSession = new ManifestSession(researchProject, pathToFile, bspUser);
+
+        ManifestSession manifestSession = new ManifestSession(researchProject, FilenameUtils.getBaseName(pathToFile),
+                userBean.getBspUser(), fromSampleKit);
         // Persist here so an ID will be generated for the ManifestSession.  This ID is used for the
         // ManifestSession's name which is displayed on the UI.
         manifestSessionDao.persist(manifestSession);
-        addAndValidateManifestRecords(manifestSession, manifestRecords);
+        manifestSession.addRecords(manifestRecords);
+        manifestSession.validateManifest();
         return manifestSession;
     }
 
-    public void addSamplesToManifest(Long manifestId, Collection<Sample> samples) {
+    /**
+     * Add a collection of samples to existing manifest.
+     */
+    public void addSamplesToManifest(@Nonnull Long manifestId, @Nonnull Collection<Sample> samples) {
         ManifestSession manifestSession = findManifestSession(manifestId);
-        if (manifestSession == null) {
-            String errorMessage = String.format("No manifestSession with id %d exists", manifestId);
-            throw new InformaticsServiceException(errorMessage);
+        if (samples.isEmpty()) {
+            throw new InformaticsServiceException("Empty list of samples not allowed.");
         }
-
         List<ManifestRecord> manifestRecords = new ArrayList<>(samples.size());
         for (Sample sample : samples) {
+            if (sample == null){
+                throw new InformaticsServiceException("Sample is null.");
+            }
+            if (CollectionUtils.isEmpty(sample.getMetadata())) {
+                throw new InformaticsServiceException("Sample contains no metadata.");
+            }
             List<Metadata> metadata = convertToMercuryMetadata(sample);
             manifestRecords.add(new ManifestRecord(metadata.toArray(new Metadata[metadata.size()])));
         }
-        addAndValidateManifestRecords(manifestSession, manifestRecords);
-    }
-
-    private void addAndValidateManifestRecords(ManifestSession manifestSession, Collection<ManifestRecord> manifestRecords) {
         manifestSession.addRecords(manifestRecords);
-        manifestSession.validateManifest();
     }
 
     List<Metadata> convertToMercuryMetadata(Sample crspSample) {
@@ -214,24 +224,41 @@ public class ManifestSessionEjb {
 
     /**
      * Scan the sample specified by collaborator barcode for the specified manifest session.
-     *
      * @param manifestSessionId    Database ID of the session
-     * @param collaboratorSampleId sample identifier for a source clinical sample
+     * @param referenceSampleId sample identifier for a source clinical sample
+     * @param barcode 2d vessel barcode.  Expected only if accessioning a sample kit
      */
-    public void accessionScan(long manifestSessionId, String collaboratorSampleId) {
+    public void accessionScan(long manifestSessionId, String referenceSampleId, String barcode) {
         ManifestSession manifestSession = findManifestSession(manifestSessionId);
 
-        manifestSession.accessionScan(collaboratorSampleId);
+        Metadata.Key referenceScanKey =
+                (manifestSession.isFromSampleKit())?Metadata.Key.BROAD_SAMPLE_ID:Metadata.Key.SAMPLE_ID;
+        manifestSession.accessionScan(referenceSampleId, referenceScanKey);
+        if(manifestSession.isFromSampleKit()) {
+            manifestSession.getRecordWithMatchingValueForKey(referenceScanKey, referenceSampleId)
+                    .addMetadata(Metadata.Key.BROAD_2D_BARCODE, barcode);
+        }
     }
 
     /**
      * Close the specified accessioning session.
+     *  @param manifestSessionId Database ID of the session which should be accepted
      *
-     * @param manifestSessionId Database ID of the session which should be accepted
      */
     public void closeSession(long manifestSessionId) {
         ManifestSession manifestSession = findManifestSession(manifestSessionId);
         manifestSession.completeSession();
+
+        if(manifestSession.isFromSampleKit()) {
+            for (ManifestRecord record : manifestSession.getNonQuarantinedRecords()) {
+                if (record.getStatus() == ManifestRecord.Status.ACCESSIONED) {
+
+                    transferSample(manifestSessionId, record.getValueByKey(Metadata.Key.SAMPLE_ID),
+                            record.getValueByKey(Metadata.Key.BROAD_SAMPLE_ID),
+                            record.getValueByKey(Metadata.Key.BROAD_2D_BARCODE));
+                }
+            }
+        }
     }
 
     /**
@@ -244,7 +271,7 @@ public class ManifestSessionEjb {
      */
     public ManifestRecord validateSourceTubeForTransfer(long manifestSessionId, String sourceForTransfer) {
         ManifestSession manifestSession = findManifestSession(manifestSessionId);
-        return manifestSession.findRecordForTransfer(sourceForTransfer);
+        return manifestSession.findRecordForTransferByKey(Metadata.Key.SAMPLE_ID, sourceForTransfer);
     }
 
     /**
@@ -292,7 +319,7 @@ public class ManifestSessionEjb {
      * <p/>
      * {@link #validateTargetSampleAndVessel(String, String)}
      *
-     * @param targetVesselLabel The label of the lab vessel that should be associated with the given mercury sample
+     * @param targetVesselLabel The label of the lab vessel that  should be associated with the given mercury sample
      * @param foundSample       The target mercury sample for the tube transfer
      *
      * @return the referenced lab vessel if it is both found and eligible
@@ -327,15 +354,14 @@ public class ManifestSessionEjb {
      * @param sourceCollaboratorSample sample identifier for a source clinical sample
      * @param sampleKey                The sample Key for the target mercury sample for the tube transfer
      * @param vesselLabel              The label of the lab vessel that should be associated with the given mercury sample
-     * @param user                     represents the user that is initiating the manifest upload
      */
     public void transferSample(long manifestSessionId, String sourceCollaboratorSample, String sampleKey,
-                               String vesselLabel, BspUser user) {
+                               String vesselLabel) {
         ManifestSession session = findManifestSession(manifestSessionId);
         MercurySample targetSample = validateTargetSample(sampleKey);
 
         LabVessel targetVessel = findAndValidateTargetVessel(vesselLabel, targetSample);
-        session.performTransfer(sourceCollaboratorSample, targetSample, targetVessel, user);
+        session.performTransfer(sourceCollaboratorSample, targetSample, targetVessel, userBean.getBspUser());
     }
 
     /**
