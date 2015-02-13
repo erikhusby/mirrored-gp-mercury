@@ -38,9 +38,6 @@ public class ClinicalResource {
     private UserBean userBean;
 
     @Inject
-    private ManifestSessionEjb manifestSessionEjb;
-
-    @Inject
     private BSPConfig bspConfig;
 
     @Inject

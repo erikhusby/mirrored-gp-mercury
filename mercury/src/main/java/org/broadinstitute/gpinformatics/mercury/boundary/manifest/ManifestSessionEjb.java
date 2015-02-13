@@ -11,7 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceExcep
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.crsp.generated.MetaData;
+import org.broadinstitute.gpinformatics.mercury.crsp.generated.SampleData;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -159,8 +159,8 @@ public class ManifestSessionEjb {
     }
 
     List<Metadata> convertToMercuryMetadata(Sample crspSample) {
-        List<Metadata> mercuryMetadata = new ArrayList<>(crspSample.getMetadata().size());
-        for (MetaData crspMetadata : crspSample.getMetadata()) {
+        List<Metadata> mercuryMetadata = new ArrayList<>(crspSample.getSampleData().size());
+        for (SampleData crspMetadata : crspSample.getSampleData()) {
             Metadata.Key metadataKey = Metadata.Key.fromDisplayName(crspMetadata.getName());
             Metadata mercuryMetadataItem = new Metadata(metadataKey, crspMetadata.getValue());
             mercuryMetadata.add(mercuryMetadataItem);

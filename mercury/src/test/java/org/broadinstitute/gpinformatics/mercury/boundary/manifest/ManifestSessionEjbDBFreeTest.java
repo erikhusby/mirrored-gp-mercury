@@ -1334,7 +1334,7 @@ public class ManifestSessionEjbDBFreeTest {
             SampleData metaDataItem = new SampleData();
             metaDataItem.setName(metaDataEntry.getKey());
             metaDataItem.setValue(metaDataEntry.getValue());
-            crspSample.getMetadata().add(metaDataItem);
+            crspSample.getSampleData().add(metaDataItem);
         }
         return crspSample;
     }
