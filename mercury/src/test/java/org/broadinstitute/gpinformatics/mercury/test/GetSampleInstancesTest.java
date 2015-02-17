@@ -172,21 +172,6 @@ public class GetSampleInstancesTest {
 
         // Clear cached bucket entries and computed LCSETS from previous run.
         tube2.clearCaches();
-        sourceTubeFormation.clearCaches();
-        targetTubeFormation.clearCaches();
-        for( LabVessel receivedVessel : receivedVessels ) {
-            receivedVessel.clearCaches();
-        }
-
-        // Set transfer event computed LCSET back to null so it's recalculated
-        try {
-            Field toNull = extractionTransfer.getClass().getDeclaredField("computedLcSets");
-            toNull.setAccessible(true);
-            toNull.set(extractionTransfer, null);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            throw new RuntimeException( "Fail to null out event computedLcSets", e);
-        }
-
 
         StaticPlate shearingPlate2 = sequencing(tube2, tube3, sampleInitProductOrder, extractionProductOrder,
                 sequencingProductOrder, rootSample2, true, 2);

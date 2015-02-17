@@ -477,8 +477,27 @@ todo jmt adder methods
                 } else {
                     // Try target vessel container(s) when section transfer source vessel container comes up blank
                     // (e.g. IndexedAdapterLigation event from IndexedAdapterPlate96 source)
-                    computedLcSets.addAll(sectionTransfer.getTargetVesselContainer().getComputedLcSetsForSection(
-                            sectionTransfer.getSourceSection()));
+                    // Results of this are only valid when the event source vessel contains only reagents
+                    //            (or has no samples associated with it)
+                    // TODO jms - Serious performance hit on some events - revisit after we remove inference of LCSETs for controls.
+                    /***
+                    System.out.println( Thread.currentThread().getStackTrace()[1] + " - Try target for samples, event " + labEventId );
+                    boolean allReagents = true;
+                    Set<SampleInstanceV2> sampleInstances =
+                            sectionTransfer.getSourceVesselContainer().getSampleInstancesV2();
+                    for( SampleInstanceV2 sampleInstanceV2 : sampleInstances ) {
+                        if (!sampleInstanceV2.isReagentOnly()) {
+                            allReagents = false;
+                            break;
+                        }
+                    }
+                    System.out.println(Thread.currentThread().getStackTrace()[1] + " - Source has " + sampleInstances.size() + " samples and reagents only is: " + allReagents );
+                    if (allReagents) {
+                        computedLcSets.addAll(sectionTransfer.getTargetVesselContainer().getComputedLcSetsForSection(
+                                sectionTransfer.getSourceSection()));
+                        System.out.println(Thread.currentThread().getStackTrace()[1] + " - Compute target LCSETs done: " + computedLcSets.size() );
+                    }
+                    **** */
                 }
             }
             computedLcSets.addAll(computeLcSetsForCherryPickTransfers());
