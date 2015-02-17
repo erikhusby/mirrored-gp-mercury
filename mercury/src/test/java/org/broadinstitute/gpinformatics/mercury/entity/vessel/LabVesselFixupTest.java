@@ -4,11 +4,11 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.RackOfTubesDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
@@ -970,6 +970,18 @@ public class LabVesselFixupTest extends Arquillian {
         }
         barcodedTubeDao.persist(new FixupCommentary("GPLIM-3257 fixup manually adjusted tube volumes."));
         barcodedTubeDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void gplim3376FixupFlowcellLabel() {
+        userBean.loginOSUser();
+        // Change lab_vessel 1946416 label HGKJCADXX
+        LabVessel flowcell = labVesselDao.findById(LabVessel.class, 1946416L);
+        Assert.assertNotNull(flowcell);
+        flowcell.setLabel("HGKJCADXX");
+        System.out.println("Updated flowcell " + flowcell.getLabVesselId() + " label to " + flowcell.getLabel());
+        labVesselDao.persist(new FixupCommentary("GPLIM-3376 fixup flowcell label."));
+        labVesselDao.flush();
     }
 
 }
