@@ -75,17 +75,8 @@ public class ClinicalResource {
      */
     public long createAccessioningSession(String username, String manifestName, String researchProjectKey,
                                           Boolean isFromSampleKit) {
-        if (StringUtils.isBlank(manifestName)) {
-            throw new IllegalArgumentException("manifestName is required.");
-        }
-        if (isFromSampleKit == null) {
-            throw new IllegalArgumentException("isFromSampleKit is required.");
-        }
-        if (!isFromSampleKit) {
-            throw new UnsupportedOperationException(
-                    "Samples in tubes other than from Broad sample kits are currently not supported.");
-        }
-
+        validateManifestName(manifestName);
+        validateIsFromSampleKit(isFromSampleKit);
         login(username);
 
         ManifestSession manifestSession =
@@ -104,6 +95,34 @@ public class ClinicalResource {
             throw new InformaticsServiceException(String.format(requiredParameterMissing, "samples"));
         }
         manifestSessionEjb.addSamplesToManifest(manifestId, samples);
+    }
+
+    public void createManifestWithSamples(String username, String manifestName, String researchProjectKey,
+                                          Boolean isFromSampleKit,
+                                          Collection<Sample> samples) {
+        validateManifestName(manifestName);
+        validateIsFromSampleKit(isFromSampleKit);
+        login(username);
+
+        ManifestSession manifestSession =
+                manifestSessionEjb.createManifestSession(researchProjectKey, manifestName, userBean.getBspUser());
+        manifestSessionEjb.addSamplesToManifest(manifestSession.getManifestSessionId(), samples);
+    }
+
+    private void validateManifestName(String manifestName) {
+        if (StringUtils.isBlank(manifestName)) {
+            throw new IllegalArgumentException("manifestName is required.");
+        }
+    }
+
+    private void validateIsFromSampleKit(Boolean isFromSampleKit) {
+        if (isFromSampleKit == null) {
+            throw new IllegalArgumentException("isFromSampleKit is required.");
+        }
+        if (!isFromSampleKit) {
+            throw new UnsupportedOperationException(
+                    "Samples in tubes other than from Broad sample kits are currently not supported.");
+        }
     }
 
     private void login(String username) {

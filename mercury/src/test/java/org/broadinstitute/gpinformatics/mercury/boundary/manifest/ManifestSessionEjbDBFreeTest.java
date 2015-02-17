@@ -248,7 +248,8 @@ public class ManifestSessionEjbDBFreeTest {
         Mockito.when(manifestSessionDao.find(Mockito.anyLong())).thenAnswer(new Answer<ManifestSession>() {
             @Override
             public ManifestSession answer(InvocationOnMock invocation) throws Throwable {
-                if ((long)invocation.getArguments()[0] == 0) {
+                Long id = (Long) invocation.getArguments()[0];
+                if (id == 0) {
                     return null;
                 }
                 return holder.manifestSession;
