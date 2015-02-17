@@ -130,21 +130,6 @@ public class ManifestSession implements Updatable {
     }
 
     /**
-     * Creates a new ManifestSession with the given research project, name, and creator. While the parameters are similar
-     * @param researchProject
-     * @param name
-     * @param createdBy
-     * @return
-     */
-    public static ManifestSession createWithName(ResearchProject researchProject, String name, BspUser createdBy) {
-        ManifestSession manifestSession = new ManifestSession();
-        manifestSession.researchProject = researchProject;
-        manifestSession.sessionPrefix = name;
-        manifestSession.updateData.setCreatedBy(createdBy);
-        return manifestSession;
-    }
-
-    /**
      * For database-free tests ONLY.
      */
     public ManifestSession(long manifestSessionId) {
