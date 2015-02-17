@@ -370,17 +370,15 @@ public class ManifestSessionEjb {
      *
      * @param researchProjectKey    the business key of the research project for these samples
      * @param sessionName           the name to give the manifest session
-     * @param user                  the user initiating the session
      * @return the newly created (and persisted) ManifestSession
      */
-    // TODO: change BspUser parameter to String of username after merging develop with Scott's changes
-    public ManifestSession createManifestSession(String researchProjectKey, String sessionName, BspUser user) {
+    public ManifestSession createManifestSession(String researchProjectKey, String sessionName) {
         ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
         if (researchProject == null) {
             throw new IllegalArgumentException("Research project not found: " + researchProjectKey);
         }
 
-        ManifestSession manifestSession = new ManifestSession(researchProject, sessionName, user, true); // TODO: add fromSampleKit parameter
+        ManifestSession manifestSession = new ManifestSession(researchProject, sessionName, userBean.getBspUser(), true); // TODO: add fromSampleKit parameter
         manifestSessionDao.persist(manifestSession);
         return manifestSession;
     }

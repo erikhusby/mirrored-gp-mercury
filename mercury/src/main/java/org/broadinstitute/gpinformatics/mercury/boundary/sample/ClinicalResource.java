@@ -79,8 +79,7 @@ public class ClinicalResource {
         validateIsFromSampleKit(isFromSampleKit);
         login(username);
 
-        ManifestSession manifestSession =
-                manifestSessionEjb.createManifestSession(researchProjectKey, manifestName, userBean.getBspUser());
+        ManifestSession manifestSession = manifestSessionEjb.createManifestSession(researchProjectKey, manifestName);
 
         return manifestSession.getManifestSessionId();
     }
@@ -104,8 +103,7 @@ public class ClinicalResource {
         validateIsFromSampleKit(isFromSampleKit);
         login(username);
 
-        ManifestSession manifestSession =
-                manifestSessionEjb.createManifestSession(researchProjectKey, manifestName, userBean.getBspUser());
+        ManifestSession manifestSession = manifestSessionEjb.createManifestSession(researchProjectKey, manifestName);
         manifestSessionEjb.addSamplesToManifest(manifestSession.getManifestSessionId(), samples);
     }
 

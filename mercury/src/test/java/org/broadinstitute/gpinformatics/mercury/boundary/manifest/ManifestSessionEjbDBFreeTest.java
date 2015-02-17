@@ -187,7 +187,8 @@ public class ManifestSessionEjbDBFreeTest {
         Mockito.when(researchProjectDao.findByBusinessKey(researchProject.getBusinessKey()))
                 .thenReturn(researchProject);
 
-        return new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao, mockUserBean);
+        return new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao,
+                mockUserBean);
     }
 
     /**
@@ -1497,12 +1498,14 @@ public class ManifestSessionEjbDBFreeTest {
                 .thenReturn(researchProject);
         String sessionName = "test session";
 
+        Mockito.when(mockUserBean.getBspUser()).thenReturn(TEST_USER);
+
         ManifestSessionEjb manifestSessionEjb =
                 new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao,
                         mockUserBean);
 
-        ManifestSession manifestSession = manifestSessionEjb
-                .createManifestSession(researchProject.getBusinessKey(), sessionName, TEST_USER);
+        ManifestSession manifestSession =
+                manifestSessionEjb.createManifestSession(researchProject.getBusinessKey(), sessionName);
 
         assertThat(manifestSession.getResearchProject(), equalTo(researchProject));
         assertThat(manifestSession.getSessionName(),
@@ -1521,6 +1524,6 @@ public class ManifestSessionEjbDBFreeTest {
                 new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao,
                         mockUserBean);
 
-        manifestSessionEjb.createManifestSession("BadRP", "test session", TEST_USER);
+        manifestSessionEjb.createManifestSession("BadRP", "test session");
     }
 }

@@ -155,7 +155,7 @@ public class ClinicalResourceDbFreeTest {
                 clinicalResource.createAccessioningSession(username, manifestName, researchProjectKey, Boolean.TRUE);
 
         verifyUserLogin(username);
-        Mockito.verify(manifestSessionEjb).createManifestSession(researchProjectKey, manifestName, user);
+        Mockito.verify(manifestSessionEjb).createManifestSession(researchProjectKey, manifestName);
         assertThat(manifestId, equalTo(expectedManifestId));
     }
 
@@ -175,7 +175,7 @@ public class ClinicalResourceDbFreeTest {
         clinicalResource.createManifestWithSamples(username, manifestName, researchProjectKey, Boolean.TRUE, samples);
 
         verifyUserLogin(username);
-        Mockito.verify(manifestSessionEjb).createManifestSession(researchProjectKey, manifestName, user);
+        Mockito.verify(manifestSessionEjb).createManifestSession(researchProjectKey, manifestName);
         Mockito.verify(manifestSessionEjb).addSamplesToManifest(expectedManifestId, samples);
     }
 
@@ -194,7 +194,7 @@ public class ClinicalResourceDbFreeTest {
 
     private void setupTestManifest(long manifestId, String manifestName, String researchProjectKey, BspUser user) {
         ManifestSession manifestSession = new ManifestSession(manifestId);
-        Mockito.when(manifestSessionEjb.createManifestSession(researchProjectKey, manifestName, user)).thenReturn(
+        Mockito.when(manifestSessionEjb.createManifestSession(researchProjectKey, manifestName)).thenReturn(
                 manifestSession);
     }
 }
