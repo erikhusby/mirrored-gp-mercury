@@ -140,8 +140,8 @@ public class ManifestTubeTransferActionBean extends CoreActionBean {
         Resolution resolution;
 
         try {
-            manifestSessionEjb.transferSample(Long.valueOf(activeSessionId), sourceTube, targetSample, targetVessel,
-                    userBean.getBspUser());
+            manifestSessionEjb.transferSample(Long.valueOf(activeSessionId), sourceTube, targetSample, targetVessel
+            );
             addMessage("Sample ID {0} has been successfully recorded as transferred to vessel " +
                        "{1} with a sample of {2}", sourceTube, targetVessel, targetSample);
             resolution =

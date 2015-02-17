@@ -66,6 +66,12 @@ public class WorkflowConfigLookup implements Serializable {
         SYNTHETIC_WORKFLOW_CONFIGS.add(new WorkflowConfigDenorm(FIRST_EFFECTIVE_WORKFLOW_DATE, "BSP", "0", "BSP", "0",
                 LabEventType.SAMPLE_PACKAGE.getName(), LabEventType.SAMPLE_PACKAGE.getName(),
                 PDO_NOT_NEEDED, BATCH_NOT_NEEDED));
+        SYNTHETIC_WORKFLOW_CONFIGS.add(new WorkflowConfigDenorm(FIRST_EFFECTIVE_WORKFLOW_DATE, "Activity", "0", "Activity", "0",
+                LabEventType.ACTIVITY_BEGIN.getName(), LabEventType.ACTIVITY_BEGIN.getName(),
+                PDO_NOT_NEEDED, BATCH_NOT_NEEDED));
+        SYNTHETIC_WORKFLOW_CONFIGS.add(new WorkflowConfigDenorm(FIRST_EFFECTIVE_WORKFLOW_DATE, "Activity", "0", "Activity", "0",
+                LabEventType.ACTIVITY_END.getName(), LabEventType.ACTIVITY_END.getName(),
+                PDO_NOT_NEEDED, BATCH_NOT_NEEDED));
     }
 
 

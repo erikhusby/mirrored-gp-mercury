@@ -30,7 +30,8 @@ public class ManifestSessionDao extends GenericDao {
 
     public List<ManifestSession> findOpenSessions() {
         return findListByList(ManifestSession.class, ManifestSession_.status, EnumSet.of(
-                ManifestSession.SessionStatus.OPEN, ManifestSession.SessionStatus.ACCESSIONING));
+                ManifestSession.SessionStatus.OPEN, ManifestSession.SessionStatus.ACCESSIONING,
+                ManifestSession.SessionStatus.PENDING_SAMPLE_INFO));
     }
 
     /**
@@ -62,7 +63,9 @@ public class ManifestSessionDao extends GenericDao {
                 .diff(totalMinusQuarantined, root.get(ManifestSession_.numberOfTubesTransferred));
 
         Predicate tubesRemainingToBeTransferred =
-                criteriaBuilder.notEqual(criteriaBuilder.toInteger(numberOfTubesRemainingToBeTransferred), 0);
+                criteriaBuilder.and(
+                        criteriaBuilder.notEqual(criteriaBuilder.toInteger(numberOfTubesRemainingToBeTransferred), 0),
+                        criteriaBuilder.equal(root.get(ManifestSession_.fromSampleKit), Boolean.FALSE));
 
         query.where(completedStatus, tubesRemainingToBeTransferred);
 

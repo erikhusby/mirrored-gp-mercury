@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeD
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
+import org.broadinstitute.gpinformatics.mercury.control.sample.SampleParentChildVesselProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.sample.SampleVesselProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanPlateProcessor;
@@ -163,9 +164,8 @@ public class VesselEjb {
      * Create LabVessels and MercurySamples from a spreadsheet (from BSP).
      */
     public List<LabVessel> createSampleVessels(InputStream samplesSpreadsheetStream, String loginUserName,
-            MessageCollection messageCollection)
+            MessageCollection messageCollection, SampleVesselProcessor sampleVesselProcessor)
             throws InvalidFormatException, IOException, ValidationException {
-        SampleVesselProcessor sampleVesselProcessor = new SampleVesselProcessor("Sheet1");
         messageCollection.addErrors(PoiSpreadsheetParser.processSingleWorksheet(samplesSpreadsheetStream,
                 sampleVesselProcessor));
 
@@ -185,8 +185,7 @@ public class VesselEjb {
             }
 
             if (!messageCollection.hasErrors()) {
-                labVessels = labVesselFactory.buildLabVessels(
-                        new ArrayList<>(sampleVesselProcessor.getMapBarcodeToParentVessel().values()),
+                labVessels = labVesselFactory.buildLabVessels(sampleVesselProcessor.getParentVesselBeans(),
                         loginUserName, new Date(), null, MercurySample.MetadataSource.MERCURY);
                 labVesselDao.persistAll(labVessels);
             }

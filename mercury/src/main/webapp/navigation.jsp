@@ -168,10 +168,16 @@
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.ManifestTubeTransferActionBean">
                             Transfer Tubes from Manifest
                             </stripes:link>
+                        </li>
                         <li>
                             <stripes:link id="uploadReagents"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.ReagentActionBean"
                                           event="view">Upload Reagents</stripes:link>
+                        </li>
+                        <li>
+                            <stripes:link id="manualTransfers"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.labevent.ManualTransferActionBean"
+                                          event="view">Manual Transfers</stripes:link>
                         </li>
                     </ul>
                 </li>
