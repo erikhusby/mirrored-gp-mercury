@@ -77,8 +77,9 @@ public class ClinicalResourceTest extends RestServiceContainerTest {
     }
 
 
-    public void testAddSamplesToManifest() throws Exception {
+    public void testCreateManifestWithSamples() throws Exception {
         ManifestSession manifestSession = manifestSessionDao.find(MANIFEST_ID);
+
         int numRecordsBefore = manifestSession.getRecords().size();
         List<Sample> samples = Arrays.asList(
                 ClinicalSampleFactory.createCrspSample(ImmutableMap

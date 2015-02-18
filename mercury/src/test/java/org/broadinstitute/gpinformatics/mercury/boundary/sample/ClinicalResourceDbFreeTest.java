@@ -39,34 +39,13 @@ public class ClinicalResourceDbFreeTest {
      * workflow we're supporting at this time for clinical diagnostics.
      */
     @Test(expectedExceptions = UnsupportedOperationException.class)
-    public void testCreateSessionNotFromSampleKit() {
-        stubValidLogin();
-
-        clinicalResource.createAccessioningSession("test_user", "test manifest", "RP-1", Boolean.FALSE);
-    }
-
-    /**
-     * Test that passing in <code>false</code> for isFromSampleKit throws an unsupported operation exception. This is
-     * intended for future use for Buick-like projects. For now, we only support <code>true</code>, which is for the
-     * workflow we're supporting at this time for clinical diagnostics.
-     */
-    @Test(expectedExceptions = UnsupportedOperationException.class)
     public void testManifestWithSamplesNotFromSampleKit() {
         stubValidLogin();
 
         ClinicalResourceBean clinicalResourceBean = ClinicalSampleFactory
                 .createClinicalResourceBean("test_user", "test manifest", "RP-1", Boolean.FALSE,
-                        Collections.<Sample>emptySet());
+                        Collections.<Sample>emptySet()); // TODO: not empty set
         clinicalResource.createManifestWithSamples(clinicalResourceBean);
-    }
-
-    /**
-     * Test that passing in an unknown user throws an UnknownUserException. As tested elsewhere, this will result in a
-     * 403 response.
-     */
-    @Test(expectedExceptions = UnknownUserException.class)
-    public void testCreateSessionUnknownUser() {
-        clinicalResource.createAccessioningSession("unknown_user", "test manifest", "RP-1", Boolean.TRUE);
     }
 
     /**
@@ -85,31 +64,12 @@ public class ClinicalResourceDbFreeTest {
      * Test that the call fails if isFromSampleKit is not passed in.
      */
     @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testCreateManifestNullIsFromSampleKit() {
-        stubValidLogin();
-
-        clinicalResource.createAccessioningSession("test_user", "test manifest", "RP-1", null);
-    }
-
-    /**
-     * Test that the call fails if isFromSampleKit is not passed in.
-     */
-    @Test(expectedExceptions = IllegalArgumentException.class)
     public void testCreateManifestWithSamplesNullIsFromSampleKit() {
         stubValidLogin();
 
         ClinicalResourceBean clinicalResourceBean = ClinicalSampleFactory
                 .createClinicalResourceBean("test_user", "test manifest", "RP-1", null, Collections.<Sample>emptySet());
         clinicalResource.createManifestWithSamples(clinicalResourceBean);
-    }
-
-    /**
-     * Test that the call fails if a null manifest name is provided.
-     */
-    @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testCreateManifestNullManifestName() {
-        Mockito.when(userBean.isValidBspUser()).thenReturn(true);
-        clinicalResource.createAccessioningSession("test user", null, "RP-1", Boolean.TRUE);
     }
 
     /**
@@ -128,41 +88,11 @@ public class ClinicalResourceDbFreeTest {
      * Test that the call fails if an empty manifest name is provided.
      */
     @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testCreateManifestEmptyManifestName() {
-        Mockito.when(userBean.isValidBspUser()).thenReturn(true);
-        clinicalResource.createAccessioningSession("test user", "", "RP-1", Boolean.TRUE);
-    }
-
-    /**
-     * Test that the call fails if an empty manifest name is provided.
-     */
-    @Test(expectedExceptions = IllegalArgumentException.class)
     public void testCreateManifestWithSamplesEmptyManifestName() {
         Mockito.when(userBean.isValidBspUser()).thenReturn(true);
         ClinicalResourceBean clinicalResourceBean = ClinicalSampleFactory
                 .createClinicalResourceBean("test user", "", "RP-1", Boolean.TRUE, Collections.<Sample>emptySet());
         clinicalResource.createManifestWithSamples(clinicalResourceBean);
-    }
-
-    /**
-     * Test that a valid request returns the ID for a new manifest manifest.
-     */
-    public void testValidCreateAccessioningSession() {
-        stubValidLogin();
-
-        long expectedManifestId = 1L;
-        String manifestName = "test manifest";
-        String researchProjectKey = "RP-1";
-        stubManifestCreation(expectedManifestId, manifestName, researchProjectKey);
-
-        String username = "test_user";
-        Boolean isFromSampleKit = Boolean.TRUE;
-        long manifestId =
-                clinicalResource.createAccessioningSession(username, manifestName, researchProjectKey, isFromSampleKit);
-
-        verifyUserLogin(username);
-        Mockito.verify(manifestSessionEjb).createManifestSession(researchProjectKey, manifestName, isFromSampleKit);
-        assertThat(manifestId, equalTo(expectedManifestId));
     }
 
     /**

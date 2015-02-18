@@ -384,4 +384,9 @@ public class ManifestSessionEjb {
         manifestSessionDao.persist(manifestSession);
         return manifestSession;
     }
+
+    public ManifestSession createManifestSessionWithSamples(String researchProjectKey, String sessionName,
+                                                            boolean fromSampleKit, Collection<Sample> samples) {
+        return null;
+    }
 }

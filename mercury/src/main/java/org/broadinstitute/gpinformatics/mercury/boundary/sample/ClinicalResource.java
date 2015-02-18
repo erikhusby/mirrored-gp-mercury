@@ -15,7 +15,6 @@ import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
-import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.POST;
@@ -23,7 +22,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import java.util.Collection;
 
@@ -32,7 +30,6 @@ import java.util.Collection;
  * lab processing, diagnostics, and analysis of the data.
  */
 @Path(ClinicalResource.CLINICAL_RESOURCE_PATH)
-@Stateful
 @RequestScoped
 public class ClinicalResource {
 
@@ -69,30 +66,6 @@ public class ClinicalResource {
         this.manifestSessionEjb = manifestSessionEjb;
     }
 
-    /**
-     * Creates an accessioning session for receiving sample tubes along with their sample data.
-     *
-     * Note that object wrappers are used instead of their primitive types so that we get null values instead of
-     * default values.
-     *
-     * @param username              the user who is sending the sample data to Mercury
-     * @param manifestName          a name for the session, which should indicate the source of the data (spreadsheet name, shipment ID, etc.)
-     * @param researchProjectKey    the research project that the samples belong to
-     * @param isFromSampleKit       true if the samples are in Broad-provided tubes; false if the samples are in collaborator tubes
-     * @return a unique session ID to use as input to other web service calls
-     */
-    public long createAccessioningSession(String username, String manifestName, String researchProjectKey,
-                                          Boolean isFromSampleKit) {
-        validateManifestName(manifestName);
-        validateIsFromSampleKit(isFromSampleKit);
-        login(username);
-
-        ManifestSession manifestSession = manifestSessionEjb.createManifestSession(researchProjectKey, manifestName,
-                isFromSampleKit);
-
-        return manifestSession.getManifestSessionId();
-    }
-
     public void addSamplesToManifest(String username, Long manifestId, Collection<Sample> samples) {
         login(username);
         String requiredParameterMissing = "Required parameter \'%s\' is missing.";
@@ -105,10 +78,19 @@ public class ClinicalResource {
         manifestSessionEjb.addSamplesToManifest(manifestId, samples);
     }
 
+    /**
+     * Creates an accessioning session for receiving sample tubes along with their sample data.
+     *
+     * Note that object wrappers are used instead of their primitive types so that we get null values instead of
+     * default values.
+     *
+     * @param clinicalResourceBean    data bean containing request parameters for creating the manifest
+     * @return a unique manifest ID
+     */
     @POST
     @Path(CREATE_MANIFEST)
     @Produces(MediaType.APPLICATION_XML)
-    public Response createManifestWithSamples(ClinicalResourceBean clinicalResourceBean) {
+    public long createManifestWithSamples(ClinicalResourceBean clinicalResourceBean) {
         validateManifestName(clinicalResourceBean.getManifestName());
         validateIsFromSampleKit(clinicalResourceBean.isFromSampleKit());
         login(clinicalResourceBean.getUsername());
@@ -119,10 +101,7 @@ public class ClinicalResource {
         manifestSessionEjb
                 .addSamplesToManifest(manifestSession.getManifestSessionId(), clinicalResourceBean.getSamples());
 
-        String resultString = String.format("Manifest Created with %s samples", clinicalResourceBean.getSamples().size() > 0 ?
-                String.valueOf(clinicalResourceBean.getSamples().size()) : "no");
-
-        return Response.status(Response.Status.OK).entity(clinicalResourceBean).type(MediaType.APPLICATION_XML_TYPE).build();
+        return manifestSession.getManifestSessionId();
     }
 
     private void validateManifestName(String manifestName) {

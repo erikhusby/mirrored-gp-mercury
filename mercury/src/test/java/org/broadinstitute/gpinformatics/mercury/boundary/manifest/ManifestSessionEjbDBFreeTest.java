@@ -1492,7 +1492,7 @@ public class ManifestSessionEjbDBFreeTest {
     /**
      * Test creation of a valid manifest session.
      */
-    public void testCreateValidManifest() {
+    public void testCreateValidManifestWithSamples() {
         ResearchProject researchProject = createTestResearchProject();
         Mockito.when(researchProjectDao.findByBusinessKey(researchProject.getBusinessKey()))
                 .thenReturn(researchProject);
@@ -1504,8 +1504,13 @@ public class ManifestSessionEjbDBFreeTest {
                 new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao,
                         mockUserBean);
 
+        Sample sample = new Sample();
+        Collection<Sample> samples =
+                Collections.singleton(ClinicalSampleFactory.createCrspSample(Collections.singletonMap(
+                        Metadata.Key.BROAD_SAMPLE_ID, SM_1)));
         ManifestSession manifestSession =
-                manifestSessionEjb.createManifestSession(researchProject.getBusinessKey(), sessionName, true);
+                manifestSessionEjb
+                        .createManifestSessionWithSamples(researchProject.getBusinessKey(), sessionName, true, samples);
 
         assertThat(manifestSession.getResearchProject(), equalTo(researchProject));
         assertThat(manifestSession.getSessionName(),
