@@ -19,8 +19,8 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.ClinicalResourceBean;
-import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -34,13 +34,12 @@ import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.startsWith;
 
 @Test(groups = TestGroups.STANDARD)
 public class ClinicalResourceTest extends RestServiceContainerTest {
@@ -54,6 +53,8 @@ public class ClinicalResourceTest extends RestServiceContainerTest {
     private static final long MANIFEST_ID = 5102l;
     private static final String MANIFEST_NAME = "fooManifest";
 
+    private static final String EXISTING_RESEARCH_PROJECT_KEY = "RP-12";
+
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(DEV);
@@ -63,36 +64,36 @@ public class ClinicalResourceTest extends RestServiceContainerTest {
     @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     public void testWebService(@ArquillianResource URL baseUrl) throws Exception {
         ClinicalResourceBean clinicalResourceBean =
-                ClinicalSampleFactory.createClinicalResourceBean(QA_DUDE_PM, MANIFEST_NAME, "RP-12", true,
+                ClinicalSampleFactory.createClinicalResourceBean(
+                        QA_DUDE_PM, MANIFEST_NAME, EXISTING_RESEARCH_PROJECT_KEY, true,
                         ImmutableMap.of(Metadata.Key.PATIENT_ID, "004-002", Metadata.Key.SAMPLE_ID, "03101231193"),
                         ImmutableMap.of(Metadata.Key.PATIENT_ID, "994-002", Metadata.Key.SAMPLE_ID, "93101231193")
                 );
 
         WebResource resource = makeWebResource(baseUrl, ClinicalResource.CREATE_MANIFEST);
 
-        ClientResponse response = resource.type(MediaType.APPLICATION_XML)
-                .accept(MediaType.APPLICATION_XML).entity(clinicalResourceBean)
+        ClientResponse response = resource.type(MediaType.APPLICATION_JSON_TYPE)
+                .accept(MediaType.APPLICATION_JSON_TYPE).entity(clinicalResourceBean)
                 .post(ClientResponse.class);
         assertThat(response.getStatus(), is(Response.Status.OK.getStatusCode()));
     }
 
 
     public void testCreateManifestWithSamples() throws Exception {
-        ManifestSession manifestSession = manifestSessionDao.find(MANIFEST_ID);
+        String sampleId = "SM-1";
+        ClinicalResourceBean clinicalResourceBean = ClinicalSampleFactory
+                .createClinicalResourceBean(QA_DUDE_PM, MANIFEST_NAME, EXISTING_RESEARCH_PROJECT_KEY, Boolean.TRUE,
+                        ImmutableMap.of(Metadata.Key.BROAD_SAMPLE_ID, sampleId));
+        long manifestId = clinicalResource.createManifestWithSamples(clinicalResourceBean);
 
-        int numRecordsBefore = manifestSession.getRecords().size();
-        List<Sample> samples = Arrays.asList(
-                ClinicalSampleFactory.createCrspSample(ImmutableMap
-                        .of(Metadata.Key.PATIENT_ID, "004-002", Metadata.Key.SAMPLE_ID, "03101231193")),
-                ClinicalSampleFactory.createCrspSample(ImmutableMap
-                        .of(Metadata.Key.PATIENT_ID, "001-001", Metadata.Key.SAMPLE_ID, "03101067213")));
+        ManifestSession manifestSession = manifestSessionDao.find(manifestId);
 
-        clinicalResource.addSamplesToManifest(QA_DUDE_PM, MANIFEST_ID, samples);
-
-        manifestSession = manifestSessionDao.find(MANIFEST_ID);
-        int numRecordsAfter = manifestSession.getRecords().size();
-
-        assertThat(numRecordsAfter, equalTo(numRecordsBefore + samples.size()));
+        assertThat(manifestSession.getSessionName(), startsWith(MANIFEST_NAME));
+        assertThat(manifestSession.getResearchProject().getBusinessKey(), equalTo(EXISTING_RESEARCH_PROJECT_KEY));
+        assertThat(manifestSession.getStatus(), equalTo(ManifestSession.SessionStatus.ACCESSIONING));
+        assertThat(manifestSession.getRecords().size(), equalTo(1));
+        ManifestRecord manifestRecord = manifestSession.getRecords().iterator().next();
+        assertThat(manifestRecord.getValueByKey(Metadata.Key.BROAD_SAMPLE_ID), equalTo(sampleId));
     }
 
     @Override

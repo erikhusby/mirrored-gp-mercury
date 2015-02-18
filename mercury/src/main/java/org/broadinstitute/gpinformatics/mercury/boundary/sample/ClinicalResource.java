@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -83,7 +84,8 @@ public class ClinicalResource {
      */
     @POST
     @Path(CREATE_MANIFEST)
-    @Produces(MediaType.APPLICATION_XML)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
     public long createManifestWithSamples(ClinicalResourceBean clinicalResourceBean) {
         validateManifestName(clinicalResourceBean.getManifestName());
         validateIsFromSampleKit(clinicalResourceBean.isFromSampleKit());

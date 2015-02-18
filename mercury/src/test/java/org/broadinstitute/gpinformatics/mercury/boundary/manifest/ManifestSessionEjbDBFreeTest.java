@@ -59,6 +59,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.collection.IsEmptyCollection.empty;
@@ -1435,8 +1436,7 @@ public class ManifestSessionEjbDBFreeTest {
     public void testAddSampleToManifestNullSamples() throws Exception {
         try {
             ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.UPLOAD_ACCEPTED, 0, true);
-            Sample crspSample = null;
-            holder.ejb.addSamplesToManifest(1234l, Arrays.asList(crspSample));
+            holder.ejb.addSamplesToManifest(1234l, Collections.<Sample>singleton(null));
         } catch (InformaticsServiceException e) {
             assertThat(e.getMessage(), is("Sample is null."));
             throw e;
@@ -1512,11 +1512,13 @@ public class ManifestSessionEjbDBFreeTest {
                         .createManifestSessionWithSamples(researchProject.getBusinessKey(), sessionName, true, samples);
 
         assertThat(manifestSession.getResearchProject(), equalTo(researchProject));
-        assertThat(manifestSession.getSessionName(),
-                equalTo(sessionName + "-" + manifestSession.getManifestSessionId()));
+        assertThat(manifestSession.getSessionName(), startsWith(sessionName));
         assertThat(manifestSession.isFromSampleKit(), is(true));
         assertThat(manifestSession.getUpdateData().getCreatedBy(), equalTo(TEST_USER.getUserId()));
         assertThat(manifestSession.getRecords().size(), equalTo(samples.size()));
+        ManifestRecord manifestRecord = manifestSession.getRecords().iterator().next();
+        assertThat(manifestRecord.getValueByKey(Metadata.Key.BROAD_SAMPLE_ID), equalTo(SM_1));
+
         Mockito.verify(manifestSessionDao).persist(manifestSession);
     }
 

@@ -145,8 +145,8 @@ public class ClinicalResourceDbFreeTest {
     private void stubManifestCreation(long manifestId, String manifestName, String researchProjectKey,
                                       Collection<Sample> samples) {
         ManifestSession manifestSession = new ManifestSession(manifestId);
-        Mockito.when(manifestSessionEjb.createManifestSessionWithSamples(researchProjectKey, manifestName, true,
-                samples)).thenReturn(
-                manifestSession);
+        Mockito.when(
+                manifestSessionEjb.createManifestSessionWithSamples(researchProjectKey, manifestName, true, samples))
+                .thenReturn(manifestSession);
     }
 }
