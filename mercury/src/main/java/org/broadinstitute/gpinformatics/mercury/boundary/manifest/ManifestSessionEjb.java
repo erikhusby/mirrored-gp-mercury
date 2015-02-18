@@ -98,7 +98,11 @@ public class ManifestSessionEjb {
                                           boolean fromSampleKit) {
 
         ResearchProject researchProject = findResearchProject(researchProjectKey);
-        return uploadManifest(inputStream, pathToFile, researchProject, fromSampleKit);
+        ManifestSession manifestSession = uploadManifest(inputStream, pathToFile, researchProject, fromSampleKit);
+        // Persist here so an ID will be generated for the ManifestSession.  This ID is used for the
+        // ManifestSession's name which is displayed on the UI.
+        manifestSessionDao.persist(manifestSession);
+        return manifestSession;
     }
 
     /**
@@ -139,9 +143,6 @@ public class ManifestSessionEjb {
 
         ManifestSession manifestSession = new ManifestSession(researchProject, FilenameUtils.getBaseName(pathToFile),
                 userBean.getBspUser(), fromSampleKit);
-        // Persist here so an ID will be generated for the ManifestSession.  This ID is used for the
-        // ManifestSession's name which is displayed on the UI.
-        manifestSessionDao.persist(manifestSession);
         manifestSession.addRecords(manifestRecords);
         manifestSession.validateManifest();
         return manifestSession;
