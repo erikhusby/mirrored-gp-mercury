@@ -16,9 +16,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ClinicalResourceDbFreeTest {
 
@@ -104,18 +101,19 @@ public class ClinicalResourceDbFreeTest {
         long expectedManifestId = 1L;
         String manifestName = "test manifest";
         String researchProjectKey = "RP-1";
-        stubManifestCreation(expectedManifestId, manifestName, researchProjectKey);
+        Collection<Sample> samples = new ArrayList<>();
+        stubManifestCreation(expectedManifestId, manifestName, researchProjectKey, samples);
 
         String username = "test_user";
         Boolean isFromSampleKit = Boolean.TRUE;
-        Collection<Sample> samples = new ArrayList<>();
+
         ClinicalResourceBean clinicalResourceBean = ClinicalSampleFactory
                 .createClinicalResourceBean(username, manifestName, researchProjectKey, isFromSampleKit, samples);
         clinicalResource.createManifestWithSamples(clinicalResourceBean);
 
         verifyUserLogin(username);
-        Mockito.verify(manifestSessionEjb).createManifestSession(researchProjectKey, manifestName, isFromSampleKit);
-        Mockito.verify(manifestSessionEjb).addSamplesToManifest(expectedManifestId, samples);
+        Mockito.verify(manifestSessionEjb).createManifestSessionWithSamples(researchProjectKey, manifestName,
+                isFromSampleKit, samples);
     }
 
     /**
@@ -139,14 +137,16 @@ public class ClinicalResourceDbFreeTest {
 
     /**
      * Stubs the behavior of {@link ManifestSessionEjb} for creating a manifest.
-     *
-     * @param manifestId            the ID for the created manifest
+     *  @param manifestId            the ID for the created manifest
      * @param manifestName          the name for the created manifest
      * @param researchProjectKey    the business key of the research project that the manifest is associated with
+     * @param samples
      */
-    private void stubManifestCreation(long manifestId, String manifestName, String researchProjectKey) {
+    private void stubManifestCreation(long manifestId, String manifestName, String researchProjectKey,
+                                      Collection<Sample> samples) {
         ManifestSession manifestSession = new ManifestSession(manifestId);
-        Mockito.when(manifestSessionEjb.createManifestSession(researchProjectKey, manifestName, true)).thenReturn(
+        Mockito.when(manifestSessionEjb.createManifestSessionWithSamples(researchProjectKey, manifestName, true,
+                samples)).thenReturn(
                 manifestSession);
     }
 }

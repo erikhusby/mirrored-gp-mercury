@@ -152,6 +152,13 @@ public class ManifestSessionEjb {
      */
     public void addSamplesToManifest(@Nonnull Long manifestId, @Nonnull Collection<Sample> samples) {
         ManifestSession manifestSession = findManifestSession(manifestId);
+        addSamplesToManifest(manifestSession, samples);
+    }
+
+    /**
+     * Add a collection of samples to existing manifest.
+     */
+    public void addSamplesToManifest(ManifestSession manifestSession, Collection<Sample> samples) {
         if (samples.isEmpty()) {
             throw new InformaticsServiceException("Empty list of samples not allowed.");
         }
@@ -387,6 +394,8 @@ public class ManifestSessionEjb {
 
     public ManifestSession createManifestSessionWithSamples(String researchProjectKey, String sessionName,
                                                             boolean fromSampleKit, Collection<Sample> samples) {
-        return null;
+        ManifestSession manifestSession = createManifestSession(researchProjectKey, sessionName, fromSampleKit);
+        addSamplesToManifest(manifestSession, samples);
+        return manifestSession;
     }
 }

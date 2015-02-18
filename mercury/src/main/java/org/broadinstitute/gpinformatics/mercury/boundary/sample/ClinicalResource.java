@@ -2,8 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.portal.PortalConfig;
@@ -34,10 +32,6 @@ import java.util.Collection;
 public class ClinicalResource {
 
     public static final String CLINICAL_RESOURCE_PATH = "clinical";
-
-    private static final Log log = LogFactory.getLog(ClinicalResource.class);
-    public static final String USERNAME = "username";
-    public static final String MANIFEST_ID = "manifestId";
     public static final String CREATE_MANIFEST = "createManifestWithSamples";
 
     @Inject
@@ -96,10 +90,9 @@ public class ClinicalResource {
         login(clinicalResourceBean.getUsername());
 
         ManifestSession manifestSession = manifestSessionEjb
-                .createManifestSession(clinicalResourceBean.getResearchProjectKey(),
-                        clinicalResourceBean.getManifestName(), clinicalResourceBean.isFromSampleKit());
-        manifestSessionEjb
-                .addSamplesToManifest(manifestSession.getManifestSessionId(), clinicalResourceBean.getSamples());
+                .createManifestSessionWithSamples(clinicalResourceBean.getResearchProjectKey(),
+                        clinicalResourceBean.getManifestName(), clinicalResourceBean.isFromSampleKit(),
+                        clinicalResourceBean.getSamples());
 
         return manifestSession.getManifestSessionId();
     }
