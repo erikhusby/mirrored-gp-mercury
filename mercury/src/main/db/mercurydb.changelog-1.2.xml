@@ -221,5 +221,10 @@
             <column name="FROM_SAMPLE_KIT" type="number(1,0)" defaultValue="0" />
         </addColumn>
     </changeSet>
+    <changeSet id="GPLIM-3314-1" author="jsacco">
+        <createIndex tableName="LAB_METRIC" indexName="IX_LAB_METRIC_VESSEL">
+            <column name="LAB_VESSEL"/>
+        </createIndex>
+    </changeSet>
 
 </databaseChangeLog>

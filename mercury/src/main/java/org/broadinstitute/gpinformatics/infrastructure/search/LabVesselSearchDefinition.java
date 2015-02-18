@@ -789,47 +789,7 @@ public class LabVesselSearchDefinition {
         return results;
     }
 
-    /**
-     * Shared logic to traverse lab vessel events looking for specific types and extract
-     *  the vessel position and barcode for a given sample
-     * @param labVessel The sample tube
-     * @param labEventTypes Mutually exclusive event types
-     * @param useTargetContainer Should target container (vs. source container) be used for positions?
-     * @return
-     */
-    private List<Pair<VesselPosition,String>> getSamplePositionForEvent(LabVessel labVessel,
-                                                                        List<LabEventType> labEventTypes,
-                                                                        boolean useTargetContainer) {
-
-        List<Pair<VesselPosition,String>> results = new ArrayList<>();
-
-        // Look for in-place
-        Set<LabEvent> inPlaceEvents = labVessel.getInPlaceEventsWithContainers();
-        for( LabEvent event : inPlaceEvents ) {
-            if( labEventTypes.contains(event.getLabEventType()) ){
-                VesselContainer container = event.getInPlaceLabVessel().getContainerRole();
-                VesselPosition position = container.getPositionOfVessel(labVessel);
-                if( position != null ) {
-                    results.add( Pair.of(position, labVessel.getLabel() ) );
-                }
-            }
-        }
-
-        if( results.size() > 0 ) {
-            return results;
-        }
-
-        // Lab event types
-        Map<LabEvent, Set<LabVessel>> mapEventToVessels
-                = labVessel.findVesselsForLabEventTypes( labEventTypes, useTargetContainer );
-
-        if( mapEventToVessels.isEmpty() ) {
-            return results;
-        }
-
-        // Only a single event will (or at least should) be found for a vessel and event type
-        LabEvent labEvent = mapEventToVessels.entrySet().iterator().next().getKey();
-        Set<LabVessel> descendantLabVessels = mapEventToVessels.entrySet().iterator().next().getValue();
+    private VesselContainer getEventVesselContainer( LabEvent labEvent, boolean useTargetContainer ) {
         VesselContainer vesselContainer = null;
 
         // In place vessel is a container where event has no transfers
@@ -856,49 +816,99 @@ public class LabVesselSearchDefinition {
                 }
             }
         }
+        return vesselContainer;
+    }
 
-        if( vesselContainer == null || vesselContainer.getMapPositionToVessel().isEmpty() ) {
+    /**
+     * Shared logic to traverse lab vessel events looking for specific types and extract
+     *  the vessel position and barcode for a given sample
+     * @param labVessel The sample tube
+     * @param labEventTypes Mutually exclusive event types
+     * @param useTargetContainer Should target container (vs. source container) be used for positions?
+     * @return
+     */
+    private List<Pair<VesselPosition,String>> getSamplePositionForEvent(LabVessel labVessel,
+                                                                        List<LabEventType> labEventTypes,
+                                                                        boolean useTargetContainer) {
+
+        List<Pair<VesselPosition,String>> results = new ArrayList<>();
+
+        // Look for in-place event low hanging fruit
+        Set<LabEvent> inPlaceEvents = labVessel.getInPlaceEventsWithContainers();
+        for( LabEvent event : inPlaceEvents ) {
+            if( labEventTypes.contains(event.getLabEventType()) ){
+                VesselContainer container = event.getInPlaceLabVessel().getContainerRole();
+                VesselPosition position = container.getPositionOfVessel(labVessel);
+                if( position != null ) {
+                    results.add( Pair.of(position, labVessel.getLabel() ) );
+                }
+            }
+        }
+
+        if( results.size() > 0 ) {
             return results;
         }
 
-        VesselPosition position = vesselContainer.getPositionOfVessel(labVessel);
-        if( position != null) {
-            results.add( Pair.of(position, labVessel.getLabel() ) );
+        // Dig through event ancestry for specific event types
+        Map<LabEvent, Set<LabVessel>> mapEventToVessels
+                = labVessel.findVesselsForLabEventTypes( labEventTypes, useTargetContainer );
+
+        if( mapEventToVessels.isEmpty() ) {
+            return results;
         }
 
-        for (LabVessel descendantVessel : descendantLabVessels) {
-            position = vesselContainer.getPositionOfVessel(descendantVessel);
-            if( position != null) {
-                results.add( Pair.of(position, descendantVessel.getLabel()) );
+        for( Map.Entry<LabEvent, Set<LabVessel>> eventMapEntry : mapEventToVessels.entrySet() ){
+            boolean foundPositionForEvent = false;
+            LabEvent labEvent = eventMapEntry.getKey();
+            Set<LabVessel> descendantLabVessels = eventMapEntry.getValue();
+
+            VesselContainer vesselContainer = getEventVesselContainer( labEvent, useTargetContainer );
+
+            if( vesselContainer == null || vesselContainer.getMapPositionToVessel().isEmpty() ) {
+                continue;
             }
-        }
 
-        if( results.isEmpty() ) {
-            // Dig through  samples to get a match
-            for( LabVessel containedVessel : (Set<LabVessel>)vesselContainer.getContainedVessels() ) {
+            VesselPosition position = vesselContainer.getPositionOfVessel(labVessel);
+            if( position != null) {
+                results.add( Pair.of(position, labVessel.getLabel() ) );
+                foundPositionForEvent = true;
+            }
+
+            for (LabVessel descendantVessel : descendantLabVessels) {
+                position = vesselContainer.getPositionOfVessel(descendantVessel);
+                if( position != null) {
+                    results.add( Pair.of(position, descendantVessel.getLabel()) );
+                    foundPositionForEvent = true;
+                }
+            }
+
+            if( !foundPositionForEvent ){
+                // Dig through  samples to get a match
                 boolean foundSample = false;
-                for (SampleInstanceV2 sampleInstanceV2 : containedVessel.getSampleInstancesV2()) {
-                    MercurySample sample = sampleInstanceV2.getRootOrEarliestMercurySample();
-                    if (sample != null) {
-                        for( LabVessel sampleVessel : sample.getLabVessel() ) {
-                            if( labVessel.getLabel().equals( sampleVessel.getLabel() ) ) {
-                                position = vesselContainer.getPositionOfVessel(containedVessel);
-                                if( position != null) {
-                                    results.add( Pair.of(position, containedVessel.getLabel() ) );
-                                    foundSample = true;
-                                    // Stop parsing vessels for this sample
-                                    break;
+                for( LabVessel containedVessel : (Set<LabVessel>)vesselContainer.getContainedVessels() ) {
+                    for (SampleInstanceV2 sampleInstanceV2 : containedVessel.getSampleInstancesV2()) {
+                        MercurySample sample = sampleInstanceV2.getRootOrEarliestMercurySample();
+                        if (sample != null) {
+                            for( LabVessel sampleVessel : sample.getLabVessel() ) {
+                                if( labVessel.getLabel().equals( sampleVessel.getLabel() ) ) {
+                                    position = vesselContainer.getPositionOfVessel(containedVessel);
+                                    if( position != null) {
+                                        results.add( Pair.of(position, containedVessel.getLabel() ) );
+                                        foundSample = true;
+                                        // Stop parsing vessels for this sample
+                                        break;
+                                    }
                                 }
                             }
                         }
-                    }
-                    if( foundSample ) {
-                        // Stop parsing samples for this contained vessel
-                        // TODO jms Should we stop wading through contained vessels?
-                        break;
+                        if( foundSample ) {
+                            // Stop parsing samples for this entire container and return results
+                            return results;
+                        }
                     }
                 }
             }
+
         }
 
         return results;
