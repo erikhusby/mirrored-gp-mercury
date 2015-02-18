@@ -39,10 +39,9 @@ public class ClinicalResourceDbFreeTest {
      */
     @Test(expectedExceptions = UnsupportedOperationException.class)
     public void testCreateSessionNotFromSampleKit() {
-        String username = "test_user";
-        setupTestUser(username);
+        stubValidLogin();
 
-        clinicalResource.createAccessioningSession(username, "test manifest", "RP-1", Boolean.FALSE);
+        clinicalResource.createAccessioningSession("test_user", "test manifest", "RP-1", Boolean.FALSE);
     }
 
     /**
@@ -52,10 +51,9 @@ public class ClinicalResourceDbFreeTest {
      */
     @Test(expectedExceptions = UnsupportedOperationException.class)
     public void testManifestWithSamplesNotFromSampleKit() {
-        String username = "test_user";
-        setupTestUser(username);
+        stubValidLogin();
 
-        clinicalResource.createManifestWithSamples(username, "test manifest", "RP-1", Boolean.FALSE,
+        clinicalResource.createManifestWithSamples("test_user", "test manifest", "RP-1", Boolean.FALSE,
                 Collections.<Sample>emptySet());
     }
 
@@ -83,10 +81,9 @@ public class ClinicalResourceDbFreeTest {
      */
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testCreateManifestNullIsFromSampleKit() {
-        String username = "test_user";
-        setupTestUser(username);
+        stubValidLogin();
 
-        clinicalResource.createAccessioningSession(username, "test manifest", "RP-1", null);
+        clinicalResource.createAccessioningSession("test_user", "test manifest", "RP-1", null);
     }
 
     /**
@@ -94,10 +91,9 @@ public class ClinicalResourceDbFreeTest {
      */
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testCreateManifestWithSamplesNullIsFromSampleKit() {
-        String username = "test_user";
-        setupTestUser(username);
+        stubValidLogin();
 
-        clinicalResource.createManifestWithSamples(username, "test manifest", "RP-1", null,
+        clinicalResource.createManifestWithSamples("test_user", "test manifest", "RP-1", null,
                 Collections.<Sample>emptySet());
     }
 
@@ -143,19 +139,20 @@ public class ClinicalResourceDbFreeTest {
      * Test that a valid request returns the ID for a new manifest manifest.
      */
     public void testValidCreateAccessioningSession() {
-        String username = "test_user";
-        BspUser user = setupTestUser(username);
+        stubValidLogin();
 
         long expectedManifestId = 1L;
         String manifestName = "test manifest";
         String researchProjectKey = "RP-1";
-        setupTestManifest(expectedManifestId, manifestName, researchProjectKey, user);
+        stubManifestCreation(expectedManifestId, manifestName, researchProjectKey);
 
+        String username = "test_user";
+        Boolean isFromSampleKit = Boolean.TRUE;
         long manifestId =
-                clinicalResource.createAccessioningSession(username, manifestName, researchProjectKey, Boolean.TRUE);
+                clinicalResource.createAccessioningSession(username, manifestName, researchProjectKey, isFromSampleKit);
 
         verifyUserLogin(username);
-        Mockito.verify(manifestSessionEjb).createManifestSession(researchProjectKey, manifestName);
+        Mockito.verify(manifestSessionEjb).createManifestSession(researchProjectKey, manifestName, isFromSampleKit);
         assertThat(manifestId, equalTo(expectedManifestId));
     }
 
@@ -163,38 +160,53 @@ public class ClinicalResourceDbFreeTest {
      * Test service that creates a manifest with all sample information.
      */
     public void testValidCreateManifestWithSamples() {
-        String username = "test_user";
-        BspUser user = setupTestUser(username);
+        stubValidLogin();
 
         long expectedManifestId = 1L;
         String manifestName = "test manifest";
         String researchProjectKey = "RP-1";
-        setupTestManifest(expectedManifestId, manifestName, researchProjectKey, user);
+        stubManifestCreation(expectedManifestId, manifestName, researchProjectKey);
 
+        String username = "test_user";
+        Boolean isFromSampleKit = Boolean.TRUE;
         Collection<Sample> samples = new ArrayList<>();
-        clinicalResource.createManifestWithSamples(username, manifestName, researchProjectKey, Boolean.TRUE, samples);
+        clinicalResource
+                .createManifestWithSamples(username, manifestName, researchProjectKey, isFromSampleKit, samples);
 
         verifyUserLogin(username);
-        Mockito.verify(manifestSessionEjb).createManifestSession(researchProjectKey, manifestName);
+        Mockito.verify(manifestSessionEjb).createManifestSession(researchProjectKey, manifestName, isFromSampleKit);
         Mockito.verify(manifestSessionEjb).addSamplesToManifest(expectedManifestId, samples);
     }
 
-    private BspUser setupTestUser(String username) {
-        BspUser user = new BspUser();
-        user.setUserId(1L);
-        user.setUsername(username);
-        Mockito.when(userBean.getBspUser()).thenReturn(user);
+    /**
+     * Stubs {@link UserBean} to report that the user has successfully logged in. There is no need for an actual
+     * {@link BspUser} at this level because {@link ClinicalResource} doesn't actually need to access one. It simply
+     * performs login and validates that login was successful. ClinicalResource then is able to get the BspUser from its
+     * own injected reference to the session-scoped UserBean.
+     */
+    private void stubValidLogin() {
         Mockito.when(userBean.isValidBspUser()).thenReturn(true);
-        return user;
     }
 
+    /**
+     * Verifies that a login operation was performed on the session-scoped {@link UserBean}.
+     *
+     * @param username    the username that should have been logged in
+     */
     private void verifyUserLogin(String username) {
         Mockito.verify(userBean).login(username);
     }
 
-    private void setupTestManifest(long manifestId, String manifestName, String researchProjectKey, BspUser user) {
+    /**
+     * Stubs the behavior of {@link ManifestSessionEjb} for creating a manifest.
+     *
+     * @param manifestId            the ID for the created manifest
+     * @param manifestName          the name for the created manifest
+     * @param researchProjectKey    the business key of the research project that the manifest is associated with
+     */
+    private void stubManifestCreation(long manifestId, String manifestName, String researchProjectKey) {
         ManifestSession manifestSession = new ManifestSession(manifestId);
-        Mockito.when(manifestSessionEjb.createManifestSession(researchProjectKey, manifestName)).thenReturn(
+        Mockito.when(manifestSessionEjb.createManifestSession(researchProjectKey, manifestName, true)).thenReturn(
                 manifestSession);
     }
 }

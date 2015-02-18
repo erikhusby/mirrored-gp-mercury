@@ -79,7 +79,8 @@ public class ClinicalResource {
         validateIsFromSampleKit(isFromSampleKit);
         login(username);
 
-        ManifestSession manifestSession = manifestSessionEjb.createManifestSession(researchProjectKey, manifestName);
+        ManifestSession manifestSession = manifestSessionEjb.createManifestSession(researchProjectKey, manifestName,
+                isFromSampleKit);
 
         return manifestSession.getManifestSessionId();
     }
@@ -97,13 +98,13 @@ public class ClinicalResource {
     }
 
     public void createManifestWithSamples(String username, String manifestName, String researchProjectKey,
-                                          Boolean isFromSampleKit,
-                                          Collection<Sample> samples) {
+                                          Boolean isFromSampleKit, Collection<Sample> samples) {
         validateManifestName(manifestName);
         validateIsFromSampleKit(isFromSampleKit);
         login(username);
 
-        ManifestSession manifestSession = manifestSessionEjb.createManifestSession(researchProjectKey, manifestName);
+        ManifestSession manifestSession = manifestSessionEjb.createManifestSession(researchProjectKey, manifestName,
+                isFromSampleKit);
         manifestSessionEjb.addSamplesToManifest(manifestSession.getManifestSessionId(), samples);
     }
 

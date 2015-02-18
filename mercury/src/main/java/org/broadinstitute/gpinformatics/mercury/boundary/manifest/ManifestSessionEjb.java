@@ -4,7 +4,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
@@ -371,15 +370,17 @@ public class ManifestSessionEjb {
      *
      * @param researchProjectKey    the business key of the research project for these samples
      * @param sessionName           the name to give the manifest session
+     * @param fromSampleKit         whether or not the samples are in tubes from a Broad sample kit
      * @return the newly created (and persisted) ManifestSession
      */
-    public ManifestSession createManifestSession(String researchProjectKey, String sessionName) {
+    public ManifestSession createManifestSession(String researchProjectKey, String sessionName, boolean fromSampleKit) {
         ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
         if (researchProject == null) {
             throw new IllegalArgumentException("Research project not found: " + researchProjectKey);
         }
 
-        ManifestSession manifestSession = new ManifestSession(researchProject, sessionName, userBean.getBspUser(), true); // TODO: add fromSampleKit parameter
+        ManifestSession manifestSession = new ManifestSession(researchProject, sessionName, userBean.getBspUser(),
+                fromSampleKit);
         manifestSessionDao.persist(manifestSession);
         return manifestSession;
     }

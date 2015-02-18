@@ -1505,11 +1505,12 @@ public class ManifestSessionEjbDBFreeTest {
                         mockUserBean);
 
         ManifestSession manifestSession =
-                manifestSessionEjb.createManifestSession(researchProject.getBusinessKey(), sessionName);
+                manifestSessionEjb.createManifestSession(researchProject.getBusinessKey(), sessionName, true);
 
         assertThat(manifestSession.getResearchProject(), equalTo(researchProject));
         assertThat(manifestSession.getSessionName(),
                 equalTo(sessionName + "-" + manifestSession.getManifestSessionId()));
+        assertThat(manifestSession.isFromSampleKit(), is(true));
         assertThat(manifestSession.getUpdateData().getCreatedBy(), equalTo(TEST_USER.getUserId()));
 
         Mockito.verify(manifestSessionDao).persist(manifestSession);
@@ -1524,6 +1525,6 @@ public class ManifestSessionEjbDBFreeTest {
                 new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao,
                         mockUserBean);
 
-        manifestSessionEjb.createManifestSession("BadRP", "test session");
+        manifestSessionEjb.createManifestSession("BadRP", "test session", true);
     }
 }
