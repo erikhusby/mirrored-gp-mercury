@@ -36,8 +36,9 @@
                 Download Product Descriptions</stripes:link>
             <stripes:form id="list" beanclass="${actionBean.class.name}">
 
-                <stripes:radio onchange="changeAvailability()" value="<%= ProductDao.Availability.ALL%>" name="availability"/> All Products
-                <stripes:radio onchange="changeAvailability()" value="<%= ProductDao.Availability.CURRENT%>" checked="checked"
+                <stripes:radio onchange="changeAvailability()" value="<%= ProductDao.Availability.ALL%>"
+                               name="availability"/> All Products
+                <stripes:radio onchange="changeAvailability()" value="<%= ProductDao.Availability.CURRENT%>"
                                name="availability"/> Available Products Only
             </stripes:form>
         </div>

@@ -552,4 +552,12 @@ public class ProductActionBean extends CoreActionBean {
     public Workflow getWorkflowNone() {
         return Workflow.NONE;
     }
+
+    public String getAvailability() {
+        return availability;
+    }
+
+    public void setAvailability(String availability) {
+        this.availability = availability;
+    }
 }
