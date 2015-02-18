@@ -4,6 +4,7 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.UnknownUserException;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
+import org.broadinstitute.gpinformatics.mercury.crsp.generated.ClinicalResourceBean;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -53,8 +54,10 @@ public class ClinicalResourceDbFreeTest {
     public void testManifestWithSamplesNotFromSampleKit() {
         stubValidLogin();
 
-        clinicalResource.createManifestWithSamples("test_user", "test manifest", "RP-1", Boolean.FALSE,
-                Collections.<Sample>emptySet());
+        ClinicalResourceBean clinicalResourceBean = ClinicalSampleFactory
+                .createClinicalResourceBean("test_user", "test manifest", "RP-1", Boolean.FALSE,
+                        Collections.<Sample>emptySet());
+        clinicalResource.createManifestWithSamples(clinicalResourceBean);
     }
 
     /**
@@ -72,8 +75,10 @@ public class ClinicalResourceDbFreeTest {
      */
     @Test(expectedExceptions = UnknownUserException.class)
     public void testCreateManifestWithSamplesUnknownUser() {
-        clinicalResource.createManifestWithSamples("unknown_user", "test manifest", "RP-1", Boolean.TRUE,
-                Collections.<Sample>emptySet());
+        ClinicalResourceBean clinicalResourceBean = ClinicalSampleFactory
+                .createClinicalResourceBean("unknown_user", "test manifest", "RP-1", Boolean.TRUE,
+                        Collections.<Sample>emptySet());
+        clinicalResource.createManifestWithSamples(clinicalResourceBean);
     }
 
     /**
@@ -93,8 +98,9 @@ public class ClinicalResourceDbFreeTest {
     public void testCreateManifestWithSamplesNullIsFromSampleKit() {
         stubValidLogin();
 
-        clinicalResource.createManifestWithSamples("test_user", "test manifest", "RP-1", null,
-                Collections.<Sample>emptySet());
+        ClinicalResourceBean clinicalResourceBean = ClinicalSampleFactory
+                .createClinicalResourceBean("test_user", "test manifest", "RP-1", null, Collections.<Sample>emptySet());
+        clinicalResource.createManifestWithSamples(clinicalResourceBean);
     }
 
     /**
@@ -112,8 +118,10 @@ public class ClinicalResourceDbFreeTest {
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testCreateManifestWithSamplesNullManifestName() {
         Mockito.when(userBean.isValidBspUser()).thenReturn(true);
-        clinicalResource.createManifestWithSamples("test user", null, "RP-1", Boolean.TRUE,
-                Collections.<Sample>emptySet());
+
+        ClinicalResourceBean clinicalResourceBean = ClinicalSampleFactory
+                .createClinicalResourceBean("test user", null, "RP-1", Boolean.TRUE, Collections.<Sample>emptySet());
+        clinicalResource.createManifestWithSamples(clinicalResourceBean);
     }
 
     /**
@@ -131,8 +139,9 @@ public class ClinicalResourceDbFreeTest {
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testCreateManifestWithSamplesEmptyManifestName() {
         Mockito.when(userBean.isValidBspUser()).thenReturn(true);
-        clinicalResource.createManifestWithSamples("test user", "", "RP-1", Boolean.TRUE,
-                Collections.<Sample>emptySet());
+        ClinicalResourceBean clinicalResourceBean = ClinicalSampleFactory
+                .createClinicalResourceBean("test user", "", "RP-1", Boolean.TRUE, Collections.<Sample>emptySet());
+        clinicalResource.createManifestWithSamples(clinicalResourceBean);
     }
 
     /**
@@ -170,8 +179,9 @@ public class ClinicalResourceDbFreeTest {
         String username = "test_user";
         Boolean isFromSampleKit = Boolean.TRUE;
         Collection<Sample> samples = new ArrayList<>();
-        clinicalResource
-                .createManifestWithSamples(username, manifestName, researchProjectKey, isFromSampleKit, samples);
+        ClinicalResourceBean clinicalResourceBean = ClinicalSampleFactory
+                .createClinicalResourceBean(username, manifestName, researchProjectKey, isFromSampleKit, samples);
+        clinicalResource.createManifestWithSamples(clinicalResourceBean);
 
         verifyUserLogin(username);
         Mockito.verify(manifestSessionEjb).createManifestSession(researchProjectKey, manifestName, isFromSampleKit);

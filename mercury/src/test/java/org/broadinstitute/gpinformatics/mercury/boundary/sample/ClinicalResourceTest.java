@@ -13,13 +13,12 @@ package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
 import com.google.common.collect.ImmutableMap;
 import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.GenericType;
 import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
+import org.broadinstitute.gpinformatics.mercury.crsp.generated.ClinicalResourceBean;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
@@ -32,16 +31,16 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.net.URL;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 
 @Test(groups = TestGroups.STANDARD)
 public class ClinicalResourceTest extends RestServiceContainerTest {
@@ -53,38 +52,28 @@ public class ClinicalResourceTest extends RestServiceContainerTest {
     @Inject
     private ManifestSessionEjb manifestSessionEjb;
     private static final long MANIFEST_ID = 5102l;
+    private static final String MANIFEST_NAME = "fooManifest";
 
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(DEV);
     }
 
-
-    @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
+    @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     public void testWebService(@ArquillianResource URL baseUrl) throws Exception {
-        Map<String, Object> postBody = new HashMap<>();
-        postBody.put("username", QA_DUDE_PM);
-        postBody.put("manifestId", MANIFEST_ID);
+        ClinicalResourceBean clinicalResourceBean =
+                ClinicalSampleFactory.createClinicalResourceBean(QA_DUDE_PM, MANIFEST_NAME, "RP-12", true,
+                        ImmutableMap.of(Metadata.Key.PATIENT_ID, "004-002", Metadata.Key.SAMPLE_ID, "03101231193"),
+                        ImmutableMap.of(Metadata.Key.PATIENT_ID, "994-002", Metadata.Key.SAMPLE_ID, "93101231193")
+                );
 
-        postBody.put("samples", ClinicalSampleFactory.createCrspSample(ImmutableMap
-                .of(Metadata.Key.PATIENT_ID, "004-002", Metadata.Key.SAMPLE_ID, "03101231193")));
+        WebResource resource = makeWebResource(baseUrl, ClinicalResource.CREATE_MANIFEST);
 
-        WebResource resource = makeWebResource(baseUrl, "addSamplesToManifest");
-        resource = resource.queryParam("username", QA_DUDE_PM)
-                .queryParam("manifestId", String.valueOf(MANIFEST_ID));
-        resource.accept("application/json")
-                .type("application/json").post(ClientResponse.class, postBody);
-
-        MultivaluedMap formData = new MultivaluedMapImpl();
-        formData.add("name1", "val1");
-        formData.add("name2", "val2");
-        ClientResponse response =
-                resource.type("application/x-www-form-urlencoded").post(ClientResponse.class, formData);
-
-        resource.entity(postBody).post(new GenericType<List<Sample>>() { });
-
-
+        ClientResponse response = resource.type(MediaType.APPLICATION_XML)
+                .accept(MediaType.APPLICATION_XML).entity(clinicalResourceBean)
+                .post(ClientResponse.class);
+        assertThat(response.getStatus(), is(Response.Status.OK.getStatusCode()));
     }
 
 

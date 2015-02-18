@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <xs:element name="clinicalResourceBean">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="samples" type="sample" maxOccurs="unbounded"/>
+            </xs:sequence>
+
+            <xs:attribute name="username" type="xs:normalizedString"/>
+            <xs:attribute name="manifestName" type="xs:normalizedString"/>
+            <xs:attribute name="researchProjectKey" type="xs:normalizedString"/>
+            <xs:attribute name="fromSampleKit" type="xs:boolean"/>
+        </xs:complexType>
+
+    </xs:element>
+
+    <!--<xs:element name="Sample" >-->
+        <xs:complexType name="sample">
+            <xs:sequence>
+                <xs:element name="sampleData" type="sampleData" maxOccurs="unbounded"/>
+            </xs:sequence>
+        </xs:complexType>
+    <!--</xs:element>-->
+
+    <xs:complexType name="sampleData">
+        <xs:attribute name="name" type="xs:normalizedString"/>
+        <xs:attribute name="value" type="xs:normalizedString"/>
+    </xs:complexType>
+</xs:schema>

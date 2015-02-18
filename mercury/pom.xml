@@ -2072,17 +2072,17 @@
                     </execution>
 
                     <execution>
-                        <id>CrspTypes</id>
+                        <id>ClinicalResourceTypes</id>
                         <goals>
                             <goal>xjc</goal>
                         </goals>
                         <configuration>
                             <!-- each execution needs to specify the schemaFile(s) to use -->
-                            <schemaFiles>CrspTypes.xsd</schemaFiles>
+                            <schemaFiles>ClinicalResourceTypes.xsd</schemaFiles>
                             <schemaDirectory>src/main/webapp/xsd</schemaDirectory>
                             <packageName>org.broadinstitute.gpinformatics.mercury.crsp.generated</packageName>
                             <!-- each execution must have a unique staleFile -->
-                            <staleFile>${project.build.directory}/jaxb2/.CrspTypesXjcStaleFlag</staleFile>
+                            <staleFile>${project.build.directory}/jaxb2/.ClinicalResourceTypesXjcStaleFlag</staleFile>
                             <!-- all executions, except the first, need clearOutputDir set to false -->
                             <clearOutputDir>false</clearOutputDir>
                         </configuration>

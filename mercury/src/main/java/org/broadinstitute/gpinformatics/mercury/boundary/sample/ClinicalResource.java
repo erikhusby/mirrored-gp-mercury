@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.infrastructure.portal.PortalConfig;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.UnknownUserException;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
+import org.broadinstitute.gpinformatics.mercury.crsp.generated.ClinicalResourceBean;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -17,8 +18,12 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import java.util.Collection;
 
@@ -34,6 +39,9 @@ public class ClinicalResource {
     public static final String CLINICAL_RESOURCE_PATH = "clinical";
 
     private static final Log log = LogFactory.getLog(ClinicalResource.class);
+    public static final String USERNAME = "username";
+    public static final String MANIFEST_ID = "manifestId";
+    public static final String CREATE_MANIFEST = "createManifestWithSamples";
 
     @Inject
     private UserBean userBean;
@@ -97,15 +105,24 @@ public class ClinicalResource {
         manifestSessionEjb.addSamplesToManifest(manifestId, samples);
     }
 
-    public void createManifestWithSamples(String username, String manifestName, String researchProjectKey,
-                                          Boolean isFromSampleKit, Collection<Sample> samples) {
-        validateManifestName(manifestName);
-        validateIsFromSampleKit(isFromSampleKit);
-        login(username);
+    @POST
+    @Path(CREATE_MANIFEST)
+    @Produces(MediaType.APPLICATION_XML)
+    public Response createManifestWithSamples(ClinicalResourceBean clinicalResourceBean) {
+        validateManifestName(clinicalResourceBean.getManifestName());
+        validateIsFromSampleKit(clinicalResourceBean.isFromSampleKit());
+        login(clinicalResourceBean.getUsername());
 
-        ManifestSession manifestSession = manifestSessionEjb.createManifestSession(researchProjectKey, manifestName,
-                isFromSampleKit);
-        manifestSessionEjb.addSamplesToManifest(manifestSession.getManifestSessionId(), samples);
+        ManifestSession manifestSession = manifestSessionEjb
+                .createManifestSession(clinicalResourceBean.getResearchProjectKey(),
+                        clinicalResourceBean.getManifestName(), clinicalResourceBean.isFromSampleKit());
+        manifestSessionEjb
+                .addSamplesToManifest(manifestSession.getManifestSessionId(), clinicalResourceBean.getSamples());
+
+        String resultString = String.format("Manifest Created with %s samples", clinicalResourceBean.getSamples().size() > 0 ?
+                String.valueOf(clinicalResourceBean.getSamples().size()) : "no");
+
+        return Response.status(Response.Status.OK).entity(clinicalResourceBean).type(MediaType.APPLICATION_XML_TYPE).build();
     }
 
     private void validateManifestName(String manifestName) {
