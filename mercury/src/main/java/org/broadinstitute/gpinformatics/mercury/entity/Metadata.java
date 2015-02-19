@@ -224,9 +224,9 @@ public class Metadata {
             return visibility;
         }
 
-        public static Metadata.Key fromDisplayName(String displayName) {
-            for (Key key : Key.values()) {
-                if (key.getDisplayName().equals(displayName)) {
+        public static Key fromDisplayName(String displayName) {
+            for (Key key : values()) {
+                if (key.displayName.equals(displayName)) {
                     return key;
                 }
             }
