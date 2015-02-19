@@ -32,6 +32,7 @@
             <c:if test="${not empty actionBean.stationEvent}">
                 <stripes:hidden name="stationEvent.eventType" value="${actionBean.stationEvent.eventType}"/>
                 <h5>Reagents</h5>
+                Expiration date format is mm/dd/yyyy.
                 <c:forEach items="${actionBean.stationEvent.reagent}" var="reagent" varStatus="loop">
                     <%--@elvariable id="reagent" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReagentType"--%>
                     <div class="control-group">
@@ -130,7 +131,7 @@
                         set in the action bean. -->
                         <label for="srcRcpVol">Volume</label>
                         <input type="text" id="srcRcpVol" name="stationEvent.sourceReceptacle.volume"
-                                value="${receptacleTransfer.sourceReceptacle.volume}"/>
+                                value="${receptacleTransfer.sourceReceptacle.volume}"/> ul
                         </div>
                         <div class="control-group">
                         <h5>Destination</h5>
@@ -143,7 +144,7 @@
                                 value="${receptacleTransfer.receptacle.barcode}"/>
                         <label for="destRcpVol">Volume</label>
                         <input type="text" id="destRcpVol" name="stationEvent.receptacle.volume"
-                                value="${receptacleTransfer.receptacle.volume}"/>
+                                value="${receptacleTransfer.receptacle.volume}"/> ul
                         </div>
                     </c:when>
                 </c:choose>
