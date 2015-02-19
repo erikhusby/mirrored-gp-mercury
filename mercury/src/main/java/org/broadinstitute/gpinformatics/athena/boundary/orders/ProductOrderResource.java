@@ -318,7 +318,14 @@ public class ProductOrderResource {
             productOrderDao.persist(productOrder);
             productOrderDao.flush();
         } catch (Exception e) {
-            log.error(user.getUsername() + " had a problem placing their product order " + productOrder.getTitle(), e);
+            String keyText;
+            if (productOrder.getJiraTicketKey() != null) {
+                keyText = " (" + productOrder.getJiraTicketKey() + ")";
+            } else {
+                keyText = "";
+            }
+            log.error(user.getUsername() + " could not create the product order " + productOrder.getTitle()
+                      + keyText, e);
             throw new ApplicationValidationException("Cannot create the product order - " + e.getMessage());
         }
 
