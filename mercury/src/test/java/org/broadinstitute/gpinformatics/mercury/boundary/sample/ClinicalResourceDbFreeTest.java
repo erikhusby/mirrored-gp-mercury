@@ -9,6 +9,8 @@ import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -142,11 +144,20 @@ public class ClinicalResourceDbFreeTest {
      * @param researchProjectKey the business key of the research project that the manifest is associated with
      * @param samples            the Samples to add to the new manifest.
      */
-    private void stubManifestCreation(long manifestId, String manifestName, String researchProjectKey,
+    private void stubManifestCreation( final long manifestId, String manifestName, String researchProjectKey,
                                       Collection<Sample> samples) {
-        ManifestSession manifestSession = new ManifestSession(manifestId);
-        Mockito.when(
-                manifestSessionEjb.createManifestSessionWithSamples(researchProjectKey, manifestName, true, samples))
-                .thenReturn(manifestSession);
+        Mockito.when(manifestSessionEjb.createManifestSessionWithSamples(researchProjectKey, manifestName, true,
+                samples)).then(new Answer<ManifestSession>() {
+
+            @Override
+            public ManifestSession answer(final InvocationOnMock invocation) throws Throwable {
+                return new ManifestSession() {
+                    @Override
+                    public Long getManifestSessionId() {
+                        return manifestId;
+                    }
+                };
+            }
+        });
     }
 }

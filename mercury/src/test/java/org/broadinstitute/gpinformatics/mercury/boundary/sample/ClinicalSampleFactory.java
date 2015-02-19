@@ -57,13 +57,7 @@ public class ClinicalSampleFactory {
     public static ClinicalResourceBean createClinicalResourceBean(String userName, String manifestName,
                                                                   String researchProjectKey, Boolean isFromSampleKit,
                                                                   Map<Metadata.Key, String> ... sampleMetadataList) {
-        ClinicalResourceBean clinicalResourceBean = new ClinicalResourceBean();
-        clinicalResourceBean.setManifestName(manifestName);
-        clinicalResourceBean.setResearchProjectKey(researchProjectKey);
-        clinicalResourceBean.setFromSampleKit(isFromSampleKit);
-        clinicalResourceBean.setUsername(userName);
         Set<Sample> sampleData = new HashSet<>();
-
         for (Map<Metadata.Key, String> sampleMetadata : sampleMetadataList) {
             sampleData.add(createCrspSample(sampleMetadata));
         }
