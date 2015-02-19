@@ -30,7 +30,7 @@ import java.util.Set;
  */
 public class ClinicalSampleFactory {
     public static Collection<Sample> getRandomTestSamples(int count) {
-        List<Sample> samples = new ArrayList<>();
+        List<Sample> samples = new ArrayList<>(count);
         for (int i = 1; i <= count; i++) {
             samples.add(ClinicalSampleFactory.createCrspSample(ImmutableMap
                     .of(Metadata.Key.SAMPLE_ID, "SM-" + i, Metadata.Key.PATIENT_ID,

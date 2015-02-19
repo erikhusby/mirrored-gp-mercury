@@ -1,15 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.portal.PortalConfig;
-import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.UnknownUserException;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.ClinicalResourceBean;
-import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
@@ -22,7 +19,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.SecurityContext;
-import java.util.Collection;
 
 /**
  * ClinicalResource provides web services related to accessioning samples into Mercury along with sample data used for
@@ -59,18 +55,6 @@ public class ClinicalResource {
     public ClinicalResource(UserBean userBean, ManifestSessionEjb manifestSessionEjb) {
         this.userBean = userBean;
         this.manifestSessionEjb = manifestSessionEjb;
-    }
-
-    public void addSamplesToManifest(String username, Long manifestId, Collection<Sample> samples) {
-        login(username);
-        String requiredParameterMissing = "Required parameter \'%s\' is missing.";
-        if (manifestId == null) {
-            throw new InformaticsServiceException(String.format(requiredParameterMissing, "manifestId"));
-        }
-        if (CollectionUtils.isEmpty(samples)) {
-            throw new InformaticsServiceException(String.format(requiredParameterMissing, "samples"));
-        }
-        manifestSessionEjb.addSamplesToManifest(manifestId, samples);
     }
 
     /**

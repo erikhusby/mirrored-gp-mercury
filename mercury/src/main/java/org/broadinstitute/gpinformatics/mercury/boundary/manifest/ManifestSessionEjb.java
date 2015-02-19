@@ -162,7 +162,7 @@ public class ManifestSessionEjb {
         if (samples.isEmpty()) {
             throw new InformaticsServiceException("Empty list of samples not allowed.");
         }
-        List<ManifestRecord> manifestRecords = new ArrayList<>(samples.size());
+//        List<ManifestRecord> manifestRecords = new ArrayList<>(samples.size());
         for (Sample sample : samples) {
             if (sample == null){
                 throw new InformaticsServiceException("Sample is null.");
@@ -171,9 +171,8 @@ public class ManifestSessionEjb {
                 throw new InformaticsServiceException("Sample contains no metadata.");
             }
             List<Metadata> metadata = convertToMercuryMetadata(sample);
-            manifestRecords.add(new ManifestRecord(metadata.toArray(new Metadata[metadata.size()])));
+            manifestSession.addRecord(new ManifestRecord(metadata.toArray(new Metadata[metadata.size()])));
         }
-        manifestSession.addRecords(manifestRecords);
     }
 
     List<Metadata> convertToMercuryMetadata(Sample crspSample) {
