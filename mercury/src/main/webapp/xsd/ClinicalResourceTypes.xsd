@@ -14,13 +14,11 @@
 
     </xs:element>
 
-    <!--<xs:element name="Sample" >-->
-        <xs:complexType name="sample">
-            <xs:sequence>
-                <xs:element name="sampleData" type="sampleData" maxOccurs="unbounded"/>
-            </xs:sequence>
-        </xs:complexType>
-    <!--</xs:element>-->
+    <xs:complexType name="sample">
+        <xs:sequence>
+            <xs:element name="sampleData" type="sampleData" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
 
     <xs:complexType name="sampleData">
         <xs:attribute name="name" type="xs:normalizedString"/>

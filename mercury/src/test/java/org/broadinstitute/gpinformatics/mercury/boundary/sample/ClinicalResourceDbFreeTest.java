@@ -19,6 +19,9 @@ import java.util.Collections;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ClinicalResourceDbFreeTest {
 
+    private static final String RP_1 = "RP-1";
+    private static final String MANIFEST_NAME = "test manifest";
+    private static final String TEST_USER = "test_user";
     private ClinicalResource clinicalResource;
     private UserBean userBean;
     private ManifestSessionEjb manifestSessionEjb;
@@ -39,9 +42,8 @@ public class ClinicalResourceDbFreeTest {
     public void testManifestWithSamplesNotFromSampleKit() {
         stubValidLogin();
 
-        ClinicalResourceBean clinicalResourceBean = ClinicalSampleFactory
-                .createClinicalResourceBean("test_user", "test manifest", "RP-1", Boolean.FALSE,
-                        Collections.<Sample>emptySet()); // TODO: not empty set
+        ClinicalResourceBean clinicalResourceBean =
+                ClinicalSampleFactory.createClinicalResourceBean(TEST_USER, MANIFEST_NAME, RP_1, Boolean.FALSE, 2);
         clinicalResource.createManifestWithSamples(clinicalResourceBean);
     }
 
@@ -52,7 +54,7 @@ public class ClinicalResourceDbFreeTest {
     @Test(expectedExceptions = UnknownUserException.class)
     public void testCreateManifestWithSamplesUnknownUser() {
         ClinicalResourceBean clinicalResourceBean = ClinicalSampleFactory
-                .createClinicalResourceBean("unknown_user", "test manifest", "RP-1", Boolean.TRUE,
+                .createClinicalResourceBean("unknown_user", MANIFEST_NAME, RP_1, Boolean.TRUE,
                         Collections.<Sample>emptySet());
         clinicalResource.createManifestWithSamples(clinicalResourceBean);
     }
@@ -65,7 +67,7 @@ public class ClinicalResourceDbFreeTest {
         stubValidLogin();
 
         ClinicalResourceBean clinicalResourceBean = ClinicalSampleFactory
-                .createClinicalResourceBean("test_user", "test manifest", "RP-1", null, Collections.<Sample>emptySet());
+                .createClinicalResourceBean(TEST_USER, MANIFEST_NAME, RP_1, null, Collections.<Sample>emptySet());
         clinicalResource.createManifestWithSamples(clinicalResourceBean);
     }
 
@@ -77,7 +79,7 @@ public class ClinicalResourceDbFreeTest {
         Mockito.when(userBean.isValidBspUser()).thenReturn(true);
 
         ClinicalResourceBean clinicalResourceBean = ClinicalSampleFactory
-                .createClinicalResourceBean("test user", null, "RP-1", Boolean.TRUE, Collections.<Sample>emptySet());
+                .createClinicalResourceBean("test user", null, RP_1, Boolean.TRUE, Collections.<Sample>emptySet());
         clinicalResource.createManifestWithSamples(clinicalResourceBean);
     }
 
@@ -88,7 +90,7 @@ public class ClinicalResourceDbFreeTest {
     public void testCreateManifestWithSamplesEmptyManifestName() {
         Mockito.when(userBean.isValidBspUser()).thenReturn(true);
         ClinicalResourceBean clinicalResourceBean = ClinicalSampleFactory
-                .createClinicalResourceBean("test user", "", "RP-1", Boolean.TRUE, Collections.<Sample>emptySet());
+                .createClinicalResourceBean(TEST_USER, "", RP_1, Boolean.TRUE, Collections.<Sample>emptySet());
         clinicalResource.createManifestWithSamples(clinicalResourceBean);
     }
 
@@ -99,21 +101,18 @@ public class ClinicalResourceDbFreeTest {
         stubValidLogin();
 
         long expectedManifestId = 1L;
-        String manifestName = "test manifest";
-        String researchProjectKey = "RP-1";
         Collection<Sample> samples = new ArrayList<>();
-        stubManifestCreation(expectedManifestId, manifestName, researchProjectKey, samples);
+        stubManifestCreation(expectedManifestId, MANIFEST_NAME, RP_1, samples);
 
-        String username = "test_user";
         Boolean isFromSampleKit = Boolean.TRUE;
 
         ClinicalResourceBean clinicalResourceBean = ClinicalSampleFactory
-                .createClinicalResourceBean(username, manifestName, researchProjectKey, isFromSampleKit, samples);
+                .createClinicalResourceBean(TEST_USER, MANIFEST_NAME, RP_1, isFromSampleKit, samples);
         clinicalResource.createManifestWithSamples(clinicalResourceBean);
 
-        verifyUserLogin(username);
-        Mockito.verify(manifestSessionEjb).createManifestSessionWithSamples(researchProjectKey, manifestName,
-                isFromSampleKit, samples);
+        verifyUserLogin(TEST_USER);
+        Mockito.verify(manifestSessionEjb)
+                .createManifestSessionWithSamples(RP_1, MANIFEST_NAME, isFromSampleKit, samples);
     }
 
     /**
@@ -137,10 +136,11 @@ public class ClinicalResourceDbFreeTest {
 
     /**
      * Stubs the behavior of {@link ManifestSessionEjb} for creating a manifest.
-     *  @param manifestId            the ID for the created manifest
-     * @param manifestName          the name for the created manifest
-     * @param researchProjectKey    the business key of the research project that the manifest is associated with
-     * @param samples
+     *
+     * @param manifestId         the ID for the created manifest
+     * @param manifestName       the name for the created manifest
+     * @param researchProjectKey the business key of the research project that the manifest is associated with
+     * @param samples            the Samples to add to the new manifest.
      */
     private void stubManifestCreation(long manifestId, String manifestName, String researchProjectKey,
                                       Collection<Sample> samples) {

@@ -63,12 +63,8 @@ public class ClinicalResourceTest extends RestServiceContainerTest {
     @RunAsClient
     @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     public void testWebService(@ArquillianResource URL baseUrl) throws Exception {
-        ClinicalResourceBean clinicalResourceBean =
-                ClinicalSampleFactory.createClinicalResourceBean(
-                        QA_DUDE_PM, MANIFEST_NAME, EXISTING_RESEARCH_PROJECT_KEY, true,
-                        ImmutableMap.of(Metadata.Key.PATIENT_ID, "004-002", Metadata.Key.SAMPLE_ID, "03101231193"),
-                        ImmutableMap.of(Metadata.Key.PATIENT_ID, "994-002", Metadata.Key.SAMPLE_ID, "93101231193")
-                );
+        ClinicalResourceBean clinicalResourceBean = ClinicalSampleFactory
+                .createClinicalResourceBean(QA_DUDE_PM, MANIFEST_NAME, EXISTING_RESEARCH_PROJECT_KEY, true, 2);
 
         WebResource resource = makeWebResource(baseUrl, ClinicalResource.CREATE_MANIFEST);
 
