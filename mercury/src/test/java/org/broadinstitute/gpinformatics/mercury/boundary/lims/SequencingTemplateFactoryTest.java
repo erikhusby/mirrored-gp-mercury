@@ -55,21 +55,23 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
 
     public static final String BARCODE_SUFFIX = "1";
     public static final String FLOWCELL_2500_TICKET = "FCT-3";
+    public static final String FLOWCELL_2000_TICKET = "FCT-4";
     private SequencingTemplateFactory factory = null;
     private BarcodedTube denatureTube = null;
     private BarcodedTube dilutionTube = null;
-    private IlluminaFlowcell flowcell = null;
+    private IlluminaFlowcell flowcellHiSeq2500 = null;
     private MiSeqReagentKit reagentKit = null;
     private static final String PRODUCTION_CIGAR = "76T8B8B76T";
     private static final String POOL_TEST_CIGAR = "8B8B";
     private SequencingTemplateType template;
     private Date runDate;
-    String flowcellBarcode;
+    String flowcellHiSeq2500Barcode;
     private String denatureTubeBarcode;
     private String dilutionTubeBarcode;
     private LabBatch fctBatch;
     private LabBatch miseqBatch2;
     private LabBatch miseqBatch1;
+    private LabBatch fctBatchHiSeq2000;
 
     @Override
     @BeforeTest(alwaysRun = true)
@@ -84,38 +86,38 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         runDate = new Date();
         Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
-                                              new HashSet<LabVessel>(mapBarcodeToTube.values()),
-                                              LabBatch.LabBatchType.WORKFLOW);
+                new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                LabBatch.LabBatchType.WORKFLOW);
         workflowBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
         workflowBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
 
         //Build Event History
         bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, BARCODE_SUFFIX);
         PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube,
-                                                                                  String.valueOf(runDate.getTime()),
-                                                                                  BARCODE_SUFFIX, true);
+                String.valueOf(runDate.getTime()),
+                BARCODE_SUFFIX, true);
         ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
                 runExomeExpressShearingProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
-                                               picoPlatingEntityBuilder.getNormTubeFormation(),
-                                               picoPlatingEntityBuilder.getNormalizationBarcode(), BARCODE_SUFFIX);
+                        picoPlatingEntityBuilder.getNormTubeFormation(),
+                        picoPlatingEntityBuilder.getNormalizationBarcode(), BARCODE_SUFFIX);
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
                 runLibraryConstructionProcess(exomeExpressShearingEntityBuilder.getShearingCleanupPlate(),
-                                              exomeExpressShearingEntityBuilder.getShearCleanPlateBarcode(),
-                                              exomeExpressShearingEntityBuilder.getShearingPlate(), BARCODE_SUFFIX);
+                        exomeExpressShearingEntityBuilder.getShearCleanPlateBarcode(),
+                        exomeExpressShearingEntityBuilder.getShearingPlate(), BARCODE_SUFFIX);
         HybridSelectionEntityBuilder hybridSelectionEntityBuilder =
                 runHybridSelectionProcess(libraryConstructionEntityBuilder.getPondRegRack(),
-                                          libraryConstructionEntityBuilder.getPondRegRackBarcode(),
-                                          libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), BARCODE_SUFFIX);
+                        libraryConstructionEntityBuilder.getPondRegRackBarcode(),
+                        libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), BARCODE_SUFFIX);
         QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
-                                                          hybridSelectionEntityBuilder.getNormCatchBarcodes(),
-                                                          hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(),
-                                                          "1");
+                hybridSelectionEntityBuilder.getNormCatchBarcodes(),
+                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(),
+                "1");
 
         denatureTube = qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
         denatureTubeBarcode = denatureTube.getLabel();
         reagentKit = new MiSeqReagentKit("reagent_kit_barcode");
         LabEvent denatureToReagentKitEvent = new LabEvent(DENATURE_TO_REAGENT_KIT_TRANSFER, new Date(),
-                                                          "ZLAB", 1L, 1L, "sequencingTemplateFactoryTest");
+                "ZLAB", 1L, 1L, "sequencingTemplateFactoryTest");
         final VesselToSectionTransfer sectionTransfer = new VesselToSectionTransfer(
                 denatureTube, SBSSection.getBySectionName(MiSeqReagentKit.LOADING_WELL.name()),
                 reagentKit.getContainerRole(), null, denatureToReagentKitEvent);
@@ -131,15 +133,18 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
 
         HiSeq2500FlowcellEntityBuilder flowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), BARCODE_SUFFIX + "ADXX",
-                                            FLOWCELL_2500_TICKET,
-                                            ProductionFlowcellPath.DILUTION_TO_FLOWCELL, null,
-                                            Workflow.AGILENT_EXOME_EXPRESS);
+                        FLOWCELL_2500_TICKET,
+                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, null,
+                        Workflow.AGILENT_EXOME_EXPRESS);
         dilutionTube = flowcellEntityBuilder.getDilutionRack().getContainerRole().getVesselAtPosition(
                 VesselPosition.A01);
         dilutionTubeBarcode = dilutionTube.getLabel();
 
-        flowcell = flowcellEntityBuilder.getIlluminaFlowcell();
-        flowcellBarcode = flowcell.getLabel();
+        flowcellHiSeq2500 = flowcellEntityBuilder.getIlluminaFlowcell();
+        flowcellHiSeq2500Barcode = flowcellHiSeq2500.getLabel();
+
+        fctBatchHiSeq2000 = new LabBatch(FLOWCELL_2000_TICKET, starterVessels, LabBatch.LabBatchType.FCT, BigDecimal.valueOf(
+                12.33f), IlluminaFlowcell.FlowcellType.HiSeqFlowcell);
 
         template = null;
     }
@@ -172,13 +177,13 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
 
     public void testGetSequencingTemplatePoolTest() {
         // fixme this is a bit shady.  The flowcell here is a production flowcell, not a MiSeq flowcell
-        Set<VesselAndPosition> vesselsAndPositions = flowcell.getLoadingVessels();
+        Set<VesselAndPosition> vesselsAndPositions = flowcellHiSeq2500.getLoadingVessels();
         MatcherAssert.assertThat(vesselsAndPositions, not(Matchers.empty()));
-        template = factory.getSequencingTemplate(flowcell, vesselsAndPositions, true);
+        template = factory.getSequencingTemplate(flowcellHiSeq2500, vesselsAndPositions, true);
         assertThat(template.getOnRigChemistry(), is("Default"));
         assertThat(template.getOnRigWorkflow(), is("Resequencing"));
         assertThat(template.getReadStructure(), is(POOL_TEST_CIGAR));
-        assertThat(template.getBarcode(), equalTo(flowcellBarcode));
+        assertThat(template.getBarcode(), equalTo(flowcellHiSeq2500Barcode));
         assertThat(template.getLanes().size(), is(2));
         Set<String> allLanes = new HashSet<>();
 
@@ -192,15 +197,15 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
     }
 
     public void testGetSequencingTemplateProduction() {
-        Set<VesselAndPosition> vesselsAndPositions = flowcell.getLoadingVessels();
+        Set<VesselAndPosition> vesselsAndPositions = flowcellHiSeq2500.getLoadingVessels();
         MatcherAssert.assertThat(vesselsAndPositions, not(Matchers.empty()));
-        template = factory.getSequencingTemplate(flowcell, vesselsAndPositions, false);
+        template = factory.getSequencingTemplate(flowcellHiSeq2500, vesselsAndPositions, false);
         assertThat(template.getOnRigChemistry(), is(nullValue()));
         assertThat(template.getOnRigWorkflow(), is(nullValue()));
 
         assertThat(template.getReadStructure(), is(PRODUCTION_CIGAR));
 
-        assertThat(template.getBarcode(), equalTo(flowcellBarcode));
+        assertThat(template.getBarcode(), equalTo(flowcellHiSeq2500Barcode));
         assertThat(template.getLanes().size(), is(2));
         Set<String> allLanes = new HashSet<>();
 
@@ -214,13 +219,13 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
     }
 
     public void testGetLoadingVesselsForFlowcell() {
-        Set<VesselAndPosition> vesselsAndPositions = flowcell.getLoadingVessels();
+        Set<VesselAndPosition> vesselsAndPositions = flowcellHiSeq2500.getLoadingVessels();
         MatcherAssert.assertThat(vesselsAndPositions, not(Matchers.empty()));
         final List<VesselPosition> vesselPositions = Arrays.asList(VesselPosition.LANE1, VesselPosition.LANE2);
 
         for (VesselAndPosition vesselsAndPosition : vesselsAndPositions) {
             assertThat(vesselsAndPosition.getPosition(),
-                       AnyOf.anyOf(equalTo(VesselPosition.LANE1), equalTo(VesselPosition.LANE2)));
+                    AnyOf.anyOf(equalTo(VesselPosition.LANE1), equalTo(VesselPosition.LANE2)));
             assertThat(dilutionTube, equalTo(vesselsAndPosition.getVessel()));
         }
 
@@ -295,5 +300,25 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         }
         assertThat(allLanes, hasItem("LANE1"));
         assertThat(allLanes, hasItem("LANE2"));
+    }
+
+    public void testGetSequencingTemplateForHiSeq2000() {
+        template = factory.getSequencingTemplate(fctBatchHiSeq2000, false);
+        assertThat(template.getBarcode(), Matchers.nullValue());
+        assertThat(template.getOnRigChemistry(), is(nullValue()));
+        assertThat(template.getOnRigWorkflow(), is(nullValue()));
+        assertThat(template.getReadStructure(), is(PRODUCTION_CIGAR));
+        assertThat(template.getLanes().size(), is(8));
+        Set<String> allLanes = new HashSet<>();
+
+        for (SequencingTemplateLaneType lane : template.getLanes()) {
+            allLanes.add(lane.getLaneName());
+            assertThat(lane.getLoadingVesselLabel(), equalTo(""));
+            assertThat(lane.getDerivedVesselLabel(), equalTo(denatureTubeBarcode));
+            assertThat(lane.getLoadingConcentration(), is(BigDecimal.valueOf(12.33f)));
+        }
+        for(int i = 1; i <= 8; i++) {
+            assertThat(allLanes, hasItem("LANE" + i));
+        }
     }
 }

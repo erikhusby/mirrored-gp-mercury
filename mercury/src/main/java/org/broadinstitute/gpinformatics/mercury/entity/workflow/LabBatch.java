@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.hibernate.envers.Audited;
@@ -136,6 +137,9 @@ public class LabBatch {
     @Column(nullable = false)
     private LabBatchType labBatchType;
 
+    @Enumerated(EnumType.STRING)
+    private IlluminaFlowcell.FlowcellType flowcellType;
+
     @Transient
     private String batchDescription;
 
@@ -160,6 +164,18 @@ public class LabBatch {
                     @Nonnull LabBatchType labBatchType, @Nullable BigDecimal concentration) {
         this.batchName = batchName;
         this.labBatchType = labBatchType;
+        for (LabVessel starter : starterVessels) {
+            addLabVessel(starter, concentration);
+        }
+        createdOn = new Date();
+    }
+
+    public LabBatch(@Nonnull String batchName, @Nonnull Set<LabVessel> starterVessels,
+                    @Nonnull LabBatchType labBatchType, @Nullable BigDecimal concentration,
+                    @Nullable IlluminaFlowcell.FlowcellType flowcellType) {
+        this.batchName = batchName;
+        this.labBatchType = labBatchType;
+        this.flowcellType = flowcellType;
         for (LabVessel starter : starterVessels) {
             addLabVessel(starter, concentration);
         }
@@ -397,6 +413,10 @@ public class LabBatch {
 
     public LabBatchType getLabBatchType() {
         return labBatchType;
+    }
+
+    public IlluminaFlowcell.FlowcellType getFlowcellType() {
+        return flowcellType;
     }
 
     /**
