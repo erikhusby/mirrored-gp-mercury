@@ -58,6 +58,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
     public static final String FLOWCELL_2000_TICKET = "FCT-4";
     private SequencingTemplateFactory factory = null;
     private BarcodedTube denatureTube = null;
+    private BarcodedTube denatureTube2000 = null;
     private BarcodedTube dilutionTube = null;
     private IlluminaFlowcell flowcellHiSeq2500 = null;
     private MiSeqReagentKit reagentKit = null;
@@ -142,6 +143,14 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
 
         flowcellHiSeq2500 = flowcellEntityBuilder.getIlluminaFlowcell();
         flowcellHiSeq2500Barcode = flowcellHiSeq2500.getLabel();
+
+        qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
+                hybridSelectionEntityBuilder.getNormCatchBarcodes(),
+                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(),
+                "1");
+
+        denatureTube2000 = qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
+        starterVessels = Collections.singleton((LabVessel) denatureTube2000);
 
         fctBatchHiSeq2000 = new LabBatch(FLOWCELL_2000_TICKET, starterVessels, LabBatch.LabBatchType.FCT, BigDecimal.valueOf(
                 12.33f), IlluminaFlowcell.FlowcellType.HiSeqFlowcell);
