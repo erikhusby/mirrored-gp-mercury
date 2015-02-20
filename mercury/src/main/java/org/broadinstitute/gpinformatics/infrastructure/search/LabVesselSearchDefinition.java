@@ -456,7 +456,7 @@ public class LabVesselSearchDefinition {
             public Object evaluate(Object entity, Map<String, Object> context) {
                 // Uses InitialTare to return position in rack (CollaboratorTransfer event has no position)
                 return getEventPosition((LabVessel) entity
-                        , Collections.singletonList(LabEventType.INITIAL_TARE), false);
+                        , Collections.singletonList(LabEventType.SAMPLE_IMPORT), false);
             }
         });
         searchTerms.add(searchTerm);
@@ -796,6 +796,18 @@ public class LabVesselSearchDefinition {
         LabVessel inPlaceVessel = labEvent.getInPlaceLabVessel();
         if( inPlaceVessel != null ) {
             vesselContainer = inPlaceVessel.getContainerRole();
+            if( vesselContainer == null ) {
+                // SAMPLE_IMPORT event is in-place on tube but no transfers so can't get the tube formation
+                for( VesselContainer container : inPlaceVessel.getContainers() ) {
+                    if( container.getEmbedder() != null ) {
+                        for( LabEvent inPlaceEvent : container.getEmbedder().getInPlaceLabEvents() ) {
+                            if( inPlaceEvent.getLabEventType() == labEvent.getLabEventType() ){
+                                return container;
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         // Transfer
@@ -849,7 +861,7 @@ public class LabVesselSearchDefinition {
             return results;
         }
 
-        // Dig through event ancestry for specific event types
+        // Dig through event descendants for specific event types
         Map<LabEvent, Set<LabVessel>> mapEventToVessels
                 = labVessel.findVesselsForLabEventTypes( labEventTypes, useTargetContainer );
 
