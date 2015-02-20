@@ -93,7 +93,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import javax.annotation.Nullable;
-import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -1019,7 +1018,6 @@ public class LabEventTest extends BaseEventTest {
 
         // Chooses a tube from the third batch, puts it into shearing bucket as rework, and takes it out of
         // the shearing bucket so it can be part of the second batch.
-        tube3.clearCaches();
         Bucket shearingBucket = createAndPopulateBucket(
                 new HashMap<String, BarcodedTube>() {{
                     put(tube3.getLabel(), tube3);
@@ -1028,10 +1026,10 @@ public class LabEventTest extends BaseEventTest {
         drainBucket(shearingBucket, workflowBatch2);
         Assert.assertEquals(tube3.getBucketEntries().size(), 2);
 
-        // These asserts are key to make workflow validation work.
+        // These are key to make workflow validation work.
         tube3.addReworkLabBatch(workflowBatch2);
-        Assert.assertTrue(tube3.getReworkLabBatches().contains(workflowBatch2));
         workflowBatch2.addReworks(Collections.singletonList((LabVessel) tube3));
+        Assert.assertTrue(tube3.getReworkLabBatches().contains(workflowBatch2));
         Assert.assertTrue(workflowBatch2.getReworks().contains(tube3));
 
         Assert.assertEquals(tube3.getBucketEntries().size(), 2);
@@ -1052,21 +1050,31 @@ public class LabEventTest extends BaseEventTest {
         mapBarcodeToCombined.putAll(picoPlatingBuilder1.getNormBarcodeToTubeMap());
         mapBarcodeToCombined.putAll(picoPlatingBuilder2.getNormBarcodeToTubeMap());
 
-        tube3.clearCaches();
         ExomeExpressShearingEntityBuilder builder = runExomeExpressShearingProcess(mapBarcodeToCombined, null,
                 picoPlatingBuilder2.getNormalizationBarcode(), String.valueOf(counter++));
         StaticPlate plate = builder.getShearingPlate();
 
-        // Checks the shearing event to see if
+        for (LabVessel tube : mapBarcodeToCombined.values()) {
+            tube.clearCaches();
+        }
+        // The shearing event should have the ambiguous lcset problem.
         boolean foundShearingTransfer = false;
         boolean foundCovarisLoaded = false;
         for (LabEvent event : plate.getEvents()) {
             switch (event.getLabEventType()) {
             case SHEARING_TRANSFER:
+                for (LabVessel labVessel : event.getAllLabVessels()) {
+                    labVessel.clearCaches();
+                }
                 Assert.assertTrue(event.hasAmbiguousLcsetProblem());
                 foundShearingTransfer = true;
                 break;
             case COVARIS_LOADED:
+                for (LabVessel labVessel : event.getAllLabVessels()) {
+                    labVessel.clearCaches();
+                }
+                // The lcset is still ambiguous, but this event cannot follow a bucket so no problem with it.
+                Assert.assertFalse(event.hasAmbiguousLcsetProblem());
                 foundCovarisLoaded = true;
             }
         }

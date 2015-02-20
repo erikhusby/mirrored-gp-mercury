@@ -48,6 +48,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -116,7 +117,7 @@ public class ZimsIlluminaRunFactoryTest {
 
         // Create a test product
         Product testProduct = new Product("Test Product", new ProductFamily("Test Product Family"), "Test product",
-                                          "P-TEST-1", new Date(), new Date(), 0, 0, 0, 0, "Test samples only", "None",
+                                          "P-EX-0011", new Date(), new Date(), 0, 0, 0, 0, "Test samples only", "None",
                                           true, Workflow.AGILENT_EXOME_EXPRESS, false, "agg type");
         testProduct.setAnalysisTypeKey("Resequencing");
 
@@ -421,6 +422,7 @@ public class ZimsIlluminaRunFactoryTest {
                 hasPositiveControl = true;
                 Assert.assertTrue(libraryBean.getLsid().startsWith("org.broadinstitute:crsp:"));
                 Assert.assertEquals(libraryBean.getCollaboratorParticipantId(),libraryBean.getCollaboratorSampleId());
+                Assert.assertEquals(libraryBean.getProductPartNumber(), "P-EX-0011");
             }
         }
         Assert.assertTrue(hasPositiveControl);
@@ -469,6 +471,26 @@ public class ZimsIlluminaRunFactoryTest {
         assertThat(consolidatedBeans.size(), equalTo(testSampleIds.size() - 1));
     }
 
+    @Test
+    public void testControlPartNumber() {
+        Assert.assertEquals(zimsIlluminaRunFactory.getControlProductPartNumber(
+                Collections.singleton(ZimsIlluminaRunFactory.AGILENT_SOMATIC_PART_NUMBER)),
+                ZimsIlluminaRunFactory.AGILENT_GERMLINE_PART_NUMBER);
+
+        Assert.assertEquals(zimsIlluminaRunFactory.getControlProductPartNumber(
+                new HashSet<String>() {{
+                    add(ZimsIlluminaRunFactory.AGILENT_SOMATIC_PART_NUMBER);
+                    add(ZimsIlluminaRunFactory.AGILENT_GERMLINE_PART_NUMBER);
+                }}),
+                ZimsIlluminaRunFactory.AGILENT_GERMLINE_PART_NUMBER);
+
+        Assert.assertEquals(zimsIlluminaRunFactory.getControlProductPartNumber(
+                new HashSet<String>() {{
+                    add(ZimsIlluminaRunFactory.AGILENT_SOMATIC_PART_NUMBER);
+                    add(ZimsIlluminaRunFactory.ICE_GERMLINE_PART_NUMBER);
+                }}),
+                null);
+    }
 
     /** Creates some reagents having molecular barcodes for test purposes. */
     public static List<MolecularIndexReagent> makeTestReagents(int numberOfReagents, final boolean doubleEnded) {

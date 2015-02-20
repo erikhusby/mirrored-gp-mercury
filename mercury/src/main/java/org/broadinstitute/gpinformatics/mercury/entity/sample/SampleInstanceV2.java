@@ -199,14 +199,14 @@ public class SampleInstanceV2 {
     }
 
     /**
-     * Primarily for controls, which don't have BucketEntries.  Returns the nearest bucketed batch, based on LCSET
-     * calculated for each transfer.
+     * For each container this sample instance is in, looks at the other tubes in the container and if they all
+     * share one LCSET, returns it.  Returns null if no container can yield a single common LCSET (i.e. it has
+     * none or mulitple LCSETs).  Primarily for controls, which don't have BucketEntries.
      */
     public LabBatch getSingleInferredBucketedBatch() {
         if (singleInferredBucketedBatch == null && !examinedContainers) {
             examinedContainers = true;
             if (labVessel != null) {
-                // look at other tubes in same container(s).  If they're all of same LCSET, use it.
                 for (VesselContainer<?> vesselContainer : labVessel.getContainers()) {
                     LabBatch singleBatch = vesselContainer.getSingleBatch();
                     if (singleBatch != null) {
@@ -264,9 +264,15 @@ public class SampleInstanceV2 {
         if (singleBucketEntry != null && singleBucketEntry.getLabBatch() != null) {
             return singleBucketEntry.getLabBatch().getWorkflowName();
         }
-        LabBatch singleInferredBucketedBatchLocal = getSingleInferredBucketedBatch();
-        if (singleInferredBucketedBatchLocal != null && singleInferredBucketedBatchLocal.getWorkflowName() != null) {
-            return singleInferredBucketedBatchLocal.getWorkflowName();
+        Set<String> workflowNames = new HashSet<>();
+        for (BucketEntry bucketEntry : getAllBucketEntries()) {
+            LabBatch batch = bucketEntry.getLabBatch();
+            if (batch != null && batch.getWorkflowName() != null) {
+                workflowNames.add(batch.getWorkflowName());
+            }
+        }
+        if (workflowNames.size() == 1) {
+            return workflowNames.iterator().next();
         }
 /*
 todo jmt not sure if this applies.

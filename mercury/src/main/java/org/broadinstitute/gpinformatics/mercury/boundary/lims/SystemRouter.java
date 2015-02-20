@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceExcep
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
@@ -314,38 +315,29 @@ public class SystemRouter implements Serializable {
                             possibleControls.add(sampleInstance);
                         } else {
                             String workflowName = sampleInstance.getWorkflowName();
-                            // todo jmt if multiple batches, see if they resolve to the same system
-                            LabBatch batch = sampleInstance.getSingleBatch();
-                            if (workflowName != null && batch != null) {
-                                ProductWorkflowDefVersion productWorkflowDef = getWorkflowVersion(workflowName,
-                                        batch.getCreatedOn());
-                                if (intent == Intent.SYSTEM_OF_RECORD) {
-                                    System system;
-                                    if (productWorkflowDef.getInValidation()) {
-                                        LabBatch labBatch = sampleInstance.getSingleBatch();
-                                        if(labBatch == null) {
-                                            throw new RuntimeException("No lab batch for sample " +
-                                                                     sampleInstance.getEarliestMercurySampleName());
-                                        }
-                                        // Per Andrew, we can assume that validation plastic has only one LCSET
-                                        if(labBatch.isValidationBatch()) {
+                            for (BucketEntry bucketEntry : sampleInstance.getAllBucketEntries()) {
+                                LabBatch batch = bucketEntry.getLabBatch();
+                                if (workflowName != null && batch != null) {
+                                    ProductWorkflowDefVersion productWorkflowDef = getWorkflowVersion(workflowName,
+                                            batch.getCreatedOn());
+                                    if (intent == Intent.SYSTEM_OF_RECORD) {
+                                        System system;
+                                        if (productWorkflowDef.getInValidation() && batch.isValidationBatch()) {
                                             system = System.MERCURY;
                                         } else {
                                             system = productWorkflowDef.getRouting();
                                         }
+                                        if (system == System.BOTH) {
+                                            badCrspRouting();
+                                            system = System.SQUID;
+                                        }
+                                        routingOptions.add(system);
                                     } else {
-                                        system = productWorkflowDef.getRouting();
+                                        routingOptions.add(productWorkflowDef.getRouting());
                                     }
-                                    if (system == System.BOTH) {
-                                        badCrspRouting();
-                                        system = System.SQUID;
-                                    }
-                                    routingOptions.add(system);
                                 } else {
-                                    routingOptions.add(productWorkflowDef.getRouting());
+                                    // TODO: what about this case?
                                 }
-                            } else {
-                                // TODO: what about this case?
                             }
                         }
                     }
@@ -370,16 +362,18 @@ public class SystemRouter implements Serializable {
                                         // Determine the control's routing from either its workflow, or if workflow
                                         // cannot be identified, from the routing of other vessels in its container(s).
                                         String workflowName = possibleControl.getWorkflowName();
-                                        LabBatch effectiveBatch = possibleControl.getSingleBatch();
-                                        if (workflowName != null && effectiveBatch != null) {
-                                            ProductWorkflowDefVersion productWorkflowDef =
-                                                    getWorkflowVersion(workflowName, effectiveBatch.getCreatedOn());
-                                            routingOptions.add(productWorkflowDef.getRouting());
-                                        } else if (!excludeControlsWithoutWorkflow) {
-                                            System system = routesForAccompanyingVessels(vessel, intent,
-                                                    controlCollaboratorSampleIds);
-                                            if (system != null) {
-                                                routingOptions.add(system);
+                                        for (BucketEntry bucketEntry : possibleControl.getAllBucketEntries()) {
+                                            LabBatch batch = bucketEntry.getLabBatch();
+                                            if (workflowName != null && batch != null) {
+                                                ProductWorkflowDefVersion productWorkflowDef =
+                                                        getWorkflowVersion(workflowName, batch.getCreatedOn());
+                                                routingOptions.add(productWorkflowDef.getRouting());
+                                            } else if (!excludeControlsWithoutWorkflow) {
+                                                System system = routesForAccompanyingVessels(vessel, intent,
+                                                        controlCollaboratorSampleIds);
+                                                if (system != null) {
+                                                    routingOptions.add(system);
+                                                }
                                             }
                                         }
                                     } else {
