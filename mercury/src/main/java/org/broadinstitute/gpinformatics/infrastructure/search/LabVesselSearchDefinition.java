@@ -18,6 +18,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -452,11 +454,45 @@ public class LabVesselSearchDefinition {
         searchTerm = new SearchTerm();
         searchTerm.setName("Imported Sample Position");
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            //            @Override
+//            public Object evaluate(Object entity, Map<String, Object> context) {
+//                // Uses InitialTare to return position in rack (CollaboratorTransfer event has no position)
+//                return getEventPosition((LabVessel) entity
+//                        , Collections.singletonList(LabEventType.SAMPLE_IMPORT), false);
+//            }
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
-                // Uses InitialTare to return position in rack (CollaboratorTransfer event has no position)
-                return getEventPosition((LabVessel) entity
-                        , Collections.singletonList(LabEventType.SAMPLE_IMPORT), false);
+                LabVessel ves = (LabVessel) entity;
+                VesselDescendantTraverserCriteria eval
+                        = new VesselDescendantTraverserCriteria(Collections.singletonList(LabEventType.SAMPLE_IMPORT));
+                ves.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
+                if (!eval.getPosition().isEmpty()) {
+                    return eval.getPosition();
+                } else {
+                    // In place vessel is a container where event has no transfers
+                    LabVessel inPlaceVessel = null;
+                    LabEvent labEvent = null;
+                    if (eval.getEvent() != null) {
+                        labEvent = eval.getEvent();
+                        inPlaceVessel = labEvent.getInPlaceLabVessel();
+                    }
+                    if (inPlaceVessel != null) {
+                        VesselContainer vesselContainer = inPlaceVessel.getContainerRole();
+                        if (vesselContainer == null) {
+                            // SAMPLE_IMPORT event is in-place on tube but no transfers so can't get the tube formation
+                            for (VesselContainer container : inPlaceVessel.getContainers()) {
+                                if (container.getEmbedder() instanceof TubeFormation) {
+                                    for (LabEvent inPlaceEvent : container.getEmbedder().getInPlaceLabEvents()) {
+                                        if (inPlaceEvent.getLabEventType() == labEvent.getLabEventType()) {
+                                            return container.getPositionOfVessel(ves);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                return null;
             }
         });
         searchTerms.add(searchTerm);
@@ -464,10 +500,18 @@ public class LabVesselSearchDefinition {
         searchTerm = new SearchTerm();
         searchTerm.setName("Pond Sample Position");
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+//            @Override
+//            public Object evaluate(Object entity, Map<String, Object> context) {
+//                return getEventPosition((LabVessel) entity
+//                        , Collections.singletonList(LabEventType.POND_REGISTRATION), true);
+//            }
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
-                return getEventPosition((LabVessel) entity
-                        , Collections.singletonList(LabEventType.POND_REGISTRATION), true);
+                LabVessel ves = (LabVessel) entity;
+                VesselDescendantTraverserCriteria eval
+                        = new VesselDescendantTraverserCriteria(Collections.singletonList(LabEventType.POND_REGISTRATION));
+                ves.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants );
+                return eval.getPosition();
             }
         });
         searchTerms.add(searchTerm);
@@ -486,10 +530,13 @@ public class LabVesselSearchDefinition {
         searchTerm = new SearchTerm();
         searchTerm.setName("Shearing Sample Position");
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
+           @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
-                return getEventPosition((LabVessel) entity
-                        , Collections.singletonList(LabEventType.SHEARING_TRANSFER), false);
+                LabVessel ves = (LabVessel) entity;
+                VesselDescendantTraverserCriteria eval
+                        = new VesselDescendantTraverserCriteria(Collections.singletonList(LabEventType.SHEARING_TRANSFER));
+                ves.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants );
+                return eval.getPosition();
             }
         });
         searchTerms.add(searchTerm);
@@ -508,15 +555,28 @@ public class LabVesselSearchDefinition {
         searchTerm = new SearchTerm();
         searchTerm.setName("Catch Sample Position");
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+//            @Override
+//            public Object evaluate(Object entity, Map<String, Object> context) {
+//                List<LabEventType> labEventTypes = new ArrayList<>();
+//                // ICE
+//                labEventTypes.add(LabEventType.ICE_CATCH_ENRICHMENT_CLEANUP);
+//                // Agilent
+//                labEventTypes.add(LabEventType.NORMALIZED_CATCH_REGISTRATION);
+//
+//                return getEventPosition((LabVessel) entity, labEventTypes, true);
+//            }
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
+                LabVessel ves = (LabVessel) entity;
                 List<LabEventType> labEventTypes = new ArrayList<>();
                 // ICE
                 labEventTypes.add(LabEventType.ICE_CATCH_ENRICHMENT_CLEANUP);
                 // Agilent
                 labEventTypes.add(LabEventType.NORMALIZED_CATCH_REGISTRATION);
-
-                return getEventPosition((LabVessel) entity, labEventTypes, true);
+                VesselDescendantTraverserCriteria eval
+                        = new VesselDescendantTraverserCriteria(labEventTypes);
+                ves.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants );
+                return eval.getPosition();
             }
         });
         searchTerms.add(searchTerm);
@@ -562,7 +622,7 @@ public class LabVesselSearchDefinition {
         });
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
         SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setCriteria(Arrays.asList( "mercurySample", "mercurySamples" ));
+        criteriaPath.setCriteria(Arrays.asList("mercurySample", "mercurySamples"));
         criteriaPath.setPropertyName("sampleKey");
         criteriaPath.setJoinFetch(Boolean.TRUE);
         criteriaPaths.add(criteriaPath);
@@ -577,7 +637,7 @@ public class LabVesselSearchDefinition {
                 List<String> values = new ArrayList<>();
                 LabVessel labVessel = (LabVessel) entity;
                 for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-                    if( sampleInstanceV2.getInitialLabVessel() != null ) {
+                    if (sampleInstanceV2.getInitialLabVessel() != null) {
                         values.add(sampleInstanceV2.getInitialLabVessel().getLabel());
                     }
                 }
@@ -595,7 +655,7 @@ public class LabVesselSearchDefinition {
                 LabVessel labVessel = (LabVessel) entity;
                 Set<LabMetric> labMetrics = labVessel.getMetrics();
                 for (LabMetric labMetric : labMetrics) {
-                    if( labMetric.getName() == LabMetric.MetricType.INITIAL_PICO ) {
+                    if (labMetric.getName() == LabMetric.MetricType.INITIAL_PICO) {
                         BigDecimal ng = labMetric.getTotalNg();
                         if (ng != null) {
                             value = MathUtils.scaleTwoDecimalPlaces(ng).toPlainString();
@@ -607,10 +667,10 @@ public class LabVesselSearchDefinition {
 
             }
         });
-        searchTerm.setValueConversionExpression( new SearchTerm.Evaluator<Object>() {
+        searchTerm.setValueConversionExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
-                return new BigDecimal( (String) context.get(SearchInstance.CONTEXT_KEY_SEARCH_STRING));
+                return new BigDecimal((String) context.get(SearchInstance.CONTEXT_KEY_SEARCH_STRING));
             }
         });
         searchTerms.add(searchTerm);
@@ -648,10 +708,11 @@ public class LabVesselSearchDefinition {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
                 String header;
-                SearchInstance.SearchValue searchValue = (SearchInstance.SearchValue) context.get(SearchInstance.CONTEXT_KEY_SEARCH_VALUE);
+                SearchInstance.SearchValue searchValue =
+                        (SearchInstance.SearchValue) context.get(SearchInstance.CONTEXT_KEY_SEARCH_VALUE);
                 header = searchValue.getParent().getValues().get(0);
                 Metadata.Key key = Metadata.Key.valueOf(header);
-                if( key != null ) {
+                if (key != null) {
                     return key.getDisplayName();
                 } else {
                     return header;
@@ -661,7 +722,8 @@ public class LabVesselSearchDefinition {
         searchTerm.setTypeExpression(new SearchTerm.Evaluator<String>() {
             @Override
             public String evaluate(Object entity, Map<String, Object> context) {
-                SearchInstance.SearchValue searchValue = (SearchInstance.SearchValue) context.get(SearchInstance.CONTEXT_KEY_SEARCH_VALUE);
+                SearchInstance.SearchValue searchValue =
+                        (SearchInstance.SearchValue) context.get(SearchInstance.CONTEXT_KEY_SEARCH_VALUE);
                 String metaName = searchValue.getParent().getValues().get(0);
                 Metadata.Key key = Metadata.Key.valueOf(metaName);
                 switch (key.getDataType()) {
@@ -683,7 +745,8 @@ public class LabVesselSearchDefinition {
             // Defensive coding
             //   - as of 10/02/2014 sample metadata values are stored in value column (JPA aliased as "stringValue").
             public String evaluate(Object entity, Map<String, Object> context) {
-                SearchInstance.SearchValue searchValue = (SearchInstance.SearchValue) context.get(SearchInstance.CONTEXT_KEY_SEARCH_VALUE);
+                SearchInstance.SearchValue searchValue =
+                        (SearchInstance.SearchValue) context.get(SearchInstance.CONTEXT_KEY_SEARCH_VALUE);
                 String metaName = searchValue.getParent().getValues().get(0);
                 Metadata.Key key = Metadata.Key.valueOf(metaName);
                 switch (key.getDataType()) {
@@ -729,7 +792,7 @@ public class LabVesselSearchDefinition {
         searchTerm.setAddDependentTermsToSearchTermList(Boolean.TRUE);
         criteriaPaths = new ArrayList<>();
         criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setCriteria(Arrays.asList( "mercurySample", "mercurySamples", "metadata" ));
+        criteriaPath.setCriteria(Arrays.asList("mercurySample", "mercurySamples", "metadata"));
         criteriaPath.setPropertyName("key");
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
@@ -799,7 +862,7 @@ public class LabVesselSearchDefinition {
             if( vesselContainer == null ) {
                 // SAMPLE_IMPORT event is in-place on tube but no transfers so can't get the tube formation
                 for( VesselContainer container : inPlaceVessel.getContainers() ) {
-                    if( container.getEmbedder() != null ) {
+                    if( container.getEmbedder() instanceof TubeFormation ) {
                         for( LabEvent inPlaceEvent : container.getEmbedder().getInPlaceLabEvents() ) {
                             if( inPlaceEvent.getLabEventType() == labEvent.getLabEventType() ){
                                 return container;
@@ -863,7 +926,7 @@ public class LabVesselSearchDefinition {
 
         // Dig through event descendants for specific event types
         Map<LabEvent, Set<LabVessel>> mapEventToVessels
-                = labVessel.findVesselsForLabEventTypes( labEventTypes, useTargetContainer );
+                = labVessel.findDescendantVesselsForLabEventTypes(labEventTypes, useTargetContainer);
 
         if( mapEventToVessels.isEmpty() ) {
             return results;
@@ -941,7 +1004,59 @@ public class LabVesselSearchDefinition {
         return results;
     }
 
+    private class VesselDescendantTraverserCriteria implements TransferTraverserCriteria {
 
+        public VesselDescendantTraverserCriteria( List<LabEventType> labEventTypes ) {
+            this.labEventTypes = labEventTypes;
+        }
+
+        private List<LabEventType> labEventTypes;
+
+        private Set<String> positions = new HashSet<>();
+        private Set<String> barcodes = new HashSet<>();
+        private LabEvent labEvent;
+
+        public Set<String> getPosition(){
+            return positions;
+        }
+
+        public Set<String> getBarcodes(){
+            return barcodes;
+        }
+
+        public LabEvent getEvent(){
+            return labEvent;
+        }
+
+        @Override
+        public TransferTraverserCriteria.TraversalControl evaluateVesselPreOrder(
+                TransferTraverserCriteria.Context context ) {
+
+            TransferTraverserCriteria.TraversalControl outcome
+                    = TransferTraverserCriteria.TraversalControl.ContinueTraversing;
+
+            if( context.getEvent() != null && labEventTypes.contains( context.getEvent().getLabEventType() ) ) {
+                labEvent = context.getEvent();
+                if( context.getLabVessel() != null ) {
+                    barcodes.add( context.getLabVessel().getLabel() );
+                }
+                if( context.getVesselPosition() != null ) {
+                    positions.add(context.getVesselPosition().toString());
+                }
+                //outcome = TransferTraverserCriteria.TraversalControl.StopTraversing;
+            }
+
+            return outcome;
+        }
+
+        @Override
+        public void evaluateVesselInOrder(TransferTraverserCriteria.Context context) {
+        }
+
+        @Override
+        public void evaluateVesselPostOrder(TransferTraverserCriteria.Context context) {
+        }
+    }
 
 
 }
