@@ -379,8 +379,11 @@ public abstract class LabVessel implements Serializable {
      * @return transfers
      */
     public Set<LabEvent> getTransfersFrom() {
+        Set<LabEvent> transfersFrom = new HashSet<>();
+        for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsSource) {
+            transfersFrom.add(vesselToVesselTransfer.getLabEvent());
+        }
         if (getContainerRole() == null) {
-            Set<LabEvent> transfersFrom = new HashSet<>();
             for (VesselContainer<?> vesselContainer : getContainers()) {
                 transfersFrom.addAll(vesselContainer.getTransfersFrom());
             }
@@ -388,7 +391,6 @@ public abstract class LabVessel implements Serializable {
         } else {
             return getContainerRole().getTransfersFrom();
         }
-        // todo jmt vessel to vessel transfers
     }
 
     /**
@@ -398,6 +400,9 @@ public abstract class LabVessel implements Serializable {
      */
     public Set<LabEvent> getTransfersTo() {
         Set<LabEvent> transfersTo = new HashSet<>();
+        for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsTarget) {
+            transfersTo.add(vesselToVesselTransfer.getLabEvent());
+        }
         if (getContainerRole() == null) {
             for (VesselContainer<?> vesselContainer : getContainers()) {
                 transfersTo.addAll(vesselContainer.getTransfersTo());
@@ -405,8 +410,6 @@ public abstract class LabVessel implements Serializable {
         } else {
             transfersTo.addAll(getContainerRole().getTransfersTo());
         }
-
-        // todo jmt vessel to vessel transfers
         return transfersTo;
     }
 
@@ -417,6 +420,9 @@ public abstract class LabVessel implements Serializable {
      */
     public Set<LabEvent> getTransfersToWithReArrays() {
         Set<LabEvent> transfersTo = new HashSet<>();
+        for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsTarget) {
+            transfersTo.add(vesselToVesselTransfer.getLabEvent());
+        }
         if (getContainerRole() == null) {
             for (VesselContainer<?> vesselContainer : getContainers()) {
                 transfersTo.addAll(vesselContainer.getTransfersToWithRearrays());
@@ -424,8 +430,6 @@ public abstract class LabVessel implements Serializable {
         } else {
             transfersTo.addAll(getContainerRole().getTransfersToWithRearrays());
         }
-
-        // todo jmt vessel to vessel transfers
         return transfersTo;
     }
 
