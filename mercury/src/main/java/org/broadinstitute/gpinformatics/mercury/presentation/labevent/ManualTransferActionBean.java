@@ -223,7 +223,9 @@ public class ManualTransferActionBean extends CoreActionBean {
                     if (OrmUtil.proxySafeIsInstance(labVessel, BarcodedTube.class)) {
                         BarcodedTube barcodedTube = OrmUtil.proxySafeCast(labVessel, BarcodedTube.class);
                         receptacleType.setReceptacleType(barcodedTube.getTubeType().getDisplayName());
-                        receptacleType.setVolume(barcodedTube.getVolume());
+                        if (barcodedTube.getVolume() != null) {
+                            receptacleType.setVolume(barcodedTube.getVolume());
+                        }
                         receptacleType.setConcentration(barcodedTube.getConcentration());
                         receptacleType.setReceptacleWeight(barcodedTube.getReceptacleWeight());
                         addMessage("{0} is in the database", barcode);
