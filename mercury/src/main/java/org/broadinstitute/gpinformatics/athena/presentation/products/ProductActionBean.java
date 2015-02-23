@@ -127,7 +127,7 @@ public class ProductActionBean extends CoreActionBean {
 
     private String q;
 
-    private String availability = ProductDao.Availability.CURRENT.name();
+    private ProductDao.Availability availability = ProductDao.Availability.CURRENT;
 
     public String getQ() {
         return q;
@@ -190,8 +190,7 @@ public class ProductActionBean extends CoreActionBean {
 
     @After(stages = LifecycleStage.BindingAndValidation, on = LIST_ACTION)
     public void allProductsInit() {
-        ProductDao.Availability productAvailability = ProductDao.Availability.valueOf(availability);
-        allProducts = productDao.findProducts(productAvailability, TopLevelOnly.NO, IncludePDMOnly.YES);
+        allProducts = productDao.findProducts(availability, TopLevelOnly.NO, IncludePDMOnly.YES);
     }
 
     /**
@@ -553,11 +552,11 @@ public class ProductActionBean extends CoreActionBean {
         return Workflow.NONE;
     }
 
-    public String getAvailability() {
+    public ProductDao.Availability getAvailability() {
         return availability;
     }
 
-    public void setAvailability(String availability) {
+    public void setAvailability(ProductDao.Availability availability) {
         this.availability = availability;
     }
 }
