@@ -6,8 +6,8 @@
 
 <c:set var="session" value="${actionBean.selectedSession}"/>
 <stripes:layout-render name="/layout.jsp"
-                       pageTitle="${session.researchProject.businessKey}: Buick Sample Accessioning: ${session.sessionName}"
-                       sectionTitle="${session.researchProject.businessKey}: Buick Sample Accessioning: ${session.sessionName}"
+                       pageTitle="${session.researchProject.businessKey}: Sample Accessioning: ${session.sessionName}"
+                       sectionTitle="${session.researchProject.businessKey}: Sample Accessioning: ${session.sessionName}"
                        showCreate="false">
 
     <stripes:layout-component name="extraHead">
@@ -15,7 +15,13 @@
 
             $j(document).ready(function () {
                 $j("#accessionSourceText").blur(function () {
-                    if ($j(this).val() != '') {
+                    if (!($j(this).val() == '' || $j("#accessionTubeText").val() == '')) {
+                        performAccessionScan();
+                    }
+                });
+
+                $j("#accessionTubeText").blur(function () {
+                    if ($j(this).val() != '' && $j("#accessionSourceText").val() != '') {
                         performAccessionScan();
                     }
                 });
@@ -43,6 +49,16 @@
                         return false;
                     }
                 });
+                // Prevent posting the form for an enter key press in the accession source field.  Also
+                // blur out of the accession source field so an enter key press essentially behaves the
+                // same as a blurring tab.
+                $j('#accessionTubeText').keydown(function(event) {
+                    if (event.which == 13) {
+                        event.preventDefault();
+                        $j(this).blur();
+                        return false;
+                    }
+                });
             });
 
             function performAccessionScan() {
@@ -52,11 +68,18 @@
                         '<%= ManifestAccessioningActionBean.SCAN_ACCESSION_SOURCE_ACTION %>': '',
                         '<%= ManifestAccessioningActionBean.SELECTED_SESSION_ID %>': '${actionBean.selectedSessionId}',
                         accessionSource: $j("#accessionSourceText").val()
+                        <c:if test="${actionBean.selectedSession.fromSampleKit}">
+                        ,
+                        accessionTube: $j("#accessionTubeText").val()
+                        </c:if>
                     },
                     datatype: 'html',
                     success: function (html) {
                         $j('#scanResults').html(html);
                         $j('#accessionSourceText').val('');
+                        <c:if test="${actionBean.selectedSession.fromSampleKit}">
+                        $j('#accessionTubeText').val('');
+                        </c:if>
                         $j('#accessionSourceText').focus();
                     }
                 });
@@ -96,12 +119,27 @@
                 <div class="control-group">
                     <label class="control-label" for="accessionSourceText">Scan or input specimen number *</label>
                     <div class="controls">
+                        <c:set var="sourcePlaceholderText" value="Enter the clinical sample ID"/>
+                        <c:if test="${actionBean.selectedSession.fromSampleKit}">
+                            <c:set var="sourcePlaceholderText" value="Enter the Broad sample ID"/>
+                        </c:if>
+
                         <input type="text" class="input-xlarge" name="accessionSource" maxlength="255"
-                               placeholder="Enter the clinical sample ID" id="accessionSourceText">
+                               placeholder="${sourcePlaceholderText}" id="accessionSourceText" tabindex="1">
                     </div>
                 </div>
+                <c:if test="${actionBean.selectedSession.fromSampleKit}">
+                    <div class="control-group">
+                        <label class="control-label" for="accessionTubeText">Scan or input tube barcode *</label>
+
+                        <div class="controls">
+                            <input type="text" class="input-xlarge" name="accessionTube" maxlength="255"
+                                   placeholder="Enter the 2d barcode" id="accessionTubeText" tabindex="2">
+                        </div>
+                    </div>
+                </c:if>
                 <div class="actionButtons">
-                    <stripes:submit id="previewSessionClose"
+                <stripes:submit id="previewSessionClose"
                                     name="<%= ManifestAccessioningActionBean.PREVIEW_SESSION_CLOSE_ACTION %>"
                                     value="Submit Session" class="btn"/>
                     <stripes:link beanclass="${actionBean.class.name}">

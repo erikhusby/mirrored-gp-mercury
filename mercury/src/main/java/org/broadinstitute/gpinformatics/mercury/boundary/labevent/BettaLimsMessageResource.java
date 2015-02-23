@@ -13,13 +13,16 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventTy
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationSetupEvent;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.BettaLimsMessageUtils;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -32,6 +35,7 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLFilterImpl;
 import org.xml.sax.helpers.XMLReaderFactory;
 
+import javax.annotation.PostConstruct;
 import javax.ejb.Stateful;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
@@ -102,6 +106,24 @@ public class BettaLimsMessageResource {
 
     @Inject
     private UserBean userBean;
+
+    @Inject
+    private WorkflowLoader workflowLoader;
+
+    public BettaLimsMessageResource() {
+    }
+
+    /** Constructor used for test purposes. */
+    public BettaLimsMessageResource(WorkflowLoader workflowLoader) {
+        this.workflowLoader = workflowLoader;
+        postConstructor();
+    }
+
+    @PostConstruct
+    public void postConstructor() {
+        // Does the one-time lab event setup that is needed when processing messages.
+        LabEvent.setupEventTypesThatCanFollowBucket(workflowLoader);
+    }
 
     /**
      * Accepts a message from (typically) a liquid handling deck.  We unmarshal ourselves, rather than letting JAX-RS
@@ -352,6 +374,24 @@ public class BettaLimsMessageResource {
                 }
             }
         }
+        if (labEventType == null) {
+            StationSetupEvent stationSetupEvent = bettaLIMSMessage.getStationSetupEvent();
+            if (stationSetupEvent != null) {
+                labEventType = LabEventType.getByName(stationSetupEvent.getEventType());
+                if (labEventType != null) {
+                    userBean.login(LabEventFactory.ACTIVITY_USER_ID);
+                }
+            }
+        }
+        if (labEventType == null) {
+            for (ReceptacleTransferEventType receptacleTransferEventType : bettaLIMSMessage.getReceptacleTransferEvent()) {
+                labEventType = LabEventType.getByName(receptacleTransferEventType.getEventType());
+                if (labEventType != null) {
+                    login(receptacleTransferEventType);
+                    break;
+                }
+            }
+        }
         return labEventType;
     }
 
@@ -365,12 +405,8 @@ public class BettaLimsMessageResource {
     /**
      * Builds a collection of {@link LabVessel} barcodes from a JAXB message bean that contains one or more event
      * beans.
-     * Since this method is used to validate the system of record for existing vessels, the vessels returned will be
-     * Source vessles, In place vessels, and some target vessels If the setting for the associated
-     * {@link LabEventType#expectExistingTarget} determines it is possible.
      *
      * @param bettaLIMSMessage JAXB bean
-     *
      * @return list of barcodes
      */
     private Collection<String> getRegisteredBarcodesFromMessage(BettaLIMSMessage bettaLIMSMessage) {
@@ -393,6 +429,9 @@ public class BettaLimsMessageResource {
         for (ReceptacleEventType receptacleEventType : bettaLIMSMessage.getReceptacleEvent()) {
             barcodes.addAll(BettaLimsMessageUtils.getBarcodesForReceptacleEvent(receptacleEventType));
         }
+        for (ReceptacleTransferEventType receptacleTransferEventType : bettaLIMSMessage.getReceptacleTransferEvent()) {
+            barcodes.addAll(BettaLimsMessageUtils.getBarcodesForReceptacleTransferEvent(receptacleTransferEventType));
+        }
 
         return barcodes;
     }
@@ -412,6 +451,11 @@ public class BettaLimsMessageResource {
         List<LabEvent> labEvents = labEventFactory.buildFromBettaLims(message);
         for (LabEvent labEvent : labEvents) {
             labEventHandler.processEvent(labEvent);
+            if (labEvent.hasAmbiguousLcsetProblem()) {
+                emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
+                        "[Mercury] Vessels have ambiguous LCSET", "After " + labEvent.getLabEventType().getName() +
+                                                                  " (" + labEvent.getLabEventId() + ")");
+            }
         }
     }
 

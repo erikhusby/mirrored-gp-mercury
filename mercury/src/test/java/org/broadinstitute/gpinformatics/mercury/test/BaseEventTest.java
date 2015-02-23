@@ -273,7 +273,7 @@ public class BaseEventTest {
 
 
     protected LabEventHandler getLabEventHandler() {
-        return new LabEventHandler(new WorkflowLoader());
+        return new LabEventHandler();
     }
 
     /**
@@ -323,6 +323,10 @@ public class BaseEventTest {
 
     public void drainBucket(Bucket workingBucket) {
         bucketEjb.moveFromBucketToCommonBatch(workingBucket.getBucketEntries());
+    }
+
+    public void drainBucket(Bucket workingBucket, LabBatch labBatch) {
+        bucketEjb.moveFromBucketToBatch(workingBucket.getBucketEntries(), labBatch);
     }
 
     public void archiveBucketEntries(Bucket bucket) {
@@ -784,7 +788,7 @@ public class BaseEventTest {
         SystemRouter systemRouter = new SystemRouter(null, null, new WorkflowLoader(), null, null);
         SystemRouter.System system = systemRouter.routeForVessels(labVessels,
                 controlCollaboratorIdList, nameToSampleData,
-                SystemRouter.Intent.ROUTE);
+                SystemRouter.Intent.ROUTE, false);
         Assert.assertEquals(system, expectedRouting);
 
         WorkflowValidator workflowValidator = new WorkflowValidator();

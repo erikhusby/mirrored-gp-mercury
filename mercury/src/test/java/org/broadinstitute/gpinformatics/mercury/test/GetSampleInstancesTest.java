@@ -32,6 +32,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -169,8 +170,9 @@ public class GetSampleInstancesTest {
         StaticPlate shearingPlate1 = sequencing(tube1, tube2, sampleInitProductOrder, extractionProductOrder,
                 sequencingProductOrder, rootSample1, false, 1);
 
-        // Clear cached bucket entry.
+        // Clear cached bucket entries and computed LCSETS from previous run.
         tube2.clearCaches();
+
         StaticPlate shearingPlate2 = sequencing(tube2, tube3, sampleInitProductOrder, extractionProductOrder,
                 sequencingProductOrder, rootSample2, true, 2);
 
@@ -251,15 +253,18 @@ public class GetSampleInstancesTest {
         Set<LabVessel> extractedVessels = new HashSet<>();
         extractedVessels.add(tube1);
         extractedVessels.add(tube2);
+
         LabBatch lcsetBatch = new LabBatch("LCSET-" + lcsetNum, extractedVessels, LabBatch.LabBatchType.WORKFLOW);
         lcsetBatch.setCreatedOn(new Date(now++));
         lcsetBatch.setWorkflowName("Exome Express");
-        BucketEntry bucketEntry1 = new BucketEntry(tube1, sequencingProductOrder, new Bucket("Shearing"),
+
+        Bucket lcsetBucket = new Bucket("Shearing" + lcsetNum);
+        BucketEntry bucketEntry1 = new BucketEntry(tube1, sequencingProductOrder, lcsetBucket,
                 BucketEntry.BucketEntryType.PDO_ENTRY);
         bucketEntry1.setLabBatch(lcsetBatch);
         tube1.addBucketEntry(bucketEntry1);
 
-        BucketEntry bucketEntry2 = new BucketEntry(tube2, sequencingProductOrder, new Bucket("Shearing"),
+        BucketEntry bucketEntry2 = new BucketEntry(tube2, sequencingProductOrder, lcsetBucket,
                 BucketEntry.BucketEntryType.PDO_ENTRY);
         bucketEntry2.setLabBatch(lcsetBatch);
         tube2.addBucketEntry(bucketEntry2);
@@ -286,6 +291,7 @@ public class GetSampleInstancesTest {
         LabBatch importLabBatch = new LabBatch("EX-" + lcsetNum, new HashSet<LabVessel>(mapPositionToExtractTubeControl.values()),
                 LabBatch.LabBatchType.SAMPLES_IMPORT);
         importLabBatch.setCreatedOn(new Date(now++));
+
         // Add the rework after the import
         if (tube1Rework) {
             mapPositionToExtractTubeControl.put(position1, tube1);

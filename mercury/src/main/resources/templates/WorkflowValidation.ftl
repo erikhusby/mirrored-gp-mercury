@@ -6,7 +6,7 @@
 <body>
 <p>
     Mercury regrets to inform you that the <a href="${linkToPlastic}">${stationEvent.eventType}</a> message sent
-    on ${stationEvent.start.toGregorianCalendar().getTime()?datetime} from ${stationEvent.station} on behalf of
+    on ${stationEvent.start?datetime} from ${stationEvent.station} on behalf of
     <a href="mailto:${bspUser.email}">${bspUser.fullName}</a>
     has failed validation because ${validationErrors?size} samples are in the wrong state.
 </p>
