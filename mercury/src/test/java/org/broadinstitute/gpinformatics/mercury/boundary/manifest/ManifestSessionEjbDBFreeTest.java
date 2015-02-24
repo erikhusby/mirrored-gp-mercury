@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.ClinicalSampleFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.sample.ClinicalSampleTestFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -1386,7 +1387,7 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     public void testConvertToMercuryMetadata() throws Exception {
-        Sample sample = ClinicalSampleFactory
+        Sample sample = ClinicalSampleTestFactory
                 .createSample(ImmutableMap.of(Metadata.Key.SAMPLE_ID, SM_1));
 
         Metadata[] metadata = ClinicalSampleFactory.toMercuryMetadata(sample);
@@ -1397,7 +1398,7 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     public void testConvertToManifestRecords() {
-        Sample sample = ClinicalSampleFactory
+        Sample sample = ClinicalSampleTestFactory
                 .createSample(ImmutableMap.of(Metadata.Key.SAMPLE_ID, SM_1));
         SampleData sampleData = sample.getSampleData().iterator().next();
 
@@ -1459,10 +1460,10 @@ public class ManifestSessionEjbDBFreeTest {
     public void testAddDuplicateSamplesToManifestSession() throws Exception {
         mockCreateResearchProject();
         List<Sample> samples = new ArrayList<>();
-        Sample crspSample = ClinicalSampleFactory
+        Sample crspSample = ClinicalSampleTestFactory
                 .createSample(ImmutableMap.of(Metadata.Key.SAMPLE_ID, SM_1, Metadata.Key.PATIENT_ID, PATIENT_1));
         samples.add(crspSample);
-        crspSample = ClinicalSampleFactory
+        crspSample = ClinicalSampleTestFactory
                 .createSample(ImmutableMap.of(Metadata.Key.SAMPLE_ID, SM_1, Metadata.Key.PATIENT_ID, PATIENT_1));
         samples.add(crspSample);
 
@@ -1481,7 +1482,7 @@ public class ManifestSessionEjbDBFreeTest {
     public void testCreateValidManifestWithSamples() {
         mockCreateResearchProject();
         Collection<Sample> samples = Collections.singleton(
-                ClinicalSampleFactory.createSample(Collections.singletonMap(Metadata.Key.BROAD_SAMPLE_ID, SM_1)));
+                ClinicalSampleTestFactory.createSample(Collections.singletonMap(Metadata.Key.BROAD_SAMPLE_ID, SM_1)));
         ManifestSession manifestSession = manifestSessionEjb
                 .createManifestSessionWithSamples(TEST_RESEARCH_PROJECT_KEY, TEST_SESSION_NAME, true, samples);
 

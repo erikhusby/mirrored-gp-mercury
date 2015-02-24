@@ -60,7 +60,7 @@ public class ClinicalResourceDbFreeTest {
      */
     @Test(expectedExceptions = UnknownUserException.class)
     public void testCreateManifestWithSamplesUnknownUser() {
-        ClinicalResourceBean clinicalResourceBean = ClinicalSampleFactory
+        ClinicalResourceBean clinicalResourceBean = ClinicalSampleTestFactory
                 .createClinicalResourceBean("unknown_user", MANIFEST_NAME, RP_1, Boolean.TRUE,
                         Collections.<Sample>emptySet());
         clinicalResource.createManifestWithSamples(clinicalResourceBean);
@@ -86,7 +86,7 @@ public class ClinicalResourceDbFreeTest {
     public void testCreateManifestWithSamplesNullManifestName() {
         Mockito.when(userBean.isValidBspUser()).thenReturn(true);
 
-        ClinicalResourceBean clinicalResourceBean = ClinicalSampleFactory
+        ClinicalResourceBean clinicalResourceBean = ClinicalSampleTestFactory
                 .createClinicalResourceBean("test user", null, RP_1, Boolean.TRUE, Collections.<Sample>emptySet());
         clinicalResource.createManifestWithSamples(clinicalResourceBean);
     }
@@ -97,7 +97,7 @@ public class ClinicalResourceDbFreeTest {
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testCreateManifestWithSamplesEmptyManifestName() {
         Mockito.when(userBean.isValidBspUser()).thenReturn(true);
-        ClinicalResourceBean clinicalResourceBean = ClinicalSampleFactory
+        ClinicalResourceBean clinicalResourceBean = ClinicalSampleTestFactory
                 .createClinicalResourceBean(TEST_USER, "", RP_1, Boolean.TRUE, Collections.<Sample>emptySet());
         clinicalResource.createManifestWithSamples(clinicalResourceBean);
     }
@@ -114,7 +114,7 @@ public class ClinicalResourceDbFreeTest {
 
         Boolean isFromSampleKit = Boolean.TRUE;
 
-        ClinicalResourceBean clinicalResourceBean = ClinicalSampleFactory
+        ClinicalResourceBean clinicalResourceBean = ClinicalSampleTestFactory
                 .createClinicalResourceBean(TEST_USER, MANIFEST_NAME, RP_1, isFromSampleKit, samples);
         clinicalResource.createManifestWithSamples(clinicalResourceBean);
 

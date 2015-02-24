@@ -77,7 +77,7 @@ public class ClinicalResourceTest extends RestServiceContainerTest {
 
     public void testCreateManifestWithSamples() throws Exception {
         String sampleId = "SM-1";
-        ClinicalResourceBean clinicalResourceBean = ClinicalSampleFactory
+        ClinicalResourceBean clinicalResourceBean = ClinicalSampleTestFactory
                 .createClinicalResourceBean(QA_DUDE_PM, MANIFEST_NAME, EXISTING_RESEARCH_PROJECT_KEY, Boolean.TRUE,
                         ImmutableMap.of(Metadata.Key.BROAD_SAMPLE_ID, sampleId));
         long manifestId = clinicalResource.createManifestWithSamples(clinicalResourceBean);
