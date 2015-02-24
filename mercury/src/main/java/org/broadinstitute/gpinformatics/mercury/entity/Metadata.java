@@ -175,6 +175,9 @@ public class Metadata {
         NONE
     }
 
+    /**
+     * This enum is part of an external API and should not be changed.
+     */
     public enum Key implements Displayable {
 
         /**
@@ -274,15 +277,6 @@ public class Metadata {
 
         public Visibility getVisibility() {
             return visibility;
-        }
-
-        public static Key fromDisplayName(String displayName) {
-            for (Key key : values()) {
-                if (key.displayName.equals(displayName)) {
-                    return key;
-                }
-            }
-            throw new IllegalArgumentException(String.format(METADATA_KEY_NOT_FOUND, displayName));
         }
 
     }

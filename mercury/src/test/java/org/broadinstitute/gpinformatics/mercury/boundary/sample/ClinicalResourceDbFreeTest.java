@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.infrastructure.common.MercuryStringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.UnknownUserException;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
@@ -14,6 +15,7 @@ import org.mockito.stubbing.Answer;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.xml.bind.JAXBException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -45,7 +47,7 @@ public class ClinicalResourceDbFreeTest {
         stubValidLogin();
 
         ClinicalResourceBean clinicalResourceBean =
-                ClinicalSampleFactory.createClinicalResourceBean(TEST_USER, MANIFEST_NAME, RP_1, Boolean.FALSE, 2);
+                ClinicalSampleTestFactory.createClinicalResourceBean(TEST_USER, MANIFEST_NAME, RP_1, Boolean.FALSE, 2);
         clinicalResource.createManifestWithSamples(clinicalResourceBean);
     }
 
@@ -65,11 +67,14 @@ public class ClinicalResourceDbFreeTest {
      * Test that the call fails if isFromSampleKit is not passed in.
      */
     @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testCreateManifestWithSamplesNullIsFromSampleKit() {
+    public void testCreateManifestWithSamplesNullIsFromSampleKit() throws JAXBException {
         stubValidLogin();
-
-        ClinicalResourceBean clinicalResourceBean = ClinicalSampleFactory
-                .createClinicalResourceBean(TEST_USER, MANIFEST_NAME, RP_1, null, Collections.<Sample>emptySet());
+        String deSerializedJson =
+                       "{\"username\" : \"test_user\", \"manifestName\" : \"test manifest\",  \"researchProjectKey\" : \"RP-1\", \"fromSampleKit\" : 2}";
+               ClinicalResourceBean clinicalResourceBean =
+                       MercuryStringUtils.deSerializeJsonBean(deSerializedJson, ClinicalResourceBean.class);
+//        ClinicalResourceBean clinicalResourceBean = ClinicalSampleFactory
+//                .createClinicalResourceBean(TEST_USER, MANIFEST_NAME, RP_1, null, Collections.<Sample>emptySet());
         clinicalResource.createManifestWithSamples(clinicalResourceBean);
     }
 
@@ -159,5 +164,27 @@ public class ClinicalResourceDbFreeTest {
                 };
             }
         });
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testFromSampleKitMissing() throws JAXBException {
+        String serialized =
+                "{\"username\" : \"test_user\", \"manifestName\" : \"test manifest\",  \"researchProjectKey\" : \"RP-1\"}";
+        ClinicalResourceBean clinicalResourceBean =
+                MercuryStringUtils.deSerializeJsonBean(serialized, ClinicalResourceBean.class);
+        clinicalResource.createManifestWithSamples(clinicalResourceBean);
+    }
+    @Test(expectedExceptions = UnsupportedOperationException.class)
+    public void testFromSampleKitNull() throws JAXBException {
+//        ClinicalResourceBean zz = ClinicalSampleFactory
+//                        .createClinicalResourceBean(TEST_USER, MANIFEST_NAME, RP_1, null, Collections.<Sample> emptyList());
+        ClinicalResourceBean b1 = new ClinicalResourceBean();
+        String serializedJson= MercuryStringUtils.serializeJsonBean(b1).toString();
+
+        String deSerializedJson =
+                "{\"username\" : \"test_user\", \"manifestName\" : \"test manifest\",  \"researchProjectKey\" : \"RP-1\", \"fromSampleKit\" : }";
+        ClinicalResourceBean clinicalResourceBean =
+                MercuryStringUtils.deSerializeJsonBean(deSerializedJson, ClinicalResourceBean.class);
+        clinicalResource.createManifestWithSamples(clinicalResourceBean);
     }
 }

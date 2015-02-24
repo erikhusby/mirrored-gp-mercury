@@ -63,7 +63,7 @@ public class ClinicalResourceTest extends RestServiceContainerTest {
     @RunAsClient
     @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     public void testWebService(@ArquillianResource URL baseUrl) throws Exception {
-        ClinicalResourceBean clinicalResourceBean = ClinicalSampleFactory
+        ClinicalResourceBean clinicalResourceBean = ClinicalSampleTestFactory
                 .createClinicalResourceBean(QA_DUDE_PM, MANIFEST_NAME, EXISTING_RESEARCH_PROJECT_KEY, true, 2);
 
         WebResource resource = makeWebResource(baseUrl, ClinicalResource.CREATE_MANIFEST);
@@ -96,4 +96,5 @@ public class ClinicalResourceTest extends RestServiceContainerTest {
     protected String getResourcePath() {
         return "clinical";
     }
+
 }

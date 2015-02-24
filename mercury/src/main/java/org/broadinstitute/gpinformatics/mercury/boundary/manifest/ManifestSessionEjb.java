@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -9,10 +8,10 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
+import org.broadinstitute.gpinformatics.mercury.boundary.sample.ClinicalSampleFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.crsp.generated.SampleData;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -24,13 +23,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.TubeTransferExcept
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
-import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -145,44 +142,6 @@ public class ManifestSessionEjb {
         manifestSession.addRecords(manifestRecords);
         manifestSession.validateManifest();
         return manifestSession;
-    }
-
-    /**
-     * Add a collection of samples to existing manifest.
-     */
-    public void addSamplesToManifest(@Nonnull Long manifestId, @Nonnull Collection<Sample> samples) {
-        ManifestSession manifestSession = findManifestSession(manifestId);
-        addSamplesToManifest(manifestSession, samples);
-    }
-
-    /**
-     * Add a collection of samples to existing manifest.
-     */
-    public void addSamplesToManifest(ManifestSession manifestSession, Collection<Sample> samples) {
-        if (samples.isEmpty()) {
-            throw new InformaticsServiceException("Empty list of samples not allowed.");
-        }
-//        List<ManifestRecord> manifestRecords = new ArrayList<>(samples.size());
-        for (Sample sample : samples) {
-            if (sample == null){
-                throw new InformaticsServiceException("Sample is null.");
-            }
-            if (CollectionUtils.isEmpty(sample.getSampleData())) {
-                throw new InformaticsServiceException("Sample contains no metadata.");
-            }
-            List<Metadata> metadata = convertToMercuryMetadata(sample);
-            manifestSession.addRecord(new ManifestRecord(metadata.toArray(new Metadata[metadata.size()])));
-        }
-    }
-
-    List<Metadata> convertToMercuryMetadata(Sample crspSample) {
-        List<Metadata> mercuryMetadata = new ArrayList<>(crspSample.getSampleData().size());
-        for (SampleData crspMetadata : crspSample.getSampleData()) {
-            Metadata.Key metadataKey = Metadata.Key.fromDisplayName(crspMetadata.getName());
-            Metadata mercuryMetadataItem = new Metadata(metadataKey, crspMetadata.getValue());
-            mercuryMetadata.add(mercuryMetadataItem);
-        }
-        return mercuryMetadata;
     }
 
     private ResearchProject findResearchProject(String researchProjectKey) {
@@ -379,7 +338,7 @@ public class ManifestSessionEjb {
      * @param fromSampleKit         whether or not the samples are in tubes from a Broad sample kit
      * @return the newly created (and persisted) ManifestSession
      */
-    public ManifestSession createManifestSession(String researchProjectKey, String sessionName, boolean fromSampleKit) {
+    private ManifestSession createManifestSession(String researchProjectKey, String sessionName, boolean fromSampleKit) {
         ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
         if (researchProject == null) {
             throw new IllegalArgumentException("Research project not found: " + researchProjectKey);
@@ -391,10 +350,20 @@ public class ManifestSessionEjb {
         return manifestSession;
     }
 
+    /**
+     * Creates a new manifest session for the given research project.
+     *
+     * @param researchProjectKey    the business key of the research project for these samples
+     * @param sessionName           the name to give the manifest session
+     * @param fromSampleKit         whether or not the samples are in tubes from a Broad sample kit
+     * @param samples               Collection of samples to add to the manifest.
+     * @return the newly created (and persisted) ManifestSession
+     */
     public ManifestSession createManifestSessionWithSamples(String researchProjectKey, String sessionName,
                                                             boolean fromSampleKit, Collection<Sample> samples) {
         ManifestSession manifestSession = createManifestSession(researchProjectKey, sessionName, fromSampleKit);
-        addSamplesToManifest(manifestSession, samples);
+        Collection<ManifestRecord> manifestRecords = ClinicalSampleFactory.toManifestRecords(samples);
+        manifestSession.addRecords(manifestRecords);
         return manifestSession;
     }
 }
