@@ -184,4 +184,16 @@
 
     </changeSet>
 
+    <changeSet author="jowalsh" id="GPLIM-2619-1">
+        <addColumn tableName="LAB_BATCH" schemaName="mercury">
+            <column name="FLOWCELL_TYPE" type="varchar(255)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-2619-2">
+        <addColumn tableName="LAB_BATCH_AUD" schemaName="mercury">
+            <column name="FLOWCELL_TYPE" type="varchar(255)" />
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
