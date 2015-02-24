@@ -54,6 +54,7 @@ import java.util.Set;
 import static org.broadinstitute.gpinformatics.FormatStringMatcher.matchesFormatString;
 import static org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestStatusErrorMatcher.hasError;
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.endsWith;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
@@ -1416,7 +1417,7 @@ public class ManifestSessionEjbDBFreeTest {
             manifestSessionEjb.createManifestSessionWithSamples(TEST_RESEARCH_PROJECT_KEY, "BuickCloseGood", true,
                     Collections.<Sample>emptyList());
         } catch (InformaticsServiceException e) {
-            assertThat(e.getMessage(), is("Empty list of samples not allowed."));
+            assertThat(e.getMessage(), endsWith(ClinicalSampleFactory.EMPTY_LIST_OF_SAMPLES_NOT_ALLOWED));
             throw e;
         }
     }
@@ -1441,7 +1442,7 @@ public class ManifestSessionEjbDBFreeTest {
         try {
             manifestSessionEjb.createManifestSessionWithSamples(TEST_RESEARCH_PROJECT_KEY, "ThisSession", true, Collections.singleton(new Sample()));
         } catch (InformaticsServiceException e) {
-            assertThat(e.getMessage(), is("Sample contains no metadata."));
+            assertThat(e.getMessage(), endsWith(ClinicalSampleFactory.SAMPLE_CONTAINS_NO_METADATA));
             throw e;
         }
     }
@@ -1452,7 +1453,7 @@ public class ManifestSessionEjbDBFreeTest {
         try {
             manifestSessionEjb.createManifestSessionWithSamples(TEST_RESEARCH_PROJECT_KEY, TEST_SESSION_NAME, true, Collections.<Sample>singleton(null));
         } catch (InformaticsServiceException e) {
-            assertThat(e.getMessage(), is("Sample is null."));
+            assertThat(e.getMessage(), endsWith(ClinicalSampleFactory.SAMPLE_IS_NULL));
             throw e;
         }
     }

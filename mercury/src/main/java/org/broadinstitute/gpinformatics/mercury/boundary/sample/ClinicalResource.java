@@ -91,7 +91,7 @@ public class ClinicalResource {
 
     private void validateIsFromSampleKit(Boolean isFromSampleKit) {
         if (isFromSampleKit == null) {
-            throw new IllegalArgumentException("isFromSampleKit is required.");
+            throw new IllegalArgumentException("fromSampleKit is required.");
         }
         if (!isFromSampleKit) {
             throw new UnsupportedOperationException(

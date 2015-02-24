@@ -362,7 +362,12 @@ public class ManifestSessionEjb {
     public ManifestSession createManifestSessionWithSamples(String researchProjectKey, String sessionName,
                                                             boolean fromSampleKit, Collection<Sample> samples) {
         ManifestSession manifestSession = createManifestSession(researchProjectKey, sessionName, fromSampleKit);
-        Collection<ManifestRecord> manifestRecords = ClinicalSampleFactory.toManifestRecords(samples);
+        Collection<ManifestRecord> manifestRecords = null;
+        try {
+            manifestRecords = ClinicalSampleFactory.toManifestRecords(samples);
+        } catch (RuntimeException e) {
+            throw new InformaticsServiceException(e);
+        }
         manifestSession.addRecords(manifestRecords);
         return manifestSession;
     }
