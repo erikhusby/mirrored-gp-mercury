@@ -20,6 +20,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.nullValue;
+
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ClinicalResourceDbFreeTest {
 
@@ -70,11 +73,9 @@ public class ClinicalResourceDbFreeTest {
     public void testCreateManifestWithSamplesNullIsFromSampleKit() throws JAXBException {
         stubValidLogin();
         String deSerializedJson =
-                       "{\"username\" : \"test_user\", \"manifestName\" : \"test manifest\",  \"researchProjectKey\" : \"RP-1\", \"fromSampleKit\" : 2}";
+                       "{\"username\" : \"test_user\", \"manifestName\" : \"test manifest\",  \"researchProjectKey\" : \"RP-1\", \"fromSampleKit\" : nil}";
                ClinicalResourceBean clinicalResourceBean =
                        MercuryStringUtils.deSerializeJsonBean(deSerializedJson, ClinicalResourceBean.class);
-//        ClinicalResourceBean clinicalResourceBean = ClinicalSampleFactory
-//                .createClinicalResourceBean(TEST_USER, MANIFEST_NAME, RP_1, null, Collections.<Sample>emptySet());
         clinicalResource.createManifestWithSamples(clinicalResourceBean);
     }
 
@@ -174,17 +175,12 @@ public class ClinicalResourceDbFreeTest {
                 MercuryStringUtils.deSerializeJsonBean(serialized, ClinicalResourceBean.class);
         clinicalResource.createManifestWithSamples(clinicalResourceBean);
     }
-    @Test(expectedExceptions = UnsupportedOperationException.class)
-    public void testFromSampleKitNull() throws JAXBException {
-//        ClinicalResourceBean zz = ClinicalSampleFactory
-//                        .createClinicalResourceBean(TEST_USER, MANIFEST_NAME, RP_1, null, Collections.<Sample> emptyList());
-        ClinicalResourceBean b1 = new ClinicalResourceBean();
-        String serializedJson= MercuryStringUtils.serializeJsonBean(b1).toString();
 
-        String deSerializedJson =
-                "{\"username\" : \"test_user\", \"manifestName\" : \"test manifest\",  \"researchProjectKey\" : \"RP-1\", \"fromSampleKit\" : }";
-        ClinicalResourceBean clinicalResourceBean =
-                MercuryStringUtils.deSerializeJsonBean(deSerializedJson, ClinicalResourceBean.class);
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testFromSampleKitNull() throws JAXBException {
+        ClinicalResourceBean clinicalResourceBean = ClinicalSampleTestFactory.createClinicalResourceBean(TEST_USER, MANIFEST_NAME, RP_1, true, 5);
+        clinicalResourceBean.setFromSampleKit(null);
+        assertThat(clinicalResourceBean.isFromSampleKit(), nullValue());
         clinicalResource.createManifestWithSamples(clinicalResourceBean);
     }
 }
