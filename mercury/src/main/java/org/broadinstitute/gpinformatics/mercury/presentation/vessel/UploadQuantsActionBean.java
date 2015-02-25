@@ -11,6 +11,7 @@ import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationErrors;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
@@ -78,6 +79,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
     private String tubeFormationLabel;
     /** acceptRePico indicates the user wishes to process the new pico regardless of existing quants. */
     private boolean acceptRePico;
+    private final int STRING_LIMIT = 255;
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -156,6 +158,8 @@ public class UploadQuantsActionBean extends CoreActionBean {
             addGlobalValidationError("Check at least one box.");
         } else if (overrideReason == null || overrideReason.trim().isEmpty()) {
             addValidationError("overrideReason", "Override reason is required");
+        } else if (overrideReason.length() > STRING_LIMIT) {
+            addValidationError("overrideReason", "Override reason is too long. Limit is 255 characters.");
         } else {
             List<LabMetric> selectedLabMetrics = labMetricDao.findListByList(LabMetric.class, LabMetric_.labMetricId,
                     selectedMetrics);
