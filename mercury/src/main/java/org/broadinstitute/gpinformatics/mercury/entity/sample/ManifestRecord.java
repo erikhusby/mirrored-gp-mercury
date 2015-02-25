@@ -197,6 +197,7 @@ public class ManifestRecord implements Updatable {
         return false;
     }
 
+    @Override
     public UpdateData getUpdateData() {
         return updateData;
     }

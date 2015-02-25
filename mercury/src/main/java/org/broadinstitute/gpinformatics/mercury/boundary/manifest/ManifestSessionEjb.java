@@ -47,11 +47,9 @@ public class ManifestSessionEjb {
     static final String VESSEL_NOT_FOUND_MESSAGE = "The target vessel was not found.";
     static final String VESSEL_USED_FOR_PREVIOUS_TRANSFER =
             "The target vessel has already been used for a tube transfer.";
-
-    static final String MANIFEST_SESSION_NOT_FOUND = "Manifest Session '%s' not found";
-
+    static final String MANIFEST_SESSION_NOT_FOUND_FORMAT = "Manifest Session '%s' not found";
     static final String MERCURY_SAMPLE_KEY = "Mercury sample key";
-    static final String RESEARCH_PROJECT_NOT_FOUND_FORMAT = "Research project not found: %s";
+    static final String RESEARCH_PROJECT_NOT_FOUND_FORMAT = "Research Project '%s' not found: ";
 
     private ManifestSessionDao manifestSessionDao;
 
@@ -162,7 +160,7 @@ public class ManifestSessionEjb {
     private ManifestSession findManifestSession(long manifestSessionId) {
         ManifestSession manifestSession = manifestSessionDao.find(manifestSessionId);
         if (manifestSession == null) {
-            throw new InformaticsServiceException(String.format(MANIFEST_SESSION_NOT_FOUND, manifestSessionId));
+            throw new InformaticsServiceException(String.format(MANIFEST_SESSION_NOT_FOUND_FORMAT, manifestSessionId));
         }
         return manifestSession;
     }

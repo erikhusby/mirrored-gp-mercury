@@ -6,7 +6,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.broadinstitute.bsp.client.users.BspUser;
@@ -44,6 +43,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -119,26 +119,20 @@ public class ManifestSession implements Updatable {
 
     public ManifestSession(ResearchProject researchProject, String manifestSessionName, BspUser createdBy,
                            boolean fromSampleKit) {
+        this(researchProject, manifestSessionName, createdBy, fromSampleKit, Collections.<ManifestRecord>emptyList());
+    }
+
+    public ManifestSession(ResearchProject researchProject, String sessionName, BspUser createdBy, boolean fromSampleKit,
+                           Collection<ManifestRecord> manifestRecords) {
         this.researchProject = researchProject;
         researchProject.addManifestSession(this);
-        sessionPrefix = manifestSessionName;
+        sessionPrefix = sessionName;
         updateData.setCreatedBy(createdBy.getUserId());
         this.fromSampleKit = fromSampleKit;
         if(fromSampleKit) {
             status = SessionStatus.PENDING_SAMPLE_INFO;
         }
-    }
 
-    /**
-     * For database-free tests ONLY.
-     */
-    public ManifestSession(long manifestSessionId) {
-        this.manifestSessionId = manifestSessionId;
-    }
-
-    public ManifestSession(ResearchProject researchProject, String sessionName, BspUser bspUser, boolean fromSampleKit,
-                           Collection<ManifestRecord> manifestRecords) {
-        this(researchProject, sessionName, bspUser, fromSampleKit);
         addRecords(manifestRecords);
     }
 
@@ -617,6 +611,7 @@ public class ManifestSession implements Updatable {
         }
     }
 
+    @Override
     public UpdateData getUpdateData() {
         return updateData;
     }

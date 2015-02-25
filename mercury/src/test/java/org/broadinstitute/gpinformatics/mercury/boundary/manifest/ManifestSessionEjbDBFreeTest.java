@@ -161,8 +161,9 @@ public class ManifestSessionEjbDBFreeTest {
                 new BarcodedTube(TEST_VESSEL_LABEL, BarcodedTube.BarcodedTubeType.MatrixTube2mL);
         testVesselAlreadyTransferred = new BarcodedTube(TEST_VESSEL_LABEL_ALREADY_TRANSFERRED,
                 BarcodedTube.BarcodedTubeType.MatrixTube2mL);
-        manifestSessionEjb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao,
-                                    mockUserBean);
+        manifestSessionEjb =
+                new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao,
+                        mockUserBean);
     }
 
     /**
@@ -558,7 +559,7 @@ public class ManifestSessionEjbDBFreeTest {
             ejb.acceptManifestUpload(ARBITRARY_MANIFEST_SESSION_ID);
             Assert.fail();
         } catch (InformaticsServiceException e) {
-            assertThat(e.getMessage(), matchesFormatString(ManifestSessionEjb.MANIFEST_SESSION_NOT_FOUND));
+            assertThat(e.getMessage(), matchesFormatString(ManifestSessionEjb.MANIFEST_SESSION_NOT_FOUND_FORMAT));
         }
     }
 
@@ -1403,7 +1404,8 @@ public class ManifestSessionEjbDBFreeTest {
                 .createSample(ImmutableMap.of(Metadata.Key.SAMPLE_ID, SM_1));
         SampleData sampleData = sample.getSampleData().iterator().next();
 
-        Collection<ManifestRecord> manifestRecords = ClinicalSampleFactory.toManifestRecords(Collections.singleton(sample));
+        Collection<ManifestRecord> manifestRecords =
+                ClinicalSampleFactory.toManifestRecords(Collections.singleton(sample));
         assertThat(manifestRecords.size(), is(1));
         ManifestRecord manifestRecord = manifestRecords.iterator().next();
 
@@ -1504,10 +1506,6 @@ public class ManifestSessionEjbDBFreeTest {
      * Test creation of a manifest session when the research project doesn't exist.
      */
     public void testCreateManifestManifestBadResearchProject() {
-        ManifestSessionEjb manifestSessionEjb =
-                new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao,
-                        mockUserBean);
-
         String researchProjectName = "BadRP";
         try {
             manifestSessionEjb.createManifestSession(
