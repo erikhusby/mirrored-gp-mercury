@@ -76,6 +76,8 @@ public class UploadQuantsActionBean extends CoreActionBean {
     private String overrideReason;
     private LabMetricDecision.Decision overrideDecision;
     private String tubeFormationLabel;
+    /** acceptRePico indicates the user wishes to process the new pico regardless of existing quants. */
+    private boolean acceptRePico;
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -112,7 +114,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
             case VARIOSKAN:
                 MessageCollection messageCollection = new MessageCollection();
                 Pair<LabMetricRun, String> pair = vesselEjb.createVarioskanRun(quantStream, getQuantType(),
-                        userBean.getBspUser().getUserId(), messageCollection);
+                        userBean.getBspUser().getUserId(), messageCollection, acceptRePico);
                 if (pair != null) {
                     labMetricRun = pair.getLeft();
                     tubeFormationLabel = pair.getRight();
@@ -253,5 +255,13 @@ public class UploadQuantsActionBean extends CoreActionBean {
 
     public void setTubeFormationLabel(String tubeFormationLabel) {
         this.tubeFormationLabel = tubeFormationLabel;
+    }
+
+    public boolean getAcceptRePico() {
+        return acceptRePico;
+    }
+
+    public void setAcceptRePico(boolean acceptRePico) {
+        this.acceptRePico = acceptRePico;
     }
 }
