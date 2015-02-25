@@ -48,24 +48,12 @@
 
             });
 
+
         </script>
     </stripes:layout-component>
     <stripes:layout-component name="content">
         <stripes:form beanclass="${actionBean.class.name}" id="uploadForm" class="form-horizontal">
             <div class="form-horizontal">
-                <c:if test="${actionBean.rePico}">
-                    <p/>The spreadsheet is a redo of a previous quant. To process the new quants, check the box to confirm, reselect the spreadsheet file, then click Upload Quants.
-                    <div class="control-group">
-                        <stripes:label for="confirmRePico" class="control-label">
-                            Confirm redo
-                        </stripes:label>
-                        <div class="controls">
-                            <stripes:checkbox id="confirmRePico" name="acceptRePico"
-                                              style="margin-top: 10px;" class="overrideCheckboxClass"/>
-                        </div>
-                    </div>
-                </c:if>
-
                 <div class="control-group">
                     <stripes:label for="quantFormat" class="control-label">File Format</stripes:label>
                     <div class="controls">
@@ -88,16 +76,20 @@
                     <div class="controls">
                         <stripes:file name="quantSpreadsheet" id="quantFile"/>
                     </div>
+                    <stripes:label for="allowRePico" class="control-label">Redo existing quants</stripes:label>
+                    <div class="controls">
+                        <stripes:checkbox id="allowRePico" name="acceptRePico"
+                                          style="margin-top: 10px;" class="overrideCheckboxClass"
+                                          title="Check this to upload a spreadsheet of quants when tubes already have quants of the same Quant Type and a new pico run was done.  If left unchecked, Mercury will error the upload if it finds existing quants."/>
+                    </div>
                 </div>
                 <div class="control-group">
                     <div class="controls">
-                        <stripes:hidden name="rePico" value="${actionBean.rePico}"/>
                         <stripes:submit name="uploadQuant" value="Upload Quants" class="btn btn-primary"/>
                     </div>
                 </div>
             </div>
         </stripes:form>
-
         <c:if test="${actionBean.labMetricRun != null}">
             Type: ${actionBean.labMetricRun.metricType.displayName}
             <br/>
@@ -187,7 +179,6 @@
                 <stripes:hidden name="labMetricRunId" value="${actionBean.labMetricRun.labMetricRunId}"/>
                 <stripes:hidden name="tubeFormationLabel" value="${actionBean.tubeFormationLabel}"/>
                 <stripes:hidden name="quantType" value="${actionBean.quantType}"/>
-                <stripes:hidden name="rePico" value="${actionBean.rePico}"/>
                 <stripes:label for="overrideDecision" class="control-label">Override Decision</stripes:label>
                 <div class="controls">
                     <stripes:select name="overrideDecision">

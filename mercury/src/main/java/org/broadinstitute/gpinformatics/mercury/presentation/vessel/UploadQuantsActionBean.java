@@ -11,6 +11,7 @@ import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationErrors;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
@@ -75,9 +76,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
     private String overrideReason;
     private LabMetricDecision.Decision overrideDecision;
     private String tubeFormationLabel;
-    // rePico indicates that VesselEjb found a previous quant run of the same type.
-    private boolean rePico;
-    // acceptRePico comes from UI to indicate the user wishes to process the new pico.
+    /** acceptRePico indicates the user wishes to process the new pico regardless of existing quants. */
     private boolean acceptRePico;
 
     @DefaultHandler
@@ -93,10 +92,6 @@ public class UploadQuantsActionBean extends CoreActionBean {
     public Resolution uploadQuant() {
         switch (quantFormat) {
         case VARIOSKAN:
-            if (rePico) {
-                // Prompts user to confirm use of the re-pico.
-                view();
-            }
             break;
         case GENERIC:
             quantEJB.storeQuants(labMetrics);
@@ -118,12 +113,11 @@ public class UploadQuantsActionBean extends CoreActionBean {
             switch (quantFormat) {
             case VARIOSKAN:
                 MessageCollection messageCollection = new MessageCollection();
-                VesselEjb.VarioskanRunDto dto = vesselEjb.createVarioskanRun(quantStream, getQuantType(),
+                Pair<LabMetricRun, String> pair = vesselEjb.createVarioskanRun(quantStream, getQuantType(),
                         userBean.getBspUser().getUserId(), messageCollection, acceptRePico);
-                if (dto != null) {
-                    rePico = dto.getRePico();
-                    labMetricRun = dto.getLabMetricRun();
-                    tubeFormationLabel = dto.getTubeFormationLabel();
+                if (pair != null) {
+                    labMetricRun = pair.getLeft();
+                    tubeFormationLabel = pair.getRight();
                 }
                 addMessages(messageCollection);
                 break;
@@ -261,14 +255,6 @@ public class UploadQuantsActionBean extends CoreActionBean {
 
     public void setTubeFormationLabel(String tubeFormationLabel) {
         this.tubeFormationLabel = tubeFormationLabel;
-    }
-
-    public boolean getRePico() {
-        return rePico;
-    }
-
-    public void setRePico(boolean isRePico) {
-        this.rePico = isRePico;
     }
 
     public boolean getAcceptRePico() {

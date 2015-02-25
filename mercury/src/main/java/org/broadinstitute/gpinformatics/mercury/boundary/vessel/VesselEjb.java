@@ -193,46 +193,18 @@ public class VesselEjb {
         return labVessels;
     }
 
-    public class VarioskanRunDto {
-        private LabMetricRun labMetricRun;
-        private String tubeFormationLabel;
-        private boolean rePico;
-
-        public VarioskanRunDto(LabMetricRun labMetricRun, String tubeFormationLabel, boolean rePico) {
-            this.labMetricRun = labMetricRun;
-            this.tubeFormationLabel = tubeFormationLabel;
-            this.rePico = rePico;
-        }
-
-        public LabMetricRun getLabMetricRun() {
-            return labMetricRun;
-        }
-
-        public String getTubeFormationLabel() {
-            return tubeFormationLabel;
-        }
-
-        /**
-         * Returns true if the tube formation has existing quants of the same MetricType, i.e. this
-         * upload represents a redo of the pico.
-         */
-        public boolean getRePico() {
-            return rePico;
-        }
-    }
-
     /**
      * Create a LabMetricRun from a Varioskan spreadsheet.  This method assumes that a rack of tubes was
      * transferred into one or more plates, and the plates are in the spreadsheet.
-     * In case of an upload of a duplicate spreadsheet, the returned LabMetricRun is the previously uploaded one.
      *
      * @param acceptRePico indicates when previous quants should be ignored and new quants processed.
-     * @return DTO containing LabMetricRun, tubeFormation label that sourced the plates listed in the upload,
-     *         and whether previous quants of this metric type were detected on one or more tubes.
+     * @return Pair of LabMetricRun and the label of the tubeFormation that sourced the plates listed in the upload,
+     *         or null in case of error.
+     * In case of a duplicate upload the returned LabMetricRun is the previously uploaded one.
      */
-    public VarioskanRunDto createVarioskanRun(InputStream varioskanSpreadsheet,
-                                              LabMetric.MetricType metricType, Long decidingUser,
-                                              MessageCollection messageCollection, boolean acceptRePico) {
+    public Pair<LabMetricRun, String> createVarioskanRun(InputStream varioskanSpreadsheet,
+                                                         LabMetric.MetricType metricType, Long decidingUser,
+                                                         MessageCollection messageCollection, boolean acceptRePico) {
 
         try {
             Workbook workbook = WorkbookFactory.create(varioskanSpreadsheet);
@@ -247,7 +219,8 @@ public class VesselEjb {
 
             // Fetch the plates
             Map<String, StaticPlate> mapBarcodeToPlate = new HashMap<>();
-            TubeFormation tubeFormation = null;
+            Pair<LabMetricRun, String> pair = null;
+
             if (varioskanPlateProcessor.getPlateWellResults().isEmpty()) {
                 messageCollection.addError("Didn't find any plate barcodes in the spreadsheet.");
             } else {
@@ -263,53 +236,53 @@ public class VesselEjb {
                         }
                     }
                 }
-                tubeFormation = getFirstTubeFormationFromPlates(mapBarcodeToPlate.values());
+                TubeFormation tubeFormation = getFirstTubeFormationFromPlates(mapBarcodeToPlate.values());
                 if (tubeFormation == null) {
                     messageCollection.addError("Cannot find the tube formation upstream of plates " +
                                                StringUtils.join(mapBarcodeToPlate.values(), ", "));
-                }
-            }
-
-            if (!messageCollection.hasErrors()) {
-                // Run name must be unique.
-                String runName = mapNameValueToValue.get(VarioskanRowParser.NameValue.RUN_NAME);
-                LabMetricRun labMetricRun = labMetricRunDao.findByName(runName);
-                if (labMetricRun != null) {
-                    messageCollection.addError("This run has been uploaded previously.");
-                    return new VarioskanRunDto(labMetricRun, tubeFormation.getLabel(), false);
-                }
-                // Run date must be unique so that a search can reveal the latest quant.
-                List<LabMetricRun> sameDateRuns = labMetricRunDao.findList(LabMetricRun.class, LabMetricRun_.runDate,
-                        parseRunDate(mapNameValueToValue));
-                if (CollectionUtils.isNotEmpty(sameDateRuns)) {
-                    messageCollection.addError("A previous upload has the same Run Started timestamp.");
-                    return new VarioskanRunDto(sameDateRuns.iterator().next(), tubeFormation.getLabel(), false);
-                }
-                // Unless told to ignore them, if previous quants exist then does not create a new run.
-                if (!acceptRePico) {
-                    List<String> previousQuantedTubes = new ArrayList<>();
-                    for (BarcodedTube tube : tubeFormation.getContainerRole().getContainedVessels()) {
-                        if (tube.findMostRecentLabMetric(metricType) != null) {
-                            previousQuantedTubes.add(tube.getLabel());
+                } else {
+                    // Run name must be unique.
+                    String runName = mapNameValueToValue.get(VarioskanRowParser.NameValue.RUN_NAME);
+                    LabMetricRun labMetricRun = labMetricRunDao.findByName(runName);
+                    if (labMetricRun != null) {
+                        messageCollection.addError("This run has been uploaded previously.");
+                        pair = Pair.of(labMetricRun, tubeFormation.getLabel());
+                    } else {
+                        // Run date must be unique so that a search can reveal the latest quant.
+                        List<LabMetricRun> sameDateRuns = labMetricRunDao.findList(LabMetricRun.class,
+                                LabMetricRun_.runDate, parseRunDate(mapNameValueToValue));
+                        if (CollectionUtils.isNotEmpty(sameDateRuns)) {
+                            messageCollection.addError("A previous upload has the same Run Started timestamp.");
+                            pair = Pair.of(sameDateRuns.iterator().next(), tubeFormation.getLabel());
+                        } else {
+                            // It's an error if previous quants exist, unless told to accept the rePico.
+                            List<String> previousQuantedTubes = null;
+                            if (!acceptRePico) {
+                                previousQuantedTubes = new ArrayList<>();
+                                for (BarcodedTube tube : tubeFormation.getContainerRole().getContainedVessels()) {
+                                    if (tube.findMostRecentLabMetric(metricType) != null) {
+                                        previousQuantedTubes.add(tube.getLabel());
+                                    }
+                                }
+                            }
+                            if (!acceptRePico && CollectionUtils.isNotEmpty(previousQuantedTubes)) {
+                                messageCollection.addError(metricType.getDisplayName() +
+                                                           " was previously done on tubes " +
+                                                           StringUtils.join(previousQuantedTubes, ", "));
+                            } else {
+                                pair = createVarioskanRunDaoFree(mapNameValueToValue, metricType,
+                                        varioskanPlateProcessor, mapBarcodeToPlate, decidingUser, messageCollection);
+                                if (messageCollection.hasErrors()) {
+                                    ejbContext.setRollbackOnly();
+                                } else {
+                                    labMetricRunDao.persist(pair.getLeft());
+                                }
+                            }
                         }
                     }
-                    if (previousQuantedTubes.size() > 0) {
-                        messageCollection.addWarning(metricType.getDisplayName() + " was previously done on tubes " +
-                                                     StringUtils.join(previousQuantedTubes, ", "));
-                        return new VarioskanRunDto(null, tubeFormation.getLabel(), true);
-                    }
                 }
-
-                Pair<LabMetricRun, String> pair = createVarioskanRunDaoFree(mapNameValueToValue, metricType,
-                        varioskanPlateProcessor, mapBarcodeToPlate, decidingUser, messageCollection);
-                if (messageCollection.hasErrors()) {
-                    ejbContext.setRollbackOnly();
-                } else {
-                    labMetricRunDao.persist(pair.getLeft());
-                }
-                return new VarioskanRunDto(pair.getLeft(), tubeFormation.getLabel(), false);
             }
-            return null;
+            return pair;
         } catch (IOException | InvalidFormatException | ValidationException e) {
             throw new RuntimeException(e);
         }

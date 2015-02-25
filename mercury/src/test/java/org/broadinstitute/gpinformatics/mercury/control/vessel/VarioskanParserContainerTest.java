@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
+import com.sun.accessibility.internal.resources.accessibility;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -14,6 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -58,43 +61,43 @@ public class VarioskanParserContainerTest extends Arquillian {
         String plate1Barcode = timestamp + "01";
         String plate2Barcode = timestamp + "02";
         MessageCollection messageCollection = new MessageCollection();
+        final boolean PERSIST_VESSELS = true;
+        final boolean ACCEPT_PICO_REDO = true;
 
-        VesselEjb.VarioskanRunDto dto = makeVarioskanRunDto(plate1Barcode, plate2Barcode, timestamp, messageCollection,
-                false, true);
+        Pair<LabMetricRun, String> pair1 = makeVarioskanRun(plate1Barcode, plate2Barcode, timestamp,
+                messageCollection, !ACCEPT_PICO_REDO, PERSIST_VESSELS);
 
-        Assert.assertFalse(dto.getRePico());
-        Assert.assertTrue(StringUtils.isNotBlank(dto.getTubeFormationLabel()));
+        Assert.assertTrue(StringUtils.isNotBlank(pair1.getRight()));
         Assert.assertFalse(messageCollection.hasErrors());
         Assert.assertFalse(messageCollection.hasWarnings());
-        Assert.assertNotNull(dto.getLabMetricRun());
-        Assert.assertEquals(dto.getLabMetricRun().getLabMetrics().size(), 96 * 3);
+        Assert.assertNotNull(pair1.getLeft());
+        Assert.assertEquals(pair1.getLeft().getLabMetrics().size(), 96 * 3);
 
-        // Tests ability to detect previous quants with a new quant run of the same type.
+        // Should fail the pico redo due to previous quants of the same type.
         messageCollection.clearAll();
-        VesselEjb.VarioskanRunDto dto2 = makeVarioskanRunDto(plate1Barcode, plate2Barcode, timestamp + "2",
-                messageCollection, false, false);
+        Pair<LabMetricRun, String> pair2 = makeVarioskanRun(plate1Barcode, plate2Barcode, timestamp + "2",
+                messageCollection, !ACCEPT_PICO_REDO, !PERSIST_VESSELS);
 
-        Assert.assertTrue(dto2.getRePico());
-        Assert.assertFalse(messageCollection.hasErrors());
-        Assert.assertTrue(messageCollection.hasWarnings());
-        Assert.assertNull(dto2.getLabMetricRun());
+        Assert.assertTrue(messageCollection.hasErrors());
+        Assert.assertTrue(messageCollection.getErrors().get(0).contains("Initial Pico was previously done"));
+        Assert.assertNull(pair2);
 
-        // Tests ability to upload despite previous quants.
+        // Should accept the pico redo when told to, despite previous quants.
         messageCollection.clearAll();
-        VesselEjb.VarioskanRunDto dto3 = makeVarioskanRunDto(plate1Barcode, plate2Barcode, timestamp + "3",
-                messageCollection, true, false);
+        Pair<LabMetricRun, String> pair3 = makeVarioskanRun(plate1Barcode, plate2Barcode, timestamp + "3",
+                messageCollection, ACCEPT_PICO_REDO, !PERSIST_VESSELS);
 
-        Assert.assertTrue(StringUtils.isNotBlank(dto3.getTubeFormationLabel()));
+        Assert.assertTrue(StringUtils.isNotBlank(pair3.getRight()));
         Assert.assertFalse(messageCollection.hasErrors());
         Assert.assertFalse(messageCollection.hasWarnings());
-        Assert.assertNotNull(dto3.getLabMetricRun());
-        Assert.assertEquals(dto3.getLabMetricRun().getLabMetrics().size(), 96 * 3);
+        Assert.assertNotNull(pair3.getLeft());
+        Assert.assertEquals(pair3.getLeft().getLabMetrics().size(), 96 * 3);
 
     }
 
-    private VesselEjb.VarioskanRunDto makeVarioskanRunDto(String plate1Barcode, String plate2Barcode, String namePrefix,
-                                                          MessageCollection messageCollection, boolean acceptRePico,
-                                                          boolean persistVessels)
+    private Pair<LabMetricRun, String> makeVarioskanRun(String plate1Barcode, String plate2Barcode, String namePrefix,
+                                                        MessageCollection messageCollection, boolean acceptRePico,
+                                                        boolean persistVessels)
             throws Exception {
 
         Workbook workbook = WorkbookFactory.create(VarioskanParserTest.getSpreadsheet());
