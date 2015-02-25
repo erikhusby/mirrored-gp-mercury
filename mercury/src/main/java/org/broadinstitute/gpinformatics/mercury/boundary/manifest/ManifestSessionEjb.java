@@ -51,6 +51,7 @@ public class ManifestSessionEjb {
     static final String MANIFEST_SESSION_NOT_FOUND = "Manifest Session '%s' not found";
 
     static final String MERCURY_SAMPLE_KEY = "Mercury sample key";
+    static final String RESEARCH_PROJECT_NOT_FOUND_FORMAT = "Research project not found: %s";
 
     private ManifestSessionDao manifestSessionDao;
 
@@ -336,39 +337,25 @@ public class ManifestSessionEjb {
      * @param researchProjectKey    the business key of the research project for these samples
      * @param sessionName           the name to give the manifest session
      * @param fromSampleKit         whether or not the samples are in tubes from a Broad sample kit
-     * @return the newly created (and persisted) ManifestSession
-     */
-    private ManifestSession createManifestSession(String researchProjectKey, String sessionName, boolean fromSampleKit) {
-        ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
-        if (researchProject == null) {
-            throw new IllegalArgumentException("Research project not found: " + researchProjectKey);
-        }
-
-        ManifestSession manifestSession = new ManifestSession(researchProject, sessionName, userBean.getBspUser(),
-                fromSampleKit);
-        manifestSessionDao.persist(manifestSession);
-        return manifestSession;
-    }
-
-    /**
-     * Creates a new manifest session for the given research project.
-     *
-     * @param researchProjectKey    the business key of the research project for these samples
-     * @param sessionName           the name to give the manifest session
-     * @param fromSampleKit         whether or not the samples are in tubes from a Broad sample kit
      * @param samples               Collection of samples to add to the manifest.
      * @return the newly created (and persisted) ManifestSession
      */
-    public ManifestSession createManifestSessionWithSamples(String researchProjectKey, String sessionName,
-                                                            boolean fromSampleKit, Collection<Sample> samples) {
-        ManifestSession manifestSession = createManifestSession(researchProjectKey, sessionName, fromSampleKit);
-        Collection<ManifestRecord> manifestRecords = null;
+    public ManifestSession createManifestSession(String researchProjectKey, String sessionName,
+                                                 boolean fromSampleKit, Collection<Sample> samples) {
+        ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
+        if (researchProject == null) {
+            throw new IllegalArgumentException(String.format(RESEARCH_PROJECT_NOT_FOUND_FORMAT, researchProjectKey));
+        }
+
+        Collection<ManifestRecord> manifestRecords;
         try {
             manifestRecords = ClinicalSampleFactory.toManifestRecords(samples);
         } catch (RuntimeException e) {
             throw new InformaticsServiceException(e);
         }
-        manifestSession.addRecords(manifestRecords);
+        ManifestSession manifestSession =
+                new ManifestSession(researchProject, sessionName, userBean.getBspUser(), fromSampleKit, manifestRecords);
+        manifestSessionDao.persist(manifestSession);
         return manifestSession;
     }
 }

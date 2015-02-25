@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
 import org.broadinstitute.bsp.client.users.BspUser;
-import org.broadinstitute.gpinformatics.infrastructure.common.MercuryStringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.UnknownUserException;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
@@ -67,19 +66,6 @@ public class ClinicalResourceDbFreeTest {
     }
 
     /**
-     * Test that the call fails if isFromSampleKit is not passed in.
-     */
-    @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testCreateManifestWithSamplesNullIsFromSampleKit() throws JAXBException {
-        stubValidLogin();
-        String deSerializedJson =
-                       "{\"username\" : \"test_user\", \"manifestName\" : \"test manifest\",  \"researchProjectKey\" : \"RP-1\", \"fromSampleKit\" : nil}";
-               ClinicalResourceBean clinicalResourceBean =
-                       MercuryStringUtils.deSerializeJsonBean(deSerializedJson, ClinicalResourceBean.class);
-        clinicalResource.createManifestWithSamples(clinicalResourceBean);
-    }
-
-    /**
      * Test that the call fails if a null manifest name is provided.
      */
     @Test(expectedExceptions = IllegalArgumentException.class)
@@ -120,7 +106,7 @@ public class ClinicalResourceDbFreeTest {
 
         verifyUserLogin(TEST_USER);
         Mockito.verify(manifestSessionEjb)
-                .createManifestSessionWithSamples(RP_1, MANIFEST_NAME, isFromSampleKit, samples);
+                .createManifestSession(RP_1, MANIFEST_NAME, isFromSampleKit, samples);
     }
 
     /**
@@ -152,7 +138,7 @@ public class ClinicalResourceDbFreeTest {
      */
     private void stubManifestCreation( final long manifestId, String manifestName, String researchProjectKey,
                                       Collection<Sample> samples) {
-        Mockito.when(manifestSessionEjb.createManifestSessionWithSamples(researchProjectKey, manifestName, true,
+        Mockito.when(manifestSessionEjb.createManifestSession(researchProjectKey, manifestName, true,
                 samples)).then(new Answer<ManifestSession>() {
 
             @Override
@@ -168,17 +154,9 @@ public class ClinicalResourceDbFreeTest {
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testFromSampleKitMissing() throws JAXBException {
-        String serialized =
-                "{\"username\" : \"test_user\", \"manifestName\" : \"test manifest\",  \"researchProjectKey\" : \"RP-1\"}";
-        ClinicalResourceBean clinicalResourceBean =
-                MercuryStringUtils.deSerializeJsonBean(serialized, ClinicalResourceBean.class);
-        clinicalResource.createManifestWithSamples(clinicalResourceBean);
-    }
-
-    @Test(expectedExceptions = IllegalArgumentException.class)
     public void testFromSampleKitNull() throws JAXBException {
-        ClinicalResourceBean clinicalResourceBean = ClinicalSampleTestFactory.createClinicalResourceBean(TEST_USER, MANIFEST_NAME, RP_1, true, 5);
+        ClinicalResourceBean clinicalResourceBean =
+                ClinicalSampleTestFactory.createClinicalResourceBean(TEST_USER, MANIFEST_NAME, RP_1, true, 5);
         clinicalResourceBean.setFromSampleKit(null);
         assertThat(clinicalResourceBean.isFromSampleKit(), nullValue());
         clinicalResource.createManifestWithSamples(clinicalResourceBean);

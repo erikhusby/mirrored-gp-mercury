@@ -76,7 +76,7 @@ public class ClinicalResource {
         login(clinicalResourceBean.getUsername());
 
         ManifestSession manifestSession = manifestSessionEjb
-                .createManifestSessionWithSamples(clinicalResourceBean.getResearchProjectKey(),
+                .createManifestSession(clinicalResourceBean.getResearchProjectKey(),
                         clinicalResourceBean.getManifestName(), clinicalResourceBean.isFromSampleKit(),
                         clinicalResourceBean.getSamples());
 

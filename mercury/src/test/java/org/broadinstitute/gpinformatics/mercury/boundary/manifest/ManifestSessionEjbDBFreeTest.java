@@ -1414,7 +1414,7 @@ public class ManifestSessionEjbDBFreeTest {
     public void testAddSampleToManifestSessionNoSamples() throws Exception {
         try {
             mockCreateResearchProject();
-            manifestSessionEjb.createManifestSessionWithSamples(TEST_RESEARCH_PROJECT_KEY, "BuickCloseGood", true,
+            manifestSessionEjb.createManifestSession(TEST_RESEARCH_PROJECT_KEY, TEST_SESSION_NAME, true,
                     Collections.<Sample>emptyList());
         } catch (InformaticsServiceException e) {
             assertThat(e.getMessage(), endsWith(ClinicalSampleFactory.EMPTY_LIST_OF_SAMPLES_NOT_ALLOWED));
@@ -1440,7 +1440,8 @@ public class ManifestSessionEjbDBFreeTest {
     public void testAddSampleToManifestSessionEmptySample() throws Exception {
         mockCreateResearchProject();
         try {
-            manifestSessionEjb.createManifestSessionWithSamples(TEST_RESEARCH_PROJECT_KEY, "ThisSession", true, Collections.singleton(new Sample()));
+            manifestSessionEjb.createManifestSession(TEST_RESEARCH_PROJECT_KEY, TEST_SESSION_NAME, true,
+                    Collections.singleton(new Sample()));
         } catch (InformaticsServiceException e) {
             assertThat(e.getMessage(), endsWith(ClinicalSampleFactory.SAMPLE_CONTAINS_NO_METADATA));
             throw e;
@@ -1451,7 +1452,8 @@ public class ManifestSessionEjbDBFreeTest {
     public void testAddSampleToManifestNullSamples() throws Exception {
         mockCreateResearchProject();
         try {
-            manifestSessionEjb.createManifestSessionWithSamples(TEST_RESEARCH_PROJECT_KEY, TEST_SESSION_NAME, true, Collections.<Sample>singleton(null));
+            manifestSessionEjb.createManifestSession(TEST_RESEARCH_PROJECT_KEY, TEST_SESSION_NAME, true,
+                    Collections.<Sample>singleton(null));
         } catch (InformaticsServiceException e) {
             assertThat(e.getMessage(), endsWith(ClinicalSampleFactory.SAMPLE_IS_NULL));
             throw e;
@@ -1469,7 +1471,7 @@ public class ManifestSessionEjbDBFreeTest {
         samples.add(crspSample);
 
         ManifestSession manifestSession = manifestSessionEjb
-                .createManifestSessionWithSamples(TEST_RESEARCH_PROJECT_KEY, TEST_SESSION_NAME, true, samples);
+                .createManifestSession(TEST_RESEARCH_PROJECT_KEY, TEST_SESSION_NAME, true, samples);
         assertThat(manifestSession.getRecords().size(), is(2));
     }
 
@@ -1485,7 +1487,7 @@ public class ManifestSessionEjbDBFreeTest {
         Collection<Sample> samples = Collections.singleton(
                 ClinicalSampleTestFactory.createSample(Collections.singletonMap(Metadata.Key.BROAD_SAMPLE_ID, SM_1)));
         ManifestSession manifestSession = manifestSessionEjb
-                .createManifestSessionWithSamples(TEST_RESEARCH_PROJECT_KEY, TEST_SESSION_NAME, true, samples);
+                .createManifestSession(TEST_RESEARCH_PROJECT_KEY, TEST_SESSION_NAME, true, samples);
 
         assertThat(manifestSession.getResearchProject().getBusinessKey(), equalTo(TEST_RESEARCH_PROJECT_KEY));
         assertThat(manifestSession.getSessionName(), startsWith(TEST_SESSION_NAME));
@@ -1501,12 +1503,19 @@ public class ManifestSessionEjbDBFreeTest {
     /**
      * Test creation of a manifest session when the research project doesn't exist.
      */
-    @Test(expectedExceptions = IllegalArgumentException.class)
     public void testCreateManifestManifestBadResearchProject() {
         ManifestSessionEjb manifestSessionEjb =
                 new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao,
                         mockUserBean);
 
-        manifestSessionEjb.createManifestSessionWithSamples("BadRP", "test session", true, Collections.<Sample>emptySet());
+        String researchProjectName = "BadRP";
+        try {
+            manifestSessionEjb.createManifestSession(
+                    researchProjectName, TEST_SESSION_NAME, true, Collections.<Sample>emptySet());
+            Assert.fail();
+        } catch (Exception e) {
+            assertThat(e.getLocalizedMessage(),
+                    is(String.format(ManifestSessionEjb.RESEARCH_PROJECT_NOT_FOUND_FORMAT, researchProjectName)));
+        }
     }
 }

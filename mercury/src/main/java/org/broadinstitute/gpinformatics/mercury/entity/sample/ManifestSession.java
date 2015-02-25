@@ -136,6 +136,12 @@ public class ManifestSession implements Updatable {
         this.manifestSessionId = manifestSessionId;
     }
 
+    public ManifestSession(ResearchProject researchProject, String sessionName, BspUser bspUser, boolean fromSampleKit,
+                           Collection<ManifestRecord> manifestRecords) {
+        this(researchProject, sessionName, bspUser, fromSampleKit);
+        addRecords(manifestRecords);
+    }
+
     public ResearchProject getResearchProject() {
         return researchProject;
     }
