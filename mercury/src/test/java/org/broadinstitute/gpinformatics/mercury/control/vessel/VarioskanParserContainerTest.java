@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
-import com.sun.accessibility.internal.resources.accessibility;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.poi.ss.usermodel.Cell;
