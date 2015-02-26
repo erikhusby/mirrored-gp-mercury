@@ -54,7 +54,6 @@ import java.util.Set;
 import static org.broadinstitute.gpinformatics.FormatStringMatcher.matchesFormatString;
 import static org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestStatusErrorMatcher.hasError;
 import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.endsWith;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
@@ -1412,19 +1411,8 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID), is(sampleData.getValue()));
     }
 
-    @Test(expectedExceptions = InformaticsServiceException.class)
-    public void testAddSampleToManifestSessionNoSamples() throws Exception {
-        try {
-            mockCreateResearchProject();
-            manifestSessionEjb.createManifestSession(TEST_RESEARCH_PROJECT_KEY, TEST_SESSION_NAME, true,
-                    Collections.<Sample>emptyList());
-        } catch (InformaticsServiceException e) {
-            assertThat(e.getMessage(), endsWith(ClinicalSampleFactory.EMPTY_LIST_OF_SAMPLES_NOT_ALLOWED));
-            throw e;
-        }
-    }
 
-    private void mockCreateResearchProject() {
+    private void stubResearchProjectDaoFindReturnsNewObject() {
         Mockito.when(researchProjectDao.findByBusinessKey(Mockito.anyString()))
                 .thenAnswer(new Answer<ResearchProject>() {
                     @Override
@@ -1438,39 +1426,15 @@ public class ManifestSessionEjbDBFreeTest {
                 });
     }
 
-    @Test(expectedExceptions = InformaticsServiceException.class)
-    public void testAddSampleToManifestSessionEmptySample() throws Exception {
-        mockCreateResearchProject();
-        try {
-            manifestSessionEjb.createManifestSession(TEST_RESEARCH_PROJECT_KEY, TEST_SESSION_NAME, true,
-                    Collections.singleton(new Sample()));
-        } catch (InformaticsServiceException e) {
-            assertThat(e.getMessage(), endsWith(ClinicalSampleFactory.SAMPLE_CONTAINS_NO_METADATA));
-            throw e;
-        }
-    }
-
-    @Test(expectedExceptions = InformaticsServiceException.class)
-    public void testAddSampleToManifestNullSamples() throws Exception {
-        mockCreateResearchProject();
-        try {
-            manifestSessionEjb.createManifestSession(TEST_RESEARCH_PROJECT_KEY, TEST_SESSION_NAME, true,
-                    Collections.<Sample>singleton(null));
-        } catch (InformaticsServiceException e) {
-            assertThat(e.getMessage(), endsWith(ClinicalSampleFactory.SAMPLE_IS_NULL));
-            throw e;
-        }
-    }
-
     public void testAddDuplicateSamplesToManifestSession() throws Exception {
-        mockCreateResearchProject();
+        stubResearchProjectDaoFindReturnsNewObject();
         List<Sample> samples = new ArrayList<>();
-        Sample crspSample = ClinicalSampleTestFactory
+        Sample sample = ClinicalSampleTestFactory
                 .createSample(ImmutableMap.of(Metadata.Key.SAMPLE_ID, SM_1, Metadata.Key.PATIENT_ID, PATIENT_1));
-        samples.add(crspSample);
-        crspSample = ClinicalSampleTestFactory
+        samples.add(sample);
+        sample = ClinicalSampleTestFactory
                 .createSample(ImmutableMap.of(Metadata.Key.SAMPLE_ID, SM_1, Metadata.Key.PATIENT_ID, PATIENT_1));
-        samples.add(crspSample);
+        samples.add(sample);
 
         ManifestSession manifestSession = manifestSessionEjb
                 .createManifestSession(TEST_RESEARCH_PROJECT_KEY, TEST_SESSION_NAME, true, samples);
@@ -1485,7 +1449,7 @@ public class ManifestSessionEjbDBFreeTest {
      * Test creation of a valid manifest session.
      */
     public void testCreateValidManifestWithSamples() {
-        mockCreateResearchProject();
+        stubResearchProjectDaoFindReturnsNewObject();
         Collection<Sample> samples = Collections.singleton(
                 ClinicalSampleTestFactory.createSample(Collections.singletonMap(Metadata.Key.BROAD_SAMPLE_ID, SM_1)));
         ManifestSession manifestSession = manifestSessionEjb

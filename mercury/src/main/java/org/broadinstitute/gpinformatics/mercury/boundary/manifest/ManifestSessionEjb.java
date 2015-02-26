@@ -345,15 +345,15 @@ public class ManifestSessionEjb {
             throw new IllegalArgumentException(String.format(RESEARCH_PROJECT_NOT_FOUND_FORMAT, researchProjectKey));
         }
 
-        Collection<ManifestRecord> manifestRecords;
         try {
-            manifestRecords = ClinicalSampleFactory.toManifestRecords(samples);
+            Collection<ManifestRecord> manifestRecords = ClinicalSampleFactory.toManifestRecords(samples);
+            ManifestSession manifestSession =
+                    new ManifestSession(researchProject, sessionName, userBean.getBspUser(), fromSampleKit,
+                            manifestRecords);
+            manifestSessionDao.persist(manifestSession);
+            return manifestSession;
         } catch (RuntimeException e) {
             throw new InformaticsServiceException(e);
         }
-        ManifestSession manifestSession =
-                new ManifestSession(researchProject, sessionName, userBean.getBspUser(), fromSampleKit, manifestRecords);
-        manifestSessionDao.persist(manifestSession);
-        return manifestSession;
     }
 }

@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.infrastructure.portal.PortalConfig;
 import org.broadinstitute.gpinformatics.mercury.boundary.UnknownUserException;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.ClinicalResourceBean;
+import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
@@ -19,6 +20,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.SecurityContext;
+import java.util.Collection;
 
 /**
  * ClinicalResource provides web services related to accessioning samples into Mercury along with sample data used for
@@ -30,6 +32,9 @@ public class ClinicalResource {
 
     public static final String CLINICAL_RESOURCE_PATH = "clinical";
     public static final String CREATE_MANIFEST = "createManifestWithSamples";
+    public static final String SAMPLE_CONTAINS_NO_METADATA = "Sample contains no metadata.";
+    public static final String SAMPLE_IS_NULL = "Sample is null.";
+    public static final String EMPTY_LIST_OF_SAMPLES_NOT_ALLOWED = "Empty list of samples not allowed.";
 
     @Inject
     private UserBean userBean;
@@ -75,12 +80,29 @@ public class ClinicalResource {
         validateIsFromSampleKit(clinicalResourceBean.isFromSampleKit());
         login(clinicalResourceBean.getUsername());
 
+        validateSamples(clinicalResourceBean.getSamples());
+
         ManifestSession manifestSession = manifestSessionEjb
                 .createManifestSession(clinicalResourceBean.getResearchProjectKey(),
                         clinicalResourceBean.getManifestName(), clinicalResourceBean.isFromSampleKit(),
                         clinicalResourceBean.getSamples());
 
         return manifestSession.getManifestSessionId();
+    }
+
+    private void validateSamples(Collection<Sample> samples) {
+        if (samples.isEmpty()) {
+            throw new IllegalArgumentException(EMPTY_LIST_OF_SAMPLES_NOT_ALLOWED);
+        }
+
+        if (samples.contains(null)) {
+            throw new IllegalArgumentException(SAMPLE_IS_NULL);
+        }
+        for (Sample sample : samples) {
+            if (sample.getSampleData().isEmpty()) {
+                throw new IllegalArgumentException(SAMPLE_CONTAINS_NO_METADATA);
+            }
+        }
     }
 
     private void validateManifestName(String manifestName) {

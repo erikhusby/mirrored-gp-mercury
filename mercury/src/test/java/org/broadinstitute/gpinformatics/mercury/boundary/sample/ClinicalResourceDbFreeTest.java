@@ -11,14 +11,15 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.xml.bind.JAXBException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
+import static org.hamcrest.CoreMatchers.endsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.nullValue;
 
@@ -95,7 +96,7 @@ public class ClinicalResourceDbFreeTest {
         stubValidLogin();
 
         long expectedManifestId = 1L;
-        Collection<Sample> samples = new ArrayList<>();
+        Collection<Sample> samples = ClinicalSampleTestFactory.getRandomTestSamples(5);
         stubManifestCreation(expectedManifestId, MANIFEST_NAME, RP_1, samples);
 
         Boolean isFromSampleKit = Boolean.TRUE;
@@ -152,6 +153,44 @@ public class ClinicalResourceDbFreeTest {
             }
         });
     }
+
+
+    public void testManifestWithEmptySamples() {
+        stubValidLogin();
+        try {
+            ClinicalResourceBean clinicalResourceBean = ClinicalSampleTestFactory
+                    .createClinicalResourceBean(TEST_USER, MANIFEST_NAME, RP_1, true, Collections.<Sample>emptyList());
+            clinicalResource.createManifestWithSamples(clinicalResourceBean);
+            Assert.fail();
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage(), endsWith(ClinicalResource.EMPTY_LIST_OF_SAMPLES_NOT_ALLOWED));
+        }
+    }
+
+    public void testAddSampleToManifestSessionEmptySample()  {
+        stubValidLogin();
+        try {
+            ClinicalResourceBean clinicalResourceBean = ClinicalSampleTestFactory
+                    .createClinicalResourceBean(TEST_USER, MANIFEST_NAME, RP_1, true, Collections.singleton(new Sample()));
+            clinicalResource.createManifestWithSamples(clinicalResourceBean);
+            Assert.fail();
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage(), endsWith(ClinicalResource.SAMPLE_CONTAINS_NO_METADATA));
+        }
+    }
+
+    public void testAddSampleToManifestNullSamples() throws Exception {
+        stubValidLogin();
+        try {
+            ClinicalResourceBean clinicalResourceBean = ClinicalSampleTestFactory
+                    .createClinicalResourceBean(TEST_USER, MANIFEST_NAME, RP_1, true, Collections.<Sample>singleton(null));
+            clinicalResource.createManifestWithSamples(clinicalResourceBean);
+            Assert.fail();
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage(), endsWith(ClinicalResource.SAMPLE_IS_NULL));
+        }
+    }
+
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testFromSampleKitNull() throws JAXBException {
