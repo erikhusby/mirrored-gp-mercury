@@ -553,6 +553,10 @@ public class LibraryBean {
         return productPartNumber;
     }
 
+    public void setProductPartNumber(String productPartNumber) {
+        this.productPartNumber = productPartNumber;
+    }
+
     public String getRootSample() {
         return rootSample;
     }

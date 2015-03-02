@@ -76,6 +76,12 @@
                     <div class="controls">
                         <stripes:file name="quantSpreadsheet" id="quantFile"/>
                     </div>
+                    <stripes:label for="allowRePico" class="control-label">Redo existing quants</stripes:label>
+                    <div class="controls">
+                        <stripes:checkbox id="allowRePico" name="acceptRePico"
+                                          style="margin-top: 10px;" class="overrideCheckboxClass"
+                                          title="Check this to upload a spreadsheet of quants when tubes already have quants of the same Quant Type and a new pico run was done.  If left unchecked, Mercury will error the upload if it finds existing quants."/>
+                    </div>
                 </div>
                 <div class="control-group">
                     <div class="controls">

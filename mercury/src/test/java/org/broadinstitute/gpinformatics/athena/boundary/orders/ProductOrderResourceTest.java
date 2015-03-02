@@ -23,6 +23,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -33,6 +34,9 @@ import java.util.List;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.AUTO_BUILD;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STANDARD;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.core.Is.is;
 
 @Test(groups = TestGroups.STANDARD)
 public class ProductOrderResourceTest extends RestServiceContainerTest {
@@ -80,7 +84,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
         WebResource resource = makeWebResource(baseUrl, "create");
 
         ProductOrderData productOrderData = resource.entity(data).post(new GenericType<ProductOrderData>() { });
-        Assert.assertEquals(productOrderData.getStatus(), ProductOrder.OrderStatus.Submitted.name());
+        Assert.assertEquals(productOrderData.getStatus(), ProductOrder.OrderStatus.Pending.name());
     }
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
@@ -103,7 +107,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
             resource.post(data);
             Assert.fail();
         } catch (UniformInterfaceException e) {
-//            assertThat(e.getResponse().getStatus(), is(equalTo(Response.Status.UNAUTHORIZED.getStatusCode())));
+            assertThat(e.getResponse().getStatus(), is(equalTo(Response.Status.UNAUTHORIZED.getStatusCode())));
         }
     }
 

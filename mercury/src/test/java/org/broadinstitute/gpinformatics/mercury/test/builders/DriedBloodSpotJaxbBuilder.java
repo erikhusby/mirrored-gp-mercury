@@ -60,7 +60,8 @@ public class DriedBloodSpotJaxbBuilder {
         ReagentType reagentType = new ReagentType();
         reagentType.setKitType("Incubation Mix");
         reagentType.setBarcode("IncubationMix1234");
-        incubationMixJaxb.getReagent().add(reagentType);
+        // todo jmt make reagents work in database free tests, GPLIM-3388
+//        incubationMixJaxb.getReagent().add(reagentType);
         bettaLimsMessageTestFactory.addMessage(messageList, incubationMixJaxb);
 
         // DBSLysisBuffer plateEvent
