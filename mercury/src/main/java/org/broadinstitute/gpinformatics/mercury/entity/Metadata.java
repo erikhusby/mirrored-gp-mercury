@@ -221,6 +221,11 @@ public class Metadata {
         TUMOR_NORMAL(Category.SAMPLE, DataType.STRING, "Tumor/Normal", Visibility.USER),
 
         /**
+         * The type of tumor, primary or secondary.
+         */
+        TUMOR_TYPE(Category.SAMPLE, DataType.STRING, "Tumor Type (Primary, Secondary)", Visibility.USER),
+
+        /**
          * The estimated % of tumor in the sample.
          */
         PERCENT_TUMOR(Category.SAMPLE, DataType.STRING, "Estimated % Tumor", Visibility.USER),
