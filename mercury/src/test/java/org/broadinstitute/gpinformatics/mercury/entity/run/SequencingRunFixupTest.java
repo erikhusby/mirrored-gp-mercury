@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
@@ -192,4 +193,21 @@ public class SequencingRunFixupTest extends Arquillian {
         illuminaSequencingRunDao.persist(new FixupCommentary("GPLIM-3224 Fixup CRSP QA run folder"));
         illuminaSequencingRunDao.flush();
     }
+
+    @Test(enabled = false)
+    public void gplim3376FixupFlowcellBarcode() {
+        userBean.loginOSUser();
+        // Change lab_vessel 1946416 flowcell_barcode to HGKJCADXX and flowcell_type to HiSeq2500Flowcell
+        IlluminaFlowcell flowcell = illuminaSequencingRunDao.findById(IlluminaFlowcell.class, 1946416L);
+        Assert.assertNotNull(flowcell);
+        flowcell.setFlowcellBarcode("HGKJCADXX");
+        flowcell.setFlowcellType(IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell);
+
+        System.out.println("Updated flowcell " + flowcell.getLabVesselId() +
+                           " barcode to " + flowcell.getCartridgeBarcode() +
+                           " and type to " + flowcell.getFlowcellType());
+        illuminaSequencingRunDao.persist(new FixupCommentary("GPLIM-3376 fixup barcode and flowcell type."));
+        illuminaSequencingRunDao.flush();
+    }
+
 }

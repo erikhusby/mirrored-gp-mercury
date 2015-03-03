@@ -198,7 +198,7 @@ public class CreateFCTActionBean extends CoreActionBean {
             CreateFields.IssueType issueType = selectedType.getIssueType();
             for (int i = 0; i < numberOfLanes; i += lanesPerFlowcell) {
                 LabBatch batch =
-                        new LabBatch(denatureTubeBarcode + " FCT ticket", vesselSet, batchType, loadingConc);
+                        new LabBatch(denatureTubeBarcode + " FCT ticket", vesselSet, batchType, loadingConc, selectedType);
                 batch.setBatchDescription(batch.getBatchName());
                 labBatchEjb.createLabBatch(batch, userBean.getLoginUserName(), issueType);
                 createdBatches.add(batch);

@@ -136,6 +136,9 @@ public class EventEtlDbFreeTest {
         vesselList.clear();
         EasyMock.expect(obj.getTargetLabVessels()).andReturn(vesselList);
         EasyMock.expect(obj.getInPlaceLabVessel()).andReturn(null);
+        EasyMock.expect(obj.getEventDate()).andReturn(eventDate);
+        EasyMock.expect(wfLookup.lookupWorkflowConfig(LabEventType.A_BASE.getName(), null, eventDate)).andReturn(null);
+        EasyMock.expect(obj.getLabEventId()).andReturn(entityId);
         EasyMock.replay(mocks);
 
         Assert.assertEquals(tst.dataRecords(etlDateStr, false, entityId).size(), 0);

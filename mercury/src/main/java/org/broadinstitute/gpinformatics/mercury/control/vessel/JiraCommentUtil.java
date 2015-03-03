@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -18,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.VesselSearchActionBean;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.Collection;
@@ -81,7 +83,7 @@ public class JiraCommentUtil {
         } else {
             labVessels = Collections.singleton(labEvent.getInPlaceLabVessel());
         }
-        postUpdate(message, labVessels);
+        postUpdate(message, labVessels, labEvent);
     }
 
     /**
@@ -100,14 +102,19 @@ public class JiraCommentUtil {
      * @param message the text of the message
      * @param vessels the containers used in the operation
      */
-    public void postUpdate(String message, Collection<LabVessel> vessels) {
+    public void postUpdate(String message, Collection<LabVessel> vessels, @Nullable LabEvent labEvent) {
         Set<JiraTicket> tickets = new HashSet<>();
         for (LabVessel vessel : vessels) {
-            for (SampleInstanceV2 sampleInstance : vessel.getSampleInstancesV2()) {
-                LabBatch batch = sampleInstance.getSingleBatch();
-                if (batch != null && batch.getJiraTicket() != null) {
-                    tickets.add(batch.getJiraTicket());
+            // For cherry picks, update JIRA only for the tubes that are sources for transfers, not the entire rack.
+            if (vessel.getContainerRole() != null && labEvent != null && !labEvent.getCherryPickTransfers().isEmpty()) {
+                for (CherryPickTransfer cherryPickTransfer : labEvent.getCherryPickTransfers()) {
+                    if (cherryPickTransfer.getSourceVesselContainer().equals(vessel.getContainerRole())) {
+                        accumulateTickets(tickets,
+                                vessel.getContainerRole().getVesselAtPosition(cherryPickTransfer.getSourcePosition()));
+                    }
                 }
+            } else {
+                accumulateTickets(tickets, vessel);
             }
         }
 
@@ -134,6 +141,18 @@ public class JiraCommentUtil {
     }
 
     /**
+     * Accumulate JIRA tickets for vessels.
+     */
+    private void accumulateTickets(Set<JiraTicket> tickets, LabVessel vessel) {
+        for (SampleInstanceV2 sampleInstance : vessel.getSampleInstancesV2()) {
+            LabBatch batch = sampleInstance.getSingleBatch();
+            if (batch != null && batch.getJiraTicket() != null) {
+                tickets.add(batch.getJiraTicket());
+            }
+        }
+    }
+
+    /**
      * Sends an alert with the message text to every project
      * in the sample sheet.  The message text is appended with
      * the complete list of samples per project so that the
@@ -150,6 +169,6 @@ public class JiraCommentUtil {
      * @param vessel  the container used in the operation
      */
     public void postUpdate(String message, LabVessel vessel) {
-        postUpdate(message, Collections.singleton(vessel));
+        postUpdate(message, Collections.singleton(vessel), null);
     }
 }
