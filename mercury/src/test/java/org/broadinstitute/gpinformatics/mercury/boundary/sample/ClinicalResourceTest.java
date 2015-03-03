@@ -74,6 +74,18 @@ public class ClinicalResourceTest extends RestServiceContainerTest {
         assertThat(response.getStatus(), is(Response.Status.OK.getStatusCode()));
     }
 
+    @RunAsClient
+    @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    public void testCreateManifestFails(@ArquillianResource URL baseUrl) throws Exception {
+        ClinicalResourceBean clinicalResourceBean = ClinicalSampleTestFactory
+                .createClinicalResourceBean(QA_DUDE_PM, MANIFEST_NAME, EXISTING_RESEARCH_PROJECT_KEY, true, 0);
+
+        WebResource resource = makeWebResource(baseUrl, ClinicalResource.CREATE_MANIFEST);
+        ClientResponse response = resource.type(MediaType.APPLICATION_JSON_TYPE)
+                .accept(MediaType.APPLICATION_JSON_TYPE).entity(clinicalResourceBean)
+                .post(ClientResponse.class);
+        assertThat(response.getStatus(), is(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()));
+    }
 
     public void testCreateManifestWithSamples() throws Exception {
         String sampleId = "SM-1";

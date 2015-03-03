@@ -30,6 +30,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestStatus;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.TubeTransferException;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -44,6 +45,7 @@ import org.testng.annotations.Test;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -56,6 +58,7 @@ import static org.broadinstitute.gpinformatics.mercury.boundary.manifest.Manifes
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -1114,7 +1117,7 @@ public class ManifestSessionEjbDBFreeTest {
     public void validateTargetTubeAndSampleOnValidRecord() throws Exception {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 1, false);
 
-        LabVessel foundVessel = holder.ejb.validateTargetSampleAndVessel(TEST_SAMPLE_KEY, TEST_VESSEL_LABEL);
+        LabVessel foundVessel = holder.ejb.findAndValidateTargetSampleAndVessel(TEST_SAMPLE_KEY, TEST_VESSEL_LABEL);
 
         assertThat(foundVessel.getLabel(), is(equalTo(TEST_VESSEL_LABEL)));
 
@@ -1126,7 +1129,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 1, false);
 
         try {
-            holder.ejb.validateTargetSampleAndVessel(TEST_SAMPLE_KEY_UNASSOCIATED, TEST_VESSEL_LABEL);
+            holder.ejb.findAndValidateTargetSampleAndVessel(TEST_SAMPLE_KEY_UNASSOCIATED, TEST_VESSEL_LABEL);
             Assert.fail();
         } catch (Exception e) {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
@@ -1140,7 +1143,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 1, false);
 
         try {
-            holder.ejb.validateTargetSampleAndVessel(TEST_SAMPLE_KEY + "BAD", TEST_VESSEL_LABEL);
+            holder.ejb.findAndValidateTargetSampleAndVessel(TEST_SAMPLE_KEY + "BAD", TEST_VESSEL_LABEL);
             Assert.fail();
         } catch (Exception e) {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
@@ -1154,7 +1157,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 1, false);
 
         try {
-            holder.ejb.validateTargetSampleAndVessel(TEST_SAMPLE_KEY, TEST_VESSEL_LABEL + "BAD");
+            holder.ejb.findAndValidateTargetSampleAndVessel(TEST_SAMPLE_KEY, TEST_VESSEL_LABEL + "BAD");
             Assert.fail();
         } catch (Exception e) {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
@@ -1168,7 +1171,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 1, false);
 
         try {
-            holder.ejb.validateTargetSampleAndVessel(TEST_SAMPLE_ALREADY_TRANSFERRED,
+            holder.ejb.findAndValidateTargetSampleAndVessel(TEST_SAMPLE_ALREADY_TRANSFERRED,
                     TEST_VESSEL_LABEL_ALREADY_TRANSFERRED);
             Assert.fail();
         } catch (Exception e) {
@@ -1439,6 +1442,42 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSession manifestSession = manifestSessionEjb
                 .createManifestSession(TEST_RESEARCH_PROJECT_KEY, TEST_SESSION_NAME, true, samples);
         assertThat(manifestSession.getRecords().size(), is(2));
+    }
+
+    public void testAddAccessionedSampleToManifestSession() throws Exception {
+        stubResearchProjectDaoFindReturnsNewObject();
+        List<Sample> samples = Arrays.asList(ClinicalSampleTestFactory
+                 .createSample(ImmutableMap.of(Metadata.Key.SAMPLE_ID, SM_1, Metadata.Key.PATIENT_ID, PATIENT_1)));
+
+                Mockito.when(mercurySampleDao.findBySampleKeys(Mockito.anyCollectionOf(String.class)))
+                .thenAnswer(new Answer<List<MercurySample>>() {
+                    @Override
+                    public List<MercurySample> answer(InvocationOnMock invocation) throws Throwable {
+                        List<String> ids = (List<String>) invocation.getArguments()[0];
+                        List<MercurySample> result=new ArrayList<>();
+                        for (String sampleId : ids) {
+                            MercurySample sample = new MercurySample(sampleId, MercurySample.MetadataSource.MERCURY);
+                            BarcodedTube barcodedTube =
+                                    new BarcodedTube("VesselFor" + sampleId, BarcodedTube.BarcodedTubeType.MatrixTube);
+                            LabEvent collaboratorTransferEvent = new LabEvent(LabEventType.COLLABORATOR_TRANSFER,
+                                    new Date(), "thisLocation", 0l, 0l, "testprogram");
+                            barcodedTube.getInPlaceLabEvents().add(collaboratorTransferEvent);
+                            sample.getLabVessel().add(barcodedTube);
+                            result.add(sample);
+                        }
+                        return result;
+                    }
+                });
+
+
+        try {
+            manifestSessionEjb
+                            .createManifestSession(TEST_RESEARCH_PROJECT_KEY, TEST_SESSION_NAME + "_NEW", true, samples);
+            Assert.fail();
+        } catch (InformaticsServiceException e) {
+            assertThat(e.getCause(), instanceOf(TubeTransferException.class));
+            assertThat(e.getLocalizedMessage(), containsString(ManifestSessionEjb.VESSEL_USED_FOR_PREVIOUS_TRANSFER));
+        }
     }
 
     /* ************************************************** *
