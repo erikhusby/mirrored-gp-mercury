@@ -8,9 +8,11 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
+import org.broadinstitute.gpinformatics.mercury.boundary.sample.ClinicalSampleFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
@@ -45,10 +47,9 @@ public class ManifestSessionEjb {
     static final String VESSEL_NOT_FOUND_MESSAGE = "The target vessel was not found.";
     static final String VESSEL_USED_FOR_PREVIOUS_TRANSFER =
             "The target vessel has already been used for a tube transfer.";
-
-    static final String MANIFEST_SESSION_NOT_FOUND = "Manifest Session '%s' not found";
-
+    static final String MANIFEST_SESSION_NOT_FOUND_FORMAT = "Manifest Session '%s' not found";
     static final String MERCURY_SAMPLE_KEY = "Mercury sample key";
+    static final String RESEARCH_PROJECT_NOT_FOUND_FORMAT = "Research Project '%s' not found: ";
 
     private ManifestSessionDao manifestSessionDao;
 
@@ -92,7 +93,11 @@ public class ManifestSessionEjb {
                                           boolean fromSampleKit) {
 
         ResearchProject researchProject = findResearchProject(researchProjectKey);
-        return uploadManifest(inputStream, pathToFile, researchProject, fromSampleKit);
+        ManifestSession manifestSession = uploadManifest(inputStream, pathToFile, researchProject, fromSampleKit);
+        // Persist here so an ID will be generated for the ManifestSession.  This ID is used for the
+        // ManifestSession's name which is displayed on the UI.
+        manifestSessionDao.persist(manifestSession);
+        return manifestSession;
     }
 
     /**
@@ -133,9 +138,6 @@ public class ManifestSessionEjb {
 
         ManifestSession manifestSession = new ManifestSession(researchProject, FilenameUtils.getBaseName(pathToFile),
                 userBean.getBspUser(), fromSampleKit);
-        // Persist here so an ID will be generated for the ManifestSession.  This ID is used for the
-        // ManifestSession's name which is displayed on the UI.
-        manifestSessionDao.persist(manifestSession);
         manifestSession.addRecords(manifestRecords);
         manifestSession.validateManifest();
         return manifestSession;
@@ -158,7 +160,7 @@ public class ManifestSessionEjb {
     private ManifestSession findManifestSession(long manifestSessionId) {
         ManifestSession manifestSession = manifestSessionDao.find(manifestSessionId);
         if (manifestSession == null) {
-            throw new InformaticsServiceException(String.format(MANIFEST_SESSION_NOT_FOUND, manifestSessionId));
+            throw new InformaticsServiceException(String.format(MANIFEST_SESSION_NOT_FOUND_FORMAT, manifestSessionId));
         }
         return manifestSession;
     }
@@ -325,5 +327,33 @@ public class ManifestSessionEjb {
 
         LabVessel targetVessel = findAndValidateTargetVessel(vesselLabel, targetSample);
         session.performTransfer(sourceCollaboratorSample, targetSample, targetVessel, userBean.getBspUser());
+    }
+
+    /**
+     * Creates a new manifest session for the given research project.
+     *
+     * @param researchProjectKey    the business key of the research project for these samples
+     * @param sessionName           the name to give the manifest session
+     * @param fromSampleKit         whether or not the samples are in tubes from a Broad sample kit
+     * @param samples               Collection of samples to add to the manifest.
+     * @return the newly created (and persisted) ManifestSession
+     */
+    public ManifestSession createManifestSession(String researchProjectKey, String sessionName,
+                                                 boolean fromSampleKit, Collection<Sample> samples) {
+        ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
+        if (researchProject == null) {
+            throw new IllegalArgumentException(String.format(RESEARCH_PROJECT_NOT_FOUND_FORMAT, researchProjectKey));
+        }
+
+        try {
+            Collection<ManifestRecord> manifestRecords = ClinicalSampleFactory.toManifestRecords(samples);
+            ManifestSession manifestSession =
+                    new ManifestSession(researchProject, sessionName, userBean.getBspUser(), fromSampleKit,
+                            manifestRecords);
+            manifestSessionDao.persist(manifestSession);
+            return manifestSession;
+        } catch (RuntimeException e) {
+            throw new InformaticsServiceException(e);
+        }
     }
 }

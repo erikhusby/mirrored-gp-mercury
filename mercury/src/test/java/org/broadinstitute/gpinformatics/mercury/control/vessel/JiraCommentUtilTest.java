@@ -42,6 +42,6 @@ public class JiraCommentUtilTest {
 
         List<LabVessel> labVessels = new ArrayList<>();
         labVessels.add(barcodedTube);
-        jiraCommentUtil.postUpdate("test", labVessels);
+        jiraCommentUtil.postUpdate("test", labVessels, null);
     }
 }

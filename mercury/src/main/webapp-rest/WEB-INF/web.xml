@@ -29,7 +29,7 @@
         <param-name>resteasy.resources</param-name>
         <!-- comma separated list of jax-rs resource classes -->
         <param-value>
-            org.broadinstitute.gpinformatics.mercury.boundary.sample.CrspInfoResource
+            org.broadinstitute.gpinformatics.mercury.boundary.sample.ClinicalResource
         </param-value>
     </context-param>
     <context-param>

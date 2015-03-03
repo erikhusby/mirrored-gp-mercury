@@ -15,9 +15,13 @@ import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
+import org.broadinstitute.gpinformatics.mercury.boundary.sample.ClinicalSampleFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.sample.ClinicalSampleTestFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
+import org.broadinstitute.gpinformatics.mercury.crsp.generated.SampleData;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -56,6 +60,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.collection.IsEmptyCollection.empty;
@@ -97,6 +102,11 @@ public class ManifestSessionEjbDBFreeTest {
     private static final String FEMALE = "Female";
     private static final String MALE = "Male";
     private static final ManifestRecord.ErrorStatus NO_ERROR = null;
+    private static final String SM_1 = "SM-1";
+    private static final String PATIENT_1 = "patient-1";
+    private static final String SM_2 = "SM-2";
+    private static final String PATIENT_2 = "patient-2";
+    private static final String TEST_SESSION_NAME = "SomeSession";
     private ManifestSessionDao manifestSessionDao;
     private ResearchProjectDao researchProjectDao;
     private String sourceForTransfer = "9294923";
@@ -120,6 +130,7 @@ public class ManifestSessionEjbDBFreeTest {
     private LabVesselDao labVesselDao;
     private final BSPUserList.QADudeUser testLabUser = new BSPUserList.QADudeUser("LU", 342L);
     private UserBean mockUserBean;
+    private ManifestSessionEjb manifestSessionEjb;
     /**
      * How many instances of a particular collaborator barcode are seen in this manifest (anything more than 1 is
      * an error).
@@ -149,6 +160,9 @@ public class ManifestSessionEjbDBFreeTest {
                 new BarcodedTube(TEST_VESSEL_LABEL, BarcodedTube.BarcodedTubeType.MatrixTube2mL);
         testVesselAlreadyTransferred = new BarcodedTube(TEST_VESSEL_LABEL_ALREADY_TRANSFERRED,
                 BarcodedTube.BarcodedTubeType.MatrixTube2mL);
+        manifestSessionEjb =
+                new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao,
+                        mockUserBean);
     }
 
     /**
@@ -177,9 +191,11 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     private ManifestSessionEjb buildEjbForUpload(ResearchProject researchProject) {
-        Mockito.when(researchProjectDao.findByBusinessKey(Mockito.anyString())).thenReturn(researchProject);
+        Mockito.when(researchProjectDao.findByBusinessKey(researchProject.getBusinessKey()))
+                .thenReturn(researchProject);
 
-        return new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao, mockUserBean);
+        return new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao,
+                mockUserBean);
     }
 
     /**
@@ -240,10 +256,15 @@ public class ManifestSessionEjbDBFreeTest {
         Mockito.when(manifestSessionDao.find(Mockito.anyLong())).thenAnswer(new Answer<ManifestSession>() {
             @Override
             public ManifestSession answer(InvocationOnMock invocation) throws Throwable {
+                Long id = (Long) invocation.getArguments()[0];
+                if (id == 0) {
+                    return null;
+                }
                 return holder.manifestSession;
             }
         });
-        Mockito.when(researchProjectDao.findByBusinessKey(Mockito.anyString())).thenReturn(researchProject);
+        Mockito.when(researchProjectDao.findByBusinessKey(researchProject.getBusinessKey()))
+                .thenReturn(researchProject);
 
         Mockito.when(mercurySampleDao.findBySampleKey(Mockito.eq(TEST_SAMPLE_KEY))).thenReturn(
                 testSampleForAccessioning);
@@ -537,7 +558,7 @@ public class ManifestSessionEjbDBFreeTest {
             ejb.acceptManifestUpload(ARBITRARY_MANIFEST_SESSION_ID);
             Assert.fail();
         } catch (InformaticsServiceException e) {
-            assertThat(e.getMessage(), matchesFormatString(ManifestSessionEjb.MANIFEST_SESSION_NOT_FOUND));
+            assertThat(e.getMessage(), matchesFormatString(ManifestSessionEjb.MANIFEST_SESSION_NOT_FOUND_FORMAT));
         }
     }
 
@@ -1364,5 +1385,99 @@ public class ManifestSessionEjbDBFreeTest {
         holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
 
         assertThat(testSample.getMetadata(), is(not(empty())));
+    }
+
+    public void testConvertToMercuryMetadata() throws Exception {
+        Sample sample = ClinicalSampleTestFactory
+                .createSample(ImmutableMap.of(Metadata.Key.SAMPLE_ID, SM_1));
+
+        Metadata[] metadata = ClinicalSampleFactory.toMercuryMetadata(sample);
+        assertThat(metadata.length, is(1));
+        Metadata metadataItem = metadata[0];
+        assertThat(metadataItem.getValue(), is(SM_1));
+        assertThat(metadataItem.getKey(), is(Metadata.Key.SAMPLE_ID));
+    }
+
+    public void testConvertToManifestRecords() {
+        Sample sample = ClinicalSampleTestFactory
+                .createSample(ImmutableMap.of(Metadata.Key.SAMPLE_ID, SM_1));
+        SampleData sampleData = sample.getSampleData().iterator().next();
+
+        Collection<ManifestRecord> manifestRecords =
+                ClinicalSampleFactory.toManifestRecords(Collections.singleton(sample));
+        assertThat(manifestRecords.size(), is(1));
+        ManifestRecord manifestRecord = manifestRecords.iterator().next();
+
+        assertThat(manifestRecord.getValueByKey(Metadata.Key.SAMPLE_ID), is(sampleData.getValue()));
+    }
+
+
+    private void stubResearchProjectDaoFindReturnsNewObject() {
+        Mockito.when(researchProjectDao.findByBusinessKey(Mockito.anyString()))
+                .thenAnswer(new Answer<ResearchProject>() {
+                    @Override
+                    public ResearchProject answer(InvocationOnMock invocation) throws Throwable {
+                        String id = (String) invocation.getArguments()[0];
+                        ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(id);
+                        researchProject
+                                .setRegulatoryDesignation(ResearchProject.RegulatoryDesignation.CLINICAL_DIAGNOSTICS);
+                        return researchProject;
+                    }
+                });
+    }
+
+    public void testAddDuplicateSamplesToManifestSession() throws Exception {
+        stubResearchProjectDaoFindReturnsNewObject();
+        List<Sample> samples = new ArrayList<>();
+        Sample sample = ClinicalSampleTestFactory
+                .createSample(ImmutableMap.of(Metadata.Key.SAMPLE_ID, SM_1, Metadata.Key.PATIENT_ID, PATIENT_1));
+        samples.add(sample);
+        sample = ClinicalSampleTestFactory
+                .createSample(ImmutableMap.of(Metadata.Key.SAMPLE_ID, SM_1, Metadata.Key.PATIENT_ID, PATIENT_1));
+        samples.add(sample);
+
+        ManifestSession manifestSession = manifestSessionEjb
+                .createManifestSession(TEST_RESEARCH_PROJECT_KEY, TEST_SESSION_NAME, true, samples);
+        assertThat(manifestSession.getRecords().size(), is(2));
+    }
+
+    /* ************************************************** *
+     * createManifestSession tests
+     * ************************************************** */
+
+    /**
+     * Test creation of a valid manifest session.
+     */
+    public void testCreateValidManifestWithSamples() {
+        stubResearchProjectDaoFindReturnsNewObject();
+        Collection<Sample> samples = Collections.singleton(
+                ClinicalSampleTestFactory.createSample(Collections.singletonMap(Metadata.Key.BROAD_SAMPLE_ID, SM_1)));
+        ManifestSession manifestSession = manifestSessionEjb
+                .createManifestSession(TEST_RESEARCH_PROJECT_KEY, TEST_SESSION_NAME, true, samples);
+
+        assertThat(manifestSession.getResearchProject().getBusinessKey(), equalTo(TEST_RESEARCH_PROJECT_KEY));
+        assertThat(manifestSession.getSessionName(), startsWith(TEST_SESSION_NAME));
+        assertThat(manifestSession.isFromSampleKit(), is(true));
+        assertThat(manifestSession.getUpdateData().getCreatedBy(), equalTo(testLabUser.getUserId()));
+        assertThat(manifestSession.getRecords().size(), equalTo(samples.size()));
+        ManifestRecord manifestRecord = manifestSession.getRecords().iterator().next();
+        assertThat(manifestRecord.getValueByKey(Metadata.Key.BROAD_SAMPLE_ID), equalTo(SM_1));
+
+        Mockito.verify(manifestSessionDao).persist(manifestSession);
+    }
+
+    /**
+     * Test creation of a manifest session when the research project doesn't exist.
+     */
+    public void testCreateManifestManifestBadResearchProject() {
+        String researchProjectName = "BadRP";
+        try {
+            manifestSessionEjb.createManifestSession(
+                    researchProjectName, TEST_SESSION_NAME, true, Collections.<Sample>emptySet());
+            Assert.fail();
+        } catch (Exception e) {
+            assertThat(e.getLocalizedMessage(),
+                    is(String.format(ManifestSessionEjb.RESEARCH_PROJECT_NOT_FOUND_FORMAT, researchProjectName)));
+        }
     }
 }

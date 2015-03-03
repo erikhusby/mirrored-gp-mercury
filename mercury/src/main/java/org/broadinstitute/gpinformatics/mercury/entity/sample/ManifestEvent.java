@@ -126,6 +126,7 @@ public class ManifestEvent implements Updatable {
                 .toString();
     }
 
+    @Override
     public UpdateData getUpdateData() {
         return updateData;
     }

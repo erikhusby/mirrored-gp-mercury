@@ -191,7 +191,10 @@ public class SequencingTemplateFactory {
             List<SequencingTemplateLaneType> lanes = new ArrayList<>();
             Iterator<String> positionNames;
             sequencingTemplate.setConcentration(startingVessel.getConcentration());
-            if (isPoolTest) {
+            if(fctBatch.getFlowcellType() != null) {
+                positionNames = fctBatch.getFlowcellType().getVesselGeometry().getPositionNames();
+            }
+            else if (isPoolTest) {
                 positionNames = IlluminaFlowcell.FlowcellType.MiSeqFlowcell.getVesselGeometry().getPositionNames();
             } else {
                 positionNames =
