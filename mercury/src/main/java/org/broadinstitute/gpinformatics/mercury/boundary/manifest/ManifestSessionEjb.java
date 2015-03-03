@@ -277,6 +277,11 @@ public class ManifestSessionEjb {
     public LabVessel findAndValidateTargetSampleAndVessel(String targetSampleKey, String targetVesselLabel) {
         MercurySample foundSample = validateTargetSample(targetSampleKey);
         LabVessel foundVessel = labVesselDao.findByIdentifier(targetVesselLabel);
+        if (foundVessel == null) {
+            throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
+                    targetVesselLabel, VESSEL_NOT_FOUND_MESSAGE);
+        }
+
         return validateTargetVessel(foundVessel, foundSample);
     }
 
@@ -292,14 +297,9 @@ public class ManifestSessionEjb {
      * @return the referenced lab vessel if it is both found and eligible
      */
     private LabVessel validateTargetVessel(LabVessel targetLabVessel, MercurySample foundSample) {
-        if (targetLabVessel == null) {
-            throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
-                    "", VESSEL_NOT_FOUND_MESSAGE);
-        }
-        String targetVesselLabel = targetLabVessel.getLabel();
         if (targetLabVessel.doesChainOfCustodyInclude(LabEventType.COLLABORATOR_TRANSFER)) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
-                    targetVesselLabel, VESSEL_USED_FOR_PREVIOUS_TRANSFER);
+                    targetLabVessel.getLabel(), VESSEL_USED_FOR_PREVIOUS_TRANSFER);
         }
         // Since upload happens just after Initial Tare, there should not be any other transfers.  For that reason,
         // searching through the MercurySamples on the vessels instead of getSampleInstancesV2 should be sufficient.
@@ -309,7 +309,7 @@ public class ManifestSessionEjb {
             }
         }
         throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
-                targetVesselLabel, " " + UNASSOCIATED_TUBE_SAMPLE_MESSAGE);
+                targetLabVessel.getLabel(), " " + UNASSOCIATED_TUBE_SAMPLE_MESSAGE);
     }
 
     /**
