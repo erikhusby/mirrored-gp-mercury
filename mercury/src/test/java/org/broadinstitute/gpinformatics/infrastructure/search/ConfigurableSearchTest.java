@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -197,19 +198,25 @@ public class ConfigurableSearchTest extends ContainerTest {
         }
         Assert.assertNotNull(row, "mercurySampleId 797366 not found in results");
 
+        Map<String, Integer> columnNumbersByHeader = new HashMap<>();
+        int columnNumber = 0;
+        for (ConfigurableList.Header header : firstPageResults.getResultList().getHeaders()) {
+            columnNumbersByHeader.put(header.getViewHeader(), columnNumber);
+            columnNumber++;
+        }
+
         // Verify data for sample 797366
         List<String> values = row.getRenderableCells();
-        Assert.assertEquals( values.get(0),  "PDO-5115",    "Incorrect PDO Value");
-        Assert.assertEquals( values.get(1),  "LCSET-6449",  "Incorrect LCSET Value");
-        Assert.assertEquals( values.get(2),  "SM-74PK6",    "Incorrect Mercury Sample ID Value");
-        Assert.assertEquals( values.get(3),  "0175567583",  "Incorrect Mercury Sample Tube Barcode Value");
-        Assert.assertEquals( values.get(4),  "Male",        "Incorrect Gender Value");
-        Assert.assertEquals( values.get(5),  "12005-008",   "Incorrect Patient ID Value");
-        Assert.assertEquals( values.get(6),  "",            "Incorrect Sample Type Value");
-        Assert.assertEquals( values.get(7),  "Normal",      "Incorrect Tumor/Normal Value");
-        Assert.assertEquals( values.get(8),  "06/10/2013",  "Incorrect Collection Date Value");
-        Assert.assertEquals( values.get(9),  "23102117605", "Incorrect Sample ID Value");
-        Assert.assertEquals( values.get(10), "Screening",   "Incorrect Incorrect Visit Value");
+        Assert.assertEquals( values.get(columnNumbersByHeader.get("PDO")),                                               "PDO-5115",    "Incorrect PDO Value");
+        Assert.assertEquals( values.get(columnNumbersByHeader.get("LCSET")),                                             "LCSET-6449",  "Incorrect LCSET Value");
+        Assert.assertEquals( values.get(columnNumbersByHeader.get("Mercury Sample ID")),                                 "SM-74PK6",    "Incorrect Mercury Sample ID Value");
+        Assert.assertEquals( values.get(columnNumbersByHeader.get("Mercury Sample Tube Barcode")),                       "0175567583",  "Incorrect Mercury Sample Tube Barcode Value");
+        Assert.assertEquals( values.get(columnNumbersByHeader.get(Metadata.Key.GENDER.getDisplayName())),                "Male",        "Incorrect Gender Value");
+        Assert.assertEquals( values.get(columnNumbersByHeader.get(Metadata.Key.PATIENT_ID.getDisplayName())),            "12005-008",   "Incorrect Patient ID Value");
+        Assert.assertEquals( values.get(columnNumbersByHeader.get(Metadata.Key.TUMOR_NORMAL.getDisplayName())),          "Normal",      "Incorrect Tumor/Normal Value");
+        Assert.assertEquals( values.get(columnNumbersByHeader.get(Metadata.Key.BUICK_COLLECTION_DATE.getDisplayName())), "06/10/2013",  "Incorrect Collection Date Value");
+        Assert.assertEquals( values.get(columnNumbersByHeader.get(Metadata.Key.SAMPLE_ID.getDisplayName())),             "23102117605", "Incorrect Sample ID Value");
+        Assert.assertEquals( values.get(columnNumbersByHeader.get(Metadata.Key.BUICK_VISIT.getDisplayName())),           "Screening",   "Incorrect Incorrect Visit Value");
 
         // Delete instance
         searchInstanceEjb.deleteSearch(new MessageCollection(), PreferenceType.GLOBAL_MERCURY_SAMPLE_SEARCH_INSTANCES, newSearchName, mapTypeToPreference);
