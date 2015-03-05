@@ -34,6 +34,8 @@ import java.util.Set;
  */
 public class LabEventSearchDefinition {
 
+    private FastDateFormat dateFormat = FastDateFormat.getInstance( "MM/dd/yyyy");
+
     public LabEventSearchDefinition(){}
 
     public ConfigurableSearchDefinition buildSearchDefinition() {
@@ -428,6 +430,36 @@ public class LabEventSearchDefinition {
                     reagents.add(reagent.getExpiration());
                 }
                 return reagents;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Tabular Reagent Lot Expiration");
+        searchTerm.setTypeExpression(new SearchTerm.Evaluator<String>() {
+            @Override
+            public String evaluate(Object entity, Map<String, Object> context) {
+                return "Tabular";
+            }
+        });
+        searchTerm.setDisplayExpression( new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                LabEvent labEvent = (LabEvent)entity;
+                StringBuilder reagents = new StringBuilder();
+                for (Reagent reagent : labEvent.getReagents()) {
+                    if( reagents.length() > 0 ) {
+                        reagents.append( "\n" );
+                    }
+                    reagents.append( reagent.getName() );
+                    reagents.append( "\t" );
+                    reagents.append( reagent.getLot() );
+                    reagents.append( "\t" );
+                    if( reagent.getExpiration() != null ) {
+                        reagents.append(dateFormat.format(reagent.getExpiration()));
+                    }
+                }
+                return reagents.toString();
             }
         });
         searchTerms.add(searchTerm);

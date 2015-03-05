@@ -2,7 +2,7 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
 <%@ page import="org.broadinstitute.gpinformatics.infrastructure.search.PaginationDao" %>
 <%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.search.ConfigurableSearchActionBean" %>
-
+<% pageContext.setAttribute("CRLF", "\n"); %>
 <%-- This page displays a configurable list for a given entity --%>
 
 <stripes:layout-definition>
@@ -151,7 +151,7 @@
                 <input name="selectedIds" value="${resultRow.resultId}" class="shiftCheckbox" type="checkbox">
             </td>
             <c:forEach items="${resultRow.renderableCells}" var="cell">
-                <td>${cell}</td>
+                <td>${fn:replace( cell, CRLF, "<br>" )}</td>
             </c:forEach>
         </tr>
 
