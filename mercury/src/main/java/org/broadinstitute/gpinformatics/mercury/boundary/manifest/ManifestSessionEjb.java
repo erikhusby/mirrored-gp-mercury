@@ -13,7 +13,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSes
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
-import org.broadinstitute.gpinformatics.mercury.crsp.generated.SampleData;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
@@ -364,11 +363,8 @@ public class ManifestSessionEjb {
     private void validateSamplesAreAvailableForAccessioning(Collection<Sample> samples) {
         List<String> sampleIds=new ArrayList<>(samples.size());
         for (Sample sample : samples) {
-            for (SampleData sampleData : sample.getSampleData()) {
-                if (sampleData.getName().equals(Metadata.Key.SAMPLE_ID.name())){
-                    sampleIds.add(sampleData.getValue());
-                }
-            }
+            Metadata.Key metadataKey = Metadata.Key.SAMPLE_ID;
+            sampleIds.add(metadataKey.getValueFor(sample));
         }
         List<MercurySample> mercurySamples = mercurySampleDao.findBySampleKeys(sampleIds);
         for (MercurySample mercurySample : mercurySamples) {

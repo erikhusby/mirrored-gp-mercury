@@ -1447,32 +1447,21 @@ public class ManifestSessionEjbDBFreeTest {
     public void testAddAccessionedSampleToManifestSession() throws Exception {
         stubResearchProjectDaoFindReturnsNewObject();
         List<Sample> samples = Arrays.asList(ClinicalSampleTestFactory
-                 .createSample(ImmutableMap.of(Metadata.Key.SAMPLE_ID, SM_1, Metadata.Key.PATIENT_ID, PATIENT_1)));
+                .createSample(ImmutableMap.of(Metadata.Key.SAMPLE_ID, SM_1, Metadata.Key.PATIENT_ID, PATIENT_1)));
 
-                Mockito.when(mercurySampleDao.findBySampleKeys(Mockito.anyCollectionOf(String.class)))
-                .thenAnswer(new Answer<List<MercurySample>>() {
-                    @Override
-                    public List<MercurySample> answer(InvocationOnMock invocation) throws Throwable {
-                        List<String> ids = (List<String>) invocation.getArguments()[0];
-                        List<MercurySample> result=new ArrayList<>();
-                        for (String sampleId : ids) {
-                            MercurySample sample = new MercurySample(sampleId, MercurySample.MetadataSource.MERCURY);
-                            BarcodedTube barcodedTube =
-                                    new BarcodedTube("VesselFor" + sampleId, BarcodedTube.BarcodedTubeType.MatrixTube);
-                            LabEvent collaboratorTransferEvent = new LabEvent(LabEventType.COLLABORATOR_TRANSFER,
-                                    new Date(), "thisLocation", 0l, 0l, "testprogram");
-                            barcodedTube.getInPlaceLabEvents().add(collaboratorTransferEvent);
-                            sample.getLabVessel().add(barcodedTube);
-                            result.add(sample);
-                        }
-                        return result;
-                    }
-                });
+        MercurySample sample = new MercurySample(SM_1, MercurySample.MetadataSource.MERCURY);
+        BarcodedTube barcodedTube = new BarcodedTube("VesselFor" + SM_1, BarcodedTube.BarcodedTubeType.MatrixTube);
+        LabEvent collaboratorTransferEvent =
+                new LabEvent(LabEventType.COLLABORATOR_TRANSFER, new Date(), "thisLocation", 0l, 0l, "testprogram");
+        barcodedTube.getInPlaceLabEvents().add(collaboratorTransferEvent);
+        sample.getLabVessel().add(barcodedTube);
 
+        Mockito.when(mercurySampleDao.findBySampleKeys(Mockito.anyCollectionOf(String.class)))
+                .thenReturn(Collections.singletonList(sample));
 
         try {
             manifestSessionEjb
-                            .createManifestSession(TEST_RESEARCH_PROJECT_KEY, TEST_SESSION_NAME + "_NEW", true, samples);
+                    .createManifestSession(TEST_RESEARCH_PROJECT_KEY, TEST_SESSION_NAME + "_NEW", true, samples);
             Assert.fail();
         } catch (InformaticsServiceException e) {
             assertThat(e.getCause(), instanceOf(TubeTransferException.class));
