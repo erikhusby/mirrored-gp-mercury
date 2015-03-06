@@ -2166,7 +2166,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     public void validateQuoteOptions(String action) {
-        if (action.equals(PLACE_ORDER_ACTION) || action.equals(VALIDATE_ORDER)) {
+        if (action.equals(PLACE_ORDER_ACTION) || action.equals(VALIDATE_ORDER) ||
+            (action.equals(SAVE_ACTION) && editOrder.isSubmitted())) {
             boolean hasQuote = !StringUtils.isBlank(editOrder.getQuoteId());
             requireField(hasQuote || editOrder.canSkipQuote(), "a quote specified", action);
             if (!hasQuote) {
