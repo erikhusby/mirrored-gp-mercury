@@ -217,6 +217,7 @@
 
                         updateUIForMaterialInfoChoice(index, getSelectedPostReceiveOptions(index));
                     });
+                    $j("#skipQuoteDiv").hide();
                     updateUIForProductChoice();
                     updateUIForProjectChoice();
                     updateFundsRemaining();
@@ -364,6 +365,9 @@
                 $j("#addOnCheckboxes").text('If you select a product, its Add-ons will show up here');
                 $j("#sampleInitiationKitRequestEdit").hide();
                 $j("#numberOfLanesDiv").fadeOut(duration);
+                $j("#skipQuoteDiv").hide();
+                $j("#quote").show();
+
             } else {
                 if (productKey == '<%= Product.SAMPLE_INITIATION_PART_NUMBER %>') {
                     // Product is Sample Initiation "P-ESH-0001".
