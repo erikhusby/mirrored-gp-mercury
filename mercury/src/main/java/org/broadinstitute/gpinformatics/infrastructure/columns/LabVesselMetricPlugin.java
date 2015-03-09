@@ -29,11 +29,7 @@ public class LabVesselMetricPlugin implements ListPlugin {
             if(metricType.getCategory() == LabMetric.MetricType.Category.CONCENTRATION ) {
                 String headerText;
                 // Include measurement default units in header
-                if( metricType == LabMetric.MetricType.ECO_QPCR ) {
-                    headerText = metricType.getDisplayName() + " ug/mL";
-                } else {
-                    headerText = metricType.getDisplayName() + " ng/uL";
-                }
+                headerText = metricType.getDisplayName() + " ng/uL";
                 QUANT_VALUE_HEADERS
                         .put(metricType, new ConfigurableList.Header(headerText, headerText, "", ""));
                 headerText = metricType.getDisplayName() + " Decision";
@@ -115,11 +111,7 @@ public class LabVesselMetricPlugin implements ListPlugin {
         }
         value = MathUtils.scaleTwoDecimalPlaces(metric.getValue()).toPlainString();
         // Display measurement units if not default
-        if( metric.getName() == LabMetric.MetricType.ECO_QPCR ) {
-            if( metric.getUnits() != LabMetric.LabUnit.UG_PER_ML ) {
-                value += " " + metric.getUnits().getDisplayName();
-            }
-        } else if( metric.getUnits() != LabMetric.LabUnit.NG_PER_UL ) {
+        if( metric.getUnits() != LabMetric.LabUnit.UG_PER_ML && metric.getUnits() != LabMetric.LabUnit.NG_PER_UL ) {
             value += " " + metric.getUnits().getDisplayName();
         }
         valueCell = new ConfigurableList.Cell(QUANT_VALUE_HEADERS.get(metric.getName()), value, value);
