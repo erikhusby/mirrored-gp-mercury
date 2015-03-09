@@ -34,6 +34,12 @@
             color:#ffffff;
             background-color:#0076da;
         }
+
+        /* Override Bootstrap's block display of labels for add-ons to constrain the hit box. */
+        #addOnCheckboxes label {
+            display: inline;
+            vertical-align: bottom;
+        }
     </style>
         <script type="text/javascript">
 
@@ -579,6 +585,7 @@
                 var addOnId = "addOnCheckbox-" + index;
                 checkboxText += '  <input id="' + addOnId + '" type="checkbox"' + checked + ' name="addOnKeys" value="' + val.key + '"/>';
                 checkboxText += '  <label style="font-size: x-small;" for="' + addOnId + '">' + val.value + ' [' + val.key + ']</label>';
+                checkboxText += '  <br>';
             });
 
             var checkboxes = $j("#addOnCheckboxes");
