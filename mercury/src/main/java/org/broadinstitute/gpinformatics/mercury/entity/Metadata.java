@@ -247,7 +247,7 @@ public class Metadata {
          * any reason except to pass-through to the final report. Since this is something that the collaborator asked us
          * to store and repeat back, there is no guarantee that it has the same meaning as our own COLLECTION_DATE.
          */
-        BUICK_COLLECTION_DATE(Category.SAMPLE, DataType.STRING, "Collection Date", Visibility.USER),
+        BUICK_COLLECTION_DATE(Category.SAMPLE, DataType.STRING, "Buick Collection Date", Visibility.USER),
         BUICK_VISIT(Category.SAMPLE, DataType.STRING, "Visit", Visibility.USER),
 
         CORRELATION_COEFFICIENT_R2(Category.LAB_METRIC_RUN, DataType.STRING, "R Squared Correlation Coefficient",
