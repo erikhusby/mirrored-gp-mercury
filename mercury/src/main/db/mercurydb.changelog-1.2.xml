@@ -233,5 +233,21 @@
             <column name="FLOWCELL_TYPE" type="varchar(255)" />
         </addColumn>
     </changeSet>
+    
+    <changeSet author="scottmat" id="GPLIM-2731_drop_labevent_PDO_id">
+        <preConditions>
+            <columnExists tableName="LAB_EVENT" columnName="PRODUCT_ORDER_ID" schemaName="mercury" />
+        </preConditions>
+
+        <dropColumn tableName="LAB_EVENT" columnName="PRODUCT_ORDER_ID" schemaName="mercury" />
+    </changeSet> 
+
+    <changeSet author="scottmat" id="GPLIM-2731_drop_labevent_aud_PDO_id">
+        <preConditions>
+            <columnExists tableName="LAB_EVENT_AUD" columnName="PRODUCT_ORDER_ID" schemaName="mercury" />
+        </preConditions>
+
+        <dropColumn tableName="LAB_EVENT_AUD" columnName="PRODUCT_ORDER_ID" schemaName="mercury" />
+    </changeSet>
 
 </databaseChangeLog>
