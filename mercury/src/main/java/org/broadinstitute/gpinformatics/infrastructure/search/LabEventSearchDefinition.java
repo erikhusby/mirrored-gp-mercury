@@ -34,8 +34,6 @@ import java.util.Set;
  */
 public class LabEventSearchDefinition {
 
-    private FastDateFormat dateFormat = FastDateFormat.getInstance( "MM/dd/yyyy");
-
     public LabEventSearchDefinition(){}
 
     public ConfigurableSearchDefinition buildSearchDefinition() {
@@ -434,36 +432,6 @@ public class LabEventSearchDefinition {
         });
         searchTerms.add(searchTerm);
 
-        searchTerm = new SearchTerm();
-        searchTerm.setName("Tabular Reagent Lot Expiration");
-        searchTerm.setTypeExpression(new SearchTerm.Evaluator<String>() {
-            @Override
-            public String evaluate(Object entity, Map<String, Object> context) {
-                return "Tabular";
-            }
-        });
-        searchTerm.setDisplayExpression( new SearchTerm.Evaluator<Object>() {
-            @Override
-            public Object evaluate(Object entity, Map<String, Object> context) {
-                LabEvent labEvent = (LabEvent)entity;
-                StringBuilder reagents = new StringBuilder();
-                for (Reagent reagent : labEvent.getReagents()) {
-                    if( reagents.length() > 0 ) {
-                        reagents.append( "\n" );
-                    }
-                    reagents.append( reagent.getName() );
-                    reagents.append( "\t" );
-                    reagents.append( reagent.getLot() );
-                    reagents.append( "\t" );
-                    if( reagent.getExpiration() != null ) {
-                        reagents.append(dateFormat.format(reagent.getExpiration()));
-                    }
-                }
-                return reagents.toString();
-            }
-        });
-        searchTerms.add(searchTerm);
-
         return searchTerms;
     }
 
@@ -611,11 +579,18 @@ public class LabEventSearchDefinition {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
                 LabEvent labEvent = (LabEvent) entity;
-                LabVessel labVessel = labEvent.getInPlaceLabVessel();
-                if (labVessel != null) {
-                    return labVessel.getLabel();
+                LabVessel inPlaceLabVessel = labEvent.getInPlaceLabVessel();
+                if (inPlaceLabVessel == null) {
+                    return "";
+                } else {
+                    List<String> results = new ArrayList<>();
+                    if( OrmUtil.proxySafeIsInstance( inPlaceLabVessel, TubeFormation.class )) {
+                        getLabelFromTubeFormation( labEvent, inPlaceLabVessel, results );
+                    } else {
+                        results.add( inPlaceLabVessel.getLabel() );
+                    }
+                    return results;
                 }
-                return "";
             }
         });
         searchTerms.add(searchTerm);
@@ -835,31 +810,32 @@ public class LabEventSearchDefinition {
                 return results;
             }
 
-            /**
-             * Shared barcode logic for in place and section transfer events targeting tube formations
-             * @param labEvent
-             * @param vessel
-             * @param results
-             */
-            private void getLabelFromTubeFormation( LabEvent labEvent, LabVessel vessel, List<String> results ){
-                TubeFormation tubes = OrmUtil.proxySafeCast(vessel, TubeFormation.class);
-                LabVessel rack = null;
-                if( labEvent.getSectionTransfers().iterator().hasNext() ) {
-                    rack = labEvent.getSectionTransfers().iterator().next().getAncillaryTargetVessel();
-                }
-                if( rack != null ) {
-                    results.add(rack.getLabel());
-                } else {
-                    // Ancillary vessel logic was added around Aug 2014.  This handles any earlier cases
-                    for ( LabVessel oldLogicRack : tubes.getRacksOfTubes()) {
-                        results.add(oldLogicRack.getLabel());
-                    }
-                }
-            }
         });
         searchTerms.add(searchTerm);
 
         return searchTerms;
+    }
+
+    /**
+     * Shared barcode logic for in place and section transfer events targeting tube formations
+     * @param labEvent
+     * @param vessel
+     * @param results
+     */
+    private void getLabelFromTubeFormation( LabEvent labEvent, LabVessel vessel, List<String> results ){
+        TubeFormation tubes = OrmUtil.proxySafeCast(vessel, TubeFormation.class);
+        LabVessel rack = null;
+        if( labEvent.getSectionTransfers().iterator().hasNext() ) {
+            rack = labEvent.getSectionTransfers().iterator().next().getAncillaryTargetVessel();
+        }
+        if( rack != null ) {
+            results.add(rack.getLabel());
+        } else {
+            // Ancillary vessel logic was added around Aug 2014.  This handles any earlier cases
+            for ( LabVessel oldLogicRack : tubes.getRacksOfTubes()) {
+                results.add(oldLogicRack.getLabel());
+            }
+        }
     }
 
 

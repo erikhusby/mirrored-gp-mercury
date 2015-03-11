@@ -10,7 +10,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
-import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -236,6 +235,16 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     private Boolean isExcludedFromResultColumns = Boolean.FALSE;
 
     /**
+     * Flag this as an exclusive search term because it cannot logically be combined with others.
+     * If any other terms are included with an exclusive term,
+     *   the search should be rejected and a warning presented to the user.
+     */
+    private Boolean isExclusive = Boolean.FALSE;
+
+
+    private ConfigurableSearchDefinition alternateSearchDefinition;
+
+    /**
      * Evaluate the expression that returns constrained values, e.g. list of phenotypes
      *
      * @param context any additional entities referred to by the expression
@@ -320,6 +329,35 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     @Override
     public void setIsNestedParent(Boolean isNestedParent) {
         this.isNestedParent = isNestedParent;
+    }
+
+    /**
+     * Handles cases where a search term cannot be combined with any others.
+     * @return
+     */
+    public Boolean isExclusive(){
+        if( isExclusive ) {
+            return isExclusive;
+        } else if( alternateSearchDefinition != null ) {
+            return Boolean.TRUE;
+        } else {
+            return Boolean.FALSE;
+        }
+    }
+
+    public ConfigurableSearchDefinition getAlternateSearchDefinition(){
+        return alternateSearchDefinition;
+    }
+
+    /**
+     * Allow the criteria API to access a different set of root entity types than expected in the display.
+     * A traversal evaluator must be attached to the search with logic which will replace the returned entity list
+     * with a new list of the proper entity type.
+     * (Term should also be flagged as exclusive)
+     * @return
+     */
+    public void setAlternateSearchDefinition(ConfigurableSearchDefinition alternateSearchDefinition){
+        this.alternateSearchDefinition = alternateSearchDefinition;
     }
 
     /**
@@ -412,7 +450,11 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     }
 
     public List<CriteriaPath> getCriteriaPaths() {
-        return criteriaPaths;
+        if( getAlternateSearchDefinition() == null ) {
+            return criteriaPaths;
+        } else {
+            return getAlternateSearchDefinition().getSearchTerm(this.name).getCriteriaPaths();
+        }
     }
 
     public void setCriteriaPaths(List<CriteriaPath> criteriaPaths) {

@@ -112,7 +112,9 @@ Move the mouse over the question marks to see details about each section.
                     <c:forEach items="${actionBean.configurableSearchDef.mapGroupSearchTerms}" var="entry">
                         <optgroup label="${entry.key}">
                             <c:forEach items="${entry.value}" var="searchTerm">
-                                <option value="${searchTerm.name}">${searchTerm.name}</option>
+                                <option value="${searchTerm.name}"
+                                        <%-- TODO jms Colors not a good idea - try to use tool tips--%>
+                                        <c:if test="${searchTerm.isExclusive()}"> style="color:red"</c:if>>${searchTerm.name}</option>
                                 <c:if test="${searchTerm.addDependentTermsToSearchTermList}">
                                     <c:forEach items="${searchTerm.constrainedValues}" var="constrainedValue">
                                         <option value="${constrainedValue.code}"
@@ -541,6 +543,9 @@ function chooseColumnSet() {
             list of search terms, click in the Filter field and type part of the name of the term
             you're looking for.</li>
         <li>Click the red X next to an added term, to remove it from the search.</li>
+            <%-- TODO jms Colors not a good idea - try to use tool tips--%>
+        <li>Terms highlighted in <span style="color:red">red</span> are exclusive.
+            No more than one exclusive term can be selected.</li>
     </ul>
 </div>
 <div id="searchDescription" style="display: none;">
