@@ -73,7 +73,7 @@ public class ClinicalResource {
      */
     @POST
     @Path(CREATE_MANIFEST)
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     @Produces(MediaType.APPLICATION_JSON)
     public long createManifestWithSamples(ClinicalResourceBean clinicalResourceBean) {
         validateManifestName(clinicalResourceBean.getManifestName());
