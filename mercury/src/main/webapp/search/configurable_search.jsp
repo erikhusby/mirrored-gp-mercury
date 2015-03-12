@@ -41,6 +41,10 @@
     <style>
         label {display:inline; margin-left: 5px;}
         input.displayTerm, input.termoperator, input.termvalue { margin: 3px; }
+        <%-- Firefox select options allow this, Chrome quietly ignores --%>
+       .help-option { background-image: url("${ctxpath}/images/help.png");
+           background-repeat: no-repeat;
+           background-position: right; }
 
     </style>
 </stripes:layout-component>
@@ -113,8 +117,9 @@ Move the mouse over the question marks to see details about each section.
                         <optgroup label="${entry.key}">
                             <c:forEach items="${entry.value}" var="searchTerm">
                                 <option value="${searchTerm.name}"
-                                        <%-- TODO jms Colors not a good idea - try to use tool tips--%>
-                                        <c:if test="${searchTerm.isExclusive()}"> style="color:red"</c:if>>${searchTerm.name}</option>
+                                <%-- Firefox select options allow this style class, Chrome quietly ignores --%>
+                                <c:if test="${not empty searchTerm.helpText}"> class="help-option"</c:if>
+                                id="${searchTerm.uiId}_opt">${searchTerm.name}</option>
                                 <c:if test="${searchTerm.addDependentTermsToSearchTermList}">
                                     <c:forEach items="${searchTerm.constrainedValues}" var="constrainedValue">
                                         <option value="${constrainedValue.code}"
@@ -543,9 +548,6 @@ function chooseColumnSet() {
             list of search terms, click in the Filter field and type part of the name of the term
             you're looking for.</li>
         <li>Click the red X next to an added term, to remove it from the search.</li>
-            <%-- TODO jms Colors not a good idea - try to use tool tips--%>
-        <li>Terms highlighted in <span style="color:red">red</span> are exclusive.
-            No more than one exclusive term can be selected.</li>
     </ul>
 </div>
 <div id="searchDescription" style="display: none;">
@@ -588,6 +590,15 @@ function chooseColumnSet() {
         </ul>
     </c:if>
 </div>
+<%-- A div with a unique ID for search terms tool tips (search term has help text)  --%>
+<c:forEach items="${actionBean.configurableSearchDef.mapGroupSearchTerms}" var="entry">
+    <c:forEach items="${entry.value}" var="searchTerm">
+        <c:if test="${not empty searchTerm.helpText}">
+<div id="${searchTerm.uiId}_dscr" style="display: none;">${searchTerm.helpText}</div>
+        </c:if>
+    </c:forEach>
+</c:forEach>
+
 <script type="text/javascript">
     $j(function(){
         // This is required in order to render HTML in title attributes.
@@ -616,6 +627,23 @@ function chooseColumnSet() {
         $j('#traversalOptionTooltip').attr('title', function(){
             return $j('#traversalOptionDescription').remove().html();
         });
+
+        <%-- Initialize search terms tool tips (search term has help text)  --%>
+        <c:forEach items="${actionBean.configurableSearchDef.mapGroupSearchTerms}" var="entry">
+         <c:forEach items="${entry.value}" var="searchTerm">
+          <c:if test="${not empty searchTerm.helpText}">
+        $j('#${searchTerm.uiId}_opt').attr('title', function(){
+            return $j('#${searchTerm.uiId}_dscr').remove().html();
+        });
+        $j('#${searchTerm.uiId}_opt').tooltip({
+            position: { my: "left top",
+                at: "right+10 top+35",
+                of: "#searchTermSelect" },
+            show: false
+        });
+          </c:if>
+         </c:forEach>
+        </c:forEach>
 
         $j(document).tooltip();
     });

@@ -108,6 +108,8 @@ public class ReagentSearchDefinition {
         searchTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
         searchTerm.setAlternateSearchDefinition(buildLcsetAlternateSearchDef());
         searchTerm.setValueConversionExpression(SearchDefinitionFactory.getLcsetInputConverter());
+        searchTerm.setHelpText( "Reagents are collected and consolidated from all descendant events in the LCSET."
+            + "\nThe LCSET term is exclusive, no other terms can be selected.");
         // Need criteria path in order to see in list of terms
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
         SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();

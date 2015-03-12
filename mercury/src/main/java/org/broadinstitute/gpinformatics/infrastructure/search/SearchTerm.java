@@ -114,6 +114,12 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     private String name;
 
     /**
+     * HTML to display in UI to assist user (optional)
+     * (If none, no UI help is configured)
+     */
+    private String helpText;
+
+    /**
      * True if this term is required in every SearchInstance
      */
     private Boolean required;
@@ -267,6 +273,29 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
     public String getName() {
         return name;
+    }
+
+    /**
+     * A pseudo unique identifier to allow UI functionality to be tied to the display of this term (e.g. help text)
+     */
+    public String getUiId(){
+        return "srchTrm_" + String.valueOf(this.hashCode());
+    }
+
+    /**
+     * Display this text in UI if not null or empty string.
+     * @param helpText
+     */
+    public void setHelpText( String helpText ) {
+        this.helpText = helpText;
+    }
+
+    /**
+     * Optional help text for this search term.
+     * If not null or empty string, set up for display in UI.
+     */
+    public String getHelpText() {
+        return helpText;
     }
 
     public void setName(String name) {

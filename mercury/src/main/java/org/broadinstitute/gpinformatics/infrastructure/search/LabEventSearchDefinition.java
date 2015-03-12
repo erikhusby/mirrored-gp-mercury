@@ -470,6 +470,9 @@ public class LabEventSearchDefinition {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("LCSET");
+        searchTerm.setHelpText("The LCSET term will only locate events associated with bucket entries (e.g. CollaboratorTransfer and PicoPlatingBucket). "
+            + "Traversal option(s) should be selected if chain of custody events are desired.<br>"
+            + "Note: Adding other terms may exclude initial event(s) from the chain of custody traversal(s).");
         searchTerm.setValueConversionExpression(SearchDefinitionFactory.getLcsetInputConverter());
         criteriaPaths = new ArrayList<>();
         criteriaPath = new SearchTerm.CriteriaPath();
