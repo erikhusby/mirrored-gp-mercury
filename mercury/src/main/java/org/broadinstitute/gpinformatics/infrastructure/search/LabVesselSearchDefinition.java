@@ -18,7 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
@@ -417,46 +417,24 @@ public class LabVesselSearchDefinition {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
-        searchTerm.setName("Imported Sample Position");
-        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public Object evaluate(Object entity, Map<String, Object> context) {
-                List<String> results = new ArrayList<>();
-                LabVessel labVessel = (LabVessel) entity;
-                Map<LabEvent, Set<LabVessel>> mapEventToVessels = labVessel.findVesselsForLabEventType(
-                        LabEventType.SAMPLE_IMPORT, true);
-                for (Map.Entry<LabEvent, Set<LabVessel>> eventVesselEntry : mapEventToVessels.entrySet()) {
-                    for (LabVessel vessel : eventVesselEntry.getValue()) {
-                        Set<VesselContainer<?>> containers = vessel.getContainers();
-                        VesselContainer<?> container = null;
-                        if (containers.size() > 1) {
-                            for (VesselContainer<?> vesselContainer : containers) {
-                                // todo jmt this comparison is not safe
-                                if (vesselContainer.getEmbedder().getCreatedOn().getTime() / 1000L ==
-                                    eventVesselEntry.getKey().getEventDate().getTime() / 1000L) {
-                                    container = vesselContainer;
-                                }
-                            }
-                        } else {
-                            container = containers.iterator().next();
-                        }
-                        if (container != null) {
-                            results.add(container.getPositionOfVessel(vessel).toString());
-                        }
-                    }
-                }
-                return results;
-            }
-        });
-        searchTerms.add(searchTerm);
-
-        searchTerm = new SearchTerm();
         searchTerm.setName("Imported Sample Tube Barcode");
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
-                return getEventLabel((LabVessel) entity
-                        , Collections.singletonList(LabEventType.SAMPLE_IMPORT), true);
+                LabVessel labVessel = (LabVessel) entity;
+                Set<String> barcodes = null;
+
+                VesselDescendantTraverserCriteria eval
+                        = new VesselDescendantTraverserCriteria(Collections.singletonList(LabEventType.SAMPLE_IMPORT), true );
+                labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
+
+                if (!eval.getPositions().isEmpty()) {
+                    barcodes = new HashSet<>();
+                    for( Pair<String,VesselPosition> positionPair : eval.getPositions() ) {
+                        barcodes.add(positionPair.getLeft());
+                    }
+                }
+                return barcodes;
             }
         });
         searchTerms.add(searchTerm);
@@ -488,8 +466,22 @@ public class LabVesselSearchDefinition {
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
-                return getEventPosition((LabVessel) entity
-                        , Collections.singletonList(LabEventType.INITIAL_TARE), false);
+                LabVessel labVessel = (LabVessel) entity;
+                Set<String> positions = null;
+
+                VesselDescendantTraverserCriteria eval
+                        = new VesselDescendantTraverserCriteria(Collections.singletonList(LabEventType.SAMPLE_IMPORT), true );
+                labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
+
+                if (!eval.getPositions().isEmpty()) {
+                    positions = new HashSet<>();
+                    for( Pair<String,VesselPosition> positionPair : eval.getPositions() ) {
+                        if( positionPair.getRight() != null ) {
+                            positions.add(positionPair.getRight().toString());
+                        }
+                    }
+                }
+                return positions;
             }
         });
         searchTerms.add(searchTerm);
@@ -499,8 +491,22 @@ public class LabVesselSearchDefinition {
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
-                return getEventPosition((LabVessel) entity
-                        , Collections.singletonList(LabEventType.POND_REGISTRATION), true);
+                LabVessel labVessel = (LabVessel) entity;
+                Set<String> positions = null;
+
+                VesselDescendantTraverserCriteria eval
+                        = new VesselDescendantTraverserCriteria(Collections.singletonList(LabEventType.POND_REGISTRATION) );
+                labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
+
+                if (!eval.getPositions().isEmpty()) {
+                    positions = new HashSet<>();
+                    for( Pair<String,VesselPosition> positionPair : eval.getPositions() ) {
+                        if( positionPair.getRight() != null ) {
+                            positions.add(positionPair.getRight().toString());
+                        }
+                    }
+                }
+                return positions;
             }
         });
         searchTerms.add(searchTerm);
@@ -510,8 +516,20 @@ public class LabVesselSearchDefinition {
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
-                return getEventLabel((LabVessel) entity
-                        , Collections.singletonList(LabEventType.POND_REGISTRATION), true);
+                LabVessel labVessel = (LabVessel) entity;
+                Set<String> barcodes = null;
+
+                VesselDescendantTraverserCriteria eval
+                        = new VesselDescendantTraverserCriteria(Collections.singletonList(LabEventType.POND_REGISTRATION) );
+                labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
+
+                if (!eval.getPositions().isEmpty()) {
+                    barcodes = new HashSet<>();
+                    for( Pair<String,VesselPosition> positionPair : eval.getPositions() ) {
+                        barcodes.add(positionPair.getLeft());
+                    }
+                }
+                return barcodes;
             }
         });
         searchTerms.add(searchTerm);
@@ -521,8 +539,22 @@ public class LabVesselSearchDefinition {
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
-                return getEventPosition((LabVessel) entity
-                        , Collections.singletonList(LabEventType.SHEARING_TRANSFER), false);
+                LabVessel labVessel = (LabVessel) entity;
+                Set<String> positions = null;
+
+                VesselDescendantTraverserCriteria eval
+                        = new VesselDescendantTraverserCriteria(Collections.singletonList(LabEventType.SHEARING_TRANSFER) );
+                labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
+
+                if (!eval.getPositions().isEmpty()) {
+                    positions = new HashSet<>();
+                    for( Pair<String,VesselPosition> positionPair : eval.getPositions() ) {
+                        if( positionPair.getRight() != null ) {
+                            positions.add(positionPair.getRight().toString());
+                        }
+                    }
+                }
+                return positions;
             }
         });
         searchTerms.add(searchTerm);
@@ -532,8 +564,20 @@ public class LabVesselSearchDefinition {
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
-                return getEventLabel((LabVessel) entity
-                        , Collections.singletonList(LabEventType.SHEARING_TRANSFER), false);
+                LabVessel labVessel = (LabVessel) entity;
+                Set<String> barcodes = null;
+
+                VesselDescendantTraverserCriteria eval
+                        = new VesselDescendantTraverserCriteria(Collections.singletonList(LabEventType.SHEARING_TRANSFER) );
+                labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
+
+                if (!eval.getPositions().isEmpty()) {
+                    barcodes = new HashSet<>();
+                    for( Pair<String,VesselPosition> positionPair : eval.getPositions() ) {
+                        barcodes.add(positionPair.getLeft());
+                    }
+                }
+                return barcodes;
             }
         });
         searchTerms.add(searchTerm);
@@ -543,13 +587,29 @@ public class LabVesselSearchDefinition {
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
+
+                LabVessel labVessel = (LabVessel) entity;
+                Set<String> positions = null;
+
                 List<LabEventType> labEventTypes = new ArrayList<>();
                 // ICE
                 labEventTypes.add(LabEventType.ICE_CATCH_ENRICHMENT_CLEANUP);
                 // Agilent
                 labEventTypes.add(LabEventType.NORMALIZED_CATCH_REGISTRATION);
 
-                return getEventPosition((LabVessel) entity, labEventTypes, true);
+                VesselDescendantTraverserCriteria eval
+                        = new VesselDescendantTraverserCriteria(labEventTypes );
+                labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
+
+                if (!eval.getPositions().isEmpty()) {
+                    positions = new HashSet<>();
+                    for( Pair<String,VesselPosition> positionPair : eval.getPositions() ) {
+                        if( positionPair.getRight() != null ) {
+                            positions.add(positionPair.getRight().toString());
+                        }
+                    }
+                }
+                return positions;
             }
         });
         searchTerms.add(searchTerm);
@@ -559,13 +619,27 @@ public class LabVesselSearchDefinition {
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
+
+                LabVessel labVessel = (LabVessel) entity;
+                Set<String> barcodes = null;
+
                 List<LabEventType> labEventTypes = new ArrayList<>();
                 // ICE
                 labEventTypes.add(LabEventType.ICE_CATCH_ENRICHMENT_CLEANUP);
                 // Agilent
                 labEventTypes.add(LabEventType.NORMALIZED_CATCH_REGISTRATION);
 
-                return getEventLabel((LabVessel) entity, labEventTypes, true );
+                VesselDescendantTraverserCriteria eval
+                        = new VesselDescendantTraverserCriteria(labEventTypes );
+                labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
+
+                if (!eval.getPositions().isEmpty()) {
+                    barcodes = new HashSet<>();
+                    for( Pair<String,VesselPosition> positionPair : eval.getPositions() ) {
+                        barcodes.add(positionPair.getLeft());
+                    }
+                }
+                return barcodes;
             }
         });
         searchTerms.add(searchTerm);
@@ -595,7 +669,7 @@ public class LabVesselSearchDefinition {
         });
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
         SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setCriteria(Arrays.asList( "mercurySample", "mercurySamples" ));
+        criteriaPath.setCriteria(Arrays.asList("mercurySample", "mercurySamples"));
         criteriaPath.setPropertyName("sampleKey");
         criteriaPath.setJoinFetch(Boolean.TRUE);
         criteriaPaths.add(criteriaPath);
@@ -610,7 +684,7 @@ public class LabVesselSearchDefinition {
                 List<String> values = new ArrayList<>();
                 LabVessel labVessel = (LabVessel) entity;
                 for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-                    if( sampleInstanceV2.getInitialLabVessel() != null ) {
+                    if (sampleInstanceV2.getInitialLabVessel() != null) {
                         values.add(sampleInstanceV2.getInitialLabVessel().getLabel());
                     }
                 }
@@ -628,7 +702,7 @@ public class LabVesselSearchDefinition {
                 LabVessel labVessel = (LabVessel) entity;
                 Set<LabMetric> labMetrics = labVessel.getMetrics();
                 for (LabMetric labMetric : labMetrics) {
-                    if( labMetric.getName() == LabMetric.MetricType.INITIAL_PICO ) {
+                    if (labMetric.getName() == LabMetric.MetricType.INITIAL_PICO) {
                         BigDecimal ng = labMetric.getTotalNg();
                         if (ng != null) {
                             value = MathUtils.scaleTwoDecimalPlaces(ng).toPlainString();
@@ -640,10 +714,10 @@ public class LabVesselSearchDefinition {
 
             }
         });
-        searchTerm.setValueConversionExpression( new SearchTerm.Evaluator<Object>() {
+        searchTerm.setValueConversionExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
-                return new BigDecimal( (String) context.get(SearchInstance.CONTEXT_KEY_SEARCH_STRING));
+                return new BigDecimal((String) context.get(SearchInstance.CONTEXT_KEY_SEARCH_STRING));
             }
         });
         searchTerms.add(searchTerm);
@@ -681,10 +755,11 @@ public class LabVesselSearchDefinition {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
                 String header;
-                SearchInstance.SearchValue searchValue = (SearchInstance.SearchValue) context.get(SearchInstance.CONTEXT_KEY_SEARCH_VALUE);
+                SearchInstance.SearchValue searchValue =
+                        (SearchInstance.SearchValue) context.get(SearchInstance.CONTEXT_KEY_SEARCH_VALUE);
                 header = searchValue.getParent().getValues().get(0);
                 Metadata.Key key = Metadata.Key.valueOf(header);
-                if( key != null ) {
+                if (key != null) {
                     return key.getDisplayName();
                 } else {
                     return header;
@@ -694,7 +769,8 @@ public class LabVesselSearchDefinition {
         searchTerm.setTypeExpression(new SearchTerm.Evaluator<String>() {
             @Override
             public String evaluate(Object entity, Map<String, Object> context) {
-                SearchInstance.SearchValue searchValue = (SearchInstance.SearchValue) context.get(SearchInstance.CONTEXT_KEY_SEARCH_VALUE);
+                SearchInstance.SearchValue searchValue =
+                        (SearchInstance.SearchValue) context.get(SearchInstance.CONTEXT_KEY_SEARCH_VALUE);
                 String metaName = searchValue.getParent().getValues().get(0);
                 Metadata.Key key = Metadata.Key.valueOf(metaName);
                 switch (key.getDataType()) {
@@ -716,7 +792,8 @@ public class LabVesselSearchDefinition {
             // Defensive coding
             //   - as of 10/02/2014 sample metadata values are stored in value column (JPA aliased as "stringValue").
             public String evaluate(Object entity, Map<String, Object> context) {
-                SearchInstance.SearchValue searchValue = (SearchInstance.SearchValue) context.get(SearchInstance.CONTEXT_KEY_SEARCH_VALUE);
+                SearchInstance.SearchValue searchValue =
+                        (SearchInstance.SearchValue) context.get(SearchInstance.CONTEXT_KEY_SEARCH_VALUE);
                 String metaName = searchValue.getParent().getValues().get(0);
                 Metadata.Key key = Metadata.Key.valueOf(metaName);
                 switch (key.getDataType()) {
@@ -762,7 +839,7 @@ public class LabVesselSearchDefinition {
         searchTerm.setAddDependentTermsToSearchTermList(Boolean.TRUE);
         criteriaPaths = new ArrayList<>();
         criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setCriteria(Arrays.asList( "mercurySample", "mercurySamples", "metadata" ));
+        criteriaPath.setCriteria(Arrays.asList("mercurySample", "mercurySamples", "metadata"));
         criteriaPath.setPropertyName("key");
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
@@ -808,120 +885,78 @@ public class LabVesselSearchDefinition {
     }
 
     /**
-     * Traverse lab vessel events looking for specific types and extract the vessel barcode
-     * @param labVessel
-     * @param labEventTypes Mutually exclusive event types
-     * @param useTargetContainer Should target container (vs. source container) be used for positions?
-     * @return
+     * Searches for lab vessel descendant events of specific type(s)
+     * Records barcode and position of all descendant vessel(s)
      */
-    private List<String> getEventLabel(LabVessel labVessel, List<LabEventType> labEventTypes, boolean useTargetContainer) {
-        List<String> results = new ArrayList<>();
-        for( Pair<VesselPosition,String> pair : getVesselPositionForEvent(labVessel, labEventTypes, useTargetContainer ) ) {
-            results.add(pair.getRight());
+    private class VesselDescendantTraverserCriteria implements TransferTraverserCriteria {
+
+        private boolean stopTraverseAtFirstFind = false;
+        private List<LabEventType> labEventTypes;
+
+        private Set<Pair<String, VesselPosition>> positions = new HashSet<>();
+
+        /**
+         * Searches for descendant events of specific type(s).
+         * The list of types is intended to be mutually exclusive based upon different workflows (ICE/Agilent)
+         * @param labEventTypes
+         */
+        public VesselDescendantTraverserCriteria( List<LabEventType> labEventTypes ) {
+            this.labEventTypes = labEventTypes;
         }
-        return results;
-    }
 
-    /**
-     * Shared logic to traverse lab vessel events looking for specific types and extract the vessel position and barcode
-     * TODO jms Should we cache in row context to avoid duplications if/when position and label are in results?
-     * @param labVessel
-     * @param labEventTypes Mutually exclusive event types
-     * @param useTargetContainer Should target container (vs. source container) be used for positions?
-     * @return
-     */
-    private List<Pair<VesselPosition,String>> getVesselPositionForEvent(LabVessel labVessel, List<LabEventType> labEventTypes, boolean useTargetContainer ) {
+        /**
+         * Searches for descendant events and allow for traversal to be stopped at the first child vessel.
+         * Saves the traversal overhead when it's known that there will be no other rework events (e.g. sample import)
+         * @param labEventTypes
+         * @param stopTraverseAtFirstFind
+         */
+        public VesselDescendantTraverserCriteria( List<LabEventType> labEventTypes, boolean stopTraverseAtFirstFind ) {
+            this(labEventTypes);
+            this.stopTraverseAtFirstFind = stopTraverseAtFirstFind;
+        }
 
-        List<Pair<VesselPosition,String>> results = new ArrayList<>();
+        public Set<Pair<String, VesselPosition>> getPositions(){
+            return positions;
+        }
 
-        // Look for in-place
-        Set<LabEvent> inPlaceEvents = labVessel.getInPlaceEventsWithContainers();
-        for( LabEvent event : inPlaceEvents ) {
-            if( labEventTypes.contains(event.getLabEventType()) ){
-                VesselContainer container = event.getInPlaceLabVessel().getContainerRole();
-                VesselPosition position = container.getPositionOfVessel(labVessel);
-                if( position != null ) {
-                    results.add( Pair.of(position, labVessel.getLabel() ) );
+        @Override
+        public TransferTraverserCriteria.TraversalControl evaluateVesselPreOrder(
+                TransferTraverserCriteria.Context context ) {
+
+            TransferTraverserCriteria.TraversalControl outcome
+                    = TransferTraverserCriteria.TraversalControl.ContinueTraversing;
+
+            if( context.getEvent() != null && labEventTypes.contains( context.getEvent().getLabEventType() ) ) {
+                String barcode = "";
+                VesselPosition position = null;
+                if( context.getLabVessel() != null ) {
+                    barcode = context.getLabVessel().getLabel();
+                } else if( context.getVesselContainer() != null && context.getVesselContainer().getEmbedder() != null ) {
+                    barcode = context.getVesselContainer().getEmbedder().getLabel();
+                }
+
+                if( context.getVesselPosition() != null ) {
+                    position = context.getVesselPosition();
+                }
+
+                positions.add(Pair.of(barcode, position));
+
+                if( stopTraverseAtFirstFind ) {
+                    outcome = TransferTraverserCriteria.TraversalControl.StopTraversing;
                 }
             }
+
+            return outcome;
         }
 
-        if( results.size() > 0 ) {
-            return results;
+        @Override
+        public void evaluateVesselInOrder(TransferTraverserCriteria.Context context) {
         }
 
-        // Lab event types
-        Map<LabEvent, Set<LabVessel>> mapEventToVessels
-                = labVessel.findVesselsForLabEventTypes( labEventTypes, useTargetContainer );
-
-        if( mapEventToVessels.isEmpty() ) {
-            return results;
+        @Override
+        public void evaluateVesselPostOrder(TransferTraverserCriteria.Context context) {
         }
-
-        LabEvent labEvent = mapEventToVessels.entrySet().iterator().next().getKey();
-        Set<LabVessel> descendantLabVessels = mapEventToVessels.entrySet().iterator().next().getValue();
-        VesselContainer vesselContainer = null;
-
-        // In place vessel is a container where event has no transfers
-        LabVessel inPlaceVessel = labEvent.getInPlaceLabVessel();
-        if( inPlaceVessel != null ) {
-            vesselContainer = inPlaceVessel.getContainerRole();
-        }
-
-        // Transfer
-        if( vesselContainer == null ){
-            if( useTargetContainer ) {
-                for (LabVessel srcVessel : labEvent.getTargetLabVessels()) {
-                    vesselContainer = srcVessel.getContainerRole();
-                    if( vesselContainer != null ) {
-                        break;
-                    }
-                }
-            } else {
-                for (LabVessel srcVessel : labEvent.getSourceLabVessels()) {
-                    vesselContainer = srcVessel.getContainerRole();
-                    if( vesselContainer != null ) {
-                        break;
-                    }
-                }
-            }
-        }
-
-        if( vesselContainer == null || vesselContainer.getMapPositionToVessel().isEmpty() ) {
-            return results;
-        }
-
-        VesselPosition position = vesselContainer.getPositionOfVessel(labVessel);
-        if( position != null) {
-            results.add( Pair.of(position, labVessel.getLabel() ) );
-        }
-
-        for (LabVessel descendantVessel : descendantLabVessels) {
-            position = vesselContainer.getPositionOfVessel(descendantVessel);
-            if( position != null) {
-                results.add( Pair.of(position, descendantVessel.getLabel()) );
-            }
-        }
-
-        return results;
     }
-
-    /**
-     * Traverse lab vessel events looking for specific types and extract the vessel position
-     * @param labVessel
-     * @param labEventTypes Mutually exclusive event types
-     * @param useTargetContainer Should target container (vs. source container) be used for positions?
-     * @return
-     */
-    private List<String> getEventPosition(LabVessel labVessel, List<LabEventType> labEventTypes, boolean useTargetContainer ) {
-        List<String> results = new ArrayList<>();
-        for( Pair<VesselPosition,String> pair : getVesselPositionForEvent(labVessel, labEventTypes, useTargetContainer ) ) {
-            results.add(pair.getLeft().toString());
-        }
-        return results;
-    }
-
-
 
 
 }
