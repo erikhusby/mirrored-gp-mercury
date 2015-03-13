@@ -342,7 +342,13 @@ public class ConfigurableListFactory {
         }
 
         configurableList.addRows( entityList, searchInstance.getEvalContext() );
-        ConfigurableList.ResultList resultList = configurableList.getResultList();
+
+        ConfigurableList.ResultList resultList;
+        if( entityList.size() <= pagination.getPageSize() ) {
+            resultList = configurableList.getResultList(false);
+        } else {
+            resultList = configurableList.getResultList(true);
+        }
 
         return new FirstPageResults(resultList, pagination);
     }
