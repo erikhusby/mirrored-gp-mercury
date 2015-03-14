@@ -13,14 +13,21 @@ package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.infrastructure.common.BaseSplitter;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkDetail;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -28,9 +35,12 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
@@ -203,5 +213,116 @@ public class LabBatchFixUpTest extends Arquillian {
         bucketEntry.setStatus(BucketEntry.Status.Archived);
         labBatch.addBucketEntry(bucketEntry);
         labBatchDao.flush();
+    }
+
+    private static class TubeBatch {
+        private final String labBatch;
+        private final String barcode;
+
+        private TubeBatch(String labBatch, String barcode) {
+            this.labBatch = labBatch;
+            this.barcode = barcode;
+        }
+
+        public String getLabBatch() {
+            return labBatch;
+        }
+
+        public String getBarcode() {
+            return barcode;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null || getClass() != obj.getClass()) {
+                return false;
+            }
+
+            TubeBatch tubeBatch = (TubeBatch) obj;
+
+            if (!barcode.equals(tubeBatch.barcode)) {
+                return false;
+            }
+            if (!labBatch.equals(tubeBatch.labBatch)) {
+                return false;
+            }
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = labBatch.hashCode();
+            result = 31 * result + barcode.hashCode();
+            return result;
+        }
+    }
+
+    /**
+     * Back populate controls into LCSETs.
+     */
+    @Test(enabled = true)
+    public void fixupGplim3442() {
+        Set<TubeBatch> tubeBatches = new HashSet<>();
+
+        List<LabBatch> workflowLabBatches = labBatchDao.findByType(LabBatch.LabBatchType.WORKFLOW);
+        List<String> batchNames = new ArrayList<>();
+        for (LabBatch workflowLabBatch : workflowLabBatches) {
+            batchNames.add(workflowLabBatch.getBatchName());
+        }
+        labBatchDao.clear();
+        List<Collection<String>> listListBatchNames = BaseSplitter.split(batchNames, 20);
+        for (Collection<String> listBatchName : listListBatchNames) {
+            workflowLabBatches = labBatchDao.findByListIdentifier(new ArrayList<>(listBatchName));
+            for (LabBatch workflowLabBatch : workflowLabBatches) {
+                boolean found = false;
+                for (BucketEntry bucketEntry : workflowLabBatch.getBucketEntries()) {
+                    Map<LabEvent, Set<LabVessel>> vesselsForLabEventTypes =
+                            bucketEntry.getLabVessel().findVesselsForLabEventType(LabEventType.SHEARING_TRANSFER, false);
+                    for (Set<LabVessel> labVessels : vesselsForLabEventTypes.values()) {
+                        for (LabVessel labVessel : labVessels) {
+                            if (OrmUtil.proxySafeIsInstance(labVessel, BarcodedTube.class)) {
+                                found = processTube(tubeBatches, workflowLabBatch, found, (BarcodedTube) labVessel);
+                            } else if (OrmUtil.proxySafeIsInstance(labVessel, TubeFormation.class)) {
+                                for (LabVessel containedVessel : labVessel.getContainerRole().getContainedVessels()) {
+                                    found = processTube(tubeBatches, workflowLabBatch, found, (BarcodedTube) containedVessel);
+                                }
+                            }
+                        }
+                    }
+                    if (!vesselsForLabEventTypes.isEmpty()) {
+                        break;
+                    }
+                }
+                if (!found) {
+                    System.out.println("Failed to find any controls for " + workflowLabBatch.getBatchName());
+                }
+            }
+            System.out.println("Flush and clear");
+            labBatchDao.flush();
+            labBatchDao.clear();
+        }
+    }
+
+    private boolean processTube(Set<TubeBatch> tubeBatches, LabBatch workflowLabBatch, boolean found, BarcodedTube labVessel) {
+        BarcodedTube barcodedTube = labVessel;
+        Set<SampleInstanceV2> sampleInstances = barcodedTube.getSampleInstancesV2();
+        if (sampleInstances.size() == 1) {
+            SampleInstanceV2 sampleInstance = sampleInstances.iterator().next();
+            if (sampleInstance.getAllBucketEntries().isEmpty()) {
+                if (tubeBatches.add(new TubeBatch(
+                        workflowLabBatch.getBatchName(), barcodedTube.getLabel()))) {
+                    found = true;
+                    System.out.println("Adding " + barcodedTube.getLabel() + " to " +
+                            workflowLabBatch.getBatchName() + " " +
+                            sampleInstance.getEarliestMercurySampleName());
+//                            workflowLabBatch.addLabVessel(barcodedTube);
+                }
+            }
+        }
+        return found;
     }
 }
