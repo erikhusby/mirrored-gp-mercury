@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.SampleData;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
@@ -31,9 +32,11 @@ public class ClinicalSampleFactory {
         Metadata[] mercuryMetadata = new Metadata[sample.getSampleData().size()];
         for (int i = 0; i < sample.getSampleData().size(); i++) {
             SampleData sampleData = sample.getSampleData().get(i);
-            Metadata.Key metadataKey = Metadata.Key.valueOf(sampleData.getName());
-            Metadata mercuryMetadataItem = new Metadata(metadataKey, sampleData.getValue());
-            mercuryMetadata[i] = mercuryMetadataItem;
+            if(StringUtils.isNotEmpty(sampleData.getValue())) {
+                Metadata.Key metadataKey = Metadata.Key.valueOf(sampleData.getName());
+                Metadata mercuryMetadataItem = new Metadata(metadataKey, sampleData.getValue());
+                mercuryMetadata[i] = mercuryMetadataItem;
+            }
         }
 
         return mercuryMetadata;
