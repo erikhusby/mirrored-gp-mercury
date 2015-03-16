@@ -563,7 +563,13 @@ public class ManifestSession implements Updatable {
     public void performTransfer(String sourceCollaboratorSample, MercurySample targetSample, LabVessel targetVessel,
                                 BspUser user) {
 
-        ManifestRecord sourceRecord = findRecordForTransferByKey(Metadata.Key.SAMPLE_ID, sourceCollaboratorSample);
+        ManifestRecord sourceRecord ;
+
+        if(sourceCollaboratorSample != null) {
+            sourceRecord = findRecordForTransferByKey(Metadata.Key.SAMPLE_ID, sourceCollaboratorSample);
+        } else {
+            sourceRecord = findRecordForTransferByKey(Metadata.Key.BROAD_SAMPLE_ID, targetSample.getSampleKey());
+        }
 
         targetSample.addMetadata(sourceRecord.getMetadata());
         sourceRecord.setStatus(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
