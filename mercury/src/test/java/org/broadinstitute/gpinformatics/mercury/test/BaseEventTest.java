@@ -554,11 +554,12 @@ public class BaseEventTest {
      *
      * @param mapBarcodeToTube source tubes
      *
+     * @param workflowBatch
      * @return destination tube formation
      */
-    public TubeFormation daughterPlateTransfer(Map<String, BarcodedTube> mapBarcodeToTube) {
+    public TubeFormation daughterPlateTransfer(Map<String, BarcodedTube> mapBarcodeToTube, LabBatch workflowBatch) {
         List<String> daughterTubeBarcodes = generateDaughterTubeBarcodes(mapBarcodeToTube);
-        return getDaughterTubeFormation(mapBarcodeToTube, daughterTubeBarcodes);
+        return getDaughterTubeFormation(mapBarcodeToTube, daughterTubeBarcodes, workflowBatch);
     }
 
     /**
@@ -600,10 +601,11 @@ public class BaseEventTest {
      * @param mapBarcodeToTube     source tubes
      * @param daughterTubeBarcodes destination tubes
      *
+     * @param workflowBatch
      * @return destination tube formation
      */
     private TubeFormation getDaughterTubeFormation(Map<String, BarcodedTube> mapBarcodeToTube,
-                                                   List<String> daughterTubeBarcodes) {
+            List<String> daughterTubeBarcodes, LabBatch workflowBatch) {
         PlateTransferEventType daughterPlateTransferJaxb =
                 bettaLimsMessageTestFactory.buildRackToRack("SamplesDaughterPlateCreation", "MotherRack",
                                                             new ArrayList<>(mapBarcodeToTube.keySet()), "DaughterRack",
@@ -629,6 +631,7 @@ public class BaseEventTest {
         posControlTube.addSample(new MercurySample(POSITIVE_CONTROL, bspSampleDataPos));
         nameToSampleData.put(POSITIVE_CONTROL, bspSampleDataPos);
         mapBarcodeToDaughterTube.put(VesselPosition.H11, posControlTube);
+        workflowBatch.addLabVessel(posControlTube);
 
         BarcodedTube negControlTube = new BarcodedTube("C2");
         BspSampleData bspSampleDataNeg = new BspSampleData(
@@ -638,6 +641,7 @@ public class BaseEventTest {
         negControlTube.addSample(new MercurySample(NEGATIVE_CONTROL, bspSampleDataNeg));
         nameToSampleData.put(NEGATIVE_CONTROL, bspSampleDataNeg);
         mapBarcodeToDaughterTube.put(VesselPosition.H12, negControlTube);
+        workflowBatch.addLabVessel(negControlTube);
 
         return new TubeFormation(mapBarcodeToDaughterTube, RackOfTubes.RackType.Matrix96);
     }

@@ -241,7 +241,7 @@ public class LabEventTest extends BaseEventTest {
         workflowBatch.setWorkflow(Workflow.HYBRID_SELECTION);
         bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
 
-        TubeFormation daughterTubeFormation = daughterPlateTransfer(mapBarcodeToTube);
+        TubeFormation daughterTubeFormation = daughterPlateTransfer(mapBarcodeToTube, workflowBatch);
 
         Map<String, BarcodedTube> mapBarcodeToDaughterTube = new HashMap<>();
         for (BarcodedTube barcodedTube : daughterTubeFormation.getContainerRole().getContainedVessels()) {
@@ -394,7 +394,7 @@ public class LabEventTest extends BaseEventTest {
 
         bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
 
-        TubeFormation daughterTubeFormation = daughterPlateTransfer(mapBarcodeToTube);
+        TubeFormation daughterTubeFormation = daughterPlateTransfer(mapBarcodeToTube, workflowBatch);
 
         Map<String, BarcodedTube> mapBarcodeToDaughterTube = new HashMap<>();
         for (BarcodedTube barcodedTube : daughterTubeFormation.getContainerRole().getContainedVessels()) {
@@ -1103,7 +1103,7 @@ public class LabEventTest extends BaseEventTest {
         String lcsetSuffix = "1";
         bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, lcsetSuffix);
 
-        TubeFormation daughterTubeFormation = daughterPlateTransfer(mapBarcodeToTube);
+        TubeFormation daughterTubeFormation = daughterPlateTransfer(mapBarcodeToTube, workflowBatch);
 
         Map<String, BarcodedTube> mapBarcodeToDaughterTube = new HashMap<>();
         for (BarcodedTube barcodedTube : daughterTubeFormation.getContainerRole().getContainedVessels()) {

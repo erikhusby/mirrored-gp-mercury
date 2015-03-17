@@ -10,7 +10,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 
@@ -33,13 +32,12 @@ public class SampleInstanceV2 {
     private List<MercurySample> mercurySamples = new ArrayList<>();
     private List<Reagent> reagents = new ArrayList<>();
     private BucketEntry singleBucketEntry;
+    private LabBatch singleWorkflowBatch;
+    // todo jmt this is not all bucket entries, it is overwritten by each bucketed lab vessel
     private List<BucketEntry> allBucketEntries = new ArrayList<>();
-    private LabBatch singleInferredBucketedBatch;
     private List<ProductOrderSample> allProductOrderSamples = new ArrayList<>();
     private List<LabBatchStartingVessel> allLabBatchStartingVessels = new ArrayList<>();
-    private LabVessel labVessel;
     private LabVessel initialLabVessel;
-    private boolean examinedContainers;
     private MolecularIndexingScheme molecularIndexingScheme;
     private LabVessel firstPcrVessel;
 
@@ -53,8 +51,8 @@ public class SampleInstanceV2 {
      * Constructs a sample instance from a LabVessel.
      */
     public SampleInstanceV2(LabVessel labVessel) {
-        this.initialLabVessel = labVessel;
-        this.labVessel = labVessel;
+        initialLabVessel = labVessel;
+//        this.labVessel = labVessel;
         rootMercurySamples.addAll(labVessel.getMercurySamples());
         mercurySamples.addAll(labVessel.getMercurySamples());
         if (LabVessel.DIAGNOSTICS) {
@@ -78,7 +76,7 @@ public class SampleInstanceV2 {
         reagents.addAll(other.reagents);
         singleBucketEntry = other.singleBucketEntry;
         allBucketEntries.addAll(other.allBucketEntries);
-        singleInferredBucketedBatch = other.singleInferredBucketedBatch;
+        singleWorkflowBatch = other.singleWorkflowBatch;
         allProductOrderSamples.addAll(other.allProductOrderSamples);
         allLabBatchStartingVessels.addAll(other.allLabBatchStartingVessels);
         molecularIndexingScheme = other.molecularIndexingScheme;
@@ -204,19 +202,7 @@ public class SampleInstanceV2 {
      * none or mulitple LCSETs).  Primarily for controls, which don't have BucketEntries.
      */
     public LabBatch getSingleInferredBucketedBatch() {
-        if (singleInferredBucketedBatch == null && !examinedContainers) {
-            examinedContainers = true;
-            if (labVessel != null) {
-                for (VesselContainer<?> vesselContainer : labVessel.getContainers()) {
-                    LabBatch singleBatch = vesselContainer.getSingleBatch();
-                    if (singleBatch != null) {
-                        singleInferredBucketedBatch = singleBatch;
-                        break;
-                    }
-                }
-            }
-        }
-        return singleInferredBucketedBatch;
+        return singleWorkflowBatch;
     }
 
     /**
@@ -304,7 +290,7 @@ todo jmt not sure if this applies.
      */
     public void addReagent(Reagent newReagent) {
         if (LabVessel.DIAGNOSTICS) {
-            log.info("Adding reagent " + newReagent);
+            log.info("Adding reagent " + newReagent.getName());
         }
         MolecularIndexingScheme molecularIndexingSchemeLocal = SampleInstance.addReagent(newReagent, reagents);
         if (molecularIndexingSchemeLocal != null) {
@@ -316,7 +302,7 @@ todo jmt not sure if this applies.
      * Applies to a clone any new information in a LabVessel.
      */
     public final void applyVesselChanges(LabVessel labVessel) {
-        this.labVessel = labVessel;
+//        this.labVessel = labVessel;
         mercurySamples.addAll(labVessel.getMercurySamples());
         reagents.addAll(labVessel.getReagentContents());
         if (!labVessel.getBucketEntries().isEmpty()) {
@@ -330,7 +316,21 @@ todo jmt not sure if this applies.
                         " in " + labVessel.getLabel());
             }
         }
-        allLabBatchStartingVessels.addAll(labVessel.getLabBatchStartingVesselsByDate());
+
+        List<LabBatchStartingVessel> labBatchStartingVesselsByDate = labVessel.getLabBatchStartingVesselsByDate();
+        allLabBatchStartingVessels.addAll(labBatchStartingVesselsByDate);
+        List<LabBatch> workflowLabBatches = new ArrayList<>();
+        for (LabBatchStartingVessel labBatchStartingVessel : labBatchStartingVesselsByDate) {
+            if (labBatchStartingVessel.getLabBatch().getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
+                workflowLabBatches.add(labBatchStartingVessel.getLabBatch());
+            }
+        }
+        if (workflowLabBatches.size() == 1) {
+            singleWorkflowBatch = workflowLabBatches.get(0);
+        } else if (workflowLabBatches.size() > 1) {
+            singleWorkflowBatch = null;
+        }
+
         for (MercurySample mercurySample : labVessel.getMercurySamples()) {
             allProductOrderSamples.addAll(mercurySample.getProductOrderSamples());
         }
@@ -345,18 +345,18 @@ todo jmt not sure if this applies.
                 firstPcrVessel = labVessel;
             }
         }
-        Set<LabBatch> computedLcsets = labEvent.getComputedLcSets();
-        // A single computed LCSET can help resolve ambiguity of multiple bucket entries.
-        if (computedLcsets.size() == 1) {
-            singleInferredBucketedBatch = computedLcsets.iterator().next();
-            // Avoid overwriting a singleBucketEntry set by applyVesselChanges.
-            if (singleBucketEntry == null) {
-                // Multiple bucket entries need help.
-                if (allBucketEntries.size() > 1) {
+        // Multiple bucket entries need help.
+        if (allBucketEntries.size() > 1) {
+            Set<LabBatch> computedLcsets = labEvent.getComputedLcSets();
+            // A single computed LCSET can help resolve ambiguity of multiple bucket entries.
+            if (computedLcsets.size() == 1) {
+                LabBatch workflowBatch = computedLcsets.iterator().next();
+                // Avoid overwriting a singleBucketEntry set by applyVesselChanges.
+                if (singleBucketEntry == null) {
                     for (BucketEntry bucketEntry : allBucketEntries) {
                         // If there's a bucket entry that matches the computed LCSET, use it.
                         if (bucketEntry.getLabBatch() != null &&
-                                bucketEntry.getLabBatch().equals(singleInferredBucketedBatch)) {
+                                bucketEntry.getLabBatch().equals(workflowBatch)) {
                             singleBucketEntry = bucketEntry;
                             if (LabVessel.DIAGNOSTICS) {
                                 log.info("Setting singleBucketEntry to " +
@@ -392,7 +392,7 @@ todo jmt not sure if this applies.
         if (metadataSources.isEmpty()) {
             throw new RuntimeException("Could not determine metadata source");
         }
-        else if (metadataSources.size() > 1) {
+        if (metadataSources.size() > 1) {
             throw new RuntimeException(String.format("Found %s metadata sources",metadataSources.size()));
         }
         return metadataSources.iterator().next();

@@ -213,7 +213,7 @@ public class GetSampleInstancesTest {
                         ((MolecularIndexReagent) poolSampleInstance.getReagents().get(0)).getMolecularIndexingScheme();
                 switch (molecularIndexingScheme.getName()) {
                 case "Illumina_P5-U_P7-U":
-                    Assert.assertEquals(poolSampleInstance.getSingleInferredBucketedBatch().getBatchName(), LCSET_1);
+                    Assert.assertEquals(poolSampleInstance.getSingleBatch().getBatchName(), LCSET_1);
                     matchedSamples++;
                     break;
                 case "Illumina_P5-C_P7-C":
@@ -227,7 +227,7 @@ public class GetSampleInstancesTest {
                 }
             } else if (s.equals("SM-C1")) {
                 matchedSamples++;
-                Assert.assertEquals(poolSampleInstance.getSingleInferredBucketedBatch().getBatchName(), LCSET_1);
+                Assert.assertEquals(poolSampleInstance.getSingleBatch().getBatchName(), LCSET_1);
             } else {
                 if (s.equals(rootSample3)) {
                     matchedSamples++;
@@ -298,6 +298,7 @@ public class GetSampleInstancesTest {
         }
         TubeFormation extractControlTubeFormation = new TubeFormation(mapPositionToExtractTubeControl,
                 RackOfTubes.RackType.Matrix96);
+        lcsetBatch.addLabVessel(controlTube);
 
         Assert.assertEquals(controlTube.getSampleInstancesV2().iterator().next().getSingleBatch().getBatchName(),
                 "LCSET-" + lcsetNum);
@@ -383,7 +384,7 @@ public class GetSampleInstancesTest {
         sampleInstance = sampleInstances.iterator().next();
         verifyReagents(sampleInstance, lcsetNum == 1 ? "Illumina_P5-V_P7-V" : "Illumina_P5-X_P7-X");
         Assert.assertNull(sampleInstance.getSingleBucketEntry());
-        Assert.assertEquals(sampleInstance.getSingleInferredBucketedBatch(), lcsetBatch);
+        Assert.assertEquals(sampleInstance.getSingleBatch(), lcsetBatch);
 
         return shearingPlate;
     }
