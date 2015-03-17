@@ -594,7 +594,7 @@ public class ManifestSession implements Updatable {
                     ManifestRecord.ErrorStatus.NOT_IN_MANIFEST.formatMessage(
                             recordSampleKey, recordReferenceValue));
         }
-        manifestRecord.accessionScan();
+        manifestRecord.accessionScan(recordSampleKey, recordReferenceValue);
     }
 
     /**

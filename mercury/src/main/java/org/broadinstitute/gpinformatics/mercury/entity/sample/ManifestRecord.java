@@ -204,15 +204,17 @@ public class ManifestRecord implements Updatable {
 
     /**
      * Scan the sample corresponding to this ManifestRecord as part of accessioning.
+     * @param key
+     * @param value
      */
-    public void accessionScan() {
+    public void accessionScan(Metadata.Key key, String value) {
         if (isQuarantined()) {
             throw new InformaticsServiceException(
-                    ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage(Metadata.Key.SAMPLE_ID, getSampleId()));
+                    ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage(key, value));
         }
         if (status == Status.SCANNED) {
             throw new InformaticsServiceException(
-                    ErrorStatus.DUPLICATE_SAMPLE_SCAN.formatMessage(Metadata.Key.SAMPLE_ID, getSampleId()));
+                    ErrorStatus.DUPLICATE_SAMPLE_SCAN.formatMessage(key, value));
         }
 
         status = Status.SCANNED;
