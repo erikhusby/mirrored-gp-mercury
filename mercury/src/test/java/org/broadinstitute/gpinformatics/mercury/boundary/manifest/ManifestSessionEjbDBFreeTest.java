@@ -1408,9 +1408,9 @@ public class ManifestSessionEjbDBFreeTest {
         Sample sample = ClinicalSampleTestFactory
                 .createSample(ImmutableMap.of(Metadata.Key.SAMPLE_ID, SM_1));
 
-        Metadata[] metadata = ClinicalSampleFactory.toMercuryMetadata(sample);
-        assertThat(metadata.length, is(1));
-        Metadata metadataItem = metadata[0];
+        List<Metadata> metadata = ClinicalSampleFactory.toMercuryMetadata(sample);
+        assertThat(metadata.size(), is(1));
+        Metadata metadataItem = metadata.get(0);
         assertThat(metadataItem.getValue(), is(SM_1));
         assertThat(metadataItem.getKey(), is(Metadata.Key.SAMPLE_ID));
     }
