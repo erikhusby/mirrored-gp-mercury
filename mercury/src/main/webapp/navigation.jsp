@@ -179,6 +179,11 @@
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.labevent.ManualTransferActionBean"
                                           event="view">Manual Transfers</stripes:link>
                         </li>
+                        <li>
+                            <stripes:link id="lcsetControls"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.LcsetActionBean"
+                                          event="view">LCSET Controls</stripes:link>
+                        </li>
                     </ul>
                 </li>
             </security:authorizeBlock>
