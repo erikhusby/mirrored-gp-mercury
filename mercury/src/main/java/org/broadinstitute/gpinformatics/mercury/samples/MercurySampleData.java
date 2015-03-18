@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.samples;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
@@ -188,7 +189,11 @@ public class MercurySampleData implements SampleData {
 
     @Override
     public boolean isSampleReceived() {
-        return false;
+        /*
+         * Temporarily use existence of patient ID as a proxy for "is accessioned", which itself is a proxy for
+         * "is received".
+         */
+        return StringUtils.isNotBlank(patientId);
     }
 
     @Override
