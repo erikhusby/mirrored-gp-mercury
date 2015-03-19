@@ -458,7 +458,7 @@ public class SystemRouterTest extends BaseEventTest {
         tube1.addToContainer(tubeFormation.getContainerRole());
         tube2.addToContainer(tubeFormation.getContainerRole());
 
-        assertThat(controlWithoutWorkflow1.getSampleInstancesV2().iterator().next().getSingleInferredBucketedBatch(),
+        assertThat(controlWithoutWorkflow1.getSampleInstancesV2().iterator().next().getSingleBatch(),
                 is(nullValue()));
 
         assertThat(systemRouter.routeForVesselBarcodes(testBarcodes), is(MERCURY));
@@ -479,7 +479,7 @@ public class SystemRouterTest extends BaseEventTest {
         tube1.addToContainer(tubeFormation.getContainerRole());
         controlWithoutWorkflow1.addToContainer(tubeFormation.getContainerRole());
 
-        assertThat(controlWithoutWorkflow1.getSampleInstancesV2().iterator().next().getSingleInferredBucketedBatch(),
+        assertThat(controlWithoutWorkflow1.getSampleInstancesV2().iterator().next().getSingleBatch(),
                 is(nullValue()));
 
         assertThat(systemRouter.routeForVesselBarcodes(testBarcodes), is(SQUID));
@@ -499,7 +499,7 @@ public class SystemRouterTest extends BaseEventTest {
         }}, RackOfTubes.RackType.Matrix96);
         controlWithoutWorkflow1.addToContainer(tubeFormation.getContainerRole());
 
-        assertThat(controlWithoutWorkflow1.getSampleInstancesV2().iterator().next().getSingleInferredBucketedBatch(),
+        assertThat(controlWithoutWorkflow1.getSampleInstancesV2().iterator().next().getSingleBatch(),
                 is(nullValue()));
 
         assertThat(systemRouter.routeForVesselBarcodes(testBarcodes), is(SQUID));
@@ -533,9 +533,9 @@ public class SystemRouterTest extends BaseEventTest {
         tube1.addToContainer(tubeFormation.getContainerRole());
         tube2.addToContainer(tubeFormation.getContainerRole());
 
-        assertThat(controlWithoutWorkflow1.getSampleInstancesV2().iterator().next().getSingleInferredBucketedBatch(),
+        assertThat(controlWithoutWorkflow1.getSampleInstancesV2().iterator().next().getSingleBatch(),
                 is(nullValue()));
-        assertThat(controlWithoutWorkflow2.getSampleInstancesV2().iterator().next().getSingleInferredBucketedBatch(),
+        assertThat(controlWithoutWorkflow2.getSampleInstancesV2().iterator().next().getSingleBatch(),
                 is(nullValue()));
 
         assertThat(systemRouter.routeForVesselBarcodes(testBarcodes), is(MERCURY));

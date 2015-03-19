@@ -29,10 +29,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -367,7 +365,7 @@ public class GetSampleInstancesTest {
         Assert.assertEquals(allBatchVessels.get(index).getLabBatch().getBatchName(), SAMPLE_KIT_1);
         Assert.assertEquals(sampleInstance.getWorkflowName(), "Exome Express");
 
-        Assert.assertEquals(sampleInstance.getAllBucketEntries().size(), lcsetNum);
+        Assert.assertEquals(sampleInstance.getNearestBucketEntries().size(), lcsetNum);
         final int sampleIndex = lcsetNum - 1;
         HashSet<ProductOrderSample> expected = new HashSet<ProductOrderSample>() {{
             add(sampleInitProductOrder.getSamples().get(sampleIndex));

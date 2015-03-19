@@ -714,7 +714,7 @@ public class VesselContainer<T extends LabVessel> {
         Set<LabBatch> labBatches = new HashSet<>();
         if (sampleInstancesAtPosition.size() == 1) {
             for (SampleInstanceV2 sampleInstance : sampleInstancesAtPosition) {
-                List<BucketEntry> allBucketEntries = sampleInstance.getAllBucketEntries();
+                List<BucketEntry> allBucketEntries = sampleInstance.getNearestBucketEntries();
                 for (BucketEntry bucketEntry : allBucketEntries) {
                     if (bucketEntry.getLabBatch() != null) {
                         labBatches.add(bucketEntry.getLabBatch());

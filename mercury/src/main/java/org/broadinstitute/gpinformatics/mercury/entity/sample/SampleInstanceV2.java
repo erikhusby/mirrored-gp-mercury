@@ -31,12 +31,15 @@ public class SampleInstanceV2 {
     private Set<MercurySample> rootMercurySamples = new HashSet<>();
     private List<MercurySample> mercurySamples = new ArrayList<>();
     private List<Reagent> reagents = new ArrayList<>();
-    private BucketEntry singleBucketEntry;
+
+    private List<LabBatch> nearestWorkflowBatches = new ArrayList<>();
     private LabBatch singleWorkflowBatch;
-    // todo jmt this is not all bucket entries, it is overwritten by each bucketed lab vessel
-    private List<BucketEntry> allBucketEntries = new ArrayList<>();
-    private List<ProductOrderSample> allProductOrderSamples = new ArrayList<>();
+    /** This is overwritten by each bucketed lab vessel. */
+    private List<BucketEntry> nearestBucketEntries = new ArrayList<>();
+    private BucketEntry singleBucketEntry;
     private List<LabBatchStartingVessel> allLabBatchStartingVessels = new ArrayList<>();
+
+    private List<ProductOrderSample> allProductOrderSamples = new ArrayList<>();
     private LabVessel initialLabVessel;
     private MolecularIndexingScheme molecularIndexingScheme;
     private LabVessel firstPcrVessel;
@@ -52,7 +55,6 @@ public class SampleInstanceV2 {
      */
     public SampleInstanceV2(LabVessel labVessel) {
         initialLabVessel = labVessel;
-//        this.labVessel = labVessel;
         rootMercurySamples.addAll(labVessel.getMercurySamples());
         mercurySamples.addAll(labVessel.getMercurySamples());
         if (LabVessel.DIAGNOSTICS) {
@@ -71,12 +73,16 @@ public class SampleInstanceV2 {
      */
     @SuppressWarnings("AccessingNonPublicFieldOfAnotherObject")
     public SampleInstanceV2(SampleInstanceV2 other) {
+        // order of assignments is same as order of fields
         rootMercurySamples.addAll(other.rootMercurySamples);
         mercurySamples.addAll(other.mercurySamples);
         reagents.addAll(other.reagents);
-        singleBucketEntry = other.singleBucketEntry;
-        allBucketEntries.addAll(other.allBucketEntries);
+
+        nearestWorkflowBatches.addAll(other.nearestWorkflowBatches);
         singleWorkflowBatch = other.singleWorkflowBatch;
+        nearestBucketEntries.addAll(other.nearestBucketEntries);
+        singleBucketEntry = other.singleBucketEntry;
+
         allProductOrderSamples.addAll(other.allProductOrderSamples);
         allLabBatchStartingVessels.addAll(other.allLabBatchStartingVessels);
         molecularIndexingScheme = other.molecularIndexingScheme;
@@ -181,10 +187,10 @@ public class SampleInstanceV2 {
     }
 
     /**
-     * Returns all bucket entries associated with ancestor vessels.
+     * Returns all bucket entries associated with nearest ancestor vessel that has bucket entries.
      */
-    public List<BucketEntry> getAllBucketEntries() {
-        return allBucketEntries;
+    public List<BucketEntry> getNearestBucketEntries() {
+        return nearestBucketEntries;
     }
 
     /**
@@ -197,23 +203,10 @@ public class SampleInstanceV2 {
     }
 
     /**
-     * For each container this sample instance is in, looks at the other tubes in the container and if they all
-     * share one LCSET, returns it.  Returns null if no container can yield a single common LCSET (i.e. it has
-     * none or mulitple LCSETs).  Primarily for controls, which don't have BucketEntries.
-     */
-    public LabBatch getSingleInferredBucketedBatch() {
-        return singleWorkflowBatch;
-    }
-
-    /**
      * Returns the batch from the single bucket entry, or the single inferred batch.
      */
     public LabBatch getSingleBatch() {
-        BucketEntry singleBucketEntryLocal = singleBucketEntry;
-        if (singleBucketEntryLocal != null) {
-            return singleBucketEntryLocal.getLabBatch();
-        }
-        return getSingleInferredBucketedBatch();
+        return singleWorkflowBatch;
     }
 
     /**
@@ -247,36 +240,19 @@ public class SampleInstanceV2 {
      * Returns the workflow names associated with ancestor bucketed batches.
      */
     public String getWorkflowName() {
-        if (singleBucketEntry != null && singleBucketEntry.getLabBatch() != null) {
-            return singleBucketEntry.getLabBatch().getWorkflowName();
+        if (singleWorkflowBatch != null) {
+            return singleWorkflowBatch.getWorkflowName();
         }
         Set<String> workflowNames = new HashSet<>();
-        for (BucketEntry bucketEntry : getAllBucketEntries()) {
-            LabBatch batch = bucketEntry.getLabBatch();
-            if (batch != null && batch.getWorkflowName() != null) {
+        for (LabBatch batch : nearestWorkflowBatches) {
+            if (batch.getWorkflowName() != null) {
                 workflowNames.add(batch.getWorkflowName());
             }
         }
         if (workflowNames.size() == 1) {
             return workflowNames.iterator().next();
         }
-/*
-todo jmt not sure if this applies.
-        String workflowName = null;
-        for (LabBatch localLabBatch : allLabBatches) {
-            if (localLabBatch.getWorkflowName() != null) {
-                if (workflowName == null) {
-                    workflowName = localLabBatch.getWorkflowName();
-                } else {
-                    if (!workflowName.equals(localLabBatch.getWorkflowName())) {
-                        throw new RuntimeException("Conflicting workflows for sample " + sample.getSampleKey() + ": " +
-                                workflowName + ", " + localLabBatch.getWorkflowName());
-                    }
-                }
-            }
-        }
-*/
-        return null; //workflowName;
+        return null;
     }
 
     public boolean isReagentOnly() {
@@ -302,20 +278,9 @@ todo jmt not sure if this applies.
      * Applies to a clone any new information in a LabVessel.
      */
     public final void applyVesselChanges(LabVessel labVessel) {
-//        this.labVessel = labVessel;
+        // order of assignments is same as order of fields
         mercurySamples.addAll(labVessel.getMercurySamples());
         reagents.addAll(labVessel.getReagentContents());
-        if (!labVessel.getBucketEntries().isEmpty()) {
-            allBucketEntries.clear();
-        }
-        allBucketEntries.addAll(labVessel.getBucketEntries());
-        if (labVessel.getBucketEntries().size() == 1) {
-            singleBucketEntry = labVessel.getBucketEntries().iterator().next();
-            if (LabVessel.DIAGNOSTICS) {
-                log.info("Setting singleBucketEntry to " + singleBucketEntry.getLabBatch().getBatchName() +
-                        " in " + labVessel.getLabel());
-            }
-        }
 
         List<LabBatchStartingVessel> labBatchStartingVesselsByDate = labVessel.getLabBatchStartingVesselsByDate();
         allLabBatchStartingVessels.addAll(labBatchStartingVesselsByDate);
@@ -325,10 +290,28 @@ todo jmt not sure if this applies.
                 workflowLabBatches.add(labBatchStartingVessel.getLabBatch());
             }
         }
+        if (!workflowLabBatches.isEmpty()) {
+            nearestWorkflowBatches.clear();
+        }
+        nearestWorkflowBatches.addAll(workflowLabBatches);
         if (workflowLabBatches.size() == 1) {
             singleWorkflowBatch = workflowLabBatches.get(0);
         } else if (workflowLabBatches.size() > 1) {
             singleWorkflowBatch = null;
+        }
+
+        if (!labVessel.getBucketEntries().isEmpty()) {
+            nearestBucketEntries.clear();
+        }
+        nearestBucketEntries.addAll(labVessel.getBucketEntries());
+        if (labVessel.getBucketEntries().size() == 1) {
+            singleBucketEntry = labVessel.getBucketEntries().iterator().next();
+            if (LabVessel.DIAGNOSTICS) {
+                log.info("Setting singleBucketEntry to " + singleBucketEntry.getLabBatch().getBatchName() +
+                        " in " + labVessel.getLabel());
+            }
+        } else if (labVessel.getBucketEntries().size() > 1) {
+            singleBucketEntry = null;
         }
 
         for (MercurySample mercurySample : labVessel.getMercurySamples()) {
@@ -345,15 +328,16 @@ todo jmt not sure if this applies.
                 firstPcrVessel = labVessel;
             }
         }
-        // Multiple bucket entries need help.
-        if (allBucketEntries.size() > 1) {
+        // Multiple workflow batches need help.
+        if (nearestWorkflowBatches.size() > 1) {
             Set<LabBatch> computedLcsets = labEvent.getComputedLcSets();
             // A single computed LCSET can help resolve ambiguity of multiple bucket entries.
             if (computedLcsets.size() == 1) {
                 LabBatch workflowBatch = computedLcsets.iterator().next();
                 // Avoid overwriting a singleBucketEntry set by applyVesselChanges.
-                if (singleBucketEntry == null) {
-                    for (BucketEntry bucketEntry : allBucketEntries) {
+                if (singleWorkflowBatch == null) {
+                    singleWorkflowBatch = workflowBatch;
+                    for (BucketEntry bucketEntry : nearestBucketEntries) {
                         // If there's a bucket entry that matches the computed LCSET, use it.
                         if (bucketEntry.getLabBatch() != null &&
                                 bucketEntry.getLabBatch().equals(workflowBatch)) {

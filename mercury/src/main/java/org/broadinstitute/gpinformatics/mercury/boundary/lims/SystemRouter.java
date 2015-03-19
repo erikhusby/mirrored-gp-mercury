@@ -76,6 +76,7 @@ public class SystemRouter implements Serializable {
     }
 
     private LabVesselDao         labVesselDao;
+    // todo jmt remove controls logic
     private ControlDao           controlDao;
     private WorkflowLoader       workflowLoader;
     private SampleDataFetcher    sampleDataFetcher;
@@ -311,11 +312,11 @@ public class SystemRouter implements Serializable {
                         if (sampleInstance.isReagentOnly()) {
                             continue;
                         }
-                        if (sampleInstance.getAllBucketEntries().isEmpty()) {
+                        if (sampleInstance.getNearestBucketEntries().isEmpty()) {
                             possibleControls.add(sampleInstance);
                         } else {
                             String workflowName = sampleInstance.getWorkflowName();
-                            for (BucketEntry bucketEntry : sampleInstance.getAllBucketEntries()) {
+                            for (BucketEntry bucketEntry : sampleInstance.getNearestBucketEntries()) {
                                 LabBatch batch = bucketEntry.getLabBatch();
                                 if (workflowName != null && batch != null) {
                                     ProductWorkflowDefVersion productWorkflowDef = getWorkflowVersion(workflowName,
@@ -362,7 +363,7 @@ public class SystemRouter implements Serializable {
                                         // Determine the control's routing from either its workflow, or if workflow
                                         // cannot be identified, from the routing of other vessels in its container(s).
                                         String workflowName = possibleControl.getWorkflowName();
-                                        for (BucketEntry bucketEntry : possibleControl.getAllBucketEntries()) {
+                                        for (BucketEntry bucketEntry : possibleControl.getNearestBucketEntries()) {
                                             LabBatch batch = bucketEntry.getLabBatch();
                                             if (workflowName != null && batch != null) {
                                                 ProductWorkflowDefVersion productWorkflowDef =
@@ -434,11 +435,6 @@ public class SystemRouter implements Serializable {
      *     <li>If there are any other combinations, throw a {@link RouterException}</li>
      * </ul>
      *
-     * TODO: Consider routing for controls
-     * Controls recognized by Mercury currently route to BOTH. When Mercury is the system of record for a workflow,
-     * we'll start to see routingOptions of { BOTH, MERCURY }, which this implementation will currently reject.
-     *
-     *
      * @param routingOptions A navigable collection of determined routing options for a collection of lab vessels.
      *
      * @param intent routing or queries
@@ -487,7 +483,7 @@ public class SystemRouter implements Serializable {
             if (labVessel != null) {
                 Set<SampleInstanceV2> sampleInstances = labVessel.getSampleInstancesV2();
                 for (SampleInstanceV2 sampleInstance : sampleInstances) {
-                    if (!sampleInstance.isReagentOnly() && sampleInstance.getAllBucketEntries().isEmpty()) {
+                    if (!sampleInstance.isReagentOnly() && sampleInstance.getNearestBucketEntries().isEmpty()) {
                         if (controlSampleInstances.add(sampleInstance)) {
                             controlSampleNames.add(sampleInstance.getEarliestMercurySampleName());
                         }
