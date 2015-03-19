@@ -186,6 +186,10 @@ public class SampleInstanceV2 {
         return null;
     }
 
+    public List<LabBatch> getNearestWorkflowBatches() {
+        return nearestWorkflowBatches;
+    }
+
     /**
      * Returns all bucket entries associated with nearest ancestor vessel that has bucket entries.
      */

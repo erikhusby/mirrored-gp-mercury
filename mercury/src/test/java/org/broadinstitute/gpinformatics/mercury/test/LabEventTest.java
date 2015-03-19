@@ -1412,8 +1412,21 @@ public class LabEventTest extends BaseEventTest {
         wellsToReplace.add(35);
         wellsToReplace.add(88);
 
+        LabBatch workflowBatch = new LabBatch("Exome Express Batch",
+                new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
+        workflowBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
+        LabBatch workflowBatch2 = new LabBatch("Exome Express Batch 2",
+                new HashSet<LabVessel>(mapBarcodeToTube2.values()),
+                LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch2.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
+        workflowBatch2.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
+
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
+        bucketBatchAndDrain(mapBarcodeToTube2, productOrder, workflowBatch2, "1");
         TubeFormation daughterTubeFormation =
-                mismatchedDaughterPlateTransfer(mapBarcodeToTube, mapBarcodeToTube2, wellsToReplace);
+                mismatchedDaughterPlateTransfer(mapBarcodeToTube, mapBarcodeToTube2, wellsToReplace, workflowBatch);
 
 
         Set<String> keys = new LinkedHashSet<>();
@@ -1426,14 +1439,6 @@ public class LabEventTest extends BaseEventTest {
             mapBarcodeToTube.remove(key);
             mapBarcodeToTube.put((String) entry.getKey(), (BarcodedTube) entry.getValue());
         }
-
-        LabBatch workflowBatch = new LabBatch("Exome Express Batch",
-                                              new HashSet<LabVessel>(mapBarcodeToTube.values()),
-                                              LabBatch.LabBatchType.WORKFLOW);
-        workflowBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
-        workflowBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
-
-        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
 
         Map<String, BarcodedTube> mapBarcodeToDaughterTube = new HashMap<>();
         for (BarcodedTube barcodedTube : daughterTubeFormation.getContainerRole().getContainedVessels()) {

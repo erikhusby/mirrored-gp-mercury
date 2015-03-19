@@ -6,9 +6,8 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
-import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.BSPExportsService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.IsExported;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
@@ -17,7 +16,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEventTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
-import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
@@ -26,16 +24,14 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
@@ -116,6 +112,7 @@ public class SystemRouterTest extends BaseEventTest {
     private static final String MERCURY_TUBE_2 = "mercuryTube2";
     private static final String MERCURY_TUBE_3 = "mercuryTube3";
     private static final String CONTROL_TUBE = "controlTube";
+    // todo jmt not sure what "control without workflow" means; all controls are without bucket entries
     private static final String CONTROL_WITHOUT_WORKFLOW1 = "controlWoWorkflow1";
     private static final String CONTROL_WITHOUT_WORKFLOW2 = "controlWoWorkflow2";
     public static final String CONTROL_SAMPLE_ID = "SM-CONTROL1";
@@ -128,8 +125,6 @@ public class SystemRouterTest extends BaseEventTest {
     private SystemRouter systemRouter;
 
     private LabVesselDao mockLabVesselDao;
-    private ControlDao mockControlDao;
-    private SampleDataFetcher mockSampleDataFetcher;
     private BSPExportsService mockBspExportService;
     private int productOrderSequence = 1;
 
@@ -154,12 +149,8 @@ public class SystemRouterTest extends BaseEventTest {
         // Some of this mocking could be replaced by testing the @DaoFree routeForVessel method, but the mocks
         // existed before that method was factored out.
         mockLabVesselDao = mock(LabVesselDao.class);
-        mockControlDao = mock(ControlDao.class);
-//        mockAthenaClientService = mock(AthenaClientService.class);
-        mockSampleDataFetcher = mock(SampleDataFetcher.class);
         mockBspExportService = mock(BSPExportsService.class);
-        systemRouter = new SystemRouter(mockLabVesselDao, mockControlDao,
-                                        new WorkflowLoader(), mockSampleDataFetcher, mockBspExportService);
+        systemRouter = new SystemRouter(mockLabVesselDao, new WorkflowLoader(), mockBspExportService);
 
         // By default, make BSP answer that it knows about all vessels and returns that they have not been exported.
         when(mockBspExportService.findExportDestinations(anyCollectionOf(LabVessel.class))).thenAnswer(
@@ -185,8 +176,6 @@ public class SystemRouterTest extends BaseEventTest {
                 new HashMap<String, LabVessel>() {{
                     put(MERCURY_TUBE_1, tube1);
                 }});
-        when(mockSampleDataFetcher.fetchSampleData(Arrays.asList("SM-1")))
-                .thenReturn(Collections.singletonMap("SM-1", makeBspSampleData("Sample1")));
 
         tube2 = new BarcodedTube(MERCURY_TUBE_2);
         when(mockLabVesselDao.findByBarcodes(new ArrayList<String>() {{
@@ -286,11 +275,6 @@ public class SystemRouterTest extends BaseEventTest {
                     put("squidTube", null);
                     put(CONTROL_WITHOUT_WORKFLOW1, controlWithoutWorkflow1);
                 }});
-
-        when(mockControlDao.findAllActive())
-                .thenReturn(Arrays.asList(new Control(NA12878, Control.ControlType.POSITIVE)));
-        when(mockSampleDataFetcher.fetchSampleData(Arrays.asList(CONTROL_SAMPLE_ID)))
-                .thenReturn(Collections.singletonMap(CONTROL_SAMPLE_ID, makeBspSampleData(NA12878)));
 
         plate = new StaticPlate(MERCURY_PLATE, Eppendorf96);
         when(mockLabVesselDao.findByBarcodes(new ArrayList<String>() {{
@@ -432,13 +416,12 @@ public class SystemRouterTest extends BaseEventTest {
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
     public void testRouteForTubesAllInMercuryWithExomeExpressOrdersWithControls(ApplicationInstance instance) {
         placeOrderForTubesAndBatch(new HashSet<LabVessel>(Arrays.asList(tube1, tube2)), exomeExpress, picoBucket);
+        tube1.getLabBatches().iterator().next().addLabVessel(controlTube);
         final List<String> testBarcodes = Arrays.asList(MERCURY_TUBE_1, MERCURY_TUBE_2, CONTROL_TUBE);
 
         assertThat(systemRouter.routeForVesselBarcodes(testBarcodes), is(MERCURY));
 
         verify(mockLabVesselDao).findByBarcodes(testBarcodes);
-        verify(mockControlDao).findAllActive();
-        verify(mockSampleDataFetcher).fetchSampleData(Arrays.asList(CONTROL_SAMPLE_ID));
     }
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
@@ -446,6 +429,7 @@ public class SystemRouterTest extends BaseEventTest {
         // Make a mixed LCSET rack so that control's implied batch is null.
         placeOrderForTubesAndBatch(new HashSet<LabVessel>(Arrays.asList(tube1)), exomeExpress, picoBucket);
         placeOrderForTubesAndBatch(new HashSet<LabVessel>(Arrays.asList(tube2)), exomeExpress, picoBucket);
+        tube1.getLabBatches().iterator().next().addLabVessel(controlWithoutWorkflow1);
         final List<String> testBarcodes = Arrays.asList(CONTROL_WITHOUT_WORKFLOW1, MERCURY_TUBE_1, MERCURY_TUBE_2);
 
         // Need to have tubes in a container for this test.
@@ -458,13 +442,10 @@ public class SystemRouterTest extends BaseEventTest {
         tube1.addToContainer(tubeFormation.getContainerRole());
         tube2.addToContainer(tubeFormation.getContainerRole());
 
-        assertThat(controlWithoutWorkflow1.getSampleInstancesV2().iterator().next().getSingleBatch(),
+        assertThat(controlWithoutWorkflow1.getSampleInstancesV2().iterator().next().getSingleBucketEntry(),
                 is(nullValue()));
 
         assertThat(systemRouter.routeForVesselBarcodes(testBarcodes), is(MERCURY));
-
-        // This verify not strictly needed since MERCURY routes require the mockSampleDataFetcher to have run.
-        verify(mockSampleDataFetcher).fetchSampleData(Arrays.asList(CONTROL_SAMPLE_ID));
     }
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
@@ -483,10 +464,6 @@ public class SystemRouterTest extends BaseEventTest {
                 is(nullValue()));
 
         assertThat(systemRouter.routeForVesselBarcodes(testBarcodes), is(SQUID));
-
-        // This verify is needed to avoid a false positive if there is a missing setup for this test's
-        // testBarcodes contents.  The setup code starts like this: when(mockLabVesselDao.findByBarcodes.
-        verify(mockSampleDataFetcher).fetchSampleData(Arrays.asList(CONTROL_SAMPLE_ID));
     }
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
@@ -503,11 +480,6 @@ public class SystemRouterTest extends BaseEventTest {
                 is(nullValue()));
 
         assertThat(systemRouter.routeForVesselBarcodes(testBarcodes), is(SQUID));
-
-        // This verify is needed to avoid a false positive if there is a missing setup for this test's
-        // testBarcodes contents.  The setup code starts like this: when(mockLabVesselDao.findByBarcodes.
-        verify(mockSampleDataFetcher).fetchSampleData(Arrays.asList(CONTROL_SAMPLE_ID));
-
     }
 
     // This test uses two controls without workflow in a rack in order to check the code
@@ -517,6 +489,9 @@ public class SystemRouterTest extends BaseEventTest {
         // Make a mixed LCSET rack so that control's implied batch is null.
         placeOrderForTubesAndBatch(new HashSet<LabVessel>(Arrays.asList(tube1)), exomeExpress, picoBucket);
         placeOrderForTubesAndBatch(new HashSet<LabVessel>(Arrays.asList(tube2)), exomeExpress, picoBucket);
+        LabBatch labBatch = tube1.getLabBatches().iterator().next();
+        labBatch.addLabVessel(controlWithoutWorkflow1);
+        labBatch.addLabVessel(controlWithoutWorkflow2);
         final List<String> testBarcodes = Arrays.asList(CONTROL_WITHOUT_WORKFLOW1, CONTROL_WITHOUT_WORKFLOW2,
                 MERCURY_TUBE_1, MERCURY_TUBE_2);
 
@@ -533,9 +508,9 @@ public class SystemRouterTest extends BaseEventTest {
         tube1.addToContainer(tubeFormation.getContainerRole());
         tube2.addToContainer(tubeFormation.getContainerRole());
 
-        assertThat(controlWithoutWorkflow1.getSampleInstancesV2().iterator().next().getSingleBatch(),
+        assertThat(controlWithoutWorkflow1.getSampleInstancesV2().iterator().next().getSingleBucketEntry(),
                 is(nullValue()));
-        assertThat(controlWithoutWorkflow2.getSampleInstancesV2().iterator().next().getSingleBatch(),
+        assertThat(controlWithoutWorkflow2.getSampleInstancesV2().iterator().next().getSingleBucketEntry(),
                 is(nullValue()));
 
         assertThat(systemRouter.routeForVesselBarcodes(testBarcodes), is(MERCURY));
@@ -556,14 +531,13 @@ public class SystemRouterTest extends BaseEventTest {
                 }});
 
         placeOrderForTubesAndBatch(new HashSet<LabVessel>(Arrays.asList(tube1, tube2)), exomeExpress, picoBucket);
+        tube1.getLabBatches().iterator().next().addLabVessel(controlTube);
         doSectionTransfer(makeTubeFormation(tube1, tube2, controlTube), plate);
         doSectionTransfer(plate, makeTubeFormation(target1, target2, target3));
 
         assertThat(systemRouter.routeForVesselBarcodes(testBarcodes), is(MERCURY));
 
         verify(mockLabVesselDao).findByBarcodes(testBarcodes);
-        verify(mockControlDao).findAllActive();
-        verify(mockSampleDataFetcher).fetchSampleData(Arrays.asList(CONTROL_SAMPLE_ID));
     }
 
     /*
@@ -947,9 +921,6 @@ public class SystemRouterTest extends BaseEventTest {
     public void testGetSystemOfRecordForControlOnly(ApplicationInstance instance) {
         boolean oldDeployment = Deployment.isCRSP;
         Deployment.isCRSP = (instance == ApplicationInstance.CRSP);
-        // Override controlDao behavior from setUp so that the sample in MERCURY_TUBE_1 is a control sample.
-        when(mockControlDao.findAllActive())
-                .thenReturn(Arrays.asList(new Control("Sample1", Control.ControlType.POSITIVE)));
         tube1.addSample(new MercurySample("SM-1", MercurySample.MetadataSource.BSP));
 
         if (Deployment.isCRSP) {
@@ -984,23 +955,9 @@ public class SystemRouterTest extends BaseEventTest {
         Deployment.isCRSP = (instance == ApplicationInstance.CRSP);
         expectedRouting = SystemRouter.System.MERCURY;
 
-        final ProductOrder
-                productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
+        final ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
         Date runDate = new Date();
         Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
-        LabBatch workflowBatch = new LabBatch("Exome Express Batch",
-                                              new HashSet<LabVessel>(mapBarcodeToTube.values()),
-                                              LabBatch.LabBatchType.WORKFLOW);
-
-        Calendar postMercuryOnlyLaunchCalendarDate = new GregorianCalendar(2013, 6, 26);
-
-        Date today = new Date();
-
-        if (today.before(postMercuryOnlyLaunchCalendarDate.getTime())) {
-            workflowBatch.setCreatedOn(postMercuryOnlyLaunchCalendarDate.getTime());
-        }
-
-        workflowBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
 
         /*
          * Bucketing (which is required to find batch and Product key) happens in PicoPlatingEntityBuilder so
@@ -1019,6 +976,19 @@ public class SystemRouterTest extends BaseEventTest {
         }
 
         //Build Event History
+        LabBatch workflowBatch = new LabBatch("Exome Express Batch",
+                new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                LabBatch.LabBatchType.WORKFLOW);
+
+        Calendar postMercuryOnlyLaunchCalendarDate = new GregorianCalendar(2013, 6, 26);
+
+        Date today = new Date();
+
+        if (today.before(postMercuryOnlyLaunchCalendarDate.getTime())) {
+            workflowBatch.setCreatedOn(postMercuryOnlyLaunchCalendarDate.getTime());
+        }
+
+        workflowBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
         bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, BARCODE_SUFFIX);
         PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube,
                                                                                   String.valueOf(runDate.getTime()),
@@ -1127,26 +1097,9 @@ public class SystemRouterTest extends BaseEventTest {
         Deployment.isCRSP = (instance == ApplicationInstance.CRSP);
         expectedRouting = SystemRouter.System.BOTH;
 
-        final ProductOrder
-                productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
+        final ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
         Date runDate = new Date();
         Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
-        LabBatch workflowBatch = new LabBatch("Exome Express Batch",
-                                              new HashSet<LabVessel>(mapBarcodeToTube.values()),
-                                              LabBatch.LabBatchType.WORKFLOW);
-        // todo jmt should these tests create bucket entries?
-
-        Calendar july25CalendarDate = new GregorianCalendar(2013, 6, 25);
-        Calendar preJuly25CalendarDate = new GregorianCalendar(2013, 6, 24);
-
-        Date today = new Date();
-
-        if (today.after(july25CalendarDate.getTime()) ||
-            today.equals(july25CalendarDate.getTime())) {
-            workflowBatch.setCreatedOn(preJuly25CalendarDate.getTime());
-        }
-
-        workflowBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
 
         /*
          * Bucketing (which is required to find batch and Product key) happens in PicoPlatingEntityBuilder so
@@ -1165,6 +1118,20 @@ public class SystemRouterTest extends BaseEventTest {
         }
 
         //Build Event History
+        LabBatch workflowBatch = new LabBatch("Exome Express Batch",
+                new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                LabBatch.LabBatchType.WORKFLOW);
+        Calendar july25CalendarDate = new GregorianCalendar(2013, 6, 25);
+        Calendar preJuly25CalendarDate = new GregorianCalendar(2013, 6, 24);
+
+        Date today = new Date();
+
+        if (today.after(july25CalendarDate.getTime()) ||
+                today.equals(july25CalendarDate.getTime())) {
+            workflowBatch.setCreatedOn(preJuly25CalendarDate.getTime());
+        }
+
+        workflowBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
         bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, BARCODE_SUFFIX);
         PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube,
                                                                                   String.valueOf(runDate.getTime()),
