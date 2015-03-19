@@ -62,6 +62,12 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
         private Evaluator<String> propertyNameExpression;
 
+        /**
+         * Optional nested subquery criteria definition
+         * Note:  Nested criteria path and child search terms are mutually exclusive
+         */
+        private CriteriaPath nestedCriteriaPath;
+
         public List<String> getCriteria() {
             return criteria;
         }
@@ -92,6 +98,14 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
         public void setPropertyNameExpression(Evaluator<String> propertyNameExpression) {
             this.propertyNameExpression = propertyNameExpression;
+        }
+
+        public CriteriaPath getNestedCriteriaPath(){
+            return nestedCriteriaPath;
+        }
+
+        public void setNestedCriteriaPath( CriteriaPath nestedCriteriaPath ) {
+            this.nestedCriteriaPath = nestedCriteriaPath;
         }
     }
 
@@ -456,7 +470,7 @@ public class SearchTerm implements Serializable, ColumnTabulation {
             context = new HashMap<>();
         }
         // May require this SearchTerm to extract metadata key from column name
-        context.put(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_TERM, this);
+        context.put(SearchInstance.CONTEXT_KEY_SEARCH_TERM, this);
         return getDisplayExpression().evaluate(entity, context);
     }
 
@@ -468,7 +482,7 @@ public class SearchTerm implements Serializable, ColumnTabulation {
             if( context == null ) {
                 context = new HashMap<>();
             }
-            context.put(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_VALUE, this);
+            context.put(SearchInstance.CONTEXT_KEY_SEARCH_VALUE, this);
             return getViewHeader().evaluate(entity, context);
         }
     }

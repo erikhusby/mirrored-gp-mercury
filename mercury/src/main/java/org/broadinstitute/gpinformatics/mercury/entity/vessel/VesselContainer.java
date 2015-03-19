@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Parent;
 
 import javax.annotation.Nonnull;
@@ -75,6 +76,7 @@ public class VesselContainer<T extends LabVessel> {
     @MapKeyEnumerated(EnumType.STRING)
     // hbm2ddl always uses mapkey
     @MapKeyColumn(name = "mapkey")
+    @BatchSize(size = 100)
     // the map value has to be LabVessel, not T, because JPAMetaModelEntityProcessor can't handle type parameters
     private final Map<VesselPosition, LabVessel> mapPositionToVessel = new LinkedHashMap<>();
 
@@ -82,18 +84,23 @@ public class VesselContainer<T extends LabVessel> {
     private Map<LabVessel, VesselPosition> vesselToMapPosition;
 
     @OneToMany(mappedBy = "sourceVessel", cascade = CascadeType.PERSIST)
+    @BatchSize(size = 100)
     private Set<SectionTransfer> sectionTransfersFrom = new HashSet<>();
 
     @OneToMany(mappedBy = "targetVessel", cascade = CascadeType.PERSIST)
+    @BatchSize(size = 100)
     private Set<SectionTransfer> sectionTransfersTo = new HashSet<>();
 
     @OneToMany(mappedBy = "sourceVessel", cascade = CascadeType.PERSIST)
+    @BatchSize(size = 100)
     private Set<CherryPickTransfer> cherryPickTransfersFrom = new HashSet<>();
 
     @OneToMany(mappedBy = "targetVessel", cascade = CascadeType.PERSIST)
+    @BatchSize(size = 100)
     private Set<CherryPickTransfer> cherryPickTransfersTo = new HashSet<>();
 
     @OneToMany(mappedBy = "targetVessel", cascade = CascadeType.PERSIST)
+    @BatchSize(size = 100)
     private Set<VesselToSectionTransfer> vesselToSectionTransfersTo = new HashSet<>();
 
     @SuppressWarnings("InstanceVariableMayNotBeInitialized")
@@ -689,9 +696,8 @@ public class VesselContainer<T extends LabVessel> {
         Map<LabBatch, Integer> mapLabBatchToCount = new HashMap<>();
         int numSampleInstanceWithBucketEntries = 0;
         for (VesselPosition vesselPosition : section.getWells()) {
-            T vesselAtPosition = getVesselAtPosition(vesselPosition);
             numSampleInstanceWithBucketEntries = collateLcSets(mapLabBatchToCount, numSampleInstanceWithBucketEntries,
-                    vesselAtPosition);
+                    getSampleInstancesAtPositionV2(vesselPosition));
         }
         return computeLcSets(mapLabBatchToCount, numSampleInstanceWithBucketEntries);
     }
@@ -700,15 +706,15 @@ public class VesselContainer<T extends LabVessel> {
      * Calculates the number of bucket entries for each LCSET.
      * @param mapLabBatchToCount map from LCSET to count of bucket entries
      * @param numSampleInstanceWithBucketEntries number of sample instances that have at least one bucket entry
-     * @param labVessel vessel to evaluate
+     * @param sampleInstancesAtPosition Sample instances to evaluate
      * @return changed numSampleInstanceWithBucketEntries
      */
     public static int collateLcSets(Map<LabBatch, Integer> mapLabBatchToCount, int numSampleInstanceWithBucketEntries,
-            LabVessel labVessel) {
-        if (labVessel != null) {
-            Set<LabBatch> labBatches = new HashSet<>();
-            for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-                List<BucketEntry> allBucketEntries = sampleInstanceV2.getAllBucketEntries();
+                                    Set<SampleInstanceV2> sampleInstancesAtPosition ) {
+        Set<LabBatch> labBatches = new HashSet<>();
+        if (sampleInstancesAtPosition.size() == 1) {
+            for (SampleInstanceV2 sampleInstance : sampleInstancesAtPosition) {
+                List<BucketEntry> allBucketEntries = sampleInstance.getAllBucketEntries();
                 for (BucketEntry bucketEntry : allBucketEntries) {
                     if (bucketEntry.getLabBatch() != null) {
                         labBatches.add(bucketEntry.getLabBatch());
@@ -784,6 +790,33 @@ public class VesselContainer<T extends LabVessel> {
                 criteria = new TransferTraverserCriteria.NearestTubeAncestorsCriteria();
         applyCriteriaToAllPositions(criteria);
         return new ArrayList<>(criteria.getVesselAndPositions());
+    }
+
+    @Transient
+    private Set<LabBatch> containedLabBatches;
+
+    /**
+     * This is primarily used by getSampleInstances in inference of LCSETs for controls.
+     */
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
+    public LabBatch getSingleBatch() {
+        if (containedLabBatches == null) {
+            containedLabBatches = new HashSet<>();
+            for (LabVessel containedVessel : getContainedVessels()) {
+                Set<SampleInstanceV2> sampleInstances = containedVessel.getSampleInstancesV2();
+                if (sampleInstances.size() == 1) {
+                    BucketEntry containedSingleBucketEntry =
+                            sampleInstances.iterator().next().getSingleBucketEntry();
+                    if (containedSingleBucketEntry != null) {
+                        containedLabBatches.add(containedSingleBucketEntry.getLabBatch());
+                    }
+                }
+            }
+        }
+        if (containedLabBatches.size() == 1) {
+            return containedLabBatches.iterator().next();
+        }
+        return null;
     }
 
     /**
@@ -972,7 +1005,12 @@ public class VesselContainer<T extends LabVessel> {
                 ancestorEvents = vesselAtPosition.getAncestors();
             }
             if (ancestorEvents.isEmpty()) {
-                sampleInstances = Collections.emptySet();
+                if (vesselAtPosition != null) {
+                    sampleInstances = new HashSet<>();
+                    sampleInstances.add(new SampleInstanceV2(vesselAtPosition));
+                } else {
+                    sampleInstances = Collections.emptySet();
+                }
             } else {
                 sampleInstances = getAncestorSampleInstances(vesselAtPosition, ancestorEvents);
             }
@@ -1068,6 +1106,7 @@ public class VesselContainer<T extends LabVessel> {
      */
     public void clearCaches() {
         mapPositionToSampleInstances.clear();
+        containedLabBatches = null;
     }
 
 }

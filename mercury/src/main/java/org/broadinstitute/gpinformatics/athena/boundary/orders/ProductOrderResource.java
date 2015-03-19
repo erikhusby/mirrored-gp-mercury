@@ -31,10 +31,10 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.work.WorkCompleteMessage;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPGroupCollectionList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSiteList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
@@ -60,6 +60,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -137,6 +138,12 @@ public class ProductOrderResource {
     @Inject
     private UserBean userBean;
 
+    @Inject
+    private BSPUserList bspUserList;
+
+    @Inject
+    private ProductOrderJiraUtil productOrderJiraUtil;
+
     /**
      * Should be used only by test code
      */
@@ -161,17 +168,10 @@ public class ProductOrderResource {
     @Produces(MediaType.APPLICATION_XML)
     @Consumes(MediaType.APPLICATION_XML)
     public ProductOrderData createWithKitRequest(@Nonnull ProductOrderData productOrderData)
-            throws DuplicateTitleException, ApplicationValidationException, QuoteNotFoundException, NoSamplesException,
+            throws DuplicateTitleException, ApplicationValidationException, NoSamplesException,
             WorkRequestCreationException {
 
-        validateAndLoginUser(productOrderData);
-
-        // This will create a product order and place it, so a JIRA ticket is created.
-        ProductOrder productOrder = createProductOrder(productOrderData, ProductOrder.OrderStatus.Pending);
-
-        // The PDO's IRB information is copied from its RP. For Collaboration PDOs, we require that there
-        // is only one IRB on the RP.
-        productOrder.setRegulatoryInfos(productOrder.getResearchProject().getRegulatoryInfos());
+        ProductOrder productOrder = createProductOrder(productOrderData);
 
         ResearchProject researchProject =
                 researchProjectDao.findByBusinessKey(productOrderData.getResearchProjectId());
@@ -191,11 +191,33 @@ public class ProductOrderResource {
 
         try {
             productOrderEjb.submitSampleKitRequest(productOrder, messageCollection);
+            addProjectManagersToJIRA(productOrder, productOrder.getResearchProject().getProjectManagers());
         } catch (Exception ex) {
             throw new WorkRequestCreationException(ex);
         }
 
         return new ProductOrderData(productOrder);
+    }
+
+    /**
+     * Add all the PMs to the order in JIRA, so they're notified when the issue is modified.
+     */
+    private void addProjectManagersToJIRA(@Nonnull ProductOrder productOrder, Long[] projectManagers)
+            throws IOException {
+        // Convert IDs to Users.
+        List<BspUser> managers = new ArrayList<>(projectManagers.length);
+        for (Long projectManager : projectManagers) {
+            BspUser user = bspUserList.getById(projectManager);
+            if (user != null) {
+                managers.add(user);
+            } else {
+                log.error("Unexpected null BSPUser for project manager ID " + projectManager
+                          + " from research project " + productOrder.getResearchProject().getBusinessKey());
+            }
+        }
+        if (!managers.isEmpty()) {
+            productOrderJiraUtil.setJiraPMsField(productOrder, managers);
+        }
     }
 
     private void validateAndLoginUser(ProductOrderData productOrderData) {
@@ -246,33 +268,29 @@ public class ProductOrderResource {
     }
 
     /**
-     * Return the information on the newly created {@link ProductOrder} that has Draft status.
+     * Return the information on the newly created {@link ProductOrder} that has Pending status.
      * <p/>
      * It would be nice to only allow Project Managers and Administrators to create PDOs.  Use same {@link Role} names
      * as defined in the class (although I can't seem to be able to use the enum for the annotation.
      *
-     * @param productOrderData the document for the construction of the new {@link ProductOrder}
+     * @param productOrderData the data for the construction of the new ProductOrder
      *
-     * @return the reference for the newly created {@link ProductOrder}
-     *
-     * @throws DuplicateTitleException
-     * @throws NoSamplesException
-     * @throws QuoteNotFoundException
+     * @return the data from the newly created ProductOrder
      */
-
     @POST
     @Path("create")
     @Produces(MediaType.APPLICATION_XML)
     @Consumes(MediaType.APPLICATION_XML)
     public ProductOrderData create(@Nonnull ProductOrderData productOrderData)
-            throws DuplicateTitleException, NoSamplesException, QuoteNotFoundException, ApplicationValidationException {
-        ProductOrder productOrder = createProductOrder(productOrderData, ProductOrder.OrderStatus.Submitted);
-        productOrder.setPlacedDate(new Date());
-        return new ProductOrderData(productOrder, true);
+            throws DuplicateTitleException, NoSamplesException, ApplicationValidationException {
+        return new ProductOrderData(createProductOrder(productOrderData), true);
     }
 
-    private ProductOrder createProductOrder(ProductOrderData productOrderData, ProductOrder.OrderStatus initialStatus)
-            throws DuplicateTitleException, NoSamplesException, QuoteNotFoundException, ApplicationValidationException {
+    /**
+     * Create a product order in Pending state, and create its corresponding JIRA ticket.
+     */
+    private ProductOrder createProductOrder(ProductOrderData productOrderData)
+            throws DuplicateTitleException, NoSamplesException, ApplicationValidationException {
 
         validateAndLoginUser(productOrderData);
 
@@ -288,20 +306,27 @@ public class ProductOrderResource {
         try {
             productOrder.setCreatedBy(user.getUserId());
             productOrder.prepareToSave(user, ProductOrder.SaveType.CREATING);
-            ProductOrderJiraUtil.createIssueForOrder(productOrder, jiraService);
-            productOrder.setOrderStatus(initialStatus);
+            productOrder.setOrderStatus(ProductOrder.OrderStatus.Pending);
+
+            // The PDO's IRB information is copied from its RP. For Collaboration PDOs, we require that there
+            // is only one IRB on the RP.
+            productOrder.setRegulatoryInfos(productOrder.getResearchProject().getRegulatoryInfos());
+
+            productOrderJiraUtil.createIssueForOrder(productOrder);
 
             // Not supplying add-ons at this point, just saving what we defined above and then flushing to make sure
             // any DB constraints have been enforced.
             productOrderDao.persist(productOrder);
             productOrderDao.flush();
-
-            // Set the requisition name on the Jira referenced PDO.
-            productOrderEjb.updateJiraIssue(productOrder);
         } catch (Exception e) {
-            log.error(
-                    user.getUsername() + " had a problem placing their product order " + productOrder.getBusinessKey(),
-                    e);
+            String keyText;
+            if (productOrder.getJiraTicketKey() != null) {
+                keyText = " (" + productOrder.getJiraTicketKey() + ")";
+            } else {
+                keyText = "";
+            }
+            log.error(user.getUsername() + " could not create the product order " + productOrder.getTitle()
+                      + keyText, e);
             throw new ApplicationValidationException("Cannot create the product order - " + e.getMessage());
         }
 

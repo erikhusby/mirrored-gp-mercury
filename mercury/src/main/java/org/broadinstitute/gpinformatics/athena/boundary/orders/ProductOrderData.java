@@ -10,7 +10,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.LongDateTimeAdapter;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 
 import javax.annotation.Nonnull;
@@ -287,7 +286,7 @@ public class ProductOrderData {
      */
     public ProductOrder toProductOrder(ProductOrderDao productOrderDao, ResearchProjectDao researchProjectDao,
                                        ProductDao productDao)
-            throws DuplicateTitleException, NoSamplesException, QuoteNotFoundException, ApplicationValidationException {
+            throws DuplicateTitleException, NoSamplesException, ApplicationValidationException {
 
         // Make sure the title/name is supplied and unique
         if (StringUtils.isBlank(title)) {

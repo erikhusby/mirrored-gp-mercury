@@ -1,4 +1,6 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
+<%@ page import="org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession.SessionStatus.*" %>
+<%@ page import="org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession" %>
 
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.ManifestAccessioningActionBean"/>
@@ -19,7 +21,8 @@
                             resultsFormatter: formatInput,
                             tokenDelimiter: "${actionBean.projectTokenInput.separator}",
                             tokenLimit: 1,
-                            preventDuplicates: true
+                            preventDuplicates: true,
+                            autoSelectFirstResult: true
                         }
                 );
 
@@ -50,6 +53,7 @@
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
+        <c:set var="pendingData" value="<%= ManifestSession.SessionStatus.PENDING_SAMPLE_INFO%>"/>
         <div id="chooseExistingSession">
             <table id="sessionList" class="table simple">
                 <thead>
@@ -67,12 +71,20 @@
                 <c:forEach items="${actionBean.openSessions}" var="openSession">
                     <tr>
                         <td>
-                            <stripes:link beanclass="${actionBean.class.name}" event="loadSession">
-                                <stripes:param name="selectedSessionId" value="${openSession.manifestSessionId}"/>
-                                ${openSession.sessionName}
-                            </stripes:link>
+                            <c:choose>
+                                <c:when test="${openSession.status == pendingData}">
+                                    ${openSession.sessionName}
+                                </c:when>
+                                <c:otherwise>
+                                    <stripes:link beanclass="${actionBean.class.name}" event="loadSession">
+                                        <stripes:param name="selectedSessionId"
+                                                       value="${openSession.manifestSessionId}"/>
+                                        ${openSession.sessionName}
+                                    </stripes:link>
+                                </c:otherwise>
+                            </c:choose>
                         </td>
-                        <td>
+                        <td style="font-weight: bold">
                                 ${openSession.status}
                         </td>
                         <td>

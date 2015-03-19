@@ -11,7 +11,7 @@
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
-    <version>1.59.8</version>
+    <version>1.60</version>
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
@@ -196,9 +196,8 @@
         <database>postgres</database>
         <database.driver>org.postgresql.Driver</database.driver>
         <database.url>jdbc:postgresql://localhost/postgres</database.url>
-        <mercury.password>mercury_local</mercury.password>
-        <athena.password>athena_local</athena.password>
         <database.delimiterType>normal</database.delimiterType>
+        <!--<passwords.properties>must be specified as the location of the password properties file</passwords.properties>-->
 
         <!-- Note - For the RC builds, the mercury.rc.ip must contain an @ otherwise the mercury-rc-ds.xml will not be syntactically correct. The @ is a meta character to the maven filtering such that the combination of
         @${mercury.rc.ip} does not get subsituted at all. Hence mercury-rc-ds.xml only contains ${mercury.rc.ip} -->
@@ -214,7 +213,7 @@
 
         <jboss.socket.https>8443</jboss.socket.https>
 
-        <bspclient.version>[1.3,)</bspclient.version>
+        <bspclient.version>1.3.78</bspclient.version>
     </properties>
 
     <profiles>
@@ -811,6 +810,9 @@
 
         <profile>
             <id>DEV</id>
+            <properties>
+                <passwords.properties>src/test/resources/mercury-dev-passwords.properties</passwords.properties>
+            </properties>
             <build>
                 <testResources>
                     <testResource>
@@ -820,273 +822,6 @@
             </build>
         </profile>
 
-        <profile>
-            <id>CRSP-DEV</id>
-            <dependencies>
-                <dependency>
-                    <groupId>javax</groupId>
-                    <artifactId>javaee-api</artifactId>
-                    <version>6.0</version>
-                    <scope>provided</scope>
-                </dependency>
-            </dependencies>
-            <properties>
-                <!--  Oracle Dev database -->
-                <database>oracle</database>
-                <database.delimiterType>row</database.delimiterType>
-
-                <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
-                <database.url>jdbc:oracle:thin:@crsp-db-dev-vm:1521:crspdev</database.url>
-                <mercury.password>welcome1</mercury.password>
-                <athena.password>welcome1</athena.password>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-war-plugin</artifactId>
-                        <configuration>
-                            <webResources>
-                                <resource>
-                                    <directory>src/main/webapp-crsp</directory>
-                                </resource>
-                            </webResources>
-                        </configuration>
-                    </plugin>
-                </plugins>
-                <testResources>
-                    <testResource>
-                        <directory>src/test/resources-dev</directory>
-                    </testResource>
-                    <testResource>
-                        <directory>src/main/webapp/WEB-INF/classes</directory>
-                        <includes>
-                            <include>crsp-mercury-config.yaml</include>
-                        </includes>
-                    </testResource>
-                </testResources>
-            </build>
-        </profile>
-
-
-        <profile>
-            <id>CRSP-QA</id>
-            <dependencies>
-                <dependency>
-                    <groupId>javax</groupId>
-                    <artifactId>javaee-api</artifactId>
-                    <version>6.0</version>
-                    <scope>provided</scope>
-                </dependency>
-            </dependencies>
-            <properties>
-                <!--  Oracle QA database -->
-                <database>oracle</database>
-                <database.delimiterType>row</database.delimiterType>
-
-                <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
-                <database.url>jdbc:oracle:thin:@crsp-db-qa-vm:1521:crspqa</database.url>
-                <mercury.password>m3lb3c</mercury.password>
-                <athena.password>welcome</athena.password>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-war-plugin</artifactId>
-                        <configuration>
-                            <webResources>
-                                <resource>
-                                    <directory>src/main/webapp-crsp</directory>
-                                </resource>
-                            </webResources>
-                        </configuration>
-                    </plugin>
-                </plugins>
-                <testResources>
-                    <testResource>
-                        <directory>src/test/resources-qa</directory>
-                    </testResource>
-                    <testResource>
-                        <directory>src/main/webapp/WEB-INF/classes</directory>
-                        <includes>
-                            <include>crsp-mercury-config.yaml</include>
-                        </includes>
-                    </testResource>
-                </testResources>
-            </build>
-        </profile>
-
-        <profile>
-            <id>CRSP-PROD</id>
-            <!-- This is for CRSP PRODUCTION ONLY -->
-            <properties>
-                <!-- Oracle Dev -->
-                <database>oracle</database>
-                <database.delimiterType>row</database.delimiterType>
-
-                <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
-                <database.url>jdbc:oracle:thin:@crsp-db-prod-vm:1521:gpinfprd</database.url>
-                <mercury.password />
-                <athena.password />
-            </properties>
-            <build>
-                <!-- This allows us to overwrite the ejb-jar.xml for development with the special version for crsp production -->
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-war-plugin</artifactId>
-                        <configuration>
-                            <webResources>
-                                <resource>
-                                    <directory>src/main/webapp-crsp</directory>
-                                </resource>
-
-                                <resource>
-                                    <directory>src/main/webapp-crsp-prod</directory>
-                                </resource>
-                            </webResources>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
-            <id>HOW</id>
-            <properties>
-                <!--  Oracle Dev database -->
-                <database>oracle</database>
-                <database.delimiterType>row</database.delimiterType>
-
-                <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
-                <database.url>jdbc:oracle:thin:@192.168.195.25:1521:gpinfprd</database.url>
-                <mercury.password>guest</mercury.password>
-                <athena.password>guest</athena.password>
-            </properties>
-            <build>
-                <testResources>
-                    <testResource>
-                        <directory>src/test/resources</directory>
-                    </testResource>
-                    <testResource>
-                        <directory>src/test/resources-build</directory>
-                        <filtering>true</filtering>
-                    </testResource>
-                    <testResource>
-                        <directory>src/main/webapp/WEB-INF/classes</directory>
-                        <includes>
-                            <include>mercury-config.yaml</include>
-                        </includes>
-                    </testResource>
-                </testResources>
-            </build>
-        </profile>
-
-        <profile>
-            <id>pshapiro</id>
-            <properties>
-                <!--  Oracle Dev database -->
-                <database>oracle</database>
-                <database.delimiterType>row</database.delimiterType>
-
-                <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
-                <database.url>jdbc:oracle:thin:@192.168.195.61:1521:gpinfprd</database.url>
-                <mercury.password>guest</mercury.password>
-                <athena.password>guest</athena.password>
-            </properties>
-            <build>
-                <testResources>
-                    <testResource>
-                        <directory>src/test/resources-build</directory>
-                        <filtering>true</filtering>
-                    </testResource>
-                </testResources>
-            </build>
-        </profile>
-        <profile>
-            <id>ZIM</id>
-            <properties>
-                <!--  Oracle Dev database -->
-                <database>oracle</database>
-                <database.delimiterType>row</database.delimiterType>
-
-                <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
-                <database.url>jdbc:oracle:thin:@192.168.195.61:1521:gpinfprd</database.url>
-                <mercury.password>guest</mercury.password>
-                <athena.password>guest</athena.password>
-            </properties>
-            <build>
-                <testResources>
-                    <testResource>
-                        <directory>src/test/resources</directory>
-                    </testResource>
-                    <testResource>
-                        <directory>src/test/resources-build</directory>
-                        <filtering>true</filtering>
-                    </testResource>
-                    <testResource>
-                        <directory>src/main/webapp/WEB-INF/classes</directory>
-                        <includes>
-                            <include>mercury-config.yaml</include>
-                        </includes>
-                    </testResource>
-                </testResources>
-            </build>
-        </profile>
-
-        <profile>
-            <id>MLC</id>
-            <properties>
-                <!--  Oracle Dev database -->
-                <database>oracle</database>
-                <database.delimiterType>row</database.delimiterType>
-
-                <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
-                <database.url>jdbc:oracle:thin:@192.168.195.45:1521:gpinfprd</database.url>
-                <mercury.password>guest</mercury.password>
-                <athena.password>guest</athena.password>
-            </properties>
-            <build>
-                <testResources>
-                    <testResource>
-                        <directory>src/test/resources</directory>
-                    </testResource>
-                    <testResource>
-                        <directory>src/test/resources-build</directory>
-                        <filtering>true</filtering>
-                    </testResource>
-                    <testResource>
-                        <directory>src/main/webapp/WEB-INF/classes</directory>
-                        <includes>
-                            <include>mercury-config.yaml</include>
-                        </includes>
-                    </testResource>
-                </testResources>
-            </build>
-        </profile>
-
-        <profile>
-            <id>CRSPBUILD</id>
-            <properties>
-                <!--  Oracle Dev database -->
-                <database>oracle</database>
-                <database.delimiterType>row</database.delimiterType>
-
-                <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
-                <database.url>jdbc:oracle:thin:@crsp-db-dev-vm:1521:crspdev</database.url>
-                <mercury.password>welcome1</mercury.password>
-                <athena.password>welcome1</athena.password>
-            </properties>
-            <build>
-                <testResources>
-                    <testResource>
-                        <directory>src/test/resources-build</directory>
-                        <filtering>true</filtering>
-                    </testResource>
-                </testResources>
-            </build>
-        </profile>
         <profile>
             <id>BUILD</id>
             <properties>
@@ -1096,8 +831,7 @@
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
                 <database.url>jdbc:oracle:thin:@vmgpinform:1521:gpinfdev</database.url>
-                <mercury.password>mercury_dev</mercury.password>
-                <athena.password>athena_dev</athena.password>
+                <passwords.properties>src/test/resources/mercury-dev-passwords.properties</passwords.properties>
             </properties>
             <build>
                 <testResources>
@@ -1118,8 +852,7 @@
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
                 <database.url>jdbc:oracle:thin:@gpinfqa:1521:gpinfqa</database.url>
-                <mercury.password>mercury_qa</mercury.password>
-                <athena.password>athena_qa</athena.password>
+                <passwords.properties>src/test/resources/mercury-qa-passwords.properties</passwords.properties>
                 <!--<database.url>jdbc:oracle:thin:@mercuryrc.cloud.broad:1521:gpinfprd</database.url>-->
                 <!--<database.url>jdbc:oracle:thin:${mercury.rc.ip}:1521:gpinfprd</database.url>-->
                 <!--<mercury.password>guest</mercury.password>-->
@@ -1144,15 +877,16 @@
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
                 <database.url>jdbc:oracle:thin:@gpinfqa:1521:gpinfqa</database.url>
-                <mercury.password>mercury_qa</mercury.password>
-                <athena.password>athena_qa</athena.password>
+                <passwords.properties>src/test/resources/mercury-qa-passwords.properties</passwords.properties>
             </properties>
         </profile>
         <profile>
             <id>PROD</id>
             <!-- This is for PRODUCTION ONLY.  If you need to debug against production, use one of the
   other profiles and the -prod-ds.xml files.  This profile pulls from production JMS queues, so using
-   it for a debug server may cause message loss. -->
+   it for a debug server may cause message loss.
+
+  -->
             <properties>
                 <!-- Oracle Dev -->
                 <database>oracle</database>
@@ -1160,8 +894,8 @@
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
                 <database.url>jdbc:oracle:thin:@gpinfoprod:1521:gpinfprd</database.url>
-                <mercury.password>mercury_prod</mercury.password>
-                <athena.password>athena_prod</athena.password>
+                <!-- The production password is stored outside of the GIT repo in the Release Engineer's home directory -->
+                <passwords.properties>${user.home}/mercury-prod-passwords.properties</passwords.properties>
             </properties>
             <build>
                 <!-- This allows us to overwrite the ejb-jar.xml for development with the special version for production -->
@@ -1169,7 +903,6 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-war-plugin</artifactId>
-                        <version>2.2</version>
                         <configuration>
                             <webResources>
                                 <resource>
@@ -1178,6 +911,7 @@
                             </webResources>
                         </configuration>
                     </plugin>
+
                 </plugins>
             </build>
         </profile>
@@ -1187,9 +921,40 @@
             <build>
                 <plugins>
                     <plugin>
+                        <!-- Pick up the DB passwords from the particular password file DEV, QA, RC or PROD -->
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>properties-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>read</id>
+                                <phase>initialize</phase>
+                                <goals>
+                                    <goal>read-project-properties</goal>
+                                </goals>
+                                <configuration>
+                                    <files>
+                                        <file>${passwords.properties}</file>
+                                    </files>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>write</id>
+                                <phase>initialize</phase>
+                                <goals>
+                                    <goal>write-project-properties</goal>
+                                </goals>
+                                <configuration>
+                                    <outputFile>
+                                        ${project.build.directory}/build.properties
+                                    </outputFile>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
                         <groupId>org.liquibase</groupId>
                         <artifactId>liquibase-maven-plugin</artifactId>
-                        <version>2.0.5</version>
                         <executions>
                             <execution>
                                 <id>Mercury</id>
@@ -1656,7 +1421,7 @@
         <dependency>
             <groupId>lims</groupId>
             <artifactId>limsThrift</artifactId>
-            <version>1.0-20140820.174647-57</version>
+            <version>1.0-20150130.174218-62</version>
         </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>
@@ -1952,6 +1717,12 @@
 
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-war-plugin</artifactId>
+                    <version>2.2</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-deploy-plugin</artifactId>
                     <version>2.7</version>
                 </plugin>
@@ -1966,6 +1737,12 @@
                     <artifactId>build-helper-maven-plugin</artifactId>
                     <version>1.9</version>
                 </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>properties-maven-plugin</artifactId>
+                    <version>1.0-alpha-2</version>
+                </plugin>
+
                 <plugin>
                      <groupId>external.atlassian.jgitflow</groupId>
                      <artifactId>jgitflow-maven-plugin</artifactId>
@@ -2181,18 +1958,17 @@
                     </execution>
 
                     <execution>
-
-                        <id>CrspTypes</id>
+                        <id>ClinicalResourceTypes</id>
                         <goals>
                             <goal>xjc</goal>
                         </goals>
                         <configuration>
                             <!-- each execution needs to specify the schemaFile(s) to use -->
-                            <schemaFiles>CrspTypes.xsd</schemaFiles>
+                            <schemaFiles>ClinicalResourceTypes.xsd</schemaFiles>
                             <schemaDirectory>src/main/webapp/xsd</schemaDirectory>
                             <packageName>org.broadinstitute.gpinformatics.mercury.crsp.generated</packageName>
                             <!-- each execution must have a unique staleFile -->
-                            <staleFile>${project.build.directory}/jaxb2/.CrspTypesXjcStaleFlag</staleFile>
+                            <staleFile>${project.build.directory}/jaxb2/.ClinicalResourceTypesXjcStaleFlag</staleFile>
                             <!-- all executions, except the first, need clearOutputDir set to false -->
                             <clearOutputDir>false</clearOutputDir>
                         </configuration>
@@ -2466,6 +2242,8 @@
                     <!-- Do push the hotfix branches to the remote upstream --> 
                     <pushHotfixes>true</pushHotfixes>
                     <noHotfixBuild>true</noHotfixBuild>
+		    <!-- Keep the hot fix branch to avoid the error https://ecosystem.atlassian.net/browse/MJF-207	    -->
+		    <keepBranch>true</keepBranch>
                 </configuration>
             </plugin>
 

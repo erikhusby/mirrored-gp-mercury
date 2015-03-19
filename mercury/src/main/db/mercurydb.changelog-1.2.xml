@@ -183,6 +183,44 @@
         </createIndex>
 
     </changeSet>
+    <changeSet id="GPLIM-3267-1" author="jsacco">
+        <createIndex tableName="VESSEL_TRANSFER" indexName="IX_VT_SOURCE_VESSEL">
+            <column name="SOURCE_VESSEL"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-3267-2" author="jsacco">
+        <preConditions onFail="CONTINUE">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM VESSEL_TRANSFER
+                 WHERE TARGET_LAB_VESSEL IS NOT NULL
+                    OR DTYPE = 'VesselToVesselTransfer'
+            </sqlCheck>
+        </preConditions>
+        <dropColumn columnName="TARGET_LAB_VESSEL"
+                    tableName="VESSEL_TRANSFER"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-3353-1" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="MANIFEST_SESSION" columnName="FROM_SAMPLE_KIT" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="MANIFEST_SESSION" schemaName="mercury">
+            <column name="FROM_SAMPLE_KIT" type="number(1,0)" defaultValue="0" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-3353-2" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="MANIFEST_SESSION_AUD" columnName="FROM_SAMPLE_KIT" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="MANIFEST_SESSION_AUD" schemaName="mercury">
+            <column name="FROM_SAMPLE_KIT" type="number(1,0)" defaultValue="0" />
+        </addColumn>
+    </changeSet>
 
     <changeSet author="jowalsh" id="GPLIM-2619-1">
         <addColumn tableName="LAB_BATCH" schemaName="mercury">

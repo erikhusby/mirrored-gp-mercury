@@ -4,6 +4,7 @@ import org.apache.commons.collections4.map.LRUMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 
 import javax.ejb.Stateful;
@@ -17,13 +18,22 @@ public class WorkflowConfigLookup implements Serializable {
     private static Log logger = LogFactory.getLog(WorkflowConfigLookup.class);
     private WorkflowLoader workflowLoader;
     private Map<String, List<WorkflowConfigDenorm>> mapEventToWorkflows = null;
-    private static final int CONFIG_ID_CACHE_SIZE = 4;
+    private static final int CONFIG_ID_CACHE_SIZE = 64;
     private final LRUMap configIdCache = new LRUMap(CONFIG_ID_CACHE_SIZE);
     int cacheHit = 0; //instrumentation variable for testing
 
-    /** The synthetic workflowConfig records needed to etl BSP events. */
+    /** Overrides that allow etl to capture events not found in WorkflowConfig (e.g. BSP events). */
     private static final Collection<WorkflowConfigDenorm> SYNTHETIC_WORKFLOW_CONFIGS = new ArrayList<>();
+
+    /** Overrides that allow etl to accept events without a batch name. */
+    private static final Collection<String> ACCEPT_WITHOUT_BATCH_NAME = new ArrayList<String>(){{
+        add(LabEventType.PICO_PLATING_BUCKET.getName());
+    }};
+
     private static Date FIRST_EFFECTIVE_WORKFLOW_DATE;
+
+    private static final boolean PDO_NOT_NEEDED = false;
+    private static final boolean BATCH_NOT_NEEDED = false;
 
     static {
         // This should move to WorkflowConfigDao if it ever exists.
@@ -34,16 +44,34 @@ public class WorkflowConfigLookup implements Serializable {
             logger.error("Cannot create syntheticWorkflowConfigs.");
         }
         SYNTHETIC_WORKFLOW_CONFIGS.add(new WorkflowConfigDenorm(FIRST_EFFECTIVE_WORKFLOW_DATE, "BSP", "0", "BSP", "0",
-                LabEventType.SAMPLE_RECEIPT.getName(), LabEventType.SAMPLE_RECEIPT.getName(), false));
+                LabEventType.SAMPLE_RECEIPT.getName(), LabEventType.SAMPLE_RECEIPT.getName(),
+                PDO_NOT_NEEDED, BATCH_NOT_NEEDED));
+        SYNTHETIC_WORKFLOW_CONFIGS.add(new WorkflowConfigDenorm(FIRST_EFFECTIVE_WORKFLOW_DATE, "BSP", "0", "BSP", "0",
+                LabEventType.COLLABORATOR_TRANSFER.getName(), LabEventType.COLLABORATOR_TRANSFER.getName(),
+                PDO_NOT_NEEDED, BATCH_NOT_NEEDED));
         SYNTHETIC_WORKFLOW_CONFIGS.add(new WorkflowConfigDenorm(FIRST_EFFECTIVE_WORKFLOW_DATE, "BSP", "0", "BSP", "0",
                 LabEventType.SAMPLES_DAUGHTER_PLATE_CREATION.getName(),
-                LabEventType.SAMPLES_DAUGHTER_PLATE_CREATION.getName()));
+                LabEventType.SAMPLES_DAUGHTER_PLATE_CREATION.getName(),
+                PDO_NOT_NEEDED, BATCH_NOT_NEEDED));
         SYNTHETIC_WORKFLOW_CONFIGS.add(new WorkflowConfigDenorm(FIRST_EFFECTIVE_WORKFLOW_DATE, "BSP", "0", "BSP", "0",
-                LabEventType.SAMPLES_EXTRACTION_START.getName(), LabEventType.SAMPLES_EXTRACTION_START.getName()));
+                LabEventType.AUTO_DAUGHTER_PLATE_CREATION.getName(),
+                LabEventType.AUTO_DAUGHTER_PLATE_CREATION.getName(),
+                PDO_NOT_NEEDED, BATCH_NOT_NEEDED));
         SYNTHETIC_WORKFLOW_CONFIGS.add(new WorkflowConfigDenorm(FIRST_EFFECTIVE_WORKFLOW_DATE, "BSP", "0", "BSP", "0",
-                LabEventType.SAMPLE_IMPORT.getName(), LabEventType.SAMPLE_IMPORT.getName()));
+                LabEventType.SAMPLES_EXTRACTION_START.getName(), LabEventType.SAMPLES_EXTRACTION_START.getName(),
+                PDO_NOT_NEEDED, BATCH_NOT_NEEDED));
         SYNTHETIC_WORKFLOW_CONFIGS.add(new WorkflowConfigDenorm(FIRST_EFFECTIVE_WORKFLOW_DATE, "BSP", "0", "BSP", "0",
-                LabEventType.SAMPLE_PACKAGE.getName(), LabEventType.SAMPLE_PACKAGE.getName()));
+                LabEventType.SAMPLE_IMPORT.getName(), LabEventType.SAMPLE_IMPORT.getName(),
+                PDO_NOT_NEEDED, BATCH_NOT_NEEDED));
+        SYNTHETIC_WORKFLOW_CONFIGS.add(new WorkflowConfigDenorm(FIRST_EFFECTIVE_WORKFLOW_DATE, "BSP", "0", "BSP", "0",
+                LabEventType.SAMPLE_PACKAGE.getName(), LabEventType.SAMPLE_PACKAGE.getName(),
+                PDO_NOT_NEEDED, BATCH_NOT_NEEDED));
+        SYNTHETIC_WORKFLOW_CONFIGS.add(new WorkflowConfigDenorm(FIRST_EFFECTIVE_WORKFLOW_DATE, "Activity", "0", "Activity", "0",
+                LabEventType.ACTIVITY_BEGIN.getName(), LabEventType.ACTIVITY_BEGIN.getName(),
+                PDO_NOT_NEEDED, BATCH_NOT_NEEDED));
+        SYNTHETIC_WORKFLOW_CONFIGS.add(new WorkflowConfigDenorm(FIRST_EFFECTIVE_WORKFLOW_DATE, "Activity", "0", "Activity", "0",
+                LabEventType.ACTIVITY_END.getName(), LabEventType.ACTIVITY_END.getName(),
+                PDO_NOT_NEEDED, BATCH_NOT_NEEDED));
     }
 
 
@@ -130,5 +158,10 @@ public class WorkflowConfigLookup implements Serializable {
         Collection<WorkflowConfigDenorm> denormConfigs = WorkflowConfigDenorm.parse(workflowLoader.load());
         denormConfigs.addAll(SYNTHETIC_WORKFLOW_CONFIGS);
         return denormConfigs;
+    }
+
+    /** Returns true if event can be ETL'd without a batch name. */
+    public static boolean needsBatch(String workflowStepEventName) {
+        return !ACCEPT_WITHOUT_BATCH_NAME.contains(workflowStepEventName);
     }
 }

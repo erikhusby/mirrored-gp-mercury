@@ -8,6 +8,10 @@ import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceImpl;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
@@ -19,6 +23,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,7 +32,11 @@ import java.util.Date;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.AUTO_BUILD;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STANDARD;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.core.Is.is;
 
 @Test(groups = TestGroups.STANDARD)
 public class ProductOrderResourceTest extends RestServiceContainerTest {
@@ -38,7 +47,8 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
 
     private static final String VALID_PDO_ID = "PDO-10";
     private static final String WIDELY_USED_QUOTE_ID = "MMMAC1";
-    private static final String RP_CONTAINING_COHORTS = "RP-31";
+    // This RP has a Cohort and has two PMs. Both features are needed for testing.
+    private static final String RP_CONTAINING_COHORTS = "RP-40";
     private static final String RP_WITHOUT_COHORTS = "RP-32";
     private static final String EXOME_EXPRESS_V3_PRODUCT_NAME = "Exome Express v3";
     
@@ -74,7 +84,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
         WebResource resource = makeWebResource(baseUrl, "create");
 
         ProductOrderData productOrderData = resource.entity(data).post(new GenericType<ProductOrderData>() { });
-        Assert.assertEquals(productOrderData.getStatus(), ProductOrder.OrderStatus.Submitted.name());
+        Assert.assertEquals(productOrderData.getStatus(), ProductOrder.OrderStatus.Pending.name());
     }
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
@@ -97,7 +107,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
             resource.post(data);
             Assert.fail();
         } catch (UniformInterfaceException e) {
-//            assertThat(e.getResponse().getStatus(), is(equalTo(Response.Status.UNAUTHORIZED.getStatusCode())));
+            assertThat(e.getResponse().getStatus(), is(equalTo(Response.Status.UNAUTHORIZED.getStatusCode())));
         }
     }
 
@@ -134,6 +144,16 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
     public void testCreateProductOrderWithKit(@ArquillianResource URL baseUrl) throws Exception {
         ProductOrderData data = sendCreateWithKitRequest(baseUrl, "scottmat");
         Assert.assertEquals(data.getStatus(), ProductOrder.OrderStatus.Pending.name());
+
+        // Read data from JIRA.
+        JiraConfig jiraConfig = new JiraConfig(DEV);
+        JiraService jiraService = new JiraServiceImpl(jiraConfig);
+        JiraIssue jiraIssue = jiraService.getIssue(data.getProductOrderKey());
+        @SuppressWarnings("unchecked")
+        Collection<String> projectManagers =
+                (Collection<String>) jiraIssue.getField(ProductOrder.JiraField.PMS.getName());
+        // There should be two PMs in the PMs field.
+        Assert.assertEquals(projectManagers.size(), 2);
     }
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, expectedExceptions = UniformInterfaceException.class)

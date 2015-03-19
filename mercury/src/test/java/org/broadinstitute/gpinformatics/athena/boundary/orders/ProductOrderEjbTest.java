@@ -6,6 +6,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderKitTest;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
@@ -17,13 +18,17 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.hamcrest.Matchers;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -32,19 +37,30 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductOrderEjbTest {
     private static final BSPUserList.QADudeUser qaDudeUser = new BSPUserList.QADudeUser("PM", 2423L);
     private static final UserBean mockUserBean = Mockito.mock(UserBean.class);
     private ProductOrderDao productOrderDaoMock = Mockito.mock(ProductOrderDao.class);
+    public final MercurySampleDao mockMercurySampleDao = Mockito.mock(MercurySampleDao.class);
     ProductOrderEjb productOrderEjb = new ProductOrderEjb(productOrderDaoMock, null, null,
-                    JiraServiceProducer.stubInstance(), mockUserBean, null, null, null);
+            JiraServiceProducer.stubInstance(), mockUserBean, null, null, null, mockMercurySampleDao,
+            new ProductOrderJiraUtil(JiraServiceProducer.stubInstance(), mockUserBean));
     private static final String[] sampleNames = {"SM-1234", "SM-5678", "SM-9101", "SM-1112"};
-    ProductOrder productOrder=null;
+    ProductOrder productOrder = null;
     private Log logger = LogFactory.getLog(ProductOrderEjbTest.class);
 
     public void testUpdateKitInfo() throws Exception {
@@ -76,13 +92,15 @@ public class ProductOrderEjbTest {
 
         ProductOrderKitDetail kitDetailChange1 = new ProductOrderKitDetail(6L, KitType.DNA_MATRIX, 88L,
                 ProductOrderKitTest.materialInfoDto);
-        kitDetailChange1.getPostReceiveOptions().addAll(Collections.singleton(PostReceiveOption.FLUIDIGM_FINGERPRINTING));
+        kitDetailChange1.getPostReceiveOptions()
+                .addAll(Collections.singleton(PostReceiveOption.FLUIDIGM_FINGERPRINTING));
         kitDetailChange1.getPostReceiveOptions().addAll(Collections.singleton(PostReceiveOption.BIOANALYZER));
 //        kitDetail.setProductOrderKitDetaild(3243L);
 
         ProductOrderKitDetail kitDetailChange2 = new ProductOrderKitDetail(7L, KitType.DNA_MATRIX, 89L,
                 ProductOrderKitTest.materialInfoDto);
-        kitDetailChange2.getPostReceiveOptions().addAll(Collections.singleton(PostReceiveOption.FLUIDIGM_FINGERPRINTING));
+        kitDetailChange2.getPostReceiveOptions()
+                .addAll(Collections.singleton(PostReceiveOption.FLUIDIGM_FINGERPRINTING));
         kitDetailChange2.getPostReceiveOptions().addAll(Collections.singleton(PostReceiveOption.BIOANALYZER));
         kitDetailChange2.setProductOrderKitDetailId(4243L);
 
@@ -90,21 +108,21 @@ public class ProductOrderEjbTest {
         kitDetailSet.add(null);
         kitDetailSet.add(kitDetailChange2);
 
-        productOrderEjb.persistProductOrder(ProductOrder.SaveType.UPDATING, productOrder,Collections.singleton("2243"),
+        productOrderEjb.persistProductOrder(ProductOrder.SaveType.UPDATING, productOrder, Collections.singleton("2243"),
                 kitDetailSet);
 
         Assert.assertEquals(productOrder.getProductOrderKit().getKitOrderDetails().size(), 2);
-        for(ProductOrderKitDetail kitDetailToTest:productOrder.getProductOrderKit().getKitOrderDetails()) {
+        for (ProductOrderKitDetail kitDetailToTest : productOrder.getProductOrderKit().getKitOrderDetails()) {
 
             Assert.assertNotEquals(kitDetailToTest.getProductOrderKitDetailId(), 2243L);
 
-            if(kitDetailToTest.getProductOrderKitDetailId() != null &&
-               kitDetailToTest.getProductOrderKitDetailId().equals(4243L)) {
-                Assert.assertEquals((Long)kitDetailToTest.getOrganismId(), (Long)89L);
-                Assert.assertEquals((Long)kitDetailToTest.getNumberOfSamples(), (Long)7L);
+            if (kitDetailToTest.getProductOrderKitDetailId() != null &&
+                kitDetailToTest.getProductOrderKitDetailId().equals(4243L)) {
+                Assert.assertEquals((Long) kitDetailToTest.getOrganismId(), (Long) 89L);
+                Assert.assertEquals((Long) kitDetailToTest.getNumberOfSamples(), (Long) 7L);
             } else {
-                Assert.assertEquals((Long)kitDetailToTest.getOrganismId(), (Long)88L);
-                Assert.assertEquals((Long)kitDetailToTest.getNumberOfSamples(), (Long)6L);
+                Assert.assertEquals((Long) kitDetailToTest.getOrganismId(), (Long) 88L);
+                Assert.assertEquals((Long) kitDetailToTest.getNumberOfSamples(), (Long) 6L);
             }
 
             Assert.assertEquals(kitDetailToTest.getPostReceiveOptions().size(), 2);
@@ -117,7 +135,7 @@ public class ProductOrderEjbTest {
         ProductOrderEjb pdoEjb = new ProductOrderEjb();
         PDOUpdateField updateField = PDOUpdateField.createPDOUpdateFieldForQuote(pdo);
 
-        Assert.assertEquals(updateField.getNewValue(),pdo.getQuoteId());
+        Assert.assertEquals(updateField.getNewValue(), pdo.getQuoteId());
 
         pdo.setQuoteId(null);
 
@@ -132,7 +150,7 @@ public class ProductOrderEjbTest {
         pdoEjb.validateQuote(pdo, new QuoteServiceStub());
     }
 
-    public void testJiraCommentString(){
+    public void testJiraCommentString() {
         String jiraComment = productOrderEjb.buildJiraCommentForRiskString("at risk", "QADudeDEV", 2, true);
         Assert.assertEquals(jiraComment, "QADudeDEV set manual on risk to true for 2 samples with comment:\nat risk");
     }
@@ -146,22 +164,24 @@ public class ProductOrderEjbTest {
 
     public void testManualAtRisk() throws IOException {
         List<ProductOrderSample> productOrderSamples = setupRiskTests();
-        productOrderEjb.addManualOnRisk(qaDudeUser, productOrder.getJiraTicketKey(), productOrderSamples, true, "is risk");
+        productOrderEjb
+                .addManualOnRisk(qaDudeUser, productOrder.getJiraTicketKey(), productOrderSamples, true, "is risk");
         Assert.assertEquals(productOrder.countItemsOnRisk(), productOrderSamples.size());
     }
 
     public void testManualNoRisk() throws IOException {
         List<ProductOrderSample> productOrderSamples = setupRiskTests();
-        productOrderEjb.addManualOnRisk(qaDudeUser, productOrder.getJiraTicketKey(), productOrderSamples, false, "no risk");
+        productOrderEjb
+                .addManualOnRisk(qaDudeUser, productOrder.getJiraTicketKey(), productOrderSamples, false, "no risk");
         Assert.assertEquals(productOrder.countItemsOnRisk(), 0);
     }
 
     public void testAbandonAndUnabandonSamples() throws Exception {
         ProductOrder testOrder =
-                ProductOrderTestFactory.createProductOrder("SM-toAbandon1","SM-toAbandon2","SM-toAbandon3",
-                        "SM-toAbandon4","SM-toAbandon5");
+                ProductOrderTestFactory.createProductOrder("SM-toAbandon1", "SM-toAbandon2", "SM-toAbandon3",
+                        "SM-toAbandon4", "SM-toAbandon5");
 
-        for(ProductOrderSample sample:testOrder.getSamples()) {
+        for (ProductOrderSample sample : testOrder.getSamples()) {
             Assert.assertEquals(sample.getDeliveryStatus(), ProductOrderSample.DeliveryStatus.NOT_STARTED);
         }
 
@@ -170,7 +190,7 @@ public class ProductOrderEjbTest {
 
         productOrderEjb.abandonSamples(testOrder.getBusinessKey(), testOrder.getSamples(), "To be Abandoned in Test");
 
-        for(ProductOrderSample sample:testOrder.getSamples()) {
+        for (ProductOrderSample sample : testOrder.getSamples()) {
             Assert.assertEquals(sample.getDeliveryStatus(), ProductOrderSample.DeliveryStatus.ABANDONED);
         }
 
@@ -179,14 +199,14 @@ public class ProductOrderEjbTest {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
 
-                logger.info((String)invocationOnMock.getArguments()[0]);
+                logger.info((String) invocationOnMock.getArguments()[0]);
                 return "";
             }
         });
 
         ProductOrderSampleDao productOrderSampleDao = Mockito.mock(ProductOrderSampleDao.class);
         Mockito.when(productOrderSampleDao.findListByList(Mockito.eq(ProductOrderSample.class),
-                Mockito.eq(ProductOrderSample_.productOrderSampleId),Mockito.anyCollection())).thenReturn(
+                Mockito.eq(ProductOrderSample_.productOrderSampleId), Mockito.anyCollection())).thenReturn(
                 testOrder.getSamples());
         productOrderEjb.setProductOrderSampleDao(productOrderSampleDao);
 
@@ -194,10 +214,37 @@ public class ProductOrderEjbTest {
                 ProductOrderSample.getSampleIDs(testOrder.getSamples()), "to not be abandoned anymore",
                 mockReporter);
 
-        for(ProductOrderSample sample:testOrder.getSamples()) {
+        for (ProductOrderSample sample : testOrder.getSamples()) {
             Assert.assertEquals(sample.getDeliveryStatus(), ProductOrderSample.DeliveryStatus.NOT_STARTED);
         }
-
     }
 
+    public void test_Add_Samples_Without_Bound_Mercury_Samples() throws Exception {
+        String jiraTicketKey = "PDO-testMe";
+        MessageReporter mockReporter = Mockito.mock(MessageReporter.class);
+
+        ProductOrder order = ProductOrderTestFactory.createDummyProductOrder(0, jiraTicketKey);
+
+        Mockito.when(productOrderDaoMock.findByBusinessKey(Mockito.eq(jiraTicketKey))).thenReturn(order);
+        Mockito.when(mockUserBean.getBspUser()).thenReturn(new BSPUserList.QADudeUser("PM", 2423L));
+
+        String[] sampleNames = {"SM-smpl1", "SM-smpl2", "SM-smpl3", "SM-smpl4", "SM-smpl5"};
+        List<ProductOrderSample> samples = ProductOrderSampleTestFactory.createDBFreeSampleList(sampleNames);
+        Map<String, MercurySample> sampleMap = new HashMap<>();
+        for (String sampleName : sampleNames) {
+            sampleMap.put(sampleName, new MercurySample(sampleName, MercurySample.MetadataSource.BSP));
+        }
+        Mockito.when(mockMercurySampleDao.findMapIdToMercurySample(Mockito.eq(sampleMap.keySet()))).thenReturn(sampleMap);
+
+        assertThat(order.getSamples(), is(empty()));
+
+        productOrderEjb.addSamples(jiraTicketKey, samples, mockReporter);
+        assertThat(order.getSamples(), is(not(empty())));
+        assertThat(order.getSamples().size(), is(Matchers.equalTo(5)));
+        for (ProductOrderSample sample : order.getSamples()) {
+            assertThat(sample.getMercurySample(), is(not(nullValue())));
+            assertThat(sample.getMercurySample().getSampleKey(), is(equalTo(sample.getBusinessKey())));
+        }
+        Mockito.verify(mockMercurySampleDao).findMapIdToMercurySample(Mockito.eq(sampleMap.keySet()));
+    }
 }

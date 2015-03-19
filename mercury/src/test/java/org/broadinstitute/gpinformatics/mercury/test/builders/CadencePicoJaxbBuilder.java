@@ -7,11 +7,8 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventTy
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReagentType;
 
-import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeFactory;
-import javax.xml.datatype.XMLGregorianCalendar;
 import java.util.ArrayList;
-import java.util.GregorianCalendar;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -66,15 +63,7 @@ public class CadencePicoJaxbBuilder {
         ReagentType bufferReagent = new ReagentType();
         bufferReagent.setKitType("PICO");
         bufferReagent.setBarcode(bufferReagentBarcode);
-        try {
-            GregorianCalendar gregorianCalendar = new GregorianCalendar();
-            DatatypeFactory datatypeFactory = DatatypeFactory.newInstance();
-            XMLGregorianCalendar now =
-                    datatypeFactory.newXMLGregorianCalendar(gregorianCalendar);
-            bufferReagent.setExpiration(now);
-        } catch (DatatypeConfigurationException e) {
-            throw new RuntimeException(e);
-        }
+        bufferReagent.setExpiration(new Date());
         picoBufferAdditionJaxb.getReagent().add(bufferReagent);
         bettaLimsMessageTestFactory.addMessage(messageList, picoBufferAdditionJaxb);
 

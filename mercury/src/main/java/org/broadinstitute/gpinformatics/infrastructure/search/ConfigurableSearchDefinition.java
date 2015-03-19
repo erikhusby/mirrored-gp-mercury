@@ -62,7 +62,7 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
     /**
      * Allow an evaluator to expand entity list to be attached to search term.
      */
-    private TraversalEvaluator<List<?>> traversalEvaluator;
+    private Map<String, TraversalEvaluator> traversalEvaluators;
 
     /**
      * Produce named AddRowsListener instances for this search definition.
@@ -121,13 +121,27 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
         return requiredSearchTerms;
     }
 
-    public void setTraversalEvaluator(
-            TraversalEvaluator<List<?>> traversalEvaluator) {
-        this.traversalEvaluator = traversalEvaluator;
+    /**
+     * Allow an optional traversal evaluator to be attached to this search
+     * @param Id - The identifier representing this evaluator (presented as the UI identifier)
+     * @param traversalEvaluator
+     */
+    public void addTraversalEvaluator(String Id, TraversalEvaluator traversalEvaluator) {
+        if( traversalEvaluators == null ) {
+            traversalEvaluators = new LinkedHashMap<>();
+        } else {
+            if( traversalEvaluators.containsKey(Id) ) {
+                throw new RuntimeException("Duplicate TraversalEvaluator Id in ConfigurableSearchDefinition: " + Id);
+            }
+        }
+        this.traversalEvaluators.put(Id, traversalEvaluator);
     }
 
-    public TraversalEvaluator<List<?>> getTraversalEvaluator(){
-        return this.traversalEvaluator;
+    /**
+     * Obtain the TraversalEvaluator implementations
+     */
+    public Map<String,TraversalEvaluator> getTraversalEvaluators(){
+        return traversalEvaluators;
     }
 
 
@@ -160,20 +174,41 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
         private String superProperty;
 
         /**
-         * Name of the property in the subquery (DetachedCriteria)
+         * Name of the property in a subquery (DetachedCriteria)
          */
         private String subProperty;
 
         /**
+         * Optional alias for the property in a subquery if a collection is
+         *   projected from a subquery DetachedCriteria <br /><code>
+         * // e.g. LabVessel containers subquery
+         * DetachedCriteria tubeCriteria = DetachedCriteria
+         *    .forEntityName(LabVessel.class.getName() )
+         *    .createAlias( "containers", "container" ) // LabVessel.containers property is aliased as "container"
+         *    .setProjection(Projections.property("container.labVesselId"));  // subProperty using aliased name (default is "this")
+         * criterion = Restrictions.eq("label", ... ); // propertyName from SearchTerm.CriteriaPath
+         * tubeCriteria.add(criterion);
+         </code>
+         */
+        private String subPropertyAlias;
+
+        /**
          * The sub entity for which to create a DetachedCriteria
          */
-        private String entityName;
+        private Class subEntityClass;
 
-        public CriteriaProjection(String criteriaName, String superProperty, String subProperty, String entityName) {
+        public CriteriaProjection(String criteriaName, String superProperty, String subProperty
+                , String subPropertyAlias, Class subEntityClass) {
+            this.subPropertyAlias = subPropertyAlias;
             this.criteriaName = criteriaName;
             this.superProperty = superProperty;
-            this.entityName = entityName;
             this.subProperty = subProperty;
+            this.subEntityClass = subEntityClass;
+        }
+
+        public CriteriaProjection(String criteriaName, String superProperty, String subProperty
+                , Class subEntityClass) {
+            this( criteriaName, superProperty, subProperty, null, subEntityClass);
         }
 
         public String getCriteriaName() {
@@ -187,8 +222,8 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
             return superProperty;
         }
 
-        public String getEntityName() {
-            return entityName;
+        public Class getSubEntityClass() {
+            return subEntityClass;
         }
 
         public String getSubProperty() {
@@ -197,7 +232,13 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
             }
             return subProperty;
         }
+
+        public String getSubPropertyAlias(){
+            return subPropertyAlias;
+        }
     }
+
+
 
     private void buildNameMap() {
         if (this.mapGroupSearchTerms != null) {
@@ -245,15 +286,6 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
             }
         }
         return mapCriteriaToProjection.get(criteriaName);
-    }
-
-    /**
-     * Attached to a ConfigurableSearchDefinition to expand list of entity identifiers
-     *    to include ancestors, descendants, or both.
-     * @param <T>
-     */
-    public abstract static class TraversalEvaluator <T> {
-        public abstract T evaluate(List<?> rootEntities, boolean doAncestorTraversal, boolean doDescendantTraversal);
     }
 
     /**

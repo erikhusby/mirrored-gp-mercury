@@ -119,14 +119,18 @@ public class ManifestRecord implements Updatable {
         // This is constructed lazily as it can't be built within the no-arg constructor since the 'metadata' field
         // upon which it depends will not have been initialized.
         if (metadataMap == null) {
-            metadataMap = Maps.uniqueIndex(getMetadata(), new Function<Metadata, Metadata.Key>() {
-                @Override
-                public Metadata.Key apply(Metadata metadata) {
-                    return metadata.getKey();
-                }
-            });
+            updateMetadataMap();
         }
         return metadataMap;
+    }
+
+    private void updateMetadataMap() {
+        metadataMap = Maps.uniqueIndex(getMetadata(), new Function<Metadata, Metadata.Key>() {
+            @Override
+            public Metadata.Key apply(Metadata metadata) {
+                return metadata.getKey();
+            }
+        });
     }
 
     public Set<Metadata> getMetadata() {
@@ -143,6 +147,17 @@ public class ManifestRecord implements Updatable {
             return metadata.getValue();
         }
         return null;
+    }
+
+    public void addMetadata(Metadata.Key key, String value) {
+        Metadata metadata = getMetadataByKey(key);
+
+        if (metadata != null) {
+            throw new InformaticsServiceException(key.getDisplayName() +
+                                                  " is already set for the record " + toString());
+        }
+        this.metadata.add(new Metadata(key, value));
+        updateMetadataMap();
     }
 
     public Status getStatus() {
@@ -182,21 +197,24 @@ public class ManifestRecord implements Updatable {
         return false;
     }
 
+    @Override
     public UpdateData getUpdateData() {
         return updateData;
     }
 
     /**
      * Scan the sample corresponding to this ManifestRecord as part of accessioning.
+     * @param key
+     * @param value
      */
-    public void accessionScan() {
+    public void accessionScan(Metadata.Key key, String value) {
         if (isQuarantined()) {
             throw new InformaticsServiceException(
-                    ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage(Metadata.Key.SAMPLE_ID, getSampleId()));
+                    ErrorStatus.DUPLICATE_SAMPLE_ID.formatMessage(key, value));
         }
         if (status == Status.SCANNED) {
             throw new InformaticsServiceException(
-                    ErrorStatus.DUPLICATE_SAMPLE_SCAN.formatMessage(Metadata.Key.SAMPLE_ID, getSampleId()));
+                    ErrorStatus.DUPLICATE_SAMPLE_SCAN.formatMessage(key, value));
         }
 
         status = Status.SCANNED;
@@ -370,7 +388,7 @@ public class ManifestRecord implements Updatable {
          * This cannot directly apply to an actual record.  Represents a sample tube that is
          * received for which there is no previously uploaded manifest record.
          */
-        NOT_IN_MANIFEST("The scanned source sample is not found in any manifest.", ManifestEvent.Severity.ERROR),
+        NOT_IN_MANIFEST("The scanned source sample is not found in this manifest.", ManifestEvent.Severity.ERROR),
         /**
          * Encapsulates the error message to indicate to the user that they have already scanned the tube
          */

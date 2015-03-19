@@ -3,10 +3,12 @@ package org.broadinstitute.gpinformatics.mercury.entity.run;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
+import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
@@ -18,7 +20,14 @@ import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.startsWith;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * Fixups to the SequencingRun entity.
@@ -29,13 +38,13 @@ public class SequencingRunFixupTest extends Arquillian {
     @Inject
     private IlluminaSequencingRunDao illuminaSequencingRunDao;
 
+    @Inject
+    private UserBean userBean;
+
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
-
-    @Inject
-    private UserBean userBean;
 
     @Test(enabled = false)
     public void fixupGplim2628() {
@@ -111,6 +120,94 @@ public class SequencingRunFixupTest extends Arquillian {
         }
         System.out.println("Changing run barcode on " + runName + " from " + sequencingRun.getRunBarcode() + " to " + correctedRunBarcode);
         sequencingRun.setRunBarcode(correctedRunBarcode);
+    }
+
+    @Test(enabled = false)
+    public void fixupRunDirectoryGplim3160() {
+        userBean.loginOSUser();
+        Collection<String> runNames = Arrays.asList(
+                "141031_SL-HCC_0483_AFCHAAVEADXX",
+                "141031_SL-HCC_0484_BFCHAB3DADXX",
+                "141031_SL-HCD_0319_AFCHAHFBADXX",
+                "141031_SL-HCD_0320_BFCHAHHWADXX",
+                "141031_SL-HDC_0518_AFCHAAYDADXX",
+                "141031_SL-HDC_0519_BFCHAAW2ADXX",
+                "141031_SL-HDE_0484_AHAAV9ADXX",
+                "141031_SL-HDE_0485_BHAAVAADXX",
+                "141031_SL-HDF_0532_AHAB6KADXX",
+                "141031_SL-HDF_0533_BHAB32ADXX",
+                "141031_SL-HDG_0469_AHAAY7ADXX",
+                "141031_SL-HDG_0470_BHAHW6ADXX",
+                "141031_SL-HDH_0502_AHAB3AADXX",
+                "141031_SL-HDH_0503_BHAAWCADXX"
+        );
+
+        List<IlluminaSequencingRun> runs = illuminaSequencingRunDao
+                .findListByList(IlluminaSequencingRun.class, IlluminaSequencingRun_.runName, runNames);
+
+        // The DAO is not touched within this loop, so any exceptions will cause all changes to be rolled back.
+        for (IlluminaSequencingRun run : runs) {
+            String originalRunDirectory = run.getRunDirectory();
+            assertThat(originalRunDirectory, startsWith("/crsp/illumina/"));
+
+            String modifiedRunDirectory = originalRunDirectory.replaceFirst("/crsp/illumina/", "/crsp/qa/illumina/");
+            assertThat(modifiedRunDirectory, startsWith("/crsp/qa/illumina/"));
+            assertThat(modifiedRunDirectory.length(), equalTo(run.getRunDirectory().length() + "/qa".length()));
+
+            run.setRunDirectory(modifiedRunDirectory);
+
+            System.out.println(String.format("Updated run directory for sequencing run named %s from %s to %s",
+                    run.getRunName(), originalRunDirectory, modifiedRunDirectory));
+        }
+
+        illuminaSequencingRunDao.flush();
+        System.out.println("Updates flushed to database.");
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim3224() {
+        userBean.loginOSUser();
+        String[] runNames = {"141031_SL-HDG_0469_AHAAY7ADXX",
+                "141031_SL-HDF_0533_BHAB32ADXX",
+                "141031_SL-HDF_0532_AHAB6KADXX",
+                "141031_SL-HDE_0485_BHAAVAADXX",
+                "141031_SL-HDE_0484_AHAAV9ADXX",
+                "141031_SL-HDC_0519_BFCHAAW2ADXX",
+                "141031_SL-HDC_0518_AFCHAAYDADXX",
+                "141031_SL-HCD_0320_BFCHAHHWADXX",
+                "141031_SL-HCD_0319_AFCHAHFBADXX",
+                "141031_SL-HCC_0484_BFCHAB3DADXX",
+                "141031_SL-HCC_0483_AFCHAAVEADXX",
+                "141031_SL-HDH_0503_BHAAWCADXX",
+                "141031_SL-HDH_0502_AHAB3AADXX",
+                "141031_SL-HDG_0470_BHAHW6ADXX"};
+        for (String runName : runNames) {
+            IlluminaSequencingRun illuminaSequencingRun = illuminaSequencingRunDao.findByRunName(runName);
+            if (illuminaSequencingRun == null) {
+                throw new RuntimeException("Failed to find " + runName);
+            }
+            System.out.println("Updating " + runName);
+            illuminaSequencingRun.setRunDirectory(illuminaSequencingRun.getRunDirectory().replace(
+                    "/crsp/qa/illumina", "/crsp/illumina"));
+        }
+        illuminaSequencingRunDao.persist(new FixupCommentary("GPLIM-3224 Fixup CRSP QA run folder"));
+        illuminaSequencingRunDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void gplim3376FixupFlowcellBarcode() {
+        userBean.loginOSUser();
+        // Change lab_vessel 1946416 flowcell_barcode to HGKJCADXX and flowcell_type to HiSeq2500Flowcell
+        IlluminaFlowcell flowcell = illuminaSequencingRunDao.findById(IlluminaFlowcell.class, 1946416L);
+        Assert.assertNotNull(flowcell);
+        flowcell.setFlowcellBarcode("HGKJCADXX");
+        flowcell.setFlowcellType(IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell);
+
+        System.out.println("Updated flowcell " + flowcell.getLabVesselId() +
+                           " barcode to " + flowcell.getCartridgeBarcode() +
+                           " and type to " + flowcell.getFlowcellType());
+        illuminaSequencingRunDao.persist(new FixupCommentary("GPLIM-3376 fixup barcode and flowcell type."));
+        illuminaSequencingRunDao.flush();
     }
 
 }

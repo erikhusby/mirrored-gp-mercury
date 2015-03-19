@@ -12,6 +12,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
+import java.util.Collection;
 
 /**
  * Web service resource used to invoke ETL methods.
@@ -133,9 +134,11 @@ public class ExtractTransformResource {
         Long id = null;
         String type = null;
 
+        Collection<EventFactDto> dtos = extractTransform.analyzeEvent(labEventId);
+
         // Supresses the "molecularIndex" column if no indexes are given.
         boolean showMolecularBarcodes = false;
-        for (EventFactDto dto : extractTransform.analyzeEvent(labEventId)) {
+        for (EventFactDto dto : dtos) {
             id = (dto.getLabEvent() != null) ? dto.getLabEvent().getLabEventId() : null;
             type = (dto.getLabEvent() != null ? dto.getLabEvent().getLabEventType().toString() : null);
             if (!StringUtils.isBlank(dto.getSampleInstanceIndexes())) {
@@ -172,7 +175,7 @@ public class ExtractTransformResource {
         );
 
         // Outputs a table row for each dto.
-        for (EventFactDto dto : extractTransform.analyzeEvent(labEventId)) {
+        for (EventFactDto dto : dtos) {
             sb.append(showMolecularBarcodes ?
                     formatRow(String.valueOf(dto.canEtl()),
                             dto.getLabVessel() != null ? dto.getLabVessel().getLabel() : "null",

@@ -504,6 +504,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
                     collaborationQuoteId, sampleKitRecipient, collaborationMessage);
             addMessage("Collaboration created successfully");
         } catch (Exception e) {
+            log.error(BEGIN_COLLABORATION_ACTION, e);
             addGlobalValidationError("Could not begin the Collaboration: {2}", e.getMessage());
         }
 

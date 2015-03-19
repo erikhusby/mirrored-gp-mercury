@@ -135,10 +135,11 @@ buttons to move columns from one to the other --%>
             <td>&nbsp;</td>
             <td><label>Chosen</label></td>
             <td>&nbsp;</td>
+        <c:if test="${actionBean.configurableSearchDef.traversalEvaluators != null}">
             <td style="padding-left: 20px">
-                <c:if test="${actionBean.configurableSearchDef.traversalEvaluator != null}">
-                <label>Result Row Retrieval Options <img id="traversalOptionTooltip" src="${ctxpath}/images/help.png" alt="help"></label>
-                </c:if>&nbsp;</td>
+            <label><img id="traversalOptionTooltip" src="${ctxpath}/images/help.png" alt="help">&nbsp;&nbsp;Expand Search Results to Include: </label>
+            &nbsp;</td>
+        </c:if>
         </tr>
         <tr>
             <td rowspan="2" style="padding-left: 5px">
@@ -180,10 +181,11 @@ buttons to move columns from one to the other --%>
                 </a>
             </td>
             <td rowspan="2" style="padding-left: 30px;vertical-align: top">
-                <c:if test="${actionBean.configurableSearchDef.traversalEvaluator != null}">
-                <stripes:checkbox id="ancestorOptionEnabled"   name="searchInstance.ancestorOptionEnabled"   checked="${actionBean.searchInstance.ancestorOptionEnabled}"   /> Traverse Ancestors<br />
-                <stripes:checkbox id="descendantOptionEnabled" name="searchInstance.descendantOptionEnabled" checked="${actionBean.searchInstance.descendantOptionEnabled}" /> Traverse Descendants
-                </c:if>&nbsp;
+                <c:if test="${actionBean.configurableSearchDef.traversalEvaluators != null}">
+                <c:forEach items="${actionBean.configurableSearchDef.traversalEvaluators}" var="traversalMapEntry">
+                    <stripes:checkbox id="${traversalMapEntry.key}" name="searchInstance.traversalEvaluatorValues['${traversalMapEntry.key}']" checked="${searchInstance.traversalEvaluatorValues[traversalMapEntry.key]}" /> ${traversalMapEntry.value.label}<br />
+                </c:forEach>
+                </c:if>
             </td>
         </tr>
         <tr>
