@@ -9,7 +9,6 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -84,9 +83,9 @@ public class ReagentSearchTest extends ContainerTest {
         reagentNames.add("ETOH70");
 
         String error = "Expected reagent not found in search";
-        Assert.assertTrue( reagentNames.contains( resultList.getResultRows().get(0).getRenderableCells().get(0) ), error );
-        Assert.assertTrue( reagentNames.contains( resultList.getResultRows().get(1).getRenderableCells().get(0) ), error );
-        Assert.assertTrue( reagentNames.contains( resultList.getResultRows().get(2).getRenderableCells().get(0) ), error );
+        Assert.assertTrue(reagentNames.contains(resultList.getResultRows().get(0).getRenderableCells().get(0)), error);
+        Assert.assertTrue(reagentNames.contains(resultList.getResultRows().get(1).getRenderableCells().get(0)), error);
+        Assert.assertTrue(reagentNames.contains(resultList.getResultRows().get(2).getRenderableCells().get(0)), error);
     }
 
     /**
