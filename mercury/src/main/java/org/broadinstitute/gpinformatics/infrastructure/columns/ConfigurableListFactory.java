@@ -321,6 +321,7 @@ public class ConfigurableListFactory {
         }
         columnTabulations.addAll(searchInstance.findTopLevelColumnTabulations());
 
+        // todo jmt shouldn't be newing DAO
         PaginationDao.Pagination pagination = new PaginationDao.Pagination( configurableSearchDef.getPageSize() );
 
         configurableSearchDao.startPagination(pagination, criteria, searchInstance, configurableSearchDef );

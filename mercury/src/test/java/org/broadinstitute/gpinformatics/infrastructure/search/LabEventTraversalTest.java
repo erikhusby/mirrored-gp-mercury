@@ -30,6 +30,7 @@ public class LabEventTraversalTest extends ContainerTest {
         searchInstance.getTraversalEvaluatorValues().put("descendantOptionEnabled", Boolean.TRUE );
         SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("LCSET", configurableSearchDefinition);
         searchValue.setOperator(SearchInstance.Operator.EQUALS);
+        // todo jmt change to an ICE LCSET
         searchValue.setValues(Collections.singletonList("LCSET-5102"));
 
         searchValue = searchInstance.addTopLevelTerm("EventDate", configurableSearchDefinition);
@@ -39,6 +40,7 @@ public class LabEventTraversalTest extends ContainerTest {
         searchValue.setValues(dateVals);
 
         searchInstance.getPredefinedViewColumns().add("LabEventId");
+        searchInstance.getPredefinedViewColumns().add("EventType");
 
         searchInstance.establishRelationships(configurableSearchDefinition);
 

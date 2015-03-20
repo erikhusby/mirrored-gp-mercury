@@ -474,9 +474,8 @@ public class LabEventSearchDefinition {
         criteriaPaths = new ArrayList<>();
         criteriaPath = new SearchTerm.CriteriaPath();
 
-        criteriaPath.setCriteria(
-                Arrays.asList(/* LabEvent*/ "inPlaceLabEvents", /* LabVessel */ "bucketEntries", /* BucketEntry */
-                        "labBatch" /* LabBatch */));
+        criteriaPath.setCriteria(Arrays.asList(/* LabEvent*/ "inPlaceLabEvents", /* LabVessel */ "labBatches",
+                /* LabBatchStartingVessel */ "labBatch" /* LabBatch */));
         criteriaPath.setPropertyName("batchName");
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
@@ -493,6 +492,7 @@ public class LabEventSearchDefinition {
                 if (lcSetNames.isEmpty()) {
                     LabVessel labVessel = labEvent.getInPlaceLabVessel();
                     if (labVessel != null) {
+                        // todo jmt change bucketEntry usage
                         if( labVessel.getContainerRole() != null ) {
                             for( LabVessel containedVessel : labVessel.getContainerRole().getContainedVessels() ) {
                                 for( BucketEntry bucketEntry : containedVessel.getBucketEntries() ) {

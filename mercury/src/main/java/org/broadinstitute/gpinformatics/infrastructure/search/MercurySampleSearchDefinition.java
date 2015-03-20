@@ -79,6 +79,7 @@ public class MercurySampleSearchDefinition {
         searchTerm.setValueConversionExpression(SearchDefinitionFactory.getLcsetInputConverter());
         criteriaPaths = new ArrayList<>();
         criteriaPath = new SearchTerm.CriteriaPath();
+        // todo jmt fix
         criteriaPath.setCriteria(Arrays.asList("SampleBucketEntries", "labVessel", "bucketEntries", "labBatch"));
         criteriaPath.setPropertyName("batchName");
         criteriaPaths.add(criteriaPath);
