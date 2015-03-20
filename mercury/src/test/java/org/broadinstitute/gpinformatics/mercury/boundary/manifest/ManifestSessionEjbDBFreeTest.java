@@ -1472,7 +1472,7 @@ public class ManifestSessionEjbDBFreeTest {
         }
     }
 
-    public ManifestSession createManifestSessionWithMetadata(Map<Metadata.Key, String> metadata) {
+    private ManifestSession createManifestSessionWithMetadata(Map<Metadata.Key, String> metadata) {
         Sample sample = ClinicalSampleTestFactory.createSample(metadata);
 
         return manifestSessionEjb
