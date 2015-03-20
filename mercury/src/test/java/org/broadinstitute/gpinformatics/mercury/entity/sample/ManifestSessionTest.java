@@ -15,13 +15,13 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestStatusErrorMatcher.hasError;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.not;
@@ -195,7 +195,8 @@ public class ManifestSessionTest {
 
     private static void addRecord(ManifestSession session, ManifestRecord.ErrorStatus errorStatus,
                                   ManifestRecord.Status status) {
-        ManifestTestFactory.addRecord(session, errorStatus, status, ImmutableMap.<Metadata.Key, String>of());
+        ManifestTestFactory.addRecord(session, errorStatus, status, ImmutableMap.<Metadata.Key, String>of(),
+                EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
     }
 
     public void testValidationForUnscannedAndDuplicates() {
@@ -272,7 +273,7 @@ public class ManifestSessionTest {
 
         ManifestTestFactory
                 .addRecord(session, ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
-                        ImmutableMap.of(Metadata.Key.SAMPLE_ID, value));
+                        ImmutableMap.of(Metadata.Key.SAMPLE_ID, value), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
     }
 
     private void setManifestRecordStatus(ManifestRecord.Status status) {

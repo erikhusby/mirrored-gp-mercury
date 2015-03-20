@@ -221,6 +221,11 @@
             <column name="FROM_SAMPLE_KIT" type="number(1,0)" defaultValue="0" />
         </addColumn>
     </changeSet>
+    <changeSet id="GPLIM-3314-1" author="jsacco">
+        <createIndex tableName="LAB_METRIC" indexName="IX_LAB_METRIC_VESSEL">
+            <column name="LAB_VESSEL"/>
+        </createIndex>
+    </changeSet>
 
     <changeSet author="jowalsh" id="GPLIM-2619-1">
         <addColumn tableName="LAB_BATCH" schemaName="mercury">
@@ -232,6 +237,22 @@
         <addColumn tableName="LAB_BATCH_AUD" schemaName="mercury">
             <column name="FLOWCELL_TYPE" type="varchar(255)" />
         </addColumn>
+    </changeSet>
+    
+    <changeSet author="scottmat" id="GPLIM-2731_drop_labevent_PDO_id">
+        <preConditions>
+            <columnExists tableName="LAB_EVENT" columnName="PRODUCT_ORDER_ID" schemaName="mercury" />
+        </preConditions>
+
+        <dropColumn tableName="LAB_EVENT" columnName="PRODUCT_ORDER_ID" schemaName="mercury" />
+    </changeSet> 
+
+    <changeSet author="scottmat" id="GPLIM-2731_drop_labevent_aud_PDO_id">
+        <preConditions>
+            <columnExists tableName="LAB_EVENT_AUD" columnName="PRODUCT_ORDER_ID" schemaName="mercury" />
+        </preConditions>
+
+        <dropColumn tableName="LAB_EVENT_AUD" columnName="PRODUCT_ORDER_ID" schemaName="mercury" />
     </changeSet>
 
 </databaseChangeLog>

@@ -44,7 +44,7 @@ public class ClinicalSampleTestFactory {
         for (int i = 1; i <= count; i++) {
             samples.add(createSample(ImmutableMap
                     .of(Metadata.Key.SAMPLE_ID, "SM-" + i, Metadata.Key.PATIENT_ID,
-                            RandomStringUtils.randomAlphanumeric(8))));
+                            RandomStringUtils.randomAlphanumeric(8), Metadata.Key.PERCENT_TUMOR, "")));
         }
         return samples;
     }

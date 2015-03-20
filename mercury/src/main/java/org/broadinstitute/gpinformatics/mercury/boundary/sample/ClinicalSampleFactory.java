@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.SampleData;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
@@ -27,13 +28,14 @@ public class ClinicalSampleFactory {
     /**
      * Convert a Sample's SampleData to Mercury Metadata.
      */
-    public static Metadata[] toMercuryMetadata(Sample sample) {
-        Metadata[] mercuryMetadata = new Metadata[sample.getSampleData().size()];
-        for (int i = 0; i < sample.getSampleData().size(); i++) {
-            SampleData sampleData = sample.getSampleData().get(i);
-            Metadata.Key metadataKey = Metadata.Key.valueOf(sampleData.getName());
-            Metadata mercuryMetadataItem = new Metadata(metadataKey, sampleData.getValue());
-            mercuryMetadata[i] = mercuryMetadataItem;
+    public static List<Metadata> toMercuryMetadata(Sample sample) {
+        List<Metadata> mercuryMetadata = new ArrayList<>(sample.getSampleData().size());
+        for (SampleData sampleData : sample.getSampleData()) {
+            if(StringUtils.isNotEmpty(sampleData.getValue())) {
+                Metadata.Key metadataKey = Metadata.Key.valueOf(sampleData.getName());
+                Metadata mercuryMetadataItem = new Metadata(metadataKey, sampleData.getValue());
+                mercuryMetadata.add(mercuryMetadataItem);
+            }
         }
 
         return mercuryMetadata;
@@ -43,9 +45,10 @@ public class ClinicalSampleFactory {
      * Convert a collection of Samples to ManifestRecords.
      */
     public static Collection<ManifestRecord> toManifestRecords(Collection<Sample> samples) {
-        List<ManifestRecord> manifestRecords = new ArrayList<>();
+        List<ManifestRecord> manifestRecords = new ArrayList<>(samples.size());
         for (Sample sample : samples) {
-            manifestRecords.add(new ManifestRecord(toMercuryMetadata(sample)));
+            List<Metadata> metadata = toMercuryMetadata(sample);
+            manifestRecords.add(new ManifestRecord(metadata.toArray(new Metadata[metadata.size()])));
         }
         return manifestRecords;
     }

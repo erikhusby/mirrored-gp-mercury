@@ -695,9 +695,13 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (!hasErrors()) {
             doOnRiskUpdate();
         }
-        validateRegulatoryInformation(action);
+        if (!hasErrors()) {
+            validateRegulatoryInformation(action);
+        }
 
-        updateFromInitiationTokenInputs();
+        if (!hasErrors()) {
+            updateFromInitiationTokenInputs();
+        }
     }
 
     @ValidationMethod(on = {"startBilling", "downloadBillingTracker"})
@@ -1135,9 +1139,10 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent(VALIDATE_ORDER)
     public Resolution validate() {
         validatePlacedOrder("validate");
-        if (!hasErrors()) {
-            addMessage("Draft Order is valid and ready to be placed");
+        if (hasErrors()) {
+            return new ForwardResolution(this.getClass(), EDIT_ACTION);
         }
+        addMessage("Draft Order is valid and ready to be placed");
 
         // entryInit() must be called explicitly here since it does not run automatically with source page resolution
         // and the ProductOrderListEntry that provides billing data would otherwise be null.
