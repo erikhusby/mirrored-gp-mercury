@@ -105,7 +105,7 @@ public class ClinicalResource {
                 throw new IllegalArgumentException(SAMPLE_CONTAINS_NO_METADATA);
             }
             for (SampleData sampleData : sample.getSampleData()) {
-                if (StringUtils.isNotBlank(sampleData.getValue())) {
+                if (StringUtils.isNotEmpty(sampleData.getValue())) {
                     metadataCount++;
                 }
             }
