@@ -28,6 +28,7 @@ import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -90,6 +91,21 @@ public class ClinicalResourceTest extends RestServiceContainerTest {
         assertThat(manifestSession.getRecords().size(), equalTo(1));
         ManifestRecord manifestRecord = manifestSession.getRecords().iterator().next();
         assertThat(manifestRecord.getValueByKey(Metadata.Key.BROAD_SAMPLE_ID), equalTo(sampleId));
+    }
+
+    public void testCreateManifestWithSamplesHavingEmptyMetadataValues() throws Exception {
+        String sampleId = "";
+        ClinicalResourceBean clinicalResourceBean =
+                ClinicalSampleTestFactory
+                        .createClinicalResourceBean(QA_DUDE_PM, MANIFEST_NAME, EXISTING_RESEARCH_PROJECT_KEY,
+                                Boolean.TRUE, ImmutableMap.of(Metadata.Key.BROAD_SAMPLE_ID, sampleId));
+        try {
+            clinicalResource.createManifestWithSamples(clinicalResourceBean);
+            Assert.fail();
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getLocalizedMessage(), is(ClinicalResource.SAMPLE_CONTAINS_NO_METADATA));
+        }
+
     }
 
     @Override
