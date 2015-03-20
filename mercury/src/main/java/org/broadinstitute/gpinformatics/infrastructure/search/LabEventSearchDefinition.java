@@ -830,6 +830,10 @@ public class LabEventSearchDefinition {
         LabVessel rack = null;
         if( labEvent.getSectionTransfers().iterator().hasNext() ) {
             rack = labEvent.getSectionTransfers().iterator().next().getAncillaryTargetVessel();
+        } else if ( labEvent.getCherryPickTransfers().iterator().hasNext() ) {
+            rack = labEvent.getCherryPickTransfers().iterator().next().getAncillaryTargetVessel();
+        } else if ( labEvent.getVesselToSectionTransfers().iterator().hasNext() ) {
+            rack = labEvent.getVesselToSectionTransfers().iterator().next().getAncillaryTargetVessel();
         }
         if( rack != null ) {
             results.add(rack.getLabel());
