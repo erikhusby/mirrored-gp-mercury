@@ -1458,36 +1458,22 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(manifestSession.getRecords().size(), is(2));
     }
 
-    public void testAddSamplesWitNullMetadataToManifestSession() throws Exception {
-        stubResearchProjectDaoFindReturnsNewObject();
 
-        Map<Metadata.Key, String> metadata = new HashMap<Metadata.Key, String>() {{
-                put(Metadata.Key.PERCENT_TUMOR, null);
-        }};
-        ManifestSession manifestSession = createManifestSessionWithMetadata(metadata);
-
-        assertThat(manifestSession.getRecords().size(), is(1));
-        for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
-            assertThat(manifestRecord.getMetadata(), emptyCollectionOf(Metadata.class));
-        }
+    @DataProvider(name = "metaDataProvider")
+    public static Object[][] metaDataProvider() {
+        return new Object[][]{
+                {new HashMap<Metadata.Key, String>() {{ put(Metadata.Key.PERCENT_TUMOR, ""); }}},
+                {new HashMap<Metadata.Key, String>() {{ put(Metadata.Key.PERCENT_TUMOR, null); }}}
+        };
     }
 
-    private ManifestSession createManifestSessionWithMetadata(Map<Metadata.Key, String> metadata) {
+    @Test(dataProvider = "metaDataProvider")
+    public void testAddSampleWithProvidedMetadataToManifestSession(final Map<Metadata.Key, String> metadata)
+            throws Exception {
+        stubResearchProjectDaoFindReturnsNewObject();
         Sample sample = ClinicalSampleTestFactory.createSample(metadata);
-
-        return manifestSessionEjb
-                .createManifestSession(TEST_RESEARCH_PROJECT_KEY, TEST_SESSION_NAME, true,
-                        Collections.singletonList(sample));
-    }
-
-    public void testAddSamplesWitEmptyMetadataToManifestSession() throws Exception {
-        stubResearchProjectDaoFindReturnsNewObject();
-
-        Map<Metadata.Key, String> metadata = new HashMap<Metadata.Key, String>() {{
-                put(Metadata.Key.PERCENT_TUMOR, "");
-        }};
-        ManifestSession manifestSession = createManifestSessionWithMetadata(metadata);
-
+        ManifestSession manifestSession = manifestSessionEjb.createManifestSession(
+                TEST_RESEARCH_PROJECT_KEY, TEST_SESSION_NAME, true, Collections.singletonList(sample));
         assertThat(manifestSession.getRecords().size(), is(1));
         for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
             assertThat(manifestRecord.getMetadata(), emptyCollectionOf(Metadata.class));
