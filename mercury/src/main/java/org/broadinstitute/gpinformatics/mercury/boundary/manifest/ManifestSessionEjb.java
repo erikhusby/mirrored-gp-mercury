@@ -350,7 +350,6 @@ public class ManifestSessionEjb {
             ManifestSession manifestSession =
                     new ManifestSession(researchProject, sessionName, userBean.getBspUser(), fromSampleKit,
                             manifestRecords);
-            manifestSessionDao.persist(manifestSession);
             return manifestSession;
         } catch (RuntimeException e) {
             throw new InformaticsServiceException(e);

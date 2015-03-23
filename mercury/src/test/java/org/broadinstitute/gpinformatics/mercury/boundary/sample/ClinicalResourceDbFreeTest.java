@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.UnknownUserException;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.ClinicalResourceBean;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.mockito.Mockito;
@@ -18,6 +19,8 @@ import org.testng.annotations.Test;
 import javax.xml.bind.JAXBException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.endsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -188,6 +191,23 @@ public class ClinicalResourceDbFreeTest {
             Assert.fail();
         } catch (IllegalArgumentException e) {
             assertThat(e.getMessage(), endsWith(ClinicalResource.SAMPLE_IS_NULL));
+        }
+    }
+
+    public void testAddSampleToManifestNullMetadataValue() throws Exception {
+        stubValidLogin();
+
+        try {
+            Map<Metadata.Key, String> metadata = new HashMap<Metadata.Key, String>() {{
+                    put(Metadata.Key.PERCENT_TUMOR, null);
+            }};
+            Sample sample = ClinicalSampleTestFactory.createSample(metadata);
+            ClinicalResourceBean clinicalResourceBean = ClinicalSampleTestFactory
+                    .createClinicalResourceBean(TEST_USER, MANIFEST_NAME, RP_1, true, Collections.singletonList(sample));
+            clinicalResource.createManifestWithSamples(clinicalResourceBean);
+            Assert.fail();
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage(), endsWith(ClinicalResource.SAMPLE_CONTAINS_NO_METADATA));
         }
     }
 
