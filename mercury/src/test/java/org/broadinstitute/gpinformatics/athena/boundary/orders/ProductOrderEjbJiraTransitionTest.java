@@ -1,10 +1,16 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -15,6 +21,10 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
@@ -22,7 +32,9 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 @Test(groups = TestGroups.ALTERNATIVES)
 public class ProductOrderEjbJiraTransitionTest extends Arquillian {
 
-    private static final String PDO = "PDO-4458";
+    private String PDO;
+    private static final String OLD_PDO = "PDO-4458";
+
 
     private static final ProductOrderEjb.JiraTransition TARGET_STATE = ProductOrderEjb.JiraTransition.OPEN;
 
@@ -31,6 +43,12 @@ public class ProductOrderEjbJiraTransitionTest extends Arquillian {
 
     @Inject
     private ProductOrderEjb productOrderEjb;
+
+    @Inject
+    private ProductOrderDao productOrderDao;
+
+    @Inject
+    UserBean userBean;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -52,6 +70,39 @@ public class ProductOrderEjbJiraTransitionTest extends Arquillian {
 
 
     private void resetJiraTicketState() throws IOException {
+
+        userBean.login("scottmat");
+
+        ProductOrder oldProductOrder = productOrderDao.findByBusinessKey(OLD_PDO);
+
+        List<ProductOrderSample> newOrderSamples = new ArrayList<>();
+
+        for(ProductOrderSample oldSample:oldProductOrder.getSamples()) {
+            ProductOrderSample sample = new ProductOrderSample(oldSample.getName());
+            sample.setMetadataSource(oldSample.getMetadataSource());
+            newOrderSamples.add(sample);
+        }
+
+        ProductOrder newProductOrder = new ProductOrder(userBean.getBspUser().getUserId(), oldProductOrder.getTitle() + (new Date()).getTime(),
+                newOrderSamples,oldProductOrder.getQuoteId(), oldProductOrder.getProduct(),
+                oldProductOrder.getResearchProject());
+
+        newProductOrder.setSkipRegulatoryReason("JustBecause");
+
+
+        newProductOrder.setAttestationConfirmed(true);
+        try {
+            productOrderEjb.persistProductOrder(ProductOrder.SaveType.CREATING,newProductOrder,
+                    Collections.<String>emptyList(), Collections.<ProductOrderKitDetail>emptyList());
+        } catch (QuoteNotFoundException e) {
+            Assert.fail();
+        }
+        MessageCollection justToGetBy = new MessageCollection();
+        productOrderEjb.placeProductOrder(newProductOrder.getProductOrderId(), newProductOrder.getBusinessKey(),
+                justToGetBy);
+
+        PDO = newProductOrder.getBusinessKey();
+
         productOrderEjb.transitionJiraTicket(PDO, null,ProductOrderEjb.JiraTransition.DEVELOPER_EDIT, "testing");
         productOrderEjb.transitionJiraTicket(PDO, null,TARGET_STATE, "testing");
         Assert.assertEquals(getJiraTicketState(),TARGET_STATE.getStateName(),"Could not reset state of ticket " + PDO + " to " + TARGET_STATE + ".  Maybe the" +
@@ -61,8 +112,4 @@ public class ProductOrderEjbJiraTransitionTest extends Arquillian {
     private String getJiraTicketState() throws IOException{
         return (String)((Map)jiraService.getIssue(PDO).getField("Status")).get("name");
     }
-
-
-
-
 }
