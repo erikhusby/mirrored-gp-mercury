@@ -40,4 +40,9 @@ public class HappyQuoteServiceMock implements QuoteService {
         q.setQuoteFunding(funding);
         return q;
     }
+
+    @Override
+    public Quote getQuoteWithPriceItems(String alphaId) throws QuoteServerException, QuoteNotFoundException {
+        return getQuoteByAlphaId(alphaId);
+    }
 }

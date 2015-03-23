@@ -60,5 +60,10 @@ public class QuoteServiceStub implements QuoteService {
         return quote;
     }
 
+    @Override
+    public Quote getQuoteWithPriceItems(String alphaId) throws QuoteServerException, QuoteNotFoundException {
+        return getQuoteByAlphaId(alphaId);
+    }
+
 
 }

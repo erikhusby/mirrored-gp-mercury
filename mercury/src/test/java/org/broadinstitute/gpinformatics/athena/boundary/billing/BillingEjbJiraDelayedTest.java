@@ -138,6 +138,7 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
                 }
                 log.info("Woke up from quote call");
             } catch (InterruptedException e) {
+                // do nothing with this error.
             }
 
             return workId;
@@ -146,6 +147,11 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
         @Override
         public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
             throw new NotImplementedException();
+        }
+
+        @Override
+        public Quote getQuoteWithPriceItems(String alphaId) throws QuoteServerException, QuoteNotFoundException {
+            return getQuoteByAlphaId(alphaId);
         }
     }
 
@@ -160,8 +166,8 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
      * <li>Persist all of this data, outside of a transaction, flush and clear the entity manager.</li>
      * </ul>
      *
-     * @param billingSessionDao1
-     * @param orderSamples
+     * @param billingSessionDao1 A dao for the session
+     * @param orderSamples The samples
      */
     public static BillingSession writeFixtureDataOneSamplePerProductOrder(BillingSessionDao billingSessionDao1,
                                                                    String... orderSamples) {

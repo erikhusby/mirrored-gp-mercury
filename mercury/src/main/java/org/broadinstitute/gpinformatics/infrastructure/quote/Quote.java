@@ -3,6 +3,9 @@ package org.broadinstitute.gpinformatics.infrastructure.quote;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 @XmlRootElement(name="Quote")
 public class Quote {
@@ -15,7 +18,7 @@ public class Quote {
     private String name;
     private QuoteFunding quoteFunding;
     private QuoteType quoteType;
-
+    private Collection<QuotePriceItem> priceItems;
 
     public Quote() {}
 
@@ -26,6 +29,7 @@ public class Quote {
         this.alphanumericId = alphanumericId;
         this.quoteFunding = quoteFunding;
         this.approvalStatus = approvalStatus;
+        this.priceItems = new ArrayList<>();
     }
 
     @XmlElement(name = "QuoteFunding")
@@ -35,6 +39,15 @@ public class Quote {
 
     public void setQuoteFunding(QuoteFunding quoteFunding) {
         this.quoteFunding = quoteFunding;
+    }
+
+    @XmlElement(name = "Item")
+    public Collection<QuotePriceItem> getPriceItems() {
+        return priceItems;
+    }
+
+    public void setQuoteFunding(Collection<QuotePriceItem> priceItems) {
+        this.priceItems = priceItems;
     }
 
     @XmlAttribute(name = "name")

@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
+import com.google.common.collect.HashMultimap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
@@ -122,6 +123,7 @@ public class BillingAdaptor implements Serializable {
                 throw new BillingException(BillingEjb.NO_ITEMS_TO_BILL_ERROR_TEXT);
             }
 
+            HashMultimap<String, String> quoteItemsByQuote = HashMultimap.create();
             for (QuoteImportItem item : unBilledQuoteImportItems) {
 
                 BillingEjb.BillingResult result = new BillingEjb.BillingResult(item);
@@ -133,17 +135,27 @@ public class BillingAdaptor implements Serializable {
                 QuotePriceItem quotePriceItem = QuotePriceItem.convertMercuryPriceItem(item.getPriceItem());
 
                 // Get the quote PriceItem that this is replacing, if it is a replacement.
-                QuotePriceItem quoteIsReplacing = item.getPrimaryForReplacement(priceListCache);
+                QuotePriceItem replacementPriceItem = item.getPrimaryForReplacement(priceListCache);
 
                 try {
-                    String workId = quoteService.registerNewWork(quote, quotePriceItem, quoteIsReplacing,
+                    // If this is a replacement, but the primary is not on the quote, use the replacement AS the primary.
+                    Collection<String> quoteItemNames = getQuoteItems(quoteItemsByQuote, item.getQuoteId());
+                    if (replacementPriceItem != null) {
+                        if (!quoteItemNames.contains(quotePriceItem.getName()) &&
+                                quoteItemNames.contains(replacementPriceItem.getName())) {
+                            quotePriceItem = replacementPriceItem;
+                            replacementPriceItem = null;
+                        }
+                    }
+
+                    String workId = quoteService.registerNewWork(quote, quotePriceItem, replacementPriceItem,
                                                                  item.getWorkCompleteDate(), item.getQuantity(),
                                                                  pageUrl, "billingSession", sessionKey);
 
                     result.setWorkId(workId);
                     Set<String> billedPdoKeys = getBilledPdoKeys(result);
                     logBilling(workId, item, quotePriceItem, billedPdoKeys);
-                    billingEjb.updateLedgerEntries(item, quoteIsReplacing, workId);
+                    billingEjb.updateLedgerEntries(item, replacementPriceItem, workId);
                 } catch (Exception ex) {
 
                     String errorMessage;
@@ -176,6 +188,17 @@ public class BillingAdaptor implements Serializable {
         }
 
         return results;
+    }
+
+    private Collection<String> getQuoteItems(HashMultimap<String, String> quoteItemsByQuote, String quoteId) throws Exception {
+        if (quoteItemsByQuote.containsKey(quoteId)) {
+            Quote quote = quoteService.getQuoteWithPriceItems(quoteId);
+            for (QuotePriceItem quotePriceItem : quote.getPriceItems()) {
+                quoteItemsByQuote.put(quoteId, quotePriceItem.getName());
+            }
+        }
+
+        return quoteItemsByQuote.get(quoteId);
     }
 
     void logBilling(String workId, QuoteImportItem quoteImportItem, QuotePriceItem quotePriceItem, Set<String> billedPdoKeys) {

@@ -41,4 +41,15 @@ public interface QuoteService extends Serializable {
      * @throws QuoteNotFoundException When the specified quote does not exist in the quote server.
      */
     public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException;
+
+    /**
+     * Get the quote for a particular quote identifier.
+     *
+     * @param alphaId The quote identifier.
+     *
+     * @return The quote representation.
+     * @throws QuoteServerException Quote server problems.
+     * @throws QuoteNotFoundException When the specified quote does not exist in the quote server.
+     */
+    public Quote getQuoteWithPriceItems(String alphaId) throws QuoteServerException, QuoteNotFoundException;
 }
