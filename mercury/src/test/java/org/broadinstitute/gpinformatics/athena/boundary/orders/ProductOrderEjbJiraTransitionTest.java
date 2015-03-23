@@ -35,7 +35,6 @@ public class ProductOrderEjbJiraTransitionTest extends Arquillian {
     private String PDO;
     private static final String OLD_PDO = "PDO-4458";
 
-
     private static final ProductOrderEjb.JiraTransition TARGET_STATE = ProductOrderEjb.JiraTransition.OPEN;
 
     @Inject
@@ -68,11 +67,21 @@ public class ProductOrderEjbJiraTransitionTest extends Arquillian {
         Assert.assertEquals(jiraService.getIssue(PDO).getResolution().toUpperCase(),ProductOrderEjb.JiraResolution.CANCELLED.toString().toUpperCase());
     }
 
-
     private void resetJiraTicketState() throws IOException {
 
         userBean.login("scottmat");
 
+        ProductOrder newProductOrder = initializeProductOrder();
+
+        PDO = newProductOrder.getBusinessKey();
+
+        productOrderEjb.transitionJiraTicket(PDO, null,ProductOrderEjb.JiraTransition.DEVELOPER_EDIT, "testing");
+        productOrderEjb.transitionJiraTicket(PDO, null,TARGET_STATE, "testing");
+        Assert.assertEquals(getJiraTicketState(),TARGET_STATE.getStateName(),"Could not reset state of ticket " + PDO + " to " + TARGET_STATE + ".  Maybe the" +
+                                                                             "workflow has changed?  Or the pdo ticket was updated out of band?");
+    }
+
+    private ProductOrder initializeProductOrder() throws IOException {
         ProductOrder oldProductOrder = productOrderDao.findByBusinessKey(OLD_PDO);
 
         List<ProductOrderSample> newOrderSamples = new ArrayList<>();
@@ -100,13 +109,7 @@ public class ProductOrderEjbJiraTransitionTest extends Arquillian {
         MessageCollection justToGetBy = new MessageCollection();
         productOrderEjb.placeProductOrder(newProductOrder.getProductOrderId(), newProductOrder.getBusinessKey(),
                 justToGetBy);
-
-        PDO = newProductOrder.getBusinessKey();
-
-        productOrderEjb.transitionJiraTicket(PDO, null,ProductOrderEjb.JiraTransition.DEVELOPER_EDIT, "testing");
-        productOrderEjb.transitionJiraTicket(PDO, null,TARGET_STATE, "testing");
-        Assert.assertEquals(getJiraTicketState(),TARGET_STATE.getStateName(),"Could not reset state of ticket " + PDO + " to " + TARGET_STATE + ".  Maybe the" +
-                                                                             "workflow has changed?  Or the pdo ticket was updated out of band?");
+        return newProductOrder;
     }
 
     private String getJiraTicketState() throws IOException{
