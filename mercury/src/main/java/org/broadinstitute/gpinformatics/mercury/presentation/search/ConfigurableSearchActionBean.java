@@ -202,9 +202,6 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
     private ConfigurableSearchDao configurableSearchDao;
 
     @Inject
-    private PaginationDao paginationDao;
-
-    @Inject
     private BSPSampleSearchService bspSampleSearchService;
 
     @Inject
@@ -383,6 +380,9 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
             searchInstance = (SearchInstance) getContext().getRequest().getSession()
                     .getAttribute(SEARCH_INSTANCE_PREFIX + sessionKey);
         }
+
+        // Handles search attempt without any terms
+        //    (see ConfigurableListFactory.getFirstResultsPage for more validations)
         if (searchInstance == null || searchInstance.getSearchValues() == null
             || searchInstance.getSearchValues().isEmpty()) {
             addGlobalValidationError("You must add at least one search term");

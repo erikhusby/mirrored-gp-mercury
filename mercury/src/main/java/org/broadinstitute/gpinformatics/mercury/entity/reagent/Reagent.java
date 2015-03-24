@@ -40,6 +40,10 @@ public abstract class Reagent {
     protected Reagent() {
     }
 
+    public Long getReagentId(){
+        return reagentId;
+    }
+
     public String getName() {
         return name;
     }

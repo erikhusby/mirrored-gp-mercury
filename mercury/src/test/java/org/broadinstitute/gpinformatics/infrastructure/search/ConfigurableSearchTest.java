@@ -9,9 +9,13 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -23,11 +27,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+
 /**
  * Test creating, saving, retrieving and executing a search.
  */
 @Test(groups = TestGroups.STANDARD)
-public class ConfigurableSearchTest extends ContainerTest {
+public class ConfigurableSearchTest extends Arquillian {
 
     @Inject
     private SearchInstanceEjb searchInstanceEjb;
@@ -40,6 +46,11 @@ public class ConfigurableSearchTest extends ContainerTest {
 
     @Inject
     private UserBean userBean;
+
+    @Deployment
+    public static WebArchive buildMercuryWar() {
+        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
+    }
 
     /**
      * Create, execute, then delete a global saved lab event search instance

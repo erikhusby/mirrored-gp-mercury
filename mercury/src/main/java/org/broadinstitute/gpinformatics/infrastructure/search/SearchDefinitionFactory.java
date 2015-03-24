@@ -61,6 +61,7 @@ public class SearchDefinitionFactory {
         fact.buildLabEventSearchDef();
         fact.buildLabVesselSearchDef();
         fact.buildMercurySampleSearchDef();
+        fact.buildReagentSearchDef();
     }
 
     public static ConfigurableSearchDefinition getForEntity(String entity) {
@@ -91,6 +92,12 @@ public class SearchDefinitionFactory {
         ConfigurableSearchDefinition configurableSearchDefinition
                 = new MercurySampleSearchDefinition().buildSearchDefinition();
         MAP_NAME_TO_DEF.put(ColumnEntity.MERCURY_SAMPLE.getEntityName(), configurableSearchDefinition);
+    }
+
+    private void buildReagentSearchDef() {
+        ConfigurableSearchDefinition configurableSearchDefinition
+                = new ReagentSearchDefinition().buildSearchDefinition();
+        MAP_NAME_TO_DEF.put(ColumnEntity.REAGENT.getEntityName(), configurableSearchDefinition);
     }
 
     static SearchTerm.Evaluator<Object> getLcsetInputConverter(){

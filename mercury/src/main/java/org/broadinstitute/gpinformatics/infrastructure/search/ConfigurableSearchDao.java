@@ -63,11 +63,18 @@ public class ConfigurableSearchDao extends GenericDao {
             ConfigurableSearchDefinition configurableSearchDefinition, SearchInstance searchInstance, String orderPath,
             String orderDirection) {
 
+        // Note: IllegalArgumentException will cleanly percolate up to UI error message
+        // Test if inputs are blank (otherwise, a table scan is performed)
+        // The case where a user supplies no terms is handled in ConfigurableSearchActionBean
         if( !searchInstance.checkValues() ) {
-            // This will percolate up to UI error screen, if we allow blanks, a table scan is performed
-            // TODO JMS Validate this in client side JavaScript first...
-            throw new RuntimeException("*** A value is required for each selected search term. ***");
+            throw new IllegalArgumentException("A value is required for each selected search term.");
         }
+
+        // Fail cleanly with error message if any other terms are include with an exclusive term
+        if( searchInstance.hasExclusiveViolation() ) {
+            throw new IllegalArgumentException("No other search terms are allowed with an exclusive search term.");
+        }
+
         HibernateEntityManager hibernateEntityManager = getEntityManager().unwrap(HibernateEntityManager.class);
         Session hibernateSession = hibernateEntityManager.getSession();
         Criteria criteria = hibernateSession.createCriteria(configurableSearchDefinition.getResultEntity().getEntityClass());
@@ -258,6 +265,7 @@ public class ConfigurableSearchDao extends GenericDao {
 
     /**
      * Fetches list of IDs that satisfy search criteria
+     * Allow a single exclusive search term to use an alternate search definition to return a list of ids
      *
      * @param pagination to hold results IDs
      * @param criteria   from buildCriteria
@@ -267,18 +275,30 @@ public class ConfigurableSearchDao extends GenericDao {
     public void startPagination(PaginationDao.Pagination pagination, Criteria criteria, SearchInstance searchInstance,
                                 ConfigurableSearchDefinition configurableSearchDef ) {
 
-        pagination.setResultEntity(configurableSearchDef.getResultEntity());
+        // Existence of an exclusive term being the only one present will have been validated
+        boolean isAlternateSearchDefinition = searchInstance.hasAlternateSearchDefinition();
+
+        if( isAlternateSearchDefinition ) {
+            pagination.setResultEntity(searchInstance.getAlternateSearchDefinition().getResultEntity());
+        } else {
+            pagination.setResultEntity(configurableSearchDef.getResultEntity());
+        }
+
         // TODO set join fetch paths? would require access to column defs
         PaginationDao paginationDao = new PaginationDao();
 
-        // Determine if we need to expand the core entity list
+        // Determine if we need to expand the core entity list via a user selectable traversal option
         Map<String,Boolean> traversalEvaluatorValues = searchInstance.getTraversalEvaluatorValues();
-        boolean traversalRequired = ( configurableSearchDef.getTraversalEvaluators() != null
+        boolean traversalRequired = false;
+        // User selectable traversal check box option(s)
+        if( configurableSearchDef.getTraversalEvaluators() != null
             && traversalEvaluatorValues != null
-            && traversalEvaluatorValues.containsValue(Boolean.TRUE) );
+            && traversalEvaluatorValues.containsValue(Boolean.TRUE) ) {
+            traversalRequired = true;
+        }
 
-        if( !traversalRequired ) {
-            // Fetch only ID values for pagination if no traversal required
+        if( !traversalRequired && !isAlternateSearchDefinition ) {
+            // Overwhelming majority of searches fetch only ID values for pagination
             paginationDao.startPagination( criteria, pagination, false );
         } else {
             // Fetch the core entities before the traversal
@@ -287,17 +307,33 @@ public class ConfigurableSearchDao extends GenericDao {
             TraversalEvaluator evaluator = null;
             Set<Object> idList = null;
 
-            for( Map.Entry<String,TraversalEvaluator> configuredEvaluatorEntry : configurableSearchDef.getTraversalEvaluators().entrySet() ) {
-                // Traverse the options which are checked
-                Boolean doTraverse = traversalEvaluatorValues.get(configuredEvaluatorEntry.getKey());
-                if( doTraverse ) {
-                    evaluator = configuredEvaluatorEntry.getValue();
-                    if( idList == null ) {
-                        idList = evaluator.evaluate(pagination.getIdList());
-                    } else {
-                        idList.addAll(evaluator.evaluate(pagination.getIdList()));
+            Map<String,TraversalEvaluator> traversalEvaluators;
+            if( isAlternateSearchDefinition ) {
+                traversalEvaluators = searchInstance.getAlternateSearchDefinition().getTraversalEvaluators();
+            } else {
+                traversalEvaluators = configurableSearchDef.getTraversalEvaluators();
+            }
+
+            // Handle user configurable traversal options
+            if( traversalRequired ) {
+                for (Map.Entry<String, TraversalEvaluator> configuredEvaluatorEntry : traversalEvaluators.entrySet()) {
+                    // Traverse the options which are checked
+                    Boolean doTraverse = traversalEvaluatorValues.get(configuredEvaluatorEntry.getKey());
+                    if ( doTraverse ) {
+                        evaluator = configuredEvaluatorEntry.getValue();
+                        if (idList == null) {
+                            idList = evaluator.evaluate(pagination.getIdList());
+                        } else {
+                            idList.addAll(evaluator.evaluate(pagination.getIdList()));
+                        }
                     }
                 }
+            } else {
+                // Alternate traversal evaluator configured
+                evaluator = traversalEvaluators.get(ConfigurableSearchDefinition.ALTERNATE_DEFINITION_ID);
+                idList = evaluator.evaluate(pagination.getIdList());
+                // Reconfigure pagination with correct base entity type
+                pagination.setResultEntity(configurableSearchDef.getResultEntity());
             }
 
             // Replace the full entities in the pagination with ids using last evaluator
@@ -435,8 +471,19 @@ public class ConfigurableSearchDao extends GenericDao {
     }
 
     /**
-     * Criteria path may rely on a subquery against unrelated entities.
-     * Criteria path will include a nested criteria path if so.
+     * Criteria path may rely on a series of OR subqueries against unrelated entities.
+     * If the OR clauses use more than one column name. Oracle will table scan the parent.
+     * e.g.
+     * <code>
+     *   WHERE lab_event_id IN ( SELECT lab_event_id ... )
+     *      OR in_place_lab_vessel IN ( SELECT lab_vessel_id ... ) <-- second column causes table scan
+     * </code>
+     * Use a nested criteria path if required to make all columns identical
+     * <code>
+     *   WHERE lab_event_id IN ( SELECT lab_event_id ... )
+     *      OR lab_event_id IN ( SELECT lab_event_id ... ) <-- nested subquery using in_place_lab_vessel)
+     * </code>
+     *
      * Note:  Child search terms and nested criteria paths are mutually exclusive.
      * @param criteriaPath
      * @param configurableSearchDefinition
