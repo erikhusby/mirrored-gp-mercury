@@ -72,9 +72,14 @@ public class MercurySampleDao extends GenericDao {
      * Finds MercurySamples for the given samples keys. Returns a map of MercurySamples indexed by sample key. The map
      * contains empty collections if no MercurySamples are found.
      *
+     * THIS METHOD IS DEFUNCT.  Only still here because it is called in a fixup test and we cannot modify fixup tests
+     * after they are persisted
+     *
+     *
      * @param sampleKeys    the sample keys to search for
      * @return a map of sample key to (possibly multiple) MercurySamples
      */
+    @Deprecated
     public Map<String, List<MercurySample>> findMapIdToListMercurySample(Collection<String> sampleKeys) {
         Map<String, List<MercurySample>> mapSampleIdToListMercurySamples = new HashMap<>();
         for (String sampleKey : sampleKeys) {

@@ -31,6 +31,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 @RequestScoped
 @Stateful
@@ -42,7 +43,6 @@ public class ManifestSessionEjb {
     static final String UNASSOCIATED_TUBE_SAMPLE_MESSAGE =
             "The given target sample id is not associated with the given target vessel.";
     static final String SAMPLE_NOT_FOUND_MESSAGE = "You must provide a valid target sample key.";
-    private static final String SAMPLE_NOT_UNIQUE_MESSAGE = "This sample ID is not unique in Mercury.";
     static final String SAMPLE_NOT_ELIGIBLE_FOR_CLINICAL_MESSAGE =
             "The sample found is not eligible for clinical work.";
     static final String VESSEL_NOT_FOUND_MESSAGE = "The target vessel was not found.";
@@ -51,6 +51,7 @@ public class ManifestSessionEjb {
     static final String MANIFEST_SESSION_NOT_FOUND_FORMAT = "Manifest Session '%s' not found";
     static final String MERCURY_SAMPLE_KEY = "Mercury sample key";
     static final String RESEARCH_PROJECT_NOT_FOUND_FORMAT = "Research Project '%s' not found: ";
+    static final String SAMPLE_IDS_ARE_NOT_FOUND_MESSAGE = "Sample ids are not found: ";
 
     private ManifestSessionDao manifestSessionDao;
 
@@ -247,7 +248,7 @@ public class ManifestSessionEjb {
      *
      * @return the desired mercury sample if it is both found and eligible
      */
-    public MercurySample validateTargetSample(String targetSampleKey) {
+    public MercurySample findAndvalidateTargetSample(String targetSampleKey) {
         MercurySample targetSample = mercurySampleDao.findBySampleKey(targetSampleKey);
 
         // There should be one and only one target sample.
@@ -256,12 +257,16 @@ public class ManifestSessionEjb {
                     MERCURY_SAMPLE_KEY, targetSampleKey, SAMPLE_NOT_FOUND_MESSAGE);
         }
 
-        if (targetSample.getMetadataSource() != MercurySample.MetadataSource.MERCURY) {
-            throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, MERCURY_SAMPLE_KEY,
-                    targetSampleKey, SAMPLE_NOT_ELIGIBLE_FOR_CLINICAL_MESSAGE);
-        }
+        validateTargetSample(targetSample);
 
         return targetSample;
+    }
+
+    private void validateTargetSample(MercurySample targetSample) {
+        if (targetSample.getMetadataSource() != MercurySample.MetadataSource.MERCURY) {
+            throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, MERCURY_SAMPLE_KEY,
+                    targetSample.getSampleKey(), SAMPLE_NOT_ELIGIBLE_FOR_CLINICAL_MESSAGE);
+        }
     }
 
     /**
@@ -274,7 +279,7 @@ public class ManifestSessionEjb {
      * @return the referenced lab vessel if it is both found and eligible
      */
     public LabVessel findAndValidateTargetSampleAndVessel(String targetSampleKey, String targetVesselLabel) {
-        MercurySample foundSample = validateTargetSample(targetSampleKey);
+        MercurySample foundSample = findAndvalidateTargetSample(targetSampleKey);
         LabVessel foundVessel = labVesselDao.findByIdentifier(targetVesselLabel);
         if (foundVessel == null) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
@@ -323,7 +328,7 @@ public class ManifestSessionEjb {
     public void transferSample(long manifestSessionId, String sourceCollaboratorSample, String sampleKey,
                                String vesselLabel) {
         ManifestSession session = findManifestSession(manifestSessionId);
-        MercurySample targetSample = validateTargetSample(sampleKey);
+        MercurySample targetSample = findAndvalidateTargetSample(sampleKey);
 
         LabVessel targetVessel = findAndValidateTargetSampleAndVessel(sampleKey, vesselLabel);
         session.performTransfer(sourceCollaboratorSample, targetSample, targetVessel, userBean.getBspUser());
@@ -362,11 +367,22 @@ public class ManifestSessionEjb {
     private void validateSamplesAreAvailableForAccessioning(Collection<Sample> samples) {
         List<String> sampleIds=new ArrayList<>(samples.size());
         for (Sample sample : samples) {
-            Metadata.Key metadataKey = Metadata.Key.SAMPLE_ID;
+            Metadata.Key metadataKey = Metadata.Key.BROAD_SAMPLE_ID;
             sampleIds.add(metadataKey.getValueFor(sample));
         }
-        List<MercurySample> mercurySamples = mercurySampleDao.findBySampleKeys(sampleIds);
-        for (MercurySample mercurySample : mercurySamples) {
+
+        Map<String, MercurySample> mercurySampleMap = mercurySampleDao.findMapIdToMercurySample(sampleIds);
+
+        if(!mercurySampleMap.keySet().containsAll(sampleIds)) {
+
+            List<String> missingSampleIds = new ArrayList<>(sampleIds);
+            missingSampleIds.removeAll(mercurySampleMap.keySet());
+
+            throw new InformaticsServiceException(SAMPLE_IDS_ARE_NOT_FOUND_MESSAGE +
+                                                  StringUtils.join(missingSampleIds, ", "));
+        }
+        for (MercurySample mercurySample : mercurySampleMap.values()) {
+            validateTargetSample(mercurySample);
             for (LabVessel labVessel : mercurySample.getLabVessel()) {
                 validateTargetVessel(labVessel, mercurySample);
             }
