@@ -1,9 +1,9 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.SampleMetadataPlugin;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -68,7 +68,11 @@ public class MercurySampleSearchDefinition {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
                 MercurySample sample = (MercurySample) entity;
-                return sample.getProductOrderSamples().iterator().next().getProductOrder().getJiraTicketKey();
+                Set<ProductOrderSample> productOrderSamples = sample.getProductOrderSamples();
+                if (!productOrderSamples.isEmpty()) {
+                    return productOrderSamples.iterator().next().getProductOrder().getJiraTicketKey();
+                }
+                return null;
             }
         });
         searchTerms.add(searchTerm);
@@ -78,9 +82,14 @@ public class MercurySampleSearchDefinition {
         searchTerm.setName("LCSET");
         searchTerm.setValueConversionExpression(SearchDefinitionFactory.getLcsetInputConverter());
         criteriaPaths = new ArrayList<>();
+        // Non-reworks
         criteriaPath = new SearchTerm.CriteriaPath();
-        // todo jmt fix
-        criteriaPath.setCriteria(Arrays.asList("SampleBucketEntries", "labVessel", "bucketEntries", "labBatch"));
+        criteriaPath.setCriteria(Arrays.asList("SampleBucketEntries", "labVessel", "labBatches", "labBatch"));
+        criteriaPath.setPropertyName("batchName");
+        criteriaPaths.add(criteriaPath);
+        // Reworks
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("SampleBucketEntries", "labVessel", "reworkLabBatches"));
         criteriaPath.setPropertyName("batchName");
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
@@ -91,11 +100,8 @@ public class MercurySampleSearchDefinition {
                 // Assumption that sample can't be added to the same batch more than once
                 List<String> results = new ArrayList<>();
                 for( LabVessel sampleVessel : sample.getLabVessel() ) {
-                    for( BucketEntry bucket : sampleVessel.getBucketEntries() ) {
-                        LabBatch batch = bucket.getLabBatch();
-                        if( batch != null ) {
-                            results.add(batch.getBatchName());
-                        }
+                    for( LabBatch batch : sampleVessel.getLabBatches() ) {
+                        results.add(batch.getBatchName());
                     }
                 }
                 return results;
