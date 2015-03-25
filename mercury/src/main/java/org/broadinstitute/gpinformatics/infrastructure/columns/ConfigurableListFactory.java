@@ -275,8 +275,20 @@ public class ConfigurableListFactory {
             String sortDirection,
             String entityName) {
 
-        Criteria criteria = configurableSearchDao.buildCriteria(configurableSearchDef, searchInstance, dbSortPath,
-                sortDirection);
+        Criteria criteria;
+
+        // Swap out base search definition when an alternate (and exclusive) search term is available
+        if( searchInstance.hasAlternateSearchDefinition() ) {
+            criteria = configurableSearchDao.buildCriteria(
+                    searchInstance.getAlternateSearchDefinition(),
+                    searchInstance, dbSortPath,
+                    sortDirection);
+        } else {
+            criteria = configurableSearchDao.buildCriteria(
+                    configurableSearchDef,
+                    searchInstance, dbSortPath,
+                    sortDirection);
+        }
 
         // TODO move join-fetch stuff into ListConfig and SearchInstance
         // If the user chose columns to view, use those, else use a pre-defined column set

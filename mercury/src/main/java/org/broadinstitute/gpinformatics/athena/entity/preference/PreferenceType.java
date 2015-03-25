@@ -41,6 +41,15 @@ public enum PreferenceType {
     USER_MERCURY_SAMPLE_SEARCH_INSTANCES("User Mercury Sample Search Instances", PreferenceScope.USER, 1,
             new SearchInstanceList.SearchInstanceListPreferenceDefinitionCreator()),
     USER_MERCURY_SAMPLE_COLUMN_SETS("User Mercury Sample Column Sets", PreferenceScope.USER, 1,
+            new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator()),
+
+    GLOBAL_REAGENT_SEARCH_INSTANCES("Global Reagent Search Instances", PreferenceScope.GLOBAL, 1,
+            new SearchInstanceList.SearchInstanceListPreferenceDefinitionCreator()),
+    GLOBAL_REAGENT_COLUMN_SETS("Global Reagent Column Sets", PreferenceScope.GLOBAL, 1,
+            new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator()),
+    USER_REAGENT_SEARCH_INSTANCES("User Reagent Search Instances", PreferenceScope.USER, 1,
+            new SearchInstanceList.SearchInstanceListPreferenceDefinitionCreator()),
+    USER_REAGENT_COLUMN_SETS("User Reagent Column Sets", PreferenceScope.USER, 1,
             new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator());
 
     private final String preferenceTypeName;

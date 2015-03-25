@@ -28,6 +28,7 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -272,43 +273,42 @@ public class ManifestSessionEjb {
      *
      * @return the referenced lab vessel if it is both found and eligible
      */
-    public LabVessel validateTargetSampleAndVessel(String targetSampleKey, String targetVesselLabel) {
-
+    public LabVessel findAndValidateTargetSampleAndVessel(String targetSampleKey, String targetVesselLabel) {
         MercurySample foundSample = validateTargetSample(targetSampleKey);
-        return findAndValidateTargetVessel(targetVesselLabel, foundSample);
+        LabVessel foundVessel = labVesselDao.findByIdentifier(targetVesselLabel);
+        if (foundVessel == null) {
+            throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
+                    targetVesselLabel, VESSEL_NOT_FOUND_MESSAGE);
+        }
+
+        return validateTargetVessel(foundVessel, foundSample);
     }
 
     /**
      * Helper method to determine target vessel and Sample viability.  Extracts the logic of finding the lab vessel
      * to make this method available for re-use.
      * <p/>
-     * {@link #validateTargetSampleAndVessel(String, String)}
+     * {@link #findAndValidateTargetSampleAndVessel(String, String)}
      *
-     * @param targetVesselLabel The label of the lab vessel that  should be associated with the given mercury sample
+     * @param targetLabVessel   The label of the lab vessel that  should be associated with the given mercury sample
      * @param foundSample       The target mercury sample for the tube transfer
      *
      * @return the referenced lab vessel if it is both found and eligible
      */
-    private LabVessel findAndValidateTargetVessel(String targetVesselLabel, MercurySample foundSample) {
-        LabVessel foundVessel = labVesselDao.findByIdentifier(targetVesselLabel);
-
-        if (foundVessel == null) {
+    private LabVessel validateTargetVessel(LabVessel targetLabVessel, MercurySample foundSample) {
+        if (targetLabVessel.doesChainOfCustodyInclude(LabEventType.COLLABORATOR_TRANSFER)) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
-                    targetVesselLabel, VESSEL_NOT_FOUND_MESSAGE);
-        }
-        if (foundVessel.doesChainOfCustodyInclude(LabEventType.COLLABORATOR_TRANSFER)) {
-            throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
-                    targetVesselLabel, VESSEL_USED_FOR_PREVIOUS_TRANSFER);
+                    targetLabVessel.getLabel(), VESSEL_USED_FOR_PREVIOUS_TRANSFER);
         }
         // Since upload happens just after Initial Tare, there should not be any other transfers.  For that reason,
         // searching through the MercurySamples on the vessels instead of getSampleInstancesV2 should be sufficient.
-        for (MercurySample mercurySample : foundVessel.getMercurySamples()) {
+        for (MercurySample mercurySample : targetLabVessel.getMercurySamples()) {
             if (mercurySample.equals(foundSample)) {
-                return foundVessel;
+                return targetLabVessel;
             }
         }
         throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
-                targetVesselLabel, " " + UNASSOCIATED_TUBE_SAMPLE_MESSAGE);
+                targetLabVessel.getLabel(), " " + UNASSOCIATED_TUBE_SAMPLE_MESSAGE);
     }
 
     /**
@@ -325,7 +325,7 @@ public class ManifestSessionEjb {
         ManifestSession session = findManifestSession(manifestSessionId);
         MercurySample targetSample = validateTargetSample(sampleKey);
 
-        LabVessel targetVessel = findAndValidateTargetVessel(vesselLabel, targetSample);
+        LabVessel targetVessel = findAndValidateTargetSampleAndVessel(sampleKey, vesselLabel);
         session.performTransfer(sourceCollaboratorSample, targetSample, targetVessel, userBean.getBspUser());
     }
 
@@ -344,16 +344,32 @@ public class ManifestSessionEjb {
         if (researchProject == null) {
             throw new IllegalArgumentException(String.format(RESEARCH_PROJECT_NOT_FOUND_FORMAT, researchProjectKey));
         }
-
         try {
+            validateSamplesAreAvailableForAccessioning(samples);
             Collection<ManifestRecord> manifestRecords = ClinicalSampleFactory.toManifestRecords(samples);
             ManifestSession manifestSession =
                     new ManifestSession(researchProject, sessionName, userBean.getBspUser(), fromSampleKit,
                             manifestRecords);
-            manifestSessionDao.persist(manifestSession);
             return manifestSession;
         } catch (RuntimeException e) {
             throw new InformaticsServiceException(e);
+        }
+    }
+
+    /**
+     * Validate that the collection of samples are available for accessioning.
+     */
+    private void validateSamplesAreAvailableForAccessioning(Collection<Sample> samples) {
+        List<String> sampleIds=new ArrayList<>(samples.size());
+        for (Sample sample : samples) {
+            Metadata.Key metadataKey = Metadata.Key.SAMPLE_ID;
+            sampleIds.add(metadataKey.getValueFor(sample));
+        }
+        List<MercurySample> mercurySamples = mercurySampleDao.findBySampleKeys(sampleIds);
+        for (MercurySample mercurySample : mercurySamples) {
+            for (LabVessel labVessel : mercurySample.getLabVessel()) {
+                validateTargetVessel(labVessel, mercurySample);
+            }
         }
     }
 }

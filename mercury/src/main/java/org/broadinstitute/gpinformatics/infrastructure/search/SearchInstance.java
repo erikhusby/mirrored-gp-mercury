@@ -881,6 +881,7 @@ public class SearchInstance implements Serializable {
     /**
      * Prior to calling the DAO, we must determine which terms have values specified.
      * All terms must have values to prevent Oracle table scans.
+     * (Search UI ConfigurableSearchActionBean intercepts a search with no terms)
      * @return false if any terms have empty values
      */
     public boolean checkValues() {
@@ -903,6 +904,23 @@ public class SearchInstance implements Serializable {
             }
         }
         return atLeastOneAdd;
+    }
+
+    /**
+     * Prior to calling the DAO, determine if any other terms are present along with an exclusive term.
+     * Applies to parent terms only.
+     * @return false if any other terms are present along with an exclusive term.
+     */
+    public boolean hasExclusiveViolation(){
+        boolean hasExclusiveTerm = false;
+        int count = 0;
+        for( SearchValue value : getSearchValues() ) {
+            if( value.getSearchTerm().isExclusive() ) {
+                hasExclusiveTerm = true;
+            }
+            count++;
+        }
+        return hasExclusiveTerm && count > 1;
     }
 
     /**
@@ -974,6 +992,34 @@ public class SearchInstance implements Serializable {
 
     public List<SearchValue> getSearchValues() {
         return searchValues;
+    }
+
+    /**
+     * Determine whether or not the base search definition for this instance should be used
+     *   or if the alternate search definition attached to an exclusive search term should be used.
+     * Configuration validation should have been previously tested via hasExclusiveViolation()
+     * @see #hasExclusiveViolation()
+     * @return
+     */
+    public boolean hasAlternateSearchDefinition(){
+        if( searchValues != null && searchValues.size() == 1
+                && searchValues.get(0).getSearchTerm().getAlternateSearchDefinition() != null ) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Get the alternate search definition attached to the exclusive search term.
+     * @return
+     */
+    public ConfigurableSearchDefinition getAlternateSearchDefinition(){
+        if( !hasExclusiveViolation() && hasAlternateSearchDefinition() ){
+            return searchValues.get(0).getSearchTerm().getAlternateSearchDefinition();
+        } else {
+            return null;
+        }
     }
 
     public void setSearchValues(List<SearchValue> searchValues) {
