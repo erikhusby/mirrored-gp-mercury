@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -9,12 +10,15 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.sample.ClinicalSampleTestFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -39,6 +43,7 @@ import java.util.Map;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.matchers.ExceptionMessageMatcher.containsMessage;
 import static org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestEventMatcher.hasEventError;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -474,7 +479,7 @@ public class ManifestSessionContainerTest extends Arquillian {
             String sourceSampleLabel = sourceSampleToTargetVessel.get(sourceSampleToTest).getLabel();
 
             LabVessel targetVessel =
-                    manifestSessionEjb.validateTargetSampleAndVessel(sourceSampleKey, sourceSampleLabel);
+                    manifestSessionEjb.findAndValidateTargetSampleAndVessel(sourceSampleKey, sourceSampleLabel);
             assertThat(targetVessel, is(notNullValue()));
 
             MercurySample mercurySample = sourceSampleToMercurySample.get(sourceSampleToTest);
@@ -509,7 +514,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         assertThat(targetSampleForOmittedScan, is(notNullValue()));
 
         LabVessel targetVesselForOmittedScan =
-                manifestSessionEjb.validateTargetSampleAndVessel(omittedScanSampleKey, omittedScanSampleLabel);
+                manifestSessionEjb.findAndValidateTargetSampleAndVessel(omittedScanSampleKey, omittedScanSampleLabel);
 
         assertThat(targetVesselForOmittedScan, is(notNullValue()));
 
@@ -723,7 +728,7 @@ public class ManifestSessionContainerTest extends Arquillian {
             String sourceSampleLabel = sourceSampleToTargetVessel.get(sourceSampleToTest).getLabel();
 
             LabVessel targetVessel =
-                    manifestSessionEjb.validateTargetSampleAndVessel(sourceSampleKey, sourceSampleLabel);
+                    manifestSessionEjb.findAndValidateTargetSampleAndVessel(sourceSampleKey, sourceSampleLabel);
             assertThat(targetVessel, is(notNullValue()));
 
             manifestSessionEjb.transferSample(closedSession2.getManifestSessionId(), sourceSampleToTest,
@@ -751,7 +756,7 @@ public class ManifestSessionContainerTest extends Arquillian {
             assertThat(targetSample, is(notNullValue()));
             String sourceSampleLabel = sourceSampleToTargetVessel.get(sourceSampleToTest).getLabel();
             LabVessel targetVessel =
-                    manifestSessionEjb.validateTargetSampleAndVessel(sourceSampleKey, sourceSampleLabel);
+                    manifestSessionEjb.findAndValidateTargetSampleAndVessel(sourceSampleKey, sourceSampleLabel);
             assertThat(targetVessel, is(notNullValue()));
 
             manifestSessionEjb.transferSample(closedSession2.getManifestSessionId(), sourceSampleToTest,
@@ -1045,5 +1050,26 @@ public class ManifestSessionContainerTest extends Arquillian {
             labVesselDao.persist(vessel);
             labVesselDao.flush();
         }
+    }
+
+    public void testCreateManifestSampleAlreadyExists() throws Exception {
+        String sampleId = String.valueOf(System.currentTimeMillis());
+        MercurySample mercurySample = new MercurySample(sampleId, MercurySample.MetadataSource.MERCURY);
+        LabVessel labVessel = new BarcodedTube("A" + sampleId, BarcodedTube.BarcodedTubeType.MatrixTube);
+        LabEvent labEvent = new LabEvent(LabEventType.COLLABORATOR_TRANSFER, new Date(), "inTheLab", 0l,
+                0l, "mercury");
+        labVessel.getInPlaceLabEvents().add(labEvent);
+        mercurySample.getLabVessel().add(labVessel);
+        mercurySampleDao.persist(mercurySample);
+
+        try {
+            manifestSessionEjb.createManifestSession("RP-12", "new session", true, Collections.singleton(
+                    ClinicalSampleTestFactory.createSample(ImmutableMap.of(Metadata.Key.SAMPLE_ID, sampleId))));
+        } catch (InformaticsServiceException e) {
+            assertThat(e.getMessage(),
+                    containsString(ManifestRecord.ErrorStatus.INVALID_TARGET.getBaseMessage()));
+            assertThat(e.getMessage(), containsString("The target vessel has already been used for a tube transfer."));
+        }
+
     }
 }

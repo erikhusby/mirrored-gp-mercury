@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.UnknownUserException;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.ClinicalResourceBean;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
+import org.broadinstitute.gpinformatics.mercury.crsp.generated.SampleData;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
@@ -99,7 +100,16 @@ public class ClinicalResource {
             throw new IllegalArgumentException(SAMPLE_IS_NULL);
         }
         for (Sample sample : samples) {
+            int metadataCount=0;
             if (sample.getSampleData().isEmpty()) {
+                throw new IllegalArgumentException(SAMPLE_CONTAINS_NO_METADATA);
+            }
+            for (SampleData sampleData : sample.getSampleData()) {
+                if (StringUtils.isNotEmpty(sampleData.getValue())) {
+                    metadataCount++;
+                }
+            }
+            if (metadataCount==0) {
                 throw new IllegalArgumentException(SAMPLE_CONTAINS_NO_METADATA);
             }
         }

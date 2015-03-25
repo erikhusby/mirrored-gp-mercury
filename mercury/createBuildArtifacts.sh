@@ -11,7 +11,7 @@ EOF
 
 if [ "$#" -eq 1 ]
 then
-    tar -cv -f Mercury$1.tar mercury/target/Mercury-*.war mercury/pom.xml mercury/src/main/db/*.* mercury/target/test-classes/*ds.xml mercury/*.sh
+    tar -cv -f Mercury$1.tar mercury/target/Mercury-*.war mercury/pom.xml mercury/src/main/db/*.* mercury/target/test-classes/*ds.xml mercury/*.sh mercury/src/test/resources/*.properties
 else
     usage
     exit 1

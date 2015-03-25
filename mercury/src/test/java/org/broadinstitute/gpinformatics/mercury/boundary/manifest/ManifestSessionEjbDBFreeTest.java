@@ -30,6 +30,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestStatus;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.TubeTransferException;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -44,9 +45,12 @@ import org.testng.annotations.Test;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -56,6 +60,7 @@ import static org.broadinstitute.gpinformatics.mercury.boundary.manifest.Manifes
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -207,15 +212,17 @@ public class ManifestSessionEjbDBFreeTest {
     }
 
     private static void addRecord(ManifestSessionAndEjbHolder holder, ManifestRecord.ErrorStatus errorStatus,
-                                  ManifestRecord.Status status, Metadata.Key key, String value) {
-        ManifestTestFactory.addRecord(holder.manifestSession, errorStatus, status, ImmutableMap.of(key, value));
+                                  ManifestRecord.Status status, Map<Metadata.Key, String> initialData,
+                                  EnumSet<Metadata.Key> excludeKeys) {
+        ManifestTestFactory.addRecord(holder.manifestSession, errorStatus, status, initialData,
+                excludeKeys);
     }
 
     private static void addRecord(ManifestSessionAndEjbHolder holder, ManifestRecord.ErrorStatus errorStatus,
                                   ManifestRecord.Status status, Metadata.Key key1, String value1,
                                   Metadata.Key key2, String value2, Metadata.Key key3, String value3) {
         ManifestTestFactory.addRecord(holder.manifestSession, errorStatus, status,
-                ImmutableMap.of(key1, value1, key2, value2, key3, value3));
+                ImmutableMap.of(key1, value1, key2, value2, key3, value3), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
     }
 
     /**
@@ -579,7 +586,8 @@ public class ManifestSessionEjbDBFreeTest {
             for (int i = 0; i < numberOfCopies; i++) {
                 String collaboratorBarcode = entry.getKey();
                 addRecord(holder, ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, initialStatus,
-                        Metadata.Key.SAMPLE_ID, collaboratorBarcode);
+                        ImmutableMap.of(Metadata.Key.SAMPLE_ID, collaboratorBarcode),
+                        EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
             }
         }
 
@@ -700,7 +708,8 @@ public class ManifestSessionEjbDBFreeTest {
     @Test(dataProvider = GOOD_MANIFEST_ACCESSION_SCAN_PROVIDER)
     public void accessionScanGoodManifest(String tubeBarcode, boolean successExpected) throws Exception {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.UPLOAD_ACCEPTED, 20, false);
-        addRecord(holder, NO_ERROR, ManifestRecord.Status.UPLOAD_ACCEPTED, Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE);
+        addRecord(holder, NO_ERROR, ManifestRecord.Status.UPLOAD_ACCEPTED,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
 
         try {
             holder.ejb.accessionScan(ARBITRARY_MANIFEST_SESSION_ID, tubeBarcode, tubeBarcode);
@@ -814,7 +823,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.SCANNED, 20, false);
 
         addRecord(holder, ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
-                Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE);
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
 
         ManifestStatus sessionStatus = holder.ejb.getSessionStatus(ARBITRARY_MANIFEST_SESSION_ID);
 
@@ -828,7 +837,8 @@ public class ManifestSessionEjbDBFreeTest {
 
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.SCANNED, 20, false);
 
-        addRecord(holder, NO_ERROR, ManifestRecord.Status.UPLOAD_ACCEPTED, Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE);
+        addRecord(holder, NO_ERROR, ManifestRecord.Status.UPLOAD_ACCEPTED,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
 
         ManifestStatus sessionStatus = holder.ejb.getSessionStatus(ARBITRARY_MANIFEST_SESSION_ID);
 
@@ -843,10 +853,11 @@ public class ManifestSessionEjbDBFreeTest {
 
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.SCANNED, 20, false);
 
-        addRecord(holder, NO_ERROR, ManifestRecord.Status.UPLOAD_ACCEPTED, Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE);
+        addRecord(holder, NO_ERROR, ManifestRecord.Status.UPLOAD_ACCEPTED,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
 
         addRecord(holder, ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
-                Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE);
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
 
         ManifestStatus sessionStatus = holder.ejb.getSessionStatus(ARBITRARY_MANIFEST_SESSION_ID);
 
@@ -862,7 +873,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.SCANNED, 20, false);
 
         addRecord(holder, ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.SCANNED,
-                Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE);
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
 
         ManifestStatus sessionStatus = holder.ejb.getSessionStatus(ARBITRARY_MANIFEST_SESSION_ID);
 
@@ -896,7 +907,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.SCANNED, 20, false);
         String duplicateSampleId = GOOD_TUBE_BARCODE;
         addRecord(holder, ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
-                Metadata.Key.SAMPLE_ID, duplicateSampleId);
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, duplicateSampleId), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
 
         holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
         assertThat(holder.manifestSession.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
@@ -915,7 +926,8 @@ public class ManifestSessionEjbDBFreeTest {
     public void closeManifestWithUnScannedRecord() throws Exception {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.SCANNED, 20, false);
         String unScannedBarcode = GOOD_TUBE_BARCODE;
-        addRecord(holder, NO_ERROR, ManifestRecord.Status.UPLOAD_ACCEPTED, Metadata.Key.SAMPLE_ID, unScannedBarcode);
+        addRecord(holder, NO_ERROR, ManifestRecord.Status.UPLOAD_ACCEPTED,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, unScannedBarcode), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
 
         holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
 
@@ -938,11 +950,12 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.SCANNED, 20, false);
 
         String unscannedBarcode = GOOD_TUBE_BARCODE;
-        addRecord(holder, NO_ERROR, ManifestRecord.Status.UPLOAD_ACCEPTED, Metadata.Key.SAMPLE_ID, unscannedBarcode);
+        addRecord(holder, NO_ERROR, ManifestRecord.Status.UPLOAD_ACCEPTED,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, unscannedBarcode), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
 
         String dupeSampleId = GOOD_TUBE_BARCODE + "dupe";
         addRecord(holder, ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
-                Metadata.Key.SAMPLE_ID, dupeSampleId);
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, dupeSampleId), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
 
         holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
 
@@ -969,12 +982,12 @@ public class ManifestSessionEjbDBFreeTest {
         String misMatch1Barcode = GOOD_TUBE_BARCODE + "BadGender1";
         addRecord(holder,
                 ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.SCANNED,
-                Metadata.Key.SAMPLE_ID, misMatch1Barcode);
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, misMatch1Barcode), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
 
         String misMatch2Barcode = GOOD_TUBE_BARCODE + "BadGender2";
         addRecord(holder,
                 ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.SCANNED,
-                Metadata.Key.SAMPLE_ID, misMatch2Barcode);
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, misMatch2Barcode), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
 
         holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
 
@@ -998,7 +1011,8 @@ public class ManifestSessionEjbDBFreeTest {
 
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20, false);
 
-        addRecord(holder, NO_ERROR, ManifestRecord.Status.ACCESSIONED, Metadata.Key.SAMPLE_ID, sourceForTransfer);
+        addRecord(holder, NO_ERROR, ManifestRecord.Status.ACCESSIONED,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, sourceForTransfer), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
 
         ManifestRecord foundRecord =
                 holder.ejb.validateSourceTubeForTransfer(ARBITRARY_MANIFEST_SESSION_ID, sourceForTransfer);
@@ -1011,7 +1025,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20, false);
 
         addRecord(holder, ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
-                Metadata.Key.SAMPLE_ID, sourceForTransfer);
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, sourceForTransfer), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
 
         try {
             holder.ejb.validateSourceTubeForTransfer(ARBITRARY_MANIFEST_SESSION_ID, sourceForTransfer);
@@ -1040,7 +1054,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20, false);
 
         addRecord(holder, ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.ACCESSIONED,
-                Metadata.Key.SAMPLE_ID, sourceForTransfer);
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, sourceForTransfer), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
 
         ManifestRecord foundRecord =
                 holder.ejb.validateSourceTubeForTransfer(ARBITRARY_MANIFEST_SESSION_ID, sourceForTransfer);
@@ -1053,7 +1067,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20, false);
 
         addRecord(holder, ManifestRecord.ErrorStatus.MISSING_SAMPLE, ManifestRecord.Status.UPLOAD_ACCEPTED,
-                Metadata.Key.SAMPLE_ID, sourceForTransfer);
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, sourceForTransfer), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
 
         try {
             holder.ejb.validateSourceTubeForTransfer(ARBITRARY_MANIFEST_SESSION_ID, sourceForTransfer);
@@ -1114,7 +1128,7 @@ public class ManifestSessionEjbDBFreeTest {
     public void validateTargetTubeAndSampleOnValidRecord() throws Exception {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 1, false);
 
-        LabVessel foundVessel = holder.ejb.validateTargetSampleAndVessel(TEST_SAMPLE_KEY, TEST_VESSEL_LABEL);
+        LabVessel foundVessel = holder.ejb.findAndValidateTargetSampleAndVessel(TEST_SAMPLE_KEY, TEST_VESSEL_LABEL);
 
         assertThat(foundVessel.getLabel(), is(equalTo(TEST_VESSEL_LABEL)));
 
@@ -1126,7 +1140,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 1, false);
 
         try {
-            holder.ejb.validateTargetSampleAndVessel(TEST_SAMPLE_KEY_UNASSOCIATED, TEST_VESSEL_LABEL);
+            holder.ejb.findAndValidateTargetSampleAndVessel(TEST_SAMPLE_KEY_UNASSOCIATED, TEST_VESSEL_LABEL);
             Assert.fail();
         } catch (Exception e) {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
@@ -1140,7 +1154,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 1, false);
 
         try {
-            holder.ejb.validateTargetSampleAndVessel(TEST_SAMPLE_KEY + "BAD", TEST_VESSEL_LABEL);
+            holder.ejb.findAndValidateTargetSampleAndVessel(TEST_SAMPLE_KEY + "BAD", TEST_VESSEL_LABEL);
             Assert.fail();
         } catch (Exception e) {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
@@ -1154,7 +1168,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 1, false);
 
         try {
-            holder.ejb.validateTargetSampleAndVessel(TEST_SAMPLE_KEY, TEST_VESSEL_LABEL + "BAD");
+            holder.ejb.findAndValidateTargetSampleAndVessel(TEST_SAMPLE_KEY, TEST_VESSEL_LABEL + "BAD");
             Assert.fail();
         } catch (Exception e) {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
@@ -1168,7 +1182,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 1, false);
 
         try {
-            holder.ejb.validateTargetSampleAndVessel(TEST_SAMPLE_ALREADY_TRANSFERRED,
+            holder.ejb.findAndValidateTargetSampleAndVessel(TEST_SAMPLE_ALREADY_TRANSFERRED,
                     TEST_VESSEL_LABEL_ALREADY_TRANSFERRED);
             Assert.fail();
         } catch (Exception e) {
@@ -1186,7 +1200,8 @@ public class ManifestSessionEjbDBFreeTest {
     public void transferSourceValidRecord() throws Exception {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20, false);
 
-        addRecord(holder, NO_ERROR, ManifestRecord.Status.ACCESSIONED, Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE);
+        addRecord(holder, NO_ERROR, ManifestRecord.Status.ACCESSIONED,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
 
         ManifestRecord usedRecord = holder.manifestSession.findRecordByKey(GOOD_TUBE_BARCODE,
                 Metadata.Key.SAMPLE_ID);
@@ -1226,7 +1241,8 @@ public class ManifestSessionEjbDBFreeTest {
     public void transferSourceToSampleNotFound() throws Exception {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20, false);
 
-        addRecord(holder, NO_ERROR, ManifestRecord.Status.ACCESSIONED, Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE);
+        addRecord(holder, NO_ERROR, ManifestRecord.Status.ACCESSIONED,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
 
         ManifestRecord usedRecord = holder.manifestSession.findRecordByKey(GOOD_TUBE_BARCODE,
                 Metadata.Key.SAMPLE_ID);
@@ -1246,7 +1262,8 @@ public class ManifestSessionEjbDBFreeTest {
     public void transferSourceToVesselNotFound() throws Exception {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20, false);
 
-        addRecord(holder, NO_ERROR, ManifestRecord.Status.ACCESSIONED, Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE);
+        addRecord(holder, NO_ERROR, ManifestRecord.Status.ACCESSIONED,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
 
         ManifestRecord usedRecord = holder.manifestSession.findRecordByKey(GOOD_TUBE_BARCODE,
                 Metadata.Key.SAMPLE_ID);
@@ -1270,7 +1287,8 @@ public class ManifestSessionEjbDBFreeTest {
     public void transferSourceToMisMatchedSampleAndVesselNotFound() throws Exception {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20, false);
 
-        addRecord(holder, NO_ERROR, ManifestRecord.Status.ACCESSIONED, Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE);
+        addRecord(holder, NO_ERROR, ManifestRecord.Status.ACCESSIONED,
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
 
         ManifestRecord usedRecord = holder.manifestSession.findRecordByKey(GOOD_TUBE_BARCODE,
                 Metadata.Key.SAMPLE_ID);
@@ -1295,7 +1313,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20, false);
 
         addRecord(holder, ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
-                Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE);
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
 
         ManifestRecord usedRecord = holder.manifestSession.findRecordByKey(GOOD_TUBE_BARCODE,
                 Metadata.Key.SAMPLE_ID);
@@ -1320,7 +1338,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20, false);
 
         addRecord(holder, ManifestRecord.ErrorStatus.MISMATCHED_GENDER, ManifestRecord.Status.ACCESSIONED,
-                Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE);
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
 
         ManifestRecord usedRecord = holder.manifestSession.findRecordByKey(GOOD_TUBE_BARCODE,
                 Metadata.Key.SAMPLE_ID);
@@ -1342,7 +1360,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 20, false);
 
         addRecord(holder, ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
-                Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE);
+                ImmutableMap.of(Metadata.Key.SAMPLE_ID, GOOD_TUBE_BARCODE), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
 
         ManifestRecord usedRecord = holder.manifestSession.findRecordByKey(GOOD_TUBE_BARCODE,
                 Metadata.Key.SAMPLE_ID);
@@ -1367,8 +1385,10 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.UPLOAD_ACCEPTED, 5, true);
 
         assertThat(holder.manifestSession.getStatus(), is(ManifestSession.SessionStatus.ACCESSIONING));
-        addRecord(holder, NO_ERROR, ManifestRecord.Status.UPLOAD_ACCEPTED, Metadata.Key.BROAD_SAMPLE_ID,
-                TEST_SAMPLE_KEY);
+        Map<Metadata.Key, String> initialData = new HashMap<>();
+        initialData .put(Metadata.Key.BROAD_SAMPLE_ID, TEST_SAMPLE_KEY);
+        addRecord(holder, NO_ERROR, ManifestRecord.Status.UPLOAD_ACCEPTED,
+                initialData, EnumSet.of(Metadata.Key.BROAD_2D_BARCODE).of(Metadata.Key.SAMPLE_ID));
 
         ManifestRecord record = holder.manifestSession.findRecordByKey(TEST_SAMPLE_KEY, Metadata.Key.BROAD_SAMPLE_ID);
 
@@ -1391,9 +1411,9 @@ public class ManifestSessionEjbDBFreeTest {
         Sample sample = ClinicalSampleTestFactory
                 .createSample(ImmutableMap.of(Metadata.Key.SAMPLE_ID, SM_1));
 
-        Metadata[] metadata = ClinicalSampleFactory.toMercuryMetadata(sample);
-        assertThat(metadata.length, is(1));
-        Metadata metadataItem = metadata[0];
+        List<Metadata> metadata = ClinicalSampleFactory.toMercuryMetadata(sample);
+        assertThat(metadata.size(), is(1));
+        Metadata metadataItem = metadata.get(0);
         assertThat(metadataItem.getValue(), is(SM_1));
         assertThat(metadataItem.getKey(), is(Metadata.Key.SAMPLE_ID));
     }
@@ -1441,6 +1461,53 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(manifestSession.getRecords().size(), is(2));
     }
 
+    public void testAddAccessionedSampleToManifestSession() throws Exception {
+        stubResearchProjectDaoFindReturnsNewObject();
+        List<Sample> samples = Arrays.asList(ClinicalSampleTestFactory
+                .createSample(ImmutableMap.of(Metadata.Key.SAMPLE_ID, SM_1, Metadata.Key.PATIENT_ID, PATIENT_1)));
+
+        MercurySample sample = new MercurySample(SM_1, MercurySample.MetadataSource.MERCURY);
+        BarcodedTube barcodedTube = new BarcodedTube("VesselFor" + SM_1, BarcodedTube.BarcodedTubeType.MatrixTube);
+        LabEvent collaboratorTransferEvent =
+                new LabEvent(LabEventType.COLLABORATOR_TRANSFER, new Date(), "thisLocation", 0l, 0l, "testprogram");
+        barcodedTube.getInPlaceLabEvents().add(collaboratorTransferEvent);
+        sample.getLabVessel().add(barcodedTube);
+
+        Mockito.when(mercurySampleDao.findBySampleKeys(Mockito.anyCollectionOf(String.class)))
+                .thenReturn(Collections.singletonList(sample));
+
+        try {
+            manifestSessionEjb
+                    .createManifestSession(TEST_RESEARCH_PROJECT_KEY, TEST_SESSION_NAME + "_NEW", true, samples);
+            Assert.fail();
+        } catch (InformaticsServiceException e) {
+            assertThat(e.getCause(), instanceOf(TubeTransferException.class));
+            assertThat(e.getLocalizedMessage(), containsString(ManifestSessionEjb.VESSEL_USED_FOR_PREVIOUS_TRANSFER));
+        }
+    }
+
+
+    @DataProvider(name = "metaDataProvider")
+    public static Object[][] metaDataProvider() {
+        return new Object[][]{
+                {new HashMap<Metadata.Key, String>() {{ put(Metadata.Key.PERCENT_TUMOR, ""); }}},
+                {new HashMap<Metadata.Key, String>() {{ put(Metadata.Key.PERCENT_TUMOR, null); }}}
+        };
+    }
+
+    @Test(dataProvider = "metaDataProvider")
+    public void testAddSampleWithProvidedMetadataToManifestSession(final Map<Metadata.Key, String> metadata)
+            throws Exception {
+        stubResearchProjectDaoFindReturnsNewObject();
+        Sample sample = ClinicalSampleTestFactory.createSample(metadata);
+        ManifestSession manifestSession = manifestSessionEjb.createManifestSession(
+                TEST_RESEARCH_PROJECT_KEY, TEST_SESSION_NAME, true, Collections.singletonList(sample));
+        assertThat(manifestSession.getRecords().size(), is(1));
+        for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
+            assertThat(manifestRecord.getMetadata(), emptyCollectionOf(Metadata.class));
+        }
+    }
+
     /* ************************************************** *
      * createManifestSession tests
      * ************************************************** */
@@ -1462,8 +1529,6 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(manifestSession.getRecords().size(), equalTo(samples.size()));
         ManifestRecord manifestRecord = manifestSession.getRecords().iterator().next();
         assertThat(manifestRecord.getValueByKey(Metadata.Key.BROAD_SAMPLE_ID), equalTo(SM_1));
-
-        Mockito.verify(manifestSessionDao).persist(manifestSession);
     }
 
     /**

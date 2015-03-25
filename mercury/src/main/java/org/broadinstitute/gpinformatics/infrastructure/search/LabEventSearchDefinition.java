@@ -470,6 +470,9 @@ public class LabEventSearchDefinition {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("LCSET");
+        searchTerm.setHelpText("The LCSET term will only locate events associated with bucket entries (e.g. CollaboratorTransfer and PicoPlatingBucket). "
+            + "Traversal option(s) should be selected if chain of custody events are desired.<br>"
+            + "Note: Adding other terms may exclude initial event(s) from the chain of custody traversal(s).");
         searchTerm.setValueConversionExpression(SearchDefinitionFactory.getLcsetInputConverter());
         criteriaPaths = new ArrayList<>();
         criteriaPath = new SearchTerm.CriteriaPath();
@@ -579,11 +582,18 @@ public class LabEventSearchDefinition {
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
                 LabEvent labEvent = (LabEvent) entity;
-                LabVessel labVessel = labEvent.getInPlaceLabVessel();
-                if (labVessel != null) {
-                    return labVessel.getLabel();
+                LabVessel inPlaceLabVessel = labEvent.getInPlaceLabVessel();
+                if (inPlaceLabVessel == null) {
+                    return "";
+                } else {
+                    List<String> results = new ArrayList<>();
+                    if( OrmUtil.proxySafeIsInstance( inPlaceLabVessel, TubeFormation.class )) {
+                        getLabelFromTubeFormation( labEvent, inPlaceLabVessel, results );
+                    } else {
+                        results.add( inPlaceLabVessel.getLabel() );
+                    }
+                    return results;
                 }
-                return "";
             }
         });
         searchTerms.add(searchTerm);
@@ -803,31 +813,36 @@ public class LabEventSearchDefinition {
                 return results;
             }
 
-            /**
-             * Shared barcode logic for in place and section transfer events targeting tube formations
-             * @param labEvent
-             * @param vessel
-             * @param results
-             */
-            private void getLabelFromTubeFormation( LabEvent labEvent, LabVessel vessel, List<String> results ){
-                TubeFormation tubes = OrmUtil.proxySafeCast(vessel, TubeFormation.class);
-                LabVessel rack = null;
-                if( labEvent.getSectionTransfers().iterator().hasNext() ) {
-                    rack = labEvent.getSectionTransfers().iterator().next().getAncillaryTargetVessel();
-                }
-                if( rack != null ) {
-                    results.add(rack.getLabel());
-                } else {
-                    // Ancillary vessel logic was added around Aug 2014.  This handles any earlier cases
-                    for ( LabVessel oldLogicRack : tubes.getRacksOfTubes()) {
-                        results.add(oldLogicRack.getLabel());
-                    }
-                }
-            }
         });
         searchTerms.add(searchTerm);
 
         return searchTerms;
+    }
+
+    /**
+     * Shared barcode logic for in place and section transfer events targeting tube formations
+     * @param labEvent
+     * @param vessel
+     * @param results
+     */
+    private void getLabelFromTubeFormation( LabEvent labEvent, LabVessel vessel, List<String> results ){
+        TubeFormation tubes = OrmUtil.proxySafeCast(vessel, TubeFormation.class);
+        LabVessel rack = null;
+        if( labEvent.getSectionTransfers().iterator().hasNext() ) {
+            rack = labEvent.getSectionTransfers().iterator().next().getAncillaryTargetVessel();
+        } else if ( labEvent.getCherryPickTransfers().iterator().hasNext() ) {
+            rack = labEvent.getCherryPickTransfers().iterator().next().getAncillaryTargetVessel();
+        } else if ( labEvent.getVesselToSectionTransfers().iterator().hasNext() ) {
+            rack = labEvent.getVesselToSectionTransfers().iterator().next().getAncillaryTargetVessel();
+        }
+        if( rack != null ) {
+            results.add(rack.getLabel());
+        } else {
+            // Ancillary vessel logic was added around Aug 2014.  This handles any earlier cases
+            for ( LabVessel oldLogicRack : tubes.getRacksOfTubes()) {
+                results.add(oldLogicRack.getLabel());
+            }
+        }
     }
 
 

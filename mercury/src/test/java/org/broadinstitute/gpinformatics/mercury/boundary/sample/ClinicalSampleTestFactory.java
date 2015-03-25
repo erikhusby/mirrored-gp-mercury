@@ -11,7 +11,6 @@
 
 package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
-import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.ClinicalResourceBean;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
@@ -20,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -33,20 +33,25 @@ public class ClinicalSampleTestFactory {
     public static ClinicalResourceBean createClinicalResourceBean(String userName, String manifestName,
                                                                   String researchProjectKey, boolean isFromSampleKit,
                                                                   int sampleCount) {
-
-        return
-                createClinicalResourceBean(userName, manifestName, researchProjectKey, isFromSampleKit,
+        return createClinicalResourceBean(userName, manifestName, researchProjectKey, isFromSampleKit,
                         getRandomTestSamples(sampleCount));
     }
 
     public static Collection<Sample> getRandomTestSamples(int count) {
         List<Sample> samples = new ArrayList<>(count);
         for (int i = 1; i <= count; i++) {
-            samples.add(createSample(ImmutableMap
-                    .of(Metadata.Key.SAMPLE_ID, "SM-" + i, Metadata.Key.PATIENT_ID,
-                            RandomStringUtils.randomAlphanumeric(8))));
+            samples.add(createSample(getRandomMetadataMap(i)));
         }
         return samples;
+    }
+
+    public static Map<Metadata.Key, String> getRandomMetadataMap(final int smNum) {
+        return new HashMap<Metadata.Key, String>() {{
+                put(Metadata.Key.SAMPLE_ID, "SM-" + smNum);
+                put(Metadata.Key.PATIENT_ID, RandomStringUtils.randomAlphanumeric(8));
+                put(Metadata.Key.PERCENT_TUMOR, "");
+                put(Metadata.Key.MATERIAL_TYPE, null);
+            }};
     }
 
     /**
