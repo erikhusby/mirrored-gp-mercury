@@ -1064,7 +1064,7 @@ public class ManifestSessionContainerTest extends Arquillian {
 
         try {
             manifestSessionEjb.createManifestSession("RP-12", "new session", true, Collections.singleton(
-                    ClinicalSampleTestFactory.createSample(ImmutableMap.of(Metadata.Key.SAMPLE_ID, sampleId))));
+                    ClinicalSampleTestFactory.createSample(ImmutableMap.of(Metadata.Key.BROAD_SAMPLE_ID, sampleId))));
         } catch (InformaticsServiceException e) {
             assertThat(e.getMessage(),
                     containsString(ManifestRecord.ErrorStatus.INVALID_TARGET.getBaseMessage()));
