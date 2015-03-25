@@ -73,6 +73,26 @@ public class ConfigurableSearchDaoTest extends ContainerTest {
         return list;
     }
 
+    /**
+     * Tests use of tube formations in in-place events and transfer events
+     */
+    public void testEventMixForVessels(){
+        ConfigurableSearchDefinition configurableSearchDefinition =
+                SearchDefinitionFactory.getForEntity( ColumnEntity.LAB_EVENT.getEntityName());
+
+        SearchInstance searchInstance = new SearchInstance();
+        SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("Event Vessel Barcode"
+                , configurableSearchDefinition);
+        searchValue.setOperator(SearchInstance.Operator.EQUALS);
+        // This barcoded tube has a mixture of in place events and transfers in containers and not in containers
+        //   (validates GPLIM-3471)
+        searchValue.setValues(Arrays.asList("0175362333"));
+        Criteria criteria = configurableSearchDao.buildCriteria(configurableSearchDefinition, searchInstance);
+        @SuppressWarnings("unchecked")
+        List<LabEvent> list = criteria.list();
+        Assert.assertEquals(list.size(), 11);
+    }
+
     public void testEventVessels() {
 
         ConfigurableSearchDefinition configurableSearchDefinition =
