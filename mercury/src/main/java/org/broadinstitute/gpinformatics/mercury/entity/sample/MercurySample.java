@@ -161,6 +161,13 @@ public class MercurySample extends AbstractSample {
         return metadataSource;
     }
 
+    /**
+     * For fix-ups only.
+     */
+    void setMetadataSource(MetadataSource metadataSource) {
+        this.metadataSource = metadataSource;
+    }
+
     public void addMetadata(Set<Metadata> metadata) {
         if (metadataSource == MetadataSource.MERCURY) {
             this.metadata.addAll(metadata);
