@@ -15,29 +15,31 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkDetail;
+import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
-/**
- * A Test to backpopulate a column which ought to be not null.
- */
 @Test(groups = TestGroups.FIXUP)
 public class LabBatchFixUpTest extends Arquillian {
 
@@ -49,6 +51,12 @@ public class LabBatchFixUpTest extends Arquillian {
 
     @Inject
     private ProductOrderDao productOrderDao;
+
+    @Inject
+    private BucketDao bucketDao;
+
+    @Inject
+    private UserBean userBean;
 
     // Use (RC, "rc"), (PROD, "prod") to push the backfill to RC and production respectively.
     @Deployment
@@ -202,6 +210,54 @@ public class LabBatchFixUpTest extends Arquillian {
         BucketEntry bucketEntry = new BucketEntry(labVessel, productOrder, BucketEntry.BucketEntryType.PDO_ENTRY);
         bucketEntry.setStatus(BucketEntry.Status.Archived);
         labBatch.addBucketEntry(bucketEntry);
+        labBatchDao.flush();
+    }
+
+    /**
+     * Tubes were put in both LCSET-7015 and 7016. 7016 was then cancelled. Need to unlink the tubes from 7016.
+     *
+     * This test should result in audit changes to Bucket and LabBatch (both no-op changes),
+     * deletes in BucketEntry and LabBatchStartingVessel, change to BarcodedTube, and add to FixupCommentary.
+     */
+    @Test(enabled = false)
+    public void gplim3493unlinkLcset7016() throws Exception {
+        userBean.loginOSUser();
+
+        final LabBatch undesiredLcset = labBatchDao.findByName("LCSET-7016");
+        Assert.assertNotNull(undesiredLcset);
+
+        for (Iterator<LabBatchStartingVessel> lbsvIter = undesiredLcset.getLabBatchStartingVessels().iterator();
+             lbsvIter.hasNext(); ) {
+            LabBatchStartingVessel labBatchStartingVessel = lbsvIter.next();
+
+            // Removing the undesired bucket entry should leave starting vessel with another bucket entry.
+            BucketEntry undesiredBucketEntry = null;
+            boolean foundOtherBucketEntry = false;
+            for (BucketEntry bucketEntry : labBatchStartingVessel.getLabVessel().getBucketEntries()) {
+                if (undesiredLcset.getBatchName().equals(bucketEntry.getLabBatch().getBatchName())) {
+                    undesiredBucketEntry = bucketEntry;
+                } else {
+                    foundOtherBucketEntry = true;
+                }
+            }
+            if (undesiredBucketEntry != null) {
+                if (foundOtherBucketEntry) {
+                    System.out.println("Removing bucketEntry " + undesiredBucketEntry.getBucketEntryId() +
+                                       " and batch starting vessel " + labBatchStartingVessel.getBatchStartingVesselId());
+
+                    // Unlinks the bucket entry from the vessel.
+                    labBatchStartingVessel.getLabVessel().getBucketEntries().remove(undesiredBucketEntry);
+                    // Unlinks the bucket entry from the batch.
+                    undesiredLcset.getBucketEntries().remove(undesiredBucketEntry);
+                    // Unlinks the starting vessel from the batch.
+                    lbsvIter.remove();
+                } else {
+                    System.out.println("Keeping vessel's only bucketEntry " + undesiredBucketEntry.getBucketEntryId());
+                }
+            }
+        }
+
+        labBatchDao.persist(new FixupCommentary("GPLIM-3493 unlink all tubes from " + undesiredLcset.getBatchName()));
         labBatchDao.flush();
     }
 }
