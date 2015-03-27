@@ -30,7 +30,7 @@ public class SampleInstanceV2 {
         private final int depth;
         private final LabBatch labBatch;
 
-        private LabBatchDepth(int depth, LabBatch labBatch) {
+        public LabBatchDepth(int depth, LabBatch labBatch) {
             this.depth = depth;
             this.labBatch = labBatch;
         }

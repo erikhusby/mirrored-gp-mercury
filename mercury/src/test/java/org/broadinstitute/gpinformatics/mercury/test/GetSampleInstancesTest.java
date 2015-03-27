@@ -582,23 +582,23 @@ public class GetSampleInstancesTest {
         mapLcset2Pos4ToTube.put(VesselPosition.A01, lcset2SpriTube);
         TubeFormation lcset2TubeForm4 = new TubeFormation(mapLcset2Pos4ToTube, RackOfTubes.RackType.Matrix96);
         spriEventLcset2.getSectionTransfers().add(new SectionTransfer(
-                lcset1TubeForm3.getContainerRole(), SBSSection.ALL96, null,
+                lcset2TubeForm3.getContainerRole(), SBSSection.ALL96, null,
                 lcset2TubeForm4.getContainerRole(), SBSSection.ALL96, null, spriEventLcset2));
 
         // Create LCSET 3 from the first transfers of LCSET 1 and 2
         Map<VesselPosition, BarcodedTube> mapLcset3Pos1ToTube = new HashMap<>();
         mapLcset3Pos1ToTube.put(VesselPosition.A01, lcset1T2Child);
-        mapLcset3Pos1ToTube.put(VesselPosition.A02, lcset2T2Child);
+        mapLcset3Pos1ToTube.put(VesselPosition.A02, lcset2T1Child);
         LabBatch lcset3 = new LabBatch("LCSET3", Collections.<LabVessel>emptySet(),
                 new HashSet<LabVessel>(mapLcset3Pos1ToTube.values()), LabBatch.LabBatchType.WORKFLOW, "", "",
                 new Date(), "");
         TubeFormation lcset3TubeForm2 = new TubeFormation(mapLcset3Pos1ToTube, RackOfTubes.RackType.Matrix96);
 
+        // LCSET 3 pool
         Map<VesselPosition, BarcodedTube> mapLcset3Pos3ToTube = new HashMap<>();
         BarcodedTube lcset3PoolTube = new BarcodedTube("LCSET3PT");
         mapLcset3Pos3ToTube.put(VesselPosition.A01, lcset3PoolTube);
         TubeFormation lcset3TubeForm3 = new TubeFormation(mapLcset3Pos3ToTube, RackOfTubes.RackType.Matrix96);
-
         LabEvent poolingEventLcset3 = new LabEvent(LabEventType.POOLING_TRANSFER, new Date(), "BATMAN", 1L, 101L,
                 "Bravo");
         poolingEventLcset3.getCherryPickTransfers().add(new CherryPickTransfer(
@@ -608,12 +608,23 @@ public class GetSampleInstancesTest {
                 lcset3TubeForm2.getContainerRole(), VesselPosition.A02, null,
                 lcset3TubeForm3.getContainerRole(), VesselPosition.A01, null, poolingEventLcset3));
 
+        // LCSET 3 post-pool
+        LabEvent spriEventLcset3 = new LabEvent(LabEventType.ICE_96_PLEX_SPRI_CONCENTRATION, new Date(), "BATMAN", 1L,
+                101L, "Bravo");
+        Map<VesselPosition, BarcodedTube> mapLcset3Pos4ToTube = new HashMap<>();
+        BarcodedTube lcset3SpriTube = new BarcodedTube("LCSET3ST");
+        mapLcset3Pos4ToTube.put(VesselPosition.A01, lcset3SpriTube);
+        TubeFormation lcset3TubeForm4 = new TubeFormation(mapLcset3Pos4ToTube, RackOfTubes.RackType.Matrix96);
+        spriEventLcset3.getSectionTransfers().add(new SectionTransfer(
+                lcset3TubeForm3.getContainerRole(), SBSSection.ALL96, null,
+                lcset3TubeForm4.getContainerRole(), SBSSection.ALL96, null, spriEventLcset3));
+
         // Do a transfer that includes all 3 LCSETs
         LabEvent denatureEvent = new LabEvent(LabEventType.DENATURE_TRANSFER, new Date(), "BATMAN", 1L, 101L, "Bravo");
         Map<VesselPosition, BarcodedTube> mapDenatureSourcePosToTube = new HashMap<>();
-        mapDenatureSourcePosToTube.put(VesselPosition.A01, lcset1PoolTube);
-        mapDenatureSourcePosToTube.put(VesselPosition.A02, lcset2PoolTube);
-        mapDenatureSourcePosToTube.put(VesselPosition.A03, lcset3PoolTube);
+        mapDenatureSourcePosToTube.put(VesselPosition.A01, lcset1SpriTube);
+        mapDenatureSourcePosToTube.put(VesselPosition.A02, lcset2SpriTube);
+        mapDenatureSourcePosToTube.put(VesselPosition.A03, lcset3SpriTube);
         TubeFormation denatureSourceTubeForm = new TubeFormation(mapDenatureSourcePosToTube,
                 RackOfTubes.RackType.Matrix96);
         Map<VesselPosition, BarcodedTube> mapDenatureDestPosToTube = new HashMap<>();
@@ -630,8 +641,16 @@ public class GetSampleInstancesTest {
 
         Assert.assertEquals(lcset1T1Child.getSampleInstancesV2().iterator().next().getSingleBatch(), lcset1);
         Assert.assertEquals(lcset1T2Child.getSampleInstancesV2().iterator().next().getSingleBatch(), lcset1);
+        Assert.assertEquals(lcset1PoolTube.getSampleInstancesV2().iterator().next().getSingleBatch(), lcset1);
+        Assert.assertEquals(lcset1SpriTube.getSampleInstancesV2().iterator().next().getSingleBatch(), lcset1);
+
         Assert.assertEquals(lcset2T1Child.getSampleInstancesV2().iterator().next().getSingleBatch(), lcset2);
         Assert.assertEquals(lcset2T2Child.getSampleInstancesV2().iterator().next().getSingleBatch(), lcset2);
+        Assert.assertEquals(lcset2PoolTube.getSampleInstancesV2().iterator().next().getSingleBatch(), lcset2);
+        Assert.assertEquals(lcset2SpriTube.getSampleInstancesV2().iterator().next().getSingleBatch(), lcset2);
+
+        Assert.assertEquals(lcset3PoolTube.getSampleInstancesV2().iterator().next().getSingleBatch(), lcset3);
+        Assert.assertEquals(lcset3SpriTube.getSampleInstancesV2().iterator().next().getSingleBatch(), lcset3);
 
         Assert.assertEquals(shearingEventLcset1.getComputedLcSets().size(), 1);
         Assert.assertEquals(shearingEventLcset1.getComputedLcSets().iterator().next(), lcset1);
@@ -643,14 +662,13 @@ public class GetSampleInstancesTest {
         Assert.assertEquals(poolingEventLcset2.getComputedLcSets().iterator().next(), lcset2);
         Assert.assertEquals(poolingEventLcset3.getComputedLcSets().size(), 1);
         Assert.assertEquals(poolingEventLcset3.getComputedLcSets().iterator().next(), lcset3);
-        // These need computation for pools
-//        Assert.assertEquals(spriEventLcset2.getComputedLcSets().size(), 1);
-//        Assert.assertEquals(spriEventLcset2.getComputedLcSets().iterator().next(), lcset1);
-//        Assert.assertEquals(spriEventLcset2.getComputedLcSets().size(), 1);
-//        Assert.assertEquals(spriEventLcset2.getComputedLcSets().iterator().next(), lcset2);
-//        Assert.assertEquals(poolingEventLcset3.getComputedLcSets().size(), 1);
-//        Assert.assertEquals(poolingEventLcset3.getComputedLcSets().iterator().next(), lcset3);
-//        Assert.assertEquals(denatureEvent.getComputedLcSets().size(), 3);
+        Assert.assertEquals(spriEventLcset1.getComputedLcSets().size(), 1);
+        Assert.assertEquals(spriEventLcset1.getComputedLcSets().iterator().next(), lcset1);
+        Assert.assertEquals(spriEventLcset2.getComputedLcSets().size(), 1);
+        Assert.assertEquals(spriEventLcset2.getComputedLcSets().iterator().next(), lcset2);
+        Assert.assertEquals(spriEventLcset3.getComputedLcSets().size(), 1);
+        Assert.assertEquals(spriEventLcset3.getComputedLcSets().iterator().next(), lcset3);
+        Assert.assertEquals(denatureEvent.getComputedLcSets().size(), 3);
 
     }
 }

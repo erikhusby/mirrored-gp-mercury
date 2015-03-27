@@ -715,28 +715,28 @@ public class VesselContainer<T extends LabVessel> {
             int numSampleInstanceWithBucketEntries,
             Set<SampleInstanceV2> sampleInstancesAtPosition ) {
         Set<SampleInstanceV2.LabBatchDepth> labBatches = new HashSet<>();
-        if (sampleInstancesAtPosition.size() == 1) {
+        if (sampleInstancesAtPosition.size() > 1) {
+            // todo jmt hardcoded depth, and -1 as an indicator, are not ideal
+            for (SampleInstanceV2 sampleInstance : sampleInstancesAtPosition) {
+                labBatches.add(new SampleInstanceV2.LabBatchDepth(10, sampleInstance.getSingleBatch()));
+            }
+            numSampleInstanceWithBucketEntries = -1;
+        } else {
             for (SampleInstanceV2 sampleInstance : sampleInstancesAtPosition) {
                 labBatches.addAll(sampleInstance.getAllWorkflowBatchDepths());
                 if (!labBatches.isEmpty()) {
                     numSampleInstanceWithBucketEntries++;
                 }
             }
-            for (SampleInstanceV2.LabBatchDepth labBatch : labBatches) {
-                Integer count = mapLabBatchToCount.get(labBatch);
-                if (count == null) {
-                    count = 1;
-                } else {
-                    count = count + 1;
-                }
-                mapLabBatchToCount.put(labBatch, count);
+        }
+        for (SampleInstanceV2.LabBatchDepth labBatch : labBatches) {
+            Integer count = mapLabBatchToCount.get(labBatch);
+            if (count == null) {
+                count = 1;
+            } else {
+                count = count + 1;
             }
-        } else if (sampleInstancesAtPosition.size() > 1){
-            // LCSET composition of a pool is frozen by ancestors, likely to be all the same?
-            // Currently counting sample instances with workflow, should it be vessels?
-            // Pre-pooling, expect all vessels in a container to be in the same LCSET, but not post-pooling.
-            // If encounter a vessel with more than one sample instance, don't attempt to find LCSET in common, just report union.
-            // How likely to have a mixture of pools and non-pools in the same container?  Unlikely.
+            mapLabBatchToCount.put(labBatch, count);
         }
         return numSampleInstanceWithBucketEntries;
     }
@@ -749,6 +749,13 @@ public class VesselContainer<T extends LabVessel> {
      */
     public static Set<LabBatch> computeLcSets(Map<SampleInstanceV2.LabBatchDepth, Integer> mapLabBatchToCount,
             int numSampleInstanceWithBucketEntries) {
+        if (numSampleInstanceWithBucketEntries == -1) {
+            Set<LabBatch> lcsets = new HashSet<>();
+            for (SampleInstanceV2.LabBatchDepth labBatchDepth : mapLabBatchToCount.keySet()) {
+                lcsets.add(labBatchDepth.getLabBatch());
+            }
+            return lcsets;
+        }
         List<SampleInstanceV2.LabBatchDepth> labBatchDepths = new ArrayList<>();
         if (LabVessel.DIAGNOSTICS) {
             System.out.println("numSampleInstanceWithBucketEntries " + numSampleInstanceWithBucketEntries);

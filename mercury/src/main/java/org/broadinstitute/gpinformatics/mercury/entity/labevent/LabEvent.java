@@ -503,18 +503,9 @@ todo jmt adder methods
                 }
             }
             computedLcSets.addAll(computeLcSetsForCherryPickTransfers());
+            computedLcSets.addAll(computeLcSetsForVesselToSectionTransfers());
 
             if (computedLcSets.isEmpty()) {
-                // Use the LCSET(s) from incoming events
-/*
-                for (LabVessel labVessel : getSourceLabVessels()) {
-                    for (LabEvent labEvent : labVessel.getTransfersToWithReArrays()) {
-                        if (!labEvent.equals(this)) {
-                            computedLcSets.addAll(labEvent.getComputedLcSets());
-                        }
-                    }
-                }
-*/
 /*
                 todo jmt revisit after we remove inference of LCSETs for controls.  The performance penalty is too high now.
                 // Handle issue with orphan source vessels (e.g. bait)
@@ -543,6 +534,18 @@ todo jmt adder methods
         for (CherryPickTransfer cherryPickTransfer : cherryPickTransfers) {
             Set<SampleInstanceV2> sampleInstancesAtPositionV2 = cherryPickTransfer.getSourceVesselContainer()
                     .getSampleInstancesAtPositionV2(cherryPickTransfer.getSourcePosition());
+            numVesselsWithBucketEntries = VesselContainer.collateLcSets(mapLabBatchToCount, numVesselsWithBucketEntries,
+                    sampleInstancesAtPositionV2);
+        }
+        return VesselContainer.computeLcSets(mapLabBatchToCount, numVesselsWithBucketEntries);
+    }
+
+    private Set<LabBatch> computeLcSetsForVesselToSectionTransfers() {
+        Map<SampleInstanceV2.LabBatchDepth, Integer> mapLabBatchToCount = new HashMap<>();
+        int numVesselsWithBucketEntries = 0;
+        for (VesselToSectionTransfer vesselToSectionTransfer : vesselToSectionTransfers) {
+            Set<SampleInstanceV2> sampleInstancesAtPositionV2 =
+                    vesselToSectionTransfer.getSourceVessel().getSampleInstancesV2();
             numVesselsWithBucketEntries = VesselContainer.collateLcSets(mapLabBatchToCount, numVesselsWithBucketEntries,
                     sampleInstancesAtPositionV2);
         }
