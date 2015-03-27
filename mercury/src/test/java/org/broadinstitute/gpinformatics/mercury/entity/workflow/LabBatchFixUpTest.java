@@ -31,7 +31,6 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import javax.transaction.UserTransaction;
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
@@ -58,9 +57,6 @@ public class LabBatchFixUpTest extends Arquillian {
 
     @Inject
     private UserBean userBean;
-
-    @Inject
-    private UserTransaction utx;
 
     // Use (RC, "rc"), (PROD, "prod") to push the backfill to RC and production respectively.
     @Deployment
