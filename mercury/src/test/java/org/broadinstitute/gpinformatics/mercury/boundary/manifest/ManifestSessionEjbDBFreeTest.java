@@ -1087,7 +1087,7 @@ public class ManifestSessionEjbDBFreeTest {
     public void validateValidTargetSample() throws Exception {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 1, false);
 
-        MercurySample foundSample = holder.ejb.findAndvalidateTargetSample(TEST_SAMPLE_KEY);
+        MercurySample foundSample = holder.ejb.findAndValidateTargetSample(TEST_SAMPLE_KEY);
 
         assertThat(foundSample.getSampleKey(), is(equalTo(TEST_SAMPLE_KEY)));
 
@@ -1097,7 +1097,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 1, false);
 
         try {
-            holder.ejb.findAndvalidateTargetSample(BSP_TEST_SAMPLE_KEY);
+            holder.ejb.findAndValidateTargetSample(BSP_TEST_SAMPLE_KEY);
             Assert.fail();
         } catch (Exception e) {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
@@ -1110,7 +1110,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 1, false);
 
         try {
-            holder.ejb.findAndvalidateTargetSample(TEST_SAMPLE_KEY + "BAD");
+            holder.ejb.findAndValidateTargetSample(TEST_SAMPLE_KEY + "BAD");
             Assert.fail();
         } catch (Exception e) {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
@@ -1449,16 +1449,15 @@ public class ManifestSessionEjbDBFreeTest {
     public void testAddDuplicateSamplesToManifestSession() throws Exception {
         stubResearchProjectDaoFindReturnsNewObject();
         List<Sample> samples = new ArrayList<>();
-        Sample sample = ClinicalSampleTestFactory
-                .createSample(ImmutableMap.of(Metadata.Key.SAMPLE_ID, SM_1, Metadata.Key.PATIENT_ID, PATIENT_1, Metadata.Key.BROAD_SAMPLE_ID, SM_1));
+        Sample sample = ClinicalSampleTestFactory.createSample(ImmutableMap.of(Metadata.Key.SAMPLE_ID, SM_1,
+                Metadata.Key.PATIENT_ID, PATIENT_1, Metadata.Key.BROAD_SAMPLE_ID, SM_1));
         samples.add(sample);
-        sample = ClinicalSampleTestFactory
-                .createSample(ImmutableMap.of(Metadata.Key.SAMPLE_ID, SM_1, Metadata.Key.PATIENT_ID, PATIENT_1, Metadata.Key.BROAD_SAMPLE_ID, SM_1));
+        sample = ClinicalSampleTestFactory.createSample(ImmutableMap.of(Metadata.Key.SAMPLE_ID, SM_1,
+                Metadata.Key.PATIENT_ID, PATIENT_1, Metadata.Key.BROAD_SAMPLE_ID, SM_1));
         samples.add(sample);
 
         Mockito.when(mercurySampleDao.findMapIdToMercurySample(Mockito.anyCollectionOf(String.class)))
-                .thenReturn(ImmutableMap.of(SM_1,new MercurySample(SM_1, MercurySample.MetadataSource.MERCURY))
-                        .of(SM_1, new MercurySample(SM_1, MercurySample.MetadataSource.MERCURY)));
+                .thenReturn(ImmutableMap.of(SM_1,new MercurySample(SM_1, MercurySample.MetadataSource.MERCURY)));
 
 
         ManifestSession manifestSession = manifestSessionEjb
@@ -1499,9 +1498,7 @@ public class ManifestSessionEjbDBFreeTest {
 
         MercurySample sample = new MercurySample(SM_1, MercurySample.MetadataSource.BSP);
         BarcodedTube barcodedTube = new BarcodedTube("VesselFor" + SM_1, BarcodedTube.BarcodedTubeType.MatrixTube);
-        LabEvent collaboratorTransferEvent =
-                new LabEvent(LabEventType.COLLABORATOR_TRANSFER, new Date(), "thisLocation", 0l, 0l, "testprogram");
-        barcodedTube.getInPlaceLabEvents().add(collaboratorTransferEvent);
+
         sample.getLabVessel().add(barcodedTube);
 
         Mockito.when(mercurySampleDao.findMapIdToMercurySample(Mockito.anyCollectionOf(String.class)))
@@ -1577,7 +1574,7 @@ public class ManifestSessionEjbDBFreeTest {
     /**
      * Test creation of a valid manifest session.
      */
-    public void testCreateValidManifestWithBadSamples() {
+    public void testCreateManifestWithBadSamples() {
         stubResearchProjectDaoFindReturnsNewObject();
         Collection<Sample> samples = Collections.singleton(
                 ClinicalSampleTestFactory.createSample(Collections.singletonMap(Metadata.Key.BROAD_SAMPLE_ID, SM_1)));
@@ -1586,6 +1583,7 @@ public class ManifestSessionEjbDBFreeTest {
         try {
             manifestSession = manifestSessionEjb
                     .createManifestSession(TEST_RESEARCH_PROJECT_KEY, TEST_SESSION_NAME, true, samples);
+            Assert.fail();
         } catch (Exception e) {
             assertThat(e.getLocalizedMessage(),
                     containsString(ManifestSessionEjb.SAMPLE_IDS_ARE_NOT_FOUND_MESSAGE));

@@ -241,7 +241,7 @@ public class ManifestTubeTransferActionBean extends CoreActionBean {
 
         String message = "";
         try {
-            manifestSessionEjb.findAndvalidateTargetSample(targetSample);
+            manifestSessionEjb.findAndValidateTargetSample(targetSample);
         } catch (Exception e) {
             message = e.getMessage();
             logger.error("Could not validate target sample " + targetSample, e);

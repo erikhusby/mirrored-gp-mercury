@@ -11,40 +11,38 @@
 
 package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
-        import com.google.common.collect.ImmutableMap;
-        import com.sun.jersey.api.client.ClientResponse;
-        import com.sun.jersey.api.client.WebResource;
-        import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
-        import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-        import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
-        import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
-        import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
-        import org.broadinstitute.gpinformatics.mercury.crsp.generated.ClinicalResourceBean;
-        import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
-        import org.broadinstitute.gpinformatics.mercury.crsp.generated.SampleData;
-        import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
-        import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
-        import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
-        import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-        import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
-        import org.jboss.arquillian.container.test.api.Deployment;
-        import org.jboss.arquillian.container.test.api.RunAsClient;
-        import org.jboss.arquillian.test.api.ArquillianResource;
-        import org.jboss.arquillian.testng.Arquillian;
-        import org.jboss.shrinkwrap.api.spec.WebArchive;
-        import org.testng.Assert;
-        import org.testng.annotations.Test;
+import com.google.common.collect.ImmutableMap;
+import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.WebResource;
+import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
+import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
+import org.broadinstitute.gpinformatics.mercury.crsp.generated.ClinicalResourceBean;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.container.test.api.RunAsClient;
+import org.jboss.arquillian.test.api.ArquillianResource;
+import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
-        import javax.inject.Inject;
-        import javax.ws.rs.core.MediaType;
-        import javax.ws.rs.core.Response;
-        import java.net.URL;
+import javax.inject.Inject;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import java.net.URL;
 
-        import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-        import static org.hamcrest.MatcherAssert.assertThat;
-        import static org.hamcrest.Matchers.equalTo;
-        import static org.hamcrest.Matchers.is;
-        import static org.hamcrest.Matchers.startsWith;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.startsWith;
 
 @Test(groups = TestGroups.STANDARD)
 public class ClinicalResourceTest extends RestServiceContainerTest {
@@ -84,7 +82,7 @@ public class ClinicalResourceTest extends RestServiceContainerTest {
         String sampleId = "SM-1";
 
         MercurySample sampleForTest = mercurySampleDao.findBySampleKey(sampleId);
-        if(sampleForTest == null) {
+        if (sampleForTest == null) {
             sampleForTest = new MercurySample(sampleId, MercurySample.MetadataSource.MERCURY);
             mercurySampleDao.persist(sampleForTest);
         }

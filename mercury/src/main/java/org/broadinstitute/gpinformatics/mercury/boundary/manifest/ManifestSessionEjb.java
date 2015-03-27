@@ -248,7 +248,7 @@ public class ManifestSessionEjb {
      *
      * @return the desired mercury sample if it is both found and eligible
      */
-    public MercurySample findAndvalidateTargetSample(String targetSampleKey) {
+    public MercurySample findAndValidateTargetSample(String targetSampleKey) {
         MercurySample targetSample = mercurySampleDao.findBySampleKey(targetSampleKey);
 
         // There should be one and only one target sample.
@@ -279,7 +279,7 @@ public class ManifestSessionEjb {
      * @return the referenced lab vessel if it is both found and eligible
      */
     public LabVessel findAndValidateTargetSampleAndVessel(String targetSampleKey, String targetVesselLabel) {
-        MercurySample foundSample = findAndvalidateTargetSample(targetSampleKey);
+        MercurySample foundSample = findAndValidateTargetSample(targetSampleKey);
         LabVessel foundVessel = labVesselDao.findByIdentifier(targetVesselLabel);
         if (foundVessel == null) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
@@ -328,7 +328,7 @@ public class ManifestSessionEjb {
     public void transferSample(long manifestSessionId, String sourceCollaboratorSample, String sampleKey,
                                String vesselLabel) {
         ManifestSession session = findManifestSession(manifestSessionId);
-        MercurySample targetSample = findAndvalidateTargetSample(sampleKey);
+        MercurySample targetSample = findAndValidateTargetSample(sampleKey);
 
         LabVessel targetVessel = findAndValidateTargetSampleAndVessel(sampleKey, vesselLabel);
         session.performTransfer(sourceCollaboratorSample, targetSample, targetVessel, userBean.getBspUser());
