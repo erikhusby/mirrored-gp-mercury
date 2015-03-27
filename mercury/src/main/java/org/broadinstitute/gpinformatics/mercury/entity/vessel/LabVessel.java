@@ -1118,6 +1118,17 @@ public abstract class LabVessel implements Serializable {
         return allLabBatches;
     }
 
+    public List<LabBatch> getWorkflowLabBatches() {
+        List<LabBatch> allLabBatches = new ArrayList<>();
+        for (LabBatchStartingVessel batchStartingVessel : labBatches) {
+            if (batchStartingVessel.getLabBatch().getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
+                allLabBatches.add(batchStartingVessel.getLabBatch());
+            }
+        }
+        allLabBatches.addAll(reworkLabBatches);
+        return allLabBatches;
+    }
+
     public Set<LabBatch> getReworkLabBatches() {
         return reworkLabBatches;
     }
@@ -1845,6 +1856,10 @@ public abstract class LabVessel implements Serializable {
         VesselContainer<?> containerRole = getContainerRole();
         if (containerRole != null) {
             containerRole.clearCaches();
+        }
+        for (LabVessel container : containers) {
+            container.clearCaches();
+            container.getContainerRole().clearCaches();
         }
     }
 

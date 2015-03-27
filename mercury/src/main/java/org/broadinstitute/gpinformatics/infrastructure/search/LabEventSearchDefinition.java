@@ -551,6 +551,7 @@ public class LabEventSearchDefinition {
                 LabEvent labEvent = (LabEvent) entity;
                 List<String> results = new ArrayList<>();
 
+                // todo jmt this needs to do more than in place, and it needs to get sample instances
                 LabVessel labVessel = labEvent.getInPlaceLabVessel();
                 if (labVessel != null) {
                     for (MercurySample sample : labVessel.getMercurySamples()) {

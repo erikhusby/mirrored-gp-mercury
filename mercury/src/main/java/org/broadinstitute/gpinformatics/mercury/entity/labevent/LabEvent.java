@@ -506,6 +506,7 @@ todo jmt adder methods
 
             if (computedLcSets.isEmpty()) {
                 // Use the LCSET(s) from incoming events
+/*
                 for (LabVessel labVessel : getSourceLabVessels()) {
                     for (LabEvent labEvent : labVessel.getTransfersToWithReArrays()) {
                         if (!labEvent.equals(this)) {
@@ -513,6 +514,7 @@ todo jmt adder methods
                         }
                     }
                 }
+*/
 /*
                 todo jmt revisit after we remove inference of LCSETs for controls.  The performance penalty is too high now.
                 // Handle issue with orphan source vessels (e.g. bait)
@@ -536,7 +538,7 @@ todo jmt adder methods
     }
 
     private Set<LabBatch> computeLcSetsForCherryPickTransfers() {
-        Map<LabBatch, Integer> mapLabBatchToCount = new HashMap<>();
+        Map<SampleInstanceV2.LabBatchDepth, Integer> mapLabBatchToCount = new HashMap<>();
         int numVesselsWithBucketEntries = 0;
         for (CherryPickTransfer cherryPickTransfer : cherryPickTransfers) {
             Set<SampleInstanceV2> sampleInstancesAtPositionV2 = cherryPickTransfer.getSourceVesselContainer()

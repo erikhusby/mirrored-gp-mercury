@@ -18,12 +18,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexRea
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
@@ -33,6 +33,7 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -481,5 +482,175 @@ public class GetSampleInstancesTest {
                             MercurySample.GSSR_METADATA_SOURCE);
         Assert.assertEquals(createSampleInstanceForPipelineAPIMetadataTesting(null,"samples from outer space").getMetadataSourceForPipelineAPI(),
                             MercurySample.OTHER_METADATA_SOURCE);
+    }
+
+    @Test
+    public void testLcsetInference() {
+        // todo jmt add and assert bucket entries
+        // Create LCSET 1 with 2 new tubes
+        Map<VesselPosition, BarcodedTube> mapLcset1Pos1ToTube = new HashMap<>();
+        BarcodedTube lcset1T1 = new BarcodedTube("LCSET1T1");
+        lcset1T1.getMercurySamples().add(new MercurySample("S1_1", MercurySample.MetadataSource.MERCURY));
+        BarcodedTube lcset1T2 = new BarcodedTube("LCSET1T2");
+        lcset1T2.getMercurySamples().add(new MercurySample("S1_2", MercurySample.MetadataSource.MERCURY));
+        mapLcset1Pos1ToTube.put(VesselPosition.A01, lcset1T1);
+        mapLcset1Pos1ToTube.put(VesselPosition.A02, lcset1T2);
+        LabBatch lcset1 = new LabBatch("LCSET1", new HashSet<LabVessel>(mapLcset1Pos1ToTube.values()),
+                LabBatch.LabBatchType.WORKFLOW);
+        TubeFormation lcset1TubeForm1 = new TubeFormation(mapLcset1Pos1ToTube, RackOfTubes.RackType.Matrix96);
+
+        // Create LCSET 2 with 1 new tube and 1 rework
+        Map<VesselPosition, BarcodedTube> mapLcset2Pos1ToTube = new HashMap<>();
+        BarcodedTube lcset2T1 = new BarcodedTube("LCSET2T1");
+        lcset2T1.getMercurySamples().add(new MercurySample("S2_1", MercurySample.MetadataSource.MERCURY));
+        mapLcset2Pos1ToTube.put(VesselPosition.A01, lcset2T1);
+        mapLcset2Pos1ToTube.put(VesselPosition.A02, lcset1T2);
+        LabBatch lcset2 = new LabBatch("LCSET2", Collections.<LabVessel>singleton(lcset2T1),
+                Collections.<LabVessel>singleton(lcset1T2), LabBatch.LabBatchType.WORKFLOW, "", "", new Date(), "");
+        TubeFormation lcset2TubeForm1 = new TubeFormation(mapLcset2Pos1ToTube, RackOfTubes.RackType.Matrix96);
+
+        // LCSET 1 rack to rack
+        Map<VesselPosition, BarcodedTube> mapLcset1Pos2ToTube = new HashMap<>();
+        BarcodedTube lcset1T1Child = new BarcodedTube("LCSET1T1_2");
+        mapLcset1Pos2ToTube.put(VesselPosition.A01, lcset1T1Child);
+        BarcodedTube lcset1T2Child = new BarcodedTube("LCSET1T2_2");
+        mapLcset1Pos2ToTube.put(VesselPosition.A02, lcset1T2Child);
+        TubeFormation lcset1TubeForm2 = new TubeFormation(mapLcset1Pos2ToTube, RackOfTubes.RackType.Matrix96);
+        LabEvent shearingEventLcset1 = new LabEvent(LabEventType.SHEARING_TRANSFER, new Date(), "BATMAN", 1L, 101L,
+                "Bravo");
+        shearingEventLcset1.getSectionTransfers().add(new SectionTransfer(
+                lcset1TubeForm1.getContainerRole(), SBSSection.ALL96, null,
+                lcset1TubeForm2.getContainerRole(), SBSSection.ALL96, null, shearingEventLcset1));
+
+        // LCSET 1 pool
+        Map<VesselPosition, BarcodedTube> mapLcset1Pos3ToTube = new HashMap<>();
+        BarcodedTube lcset1PoolTube = new BarcodedTube("LCSET1PT");
+        mapLcset1Pos3ToTube.put(VesselPosition.A01, lcset1PoolTube);
+        TubeFormation lcset1TubeForm3 = new TubeFormation(mapLcset1Pos3ToTube, RackOfTubes.RackType.Matrix96);
+        LabEvent poolingEventLcset1 = new LabEvent(LabEventType.ICE_POOLING_TRANSFER, new Date(), "BATMAN", 1L, 101L,
+                "Bravo");
+        poolingEventLcset1.getCherryPickTransfers().add(new CherryPickTransfer(
+                lcset1TubeForm2.getContainerRole(), VesselPosition.A01, null,
+                lcset1TubeForm3.getContainerRole(), VesselPosition.A01, null, poolingEventLcset1));
+        poolingEventLcset1.getCherryPickTransfers().add(new CherryPickTransfer(
+                lcset1TubeForm2.getContainerRole(), VesselPosition.A02, null,
+                lcset1TubeForm3.getContainerRole(), VesselPosition.A01, null, poolingEventLcset1));
+
+        // LCSET 1 post pool
+        LabEvent spriEventLcset1 = new LabEvent(LabEventType.ICE_96_PLEX_SPRI_CONCENTRATION, new Date(), "BATMAN", 1L,
+                101L, "Bravo");
+        Map<VesselPosition, BarcodedTube> mapLcset1Pos4ToTube = new HashMap<>();
+        BarcodedTube lcset1SpriTube = new BarcodedTube("LCSET1ST");
+        mapLcset1Pos4ToTube.put(VesselPosition.A01, lcset1SpriTube);
+        TubeFormation lcset1TubeForm4 = new TubeFormation(mapLcset1Pos4ToTube, RackOfTubes.RackType.Matrix96);
+        spriEventLcset1.getSectionTransfers().add(new SectionTransfer(
+                lcset1TubeForm3.getContainerRole(), SBSSection.ALL96, null,
+                lcset1TubeForm4.getContainerRole(), SBSSection.ALL96, null, spriEventLcset1));
+
+        // LCSET 2 rack to rack
+        Map<VesselPosition, BarcodedTube> mapLcset2Pos2ToTube = new HashMap<>();
+        BarcodedTube lcset2T1Child = new BarcodedTube("LCSET2T1_2");
+        mapLcset2Pos2ToTube.put(VesselPosition.A01, lcset2T1Child);
+        BarcodedTube lcset2T2Child = new BarcodedTube("LCSET2T2_2");
+        mapLcset2Pos2ToTube.put(VesselPosition.A02, lcset2T2Child);
+        TubeFormation lcset2TubeForm2 = new TubeFormation(mapLcset2Pos2ToTube, RackOfTubes.RackType.Matrix96);
+        LabEvent shearingEventLcset2 = new LabEvent(LabEventType.SHEARING_TRANSFER, new Date(), "BATMAN", 1L, 101L,
+                "Bravo");
+        shearingEventLcset2.getSectionTransfers().add(new SectionTransfer(
+                lcset2TubeForm1.getContainerRole(), SBSSection.ALL96, null,
+                lcset2TubeForm2.getContainerRole(), SBSSection.ALL96, null, shearingEventLcset2));
+
+        // LCSET 2 pool
+        Map<VesselPosition, BarcodedTube> mapLcset2Pos3ToTube = new HashMap<>();
+        BarcodedTube lcset2PoolTube = new BarcodedTube("LCSET2PT");
+        mapLcset2Pos3ToTube.put(VesselPosition.A01, lcset2PoolTube);
+        TubeFormation lcset2TubeForm3 = new TubeFormation(mapLcset2Pos3ToTube, RackOfTubes.RackType.Matrix96);
+        LabEvent poolingEventLcset2 = new LabEvent(LabEventType.POOLING_TRANSFER, new Date(), "BATMAN", 1L, 101L,
+                "Bravo");
+        poolingEventLcset2.getCherryPickTransfers().add(new CherryPickTransfer(
+                lcset2TubeForm2.getContainerRole(), VesselPosition.A01, null,
+                lcset2TubeForm3.getContainerRole(), VesselPosition.A01, null, poolingEventLcset2));
+        poolingEventLcset2.getCherryPickTransfers().add(new CherryPickTransfer(
+                lcset2TubeForm2.getContainerRole(), VesselPosition.A02, null,
+                lcset2TubeForm3.getContainerRole(), VesselPosition.A01, null, poolingEventLcset2));
+
+        // LCSET 2 post-pool
+        LabEvent spriEventLcset2 = new LabEvent(LabEventType.ICE_96_PLEX_SPRI_CONCENTRATION, new Date(), "BATMAN", 1L,
+                101L, "Bravo");
+        Map<VesselPosition, BarcodedTube> mapLcset2Pos4ToTube = new HashMap<>();
+        BarcodedTube lcset2SpriTube = new BarcodedTube("LCSET2ST");
+        mapLcset2Pos4ToTube.put(VesselPosition.A01, lcset2SpriTube);
+        TubeFormation lcset2TubeForm4 = new TubeFormation(mapLcset2Pos4ToTube, RackOfTubes.RackType.Matrix96);
+        spriEventLcset2.getSectionTransfers().add(new SectionTransfer(
+                lcset1TubeForm3.getContainerRole(), SBSSection.ALL96, null,
+                lcset2TubeForm4.getContainerRole(), SBSSection.ALL96, null, spriEventLcset2));
+
+        // Create LCSET 3 from the first transfers of LCSET 1 and 2
+        Map<VesselPosition, BarcodedTube> mapLcset3Pos1ToTube = new HashMap<>();
+        mapLcset3Pos1ToTube.put(VesselPosition.A01, lcset1T2Child);
+        mapLcset3Pos1ToTube.put(VesselPosition.A02, lcset2T2Child);
+        LabBatch lcset3 = new LabBatch("LCSET3", Collections.<LabVessel>emptySet(),
+                new HashSet<LabVessel>(mapLcset3Pos1ToTube.values()), LabBatch.LabBatchType.WORKFLOW, "", "",
+                new Date(), "");
+        TubeFormation lcset3TubeForm2 = new TubeFormation(mapLcset3Pos1ToTube, RackOfTubes.RackType.Matrix96);
+
+        Map<VesselPosition, BarcodedTube> mapLcset3Pos3ToTube = new HashMap<>();
+        BarcodedTube lcset3PoolTube = new BarcodedTube("LCSET3PT");
+        mapLcset3Pos3ToTube.put(VesselPosition.A01, lcset3PoolTube);
+        TubeFormation lcset3TubeForm3 = new TubeFormation(mapLcset3Pos3ToTube, RackOfTubes.RackType.Matrix96);
+
+        LabEvent poolingEventLcset3 = new LabEvent(LabEventType.POOLING_TRANSFER, new Date(), "BATMAN", 1L, 101L,
+                "Bravo");
+        poolingEventLcset3.getCherryPickTransfers().add(new CherryPickTransfer(
+                lcset3TubeForm2.getContainerRole(), VesselPosition.A01, null,
+                lcset3TubeForm3.getContainerRole(), VesselPosition.A01, null, poolingEventLcset3));
+        poolingEventLcset3.getCherryPickTransfers().add(new CherryPickTransfer(
+                lcset3TubeForm2.getContainerRole(), VesselPosition.A02, null,
+                lcset3TubeForm3.getContainerRole(), VesselPosition.A01, null, poolingEventLcset3));
+
+        // Do a transfer that includes all 3 LCSETs
+        LabEvent denatureEvent = new LabEvent(LabEventType.DENATURE_TRANSFER, new Date(), "BATMAN", 1L, 101L, "Bravo");
+        Map<VesselPosition, BarcodedTube> mapDenatureSourcePosToTube = new HashMap<>();
+        mapDenatureSourcePosToTube.put(VesselPosition.A01, lcset1PoolTube);
+        mapDenatureSourcePosToTube.put(VesselPosition.A02, lcset2PoolTube);
+        mapDenatureSourcePosToTube.put(VesselPosition.A03, lcset3PoolTube);
+        TubeFormation denatureSourceTubeForm = new TubeFormation(mapDenatureSourcePosToTube,
+                RackOfTubes.RackType.Matrix96);
+        Map<VesselPosition, BarcodedTube> mapDenatureDestPosToTube = new HashMap<>();
+        mapDenatureDestPosToTube.put(VesselPosition.A01, new BarcodedTube("LCSET1DT"));
+        mapDenatureDestPosToTube.put(VesselPosition.A02, new BarcodedTube("LCSET2DT"));
+        mapDenatureDestPosToTube.put(VesselPosition.A03, new BarcodedTube("LCSET3DT"));
+        TubeFormation denatureDestTubeForm = new TubeFormation(mapDenatureDestPosToTube, RackOfTubes.RackType.Matrix96);
+
+        denatureEvent.getSectionTransfers().add(new SectionTransfer(
+                denatureSourceTubeForm.getContainerRole(), SBSSection.ALL96, null,
+                denatureDestTubeForm.getContainerRole(), SBSSection.ALL96, null, denatureEvent));
+
+        BaseEventTest.runTransferVisualizer(lcset1T2);
+
+        Assert.assertEquals(lcset1T1Child.getSampleInstancesV2().iterator().next().getSingleBatch(), lcset1);
+        Assert.assertEquals(lcset1T2Child.getSampleInstancesV2().iterator().next().getSingleBatch(), lcset1);
+        Assert.assertEquals(lcset2T1Child.getSampleInstancesV2().iterator().next().getSingleBatch(), lcset2);
+        Assert.assertEquals(lcset2T2Child.getSampleInstancesV2().iterator().next().getSingleBatch(), lcset2);
+
+        Assert.assertEquals(shearingEventLcset1.getComputedLcSets().size(), 1);
+        Assert.assertEquals(shearingEventLcset1.getComputedLcSets().iterator().next(), lcset1);
+        Assert.assertEquals(shearingEventLcset2.getComputedLcSets().size(), 1);
+        Assert.assertEquals(shearingEventLcset2.getComputedLcSets().iterator().next(), lcset2);
+        Assert.assertEquals(poolingEventLcset1.getComputedLcSets().size(), 1);
+        Assert.assertEquals(poolingEventLcset1.getComputedLcSets().iterator().next(), lcset1);
+        Assert.assertEquals(poolingEventLcset2.getComputedLcSets().size(), 1);
+        Assert.assertEquals(poolingEventLcset2.getComputedLcSets().iterator().next(), lcset2);
+        Assert.assertEquals(poolingEventLcset3.getComputedLcSets().size(), 1);
+        Assert.assertEquals(poolingEventLcset3.getComputedLcSets().iterator().next(), lcset3);
+        // These need computation for pools
+//        Assert.assertEquals(spriEventLcset2.getComputedLcSets().size(), 1);
+//        Assert.assertEquals(spriEventLcset2.getComputedLcSets().iterator().next(), lcset1);
+//        Assert.assertEquals(spriEventLcset2.getComputedLcSets().size(), 1);
+//        Assert.assertEquals(spriEventLcset2.getComputedLcSets().iterator().next(), lcset2);
+//        Assert.assertEquals(poolingEventLcset3.getComputedLcSets().size(), 1);
+//        Assert.assertEquals(poolingEventLcset3.getComputedLcSets().iterator().next(), lcset3);
+//        Assert.assertEquals(denatureEvent.getComputedLcSets().size(), 3);
+
     }
 }
