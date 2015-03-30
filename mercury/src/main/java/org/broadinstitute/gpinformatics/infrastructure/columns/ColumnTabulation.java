@@ -16,22 +16,22 @@ public interface ColumnTabulation {
     public String getName();
 
     /**
-     * returns the results of evaluating the plain text, sortable expression.
+     * Returns the results of evaluating the value expression.
      *
      * @param entity  root of object graph that expression navigates.
-     * @param context name / value pairs of other variables used in the expression.
-     * @return results, which could be a list.
+     * @param context name/value pairs of other variables used in the expression.
+     * @return The property value object, which could be a collection of values.
      */
-    public Object evalPlainTextExpression(Object entity, Map<String, Object> context);
+    public Object evalValueExpression(Object entity, Map<String, Object> context);
 
     /**
-     * returns the results of evaluating the formatted expression.
+     * Returns the display value of a column value property
      *
-     * @param entity  root of object graph that expression navigates.
-     * @param context name / value pairs of other variables used in the expression.
-     * @return results, which could be a list, and could contain HTML.
+     * @param value Property value or collection of values to be displayed
+     * @param context name/value pairs of other variables used in the expression.
+     * @return Results converted to a String to display
      */
-    public Object evalFormattedExpression(Object entity, Map<String, Object> context);
+    public String evalFormattedExpression(Object value, Map<String, Object> context);
 
     /**
      * returns the results of evaluating the expression for the view column header.
@@ -105,10 +105,12 @@ public interface ColumnTabulation {
     public List<ColumnTabulation> getChildColumnTabulations();
 
     /**
-     * This is used to optimize formatted value operation. Without this, there were cases where text only evaluations
-     * where happening twice.
+     * Returns the column value type from an expression evaluation
      *
-     * @return Is formatted evaluation going to call plain text anyway.
+     * @param value  The column object value
+     * @param context name/value pairs of other variables used in the expression.
+     * @return
      */
-    public boolean isOnlyPlainText();
+    public ColumnValueType evalValueTypeExpression( Object value, Map<String, Object> context );
+
 }

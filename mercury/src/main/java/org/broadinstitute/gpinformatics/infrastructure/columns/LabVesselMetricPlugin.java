@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
-import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -31,10 +30,10 @@ public class LabVesselMetricPlugin implements ListPlugin {
                 // Include measurement default units in header
                 headerText = metricType.getDisplayName() + " ng/uL";
                 QUANT_VALUE_HEADERS
-                        .put(metricType, new ConfigurableList.Header(headerText, headerText, "", ""));
+                        .put(metricType, new ConfigurableList.Header(headerText, headerText, ""));
                 headerText = metricType.getDisplayName() + " Decision";
                 QUANT_DECISION_HEADERS.put(metricType,
-                        new ConfigurableList.Header(headerText, headerText, "", ""));
+                        new ConfigurableList.Header(headerText, headerText, ""));
             }
         }
     }

@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
+import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.infrastructure.common.BaseSplitter;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.hibernate.Criteria;
@@ -102,9 +103,8 @@ public class ConfigurableSearchDao extends GenericDao {
         recurseSearchValues(1, criteria, null, mapPathToCriteria, searchInstance.getSearchValues(),
                 configurableSearchDefinition);
 
-        if (orderPath != null) {
-            addOrderByToCriteria(criteria, orderPath, orderDirection);
-        }
+        addOrderByToCriteria(criteria, orderPath, orderDirection, configurableSearchDefinition);
+
         return criteria;
     }
 
@@ -124,15 +124,15 @@ public class ConfigurableSearchDao extends GenericDao {
      * @param criteria
      * @param orderPath
      * @param orderDirection
+     * @param configurableSearchDefinition
      */
-    private void addOrderByToCriteria(Criteria criteria, String orderPath, String orderDirection) {
+    private void addOrderByToCriteria(Criteria criteria, String orderPath, String orderDirection
+            , ConfigurableSearchDefinition configurableSearchDefinition ) {
 
         if (orderPath != null && orderDirection != null) {
 
             if (!orderPath.contains(".")) {
-
-                // The orderBy property is on the result entity, so we can apply it
-                // directly
+                // The orderBy property is on the result entity, so we can apply it directly
                 if (orderDirection.equals("ASC")) {
                     criteria.addOrder(Order.asc(orderPath));
                 } else {
@@ -159,6 +159,13 @@ public class ConfigurableSearchDao extends GenericDao {
                     childCriteria.addOrder(Order.desc(criteriaSteps[criteriaSteps.length - 1]));
                 }
             }
+
+            // Always append entity ID to order (unless explicit sort on the same property requested),
+            //    because a non-unique sort column will not yield reproducible results.
+            if( orderPath == null || !orderPath.equals( configurableSearchDefinition.getResultEntity().getEntityIdProperty() ) ) {
+                criteria.addOrder(Order.asc(configurableSearchDefinition.getResultEntity().getEntityIdProperty()));
+            }
+
         }
     }
 
@@ -365,7 +372,7 @@ public class ConfigurableSearchDao extends GenericDao {
             //noinspection unchecked
             criterion = createInCriterion(searchValue, (List<Object>) propertyValues.get(0));
         } else if (searchValue.getOperator() == SearchInstance.Operator.EQUALS) {
-            if (searchValue.getDataType().equals("Date")) {
+            if (searchValue.getDataType() == ColumnValueType.DATE || searchValue.getDataType() == ColumnValueType.DATE_TIME ) {
                 // Date has implied midnight, so we need between this date and next day
                 Calendar nextDay = Calendar.getInstance();
                 nextDay.setTime((Date) propertyValues.get(0));

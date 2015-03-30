@@ -271,7 +271,8 @@ public class ConfigurableListFactory {
             SearchInstance searchInstance,
             ConfigurableSearchDefinition configurableSearchDef,
             String columnSetName,
-            Integer sortColumnIndex, String dbSortPath,
+            Integer sortColumnIndex,
+            String dbSortPath,
             String sortDirection,
             String entityName) {
 
@@ -281,8 +282,8 @@ public class ConfigurableListFactory {
         if( searchInstance.hasAlternateSearchDefinition() ) {
             criteria = configurableSearchDao.buildCriteria(
                     searchInstance.getAlternateSearchDefinition(),
-                    searchInstance, dbSortPath,
-                    sortDirection);
+                    searchInstance, null,
+                    null);
         } else {
             criteria = configurableSearchDao.buildCriteria(
                     configurableSearchDef,
@@ -355,12 +356,7 @@ public class ConfigurableListFactory {
 
         configurableList.addRows( entityList, searchInstance.getEvalContext() );
 
-        ConfigurableList.ResultList resultList;
-        if( entityList.size() <= pagination.getPageSize() ) {
-            resultList = configurableList.getResultList(false);
-        } else {
-            resultList = configurableList.getResultList(true);
-        }
+        ConfigurableList.ResultList resultList = configurableList.getResultList();
 
         return new FirstPageResults(resultList, pagination);
     }

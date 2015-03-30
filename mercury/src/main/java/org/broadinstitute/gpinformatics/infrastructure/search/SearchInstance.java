@@ -11,6 +11,7 @@ package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -45,15 +46,7 @@ public class SearchInstance implements Serializable {
     public static final String CONTEXT_KEY_SEARCH_STRING = "searchString";
     public static final String CONTEXT_KEY_BSP_SAMPLE_SEARCH = "BSPSampleSearchService";
     public static final String CONTEXT_KEY_OPTION_VALUE_DAO = "OptionValueDao";
-
-    /**
-     * For JSP EL
-     *
-     * @return value of constant
-     */
-    public String getChooseValue() {
-        return CHOOSE_VALUE;
-    }
+    public static final String CONTEXT_KEY_MULTI_VALUE_DELIMITER = "MultiValueDelimiter";
 
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class SearchValue implements ColumnTabulation, Serializable {
@@ -92,10 +85,10 @@ public class SearchInstance implements Serializable {
         private List<ConstrainedValue> constrainedValues;
 
         /**
-         * The data type of the value (String, Date, Double, Boolean).
+         * The user defined search data type of the value
          */
         @XmlTransient
-        private String dataType;
+        private ColumnValueType dataType;
 
         /**
          * True if this term should be displayed in the results.
@@ -171,7 +164,7 @@ public class SearchInstance implements Serializable {
          * @return results of expression.
          */
         public List<ConstrainedValue> getConstrainedValues() {
-            if (searchTerm.getValuesExpression() == null) {
+            if (searchTerm.getConstrainedValuesExpression() == null) {
                 return null;
             }
             if (!evaluatedConstrainedValues) {
@@ -180,7 +173,7 @@ public class SearchInstance implements Serializable {
                 if( getSearchInstance().getEvalContext() != null ) {
                     context.putAll(getSearchInstance().getEvalContext());
                 }
-                constrainedValues = searchTerm.evalConstrainedValues(context);
+                constrainedValues = searchTerm.getConstrainedValues(context);
                 evaluatedConstrainedValues = true;
             }
             return constrainedValues;
@@ -240,20 +233,17 @@ public class SearchInstance implements Serializable {
          *
          * @return data type used in Hibernate restriction.
          */
-        public String getDataType() {
-            if (searchTerm.getTypeExpression() == null) {
-                return "String";
-            }
+        public ColumnValueType getDataType() {
             if (dataType == null) {
                 Map<String, Object> context = new HashMap<>();
                 context.put(CONTEXT_KEY_SEARCH_VALUE, this);
-                dataType = searchTerm.getTypeExpression().evaluate(null, context);
+                dataType = searchTerm.evalValueTypeExpression(null, context);
             }
             return dataType;
         }
 
         @SuppressWarnings("unused")
-        public void setDataType(String dataType) {
+        public void setDataType(ColumnValueType dataType) {
             this.dataType = dataType;
         }
 
@@ -334,7 +324,7 @@ public class SearchInstance implements Serializable {
             // If the operator is IN and the values are free-form (rather than constrained)
             // then assume that the values are carriage return separated, and split them.
             if ((getOperator() == Operator.IN || getOperator() == Operator.NOT_IN) &&
-                    (getSearchTerm().getValuesExpression() == null || !getConstrainedValuesListDisplayed()) &&
+                    (getSearchTerm().getConstrainedValuesExpression() == null || !getConstrainedValuesListDisplayed()) &&
                     getValues().size() == 1) {
                 String[] lines = getValues().get(0).split("\\r?\\n");
                 setValues(new ArrayList<String>());
@@ -349,28 +339,37 @@ public class SearchInstance implements Serializable {
             if (getValues() != null) {
                 SimpleDateFormat mdyDateFormat = new SimpleDateFormat("MM/dd/yyyy");
                 for (String value : getValues()) {
-                    if (searchTerm.getValueConversionExpression() != null) {
+                    if (searchTerm.getSearchValueConversionExpression() != null) {
                         Map<String, Object> localContext = new HashMap<>();
                         if( searchInstance.getEvalContext() != null ) {
                             localContext.putAll(searchInstance.getEvalContext());
                         }
                         localContext.put(CONTEXT_KEY_SEARCH_VALUE, this);
                         localContext.put(CONTEXT_KEY_SEARCH_STRING, value);
-                        propertyValues.add(searchTerm.getValueConversionExpression().evaluate(null, localContext));
+                        propertyValues.add(searchTerm.getSearchValueConversionExpression().evaluate(null, localContext));
                     } else {
-                        if (getDataType().equals("String")) {
+                        switch(getDataType()) {
+                        case STRING:
                             propertyValues.add(value);
-                        } else if (getDataType().equals("BigDecimal")) {
+                            break;
+                        case TWO_PLACE_DECIMAL:
                             propertyValues.add(new BigDecimal(value));
-                        } else if (getDataType().equals("Long")) {
+                            break;
+                        case UNSIGNED:
                             propertyValues.add(new Long(value));
-                        } else if (getDataType().equals("Date")) {
+                            break;
+                        case DATE:
+                        case DATE_TIME:
                             try {
-                                propertyValues.add(mdyDateFormat.parse(value));
-                            } catch (ParseException e) {
-                                throw new RuntimeException(e);
-                            }
-                        } else {
+                                    propertyValues.add(mdyDateFormat.parse(value));
+                                } catch (ParseException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            break;
+                        case BOOLEAN:
+                            propertyValues.add( Boolean.parseBoolean(value));
+                            break;
+                        default:
                             throw new RuntimeException("Unknown data type " + getDataType());
                         }
                     }
@@ -379,14 +378,10 @@ public class SearchInstance implements Serializable {
             return propertyValues;
         }
 
-        public Object evalDisplayExpression(Object root, Map<String, Object> context) {
-            if( context == null ) {
-                context = new HashMap<>();
-            }
-            // Evaluate the display value expression for the search term.
-            context.put(CONTEXT_KEY_SEARCH_VALUE, this);
+        public String evalDisplayExpression(Object root, Map<String, Object> context) {
+            context = addValueToContext(context);
             try {
-                return getSearchTerm().getDisplayExpression().evaluate(root, context);
+                return getSearchTerm().evalFormattedExpression(root, context);
             } catch (Exception e) {
                 throw new RuntimeException("Exception evaluating display expression for term "
                                               + getSearchTerm().getName() + ", for object " + root, e);
@@ -395,14 +390,11 @@ public class SearchInstance implements Serializable {
 
         public Object evalHeaderExpression(Object root, Map<String, Object> context) {
             // If the header is an expression, evaluate it.
-            if (getSearchTerm().getViewHeader() == null) {
+            if (getSearchTerm().getViewHeaderExpression() == null) {
                 return getSearchTerm().getName();
             } else {
-                if( context == null ) {
-                    context = new HashMap<>();
-                }
-                context.put(CONTEXT_KEY_SEARCH_VALUE, this);
-                return getSearchTerm().getViewHeader().evaluate(root, context);
+                context = addValueToContext(context);
+                return getSearchTerm().getViewHeaderExpression().evaluate(root, context);
             }
         }
 
@@ -499,13 +491,13 @@ public class SearchInstance implements Serializable {
         }
 
         @Override
-        public Object evalPlainTextExpression(Object entity, Map<String, Object> context) {
-            return evalDisplayExpression(entity, context);
+        public Object evalValueExpression(Object entity, Map<String, Object> context) {
+            return searchTerm.evalValueExpression(entity, context);
         }
 
         @Override
-        public Object evalFormattedExpression(Object entity, Map<String, Object> context) {
-            return evalDisplayExpression(entity, context);
+        public String evalFormattedExpression(Object value, Map<String, Object> context) {
+            return evalDisplayExpression(value, context);
         }
 
         @Override
@@ -573,8 +565,11 @@ public class SearchInstance implements Serializable {
 
         @Override
         public String getDbSortPath() {
-            // It's non-trivial to derive a DB sort path from a displayExpression
-            return null;
+            if( getSearchTerm() != null ) {
+                return getSearchTerm().getDbSortPath();
+            } else {
+                return null;
+            }
         }
 
         /**
@@ -619,8 +614,8 @@ public class SearchInstance implements Serializable {
         }
 
         @Override
-        public boolean isOnlyPlainText() {
-            return true;
+        public ColumnValueType evalValueTypeExpression(Object value, Map<String, Object> context) {
+            return getSearchTerm().evalValueTypeExpression(value,context);
         }
 
         public Boolean getCaseInsensitive() {
@@ -639,8 +634,17 @@ public class SearchInstance implements Serializable {
         public Boolean getDisplayed() {
             // Don't display the value if it has a constrained list expression, but the list is empty.
             // it confuses the user to see an empty text box which has no meaningful options.
-            return searchTerm.getValuesExpression() == null
+            return searchTerm.getConstrainedValuesExpression() == null
                    || (getConstrainedValues() != null && !getConstrainedValues().isEmpty());
+        }
+
+        private Map<String, Object> addValueToContext( Map<String, Object> context ){
+            if( context == null ) {
+                context = new HashMap<>();
+            }
+            // May require this SearchTerm to extract metadata key from column name
+            context.put(SearchInstance.CONTEXT_KEY_SEARCH_VALUE, this);
+            return context;
         }
     }
 
@@ -748,10 +752,20 @@ public class SearchInstance implements Serializable {
      */
     private Map<String,Boolean> traversalEvaluatorValues = new HashMap<>();
 
+    private boolean isDbSearchable = true;
+
     /**
      * Default constructor for Stripes.
      */
     public SearchInstance() {
+    }
+
+    /**
+     * For JSP EL
+     * @return value of constant
+     */
+    public String getChooseValue() {
+        return CHOOSE_VALUE;
     }
 
     /**
@@ -833,9 +847,20 @@ public class SearchInstance implements Serializable {
                 Boolean isSelected = traversalEvaluatorValues.get(id);
                 if (isSelected == null) {
                     traversalEvaluatorValues.put(id, Boolean.FALSE);
+                } else {
+                    isDbSearchable = false;
                 }
             }
         }
+    }
+
+    /**
+     * An order by clause can only be appended to a search criteria if there are no traversal evaluators
+     * or alternate search definitions configured and/or selected
+     * @return
+     */
+    public boolean getIsDbSearchable(){
+        return isDbSearchable;
     }
 
     /**
@@ -852,6 +877,9 @@ public class SearchInstance implements Serializable {
             searchValue.setSearchTerm(configurableSearchDefinition.getSearchTerm(searchValue.getTermName()));
             searchValue.setParent(parent);
             searchValue.setSearchInstance(this);
+            if( searchValue.getSearchTerm().getAlternateSearchDefinition() != null ) {
+                isDbSearchable = false;
+            }
             recurseRelationships(configurableSearchDefinition, searchValue.getChildren(), searchValue);
         }
     }
@@ -946,7 +974,7 @@ public class SearchInstance implements Serializable {
                                                List<SearchValue> displaySearchValues) {
         for (SearchValue searchValue : valuesToSearch) {
             if (searchValue.getIncludeInResults() != null && searchValue.getIncludeInResults()
-                && searchValue.getSearchTerm().getDisplayExpression() != null) {
+                && searchValue.getSearchTerm().getDisplayValueExpression() != null) {
                 displaySearchValues.add(searchValue);
             }
             recurseForDisplaySearchValues(searchValue.getChildren(), displaySearchValues);
@@ -979,7 +1007,7 @@ public class SearchInstance implements Serializable {
             List<SearchValue> valuesToSearch, List<ColumnTabulation> columnTabulations, int depth) {
         for (SearchValue searchValue : valuesToSearch) {
             if (searchValue.getIncludeInResults() != null && searchValue.getIncludeInResults()
-                && searchValue.getSearchTerm().getDisplayExpression() != null) {
+                && searchValue.getSearchTerm().getDisplayValueExpression() != null) {
                 columnTabulations.add(searchValue);
                 if (depth > 1) {
                     return;
