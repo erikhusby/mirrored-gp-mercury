@@ -85,6 +85,8 @@ public class ClinicalResourceTest extends RestServiceContainerTest {
         if (sampleForTest == null) {
             sampleForTest = new MercurySample(sampleId, MercurySample.MetadataSource.MERCURY);
             mercurySampleDao.persist(sampleForTest);
+        } else {
+            assertThat(sampleForTest.getMetadataSource(), equalTo(MercurySample.MetadataSource.MERCURY));
         }
 
         ClinicalResourceBean clinicalResourceBean = ClinicalSampleTestFactory
