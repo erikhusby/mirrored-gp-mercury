@@ -48,6 +48,7 @@ public class ClinicalSampleTestFactory {
     public static Map<Metadata.Key, String> getRandomMetadataMap(final int smNum) {
         return new HashMap<Metadata.Key, String>() {{
                 put(Metadata.Key.SAMPLE_ID, "SM-" + smNum);
+                put(Metadata.Key.BROAD_SAMPLE_ID, "SM-" + smNum);
                 put(Metadata.Key.PATIENT_ID, RandomStringUtils.randomAlphanumeric(8));
                 put(Metadata.Key.PERCENT_TUMOR, "");
                 put(Metadata.Key.MATERIAL_TYPE, null);

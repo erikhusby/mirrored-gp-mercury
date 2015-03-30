@@ -473,7 +473,7 @@ public class ManifestSessionContainerTest extends Arquillian {
 
             String sourceSampleKey = sourceSampleToMercurySample.get(sourceSampleToTest).getSampleKey();
 
-            MercurySample targetSample = manifestSessionEjb.validateTargetSample(sourceSampleKey);
+            MercurySample targetSample = manifestSessionEjb.findAndValidateTargetSample(sourceSampleKey);
             assertThat(targetSample, is(notNullValue()));
 
             String sourceSampleLabel = sourceSampleToTargetVessel.get(sourceSampleToTest).getLabel();
@@ -510,7 +510,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         String omittedScanSampleKey = sourceSampleToMercurySample.get(firstUploadedOmittedScan).getSampleKey();
         String omittedScanSampleLabel = sourceSampleToTargetVessel.get(firstUploadedOmittedScan).getLabel();
 
-        MercurySample targetSampleForOmittedScan = manifestSessionEjb.validateTargetSample(omittedScanSampleKey);
+        MercurySample targetSampleForOmittedScan = manifestSessionEjb.findAndValidateTargetSample(omittedScanSampleKey);
         assertThat(targetSampleForOmittedScan, is(notNullValue()));
 
         LabVessel targetVesselForOmittedScan =
@@ -723,7 +723,7 @@ public class ManifestSessionContainerTest extends Arquillian {
                     is(closedSession2.getManifestSessionId()));
 
             String sourceSampleKey = sourceSampleToMercurySample.get(sourceSampleToTest).getSampleKey();
-            MercurySample targetSample = manifestSessionEjb.validateTargetSample(sourceSampleKey);
+            MercurySample targetSample = manifestSessionEjb.findAndValidateTargetSample(sourceSampleKey);
             assertThat(targetSample, is(notNullValue()));
             String sourceSampleLabel = sourceSampleToTargetVessel.get(sourceSampleToTest).getLabel();
 
@@ -752,7 +752,7 @@ public class ManifestSessionContainerTest extends Arquillian {
                     is(closedSession2.getManifestSessionId()));
 
             String sourceSampleKey = sourceSampleToMercurySample.get(sourceSampleToTest).getSampleKey();
-            MercurySample targetSample = manifestSessionEjb.validateTargetSample(sourceSampleKey);
+            MercurySample targetSample = manifestSessionEjb.findAndValidateTargetSample(sourceSampleKey);
             assertThat(targetSample, is(notNullValue()));
             String sourceSampleLabel = sourceSampleToTargetVessel.get(sourceSampleToTest).getLabel();
             LabVessel targetVessel =
@@ -1064,7 +1064,7 @@ public class ManifestSessionContainerTest extends Arquillian {
 
         try {
             manifestSessionEjb.createManifestSession("RP-12", "new session", true, Collections.singleton(
-                    ClinicalSampleTestFactory.createSample(ImmutableMap.of(Metadata.Key.SAMPLE_ID, sampleId))));
+                    ClinicalSampleTestFactory.createSample(ImmutableMap.of(Metadata.Key.BROAD_SAMPLE_ID, sampleId))));
         } catch (InformaticsServiceException e) {
             assertThat(e.getMessage(),
                     containsString(ManifestRecord.ErrorStatus.INVALID_TARGET.getBaseMessage()));
