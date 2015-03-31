@@ -896,7 +896,7 @@ public class ReworkEjbTest extends Arquillian {
 
         Collection<LabVessel> entries = reworkEjb.getVesselsForRework("Pico/Plating Bucket");
 
-        Assert.assertEquals(validationMessages.size(), 2);
+        Assert.assertEquals(validationMessages.size(), 0);
 
         Assert.assertEquals(entries.size(), existingReworks + mapBarcodeToTube.size());
 
@@ -921,7 +921,7 @@ public class ReworkEjbTest extends Arquillian {
         Collection<String> validationMessages = reworkEjb.addAndValidateCandidates(bucketCandidates, unknownReason,
                                                                                    "test Rework", "jowalsh",
                                                                                    "Pico/Plating Bucket");
-        Assert.assertEquals(validationMessages.size(), 2);
+        Assert.assertEquals(validationMessages.size(), 0);
 
         bucketDao.clear();
         Collection<LabVessel> entries = reworkEjb.getVesselsForRework("Pico/Plating Bucket");
@@ -1036,7 +1036,7 @@ public class ReworkEjbTest extends Arquillian {
 
         Collection<LabVessel> entries = reworkEjb.getVesselsForRework("Pico/Plating Bucket");
 
-        Assert.assertEquals(validationMessages.size(), 1);
+        Assert.assertEquals(validationMessages.size(), 0);
 
         Assert.assertEquals(entries.size(), existingReworks + hybridSelectionJaxbBuilder.getNormCatchBarcodes().size());
 
@@ -1076,7 +1076,7 @@ public class ReworkEjbTest extends Arquillian {
 
         Collection<LabVessel> entries = reworkEjb.getVesselsForRework("Pico/Plating Bucket");
 
-        Assert.assertEquals(validationMessages.size(), 2);
+        Assert.assertEquals(validationMessages.size(), 0);
 
         Assert.assertEquals(entries.size(), existingReworks + mapBarcodeToTube.size());
 
@@ -1115,7 +1115,7 @@ public class ReworkEjbTest extends Arquillian {
 
         Collection<LabVessel> entries = reworkEjb.getVesselsForRework("Pico/Plating Bucket");
 
-        Assert.assertEquals(validationMessages.size(), 1);
+        Assert.assertEquals(validationMessages.size(), 0);
 
         Assert.assertEquals(entries.size(), existingReworks + hybridSelectionJaxbBuilder.getNormCatchBarcodes().size());
 
