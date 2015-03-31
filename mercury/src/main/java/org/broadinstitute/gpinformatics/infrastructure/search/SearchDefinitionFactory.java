@@ -190,7 +190,9 @@ public class SearchDefinitionFactory {
                 // A vessel can end up with more than 1 sample in it
                 for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
                     MercurySample sample = sampleInstanceV2.getRootOrEarliestMercurySample();
-                    value += getSampleMetadataForDisplay(sample, metaName) + " ";
+                    if (sample != null) {
+                        value += getSampleMetadataForDisplay(sample, metaName) + " ";
+                    }
                 }
                 value = value.trim();
             } else {

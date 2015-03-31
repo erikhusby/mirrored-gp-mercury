@@ -359,7 +359,7 @@ public class LabVesselFixupTest extends Arquillian {
         for (Pair<String, String> pair : listOfPairsOldNew) {
             LabVessel labVesselOld = labVesselDao.findByIdentifier(pair.getLeft());
             LabVessel labVesselNew = labVesselDao.findByIdentifier(pair.getRight());
-            Set<BucketEntry> bucketEntries = labVesselOld.getModifiableBucketEntries();
+            Set<BucketEntry> bucketEntries = labVesselOld.getBucketEntries();
             BucketEntry bucketEntry = null;
             for (BucketEntry currentBucketEntry : bucketEntries) {
                 if (currentBucketEntry.getLabBatch().getBatchName().equals(lcset)) {
