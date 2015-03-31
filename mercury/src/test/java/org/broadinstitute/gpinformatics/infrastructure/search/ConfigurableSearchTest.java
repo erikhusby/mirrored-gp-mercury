@@ -72,6 +72,8 @@ public class ConfigurableSearchTest extends Arquillian {
 
         // Add columns
         searchInstance.getPredefinedViewColumns().add("LabEventId");
+        searchInstance.getPredefinedViewColumns().add("EventDate");
+        searchInstance.getPredefinedViewColumns().add("EventType");
 
         // Save instance
         Map<PreferenceType, Preference> mapTypeToPreference = new HashMap<>();
@@ -120,6 +122,18 @@ public class ConfigurableSearchTest extends Arquillian {
         ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(
                 fetchedSearchInstance, configurableSearchDef, null, 1, null, "ASC", entity);
         Assert.assertEquals(firstPageResults.getResultList().getResultRows().size(), 100);
+        Assert.assertEquals(firstPageResults.getPagination().getIdList().size(), 736);
+
+        // Default sort is entity ID column (labEventId) ascending
+        Assert.assertEquals(
+                firstPageResults.getResultList().getResultRows().get(0).getRenderableCells().get(0), "508066");
+
+        // Re-sort on labEventId descending using database sort
+        firstPageResults = configurableListFactory.getFirstResultsPage(
+                fetchedSearchInstance, configurableSearchDef, null, null, "labEventId", "DSC", entity);
+
+        Assert.assertEquals(
+                firstPageResults.getResultList().getResultRows().get(0).getRenderableCells().get(0), "508801");
 
         // Delete instance
         searchInstanceEjb.deleteSearch(new MessageCollection(), PreferenceType.GLOBAL_LAB_EVENT_SEARCH_INSTANCES, newSearchName, mapTypeToPreference);
@@ -205,6 +219,7 @@ public class ConfigurableSearchTest extends Arquillian {
         for( ConfigurableList.ResultRow currentRow : firstPageResults.getResultList().getResultRows() ){
             if( currentRow.getResultId().equals("797366")) {
                 row = currentRow;
+                break;
             }
         }
         Assert.assertNotNull(row, "mercurySampleId 797366 not found in results");
@@ -228,6 +243,17 @@ public class ConfigurableSearchTest extends Arquillian {
         Assert.assertEquals( values.get(columnNumbersByHeader.get(Metadata.Key.BUICK_COLLECTION_DATE.getDisplayName())), "06/10/2013",  "Incorrect Collection Date Value");
         Assert.assertEquals( values.get(columnNumbersByHeader.get(Metadata.Key.SAMPLE_ID.getDisplayName())),             "23102117605", "Incorrect Sample ID Value");
         Assert.assertEquals( values.get(columnNumbersByHeader.get(Metadata.Key.BUICK_VISIT.getDisplayName())),           "Screening",   "Incorrect Incorrect Visit Value");
+
+        // Test in-memory sorting of 1 page of results, sort on Patient ID
+        columnNumber = columnNumbersByHeader.get(Metadata.Key.PATIENT_ID.getDisplayName());
+        firstPageResults = configurableListFactory.getFirstResultsPage(
+                fetchedSearchInstance, configurableSearchDef, null, columnNumber, null, "DSC", entity);
+
+        row = firstPageResults.getResultList().getResultRows().get(0);
+        Assert.assertEquals( row.getRenderableCells().get(columnNumber), "63014-003");
+
+        row = firstPageResults.getResultList().getResultRows().get(93);
+        Assert.assertEquals( row.getRenderableCells().get(columnNumber), "02002-009");
 
         // Delete instance
         searchInstanceEjb.deleteSearch(new MessageCollection(), PreferenceType.GLOBAL_MERCURY_SAMPLE_SEARCH_INSTANCES, newSearchName, mapTypeToPreference);

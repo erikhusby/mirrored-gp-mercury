@@ -159,14 +159,14 @@ public class ConfigurableSearchDao extends GenericDao {
                     childCriteria.addOrder(Order.desc(criteriaSteps[criteriaSteps.length - 1]));
                 }
             }
-
-            // Always append entity ID to order (unless explicit sort on the same property requested),
-            //    because a non-unique sort column will not yield reproducible results.
-            if( orderPath == null || !orderPath.equals( configurableSearchDefinition.getResultEntity().getEntityIdProperty() ) ) {
-                criteria.addOrder(Order.asc(configurableSearchDefinition.getResultEntity().getEntityIdProperty()));
-            }
-
         }
+
+        // Always append entity ID to order (unless explicit sort on the same property requested),
+        //    because a non-unique sort column will not yield reproducible results.
+        if( orderPath == null || !orderPath.equals( configurableSearchDefinition.getResultEntity().getEntityIdProperty() ) ) {
+            criteria.addOrder(Order.asc(configurableSearchDefinition.getResultEntity().getEntityIdProperty()));
+        }
+
     }
 
     /**

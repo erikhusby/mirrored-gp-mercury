@@ -486,11 +486,6 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
      *  Use context to avoid need to test in container
      */
     private void buildSearchContext(){
-        if( searchInstance.getEvalContext() == null ) {
-            Map<String, Object> evalContext = new HashMap<>();
-            searchInstance.setEvalContext(evalContext);
-        }
-
         searchInstance.getEvalContext().put(SearchInstance.CONTEXT_KEY_BSP_USER_LIST, bspUserList );
         searchInstance.getEvalContext().put(SearchInstance.CONTEXT_KEY_BSP_SAMPLE_SEARCH, bspSampleSearchService );
         searchInstance.getEvalContext().put(SearchInstance.CONTEXT_KEY_OPTION_VALUE_DAO, constrainedValueDao);

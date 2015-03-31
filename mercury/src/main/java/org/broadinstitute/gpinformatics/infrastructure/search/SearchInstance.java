@@ -752,7 +752,7 @@ public class SearchInstance implements Serializable {
      */
     private Map<String,Boolean> traversalEvaluatorValues = new HashMap<>();
 
-    private boolean isDbSearchable = true;
+    private boolean isDbSortable = true;
 
     /**
      * Default constructor for Stripes.
@@ -847,8 +847,8 @@ public class SearchInstance implements Serializable {
                 Boolean isSelected = traversalEvaluatorValues.get(id);
                 if (isSelected == null) {
                     traversalEvaluatorValues.put(id, Boolean.FALSE);
-                } else {
-                    isDbSearchable = false;
+                } else if( isSelected ) {
+                    isDbSortable = false;
                 }
             }
         }
@@ -859,8 +859,8 @@ public class SearchInstance implements Serializable {
      * or alternate search definitions configured and/or selected
      * @return
      */
-    public boolean getIsDbSearchable(){
-        return isDbSearchable;
+    public boolean getIsDbSortable(){
+        return isDbSortable;
     }
 
     /**
@@ -878,7 +878,7 @@ public class SearchInstance implements Serializable {
             searchValue.setParent(parent);
             searchValue.setSearchInstance(this);
             if( searchValue.getSearchTerm().getAlternateSearchDefinition() != null ) {
-                isDbSearchable = false;
+                isDbSortable = false;
             }
             recurseRelationships(configurableSearchDefinition, searchValue.getChildren(), searchValue);
         }
@@ -1079,6 +1079,9 @@ public class SearchInstance implements Serializable {
     }
 
     public Map<String, Object> getEvalContext() {
+        if( evalContext == null ) {
+            evalContext = new HashMap<>();
+        }
         return evalContext;
     }
 

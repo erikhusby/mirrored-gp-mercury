@@ -85,7 +85,7 @@
 <input type="hidden" name="entityName" value="${entityName}"/>
 
 <div id="${entityName}ResultsDiv" class="form-inline">
-    <c:set var="isDbSearchAllowed" value="${actionBean.searchInstance.isDbSearchable}"/>
+    <c:set var="isDbSortAllowed" value="${actionBean.searchInstance.isDbSortable}"/>
 <table width="100%" class="table simple dataTable" id="${entityName}ResultsTable">
     <c:forEach items="${resultList.resultRows}" var="resultRow" varStatus="status">
         <%--@elvariable id="resultRow" type="edu.mit.broad.bsp.core.util.columns.ConfigurableListUtils.ResultRow"--%>
@@ -110,7 +110,7 @@
                         </c:when>
                         <c:otherwise>
                             <c:choose>
-                                <c:when test="${ ( not empty resultListHeader.sortPath ) and isDbSearchAllowed}">
+                                <c:when test="${ ( not empty resultListHeader.sortPath ) and isDbSortAllowed}">
                                     <%-- Multi-page results are sortable in the database, if the column has a sort path --%>
                                     <th class="sorting ${resultListHeader.sortPath == actionBean.dbSortPath ?
                                     (resultList.resultSortDirection == 'ASC' ? 'sorting_asc' : 'sorting_desc' ) : ''}"
