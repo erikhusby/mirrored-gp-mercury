@@ -1,6 +1,6 @@
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
-<%@ page import="org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -17,7 +17,8 @@
                             hintText: "Type a name",
                             prePopulate: ${actionBean.ensureStringResult(actionBean.owner.completeData)},
                             tokenDelimiter: "${actionBean.owner.separator}",
-                            resultsFormatter: formatInput
+                            resultsFormatter: formatInput,
+                            autoSelectFirstResult: true
                         }
                 );
 
@@ -26,7 +27,8 @@
                             hintText: "Type a Product name or Part Number   ",
                             resultsFormatter: formatInput,
                             prePopulate: ${actionBean.ensureStringResult(actionBean.productTokenInput.completeData)},
-                            tokenDelimiter: "${actionBean.productTokenInput.separator}"
+                            tokenDelimiter: "${actionBean.productTokenInput.separator}",
+                            autoSelectFirstResult: true
                         }
                 );
 
@@ -56,7 +58,8 @@
             });
 
             function statusChange() {
-                if ($j(".selectedStatuses[value='Draft']").attr('checked')) {
+                if ($j(".selectedStatuses[value='Draft']").attr('checked')
+                        || $j(".selectedStatuses[value='Pending']").attr('checked')) {
                     $j("#draftMessage").show();
                 } else {
                     $j("#draftMessage").hide();
@@ -197,7 +200,7 @@
                              endString="${actionBean.dateRange.endStr}">
                         </div>
                         <div id="draftMessage" class="help-text" style="margin-left: 10px;margin-top: -10px; margin-bottom: 5px; display: none;">
-                            Matching Draft Orders are displayed for any date selection
+                            Matching Draft or Pending Orders are displayed for any date selection
                         </div>
                     </div>
                 </div>
@@ -272,7 +275,7 @@
                     <c:forEach items="${actionBean.displayedProductOrderListEntries}" var="order">
                         <tr>
                             <td>
-                                <c:if test="${!order.draft}">
+                                <c:if test="${order.canBill()}">
                                     <stripes:checkbox class="shiftCheckbox" name="selectedProductOrderBusinessKeys" value="${order.businessKey}"/>
                                 </c:if>
                             </td>
@@ -336,17 +339,17 @@
                                 <c:choose>
                                     <c:when test="${order.readyForReview}">
                                         <span class="badge badge-warning">
-                                            <%=ProductOrder.LedgerStatus.READY_FOR_REVIEW.getDisplayName()%>
+                                            <%=ProductOrderListEntry.LedgerStatus.READY_FOR_REVIEW.getDisplayName()%>
                                         </span>
                                     </c:when>
                                     <c:when test="${order.billing}">
                                         <span class="badge badge-info">
-                                            <%=ProductOrder.LedgerStatus.BILLING.getDisplayName()%>
+                                            <%=ProductOrderListEntry.LedgerStatus.BILLING.getDisplayName()%>
                                         </span>
                                     </c:when>
                                     <c:when test="${order.readyForBilling}">
                                         <span class="badge badge-success">
-                                            <%=ProductOrder.LedgerStatus.READY_TO_BILL.getDisplayName()%>
+                                            <%=ProductOrderListEntry.LedgerStatus.READY_TO_BILL.getDisplayName()%>
                                         </span>
                                     </c:when>
                                 </c:choose>

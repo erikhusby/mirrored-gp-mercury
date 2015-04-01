@@ -61,6 +61,12 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
         private Evaluator<String> propertyNameExpression;
 
+        /**
+         * Optional nested subquery criteria definition
+         * Note:  Nested criteria path and child search terms are mutually exclusive
+         */
+        private CriteriaPath nestedCriteriaPath;
+
         public List<String> getCriteria() {
             return criteria;
         }
@@ -92,12 +98,26 @@ public class SearchTerm implements Serializable, ColumnTabulation {
         public void setPropertyNameExpression(Evaluator<String> propertyNameExpression) {
             this.propertyNameExpression = propertyNameExpression;
         }
+
+        public CriteriaPath getNestedCriteriaPath(){
+            return nestedCriteriaPath;
+        }
+
+        public void setNestedCriteriaPath( CriteriaPath nestedCriteriaPath ) {
+            this.nestedCriteriaPath = nestedCriteriaPath;
+        }
     }
 
     /**
      * Name displayed in the user interface
      */
     private String name;
+
+    /**
+     * HTML to display in UI to assist user (optional)
+     * (If none, no UI help is configured)
+     */
+    private String helpText;
 
     /**
      * True if this term is required in every SearchInstance
@@ -187,10 +207,9 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     private Boolean multipleForParent;
 
     /**
-     * True if the constrained values should be added to the list of search terms, e.g.
-     * phenotype names
+     * True if dependent search terms should be added to the list of criteria and result columns.
      */
-    private Boolean addConstrainedValuesToSearchTermList;
+    private Boolean addDependentTermsToSearchTermList = Boolean.FALSE;
 
     /**
      * The maximum number of values that will be returned by the constrained values
@@ -222,6 +241,16 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     private Boolean isExcludedFromResultColumns = Boolean.FALSE;
 
     /**
+     * Flag this as an exclusive search term because it cannot logically be combined with others.
+     * If any other terms are included with an exclusive term,
+     *   the search should be rejected and a warning presented to the user.
+     */
+    private Boolean isExclusive = Boolean.FALSE;
+
+
+    private ConfigurableSearchDefinition alternateSearchDefinition;
+
+    /**
      * Evaluate the expression that returns constrained values, e.g. list of phenotypes
      *
      * @param context any additional entities referred to by the expression
@@ -244,6 +273,29 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
     public String getName() {
         return name;
+    }
+
+    /**
+     * A pseudo unique identifier to allow UI functionality to be tied to the display of this term (e.g. help text)
+     */
+    public String getUiId(){
+        return "srchTrm_" + String.valueOf(this.hashCode());
+    }
+
+    /**
+     * Display this text in UI if not null or empty string.
+     * @param helpText
+     */
+    public void setHelpText( String helpText ) {
+        this.helpText = helpText;
+    }
+
+    /**
+     * Optional help text for this search term.
+     * If not null or empty string, set up for display in UI.
+     */
+    public String getHelpText() {
+        return helpText;
     }
 
     public void setName(String name) {
@@ -306,6 +358,35 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     @Override
     public void setIsNestedParent(Boolean isNestedParent) {
         this.isNestedParent = isNestedParent;
+    }
+
+    /**
+     * Handles cases where a search term cannot be combined with any others.
+     * @return
+     */
+    public Boolean isExclusive(){
+        if( isExclusive ) {
+            return isExclusive;
+        } else if( alternateSearchDefinition != null ) {
+            return Boolean.TRUE;
+        } else {
+            return Boolean.FALSE;
+        }
+    }
+
+    public ConfigurableSearchDefinition getAlternateSearchDefinition(){
+        return alternateSearchDefinition;
+    }
+
+    /**
+     * Allow the criteria API to access a different set of root entity types than expected in the display.
+     * A traversal evaluator must be attached to the search with logic which will replace the returned entity list
+     * with a new list of the proper entity type.
+     * (Term should also be flagged as exclusive)
+     * @return
+     */
+    public void setAlternateSearchDefinition(ConfigurableSearchDefinition alternateSearchDefinition){
+        this.alternateSearchDefinition = alternateSearchDefinition;
     }
 
     /**
@@ -389,16 +470,20 @@ public class SearchTerm implements Serializable, ColumnTabulation {
         this.multipleForParent = multipleForParent;
     }
 
-    public Boolean getAddConstrainedValuesToSearchTermList() {
-        return addConstrainedValuesToSearchTermList;
+    public Boolean getAddDependentTermsToSearchTermList() {
+        return addDependentTermsToSearchTermList;
     }
 
-    public void setAddConstrainedValuesToSearchTermList(Boolean addConstrainedValuesToSearchTermList) {
-        this.addConstrainedValuesToSearchTermList = addConstrainedValuesToSearchTermList;
+    public void setAddDependentTermsToSearchTermList(Boolean addDependentTermsToSearchTermList) {
+        this.addDependentTermsToSearchTermList = addDependentTermsToSearchTermList;
     }
 
     public List<CriteriaPath> getCriteriaPaths() {
-        return criteriaPaths;
+        if( getAlternateSearchDefinition() == null ) {
+            return criteriaPaths;
+        } else {
+            return getAlternateSearchDefinition().getSearchTerm(this.name).getCriteriaPaths();
+        }
     }
 
     public void setCriteriaPaths(List<CriteriaPath> criteriaPaths) {
@@ -446,11 +531,17 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
     @Override
     public Object evalPlainTextExpression(Object entity, Map<String, Object> context) {
-        return getDisplayExpression().evaluate(entity, context);
+        // Both methods identical 10/17/2014
+        return evalFormattedExpression(entity, context);
     }
 
     @Override
     public Object evalFormattedExpression(Object entity, Map<String, Object> context) {
+        if( context == null ) {
+            context = new HashMap<>();
+        }
+        // May require this SearchTerm to extract metadata key from column name
+        context.put(SearchInstance.CONTEXT_KEY_SEARCH_TERM, this);
         return getDisplayExpression().evaluate(entity, context);
     }
 
@@ -462,7 +553,7 @@ public class SearchTerm implements Serializable, ColumnTabulation {
             if( context == null ) {
                 context = new HashMap<>();
             }
-            context.put(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_VALUE, this);
+            context.put(SearchInstance.CONTEXT_KEY_SEARCH_VALUE, this);
             return getViewHeader().evaluate(entity, context);
         }
     }

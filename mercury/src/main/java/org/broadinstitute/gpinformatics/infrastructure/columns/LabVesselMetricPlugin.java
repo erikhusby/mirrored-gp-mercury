@@ -27,10 +27,12 @@ public class LabVesselMetricPlugin implements ListPlugin {
     static {
         for( LabMetric.MetricType metricType : LabMetric.MetricType.values() ) {
             if(metricType.getCategory() == LabMetric.MetricType.Category.CONCENTRATION ) {
-                String headerText = metricType.getDisplayName();
+                String headerText;
+                // Include measurement default units in header
+                headerText = metricType.getDisplayName() + " ng/uL";
                 QUANT_VALUE_HEADERS
                         .put(metricType, new ConfigurableList.Header(headerText, headerText, "", ""));
-                headerText += " Decision";
+                headerText = metricType.getDisplayName() + " Decision";
                 QUANT_DECISION_HEADERS.put(metricType,
                         new ConfigurableList.Header(headerText, headerText, "", ""));
             }
@@ -45,7 +47,8 @@ public class LabVesselMetricPlugin implements ListPlugin {
      * @return A list of rows, each corresponding to a LabVessel row in search results.
      */
     @Override
-    public List<ConfigurableList.Row> getData(List<?> entityList, ConfigurableList.HeaderGroup headerGroup) {
+    public List<ConfigurableList.Row> getData(List<?> entityList, ConfigurableList.HeaderGroup headerGroup
+            , @Nonnull Map<String, Object> context) {
         List<LabVessel> labVesselList = (List<LabVessel>) entityList;
         List<ConfigurableList.Row> metricRows = new ArrayList<>();
 
@@ -106,7 +109,11 @@ public class LabVesselMetricPlugin implements ListPlugin {
                 metric = latestMetric;
             }
         }
-        value = MathUtils.scaleTwoDecimalPlaces(metric.getValue()).toPlainString() + " " + metric.getUnits().getDisplayName();
+        value = MathUtils.scaleTwoDecimalPlaces(metric.getValue()).toPlainString();
+        // Display measurement units if not default
+        if( metric.getUnits() != LabMetric.LabUnit.UG_PER_ML && metric.getUnits() != LabMetric.LabUnit.NG_PER_UL ) {
+            value += " " + metric.getUnits().getDisplayName();
+        }
         valueCell = new ConfigurableList.Cell(QUANT_VALUE_HEADERS.get(metric.getName()), value, value);
         decision = metric.getLabMetricDecision();
         if (decision != null) {

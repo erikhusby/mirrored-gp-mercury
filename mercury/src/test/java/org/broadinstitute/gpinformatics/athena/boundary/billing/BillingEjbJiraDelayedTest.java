@@ -49,7 +49,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@Test(groups = TestGroups.ALTERNATIVES, enabled = false)
+@Test(groups = TestGroups.ALTERNATIVES)
 public class BillingEjbJiraDelayedTest extends Arquillian {
     private static boolean failQuoteCall = false;
     private static boolean inContainer = true;

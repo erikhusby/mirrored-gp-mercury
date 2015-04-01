@@ -73,19 +73,22 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Proje
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataSourceResolver;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
+import org.broadinstitute.gpinformatics.infrastructure.common.MercuryEnumUtils;
 import org.broadinstitute.gpinformatics.infrastructure.common.MercuryStringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
+import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
+import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -104,6 +107,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -118,7 +122,7 @@ import java.util.Set;
 @UrlBinding(ProductOrderActionBean.ACTIONBEAN_URL_BINDING)
 public class ProductOrderActionBean extends CoreActionBean {
 
-    private static Log logger = LogFactory.getLog(ProductOrderActionBean.class);
+    private static final Log logger = LogFactory.getLog(ProductOrderActionBean.class);
 
     public static final String ACTIONBEAN_URL_BINDING = "/orders/order.action";
     public static final String PRODUCT_ORDER_PARAMETER = "productOrder";
@@ -139,7 +143,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public static final String SQUID_COMPONENTS_ACTION = "createSquidComponents";
     private static final String SET_RISK = "setRisk";
     private static final String RECALCULATE_RISK = "recalculateRisk";
-    protected static final String PLACE_ORDER = "placeOrder";
+    protected static final String PLACE_ORDER_ACTION = "placeOrder";
     protected static final String VALIDATE_ORDER = "validate";
     // Search field constants
     private static final String FAMILY = "productFamily";
@@ -152,6 +156,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String CHOSEN_ORGANISM = "chosenOrganism";
 
     private static final String KIT_DEFINITION_INDEX = "kitDefinitionQueryIndex";
+    private static final String COULD_NOT_LOAD_SAMPLE_DATA = "Could not load sample data";
+    private static final String GET_SUMMARY = "getSummary";
 
     public ProductOrderActionBean() {
         super(CREATE_ORDER, EDIT_ORDER, PRODUCT_ORDER_PARAMETER);
@@ -306,11 +312,11 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private Long productFamilyId;
 
-    private List<ProductOrder.OrderStatus> selectedStatuses;
+    private Set<ProductOrder.OrderStatus> selectedStatuses = Collections.emptySet();
 
-    private List<ProductOrder.LedgerStatus> selectedLedgerStatuses;
+    private List<ProductOrderListEntry.LedgerStatus> selectedLedgerStatuses = Collections.emptyList();
 
-    private static List<MaterialInfo> dnaMatrixMaterialTypes =
+    private static final List<MaterialInfo> dnaMatrixMaterialTypes =
             Arrays.asList(KitTypeAllowanceSpecification.DNA_MATRIX_KIT.getMaterialInfo());
 
     private KitType chosenKitType = KitType.DNA_MATRIX;
@@ -342,16 +348,48 @@ public class ProductOrderActionBean extends CoreActionBean {
     private String[] deletedKits = new String[0];
 
     /**
-     * For use with the Ajax to indicate and pass back which kit definition is being searched for
+     * For use with the Ajax to indicate and pass back which kit definition is being searched for.
      */
     private String kitDefinitionQueryIndex;
     private String prePopulatedOrganismId;
     private String prepopulatePostReceiveOptions;
 
-    public static String getProductOrderLink(String productOrderKey, AppConfig appConfig) {
+    /**
+     * @return the required confirmation message for IRB attestation.
+     */
+    // Keep non-static so it can be easily called from JSP.
+    public String getAttestationMessage() {
+        return "By checking this box, I am attesting that I am fully aware of the regulatory requirements for this "
+               + "project, that these requirements have been met, and that the information I have provided is "
+               + "accurate. Disregard of relevant requirements and/or falsification of information may lead to "
+               + "quarantining of data.";
+    }
+
+    public RegulatoryInfo getRegulatoryInfoForPendingOrder() {
+        if (editOrder.getRegulatoryInfos().size() == 1) {
+            return editOrder.getRegulatoryInfos().iterator().next();
+        }
+        return null;
+    }
+
+    /**
+     * @return the list of role names that can modify the order being edited.
+     */
+    public String[] getModifyOrderRoles() {
+        if (editOrder.isPending()) {
+            // Allow PMs to modify Pending orders.
+            return Role.roles(Role.Developer, Role.PDM, Role.PM);
+        }
+        return Role.roles(Role.Developer, Role.PDM);
+    }
+
+    /**
+     * Given a product order, create an external link back to the application's View Details page for that order.
+     */
+    public static String getProductOrderLink(ProductOrder productOrder, AppConfig appConfig) {
         List<NameValuePair> parameters = new ArrayList<>();
         parameters.add(new BasicNameValuePair(CoreActionBean.VIEW_ACTION, ""));
-        parameters.add(new BasicNameValuePair(PRODUCT_ORDER_PARAMETER, productOrderKey));
+        parameters.add(new BasicNameValuePair(PRODUCT_ORDER_PARAMETER, productOrder.getBusinessKey()));
         return appConfig.getUrl() + ACTIONBEAN_URL_BINDING + "?" + URLEncodedUtils
                 .format(parameters, CharEncoding.UTF_8);
     }
@@ -469,7 +507,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 }
 
                 kitDetails.get(kitDetailIndex)
-                          .setPostReceiveOptions(selectedOptions);
+                        .setPostReceiveOptions(selectedOptions);
             }
         }
 
@@ -522,10 +560,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private void requireField(boolean hasValue, String name, String action) {
         if (!hasValue) {
             addGlobalValidationError("Cannot {2} ''{3}'' because it does not have {4}.",
-                    MercuryStringUtils
-                            .splitCamelCase(action),
-                    editOrder.getName(),
-                    name);
+                    MercuryStringUtils.splitCamelCase(action), editOrder.getName(), name);
         }
     }
 
@@ -630,29 +665,29 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     private void doOnRiskUpdate() {
-            try {
-                // Calculate risk here and get back any error message.
-                productOrderEjb.calculateRisk(editOrder.getBusinessKey());
+        try {
+            // Calculate risk here and get back any error message.
+            productOrderEjb.calculateRisk(editOrder.getBusinessKey());
 
-                // refetch the order to get updated risk status on the order.
-                editOrder = productOrderDao.findByBusinessKey(editOrder.getBusinessKey());
-                int numSamplesOnRisk = editOrder.countItemsOnRisk();
+            // refetch the order to get updated risk status on the order.
+            editOrder = productOrderDao.findByBusinessKey(editOrder.getBusinessKey());
+            int numSamplesOnRisk = editOrder.countItemsOnRisk();
 
-                if (numSamplesOnRisk == 0) {
-                    addMessage("None of the samples for this order are on risk");
-                } else {
-                    addMessage("{0} {1} for this order {2} on risk",
-                            numSamplesOnRisk, Noun.pluralOf("sample", numSamplesOnRisk),
-                            numSamplesOnRisk == 1 ? "is" : "are");
-                }
-            } catch (Exception e) {
-                addGlobalValidationError(e.getMessage());
+            if (numSamplesOnRisk == 0) {
+                addMessage("None of the samples for this order are on risk");
+            } else {
+                addMessage("{0} {1} for this order {2} on risk",
+                        numSamplesOnRisk, Noun.pluralOf("sample", numSamplesOnRisk),
+                        numSamplesOnRisk == 1 ? "is" : "are");
             }
+        } catch (Exception e) {
+            addGlobalValidationError(e.getMessage());
         }
+    }
 
-    @ValidationMethod(on = PLACE_ORDER)
+    @ValidationMethod(on = PLACE_ORDER_ACTION)
     public void validatePlacedOrder() {
-        validatePlacedOrder(PLACE_ORDER);
+        validatePlacedOrder(PLACE_ORDER_ACTION);
     }
 
     public void validatePlacedOrder(String action) {
@@ -660,9 +695,13 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (!hasErrors()) {
             doOnRiskUpdate();
         }
-        validateRegulatoryInformation(action);
+        if (!hasErrors()) {
+            validateRegulatoryInformation(action);
+        }
 
-        updateFromInitiationTokenInputs();
+        if (!hasErrors()) {
+            updateFromInitiationTokenInputs();
+        }
     }
 
     @ValidationMethod(on = {"startBilling", "downloadBillingTracker"})
@@ -740,14 +779,14 @@ public class ProductOrderActionBean extends CoreActionBean {
                 // If there are any errors with this preference, just use defaults and populate a message that
                 // the defaults were ignored for some reason.
                 populateSearchDefaults();
-                logger.error("Could not read user preference on search for product orders.");
+                logger.error("Could not read user preference on search for product orders.", t);
                 addMessage("Could not read search preference");
             }
         }
     }
 
     private void populateSearchDefaults() {
-        selectedStatuses = new ArrayList<>();
+        selectedStatuses = EnumSet.noneOf(ProductOrder.OrderStatus.class);
         selectedStatuses.add(ProductOrder.OrderStatus.Draft);
         selectedStatuses.add(ProductOrder.OrderStatus.Submitted);
 
@@ -777,7 +816,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         // Set up all the simple fields from the values in the preference data.
         productTokenInput.setListOfKeys(preferenceData.get(PRODUCT));
         selectedStatuses = ProductOrder.OrderStatus.getFromNames(preferenceData.get(STATUS));
-        selectedLedgerStatuses = ProductOrder.LedgerStatus.getFromNames(preferenceData.get(LEDGER_STATUS));
+        selectedLedgerStatuses = ProductOrderListEntry.LedgerStatus.getFromNames(preferenceData.get(LEDGER_STATUS));
         setDateRange(new DateRangeSelector(preferenceData.get(DATE)));
         owner.setListOfKeys(preferenceData.get(OWNER));
     }
@@ -813,12 +852,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         definitionValue.put(PRODUCT, productTokenInput.getBusinessKeyList());
 
-        List<String> statusStrings = ProductOrder.OrderStatus.getStrings(selectedStatuses);
-        List<String> ledgerStatusStrings = ProductOrder.LedgerStatus.getStrings(selectedLedgerStatuses);
+        definitionValue.put(STATUS, MercuryEnumUtils.convertToStrings(selectedStatuses));
 
-        definitionValue.put(STATUS, statusStrings);
-
-        definitionValue.put(LEDGER_STATUS, ledgerStatusStrings);
+        definitionValue.put(LEDGER_STATUS, MercuryEnumUtils.convertToStrings(selectedLedgerStatuses));
 
         definitionValue.put(DATE, getDateRange().createDateStrings());
 
@@ -843,19 +879,15 @@ public class ProductOrderActionBean extends CoreActionBean {
         int detailIndex = 0;
         initializeKitDetails();
         for (ProductOrderKitDetail kitDetail : kitDetails) {
-            List<String> postReceiveOptions = new ArrayList<>();
-            for (PostReceiveOption postReceiveOption : kitDetail.getPostReceiveOptions()) {
-                postReceiveOptions.add(postReceiveOption.name());
-            }
-            postReceiveOptionKeys.put(detailIndex, postReceiveOptions);
-            detailIndex++;
+            postReceiveOptionKeys.put(detailIndex++,
+                    MercuryEnumUtils.convertToStrings(kitDetail.getPostReceiveOptions()));
         }
     }
 
     // All actions that can result in the view page loading (either by a validation error or view itself)
     @After(stages = LifecycleStage.BindingAndValidation,
             on = {EDIT_ACTION, VIEW_ACTION, ADD_SAMPLES_ACTION, SET_RISK, RECALCULATE_RISK, ABANDON_SAMPLES_ACTION,
-                    DELETE_SAMPLES_ACTION, PLACE_ORDER, VALIDATE_ORDER, UNABANDON_SAMPLES_ACTION})
+                    DELETE_SAMPLES_ACTION, PLACE_ORDER_ACTION, VALIDATE_ORDER, UNABANDON_SAMPLES_ACTION, GET_SUMMARY})
     public void entryInit() {
         if (editOrder != null) {
             productOrderListEntry = editOrder.isDraft() ? ProductOrderListEntry.createDummy() :
@@ -863,7 +895,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             ProductOrder.loadLabEventSampleData(editOrder.getSamples());
 
-            sampleDataSourceResolver.populateSampleDataSources(editOrder.getSamples());
+            sampleDataSourceResolver.populateSampleDataSources(editOrder);
         }
     }
 
@@ -1021,12 +1053,16 @@ public class ProductOrderActionBean extends CoreActionBean {
         notificationListTokenInput.setup(editOrder.getProductOrderKit().getNotificationIds());
     }
 
-    @HandlesEvent(PLACE_ORDER)
+    @HandlesEvent(PLACE_ORDER_ACTION)
     public Resolution placeOrder() {
         String originalBusinessKey = editOrder.getBusinessKey();
 
         MessageCollection placeOrderMessageCollection = new MessageCollection();
         try {
+            if (editOrder.isPending()) {
+                // For a Pending order, we need to remove samples that haven't been received.
+                productOrderEjb.removeNonReceivedSamples(editOrder, this);
+            }
 
             productOrderEjb.placeProductOrder(editOrder.getProductOrderId(), originalBusinessKey,
                     placeOrderMessageCollection);
@@ -1103,9 +1139,10 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent(VALIDATE_ORDER)
     public Resolution validate() {
         validatePlacedOrder("validate");
-        if (!hasErrors()) {
-            addMessage("Draft Order is valid and ready to be placed");
+        if (hasErrors()) {
+            return new ForwardResolution(this.getClass(), EDIT_ACTION);
         }
+        addMessage("Draft Order is valid and ready to be placed");
 
         // entryInit() must be called explicitly here since it does not run automatically with source page resolution
         // and the ProductOrderListEntry that provides billing data would otherwise be null.
@@ -1314,19 +1351,34 @@ public class ProductOrderActionBean extends CoreActionBean {
         return createTextResolution(kitIndexObject.toString());
     }
 
-    @HandlesEvent("getSummary")
+    @HandlesEvent(GET_SUMMARY)
     public Resolution getSummary() throws Exception {
         JSONArray itemList = new JSONArray();
         if (editOrder != null) {
-            List<String> comments = editOrder.getSampleSummaryComments();
-            for (String comment : comments) {
-                JSONObject item = new JSONObject();
-                item.put("comment", comment);
+            try {
+                List<String> comments = editOrder.getSampleSummaryComments();
+                for (String comment : comments) {
+                    JSONObject item = new JSONObject();
+                    item.put("comment", comment);
+                    itemList.put(item);
+                }
 
-                itemList.put(item);
+            } catch (BSPLookupException e) {
+                handleBspLookupFailed(e);
             }
         }
         return createTextResolution(itemList.toString());
+    }
+
+    /**
+     * This convenience method logs exceptions from bsp and adds a global validation error.
+     *
+     * @param bspLookupException the exception thrown when a call to BspSampleDataFetcher fails.
+     */
+    private void handleBspLookupFailed(BSPLookupException bspLookupException) {
+        String errorMessage = String.format("%s: %s", COULD_NOT_LOAD_SAMPLE_DATA, bspLookupException.getMessage());
+        addGlobalValidationError(errorMessage);
+        logger.error(errorMessage);
     }
 
     @HandlesEvent("getBspData")
@@ -1337,18 +1389,22 @@ public class ProductOrderActionBean extends CoreActionBean {
         JSONArray itemList = new JSONArray();
 
         if (samples != null) {
+
             // Assuming all samples come from same product order here.
-            ProductOrder.loadBspData(samples);
+            try {
+                ProductOrder.loadSampleData(samples);
+                for (ProductOrderSample sample : samples) {
+                    JSONObject item = new JSONObject();
 
-            for (ProductOrderSample sample : samples) {
-                JSONObject item = new JSONObject();
-
-                if (sample.isInBspFormat()) {
-                    ProductOrderSampleJsonFactory.setupSampleDTOItems(sample, item);
-                } else {
-                    ProductOrderSampleJsonFactory.setupEmptyItems(sample, item);
+                    if (sample.isInBspFormat()) {
+                        ProductOrderSampleJsonFactory.setupSampleDTOItems(sample, item);
+                    } else {
+                        ProductOrderSampleJsonFactory.setupEmptyItems(sample, item);
+                    }
+                    itemList.put(item);
                 }
-                itemList.put(item);
+            } catch (BSPLookupException e) {
+                handleBspLookupFailed(e);
             }
         }
         return createTextResolution(itemList.toString());
@@ -1423,8 +1479,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent(DELETE_SAMPLES_ACTION)
     public Resolution deleteSamples() throws Exception {
-        productOrderEjb.removeSamples(getUserBean().getBspUser(), editOrder.getBusinessKey(),
-                selectedProductOrderSamples, this);
+        productOrderEjb.removeSamples(editOrder.getBusinessKey(), selectedProductOrderSamples, this);
         return createViewResolution(editOrder.getBusinessKey());
     }
 
@@ -1544,7 +1599,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution addSamples() throws Exception {
         List<ProductOrderSample> samplesToAdd = stringToSampleList(addSamplesText);
         try {
-            productOrderEjb.addSamples(userBean.getBspUser(), editOrder.getJiraTicketKey(), samplesToAdd, this);
+            productOrderEjb.addSamples(editOrder.getJiraTicketKey(), samplesToAdd, this);
         } catch (BucketException e) {
             logger.error("Problem adding samples to bucket", e);
             addGlobalValidationError(e.getMessage());
@@ -1620,11 +1675,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.materialInfo = materialInfo;
     }
 
-    @HandlesEvent("projectAutocomplete")
-    public Resolution projectAutocomplete() throws Exception {
-        return createTextResolution(projectTokenInput.getJsonString(getQ()));
-    }
-
     @HandlesEvent("productAutocomplete")
     public Resolution productAutocomplete() throws Exception {
         return createTextResolution(productTokenInput.getJsonString(getQ()));
@@ -1666,7 +1716,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                     .valueOf(kitDefinitionQueryIndex)) {
                 collectionAndOrganismsList.put(CHOSEN_ORGANISM,
                         kitDetails.get(Integer.valueOf(kitDefinitionQueryIndex))
-                                  .getOrganismId());
+                                .getOrganismId());
             }
 
             collectionAndOrganismsList.put("collectionName", sampleCollection.getCollectionName());
@@ -1712,7 +1762,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     public boolean getCanPlaceOrder() {
         // User must be logged into JIRA to place an order.
-        return userBean.isValidUser();
+        return userBean.isValidUser() && editOrder.getOrderStatus().canPlace();
     }
 
     /**
@@ -1888,9 +1938,10 @@ public class ProductOrderActionBean extends CoreActionBean {
      *
      * @return Boolean eligible for abandoning
      */
-    public boolean isAbandonable() {
-        if (!editOrder.isSubmitted()) {
-            setAbandonDisabledReason("the order status of the PDO is not 'Submitted'.");
+    public boolean getCanAbandonOrder() {
+        ProductOrder.OrderStatus status = editOrder.getOrderStatus();
+        if (!status.canAbandon()) {
+            setAbandonDisabledReason("an order with status " + status + " can't be abandoned.");
             return false;
         }
         if (productOrderSampleDao.countSamplesWithLedgerEntries(editOrder) > 0) {
@@ -2055,19 +2106,19 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.productFamilyId = productFamilyId;
     }
 
-    public List<ProductOrder.OrderStatus> getSelectedStatuses() {
+    public Set<ProductOrder.OrderStatus> getSelectedStatuses() {
         return selectedStatuses;
     }
 
-    public void setSelectedStatuses(List<ProductOrder.OrderStatus> selectedStatuses) {
+    public void setSelectedStatuses(Set<ProductOrder.OrderStatus> selectedStatuses) {
         this.selectedStatuses = selectedStatuses;
     }
 
-    public List<ProductOrder.LedgerStatus> getSelectedLedgerStatuses() {
+    public List<ProductOrderListEntry.LedgerStatus> getSelectedLedgerStatuses() {
         return selectedLedgerStatuses;
     }
 
-    public void setSelectedLedgerStatuses(List<ProductOrder.LedgerStatus> selectedLedgerStatuses) {
+    public void setSelectedLedgerStatuses(List<ProductOrderListEntry.LedgerStatus> selectedLedgerStatuses) {
         this.selectedLedgerStatuses = selectedLedgerStatuses;
     }
 
@@ -2088,8 +2139,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         return !editOrder.isDraft() && isCreateAllowed();
     }
 
-    public ProductOrder.LedgerStatus[] getLedgerStatuses() {
-        return ProductOrder.LedgerStatus.values();
+    public ProductOrderListEntry.LedgerStatus[] getLedgerStatuses() {
+        return ProductOrderListEntry.LedgerStatus.values();
     }
 
     public ProductOrder.OrderStatus[] getOrderStatuses() {
@@ -2120,7 +2171,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     public void validateQuoteOptions(String action) {
-        if (action.equals(PLACE_ORDER) || action.equals(VALIDATE_ORDER)) {
+        if (action.equals(PLACE_ORDER_ACTION) || action.equals(VALIDATE_ORDER) ||
+            (action.equals(SAVE_ACTION) && editOrder.isSubmitted())) {
             boolean hasQuote = !StringUtils.isBlank(editOrder.getQuoteId());
             requireField(hasQuote || editOrder.canSkipQuote(), "a quote specified", action);
             if (!hasQuote) {
@@ -2131,7 +2183,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void validateRegulatoryInformation(String action) {
 
-        if (action.equals(PLACE_ORDER) || action.equals(VALIDATE_ORDER)) {
+        if (action.equals(PLACE_ORDER_ACTION) || action.equals(VALIDATE_ORDER)) {
             requireField(editOrder.regulatoryRequirementsMet(),
                     "its regulatory requirements met or a reason for bypassing the regulatory requirements",
                     action);
@@ -2150,11 +2202,13 @@ public class ProductOrderActionBean extends CoreActionBean {
             if (editOrder.isDraft()) {
                 if (CollectionUtils.isNotEmpty(selectedRegulatoryIds)) {
                     List<RegulatoryInfo> selectedRegulatoryInfos = regulatoryInfoDao
-                            .findListByList(RegulatoryInfo.class, RegulatoryInfo_.regulatoryInfoId, selectedRegulatoryIds);
+                            .findListByList(RegulatoryInfo.class, RegulatoryInfo_.regulatoryInfoId,
+                                    selectedRegulatoryIds);
 
                     Set<String> missingRegulatoryRequirements = new HashSet<>();
                     for (RegulatoryInfo chosenInfo : selectedRegulatoryInfos) {
-                        if (!chosenInfo.getResearchProjectsIncludingChildren().contains(editOrder.getResearchProject())) {
+                        if (!chosenInfo.getResearchProjectsIncludingChildren()
+                                .contains(editOrder.getResearchProject())) {
                             missingRegulatoryRequirements.add(chosenInfo.getName());
                         }
                     }
@@ -2249,6 +2303,20 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     public boolean isCollaborationKitRequest() {
-        return !StringUtils.isBlank(editOrder.getProductOrderKit().getWorkRequestId()) && !editOrder.isSampleInitiation();
+        return !StringUtils.isBlank(editOrder.getProductOrderKit().getWorkRequestId()) && !editOrder
+                .isSampleInitiation();
+    }
+
+    /**
+     * Get count of samples not received. Return null if the samples can not be found in BSP
+     */
+    public Integer getNumberSamplesNotReceived() {
+        Integer samplesNotReceived=null;
+        try {
+            samplesNotReceived = editOrder.getSampleCount() - editOrder.getReceivedSampleCount();
+        } catch (BSPLookupException e) {
+            handleBspLookupFailed(e);
+        }
+        return samplesNotReceived;
     }
 }

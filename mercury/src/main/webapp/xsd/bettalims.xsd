@@ -47,6 +47,7 @@
             <xs:element name="comment" type="xs:normalizedString" minOccurs="0"/>
             <xs:element name="observation" type="observationType" minOccurs="0" maxOccurs="unbounded"/>
             <xs:element name="metadata" type="metadataType" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="reagent" type="reagentType" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
         <xs:attribute name="eventType" type="xs:NCName" use="required"/>
         <xs:attribute name="station" type="xs:NCName" use="required"/>
@@ -68,7 +69,6 @@
         <xs:complexContent>
             <xs:extension base="stationEventType">
                 <xs:sequence>
-                    <xs:element name="reagent" type="reagentType" minOccurs="0" maxOccurs="unbounded"/>
                     <xs:element name="plate" type="plateType"/>
                     <xs:element name="experiment" type="experimentType" minOccurs="0"/>
                 </xs:sequence>
@@ -178,7 +178,6 @@
                         <xs:element name="sourcePositionMap" type="positionMapType" minOccurs="0"
                                     maxOccurs="unbounded"/>
                         <xs:element name="source" type="cherryPickSourceType" maxOccurs="unbounded"/>
-                        <xs:element name="reagent" type="reagentType" minOccurs="0" maxOccurs="unbounded"/>
                     </xs:sequence>
                     <xs:attribute name="operation" type="xs:NMTOKEN"/>
                 </xs:extension>
@@ -268,6 +267,16 @@
         </xs:complexContent>
     </xs:complexType>
 
+    <xs:complexType name="receptacleTransferEventType">
+        <xs:complexContent>
+            <xs:extension base="receptacleEventType">
+                <xs:sequence>
+                    <xs:element name="sourceReceptacle" type="receptacleType"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
     <xs:element name="bettaLIMSMessage">
         <xs:complexType>
             <xs:choice>
@@ -278,6 +287,7 @@
                 <xs:element ref="receptaclePlateTransferEvent" maxOccurs="unbounded"/>
                 <xs:element name="receptacleEvent" type="receptacleEventType" minOccurs="0" maxOccurs="unbounded"/>
                 <xs:element name="receptacleSampleEvent" type="receptacleSampleEventType" minOccurs="0" maxOccurs="1"/>
+                <xs:element name="receptacleTransferEvent" type="receptacleTransferEventType" minOccurs="0" maxOccurs="unbounded"/>
             </xs:choice>
             <xs:attribute name="mode" type="xs:NCName"/>
         </xs:complexType>

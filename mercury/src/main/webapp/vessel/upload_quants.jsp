@@ -21,6 +21,7 @@
                     "aoColumns": [
                         {"bSortable": true}, // rev id
                         {"bSortable": true}, // barcode
+                        {"bSortable": true}, // sample ID
                         {"bSortable": true}, // collaborator patient ID
                         {"bSortable": true, "sType": "numeric"}, // value
                         {"bSortable": true, "sType": "numeric"}, // volume
@@ -75,6 +76,12 @@
                     <div class="controls">
                         <stripes:file name="quantSpreadsheet" id="quantFile"/>
                     </div>
+                    <stripes:label for="allowRePico" class="control-label">Redo existing quants</stripes:label>
+                    <div class="controls">
+                        <stripes:checkbox id="allowRePico" name="acceptRePico"
+                                          style="margin-top: 10px;" class="overrideCheckboxClass"
+                                          title="Check this to upload a spreadsheet of quants when tubes already have quants of the same Quant Type and a new pico run was done.  If left unchecked, Mercury will error the upload if it finds existing quants."/>
+                    </div>
                 </div>
                 <div class="control-group">
                     <div class="controls">
@@ -109,6 +116,7 @@
                     <tr>
                         <th>Position</th>
                         <th>Barcode</th>
+                        <th>Sample ID</th>
                         <th>Collaborator Patient ID</th>
                         <th>Value</th>
                         <th>Volume</th>
@@ -129,6 +137,9 @@
                                 </td>
                                 <td>
                                     ${labMetric.labVessel.label}
+                                </td>
+                                <td>
+                                    ${fn:join(labMetric.labVessel.sampleNamesArray, " ")}
                                 </td>
                                 <td>
                                     ${fn:join(labMetric.labVessel.getMetadataValues("PATIENT_ID"), " ")}

@@ -72,7 +72,7 @@ public class ResearchProjectTestFactory {
 
     /**
      * This code is in the dbfree version of the ResearchProject factory despite the fact that
-     * {@link org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList} is currently written as an EJB.
+     * {@link BSPUserList} is currently written as an EJB.
      * It's possible that test code could mock out BSPUserList, although at the time of this writing none of the
      * callers currently does.
      */

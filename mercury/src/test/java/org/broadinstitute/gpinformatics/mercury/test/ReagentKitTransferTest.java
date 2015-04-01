@@ -37,7 +37,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Test(enabled = false, groups = TestGroups.DATABASE_FREE)
+@Test(groups = TestGroups.DATABASE_FREE)
 public class ReagentKitTransferTest {
     BettaLimsMessageTestFactory bettaLimsMessageTestFactory = null;
 
@@ -46,6 +46,7 @@ public class ReagentKitTransferTest {
         bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
     }
 
+    @Test(enabled = false)
     public void testDenatureToReagentKit() {
         final long time = new Date().getTime();
         String denatureRackBarcode = "denatureRack" + time;

@@ -53,16 +53,16 @@ public class LibraryBean {
     private String expectedInsertSize; // Squid only
 
     @JsonProperty("analysisType")
-    private String analysisType; // Squid only
+    private String analysisType;
 
     @JsonProperty("referenceSequence")
-    private String referenceSequence; // Squid only
+    private String referenceSequence;
 
     @JsonProperty("referenceSequenceVersion")
-    private String referenceSequenceVersion; // Squid only
+    private String referenceSequenceVersion;
 
     @JsonProperty("aggregate")
-    private Boolean doAggregation; // Squid only
+    private Boolean doAggregation;
 
     @JsonProperty("species")
     private String species;
@@ -229,14 +229,15 @@ public class LibraryBean {
             TZDevExperimentData devExperimentData, Collection<String> gssrBarcodes, String gssrSampleType,
             Boolean doAggregation, Collection<String> customAmpliconSetNames, ProductOrder productOrder,
             String lcSet, SampleData sampleData, String labWorkflow, String libraryCreationDate,
-            String productOrderSample, String metadataSource) {
+            String productOrderSample, String metadataSource, String aggregationDataType /*only for controls*/) {
 
         // project was always null in the calls here, so don't send it through. Can add back later.
         this(library, null, initiative, workRequest, indexingScheme, hasIndexingRead, expectedInsertSize,
-             analysisType, referenceSequence, referenceSequenceVersion, null, organism, species, strain, null,
-             aligner, rrbsSizeRange, restrictionEnzyme, bait, null, labMeasuredInsertSize, positiveControl,
-             negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation, customAmpliconSetNames,
-             productOrder, lcSet, sampleData, labWorkflow, productOrderSample, libraryCreationDate, null, null, metadataSource);
+                analysisType, referenceSequence, referenceSequenceVersion, null, organism, species, strain, null,
+                aligner, rrbsSizeRange, restrictionEnzyme, bait, null, labMeasuredInsertSize, positiveControl,
+                negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation, customAmpliconSetNames,
+                productOrder, lcSet, sampleData, labWorkflow, productOrderSample, libraryCreationDate, null, null,
+                metadataSource, aggregationDataType);
     }
 
     /**
@@ -280,6 +281,8 @@ public class LibraryBean {
      * @param productOrderSample the product order sample name (key).
      * @param workRequestType squid work request type name
      * @param workRequestDomain squid work request domain name
+     * @param metadataSource BSP or Mercury
+     * @param aggregationDataType only for controls
      */
     public LibraryBean(String library, String project, String initiative, Long workRequest,
             MolecularIndexingScheme indexingScheme, Boolean hasIndexingRead, String expectedInsertSize,
@@ -290,7 +293,8 @@ public class LibraryBean {
             TZDevExperimentData devExperimentData, Collection<String> gssrBarcodes, String gssrSampleType,
             Boolean doAggregation, Collection<String> customAmpliconSetNames, ProductOrder productOrder,
             String lcSet, SampleData sampleData, String labWorkflow, String productOrderSample,
-            String libraryCreationDate, String workRequestType, String workRequestDomain,String metadataSource) {
+            String libraryCreationDate, String workRequestType, String workRequestDomain, String metadataSource,
+            String aggregationDataType) {
 
         this(sampleLSID, gssrSampleType, collaboratorSampleId, organism, species, strain, individual, sampleData,
                 labWorkflow, productOrderSample, libraryCreationDate);
@@ -323,7 +327,9 @@ public class LibraryBean {
             this.metadataSource = metadataSource;
         }
 
-        if (productOrder != null) {
+        if (productOrder == null) {
+            dataType = aggregationDataType;
+        } else {
             this.regulatoryDesignation = productOrder.getRegulatoryDesignationCodeForPipeline();
             productOrderKey = productOrder.getBusinessKey();
             productOrderTitle = productOrder.getTitle();
@@ -547,6 +553,10 @@ public class LibraryBean {
         return productPartNumber;
     }
 
+    public void setProductPartNumber(String productPartNumber) {
+        this.productPartNumber = productPartNumber;
+    }
+
     public String getRootSample() {
         return rootSample;
     }
@@ -625,10 +635,13 @@ public class LibraryBean {
         return metadataSource;
     }
 
-    public static final Comparator<LibraryBean> BY_SAMPLE_ID = new Comparator<LibraryBean> () {
+    public static final Comparator<LibraryBean> BY_SAMPLE_ID_LIBRARY = new Comparator<LibraryBean> () {
         @Override
         public int compare(LibraryBean libraryBean1, LibraryBean libraryBean2) {
-            return new CompareToBuilder().append(libraryBean1.getSampleId(), libraryBean2.getSampleId()).toComparison();
+            return new CompareToBuilder().
+                    append(libraryBean1.getSampleId(), libraryBean2.getSampleId()).
+                    append(libraryBean1.getLibrary(), libraryBean2.getLibrary()).
+                    toComparison();
         }
     };
 

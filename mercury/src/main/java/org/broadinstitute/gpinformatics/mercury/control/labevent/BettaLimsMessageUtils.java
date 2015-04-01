@@ -3,9 +3,11 @@ package org.broadinstitute.gpinformatics.mercury.control.labevent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 
@@ -26,14 +28,35 @@ public class BettaLimsMessageUtils {
      */
     public static Set<String> getBarcodesForCherryPick(PlateCherryPickEvent plateCherryPickEvent) {
         Set<String> barcodes = new HashSet<>();
-        switch (LabEventType.getByName(plateCherryPickEvent.getEventType()).getPlasticToValidate()) {
-        case SOURCE:
-            for (PositionMapType positionMapType : plateCherryPickEvent.getSourcePositionMap()) {
-                for (ReceptacleType receptacle : positionMapType.getReceptacle()) {
-                    barcodes.add(receptacle.getBarcode());
+        LabEventType.PlasticToValidate plasticToValidate =
+                LabEventType.getByName(plateCherryPickEvent.getEventType()).getPlasticToValidate();
+        if (plasticToValidate == LabEventType.PlasticToValidate.SOURCE ||
+                plasticToValidate == LabEventType.PlasticToValidate.BOTH) {
+            if (plateCherryPickEvent.getSourcePositionMap().isEmpty()) {
+                for (PlateType plateType : plateCherryPickEvent.getSourcePlate()) {
+                    barcodes.add(plateType.getBarcode());
+                }
+            } else {
+                for (PositionMapType positionMapType : plateCherryPickEvent.getSourcePositionMap()) {
+                    for (ReceptacleType receptacle : positionMapType.getReceptacle()) {
+                        barcodes.add(receptacle.getBarcode());
+                    }
                 }
             }
-            break;
+        }
+        if (plasticToValidate == LabEventType.PlasticToValidate.TARGET ||
+                plasticToValidate == LabEventType.PlasticToValidate.BOTH) {
+            if (plateCherryPickEvent.getPositionMap().isEmpty()) {
+                for (PlateType plateType : plateCherryPickEvent.getPlate()) {
+                    barcodes.add(plateType.getBarcode());
+                }
+            } else {
+                for (PositionMapType positionMapType : plateCherryPickEvent.getPositionMap()) {
+                    for (ReceptacleType receptacle : positionMapType.getReceptacle()) {
+                        barcodes.add(receptacle.getBarcode());
+                    }
+                }
+            }
         }
         return barcodes;
     }
@@ -131,6 +154,28 @@ public class BettaLimsMessageUtils {
         case SOURCE:
             barcodes.add(receptacleEventType.getReceptacle().getBarcode());
             break;
+        }
+        return barcodes;
+    }
+
+    /**
+     * Based on LabEventType, get tube barcodes for validation or routing
+     *
+     * @param receptacleTransferEventType from deck
+     *
+     * @return tube barcodes
+     */
+    public static Set<String> getBarcodesForReceptacleTransferEvent(ReceptacleTransferEventType receptacleTransferEventType) {
+        Set<String> barcodes = new HashSet<>();
+        LabEventType.PlasticToValidate plasticToValidate =
+                LabEventType.getByName(receptacleTransferEventType.getEventType()).getPlasticToValidate();
+        if (plasticToValidate == LabEventType.PlasticToValidate.SOURCE ||
+                plasticToValidate == LabEventType.PlasticToValidate.BOTH) {
+            barcodes.add(receptacleTransferEventType.getSourceReceptacle().getBarcode());
+        }
+        if (plasticToValidate == LabEventType.PlasticToValidate.TARGET ||
+                plasticToValidate == LabEventType.PlasticToValidate.BOTH) {
+            barcodes.add(receptacleTransferEventType.getReceptacle().getBarcode());
         }
         return barcodes;
     }

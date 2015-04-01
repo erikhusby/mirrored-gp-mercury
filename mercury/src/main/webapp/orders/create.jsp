@@ -34,6 +34,12 @@
             color:#ffffff;
             background-color:#0076da;
         }
+
+        /* Override Bootstrap's block display of labels for add-ons to constrain the hit box. */
+        #addOnCheckboxes label {
+            display: inline;
+            vertical-align: bottom;
+        }
     </style>
         <script type="text/javascript">
 
@@ -97,19 +103,21 @@
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.owner.completeData)},
                                 tokenLimit: 1,
                                 tokenDelimiter: "${actionBean.owner.separator}",
-                                resultsFormatter: formatInput
+                                resultsFormatter: formatInput,
+                                autoSelectFirstResult: true
                             }
                     );
 
                     $j("#researchProject").tokenInput(
-                            "${ctxpath}/orders/order.action?projectAutocomplete=", {
-                                hintText: "Type a project name",
+                            "${ctxpath}/projects/project.action?projectAutocomplete=", {
+                                hintText: "Type a Research Project key or title",
                                 onAdd: updateUIForProjectChoice,
                                 onDelete: updateUIForProjectChoice,
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.projectTokenInput.completeData)},
                                 resultsFormatter: formatInput,
                                 tokenDelimiter: "${actionBean.projectTokenInput.separator}",
-                                tokenLimit: 1
+                                tokenLimit: 1,
+                                autoSelectFirstResult: true
                             }
                     );
 
@@ -121,19 +129,20 @@
                                 resultsFormatter: formatInput,
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.productTokenInput.completeData)},
                                 tokenDelimiter: "${actionBean.productTokenInput.separator}",
-                                tokenLimit: 1
+                                tokenLimit: 1,
+                                autoSelectFirstResult: true
                             }
                     );
                     $j("#kitCollection").tokenInput(
                             "${ctxpath}/orders/order.action?groupCollectionAutocomplete=", {
                                 hintText: "Search for group and collection",
-                                prePopulate: ${actionBean.ensureStringResult(actionBean.bspGroupCollectionTokenInput.getCompleteData(!actionBean.editOrder.draft))
-                            },
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.bspGroupCollectionTokenInput.getCompleteData(!actionBean.editOrder.draft)) },
                                 onAdd: updateUIForCollectionChoice,
                                 onDelete: updateUIForCollectionChoice,
                                 resultsFormatter: formatInput,
                                 tokenDelimiter: "${actionBean.bspGroupCollectionTokenInput.separator}",
-                                tokenLimit: 1
+                                tokenLimit: 1,
+                                autoSelectFirstResult: true
                             }
                     );
 
@@ -143,7 +152,8 @@
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.bspShippingLocationTokenInput.getCompleteData(!actionBean.editOrder.draft))},
                                 resultsFormatter: formatInput,
                                 tokenDelimiter: "${actionBean.bspShippingLocationTokenInput.separator}",
-                                tokenLimit: 1
+                                tokenLimit: 1,
+                                autoSelectFirstResult: true
                             }
                     );
 
@@ -153,7 +163,8 @@
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.notificationListTokenInput.getCompleteData(!actionBean.editOrder.draft))},
                                 tokenDelimiter: "${actionBean.notificationListTokenInput.separator}",
                                 preventDuplicates: true,
-                                resultsFormatter: formatInput
+                                resultsFormatter: formatInput,
+                                autoSelectFirstResult: true
                             }
                     );
 
@@ -212,6 +223,7 @@
 
                         updateUIForMaterialInfoChoice(index, getSelectedPostReceiveOptions(index));
                     });
+                    $j("#skipQuoteDiv").hide();
                     updateUIForProductChoice();
                     updateUIForProjectChoice();
                     updateFundsRemaining();
@@ -359,6 +371,9 @@
                 $j("#addOnCheckboxes").text('If you select a product, its Add-ons will show up here');
                 $j("#sampleInitiationKitRequestEdit").hide();
                 $j("#numberOfLanesDiv").fadeOut(duration);
+                $j("#skipQuoteDiv").hide();
+                $j("#quote").show();
+
             } else {
                 if (productKey == '<%= Product.SAMPLE_INITIATION_PART_NUMBER %>') {
                     // Product is Sample Initiation "P-ESH-0001".
@@ -570,6 +585,7 @@
                 var addOnId = "addOnCheckbox-" + index;
                 checkboxText += '  <input id="' + addOnId + '" type="checkbox"' + checked + ' name="addOnKeys" value="' + val.key + '"/>';
                 checkboxText += '  <label style="font-size: x-small;" for="' + addOnId + '">' + val.value + ' [' + val.key + ']</label>';
+                checkboxText += '  <br>';
             });
 
             var checkboxes = $j("#addOnCheckboxes");
@@ -940,10 +956,7 @@
                             <div id="attestationDiv" class="controls controls-text">
 
                                 <stripes:checkbox name="editOrder.attestationConfirmed" id="attestationConfirmed"/>
-                                By checking this box, I am attesting that I am fully aware of the regulatory
-                                requirements for this project, that these requirements have been met, and that the
-                                information I have provided is accurate. Disregard of relevant requirements and/or
-                                falsification of information may lead to quarantining of data.
+                                ${actionBean.attestationMessage}
                             </div>
                         </div>
                     </c:when>

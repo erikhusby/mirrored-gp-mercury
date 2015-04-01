@@ -32,7 +32,10 @@ public class CrspPipelineUtils {
 
         for (SampleInstanceV2 sampleInstance : sampleInstances) {
             if (sampleInstance.getSingleBucketEntry() != null) {
-                if (sampleInstance.getSingleBucketEntry().getProductOrder().getResearchProject().getRegulatoryDesignation() == ResearchProject.RegulatoryDesignation.GENERAL_CLIA_CAP) {
+                ResearchProject.RegulatoryDesignation regulatoryDesignation = sampleInstance.getSingleBucketEntry().
+                        getProductOrder().getResearchProject().getRegulatoryDesignation();
+                if (regulatoryDesignation == ResearchProject.RegulatoryDesignation.GENERAL_CLIA_CAP ||
+                        regulatoryDesignation == ResearchProject.RegulatoryDesignation.CLINICAL_DIAGNOSTICS) {
                     hasAtLeastOneCrspSample = true;
                 }
                 else {
@@ -51,10 +54,12 @@ public class CrspPipelineUtils {
     /**
      * Overrides various fields with CRSP-specific values
      */
-    public void setFieldsForCrsp(LibraryBean libraryBean,
-                                 SampleData sampleData,
-                                 ResearchProject positiveControlsProject,
-                                 String lcSet) {
+    public void setFieldsForCrsp(
+            LibraryBean libraryBean,
+            SampleData sampleData,
+            ResearchProject positiveControlsProject,
+            String lcSet,
+            String controlProductPartNumber) {
         throwExceptionIfInProductionAndSampleIsNotABSPSample(sampleData.getSampleId());
         setBuickVisitAndCollectionDate(libraryBean, sampleData);
 
@@ -70,6 +75,7 @@ public class CrspPipelineUtils {
             libraryBean.setResearchProjectId(positiveControlsProject.getBusinessKey());
             libraryBean.setResearchProjectName(positiveControlsProject.getTitle());
             libraryBean.setRegulatoryDesignation(positiveControlsProject.getRegulatoryDesignationCodeForPipeline());
+            libraryBean.setProductPartNumber(controlProductPartNumber);
         }
     }
 
@@ -87,7 +93,8 @@ public class CrspPipelineUtils {
     private void throwExceptionIfInProductionAndSampleIsNotABSPSample(@Nonnull String sampleId) {
         if (deployment == Deployment.PROD) {
             if (!BSPUtil.isInBspFormat(sampleId)) {
-                throw new RuntimeException("Sample " + sampleId + " does not appear to be a BSP sample.  The pipeline's fingerprint validation can only handle BSP samples.");
+                throw new RuntimeException("Sample " + sampleId + " does not appear to be a BSP sample.  " +
+                        "The pipeline's fingerprint validation can only handle BSP samples.");
             }
         }
     }

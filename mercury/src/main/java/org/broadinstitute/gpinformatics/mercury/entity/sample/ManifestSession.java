@@ -6,11 +6,11 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.Updatable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.UpdatedEntityInterceptor;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
@@ -24,6 +24,7 @@ import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.NotAudited;
 
+import javax.annotation.Nonnull;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Embedded;
@@ -42,6 +43,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -92,9 +94,9 @@ public class ManifestSession implements Updatable {
     private UpdateData updateData = new UpdateData();
 
     @NotAudited
-    @Formula("(select count(*) from mercury.manifest_record where manifest_record.status != 'SAMPLE_TRANSFERRED_TO_TUBE'" +
+    @Formula("(select count(*) from mercury.manifest_record where manifest_record.status = 'SAMPLE_TRANSFERRED_TO_TUBE'" +
              " and manifest_record.manifest_session_id = manifest_session_id)")
-    private int tubesRemainingToBeTransferred;
+    private int numberOfTubesTransferred;
 
     @NotAudited
     @Formula("(select count(*) from mercury.manifest_record rec where rec.manifest_session_id = manifest_session_id)")
@@ -105,17 +107,33 @@ public class ManifestSession implements Updatable {
              + " join mercury.manifest_event evt on evt.MANIFEST_RECORD_ID = record.MANIFEST_RECORD_ID and evt.SEVERITY = 'QUARANTINED'"
              + " where record.manifest_session_id = manifest_session_id)")
     private int numberOfQuarantinedRecords;
+
+    @Column(name = "FROM_SAMPLE_KIT")
+    private boolean fromSampleKit;
+
     /**
      * For JPA.
      */
     protected ManifestSession() {
     }
 
-    public ManifestSession(ResearchProject researchProject, String pathToManifestFile, BspUser createdBy) {
+    public ManifestSession(ResearchProject researchProject, String manifestSessionName, BspUser createdBy,
+                           boolean fromSampleKit) {
+        this(researchProject, manifestSessionName, createdBy, fromSampleKit, Collections.<ManifestRecord>emptyList());
+    }
+
+    public ManifestSession(ResearchProject researchProject, String sessionName, BspUser createdBy, boolean fromSampleKit,
+                           Collection<ManifestRecord> manifestRecords) {
         this.researchProject = researchProject;
         researchProject.addManifestSession(this);
-        sessionPrefix = FilenameUtils.getBaseName(pathToManifestFile);
+        sessionPrefix = sessionName;
         updateData.setCreatedBy(createdBy.getUserId());
+        this.fromSampleKit = fromSampleKit;
+        if(fromSampleKit) {
+            status = SessionStatus.PENDING_SAMPLE_INFO;
+        }
+
+        addRecords(manifestRecords);
     }
 
     public ResearchProject getResearchProject() {
@@ -146,6 +164,12 @@ public class ManifestSession implements Updatable {
     public void addRecord(ManifestRecord record) {
         records.add(record);
         record.setManifestSession(this);
+        if(isFromSampleKit()) {
+            if(status == SessionStatus.PENDING_SAMPLE_INFO) {
+                setStatus(SessionStatus.ACCESSIONING);
+            }
+            record.setStatus(ManifestRecord.Status.UPLOAD_ACCEPTED);
+        }
     }
 
     public void addRecords(Collection<ManifestRecord> manifestRecords) {
@@ -165,6 +189,10 @@ public class ManifestSession implements Updatable {
 
     public List<ManifestEvent> getManifestEvents() {
         return manifestEvents;
+    }
+
+    public boolean isFromSampleKit() {
+        return fromSampleKit;
     }
 
     /**
@@ -334,17 +362,16 @@ public class ManifestSession implements Updatable {
     }
 
     /**
-     * Method to find the manifest record that has the specified collaborator barcode.
+     * Method to find the manifest record that has the specified Key value combo as one of it's records.
      */
-    public ManifestRecord findRecordByCollaboratorId(String collaboratorBarcode)
+    public ManifestRecord findRecordByKey(String value, Metadata.Key keyToFindRecordBy)
             throws TubeTransferException {
         for (ManifestRecord record : records) {
-            if (record.getValueByKey(Metadata.Key.SAMPLE_ID).equals(collaboratorBarcode)) {
+            if (record.getValueByKey(keyToFindRecordBy).equals(value)) {
                 return record;
             }
         }
-        throw new TubeTransferException(ManifestRecord.ErrorStatus.NOT_IN_MANIFEST, Metadata.Key.SAMPLE_ID,
-                collaboratorBarcode);
+        throw new TubeTransferException(ManifestRecord.ErrorStatus.NOT_IN_MANIFEST, Metadata.Key.SAMPLE_ID, value);
     }
 
     /**
@@ -387,14 +414,14 @@ public class ManifestSession implements Updatable {
      * Returns the total number of records that have been transferred to a mercury vessel.
      */
     public int getNumberOfTubesTransferred() {
-        return totalNumberOfRecords - tubesRemainingToBeTransferred;
+        return numberOfTubesTransferred;
     }
 
     /**
      * Returns the total number of records that can be transferred to a mercury vessel.
      */
     public int getNumberOfTubesAvailableForTransfer() {
-        return tubesRemainingToBeTransferred - numberOfQuarantinedRecords;
+        return totalNumberOfRecords - numberOfTubesTransferred - numberOfQuarantinedRecords;
     }
 
     public int getNumberOfQuarantinedRecords() {
@@ -450,7 +477,7 @@ public class ManifestSession implements Updatable {
      */
     public ManifestRecord getRecordWithMatchingValueForKey(Metadata.Key key, String value) {
         for (ManifestRecord record : records) {
-            if (record.getValueByKey(key).equals(value)) {
+            if (StringUtils.equals(record.getValueByKey(key), value)) {
                 return record;
             }
         }
@@ -490,31 +517,34 @@ public class ManifestSession implements Updatable {
      * from this record such as the record is quarantined, or not in the correct state within the session, or just
      * not found
      *
+     *
+     * @param keyForRecord
      * @param sourceForTransfer Sample ID for which the caller wishes to find the corresponding record
      *
      * @return The record that matches the source sample
      */
-    public ManifestRecord findRecordForTransfer(String sourceForTransfer) {
+    public ManifestRecord findRecordForTransferByKey(Metadata.Key keyForRecord, @Nonnull String sourceForTransfer) {
 
         if (StringUtils.isBlank(sourceForTransfer)) {
-            throw new TubeTransferException("A collaborator sample ID is required for the transfer to a lab vessel");
+            throw new TubeTransferException("A " + keyForRecord.getDisplayName() +
+                                            " is required for the transfer to a lab vessel");
         }
 
-        ManifestRecord recordForTransfer = findRecordByCollaboratorId(sourceForTransfer);
+        ManifestRecord recordForTransfer = findRecordByKey(sourceForTransfer, keyForRecord);
 
         if (recordForTransfer.isQuarantined()) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE,
-                    Metadata.Key.SAMPLE_ID, sourceForTransfer);
+                    keyForRecord, sourceForTransfer);
         }
 
         if (ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE == recordForTransfer.getStatus()) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.SOURCE_ALREADY_TRANSFERRED,
-                    Metadata.Key.SAMPLE_ID, sourceForTransfer);
+                    keyForRecord, sourceForTransfer);
         }
 
         if (ManifestRecord.Status.ACCESSIONED != recordForTransfer.getStatus()) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.NOT_READY_FOR_TUBE_TRANSFER,
-                    Metadata.Key.SAMPLE_ID, sourceForTransfer);
+                    keyForRecord, sourceForTransfer);
         }
 
         return recordForTransfer;
@@ -533,7 +563,13 @@ public class ManifestSession implements Updatable {
     public void performTransfer(String sourceCollaboratorSample, MercurySample targetSample, LabVessel targetVessel,
                                 BspUser user) {
 
-        ManifestRecord sourceRecord = findRecordForTransfer(sourceCollaboratorSample);
+        ManifestRecord sourceRecord ;
+
+        if(sourceCollaboratorSample != null) {
+            sourceRecord = findRecordForTransferByKey(Metadata.Key.SAMPLE_ID, sourceCollaboratorSample);
+        } else {
+            sourceRecord = findRecordForTransferByKey(Metadata.Key.BROAD_SAMPLE_ID, targetSample.getSampleKey());
+        }
 
         targetSample.addMetadata(sourceRecord.getMetadata());
         sourceRecord.setStatus(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
@@ -547,27 +583,41 @@ public class ManifestSession implements Updatable {
     /**
      * Scan the specified sample as part of the accessioning process.
      *
-     * @param collaboratorSampleId The collaborator sample ID the current sample
+     * @param recordReferenceValue The collaborator sample ID the current sample
+     * @param recordSampleKey
      */
-    public void accessionScan(String collaboratorSampleId) {
-        ManifestRecord manifestRecord = getRecordWithMatchingValueForKey(Metadata.Key.SAMPLE_ID, collaboratorSampleId);
+    public void accessionScan(String recordReferenceValue, Metadata.Key recordSampleKey) {
+        ManifestRecord manifestRecord = getRecordWithMatchingValueForKey(recordSampleKey, recordReferenceValue);
 
         if (manifestRecord == null) {
             throw new InformaticsServiceException(
                     ManifestRecord.ErrorStatus.NOT_IN_MANIFEST.formatMessage(
-                            Metadata.Key.SAMPLE_ID, collaboratorSampleId));
+                            recordSampleKey, recordReferenceValue));
         }
-        manifestRecord.accessionScan();
+        manifestRecord.accessionScan(recordSampleKey, recordReferenceValue);
     }
 
     /**
      * Indicator to denote the availability (complete or otherwise) of a manifest session for the sample registration
      * process.
      */
-    public enum SessionStatus {
-        OPEN, ACCESSIONING, COMPLETED
+    public enum SessionStatus implements Displayable {
+        OPEN("Manifest Uploaded"), PENDING_SAMPLE_INFO("Awaiting manifest"),
+        ACCESSIONING("Accessioning samples"), COMPLETED("Accessioning completed");
+
+        private final String displayName;
+        SessionStatus(String displayName) {
+            this.displayName = displayName;
+        }
+
+
+        @Override
+        public String getDisplayName() {
+            return displayName;
+        }
     }
 
+    @Override
     public UpdateData getUpdateData() {
         return updateData;
     }

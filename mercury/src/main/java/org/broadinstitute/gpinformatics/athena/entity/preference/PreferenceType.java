@@ -15,6 +15,7 @@ package org.broadinstitute.gpinformatics.athena.entity.preference;
 public enum PreferenceType {
     PDO_SEARCH("PDO Search Preference", PreferenceScope.USER, 1,
             new NameValueDefinitionValue.NameValuePreferenceDefinitionCreator()),
+
     GLOBAL_LAB_VESSEL_SEARCH_INSTANCES("Global Lab Vessel Search Instances", PreferenceScope.GLOBAL, 1,
             new SearchInstanceList.SearchInstanceListPreferenceDefinitionCreator()),
     GLOBAL_LAB_VESSEL_COLUMN_SETS("Global Lab Vessel Column Sets", PreferenceScope.GLOBAL, 1,
@@ -23,6 +24,7 @@ public enum PreferenceType {
             new SearchInstanceList.SearchInstanceListPreferenceDefinitionCreator()),
     USER_LAB_VESSEL_COLUMN_SETS("User Lab Vessel Column Sets", PreferenceScope.USER, 1,
             new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator()),
+
     GLOBAL_LAB_EVENT_SEARCH_INSTANCES("Global Lab Event Search Instances", PreferenceScope.GLOBAL, 1,
             new SearchInstanceList.SearchInstanceListPreferenceDefinitionCreator()),
     GLOBAL_LAB_EVENT_COLUMN_SETS("Global Lab Event Column Sets", PreferenceScope.GLOBAL, 1,
@@ -30,6 +32,24 @@ public enum PreferenceType {
     USER_LAB_EVENT_SEARCH_INSTANCES("User Lab Event Search Instances", PreferenceScope.USER, 1,
             new SearchInstanceList.SearchInstanceListPreferenceDefinitionCreator()),
     USER_LAB_EVENT_COLUMN_SETS("User Lab Event Column Sets", PreferenceScope.USER, 1,
+            new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator()),
+
+    GLOBAL_MERCURY_SAMPLE_SEARCH_INSTANCES("Global Mercury Sample Search Instances", PreferenceScope.GLOBAL, 1,
+            new SearchInstanceList.SearchInstanceListPreferenceDefinitionCreator()),
+    GLOBAL_MERCURY_SAMPLE_COLUMN_SETS("Global Mercury Sample Column Sets", PreferenceScope.GLOBAL, 1,
+            new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator()),
+    USER_MERCURY_SAMPLE_SEARCH_INSTANCES("User Mercury Sample Search Instances", PreferenceScope.USER, 1,
+            new SearchInstanceList.SearchInstanceListPreferenceDefinitionCreator()),
+    USER_MERCURY_SAMPLE_COLUMN_SETS("User Mercury Sample Column Sets", PreferenceScope.USER, 1,
+            new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator()),
+
+    GLOBAL_REAGENT_SEARCH_INSTANCES("Global Reagent Search Instances", PreferenceScope.GLOBAL, 1,
+            new SearchInstanceList.SearchInstanceListPreferenceDefinitionCreator()),
+    GLOBAL_REAGENT_COLUMN_SETS("Global Reagent Column Sets", PreferenceScope.GLOBAL, 1,
+            new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator()),
+    USER_REAGENT_SEARCH_INSTANCES("User Reagent Search Instances", PreferenceScope.USER, 1,
+            new SearchInstanceList.SearchInstanceListPreferenceDefinitionCreator()),
+    USER_REAGENT_COLUMN_SETS("User Reagent Column Sets", PreferenceScope.USER, 1,
             new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator());
 
     private final String preferenceTypeName;

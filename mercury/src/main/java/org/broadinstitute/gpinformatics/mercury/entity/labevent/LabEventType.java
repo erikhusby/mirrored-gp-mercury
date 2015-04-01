@@ -1,5 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselTypeGeometry;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,7 +35,9 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
     POST_SHEARING_TRANSFER_CLEANUP("PostShearingTransferCleanup",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            MessageType.PLATE_TRANSFER_EVENT, StaticPlate.PlateType.Eppendorf96, StaticPlate.PlateType.Eppendorf96,
+            new String[]{"SPRI", "70% Ethanol", "EB"}),
     SHEARING_QC("ShearingQC",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
@@ -68,12 +74,14 @@ public enum LabEventType {
     WGS_ADAPTER_LIGATION_CLEANUP("WGSAdapterLigationCleanup",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+    // The PCR is associated with PondRegistration, because we want a tube barcode for the pipeline
     POND_ENRICHMENT("PondEnrichment",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.PCR, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+    // The PCR is associated with PondRegistration, because we want a tube barcode for the pipeline
     INDEX_P5_POND_ENRICHMENT("IndexP5PondEnrichment",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
-            PlasticToValidate.TARGET, PipelineTransformation.PCR, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+            PlasticToValidate.TARGET, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
     POST_POND_ENRICHMENT_THERMO_CYCLER_LOADED("PostPondEnrichmentThermoCyclerLoaded",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
@@ -82,7 +90,7 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
     POND_REGISTRATION("PondRegistration",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+            PlasticToValidate.SOURCE, PipelineTransformation.PCR, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
     POND_PICO("PondPico",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
@@ -660,25 +668,46 @@ public enum LabEventType {
     ICE_1ST_HYBRIDIZATION("Ice1stHybridization",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+    POST_ICE_1ST_HYBRIDIZATION_THERMO_CYCLER_LOADED("PostIce1stHybridizationThermoCyclerLoaded",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
     ICE_1S_TBAIT_ADDITION("Ice1stBaitAddition",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
+            PlasticToValidate.TARGET, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+    ICE_1S_TBAIT_PICK("Ice1stBaitPick",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.TARGET, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
     ICE_1ST_CAPTURE("Ice1stCapture",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+    POST_ICE_1ST_CAPTURE_THERMO_CYCLER_LOADED("PostIce1stCaptureThermoCyclerLoaded",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
     ICE_2ND_HYBRIDIZATION("Ice2ndHybridization",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+    POST_ICE_2ND_HYBRIDIZATION_THERMO_CYCLER_LOADED("PostIce2ndHybridizationThermoCyclerLoaded",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
     ICE_2ND_BAIT_ADDITION("Ice2ndBaitAddition",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.TARGET, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+    ICE_2ND_BAIT_PICK("Ice2ndBaitPick",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
+            PlasticToValidate.TARGET, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
     ICE_2ND_CAPTURE("Ice2ndCapture",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+    POST_ICE_2ND_CAPTURE_THERMO_CYCLER_LOADED("PostIce2ndCaptureThermoCyclerLoaded",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
     ICE_CATCH_CLEANUP("IceCatchCleanup",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
     ICE_CATCH_ENRICHMENT_SETUP("IceCatchEnrichmentSetup",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+    POST_ICE_CATCH_ENRICHMENT_SETUP_THERMO_CYCLER_LOADED("PostIceCatchEnrichmentSetupThermoCyclerLoaded",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
     ICE_CATCH_ENRICHMENT_CLEANUP("IceCatchEnrichmentCleanup",
@@ -706,52 +735,94 @@ public enum LabEventType {
             PlasticToValidate.TARGET, PipelineTransformation.PCR, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
     NEXTERA_PCR_CLEANUP("NexteraPCRCleanup",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.PCR, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
     NEXOME_POND_PICO("NexomePondPico",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.PCR, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
     NEXOME_POOLING_TRANSFER("NexomePoolingTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.PCR, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
     NEXOME_POOL_TEST("NexomePoolTest",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.PCR, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
     NEXOME_SPRI_CONCENTRATION("NexomeSPRIConcentration",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.PCR, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
     NEXOME_1ST_HYBRIDIZATION("Nexome1stHybridization",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.PCR, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
     NEXOME_1ST_BAIT_ADDITION("Nexome1stBaitAddition",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
-            PlasticToValidate.TARGET, PipelineTransformation.PCR, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+            PlasticToValidate.TARGET, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
     NEXOME_1ST_CAPTURE("Nexome1stCapture",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.PCR, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
     NEXOME_2ND_BAIT_ADDITION("Nexome2ndBaitAddition",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.PCR, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
     NEXOME_2ND_HYBRIDIZATION("Nexome2ndHybridization",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.PCR, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
     NEXOME_2ND_CAPTURE("Nexome2ndCapture",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.PCR, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
     NEXOME_CATCH_CLEANUP("NexomeCatchCleanup",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.PCR, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+            PlasticToValidate.SOURCE, PipelineTransformation.CAPTURE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
     NEXOME_CATCH_ENRICHMENT("NexomeCatchEnrichment",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.PCR, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
     NEXOME_CATCH_ENRICHMENT_CLEANUP("NexomeCatchEnrichmentCleanup",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.PCR, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
     NEXOME_CATCH_PICO("NexomeCatchPico",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+
+    // Nexome V2
+    TWO_PLATE_TAGMENTATION_CLEANUP("2PlateTagmentationCleanup",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+    NEXTERA_PCR_TRANSFER("NexteraPCRTransfer",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+    TWO_PLATE_NEXTERA_PCR_CLEANUP("2PlateNexteraPCRCleanup",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+    THREE_84_WELL_POND_PICO("384WellPondPico",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+    NEXOME_NORM_TRANSFER("NexomeNormTransfer",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+    NEXOME_BAIT_ADDITION("NexomeBaitAddition",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+    TWO_PLATE_NEXOME_2ND_CAPTURE("2PlateNexome2ndCapture",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+    TWO_PLATE_NEXOME_CATCH_CLEANUP("2PlateNexomeCatchCleanup",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+    NEXOME_PCR_TRANSFER("NexomePCRTransfer",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+    TWO_PLATE_NEXOME_CATCH_ENRICHMENT("2PlateNexomeCatchEnrichment",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.PCR, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
 
     // PCRFree
     PCR_FREE_POND_REGISTRATION("PCRFreePondRegistration",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+    PCR_FREE_08X_CLEANUP("PCRFree0.8xCleanup",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+    PCR_FREE_3X_CLEANUP("PCRFree3.0xCleanup",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+
+    PCR_PLUS_POND_REGISTRATION("PCRPlusPondRegistration",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
 
@@ -765,7 +836,125 @@ public enum LabEventType {
 //    SHEARING_BUCKET_EXIT ("ShearingBucketExit", ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY),
     COLLABORATOR_TRANSFER("CollaboratorTransfer", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE,
             SystemOfRecord.MERCURY, CreateSources.FALSE, PlasticToValidate.TARGET, PipelineTransformation.NONE,
-            SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY);
+            SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+
+    // Activity - sent by decks for otherwise non-messaged protocols (technology development); used by Analytics to
+    // track usage.
+    ACTIVITY_BEGIN("ActivityBegin",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+    ACTIVITY_END("ActivityEnd",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),
+
+    // Transfer blood to micro centrifuge tube
+    EXTRACT_BLOOD_TO_MICRO("ExtractBloodToMicro",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.VacutainerBloodTube3,
+            BarcodedTube.BarcodedTubeType.EppendoffFliptop15, new String[]{"Proteinase K", "Buffer AL", "100% Ethanol"}),
+    // Transfer blood to spin column
+    EXTRACT_BLOOD_MICRO_TO_SPIN("ExtractBloodMicroToSpin",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.EppendoffFliptop15,
+            BarcodedTube.BarcodedTubeType.SpinColumn, new String[]{"Buffer AW1", "Buffer AW2", "Buffer AE"}),
+    // Transfer blood to matrix tube
+    EXTRACT_BLOOD_SPIN_TO_MATRIX("ExtractBloodSpinToMatrix",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.SpinColumn,
+            BarcodedTube.BarcodedTubeType.MatrixTube075, new String[]{}),
+
+    // Transfer cell suspension to microcentrifuge tube
+    EXTRACT_CELL_SUSP_TO_MICRO("ExtractCellSuspToMicro",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.Cryovial05,
+            BarcodedTube.BarcodedTubeType.EppendoffFliptop15, new String[]{"Proteinase K", "Buffer AL", "100% Ethanol"}),
+    // Transfer cell suspension to spin column
+    EXTRACT_CELL_SUSP_MICRO_TO_SPIN("ExtractCellSuspMicroToSpin",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.EppendoffFliptop15,
+            BarcodedTube.BarcodedTubeType.SpinColumn, new String[]{"Buffer AW1", "Buffer AW2", "Buffer AE"}),
+    // Optional Transfer cell suspension to micro centrifuge tube
+    EXTRACT_CELL_SUSP_SPIN_TO_MICRO("ExtractCellSuspSpinToMicro",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.SpinColumn,
+            BarcodedTube.BarcodedTubeType.EppendoffFliptop15, new String[]{"SPRI", "70% Ethanol", "TE"}),
+    // Transfer cell suspension to matrix tube
+    EXTRACT_CELL_SUSP_TO_MATRIX("ExtractCellSuspToMatrix",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.SpinColumn,
+            BarcodedTube.BarcodedTubeType.MatrixTube075, new String[]{}),
+
+    // Transfer tissue in paraffin to micro centrifuge tube
+    EXTRACT_FFPE_TO_MICRO1("ExtractFfpeToMicro1",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.Slide,
+            BarcodedTube.BarcodedTubeType.EppendoffFliptop15, new String[]{"Deparaffinization Solution", "Buffer ATL", "Proteinase K"}),
+    // Transfer tissue in paraffin to micro centrifuge tube to micro centrifuge tube
+    EXTRACT_FFPE_MICRO1_TO_MICRO2("ExtractFfpeMicro1ToMicro2",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.EppendoffFliptop15,
+            BarcodedTube.BarcodedTubeType.EppendoffFliptop15, new String[]{"RNase A", "Buffer AL", "100% Ethanol"}),
+    // Transfer tissue in paraffin to spin column
+    EXTRACT_FFPE_MICRO2_TO_SPIN("ExtractFfpeMicro2ToSpin",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.EppendoffFliptop15,
+            BarcodedTube.BarcodedTubeType.SpinColumn, new String[]{"Buffer AW1", "Buffer AW2", "Buffer ATE"}),
+    // Transfer tissue in paraffin to matrix tube
+    EXTRACT_FFPE_SPIN_TO_MATRIX("ExtractFfpeSpinToMatrix",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.SpinColumn,
+            BarcodedTube.BarcodedTubeType.MatrixTube075, new String[]{}),
+
+    // Transfer fresh frozen tissue to micro centrifuge tube
+    EXTRACT_FRESH_TISSUE_TO_MICRO("ExtractFreshTissueToMicro",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.TissueCassette,
+            BarcodedTube.BarcodedTubeType.EppendoffFliptop15, new String[]{"Buffer ATL", "Proteinase K", "RNase", "Buffer AL", "Ethanol"}),
+    // Transfer fresh frozen tissue to spin column
+    EXTRACT_FRESH_TISSUE_MICRO_TO_SPIN("ExtractFreshTissueMicroToSpin",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.EppendoffFliptop15,
+            BarcodedTube.BarcodedTubeType.SpinColumn, new String[]{"Buffer AW1", "Buffer AW2", "Buffer AE"}),
+    // Transfer fresh frozen tissue to matrix tube
+    EXTRACT_FRESH_TISSUE_SPIN_TO_MATRIX("ExtractFreshTissueSpinToMatrix",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.SpinColumn,
+            BarcodedTube.BarcodedTubeType.MatrixTube075, new String[]{}),
+
+    // Transfer saliva to conical tube
+    EXTRACT_SALIVA_TO_CONICAL("ExtractSalivaToConical",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.OrageneTube,
+            BarcodedTube.BarcodedTubeType.Conical50, new String[]{"PBS", "Proteinase K", "Buffer AL", "100% Ethanol"}),
+    // Transfer saliva to spin column
+    EXTRACT_SALIVA_CONICAL_TO_SPIN("ExtractSalivaConicalToSpin",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.Conical50,
+            BarcodedTube.BarcodedTubeType.SpinColumn, new String[]{"Buffer AW1", "Buffer AW2", "Buffer AE"}),
+    // Transfer saliva to matrix tube
+    EXTRACT_SALIVA_SPIN_TO_MATRIX("ExtractSalivaSpinToMatrix",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.SpinColumn,
+            BarcodedTube.BarcodedTubeType.MatrixTube075, new String[]{}),
+
+    ;
 
     private final String name;
 
@@ -825,6 +1014,8 @@ public enum LabEventType {
     public enum PipelineTransformation {
         NONE,
         LIGATION,
+        /** This is currently the most important transformation.  In general, the Zims library name should include
+         * the barcode of the tube following the first post-shearing PCR event. */
         PCR,
         CAPTURE,
         SIZE_SELECTION
@@ -899,6 +1090,23 @@ public enum LabEventType {
     }
     private final VolumeConcUpdate volumeConcUpdate;
 
+    public enum MessageType {
+        PLATE_EVENT,
+        PLATE_TRANSFER_EVENT,
+        STATION_SETUP_EVENT,
+        PLATE_CHERRY_PICK_EVENT,
+        RECEPTACLE_PLATE_TRANSFER_EVENT,
+        RECEPTACLE_EVENT,
+        RECEPTACLE_TRANSFER_EVENT
+    }
+
+    private MessageType messageType;
+
+    private VesselTypeGeometry sourceVesselTypeGeometry;
+    private VesselTypeGeometry targetVesselTypeGeometry;
+
+    private String[] reagentNames;
+
     /**
      * One attempt at trying to make a very generic
      * {@link LabEvent} to handle lots of different
@@ -928,7 +1136,21 @@ public enum LabEventType {
         this.volumeConcUpdate = volumeConcUpdate;
     }
 
-    public String getName() {
+    LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
+                 SystemOfRecord systemOfRecord, CreateSources createSources, PlasticToValidate plasticToValidate,
+                 PipelineTransformation pipelineTransformation, SendToBsp sendToBsp,
+                 VolumeConcUpdate volumeConcUpdate, MessageType messageType,
+                 VesselTypeGeometry sourceVesselTypeGeometry, VesselTypeGeometry targetVesselTypeGeometry,
+                 String[] reagentNames) {
+        this(name, expectSourcesEmpty, expectTargetsEmpty, systemOfRecord, createSources, plasticToValidate,
+                pipelineTransformation, sendToBsp, volumeConcUpdate);
+        this.messageType = messageType;
+        this.sourceVesselTypeGeometry = sourceVesselTypeGeometry;
+        this.targetVesselTypeGeometry = targetVesselTypeGeometry;
+        this.reagentNames = reagentNames;
+    }
+
+        public String getName() {
         return name;
     }
 
@@ -959,5 +1181,21 @@ public enum LabEventType {
 
     public VolumeConcUpdate getVolumeConcUpdate() {
         return volumeConcUpdate;
+    }
+
+    public MessageType getMessageType() {
+        return messageType;
+    }
+
+    public VesselTypeGeometry getSourceVesselTypeGeometry() {
+        return sourceVesselTypeGeometry;
+    }
+
+    public VesselTypeGeometry getTargetVesselTypeGeometry() {
+        return targetVesselTypeGeometry;
+    }
+
+    public String[] getReagentNames() {
+        return reagentNames;
     }
 }

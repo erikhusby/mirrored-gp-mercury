@@ -17,8 +17,6 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
@@ -56,7 +54,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
 
-import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.text.Format;
@@ -67,14 +64,13 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
-
-import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalDirection.Ancestors;
 
 /**
  * This class constructs a pipeline API bean from a Mercury chain of custody.
@@ -90,6 +86,35 @@ public class ZimsIlluminaRunFactory {
     private ProductOrderDao productOrderDao;
     private ResearchProjectDao researchProjectDao;
     private final CrspPipelineUtils crspPipelineUtils;
+
+    // Positive controls must have a product part number in order to go through variant calling.  Controls aren't
+    // entered into product orders, so the part number must be determined by looking at the other samples in the lane.
+    // If all samples are in one of the following sets, use the first entry in the set (germline) for the positive
+    // control.
+    static final String AGILENT_GERMLINE_PART_NUMBER = "P-CLA-0001";
+    static final String AGILENT_SOMATIC_PART_NUMBER = "P-CLA-0002";
+    private static final Set<String> AGILENT_PART_NUMBERS = new LinkedHashSet<String>() {{
+        add(AGILENT_GERMLINE_PART_NUMBER);
+        add(AGILENT_SOMATIC_PART_NUMBER);
+    }};
+
+    static final String ICE_GERMLINE_PART_NUMBER = "P-CLA-0003";
+    static final String ICE_SOMATIC_PART_NUMBER = "P-CLA-0004";
+    private static final Set<String> ICE_PART_NUMBERS = new LinkedHashSet<String>() {{
+        add(ICE_GERMLINE_PART_NUMBER);
+        add(ICE_SOMATIC_PART_NUMBER);
+    }};
+
+    static final String BUICK_PART_NUMBER = "P-EX-0011";
+    private static final Set<String> BUICK_PART_NUMBERS = new LinkedHashSet<String>() {{
+        add(BUICK_PART_NUMBER);
+    }};
+
+    private static final List<Set<String>> PART_NUMBER_SETS = new ArrayList<Set<String>>() {{
+        add(AGILENT_PART_NUMBERS);
+        add(ICE_PART_NUMBERS);
+        add(BUICK_PART_NUMBERS);
+    }};
 
     private static final Log log = LogFactory.getLog(ZimsIlluminaRunFactory.class);
 
@@ -125,23 +150,24 @@ public class ZimsIlluminaRunFactory {
             perLaneSampleInstanceDtos.add(sampleInstanceDtos);
             String positionName = positionNames.next();
             VesselPosition vesselPosition = VesselPosition.getByName(positionName);
-            PipelineTransformationCriteria criteria = new PipelineTransformationCriteria();
-            flowcell.getContainerRole().evaluateCriteria(vesselPosition, criteria, Ancestors, null, 0);
-            Map<SampleInstanceV2, SampleInstanceV2> laneSampleInstances = new HashMap<>();
-            for (SampleInstanceV2 sampleInstanceV2 :
+            // todo jmt delete this code, and determine if remainder can be simplified
+//            PipelineTransformationCriteria criteria = new PipelineTransformationCriteria();
+//            flowcell.getContainerRole().evaluateCriteria(vesselPosition, criteria, Ancestors, null, 0);
+//            Map<SampleInstanceV2, SampleInstanceV2> laneSampleInstances = new HashMap<>();
+            for (SampleInstanceV2 laneSampleInstance :
                     flowcell.getContainerRole().getSampleInstancesAtPositionV2(vesselPosition)) {
-                laneSampleInstances.put(sampleInstanceV2, sampleInstanceV2);
-            }
-
-            for (LabVessel labVessel : criteria.getNearestLabVessels()) {
-                Set<SampleInstanceV2> sampleInstances = labVessel.getSampleInstancesV2();
-                for (SampleInstanceV2 sampleInstance : sampleInstances) {
-                    // Must use equivalent sample instance in the lane, to reflect any rework LCSET since the catch.
-                    SampleInstanceV2 laneSampleInstance = laneSampleInstances.get(sampleInstance);
-                    if (laneSampleInstance == null) {
-                        throw new RuntimeException("Failed to find " + sampleInstance.getMercuryRootSampleName() +
-                                " in lane " + laneNum);
-                    }
+//                laneSampleInstances.put(sampleInstanceV2, sampleInstanceV2);
+//            }
+//
+//            for (LabVessel labVessel : criteria.getNearestLabVessels()) {
+//                Set<SampleInstanceV2> sampleInstances = labVessel.getSampleInstancesV2();
+//                for (SampleInstanceV2 sampleInstance : sampleInstances) {
+//                    // Must use equivalent sample instance in the lane, to reflect any rework LCSET since the catch.
+//                    SampleInstanceV2 laneSampleInstance = laneSampleInstances.get(sampleInstance);
+//                    if (laneSampleInstance == null) {
+//                        throw new RuntimeException("Failed to find " + sampleInstance.getMercuryRootSampleName() +
+//                                " in lane " + laneNum);
+//                    }
                     BucketEntry singleBucketEntry = laneSampleInstance.getSingleBucketEntry();
                     String productOrderKey = null;
                     if (singleBucketEntry != null) {
@@ -153,7 +179,7 @@ public class ZimsIlluminaRunFactory {
                     String sampleId = pdoSampleName;
                     LabBatchStartingVessel importLbsv = laneSampleInstance.getSingleBatchVessel(LabBatch.LabBatchType.SAMPLES_IMPORT);
                     if (importLbsv != null) {
-                        Set<MercurySample> mercurySamples = importLbsv.getLabVessel().getMercurySamples();
+                        Collection<MercurySample> mercurySamples = importLbsv.getLabVessel().getMercurySamples();
                         if (!mercurySamples.isEmpty()) {
                             sampleId = mercurySamples.iterator().next().getSampleKey();
                         }
@@ -167,10 +193,10 @@ public class ZimsIlluminaRunFactory {
                     String libraryName = libraryVessel.getLabel();
                     String metadataSource = laneSampleInstance.getMetadataSourceForPipelineAPI();
 
-                    sampleInstanceDtos
-                            .add(new SampleInstanceDto(laneNum, labVessel, laneSampleInstance, sampleId, productOrderKey,
-                                                       libraryName, libraryVessel.getCreatedOn(), pdoSampleName,isCrspLane,metadataSource));
-                }
+                    sampleInstanceDtos.add(new SampleInstanceDto(laneNum, laneSampleInstance.getFirstPcrVessel(),
+                            laneSampleInstance, sampleId, productOrderKey, libraryName, libraryVessel.getCreatedOn(),
+                            pdoSampleName,isCrspLane,metadataSource));
+//                }
             }
         }
         int numberOfLanes = laneNum;
@@ -251,8 +277,29 @@ public class ZimsIlluminaRunFactory {
                                               Map<String, SampleData> mapSampleIdToDto,
                                               Map<String, ProductOrder> mapKeyToProductOrder,
                                               Map<String, Control> mapNameToControl,
-                                              ResearchProject CrspPositiveControlProject) {
+                                              ResearchProject crspPositiveControlProject) {
         List<LibraryBean> libraryBeans = new ArrayList<>();
+
+        // Get distinct analysis types and reference sequences.  If there's only one distinct, it's used for the
+        // positive control.
+        Set<String> analysisTypes = new HashSet<>();
+        Set<String> referenceSequenceKeys = new HashSet<>();
+        Set<String> aggregationDataTypes = new HashSet<>();
+        Set<String> productPartNumbers = new HashSet<>();
+        for (SampleInstanceDto sampleInstanceDto : sampleInstanceDtos) {
+            ProductOrder productOrder = (sampleInstanceDto.getProductOrderKey() != null) ?
+                    mapKeyToProductOrder.get(sampleInstanceDto.getProductOrderKey()) : null;
+            if (productOrder != null) {
+                Product product = productOrder.getProduct();
+                analysisTypes.add(product.getAnalysisTypeKey());
+                aggregationDataTypes.add(product.getAggregationDataType());
+                ResearchProject project = productOrder.getResearchProject();
+                if (!StringUtils.isBlank(project.getReferenceSequenceKey())) {
+                    referenceSequenceKeys.add(project.getReferenceSequenceKey());
+                }
+                productPartNumbers.add(product.getPartNumber());
+            }
+        }
 
         for (SampleInstanceDto sampleInstanceDto : sampleInstanceDtos) {
             SampleInstanceV2 sampleInstance = sampleInstanceDto.getSampleInstance();
@@ -321,18 +368,17 @@ public class ZimsIlluminaRunFactory {
 
             SampleData sampleData = mapSampleIdToDto.get(sampleInstanceDto.getSampleId());
 
-            libraryBeans.add(
-                    createLibraryBean(sampleInstanceDto.getLabVessel(), productOrder, sampleData, lcSet, baitName,
-                                      indexingSchemeEntity, catNames,
-                                      sampleInstanceDto.getSampleInstance().getWorkflowName(),
-                                      indexingSchemeDto, mapNameToControl, sampleInstanceDto.getPdoSampleName(),
-                                      sampleInstanceDto.isCrspLane(),
-                                      CrspPositiveControlProject,
-                                      sampleInstanceDto.getMetadataSourceForPipelineAPI()));
+            libraryBeans.add(createLibraryBean(sampleInstanceDto.getLabVessel(), productOrder, sampleData, lcSet,
+                    baitName, indexingSchemeEntity, catNames, sampleInstanceDto.getSampleInstance().getWorkflowName(),
+                    indexingSchemeDto, mapNameToControl, sampleInstanceDto.getPdoSampleName(),
+                    sampleInstanceDto.isCrspLane(), crspPositiveControlProject,
+                    sampleInstanceDto.getMetadataSourceForPipelineAPI(), analysisTypes, referenceSequenceKeys,
+                    aggregationDataTypes, productPartNumbers));
         }
 
-        // Make order predictable
-        Collections.sort(libraryBeans, LibraryBean.BY_SAMPLE_ID);
+        // Make order predictable.  Include library name because for ICE there are 8 ancestor catch tubes, all with
+        // the same samples.  We must tell the pipeline the same library name when they ask multiple times.
+        Collections.sort(libraryBeans, LibraryBean.BY_SAMPLE_ID_LIBRARY);
 
         // Consolidates beans that have the same consolidation key.
         SortedSet<String> previouslySeenSampleAndMis = new TreeSet<>();
@@ -357,7 +403,8 @@ public class ZimsIlluminaRunFactory {
             edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme indexingSchemeDto,
             Map<String, Control> mapNameToControl, String pdoSampleName,
             boolean isCrspLane, ResearchProject crspPositiveControlsProject,
-            String metadataSourceForPipelineAPI) {
+            String metadataSourceForPipelineAPI, Set<String> analysisTypes, Set<String> referenceSequenceKeys,
+            Set<String> aggregationDataTypes, Set<String> productPartNumbers) {
 
         Format dateFormat = FastDateFormat.getInstance(ZimsIlluminaRun.DATE_FORMAT);
 
@@ -365,7 +412,7 @@ public class ZimsIlluminaRunFactory {
                 labVessel.getLabel() + (indexingSchemeEntity == null ? "" : "_" + indexingSchemeEntity.getName());
         String initiative = null;
         Long workRequest = null;
-        Boolean hasIndexingRead = null;     // todo jmt hasIndexingRead, designation?
+        Boolean hasIndexingRead = null;
         String expectedInsertSize = null;
         String organism = null;
         String species = null;
@@ -379,13 +426,29 @@ public class ZimsIlluminaRunFactory {
         Collection<String> gssrBarcodes = null;
         String gssrSampleType = null;
         Boolean doAggregation = Boolean.TRUE;
+        String controlProductPartNumber = null;
 
+        String analysisType = null;
+        String referenceSequence = null;
+        String referenceSequenceVersion = null;
+        String aggregationDataType = null;
         if (sampleData != null && productOrder == null) {
             Control control = mapNameToControl.get(sampleData.getCollaboratorParticipantId());
             if (control != null) {
                 switch (control.getType()) {
                 case POSITIVE:
                     positiveControl = true;
+                    if (analysisTypes.size() == 1 && referenceSequenceKeys.size() == 1 &&
+                            aggregationDataTypes.size() == 1) {
+                        // horrible 7/25 hack.  todo fixme with workflow
+                        analysisType = "HybridSelection." + analysisTypes.iterator().next();
+
+                        String[] referenceSequenceValues = referenceSequenceKeys.iterator().next().split("\\|");
+                        referenceSequence = referenceSequenceValues[0];
+                        referenceSequenceVersion = referenceSequenceValues[1];
+                        aggregationDataType = aggregationDataTypes.iterator().next();
+                        controlProductPartNumber = getControlProductPartNumber(productPartNumbers);
+                    }
                     break;
                 case NEGATIVE:
                     negativeControl = true;
@@ -398,9 +461,6 @@ public class ZimsIlluminaRunFactory {
         String bait = baitName;
 
         // These items are pulled off the project or product.
-        String analysisType = null;
-        String referenceSequence = null;
-        String referenceSequenceVersion = null;
         String aligner = null;
         if (productOrder != null) {
             // Product stuff.
@@ -417,9 +477,8 @@ public class ZimsIlluminaRunFactory {
             aligner = project.getSequenceAlignerKey();
 
             // If there is a reference sequence value on the project, then populate the name and version.
-            String[] referenceSequenceValues;
             if (!StringUtils.isBlank(project.getReferenceSequenceKey())) {
-                referenceSequenceValues = project.getReferenceSequenceKey().split("\\|");
+                String[] referenceSequenceValues = project.getReferenceSequenceKey().split("\\|");
                 referenceSequence = referenceSequenceValues[0];
                 referenceSequenceVersion = referenceSequenceValues[1];
             }
@@ -436,13 +495,33 @@ public class ZimsIlluminaRunFactory {
                 analysisType, referenceSequence, referenceSequenceVersion, organism, species,
                 strain, aligner, rrbsSizeRange, restrictionEnzyme, bait, labMeasuredInsertSize,
                 positiveControl, negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation,
-                catNames, productOrder, lcSet, sampleData, labWorkflow, libraryCreationDate, pdoSampleName, metadataSourceForPipelineAPI);
+                catNames, productOrder, lcSet, sampleData, labWorkflow, libraryCreationDate, pdoSampleName,
+                metadataSourceForPipelineAPI, aggregationDataType);
         if (isCrspLane) {
-            crspPipelineUtils.setFieldsForCrsp(libraryBean, sampleData, crspPositiveControlsProject, lcSet);
+            crspPipelineUtils.setFieldsForCrsp(libraryBean, sampleData, crspPositiveControlsProject, lcSet,
+                    controlProductPartNumber);
         }
         return libraryBean;        
     }
 
+    /**
+     * Determines the product part number for a control, depending on the part numbers of other samples in the same
+     * lane.
+     */
+    String getControlProductPartNumber(Set<String> productPartNumbers) {
+        String controlProductPartNumber = null;
+        for (Set<String> partNumberSet : PART_NUMBER_SETS) {
+            Set<String> intersection = new HashSet<>(productPartNumbers);
+            intersection.retainAll(partNumberSet);
+            if (intersection.size() == productPartNumbers.size()) {
+                controlProductPartNumber = partNumberSet.iterator().next();
+                break;
+            }
+        }
+        return controlProductPartNumber;
+    }
+
+    // todo jmt delete this class
     private static class PipelineTransformationCriteria implements TransferTraverserCriteria {
 
         private Map<Integer, Set<LabVessel>> mapHopToLabVessels = LazyMap.lazyMap(

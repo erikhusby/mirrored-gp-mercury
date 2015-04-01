@@ -7,6 +7,13 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample_;
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
+import javax.persistence.NoResultException;
+import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.ParameterExpression;
+import javax.persistence.criteria.Root;
+import javax.persistence.criteria.Subquery;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -57,17 +64,26 @@ public class MercurySampleDao extends GenericDao {
         return findListByList(MercurySample.class, MercurySample_.sampleKey, sampleKeys);
     }
 
-    public List<MercurySample> findBySampleKey(String sampleKey) {
-        return findList(MercurySample.class, MercurySample_.sampleKey, sampleKey);
+    public MercurySample findBySampleKey(String sampleKey) {
+        return findSingle(MercurySample.class, MercurySample_.sampleKey, sampleKey);
     }
 
     /**
      * Finds MercurySamples for the given samples keys. Returns a map of MercurySamples indexed by sample key. The map
      * contains empty collections if no MercurySamples are found.
      *
+     * THIS METHOD IS DEFUNCT.  Only still here because it is called in a fixup test and we cannot modify fixup tests
+     * after they are persisted
+     *
+     * The Proper Method to use is:
+     *
+     * @see #findMapIdToMercurySample
+     *
+     *
      * @param sampleKeys    the sample keys to search for
      * @return a map of sample key to (possibly multiple) MercurySamples
      */
+    @Deprecated
     public Map<String, List<MercurySample>> findMapIdToListMercurySample(Collection<String> sampleKeys) {
         Map<String, List<MercurySample>> mapSampleIdToListMercurySamples = new HashMap<>();
         for (String sampleKey : sampleKeys) {
@@ -78,6 +94,59 @@ public class MercurySampleDao extends GenericDao {
             mapSampleIdToListMercurySamples.get(mercurySample.getSampleKey()).add(mercurySample);
         }
         return mapSampleIdToListMercurySamples;
+    }
+
+    /**
+     * Finds MercurySamples for the given samples keys. Returns a map of MercurySamples indexed by sample key. The map
+     * contains entries only for MercurySamples that are found.
+     *
+     * @param sampleKeys    the sample keys to search for
+     * @return a map of sample key to a MercurySample
+     */
+    public Map<String, MercurySample> findMapIdToMercurySample(Collection<String> sampleKeys) {
+        Map<String, MercurySample> mapSampleIdToListMercurySamples = new HashMap<>();
+        List<MercurySample> mercurySamples = findListByList(MercurySample.class, MercurySample_.sampleKey, sampleKeys);
+        for (MercurySample mercurySample : mercurySamples) {
+            mapSampleIdToListMercurySamples.put(mercurySample.getSampleKey(), mercurySample);
+        }
+        return mapSampleIdToListMercurySamples;
+    }
+
+    /**
+     * This method was only created for the purpose of a fixup test that would find and eliminate Duplicate entries
+     * for MercurySamples.  It will never be needed again since we took steps to prevent any instances of duplicate
+     * MercurySamples within the Mercury environment.
+     * @return
+     */
+    public List<MercurySample> findDuplicateSamples() {
+
+        List<MercurySample> results = new ArrayList<>();
+
+        CriteriaBuilder sampleBuilder = getEntityManager().getCriteriaBuilder();
+
+        ParameterExpression<Long> minimumCount = sampleBuilder.parameter(Long.class);
+        CriteriaQuery<MercurySample> duplicateSampleQuery = sampleBuilder.createQuery(MercurySample.class);
+
+        Subquery<String> dupeSampleNameQuery = duplicateSampleQuery.subquery(String.class);
+        Root<MercurySample> sampleNameQ_Root = dupeSampleNameQuery.from(MercurySample.class);
+
+        dupeSampleNameQuery.select(sampleNameQ_Root.get(MercurySample_.sampleKey))
+                .distinct(true)
+                .groupBy(sampleNameQ_Root.get(MercurySample_.sampleKey))
+                .having(sampleBuilder.gt(sampleBuilder.count(sampleNameQ_Root), minimumCount));
+
+        Root<MercurySample> sampleRoot = duplicateSampleQuery.from(MercurySample.class);
+
+        duplicateSampleQuery.select(sampleRoot).distinct(true)
+                .where(sampleBuilder.in(sampleRoot.get(MercurySample_.sampleKey)).value(dupeSampleNameQuery));
+
+        try {
+            TypedQuery<MercurySample> query = getEntityManager().createQuery(duplicateSampleQuery);
+            query.setParameter(minimumCount, 1L);
+            results.addAll(query.getResultList());
+        } catch (NoResultException ignored) {
+        }
+        return results;
     }
 
 }

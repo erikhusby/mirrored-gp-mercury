@@ -84,12 +84,6 @@ public class SubmissionDtoFetcher {
             SampleData sampleData = bulkInfo.get(sample.getName());
             if (sampleData != null) {
                 sample.setSampleData(sampleData);
-                // In non-production environments bogus samples are often created so we will
-                // only create a new BspSampleData in those cases
-            } else if (bspConfig.getMercuryDeployment() != Deployment.PROD) {
-                sample.setSampleData(new BspSampleData(new HashMap<BSPSampleSearchColumn, String>() {{
-                    put(BSPSampleSearchColumn.SAMPLE_ID, sample.getName());
-                }}));
             }
         }
     }

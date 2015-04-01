@@ -227,6 +227,11 @@ public class ProductOrderActionBeanTest {
         Assert.assertTrue(goodRinScoreSample.canRinScoreBeUsedForOnRiskCalculation());
     }
 
+    public void testCanEmptyRinScoreBeUsedForOnRiskCalculation() {
+        SampleData emptyRinScoreSample = getSampleDTOWithEmptyRinScore();
+        Assert.assertTrue(emptyRinScoreSample.canRinScoreBeUsedForOnRiskCalculation());
+    }
+
     public void testPostReceiveOptions() throws Exception {
         Product product = new Product();
         pdo.setProduct(product);
@@ -317,6 +322,15 @@ public class ProductOrderActionBeanTest {
         return new BspSampleData(dataMap);
     }
 
+    private SampleData getSampleDTOWithEmptyRinScore() {
+        Map<BSPSampleSearchColumn, String> dataMap = new EnumMap<BSPSampleSearchColumn, String>(
+                BSPSampleSearchColumn.class) {{
+            put(BSPSampleSearchColumn.RIN, "");
+            put(BSPSampleSearchColumn.SAMPLE_ID, "SM-99D2A");
+        }};
+        return new BspSampleData(dataMap);
+    }
+
     private Product createSimpleProduct(String productPartNumber, String family) {
         Product product = new Product();
         product.setPartNumber(productPartNumber);
@@ -395,18 +409,18 @@ public class ProductOrderActionBeanTest {
         return new Object[][]{
                 {ProductOrderActionBean.SAVE_ACTION, null, "", true, "Saving any order should succeed."},
                 {ProductOrderActionBean.SAVE_ACTION, "", "", true, "Saving any order should succeed."},
-                {ProductOrderActionBean.PLACE_ORDER, null, "", false, "No Quote and No reason should fail."},
+                {ProductOrderActionBean.PLACE_ORDER_ACTION, null, "", false, "No Quote and No reason should fail."},
                 {ProductOrderActionBean.SAVE_ACTION, null, testReason, true, "Saving any order should succeed."},
-                {ProductOrderActionBean.PLACE_ORDER, null, testReason, true,
+                {ProductOrderActionBean.PLACE_ORDER_ACTION, null, testReason, true,
                         "No Quote but with reason should succeed."},
                 {ProductOrderActionBean.SAVE_ACTION, testQuote, "", true, "Saving any order should succeed."},
                 {ProductOrderActionBean.SAVE_ACTION, testQuote, null, true, "Saving any order should succeed."},
-                {ProductOrderActionBean.PLACE_ORDER, testQuote, "", true,
+                {ProductOrderActionBean.PLACE_ORDER_ACTION, testQuote, "", true,
                         "A good quote but blank reason should succeed."},
-                {ProductOrderActionBean.PLACE_ORDER, testQuote, null, true,
+                {ProductOrderActionBean.PLACE_ORDER_ACTION, testQuote, null, true,
                         "A good quote but null reason should succeed."},
                 {ProductOrderActionBean.SAVE_ACTION, testQuote, testReason, true, "Saving any order should succeed."},
-                {ProductOrderActionBean.PLACE_ORDER, testQuote, testReason, true,
+                {ProductOrderActionBean.PLACE_ORDER_ACTION, testQuote, testReason, true,
                         "A good quote and a reason should succeed."},
                 {ProductOrderActionBean.VALIDATE_ORDER, testQuote, testReason, true,
                         "A good quote and a reason should succeed."},
@@ -488,10 +502,18 @@ public class ProductOrderActionBeanTest {
 
     }
 
+    @Test(groups = TestGroups.DATABASE_FREE)
     public void testGetProductOrderLink() {
-        AppConfig productionConfig = AppConfig.produce(Deployment.PROD);
-        Assert.assertEquals(ProductOrderActionBean.getProductOrderLink("PDO-1", productionConfig),
-                "http://mercury.broadinstitute.org/Mercury//orders/order.action?view=&productOrder=PDO-1");
+        AppConfig testConfig = new AppConfig(Deployment.STUBBY) {
+            @Override
+            public String getUrl() {
+                return "Test URL Magic String";
+            }
+        };
+        ProductOrder order = new ProductOrder();
+        order.setJiraTicketKey("PDO-1");
+        Assert.assertEquals(ProductOrderActionBean.getProductOrderLink(order, testConfig),
+                testConfig.getUrl() + "/orders/order.action?view=&productOrder=" + order.getJiraTicketKey());
     }
 
     @DataProvider(name = "regulatoryOptionsDataProvider")
@@ -503,7 +525,7 @@ public class ProductOrderActionBeanTest {
         regulatoryInfo.setId(1L);
         RegulatoryInfo nullRegulatoryInfo = null;
         List<Object[]> testCases = new ArrayList<>();
-        for (String action : Arrays.asList(ProductOrderActionBean.PLACE_ORDER, ProductOrderActionBean.VALIDATE_ORDER)) {
+        for (String action : Arrays.asList(ProductOrderActionBean.PLACE_ORDER_ACTION, ProductOrderActionBean.VALIDATE_ORDER)) {
             testCases.add(new Object[]{action, false, "", regulatoryInfo, false, grandfatheredInDate, true});
             testCases.add(new Object[]{action, false, "", nullRegulatoryInfo, false, grandfatheredInDate, true});
             testCases.add(
@@ -648,7 +670,7 @@ public class ProductOrderActionBeanTest {
 
         // test validation for all pertinent actions.
         for (String action : Arrays.asList(ProductOrderActionBean.SAVE_ACTION, ProductOrderActionBean.VALIDATE_ORDER,
-                ProductOrderActionBean.PLACE_ORDER)) {
+                ProductOrderActionBean.PLACE_ORDER_ACTION)) {
             actionBean.validateRegulatoryInformation(action);
             Assert.assertTrue(actionBean.getValidationErrors().isEmpty(), "Validation failed for " + action);
         }

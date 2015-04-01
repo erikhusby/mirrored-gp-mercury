@@ -15,16 +15,16 @@ import java.util.Map;
  * Parser for a spreadsheet containing tubes of control reagent.
  */
 public class ControlReagentProcessor extends TableProcessor {
-    private SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MM/dd/yyyy");
+    private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MM/dd/yyyy");
     private List<String> headers;
 
-    private Map<String, ControlDto> mapTubeBarcodeToControl = new LinkedHashMap<>();
-    private Map<ControlDto, ControlDto> mapControlToControl = new HashMap<>();
+    private final Map<String, ControlDto> mapTubeBarcodeToControl = new LinkedHashMap<>();
+    private final Map<ControlDto, ControlDto> mapControlToControl = new HashMap<>();
 
     public static class ControlDto {
-        private String control;
-        private String lot;
-        private Date expiration;
+        private final String control;
+        private final String lot;
+        private final Date expiration;
 
         public ControlDto(String control, String lot, Date expiration) {
             this.control = control;
@@ -125,30 +125,25 @@ public class ControlReagentProcessor extends TableProcessor {
     }
 
     private enum Headers implements ColumnHeader {
-        TUBE_BARCODE("tube barcode", 0, REQUIRED_HEADER, REQUIRED_VALUE, IS_STRING, NON_DATE),
-        CONTROL("control", 1, REQUIRED_HEADER, REQUIRED_VALUE, IS_STRING, NON_DATE),
-        LOT("lot", 2, REQUIRED_HEADER, REQUIRED_VALUE, IS_STRING, NON_DATE),
-        EXPIRATION("expiration", 3, REQUIRED_HEADER, REQUIRED_VALUE, NON_STRING, IS_DATE),
+        TUBE_BARCODE("tube barcode"),
+        CONTROL("control"),
+        LOT("lot"),
+        EXPIRATION("expiration", IsDate.YES),
         ;
 
         private final String text;
-        private final int index;
-        private final boolean requiredHeader;
-        private final boolean requiredValue;
-        private boolean isString;
-        private boolean isDate;
+        private final IsDate isDate;
 
-        Headers(String text, int index, boolean requiredHeader, boolean requiredValue) {
-            this(text, index, requiredHeader, requiredValue, false, false);
+        private enum IsDate {
+            YES, NO
         }
 
-        Headers(String text, int index, boolean requiredHeader, boolean requiredValue,
-                boolean isString, boolean isDate) {
+        Headers(String text) {
+            this(text, IsDate.NO);
+        }
+
+        Headers(String text, IsDate isDate) {
             this.text = text;
-            this.index = index;
-            this.requiredHeader = requiredHeader;
-            this.requiredValue = requiredValue;
-            this.isString = isString;
             this.isDate = isDate;
         }
 
@@ -158,28 +153,23 @@ public class ControlReagentProcessor extends TableProcessor {
         }
 
         @Override
-        public int getIndex() {
-            return index;
-        }
-
-        @Override
         public boolean isRequiredHeader() {
-            return requiredHeader;
+            return true;
         }
 
         @Override
         public boolean isRequiredValue() {
-            return requiredValue;
+            return true;
         }
 
         @Override
         public boolean isDateColumn() {
-            return isDate;
+            return isDate == IsDate.YES;
         }
 
         @Override
         public boolean isStringColumn() {
-            return isString;
+            return isDate != IsDate.YES;
         }
     }
 

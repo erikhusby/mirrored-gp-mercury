@@ -1,17 +1,19 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.bsp.client.users.BspUser;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
+import org.broadinstitute.gpinformatics.mercury.boundary.sample.ClinicalSampleFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
@@ -19,13 +21,17 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestStatus;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.TubeTransferException;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 @RequestScoped
 @Stateful
@@ -37,16 +43,15 @@ public class ManifestSessionEjb {
     static final String UNASSOCIATED_TUBE_SAMPLE_MESSAGE =
             "The given target sample id is not associated with the given target vessel.";
     static final String SAMPLE_NOT_FOUND_MESSAGE = "You must provide a valid target sample key.";
-    private static final String SAMPLE_NOT_UNIQUE_MESSAGE = "This sample ID is not unique in Mercury.";
     static final String SAMPLE_NOT_ELIGIBLE_FOR_CLINICAL_MESSAGE =
             "The sample found is not eligible for clinical work.";
     static final String VESSEL_NOT_FOUND_MESSAGE = "The target vessel was not found.";
     static final String VESSEL_USED_FOR_PREVIOUS_TRANSFER =
             "The target vessel has already been used for a tube transfer.";
-
-    static final String MANIFEST_SESSION_NOT_FOUND = "Manifest Session '%s' not found";
-
+    static final String MANIFEST_SESSION_NOT_FOUND_FORMAT = "Manifest Session '%s' not found";
     static final String MERCURY_SAMPLE_KEY = "Mercury sample key";
+    static final String RESEARCH_PROJECT_NOT_FOUND_FORMAT = "Research Project '%s' not found: ";
+    static final String SAMPLE_IDS_ARE_NOT_FOUND_MESSAGE = "Sample ids are not found: ";
 
     private ManifestSessionDao manifestSessionDao;
 
@@ -55,6 +60,8 @@ public class ManifestSessionEjb {
     private MercurySampleDao mercurySampleDao;
 
     private LabVesselDao labVesselDao;
+
+    private UserBean userBean;
 
     /**
      * For CDI.
@@ -65,11 +72,12 @@ public class ManifestSessionEjb {
 
     @Inject
     public ManifestSessionEjb(ManifestSessionDao manifestSessionDao, ResearchProjectDao researchProjectDao,
-                              MercurySampleDao mercurySampleDao, LabVesselDao labVesselDao) {
+                              MercurySampleDao mercurySampleDao, LabVesselDao labVesselDao, UserBean userBean) {
         this.manifestSessionDao = manifestSessionDao;
         this.researchProjectDao = researchProjectDao;
         this.mercurySampleDao = mercurySampleDao;
         this.labVesselDao = labVesselDao;
+        this.userBean = userBean;
     }
 
     /**
@@ -80,15 +88,18 @@ public class ManifestSessionEjb {
      * @param inputStream        File Input stream that contains the manifest being uploaded
      * @param pathToFile         Full path of the manifest as it was uploaded.  This is used to extract the
      *                           manifest name which will help to identify the accessioning session
-     * @param bspUser            represents the user that is initiating the manifest upload
-     *
+     * @param fromSampleKit
      * @return the newly created manifest session
      */
     public ManifestSession uploadManifest(String researchProjectKey, InputStream inputStream, String pathToFile,
-                                          BspUser bspUser) {
+                                          boolean fromSampleKit) {
 
         ResearchProject researchProject = findResearchProject(researchProjectKey);
-        return uploadManifest(inputStream, pathToFile, bspUser, researchProject);
+        ManifestSession manifestSession = uploadManifest(inputStream, pathToFile, researchProject, fromSampleKit);
+        // Persist here so an ID will be generated for the ManifestSession.  This ID is used for the
+        // ManifestSession's name which is displayed on the UI.
+        manifestSessionDao.persist(manifestSession);
+        return manifestSession;
     }
 
     /**
@@ -98,42 +109,37 @@ public class ManifestSessionEjb {
      * @param inputStream     File Input stream that contains the manifest being uploaded
      * @param pathToFile      Full path of the manifest as it was uploaded.  This is used to extract the
      *                        manifest name which will help to identify the accessioning session
-     * @param bspUser         represents the user that is initiating the manifest upload
      * @param researchProject an existing research project to which the created accessioning session is to be
      *                        associated
      *
+     * @param fromSampleKit
      * @return the newly created manifest session
      */
     @DaoFree
-    private ManifestSession uploadManifest(InputStream inputStream, String pathToFile, BspUser bspUser,
-                                           ResearchProject researchProject) {
+    private ManifestSession uploadManifest(InputStream inputStream, String pathToFile,
+                                           ResearchProject researchProject, boolean fromSampleKit) {
         ManifestImportProcessor manifestImportProcessor = new ManifestImportProcessor();
-
+        List<String> messages;
         try {
-            List<String> messages = manifestImportProcessor.processSingleWorksheet(inputStream);
-
-            if (!messages.isEmpty()) {
-                String messageText = StringUtils.join(messages, ", ");
-                throw new InformaticsServiceException("Error reading manifest file: " + messageText);
-            }
+            messages = manifestImportProcessor.processSingleWorksheet(inputStream);
+        } catch (IOException | InvalidFormatException e) {
+            throw new InformaticsServiceException(e.getMessage(), e);
         } catch (ValidationException e) {
-            throw new InformaticsServiceException(e);
-        } catch (Exception e) {
-            throw new InformaticsServiceException(
-                    String.format(
-                    "Error reading manifest file '%s'.  Manifest files must be in the proper Excel format.",
-                    FilenameUtils.getName(pathToFile)), e);
+            messages = e.getValidationMessages();
         }
+        if (!messages.isEmpty()) {
+            throw new InformaticsServiceException(StringUtils.join(messages, "\n"));
+        }
+
         Collection<ManifestRecord> manifestRecords;
         try {
             manifestRecords = manifestImportProcessor.getManifestRecords();
         } catch (ValidationException e) {
-            throw new InformaticsServiceException(e);
+            throw new InformaticsServiceException(StringUtils.join(e.getValidationMessages(), "\n"));
         }
-        ManifestSession manifestSession = new ManifestSession(researchProject, pathToFile, bspUser);
-        // Persist here so an ID will be generated for the ManifestSession.  This ID is used for the
-        // ManifestSession's name which is displayed on the UI.
-        manifestSessionDao.persist(manifestSession);
+
+        ManifestSession manifestSession = new ManifestSession(researchProject, FilenameUtils.getBaseName(pathToFile),
+                userBean.getBspUser(), fromSampleKit);
         manifestSession.addRecords(manifestRecords);
         manifestSession.validateManifest();
         return manifestSession;
@@ -156,7 +162,7 @@ public class ManifestSessionEjb {
     private ManifestSession findManifestSession(long manifestSessionId) {
         ManifestSession manifestSession = manifestSessionDao.find(manifestSessionId);
         if (manifestSession == null) {
-            throw new InformaticsServiceException(String.format(MANIFEST_SESSION_NOT_FOUND, manifestSessionId));
+            throw new InformaticsServiceException(String.format(MANIFEST_SESSION_NOT_FOUND_FORMAT, manifestSessionId));
         }
         return manifestSession;
     }
@@ -185,24 +191,41 @@ public class ManifestSessionEjb {
 
     /**
      * Scan the sample specified by collaborator barcode for the specified manifest session.
-     *
      * @param manifestSessionId    Database ID of the session
-     * @param collaboratorSampleId sample identifier for a source clinical sample
+     * @param referenceSampleId sample identifier for a source clinical sample
+     * @param barcode 2d vessel barcode.  Expected only if accessioning a sample kit
      */
-    public void accessionScan(long manifestSessionId, String collaboratorSampleId) {
+    public void accessionScan(long manifestSessionId, String referenceSampleId, String barcode) {
         ManifestSession manifestSession = findManifestSession(manifestSessionId);
 
-        manifestSession.accessionScan(collaboratorSampleId);
+        Metadata.Key referenceScanKey =
+                (manifestSession.isFromSampleKit())?Metadata.Key.BROAD_SAMPLE_ID:Metadata.Key.SAMPLE_ID;
+        manifestSession.accessionScan(referenceSampleId, referenceScanKey);
+        if(manifestSession.isFromSampleKit()) {
+            manifestSession.getRecordWithMatchingValueForKey(referenceScanKey, referenceSampleId)
+                    .addMetadata(Metadata.Key.BROAD_2D_BARCODE, barcode);
+        }
     }
 
     /**
      * Close the specified accessioning session.
+     *  @param manifestSessionId Database ID of the session which should be accepted
      *
-     * @param manifestSessionId Database ID of the session which should be accepted
      */
     public void closeSession(long manifestSessionId) {
         ManifestSession manifestSession = findManifestSession(manifestSessionId);
         manifestSession.completeSession();
+
+        if(manifestSession.isFromSampleKit()) {
+            for (ManifestRecord record : manifestSession.getNonQuarantinedRecords()) {
+                if (record.getStatus() == ManifestRecord.Status.ACCESSIONED) {
+
+                    transferSample(manifestSessionId, record.getValueByKey(Metadata.Key.SAMPLE_ID),
+                            record.getValueByKey(Metadata.Key.BROAD_SAMPLE_ID),
+                            record.getValueByKey(Metadata.Key.BROAD_2D_BARCODE));
+                }
+            }
+        }
     }
 
     /**
@@ -215,7 +238,7 @@ public class ManifestSessionEjb {
      */
     public ManifestRecord validateSourceTubeForTransfer(long manifestSessionId, String sourceForTransfer) {
         ManifestSession manifestSession = findManifestSession(manifestSessionId);
-        return manifestSession.findRecordForTransfer(sourceForTransfer);
+        return manifestSession.findRecordForTransferByKey(Metadata.Key.SAMPLE_ID, sourceForTransfer);
     }
 
     /**
@@ -225,26 +248,25 @@ public class ManifestSessionEjb {
      *
      * @return the desired mercury sample if it is both found and eligible
      */
-    public MercurySample validateTargetSample(String targetSampleKey) {
-        Collection<MercurySample> targetSamples = mercurySampleDao.findBySampleKey(targetSampleKey);
+    public MercurySample findAndValidateTargetSample(String targetSampleKey) {
+        MercurySample targetSample = mercurySampleDao.findBySampleKey(targetSampleKey);
 
         // There should be one and only one target sample.
-        if (CollectionUtils.isEmpty(targetSamples)) {
+        if (targetSample == null) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET,
                     MERCURY_SAMPLE_KEY, targetSampleKey, SAMPLE_NOT_FOUND_MESSAGE);
         }
-        if (targetSamples.size() > 1) {
-            throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET,
-                    MERCURY_SAMPLE_KEY, targetSampleKey, SAMPLE_NOT_UNIQUE_MESSAGE);
-        }
-        MercurySample foundTarget = targetSamples.iterator().next();
 
-        if (foundTarget.getMetadataSource() != MercurySample.MetadataSource.MERCURY) {
+        validateTargetSample(targetSample);
+
+        return targetSample;
+    }
+
+    private void validateTargetSample(MercurySample targetSample) {
+        if (targetSample.getMetadataSource() != MercurySample.MetadataSource.MERCURY) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, MERCURY_SAMPLE_KEY,
-                    targetSampleKey, SAMPLE_NOT_ELIGIBLE_FOR_CLINICAL_MESSAGE);
+                    targetSample.getSampleKey(), SAMPLE_NOT_ELIGIBLE_FOR_CLINICAL_MESSAGE);
         }
-
-        return foundTarget;
     }
 
     /**
@@ -256,43 +278,42 @@ public class ManifestSessionEjb {
      *
      * @return the referenced lab vessel if it is both found and eligible
      */
-    public LabVessel validateTargetSampleAndVessel(String targetSampleKey, String targetVesselLabel) {
+    public LabVessel findAndValidateTargetSampleAndVessel(String targetSampleKey, String targetVesselLabel) {
+        MercurySample foundSample = findAndValidateTargetSample(targetSampleKey);
+        LabVessel foundVessel = labVesselDao.findByIdentifier(targetVesselLabel);
+        if (foundVessel == null) {
+            throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
+                    targetVesselLabel, VESSEL_NOT_FOUND_MESSAGE);
+        }
 
-        MercurySample foundSample = validateTargetSample(targetSampleKey);
-        return findAndValidateTargetVessel(targetVesselLabel, foundSample);
+        return validateTargetVessel(foundVessel, foundSample);
     }
 
     /**
      * Helper method to determine target vessel and Sample viability.  Extracts the logic of finding the lab vessel
      * to make this method available for re-use.
      * <p/>
-     * {@link #validateTargetSampleAndVessel(String, String)}
+     * {@link #findAndValidateTargetSampleAndVessel(String, String)}
      *
-     * @param targetVesselLabel The label of the lab vessel that should be associated with the given mercury sample
+     * @param targetLabVessel   The label of the lab vessel that  should be associated with the given mercury sample
      * @param foundSample       The target mercury sample for the tube transfer
      *
      * @return the referenced lab vessel if it is both found and eligible
      */
-    private LabVessel findAndValidateTargetVessel(String targetVesselLabel, MercurySample foundSample) {
-        LabVessel foundVessel = labVesselDao.findByIdentifier(targetVesselLabel);
-
-        if (foundVessel == null) {
+    private LabVessel validateTargetVessel(LabVessel targetLabVessel, MercurySample foundSample) {
+        if (targetLabVessel.doesChainOfCustodyInclude(LabEventType.COLLABORATOR_TRANSFER)) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
-                    targetVesselLabel, VESSEL_NOT_FOUND_MESSAGE);
-        }
-        if (foundVessel.doesChainOfCustodyInclude(LabEventType.COLLABORATOR_TRANSFER)) {
-            throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
-                    targetVesselLabel, VESSEL_USED_FOR_PREVIOUS_TRANSFER);
+                    targetLabVessel.getLabel(), VESSEL_USED_FOR_PREVIOUS_TRANSFER);
         }
         // Since upload happens just after Initial Tare, there should not be any other transfers.  For that reason,
         // searching through the MercurySamples on the vessels instead of getSampleInstancesV2 should be sufficient.
-        for (MercurySample mercurySample : foundVessel.getMercurySamples()) {
+        for (MercurySample mercurySample : targetLabVessel.getMercurySamples()) {
             if (mercurySample.equals(foundSample)) {
-                return foundVessel;
+                return targetLabVessel;
             }
         }
         throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
-                targetVesselLabel, " " + UNASSOCIATED_TUBE_SAMPLE_MESSAGE);
+                targetLabVessel.getLabel(), " " + UNASSOCIATED_TUBE_SAMPLE_MESSAGE);
     }
 
     /**
@@ -303,14 +324,68 @@ public class ManifestSessionEjb {
      * @param sourceCollaboratorSample sample identifier for a source clinical sample
      * @param sampleKey                The sample Key for the target mercury sample for the tube transfer
      * @param vesselLabel              The label of the lab vessel that should be associated with the given mercury sample
-     * @param user                     represents the user that is initiating the manifest upload
      */
     public void transferSample(long manifestSessionId, String sourceCollaboratorSample, String sampleKey,
-                               String vesselLabel, BspUser user) {
+                               String vesselLabel) {
         ManifestSession session = findManifestSession(manifestSessionId);
-        MercurySample targetSample = validateTargetSample(sampleKey);
+        MercurySample targetSample = findAndValidateTargetSample(sampleKey);
 
-        LabVessel targetVessel = findAndValidateTargetVessel(vesselLabel, targetSample);
-        session.performTransfer(sourceCollaboratorSample, targetSample, targetVessel, user);
+        LabVessel targetVessel = findAndValidateTargetSampleAndVessel(sampleKey, vesselLabel);
+        session.performTransfer(sourceCollaboratorSample, targetSample, targetVessel, userBean.getBspUser());
+    }
+
+    /**
+     * Creates a new manifest session for the given research project.
+     *
+     * @param researchProjectKey    the business key of the research project for these samples
+     * @param sessionName           the name to give the manifest session
+     * @param fromSampleKit         whether or not the samples are in tubes from a Broad sample kit
+     * @param samples               Collection of samples to add to the manifest.
+     * @return the newly created (and persisted) ManifestSession
+     */
+    public ManifestSession createManifestSession(String researchProjectKey, String sessionName,
+                                                 boolean fromSampleKit, Collection<Sample> samples) {
+        ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
+        if (researchProject == null) {
+            throw new IllegalArgumentException(String.format(RESEARCH_PROJECT_NOT_FOUND_FORMAT, researchProjectKey));
+        }
+        try {
+            validateSamplesAreAvailableForAccessioning(samples);
+            Collection<ManifestRecord> manifestRecords = ClinicalSampleFactory.toManifestRecords(samples);
+            ManifestSession manifestSession =
+                    new ManifestSession(researchProject, sessionName, userBean.getBspUser(), fromSampleKit,
+                            manifestRecords);
+            return manifestSession;
+        } catch (RuntimeException e) {
+            throw new InformaticsServiceException(e);
+        }
+    }
+
+    /**
+     * Validate that the collection of samples are available for accessioning.
+     */
+    private void validateSamplesAreAvailableForAccessioning(Collection<Sample> samples) {
+        List<String> sampleIds=new ArrayList<>(samples.size());
+        for (Sample sample : samples) {
+            Metadata.Key metadataKey = Metadata.Key.BROAD_SAMPLE_ID;
+            sampleIds.add(metadataKey.getValueFor(sample));
+        }
+
+        Map<String, MercurySample> mercurySampleMap = mercurySampleDao.findMapIdToMercurySample(sampleIds);
+
+        if(!mercurySampleMap.keySet().containsAll(sampleIds)) {
+
+            List<String> missingSampleIds = new ArrayList<>(sampleIds);
+            missingSampleIds.removeAll(mercurySampleMap.keySet());
+
+            throw new InformaticsServiceException(SAMPLE_IDS_ARE_NOT_FOUND_MESSAGE +
+                                                  StringUtils.join(missingSampleIds, ", "));
+        }
+        for (MercurySample mercurySample : mercurySampleMap.values()) {
+            validateTargetSample(mercurySample);
+            for (LabVessel labVessel : mercurySample.getLabVessel()) {
+                validateTargetVessel(labVessel, mercurySample);
+            }
+        }
     }
 }

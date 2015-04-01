@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-2.0.xsd">
+
+    <changeSet id="GPLIM-3098-2" author="epolk">
+
+        <createIndex tableName="BILLING_REQUIREMENT_AUD" indexName="IX_BILLING_REQUIREMENT_AUD">
+            <column name="BILLING_REQUIREMENT_ID"/>
+        </createIndex>
+        <createIndex tableName="BILLING_SESSION_AUD" indexName="IX_BILLING_SESSION_AUD">
+            <column name="BILLING_SESSION_ID"/>
+        </createIndex>
+        <createIndex tableName="MESSAGE_DATA_VALUE_AUD" indexName="IX_MESSAGE_DATA_VALUE_AUD">
+            <column name="MESSAGE_DATA_VALUE_ID"/>
+        </createIndex>
+
+        <dropPrimaryKey tableName="PDO_KIT_DTL_POST_REC_OPT_AUD"/>
+        <addPrimaryKey constraintName="PK_PDO_KIT_POST_REC_OPT_AUD" tableName="PDO_KIT_DTL_POST_REC_OPT_AUD"
+                       schemaName="athena" columnNames="REV, PRODUCT_ORDER_KIT_DETAIL_ID, POST_RECEIVE_OPTIONS"/>
+
+        <createIndex tableName="PDO_KIT_DTL_POST_REC_OPT_AUD" indexName="IX_PDO_KIT_POST_REC_OPT_AUD">
+            <column name="PRODUCT_ORDER_KIT_DETAIL_ID"/>
+        </createIndex>
+
+        <dropPrimaryKey tableName="PDO_REGULATORY_INFOS_AUD"/>
+        <addPrimaryKey  constraintName="PK_PDO_REGULATORY_INFOS_AUD" tableName="PDO_REGULATORY_INFOS_AUD"
+                        schemaName="athena" columnNames="REV, PRODUCT_ORDER, REGULATORY_INFOS"/>
+
+        <createIndex tableName="PDO_REGULATORY_INFOS_AUD" indexName="IX_PDO_REG_INFOS_AUD">
+            <column name="PRODUCT_ORDER"/>
+            <column name="REGULATORY_INFOS"/>
+        </createIndex>
+        <createIndex tableName="PRICE_ITEM_AUD" indexName="IX_PRICE_ITEM_AUD">
+            <column name="PRICE_ITEM_ID"/>
+        </createIndex>
+        <createIndex tableName="PO_SAMPLE_RISK_JOIN_AUD" indexName="IX_POS_POS_RISK_JOIN_AUD">
+            <column name="PRODUCT_ORDER_SAMPLE"/>
+        </createIndex>
+        <createIndex tableName="PRODUCT_ADD_ONS_AUD" indexName="IX_PRODUCT_ADD_ONS_AUD">
+            <column name="PRODUCT"/>
+            <column name="ADD_ONS"/>
+        </createIndex>
+        <createIndex tableName="PRODUCT_AUD" indexName="IX_PRODUCT_AUD">
+            <column name="PRODUCT_ID"/>
+        </createIndex>
+        <createIndex tableName="PRODUCT_FAMILY_AUD" indexName="IX_PRODUCT_FAMILY_AUD">
+            <column name="PRODUCT_FAMILY_ID"/>
+        </createIndex>
+        <createIndex tableName="PRODUCT_ORDER_ADD_ON_AUD" indexName="IX_PRODUCT_ORDER_ADD_ON_AUD">
+            <column name="PRODUCT_ORDER_ADD_ON_ID"/>
+        </createIndex>
+        <createIndex tableName="PRODUCT_ORDER_AUD" indexName="IX_PRODUCT_ORDER_AUD">
+            <column name="PRODUCT_ORDER_ID"/>
+        </createIndex>
+
+        <dropPrimaryKey tableName="PRODUCT_ORDER_KIT_AUD"/>
+        <addPrimaryKey constraintName="PK_PRODUCT_ORDER_KIT_AUD" tableName="PRODUCT_ORDER_KIT_AUD"
+                       schemaName="athena" columnNames="REV, PRODUCT_ORDER_KIT_ID"/>
+
+        <createIndex tableName="PRODUCT_ORDER_KIT_AUD" indexName="IX_PRODUCT_ORDER_KIT_AUD">
+            <column name="PRODUCT_ORDER_KIT_ID"/>
+        </createIndex>
+
+        <dropPrimaryKey tableName="PRODUCT_ORDER_KIT_DETAIL_AUD"/>
+        <addPrimaryKey constraintName="PK_PROD_ORDER_KIT_DETAIL_AUD" tableName="PRODUCT_ORDER_KIT_DETAIL_AUD"
+                       schemaName="athena" columnNames="REV, PRODUCT_ORDER_KIT_DETAIL_ID"/>
+
+        <createIndex tableName="PRODUCT_ORDER_KIT_DETAIL_AUD" indexName="IX_PROD_ORDER_KIT_DETAIL_AUD">
+            <column name="PRODUCT_ORDER_KIT_DETAIL_ID"/>
+        </createIndex>
+
+        <dropPrimaryKey tableName="PRODUCT_ORDER_KIT_PERSON_AUD"/>
+        <addPrimaryKey constraintName="PK_PROD_ORDER_KIT_PERSON_AUD" tableName="PRODUCT_ORDER_KIT_PERSON_AUD"
+                       schemaName="athena" columnNames="REV, PRODUCT_ORDER_KIT_PERSON_ID"/>
+
+        <createIndex tableName="PRODUCT_ORDER_KIT_PERSON_AUD" indexName="IX_PROD_ORDER_KIT_PERSON_AUD">
+            <column name="PRODUCT_ORDER_KIT_PERSON_ID"/>
+        </createIndex>
+        <createIndex tableName="PRODUCT_ORDER_SAMPLE_AUD" indexName="IX_PRODUCT_ORDER_SAMPLE_AUD">
+            <column name="PRODUCT_ORDER_SAMPLE_ID"/>
+        </createIndex>
+        <createIndex tableName="PRODUCT_ORDER_SAMPLE_JOIN_AUD" indexName="IX_PDO_PDO_SAMPLE_JOIN_AUD">
+            <column name="PRODUCT_ORDER"/>
+        </createIndex>
+        <createIndex tableName="PRODUCT_ORDER_SAMPLE_JOIN_AUD" indexName="IX_PDOS_PDO_SAMPLE_JOIN_AUD">
+            <column name="PRODUCT_ORDER_SAMPLE_ID"/>
+            <column name="SAMPLE_POSITION"/>
+        </createIndex>
+        <createIndex tableName="PRODUCT_REQUIREMENT_JOIN_AUD" indexName="IX_PROD_REQUIREMENT_JOIN_AUD">
+            <column name="PRODUCT"/>
+            <column name="BILLING_REQUIREMENT_ID"/>
+        </createIndex>
+        <createIndex tableName="PRODUCT_RISK_CRITERIA_JOIN_AUD" indexName="IX_PRD_PRD_RSK_CRT_JOIN_AUD">
+            <column name="PRODUCT"/>
+        </createIndex>
+        <createIndex tableName="PRODUCT_RISK_CRITERIA_JOIN_AUD" indexName="IX_RSK_PRD_RSK_CRT_JOIN_AUD">
+            <column name="RISK_CRITERIA_ID"/>
+        </createIndex>
+        <createIndex tableName="PROJECT_PERSON_AUD" indexName="IX_PROJECT_PERSON_AUD">
+            <column name="PROJECT_PERSON_ID"/>
+        </createIndex>
+
+        <dropPrimaryKey tableName="REGULATORY_INFO_AUD"/>
+        <addPrimaryKey constraintName="PK_REGULATORY_INFO_AUD" tableName="REGULATORY_INFO_AUD"
+                       schemaName="athena" columnNames="REV, REGULATORY_INFO_ID"/>
+
+        <createIndex tableName="REGULATORY_INFO_AUD" indexName="IX_REGULATORY_INFO_AUD">
+            <column name="REGULATORY_INFO_ID"/>
+        </createIndex>
+        <createIndex tableName="RESEARCH_PROJECT_AUD" indexName="IX_RESEARCH_PROJECT_AUD">
+            <column name="RESEARCH_PROJECT_ID"/>
+        </createIndex>
+        <createIndex tableName="RESEARCH_PROJECT_COHORT_AUD" indexName="IX_RESEARCH_PROJ_COHORT_AUD">
+            <column name="RESEARCH_PROJECT_COHORT_ID"/>
+        </createIndex>
+        <createIndex tableName="RESEARCH_PROJECT_FUNDING_AUD" indexName="IX_RESEARCH_PROJ_FUNDING_AUD">
+            <column name="RESEARCH_PROJECT_FUNDING_ID"/>
+        </createIndex>
+        <createIndex tableName="RESEARCH_PROJECTIRB_AUD" indexName="IX_RESEARCH_PROJ_IRB_AUD">
+            <column name="RESEARCH_PROJECTIRBID"/>
+        </createIndex>
+        <createIndex tableName="RISK_CRITERIA_AUD" indexName="IX_RISK_CRITERIA_AUD">
+            <column name="RISK_CRITERIA_ID"/>
+        </createIndex>
+        <createIndex tableName="RISK_ITEM_AUD" indexName="IX_RISK_ITEM_AUD">
+            <column name="RISK_ITEM_ID"/>
+        </createIndex>
+
+        <dropPrimaryKey tableName="RP_REGULATORY_INFOS_AUD"/>
+        <addPrimaryKey constraintName="PK_RP_REGULATORY_INFOS_AUD" tableName="RP_REGULATORY_INFOS_AUD"
+                       schemaName="athena" columnNames="REV, RESEARCH_PROJECT, REGULATORY_INFOS"/>
+
+        <createIndex tableName="RP_REGULATORY_INFOS_AUD" indexName="IX_RP_REGULATORY_INFOS_AUD">
+            <column name="RESEARCH_PROJECT"/>
+            <column name="REGULATORY_INFOS"/>
+        </createIndex>
+
+        <dropPrimaryKey tableName="SAMPLE_RECEIPT_VALIDATION_AUD"/>
+        <addPrimaryKey constraintName="PK_SAMPLE_RCPT_VALIDATION_AUD" tableName="SAMPLE_RECEIPT_VALIDATION_AUD"
+                       schemaName="athena" columnNames="REV, VALIDATION_ID"/>
+
+        <dropPrimaryKey tableName="SUBMISSION_TRACKER_AUD"/>
+        <addPrimaryKey constraintName="PK_SUBMISSION_TRACKER_AUD" tableName="SUBMISSION_TRACKER_AUD"
+                       schemaName="athena" columnNames="REV, SUBMISSION_TRACKER_ID"/>
+
+        <dropPrimaryKey tableName="WORK_COMPLETE_MESSAGE_AUD"/>
+        <addPrimaryKey tableName="WORK_COMPLETE_MESSAGE_AUD" constraintName="PK_WORK_COMPLETE_MESSAGE_AUD"
+                       schemaName="athena" columnNames="REV,WORK_COMPLETE_MESSAGE_ID"/>
+
+        <createIndex tableName="WORK_COMPLETE_MESSAGE_AUD" indexName="IX_WORK_COMPLETE_MESSAGE_AUD">
+            <column name="WORK_COMPLETE_MESSAGE_ID"/>
+        </createIndex>
+        <createIndex tableName="WORK_COMPLETE_MESSAGE_JOIN_AUD" indexName="IX_WRK_WRK_COMP_MSG_JOIN_AUD">
+            <column name="WORK_COMPLETE_MESSAGE"/>
+        </createIndex>
+        <createIndex tableName="WORK_COMPLETE_MESSAGE_JOIN_AUD" indexName="IX_MSG_WRK_COMP_MSG_JOIN_AUD">
+            <column name="MESSAGE_DATA_VALUE_ID"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet author="pshapiro" id="PORTAL-238-1">
+        <sql>
+            ALTER TABLE athena.product_order
+            drop CONSTRAINT check_order_status
+        </sql>
+        <sql>
+            ALTER TABLE athena.product_order
+            add CONSTRAINT check_order_status
+            CHECK (order_status IN ('Draft', 'Pending', 'Submitted', 'Abandoned', 'Completed'));
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

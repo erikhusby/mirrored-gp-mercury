@@ -6,6 +6,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -37,8 +38,10 @@ public class SampleInstanceV2 {
     private List<ProductOrderSample> allProductOrderSamples = new ArrayList<>();
     private List<LabBatchStartingVessel> allLabBatchStartingVessels = new ArrayList<>();
     private LabVessel labVessel;
+    private LabVessel initialLabVessel;
     private boolean examinedContainers;
     private MolecularIndexingScheme molecularIndexingScheme;
+    private LabVessel firstPcrVessel;
 
     /**
      * For a reagent-only sample instance.
@@ -50,6 +53,7 @@ public class SampleInstanceV2 {
      * Constructs a sample instance from a LabVessel.
      */
     public SampleInstanceV2(LabVessel labVessel) {
+        this.initialLabVessel = labVessel;
         this.labVessel = labVessel;
         rootMercurySamples.addAll(labVessel.getMercurySamples());
         mercurySamples.addAll(labVessel.getMercurySamples());
@@ -78,6 +82,8 @@ public class SampleInstanceV2 {
         allProductOrderSamples.addAll(other.allProductOrderSamples);
         allLabBatchStartingVessels.addAll(other.allLabBatchStartingVessels);
         molecularIndexingScheme = other.molecularIndexingScheme;
+        initialLabVessel = other.initialLabVessel;
+        firstPcrVessel = other.firstPcrVessel;
     }
 
     /**
@@ -153,6 +159,13 @@ public class SampleInstanceV2 {
     }
 
     /**
+     * Returns the vessel associated with this sample instance.
+     */
+    public LabVessel getInitialLabVessel() {
+        return initialLabVessel;
+    }
+
+    /**
      * Returns the nearest batch of the given type.
      */
     public LabBatchStartingVessel getSingleBatchVessel(LabBatch.LabBatchType labBatchType) {
@@ -186,33 +199,22 @@ public class SampleInstanceV2 {
     }
 
     /**
-     * Primarily for controls, which don't have BucketEntries.  Returns the nearest bucketed batch, based on LCSET
-     * calculated for each transfer.
+     * For each container this sample instance is in, looks at the other tubes in the container and if they all
+     * share one LCSET, returns it.  Returns null if no container can yield a single common LCSET (i.e. it has
+     * none or mulitple LCSETs).  Primarily for controls, which don't have BucketEntries.
      */
     public LabBatch getSingleInferredBucketedBatch() {
         if (singleInferredBucketedBatch == null && !examinedContainers) {
+            examinedContainers = true;
             if (labVessel != null) {
-                // look at other tubes in same container(s).  If they're all of same LCSET, use it.
-                Set<LabBatch> containedLabBatches = new HashSet<>();
                 for (VesselContainer<?> vesselContainer : labVessel.getContainers()) {
-                    for (LabVessel containedVessel : vesselContainer.getContainedVessels()) {
-                        if (!containedVessel.equals(labVessel)) {
-                            Set<SampleInstanceV2> sampleInstances = containedVessel.getSampleInstancesV2();
-                            if (sampleInstances.size() == 1) {
-                                BucketEntry containedSingleBucketEntry =
-                                        sampleInstances.iterator().next().getSingleBucketEntry();
-                                if (containedSingleBucketEntry != null) {
-                                    containedLabBatches.add(containedSingleBucketEntry.getLabBatch());
-                                }
-                            }
-                        }
+                    LabBatch singleBatch = vesselContainer.getSingleBatch();
+                    if (singleBatch != null) {
+                        singleInferredBucketedBatch = singleBatch;
+                        break;
                     }
                 }
-                if (containedLabBatches.size() == 1) {
-                    singleInferredBucketedBatch = containedLabBatches.iterator().next();
-                }
             }
-            examinedContainers = true;
         }
         return singleInferredBucketedBatch;
     }
@@ -262,9 +264,15 @@ public class SampleInstanceV2 {
         if (singleBucketEntry != null && singleBucketEntry.getLabBatch() != null) {
             return singleBucketEntry.getLabBatch().getWorkflowName();
         }
-        LabBatch singleInferredBucketedBatchLocal = getSingleInferredBucketedBatch();
-        if (singleInferredBucketedBatchLocal != null && singleInferredBucketedBatchLocal.getWorkflowName() != null) {
-            return singleInferredBucketedBatchLocal.getWorkflowName();
+        Set<String> workflowNames = new HashSet<>();
+        for (BucketEntry bucketEntry : getAllBucketEntries()) {
+            LabBatch batch = bucketEntry.getLabBatch();
+            if (batch != null && batch.getWorkflowName() != null) {
+                workflowNames.add(batch.getWorkflowName());
+            }
+        }
+        if (workflowNames.size() == 1) {
+            return workflowNames.iterator().next();
         }
 /*
 todo jmt not sure if this applies.
@@ -331,7 +339,12 @@ todo jmt not sure if this applies.
     /**
      * Applies a LabEvent, specifically computed LCSets.
      */
-    public void applyEvent(LabEvent labEvent) {
+    public void applyEvent(LabEvent labEvent, LabVessel labVessel) {
+        if (labEvent.getLabEventType().getPipelineTransformation() == LabEventType.PipelineTransformation.PCR) {
+            if (firstPcrVessel == null && labVessel != null) {
+                firstPcrVessel = labVessel;
+            }
+        }
         Set<LabBatch> computedLcsets = labEvent.getComputedLcSets();
         // A single computed LCSET can help resolve ambiguity of multiple bucket entries.
         if (computedLcsets.size() == 1) {
@@ -360,6 +373,10 @@ todo jmt not sure if this applies.
 
     public Set<MercurySample> getRootMercurySamples() {
         return rootMercurySamples;
+    }
+
+    public LabVessel getFirstPcrVessel() {
+        return firstPcrVessel;
     }
 
     /**

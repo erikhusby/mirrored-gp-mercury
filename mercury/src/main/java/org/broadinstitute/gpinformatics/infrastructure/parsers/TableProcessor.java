@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.parsers;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.jvnet.inflector.Noun;
 
 import javax.annotation.Nonnull;
 import java.io.Serializable;
@@ -21,12 +22,7 @@ public abstract class TableProcessor implements Serializable {
 
     /**
      * If a TableProcessor is constructed with IgnoreTrailingBlankLines.YES, it will silently ignore trailing rows of
-     * all-blank cells.  Otherwise rows of all-blank cells are sent to the TableProcessor implementation as if they
-     * were ordinary data rows.  If a TableProcessor is configured with IgnoreTrailingBlankLines.YES and non-trailing
-     * blank lines are seen, the row numbers of these lines will be passed to
-     * {@code generateErrorsForNonTrailingBlankLines}.
-     *
-     * @see #generateErrorsForNonTrailingBlankLines(java.util.Collection)
+     * all-blank cells.
      */
     public enum IgnoreTrailingBlankLines {
         YES,
@@ -34,9 +30,7 @@ public abstract class TableProcessor implements Serializable {
     }
 
     private static final long serialVersionUID = 8122298462727182883L;
-    public static final String REQUIRED_VALUE_IS_MISSING = "Required value for %s is missing";
-
-    public static final String NON_TRAILING_BLANK_LINE = "Non-trailing blank line seen";
+    public static final String REQUIRED_VALUE_IS_MISSING = "Required value for %s is missing.";
 
     private final List<String> validationMessages = new ArrayList<>();
 
@@ -118,17 +112,29 @@ public abstract class TableProcessor implements Serializable {
      */
     public abstract void processRowDetails(Map<String, String> dataRow, int dataRowIndex);
 
-    public final boolean validateHeaders(List<String> headers) {
+    public final boolean validateColumnHeaders(List<String> headers) {
+
         // If any of the required headers are NOT in the header list, then return false.
+        List<String> missingHeaders = new ArrayList<>();
         for (ColumnHeader header : getColumnHeaders()) {
             if (header.isRequiredHeader() && !headers.contains(header.getText())) {
-                validationMessages.add("Required header: " + header.getText() + " is missing");
-                return false;
+                missingHeaders.add(header.getText());
             }
         }
-
-        return true;
+        if (!missingHeaders.isEmpty()) {
+            validationMessages.add(
+                    String.format("Required %s missing: %s.", Noun.pluralOf("header", missingHeaders.size()),
+                            StringUtils.join(missingHeaders, ", ")));
+        }
+        validateHeaderRow(headers);
+        return validationMessages.isEmpty();
     }
+
+    /**
+     * If Processor specific header validation is required, override this method and perform it there.
+     */
+    @SuppressWarnings("unused")
+    public void validateHeaderRow(List<String> headers) { }
 
     /**
      * This method makes sure that all values in the row that are deemed 'required' have values. This means that
@@ -199,7 +205,7 @@ public abstract class TableProcessor implements Serializable {
         return columnHeader != null && columnHeader.isStringColumn();
     }
 
-    private ColumnHeader findColumnHeaderByName(String headerName) {
+    protected ColumnHeader findColumnHeaderByName(String headerName) {
         for (ColumnHeader columnHeader : getColumnHeaders()) {
             if (headerName.equals(columnHeader.getText())) {
                 return columnHeader;
@@ -219,13 +225,7 @@ public abstract class TableProcessor implements Serializable {
      */
     public void validateNumberOfWorksheets(int actualNumberOfSheets) throws ValidationException {    }
 
-    public boolean ignoreTrailingBlankLines() {
+    public boolean shouldIgnoreTrailingBlankLines() {
         return ignoreTrailingBlankLines == IgnoreTrailingBlankLines.YES;
-    }
-
-    public void generateErrorsForNonTrailingBlankLines(Collection<Integer> nonTrailingBlankLineIndexes) {
-        for (Integer nonTrailingBlankLineIndex : nonTrailingBlankLineIndexes) {
-            addDataMessage(NON_TRAILING_BLANK_LINE, nonTrailingBlankLineIndex);
-        }
     }
 }

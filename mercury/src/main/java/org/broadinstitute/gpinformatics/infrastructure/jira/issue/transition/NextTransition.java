@@ -1,9 +1,11 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition;
 
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+
 /**
-* @author Scott Matthews
-*         Date: 10/11/12
-*         Time: 9:31 AM
+* represents information of the next status that a Jira ticket can transition to.
 */
 public class NextTransition {
     private String self;

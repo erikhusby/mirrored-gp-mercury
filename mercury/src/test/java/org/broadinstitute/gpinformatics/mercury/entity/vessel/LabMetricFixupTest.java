@@ -3,15 +3,19 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricRunDao;
+import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.logging.Logger;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -23,6 +27,9 @@ public class LabMetricFixupTest extends Arquillian {
 
     @Inject
     private LabMetricRunDao dao;
+
+    @Inject
+    private UserBean userBean;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -68,5 +75,33 @@ public class LabMetricFixupTest extends Arquillian {
                 labMetric.setCreatedDate(createdDate);
             }
         }
+    }
+
+    @Test(enabled = false)
+    public void gplim3119FixupQuant() {
+        userBean.loginOSUser();
+        LabMetric labMetric = dao.findById(LabMetric.class, 67522L);
+        Assert.assertTrue(labMetric != null &&
+                          labMetric.getName() == LabMetric.MetricType.ECO_QPCR &&
+                          labMetric.getValue().compareTo(new BigDecimal("3.69")) == 0);
+        labMetric.setValue(new BigDecimal("25.93380293"));
+        Logger.getLogger(this.getClass().getName()).info("updated metric=" + labMetric.getLabMetricId() +
+                                                         " value=" + labMetric.getValue());
+        dao.flush();
+    }
+
+    @Test(enabled = false)
+    public void gplim3233ChangeInitialToPond() {
+        userBean.loginOSUser();
+        LabMetricRun labMetricRun = dao.findById(LabMetricRun.class, 1072L);
+        Assert.assertEquals(labMetricRun.getRunName(), "LCSET-6493_Pond Pico_11262014_");
+        System.out.println("Updating run " + labMetricRun.getRunName());
+        labMetricRun.setMetricType(LabMetric.MetricType.POND_PICO);
+        for (LabMetric labMetric : labMetricRun.getLabMetrics()) {
+            System.out.println("Updating metric " + labMetric.getLabMetricId());
+            labMetric.setMetricType(LabMetric.MetricType.POND_PICO);
+        }
+        dao.persist(new FixupCommentary("GPLIM-3233, LCSET-6493, change Initial Pico to Pond Pico"));
+        dao.flush();
     }
 }

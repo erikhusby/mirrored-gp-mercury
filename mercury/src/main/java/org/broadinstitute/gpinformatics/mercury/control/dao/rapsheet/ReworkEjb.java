@@ -459,12 +459,6 @@ public class ReworkEjb {
             throw new ValidationException(error);
         }
 
-        if (reworkItem && !candidateVessel.hasAncestorBeenInBucket(bucketDef.getName())) {
-            validationMessages.add("You have submitted a vessel to the bucket that may not be considered a rework.  " +
-                                   "No ancestor of " + candidateVessel.getLabel() + " has ever been in been in the " +
-                                   bucketDef.getName() + " before.");
-        }
-
         if (!bucketDef.meetsBucketCriteria(candidateVessel)) {
             validationMessages.add("You have submitted a vessel to the bucket that contains at least one sample that " +
                                    "is not DNA");

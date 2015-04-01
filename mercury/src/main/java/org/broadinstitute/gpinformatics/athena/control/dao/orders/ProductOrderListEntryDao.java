@@ -35,7 +35,13 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.persistence.criteria.SetJoin;
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @RequestScoped
 @Stateful
@@ -60,7 +66,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
             @Nullable String jiraTicketKey,
             @Nullable Long productFamilyId,
             @Nullable List<String> productBusinessKeys,
-            @Nullable List<ProductOrder.OrderStatus> orderStatuses,
+            @Nullable Set<ProductOrder.OrderStatus> orderStatuses,
             @Nullable DateRangeSelector placedDate,
             @Nullable List<Long> ownerIds) {
 
@@ -84,9 +90,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                         productOrderRoot.get(ProductOrder_.title),
                         productOrderRoot.get(ProductOrder_.jiraTicketKey),
                         productOrderRoot.get(ProductOrder_.orderStatus),
-                        productOrderProductJoin.get(Product_.productName),
                         productOrderProductJoin,
-                        productProductFamilyJoin.get(ProductFamily_.name),
                         productOrderResearchProjectJoin.get(ResearchProject_.title),
                         productOrderRoot.get(ProductOrder_.createdBy),
                         productOrderRoot.get(ProductOrder_.placedDate),
@@ -105,14 +109,13 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
         }
 
         if (!CollectionUtils.isEmpty(productBusinessKeys)) {
-            listOfAndTerms
-                    .add(createOrTerms(cb, productOrderProductJoin.get(Product_.partNumber), productBusinessKeys));
+            listOfAndTerms.add(productOrderProductJoin.get(Product_.partNumber).in(productBusinessKeys));
         }
 
         listOfAndTerms.add(createStatusTerms(cb, placedDate, orderStatuses, productOrderRoot));
 
         if (!CollectionUtils.isEmpty(ownerIds)) {
-            listOfAndTerms.add(createOrTerms(cb, productOrderRoot.get(ProductOrder_.createdBy), ownerIds));
+            listOfAndTerms.add(productOrderRoot.get(ProductOrder_.createdBy).in(ownerIds));
         }
 
         if (!CollectionUtils.isEmpty(listOfAndTerms)) {
@@ -122,8 +125,15 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
         return getEntityManager().createQuery(cq).getResultList();
     }
 
+
+    // PDOs with these statuses don't have a Placed Date, and will always be excluded from date range searches.
+    private static final Set<ProductOrder.OrderStatus> NO_DATE_STATUSES =
+            EnumSet.of(ProductOrder.OrderStatus.Draft, ProductOrder.OrderStatus.Pending);
+
+
     /**
-     * To get draft to work, we must run the statuses with the dates as an AND query and then OR in all drafts.
+     * To get draft to work, we must run the statuses with the dates as an AND query and then OR in all draft
+     * and pending orders.
      *
      * @param cb The criteria builder object.
      * @param placedDate The data placed range object.
@@ -134,51 +144,57 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
      */
     private Predicate createStatusTerms(
         CriteriaBuilder cb, DateRangeSelector placedDate,
-        List<ProductOrder.OrderStatus> orderStatuses, Root<ProductOrder> productOrderRoot) {
+        Set<ProductOrder.OrderStatus> orderStatuses, Root<ProductOrder> productOrderRoot) {
 
         // If there are no order statuses, add them all so that the inner query on data/draft will work.
-        List<ProductOrder.OrderStatus> fixedOrderStatuses = orderStatuses;
+        Set<ProductOrder.OrderStatus> fixedOrderStatuses = orderStatuses;
         if (CollectionUtils.isEmpty(fixedOrderStatuses)) {
-            fixedOrderStatuses = Arrays.asList(ProductOrder.OrderStatus.values());
+            fixedOrderStatuses = EnumSet.allOf(ProductOrder.OrderStatus.class);
         }
 
         // create the and terms for the status and the dates
         List<Predicate> listOfAndTerms = new ArrayList<>();
 
-        // No matter what and the order statuses with the date rage
-        listOfAndTerms.add(createOrTerms(cb, productOrderRoot.get(ProductOrder_.orderStatus), fixedOrderStatuses));
+        Collection<ProductOrder.OrderStatus> filteredStatuses =
+                CollectionUtils.removeAll(fixedOrderStatuses, NO_DATE_STATUSES);
 
-        // If there is a placed date range and the range has at least a start or end date, then add a date range.
-        if ((placedDate != null) && ((placedDate.getStart() != null) || (placedDate.getEnd() != null))) {
-            if (placedDate.getStart() == null) {
-                listOfAndTerms
-                        .add(cb.lessThan(productOrderRoot.get(ProductOrder_.placedDate), placedDate.getEndTime()));
-            } else if (placedDate.getEnd() == null) {
-                listOfAndTerms
-                        .add(cb.greaterThan(productOrderRoot.get(ProductOrder_.placedDate), placedDate.getStartTime()));
-            } else {
-                listOfAndTerms.add(
-                        cb.between(productOrderRoot.get(
-                                ProductOrder_.placedDate), placedDate.getStartTime(), placedDate.getEndTime()));
+        Predicate statusAndDate;
+
+        if (!filteredStatuses.isEmpty()) {
+            // Match for the statuses that support date ranges.
+            listOfAndTerms.add(productOrderRoot.get(ProductOrder_.orderStatus).in(filteredStatuses));
+
+            // If there is a placed date range and the range has at least a start or end date, then add a date range.
+            if ((placedDate != null) && ((placedDate.getStart() != null) || (placedDate.getEnd() != null))) {
+                if (placedDate.getStart() == null) {
+                    listOfAndTerms
+                            .add(cb.lessThan(productOrderRoot.get(ProductOrder_.placedDate), placedDate.getEndTime()));
+                } else if (placedDate.getEnd() == null) {
+                    listOfAndTerms.add(
+                            cb.greaterThan(productOrderRoot.get(ProductOrder_.placedDate), placedDate.getStartTime()));
+                } else {
+                    listOfAndTerms
+                            .add(cb.between(productOrderRoot.get(ProductOrder_.placedDate), placedDate.getStartTime(),
+                                    placedDate.getEndTime()));
+                }
             }
+            // AND the order statuses with the date ranges.
+            statusAndDate = cb.and(listOfAndTerms.toArray(new Predicate[listOfAndTerms.size()]));
+        } else {
+            // Create an expression for FALSE.
+            statusAndDate = cb.or();
         }
 
-        Predicate statusAndDate = cb.and(listOfAndTerms.toArray(new Predicate[listOfAndTerms.size()]));
-
-        // return the status and date, if not looking for Drafts
-        if (!fixedOrderStatuses.contains(ProductOrder.OrderStatus.Draft)) {
-            return statusAndDate;
+        // If there were any non-date range statuses, handle them here.
+        Collection<ProductOrder.OrderStatus> remainingStatuses =
+                CollectionUtils.retainAll(fixedOrderStatuses, NO_DATE_STATUSES);
+        if (!remainingStatuses.isEmpty()) {
+            // Now add the orders by doing an in query with the statuses.
+            statusAndDate = cb.or(statusAndDate, productOrderRoot.get(ProductOrder_.orderStatus).in(remainingStatuses));
         }
 
-        // Now add all the drafts by doing an OR query with just drafts
-        return cb.or(
-                statusAndDate,
-                cb.equal(productOrderRoot.get(ProductOrder_.orderStatus), ProductOrder.OrderStatus.Draft));
+        return statusAndDate;
     }
-
-    private static final Set<ProductOrder.LedgerStatus> FETCH_STATUSES =
-            EnumSet.of(ProductOrder.LedgerStatus.READY_FOR_REVIEW,
-                    ProductOrder.LedgerStatus.BILLING, ProductOrder.LedgerStatus.READY_TO_BILL);
 
     /**
      * This fetches the count information in some subqueries and then populates the transient counts for the appropriate
@@ -231,46 +247,19 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
             }
         }
 
-        for (final ProductOrder.LedgerStatus ledgerStatus : FETCH_STATUSES) {
+        for (final ProductOrderListEntry.LedgerStatus ledgerStatus : ProductOrderListEntry.LedgerStatus.values()) {
+            if (!ledgerStatus.canCreateQuery) {
+                continue;
+            }
             // Only query for the JIRA ticket keys of interest, using Splitter.
             List<ProductOrderListEntry> resultList = JPASplitter.runCriteriaQuery(
                     jiraTicketKeys,
                     new CriteriaInClauseCreator<String>() {
                         @Override
                         public Query createCriteriaInQuery(Collection<String> parameterList) {
-                            CriteriaQuery<ProductOrderListEntry> query;
-                            switch (ledgerStatus) {
-                            case READY_FOR_REVIEW:
-                                // The billing session is null but the auto bill timestamp is NOT null.
-                                query = cq.where(cb.isNull(
-                                        productOrderSampleLedgerEntrySetJoin.get(LedgerEntry_.billingSession)),
-                                        cb.isNotNull(productOrderSampleLedgerEntrySetJoin
-                                                .get(LedgerEntry_.autoLedgerTimestamp)),
-                                        productOrderRoot.get(ProductOrder_.jiraTicketKey).in(parameterList));
-                                break;
-                            case READY_TO_BILL:
-                                // The billing session is null but the auto bill timestamp is null.
-                                query = cq.where(cb.isNull(
-                                        productOrderSampleLedgerEntrySetJoin.get(LedgerEntry_.billingSession)),
-                                        cb.isNull(productOrderSampleLedgerEntrySetJoin
-                                                .get(LedgerEntry_.autoLedgerTimestamp)),
-                                        productOrderRoot.get(ProductOrder_.jiraTicketKey).in(parameterList));
-                                break;
-                            case BILLING:
-                                // The session is NOT null, but the session's billed date IS null.
-                                query = cq.where(
-                                        cb.isNull(ledgerEntryBillingSessionJoin.get(BillingSession_.billedDate)),
-                                        cb.isNotNull(
-                                                productOrderSampleLedgerEntrySetJoin.get(LedgerEntry_.billingSession)),
-                                        cb.isNull(productOrderSampleLedgerEntrySetJoin
-                                                .get(LedgerEntry_.autoLedgerTimestamp)),
-                                        productOrderRoot.get(ProductOrder_.jiraTicketKey).in(parameterList));
-                                break;
-                            default:
-                                throw new IllegalArgumentException("Can only fetch ready to bill or ready for review");
-                            }
-
-                            return getEntityManager().createQuery(query);
+                            cq.where(ledgerStatus.buildPredicate(cb, productOrderSampleLedgerEntrySetJoin, ledgerEntryBillingSessionJoin),
+                                    productOrderRoot.get(ProductOrder_.jiraTicketKey).in(parameterList));
+                            return getEntityManager().createQuery(cq);
                         }
                     }
             );
@@ -290,19 +279,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                             jiraKeyToProductOrderListEntryMap.get(result.getJiraTicketKey());
                     productOrderListEntry.setBillingSessionId(result.getBillingSessionId());
 
-                    switch (ledgerStatus) {
-                    case READY_FOR_REVIEW:
-                        productOrderListEntry.setReadyForReviewCount(result.getConstructedCount());
-                        break;
-                    case READY_TO_BILL:
-                        productOrderListEntry.setReadyForBillingCount(result.getConstructedCount());
-                        break;
-                    case BILLING:
-                        break;
-                    default:
-                        // The constructor handles billing, so if not that now, throw this exception.
-                        throw new IllegalArgumentException("Can only fetch ready to bill or ready for review");
-                    }
+                    ledgerStatus.updateEntryCount(productOrderListEntry, result.getConstructedCount());
                 }
             }
         }
@@ -315,10 +292,10 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
     public List<ProductOrderListEntry> findProductOrderListEntries(
             @Nullable Long productFamilyId,
             @Nullable List<String> productKeys,
-            @Nullable List<ProductOrder.OrderStatus> orderStatuses,
+            @Nullable Set<ProductOrder.OrderStatus> orderStatuses,
             @Nullable DateRangeSelector placedDate,
             @Nullable List<Long> ownerIds,
-            @Nullable List<ProductOrder.LedgerStatus> ledgerStatuses) {
+            @Nullable List<ProductOrderListEntry.LedgerStatus> ledgerStatuses) {
 
         List<ProductOrderListEntry> productOrderListEntries =
                 findBaseProductOrderListEntries(null, productFamilyId, productKeys, orderStatuses, placedDate,
@@ -332,7 +309,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
         // problem for a long time. Before needing to make this work, we will probably want scrolling and paging. This
         // returns the whole list if there is nothing selected or if all statuses are selected.
         if (CollectionUtils.isEmpty(ledgerStatuses) ||
-            (ledgerStatuses.size() == ProductOrder.LedgerStatus.values().length)) {
+            (ledgerStatuses.size() == ProductOrderListEntry.LedgerStatus.values().length)) {
             // If there is nothing selected or all statuses are selected, just return the full list.
             return productOrderListEntries;
         }
@@ -340,7 +317,9 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
         // The following code filters out only the items that have the appropriate ledger status that the user wants.
         List<ProductOrderListEntry> filteredList = new ArrayList<>();
         for (ProductOrderListEntry entry : productOrderListEntries) {
-            ProductOrder.LedgerStatus.addEntryBasedOnStatus(ledgerStatuses, filteredList, entry);
+            if (entry.matchStatuses(ledgerStatuses)) {
+                filteredList.add(entry);
+            }
         }
 
         return filteredList;

@@ -10,9 +10,7 @@
         <!--<connection-url>jdbc:postgresql://localhost/postgres</connection-url>-->
         <!--<driver>org.postgresql</driver>-->
         <security>
-            <user-name>mercury</user-name>
-            <password>mercury_qa</password>
-            <!--<password>mercury_local</password>-->
+            <security-domain>mercury-qa-encrypted-ds</security-domain>
         </security>
         <validation>
             <background-validation>true</background-validation>

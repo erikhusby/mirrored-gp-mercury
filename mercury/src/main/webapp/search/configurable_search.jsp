@@ -41,6 +41,10 @@
     <style>
         label {display:inline; margin-left: 5px;}
         input.displayTerm, input.termoperator, input.termvalue { margin: 3px; }
+        <%-- Firefox select options allow this, Chrome quietly ignores --%>
+       .help-option { background-image: url("${ctxpath}/images/help.png");
+           background-repeat: no-repeat;
+           background-position: right; }
 
     </style>
 </stripes:layout-component>
@@ -112,8 +116,11 @@ Move the mouse over the question marks to see details about each section.
                     <c:forEach items="${actionBean.configurableSearchDef.mapGroupSearchTerms}" var="entry">
                         <optgroup label="${entry.key}">
                             <c:forEach items="${entry.value}" var="searchTerm">
-                                <option value="${searchTerm.name}">${searchTerm.name}</option>
-                                <c:if test="${searchTerm.addConstrainedValuesToSearchTermList}">
+                                <option value="${searchTerm.name}"
+                                <%-- Firefox select options allow this style class, Chrome quietly ignores --%>
+                                <c:if test="${not empty searchTerm.helpText}"> class="help-option"</c:if>
+                                id="${searchTerm.uiId}_opt">${searchTerm.name}</option>
+                                <c:if test="${searchTerm.addDependentTermsToSearchTermList}">
                                     <c:forEach items="${searchTerm.constrainedValues}" var="constrainedValue">
                                         <option value="${constrainedValue.code}"
                                                 searchTerm="${searchTerm.name}">${constrainedValue.label}</option>
@@ -573,6 +580,25 @@ function chooseColumnSet() {
         <li>Down arrow: moves selected Chosen columns lower in the order</li>
     </ul>
 </div>
+<div id="traversalOptionDescription" style="display: none;">
+    <c:if test="${actionBean.configurableSearchDef.traversalEvaluators != null}">
+        <p>Available Options:</p>
+        <ul>
+        <c:forEach items="${actionBean.configurableSearchDef.traversalEvaluators}" var="traversalMapEntry">
+            <li>${traversalMapEntry.value.helpNote}</li>
+        </c:forEach>
+        </ul>
+    </c:if>
+</div>
+<%-- A div with a unique ID for search terms tool tips (search term has help text)  --%>
+<c:forEach items="${actionBean.configurableSearchDef.mapGroupSearchTerms}" var="entry">
+    <c:forEach items="${entry.value}" var="searchTerm">
+        <c:if test="${not empty searchTerm.helpText}">
+<div id="${searchTerm.uiId}_dscr" style="display: none;">${searchTerm.helpText}</div>
+        </c:if>
+    </c:forEach>
+</c:forEach>
+
 <script type="text/javascript">
     $j(function(){
         // This is required in order to render HTML in title attributes.
@@ -598,6 +624,26 @@ function chooseColumnSet() {
         $j('#resultColumnsTooltip').attr('title', function(){
             return $j('#resultColumnsDescription').remove().html();
         });
+        $j('#traversalOptionTooltip').attr('title', function(){
+            return $j('#traversalOptionDescription').remove().html();
+        });
+
+        <%-- Initialize search terms tool tips (search term has help text)  --%>
+        <c:forEach items="${actionBean.configurableSearchDef.mapGroupSearchTerms}" var="entry">
+         <c:forEach items="${entry.value}" var="searchTerm">
+          <c:if test="${not empty searchTerm.helpText}">
+        $j('#${searchTerm.uiId}_opt').attr('title', function(){
+            return $j('#${searchTerm.uiId}_dscr').remove().html();
+        });
+        $j('#${searchTerm.uiId}_opt').tooltip({
+            position: { my: "left top",
+                at: "right+10 top+35",
+                of: "#searchTermSelect" },
+            show: false
+        });
+          </c:if>
+         </c:forEach>
+        </c:forEach>
 
         $j(document).tooltip();
     });

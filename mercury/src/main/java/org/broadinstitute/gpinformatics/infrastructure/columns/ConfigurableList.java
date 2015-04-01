@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.columns;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.athena.entity.preference.ColumnSetsPreference;
-import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.SpreadsheetCreator;
 
@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * <p>
@@ -48,11 +49,18 @@ import java.util.Map;
  */
 public class ConfigurableList {
 
+    /**
+     * A way to capture high latency bulk data for a page of results
+     */
     public interface AddRowsListener {
         void addRows(List<?> entityList, Map<String, Object> context, List<ColumnTabulation> nonPluginTabulations);
+        void reset();
     }
 
-    private final List<AddRowsListener> addRowsListeners = new ArrayList<>();
+    /**
+     * Allow multiple named AddRowsListener instances for a single search
+     */
+    private final Map<String,AddRowsListener> addRowsListeners = new HashMap<>();
 
     private final List<ColumnTabulation> pluginTabulations = new ArrayList<>();
 
@@ -63,8 +71,6 @@ public class ConfigurableList {
     private final String sortDirection;
 
     private final String multiValueDelimiter;
-
-    private final boolean multiValueAddTrailingDelimiter;
 
     private List<SortColumn> sortColumnIndexes;
 
@@ -99,8 +105,6 @@ public class ConfigurableList {
 
     public static final String DEFAULT_MULTI_VALUE_DELIMITER = " ";
 
-    public static final boolean DEFAULT_MULTI_VALUE_ADD_TRAILING_DELIMITER = true;
-
     /**
      * Get the column names for a given column set name, and information required to find the preference.
      *
@@ -114,7 +118,7 @@ public class ConfigurableList {
             ColumnSetsPreference columnSets) {
 
         Map<String, Object> context = new HashMap<>();
-        context.put(SearchDefinitionFactory.CONTEXT_KEY_COLUMN_SET_TYPE, columnSetType);
+        context.put(SearchInstance.CONTEXT_KEY_COLUMN_SET_TYPE, columnSetType);
 /*
         context.put("bspDomainUser", bspDomainUser);
         context.put("group", group);
@@ -161,7 +165,7 @@ public class ConfigurableList {
     public ConfigurableList(List<ColumnTabulation> columnTabulations, Integer sortColumnIndex,
             String sortDirection, /*Boolean admin, */ @Nonnull ColumnEntity columnEntity) {
         this(columnTabulations, sortColumnIndex, sortDirection, /*admin, */columnEntity,
-                DEFAULT_MULTI_VALUE_DELIMITER, DEFAULT_MULTI_VALUE_ADD_TRAILING_DELIMITER);
+                DEFAULT_MULTI_VALUE_DELIMITER);
     }
 
     /**
@@ -172,14 +176,11 @@ public class ConfigurableList {
      * @param sortDirection Ascending or descending.
      * @param columnEntity The field id.
      * @param multiValueDelimiter The text to use as the delimiter between values in a multi-valued field.
-     * @param multiValueAddTrailingDelimiter Whether to include a trailing delimiter in multi-valued fields.
      */
     public ConfigurableList(List<ColumnTabulation> columnTabulations, Integer sortColumnIndex,
-            String sortDirection, /*Boolean admin, */ @Nonnull ColumnEntity columnEntity, String multiValueDelimiter,
-            boolean multiValueAddTrailingDelimiter) {
+            String sortDirection, /*Boolean admin, */ @Nonnull ColumnEntity columnEntity, String multiValueDelimiter) {
         this.columnEntity = columnEntity;
         this.multiValueDelimiter = multiValueDelimiter;
-        this.multiValueAddTrailingDelimiter = multiValueAddTrailingDelimiter;
         for (ColumnTabulation columnTabulation : columnTabulations) {
             // Ignore header logic on nested table ColumnTabulation
             if( !columnTabulation.isNestedParent() ) {
@@ -465,8 +466,9 @@ public class ConfigurableList {
      */
     public void addRows(List<?> entityList, @Nonnull Map<String, Object> context ) {
 
-        for (AddRowsListener addRowsListener : addRowsListeners) {
-            addRowsListener.addRows(entityList, context, nonPluginTabulations);
+        for (Map.Entry<String,AddRowsListener> entry : addRowsListeners.entrySet()) {
+            entry.getValue().addRows(entityList, context, nonPluginTabulations);
+            context.put(entry.getKey(),entry.getValue());
         }
         for (Object entity : entityList) {
             // evaluate expression to get ID
@@ -503,7 +505,7 @@ public class ConfigurableList {
             // Legacy plugin process from BSP
             if( !columnTabulation.isNestedParent() ) {
                 List<Row> pluginRows =
-                        listPlugin.getData(entityList, headerGroupMap.get(columnTabulation.getName()));
+                        listPlugin.getData(entityList, headerGroupMap.get(columnTabulation.getName()), context);
                 int rowIndex = pageStartingRow;
                 for (Row row : pluginRows) {
                     // TODO jmt rows might be empty, if columns are all plugins
@@ -587,11 +589,11 @@ public class ConfigurableList {
         // a pooled sample) convert the multiple values to a single value.
         if (viewHeaders.size() == 1) {
             StringBuilder stringBuilder = new StringBuilder();
-            convertResultToString(plainTextValues, stringBuilder, multiValueDelimiter, multiValueAddTrailingDelimiter);
+            convertResultToString(plainTextValues, stringBuilder, multiValueDelimiter);
             plainTextValues.clear();
             plainTextValues.add(stringBuilder.toString());
             stringBuilder = new StringBuilder();
-            convertResultToString(formattedValues, stringBuilder, multiValueDelimiter, multiValueAddTrailingDelimiter);
+            convertResultToString(formattedValues, stringBuilder, multiValueDelimiter);
             formattedValues.clear();
             formattedValues.add(stringBuilder.toString());
         }
@@ -774,22 +776,19 @@ public class ConfigurableList {
      * @param stringBuilder    accumulated string
      * @param separator        string to use to separate list entries
      */
-    private static void convertResultToString(Object expressionResult, StringBuilder stringBuilder, String separator,
-            boolean multiValueAddTrailingDelimiter) {
+    private static void convertResultToString(Object expressionResult, StringBuilder stringBuilder, String separator) {
         // Do nothing if the expression is null.
         if (expressionResult != null) {
-            if (expressionResult instanceof List) {
-                List<?> resultList = (List<?>) expressionResult;
+            if (expressionResult instanceof List || expressionResult instanceof Set) {
+                Collection<?> resultList = (Collection<?>) expressionResult;
+                int size = 0;
                 for (Object result : resultList) {
                     if (result != null) {
-                        convertResultToString(result, stringBuilder, separator, multiValueAddTrailingDelimiter);
-                        int size = resultList.size();
-                        if (size > 1) {
-                            // Add a separator if this is not the last element or a trailing separator is requested.
-                            if (result != resultList.get(size - 1) || multiValueAddTrailingDelimiter) {
-                                stringBuilder.append(separator);
-                            }
+                        if( size > 0 || ( size == 0 && stringBuilder.length() > 0 ) ) {
+                            stringBuilder.append(separator);
                         }
+                        size++;
+                        convertResultToString(result, stringBuilder, separator);
                     }
                 }
             } else if (expressionResult instanceof String) {
@@ -1163,8 +1162,8 @@ public class ConfigurableList {
         return finalString.toString();
     }
 
-    public void addListener(AddRowsListener addRowsListener) {
-        addRowsListeners.add(addRowsListener);
+    public void addAddRowsListener(String name, AddRowsListener addRowsListener) {
+        addRowsListeners.put(name, addRowsListener);
     }
 
     /**

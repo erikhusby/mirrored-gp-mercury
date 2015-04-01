@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServic
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -45,7 +46,6 @@ public class ConfigurableListContainerTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
-    @Test(groups= TestGroups.STANDARD)
     public void testTrackingSheet() {
         List<ColumnTabulation> columnTabulations = new ArrayList<>();
         LabBatch labBatch = labBatchDao.findByBusinessKey("LCSET-5102");
@@ -54,10 +54,10 @@ public class ConfigurableListContainerTest extends Arquillian {
             labVessels.add(bucketEntry.getLabVessel());
         }
 
-        ConfigurableSearchDefinition configurableSearchDefinition =
-                new SearchDefinitionFactory().buildLabVesselSearchDef();
+        ConfigurableSearchDefinition configurableSearchDef =
+                SearchDefinitionFactory.getForEntity( ColumnEntity.LAB_VESSEL.getEntityName());
         for (Map.Entry<String, List<ColumnTabulation>> groupListSearchTermEntry :
-                configurableSearchDefinition.getMapGroupToColumnTabulations().entrySet()) {
+                configurableSearchDef.getMapGroupToColumnTabulations().entrySet()) {
             for (ColumnTabulation searchTerm : groupListSearchTermEntry.getValue()) {
                 // Some search terms are not available for selection in result list
                 // TODO Push method from SearchTerm to ColumnTabulation superclass (or consolidate)
@@ -68,7 +68,14 @@ public class ConfigurableListContainerTest extends Arquillian {
         }
 
         ConfigurableList configurableList = new ConfigurableList(columnTabulations, 1, "ASC", ColumnEntity.LAB_VESSEL);
-        configurableList.addListener(new BspSampleSearchAddRowsListener(bspSampleSearchService));
+
+        // Add any row listeners
+        ConfigurableSearchDefinition.AddRowsListenerFactory addRowsListenerFactory = configurableSearchDef.getAddRowsListenerFactory();
+        if( addRowsListenerFactory != null ) {
+            for( Map.Entry<String,ConfigurableList.AddRowsListener> entry : addRowsListenerFactory.getAddRowsListeners().entrySet() ) {
+                configurableList.addAddRowsListener(entry.getKey(), entry.getValue());
+            }
+        }
 
         Map<String, Object> context = buildSearchContext();
         configurableList.addRows(labVessels, context);
@@ -81,15 +88,49 @@ public class ConfigurableListContainerTest extends Arquillian {
         ConfigurableList.ResultRow resultRow = resultList.getResultRows().get(1);
         Assert.assertEquals(resultRow.getResultId(), "0162998809");
 
-        // Find Imported Sample ID
+        // Test column values
         List<ConfigurableList.Header> headers = resultList.getHeaders();
-        int columnIndex = 0;
+        int columnIndex;
+
+        // Find Imported Sample ID
+        columnIndex = 0;
         for( ConfigurableList.Header header : headers ) {
             if( header.getViewHeader().equals("Imported Sample ID")) break;
             columnIndex++;
         }
         Assert.assertTrue( columnIndex < headers.size(), "Column header 'Imported Sample ID' not found in results" );
         Assert.assertEquals(resultRow.getRenderableCells().get(columnIndex), "SM-5KWVC");
+
+        // Test LabVesselMetricPlugin
+        columnIndex = 0;
+        for( ConfigurableList.Header header : headers ) {
+            if( header.getViewHeader().equals("Pond Pico ng/uL")) break;
+            columnIndex++;
+        }
+        Assert.assertTrue( columnIndex < headers.size(), "Column header 'Pond Pico ng/uL' not found in results" );
+        Assert.assertEquals(resultRow.getRenderableCells().get(columnIndex), "54.68");
+        Assert.assertEquals(resultRow.getRenderableCells().get(columnIndex + 1), "(None)"
+                , "Incorrect value for 'Pond Pico Decision' column" );
+
+        columnIndex = 0;
+        for( ConfigurableList.Header header : headers ) {
+            if( header.getViewHeader().equals("ECO QPCR ng/uL")) break;
+            columnIndex++;
+        }
+        Assert.assertTrue( columnIndex < headers.size(), "Column header 'ECO QPCR ng/uL' not found in results" );
+        Assert.assertEquals(resultRow.getRenderableCells().get(columnIndex), "26.13");
+        Assert.assertEquals(resultRow.getRenderableCells().get(columnIndex + 1), "(None)" );
+
+        // Test LabVesselLatestEventPlugin
+        columnIndex = 0;
+        for( ConfigurableList.Header header : headers ) {
+            if( header.getViewHeader().equals("Latest Event")) break;
+            columnIndex++;
+        }
+        Assert.assertTrue( columnIndex < headers.size(), "Column header 'Latest Event' not found in results" );
+        Assert.assertEquals(resultRow.getRenderableCells().get(columnIndex), "DilutionToFlowcellTransfer");
+        Assert.assertEquals(resultRow.getRenderableCells().get(columnIndex + 3), "03/06/2014 12:44:45" );
+
 
     }
 
@@ -99,7 +140,7 @@ public class ConfigurableListContainerTest extends Arquillian {
      */
     private Map<String, Object> buildSearchContext(){
         Map<String, Object> evalContext = new HashMap<>();
-        evalContext.put(SearchDefinitionFactory.CONTEXT_KEY_BSP_USER_LIST, bspUserList );
+        evalContext.put(SearchInstance.CONTEXT_KEY_BSP_USER_LIST, bspUserList );
 
         return evalContext;
     }

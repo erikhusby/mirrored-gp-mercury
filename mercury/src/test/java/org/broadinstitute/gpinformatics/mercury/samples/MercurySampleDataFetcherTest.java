@@ -62,7 +62,7 @@ public class MercurySampleDataFetcherTest {
 
     public void testFetchOneMercurySampleReturnsOneResult() {
         String collaboratorSampleId = "Sample-1";
-        MercurySample mercurySample = new MercurySample(SM_MERC1, MercurySample.MetadataSource.MERCURY,
+        MercurySample mercurySample = new MercurySample(SM_MERC1,
                 Collections.singleton(new Metadata(Metadata.Key.SAMPLE_ID, collaboratorSampleId)));
 
         MercurySampleData mercurySampleData = mercurySampleDataFetcher.fetchSampleData(mercurySample);
@@ -80,7 +80,7 @@ public class MercurySampleDataFetcherTest {
                         new Metadata(Metadata.Key.BUICK_COLLECTION_DATE, COLLECTION_DATE),
                         new Metadata(Metadata.Key.BUICK_VISIT, BUICK_VISIT)
                 );
-        MercurySample mercurySample = new MercurySample(SM_MERC1, MercurySample.MetadataSource.MERCURY, metaData);
+        MercurySample mercurySample = new MercurySample(SM_MERC1, metaData);
         MercurySampleData mercurySampleData = mercurySampleDataFetcher.fetchSampleData(mercurySample);
 
         assertThat(mercurySampleData.getSampleId(), equalTo(SM_MERC1));
@@ -98,8 +98,8 @@ public class MercurySampleDataFetcherTest {
         String patientId2 = "Patient-2";
         Set<Metadata> metadata2 = ImmutableSet.of(new Metadata(Metadata.Key.SAMPLE_ID, SM_MERC2),
                 new Metadata(Metadata.Key.PATIENT_ID, patientId2));
-        MercurySample mercurySample1 = new MercurySample(SM_MERC1, MercurySample.MetadataSource.MERCURY, metadata1);
-        MercurySample mercurySample2 = new MercurySample(SM_MERC2, MercurySample.MetadataSource.MERCURY, metadata2);
+        MercurySample mercurySample1 = new MercurySample(SM_MERC1, metadata1);
+        MercurySample mercurySample2 = new MercurySample(SM_MERC2, metadata2);
 
         Map<String, MercurySampleData> sampleDatas =
                 mercurySampleDataFetcher.fetchSampleData(Arrays.asList(mercurySample1, mercurySample2));

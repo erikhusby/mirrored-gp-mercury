@@ -15,6 +15,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestStatusErrorMatcher.hasError;
@@ -50,7 +51,7 @@ public class ManifestSessionTest {
         sessionPrefix = "testPrefix";
         testUser = new BSPUserList.QADudeUser("LU", 33L);
 
-        session = new ManifestSession(testRp, sessionPrefix, testUser);
+        session = new ManifestSession(testRp, sessionPrefix, testUser, false);
 
         for (String sampleId : SAMPLES_IN_MANIFEST) {
             ManifestRecord manifestRecord = buildManifestRecord(session, sampleId);
@@ -85,7 +86,7 @@ public class ManifestSessionTest {
     private ManifestRecord buildManifestRecord(ManifestSession manifestSession, String sampleId) {
         ManifestRecord manifestRecord = new ManifestRecord(ManifestTestFactory.buildMetadata(ImmutableMap.of(
                 Metadata.Key.SAMPLE_ID, sampleId,
-                Metadata.Key.SAMPLE_TYPE, "value1",
+                Metadata.Key.MATERIAL_TYPE, "value1",
                 Metadata.Key.TUMOR_NORMAL, "value2",
                 Metadata.Key.BUICK_COLLECTION_DATE, "value3")));
         manifestSession.addRecord(manifestRecord);
@@ -194,7 +195,8 @@ public class ManifestSessionTest {
 
     private static void addRecord(ManifestSession session, ManifestRecord.ErrorStatus errorStatus,
                                   ManifestRecord.Status status) {
-        ManifestTestFactory.addRecord(session, errorStatus, status, ImmutableMap.<Metadata.Key, String>of());
+        ManifestTestFactory.addRecord(session, errorStatus, status, ImmutableMap.<Metadata.Key, String>of(),
+                EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
     }
 
     public void testValidationForUnscannedAndDuplicates() {
@@ -243,7 +245,8 @@ public class ManifestSessionTest {
         setAllManifestRecordStatus(ManifestRecord.Status.ACCESSIONED);
 
         ManifestRecord testRecord = session.getRecords().iterator().next();
-        ManifestRecord recordForTransfer = session.findRecordForTransfer(testRecord.getSampleId());
+        ManifestRecord recordForTransfer = session.findRecordForTransferByKey(Metadata.Key.SAMPLE_ID,
+                testRecord.getSampleId());
 
         assertThat(testRecord, is(equalTo(recordForTransfer)));
 
@@ -256,7 +259,7 @@ public class ManifestSessionTest {
 
         ManifestRecord testRecord = session.getRecords().iterator().next();
         try {
-            session.findRecordForTransfer(testRecord.getSampleId());
+            session.findRecordForTransferByKey(Metadata.Key.SAMPLE_ID, testRecord.getSampleId());
             Assert.fail();
         } catch (Exception e) {
             assertThat(e.getMessage(),
@@ -270,7 +273,7 @@ public class ManifestSessionTest {
 
         ManifestTestFactory
                 .addRecord(session, ManifestRecord.ErrorStatus.DUPLICATE_SAMPLE_ID, ManifestRecord.Status.UPLOADED,
-                        ImmutableMap.of(Metadata.Key.SAMPLE_ID, value));
+                        ImmutableMap.of(Metadata.Key.SAMPLE_ID, value), EnumSet.of(Metadata.Key.BROAD_2D_BARCODE));
     }
 
     private void setManifestRecordStatus(ManifestRecord.Status status) {

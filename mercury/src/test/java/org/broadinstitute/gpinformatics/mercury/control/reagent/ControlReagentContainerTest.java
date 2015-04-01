@@ -82,7 +82,8 @@ public class ControlReagentContainerTest extends Arquillian {
             List<BarcodedTube> barcodedTubes = controlReagentFactory.buildTubesFromSpreadsheet(
                     new FileInputStream(tempFile), messageCollection);
 
-            Assert.assertFalse(messageCollection.hasErrors());
+            Assert.assertFalse(messageCollection.hasErrors(),
+                    "buildTubesFromSpreadsheet failed: " + messageCollection.getErrors());
             barcodedTubeDao.flush();
             barcodedTubeDao.clear();
             BarcodedTube barcodedTube = barcodedTubeDao.findByBarcode(barcodedTubes.get(0).getLabel());

@@ -10,48 +10,75 @@ import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
  */
 public enum BillingTrackerHeader implements ColumnHeader {
 
-    SAMPLE_ID("Sample ID", 0, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE),
-    COLLABORATOR_SAMPLE_ID("Collaborator Sample ID", 1, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_HEADER),
-    MATERIAL_TYPE("Material Type", 2, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_HEADER),
-    ON_RISK("On Risk", 3, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_HEADER),
-    STATUS("Status", 4, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_HEADER),
-    PRODUCT_NAME("Product Name", 5, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_HEADER),
-    ORDER_ID("Product Order ID", 6, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE),
-    PRODUCT_ORDER_NAME("Product Order Name", 7, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_HEADER),
-    PROJECT_MANAGER("Project Manager", 8, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_HEADER),
-    LANE_COUNT("Lane Count", 9, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_HEADER) {
-        @Override public boolean shouldShow(Product product) { return product.getSupportsNumberOfLanes(); }
+    SAMPLE_ID("Sample ID", ColumnHeader.REQUIRED_HEADER),
+    COLLABORATOR_SAMPLE_ID("Collaborator Sample ID", ColumnHeader.OPTIONAL_HEADER),
+    MATERIAL_TYPE("Material Type", ColumnHeader.OPTIONAL_HEADER),
+    ON_RISK("On Risk", ColumnHeader.OPTIONAL_HEADER),
+    STATUS("Status", ColumnHeader.OPTIONAL_HEADER),
+    PRODUCT_NAME("Product Name", ColumnHeader.OPTIONAL_HEADER),
+    ORDER_ID("Product Order ID", ColumnHeader.REQUIRED_HEADER),
+    PRODUCT_ORDER_NAME("Product Order Name", ColumnHeader.OPTIONAL_HEADER),
+    PROJECT_MANAGER("Project Manager", ColumnHeader.OPTIONAL_HEADER),
+    LANE_COUNT("Lane Count", ColumnHeader.OPTIONAL_HEADER) {
+        @Override
+        public boolean shouldShow(Product product) {
+            return product.getSupportsNumberOfLanes();
+        }
     },
-    AUTO_LEDGER_TIMESTAMP("Auto Ledger Timestamp", 10, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_HEADER, true),
-    WORK_COMPLETE_DATE("Date Completed", 11, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_HEADER, true),
-    PF_READS("PF Reads", 12, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_VALUE),
-    PF_ALIGNED_GB("PF Aligned GB", 13, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_VALUE),
-    PF_READS_ALIGNED_IN_PAIRS("PF Reads Aligned in Pairs", 14, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_VALUE),
-    PERCENT_COVERAGE_AT_20X("% Coverage at 20X", 15, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_VALUE) {
-        @Override public boolean shouldShow(Product product) {
+    AUTO_LEDGER_TIMESTAMP("Auto Ledger Timestamp", ColumnHeader.OPTIONAL_HEADER, IsDate.YES),
+    WORK_COMPLETE_DATE("Date Completed", ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_VALUE, IsDate.YES),
+    PF_READS("PF Reads", ColumnHeader.OPTIONAL_HEADER),
+    PF_ALIGNED_GB("PF Aligned GB", ColumnHeader.OPTIONAL_HEADER),
+    PF_READS_ALIGNED_IN_PAIRS("PF Reads Aligned in Pairs", ColumnHeader.OPTIONAL_HEADER),
+    PERCENT_COVERAGE_AT_20X("% Coverage at 20X", ColumnHeader.OPTIONAL_HEADER) {
+        @Override
+        public boolean shouldShow(Product product) {
             return product.isSameProductFamily(ProductFamily.ProductFamilyName.EXOME);
         }
     },
-    TABLEAU_LINK("Tableau", 16, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_VALUE),
-    QUOTE_ID("Quote ID", 17, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_HEADER),
-    SORT_COLUMN("Sort Column", 18, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE);
+    TARGET_BASES_100X_PERCENT("Target Bases 100x %", ColumnHeader.OPTIONAL_HEADER) {
+        @Override
+        public boolean shouldShow(Product product) {
+            return product.isSameProductFamily(ProductFamily.ProductFamilyName.EXOME);
+        }
+    },
+    SAMPLE_TYPE("Sample Type", ColumnHeader.OPTIONAL_HEADER),
+    TABLEAU_LINK("Tableau", ColumnHeader.OPTIONAL_HEADER),
+    QUOTE_ID("Quote ID", ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_VALUE),
+    SORT_COLUMN("Sort Column", ColumnHeader.REQUIRED_HEADER);
+
+    private enum IsDate {
+        YES, NO
+    }
 
     public static final String BILLED = "Billed";
     public static final String UPDATE = "Update Quantity To";
 
     private final String text;
-    private final int index;
     private final boolean requiredHeader;
     private final boolean requiredValue;
-    private final boolean isDate;
+    private final IsDate isDate;
 
-    private BillingTrackerHeader(String text, int index, boolean requiredHeader, boolean requiredValue) {
-        this(text, index, requiredHeader, requiredValue, false);
+    /**
+     * Construct a header where the 'required header' and 'required value' are the same. This is the most common case.
+     */
+    BillingTrackerHeader(String text, boolean requiredHeader) {
+        this(text, requiredHeader, IsDate.NO);
     }
 
-    private BillingTrackerHeader(String text, int index, boolean requiredHeader, boolean requiredValue, boolean isDate) {
+    /**
+     * Construct a header where the 'required header' and 'required value' are the same. This is the most common case.
+     */
+    BillingTrackerHeader(String text, boolean requiredHeader, IsDate isDate) {
+        this(text, requiredHeader, requiredHeader, isDate);
+    }
+
+    BillingTrackerHeader(String text, boolean requiredHeader, boolean requiredValue) {
+        this(text, requiredHeader, requiredValue, IsDate.NO);
+    }
+
+    BillingTrackerHeader(String text, boolean requiredHeader, boolean requiredValue, IsDate isDate) {
         this.text = text;
-        this.index = index;
         this.requiredHeader = requiredHeader;
         this.requiredValue = requiredValue;
         this.isDate = isDate;
@@ -70,12 +97,7 @@ public enum BillingTrackerHeader implements ColumnHeader {
 
     @Override
     public String getText() {
-        return this.text;
-    }
-
-    @Override
-    public int getIndex() {
-        return this.index;
+        return text;
     }
 
     @Override
@@ -151,6 +173,6 @@ public enum BillingTrackerHeader implements ColumnHeader {
 
     @Override
     public boolean isDateColumn() {
-        return isDate;
+        return isDate == IsDate.YES;
     }
 }

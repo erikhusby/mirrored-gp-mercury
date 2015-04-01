@@ -21,6 +21,11 @@ public class ResourceException extends WebApplicationException {
         this.message = message;
     }
 
+    public ResourceException(Response.Status status) {
+        this.status = status;
+    }
+
+    @Override
     public String getMessage() {
         return message;
     }

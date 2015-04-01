@@ -68,26 +68,6 @@ public class ProductOrderSampleTest {
         Assert.assertEquals(sample.isCompletelyBilled(), isBilled);
     }
 
-    @DataProvider(name = "testIsInBspFormat")
-    public Object[][] createIsInBspFormatData() {
-        return new Object[][] {
-                {"SM-2ACG", inBspFormat()},
-                {"SM-2ACG5", inBspFormat()},
-                {"SM-2ACG6", inBspFormat()},
-                {"Blahblahblah", not(inBspFormat())},
-                {"12345", not(inBspFormat())},
-                {"12345.0", not(inBspFormat())}, // that's a GSSR id, not a BSP id
-                {"4FHTK", not(inBspFormat())}, // "bare ids" are not considered valid BSP barcodes
-                {"SM-ABC0", not(inBspFormat())},
-                {"SM-ABCO", inBspFormat()}
-        };
-    }
-
-    @Test(dataProvider = "testIsInBspFormat")
-    public void testIsInBspFormat(String sampleName, Matcher<String> matcher) throws Exception {
-        assertThat(sampleName, is(matcher));
-    }
-
     static final org.broadinstitute.bsp.client.sample.MaterialType BSP_MATERIAL_TYPE =
             new org.broadinstitute.bsp.client.sample.MaterialType("Cells", "Red Blood Cells");
 

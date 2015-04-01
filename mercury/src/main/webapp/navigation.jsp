@@ -112,11 +112,9 @@
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.LinkDenatureTubeToReagentBlockActionBean"
                                           event="view">Link Denature Tube to Reagent Block</stripes:link>
                         </li>
-                        <security:authorizeBlock roles="<%= roles(Developer) %>">
-                            <li>
-                                <a tabindex="-1" href="${ctxpath}/reagent/design.action?list">Reagent Designs</a>
-                            </li>
-                        </security:authorizeBlock>
+                        <li>
+                            <a tabindex="-1" href="${ctxpath}/reagent/design.action?list">Reagent Designs</a>
+                        </li>
                         <security:authorizeBlock roles="<%= roles(LabUser, LabManager, Developer) %>" context="<%= ApplicationInstance.CRSP %>">
                             <li>
                                 <a tabindex="-1" href="${ctxpath}/reagent/molindscheme.action">Molecular Index Schemes</a>
@@ -170,10 +168,16 @@
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.ManifestTubeTransferActionBean">
                             Transfer Tubes from Manifest
                             </stripes:link>
+                        </li>
                         <li>
                             <stripes:link id="uploadReagents"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.ReagentActionBean"
                                           event="view">Upload Reagents</stripes:link>
+                        </li>
+                        <li>
+                            <stripes:link id="manualTransfers"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.labevent.ManualTransferActionBean"
+                                          event="view">Manual Transfers</stripes:link>
                         </li>
                     </ul>
                 </li>
@@ -203,9 +207,6 @@
                             <li><stripes:link
                                     beanclass="org.broadinstitute.gpinformatics.mercury.presentation.admin.PublicMessageAdminActionBean"
                                     event="view">Manage Public Message</stripes:link></li>
-                            <li><stripes:link
-                                    beanclass="org.broadinstitute.gpinformatics.mercury.presentation.audit.AuditTrailActionBean"
-                                    event="view">View Audit Trail</stripes:link></li>
                         </security:authorizeBlock>
                     </ul>
                 </li>
@@ -236,14 +237,17 @@
                                       event="view">Samples</stripes:link>
                     </li>
                     <li>
-                        <stripes:link id="lcsetSearch"
-                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.LCSetSearchActionBean"
-                                      event="view">LCSets</stripes:link>
+                        <a href="${ctxpath}/search/ConfigurableSearch.action?fetchSearch=&selectedSearchName=GLOBAL%7CGLOBAL_LAB_VESSEL_SEARCH_INSTANCES%7CLCSET+Data&entityName=LabVessel">LCSets</a>
                     </li>
                     <li>
                         <stripes:link id="userDefSearch"
                                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.ConfigurableSearchActionBean"
                                       event="entitySelection">User-Defined</stripes:link>
+                    </li>
+                    <li>
+                        <stripes:link id="auditTrailSearch"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.audit.AuditTrailActionBean"
+                                      event="view">Audit Trail</stripes:link>
                     </li>
                 </ul>
             </li>

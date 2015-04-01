@@ -7,8 +7,8 @@ import org.apache.commons.collections4.map.LazySortedMap;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransfe
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.boundary.graph.Graph;
+import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferEntityGrapher;
@@ -35,6 +36,7 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -54,13 +56,13 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
@@ -213,6 +215,7 @@ public class LabEventTest extends BaseEventTest {
     @Override
     @BeforeClass(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
+        new BettaLimsMessageResource(new WorkflowLoader());
         templateEngine.postConstruct();
         super.setUp();
     }
@@ -957,6 +960,128 @@ public class LabEventTest extends BaseEventTest {
         }
     }
 
+    /**
+     * Make a rack composed of a mix of tubes from two lcsets, and add in a tube from a third lcset.
+     * Attempt shearing aliquot on the combined lcsets and verify the ambiguous lcset was detected.
+     */
+    @Test(groups = {TestGroups.DATABASE_FREE})
+    public void testAmbiguousLcset() {
+        expectedRouting = SystemRouter.System.MERCURY;
+        Date runDate = new Date();
+        int counter = 1;
+        int tubesPerPlate = 2;
+
+        // Makes the first workflow batch.
+        ProductOrder productOrder1 = ProductOrderTestFactory.buildHybridSelectionProductOrder(tubesPerPlate, "A");
+        Map<String, BarcodedTube> mapBarcodeToTube1 = createInitialRack(productOrder1, "R1_");
+        LabBatch workflowBatch1 = new LabBatch("ignored", new HashSet<LabVessel>(mapBarcodeToTube1.values()),
+                LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch1.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
+        workflowBatch1.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
+        bucketBatchAndDrain(mapBarcodeToTube1, productOrder1, workflowBatch1, String.valueOf(counter++));
+        Assert.assertEquals(mapBarcodeToTube1.values().iterator().next().getBucketEntries().size(), 1);
+        PicoPlatingEntityBuilder picoPlatingBuilder1 = runPicoPlatingProcess(mapBarcodeToTube1,
+                String.valueOf(runDate.getTime()), String.valueOf(counter++), true);
+
+        // Makes the second workflow batch.
+        ProductOrder productOrder2 = ProductOrderTestFactory.buildHybridSelectionProductOrder(tubesPerPlate, "B");
+        Map<String, BarcodedTube> mapBarcodeToTube2 = createInitialRack(productOrder2, "R2_");
+        LabBatch workflowBatch2 = new LabBatch("ignored", new HashSet<LabVessel>(mapBarcodeToTube2.values()),
+                LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch2.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
+        workflowBatch2.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
+        bucketBatchAndDrain(mapBarcodeToTube2, productOrder2, workflowBatch2, String.valueOf(counter++));
+        Assert.assertEquals(mapBarcodeToTube2.values().iterator().next().getBucketEntries().size(), 1);
+        PicoPlatingEntityBuilder picoPlatingBuilder2 = runPicoPlatingProcess(mapBarcodeToTube2,
+                String.valueOf(runDate.getTime()), String.valueOf(counter++), true);
+
+        // Makes the third workflow batch.
+        ProductOrder productOrder3 = ProductOrderTestFactory.buildHybridSelectionProductOrder(tubesPerPlate, "C");
+        Map<String, BarcodedTube> mapBarcodeToTube3 = createInitialRack(productOrder3, "R3_");
+        LabBatch workflowBatch3 = new LabBatch("ignored", new HashSet<LabVessel>(mapBarcodeToTube3.values()),
+                LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch3.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
+        workflowBatch3.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
+        bucketBatchAndDrain(mapBarcodeToTube3, productOrder3, workflowBatch3, String.valueOf(counter++));
+        final BarcodedTube tube3 = mapBarcodeToTube3.values().iterator().next();
+        Assert.assertEquals(tube3.getBucketEntries().size(), 1);
+        PicoPlatingEntityBuilder picoPlatingBuilder3 = runPicoPlatingProcess(mapBarcodeToTube3,
+                String.valueOf(runDate.getTime()), String.valueOf(counter++), true);
+        // Runs the third batch through shearing process.
+        ExomeExpressShearingEntityBuilder shearingBuilder3 = runExomeExpressShearingProcess(
+                picoPlatingBuilder3.getNormBarcodeToTubeMap(),
+                picoPlatingBuilder3.getNormTubeFormation(),
+                picoPlatingBuilder3.getNormalizationBarcode(), String.valueOf(counter++));
+        for (LabEvent event : shearingBuilder3.getShearingPlate().getEvents()) {
+            Assert.assertFalse(event.hasAmbiguousLcsetProblem());
+        }
+
+        // Chooses a tube from the third batch, puts it into shearing bucket as rework, and takes it out of
+        // the shearing bucket so it can be part of the second batch.
+        Bucket shearingBucket = createAndPopulateBucket(
+                new HashMap<String, BarcodedTube>() {{
+                    put(tube3.getLabel(), tube3);
+                }}, productOrder3, "Shearing");
+        workflowBatch2.addLabVessel(tube3);
+        drainBucket(shearingBucket, workflowBatch2);
+        Assert.assertEquals(tube3.getBucketEntries().size(), 2);
+
+        // These are key to make workflow validation work.
+        tube3.addReworkLabBatch(workflowBatch2);
+        workflowBatch2.addReworks(Collections.singletonList((LabVessel) tube3));
+        Assert.assertTrue(tube3.getReworkLabBatches().contains(workflowBatch2));
+        Assert.assertTrue(workflowBatch2.getReworks().contains(tube3));
+
+        Assert.assertEquals(tube3.getBucketEntries().size(), 2);
+        for (BucketEntry bucketEntry : tube3.getBucketEntries()) {
+            if (bucketEntry.getLabBatch().getBatchName().equals(workflowBatch2.getBatchName())) {
+                bucketEntry.setReworkDetail(
+                        new ReworkDetail(new ReworkReason(ReworkEntry.ReworkReasonEnum.MACHINE_ERROR.getValue()),
+                                ReworkLevel.ONE_SAMPLE_RELEASE_REST_BATCH,
+                                LabEventType.SHEARING_TRANSFER, "test", null));
+            }
+        }
+
+        // The first and second batches and the one rework tube are rearrayed into one rack.
+        // It should result in the rework tube having an ambiguous LCSET, because the first event
+        // after bucketing involves vessels having a mix of LCSETs without a single common one.
+        Map<String, BarcodedTube> mapBarcodeToCombined = new LinkedHashMap<>();
+        mapBarcodeToCombined.put(tube3.getLabel(), tube3);
+        mapBarcodeToCombined.putAll(picoPlatingBuilder1.getNormBarcodeToTubeMap());
+        mapBarcodeToCombined.putAll(picoPlatingBuilder2.getNormBarcodeToTubeMap());
+
+        ExomeExpressShearingEntityBuilder builder = runExomeExpressShearingProcess(mapBarcodeToCombined, null,
+                picoPlatingBuilder2.getNormalizationBarcode(), String.valueOf(counter++));
+        StaticPlate plate = builder.getShearingPlate();
+
+        for (LabVessel tube : mapBarcodeToCombined.values()) {
+            tube.clearCaches();
+        }
+        // The shearing event should have the ambiguous lcset problem.
+        boolean foundShearingTransfer = false;
+        boolean foundCovarisLoaded = false;
+        for (LabEvent event : plate.getEvents()) {
+            switch (event.getLabEventType()) {
+            case SHEARING_TRANSFER:
+                for (LabVessel labVessel : event.getAllLabVessels()) {
+                    labVessel.clearCaches();
+                }
+                Assert.assertTrue(event.hasAmbiguousLcsetProblem());
+                foundShearingTransfer = true;
+                break;
+            case COVARIS_LOADED:
+                for (LabVessel labVessel : event.getAllLabVessels()) {
+                    labVessel.clearCaches();
+                }
+                // The lcset is still ambiguous, but this event cannot follow a bucket so no problem with it.
+                Assert.assertFalse(event.hasAmbiguousLcsetProblem());
+                foundCovarisLoaded = true;
+            }
+        }
+        Assert.assertTrue(foundShearingTransfer, "Failed to find shearing transfer event");
+        Assert.assertTrue(foundCovarisLoaded, "Failed to process beyond shearing transfer event");
+    }
+
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testExomeExpressIce() {
         // e.g. 0157473471
@@ -975,7 +1100,8 @@ public class LabEventTest extends BaseEventTest {
         workflowBatch.setCreatedOn(new Date());
         workflowBatch.setWorkflow(Workflow.ICE_EXOME_EXPRESS);
 
-        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
+        String lcsetSuffix = "1";
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, lcsetSuffix);
 
         TubeFormation daughterTubeFormation = daughterPlateTransfer(mapBarcodeToTube);
 
@@ -985,29 +1111,28 @@ public class LabEventTest extends BaseEventTest {
         }
 
         PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToDaughterTube,
-                                                                                  String.valueOf(runDate.getTime()),
-                                                                                  "1", true);
+                String.valueOf(runDate.getTime()), lcsetSuffix, true);
         ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
                 runExomeExpressShearingProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
                                                picoPlatingEntityBuilder.getNormTubeFormation(),
-                                               picoPlatingEntityBuilder.getNormalizationBarcode(), "1");
+                                               picoPlatingEntityBuilder.getNormalizationBarcode(), lcsetSuffix);
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
                 runLibraryConstructionProcess(exomeExpressShearingEntityBuilder.getShearingCleanupPlate(),
                                               exomeExpressShearingEntityBuilder.getShearCleanPlateBarcode(),
-                                              exomeExpressShearingEntityBuilder.getShearingPlate(), "1");
+                                              exomeExpressShearingEntityBuilder.getShearingPlate(), lcsetSuffix);
 
         IceEntityBuilder iceEntityBuilder = runIceProcess(libraryConstructionEntityBuilder.getPondRegRack(),
-                                                          libraryConstructionEntityBuilder.getPondRegRackBarcode(),
-                                                          libraryConstructionEntityBuilder.getPondRegTubeBarcodes(),
-                                                          "1");
+                libraryConstructionEntityBuilder.getPondRegRackBarcode(),
+                libraryConstructionEntityBuilder.getPondRegTubeBarcodes(),
+                lcsetSuffix);
 
         // Need a version of QTP that jumps over pooling to normalization
         QtpEntityBuilder qtpEntityBuilder = new QtpEntityBuilder(
                 getBettaLimsMessageTestFactory(), getLabEventFactory(), getLabEventHandler(),
                 Collections.singletonList(iceEntityBuilder.getCatchEnrichRack()),
-                Collections.singletonList(iceEntityBuilder.getCatchEnrichRack().getLabel()),
+                Collections.singletonList(iceEntityBuilder.getCatchEnrichRack().getRacksOfTubes().iterator().next().getLabel()),
                 Collections.singletonList(iceEntityBuilder.getCatchEnrichBarcodes()),
-                iceEntityBuilder.getMapBarcodeToCatchEnrichTubes(), "1").invoke(false, true);
+                iceEntityBuilder.getMapBarcodeToCatchEnrichTubes(), lcsetSuffix).invoke(true, true);
 
         final LabVessel denatureSource = qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(
                 VesselPosition.A01);
@@ -1015,7 +1140,7 @@ public class LabEventTest extends BaseEventTest {
 
         // todo jmt denature rack has 8 source tubes, but 2500 builder is expecting only 1
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
-                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", FCT_TICKET,
+                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), lcsetSuffix + "ADXX", FCT_TICKET,
                                             ProductionFlowcellPath.DILUTION_TO_FLOWCELL, null,
                                             Workflow.AGILENT_EXOME_EXPRESS);
 
@@ -1070,6 +1195,14 @@ public class LabEventTest extends BaseEventTest {
         Assert.assertEquals(zimsIlluminaRun.getImagedAreaPerLaneMM2(), readStructureRequest.getImagedArea());
         Assert.assertEquals(zimsIlluminaRun.getLanesSequenced(), "3,6");
         Assert.assertEquals(zimsIlluminaRun.getSystemOfRecord(), SystemRouter.System.MERCURY);
+        for (ZimsIlluminaChamber zimsIlluminaChamber : zimsIlluminaRun.getLanes()) {
+            Assert.assertEquals(zimsIlluminaChamber.getLibraries().size(), NUM_POSITIONS_IN_RACK);
+            for (LibraryBean libraryBean : zimsIlluminaChamber.getLibraries()) {
+                Assert.assertTrue(libraryBean.getLibrary().startsWith(
+                        POND_REGISTRATION_TUBE_PREFIX + lcsetSuffix));
+            }
+        }
+
 
         Map.Entry<String, BarcodedTube> stringBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
@@ -1088,19 +1221,19 @@ public class LabEventTest extends BaseEventTest {
                 "HybSelPondEnrichmentCleanup",
                 "PondRegistration",
                 "IcePoolingTransfer",
-                "IceSPRIConcentration",
+                "Ice96PlexSpriConcentration",
                 "IcePoolTest",
                 "Ice1stHybridization",
                 "Ice1stCapture",
                 "Ice2ndCapture",
                 "IceCatchCleanup",
                 "IceCatchEnrichmentCleanup",
-//                "EcoTransfer",
+                "PoolingTransfer",
+                "EcoTransfer",
                 "NormalizationTransfer",
                 "DenatureTransfer",
-                // todo jmt why aren't these events found?
-//                "DenatureToDilutionTransfer",
-//                "DilutionToFlowcellTransfer",
+                "DenatureToDilutionTransfer",
+                "DilutionToFlowcellTransfer",
         };
         verifyEventSequence(labEventNames, expectedEventNames);
 
@@ -1167,7 +1300,7 @@ public class LabEventTest extends BaseEventTest {
         Set<SampleInstance> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
                 VesselPosition.LANE1);
         Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(), 1,
-                            "Wrong number of reagents");
+                "Wrong number of reagents");
 
         Map.Entry<String, BarcodedTube> stringBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
@@ -1328,7 +1461,7 @@ public class LabEventTest extends BaseEventTest {
                 new HashSet<LabVessel>(mapBarcodeToTube.values()),
                 LabBatch.LabBatchType.WORKFLOW);
         workflowBatch.setCreatedOn(new Date());
-        workflowBatch.setWorkflow(Workflow.ICE_EXOME_EXPRESS);
+        workflowBatch.setWorkflow(Workflow.ICE_CRSP);
 
         bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
 

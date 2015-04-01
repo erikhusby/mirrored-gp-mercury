@@ -1,7 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.products;
 
-import edu.mit.broad.prodinfo.bean.generated.AutoWorkRequestOutput;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -12,47 +13,75 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.annotation.Nonnull;
+import javax.ejb.Stateful;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
+
 /**
- * Utility class that manages interactions between
- * PDOs and jira.
+ * Utility class that manages interactions between PDOs and jira.
  */
+@Stateful
 public class ProductOrderJiraUtil {
 
+    @Inject
+    private JiraService jiraService;
+
+    @Inject
+    private UserBean userBean;
+
+    // EJBs require a no arg constructor.
+    @SuppressWarnings("unused")
+    public ProductOrderJiraUtil() {
+    }
+
+    @Inject
+    public ProductOrderJiraUtil(JiraService jiraService,
+                                UserBean userBean) {
+        this.jiraService = jiraService;
+        this.userBean = userBean;
+    }
+
+    private static class ProductOrderFields {
+        private final Map<String, CustomFieldDefinition> submissionFields;
+        private final List<CustomField> fields = new ArrayList<>();
+
+        private ProductOrderFields(Map<String, CustomFieldDefinition> submissionFields) {
+            this.submissionFields = submissionFields;
+        }
+
+        private void addValue(ProductOrder.JiraField field, Object value) {
+            fields.add(new CustomField(submissionFields, field, value));
+        }
+    }
+
     /**
-     * This method encapsulates the set of steps necessary to finalize the submission of a product order.
-     * This mainly deals with jira ticket creation.  This method will:
+     * Create a Product Order's corresponding JIRA issue.
      * <ul>
-     * <li>Create a new jira ticket and persist the reference to the ticket key</li>
+     * <li>create a new JIRA issue using the product order state and store the key in the product order</li>
      * <li>assign the submitter as a watcher to the ticket</li>
-     * <li>Add a new comment listing all Samples contained within the order</li>
-     * <li>Add any validation comments regarding the Samples contained within the order</li>
+     * <li>link the research project to the JIRA issue</li>
      * </ul>
-     *
-     * @throws java.io.IOException
      */
-    public static void placeOrder(@Nonnull ProductOrder pdo,@Nonnull JiraService jiraService) throws IOException {
-        pdo.setPlacedDate(new Date());
-        Product product = pdo.getProduct();
-        List<ProductOrderAddOn> addOns = pdo.getAddOns();
+    public void createIssueForOrder(@Nonnull ProductOrder order) throws IOException {
+        Product product = order.getProduct();
+        List<ProductOrderAddOn> addOns = order.getAddOns();
         Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
 
+        ProductOrderFields fields = new ProductOrderFields(submissionFields);
 
-        List<CustomField> listOfFields = new ArrayList<>();
+        fields.addValue(ProductOrder.JiraField.PRODUCT_FAMILY,
+                product.getProductFamily() == null ? "" : product.getProductFamily().getName());
 
-        listOfFields.add(new CustomField(submissionFields, ProductOrder.JiraField.PRODUCT_FAMILY,
-                product.getProductFamily() == null ? "" : product.getProductFamily().getName()));
-
-        listOfFields.add(new CustomField(submissionFields, ProductOrder.JiraField.PRODUCT,
-                product.getProductName() == null ? "" : product.getProductName()));
-        listOfFields.add(new CustomField(submissionFields, ProductOrder.JiraField.QUOTE_ID, pdo.getQuoteStringForJiraTicket()));
+        fields.addValue(ProductOrder.JiraField.PRODUCT,
+                product.getProductName() == null ? "" : product.getProductName());
+        fields.addValue(ProductOrder.JiraField.QUOTE_ID, order.getQuoteStringForJiraTicket());
 
         if (!addOns.isEmpty()) {
             List<String> addOnsList = new ArrayList<>(addOns.size());
@@ -60,31 +89,29 @@ public class ProductOrderJiraUtil {
                 addOnsList.add(addOn.getAddOn().getDisplayName());
             }
             Collections.sort(addOnsList);
-            listOfFields.add(new CustomField(submissionFields, ProductOrder.JiraField.ADD_ONS, StringUtils.join(addOnsList, "\n")));
+            fields.addValue(ProductOrder.JiraField.ADD_ONS, StringUtils.join(addOnsList, "\n"));
         }
 
-        listOfFields.add(new CustomField(submissionFields, ProductOrder.JiraField.SAMPLE_IDS, pdo.getSampleString()));
+        fields.addValue(ProductOrder.JiraField.SAMPLE_IDS, order.getSampleString());
 
-        listOfFields.add(new CustomField(submissionFields, ProductOrder.JiraField.NUMBER_OF_SAMPLES,
-                pdo.getSamples().size()));
+        fields.addValue(ProductOrder.JiraField.NUMBER_OF_SAMPLES, order.getSamples().size());
 
         if (product.getSupportsNumberOfLanes()) {
-            listOfFields.add(
-                    new CustomField(submissionFields, ProductOrder.JiraField.LANES_PER_SAMPLE, pdo.getLaneCount()));
+            fields.addValue(ProductOrder.JiraField.LANES_PER_SAMPLE, order.getLaneCount());
         }
 
-        if (pdo.getPublicationDeadline() != null) {
-            listOfFields.add(new CustomField(submissionFields, ProductOrder.JiraField.PUBLICATION_DEADLINE,
-                    JiraService.JIRA_DATE_FORMAT.format(pdo.getPublicationDeadline())));
+        if (order.getPublicationDeadline() != null) {
+            fields.addValue(ProductOrder.JiraField.PUBLICATION_DEADLINE,
+                    JiraService.JIRA_DATE_FORMAT.format(order.getPublicationDeadline()));
         }
 
-        if (pdo.getFundingDeadline() != null) {
-            listOfFields.add(new CustomField(submissionFields, ProductOrder.JiraField.FUNDING_DEADLINE,
-                    JiraService.JIRA_DATE_FORMAT.format(pdo.getFundingDeadline())));
+        if (order.getFundingDeadline() != null) {
+            fields.addValue(ProductOrder.JiraField.FUNDING_DEADLINE,
+                    JiraService.JIRA_DATE_FORMAT.format(order.getFundingDeadline()));
         }
 
-        if (pdo.getComments() != null) {
-            listOfFields.add(new CustomField(submissionFields, ProductOrder.JiraField.DESCRIPTION, pdo.getComments()));
+        if (order.getComments() != null) {
+            fields.addValue(ProductOrder.JiraField.DESCRIPTION, order.getComments());
         }
 
         BSPUserList bspUserList = ServiceAccessUtility.getBean(BSPUserList.class);
@@ -97,14 +124,44 @@ public class ProductOrderJiraUtil {
         }
 
         JiraIssue issue = jiraService.createIssue(
-                CreateFields.ProjectType.PRODUCT_ORDERING, bspUserList.getById(pdo.getCreatedBy()).getUsername(), issueType,
-                pdo.getTitle(), listOfFields);
+                CreateFields.ProjectType.PRODUCT_ORDERING, bspUserList.getById(order.getCreatedBy()).getUsername(),
+                issueType, order.getTitle(), fields.fields);
 
-        pdo.setJiraTicketKey(issue.getKey());
-        issue.addLink(pdo.getResearchProject().getJiraTicketKey());
-
-        issue.addComment(StringUtils.join(pdo.getSampleSummaryComments(), "\n"));
-        issue.addComment(StringUtils.join(pdo.getSampleValidationComments(), "\n"));
+        order.setJiraTicketKey(issue.getKey());
+        issue.addLink(order.getResearchProject().getJiraTicketKey());
     }
 
+    /**
+     * <p>Add comments about the state of the samples to the order's JIRA issue:
+     * <ul>
+     * <li>Add any validation comments regarding the Samples contained within the order</li>
+     * </ul>
+     * </p>
+     *
+     * This is done separately from {@link #createIssueForOrder} because we want to delay adding these
+     * comments until the order is Submitted. The reason for this is that the information about samples
+     * is not complete until the samples have been received and processed in the lab.
+     */
+    public void addSampleComments(ProductOrder order) throws IOException {
+        JiraIssue issue = jiraService.getIssue(order.getJiraTicketKey());
+        issue.addComment(StringUtils.join(order.getSampleSummaryComments(), "\n"));
+        issue.addComment(StringUtils.join(order.getSampleValidationComments(), "\n"));
+    }
+
+    /**
+     * Replace the PMs field in the JIRA issue for this order with the provided list of users.
+     */
+    public void setJiraPMsField(ProductOrder productOrder, List<BspUser> projectManagers) throws IOException {
+        List<CustomField.NameContainer> managers = new ArrayList<>(projectManagers.size());
+        for (BspUser manager : projectManagers) {
+            managers.add(new CustomField.NameContainer(manager.getUsername()));
+        }
+
+        JiraIssue issue = jiraService.getIssue(productOrder.getJiraTicketKey());
+        setCustomField(issue, ProductOrder.JiraField.PMS, managers);
+    }
+
+    public void setCustomField(JiraIssue issue, ProductOrder.JiraField field, Object value) throws IOException {
+        issue.setCustomFieldUsingTransition(field, value, ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
+    }
 }

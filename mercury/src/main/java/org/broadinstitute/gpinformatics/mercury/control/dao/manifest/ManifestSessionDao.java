@@ -10,6 +10,7 @@ import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Expression;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.util.EnumSet;
@@ -29,7 +30,8 @@ public class ManifestSessionDao extends GenericDao {
 
     public List<ManifestSession> findOpenSessions() {
         return findListByList(ManifestSession.class, ManifestSession_.status, EnumSet.of(
-                ManifestSession.SessionStatus.OPEN, ManifestSession.SessionStatus.ACCESSIONING));
+                ManifestSession.SessionStatus.OPEN, ManifestSession.SessionStatus.ACCESSIONING,
+                ManifestSession.SessionStatus.PENDING_SAMPLE_INFO));
     }
 
     /**
@@ -46,9 +48,24 @@ public class ManifestSessionDao extends GenericDao {
 
         Predicate completedStatus =
                 criteriaBuilder.equal(root.get(ManifestSession_.status), ManifestSession.SessionStatus.COMPLETED);
-        Predicate tubesRemainingToBeTransferred =
-                criteriaBuilder.notEqual(root.get(ManifestSession_.tubesRemainingToBeTransferred),
+
+        // The two CriteriaBuilder#diff calls below calculate the result of
+        //
+        // totalNumberOfRecords - numberOfQuarantinedRecords - numberOfTubesTransferred
+        //
+        // If the result of this expression is not zero and the session is not in COMPLETED status, the session should
+        // be considered eligible for tube transfer.
+        Expression<Integer> totalMinusQuarantined =
+                criteriaBuilder.diff(root.get(ManifestSession_.totalNumberOfRecords),
                         root.get(ManifestSession_.numberOfQuarantinedRecords));
+
+        Expression<Integer> numberOfTubesRemainingToBeTransferred = criteriaBuilder
+                .diff(totalMinusQuarantined, root.get(ManifestSession_.numberOfTubesTransferred));
+
+        Predicate tubesRemainingToBeTransferred =
+                criteriaBuilder.and(
+                        criteriaBuilder.notEqual(criteriaBuilder.toInteger(numberOfTubesRemainingToBeTransferred), 0),
+                        criteriaBuilder.equal(root.get(ManifestSession_.fromSampleKit), Boolean.FALSE));
 
         query.where(completedStatus, tubesRemainingToBeTransferred);
 

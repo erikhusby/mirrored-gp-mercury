@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerHeader;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
@@ -13,8 +14,9 @@ import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.work.WorkCompleteMessage;
 import org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPLSIDUtil;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPLSIDUtil;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
@@ -22,6 +24,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.tableau.TableauConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.TableauRedirectActionBean;
 
+import java.awt.Color;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
@@ -40,7 +43,7 @@ import java.util.TreeSet;
  * This class creates a spreadsheet version of a product order's sample billing status, also called the sample
  * billing ledger.  The exported spreadsheet will later be imported after the user has updated the sample
  * billing information.
- *
+ * <p/>
  * A future version of this class will probably support both export and import, since there will be some common
  * code & data structures.
  */
@@ -133,17 +136,16 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
         return allPriceItems;
     }
 
-    private void writePriceItemProductHeaders(PriceItem priceItem, Product product, byte[] rgbColor) {
-        getWriter().writeCell(BillingTrackerHeader.getPriceItemNameHeader(priceItem), getWrappedHeaderStyle(rgbColor));
+    private void writePriceItemProductHeaders(PriceItem priceItem, Product product, XSSFColor color) {
+        getWriter().writeCell(BillingTrackerHeader.getPriceItemNameHeader(priceItem), getWrappedHeaderStyle(color));
         getWriter().setColumnWidth(VALUE_WIDTH);
-        getWriter().writeCell(BillingTrackerHeader.getPriceItemPartNumberHeader(product), getWrappedHeaderStyle(
-                rgbColor));
+        getWriter().writeCell(BillingTrackerHeader.getPriceItemPartNumberHeader(product), getWrappedHeaderStyle(color));
         getWriter().setColumnWidth(VALUE_WIDTH);
     }
 
-    private void writeHistoricalPriceItemProductHeader(PriceItem priceItem, byte[] rgbColor) {
+    private void writeHistoricalPriceItemProductHeader(PriceItem priceItem, XSSFColor color) {
         getWriter().writeCell(BillingTrackerHeader.getHistoricalPriceItemNameHeader(priceItem),
-                getWrappedHeaderStyle(rgbColor));
+                getWrappedHeaderStyle(color));
         getWriter().setColumnWidth(VALUE_WIDTH);
     }
 
@@ -160,17 +162,16 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
         List<Product> productsSortedByPartNumber = new ArrayList<>(orderMap.keySet());
         Collections.sort(productsSortedByPartNumber);
 
-        // Go through each product
+        // Loop through all the products, creating a new sheet for each one.
         for (Product currentProduct : productsSortedByPartNumber) {
 
-            // per 2012-11-19 conversation with Alex and Hugh, Excel does not give us enough characters in a tab
-            // name to allow for the product name in all cases, so use just the part number.
+            // Excel sheet names are limited to 31 characters, so we use the product's part number instead of its name.
             getWriter().createSheet(currentProduct.getPartNumber());
 
-            List<ProductOrder> productOrders = orderMap.get(currentProduct);
-
-            // Write headers after placing an extra line
+            // Need to create a new row for the headers.
             getWriter().nextRow();
+
+            List<ProductOrder> productOrders = orderMap.get(currentProduct);
             for (BillingTrackerHeader header : BillingTrackerHeader.values()) {
                 if (header.shouldShow(currentProduct)) {
                     getWriter().writeHeaderCell(header.getText(), header == BillingTrackerHeader.TABLEAU_LINK);
@@ -198,7 +199,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
             List<SampleLedgerRow> sampleLedgerRows = sampleRowData.get(currentProduct);
             for (SampleLedgerRow sampleLedgerRow : sampleLedgerRows) {
                 ProductOrder productOrder = sampleLedgerRow.getProductOrderSample().getProductOrder();
-                productOrder.loadBspData();
                 writeRow(sortedPriceItems, sortedAddOns, historicalPriceItems, sampleLedgerRow.getProductOrderSample(),
                         sortOrder++, getWorkCompleteMessageBySample(productOrder), sampleLedgerRow);
             }
@@ -229,6 +229,15 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
         return historicalPriceItems;
     }
 
+    // FIXME: This can be made more efficient by avoiding the remote call to BSP, since we have aliquot ID on the
+    // FIXME: PDO sample. This allows us to map directly from the PDO sample to its WorkCompleteMessage. The SQL
+    // FIXME: looks like:
+    // SELECT * FROM athena.message_data_value, athena.work_complete_message
+    // WHERE key = 'ALIQUOT_ID' AND value IN (SELECT
+    //                                      concat('broadinstitute.org:bsp.prod.sample:', aliquot_id)
+    //                                     FROM athena.product_order_sample
+    //                                     WHERE aliquot_id IS NOT NULL)
+    //    AND work_complete_message_id = work_complete_message;
     private Map<String, WorkCompleteMessage> getWorkCompleteMessageBySample(ProductOrder productOrder) {
         Map<String, WorkCompleteMessage> workCompleteMessageBySample = workCompleteMessageCache.get(productOrder);
         if (workCompleteMessageBySample == null) {
@@ -285,116 +294,114 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
      * @param sample                         the product order sample for the row
      * @param sortOrder                      the value for the sort order column, for re-sorting the tracker before uploading
      * @param workCompleteMessageBySample    any work complete messages for the product order, by sample
-     * @param sampleData                     simple bean of sample data to be written
+     * @param sampleLedgerRow                sample data to be written
      */
     private void writeRow(List<PriceItem> sortedPriceItems, List<Product> sortedAddOns,
                           Collection<PriceItem> historicalPriceItems, ProductOrderSample sample,
                           int sortOrder, Map<String, WorkCompleteMessage> workCompleteMessageBySample,
-                          SampleLedgerRow sampleData) {
-        getWriter().nextRow();
+                          SampleLedgerRow sampleLedgerRow) {
+        SampleLedgerSpreadSheetWriter writer = getWriter();
+        ProductOrder productOrder = sample.getProductOrder();
+        Product product = productOrder.getProduct();
+        SampleData sampleData = sample.getSampleData();
+
+        writer.nextRow();
 
         // sample name.
-        getWriter().writeCell(sampleData.getSampleId());
+        writer.writeCell(sample.getSampleKey());
 
         // collaborator sample ID, looks like this is properly initialized.
-        getWriter().writeCell(sampleData.getCollaboratorSampleId());
+        writer.writeCell(sampleData.getCollaboratorsSampleName());
 
         // Material type.
-        getWriter().writeCell(sampleData.getMaterialType());
+        writer.writeCell(sampleData.getMaterialType());
 
         // Risk Information.
-        String riskString = sampleData.getRiskText();
+        String riskString = sample.getRiskString();
         if (StringUtils.isBlank(riskString)) {
-            getWriter().nextCell();
+            writer.nextCell();
         } else {
-            getWriter().writeCell(riskString, getRiskStyle());
+            writer.writeCell(riskString, getRiskStyle());
         }
 
         // Sample Delivery Status.
-        String deliveryStatus = sampleData.getDeliveryStatus();
-        getWriter().writeCell(deliveryStatus);
+        writer.writeCell(sample.getDeliveryStatus().getDisplayName());
 
         // product name.
-        getWriter().writeCell(sampleData.getProductName());
+        writer.writeCell(product.getProductName());
 
         // Product Order ID.
-        String pdoKey = sampleData.getProductOrderKey();
-        getWriter().writeCellLink(pdoKey, ProductOrderActionBean.getProductOrderLink(pdoKey, appConfig));
+        writer.writeCellLink(productOrder.getJiraTicketKey(),
+                ProductOrderActionBean.getProductOrderLink(productOrder, appConfig));
 
         // Product Order Name (actually this concept is called 'Title' in PDO world).
-        getWriter().writeCell(sampleData.getProductOrderTitle());
+        writer.writeCell(productOrder.getTitle());
 
         // Project Manager - need to turn this into a user name.
-        getWriter().writeCell(sampleData.getProjectManagerName());
+        writer.writeCell(sampleLedgerRow.getProjectManagerName());
 
         // Lane Count
-        if (BillingTrackerHeader.LANE_COUNT.shouldShow(sample.getProductOrder().getProduct())) {
-            getWriter().writeCell(sampleData.getNumberOfLanes());
+        if (BillingTrackerHeader.LANE_COUNT.shouldShow(product)) {
+            writer.writeCell(productOrder.getLaneCount());
         }
 
-        // auto bill date is the date of any ledger items were auto billed by external messages.
-        getWriter().writeCell(sampleData.getAutoLedgerDate(), getDateStyle());
+        // Auto bill date is the date of any ledger items were auto billed by external messages.
+        writer.writeCell(sample.getLatestAutoLedgerTimestamp(), getDateStyle());
 
-        // work complete date is the date of any ledger items that are ready to be billed.
-        getWriter().writeCell(sampleData.getWorkCompleteDate(), getDateStyle());
+        // Work complete date is the date of any ledger items that are ready to be billed.
+        writer.writeCell(sample.getWorkCompleteDate(), getDateStyle());
 
         // Picard metrics
         BigInteger pfReads = null;
         BigInteger pfAlignedGb = null;
         BigInteger pfReadsAlignedInPairs = null;
         Double percentCoverageAt20x = null;
+        Double percentCoverageAt100x = null;
         WorkCompleteMessage workCompleteMessage = workCompleteMessageBySample.get(sample.getSampleKey());
         if (workCompleteMessage != null) {
             pfReads = workCompleteMessage.getPfReads();
             pfAlignedGb = workCompleteMessage.getAlignedGb();
             pfReadsAlignedInPairs = workCompleteMessage.getPfReadsAlignedInPairs();
             percentCoverageAt20x = workCompleteMessage.getPercentCoverageAt20X();
+            percentCoverageAt100x = workCompleteMessage.getPercentCoverageAt100X();
         }
 
         // PF Reads
-        if (pfReads != null) {
-            getWriter().writeCell(pfReads.doubleValue());
-        } else {
-            getWriter().writeCell("");
-        }
+        writer.writeCell(pfReads);
 
         // PF Aligned GB
-        if (pfAlignedGb != null) {
-            getWriter().writeCell(pfAlignedGb.doubleValue());
-        } else {
-            getWriter().writeCell("");
-        }
+        writer.writeCell(pfAlignedGb);
 
         // PF Reads Aligned in Pairs
-        if (pfReadsAlignedInPairs != null) {
-            getWriter().writeCell(pfReadsAlignedInPairs.doubleValue());
-        } else {
-            getWriter().writeCell("");
-        }
+        writer.writeCell(pfReadsAlignedInPairs);
 
         // % coverage at 20x
-        if (BillingTrackerHeader.PERCENT_COVERAGE_AT_20X.shouldShow(sample.getProductOrder().getProduct())) {
-            if (percentCoverageAt20x != null) {
-                getWriter().writeCell(percentCoverageAt20x, getPercentageStyle());
-            } else {
-                getWriter().writeCell("");
-            }
+        if (BillingTrackerHeader.PERCENT_COVERAGE_AT_20X.shouldShow(product)) {
+            writer.writeCell(percentCoverageAt20x, getPercentageStyle());
         }
 
+        // % coverage at 100x
+        if (BillingTrackerHeader.TARGET_BASES_100X_PERCENT.shouldShow(product)) {
+            writer.writeCell(percentCoverageAt100x, getPercentageStyle());
+        }
+
+        writer.writeCell(sample.getSampleData().getSampleType());
+
         // Tableau link
-        getWriter().writeCellLink(TableauRedirectActionBean.getPdoSequencingSampleDashboardUrl(pdoKey, tableauConfig),
+        String pdoKey = productOrder.getJiraTicketKey();
+        writer.writeCellLink(TableauRedirectActionBean.getPdoSequencingSampleDashboardUrl(pdoKey, tableauConfig),
                 TableauRedirectActionBean.getPdoSequencingSamplesDashboardRedirectUrl(pdoKey, appConfig));
 
         // Quote ID.
-        getWriter().writeCell(sample.getProductOrder().getQuoteId());
+        writer.writeCell(productOrder.getQuoteId());
 
-        // sort order to be able to reconstruct the originally sorted sample list.
-        getWriter().writeCell(sortOrder);
+        // The sort order column allows users to reconstruct the original spreadsheet row order.
+        writer.writeCell(sortOrder);
 
         // The ledger amounts.
         Map<PriceItem, ProductOrderSample.LedgerQuantities> billCounts = sample.getLedgerQuantities();
 
-        // write out for the price item columns.
+        // Write out the price item columns.
         for (PriceItem priceItem : historicalPriceItems) {
             writeCountForHistoricalPriceItem(billCounts, priceItem);
         }
@@ -405,74 +412,83 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
 
         // And for add-ons.
         for (Product addOn : sortedAddOns) {
-            List<PriceItem> sortedAddOnPriceItems = getPriceItems(addOn, priceItemDao, priceListCache);
-            for (PriceItem item : sortedAddOnPriceItems) {
+            for (PriceItem item : getPriceItems(addOn, priceItemDao, priceListCache)) {
                 writeCountsForPriceItems(billCounts, item);
             }
         }
 
-        // write the comments.
+        // Write the comments.
         String theComment = "";
-        if (!StringUtils.isBlank(sample.getProductOrder().getComments())) {
-            theComment += sample.getProductOrder().getComments();
+        if (!StringUtils.isBlank(productOrder.getComments())) {
+            theComment += productOrder.getComments();
         }
 
         if (!StringUtils.isBlank(sample.getSampleComment())) {
             theComment += "--" + sample.getSampleComment();
         }
-        getWriter().writeCell(theComment);
+        writer.writeCell(theComment);
 
         // Any messages for items that are not billed yet.
         String billingError = sample.getUnbilledLedgerItemMessages();
 
         if (StringUtils.isBlank(billingError)) {
-            // no value, so just empty a blank line.
-            getWriter().nextCell();
+            writer.nextCell();
         } else if (billingError.endsWith(BillingSession.SUCCESS)) {
             // Give the success message with no special style.
-            getWriter().writeCell(billingError);
+            writer.writeCell(billingError);
         } else {
             // Only use error style when there is an error in the string.
-            getWriter().writeCell(billingError, getErrorMessageStyle());
+            writer.writeCell(billingError, getErrorMessageStyle());
         }
 
-        if (deliveryStatus.equals(ProductOrderSample.DeliveryStatus.ABANDONED.getDisplayName())) {
+        if (sample.getDeliveryStatus() == ProductOrderSample.DeliveryStatus.ABANDONED) {
             // Set the row style last, so all columns are affected.
-            getWriter().setRowStyle(getAbandonedStyle());
+            writer.setRowStyle(getAbandonedStyle());
         }
     }
 
-    private static byte[][] PRICE_ITEM_COLORS = {
-            { (byte) 255, (byte) 255, (byte) 204 },
-            { (byte) 255, (byte) 204, (byte) 255 },
-            { (byte) 204, (byte) 236, (byte) 255 },
-            { (byte) 204, (byte) 255, (byte) 204 },
-            { (byte) 204, (byte) 153, (byte) 255 },
-            { (byte) 255, (byte) 102, (byte) 204 },
-            { (byte) 255, (byte) 255, (byte) 153 },
-            { (byte)   0, (byte) 255, (byte) 255 },
-            { (byte) 102, (byte) 255, (byte) 153 },
-    };
+    @SuppressWarnings("MagicNumber")
+    private static final XSSFColor HISTORICAL_PRICE_ITEM_COLOR = new XSSFColor(new Color(204, 204, 204));
+
+    private static class PriceItemColor {
+
+        @SuppressWarnings("MagicNumber")
+        private static final XSSFColor[] COLORS = {
+                new XSSFColor(new Color(255, 255, 204)),
+                new XSSFColor(new Color(255, 204, 255)),
+                new XSSFColor(new Color(204, 236, 255)),
+                new XSSFColor(new Color(204, 255, 204)),
+                new XSSFColor(new Color(204, 153, 255)),
+                new XSSFColor(new Color(255, 102, 204)),
+                new XSSFColor(new Color(255, 255, 153)),
+                new XSSFColor(new Color(0, 255, 255)),
+                new XSSFColor(new Color(102, 255, 153))
+        };
+
+        private int index;
+
+        private XSSFColor getNext() {
+            return COLORS[index++ % COLORS.length];
+        }
+    }
 
     private void writeHeaders(Product currentProduct, List<PriceItem> sortedPriceItems, List<Product> sortedAddOns,
                               Collection<PriceItem> historicalPriceItems) {
-        int colorIndex = 0;
-
         for (PriceItem priceItem : historicalPriceItems) {
-            writeHistoricalPriceItemProductHeader(priceItem, new byte[]{(byte) 204, (byte) 204, (byte) 204});
+            writeHistoricalPriceItemProductHeader(priceItem, HISTORICAL_PRICE_ITEM_COLOR);
         }
 
+        PriceItemColor itemColor = new PriceItemColor();
+
         for (PriceItem priceItem : sortedPriceItems) {
-            writePriceItemProductHeaders(priceItem, currentProduct,
-                    PRICE_ITEM_COLORS[colorIndex++ % PRICE_ITEM_COLORS.length]);
+            writePriceItemProductHeaders(priceItem, currentProduct, itemColor.getNext());
         }
 
         // Repeat the process for add ons
         for (Product addOn : sortedAddOns) {
             List<PriceItem> sortedAddOnPriceItems = getPriceItems(addOn, priceItemDao, priceListCache);
             for (PriceItem priceItem : sortedAddOnPriceItems) {
-                writePriceItemProductHeaders(priceItem, addOn,
-                        PRICE_ITEM_COLORS[colorIndex++ % PRICE_ITEM_COLORS.length]);
+                writePriceItemProductHeaders(priceItem, addOn, itemColor.getNext());
             }
         }
 

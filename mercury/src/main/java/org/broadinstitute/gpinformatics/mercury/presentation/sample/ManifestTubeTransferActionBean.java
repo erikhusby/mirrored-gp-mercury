@@ -140,8 +140,8 @@ public class ManifestTubeTransferActionBean extends CoreActionBean {
         Resolution resolution;
 
         try {
-            manifestSessionEjb.transferSample(Long.valueOf(activeSessionId), sourceTube, targetSample, targetVessel,
-                    userBean.getBspUser());
+            manifestSessionEjb.transferSample(Long.valueOf(activeSessionId), sourceTube, targetSample, targetVessel
+            );
             addMessage("Sample ID {0} has been successfully recorded as transferred to vessel " +
                        "{1} with a sample of {2}", sourceTube, targetVessel, targetSample);
             resolution =
@@ -241,7 +241,7 @@ public class ManifestTubeTransferActionBean extends CoreActionBean {
 
         String message = "";
         try {
-            manifestSessionEjb.validateTargetSample(targetSample);
+            manifestSessionEjb.findAndValidateTargetSample(targetSample);
         } catch (Exception e) {
             message = e.getMessage();
             logger.error("Could not validate target sample " + targetSample, e);
@@ -258,7 +258,7 @@ public class ManifestTubeTransferActionBean extends CoreActionBean {
         String message = "";
 
         try {
-            manifestSessionEjb.validateTargetSampleAndVessel(targetSample, targetVessel);
+            manifestSessionEjb.findAndValidateTargetSampleAndVessel(targetSample, targetVessel);
         } catch (Exception e) {
             message = e.getMessage();
             logger.error(String.format("Could not validate target vessel %s and sample %s", targetVessel, targetSample), e);
@@ -308,5 +308,4 @@ public class ManifestTubeTransferActionBean extends CoreActionBean {
     public List<ManifestSession> getClosedSessions() {
         return availableSessions;
     }
-
 }

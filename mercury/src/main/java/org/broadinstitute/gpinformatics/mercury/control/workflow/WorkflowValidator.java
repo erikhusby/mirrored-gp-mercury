@@ -224,7 +224,7 @@ public class WorkflowValidator {
             Set<SampleInstanceV2> sampleInstances = labVessel.getSampleInstancesV2();
             for (SampleInstanceV2 sampleInstance : sampleInstances) {
                 String workflowName = sampleInstance.getWorkflowName();
-                LabBatch effectiveBatch = sampleInstance.getSingleInferredBucketedBatch();
+                LabBatch effectiveBatch = sampleInstance.getSingleBatch();
 
                 /*
                     Not necessarily an ideal solution but validation should not necessarily cause a Null pointer which

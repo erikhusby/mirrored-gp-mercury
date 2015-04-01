@@ -10,7 +10,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.LongDateTimeAdapter;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 
 import javax.annotation.Nonnull;
@@ -33,6 +32,7 @@ public class ProductOrderData {
     private String title;
     private String id;
     private String comments;
+    private Date createdDate;
     private Date placedDate;
     private Date modifiedDate;
     private String product;
@@ -50,8 +50,9 @@ public class ProductOrderData {
     /** Even if includeSamples == false this will still contain the number of samples in the PDO. */
     private int numberOfSamples;
 
-    // This is an "in" parameter only, used to create a PDO with sample kits.
+    // These are "in" parameters only, used to create a PDO with sample kits.
     private List<ProductOrderKitDetailData> kitDetailData = new ArrayList<>();
+    private long siteId;
 
     /**
      * This is really a list of sample IDs.
@@ -91,6 +92,7 @@ public class ProductOrderData {
         quoteId = productOrder.getQuoteId();
         status = productOrder.getOrderStatus().name();
         requisitionName = productOrder.getRequisitionName();
+        createdDate = productOrder.getCreatedDate();
 
         Product product = productOrder.getProduct();
         if (product != null) {
@@ -110,6 +112,11 @@ public class ProductOrderData {
 
         if (includeSamples) {
             samples = getSampleList(productOrder.getSamples());
+            for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
+                if (productOrderSample.getRiskItems().isEmpty()) {
+                    riskNotCalculatedCount++;
+                }
+            }
         } else {
             // Explicit set of null into a List<String> field, this duplicates what the existing code was doing when
             // includeSamples = false.  Is the JAXB behavior with an empty List undesirable?
@@ -117,14 +124,6 @@ public class ProductOrderData {
         }
 
         numberOfSamples = productOrder.getSampleCount();
-
-        if (includeSamples) {
-            for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
-                if (productOrderSample.getRiskItems().isEmpty()) {
-                    riskNotCalculatedCount++;
-                }
-            }
-        }
     }
 
     private static List<String> getSampleList(List<ProductOrderSample> productOrderSamples) {
@@ -287,7 +286,7 @@ public class ProductOrderData {
      */
     public ProductOrder toProductOrder(ProductOrderDao productOrderDao, ResearchProjectDao researchProjectDao,
                                        ProductDao productDao)
-            throws DuplicateTitleException, NoSamplesException, QuoteNotFoundException, ApplicationValidationException {
+            throws DuplicateTitleException, NoSamplesException, ApplicationValidationException {
 
         // Make sure the title/name is supplied and unique
         if (StringUtils.isBlank(title)) {
@@ -360,5 +359,21 @@ public class ProductOrderData {
 
     public void setKitDetailData(List<ProductOrderKitDetailData> kitDetailData) {
         this.kitDetailData = kitDetailData;
+    }
+
+    public long getSiteId() {
+        return siteId;
+    }
+
+    public void setSiteId(long siteId) {
+        this.siteId = siteId;
+    }
+
+    public Date getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(Date createdDate) {
+        this.createdDate = createdDate;
     }
 }

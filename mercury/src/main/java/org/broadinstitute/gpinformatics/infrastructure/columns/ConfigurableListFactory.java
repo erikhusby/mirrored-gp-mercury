@@ -4,25 +4,19 @@ import org.broadinstitute.gpinformatics.athena.control.dao.preference.Preference
 import org.broadinstitute.gpinformatics.athena.entity.preference.ColumnSetsPreference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.PaginationDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.hibernate.Criteria;
-import org.hibernate.criterion.Order;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Creates ConfigurableList instances.
@@ -37,9 +31,6 @@ public class ConfigurableListFactory {
 
     @Inject
     private PaginationDao paginationDao;
-
-    @Inject
-    private BSPSampleSearchService bspSampleSearchService;
 
     /**
      * Create a ConfigurableList instance.
@@ -104,7 +95,7 @@ public class ConfigurableListFactory {
         ColumnSetsPreference.ColumnSet columnSet = ConfigurableList.getColumnNameList(columnSetNameSuffix,
                 ConfigurableList.ColumnSetType.DOWNLOAD, columnSetsPreference);
 //        ListConfig listConfig = entityPreferenceFactory.loadListConfig(entityName);
-        ConfigurableSearchDefinition configurableSearchDefinition = new SearchDefinitionFactory().getForEntity(
+        ConfigurableSearchDefinition configurableSearchDefinition = SearchDefinitionFactory.getForEntity(
                 entityName);
         List<ColumnTabulation> columnTabulations = new ArrayList<>();
         for (String columnName : columnSet.getColumnDefinitions()) {
@@ -284,8 +275,20 @@ public class ConfigurableListFactory {
             String sortDirection,
             String entityName) {
 
-        Criteria criteria = configurableSearchDao.buildCriteria(configurableSearchDef, searchInstance, dbSortPath,
-                sortDirection);
+        Criteria criteria;
+
+        // Swap out base search definition when an alternate (and exclusive) search term is available
+        if( searchInstance.hasAlternateSearchDefinition() ) {
+            criteria = configurableSearchDao.buildCriteria(
+                    searchInstance.getAlternateSearchDefinition(),
+                    searchInstance, dbSortPath,
+                    sortDirection);
+        } else {
+            criteria = configurableSearchDao.buildCriteria(
+                    configurableSearchDef,
+                    searchInstance, dbSortPath,
+                    sortDirection);
+        }
 
         // TODO move join-fetch stuff into ListConfig and SearchInstance
         // If the user chose columns to view, use those, else use a pre-defined column set
@@ -330,33 +333,9 @@ public class ConfigurableListFactory {
         }
         columnTabulations.addAll(searchInstance.findTopLevelColumnTabulations());
 
-        /* Traverse IDs for lab events and obtain parents and ancestors
-         * Intercepts the LabEvent ID list and injects descendant LabEvents
-         * TODO jms Move this elsewhere along with BSPSampleSearchService  */
-
-        boolean doEventTraversal = false;
-        if (entityName.equals("LabEvent")) {
-            /* Only traverse descendant events if LCSET is in search criteria (or all events?) */
-            for( SearchInstance.SearchValue searchValue : searchInstance.getSearchValues() ) {
-                if( searchValue.getSearchTerm().getName().equals("LCSET")){
-                    doEventTraversal = true;
-                    break;
-                }
-            }
-        }
-
         PaginationDao.Pagination pagination = new PaginationDao.Pagination( configurableSearchDef.getPageSize() );
 
-        if( doEventTraversal ) {
-            // Flag pagination to do an initial full entity fetch then replace entities with IDs
-            pagination.setResultEntity(configurableSearchDef.getResultEntity(), configurableSearchDef.getResultEntityId());
-            criteria.addOrder(Order.asc(pagination.getResultEntityId()));
-            List<?> idList = getDescendantVesselLabEvents( criteria.list() );
-            pagination.setIdList(idList);
-        } else {
-            // Legacy pagination - initially fetches only ID values
-            configurableSearchDao.startPagination(pagination, criteria, false);
-        }
+        configurableSearchDao.startPagination(pagination, criteria, searchInstance, configurableSearchDef );
 
         pagination.setJoinFetchPaths(joinFetchPaths);
         List<?> entityList = paginationDao.getPage(pagination, 0);
@@ -365,10 +344,15 @@ public class ConfigurableListFactory {
         ConfigurableList configurableList = new ConfigurableList(columnTabulations,
                 pagination.getNumberPages() == 1 ? sortColumnIndex : null, sortDirection,
                 ColumnEntity.getByName(entityName));
-        // todo jmt adding the BSP stuff needs to be configurable
-        if (entityName.equals("LabVessel")) {
-            configurableList.addListener(new BspSampleSearchAddRowsListener(bspSampleSearchService));
+
+        // Add any row listeners
+        ConfigurableSearchDefinition.AddRowsListenerFactory addRowsListenerFactory = configurableSearchDef.getAddRowsListenerFactory();
+        if( addRowsListenerFactory != null ) {
+            for( Map.Entry<String,ConfigurableList.AddRowsListener> entry : addRowsListenerFactory.getAddRowsListeners().entrySet() ) {
+                configurableList.addAddRowsListener(entry.getKey(), entry.getValue());
+            }
         }
+
         configurableList.addRows( entityList, searchInstance.getEvalContext() );
         ConfigurableList.ResultList resultList = configurableList.getResultList();
 
@@ -390,7 +374,7 @@ public class ConfigurableListFactory {
         List<?> entityList = paginationDao.getPage(pagination, pageNumber);
 
         // Format the results into columns
-        ConfigurableSearchDefinition configurableSearchDef = new SearchDefinitionFactory().getForEntity(entityName);
+        ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(entityName);
         List<ColumnTabulation> columnTabulations = new ArrayList<>();
         List<SearchInstance.SearchValue> displaySearchValues = searchInstance.findDisplaySearchValues();
         List<String> columnNameList;
@@ -407,43 +391,17 @@ public class ConfigurableListFactory {
         }
         ConfigurableList configurableList = new ConfigurableList(columnTabulations, null,
                 ColumnEntity.getByName(entityName));
-        // todo jmt adding the BSP stuff needs to be configurable
-        if (entityName.equals("LabVessel")) {
-            configurableList.addListener(new BspSampleSearchAddRowsListener(bspSampleSearchService));
+
+        // Add any row listeners
+        ConfigurableSearchDefinition.AddRowsListenerFactory addRowsListenerFactory = configurableSearchDef.getAddRowsListenerFactory();
+        if( addRowsListenerFactory != null ) {
+            for( Map.Entry<String,ConfigurableList.AddRowsListener> entry : addRowsListenerFactory.getAddRowsListeners().entrySet() ) {
+                configurableList.addAddRowsListener(entry.getKey(), entry.getValue());
+            }
         }
+
         configurableList.addRows( entityList,searchInstance.getEvalContext() );
 
         return configurableList.getResultList();
     }
-
-    /**
-     * Accumulates lab events for a given LabVessel
-     * LabEventDescendantCriteria sorts them by date and disambiguator
-     * TODO:  jms - Move this entity specific logic out of generic ConfigurableList logic
-     */
-    private List<?> getDescendantVesselLabEvents( List<?> labEventList ) {
-        Set<LabEvent> sortedSet;
-        List<Long> idList = new ArrayList<>();
-        TransferTraverserCriteria.LabEventDescendantCriteria eventTraversalCriteria =
-                new TransferTraverserCriteria.LabEventDescendantCriteria();
-        for( LabEvent startingEvent : (List<LabEvent>) labEventList ) {
-            // Add each starting event so it gets date sorted with descendants
-            eventTraversalCriteria.getAllEvents().add(startingEvent);
-            // First events found have in place lab vessels
-            LabVessel vessel = startingEvent.getInPlaceLabVessel();
-            // Recurse down through vessel-event layers
-            if( vessel != null ) {
-                vessel.evaluateCriteria(eventTraversalCriteria
-                        , TransferTraverserCriteria.TraversalDirection.Descendants );
-            }
-        }
-        sortedSet = eventTraversalCriteria.getAllEvents();
-        // Replace entire original list contents
-        for( LabEvent event : sortedSet ) {
-            idList.add( event.getLabEventId() );
-        }
-
-        return idList;
-    }
-
 }

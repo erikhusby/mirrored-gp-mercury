@@ -8,8 +8,7 @@
         <connection-url>jdbc:oracle:thin:@gpinfoprod:1521:gpinfprd</connection-url>
         <driver>com.oracle</driver>
         <security>
-            <user-name>mercury</user-name>
-            <password>mercury_prod</password>
+            <security-domain>mercury-prod-encrypted-ds</security-domain>
         </security>
         <validation>
             <background-validation>true</background-validation>

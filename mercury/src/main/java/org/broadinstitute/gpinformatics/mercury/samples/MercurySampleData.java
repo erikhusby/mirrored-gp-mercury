@@ -1,8 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.samples;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 
 import javax.annotation.Nonnull;
 import java.text.ParseException;
@@ -13,7 +15,6 @@ import java.util.Set;
  * This class holds sample data specific to MercurySamples whose MetadataSource == MERCURY.
  */
 public class MercurySampleData implements SampleData {
-
     private String sampleId;
     private String collaboratorSampleId;
     private String patientId;
@@ -22,9 +23,11 @@ public class MercurySampleData implements SampleData {
 
     private String collectionDate;
     private String visit;
+    private final boolean hasData;
 
     public MercurySampleData(@Nonnull String sampleId, @Nonnull Set<Metadata> metadata) {
         this.sampleId = sampleId;
+        hasData = !metadata.isEmpty();
         extractSampleDataFromMetadata(metadata);
     }
 
@@ -56,7 +59,7 @@ public class MercurySampleData implements SampleData {
 
     @Override
     public boolean hasData() {
-        return false;
+        return hasData;
     }
 
     @Override
@@ -186,7 +189,11 @@ public class MercurySampleData implements SampleData {
 
     @Override
     public boolean isSampleReceived() {
-        return false;
+        /*
+         * Temporarily use existence of patient ID as a proxy for "is accessioned", which itself is a proxy for
+         * "is received".
+         */
+        return StringUtils.isNotBlank(patientId);
     }
 
     @Override
@@ -227,6 +234,11 @@ public class MercurySampleData implements SampleData {
     @Override
     public Boolean getFfpeStatus() {
         return null;
+    }
+
+    @Override
+    public MercurySample.MetadataSource getMetadataSource() {
+        return MercurySample.MetadataSource.MERCURY;
     }
 
     // TODO: decide whether to keep these methods or implement a general get(Metadata.Key)

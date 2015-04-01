@@ -165,7 +165,7 @@ public class CreateFCTActionBean extends CoreActionBean {
             for (LabVessel vessel : labBatch.getStartingBatchLabVessels()) {
                 // Can't use denatureTubeToEvent.putAll, because multiple denatures may be created by the same event.
                 Map<LabEvent, Set<LabVessel>> mapEventToVessels = vessel.findVesselsForLabEventType(
-                        LabEventType.DENATURE_TRANSFER);
+                        LabEventType.DENATURE_TRANSFER, true);
                 for (Map.Entry<LabEvent, Set<LabVessel>> labEventSetEntry : mapEventToVessels.entrySet()) {
                     Set<LabVessel> labVessels = denatureTubeToEvent.get(labEventSetEntry.getKey());
                     if (labVessels == null) {
@@ -198,7 +198,7 @@ public class CreateFCTActionBean extends CoreActionBean {
             CreateFields.IssueType issueType = selectedType.getIssueType();
             for (int i = 0; i < numberOfLanes; i += lanesPerFlowcell) {
                 LabBatch batch =
-                        new LabBatch(denatureTubeBarcode + " FCT ticket", vesselSet, batchType, loadingConc);
+                        new LabBatch(denatureTubeBarcode + " FCT ticket", vesselSet, batchType, loadingConc, selectedType);
                 batch.setBatchDescription(batch.getBatchName());
                 labBatchEjb.createLabBatch(batch, userBean.getLoginUserName(), issueType);
                 createdBatches.add(batch);

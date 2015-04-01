@@ -23,22 +23,21 @@ import java.util.Map;
  * This enum holds header information for sample metadata manifests.
  */
 public enum ManifestHeader implements ColumnHeader {
-    SPECIMEN_NUMBER("Specimen_Number", 0, Metadata.Key.SAMPLE_ID, ColumnHeader.REQUIRED_VALUE),
-    SEX("Sex", 2, Metadata.Key.GENDER, ColumnHeader.REQUIRED_VALUE),
-    PATIENT_ID("Patient_ID", 1, Metadata.Key.PATIENT_ID, ColumnHeader.REQUIRED_VALUE),
-    COLLECTION_DATE("Collection_Date", 3, Metadata.Key.BUICK_COLLECTION_DATE, ColumnHeader.OPTIONAL_VALUE),
-    VISIT("Visit", 4, Metadata.Key.BUICK_VISIT, ColumnHeader.OPTIONAL_VALUE),
-    TUMOR_OR_NORMAL("SAMPLE_TYPE", 5, Metadata.Key.TUMOR_NORMAL, ColumnHeader.REQUIRED_VALUE);
+    SPECIMEN_NUMBER("Specimen_Number", Metadata.Key.SAMPLE_ID),
+    SEX("Sex", Metadata.Key.GENDER),
+    PATIENT_ID("Patient_ID", Metadata.Key.PATIENT_ID),
+    COLLECTION_DATE("Collection_Date", Metadata.Key.BUICK_COLLECTION_DATE),
+    VISIT("Visit", Metadata.Key.BUICK_VISIT),
+    TUMOR_OR_NORMAL("SAMPLE_TYPE", Metadata.Key.TUMOR_NORMAL);
     private final String columnName;
-    private final int index;
     private final Metadata.Key metadataKey;
-    private final boolean requiredValue;
 
-    ManifestHeader(String columnName, int index, Metadata.Key metadataKey, boolean requiredValue) {
+    public static final String NO_MANIFEST_HEADER_FOUND_FOR_COLUMN =
+            "No ManifestHeader found for columnHeader: ";
+
+    ManifestHeader(String columnName, Metadata.Key metadataKey) {
         this.columnName = columnName;
-        this.index = index;
         this.metadataKey = metadataKey;
-        this.requiredValue = requiredValue;
     }
 
     /**
@@ -70,18 +69,13 @@ public enum ManifestHeader implements ColumnHeader {
     }
 
     @Override
-    public int getIndex() {
-        return index;
-    }
-
-    @Override
     public boolean isRequiredHeader() {
-        return ColumnHeader.REQUIRED_HEADER;
+        return true;
     }
 
     @Override
     public boolean isRequiredValue() {
-        return requiredValue;
+        return ColumnHeader.REQUIRED_VALUE;
     }
 
     /**
@@ -107,13 +101,17 @@ public enum ManifestHeader implements ColumnHeader {
      *
      * @return Collection of ColumnHeaders for the columnNames
      */
-    static Collection<? extends ColumnHeader> fromColumnName(List<String> errors, String... columnNames) {
+    static Collection<ManifestHeader> fromColumnName(List<String> errors, String... columnNames) {
         List<ManifestHeader> matches = new ArrayList<>();
         for (String columnName : columnNames) {
             try {
                 matches.add(ManifestHeader.fromColumnName(columnName));
-            } catch (EnumConstantNotPresentException e) {
-                errors.add(e.constantName());
+            } catch (IllegalArgumentException e) {
+
+                // If a header cell is not blank.
+                if (!columnName.isEmpty()) {
+                    errors.add(columnName);
+                }
             }
         }
         return matches;
@@ -126,7 +124,7 @@ public enum ManifestHeader implements ColumnHeader {
      *
      * @return ManifestHeader for given column.
      *
-     * @throws EnumConstantNotPresentException if enum does not exist for columnHeader.
+     * @throws IllegalArgumentException if enum does not exist for columnHeader.
      */
     public static ManifestHeader fromColumnName(String columnHeader) {
         for (ManifestHeader manifestHeader : ManifestHeader.values()) {
@@ -134,7 +132,7 @@ public enum ManifestHeader implements ColumnHeader {
                 return manifestHeader;
             }
         }
-        throw new EnumConstantNotPresentException(ManifestHeader.class, columnHeader);
+        throw new IllegalArgumentException(NO_MANIFEST_HEADER_FOUND_FOR_COLUMN + columnHeader);
     }
 
     /**

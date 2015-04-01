@@ -38,6 +38,14 @@ public class SearchInstance implements Serializable {
 
     public static final String CHOOSE_VALUE = "(Choose one)";
 
+    public static final String CONTEXT_KEY_BSP_USER_LIST = "bspUserList";
+    public static final String CONTEXT_KEY_COLUMN_SET_TYPE = "columnSetType";
+    public static final String CONTEXT_KEY_SEARCH_VALUE = "searchValue";
+    public static final String CONTEXT_KEY_SEARCH_TERM = "searchTerm";
+    public static final String CONTEXT_KEY_SEARCH_STRING = "searchString";
+    public static final String CONTEXT_KEY_BSP_SAMPLE_SEARCH = "BSPSampleSearchService";
+    public static final String CONTEXT_KEY_OPTION_VALUE_DAO = "OptionValueDao";
+
     /**
      * For JSP EL
      *
@@ -168,7 +176,7 @@ public class SearchInstance implements Serializable {
             }
             if (!evaluatedConstrainedValues) {
                 Map<String, Object> context = new HashMap<>();
-                context.put(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_VALUE, this);
+                context.put(CONTEXT_KEY_SEARCH_VALUE, this);
                 if( getSearchInstance().getEvalContext() != null ) {
                     context.putAll(getSearchInstance().getEvalContext());
                 }
@@ -189,7 +197,7 @@ public class SearchInstance implements Serializable {
                     constrainedValuesSizeLimit = 1000;
                 } else {
                     Map<String, Object> context = new HashMap<>();
-                    context.put(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_VALUE, this);
+                    context.put(CONTEXT_KEY_SEARCH_VALUE, this);
                     constrainedValuesSizeLimit = searchTerm.getConstrainedValuesSizeLimitExpression().evaluate(
                             null, context);
                 }
@@ -220,7 +228,7 @@ public class SearchInstance implements Serializable {
                     searchTerm.getCriteriaPaths().get(0).getPropertyNameExpression();
             if (propertyNameExpression != null) {
                 Map<String, Object> context = new HashMap<>();
-                context.put(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_VALUE, this);
+                context.put(CONTEXT_KEY_SEARCH_VALUE, this);
                 propertyName = propertyNameExpression.evaluate(null, context);
             }
 
@@ -238,7 +246,7 @@ public class SearchInstance implements Serializable {
             }
             if (dataType == null) {
                 Map<String, Object> context = new HashMap<>();
-                context.put(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_VALUE, this);
+                context.put(CONTEXT_KEY_SEARCH_VALUE, this);
                 dataType = searchTerm.getTypeExpression().evaluate(null, context);
             }
             return dataType;
@@ -343,9 +351,11 @@ public class SearchInstance implements Serializable {
                 for (String value : getValues()) {
                     if (searchTerm.getValueConversionExpression() != null) {
                         Map<String, Object> localContext = new HashMap<>();
-                        localContext.putAll(searchInstance.getEvalContext());
-                        localContext.put(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_VALUE, this);
-                        localContext.put(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_STRING, value);
+                        if( searchInstance.getEvalContext() != null ) {
+                            localContext.putAll(searchInstance.getEvalContext());
+                        }
+                        localContext.put(CONTEXT_KEY_SEARCH_VALUE, this);
+                        localContext.put(CONTEXT_KEY_SEARCH_STRING, value);
                         propertyValues.add(searchTerm.getValueConversionExpression().evaluate(null, localContext));
                     } else {
                         if (getDataType().equals("String")) {
@@ -374,7 +384,7 @@ public class SearchInstance implements Serializable {
                 context = new HashMap<>();
             }
             // Evaluate the display value expression for the search term.
-            context.put(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_VALUE, this);
+            context.put(CONTEXT_KEY_SEARCH_VALUE, this);
             try {
                 return getSearchTerm().getDisplayExpression().evaluate(root, context);
             } catch (Exception e) {
@@ -391,7 +401,7 @@ public class SearchInstance implements Serializable {
                 if( context == null ) {
                     context = new HashMap<>();
                 }
-                context.put(SearchDefinitionFactory.CONTEXT_KEY_SEARCH_VALUE, this);
+                context.put(CONTEXT_KEY_SEARCH_VALUE, this);
                 return getSearchTerm().getViewHeader().evaluate(root, context);
             }
         }
@@ -734,6 +744,11 @@ public class SearchInstance implements Serializable {
     private Map<String, Object> evalContext;
 
     /**
+     * Should searches include ancestors/descendants of directly located base entities?
+     */
+    private Map<String,Boolean> traversalEvaluatorValues = new HashMap<>();
+
+    /**
      * Default constructor for Stripes.
      */
     public SearchInstance() {
@@ -803,6 +818,24 @@ public class SearchInstance implements Serializable {
      */
     public void establishRelationships(ConfigurableSearchDefinition configurableSearchDefinition) {
         recurseRelationships(configurableSearchDefinition, searchValues, null);
+        buildTraversalOptions(configurableSearchDefinition);
+    }
+
+    /**
+     * Builds out traversal options to include all available options,
+     *    not just the ones set as true with user checkbox selections.
+     * @param configurableSearchDefinition
+     */
+    private void buildTraversalOptions(ConfigurableSearchDefinition configurableSearchDefinition) {
+        Map<String,TraversalEvaluator> evaluators = configurableSearchDefinition.getTraversalEvaluators();
+        if( evaluators != null ) {
+            for (String id : evaluators.keySet() ) {
+                Boolean isSelected = traversalEvaluatorValues.get(id);
+                if (isSelected == null) {
+                    traversalEvaluatorValues.put(id, Boolean.FALSE);
+                }
+            }
+        }
     }
 
     /**
@@ -846,12 +879,13 @@ public class SearchInstance implements Serializable {
     }
 
     /**
-     * Prior to calling the DAO, we must determine which terms have values specified. The
-     * user might add a term solely to have it appear in the results, and might not
-     * specify a value to search on.
+     * Prior to calling the DAO, we must determine which terms have values specified.
+     * All terms must have values to prevent Oracle table scans.
+     * (Search UI ConfigurableSearchActionBean intercepts a search with no terms)
+     * @return false if any terms have empty values
      */
-    public void checkValues() {
-        recurseCheckValues(searchValues);
+    public boolean checkValues() {
+        return recurseCheckValues(searchValues);
     }
 
     private boolean recurseCheckValues(List<SearchValue> valuesToSearch) {
@@ -870,6 +904,23 @@ public class SearchInstance implements Serializable {
             }
         }
         return atLeastOneAdd;
+    }
+
+    /**
+     * Prior to calling the DAO, determine if any other terms are present along with an exclusive term.
+     * Applies to parent terms only.
+     * @return false if any other terms are present along with an exclusive term.
+     */
+    public boolean hasExclusiveViolation(){
+        boolean hasExclusiveTerm = false;
+        int count = 0;
+        for( SearchValue value : getSearchValues() ) {
+            if( value.getSearchTerm().isExclusive() ) {
+                hasExclusiveTerm = true;
+            }
+            count++;
+        }
+        return hasExclusiveTerm && count > 1;
     }
 
     /**
@@ -943,6 +994,34 @@ public class SearchInstance implements Serializable {
         return searchValues;
     }
 
+    /**
+     * Determine whether or not the base search definition for this instance should be used
+     *   or if the alternate search definition attached to an exclusive search term should be used.
+     * Configuration validation should have been previously tested via hasExclusiveViolation()
+     * @see #hasExclusiveViolation()
+     * @return
+     */
+    public boolean hasAlternateSearchDefinition(){
+        if( searchValues != null && searchValues.size() == 1
+                && searchValues.get(0).getSearchTerm().getAlternateSearchDefinition() != null ) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Get the alternate search definition attached to the exclusive search term.
+     * @return
+     */
+    public ConfigurableSearchDefinition getAlternateSearchDefinition(){
+        if( !hasExclusiveViolation() && hasAlternateSearchDefinition() ){
+            return searchValues.get(0).getSearchTerm().getAlternateSearchDefinition();
+        } else {
+            return null;
+        }
+    }
+
     public void setSearchValues(List<SearchValue> searchValues) {
         this.searchValues = searchValues;
     }
@@ -993,5 +1072,9 @@ public class SearchInstance implements Serializable {
 
     public void setOrderByList(List<SearchOrderBy> orderByList) {
         this.orderByList = orderByList;
+    }
+
+    public Map<String,Boolean> getTraversalEvaluatorValues(){
+        return traversalEvaluatorValues;
     }
 }

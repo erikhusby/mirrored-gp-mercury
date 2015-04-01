@@ -1,10 +1,14 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.Multimaps;
 import edu.mit.broad.prodinfo.bean.generated.AutoWorkRequestInput;
 import edu.mit.broad.prodinfo.bean.generated.AutoWorkRequestOutput;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.text.WordUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
@@ -37,6 +41,8 @@ import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInsta
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
@@ -52,6 +58,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -91,6 +98,10 @@ public class ProductOrderEjb {
 
     private ProductOrderSampleDao productOrderSampleDao;
 
+    private MercurySampleDao mercurySampleDao;
+
+    private ProductOrderJiraUtil productOrderJiraUtil;
+
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
     public ProductOrderEjb() {
@@ -103,7 +114,10 @@ public class ProductOrderEjb {
                            JiraService jiraService,
                            UserBean userBean,
                            BSPUserList userList,
-                           BucketEjb bucketEjb, SquidConnector squidConnector) {
+                           BucketEjb bucketEjb,
+                           SquidConnector squidConnector,
+                           MercurySampleDao mercurySampleDao,
+                           ProductOrderJiraUtil productOrderJiraUtil) {
         this.productOrderDao = productOrderDao;
         this.productDao = productDao;
         this.quoteService = quoteService;
@@ -112,9 +126,32 @@ public class ProductOrderEjb {
         this.userList = userList;
         this.bucketEjb = bucketEjb;
         this.squidConnector = squidConnector;
+        this.mercurySampleDao = mercurySampleDao;
+        this.productOrderJiraUtil = productOrderJiraUtil;
     }
 
     private final Log log = LogFactory.getLog(ProductOrderEjb.class);
+
+    /**
+     * Remove all non-received samples from the order.
+     */
+    public void removeNonReceivedSamples(ProductOrder editOrder,
+                                         MessageReporter reporter) throws NoSuchPDOException, IOException {
+        // Note that calling getReceivedSampleCount() will cause the sample data for all samples to be
+        // fetched if it hasn't been already. This is good because without it each call to getSampleData() below
+        // would fetch it one sample at a time.
+        List<ProductOrderSample> samplesToRemove =
+                new ArrayList<>(editOrder.getSampleCount() - editOrder.getReceivedSampleCount());
+        for (ProductOrderSample sample : editOrder.getSamples()) {
+            if (!sample.getSampleData().isSampleReceived()) {
+                samplesToRemove.add(sample);
+            }
+        }
+
+        if (!samplesToRemove.isEmpty()) {
+            removeSamples(editOrder.getJiraTicketKey(), samplesToRemove, reporter);
+        }
+    }
 
     /**
      * Persisting a Product order.  This method's primary job is to Support a call from the Product Order Action bean
@@ -131,8 +168,8 @@ public class ProductOrderEjb {
      * @throws QuoteNotFoundException
      */
     public void persistProductOrder(ProductOrder.SaveType saveType, ProductOrder editedProductOrder,
-                                    Collection<String> deletedIds,
-                                    Collection<ProductOrderKitDetail> kitDetailCollection)
+                                    @Nonnull Collection<String> deletedIds,
+                                    @Nonnull Collection<ProductOrderKitDetail> kitDetailCollection)
             throws IOException, QuoteNotFoundException {
 
         kitDetailCollection.removeAll(Collections.singleton(null));
@@ -141,9 +178,6 @@ public class ProductOrderEjb {
         editedProductOrder.prepareToSave(userBean.getBspUser(), saveType);
 
         if (editedProductOrder.isDraft()) {
-            // mlc isDraft checks if the status is Draft and if so, we set it to Draft again?
-            editedProductOrder.setOrderStatus(OrderStatus.Draft);
-
             if (editedProductOrder.isSampleInitiation()) {
                 Map<Long, ProductOrderKitDetail> mapKitDetailsByIDs = new HashMap<>();
                 Iterator<ProductOrderKitDetail> kitDetailIterator =
@@ -175,12 +209,6 @@ public class ProductOrderEjb {
         productOrderDao.persist(editedProductOrder);
     }
 
-    private void validateUniqueProjectTitle(ProductOrder productOrder) throws DuplicateTitleException {
-        if (productOrderDao.findByTitle(productOrder.getTitle()) != null) {
-            throw new DuplicateTitleException();
-        }
-    }
-
     /**
      * Looks up the quote for the pdo (if the pdo has one) in the
      * quote server.
@@ -194,53 +222,6 @@ public class ProductOrderEjb {
             }
         }
     }
-
-    // Could be static, but EJB spec does not like it.
-    private void setSamples(ProductOrder productOrder, List<String> sampleIds) throws NoSamplesException {
-        if (sampleIds.isEmpty()) {
-            throw new NoSamplesException();
-        }
-
-        List<ProductOrderSample> orderSamples = new ArrayList<>(sampleIds.size());
-        for (String sampleId : sampleIds) {
-            orderSamples.add(new ProductOrderSample(sampleId));
-        }
-        productOrder.setSamples(orderSamples);
-    }
-
-    private void setAddOnProducts(ProductOrder productOrder, List<String> addOnPartNumbers) {
-        List<Product> addOns =
-                addOnPartNumbers.isEmpty() ? new ArrayList<Product>() : productDao.findByPartNumbers(addOnPartNumbers);
-
-        productOrder.updateAddOnProducts(addOns);
-    }
-
-    // Could be static, but EJB spec does not like it.
-    private void setStatus(ProductOrder productOrder) {
-        // DRAFT orders not yet supported; force state of new PDOs to Submitted.
-        productOrder.setOrderStatus(OrderStatus.Submitted);
-    }
-
-    /**
-     * Including {@link QuoteNotFoundException} since this is an expected failure that may occur in application
-     * validation.  This automatically sets the status of the {@link ProductOrder} to submitted.
-     *
-     * @param productOrder          product order
-     * @param productOrderSampleIds sample IDs
-     * @param addOnPartNumbers      add-on part numbers
-     *
-     * @throws QuoteNotFoundException
-     */
-    public void save(
-            ProductOrder productOrder, List<String> productOrderSampleIds, List<String> addOnPartNumbers)
-            throws DuplicateTitleException, QuoteNotFoundException, NoSamplesException {
-        validateUniqueProjectTitle(productOrder);
-        validateQuote(productOrder, quoteService);
-        setSamples(productOrder, productOrderSampleIds);
-        setAddOnProducts(productOrder, addOnPartNumbers);
-        setStatus(productOrder);
-    }
-
 
     /**
      * Calculate the risk for all samples on the product order specified by business key.
@@ -277,8 +258,9 @@ public class ProductOrderEjb {
                 editOrder.calculateRisk(samples);
             }
         } catch (Exception ex) {
-            log.error("Could not calculate risk", ex);
-            throw ex;
+            String message = "Could not calculate risk.";
+            log.error(message, ex);
+            throw new InformaticsServiceException(message, ex);
         }
 
         // Set the create and modified information.
@@ -347,9 +329,12 @@ public class ProductOrderEjb {
     public void handleSamplesAdded(@Nonnull String productOrderKey, @Nonnull Collection<ProductOrderSample> newSamples,
                                    @Nonnull MessageReporter reporter) {
         ProductOrder order = productOrderDao.findByBusinessKey(productOrderKey);
-        Collection<ProductOrderSample> samples = bucketEjb.addSamplesToBucket(order, newSamples);
-        if (!samples.isEmpty()) {
-            reporter.addMessage("{0} samples have been added to the pico bucket.", samples.size());
+        // Only add samples to the LIMS bucket if the order is ready for lab work.
+        if (order.readyForLab()) {
+            Collection<ProductOrderSample> samples = bucketEjb.addSamplesToBucket(order, newSamples);
+            if (!samples.isEmpty()) {
+                reporter.addMessage("{0} samples have been added to the pico bucket.", samples.size());
+            }
         }
     }
 
@@ -645,7 +630,7 @@ public class ProductOrderEjb {
          */
         private final String stateName;
 
-        private JiraTransition(String stateName) {
+        JiraTransition(String stateName) {
             this.stateName = stateName;
         }
 
@@ -684,8 +669,10 @@ public class ProductOrderEjb {
     /**
      * JIRA Status used by PDOs. Each status contains two transitions. One will transition to Open, one to Closed.
      */
-    private enum JiraStatus {
+    protected enum JiraStatus {
+        PENDING("Pending", JiraTransition.OPEN, JiraTransition.CLOSED),
         OPEN("Open", null, JiraTransition.COMPLETE_ORDER),
+        // This status is only set in the JIRA UI. In Mercury it has the same behavior as Open.
         WORK_REQUEST_CREATED("Work Request Created", null, JiraTransition.ORDER_COMPLETE),
         CLOSED("Closed", JiraTransition.OPEN, null),
         REOPENED("Reopened", JiraTransition.OPEN, JiraTransition.CLOSED),
@@ -698,12 +685,12 @@ public class ProductOrderEjb {
         private final String text;
 
         /**
-         * Transition to use to get to 'Open'. Null if we are already Open.
+         * Transition to use to get to 'Open'. Null indicates a transition is not possible.
          */
         private final JiraTransition toOpen;
 
         /**
-         * Transition to use to get to 'Closed'. Null if we are already Closed.
+         * Transition to use to get to 'Closed'. Null indicates a transition is not possible.
          */
         private final JiraTransition toClosed;
 
@@ -713,13 +700,28 @@ public class ProductOrderEjb {
             this.toClosed = toClosed;
         }
 
-        static JiraStatus fromString(String text) {
+        /**
+         * Given a JIRA issue, return its status as a JiraStatus.
+         */
+        public static JiraStatus fromIssue(JiraIssue issue) throws IOException {
+            Object statusValue = issue.getField(ProductOrder.JiraField.STATUS.getName());
+            String text = ((Map<?, ?>) statusValue).get("name").toString();
             for (JiraStatus status : values()) {
                 if (status.text.equalsIgnoreCase(text)) {
                     return status;
                 }
             }
             return UNKNOWN;
+        }
+
+        /**
+         * Given a PDO status, return the transition required to get to the corresponding JIRA status from this one.
+         */
+        public JiraTransition getTransitionTo(OrderStatus orderStatus) {
+            if (orderStatus == OrderStatus.Completed) {
+                return toClosed;
+            }
+            return toOpen;
         }
     }
 
@@ -751,24 +753,24 @@ public class ProductOrderEjb {
         // update the status.
         ProductOrder order = findProductOrder(jiraTicketKey);
         if (order.updateOrderStatus()) {
-            String operation;
-            JiraIssue issue = jiraService.getIssue(jiraTicketKey);
-            Object statusValue = issue.getField(ProductOrder.JiraField.STATUS.getName());
-            JiraStatus status = JiraStatus.fromString(((Map<?, ?>) statusValue).get("name").toString());
-            JiraTransition transition;
-            if (order.getOrderStatus() == OrderStatus.Completed) {
-                operation = "Completed";
-                transition = status.toClosed;
-            } else {
-                operation = "Opened";
-                transition = status.toOpen;
-            }
-            if (transition != null) {
-                issue.postTransition(transition.getStateName(),
-                        getUserName() + " performed " + operation + " transition");
-            }
+            transitionIssueToSameOrderStatus(order);
             // The status was changed, let the user know.
             reporter.addMessage("The order status of ''{0}'' is now {1}.", jiraTicketKey, order.getOrderStatus());
+        }
+    }
+
+    /**
+     * If possible, update the JIRA issue so its status matches the status of the PDO in Mercury. No error is
+     * generated if the transition is not possible, or if the JIRA status already matches Mercury.
+     *
+     * @param order the order to transition
+     * @throws IOException
+     */
+    private void transitionIssueToSameOrderStatus(@Nonnull ProductOrder order) throws IOException {
+        JiraIssue issue = jiraService.getIssue(order.getJiraTicketKey());
+        JiraTransition transition = JiraStatus.fromIssue(issue).getTransitionTo(order.getOrderStatus());
+        if (transition != null) {
+            issue.postTransition(transition.stateName, getUserName() + " transitioned to " + transition.stateName);
         }
     }
 
@@ -811,8 +813,12 @@ public class ProductOrderEjb {
 
         productOrder.setOrderStatus(OrderStatus.Abandoned);
 
-        transitionSamples(productOrder, EnumSet.of(DeliveryStatus.ABANDONED, DeliveryStatus.NOT_STARTED),
-                DeliveryStatus.ABANDONED, productOrder.getSamples());
+        // For Pending orders, don't change the sample states. This is so reporting can distinguish
+        // abandoned samples vs samples that were removed because the PDO was never placed.
+        if (!productOrder.isPending()) {
+            transitionSamples(productOrder, EnumSet.of(DeliveryStatus.ABANDONED, DeliveryStatus.NOT_STARTED),
+                    DeliveryStatus.ABANDONED, productOrder.getSamples());
+        }
 
         // Currently not setting abandon comments into PDO comments, that seems too intrusive.  We will record the comments
         // with the JIRA ticket.
@@ -820,15 +826,11 @@ public class ProductOrderEjb {
     }
 
     /**
-     * Sample abandonment method with parameter types guessed as appropriate for use with Stripes.
+     * Abandon a list of samples and add a message to the JIRA ticket to reflect this change.
      *
-     * @param jiraTicketKey JIRA ticket key of the PDO in question
+     * @param jiraTicketKey the order's JIRA key
      * @param samples       the samples to abandon
      * @param comment       optional user supplied comment about this action.
-     *
-     * @throws IOException
-     * @throws SampleDeliveryStatusChangeException
-     * @throws NoSuchPDOException
      */
     public void abandonSamples(@Nonnull String jiraTicketKey, @Nonnull Collection<ProductOrderSample> samples,
                                @Nonnull String comment)
@@ -840,37 +842,56 @@ public class ProductOrderEjb {
     }
 
     /**
-     * Sample abandonment method with parameter types guessed as appropriate for use with Stripes.
+     * Un-abandon a list of samples and add a message to the JIRA ticket to reflect this change.
      *
-     * @param jiraTicketKey JIRA ticket key of the PDO in question
-     * @param samples       the samples to abandon
+     * @param jiraTicketKey the order's JIRA key
+     * @param sampleIds       the samples to un-abandon
      * @param comment       optional user supplied comment about this action.
-     *
-     * @throws IOException
-     * @throws SampleDeliveryStatusChangeException
-     * @throws NoSuchPDOException
      */
-    public void unAbandonSamples(@Nonnull String jiraTicketKey, @Nonnull Collection<Long> samples,
+    public void unAbandonSamples(@Nonnull String jiraTicketKey, @Nonnull Collection<Long> sampleIds,
                                  @Nonnull String comment, @Nonnull MessageReporter reporter)
             throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException {
 
-        List<ProductOrderSample> poSamples = productOrderSampleDao.findListByList(ProductOrderSample.class,
-                ProductOrderSample_.productOrderSampleId, samples);
+        List<ProductOrderSample> samples = productOrderSampleDao.findListByList(ProductOrderSample.class,
+                ProductOrderSample_.productOrderSampleId, sampleIds);
 
-        Iterator<ProductOrderSample> samplesIter = poSamples.iterator();
-        while (samplesIter.hasNext()) {
-            ProductOrderSample sample = samplesIter.next();
-            if (sample.getDeliveryStatus() == ProductOrderSample.DeliveryStatus.ABANDONED &&
-                !StringUtils.isBlank(comment)) {
-                sample.setSampleComment(comment);
+        if (!StringUtils.isBlank(comment)) {
+            for (ProductOrderSample sample : samples) {
+                if (sample.getDeliveryStatus() == DeliveryStatus.ABANDONED) {
+                    sample.setSampleComment(comment);
+                }
             }
         }
 
         transitionSamplesAndUpdateTicket(jiraTicketKey, EnumSet.of(DeliveryStatus.ABANDONED),
-                DeliveryStatus.NOT_STARTED, poSamples, comment);
+                DeliveryStatus.NOT_STARTED, samples, comment);
 
         reporter.addMessage("Un-Abandoned samples: {0}.",
-                StringUtils.join(ProductOrderSample.getSampleNames(poSamples), ", "));
+                StringUtils.join(ProductOrderSample.getSampleNames(samples), ", "));
+    }
+
+    /**
+     * Update JIRA state of an order based on a sample change operation.
+     * <ul>
+     *     <li>add a comment with the operation and the list of samples changed</li>
+     *     <li>update the Sample IDs and Number of Samples fields</li>
+     *     <li>output a message to the user about the operation</li>
+     *     <li>if necessary, update the order status based on the new list of samples</li>
+     * </ul>
+     */
+    private void updateSamples(ProductOrder order, Collection<ProductOrderSample> samples, MessageReporter reporter,
+                               String operation) throws IOException, NoSuchPDOException {
+        JiraIssue issue = jiraService.getIssue(order.getJiraTicketKey());
+
+        String nameList = StringUtils.join(ProductOrderSample.getSampleNames(samples), ",");
+        issue.addComment(MessageFormat.format("{0} {1} samples: {2}.",
+                userBean.getLoginUserName(), operation, nameList));
+        productOrderJiraUtil.setCustomField(issue, ProductOrder.JiraField.SAMPLE_IDS, order.getSampleString());
+        productOrderJiraUtil.setCustomField(issue, ProductOrder.JiraField.NUMBER_OF_SAMPLES, order.getSamples().size());
+
+        reporter.addMessage("{0} samples: {1}.", WordUtils.capitalize(operation), nameList);
+
+        updateOrderStatus(order.getJiraTicketKey(), reporter);
     }
 
     /**
@@ -881,53 +902,46 @@ public class ProductOrderEjb {
      * @param jiraTicketKey the PDO key
      * @param samples       the samples to add
      */
-    public void addSamples(@Nonnull BspUser bspUser, @Nonnull String jiraTicketKey,
-                           @Nonnull Collection<ProductOrderSample> samples,
+    public void addSamples(@Nonnull String jiraTicketKey, @Nonnull Collection<ProductOrderSample> samples,
                            @Nonnull MessageReporter reporter) throws NoSuchPDOException, IOException {
         ProductOrder order = findProductOrder(jiraTicketKey);
         order.addSamples(samples);
-        order.prepareToSave(bspUser);
+
+        ImmutableListMultimap<String, ProductOrderSample> samplesBySampleId =
+                Multimaps.index(samples, new Function<ProductOrderSample, String>() {
+                    @Override
+                    public String apply(ProductOrderSample productOrderSample) {
+                        return productOrderSample.getSampleKey();
+                    }
+                });
+
+        Map<String, MercurySample> mercurySampleMap = mercurySampleDao.findMapIdToMercurySample(samplesBySampleId.keySet());
+
+        for (Map.Entry<String, ProductOrderSample> productOrderSampleEntry : samplesBySampleId.entries()) {
+            if (productOrderSampleEntry.getValue().getMercurySample() == null) {
+                productOrderSampleEntry.getValue()
+                        .setMercurySample(mercurySampleMap.get(productOrderSampleEntry.getKey()));
+            }
+        }
+
+        order.prepareToSave(userBean.getBspUser());
         productOrderDao.persist(order);
         handleSamplesAdded(jiraTicketKey, samples, reporter);
 
-        String nameList = StringUtils.join(ProductOrderSample.getSampleNames(samples), ",");
-
-        JiraIssue issue = jiraService.getIssue(jiraTicketKey);
-        issue.addComment(MessageFormat.format("{0} added samples: {1}.", userBean.getLoginUserName(), nameList));
-        issue.setCustomFieldUsingTransition(ProductOrder.JiraField.SAMPLE_IDS,
-                order.getSampleString(),
-                ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
-        issue.setCustomFieldUsingTransition(ProductOrder.JiraField.NUMBER_OF_SAMPLES,
-                order.getSamples().size(),
-                ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
-
-        reporter.addMessage("Added samples: {0}.", nameList);
-
-        updateOrderStatus(jiraTicketKey, reporter);
+        updateSamples(order, samples, reporter, "added");
     }
 
-    public void removeSamples(@Nonnull BspUser bspUser, @Nonnull String jiraTicketKey,
-                              @Nonnull Collection<ProductOrderSample> samples,
+    public void removeSamples(@Nonnull String jiraTicketKey, @Nonnull Collection<ProductOrderSample> samples,
                               @Nonnull MessageReporter reporter) throws IOException, NoSuchPDOException {
         ProductOrder productOrder = findProductOrder(jiraTicketKey);
 
         // If removeAll returns false, no samples were removed -- should never happen.
         if (productOrder.getSamples().removeAll(samples)) {
             String nameList = StringUtils.join(ProductOrderSample.getSampleNames(samples), ",");
-            productOrder.prepareToSave(bspUser);
+            productOrder.prepareToSave(userBean.getBspUser());
             productOrderDao.persist(productOrder);
-            reporter.addMessage("Deleted samples: {0}.", nameList);
 
-            JiraIssue issue = jiraService.getIssue(productOrder.getJiraTicketKey());
-            issue.addComment(MessageFormat.format("{0} deleted samples: {1}.", userBean.getLoginUserName(), nameList));
-            issue.setCustomFieldUsingTransition(ProductOrder.JiraField.SAMPLE_IDS,
-                    productOrder.getSampleString(),
-                    ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
-            issue.setCustomFieldUsingTransition(ProductOrder.JiraField.NUMBER_OF_SAMPLES,
-                    productOrder.getSamples().size(),
-                    ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
-
-            updateOrderStatus(productOrder.getJiraTicketKey(), reporter);
+            updateSamples(productOrder, samples, reporter, "deleted");
         }
     }
 
@@ -960,27 +974,30 @@ public class ProductOrderEjb {
         }
         editOrder.prepareToSave(userBean.getBspUser());
         try {
-
-            ProductOrderJiraUtil.placeOrder(editOrder, jiraService);
+            if (editOrder.isDraft()) {
+                // Only Draft orders are not already created in JIRA.
+                productOrderJiraUtil.createIssueForOrder(editOrder);
+            }
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+            editOrder.setPlacedDate(new Date());
+            transitionIssueToSameOrderStatus(editOrder);
+
+            // Now that the order is placed, add the comments about the samples to the issue.
+            productOrderJiraUtil.addSampleComments(editOrder);
 
         } catch (IOException e) {
-            log.error("An exception occurred attempting to create a Product Order in Jira", e);
-            throw new InformaticsServiceException("Unable to create the Product Order in Jira", e);
+            String message = "Unable to create the Product Order in Jira";
+            log.error(message, e);
+            throw new InformaticsServiceException(message, e);
         }
 
-        // This checks if there is a product order kit defined, which will let ANY PDO define the kit work request.
-        if (editOrder.getProductOrderKit().getKitOrderDetails().isEmpty()) {
-            if (editOrder.isSampleInitiation()) {
-                throw new InformaticsServiceException("Kit Work Requests require at least one kit definition");
-            }
-        } else {
+        if (editOrder.isSampleInitiation()) {
             try {
                 submitSampleKitRequest(editOrder, messageCollection);
             } catch (Exception e) {
-                String errorMessage = "Unable to successfully complete the sample kit creation";
-                log.error(errorMessage);
-                messageCollection.addError(errorMessage);
+                String errorMessage = "Unable to successfully complete the sample kit creation: ";
+                log.error(errorMessage, e);
+                messageCollection.addError(errorMessage + e.getMessage());
             }
         }
 

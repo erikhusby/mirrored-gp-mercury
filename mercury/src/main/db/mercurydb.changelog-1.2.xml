@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-2.0.xsd">
+
+    <changeSet id="GPLIM-3005-sample-key-unique-constraint" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                select count(*) from all_cons_columns col, all_constraints cons
+                where col.constraint_name = cons.constraint_name
+                and cons.table_name = 'MERCURY_SAMPLE'
+                and col.column_name = 'SAMPLE_KEY'
+                and cons.constraint_type in ('U', 'P')
+            </sqlCheck>
+        </preConditions>
+        <addUniqueConstraint tableName="MERCURY_SAMPLE" columnNames="SAMPLE_KEY"
+                             constraintName="U_MERCURY_SAMPLE_SAMPLE_KEY" schemaName="mercury" />
+    </changeSet>
+
+    <changeSet id="GPLIM-3098-1" author="epolk">
+        <createIndex tableName="REV_INFO" indexName="IX_DATE_REV_INFO">
+            <column name="REV_DATE"/>
+        </createIndex>
+        <createIndex tableName="ALIGNER_AUD" indexName="IX_ALIGNER_AUD">
+            <column name="ALIGNER_ID"/>
+        </createIndex>
+        <createIndex tableName="ANALYSIS_TYPE_AUD" indexName="IX_ANALYSIS_TYPE_AUD">
+            <column name="ANALYSIS_TYPE_ID"/>
+        </createIndex>
+        <dropPrimaryKey tableName="BATCH_STARTING_VESSELS_AUD"/>
+        <addPrimaryKey constraintName="PK_BATCH_STARTING_VESSELS_AUD" tableName="BATCH_STARTING_VESSELS_AUD"
+                       schemaName="mercury" columnNames="REV, BATCH_STARTING_VESSEL_ID"/>
+        <createIndex tableName="BATCH_STARTING_VESSELS_AUD" indexName="IX_BATCH_STARTING_VESSELS_AUD">
+            <column name="BATCH_STARTING_VESSEL_ID"/>
+        </createIndex>
+        <createIndex tableName="BUCKET_AUD" indexName="IX_BUCKET_AUD">
+            <column name="BUCKET_ID"/>
+        </createIndex>
+        <createIndex tableName="BUCKET_ENTRY_AUD" indexName="IX_BUCKET_ENTRY_AUD">
+            <column name="BUCKET_ENTRY_ID"/>
+        </createIndex>
+        <createIndex tableName="JIRA_TICKET_AUD" indexName="IX_JIRA_TICKET_AUD">
+            <column name="TICKET_ID"/>
+        </createIndex>
+        <createIndex tableName="LAB_BATCH_AUD" indexName="IX_LAB_BATCH_AUD">
+            <column name="LAB_BATCH_ID"/>
+        </createIndex>
+        <createIndex tableName="LAB_BATCH_REWORKS_AUD" indexName="IX_LB_LAB_BATCH_REWORKS_AUD">
+            <column name="LAB_BATCH"/>
+        </createIndex>
+        <createIndex tableName="LAB_EVENT_AUD" indexName="IX_LAB_EVENT_AUD">
+            <column name="LAB_EVENT_ID"/>
+        </createIndex>
+        <createIndex tableName="LAB_EVENT_REAGENTS_AUD" indexName="IX_LAB_EVENT_REAGENTS_AUD">
+            <column name="LAB_EVENT"/>
+        </createIndex>
+        <createIndex tableName="LAB_METRIC_AUD" indexName="IX_LAB_METRIC_AUD">
+            <column name="LAB_METRIC_ID"/>
+        </createIndex>
+        <createIndex tableName="LAB_METRIC_DECISION_AUD" indexName="IX_DEC_ID_LAB_METR_DEC_AUD">
+            <column name="LAB_METRIC_DECISION_ID"/>
+        </createIndex>
+        <createIndex tableName="LAB_METRIC_METADATA_AUD" indexName="IX_METR_LAB_METR_META_AUD">
+            <column name="LAB_METRIC_ID"/>
+        </createIndex>
+        <createIndex tableName="LAB_METRIC_RUN_AUD" indexName="IX_LAB_METRIC_RUN_AUD">
+            <column name="LAB_METRIC_RUN_ID"/>
+        </createIndex>
+        <createIndex tableName="LAB_METRIC_RUN_METADATA_AUD" indexName="IX_RUN_LAB_METR_RUN_META_AUD">
+            <column name="LAB_METRIC_RUN_ID"/>
+        </createIndex>
+        <createIndex tableName="LAB_METRIC_RUN_METADATA_AUD" indexName="IX_META_LAB_METR_RUN_META_AUD">
+            <column name="METADATA_ID"/>
+        </createIndex>
+        <createIndex tableName="LAB_VESSEL_MERCURY_SAMPLES_AUD" indexName="IX_MS_LV_MERC_SAMPLES_AUD">
+            <column name="MERCURY_SAMPLES"/>
+        </createIndex>
+        <createIndex tableName="LAB_VESSEL_RACKS_OF_TUBES_AUD" indexName="IX_LV_LV_RACKS_OF_TUBES_AUD">
+            <column name="LAB_VESSEL"/>
+        </createIndex>
+        <createIndex tableName="LAB_VESSEL_RACKS_OF_TUBES_AUD" indexName="IX_RT_LV__RACKS_OF_TUBES_AUD">
+            <column name="RACKS_OF_TUBES"/>
+        </createIndex>
+        <createIndex tableName="LB_STARTING_LAB_VESSELS_AUD" indexName="IX_LB_START_LAB_VESSELS_AUD">
+            <column name="LAB_BATCH"/>
+        </createIndex>
+        <createIndex tableName="LB_STARTING_LAB_VESSELS_AUD" indexName="IX_SLV_START_LAB_VESSELS_AUD">
+            <column name="STARTING_LAB_VESSELS"/>
+        </createIndex>
+        <createIndex tableName="LE_LAB_EVENT_METADATAS_AUD" indexName="IX_LE_LE_METADATAS_AUD">
+            <column name="LAB_EVENT"/>
+        </createIndex>
+        <dropPrimaryKey tableName="LE_METADATA_AUD"/>
+        <addPrimaryKey constraintName="PK_LE_METADATA_AUD" tableName="LE_METADATA_AUD" schemaName="mercury"
+                       columnNames="REV, LAB_EVENT_METADATA_ID"/>
+        <createIndex tableName="LE_METADATA_AUD" indexName="IX_LE_METADATA_AUD">
+            <column name="LAB_EVENT_METADATA_ID"/>
+        </createIndex>
+        <createIndex tableName="LV_MAP_POSITION_TO_VESSEL_AUD" indexName="IX_LV_LV_MAP_POS_VESSEL_AUD">
+            <column name="LAB_VESSEL"/>
+        </createIndex>
+        <createIndex tableName="LV_MAP_POSITION_TO_VESSEL_AUD" indexName="IX_MP_LV_MAP_POS_VESSEL_AUD">
+            <column name="MAP_POSITION_TO_VESSEL"/>
+            <column name="MAPKEY"/>
+        </createIndex>
+        <createIndex tableName="MANIFEST_EVENT_AUD" indexName="IX_MANIFEST_EVENT_AUD">
+            <column name="MANIFEST_EVENT_ID"/>
+        </createIndex>
+        <createIndex tableName="MANIFEST_RECORD_AUD" indexName="IX_MANIFEST_RECORD_AUD">
+            <column name="MANIFEST_RECORD_ID"/>
+        </createIndex>
+        <createIndex tableName="MANIFEST_RECORD_JOIN_AUD" indexName="IX_MR_MAN_RECORD_JOIN_AUD">
+            <column name="MANIFEST_RECORD_ID"/>
+        </createIndex>
+        <createIndex tableName="MANIFEST_RECORD_JOIN_AUD" indexName="IX_MR_MAN_SESSION_JOIN_AUD">
+            <column name="MANIFEST_SESSION_ID"/>
+        </createIndex>
+        <createIndex tableName="MANIFEST_RECORD_METADATA_AUD" indexName="IX_MR_MAN_REC_METADATA_AUD">
+            <column name="MANIFEST_RECORD_ID"/>
+        </createIndex>
+        <createIndex tableName="MANIFEST_RECORD_METADATA_AUD" indexName="IX_META_MAN_REC_METADATA_AUD">
+            <column name="METADATA_ID"/>
+        </createIndex>
+        <createIndex tableName="MANIFEST_SESSION_AUD" indexName="IX_MANIFEST_SESSION_AUD">
+            <column name="MANIFEST_SESSION_ID"/>
+        </createIndex>
+        <createIndex tableName="MERCURY_CONTROL_AUD" indexName="IX_MERCURY_CONTROL_AUD">
+            <column name="MERCURY_CONTROL_ID"/>
+        </createIndex>
+        <createIndex tableName="MERCURY_SAMPLE_METADATA_AUD" indexName="IX_MS_MS_METADATA_AUD">
+            <column name="MERCURY_SAMPLE"/>
+            <column name="METADATA"/>
+        </createIndex>
+        <createIndex tableName="METADATA_AUD" indexName="IX_METADATA_AUD">
+            <column name="METADATA_ID"/>
+        </createIndex>
+        <createIndex tableName="MOLECULAR_INDEX_AUD" indexName="IX_MOLECULAR_INDEX_AUD">
+            <column name="MOLECULAR_INDEX_ID"/>
+        </createIndex>
+        <createIndex tableName="MOLECULAR_INDEX_POSITION_AUD" indexName="IX_SCHM_MOL_IDX_POS_AUD">
+            <column name="SCHEME_ID"/>
+        </createIndex>
+        <createIndex tableName="MOLECULAR_INDEX_POSITION_AUD" indexName="IX_IDX_MOL_IDX_POS_AUD">
+            <column name="INDEX_ID"/>
+        </createIndex>
+        <createIndex tableName="MOLECULAR_INDEXING_SCHEME_AUD" indexName="IX_MOL_INDEXING_SCHEME_AUD">
+            <column name="MOLECULAR_INDEXING_SCHEME_ID"/>
+        </createIndex>
+        <createIndex tableName="RAP_SHEET_AUD" indexName="IX_RAP_SHEET_AUD">
+            <column name="RAP_SHEET_ID"/>
+        </createIndex>
+        <createIndex tableName="REAGENT_DESIGN_AUD" indexName="IX_REAGENT_DESIGN_AUD">
+            <column name="REAGENT_DESIGN_ID"/>
+        </createIndex>
+        <createIndex tableName="REFERENCE_SEQUENCE_AUD" indexName="IX_REFERENCE_SEQUENCE_AUD">
+            <column name="SEQUENCE_ID"/>
+        </createIndex>
+        <dropPrimaryKey tableName="REWORK_DETAIL_AUD"/>
+        <addPrimaryKey constraintName="PK_REWORK_DETAIL_AUD" tableName="REWORK_DETAIL_AUD"
+                       schemaName="mercury" columnNames="REV, REWORK_DETAIL_ID"/>
+        <createIndex tableName="REWORK_DETAIL_AUD" indexName="IX_REWORK_DETAIL_AUD">
+            <column name="REWORK_DETAIL_ID"/>
+        </createIndex>
+        <dropPrimaryKey tableName="REWORK_REASON_AUD"/>
+        <addPrimaryKey constraintName="PK_REWORK_REASON_AUD" tableName="REWORK_REASON_AUD"
+                       schemaName="mercury" columnNames="REV, REWORK_REASON_ID"/>
+        <createIndex tableName="REWORK_REASON_AUD" indexName="IX_REWORK_REASON_AUD">
+            <column name="REWORK_REASON_ID"/>
+        </createIndex>
+        <createIndex tableName="SEQUENCING_RUN_AUD" indexName="IX_SEQUENCING_RUN_AUD">
+            <column name="SEQUENCING_RUN_ID"/>
+        </createIndex>
+        <dropPrimaryKey tableName="SEQUENCING_RUN_CHAMBER_AUD"/>
+        <addPrimaryKey constraintName="PK_SEQUENCING_RUN_CHAMBER_AUD" tableName="SEQUENCING_RUN_CHAMBER_AUD"
+                       schemaName="mercury" columnNames="REV, SEQUENCING_RUN_CHAMBER_ID"/>
+        <createIndex tableName="SEQUENCING_RUN_CHAMBER_AUD" indexName="IX_SEQUENCING_RUN_CHAMBER_AUD">
+            <column name="SEQUENCING_RUN_CHAMBER_ID"/>
+        </createIndex>
+        <createIndex tableName="VESSEL_TRANSFER_AUD" indexName="IX_VESSEL_TRANSFER_AUD">
+            <column name="VESSEL_TRANSFER_ID"/>
+        </createIndex>
+
+    </changeSet>
+    <changeSet id="GPLIM-3267-1" author="jsacco">
+        <createIndex tableName="VESSEL_TRANSFER" indexName="IX_VT_SOURCE_VESSEL">
+            <column name="SOURCE_VESSEL"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-3267-2" author="jsacco">
+        <preConditions onFail="CONTINUE">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM VESSEL_TRANSFER
+                 WHERE TARGET_LAB_VESSEL IS NOT NULL
+                    OR DTYPE = 'VesselToVesselTransfer'
+            </sqlCheck>
+        </preConditions>
+        <dropColumn columnName="TARGET_LAB_VESSEL"
+                    tableName="VESSEL_TRANSFER"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-3353-1" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="MANIFEST_SESSION" columnName="FROM_SAMPLE_KIT" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="MANIFEST_SESSION" schemaName="mercury">
+            <column name="FROM_SAMPLE_KIT" type="number(1,0)" defaultValue="0" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-3353-2" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="MANIFEST_SESSION_AUD" columnName="FROM_SAMPLE_KIT" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="MANIFEST_SESSION_AUD" schemaName="mercury">
+            <column name="FROM_SAMPLE_KIT" type="number(1,0)" defaultValue="0" />
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-3314-1" author="jsacco">
+        <createIndex tableName="LAB_METRIC" indexName="IX_LAB_METRIC_VESSEL">
+            <column name="LAB_VESSEL"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-2619-1">
+        <addColumn tableName="LAB_BATCH" schemaName="mercury">
+            <column name="FLOWCELL_TYPE" type="varchar(255)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-2619-2">
+        <addColumn tableName="LAB_BATCH_AUD" schemaName="mercury">
+            <column name="FLOWCELL_TYPE" type="varchar(255)" />
+        </addColumn>
+    </changeSet>
+    
+    <changeSet author="scottmat" id="GPLIM-2731_drop_labevent_PDO_id">
+        <preConditions>
+            <columnExists tableName="LAB_EVENT" columnName="PRODUCT_ORDER_ID" schemaName="mercury" />
+        </preConditions>
+
+        <dropColumn tableName="LAB_EVENT" columnName="PRODUCT_ORDER_ID" schemaName="mercury" />
+    </changeSet> 
+
+    <changeSet author="scottmat" id="GPLIM-2731_drop_labevent_aud_PDO_id">
+        <preConditions>
+            <columnExists tableName="LAB_EVENT_AUD" columnName="PRODUCT_ORDER_ID" schemaName="mercury" />
+        </preConditions>
+
+        <dropColumn tableName="LAB_EVENT_AUD" columnName="PRODUCT_ORDER_ID" schemaName="mercury" />
+    </changeSet>
+
+</databaseChangeLog>

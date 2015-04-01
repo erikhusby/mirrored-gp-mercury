@@ -1,12 +1,17 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
+import com.sun.jersey.api.client.GenericType;
 import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
 import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.MaterialInfo;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceImpl;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
@@ -27,10 +32,11 @@ import java.util.Date;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.AUTO_BUILD;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STANDARD;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.core.Is.is;
 
 @Test(groups = TestGroups.STANDARD)
 public class ProductOrderResourceTest extends RestServiceContainerTest {
@@ -40,6 +46,13 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
     private static final String MULTIPLE_RISK_SAMPLE = "SM-3RAE1";
 
     private static final String VALID_PDO_ID = "PDO-10";
+    private static final String WIDELY_USED_QUOTE_ID = "MMMAC1";
+    // This RP has a Cohort and has two PMs. Both features are needed for testing.
+    private static final String RP_CONTAINING_COHORTS = "RP-40";
+    private static final String RP_WITHOUT_COHORTS = "RP-32";
+    private static final String EXOME_EXPRESS_V3_PRODUCT_NAME = "Exome Express v3";
+    
+    private static final String TEST_PDO_NAME = "test";
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -55,35 +68,35 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
     @RunAsClient
-    public void testCreateProductOrder(@ArquillianResource URL baseUrl) {
+    public void testCreateProductOrder(@ArquillianResource URL baseUrl) throws Exception {
         Date testDate = new Date();
 
         ProductOrderData data = new ProductOrderData();
-        data.setProductName("Exome Express v3");
-        data.setTitle("test product name" + testDate.getTime());
-        data.setQuoteId("MMMAC1");
+        data.setProductName(EXOME_EXPRESS_V3_PRODUCT_NAME);
+        data.setTitle(TEST_PDO_NAME + " rest/create " + testDate.getTime());
+        data.setQuoteId(WIDELY_USED_QUOTE_ID);
         data.setUsername("scottmat");
-        data.setResearchProjectId("RP-32");
+        data.setResearchProjectId(RP_WITHOUT_COHORTS);
         List<String> sampleIds = new ArrayList<>();
         Collections.addAll(sampleIds, "SM-41Q94", "SM-41Q95");
         data.setSamples(sampleIds);
 
         WebResource resource = makeWebResource(baseUrl, "create");
 
-        resource.post(data);
+        ProductOrderData productOrderData = resource.entity(data).post(new GenericType<ProductOrderData>() { });
+        Assert.assertEquals(productOrderData.getStatus(), ProductOrder.OrderStatus.Pending.name());
     }
-
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
     @RunAsClient
-    public void testCreateProductOrderNoUser(@ArquillianResource URL baseUrl) {
+    public void testCreateProductOrderNoUser(@ArquillianResource URL baseUrl) throws Exception{
         Date testDate = new Date();
 
         ProductOrderData data = new ProductOrderData();
-        data.setProductName("Exome Express v3");
-        data.setTitle("test product name" + testDate.getTime());
-        data.setQuoteId("MMMAC1");
-        data.setResearchProjectId("RP-32");
+        data.setProductName(EXOME_EXPRESS_V3_PRODUCT_NAME);
+        data.setTitle(TEST_PDO_NAME + " rest/create " + testDate.getTime());
+        data.setQuoteId(WIDELY_USED_QUOTE_ID);
+        data.setResearchProjectId(RP_WITHOUT_COHORTS);
         List<String> sampleIds = new ArrayList<>();
         Collections.addAll(sampleIds, "SM-41Q94", "SM-41Q95");
         data.setSamples(sampleIds);
@@ -94,97 +107,70 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
             resource.post(data);
             Assert.fail();
         } catch (UniformInterfaceException e) {
-//            assertThat(e.getResponse().getStatus(), is(equalTo(Response.Status.UNAUTHORIZED.getStatusCode())));
+            assertThat(e.getResponse().getStatus(), is(equalTo(Response.Status.UNAUTHORIZED.getStatusCode())));
         }
     }
 
-    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
-    @RunAsClient
-    public void testCreateProductOrderWithKit(@ArquillianResource URL baseUrl) {
-        Date testDate = new Date();
-
+    private static ProductOrderData createTestProductOrderData(String username) {
         ProductOrderData data = new ProductOrderData();
-        data.setProductName("Exome Express v3");
-        data.setTitle("test product name" + testDate.getTime());
-        data.setQuoteId("MMMAC1");
-        data.setUsername("scottmat");
-        data.setResearchProjectId("RP-31"); //RP that has cohorts associated with it.
+        data.setProductName(EXOME_EXPRESS_V3_PRODUCT_NAME);
+        data.setTitle(TEST_PDO_NAME + " rest/createWithKitRequest " + new Date().getTime());
+        data.setQuoteId(WIDELY_USED_QUOTE_ID);
+        // Need to use a research project that has a cohort associated with it.
+        data.setResearchProjectId(RP_CONTAINING_COHORTS);
+        data.setUsername(username);
+        // This is a valid id in the BSP.BSP_SITE table.
+        data.setSiteId(1);
+        ProductOrderKitDetailData kitDetailData = createTestProductOrderKit();
+        data.setKitDetailData(Collections.singletonList(kitDetailData));
+        return data;
+    }
 
+    private static ProductOrderKitDetailData createTestProductOrderKit() {
         ProductOrderKitDetailData kitDetailData = new ProductOrderKitDetailData();
-
         kitDetailData.setMaterialInfo(MaterialInfo.DNA_DERIVED_FROM_BLOOD);
         kitDetailData.setMoleculeType(SampleKitWorkRequest.MoleculeType.DNA);
         kitDetailData.setNumberOfSamples(3);
+        return kitDetailData;
+    }
 
-        data.setKitDetailData(Collections.singletonList(kitDetailData));
-
+    private ProductOrderData sendCreateWithKitRequest(URL baseUrl, String username) throws Exception {
         WebResource resource = makeWebResource(baseUrl, "createWithKitRequest");
+        return resource.entity(createTestProductOrderData(username)).post(new GenericType<ProductOrderData>() { });
+    }
 
-        resource.post(data);
+    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testCreateProductOrderWithKit(@ArquillianResource URL baseUrl) throws Exception {
+        ProductOrderData data = sendCreateWithKitRequest(baseUrl, "scottmat");
+        Assert.assertEquals(data.getStatus(), ProductOrder.OrderStatus.Pending.name());
+
+        // Read data from JIRA.
+        JiraConfig jiraConfig = new JiraConfig(DEV);
+        JiraService jiraService = new JiraServiceImpl(jiraConfig);
+        JiraIssue jiraIssue = jiraService.getIssue(data.getProductOrderKey());
+        @SuppressWarnings("unchecked")
+        Collection<String> projectManagers =
+                (Collection<String>) jiraIssue.getField(ProductOrder.JiraField.PMS.getName());
+        // There should be two PMs in the PMs field.
+        Assert.assertEquals(projectManagers.size(), 2);
+    }
+
+    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, expectedExceptions = UniformInterfaceException.class)
+    @RunAsClient
+    public void testCreateProductOrderWithKitNoUser(@ArquillianResource URL baseUrl) throws Exception {
+        sendCreateWithKitRequest(baseUrl, null);
+    }
+
+    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, expectedExceptions = UniformInterfaceException.class)
+    @RunAsClient
+    public void testCreateProductOrderWithKitNoGoodUser(@ArquillianResource URL baseUrl) throws Exception {
+        sendCreateWithKitRequest(baseUrl, "invalid user name");
     }
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
     @RunAsClient
-    public void testCreateProductOrderWithKitNoUser(@ArquillianResource URL baseUrl) {
-        Date testDate = new Date();
-
-        ProductOrderData data = new ProductOrderData();
-        data.setProductName("Exome Express v3");
-        data.setTitle("test product name" + testDate.getTime());
-        data.setQuoteId("MMMAC1");
-        data.setResearchProjectId("RP-31"); //RP that has cohorts associated with it.
-
-        ProductOrderKitDetailData kitDetailData = new ProductOrderKitDetailData();
-
-        kitDetailData.setMaterialInfo(MaterialInfo.DNA_DERIVED_FROM_BLOOD);
-        kitDetailData.setMoleculeType(SampleKitWorkRequest.MoleculeType.DNA);
-        kitDetailData.setNumberOfSamples(3);
-
-        data.setKitDetailData(Collections.singletonList(kitDetailData));
-
-        WebResource resource = makeWebResource(baseUrl, "createWithKitRequest");
-
-        try {
-            resource.post(data);
-            Assert.fail();
-        } catch (UniformInterfaceException e) {
-
-        }
-    }
-
-    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
-    @RunAsClient
-    public void testCreateProductOrderWithKitNoGoodUser(@ArquillianResource URL baseUrl) {
-        Date testDate = new Date();
-
-        ProductOrderData data = new ProductOrderData();
-        data.setProductName("Exome Express v3");
-        data.setTitle("test product name" + testDate.getTime());
-        data.setQuoteId("MMMAC1");
-        data.setUsername("scottmatthewes");
-        data.setResearchProjectId("RP-31"); //RP that has cohorts associated with it.
-
-        ProductOrderKitDetailData kitDetailData = new ProductOrderKitDetailData();
-
-        kitDetailData.setMaterialInfo(MaterialInfo.DNA_DERIVED_FROM_BLOOD);
-        kitDetailData.setMoleculeType(SampleKitWorkRequest.MoleculeType.DNA);
-        kitDetailData.setNumberOfSamples(3);
-
-        data.setKitDetailData(Collections.singletonList(kitDetailData));
-
-        WebResource resource = makeWebResource(baseUrl, "createWithKitRequest");
-
-        try {
-            resource.post(data);
-            Assert.fail();
-        } catch (UniformInterfaceException e) {
-
-        }
-    }
-
-    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
-    @RunAsClient
-    public void testFetchAtRiskPDOSamplesAllAtRisk(@ArquillianResource URL baseUrl) {
+    public void testFetchAtRiskPDOSamplesAllAtRisk(@ArquillianResource URL baseUrl) throws Exception {
         PDOSamples pdoSamples = getAtRiskSamples();
 
         PDOSamples returnedPdoSamples = makeWebResource(baseUrl, PDO_SAMPLE_STATUS)
@@ -222,7 +208,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
     @RunAsClient
-    public void testFetchAtRiskPDOSamplesNoneAtRisk(@ArquillianResource URL baseUrl) {
+    public void testFetchAtRiskPDOSamplesNoneAtRisk(@ArquillianResource URL baseUrl) throws Exception {
         PDOSamples pdoSamples = getNonRiskPDOSamples();
         PDOSamples returnedPdoSamples = makeWebResource(baseUrl, PDO_SAMPLE_STATUS)
                 .type(MediaType.APPLICATION_JSON)
@@ -236,7 +222,8 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
 
     @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testFindByIds(@ArquillianResource URL baseUrl) {
+    public void testFindByIds(@ArquillianResource URL baseUrl)
+            throws Exception {
         ProductOrders orders = makeWebResource(baseUrl, "pdo/" + VALID_PDO_ID)
                 .accept(MediaType.APPLICATION_XML)
                 .get(ProductOrders.class);
