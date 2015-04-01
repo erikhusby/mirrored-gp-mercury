@@ -25,6 +25,8 @@ import java.util.Date;
 
 @Impl
 public class QuoteServiceImpl extends AbstractJerseyClientService implements QuoteService {
+    public static final String COMMUNICATION_ERROR = "Could not communicate with quote server at %s: %s";
+    private static final long serialVersionUID = 8458283723746937096L;
     @Inject
     private QuoteConfig quoteConfig;
 
@@ -176,10 +178,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         } catch (UniformInterfaceException e) {
             throw new QuoteNotFoundException("Could not find price list at " + url);
         } catch (ClientHandlerException e) {
-            String message =
-                    String.format("Could not communicate with quote server at %s: %s" + url, e.getLocalizedMessage());
-            throw new QuoteServerException(message);
-
+            throw new QuoteServerException(String.format(COMMUNICATION_ERROR, url, e.getLocalizedMessage()));
         }
 
         return prices;
@@ -206,10 +205,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         } catch (UniformInterfaceException e) {
             throw new QuoteNotFoundException("Could not find quotes for sequencing at " + url);
         } catch (ClientHandlerException e) {
-            String message =
-                    String.format("Could not communicate with quote server at %s: %s" + url, e.getLocalizedMessage());
-            throw new QuoteServerException(message);
-
+            throw new QuoteServerException(String.format(COMMUNICATION_ERROR, url, e.getLocalizedMessage()));
         }
 
         return quotes;
@@ -255,9 +251,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         } catch (UniformInterfaceException e) {
             throw new QuoteNotFoundException("Could not find quote " + id + " at " + url);
         } catch (ClientHandlerException e) {
-            String message =
-                    String.format("Could not communicate with quote server at %s: %s" + url, e.getLocalizedMessage());
-            throw new QuoteServerException(message);
+            throw new QuoteServerException(String.format(COMMUNICATION_ERROR, url, e.getLocalizedMessage()));
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException("URL encoding not supported: '" + ENCODING + "'", e);
         }
