@@ -24,11 +24,16 @@ public class MercurySampleData implements SampleData {
     private String collectionDate;
     private String visit;
     private final boolean hasData;
+    private boolean received;
 
     public MercurySampleData(@Nonnull String sampleId, @Nonnull Set<Metadata> metadata) {
         this.sampleId = sampleId;
         hasData = !metadata.isEmpty();
         extractSampleDataFromMetadata(metadata);
+        /*
+         * Temporarily use existence of patient ID as a proxy for "is received".
+         */
+        received = StringUtils.isNotBlank(patientId);
     }
 
     private void extractSampleDataFromMetadata(Set<Metadata> metadata) {
@@ -189,11 +194,7 @@ public class MercurySampleData implements SampleData {
 
     @Override
     public boolean isSampleReceived() {
-        /*
-         * Temporarily use existence of patient ID as a proxy for "is accessioned", which itself is a proxy for
-         * "is received".
-         */
-        return StringUtils.isNotBlank(patientId);
+        return received;
     }
 
     @Override

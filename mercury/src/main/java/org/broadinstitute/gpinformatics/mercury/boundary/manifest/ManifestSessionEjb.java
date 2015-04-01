@@ -14,7 +14,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySample
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestStatus;
@@ -40,16 +39,16 @@ import java.util.Map;
  */
 public class ManifestSessionEjb {
 
-    static final String UNASSOCIATED_TUBE_SAMPLE_MESSAGE =
+    public static final String UNASSOCIATED_TUBE_SAMPLE_MESSAGE =
             "The given target sample id is not associated with the given target vessel.";
     static final String SAMPLE_NOT_FOUND_MESSAGE = "You must provide a valid target sample key.";
-    static final String SAMPLE_NOT_ELIGIBLE_FOR_CLINICAL_MESSAGE =
+    public static final String SAMPLE_NOT_ELIGIBLE_FOR_CLINICAL_MESSAGE =
             "The sample found is not eligible for clinical work.";
     static final String VESSEL_NOT_FOUND_MESSAGE = "The target vessel was not found.";
-    static final String VESSEL_USED_FOR_PREVIOUS_TRANSFER =
+    public static final String VESSEL_USED_FOR_PREVIOUS_TRANSFER =
             "The target vessel has already been used for a tube transfer.";
     static final String MANIFEST_SESSION_NOT_FOUND_FORMAT = "Manifest Session '%s' not found";
-    static final String MERCURY_SAMPLE_KEY = "Mercury sample key";
+    public static final String MERCURY_SAMPLE_KEY = "Mercury sample key";
     static final String RESEARCH_PROJECT_NOT_FOUND_FORMAT = "Research Project '%s' not found: ";
     static final String SAMPLE_IDS_ARE_NOT_FOUND_MESSAGE = "Sample ids are not found: ";
 
@@ -257,16 +256,9 @@ public class ManifestSessionEjb {
                     MERCURY_SAMPLE_KEY, targetSampleKey, SAMPLE_NOT_FOUND_MESSAGE);
         }
 
-        validateTargetSample(targetSample);
+        targetSample.checkClinicalEligibility();
 
         return targetSample;
-    }
-
-    private void validateTargetSample(MercurySample targetSample) {
-        if (targetSample.getMetadataSource() != MercurySample.MetadataSource.MERCURY) {
-            throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, MERCURY_SAMPLE_KEY,
-                    targetSample.getSampleKey(), SAMPLE_NOT_ELIGIBLE_FOR_CLINICAL_MESSAGE);
-        }
     }
 
     /**
@@ -279,41 +271,14 @@ public class ManifestSessionEjb {
      * @return the referenced lab vessel if it is both found and eligible
      */
     public LabVessel findAndValidateTargetSampleAndVessel(String targetSampleKey, String targetVesselLabel) {
-        MercurySample foundSample = findAndValidateTargetSample(targetSampleKey);
         LabVessel foundVessel = labVesselDao.findByIdentifier(targetVesselLabel);
         if (foundVessel == null) {
             throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
                     targetVesselLabel, VESSEL_NOT_FOUND_MESSAGE);
         }
 
-        return validateTargetVessel(foundVessel, foundSample);
-    }
-
-    /**
-     * Helper method to determine target vessel and Sample viability.  Extracts the logic of finding the lab vessel
-     * to make this method available for re-use.
-     * <p/>
-     * {@link #findAndValidateTargetSampleAndVessel(String, String)}
-     *
-     * @param targetLabVessel   The label of the lab vessel that  should be associated with the given mercury sample
-     * @param foundSample       The target mercury sample for the tube transfer
-     *
-     * @return the referenced lab vessel if it is both found and eligible
-     */
-    private LabVessel validateTargetVessel(LabVessel targetLabVessel, MercurySample foundSample) {
-        if (targetLabVessel.doesChainOfCustodyInclude(LabEventType.COLLABORATOR_TRANSFER)) {
-            throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
-                    targetLabVessel.getLabel(), VESSEL_USED_FOR_PREVIOUS_TRANSFER);
-        }
-        // Since upload happens just after Initial Tare, there should not be any other transfers.  For that reason,
-        // searching through the MercurySamples on the vessels instead of getSampleInstancesV2 should be sufficient.
-        for (MercurySample mercurySample : targetLabVessel.getMercurySamples()) {
-            if (mercurySample.equals(foundSample)) {
-                return targetLabVessel;
-            }
-        }
-        throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
-                targetLabVessel.getLabel(), " " + UNASSOCIATED_TUBE_SAMPLE_MESSAGE);
+        MercurySample foundSample = findAndValidateTargetSample(targetSampleKey);
+        return foundSample.validateTargetVesselForClinicalWork(foundVessel);
     }
 
     /**
@@ -382,9 +347,9 @@ public class ManifestSessionEjb {
                                                   StringUtils.join(missingSampleIds, ", "));
         }
         for (MercurySample mercurySample : mercurySampleMap.values()) {
-            validateTargetSample(mercurySample);
+            mercurySample.checkClinicalEligibility();
             for (LabVessel labVessel : mercurySample.getLabVessel()) {
-                validateTargetVessel(labVessel, mercurySample);
+                mercurySample.validateTargetVesselForClinicalWork(labVessel);
             }
         }
     }

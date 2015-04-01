@@ -1364,7 +1364,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         private void updateSampleCounts(Set<String> participantSet, ProductOrderSample sample) {
             incrementSampleCountByMetadata(sample);
             SampleData sampleData = sample.getSampleData();
-            if (sampleData.isSampleReceived()) {
+
+            //Exposing that we look at received to be either received or accessioned.
+            if (sample.isSampleAvailable()) {
                 receivedSampleCount++;
             } else if (!sample.getDeliveryStatus().isAbandoned()) {
                 notReceivedAndNotAbandonedCount++;

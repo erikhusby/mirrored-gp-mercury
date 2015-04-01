@@ -143,7 +143,7 @@ public class ProductOrderEjb {
         List<ProductOrderSample> samplesToRemove =
                 new ArrayList<>(editOrder.getSampleCount() - editOrder.getReceivedSampleCount());
         for (ProductOrderSample sample : editOrder.getSamples()) {
-            if (!sample.getSampleData().isSampleReceived()) {
+            if (!sample.isSampleAvailable()) {
                 samplesToRemove.add(sample);
             }
         }

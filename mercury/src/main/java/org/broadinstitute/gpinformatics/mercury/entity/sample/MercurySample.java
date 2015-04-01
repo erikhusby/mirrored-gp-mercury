@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
+import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.RapSheet;
@@ -48,6 +49,56 @@ public class MercurySample extends AbstractSample {
     public static final String BSP_METADATA_SOURCE = "BSP";
     public static final String MERCURY_METADATA_SOURCE = "MERCURY";
     public static final String GSSR_METADATA_SOURCE = "GSSR";
+
+    /**
+     * Checks if the sample has successfully gone through the accessioning process.
+     */
+    public boolean hasSampleBeenAccessioned() {
+
+        boolean result = false;
+        try {
+            for (LabVessel labVessel : getLabVessel()) {
+                labVessel.accessionCheck();
+            }
+        } catch (TubeTransferException e) {
+            result = true;
+        }
+
+        return result;
+    }
+
+    /**
+     * Helper method to determine target vessel and Sample viability.  Extracts the logic of finding the lab vessel
+     * to make this method available for re-use.
+     * <p/>
+
+     *
+     * @param targetLabVessel   The label of the lab vessel that  should be associated with the given mercury sample
+     * @return the referenced lab vessel if it is both found and eligible
+     */
+    public LabVessel validateTargetVesselForClinicalWork(LabVessel targetLabVessel) {
+        targetLabVessel.accessionCheck();
+        // Since upload happens just after Initial Tare, there should not be any other transfers.  For that reason,
+        // searching through the MercurySamples on the vessels instead of getSampleInstancesV2 should be sufficient.
+        for (MercurySample mercurySample : targetLabVessel.getMercurySamples()) {
+            if (mercurySample.equals(this)) {
+                return targetLabVessel;
+            }
+        }
+        throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
+                targetLabVessel.getLabel(), " " + ManifestSessionEjb.UNASSOCIATED_TUBE_SAMPLE_MESSAGE);
+    }
+
+    /**
+     * Checks if the sample is eligible to be used for Clinical work.  The only criteria here would be that the
+     * sample originated in Mercury.
+     */
+    public void checkClinicalEligibility() {
+        if (getMetadataSource() != MetadataSource.MERCURY) {
+            throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSessionEjb.MERCURY_SAMPLE_KEY,
+                    getSampleKey(), ManifestSessionEjb.SAMPLE_NOT_ELIGIBLE_FOR_CLINICAL_MESSAGE);
+        }
+    }
 
     /** Determines from which system Mercury gets metadata, e.g. collaborator sample ID */
     public enum MetadataSource implements Displayable {

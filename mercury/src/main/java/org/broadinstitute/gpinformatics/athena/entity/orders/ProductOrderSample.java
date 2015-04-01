@@ -684,6 +684,24 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         return criteriaString.substring(0, criteriaString.lastIndexOf(" AND "));
     }
 
+    /**
+     * Rolls up visibility of the samples availability from just the sample data
+     */
+    public boolean isSampleAvailable() {
+        return isSampleAccessioned() && getSampleData().isSampleReceived();
+    }
+
+    /**
+     * Exposes if a sample has been Accessioned.
+     */
+    private boolean isSampleAccessioned() {
+        boolean sampleAccessioned = true;
+        if(mercurySample != null &&
+           mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
+            sampleAccessioned = mercurySample.hasSampleBeenAccessioned();
+        }
+        return sampleAccessioned;
+    }
 
     @SuppressWarnings("UnusedDeclaration")
     public Collection<RiskItem> getRiskItems() {
