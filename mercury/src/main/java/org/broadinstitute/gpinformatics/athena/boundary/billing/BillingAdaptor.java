@@ -143,8 +143,8 @@ public class BillingAdaptor implements Serializable {
                     // Get the quote items on the quote, adding to the quote item cache, if not there.
                     Collection<String> quoteItemNames = getQuoteItems(quoteItemsByQuote, item.getQuoteId());
 
-                    // If this is a replacement, but the primary is not on the quote, set the primary to null so it will
-                    // be billed as if it is a primary.
+                    // If this is a replacement, the primary is not on the quote and the replacement IS on the quote,
+                    // set the primary to null so it will be billed as if it is a primary.
                     if (primaryPriceItemIfReplacement != null) {
                         if (!quoteItemNames.contains(primaryPriceItemIfReplacement.getName()) &&
                                 quoteItemNames.contains(priceItemBeingBilled.getName())) {
