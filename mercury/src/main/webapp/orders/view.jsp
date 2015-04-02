@@ -337,7 +337,7 @@ function showSamples(sampleData) {
                 {"bSortable": true, "sType": "numeric"},        // Yield Amount
                 {"bSortable": true},                            // sample kit upload/rackscan mismatch
                 {"bSortable": true},                            // On Risk
-                {"bSortable": false},                            // On Risk Details
+                {"bSortable": false},                           // On Risk Details
                 {"bSortable": true},                            // Status
                 {"bSortable": true, "sType": "title-string"},   // is billed
                 {"bSortable": true}                             // Comment
