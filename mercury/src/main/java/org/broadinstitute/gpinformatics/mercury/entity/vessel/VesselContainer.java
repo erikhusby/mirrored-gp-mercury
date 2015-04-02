@@ -718,7 +718,16 @@ public class VesselContainer<T extends LabVessel> {
         if (sampleInstancesAtPosition.size() > 1) {
             // todo jmt hardcoded depth, and -1 as an indicator, are not ideal
             for (SampleInstanceV2 sampleInstance : sampleInstancesAtPosition) {
-                labBatches.add(new SampleInstanceV2.LabBatchDepth(10, sampleInstance.getSingleBatch()));
+                LabBatch labBatch = sampleInstance.getSingleBatch();
+                if (labBatch == null) {
+                    List<LabBatch> nearestWorkflowBatches = sampleInstance.getNearestWorkflowBatches();
+                    if (!nearestWorkflowBatches.isEmpty()) {
+                        labBatch = nearestWorkflowBatches.iterator().next();
+                    }
+                }
+                if (labBatch != null) {
+                    labBatches.add(new SampleInstanceV2.LabBatchDepth(10, labBatch));
+                }
             }
             numSampleInstanceWithBucketEntries = -1;
         } else {

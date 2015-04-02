@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 
 import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -30,7 +31,7 @@ public class SampleInstanceV2 {
         private final int depth;
         private final LabBatch labBatch;
 
-        public LabBatchDepth(int depth, LabBatch labBatch) {
+        public LabBatchDepth(int depth, @NotNull LabBatch labBatch) {
             this.depth = depth;
             this.labBatch = labBatch;
         }
@@ -69,6 +70,7 @@ public class SampleInstanceV2 {
     private List<MercurySample> mercurySamples = new ArrayList<>();
     private List<Reagent> reagents = new ArrayList<>();
 
+    // todo jmt revisit "nearest" vs "all"
     private List<LabBatch> nearestWorkflowBatches = new ArrayList<>();
     private List<LabBatch> allWorkflowBatches = new ArrayList<>();
     private List<LabBatchDepth> allWorkflowBatchDepths = new ArrayList<>();
@@ -361,17 +363,25 @@ public class SampleInstanceV2 {
             singleWorkflowBatch = allWorkflowBatches.get(0);
         }
 
-        if (!labVessel.getBucketEntries().isEmpty()) {
+        // filter out bucket entries without a lab batch
+        Set<BucketEntry> bucketEntries = new HashSet<>();
+        for (BucketEntry bucketEntry : labVessel.getBucketEntries()) {
+            if (bucketEntry.getLabBatch() != null) {
+                bucketEntries.add(bucketEntry);
+            }
+        }
+
+        if (!bucketEntries.isEmpty()) {
             nearestBucketEntries.clear();
         }
-        nearestBucketEntries.addAll(labVessel.getBucketEntries());
-        if (labVessel.getBucketEntries().size() == 1) {
-            singleBucketEntry = labVessel.getBucketEntries().iterator().next();
+        nearestBucketEntries.addAll(bucketEntries);
+        if (bucketEntries.size() == 1) {
+            singleBucketEntry = bucketEntries.iterator().next();
             if (LabVessel.DIAGNOSTICS) {
                 log.info("Setting singleBucketEntry to " + singleBucketEntry.getLabBatch().getBatchName() +
                         " in " + labVessel.getLabel());
             }
-        } else if (labVessel.getBucketEntries().size() > 1) { // todo jmt revisit
+        } else if (bucketEntries.size() > 1) { // todo jmt revisit
             singleBucketEntry = null;
         }
 
