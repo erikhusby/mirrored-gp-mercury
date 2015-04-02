@@ -35,8 +35,7 @@ public class IlluminaRunResourceDiffsTest extends Arquillian {
 
     @Test(groups = TestGroups.STANDARD, enabled = false)
     public void testCompareAll() {
-        List<IlluminaSequencingRun> illuminaSequencingRuns = illuminaSequencingRunDao.findAll(
-                IlluminaSequencingRun.class);
+        List<IlluminaSequencingRun> illuminaSequencingRuns = illuminaSequencingRunDao.findAllOrderByRunName();
         for (IlluminaSequencingRun illuminaSequencingRun : illuminaSequencingRuns) {
             // Exclude runs created by tests
             if (!illuminaSequencingRun.getRunName().contains("Flowcell") &&
