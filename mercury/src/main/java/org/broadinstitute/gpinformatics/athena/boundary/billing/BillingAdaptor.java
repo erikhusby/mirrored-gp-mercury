@@ -38,6 +38,8 @@ import java.util.Set;
 @TransactionAttribute(TransactionAttributeType.NEVER)
 public class BillingAdaptor implements Serializable {
 
+    private static final long serialVersionUID = 8829737083883106155L;
+
     private static final Log log = LogFactory.getLog(BillingAdaptor.class);
 
     BillingEjb billingEjb;
