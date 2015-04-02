@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 
@@ -132,30 +133,33 @@ public class BillingAdaptor implements Serializable {
                 Quote quote = new Quote();
                 quote.setAlphanumericId(item.getQuoteId());
 
-                QuotePriceItem quotePriceItem = QuotePriceItem.convertMercuryPriceItem(item.getPriceItem());
+                // The price item that we are billing.
+                QuotePriceItem priceItemBeingBilled = QuotePriceItem.convertMercuryPriceItem(item.getPriceItem());
 
                 // Get the quote PriceItem that this is replacing, if it is a replacement.
-                QuotePriceItem replacementPriceItem = item.getPrimaryForReplacement(priceListCache);
+                QuotePriceItem primaryPriceItemIfReplacement = item.getPrimaryForReplacement(priceListCache);
 
                 try {
-                    // If this is a replacement, but the primary is not on the quote, use the replacement AS the primary.
+                    // Get the quote items on the quote, adding to the quote item cache, if not there.
                     Collection<String> quoteItemNames = getQuoteItems(quoteItemsByQuote, item.getQuoteId());
-                    if (replacementPriceItem != null) {
-                        if (!quoteItemNames.contains(quotePriceItem.getName()) &&
-                                quoteItemNames.contains(replacementPriceItem.getName())) {
-                            quotePriceItem = replacementPriceItem;
-                            replacementPriceItem = null;
+
+                    // If this is a replacement, but the primary is not on the quote, set the primary to null so it will
+                    // be billed as if it is a primary.
+                    if (primaryPriceItemIfReplacement != null) {
+                        if (!quoteItemNames.contains(primaryPriceItemIfReplacement.getName()) &&
+                                quoteItemNames.contains(priceItemBeingBilled.getName())) {
+                            primaryPriceItemIfReplacement = null;
                         }
                     }
 
-                    String workId = quoteService.registerNewWork(quote, quotePriceItem, replacementPriceItem,
+                    String workId = quoteService.registerNewWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
                                                                  item.getWorkCompleteDate(), item.getQuantity(),
                                                                  pageUrl, "billingSession", sessionKey);
 
                     result.setWorkId(workId);
                     Set<String> billedPdoKeys = getBilledPdoKeys(result);
-                    logBilling(workId, item, quotePriceItem, billedPdoKeys);
-                    billingEjb.updateLedgerEntries(item, replacementPriceItem, workId);
+                    logBilling(workId, item, priceItemBeingBilled, billedPdoKeys);
+                    billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacement, workId);
                 } catch (Exception ex) {
 
                     String errorMessage;
@@ -191,10 +195,10 @@ public class BillingAdaptor implements Serializable {
     }
 
     private Collection<String> getQuoteItems(HashMultimap<String, String> quoteItemsByQuote, String quoteId) throws Exception {
-        if (quoteItemsByQuote.containsKey(quoteId)) {
+        if (!quoteItemsByQuote.containsKey(quoteId)) {
             Quote quote = quoteService.getQuoteWithPriceItems(quoteId);
-            for (QuotePriceItem quotePriceItem : quote.getPriceItems()) {
-                quoteItemsByQuote.put(quoteId, quotePriceItem.getName());
+            for (QuoteItem quoteItem : quote.getQuoteItems()) {
+                quoteItemsByQuote.put(quoteId, quoteItem.getName());
             }
         }
 

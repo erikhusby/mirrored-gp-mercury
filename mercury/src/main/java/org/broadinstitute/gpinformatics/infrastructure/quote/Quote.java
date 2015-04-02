@@ -18,7 +18,7 @@ public class Quote {
     private String name;
     private QuoteFunding quoteFunding;
     private QuoteType quoteType;
-    private Collection<QuotePriceItem> priceItems;
+    private Collection<QuoteItem> quoteItems = new ArrayList<> ();
 
     public Quote() {}
 
@@ -29,7 +29,7 @@ public class Quote {
         this.alphanumericId = alphanumericId;
         this.quoteFunding = quoteFunding;
         this.approvalStatus = approvalStatus;
-        this.priceItems = new ArrayList<>();
+        this.quoteItems = new ArrayList<>();
     }
 
     @XmlElement(name = "QuoteFunding")
@@ -42,12 +42,12 @@ public class Quote {
     }
 
     @XmlElement(name = "Item")
-    public Collection<QuotePriceItem> getPriceItems() {
-        return priceItems;
+    public Collection<QuoteItem> getQuoteItems() {
+        return quoteItems;
     }
 
-    public void setQuoteFunding(Collection<QuotePriceItem> priceItems) {
-        this.priceItems = priceItems;
+    public void setQuoteItems(Collection<QuoteItem> quoteItems) {
+        this.quoteItems = quoteItems;
     }
 
     @XmlAttribute(name = "name")

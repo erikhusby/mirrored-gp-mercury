@@ -1,12 +1,9 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
-import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
-
-import javax.annotation.Nonnull;
+import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -15,6 +12,7 @@ public class QuoteItem {
 
     private String quoteId;
     private String priceItemId;
+    private String categoryName;
     private String name;
     private String quantity;
     private String price;
@@ -33,7 +31,7 @@ public class QuoteItem {
         this.unit = unit;
     }
 
-    @XmlElement(name = "quoteId")
+    @XmlAttribute(name = "quoteId")
     public String getQuoteId() {
         return quoteId;
     }
@@ -42,7 +40,7 @@ public class QuoteItem {
         this.quoteId = quoteId;
     }
 
-    @XmlElement(name = "priceItemId")
+    @XmlAttribute(name = "priceItemId")
     public String getPriceItemId() {
         return priceItemId;
     }
@@ -51,7 +49,7 @@ public class QuoteItem {
         this.priceItemId = priceItemId;
     }
 
-    @XmlElement(name = "name")
+    @XmlAttribute(name = "name")
     public String getName() {
         return name;
     }
@@ -60,7 +58,16 @@ public class QuoteItem {
         this.name = name;
     }
 
-    @XmlElement(name = "quantity")
+    @XmlAttribute(name = "categoryName")
+    public String getCategoryName() {
+        return categoryName;
+    }
+
+    public void setCategoryName(String categoryName) {
+        this.categoryName = categoryName;
+    }
+
+    @XmlAttribute(name = "quantity")
     public String getQuantity() {
         return quantity;
     }
@@ -69,7 +76,7 @@ public class QuoteItem {
         this.quantity = quantity;
     }
 
-    @XmlElement(name = "price")
+    @XmlAttribute(name = "price")
     public String getPrice() {
         return price;
     }
@@ -78,7 +85,7 @@ public class QuoteItem {
         this.price = price;
     }
 
-    @XmlElement(name = "unit")
+    @XmlAttribute(name = "unit")
     public String getUnit() {
         return unit;
     }
@@ -117,8 +124,7 @@ public class QuoteItem {
 
     @Override
     public String toString() {
-        return "QuotePriceItem{" + "quoteId='" + quoteId + '\'' +
-                ", name='" + name + '\'' + '\'' + '}';
+        return "QuotePriceItem{" + "quoteId='" + quoteId + '\'' + ", name='" + name + '\'' + '\'' + '}';
     }
 
     /**
