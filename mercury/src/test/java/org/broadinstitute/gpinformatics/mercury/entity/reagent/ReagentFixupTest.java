@@ -6,6 +6,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -39,6 +40,9 @@ public class ReagentFixupTest extends Arquillian {
 
     @Inject
     private ReagentDesignDao reagentDesignDao;
+
+    @Inject
+    private GenericReagentDao genericReagentDao;
 
     @Inject
     private UserBean userBean;
@@ -285,4 +289,12 @@ public class ReagentFixupTest extends Arquillian {
         reagentDesignDao.flush();
     }
 
+    @Test(enabled = false)
+    public void testSupport565(){
+        userBean.loginOSUser();
+        GenericReagent genericReagent = genericReagentDao.findByReagentNameAndLot("HS buffer", "91Q33120101670146301");
+        genericReagent.setLot("RG-8252");
+        genericReagentDao.persist(new FixupCommentary("SUPPORT-565 reagent fixup"));
+        genericReagentDao.flush();
+    }
 }
