@@ -21,9 +21,11 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkDetail;
+import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
@@ -33,16 +35,23 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -72,6 +81,9 @@ public class LabBatchFixUpTest extends Arquillian {
 
     @Inject
     private SampleDataFetcher sampleDataFetcher;
+
+    @Inject
+    private UserBean userBean;
 
     // Use (RC, "rc"), (PROD, "prod") to push the backfill to RC and production respectively.
     @Deployment
@@ -228,66 +240,20 @@ public class LabBatchFixUpTest extends Arquillian {
         labBatchDao.flush();
     }
 
-    private static class TubeBatch {
-        private final String labBatch;
-        private final String barcode;
-
-        private TubeBatch(String labBatch, String barcode) {
-            this.labBatch = labBatch;
-            this.barcode = barcode;
-        }
-
-        public String getLabBatch() {
-            return labBatch;
-        }
-
-        public String getBarcode() {
-            return barcode;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (obj == null || getClass() != obj.getClass()) {
-                return false;
-            }
-
-            TubeBatch tubeBatch = (TubeBatch) obj;
-
-            if (!barcode.equals(tubeBatch.barcode)) {
-                return false;
-            }
-            if (!labBatch.equals(tubeBatch.labBatch)) {
-                return false;
-            }
-
-            return true;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = labBatch.hashCode();
-            result = 31 * result + barcode.hashCode();
-            return result;
-        }
-    }
-
     /**
      * Back populate controls into LCSETs.
      */
     @Test(enabled = true)
-    public void fixupGplim3442() {
+    public void fixupGplim3442GenFile() {
 //        Controller.startCPURecording(true);
 //        Controller.startProbeRecording(Controller.PROBE_NAME_JDBC, true);
 
-        List<LabEventType> shearingLabEventTypes = new ArrayList<>();
-        shearingLabEventTypes.add(LabEventType.SHEARING_TRANSFER);
-
-        List<LabEventType> poolingLabEventTypes = new ArrayList<>();
-        poolingLabEventTypes.add(LabEventType.POOLING_TRANSFER);
-        poolingLabEventTypes.add(LabEventType.ICE_POOLING_TRANSFER);
+        Map<String, List<LabEventType>> mapBucketToEvents = new HashMap<>();
+        mapBucketToEvents.put("Pico/Plating Bucket", Collections.singletonList(LabEventType.SHEARING_TRANSFER));
+        mapBucketToEvents.put("Shearing Bucket", Collections.singletonList(LabEventType.SHEARING_TRANSFER));
+        mapBucketToEvents.put("ICE Bucket", Collections.singletonList(LabEventType.ICE_POOLING_TRANSFER));
+        mapBucketToEvents.put("Hybridization Bucket", Collections.singletonList(LabEventType.HYBRIDIZATION));
+        mapBucketToEvents.put("Pooling Bucket", Collections.singletonList(LabEventType.POOLING_TRANSFER));
 
         List<Control> controls = controlDao.findAllActive();
         List<String> controlAliases = new ArrayList<>();
@@ -295,32 +261,34 @@ public class LabBatchFixUpTest extends Arquillian {
             controlAliases.add(control.getCollaboratorParticipantId());
         }
 
-        Set<TubeBatch> tubeBatches = new HashSet<>();
-
         List<LabBatch> workflowLabBatches = labBatchDao.findByType(LabBatch.LabBatchType.WORKFLOW);
         List<String> batchNames = new ArrayList<>();
         for (LabBatch workflowLabBatch : workflowLabBatches) {
             batchNames.add(workflowLabBatch.getBatchName());
         }
         labBatchDao.clear();
+        Collections.sort(batchNames);
         List<Collection<String>> listListBatchNames = BaseSplitter.split(batchNames, 20);
 
         for (Collection<String> listBatchName : listListBatchNames) {
             workflowLabBatches = labBatchDao.findByListIdentifier(new ArrayList<>(listBatchName));
             for (LabBatch workflowLabBatch : workflowLabBatches) {
-                boolean found = false;
-                Set<LabVessel> labVessels = null;
+                int bucketEntryCount = workflowLabBatch.getBucketEntries().size();
+                Set<LabVessel> labVessels = new HashSet<>();
                 for (BucketEntry bucketEntry : workflowLabBatch.getBucketEntries()) {
                     LabVessel bucketEntryLabVessel = bucketEntry.getLabVessel();
-                    labVessels = getEventLabVessels(shearingLabEventTypes, bucketEntryLabVessel);
-                    if (labVessels.isEmpty()) {
-                        labVessels = getEventLabVessels(poolingLabEventTypes, bucketEntryLabVessel);
+                    if (bucketEntry.getBucket() == null) {
+                        continue;
                     }
-                    if (!labVessels.isEmpty()) {
-                        break;
+                    String bucketDefinitionName = bucketEntry.getBucket().getBucketDefinitionName();
+                    List<LabEventType> labEventTypes = mapBucketToEvents.get(bucketDefinitionName);
+                    if (labEventTypes == null) {
+                        throw new RuntimeException("No event types for bucket " + bucketDefinitionName);
                     }
+                    labVessels.addAll(getEventLabVessels(labEventTypes, bucketEntryLabVessel));
                 }
-                if (labVessels != null) {
+                boolean found = false;
+                if (!labVessels.isEmpty()) {
                     List<String> sampleNames = new ArrayList<>();
                     for (LabVessel labVessel : labVessels) {
                         for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
@@ -329,12 +297,27 @@ public class LabBatchFixUpTest extends Arquillian {
                     }
                     Map<String, SampleData> mapSampleNameToData = sampleDataFetcher.fetchSampleData(sampleNames);
                     for (LabVessel labVessel : labVessels) {
+                        int foundCount;
                         if (OrmUtil.proxySafeIsInstance(labVessel, BarcodedTube.class)) {
-                            found = processTube(tubeBatches, workflowLabBatch, found, (BarcodedTube) labVessel,
+                            foundCount = labVessels.size();
+                        } else if (OrmUtil.proxySafeIsInstance(labVessel, TubeFormation.class)) {
+                            foundCount = labVessel.getContainerRole().getContainedVessels().size();
+                        } else {
+                            throw new RuntimeException("Unexpected class " + labVessel.getClass());
+                        }
+                        System.out.println("For " + workflowLabBatch.getBatchName() +
+                                ", found lab vessels count = " + foundCount +
+                                ", bucket entries size = " + bucketEntryCount);
+                        int difference = foundCount - bucketEntryCount;
+                        if (difference < 0 || difference > 4) {
+                            System.out.println("Difference out of range: " + difference);
+                        }
+                        if (OrmUtil.proxySafeIsInstance(labVessel, BarcodedTube.class)) {
+                            found = processTube(workflowLabBatch, found, (BarcodedTube) labVessel,
                                     mapSampleNameToData, controlAliases);
                         } else if (OrmUtil.proxySafeIsInstance(labVessel, TubeFormation.class)) {
                             for (LabVessel containedVessel : labVessel.getContainerRole().getContainedVessels()) {
-                                found = processTube(tubeBatches, workflowLabBatch, found, (BarcodedTube) containedVessel,
+                                found = processTube(workflowLabBatch, found, (BarcodedTube) containedVessel,
                                         mapSampleNameToData, controlAliases);
                             }
                         }
@@ -353,6 +336,55 @@ public class LabBatchFixUpTest extends Arquillian {
     }
 
     private Set<LabVessel> getEventLabVessels(List<LabEventType> labEventTypes, LabVessel bucketEntryLabVessel) {
+
+/*
+        class EventSourceCriteria implements TransferTraverserCriteria {
+            private final List<LabEventType> labEventTypes;
+            private Set<LabVessel> labVessels = new HashSet<>();
+
+            EventSourceCriteria(List<LabEventType> labEventTypes) {
+                this.labEventTypes = labEventTypes;
+            }
+
+            @Override
+            public TraversalControl evaluateVesselPreOrder(Context context) {
+                LabEvent contextEvent = context.getEvent();
+                // todo jmt getting destination vessel, need source
+                if (contextEvent != null && labEventTypes.contains(contextEvent.getLabEventType())) {
+                    for (CherryPickTransfer cherryPickTransfer : contextEvent.getCherryPickTransfers()) {
+                        if (cherryPickTransfer.getSourceVesselContainer().getContainedVessels().contains(context.getLabVessel())) {
+                            labVessels.add(cherryPickTransfer.getSourceVesselContainer().getEmbedder());
+                        }
+                    }
+                    for (SectionTransfer sectionTransfer : contextEvent.getSectionTransfers()) {
+                        if (sectionTransfer.getSourceVesselContainer().getContainedVessels().contains(context.getLabVessel())) {
+                            labVessels.add(sectionTransfer.getSourceVesselContainer().getEmbedder());
+                        }
+                    }
+                }
+                return TraversalControl.ContinueTraversing;
+            }
+
+            @Override
+            public void evaluateVesselInOrder(Context context) {
+
+            }
+
+            @Override
+            public void evaluateVesselPostOrder(Context context) {
+
+            }
+
+            public Set<LabVessel> getLabVessels() {
+                return labVessels;
+            }
+        }
+
+        EventSourceCriteria eventSourceCriteria = new EventSourceCriteria(labEventTypes);
+        bucketEntryLabVessel.evaluateCriteria(eventSourceCriteria,
+                TransferTraverserCriteria.TraversalDirection.Descendants);
+        return eventSourceCriteria.getLabVessels();
+*/
         Set<LabVessel> labVessels = new HashSet<>();
         for (LabEvent labEvent : bucketEntryLabVessel.getTransfersFrom()) {
             if (labEventTypes.contains(labEvent.getLabEventType())) {
@@ -370,24 +402,40 @@ public class LabBatchFixUpTest extends Arquillian {
         return labVessels;
     }
 
-    private boolean processTube(Set<TubeBatch> tubeBatches, LabBatch workflowLabBatch, boolean found,
+    private boolean processTube(LabBatch workflowLabBatch, boolean found,
             BarcodedTube labVessel, Map<String, SampleData> mapSampleNameToData, List<String> controlAliases) {
-        BarcodedTube barcodedTube = labVessel;
-        Set<SampleInstanceV2> sampleInstances = barcodedTube.getSampleInstancesV2();
+        Set<SampleInstanceV2> sampleInstances = labVessel.getSampleInstancesV2();
         if (sampleInstances.size() == 1) {
             SampleInstanceV2 sampleInstance = sampleInstances.iterator().next();
             SampleData sampleData = mapSampleNameToData.get(sampleInstance.getEarliestMercurySampleName());
             if (controlAliases.contains(sampleData.getCollaboratorParticipantId())) {
-                if (tubeBatches.add(new TubeBatch(
-                        workflowLabBatch.getBatchName(), barcodedTube.getLabel()))) {
-                    found = true;
-                    System.out.println("Adding " + barcodedTube.getLabel() + " to " +
-                            workflowLabBatch.getBatchName() + " " +
-                            sampleInstance.getEarliestMercurySampleName());
+                found = true;
+                System.out.println("Add " + labVessel.getLabel() + " to " +
+                        workflowLabBatch.getBatchName() + " " +
+                        sampleInstance.getEarliestMercurySampleName());
 //                            workflowLabBatch.addLabVessel(barcodedTube);
-                }
             }
         }
         return found;
+    }
+
+    @Test
+    public void fixupGplim3442() {
+        userBean.loginOSUser();
+        InputStream testSpreadSheetInputStream = VarioskanParserTest.getTestResource("BackfillInput.txt");
+        BufferedReader reader = new BufferedReader(new InputStreamReader(testSpreadSheetInputStream));
+        try {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] words = line.split("\\s+");
+                LabVessel labVessel = labVesselDao.findByIdentifier(words[0]);
+                LabBatch labBatch = labBatchDao.findByName(words[1]);
+                labBatch.addLabVessel(labVessel);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        labBatchDao.persist(new FixupCommentary("GPLIM-3442 back fill controls into LCSETs"));
+        labBatchDao.flush();
     }
 }
