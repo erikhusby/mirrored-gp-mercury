@@ -293,7 +293,9 @@ public class ReagentFixupTest extends Arquillian {
     public void fixupSupport565(){
         userBean.loginOSUser();
         GenericReagent genericReagent = genericReagentDao.findByReagentNameAndLot("HS buffer", "91Q33120101670146301");
+        System.out.print("Updating " + genericReagent.getLot());
         genericReagent.setLot("RG-8252");
+        System.out.println(" to " + genericReagent.getLot());
         genericReagentDao.persist(new FixupCommentary("SUPPORT-565 reagent fixup"));
         genericReagentDao.flush();
     }
