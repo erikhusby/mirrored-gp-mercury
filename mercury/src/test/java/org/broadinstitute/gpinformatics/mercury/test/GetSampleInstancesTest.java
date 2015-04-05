@@ -671,4 +671,52 @@ public class GetSampleInstancesTest {
         Assert.assertEquals(denatureEvent.getComputedLcSets().size(), 3);
 
     }
+
+    /**
+     * Tests an ICE pooling transfer with two LCSETs in parallel.
+     */
+    @Test
+    public void testDoublePool() {
+        Map<VesselPosition, BarcodedTube> mapSourcePos1ToTube = new HashMap<>();
+        BarcodedTube l1T1 = new BarcodedTube("L1T1", BarcodedTube.BarcodedTubeType.MatrixTube);
+        mapSourcePos1ToTube.put(VesselPosition.A01, l1T1);
+        mapSourcePos1ToTube.put(VesselPosition.A02, new BarcodedTube("L1T2", BarcodedTube.BarcodedTubeType.MatrixTube));
+        LabBatch lcset1 = new LabBatch("LCSET1", new HashSet<LabVessel>(mapSourcePos1ToTube.values()),
+                LabBatch.LabBatchType.WORKFLOW);
+        TubeFormation sourceTf1 = new TubeFormation(mapSourcePos1ToTube, RackOfTubes.RackType.Matrix96);
+
+        Map<VesselPosition, BarcodedTube> mapSourcePos2ToTube = new HashMap<>();
+        mapSourcePos2ToTube.put(VesselPosition.A01, new BarcodedTube("L2T1", BarcodedTube.BarcodedTubeType.MatrixTube));
+        mapSourcePos2ToTube.put(VesselPosition.A02, new BarcodedTube("L2T2", BarcodedTube.BarcodedTubeType.MatrixTube));
+        LabBatch lcset2 = new LabBatch("LCSET2", new HashSet<LabVessel>(mapSourcePos2ToTube.values()),
+                LabBatch.LabBatchType.WORKFLOW);
+        TubeFormation sourceTf2 = new TubeFormation(mapSourcePos2ToTube, RackOfTubes.RackType.Matrix96);
+
+        Map<VesselPosition, BarcodedTube> mapTargetPosToTube = new HashMap<>();
+        BarcodedTube l1T3 = new BarcodedTube("L1T3", BarcodedTube.BarcodedTubeType.MatrixTube);
+        mapTargetPosToTube.put(VesselPosition.A01, l1T3);
+        BarcodedTube l2T3 = new BarcodedTube("L2T3", BarcodedTube.BarcodedTubeType.MatrixTube);
+        mapTargetPosToTube.put(VesselPosition.A02, l2T3);
+        TubeFormation targetTf = new TubeFormation(mapTargetPosToTube, RackOfTubes.RackType.Matrix96);
+
+        LabEvent labEvent = new LabEvent(LabEventType.ICE_POOLING_TRANSFER, new Date(), "BATMAN", 1L, 101L, "Hamilton");
+        labEvent.getCherryPickTransfers().add(new CherryPickTransfer(
+                sourceTf1.getContainerRole(), VesselPosition.A01, null,
+                targetTf.getContainerRole(), VesselPosition.A01, null, labEvent));
+        labEvent.getCherryPickTransfers().add(new CherryPickTransfer(
+                sourceTf1.getContainerRole(), VesselPosition.A02, null,
+                targetTf.getContainerRole(), VesselPosition.A01, null, labEvent));
+        labEvent.getCherryPickTransfers().add(new CherryPickTransfer(
+                sourceTf2.getContainerRole(), VesselPosition.A01, null,
+                targetTf.getContainerRole(), VesselPosition.A02, null, labEvent));
+        labEvent.getCherryPickTransfers().add(new CherryPickTransfer(
+                sourceTf2.getContainerRole(), VesselPosition.A02, null,
+                targetTf.getContainerRole(), VesselPosition.A02, null, labEvent));
+        Assert.assertEquals(labEvent.getComputedLcSets().size(), 0);
+        Assert.assertEquals(labEvent.getMapPositionToLcSets().size(), 2);
+        Assert.assertEquals(l1T3.getSampleInstancesV2().iterator().next().getSingleBatch(), lcset1);
+        Assert.assertEquals(l2T3.getSampleInstancesV2().iterator().next().getSingleBatch(), lcset2);
+
+        BaseEventTest.runTransferVisualizer(l1T1);
+    }
 }

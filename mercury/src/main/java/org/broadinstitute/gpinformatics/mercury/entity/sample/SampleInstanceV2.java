@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 
@@ -404,6 +405,18 @@ public class SampleInstanceV2 {
         if (singleWorkflowBatch == null) {
             Set<LabBatch> computedLcsets = labEvent.getComputedLcSets();
             // A single computed LCSET can help resolve ambiguity of multiple bucket entries.
+            if (computedLcsets.size() != 1) {
+                // Didn't get a single LCSET for the entire event, see if there's one for the vessel.
+                LabVessel targetLabVessel = labEvent.getTargetLabVessels().iterator().next();
+                VesselContainer<?> containerRole = targetLabVessel.getContainerRole();
+                if (containerRole != null) {
+                    Set<LabBatch> posLabBatches = labEvent.getMapPositionToLcSets().get(
+                            containerRole.getPositionOfVessel(labVessel));
+                    if (posLabBatches != null) {
+                        computedLcsets = posLabBatches;
+                    }
+                }
+            }
             if (computedLcsets.size() == 1) {
                 LabBatch workflowBatch = computedLcsets.iterator().next();
                 singleWorkflowBatch = workflowBatch;
