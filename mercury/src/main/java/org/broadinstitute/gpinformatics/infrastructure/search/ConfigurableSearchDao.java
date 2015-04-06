@@ -353,12 +353,14 @@ public class ConfigurableSearchDao extends GenericDao {
             criterion = createInCriterion(searchValue, (List<Object>) propertyValues.get(0));
         } else if (searchValue.getOperator() == SearchInstance.Operator.EQUALS) {
             if (searchValue.getDataType().equals("Date")) {
-                // Date has implied midnight, so we need between this date and next day
+                // Date has implied midnight, so we need between this date and end of day
                 Calendar nextDay = Calendar.getInstance();
                 nextDay.setTime((Date) propertyValues.get(0));
                 nextDay.add(Calendar.DATE, 1);
+                // Prevent getting next day if time is 12:00 AM
+                nextDay.add(Calendar.SECOND, -1);
                 criterion = Restrictions.between(searchValue.getPropertyName(), propertyValues.get(0),
-                        new Date(nextDay.getTimeInMillis()));
+                        nextDay.getTime());
             } else if (searchValue.getCaseInsensitive() != null && searchValue.getCaseInsensitive()) {
                 criterion = Restrictions.ilike(searchValue.getPropertyName(), propertyValues.get(0));
             } else {
@@ -367,8 +369,19 @@ public class ConfigurableSearchDao extends GenericDao {
         } else if (searchValue.getOperator() == SearchInstance.Operator.LIKE) {
             criterion = Restrictions.ilike(searchValue.getPropertyName(), "%" + propertyValues.get(0) + "%");
         } else if (searchValue.getOperator() == SearchInstance.Operator.BETWEEN) {
-            criterion = Restrictions.between(searchValue.getPropertyName(), propertyValues.get(0),
-                    propertyValues.get(1));
+            if (searchValue.getDataType().equals("Date")) {
+                // Date has implied midnight, so we need to adjust upper value to end of day
+                Calendar nextDay = Calendar.getInstance();
+                nextDay.setTime((Date) propertyValues.get(1));
+                nextDay.add(Calendar.DATE, 1);
+                // Prevent getting next day if time is 12:00 AM
+                nextDay.add(Calendar.SECOND, -1);
+                criterion = Restrictions.between(searchValue.getPropertyName(), propertyValues.get(0),
+                        nextDay.getTime());
+            } else {
+                criterion = Restrictions.between(searchValue.getPropertyName(), propertyValues.get(0),
+                        propertyValues.get(1));
+            }
         } else if (SearchInstance.Operator.IN == searchValue.getOperator()) {
             criterion = createInCriterion(searchValue, propertyValues);
         } else if (SearchInstance.Operator.NOT_IN == searchValue.getOperator()) {
