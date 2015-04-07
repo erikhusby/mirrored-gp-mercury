@@ -115,7 +115,7 @@ public class LabMetricFixupTest extends Arquillian {
         dao.flush();
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void fixupGplim3508() {
         try {
             utx.begin();
