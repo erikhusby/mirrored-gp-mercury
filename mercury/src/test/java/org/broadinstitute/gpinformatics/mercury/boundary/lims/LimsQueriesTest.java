@@ -21,7 +21,9 @@ import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -198,9 +200,14 @@ public class LimsQueriesTest {
         expect(labVesselDao.findByIdentifier("tube1")).andReturn(tube);
         replay(labVesselDao);
 
-        LabMetric quantMetric =
-                new LabMetric(new BigDecimal("55.55"), LabMetric.MetricType.POND_PICO, LabMetric.LabUnit.UG_PER_ML,
-                        "D04", new Date());
+        GregorianCalendar gregorianCalendar = new GregorianCalendar();
+        LabMetric quantMetric = new LabMetric(new BigDecimal("44.44"), LabMetric.MetricType.POND_PICO,
+                LabMetric.LabUnit.UG_PER_ML, "D04", gregorianCalendar.getTime());
+        tube.addMetric(quantMetric);
+
+        gregorianCalendar.add(Calendar.HOUR, 1);
+        quantMetric = new LabMetric(new BigDecimal("55.55"), LabMetric.MetricType.POND_PICO,
+                LabMetric.LabUnit.UG_PER_ML, "D04", gregorianCalendar.getTime());
         tube.addMetric(quantMetric);
 
         Double quantValue = limsQueries.fetchQuantForTube("tube1", "Pond Pico");
