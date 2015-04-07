@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricRunDao;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -12,6 +13,12 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
+import javax.transaction.UserTransaction;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -30,6 +37,9 @@ public class LabMetricFixupTest extends Arquillian {
 
     @Inject
     private UserBean userBean;
+
+    @Inject
+    private UserTransaction utx;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -103,5 +113,34 @@ public class LabMetricFixupTest extends Arquillian {
         }
         dao.persist(new FixupCommentary("GPLIM-3233, LCSET-6493, change Initial Pico to Pond Pico"));
         dao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim3508() {
+        try {
+            utx.begin();
+            userBean.loginOSUser();
+            // This is too time sensitive to hotfix the bug in fetchQuantForTube, so remove the duplicate run.
+            LabMetricRun labMetricRun = dao.findByName("LCSET-7039_Pond Pico3_RM_040315");
+            for (LabMetric labMetric : labMetricRun.getLabMetrics()) {
+                labMetric.getLabVessel().getMetrics().remove(labMetric);
+                for (Metadata metadata : labMetric.getMetadataSet()) {
+                    dao.remove(metadata);
+                }
+                dao.remove(labMetric);
+            }
+            for (Metadata metadata : labMetricRun.getMetadata()) {
+                dao.remove(metadata);
+            }
+
+            System.out.println("Deleting " + labMetricRun.getRunName());
+            dao.remove(labMetricRun);
+            dao.persist(new FixupCommentary("GPLIM-3508 remove duplicate Pico run"));
+            dao.flush();
+            utx.commit();
+        } catch (NotSupportedException | SystemException | RollbackException | HeuristicMixedException |
+                HeuristicRollbackException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
