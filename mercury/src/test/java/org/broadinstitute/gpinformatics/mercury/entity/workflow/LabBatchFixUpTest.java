@@ -428,6 +428,9 @@ public class LabBatchFixUpTest extends Arquillian {
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] words = line.split("\\s+");
+                if (words[0].startsWith("#")) {
+                    continue;
+                }
                 LabVessel labVessel = labVesselDao.findByIdentifier(words[0]);
                 LabBatch labBatch = labBatchDao.findByName(words[1]);
                 labBatch.addLabVessel(labVessel);
