@@ -108,7 +108,7 @@ public class LabVesselMetricPlugin implements ListPlugin {
                 metric = latestMetric;
             }
         }
-        value = MathUtils.scaleTwoDecimalPlaces(metric.getValue()).toPlainString();
+        value = ColumnValueType.TWO_PLACE_DECIMAL.format( metric.getValue(), "" );
         // Display measurement units if not default
         if( metric.getUnits() != LabMetric.LabUnit.UG_PER_ML && metric.getUnits() != LabMetric.LabUnit.NG_PER_UL ) {
             value += " " + metric.getUnits().getDisplayName();
