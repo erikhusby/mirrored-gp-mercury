@@ -453,7 +453,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.EventHandling, on = SAVE_ACTION)
     public void initRegulatoryParameter() {
 
-        if (editOrder.isDraft()) {
+        if (isRegulatoryInfoEditAllowed()) {
             if (selectedRegulatoryIds != null) {
                 List<RegulatoryInfo> selectedRegulatoryInfos = regulatoryInfoDao
                         .findListByList(RegulatoryInfo.class, RegulatoryInfo_.regulatoryInfoId, selectedRegulatoryIds);
@@ -1160,7 +1160,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             saveType = ProductOrder.SaveType.CREATING;
         }
 
-        if (editOrder.isDraft()) {
+        if (isRegulatoryInfoEditAllowed()) {
             updateRegulatoryInformation();
         }
         Set<String> deletedIdsConverted = new HashSet<>(Arrays.asList(deletedKits));
@@ -2199,7 +2199,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 requireField(editOrder.canSkipRegulatoryRequirements(),
                         "a reason for bypassing the regulatory requirements", action);
             }
-            if (editOrder.isDraft()) {
+            if (isRegulatoryInfoEditAllowed()) {
                 if (CollectionUtils.isNotEmpty(selectedRegulatoryIds)) {
                     List<RegulatoryInfo> selectedRegulatoryInfos = regulatoryInfoDao
                             .findListByList(RegulatoryInfo.class, RegulatoryInfo_.regulatoryInfoId,
@@ -2223,6 +2223,10 @@ public class ProductOrderActionBean extends CoreActionBean {
             }
 
         }
+    }
+
+    public boolean isRegulatoryInfoEditAllowed() {
+        return editOrder.isDraft() || editOrder.isPending();
     }
 
     public KitType getChosenKitType() {
