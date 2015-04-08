@@ -561,9 +561,9 @@ public abstract class LabVessel implements Serializable {
      *
      * @param metricType The type of metric to search for during the traversal.
      *
-     * @return A collection of the closest metrics of the type specified.
+     * @return A list of the closest metrics of the type specified, ordered by ascending date
      */
-    public Collection<LabMetric> getNearestMetricsOfType(LabMetric.MetricType metricType) {
+    public List<LabMetric> getNearestMetricsOfType(LabMetric.MetricType metricType) {
         if (getContainerRole() != null) {
             return getContainerRole().getNearestMetricOfType(metricType);
         } else {
