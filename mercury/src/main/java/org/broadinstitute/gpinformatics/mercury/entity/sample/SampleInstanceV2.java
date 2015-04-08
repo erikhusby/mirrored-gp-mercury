@@ -28,6 +28,9 @@ import java.util.Set;
  */
 public class SampleInstanceV2 {
 
+    /**
+     * Allows LabEvent.computeLcSets to choose the nearest match if there are multiple.
+     */
     public static class LabBatchDepth {
         private final int depth;
         private final LabBatch labBatch;
@@ -71,13 +74,14 @@ public class SampleInstanceV2 {
     private List<MercurySample> mercurySamples = new ArrayList<>();
     private List<Reagent> reagents = new ArrayList<>();
 
-    // todo jmt revisit "nearest" vs "all"
+    // todo jmt does "nearest" add any value vs "all"
     private List<LabBatch> nearestWorkflowBatches = new ArrayList<>();
     private List<LabBatch> allWorkflowBatches = new ArrayList<>();
     private List<LabBatchDepth> allWorkflowBatchDepths = new ArrayList<>();
     private LabBatch singleWorkflowBatch;
     /** This is overwritten by each bucketed lab vessel. */
     private List<BucketEntry> nearestBucketEntries = new ArrayList<>();
+    private List<BucketEntry> allBucketEntries = new ArrayList<>();
     private BucketEntry singleBucketEntry;
     // todo jmt this doesn't include reworks
     private List<LabBatchStartingVessel> allLabBatchStartingVessels = new ArrayList<>();
@@ -132,6 +136,7 @@ public class SampleInstanceV2 {
             singleWorkflowBatch = other.singleWorkflowBatch;
         }
         nearestBucketEntries.addAll(other.nearestBucketEntries);
+        allBucketEntries.addAll(other.allBucketEntries);
         singleBucketEntry = other.singleBucketEntry;
 
         allProductOrderSamples.addAll(other.allProductOrderSamples);
@@ -376,6 +381,7 @@ public class SampleInstanceV2 {
             nearestBucketEntries.clear();
         }
         nearestBucketEntries.addAll(bucketEntries);
+        allBucketEntries.addAll(bucketEntries);
         if (bucketEntries.size() == 1) {
             singleBucketEntry = bucketEntries.iterator().next();
             if (LabVessel.DIAGNOSTICS) {
@@ -420,7 +426,7 @@ public class SampleInstanceV2 {
             if (computedLcsets.size() == 1) {
                 LabBatch workflowBatch = computedLcsets.iterator().next();
                 singleWorkflowBatch = workflowBatch;
-                for (BucketEntry bucketEntry : nearestBucketEntries) {
+                for (BucketEntry bucketEntry : allBucketEntries) {
                     // If there's a bucket entry that matches the computed LCSET, use it.
                     if (bucketEntry.getLabBatch() != null &&
                             bucketEntry.getLabBatch().equals(workflowBatch)) {
