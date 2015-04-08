@@ -27,6 +27,11 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.persistence.Query;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 import java.util.Collection;
 import java.util.GregorianCalendar;
@@ -580,5 +585,24 @@ public class LabEventFixupTest extends Arquillian {
         labEventDao.persist(new FixupCommentary(
                 jiraTicket + " manual override to " + lcsetName + " for " + labEventType));
         labEventDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim3513() {
+        try {
+            userBean.loginOSUser();
+            utx.begin();
+            LabEvent dilutionToFlowcell = labEventDao.findById(LabEvent.class, 850779L);
+            Assert.assertEquals(dilutionToFlowcell.getLabEventType(), LabEventType.DILUTION_TO_FLOWCELL_TRANSFER);
+            System.out.println("Deleting " + dilutionToFlowcell.getLabEventType() + " " +
+                    dilutionToFlowcell.getLabEventId());
+            labEventDao.remove(dilutionToFlowcell);
+            labEventDao.persist(new FixupCommentary("GPLIM-3513 delete duplicate event"));
+            labEventDao.flush();
+            utx.commit();
+        } catch (NotSupportedException | SystemException | HeuristicMixedException | HeuristicRollbackException |
+                RollbackException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
