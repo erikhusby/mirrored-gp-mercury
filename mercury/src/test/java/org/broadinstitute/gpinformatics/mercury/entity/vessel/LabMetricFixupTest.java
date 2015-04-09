@@ -3,6 +3,8 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricRunDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -12,9 +14,18 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
+import javax.transaction.UserTransaction;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
@@ -30,6 +41,12 @@ public class LabMetricFixupTest extends Arquillian {
 
     @Inject
     private UserBean userBean;
+
+    @Inject
+    private UserTransaction utx;
+
+    @Inject
+    private LabVesselDao labVesselDao;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -102,6 +119,68 @@ public class LabMetricFixupTest extends Arquillian {
             labMetric.setMetricType(LabMetric.MetricType.POND_PICO);
         }
         dao.persist(new FixupCommentary("GPLIM-3233, LCSET-6493, change Initial Pico to Pond Pico"));
+        dao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim3508() {
+        try {
+            utx.begin();
+            userBean.loginOSUser();
+            // This is too time sensitive to hotfix the bug in fetchQuantForTube, so remove the duplicate run.
+            LabMetricRun labMetricRun = dao.findByName("LCSET-7039_Pond Pico3_RM_040315");
+            for (LabMetric labMetric : labMetricRun.getLabMetrics()) {
+                labMetric.getLabVessel().getMetrics().remove(labMetric);
+                for (Metadata metadata : labMetric.getMetadataSet()) {
+                    dao.remove(metadata);
+                }
+                dao.remove(labMetric);
+            }
+            for (Metadata metadata : labMetricRun.getMetadata()) {
+                dao.remove(metadata);
+            }
+
+            System.out.println("Deleting " + labMetricRun.getRunName());
+            dao.remove(labMetricRun);
+            dao.persist(new FixupCommentary("GPLIM-3508 remove duplicate Pico run"));
+            dao.flush();
+            utx.commit();
+        } catch (NotSupportedException | SystemException | RollbackException | HeuristicMixedException |
+                HeuristicRollbackException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim3514() {
+        Map<String, String> barcodeToPondQuants = new HashMap<String, String>() {{
+            // tested on dev:  put("0180654866", "21.66");
+            //                 put("0180654901", "21.01");
+            put("0180654876","25.87226483");
+            put("0175073819","29.3801513");
+            put("0175073767","28.4380814");
+            put("0180654826","30.51237225");
+            put("0175073776","28.55423798");
+        }};
+
+        userBean.loginOSUser();
+        Map<String, LabVessel> vessels = labVesselDao.findByBarcodes (new ArrayList<>(barcodeToPondQuants.keySet()));
+        Assert.assertEquals(vessels.size(), barcodeToPondQuants.size());
+        for (Map.Entry<String, LabVessel> entry : vessels.entrySet()) {
+            Assert.assertNotNull(entry.getValue(), "barcode " + entry.getKey());
+
+            LabMetric metric = entry.getValue().findMostRecentLabMetric(LabMetric.MetricType.POND_PICO);
+            Assert.assertNotNull(metric,  "barcode " + entry.getKey());
+
+            String newValue = barcodeToPondQuants.get(entry.getKey());
+            Assert.assertNotNull(newValue, "barcode " + entry.getKey());
+
+            System.out.println(
+                    "Updating lab metric " + metric.getLabMetricId() + " pond quant from " + metric.getValue() + " to "
+                    + newValue);
+            metric.setValue(new BigDecimal(newValue));
+        }
+        dao.persist(new FixupCommentary("GPLIM-3514 update generic pico due to rerun of the pond quant"));
         dao.flush();
     }
 }

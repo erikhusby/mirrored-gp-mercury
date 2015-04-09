@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
-import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -33,7 +32,7 @@ public class LabVesselLatestEventPlugin implements ListPlugin {
 
         LatestEventColumn( String displayName ){
             this.displayName = displayName;
-            this.header = new ConfigurableList.Header(displayName, displayName, "", "");
+            this.header = new ConfigurableList.Header(displayName, displayName, "");
         }
 
         @Override
@@ -46,8 +45,6 @@ public class LabVesselLatestEventPlugin implements ListPlugin {
         }
 
     }
-
-    private FastDateFormat dateFormat = FastDateFormat.getInstance( "MM/dd/yyyy HH:mm:ss");
 
     /**
      * Gathers last event data of interest and associates with LabVessel row in search results.
@@ -109,8 +106,8 @@ public class LabVesselLatestEventPlugin implements ListPlugin {
                 cellValue = lastEvent.getEventLocation();
                 row.addCell( new ConfigurableList.Cell(LatestEventColumn.EVENT_LOCATION.getHeader(), cellValue, cellValue ));
                 // Event Date
-                cellValue = dateFormat.format(lastEvent.getEventDate());
-                row.addCell( new ConfigurableList.Cell(LatestEventColumn.EVENT_DATE.getHeader(), cellValue, cellValue ));
+                cellValue = ColumnValueType.DATE_TIME.format( lastEvent.getEventDate(), null );
+                row.addCell( new ConfigurableList.Cell(LatestEventColumn.EVENT_DATE.getHeader(), lastEvent.getEventDate(), cellValue ));
             }
             eventRows.add(row);
         }

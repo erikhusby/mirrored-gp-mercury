@@ -138,8 +138,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
     private String columnSetName;
 
     /**
-     * For single page results, which result set column to in-memory sort by, default to
-     * first
+     * For single page results, which result set column to in-memory sort by, default to first
      */
     private int sortColumnIndex;
 
@@ -391,6 +390,11 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
 
             buildSearchContext();
 
+            // Set up proper sort direction display/functionality of entity headers
+            if( dbSortPath == null || dbSortPath.isEmpty() ) {
+                dbSortPath = configurableSearchDef.getResultEntity().getEntityIdProperty();
+            }
+
             try {
                 ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(
                         searchInstance, configurableSearchDef, columnSetName, sortColumnIndex, dbSortPath,
@@ -418,6 +422,15 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
         getPreferences();
         searchInstance = (SearchInstance) getContext().getRequest().getSession().getAttribute(
                 SEARCH_INSTANCE_PREFIX + sessionKey);
+
+        // Search configuration and paging data have been lost due to session expiration.
+        // The best recovery is to use the back button and click Search button, but relies on browser page caching.
+        // Code gets here by user logging in from another browser tab then clicking on a page link in the expired page
+        //  or clicking a page link and getting forwarded after a session timeout login.
+        if( searchInstance == null ) {
+            addGlobalValidationError("The paging results are no longer available.  Rerun the search.");
+            return new ForwardResolution("/search/configurable_search.jsp");
+        }
 
         buildSearchContext();
 
@@ -473,11 +486,6 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
      *  Use context to avoid need to test in container
      */
     private void buildSearchContext(){
-        if( searchInstance.getEvalContext() == null ) {
-            Map<String, Object> evalContext = new HashMap<>();
-            searchInstance.setEvalContext(evalContext);
-        }
-
         searchInstance.getEvalContext().put(SearchInstance.CONTEXT_KEY_BSP_USER_LIST, bspUserList );
         searchInstance.getEvalContext().put(SearchInstance.CONTEXT_KEY_BSP_SAMPLE_SEARCH, bspSampleSearchService );
         searchInstance.getEvalContext().put(SearchInstance.CONTEXT_KEY_OPTION_VALUE_DAO, constrainedValueDao);

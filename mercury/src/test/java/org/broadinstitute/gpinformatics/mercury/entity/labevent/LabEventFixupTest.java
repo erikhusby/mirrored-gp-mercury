@@ -581,4 +581,30 @@ public class LabEventFixupTest extends Arquillian {
                 jiraTicket + " manual override to " + lcsetName + " for " + labEventType));
         labEventDao.flush();
     }
+
+    @Test(enabled = false)
+    public void fixupGplim3508() {
+        userBean.loginOSUser();
+        LabEvent catchCleanup = labEventDao.findById(LabEvent.class, 849904L);
+        Assert.assertEquals(catchCleanup.getLabEventType(), LabEventType.ICE_CATCH_ENRICHMENT_CLEANUP);
+        LabEvent catchPico1 = labEventDao.findById(LabEvent.class, 849943L);
+        Assert.assertEquals(catchPico1.getLabEventType(), LabEventType.CATCH_PICO);
+        LabEvent catchPico2 = labEventDao.findById(LabEvent.class, 849942L);
+        Assert.assertEquals(catchPico2.getLabEventType(), LabEventType.CATCH_PICO);
+
+        System.out.print("Changing " + catchCleanup.getLabEventType());
+        catchCleanup.setLabEventType(LabEventType.POND_REGISTRATION);
+        System.out.println(" to " + catchCleanup.getLabEventType());
+
+        System.out.print("Changing " + catchPico1.getLabEventType());
+        catchPico1.setLabEventType(LabEventType.POND_PICO);
+        System.out.println(" to " + catchPico1.getLabEventType());
+
+        System.out.print("Changing " + catchPico2.getLabEventType());
+        catchPico2.setLabEventType(LabEventType.POND_PICO);
+        System.out.println(" to " + catchPico2.getLabEventType());
+
+        labEventDao.persist(new FixupCommentary("GPLIM-3508 change event types"));
+        labEventDao.flush();
+    }
 }

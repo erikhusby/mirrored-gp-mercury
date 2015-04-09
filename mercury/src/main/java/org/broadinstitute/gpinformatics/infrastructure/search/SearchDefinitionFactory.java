@@ -156,7 +156,7 @@ public class SearchDefinitionFactory {
      */
     static class EventTypeValueConversionExpression extends SearchTerm.Evaluator<Object> {
         @Override
-        public Object evaluate(Object entity, Map<String, Object> context) {
+        public LabEventType evaluate(Object entity, Map<String, Object> context) {
             return Enum.valueOf(LabEventType.class, (String) context.get(SearchInstance.CONTEXT_KEY_SEARCH_STRING));
         }
     }

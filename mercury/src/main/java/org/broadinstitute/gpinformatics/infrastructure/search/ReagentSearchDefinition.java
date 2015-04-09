@@ -1,11 +1,13 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,15 +43,16 @@ public class ReagentSearchDefinition {
 
         SearchTerm searchTerm = new SearchTerm();
         searchTerm.setName("Reagent Name");
+        searchTerm.setDbSortPath("name");
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
         SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setCriteria( Arrays.asList( "ReagentID" ) );
         criteriaPath.setPropertyName("name");
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
-        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public Object evaluate(Object entity, Map<String, Object> context) {
+            public String evaluate(Object entity, Map<String, Object> context) {
                 Reagent reagent = (Reagent) entity;
                 return reagent.getName();
             }
@@ -58,15 +61,16 @@ public class ReagentSearchDefinition {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Lot Number");
+        searchTerm.setDbSortPath("lot");
         criteriaPaths = new ArrayList<>();
         criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setCriteria(Arrays.asList("ReagentID"));
         criteriaPath.setPropertyName("lot");
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
-        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public Object evaluate(Object entity, Map<String, Object> context) {
+            public String evaluate(Object entity, Map<String, Object> context) {
                 Reagent reagent = (Reagent) entity;
                 return reagent.getLot();
             }
@@ -75,21 +79,17 @@ public class ReagentSearchDefinition {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Expiration Date");
-        searchTerm.setTypeExpression(new SearchTerm.Evaluator<String>() {
-            @Override
-            public String evaluate(Object entity, Map<String, Object> context) {
-                return "Date";
-            }
-        });
+        searchTerm.setDbSortPath("expiration");
+        searchTerm.setValueType(ColumnValueType.DATE);
         criteriaPaths = new ArrayList<>();
         criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setCriteria(Arrays.asList("ReagentID"));
         criteriaPath.setPropertyName("expiration");
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
-        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public Object evaluate(Object entity, Map<String, Object> context) {
+            public Date evaluate(Object entity, Map<String, Object> context) {
                 Reagent reagent = (Reagent) entity;
                 return reagent.getExpiration();
             }
@@ -107,7 +107,7 @@ public class ReagentSearchDefinition {
         searchTerm.setName("LCSET Events");
         searchTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
         searchTerm.setAlternateSearchDefinition(buildLcsetAlternateSearchDef());
-        searchTerm.setValueConversionExpression(SearchDefinitionFactory.getLcsetInputConverter());
+        searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getLcsetInputConverter());
         searchTerm.setHelpText( "Reagents are collected and consolidated from all descendant events in the LCSET."
             + "\nThe LCSET term is exclusive, no other terms can be selected.");
         // Need criteria path in order to see in list of terms

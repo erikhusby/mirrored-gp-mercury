@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.infrastructure.search;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -58,6 +57,7 @@ public class ReagentSearchTest extends Arquillian {
                 configurableListFactory.getFirstResultsPage(
                         searchInstance, configurableSearchDefinition, null, 1, null, "ASC", "LabEvent" );
 
+        // Will blow up on non-exclusive terms before this happens
         Assert.assertEquals(firstPageResults.getPagination().getIdList().size(), 117);
 
     }
@@ -81,22 +81,32 @@ public class ReagentSearchTest extends Arquillian {
 
         searchInstance.establishRelationships(configurableSearchDefinition);
 
+        // Validate side effect of using an alternate search definition
+        Assert.assertFalse(searchInstance.getIsDbSortable(),
+                "DB sorting is disabled for results from terms with alternate search definitions.");
+
         ConfigurableListFactory.FirstPageResults firstPageResults =
                 configurableListFactory.getFirstResultsPage(
-                        searchInstance, configurableSearchDefinition, null, 1, null, "ASC", "Reagent" );
+                        searchInstance, configurableSearchDefinition, null, 0, null, "DSC", "Reagent");
 
         ConfigurableList.ResultList resultList = firstPageResults.getResultList();
         Assert.assertEquals(resultList.getHeaders().size(), 3);
 
-        Set<String> reagentNames = new HashSet<>();
-        reagentNames.add("10MMTRISH8");
-        reagentNames.add("AMPUREXP");
-        reagentNames.add("ETOH70");
+        // Sort is first column descending
+        Assert.assertEquals(resultList.getResultRows().get(0).getRenderableCells().get(0), "ETOH70");
+        Assert.assertEquals(resultList.getResultRows().get(1).getRenderableCells().get(0), "AMPUREXP");
+        Assert.assertEquals(resultList.getResultRows().get(2).getRenderableCells().get(0), "10MMTRISH8");
 
-        String error = "Expected reagent not found in search";
-        Assert.assertTrue(reagentNames.contains(resultList.getResultRows().get(0).getRenderableCells().get(0)), error);
-        Assert.assertTrue(reagentNames.contains(resultList.getResultRows().get(1).getRenderableCells().get(0)), error);
-        Assert.assertTrue(reagentNames.contains(resultList.getResultRows().get(2).getRenderableCells().get(0)), error);
+        // Re-sort on reagent lot ascending
+        configurableListFactory.getFirstResultsPage(
+                searchInstance, configurableSearchDefinition, null, 1, null, "ASC", "Reagent");
+        resultList = firstPageResults.getResultList();
+
+        // Verify sort is second column ascending
+        Assert.assertEquals(resultList.getResultRows().get(0).getRenderableCells().get(1), "13G16A0008");
+        Assert.assertEquals(resultList.getResultRows().get(1).getRenderableCells().get(1), "14C19A0006");
+        Assert.assertEquals(resultList.getResultRows().get(2).getRenderableCells().get(1), "14F04A0001");
+
     }
 
     /**

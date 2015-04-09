@@ -6,8 +6,12 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -16,6 +20,12 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
+import javax.transaction.UserTransaction;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -41,7 +51,16 @@ public class ReagentFixupTest extends Arquillian {
     private ReagentDesignDao reagentDesignDao;
 
     @Inject
+    private GenericReagentDao genericReagentDao;
+
+    @Inject
     private UserBean userBean;
+
+    @Inject
+    private LabEventDao labEventDao;
+
+    @Inject
+    private UserTransaction utx;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -285,4 +304,66 @@ public class ReagentFixupTest extends Arquillian {
         reagentDesignDao.flush();
     }
 
+    @Test(enabled = false)
+    public void fixupSupport565(){
+        userBean.loginOSUser();
+        GenericReagent genericReagent = genericReagentDao.findByReagentNameAndLot("HS buffer", "91Q33120101670146301");
+        System.out.print("Updating " + genericReagent.getLot());
+        genericReagent.setLot("RG-8252");
+        System.out.println(" to " + genericReagent.getLot());
+        genericReagentDao.persist(new FixupCommentary("SUPPORT-565 reagent fixup"));
+        genericReagentDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupSupport565Try2(){
+        try {
+            userBean.loginOSUser();
+            utx.begin();
+            GenericReagent correctReagent = genericReagentDao.findById(GenericReagent.class, 628953L);
+            GenericReagent duplicateReagent = genericReagentDao.findById(GenericReagent.class, 929980L);
+            List<LabEvent> labEvents = labEventDao.findListByList(LabEvent.class, LabEvent_.labEventId, Arrays.asList(
+                    846510L,
+                    846511L,
+                    846512L,
+                    846486L,
+                    846487L,
+                    846488L,
+                    846500L,
+                    846501L,
+                    846502L,
+                    846522L,
+                    846523L,
+                    846524L,
+                    846619L,
+                    846620L,
+                    846621L,
+                    846723L,
+                    846724L,
+                    846725L,
+                    846830L,
+                    846831L,
+                    846832L,
+                    846838L,
+                    846839L,
+                    846840L,
+                    846845L,
+                    846846L,
+                    846847L,
+                    846857L,
+                    846858L,
+                    846859L));
+            for (LabEvent labEvent : labEvents) {
+                labEvent.getReagents().remove(duplicateReagent);
+                labEvent.getReagents().add(correctReagent);
+            }
+            genericReagentDao.remove(duplicateReagent);
+            genericReagentDao.persist(new FixupCommentary("SUPPORT-565 reagent merge"));
+            genericReagentDao.flush();
+            utx.commit();
+        } catch (NotSupportedException | SystemException | HeuristicRollbackException | RollbackException |
+                HeuristicMixedException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
