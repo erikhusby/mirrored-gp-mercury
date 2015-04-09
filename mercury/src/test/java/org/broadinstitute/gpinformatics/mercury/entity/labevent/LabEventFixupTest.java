@@ -28,10 +28,23 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import javax.persistence.Query;
 import javax.transaction.UserTransaction;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Collection;
+import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -40,6 +53,11 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
  */
 @Test(groups = TestGroups.FIXUP)
 public class LabEventFixupTest extends Arquillian {
+
+    private static final Pattern EVENT_TYPE_PATTERN = Pattern.compile("eventType=\"([^\"]*)\"");
+    private static final Pattern STATION_PATTERN = Pattern.compile("station=\"([^\"]*)\"");
+    private static final Pattern START_PATTERN = Pattern.compile("start=\"([^\"]*)\"");
+    private static final Pattern REAGENT_PATTERN = Pattern.compile("reagent barcode=\"([^\"]*)\" kitType=\"([^\"]*) expiration=\"([^\"]*)\"");
 
     @Inject
     private LabEventDao labEventDao;
@@ -55,6 +73,9 @@ public class LabEventFixupTest extends Arquillian {
 
     @Inject
     private StaticPlateDao staticPlateDao;
+
+    @Inject
+    private GenericReagentDao genericReagentDao;
 
     @Inject
     private UserBean userBean;
@@ -580,5 +601,83 @@ public class LabEventFixupTest extends Arquillian {
         labEventDao.persist(new FixupCommentary(
                 jiraTicket + " manual override to " + lcsetName + " for " + labEventType));
         labEventDao.flush();
+    }
+
+    @Test(enabled = true)
+    public void fixupGplim3513Backfill() {
+        userBean.loginOSUser();
+        try {
+            SimpleDateFormat xmlDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+            String inbox = "\\\\neon\\seq_lims\\mercury\\prod\\bettalims\\inbox";
+            DirectoryStream<Path> dateDirs = Files.newDirectoryStream(Paths.get(inbox));
+            for (Path path : dateDirs) {
+//            Path path = Paths.get(inbox + "\\" + "20150406");
+            for (File file : path.toFile().listFiles()) {
+                    BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
+                    try {
+                        boolean found = false;
+                        // We expect to find the eventType in the first few lines
+                        String line = null;
+                        for (int i = 0; i < 3; i++) {
+                            line = bufferedReader.readLine();
+                            Matcher matcher = EVENT_TYPE_PATTERN.matcher(line);
+                            if (matcher.find()) {
+                                String eventType = matcher.group(1);
+                                if (eventType.equals("DilutionToFlowcellTransfer")) {
+                                    found = true;
+                                }
+                                break;
+                            }
+                        }
+                        if (found) {
+                            Matcher matcher = STATION_PATTERN.matcher(line);
+                            if (!matcher.find()) {
+                                System.out.println("Failed to find station in " + file.getName());
+                                continue;
+                            }
+                            String station = matcher.group(1);
+                            matcher = START_PATTERN.matcher(line);
+                            if (!matcher.find()) {
+                                System.out.println("Failed to find start date in " + file.getName());
+                                continue;
+                            }
+                            String startDateString = matcher.group(1);
+                            Date date = xmlDateFormat.parse(startDateString);
+                            LabEvent labEvent = labEventDao.findByLocationDateDisambiguator(station, date, 1L);
+                            if (labEvent == null) {
+                                System.out.println("Failed to find event in " + file.getName());
+                                continue;
+                            }
+                            if (!labEvent.getReagents().isEmpty()) {
+                                continue;
+                            }
+                            while (line != null) {
+                                matcher = REAGENT_PATTERN.matcher(line);
+                                while(matcher.find()) {
+                                    // todo jmt fetch event only if there are reagents
+                                    String reagentName = matcher.group(1);
+                                    String lot = matcher.group(2);
+                                    String expirationString = matcher.group(3);
+                                    Date expiration = xmlDateFormat.parse(expirationString);
+                                    GenericReagent genericReagent = genericReagentDao.findByReagentNameAndLot(
+                                            reagentName, lot);
+                                    if (genericReagent == null) {
+                                        genericReagent = new GenericReagent(reagentName, lot, expiration);
+                                    }
+//                                    labEvent.addReagent(genericReagent);
+                                }
+                                line = bufferedReader.readLine();
+                            }
+                        }
+                    } finally {
+                        bufferedReader.close();
+                    }
+                }
+                labEventDao.persist(new FixupCommentary("GPLIM-3151 backfill reagents"));
+                labEventDao.flush();
+            }
+        } catch (IOException | ParseException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
