@@ -982,6 +982,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return false;
     }
 
+    public boolean isRegulatoryInfoEditAllowed() {
+        return isDraft() || isPending();
+    }
+
     public boolean canSkipRegulatoryRequirements() {
         return !StringUtils.isBlank(skipRegulatoryReason);
     }
