@@ -962,7 +962,7 @@
                     </c:otherwise>
                 </c:choose>
                 <c:choose>
-                    <c:when test="${actionBean.regulatoryInfoEditAllowed}">
+                    <c:when test="${actionBean.editOrder.regulatoryInfoEditAllowed}">
                         <div class="control-group">
                             <stripes:label for="regulatoryInfo" class="control-label">
                                 Regulatory Information

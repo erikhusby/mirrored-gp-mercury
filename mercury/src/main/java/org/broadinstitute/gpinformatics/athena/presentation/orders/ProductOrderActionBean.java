@@ -2225,10 +2225,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    public boolean isRegulatoryInfoEditAllowed() {
-        return editOrder.isDraft() || editOrder.isPending();
-    }
-
     public KitType getChosenKitType() {
         return chosenKitType;
     }
