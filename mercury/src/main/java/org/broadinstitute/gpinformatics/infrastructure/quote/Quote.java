@@ -5,7 +5,6 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 @XmlRootElement(name="Quote")
 public class Quote {
@@ -22,14 +21,13 @@ public class Quote {
 
     public Quote() {}
 
-    public Quote(String alphanumericId,QuoteFunding quoteFunding, ApprovalStatus approvalStatus) {
+    public Quote(String alphanumericId, QuoteFunding quoteFunding, ApprovalStatus approvalStatus) {
         if (alphanumericId == null) {
             throw new NullPointerException("alphanumeric Id cannot be null.");
         }
         this.alphanumericId = alphanumericId;
         this.quoteFunding = quoteFunding;
         this.approvalStatus = approvalStatus;
-        this.quoteItems = new ArrayList<>();
     }
 
     @XmlElement(name = "QuoteFunding")

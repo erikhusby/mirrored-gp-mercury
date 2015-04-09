@@ -196,6 +196,15 @@ public class BillingAdaptor implements Serializable {
         return results;
     }
 
+    /**
+     * This grabs the quote items for a quoteId from the quote server. It maintains a cache that keeps it from going
+     * to the quote server multiple times for the same quote id.
+     *
+     * @param quoteItemsByQuote The cache of quote Ids to the quote items.
+     * @param quoteId The quote to look up
+     *
+     * @return The list of quote items (price item names that belong to the quote).
+     */
     private Collection<String> getQuoteItems(HashMultimap<String, String> quoteItemsByQuote, String quoteId) throws Exception {
         if (!quoteItemsByQuote.containsKey(quoteId)) {
             Quote quote = quoteService.getQuoteWithPriceItems(quoteId);

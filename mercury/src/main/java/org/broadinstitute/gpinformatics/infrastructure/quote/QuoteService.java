@@ -43,7 +43,7 @@ public interface QuoteService extends Serializable {
     public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException;
 
     /**
-     * Get the quote for a particular quote identifier.
+     * Get the quote and all its associated price items for a particular quote identifier.
      *
      * @param alphaId The quote identifier.
      *
