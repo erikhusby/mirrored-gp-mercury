@@ -52,7 +52,18 @@ public class MercurySample extends AbstractSample {
     public static final String GSSR_METADATA_SOURCE = "GSSR";
 
     /**
-     * Checks if the sample has successfully gone through the accessioning process.
+     * Checks if the sample has successfully gone through the accessioning process.  If any vessel (for everything but
+     * slides there should only be one vessel associated) has been accessioned, this will return true.
+     *
+     * Except for Slides, samples should have one and only one lab vessel associated with it.  Instead of
+     * implementing
+     * <code>
+     *     iterator().next()
+     * </code>
+     * for getting the one item, I will leave the loop since it is a bit cleaner and safer.  When there is a concrete
+     * solution for dealing with Slides for Accessioning, and there is a slide entity type, we can alter this logic to
+     * check for number of vessels and compare it to vessel type.
+     *
      */
     public boolean hasSampleBeenAccessioned() {
 

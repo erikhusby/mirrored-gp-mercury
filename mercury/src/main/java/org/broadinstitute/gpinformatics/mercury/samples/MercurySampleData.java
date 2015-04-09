@@ -30,10 +30,6 @@ public class MercurySampleData implements SampleData {
         this.sampleId = sampleId;
         hasData = !metadata.isEmpty();
         extractSampleDataFromMetadata(metadata);
-        /*
-         * Temporarily use existence of patient ID as a proxy for "is received".
-         */
-        received = StringUtils.isNotBlank(patientId);
     }
 
     private void extractSampleDataFromMetadata(Set<Metadata> metadata) {

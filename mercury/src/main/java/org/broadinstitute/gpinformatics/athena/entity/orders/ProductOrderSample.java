@@ -688,7 +688,19 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      * Rolls up visibility of the samples availability from just the sample data
      */
     public boolean isSampleAvailable() {
-        return isSampleAccessioned() && getSampleData().isSampleReceived();
+        boolean available;
+
+        switch (getMetadataSource()) {
+        case BSP:
+            available = getSampleData().isSampleReceived();
+            break;
+        case MERCURY:
+            available = isSampleAccessioned();
+            break;
+        default:
+            throw new IllegalStateException("The metadata Source is undetermined");
+        }
+        return available;
     }
 
     /**
