@@ -236,8 +236,7 @@ public class ProductOrderSampleTest {
         ProductOrderSample sample = new ProductOrderSample("ABC");
 
         MercurySample.MetadataSource metadataSource = MercurySample.MetadataSource.MERCURY;
-        MercurySample testSample = new MercurySample( sample.getSampleKey(), Collections.singleton(new Metadata(
-                Metadata.Key.PATIENT_ID, "PT-"+sample.getSampleKey())));
+        MercurySample testSample = new MercurySample( sample.getSampleKey(), Collections.<Metadata>emptySet());
         BarcodedTube barcodedTube = new BarcodedTube("VesselFor" + sample.getSampleKey(),
                 BarcodedTube.BarcodedTubeType.MatrixTube);
         LabEvent collaboratorTransferEvent =
