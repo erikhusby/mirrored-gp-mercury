@@ -243,7 +243,7 @@ public class ProductOrderSampleTest {
         LabEvent collaboratorTransferEvent =
                 new LabEvent(LabEventType.COLLABORATOR_TRANSFER, new Date(), "thisLocation", 0l, 0l, "testprogram");
         barcodedTube.getInPlaceLabEvents().add(collaboratorTransferEvent);
-        testSample.getLabVessel().add(barcodedTube);
+        testSample.addLabVessel(barcodedTube);
 
         sample.setMetadataSource(metadataSource);
         sample.setMercurySample(testSample);
@@ -260,7 +260,7 @@ public class ProductOrderSampleTest {
         MercurySample testSample = new MercurySample( sample.getSampleKey(), Collections.<Metadata>emptySet());
         BarcodedTube barcodedTube = new BarcodedTube("VesselFor" + sample.getSampleKey(),
                 BarcodedTube.BarcodedTubeType.MatrixTube);
-        testSample.getLabVessel().add(barcodedTube);
+        testSample.addLabVessel(barcodedTube);
 
         sample.setMetadataSource(metadataSource);
         sample.setMercurySample(testSample);

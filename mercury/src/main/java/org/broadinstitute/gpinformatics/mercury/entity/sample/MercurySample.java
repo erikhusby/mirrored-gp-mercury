@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.RapSheet;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
@@ -56,12 +57,11 @@ public class MercurySample extends AbstractSample {
     public boolean hasSampleBeenAccessioned() {
 
         boolean result = false;
-        try {
-            for (LabVessel labVessel : getLabVessel()) {
-                labVessel.accessionCheck();
+        for (LabVessel labVessel : getLabVessel()) {
+            if(!labVessel.canBeUsedForAccessioning()) {
+                result = true;
+                break;
             }
-        } catch (TubeTransferException e) {
-            result = true;
         }
 
         return result;
@@ -76,28 +76,35 @@ public class MercurySample extends AbstractSample {
      * @param targetLabVessel   The label of the lab vessel that  should be associated with the given mercury sample
      * @return the referenced lab vessel if it is both found and eligible
      */
-    public LabVessel validateTargetVesselForClinicalWork(LabVessel targetLabVessel) {
-        targetLabVessel.accessionCheck();
-        // Since upload happens just after Initial Tare, there should not be any other transfers.  For that reason,
-        // searching through the MercurySamples on the vessels instead of getSampleInstancesV2 should be sufficient.
-        for (MercurySample mercurySample : targetLabVessel.getMercurySamples()) {
-            if (mercurySample.equals(this)) {
-                return targetLabVessel;
+    public AccessioningCheckResult canSampleBeAccessionedWithTargetVessel(LabVessel targetLabVessel) {
+
+        AccessioningCheckResult canAccession = AccessioningCheckResult.TUBE_NOT_ASSOCIATED;
+
+        if(!targetLabVessel.canBeUsedForAccessioning()) {
+            canAccession = AccessioningCheckResult.TUBE_ACCESSIONED_PREVIOUSLY;
+        }   else {
+            // Since upload happens just after Initial Tare, there should not be any other transfers.  For that reason,
+            // searching through the MercurySamples on the vessels instead of getSampleInstancesV2 should be sufficient.
+            for (MercurySample mercurySample : targetLabVessel.getMercurySamples()) {
+                if (mercurySample.equals(this)) {
+                    canAccession = AccessioningCheckResult.CAN_BE_ACCESSIONED;
+                }
             }
         }
-        throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
-                targetLabVessel.getLabel(), " " + ManifestSessionEjb.UNASSOCIATED_TUBE_SAMPLE_MESSAGE);
+        return canAccession;
+
+    }
+
+    public enum AccessioningCheckResult {
+        CAN_BE_ACCESSIONED, TUBE_NOT_ASSOCIATED, TUBE_ACCESSIONED_PREVIOUSLY
     }
 
     /**
      * Checks if the sample is eligible to be used for Clinical work.  The only criteria here would be that the
      * sample originated in Mercury.
      */
-    public void checkClinicalEligibility() {
-        if (getMetadataSource() != MetadataSource.MERCURY) {
-            throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSessionEjb.MERCURY_SAMPLE_KEY,
-                    getSampleKey(), ManifestSessionEjb.SAMPLE_NOT_ELIGIBLE_FOR_CLINICAL_MESSAGE);
-        }
+    public boolean canSampleBeUsedForClinical() {
+        return getMetadataSource() == MetadataSource.MERCURY;
     }
 
     /** Determines from which system Mercury gets metadata, e.g. collaborator sample ID */
@@ -307,5 +314,10 @@ public class MercurySample extends AbstractSample {
             labVesselForRemoval.getMercurySamples().remove(this);
             labVessel.remove(labVesselForRemoval);
         }
+    }
+
+    public void addLabVessel(LabVessel vesselToAdd) {
+        getLabVessel().add(vesselToAdd);
+        vesselToAdd.addSample(this);
     }
 }

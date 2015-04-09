@@ -600,11 +600,8 @@ public abstract class LabVessel implements Serializable {
      * @throws TubeTransferException if it has been accessioned
      *
      */
-    public void accessionCheck() {
-        if (doesChainOfCustodyInclude(LabEventType.COLLABORATOR_TRANSFER)) {
-            throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
-                    getLabel(), ManifestSessionEjb.VESSEL_USED_FOR_PREVIOUS_TRANSFER);
-        }
+    public boolean canBeUsedForAccessioning() {
+        return !doesChainOfCustodyInclude(LabEventType.COLLABORATOR_TRANSFER);
     }
 
     public enum ContainerType {

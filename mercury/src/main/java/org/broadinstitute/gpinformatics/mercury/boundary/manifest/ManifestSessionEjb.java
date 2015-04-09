@@ -256,7 +256,10 @@ public class ManifestSessionEjb {
                     MERCURY_SAMPLE_KEY, targetSampleKey, SAMPLE_NOT_FOUND_MESSAGE);
         }
 
-        targetSample.checkClinicalEligibility();
+        if(!targetSample.canSampleBeUsedForClinical()) {
+            throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSessionEjb.MERCURY_SAMPLE_KEY,
+                    targetSample.getSampleKey(), ManifestSessionEjb.SAMPLE_NOT_ELIGIBLE_FOR_CLINICAL_MESSAGE);
+        }
 
         return targetSample;
     }
@@ -278,7 +281,15 @@ public class ManifestSessionEjb {
         }
 
         MercurySample foundSample = findAndValidateTargetSample(targetSampleKey);
-        return foundSample.validateTargetVesselForClinicalWork(foundVessel);
+        MercurySample.AccessioningCheckResult canBeAccessioned = foundSample.canSampleBeAccessionedWithTargetVessel(foundVessel);
+        if(canBeAccessioned != MercurySample.AccessioningCheckResult.CAN_BE_ACCESSIONED) {
+            throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET, ManifestSession.VESSEL_LABEL,
+                    foundVessel.getLabel(),
+                    " " + ((canBeAccessioned == MercurySample.AccessioningCheckResult.TUBE_NOT_ASSOCIATED)?
+                            ManifestSessionEjb.UNASSOCIATED_TUBE_SAMPLE_MESSAGE:
+                            ManifestSessionEjb.VESSEL_USED_FOR_PREVIOUS_TRANSFER));
+        }
+        return foundVessel;
     }
 
     /**
@@ -347,9 +358,21 @@ public class ManifestSessionEjb {
                                                   StringUtils.join(missingSampleIds, ", "));
         }
         for (MercurySample mercurySample : mercurySampleMap.values()) {
-            mercurySample.checkClinicalEligibility();
+            if(!mercurySample.canSampleBeUsedForClinical()) {
+                throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET,
+                        ManifestSessionEjb.MERCURY_SAMPLE_KEY, mercurySample.getSampleKey(),
+                        ManifestSessionEjb.SAMPLE_NOT_ELIGIBLE_FOR_CLINICAL_MESSAGE);
+            }
             for (LabVessel labVessel : mercurySample.getLabVessel()) {
-                mercurySample.validateTargetVesselForClinicalWork(labVessel);
+                MercurySample.AccessioningCheckResult accessioningCheckResult =
+                        mercurySample.canSampleBeAccessionedWithTargetVessel(labVessel);
+                if(accessioningCheckResult != MercurySample.AccessioningCheckResult.CAN_BE_ACCESSIONED) {
+                    throw new TubeTransferException(ManifestRecord.ErrorStatus.INVALID_TARGET,
+                            ManifestSession.VESSEL_LABEL, labVessel.getLabel(),
+                            " " + ((accessioningCheckResult == MercurySample.AccessioningCheckResult.TUBE_NOT_ASSOCIATED)?
+                                    ManifestSessionEjb.UNASSOCIATED_TUBE_SAMPLE_MESSAGE:
+                                    ManifestSessionEjb.VESSEL_USED_FOR_PREVIOUS_TRANSFER));
+                }
             }
         }
     }
