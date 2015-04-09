@@ -27,22 +27,31 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.persistence.Query;
+import javax.transaction.NotSupportedException;
+import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.CharBuffer;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -57,7 +66,11 @@ public class LabEventFixupTest extends Arquillian {
     private static final Pattern EVENT_TYPE_PATTERN = Pattern.compile("eventType=\"([^\"]*)\"");
     private static final Pattern STATION_PATTERN = Pattern.compile("station=\"([^\"]*)\"");
     private static final Pattern START_PATTERN = Pattern.compile("start=\"([^\"]*)\"");
-    private static final Pattern REAGENT_PATTERN = Pattern.compile("reagent barcode=\"([^\"]*)\" kitType=\"([^\"]*) expiration=\"([^\"]*)\"");
+    private static final Pattern REAGENT_PATTERN = Pattern.compile("reagent barcode=\"([^\"]*)\" kitType=\"([^\"]*)\" expiration=\"([^\"]*)\"");
+
+    private static Charset charset = Charset.forName("US-ASCII");
+    private static CharsetDecoder decoder = charset.newDecoder();
+    private static Pattern linePattern = Pattern.compile(".*\r?\n");
 
     @Inject
     private LabEventDao labEventDao;
@@ -605,78 +618,128 @@ public class LabEventFixupTest extends Arquillian {
 
     @Test(enabled = true)
     public void fixupGplim3513Backfill() {
+        visitMessageFiles("DilutionToFlowcellTransfer", "GPLIM-3151 backfill reagents", "20141|2015");
+    }
+
+    private void visitMessageFiles(String eventTypeParam, String reason, String directoryRegex) {
         userBean.loginOSUser();
         try {
-            SimpleDateFormat xmlDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+            utx.begin();
+            SimpleDateFormat xmlDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
+
+            // Visit the inbox date directories that match the regex
             String inbox = "\\\\neon\\seq_lims\\mercury\\prod\\bettalims\\inbox";
+            Pattern dirPattern = Pattern.compile(directoryRegex);
             DirectoryStream<Path> dateDirs = Files.newDirectoryStream(Paths.get(inbox));
             for (Path path : dateDirs) {
-//            Path path = Paths.get(inbox + "\\" + "20150406");
-            for (File file : path.toFile().listFiles()) {
-                    BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
+                Matcher dirMatcher = dirPattern.matcher(path.toString());
+                if (!dirMatcher.find()) {
+                    continue;
+                }
+                for (File file : path.toFile().listFiles()) {
+                    // Open the file and then get a channel from the stream
+                    FileInputStream fis = new FileInputStream(file);
+                    FileChannel fc = fis.getChannel();
+
+                    // Get the file's size and then map it into memory
+                    MappedByteBuffer bb = fc.map(FileChannel.MapMode.READ_ONLY, 0L, fc.size());
+
+                    // Decode the file into a char buffer
+                    CharBuffer cb = decoder.decode(bb);
+
                     try {
-                        boolean found = false;
-                        // We expect to find the eventType in the first few lines
-                        String line = null;
-                        for (int i = 0; i < 3; i++) {
-                            line = bufferedReader.readLine();
-                            Matcher matcher = EVENT_TYPE_PATTERN.matcher(line);
-                            if (matcher.find()) {
-                                String eventType = matcher.group(1);
-                                if (eventType.equals("DilutionToFlowcellTransfer")) {
-                                    found = true;
-                                }
-                                break;
-                            }
+                        Matcher eventMatcher = EVENT_TYPE_PATTERN.matcher(cb);
+                        if (!eventMatcher.find()) {
+                            continue;
                         }
-                        if (found) {
-                            Matcher matcher = STATION_PATTERN.matcher(line);
-                            if (!matcher.find()) {
-                                System.out.println("Failed to find station in " + file.getName());
+                        String eventType = eventMatcher.group(1);
+                        if (!eventType.equals(eventTypeParam)) {
+                            continue;
+                        }
+
+                        // Parse the unique key for the event
+                        Matcher matcher = STATION_PATTERN.matcher(cb);
+                        if (!matcher.find()) {
+                            System.out.println("Failed to find station in " + file.getName());
+                            continue;
+                        }
+                        String station = matcher.group(1);
+                        matcher = START_PATTERN.matcher(cb);
+                        if (!matcher.find()) {
+                            System.out.println("Failed to find start date in " + file.getName());
+                            continue;
+                        }
+                        String startDateString = matcher.group(1);
+                        Date startDate = xmlDateFormat.parse(startDateString);
+
+                        // Parse the reagents
+                        List<GenericReagent> genericReagents = new ArrayList<>();
+                        Set<String> reagentNames = new HashSet<>();
+                        matcher = REAGENT_PATTERN.matcher(cb);
+                        while(matcher.find()) {
+                            String lot = matcher.group(1);
+                            String reagentName = matcher.group(2);
+                            // Some messages have duplicate reagent elements
+                            if (!reagentNames.add(reagentName)) {
                                 continue;
                             }
-                            String station = matcher.group(1);
-                            matcher = START_PATTERN.matcher(line);
-                            if (!matcher.find()) {
-                                System.out.println("Failed to find start date in " + file.getName());
-                                continue;
+                            String expirationString = matcher.group(3);
+                            if (expirationString.startsWith("12015") || expirationString.startsWith("42015")) {
+                                expirationString = expirationString.substring(1);
+                            } else if (expirationString.startsWith("302015")) {
+                                expirationString = expirationString.substring(2);
                             }
-                            String startDateString = matcher.group(1);
-                            Date date = xmlDateFormat.parse(startDateString);
-                            LabEvent labEvent = labEventDao.findByLocationDateDisambiguator(station, date, 1L);
+                            Date expiration = xmlDateFormat.parse(expirationString);
+                            genericReagents.add(new GenericReagent(reagentName, lot, expiration));
+                        }
+
+                        // Fetch the event and add the reagents
+                        if (!genericReagents.isEmpty()) {
+                            LabEvent labEvent = labEventDao.findByLocationDateDisambiguator(station, startDate, 1L);
                             if (labEvent == null) {
-                                System.out.println("Failed to find event in " + file.getName());
+                                System.out.println("Failed to find database event in " + file.getName());
                                 continue;
                             }
                             if (!labEvent.getReagents().isEmpty()) {
                                 continue;
                             }
-                            while (line != null) {
-                                matcher = REAGENT_PATTERN.matcher(line);
-                                while(matcher.find()) {
-                                    // todo jmt fetch event only if there are reagents
-                                    String reagentName = matcher.group(1);
-                                    String lot = matcher.group(2);
-                                    String expirationString = matcher.group(3);
-                                    Date expiration = xmlDateFormat.parse(expirationString);
-                                    GenericReagent genericReagent = genericReagentDao.findByReagentNameAndLot(
-                                            reagentName, lot);
-                                    if (genericReagent == null) {
-                                        genericReagent = new GenericReagent(reagentName, lot, expiration);
-                                    }
-//                                    labEvent.addReagent(genericReagent);
+                            System.out.println("Adding reagents to " + station + " " + startDate);
+                            for (GenericReagent genericReagent : genericReagents) {
+                                // Fetching each reagent individually like this is not ideal for performance,
+                                // but the slowness of reading the files is more of a bottleneck.
+                                GenericReagent dbGenericReagent = genericReagentDao.findByReagentNameLotExpiration(
+                                        genericReagent.getName(), genericReagent.getLot(),
+                                        genericReagent.getExpiration());
+                                if (dbGenericReagent != null) {
+                                    genericReagent = dbGenericReagent;
                                 }
-                                line = bufferedReader.readLine();
+                                labEvent.addReagent(genericReagent);
                             }
+                            labEventDao.flush();
+                            labEventDao.clear();
                         }
                     } finally {
-                        bufferedReader.close();
+                        fc.close();
                     }
                 }
-                labEventDao.persist(new FixupCommentary("GPLIM-3151 backfill reagents"));
-                labEventDao.flush();
             }
+            labEventDao.persist(new FixupCommentary(reason));
+            labEventDao.flush();
+//                utx.commit();
+            utx.rollback();
         } catch (IOException | ParseException e) {
+            throw new RuntimeException(e);
+/*
+        } catch (HeuristicRollbackException e) {
+            throw new RuntimeException(e);
+        } catch (RollbackException e) {
+            throw new RuntimeException(e);
+        } catch (HeuristicMixedException e) {
+            throw new RuntimeException(e);
+*/
+        } catch (SystemException e) {
+            throw new RuntimeException(e);
+        } catch (NotSupportedException e) {
             throw new RuntimeException(e);
         }
     }

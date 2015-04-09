@@ -10,6 +10,7 @@ import javax.persistence.NoResultException;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
+import java.util.Date;
 
 /**
  * Data Access object for generic reagents
@@ -25,6 +26,21 @@ public class GenericReagentDao extends GenericDao {
         criteriaQuery.where(criteriaBuilder.and(
                 criteriaBuilder.equal(root.get(Reagent_.name), reagentName),
                 criteriaBuilder.equal(root.get(Reagent_.lot), lot)));
+        try {
+            return getEntityManager().createQuery(criteriaQuery).getSingleResult();
+        } catch (NoResultException ignored) {
+            return null;
+        }
+    }
+
+    public GenericReagent findByReagentNameLotExpiration(String reagentName, String lot, Date expiration) {
+        CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<GenericReagent> criteriaQuery = criteriaBuilder.createQuery(GenericReagent.class);
+        Root<GenericReagent> root = criteriaQuery.from(GenericReagent.class);
+        criteriaQuery.where(
+                criteriaBuilder.equal(root.get(Reagent_.name), reagentName),
+                criteriaBuilder.equal(root.get(Reagent_.lot), lot),
+                criteriaBuilder.equal(root.get(Reagent_.expiration), expiration));
         try {
             return getEntityManager().createQuery(criteriaQuery).getSingleResult();
         } catch (NoResultException ignored) {
