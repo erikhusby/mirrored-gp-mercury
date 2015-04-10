@@ -27,7 +27,10 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.persistence.Query;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
 import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 import java.io.File;
@@ -48,10 +51,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.GregorianCalendar;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -66,11 +67,8 @@ public class LabEventFixupTest extends Arquillian {
     private static final Pattern EVENT_TYPE_PATTERN = Pattern.compile("eventType=\"([^\"]*)\"");
     private static final Pattern STATION_PATTERN = Pattern.compile("station=\"([^\"]*)\"");
     private static final Pattern START_PATTERN = Pattern.compile("start=\"([^\"]*)\"");
-    private static final Pattern REAGENT_PATTERN = Pattern.compile("reagent barcode=\"([^\"]*)\" kitType=\"([^\"]*)\" expiration=\"([^\"]*)\"");
-
-    private static Charset charset = Charset.forName("US-ASCII");
-    private static CharsetDecoder decoder = charset.newDecoder();
-    private static Pattern linePattern = Pattern.compile(".*\r?\n");
+    private static final Pattern REAGENT_PATTERN = Pattern.compile(
+            "reagent barcode=\"([^\"]*)\" kitType=\"([^\"]*)\" expiration=\"([^\"]*)\"");
 
     @Inject
     private LabEventDao labEventDao;
@@ -616,16 +614,18 @@ public class LabEventFixupTest extends Arquillian {
         labEventDao.flush();
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void fixupGplim3513Backfill() {
-        visitMessageFiles("DilutionToFlowcellTransfer", "GPLIM-3151 backfill reagents", "20141|2015");
+        backfillReagents("DilutionToFlowcellTransfer", "GPLIM-3151 backfill reagents", "20141|2015");
     }
 
-    private void visitMessageFiles(String eventTypeParam, String reason, String directoryRegex) {
+    private void backfillReagents(String eventTypeParam, String reason, String directoryRegex) {
         userBean.loginOSUser();
         try {
             utx.begin();
             SimpleDateFormat xmlDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
+            Charset charset = Charset.forName("US-ASCII");
+            CharsetDecoder decoder = charset.newDecoder();
 
             // Visit the inbox date directories that match the regex
             String inbox = "\\\\neon\\seq_lims\\mercury\\prod\\bettalims\\inbox";
@@ -642,13 +642,13 @@ public class LabEventFixupTest extends Arquillian {
                     FileChannel fc = fis.getChannel();
 
                     // Get the file's size and then map it into memory
-                    MappedByteBuffer bb = fc.map(FileChannel.MapMode.READ_ONLY, 0L, fc.size());
+                    MappedByteBuffer byteBuffer = fc.map(FileChannel.MapMode.READ_ONLY, 0L, fc.size());
 
                     // Decode the file into a char buffer
-                    CharBuffer cb = decoder.decode(bb);
+                    CharBuffer charBuffer = decoder.decode(byteBuffer);
 
                     try {
-                        Matcher eventMatcher = EVENT_TYPE_PATTERN.matcher(cb);
+                        Matcher eventMatcher = EVENT_TYPE_PATTERN.matcher(charBuffer);
                         if (!eventMatcher.find()) {
                             continue;
                         }
@@ -658,13 +658,13 @@ public class LabEventFixupTest extends Arquillian {
                         }
 
                         // Parse the unique key for the event
-                        Matcher matcher = STATION_PATTERN.matcher(cb);
+                        Matcher matcher = STATION_PATTERN.matcher(charBuffer);
                         if (!matcher.find()) {
                             System.out.println("Failed to find station in " + file.getName());
                             continue;
                         }
                         String station = matcher.group(1);
-                        matcher = START_PATTERN.matcher(cb);
+                        matcher = START_PATTERN.matcher(charBuffer);
                         if (!matcher.find()) {
                             System.out.println("Failed to find start date in " + file.getName());
                             continue;
@@ -674,14 +674,14 @@ public class LabEventFixupTest extends Arquillian {
 
                         // Parse the reagents
                         List<GenericReagent> genericReagents = new ArrayList<>();
-                        Set<String> reagentNames = new HashSet<>();
-                        matcher = REAGENT_PATTERN.matcher(cb);
+                        matcher = REAGENT_PATTERN.matcher(charBuffer);
+                        int i = 1;
                         while(matcher.find()) {
                             String lot = matcher.group(1);
                             String reagentName = matcher.group(2);
-                            // Some messages have duplicate reagent elements
-                            if (!reagentNames.add(reagentName)) {
-                                continue;
+                            if (reagentName.equals("Universal Sequencing Buffer")) {
+                                reagentName += " " + i;
+                                i++;
                             }
                             String expirationString = matcher.group(3);
                             if (expirationString.startsWith("12015") || expirationString.startsWith("42015")) {
@@ -725,21 +725,9 @@ public class LabEventFixupTest extends Arquillian {
             }
             labEventDao.persist(new FixupCommentary(reason));
             labEventDao.flush();
-//                utx.commit();
-            utx.rollback();
-        } catch (IOException | ParseException e) {
-            throw new RuntimeException(e);
-/*
-        } catch (HeuristicRollbackException e) {
-            throw new RuntimeException(e);
-        } catch (RollbackException e) {
-            throw new RuntimeException(e);
-        } catch (HeuristicMixedException e) {
-            throw new RuntimeException(e);
-*/
-        } catch (SystemException e) {
-            throw new RuntimeException(e);
-        } catch (NotSupportedException e) {
+            utx.commit();
+        } catch (IOException | ParseException | HeuristicRollbackException | HeuristicMixedException | SystemException |
+                NotSupportedException |RollbackException e) {
             throw new RuntimeException(e);
         }
     }
