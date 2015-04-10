@@ -357,7 +357,7 @@ public class ManifestSessionEjb {
                             manifestRecords);
             return manifestSession;
         } catch (RuntimeException e) {
-            throw new InformaticsServiceException(e);
+            throw new InformaticsServiceException(e.getMessage(),e);
         }
     }
 
