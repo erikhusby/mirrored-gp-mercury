@@ -201,11 +201,11 @@ public class LabMetricFixupTest extends Arquillian {
 
     @Test(enabled = false)
     public void fixupGplim3518() {
-        // Adds a new generic quant to represent the lab having done a manual dilution to the
+        // Adds a synthetic generic quant to represent the lab having done a manual dilution to the
         // stock tube and the subsequent skipping of the pico in order to conserve the sample mass.
 
         LabMetric.MetricType quantType = LabMetric.MetricType.INITIAL_PICO;
-        //for dev test use barcode "0175331205" and existingValue 20.77
+        //For dev testing use barcode "0175331205" and existingValue 20.77
         String tubeBarcode = "1109293898";
         BigDecimal existingValue = new BigDecimal("3.14");
         BigDecimal newValue = new BigDecimal("2.52");
@@ -218,17 +218,18 @@ public class LabMetricFixupTest extends Arquillian {
         Assert.assertTrue(MathUtils.isSame(existingValue.doubleValue(), metric.getValue().doubleValue()));
         Assert.assertNotNull(metric.getLabMetricRun());
 
-        // Verify lims queries are ok before the change.
-        LimsQueries lq = new LimsQueries(staticPlateDao, labVesselDao, barcodedTubeDao);
-        Assert.assertTrue(MathUtils.isSame(lq.fetchQuantForTube(tubeBarcode, quantType.getDisplayName()),
+        // Verifies two lims queries are ok before the change.
+        LimsQueries limsQueries = new LimsQueries(staticPlateDao, labVesselDao, barcodedTubeDao);
+        Assert.assertTrue(MathUtils.isSame(limsQueries.fetchQuantForTube(tubeBarcode, quantType.getDisplayName()),
                 existingValue.doubleValue()));
-        Map<String,ConcentrationAndVolumeAndWeightType>
-                map = lq.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(Collections.singletonList(tubeBarcode));
+        Map<String,ConcentrationAndVolumeAndWeightType> map =
+                limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(Collections.singletonList(tubeBarcode));
         Assert.assertEquals(map.size(), 1);
         Assert.assertEquals(map.values().size(), 1);
         Assert.assertTrue(MathUtils.isSame(map.values().iterator().next().getConcentration().doubleValue(),
                 existingValue.doubleValue()));
 
+        // All INITIAL_PICO quants have lab metric runs.
         // Adds a new lab metric and lab metric run, having unique run name and dated "now".
         Date newDate = new Date();
         final LabMetric newLabMetric = new LabMetric(newValue, quantType, LabMetric.LabUnit.NG_PER_UL,
@@ -241,25 +242,23 @@ public class LabMetricFixupTest extends Arquillian {
 
         vessel.addMetric(newLabMetric);
 
-        System.out.println(
-                "Adding lab metric " + newLabMetric.getLabMetricId() + " and lab metric run " + newLabMetricRun
-                        .getLabMetricRunId());
+        System.out.println("Adding lab metric " + newLabMetric.getLabMetricId() +
+                           " and lab metric run " + newLabMetricRun.getLabMetricRunId());
         dao.persistAll(new ArrayList<Object>() {{
-            add(new FixupCommentary("GPLIM-3514 update generic pico due to rerun of the pond quant"));
+            add(new FixupCommentary("GPLIM-3518 add synthetic initial pico quant"));
             add(newLabMetricRun);
             add(newLabMetric);
         }});
         dao.flush();
 
-        // Verify lims queries are ok after the change.
-        Assert.assertTrue(MathUtils.isSame(lq.fetchQuantForTube(tubeBarcode, quantType.getDisplayName()),
+        // Verifies two lims queries are ok after the change.
+        Assert.assertTrue(MathUtils.isSame(limsQueries.fetchQuantForTube(tubeBarcode, quantType.getDisplayName()),
                 newValue.doubleValue()));
-        map = lq.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(Collections.singletonList(tubeBarcode));
+        map = limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(Collections.singletonList(tubeBarcode));
         Assert.assertEquals(map.size(), 1);
         Assert.assertEquals(map.values().size(), 1);
         Assert.assertTrue(MathUtils.isSame(map.values().iterator().next().getConcentration().doubleValue(),
                 newValue.doubleValue()));
-//end
 
     }
 }
