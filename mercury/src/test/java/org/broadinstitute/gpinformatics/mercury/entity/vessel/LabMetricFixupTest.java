@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
+import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricRunDao;
@@ -182,5 +183,68 @@ public class LabMetricFixupTest extends Arquillian {
         }
         dao.persist(new FixupCommentary("GPLIM-3514 update generic pico due to rerun of the pond quant"));
         dao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim3518() {
+        // Adds a synthetic generic quant to represent the lab having done a manual dilution to the
+        // stock tube and the subsequent skipping of the pico in order to conserve the sample mass.
+
+        LabMetric.MetricType quantType = LabMetric.MetricType.INITIAL_PICO;
+        //For dev testing use barcode "0175331205" and existingValue 20.77
+        String tubeBarcode = "1109293898";
+        BigDecimal existingValue = new BigDecimal("3.14");
+        BigDecimal newValue = new BigDecimal("2.52");
+
+        userBean.loginOSUser();
+        LabVessel vessel = labVesselDao.findByIdentifier(tubeBarcode);
+        Assert.assertNotNull(vessel);
+
+        LabMetric metric = vessel.findMostRecentLabMetric(quantType);
+        Assert.assertTrue(MathUtils.isSame(existingValue.doubleValue(), metric.getValue().doubleValue()));
+        Assert.assertNotNull(metric.getLabMetricRun());
+
+        // Verifies that the two lims queries are as expected before the change.
+        // LimsQueries limsQueries = new LimsQueries(staticPlateDao, labVesselDao, barcodedTubeDao);
+        // Assert.assertTrue(MathUtils.isSame(limsQueries.fetchQuantForTube(tubeBarcode, quantType.getDisplayName()),
+        //         existingValue.doubleValue()));
+        // Map<String,ConcentrationAndVolumeAndWeightType> map =
+        //         limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(Collections.singletonList(tubeBarcode));
+        // Assert.assertEquals(map.size(), 1);
+        // Assert.assertEquals(map.values().size(), 1);
+        // Assert.assertTrue(MathUtils.isSame(map.values().iterator().next().getConcentration().doubleValue(),
+        //         existingValue.doubleValue()));
+
+        // All INITIAL_PICO quants have lab metric runs.
+        // Adds a new lab metric and lab metric run, having unique run name and dated "now".
+        Date newDate = new Date();
+        final LabMetric newLabMetric = new LabMetric(newValue, quantType, LabMetric.LabUnit.NG_PER_UL,
+                metric.getVesselPosition(), newDate);
+        String newRunName = metric.getLabMetricRun().getRunName() + "_1";
+        Assert.assertNull(dao.findByName(newRunName));
+
+        final LabMetricRun newLabMetricRun = new LabMetricRun(newRunName, newDate, quantType);
+        newLabMetricRun.addMetric(newLabMetric);
+
+        vessel.addMetric(newLabMetric);
+
+        System.out.println("Adding lab metric " + newLabMetric.getLabMetricId() +
+                           " and lab metric run " + newLabMetricRun.getLabMetricRunId());
+        dao.persistAll(new ArrayList<Object>() {{
+            add(new FixupCommentary("GPLIM-3518 add synthetic initial pico quant"));
+            add(newLabMetricRun);
+            add(newLabMetric);
+        }});
+        dao.flush();
+
+        // Verifies that the two lims queries in fact pick the latest generic quant.
+        // Assert.assertTrue(MathUtils.isSame(limsQueries.fetchQuantForTube(tubeBarcode, quantType.getDisplayName()),
+        //         newValue.doubleValue()));
+        // map = limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(Collections.singletonList(tubeBarcode));
+        // Assert.assertEquals(map.size(), 1);
+        // Assert.assertEquals(map.values().size(), 1);
+        // Assert.assertTrue(MathUtils.isSame(map.values().iterator().next().getConcentration().doubleValue(),
+        //         newValue.doubleValue()));
+
     }
 }
