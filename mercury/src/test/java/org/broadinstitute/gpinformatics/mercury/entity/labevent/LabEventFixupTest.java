@@ -598,6 +598,7 @@ public class LabEventFixupTest extends Arquillian {
                 Assert.assertEquals(dilutionToFlowcell.getLabEventType(), LabEventType.DILUTION_TO_FLOWCELL_TRANSFER);
                 System.out.println("Deleting " + dilutionToFlowcell.getLabEventType() + " " +
                         dilutionToFlowcell.getLabEventId());
+                dilutionToFlowcell.getReagents().clear();
                 labEventDao.remove(dilutionToFlowcell);
             }
             labEventDao.persist(new FixupCommentary("QUAL-676 delete duplicate events"));
