@@ -411,7 +411,10 @@ public class ReagentFixupTest extends Arquillian {
                     {931961, /*10046204Universal Sequencing Buffer 854895DILUTION_TO_FLOWCELL_TRANSFER*/
                     931964, /*10046204Universal Sequencing Buffer */854895/*DILUTION_TO_FLOWCELL_TRANSFER*/},
                     {931975, /*10046204Universal Sequencing Buffer 854896DILUTION_TO_FLOWCELL_TRANSFER*/
-                    931982, /*10046204Universal Sequencing Buffer */854896/*DILUTION_TO_FLOWCELL_TRANSFER*/}
+                    931982, /*10046204Universal Sequencing Buffer */854896/*DILUTION_TO_FLOWCELL_TRANSFER*/},
+                    // Added this pair after the first run of this fixup, because there were still duplicates
+                    {931961,/*	10046204	Universal Sequencing Buffer	854895	DILUTION_TO_FLOWCELL_TRANSFER*/
+                    931975,	/*10046204	Universal Sequencing Buffer	*/854896/*	DILUTION_TO_FLOWCELL_TRANSFER*/},
             };
 
             for (int[] triple : ids) {
