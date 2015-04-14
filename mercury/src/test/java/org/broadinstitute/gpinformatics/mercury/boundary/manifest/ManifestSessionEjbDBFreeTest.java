@@ -1373,6 +1373,7 @@ public class ManifestSessionEjbDBFreeTest {
         try {
             holder.ejb.transferSample(ARBITRARY_MANIFEST_SESSION_ID, GOOD_TUBE_BARCODE, TEST_SAMPLE_ALREADY_TRANSFERRED,
                     TEST_VESSEL_LABEL_ALREADY_TRANSFERRED);
+            Assert.fail();
         } catch (Exception e) {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET.getBaseMessage()));
             assertThat(e.getMessage(), containsString(ManifestSessionEjb.VESSEL_USED_FOR_PREVIOUS_TRANSFER));
@@ -1476,7 +1477,7 @@ public class ManifestSessionEjbDBFreeTest {
         LabEvent collaboratorTransferEvent =
                 new LabEvent(LabEventType.COLLABORATOR_TRANSFER, new Date(), "thisLocation", 0l, 0l, "testprogram");
         barcodedTube.getInPlaceLabEvents().add(collaboratorTransferEvent);
-        sample.getLabVessel().add(barcodedTube);
+        sample.addLabVessel(barcodedTube);
 
         Mockito.when(mercurySampleDao.findMapIdToMercurySample(Mockito.anyCollectionOf(String.class)))
                 .thenReturn(Collections.singletonMap(SM_1, sample));
@@ -1485,7 +1486,7 @@ public class ManifestSessionEjbDBFreeTest {
             manifestSessionEjb
                     .createManifestSession(TEST_RESEARCH_PROJECT_KEY, TEST_SESSION_NAME + "_NEW", true, samples);
             Assert.fail();
-        } catch (InformaticsServiceException e) {
+        } catch (InformaticsServiceException | TubeTransferException e) {
             assertThat(e.getCause(), instanceOf(TubeTransferException.class));
             assertThat(e.getLocalizedMessage(), containsString(ManifestSessionEjb.VESSEL_USED_FOR_PREVIOUS_TRANSFER));
         }
@@ -1499,7 +1500,7 @@ public class ManifestSessionEjbDBFreeTest {
         MercurySample sample = new MercurySample(SM_1, MercurySample.MetadataSource.BSP);
         BarcodedTube barcodedTube = new BarcodedTube("VesselFor" + SM_1, BarcodedTube.BarcodedTubeType.MatrixTube);
 
-        sample.getLabVessel().add(barcodedTube);
+        sample.addLabVessel(barcodedTube);
 
         Mockito.when(mercurySampleDao.findMapIdToMercurySample(Mockito.anyCollectionOf(String.class)))
                 .thenReturn(Collections.singletonMap(SM_1, sample));

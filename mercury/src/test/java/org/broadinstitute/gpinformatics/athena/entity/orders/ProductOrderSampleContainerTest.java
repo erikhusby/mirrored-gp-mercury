@@ -32,7 +32,7 @@ public class ProductOrderSampleContainerTest extends ContainerTest {
 
         try {
             SampleData sampleData = testSample.getSampleData();
-            Assert.assertTrue(sampleData.isSampleReceived());
+            Assert.assertTrue(testSample.isSampleAvailable());
             Assert.assertTrue(sampleData.isActiveStock());
 
             Assert.assertEquals(String.valueOf(sampleData.getVolume()), BSPSampleSearchServiceStub.SM_1P3XN_VOLUME);
