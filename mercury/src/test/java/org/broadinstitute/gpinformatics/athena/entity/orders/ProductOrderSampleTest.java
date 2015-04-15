@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import com.google.common.collect.ImmutableMap;
+import freemarker.ext.beans.HashAdapter;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntryTest;
@@ -8,11 +9,13 @@ import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataSourceResolver;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -20,6 +23,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
+import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -277,93 +281,114 @@ public class ProductOrderSampleTest {
     public Object[][] availableSampleConditions(Method method) {
 
         List<Object[]> dataList = new ArrayList<>();
-        /**
-         *
+        /*
+         * Param 1
          * Metadata source,       setMercurySample, set POS metadata Source, sample available, sampledata set, expected Result
          *
          */
-        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, true, false, true,  true, true});
-        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, false, true, true,  true, false});
-        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, true, true, true,   true, true});
-        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, false, false, true, true, false});
+        /*
+          Source of the sample is determined to be Mercury
+         */
+        /*
+            A MercurySample is defined and set on the product order sample, the Metadata source is not set,
+            the sample has been accessioned, and the sample data
+         */
+        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.PRODUCT_ORDER_SAMPLE_AND_DATABASE, true, true, true});
+        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.PRODUCT_ORDER_SAMPLE_AND_DATABASE, true, false, true});
+        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.PRODUCT_ORDER_SAMPLE_AND_DATABASE, false, true, false});
+        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.PRODUCT_ORDER_SAMPLE_AND_DATABASE, false, false, false});
 
-        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, true, false, false,  true, false});
-        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, false, true, false,  true, false});
-        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, true, true, false,   true, false});
-        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, false, false, false, true, false});
+        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.NEITHER, true, true, false});
+        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.NEITHER, true, false, false});
+        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.NEITHER, false, true, false});
+        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.NEITHER, false, false, false});
 
-        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, true, false, true,  false, true});
-        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, false, true, true,  false, false});
-        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, true, true, true,   false, true});
-        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, false, false, true, false, false});
+        /*
+            A Mercury sample existing in the Database without a relationship to a corresponding product order sample
+             defined in the database should be an invalid case.  We make a proactive effort to bind the two entities
+             when either is first entered into mercury.
+          */
+//        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.DATABASE, true, true, true});
+//        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.DATABASE, true, false, true});
+//        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.DATABASE, false, true, false});
+//        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.DATABASE, false, false, false});
 
-        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, true, false, false,  false, false});
-        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, false, true, false,  false, false});
-        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, true, true, false,   false, false});
-        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, false, false, false, false, false});
+        /*
+          Source of the sample is determined to be BSP
+         */
+        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, TargetMercurySample.PRODUCT_ORDER_SAMPLE_AND_DATABASE, true, true, true});
+        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, TargetMercurySample.PRODUCT_ORDER_SAMPLE_AND_DATABASE, false, true, false});
+        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, TargetMercurySample.PRODUCT_ORDER_SAMPLE_AND_DATABASE, true, false, false});
+        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, TargetMercurySample.PRODUCT_ORDER_SAMPLE_AND_DATABASE, false, false, false});
 
-        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, true, false, true,  true, true});
-        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, false, true, true,  true, true});
-        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, true, true, true,   true, true});
-        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, false, false, true, true, true});
+        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, TargetMercurySample.NEITHER, true, true, true});
+        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, TargetMercurySample.NEITHER, true, false, false});
+        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, TargetMercurySample.NEITHER, false, true, false});
+        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, TargetMercurySample.NEITHER, false, false, false});
 
-        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, true, false, false,  true, false});
-        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, false, true, false,  true, false});
-        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, true, true, false,   true, false});
-        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, false, false, false, true, false});
+        /*
+            A Mercury sample existing in the Database without a relationship to a corresponding product order sample
+             defined in the database should be an invalid case.  We make a proactive effort to bind the two entities
+             when either is first entered into mercury.
+         */
+//        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, TargetMercurySample.DATABASE, true, true, true});
+//        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, TargetMercurySample.DATABASE, true, false, false});
+//        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, TargetMercurySample.DATABASE, false, true, false});
+//        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, TargetMercurySample.DATABASE, false, false, false});
 
-        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, true, false, true,  false, true});
-        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, false, true, true,  false, true});
-        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, true, true, true,   false, true});
-        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, false, false, true, false, false});
-
-        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, true, false, false,  false, false});
-        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, false, true, false,  false, false});
-        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, true, true, false,   false, false});
-        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, false, false, false, false, false});
-
-        dataList.add(new Object[]{null, false, false, true, true, false});
-        dataList.add(new Object[]{null, false, false, false, true, false});
-        dataList.add(new Object[]{null, false, false, true, false, false});
-        dataList.add(new Object[]{null, false, false, false, false, false});
+        /*
+           Source of the sample is ambiguous.
+         */
+        dataList.add(new Object[]{null, TargetMercurySample.NEITHER, true,  true,  false});
+        dataList.add(new Object[]{null, TargetMercurySample.NEITHER, true,  false, false});
+        dataList.add(new Object[]{null, TargetMercurySample.NEITHER, false, true,  false});
+        dataList.add(new Object[]{null, TargetMercurySample.NEITHER, false, false, false});
 
         return dataList.toArray(new Object[dataList.size()][]);
     }
 
     @Test(groups = TestGroups.DATABASE_FREE, dataProvider = "availableSampleConditions")
-    public void testIsSampleAvailable(MercurySample.MetadataSource source, boolean setMercurySample,
-                                      boolean setProductOrderSampleMetadataSource, boolean isSampleAvailable,
-                                      boolean isSampleDataSet, boolean expectedResult) {
+    public void testIsSampleAvailable(MercurySample.MetadataSource source, TargetMercurySample setMercurySample,
+                                      boolean isSampleAvailable, boolean isSampleDataSet, boolean expectedResult) {
         String sampleId = "SM-2923";
+
+        MercurySample sourceSample = null;
+        ProductOrderSample productOrderSample = new ProductOrderSample(sampleId);
 
         SampleData receivedSampleData = new BspSampleData();
         if(source != null) {
-            if (source == MercurySample.MetadataSource.BSP) {
+            if (source == MercurySample.MetadataSource.BSP && isSampleDataSet) {
+                Map<BSPSampleSearchColumn, String> sampleDataMap = new HashMap<>();
+                sampleDataMap.put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "C"+sampleId);
                 if (isSampleAvailable) {
-                    receivedSampleData = new BspSampleData(ImmutableMap.of(BSPSampleSearchColumn.RECEIPT_DATE,
-                            new SimpleDateFormat(BspSampleData.BSP_DATE_FORMAT_STRING).format(new Date())));
+                    sampleDataMap.put(BSPSampleSearchColumn.RECEIPT_DATE,
+                            new SimpleDateFormat(BspSampleData.BSP_DATE_FORMAT_STRING).format(new Date()));
                 }
+                receivedSampleData = new BspSampleData(sampleDataMap);
             } else {
-                receivedSampleData = new MercurySampleData(sampleId, Collections.<Metadata>emptySet());
+                receivedSampleData =
+                        new MercurySampleData(sampleId,
+                                Collections.singleton(new Metadata(Metadata.Key.BROAD_SAMPLE_ID,sampleId)));
             }
         }
 
-        ProductOrderSample productOrderSample = new ProductOrderSample(sampleId);
-        if(isSampleDataSet) {
-            productOrderSample.setSampleData(receivedSampleData);
-        }
+        productOrderSample.setSampleData(receivedSampleData);
 
-        MercurySample sourceSample = null;
         if(source != null) {
             sourceSample = new MercurySample(sampleId,source);
         }
 
-        if(setMercurySample && source != null) {
-            productOrderSample.setMercurySample(sourceSample);
-        }
-
-        if(setProductOrderSampleMetadataSource) {
-            productOrderSample.setMetadataSource(source);
+        MercurySampleDao mockDao = Mockito.mock(MercurySampleDao.class);
+        if(source != null) {
+            if(setMercurySample == TargetMercurySample.PRODUCT_ORDER_SAMPLE_AND_DATABASE) {
+                productOrderSample.setMercurySample(sourceSample);
+            }
+            if(setMercurySample != TargetMercurySample.NEITHER) {
+                Map<String, MercurySample> mockResults = new HashMap<>();
+                mockResults.put(sampleId, sourceSample);
+                Mockito.when(mockDao.findMapIdToMercurySample(Mockito.anyCollectionOf(String.class))).thenReturn(
+                        mockResults);
+            }
         }
 
         if(source != null && source == MercurySample.MetadataSource.MERCURY && isSampleAvailable) {
@@ -373,8 +398,14 @@ public class ProductOrderSampleTest {
                     new LabEvent(LabEventType.COLLABORATOR_TRANSFER, new Date(), "thisLocation", 0l, 0l, "testprogram");
             barcodedTube.getInPlaceLabEvents().add(collaboratorTransferEvent);
             sourceSample.getLabVessel().add(barcodedTube);
-
         }
+
+        SampleDataSourceResolver resolver = new SampleDataSourceResolver(mockDao);
+        resolver.populateSampleDataSources(Collections.singleton(productOrderSample));
         Assert.assertEquals(productOrderSample.isSampleAvailable(), expectedResult);
+    }
+
+    private enum TargetMercurySample {
+        PRODUCT_ORDER_SAMPLE_AND_DATABASE, DATABASE, NEITHER;
     }
 }

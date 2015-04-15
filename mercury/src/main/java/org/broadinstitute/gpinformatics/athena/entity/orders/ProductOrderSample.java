@@ -118,9 +118,6 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     @Transient
     private MercurySample.MetadataSource metadataSource;
 
-//    @Transient
-//    private boolean isMetadataSourceInitialized;
-
     /**
      * Convert a list of ProductOrderSamples into a list of sample names.
      *
@@ -275,9 +272,6 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         if (mercurySample != null) {
             return mercurySample.getMetadataSource();
         }
-        if (getSampleData().hasData() && getSampleData() instanceof BspSampleData) {
-            return MercurySample.MetadataSource.BSP;
-        }
         if (!isMetadataSourceInitialized()) {
            throw new IllegalStateException(String.format("ProductOrderSample %s transient metadataSource has not been initialized", sampleName));
         }
@@ -298,7 +292,6 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
     public void setMetadataSource(MercurySample.MetadataSource metadataSource) {
         this.metadataSource = metadataSource;
-//        isMetadataSourceInitialized = true;
     }
 
     public enum DeliveryStatus implements StatusType {
@@ -712,8 +705,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     }
 
     private boolean isMetadataSourceInitialized() {
-        return mercurySample != null || metadataSource != null ||
-               (getSampleData().hasData() && getSampleData() instanceof BspSampleData);
+        return mercurySample != null || metadataSource != null ;
     }
 
     /**

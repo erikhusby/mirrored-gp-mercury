@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataSourceResolver;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -12,6 +13,7 @@ import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import java.util.Collections;
 
 @Test(groups = TestGroups.STUBBY)
 public class ProductOrderSampleContainerTest extends ContainerTest {
@@ -24,6 +26,9 @@ public class ProductOrderSampleContainerTest extends ContainerTest {
     @Inject
     private ProductOrderDao pdoDao;
 
+    @Inject
+    private SampleDataSourceResolver sampleDataSourceResolver;
+
 
     public void testOrderSampleConstruction() {
         ProductOrderSample testSample = new ProductOrderSample("SM-1P3XN");
@@ -32,6 +37,7 @@ public class ProductOrderSampleContainerTest extends ContainerTest {
 
         try {
             SampleData sampleData = testSample.getSampleData();
+            sampleDataSourceResolver.populateSampleDataSources(Collections.singleton(testSample));
             Assert.assertTrue(testSample.isSampleAvailable());
             Assert.assertTrue(sampleData.isActiveStock());
 

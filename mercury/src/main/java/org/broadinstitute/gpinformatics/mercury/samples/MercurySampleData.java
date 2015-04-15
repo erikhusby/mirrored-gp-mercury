@@ -30,7 +30,6 @@ public class MercurySampleData implements SampleData {
         this.sampleId = sampleId;
         hasData = !metadata.isEmpty();
         extractSampleDataFromMetadata(metadata);
-        received = true;
     }
 
     private void extractSampleDataFromMetadata(Set<Metadata> metadata) {
