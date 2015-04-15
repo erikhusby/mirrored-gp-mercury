@@ -279,54 +279,86 @@ public class ProductOrderSampleTest {
         List<Object[]> dataList = new ArrayList<>();
         /**
          *
-         * Metadata source,       setMercurySample, set POS metadata Source, isAccessioned, received, expected Result
+         * Metadata source,       setMercurySample, set POS metadata Source, sample available, sampledata set, expected Result
          *
          */
-        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, true, false, true, true, true});
-        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, false, true, true, true, false});
-        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, true, true, true, true, true});
+        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, true, false, true,  true, true});
+        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, false, true, true,  true, false});
+        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, true, true, true,   true, true});
         dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, false, false, true, true, false});
 
-        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, true, false, false, true, false});
-        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, false, true, false, true, false});
-        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, true, true, false, true, false});
+        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, true, false, false,  true, false});
+        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, false, true, false,  true, false});
+        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, true, true, false,   true, false});
         dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, false, false, false, true, false});
 
-        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, true, false, false, true, true});
-        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, false, true, false, true, true});
-        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, true, true, false, true, true});
+        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, true, false, true,  false, true});
+        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, false, true, true,  false, false});
+        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, true, true, true,   false, true});
+        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, false, false, true, false, false});
+
+        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, true, false, false,  false, false});
+        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, false, true, false,  false, false});
+        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, true, true, false,   false, false});
+        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, false, false, false, false, false});
+
+        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, true, false, true,  true, true});
+        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, false, true, true,  true, true});
+        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, true, true, true,   true, true});
+        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, false, false, true, true, true});
+
+        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, true, false, false,  true, false});
+        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, false, true, false,  true, false});
+        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, true, true, false,   true, false});
         dataList.add(new Object[]{MercurySample.MetadataSource.BSP, false, false, false, true, false});
 
-        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, true, false, false, false, false});
-        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, false, true, false, false, false});
-        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, true, true, false, false, false});
+        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, true, false, true,  false, true});
+        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, false, true, true,  false, true});
+        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, true, true, true,   false, true});
+        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, false, false, true, false, false});
+
+        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, true, false, false,  false, false});
+        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, false, true, false,  false, false});
+        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, true, true, false,   false, false});
         dataList.add(new Object[]{MercurySample.MetadataSource.BSP, false, false, false, false, false});
 
-        Object[][] output = dataList.toArray(new Object[dataList.size()][]);
+        dataList.add(new Object[]{null, false, false, true, true, false});
+        dataList.add(new Object[]{null, false, false, false, true, false});
+        dataList.add(new Object[]{null, false, false, true, false, false});
+        dataList.add(new Object[]{null, false, false, false, false, false});
 
-        return output;
+        return dataList.toArray(new Object[dataList.size()][]);
     }
 
     @Test(groups = TestGroups.DATABASE_FREE, dataProvider = "availableSampleConditions")
     public void testIsSampleAvailable(MercurySample.MetadataSource source, boolean setMercurySample,
-                                      boolean setProductOrderSampleMetadataSource, boolean isSampleAccessioned,
-                                      boolean isSampleReceived, boolean expectedResult) {
+                                      boolean setProductOrderSampleMetadataSource, boolean isSampleAvailable,
+                                      boolean isSampleDataSet, boolean expectedResult) {
         String sampleId = "SM-2923";
 
         SampleData receivedSampleData = new BspSampleData();
-        if(source == MercurySample.MetadataSource.BSP) {
-            if(isSampleReceived) {
-                receivedSampleData = new BspSampleData(ImmutableMap.of(BSPSampleSearchColumn.RECEIPT_DATE,
-                        new SimpleDateFormat(BspSampleData.BSP_DATE_FORMAT_STRING).format(new Date())));
+        if(source != null) {
+            if (source == MercurySample.MetadataSource.BSP) {
+                if (isSampleAvailable) {
+                    receivedSampleData = new BspSampleData(ImmutableMap.of(BSPSampleSearchColumn.RECEIPT_DATE,
+                            new SimpleDateFormat(BspSampleData.BSP_DATE_FORMAT_STRING).format(new Date())));
+                }
+            } else {
+                receivedSampleData = new MercurySampleData(sampleId, Collections.<Metadata>emptySet());
             }
-        } else {
-            receivedSampleData = new MercurySampleData(sampleId, Collections.<Metadata>emptySet());
         }
 
-        ProductOrderSample productOrderSample = new ProductOrderSample(sampleId, receivedSampleData);
-        MercurySample sourceSample= new MercurySample(sampleId,source);
+        ProductOrderSample productOrderSample = new ProductOrderSample(sampleId);
+        if(isSampleDataSet) {
+            productOrderSample.setSampleData(receivedSampleData);
+        }
 
-        if(setMercurySample) {
+        MercurySample sourceSample = null;
+        if(source != null) {
+            sourceSample = new MercurySample(sampleId,source);
+        }
+
+        if(setMercurySample && source != null) {
             productOrderSample.setMercurySample(sourceSample);
         }
 
@@ -334,7 +366,7 @@ public class ProductOrderSampleTest {
             productOrderSample.setMetadataSource(source);
         }
 
-        if(source == MercurySample.MetadataSource.MERCURY && isSampleAccessioned) {
+        if(source != null && source == MercurySample.MetadataSource.MERCURY && isSampleAvailable) {
             BarcodedTube barcodedTube = new BarcodedTube("VesselFor" + sourceSample.getSampleKey(),
                     BarcodedTube.BarcodedTubeType.MatrixTube);
             LabEvent collaboratorTransferEvent =

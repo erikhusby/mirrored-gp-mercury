@@ -275,6 +275,9 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         if (mercurySample != null) {
             return mercurySample.getMetadataSource();
         }
+        if (getSampleData().hasData() && getSampleData() instanceof BspSampleData) {
+            return MercurySample.MetadataSource.BSP;
+        }
         if (!isMetadataSourceInitialized()) {
            throw new IllegalStateException(String.format("ProductOrderSample %s transient metadataSource has not been initialized", sampleName));
         }
@@ -690,11 +693,27 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      * If the metadata is essentially BSP,
      */
     public boolean isSampleAvailable() {
-        return isSampleAccessioned() && getSampleData().isSampleReceived();
+        boolean available;
+        if(!isMetadataSourceInitialized()) {
+            available = false;
+        } else {
+            switch (getMetadataSource()) {
+            case BSP:
+                available = getSampleData().isSampleReceived();
+                break;
+            case MERCURY:
+                available = isSampleAccessioned();
+                break;
+            default:
+                throw new IllegalStateException("The metadata Source is undetermined");
+            }
+        }
+        return available;
     }
 
     private boolean isMetadataSourceInitialized() {
-        return mercurySample != null || metadataSource != null;
+        return mercurySample != null || metadataSource != null ||
+               (getSampleData().hasData() && getSampleData() instanceof BspSampleData);
     }
 
     /**
@@ -702,13 +721,9 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      */
     private boolean isSampleAccessioned() {
         boolean sampleAccessioned = false;
-        if(isMetadataSourceInitialized() || mercurySample != null) {
-            if(getMetadataSource() == MercurySample.MetadataSource.BSP) {
-                sampleAccessioned = true;
-            } else {
-                if (mercurySample != null) {
-                    sampleAccessioned = mercurySample.hasSampleBeenAccessioned();
-                }
+        if(isMetadataSourceInitialized()) {
+            if (mercurySample != null) {
+                sampleAccessioned = mercurySample.hasSampleBeenAccessioned();
             }
         }
         return sampleAccessioned;
