@@ -631,4 +631,27 @@ public class LabEventFixupTest extends Arquillian {
         labEventDao.persist(new FixupCommentary("GPLIM-3508 change event types"));
         labEventDao.flush();
     }
+
+    @Test(enabled = false)
+    public void fixupQual676() {
+        try {
+            userBean.loginOSUser();
+            utx.begin();
+            long[] ids = {856424L, 856423L};
+            for (long id: ids) {
+                LabEvent dilutionToFlowcell = labEventDao.findById(LabEvent.class, id);
+                Assert.assertEquals(dilutionToFlowcell.getLabEventType(), LabEventType.DILUTION_TO_FLOWCELL_TRANSFER);
+                System.out.println("Deleting " + dilutionToFlowcell.getLabEventType() + " " +
+                        dilutionToFlowcell.getLabEventId());
+                dilutionToFlowcell.getReagents().clear();
+                labEventDao.remove(dilutionToFlowcell);
+            }
+            labEventDao.persist(new FixupCommentary("QUAL-676 delete duplicate events"));
+            labEventDao.flush();
+            utx.commit();
+        } catch (NotSupportedException | SystemException | HeuristicMixedException | HeuristicRollbackException |
+                RollbackException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

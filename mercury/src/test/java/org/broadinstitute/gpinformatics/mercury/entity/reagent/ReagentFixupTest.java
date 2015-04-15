@@ -161,7 +161,7 @@ public class ReagentFixupTest extends Arquillian {
         }
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void gplim3370addExpirationDates() throws Exception {
         Multimap<String, Reagent> barcodeReagentMap = HashMultimap.create();
 
@@ -302,6 +302,138 @@ public class ReagentFixupTest extends Arquillian {
         entitiesToPersist.add(new FixupCommentary("GPLIM-3370 add missing reagents and expiration dates"));
         reagentDesignDao.persistAll(entitiesToPersist);
         reagentDesignDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupQual676(){
+        /*
+        Used this query to find duplicate reagents, and the events that they are associated with:
+        SELECT
+            reagent.reagent_id,
+            reagent.lot,
+            reagent.reagent_name,
+            le.lab_event_id,
+            le.lab_event_type
+        FROM
+            reagent
+            INNER JOIN lab_event_reagents ler
+                ON   ler.reagents = reagent.reagent_id
+            INNER JOIN lab_event le
+                ON   le.lab_event_id = ler.lab_event
+        WHERE
+            (reagent.reagent_name, reagent.lot) IN (SELECT
+                                                        reagent_name,
+                                                        lot
+                                                    FROM
+                                                        reagent
+                                                    GROUP BY
+                                                        reagent_name,
+                                                        lot
+                                                    HAVING
+                                                        COUNT(*) > 1)
+        ORDER BY
+            reagent.reagent_name,
+            le.lab_event_id;
+
+        931959	10046231	Cleavage Reagent Master Mix	854895	DILUTION_TO_FLOWCELL_TRANSFER
+        931970	10046231	Cleavage Reagent Master Mix	854896	DILUTION_TO_FLOWCELL_TRANSFER
+        631024	14D24A0013	ET2	688467	ICE_1ST_CAPTURE
+        631027	14D24A0013	ET2	688625	ICE_2ND_CAPTURE
+        931966	10029679	Fast Amplification Premix	854895	DILUTION_TO_FLOWCELL_TRANSFER
+        931978	10029679	Fast Amplification Premix	854896	DILUTION_TO_FLOWCELL_TRANSFER
+        931958	10029663	Fast Amplifixation Mix	854895	DILUTION_TO_FLOWCELL_TRANSFER
+        931985	10029663	Fast Amplifixation Mix	854896	DILUTION_TO_FLOWCELL_TRANSFER
+        931957	10029690	Fast Denaturation Reagent	854895	DILUTION_TO_FLOWCELL_TRANSFER
+        931979	10029690	Fast Denaturation Reagent	854896	DILUTION_TO_FLOWCELL_TRANSFER
+        931962	10032298	Fast Linearization Mix 1	854895	DILUTION_TO_FLOWCELL_TRANSFER
+        931974	10032298	Fast Linearization Mix 1	854896	DILUTION_TO_FLOWCELL_TRANSFER
+        931956	10037762	Fast Linearization Mix 2	854895	DILUTION_TO_FLOWCELL_TRANSFER
+        931976	10037762	Fast Linearization Mix 2	854896	DILUTION_TO_FLOWCELL_TRANSFER
+        931954	10037735	Fast Resynthesis Mix	854895	DILUTION_TO_FLOWCELL_TRANSFER
+        931981	10037735	Fast Resynthesis Mix	854896	DILUTION_TO_FLOWCELL_TRANSFER
+        931963	10052129	Incorporation Master Mix	854895	DILUTION_TO_FLOWCELL_TRANSFER
+        931983	10052129	Incorporation Master Mix	854896	DILUTION_TO_FLOWCELL_TRANSFER
+        931967	10029525	Primer Mix Index i7	854895	DILUTION_TO_FLOWCELL_TRANSFER
+        931972	10029525	Primer Mix Index i7	854896	DILUTION_TO_FLOWCELL_TRANSFER
+        931960	10037740	Primer Mix Read 1	854895	DILUTION_TO_FLOWCELL_TRANSFER
+        931971	10037740	Primer Mix Read 1	854896	DILUTION_TO_FLOWCELL_TRANSFER
+        931965	10035675	Primer Mix Read 2	854895	DILUTION_TO_FLOWCELL_TRANSFER
+        931984	10035675	Primer Mix Read 2	854896	DILUTION_TO_FLOWCELL_TRANSFER
+        931968	10048313	Scan Reagent	854895	DILUTION_TO_FLOWCELL_TRANSFER
+        931977	10048313	Scan Reagent	854896	DILUTION_TO_FLOWCELL_TRANSFER
+        931969	15C11A0046	TruSeq Rapid PE Cluster Kit	854895	DILUTION_TO_FLOWCELL_TRANSFER
+        931980	15C11A0046	TruSeq Rapid PE Cluster Kit	854896	DILUTION_TO_FLOWCELL_TRANSFER
+        931955	15C11A0042	TruSeq Rapid SBS Kit	854895	DILUTION_TO_FLOWCELL_TRANSFER
+        931973	15C11A0042	TruSeq Rapid SBS Kit	854896	DILUTION_TO_FLOWCELL_TRANSFER
+        931961	10046204	Universal Sequencing Buffer	854895	DILUTION_TO_FLOWCELL_TRANSFER
+        931964	10046204	Universal Sequencing Buffer	854895	DILUTION_TO_FLOWCELL_TRANSFER
+        931975	10046204	Universal Sequencing Buffer	854896	DILUTION_TO_FLOWCELL_TRANSFER
+        931982	10046204	Universal Sequencing Buffer	854896	DILUTION_TO_FLOWCELL_TRANSFER
+
+        For each pair, fetch the second event and both reagents.  Remove the second reagent from the second event,
+          and add the first reagent.  Delete the second reagent.
+         */
+        try {
+            userBean.loginOSUser();
+            utx.begin();
+
+            int[][] ids = {
+                    {931959, /* 10046231Cleavage Reagent Master Mix 854895DILUTION_TO_FLOWCELL_TRANSFER*/
+                    931970, /*10046231Cleavage Reagent Master Mix */854896/*DILUTION_TO_FLOWCELL_TRANSFER*/},
+                    // The following pair aren't directly related, but are preparation for adding a unique constraint.
+                    {631024,/* 14D24A0013 ET2 688467ICE_1ST_CAPTURE*/
+                    631027, /*14D24A0013 ET2 */688625/*ICE_2ND_CAPTURE*/},
+                    {931966, /*10029679Fast Amplification Premix 854895DILUTION_TO_FLOWCELL_TRANSFER*/
+                    931978, /*10029679Fast Amplification Premix */854896/*DILUTION_TO_FLOWCELL_TRANSFER*/},
+                    {931958, /*10029663Fast Amplifixation Mix 854895DILUTION_TO_FLOWCELL_TRANSFER*/
+                    931985, /*10029663Fast Amplifixation Mix */854896/*DILUTION_TO_FLOWCELL_TRANSFER*/},
+                    {931957, /*10029690Fast Denaturation Reagent 854895DILUTION_TO_FLOWCELL_TRANSFER*/
+                    931979, /*10029690Fast Denaturation Reagent */854896/*DILUTION_TO_FLOWCELL_TRANSFER*/},
+                    {931962, /*10032298Fast Linearization Mix 1 854895DILUTION_TO_FLOWCELL_TRANSFER*/
+                    931974, /*10032298Fast Linearization Mix 1 */854896/*DILUTION_TO_FLOWCELL_TRANSFER*/},
+                    {931956, /*10037762Fast Linearization Mix 2 854895DILUTION_TO_FLOWCELL_TRANSFER*/
+                    931976, /*10037762Fast Linearization Mix 2 */854896/*DILUTION_TO_FLOWCELL_TRANSFER*/},
+                    {931954, /*10037735Fast Resynthesis Mix 854895DILUTION_TO_FLOWCELL_TRANSFER*/
+                    931981, /*10037735Fast Resynthesis Mix */854896/*DILUTION_TO_FLOWCELL_TRANSFER*/},
+                    {931963, /*10052129Incorporation Master Mix 854895DILUTION_TO_FLOWCELL_TRANSFER*/
+                    931983, /*10052129Incorporation Master Mix */854896/*DILUTION_TO_FLOWCELL_TRANSFER*/},
+                    {931967, /*10029525Primer Mix Index i7 854895DILUTION_TO_FLOWCELL_TRANSFER*/
+                    931972, /*10029525Primer Mix Index i7 */854896/*DILUTION_TO_FLOWCELL_TRANSFER*/},
+                    {931960, /*10037740Primer Mix Read 1 854895DILUTION_TO_FLOWCELL_TRANSFER*/
+                    931971, /*10037740Primer Mix Read 1 */854896/*DILUTION_TO_FLOWCELL_TRANSFER*/},
+                    {931965, /*10035675Primer Mix Read 2 854895DILUTION_TO_FLOWCELL_TRANSFER*/
+                    931984, /*10035675Primer Mix Read 2 */854896/*DILUTION_TO_FLOWCELL_TRANSFER*/},
+                    {931968, /*10048313Scan Reagent 854895DILUTION_TO_FLOWCELL_TRANSFER*/
+                    931977, /*10048313Scan Reagent */854896/*DILUTION_TO_FLOWCELL_TRANSFER*/},
+                    {931969, /*15C11A0046 TruSeq Rapid PE Cluster Kit 854895DILUTION_TO_FLOWCELL_TRANSFER*/
+                    931980, /*15C11A0046 TruSeq Rapid PE Cluster Kit */854896/*DILUTION_TO_FLOWCELL_TRANSFER*/},
+                    {931955, /*15C11A0042 TruSeq Rapid SBS Kit 854895DILUTION_TO_FLOWCELL_TRANSFER*/
+                    931973, /*15C11A0042 TruSeq Rapid SBS Kit */854896/*DILUTION_TO_FLOWCELL_TRANSFER*/},
+                    {931961, /*10046204Universal Sequencing Buffer 854895DILUTION_TO_FLOWCELL_TRANSFER*/
+                    931964, /*10046204Universal Sequencing Buffer */854895/*DILUTION_TO_FLOWCELL_TRANSFER*/},
+                    {931975, /*10046204Universal Sequencing Buffer 854896DILUTION_TO_FLOWCELL_TRANSFER*/
+                    931982, /*10046204Universal Sequencing Buffer */854896/*DILUTION_TO_FLOWCELL_TRANSFER*/},
+                    // Added this pair after the first run of this fixup, because there were still duplicates
+                    {931961,/*	10046204	Universal Sequencing Buffer	854895	DILUTION_TO_FLOWCELL_TRANSFER*/
+                    931975,	/*10046204	Universal Sequencing Buffer	*/854896/*	DILUTION_TO_FLOWCELL_TRANSFER*/},
+            };
+
+            for (int[] triple : ids) {
+                GenericReagent correctReagent = genericReagentDao.findById(GenericReagent.class, (long) triple[0]);
+                GenericReagent duplicateReagent = genericReagentDao.findById(GenericReagent.class, (long) triple[1]);
+                LabEvent labEvent = labEventDao.findById(LabEvent.class, (long) triple[2]);
+                System.out.println("For event " + labEvent.getLabEventId() + ", merge " + duplicateReagent.getName());
+                labEvent.getReagents().remove(duplicateReagent);
+                labEvent.getReagents().add(correctReagent);
+                genericReagentDao.remove(duplicateReagent);
+            }
+            genericReagentDao.persist(new FixupCommentary("QUAL-676 reagent merge"));
+            genericReagentDao.flush();
+            utx.commit();
+        } catch (NotSupportedException | SystemException | HeuristicRollbackException | RollbackException |
+                HeuristicMixedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Test(enabled = false)
