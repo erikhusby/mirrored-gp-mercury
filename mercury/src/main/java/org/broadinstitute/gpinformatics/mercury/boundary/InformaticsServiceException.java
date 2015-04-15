@@ -29,6 +29,6 @@ public class InformaticsServiceException extends RuntimeException {
     }
 
     public InformaticsServiceException ( Throwable throwableIn ) {
-        super(throwableIn);
+        this (throwableIn.getMessage(), throwableIn);
     }
 }

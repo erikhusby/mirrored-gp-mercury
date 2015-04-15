@@ -90,11 +90,10 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
 
 
     private TestLogHandler testLogHandler;
-    private Logger billingAdaptorLogger;
 
     @BeforeTest
     public void setUpTestLogger() {
-        billingAdaptorLogger = Logger.getLogger(BillingAdaptor.class.getName());
+        Logger billingAdaptorLogger = Logger.getLogger(BillingAdaptor.class.getName());
         billingAdaptorLogger.setLevel(Level.ALL);
         testLogHandler = new TestLogHandler();
         billingAdaptorLogger.addHandler(testLogHandler);
@@ -158,6 +157,11 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
             return new Quote();
         }
+
+        @Override
+        public Quote getQuoteWithPriceItems(String alphaId) throws QuoteServerException, QuoteNotFoundException {
+            return getQuoteByAlphaId(alphaId);
+        }
     }
 
     @Deployment
@@ -176,7 +180,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
      * <li>Persist all of this data, outside of a transaction, flush and clear the entity manager.</li>
      * </ul>
      *
-     * @param orderSamples
+     * @param orderSamples The sampels for the order
      */
     private BillingSession writeFixtureData(String... orderSamples) {
 

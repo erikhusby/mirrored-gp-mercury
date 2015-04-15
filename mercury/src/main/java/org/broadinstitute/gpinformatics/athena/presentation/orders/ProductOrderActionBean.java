@@ -517,8 +517,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (StringUtils.isBlank(editOrder.getName()) || editOrder.getName().length() > 255) {
             addValidationError("title", "Name is required and cannot exceed 255 characters");
         }
-        if (StringUtils.isNotBlank(editOrder.getSkipQuoteReason()) &&
-            editOrder.canSkipQuote() && editOrder.getSkipQuoteReason().length() > 255) {
+        if (editOrder.canSkipQuote() && editOrder.getSkipQuoteReason().length() > 255) {
             addValidationError("skipQuoteReason", "Reason for Quote cannot exceed 255 characters");
         }
         if (editOrder.getProductOrderKit() != null &&
@@ -2175,8 +2174,8 @@ public class ProductOrderActionBean extends CoreActionBean {
             (action.equals(SAVE_ACTION) && editOrder.isSubmitted())) {
             boolean hasQuote = !StringUtils.isBlank(editOrder.getQuoteId());
             requireField(hasQuote || editOrder.canSkipQuote(), "a quote specified", action);
-            if (!hasQuote) {
-                requireField(editOrder.canSkipQuote(), "an explanation for why a quote cannot be entered", action);
+            if (!hasQuote && editOrder.allowedToSkipQuote()) {
+                requireField(editOrder.getSkipQuoteReason() , "an explanation for why a quote cannot be entered", action);
             }
         }
     }

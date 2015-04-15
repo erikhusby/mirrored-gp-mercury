@@ -52,6 +52,9 @@ public class LabEventTraversalTest extends Arquillian {
 
         searchInstance.establishRelationships(configurableSearchDefinition);
 
+        // Side effect of traversal evaluator
+        Assert.assertFalse(searchInstance.getIsDbSortable(), "Traversal evaluator results are not sortable in DB");
+
         ConfigurableListFactory.FirstPageResults firstPageResults =
                 configurableListFactory.getFirstResultsPage(
                         searchInstance, configurableSearchDefinition, null, 1, null, "ASC", "LabEvent" );

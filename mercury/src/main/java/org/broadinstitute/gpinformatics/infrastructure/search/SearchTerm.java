@@ -10,6 +10,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -26,9 +27,8 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
     private static final long serialVersionUID = -7452519036319121392L;
 
-    /**
-     * Attached to a search term display expression
-     * Generates the value to be displayed
+     /**
+     * Attached to various search term expressions to dynamically generate required properties.
      * @param <T>
      */
     public abstract static class Evaluator <T> {
@@ -125,11 +125,20 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     private Boolean required;
 
     /**
-     * Expression to access the parent entity's collection of child entities
+     * Provides sorting in criteria API if value is not null
+     * (Works only on simple entity properties on multi page results)
+     */
+    private String dbSortPath;
+
+    /**
+     * Provides access the parent entity's collection of child entities
      *     to include in a nested table presentation
      */
     private List<ColumnTabulation> nestedEntityColumns;
 
+    /**
+     * Plugins programmatically expand the list of search columns returned for a single search term
+     */
     private Class pluginClass;
 
     /**
@@ -147,34 +156,39 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     /**
      * Expression that fetches list of constrained values
      */
-    private Evaluator<List<ConstrainedValue>> valuesExpression;
+    private Evaluator<List<ConstrainedValue>> constrainedValuesExpression;
 
     /**
-     * Expression that determines data type
+     * Dynamic value type expression.
+     * Required to handle String, Data, Number metadata
      */
-    private Evaluator<String> typeExpression;
+    private Evaluator<ColumnValueType> valueTypeExpression;
 
     /**
-     * Value that isn't supplied by the user, referenced by dependent search terms, null
-     * if user supplies value
+     * Constant value type, superceded by valueTypeExpression if exists
+    */
+    private ColumnValueType valueType = ColumnValueType.STRING;
+
+    /**
+     * Value that isn't supplied by the user, referenced by dependent search terms.
+     * Null if user supplies value
      */
     private String constantValue;
 
     /**
-     * Expression to navigate to the property, for displaying search results, null if not
-     * displayed
+     * Expression to navigate to the property to generate value for display and sorting
      */
-    private Evaluator<Object> displayExpression;
+    private Evaluator<Object> displayValueExpression;
 
     /**
-     * Header text (or expression to derive it) for displaying search results, null if
-     * same as name.
+     * Header text (or expression to derive it) for displaying search results.
+     * Null if same as name.
      */
-    private Evaluator<Object> viewHeader;
+    private Evaluator<Object> viewHeaderExpression;
 
     /**
-     * First header text (or expression to derive it) for downloading search results, null
-     * if same as viewHeader
+     * First header text (or expression to derive it) for downloading search results.
+     * Null if same as viewHeaderExpression
      */
     private String downloadFirstHeader;
 
@@ -190,9 +204,9 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     private List<SearchTerm> dependentSearchTerms;
 
     /**
-     * Expression to convert HTML form value from String to property data type
+     * Expression to convert HTML form input value from String to property data type
      */
-    private Evaluator<Object> valueConversionExpression;
+    private Evaluator<Object> searchValueConversionExpression;
 
     /**
      * Hibernate SQL restriction (currently constant, i.e. doesn't reference values)
@@ -207,7 +221,7 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     private Boolean multipleForParent;
 
     /**
-     * True if dependent search terms should be added to the list of criteria and result columns.
+     * True if dependent search terms should be expanded and added to the list of criteria and result columns.
      */
     private Boolean addDependentTermsToSearchTermList = Boolean.FALSE;
 
@@ -256,19 +270,23 @@ public class SearchTerm implements Serializable, ColumnTabulation {
      * @param context any additional entities referred to by the expression
      * @return list of constrained values
      */
-    public List<ConstrainedValue> evalConstrainedValues(Map<String, Object> context) {
-        if (this.getValuesExpression() == null) {
+    public List<ConstrainedValue> getConstrainedValues(Map<String, Object> context) {
+        if (this.getConstrainedValuesExpression() == null) {
             return Collections.emptyList();
         }
-        List<ConstrainedValue> constrainedValues = valuesExpression.evaluate(null, context);
+        List<ConstrainedValue> constrainedValues = constrainedValuesExpression.evaluate(null, context);
         if (constrainedValues != null && constrainedValues.size() == 1 && constrainedValues.get(0).getCode() == null) {
             constrainedValues = null;
         }
         return constrainedValues;
     }
 
+    /**
+     * Display using JSP expression
+     * @return
+     */
     public List<ConstrainedValue> getConstrainedValues() {
-        return evalConstrainedValues(new HashMap<String, Object>());
+        return getConstrainedValues(new HashMap<String, Object>());
     }
 
     public String getName() {
@@ -318,20 +336,32 @@ public class SearchTerm implements Serializable, ColumnTabulation {
         this.newDetachedCriteria = newDetachedCriteria;
     }
 
-    public Evaluator<List<ConstrainedValue>> getValuesExpression() {
-        return valuesExpression;
+    public Evaluator<List<ConstrainedValue>> getConstrainedValuesExpression() {
+        return constrainedValuesExpression;
     }
 
-    public void setValuesExpression(Evaluator<List<ConstrainedValue>> valuesExpression) {
-        this.valuesExpression = valuesExpression;
+    public void setConstrainedValuesExpression(Evaluator<List<ConstrainedValue>> constrainedValuesExpression) {
+        this.constrainedValuesExpression = constrainedValuesExpression;
     }
 
-    public Evaluator<String> getTypeExpression() {
-        return typeExpression;
+    /**
+     * Set a constant value type for this term
+     * @param valueType
+     */
+    public void setValueType( ColumnValueType valueType ) {
+        this.valueType = valueType;
     }
 
-    public void setTypeExpression(Evaluator<String> typeExpression) {
-        this.typeExpression = typeExpression;
+    public void setValueTypeExpression( Evaluator<ColumnValueType> valueTypeExpression) {
+        this.valueTypeExpression = valueTypeExpression;
+    }
+
+    public Evaluator<Object> getSearchValueConversionExpression() {
+        return searchValueConversionExpression;
+    }
+
+    public void setSearchValueConversionExpression(Evaluator<Object> searchValueConversionExpression) {
+        this.searchValueConversionExpression = searchValueConversionExpression;
     }
 
     public String getConstantValue() {
@@ -342,12 +372,12 @@ public class SearchTerm implements Serializable, ColumnTabulation {
         this.constantValue = constantValue;
     }
 
-    public Evaluator<Object> getDisplayExpression() {
-        return displayExpression;
+    public Evaluator<Object> getDisplayValueExpression() {
+        return displayValueExpression;
     }
 
-    public void setDisplayExpression(Evaluator<Object> displayExpression) {
-        this.displayExpression = displayExpression;
+    public void setDisplayValueExpression(Evaluator<Object> displayValueExpression) {
+        this.displayValueExpression = displayValueExpression;
     }
 
     @Override
@@ -414,12 +444,12 @@ public class SearchTerm implements Serializable, ColumnTabulation {
         nestedEntityColumns.add(nestedEntityColumn);
     }
 
-    public Evaluator<Object> getViewHeader() {
-        return viewHeader;
+    public Evaluator<Object> getViewHeaderExpression() {
+        return viewHeaderExpression;
     }
 
-    public void setViewHeader(Evaluator<Object> viewHeader) {
-        this.viewHeader = viewHeader;
+    public void setViewHeaderExpression(Evaluator<Object> viewHeaderExpression) {
+        this.viewHeaderExpression = viewHeaderExpression;
     }
 
     public String getDownloadFirstHeader() {
@@ -444,14 +474,6 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
     public void setDependentSearchTerms(List<SearchTerm> dependentSearchTerms) {
         this.dependentSearchTerms = dependentSearchTerms;
-    }
-
-    public Evaluator<Object> getValueConversionExpression() {
-        return valueConversionExpression;
-    }
-
-    public void setValueConversionExpression(Evaluator<Object> valueConversionExpression) {
-        this.valueConversionExpression = valueConversionExpression;
     }
 
     public String getSqlRestriction() {
@@ -530,31 +552,39 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     }
 
     @Override
-    public Object evalPlainTextExpression(Object entity, Map<String, Object> context) {
-        // Both methods identical 10/17/2014
-        return evalFormattedExpression(entity, context);
+    public Object evalValueExpression(Object entity, Map<String, Object> context) {
+        context = addTermToContext(context);
+        return getDisplayValueExpression().evaluate(entity, context);
+    }
+
+    /**
+     * If a dynamic type expression has been explicitly set, use it, otherwise, use the default for the type
+     * @return
+     */
+    @Override
+    public ColumnValueType evalValueTypeExpression( Object value, Map<String, Object> context ) {
+        context = addTermToContext(context);
+        if( valueTypeExpression == null ) {
+            return valueType.getDefaultEvaluator().evaluate( value, context);
+        } else {
+            return valueTypeExpression.evaluate( value, context);
+        }
     }
 
     @Override
-    public Object evalFormattedExpression(Object entity, Map<String, Object> context) {
-        if( context == null ) {
-            context = new HashMap<>();
-        }
-        // May require this SearchTerm to extract metadata key from column name
-        context.put(SearchInstance.CONTEXT_KEY_SEARCH_TERM, this);
-        return getDisplayExpression().evaluate(entity, context);
+    public String evalFormattedExpression(Object value, Map<String, Object> context) {
+        context = addTermToContext(context);
+        String multiValueDelimiter = (String) context.get(SearchInstance.CONTEXT_KEY_MULTI_VALUE_DELIMITER );
+        return evalValueTypeExpression(value, context).format(value, multiValueDelimiter);
     }
 
     @Override
     public Object evalViewHeaderExpression(Object entity, Map<String, Object> context) {
-        if (getViewHeader() == null) {
+        if (getViewHeaderExpression() == null) {
             return getName();
         } else {
-            if( context == null ) {
-                context = new HashMap<>();
-            }
-            context.put(SearchInstance.CONTEXT_KEY_SEARCH_VALUE, this);
-            return getViewHeader().evaluate(entity, context);
+            context = addTermToContext(context);
+            return getViewHeaderExpression().evaluate(entity, context);
         }
     }
 
@@ -567,7 +597,8 @@ public class SearchTerm implements Serializable, ColumnTabulation {
      */
     @Override
     public Collection<?> evalNestedTableExpression(Object entity, Map<String, Object> context) {
-        return (Collection<?>) getDisplayExpression().evaluate(entity, context);
+        context = addTermToContext(context);
+        return (Collection<?>) getDisplayValueExpression().evaluate(entity, context);
     }
 
     @Override
@@ -591,7 +622,11 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
     @Override
     public String getDbSortPath() {
-        return null;
+        return this.dbSortPath;
+    }
+
+    public void setDbSortPath( String dbSortPath ) {
+        this.dbSortPath = dbSortPath;
     }
 
     @Override
@@ -599,9 +634,12 @@ public class SearchTerm implements Serializable, ColumnTabulation {
         return Collections.emptyList();
     }
 
-    @Override
-    public boolean isOnlyPlainText() {
-        return true;
+    private Map<String, Object> addTermToContext( Map<String, Object> context ){
+        if( context == null ) {
+            context = new HashMap<>();
+        }
+        // May require this SearchTerm to extract metadata key from column name
+        context.put(SearchInstance.CONTEXT_KEY_SEARCH_TERM, this);
+        return context;
     }
-
 }

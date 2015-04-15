@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -47,14 +48,20 @@ public class LcsetReagentTraversalEvaluator extends LabEventTraversalEvaluator {
      */
     @Override
     public List<Long> buildEntityIdList( Set entities ) {
-        Set<Long> idSet = new HashSet<>();
-        for( Reagent reagent : (Set<Reagent>)entities ) {
-            idSet.add(reagent.getReagentId());
-        }
+
+        // Need to sort list by name because no database sort possible on this search term
+        //   alternate search definition.
+        // Otherwise, if results are longer than 1 page no sorting will be done.
+        List<Reagent> reagentList = new ArrayList<>((Set<Reagent>)entities);
+
+        Collections.sort( reagentList, Reagent.BY_NAME_LOT_EXP );
+
         List<Long> idList = new ArrayList<>();
-        idList.addAll(idSet);
+        for( Reagent reagent : reagentList ) {
+            idList.add( reagent.getReagentId() );
+        }
+
         return idList;
     }
-
 
 }

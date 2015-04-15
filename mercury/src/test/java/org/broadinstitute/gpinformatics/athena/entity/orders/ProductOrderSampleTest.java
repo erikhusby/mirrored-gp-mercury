@@ -6,30 +6,38 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntryTest;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
-import org.hamcrest.Matcher;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.broadinstitute.gpinformatics.infrastructure.matchers.InBspFormat.inBspFormat;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 
 
 @Test(groups = TestGroups.DATABASE_FREE)
@@ -189,4 +197,75 @@ public class ProductOrderSampleTest {
         sample.setMetadataSource(metadataSource);
         assertThat(sample.getMetadataSource(), equalTo(metadataSource));
     }
+
+
+    public void testBspSampleIsReceived() {
+
+        ProductOrderSample sample = new ProductOrderSample("ABC");
+
+        MercurySample.MetadataSource metadataSource = MercurySample.MetadataSource.BSP;
+
+        sample.setMetadataSource(metadataSource);
+
+        SampleData bspTestData = new BspSampleData(new HashMap<BSPSampleSearchColumn, String>(){{
+            put(BSPSampleSearchColumn.RECEIPT_DATE, new SimpleDateFormat(BspSampleData.BSP_DATE_FORMAT_STRING).format(new Date()));
+            put(BSPSampleSearchColumn.GENDER, "M");
+        }});
+        sample.setSampleData(bspTestData);
+
+        assertThat(sample.isSampleAvailable(), equalTo(true));
+    }
+
+    public void testBspSampleIsNotReceived() {
+
+        ProductOrderSample sample = new ProductOrderSample("ABC");
+
+        MercurySample.MetadataSource metadataSource = MercurySample.MetadataSource.BSP;
+
+        sample.setMetadataSource(metadataSource);
+
+        SampleData bspTestData = new BspSampleData(new HashMap<BSPSampleSearchColumn, String>(){{
+            put(BSPSampleSearchColumn.GENDER, "M");
+        }});
+        sample.setSampleData(bspTestData);
+
+        assertThat(sample.isSampleAvailable(), equalTo(false));
+    }
+
+    public void testMercurySampleIsReceivedAndAccessioned() {
+        ProductOrderSample sample = new ProductOrderSample("ABC");
+
+        MercurySample.MetadataSource metadataSource = MercurySample.MetadataSource.MERCURY;
+        MercurySample testSample = new MercurySample( sample.getSampleKey(), Collections.<Metadata>emptySet());
+        BarcodedTube barcodedTube = new BarcodedTube("VesselFor" + sample.getSampleKey(),
+                BarcodedTube.BarcodedTubeType.MatrixTube);
+        LabEvent collaboratorTransferEvent =
+                new LabEvent(LabEventType.COLLABORATOR_TRANSFER, new Date(), "thisLocation", 0l, 0l, "testprogram");
+        barcodedTube.getInPlaceLabEvents().add(collaboratorTransferEvent);
+        testSample.addLabVessel(barcodedTube);
+
+        sample.setMetadataSource(metadataSource);
+        sample.setMercurySample(testSample);
+        sample.setSampleData(testSample.getSampleData());
+
+        assertThat(sample.isSampleAvailable(), equalTo(true));
+    }
+
+    public void testMercurySampleIsNotReceivedOrAccessioned() {
+
+        ProductOrderSample sample = new ProductOrderSample("ABC");
+
+        MercurySample.MetadataSource metadataSource = MercurySample.MetadataSource.MERCURY;
+        MercurySample testSample = new MercurySample( sample.getSampleKey(), Collections.<Metadata>emptySet());
+        BarcodedTube barcodedTube = new BarcodedTube("VesselFor" + sample.getSampleKey(),
+                BarcodedTube.BarcodedTubeType.MatrixTube);
+        testSample.addLabVessel(barcodedTube);
+
+        sample.setMetadataSource(metadataSource);
+        sample.setMercurySample(testSample);
+        sample.setSampleData(testSample.getSampleData());
+
+        assertThat(sample.isSampleAvailable(), equalTo(false));
+    }
+
 }

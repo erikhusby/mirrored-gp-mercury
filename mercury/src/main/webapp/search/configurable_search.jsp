@@ -392,7 +392,7 @@ function changeOperator(operatorSelect) {
                 valueElement.parentNode.insertBefore(andText, valueElement);
                 valueElement.parentNode.replaceChild(textInput2, valueElement);
 
-                if (dataType == 'Date') {
+                if (dataType == 'DATE' || dataType == 'DATE_TIME') {
                     $j("#" + valueElementId + "1").datepicker();
                     $j("#" + valueElementId + "2").datepicker();
                 }
@@ -412,7 +412,7 @@ function changeOperator(operatorSelect) {
                 }
                 valueElement.parentNode.replaceChild(textInput1, valueElement);
 
-                if (dataType == 'Date') {
+                if (dataType == 'DATE' || dataType == 'DATE_TIME' ) {
                     $j("#" + valueElementId).datepicker();
                 }
             }

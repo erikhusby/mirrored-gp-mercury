@@ -1003,7 +1003,7 @@ public class ManifestSessionContainerTest extends Arquillian {
             assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE));
             LabVessel transferedVessel = labVesselDao.findByIdentifier(sourceSampleToTargetVessel.get(manifestRecord.getValueByKey(
                     Metadata.Key.SAMPLE_ID)).getLabel());
-            assertThat(transferedVessel.doesChainOfCustodyInclude(LabEventType.COLLABORATOR_TRANSFER), is(true));
+            assertThat(transferedVessel.canBeUsedForAccessioning(), is(true));
         }
 
         /*
@@ -1059,7 +1059,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         LabEvent labEvent = new LabEvent(LabEventType.COLLABORATOR_TRANSFER, new Date(), "inTheLab", 0l,
                 0l, "mercury");
         labVessel.getInPlaceLabEvents().add(labEvent);
-        mercurySample.getLabVessel().add(labVessel);
+        mercurySample.addLabVessel(labVessel);
         mercurySampleDao.persist(mercurySample);
 
         try {
