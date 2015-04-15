@@ -13,14 +13,17 @@ package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkDetail;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -31,7 +34,15 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
+import javax.transaction.UserTransaction;
+import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -53,10 +64,16 @@ public class LabBatchFixUpTest extends Arquillian {
     private ProductOrderDao productOrderDao;
 
     @Inject
+    private LabBatchEjb labBatchEjb;
+
+    @Inject
     private BucketDao bucketDao;
 
     @Inject
     private UserBean userBean;
+
+    @Inject
+    private UserTransaction userTransaction;
 
     // Use (RC, "rc"), (PROD, "prod") to push the backfill to RC and production respectively.
     @Deployment
@@ -260,4 +277,48 @@ public class LabBatchFixUpTest extends Arquillian {
         labBatchDao.persist(new FixupCommentary("GPLIM-3493 unlink all tubes from " + undesiredLcset.getBatchName()));
         labBatchDao.flush();
     }
+
+
+    @Test(enabled = false)
+    public void fixupQual680(){
+        createFctsWithoutLcset(Collections.singletonList("AB56073486"), IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell,
+                8, new BigDecimal("15"), "QUAL-680 create FCT tickets without LCSET");
+    }
+
+    /**
+     * If a denature tube contains only positive controls, it doesn't have an LCSET (until control inference is
+     * removed), so the Create FCT Ticket page can't be used.  This method is adapted from that ActionBean.
+     */
+    public void createFctsWithoutLcset(List<String> selectedVesselLabels,
+            IlluminaFlowcell.FlowcellType selectedType, int numberOfLanes, BigDecimal loadingConc, String reason) {
+        try {
+            userBean.loginOSUser();
+            userTransaction.begin();
+            List<LabBatch> createdBatches = new ArrayList<>();
+            for (String denatureTubeBarcode : selectedVesselLabels) {
+                Set<LabVessel> vesselSet = new HashSet<>(labVesselDao.findByListIdentifiers(selectedVesselLabels));
+
+                LabBatch.LabBatchType batchType = selectedType.getBatchType();
+                int lanesPerFlowcell = selectedType.getVesselGeometry().getVesselPositions().length;
+                CreateFields.IssueType issueType = selectedType.getIssueType();
+                for (int i = 0; i < numberOfLanes; i += lanesPerFlowcell) {
+                    LabBatch batch = new LabBatch(denatureTubeBarcode + " FCT ticket", vesselSet, batchType,
+                            loadingConc, selectedType);
+                    batch.setBatchDescription(batch.getBatchName());
+                    labBatchEjb.createLabBatch(batch, userBean.getLoginUserName(), issueType);
+                    createdBatches.add(batch);
+                }
+            }
+            labBatchDao.persist(new FixupCommentary(reason));
+            labBatchDao.flush();
+            userTransaction.commit();
+            for (LabBatch createdBatch : createdBatches) {
+                System.out.println("Created " + createdBatch.getBatchName());
+            }
+        } catch (NotSupportedException | SystemException | HeuristicMixedException | HeuristicRollbackException |
+                RollbackException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 }
