@@ -686,19 +686,25 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
     /**
      * Rolls up visibility of the samples availability from just the sample data
+     *
+     * If the metadata is essentially BSP,
      */
     public boolean isSampleAvailable() {
         boolean available;
+        if(!isMetadataSourceInitialized && mercurySample == null) {
+            available = false;
+        } else {
 
-        switch (getMetadataSource()) {
-        case BSP:
-            available = getSampleData().isSampleReceived();
-            break;
-        case MERCURY:
-            available = isSampleAccessioned();
-            break;
-        default:
-            throw new IllegalStateException("The metadata Source is undetermined");
+            switch (getMetadataSource()) {
+            case BSP:
+                available = getSampleData().isSampleReceived();
+                break;
+            case MERCURY:
+                available = isSampleAccessioned();
+                break;
+            default:
+                throw new IllegalStateException("The metadata Source is undetermined");
+            }
         }
         return available;
     }
@@ -707,10 +713,11 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      * Exposes if a sample has been Accessioned.
      */
     private boolean isSampleAccessioned() {
-        boolean sampleAccessioned = true;
-        if(mercurySample != null &&
-           mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
-            sampleAccessioned = mercurySample.hasSampleBeenAccessioned();
+        boolean sampleAccessioned = false;
+        if(isMetadataSourceInitialized || mercurySample != null) {
+            if(mercurySample != null) {
+                sampleAccessioned = mercurySample.hasSampleBeenAccessioned();
+            }
         }
         return sampleAccessioned;
     }
