@@ -70,7 +70,8 @@ public class ProductOrderEtl extends GenericEntityAndStatusEtl<ProductOrder, Pro
                 format(entity.getQuoteId()),
                 format(entity.getJiraTicketKey()),
                 format(bspUser != null ? bspUser.getUsername() : null),
-                format(entity.getPlacedDate())
+                format(entity.getPlacedDate()),
+                format(entity.getSkipRegulatoryReason())
         );
     }
 }

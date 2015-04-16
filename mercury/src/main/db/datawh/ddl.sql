@@ -88,18 +88,19 @@ CREATE TABLE research_project_irb (
 );
 
 CREATE TABLE product_order (
-  product_order_id    NUMERIC(19) PRIMARY KEY NOT NULL,
-  research_project_id NUMERIC(19),
-  product_id          NUMERIC(19),
-  status              VARCHAR2(40)            NOT NULL,
-  created_date        DATE,
-  modified_date       DATE,
-  title               VARCHAR2(255),
-  quote_id            VARCHAR2(255),
-  jira_ticket_key     VARCHAR2(255),
-  owner               VARCHAR2(40),
-  placed_date         DATE,
-  etl_date            DATE                    NOT NULL
+  product_order_id       NUMERIC(19)    PRIMARY KEY NOT NULL,
+  research_project_id    NUMERIC(19),
+  product_id             NUMERIC(19),
+  status                 VARCHAR2(40)   NOT NULL,
+  created_date           DATE,
+  modified_date          DATE,
+  title                  VARCHAR2(255),
+  quote_id               VARCHAR2(255),
+  jira_ticket_key        VARCHAR2(255),
+  owner                  VARCHAR2(40),
+  placed_date            DATE,
+  skip_regulatory_reason VARCHAR2(255),
+  etl_date               DATE           NOT NULL
 );
 
 CREATE TABLE product_order_status (
@@ -139,6 +140,16 @@ CREATE TABLE product_order_add_on (
   product_order_id        NUMERIC(19) NOT NULL,
   product_id              NUMERIC(19) NOT NULL,
   etl_date                DATE        NOT NULL
+);
+
+CREATE TABLE pdo_regulatory_infos (
+  product_order_id   NUMERIC(19)   NOT NULL,
+  regulatory_info_id NUMERIC(19)   NOT NULL,
+  identifier         VARCHAR2(255) NOT NULL,
+  type               VARCHAR2(255) NOT NULL,
+  name               VARCHAR2(255) NOT NULL,
+  etl_date           DATE          NOT NULL,
+  constraint pk_pdo_regulatory_infos PRIMARY KEY ( product_order_id, regulatory_info_id )
 );
 
 CREATE TABLE lab_vessel (
@@ -341,20 +352,21 @@ CREATE TABLE im_research_project_irb (
 );
 
 CREATE TABLE im_product_order (
-  line_number         NUMERIC(9)  NOT NULL,
-  etl_date            DATE        NOT NULL,
-  is_delete           CHAR(1)     NOT NULL,
-  product_order_id    NUMERIC(19) NOT NULL,
-  research_project_id NUMERIC(19),
-  product_id          NUMERIC(19),
-  status              VARCHAR2(40),
-  created_date        DATE,
-  modified_date       DATE,
-  title               VARCHAR2(255),
-  quote_id            VARCHAR2(255),
-  jira_ticket_key     VARCHAR2(255),
-  owner               VARCHAR2(40),
-  placed_date         DATE
+  line_number            NUMERIC(9)  NOT NULL,
+  etl_date               DATE        NOT NULL,
+  is_delete              CHAR(1)     NOT NULL,
+  product_order_id       NUMERIC(19) NOT NULL,
+  research_project_id    NUMERIC(19),
+  product_id             NUMERIC(19),
+  status                 VARCHAR2(40),
+  created_date           DATE,
+  modified_date          DATE,
+  title                  VARCHAR2(255),
+  quote_id               VARCHAR2(255),
+  jira_ticket_key        VARCHAR2(255),
+  owner                  VARCHAR2(40),
+  placed_date            DATE,
+  skip_regulatory_reason VARCHAR2(255)
 );
 
 CREATE TABLE im_product_order_status (
@@ -394,6 +406,27 @@ CREATE TABLE im_product_order_add_on (
   product_order_add_on_id NUMERIC(19) NOT NULL,
   product_order_id        NUMERIC(19),
   product_id              NUMERIC(19)
+);
+
+CREATE TABLE im_pdo_regulatory_infos (
+  line_number        NUMERIC(9)    NOT NULL,
+  etl_date           DATE          NOT NULL,
+  is_delete          CHAR(1)       NOT NULL,
+  product_order_id   NUMERIC(19),
+  regulatory_info_id NUMERIC(19),
+  identifier         VARCHAR2(255),
+  type               VARCHAR2(255),
+  name               VARCHAR2(255)
+);
+
+CREATE TABLE im_regulatory_info (
+  line_number        NUMERIC(9)    NOT NULL,
+  etl_date           DATE          NOT NULL,
+  is_delete          CHAR(1)       NOT NULL,
+  regulatory_info_id NUMERIC(19),
+  identifier         VARCHAR2(255),
+  type               VARCHAR2(255),
+  name               VARCHAR2(255)
 );
 
 CREATE TABLE im_lab_vessel (
@@ -606,6 +639,11 @@ REFERENCES lab_vessel (lab_vessel_id) ON DELETE CASCADE;
 ALTER TABLE lab_metric ADD CONSTRAINT fk_lab_metric_pdo_id FOREIGN KEY (product_order_id)
 REFERENCES product_order (product_order_id) ON DELETE CASCADE;
 
+alter table pdo_regulatory_infos
+add constraint FK_PDO_REGINFO
+foreign key(product_order_id)
+references product_order(product_order_id) ON DELETE CASCADE;
+
 --  Creates indexes
 
 CREATE INDEX research_project_status_idx1 ON research_project_status (research_project_id);
@@ -629,5 +667,6 @@ CREATE UNIQUE INDEX seq_sample_fact_idx1 ON sequencing_sample_fact (flowcell_bar
 CREATE INDEX seq_sample_fact_idx2 ON sequencing_sample_fact (product_order_id, sample_name);
 CREATE INDEX seq_sample_fact_idx3 ON sequencing_sample_fact (sequencing_run_id);
 CREATE INDEX lab_metric_idx1 ON lab_metric (product_order_id, sample_name, batch_name);
+CREATE INDEX pdo_regulatory_info_idx1 ON pdo_regulatory_infos (regulatory_info_id);
 
-COMMIT;
+

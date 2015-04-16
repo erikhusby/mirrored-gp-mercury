@@ -105,7 +105,7 @@ public class ExtractTransform implements Serializable {
     /**
      * Name of subdirectory under configured ETL root dir where new sqlLoader files are put.
      */
-    public static final String DATAFILE_SUBDIR = "/new";
+    public static final String DATAFILE_SUBDIR = File.separator + "new";
 
     /**
      * Name of directory where sqlLoader files are put.
@@ -161,6 +161,8 @@ public class ExtractTransform implements Serializable {
             ProductEtl productEtl,
             ProductOrderAddOnEtl productOrderAddOnEtl,
             ProductOrderEtl productOrderEtl,
+            RegulatoryInfoEtl regulatoryInfoEtl,
+            PDORegulatoryInfoEtl pdoRegulatoryInfoEtl,
             ProductOrderSampleEtl productOrderSampleEtl,
             ProjectPersonEtl projectPersonEtl,
             ResearchProjectCohortEtl researchProjectCohortEtl,
@@ -182,6 +184,8 @@ public class ExtractTransform implements Serializable {
         etlInstances.add(productEtl);
         etlInstances.add(productOrderAddOnEtl);
         etlInstances.add(productOrderEtl);
+        etlInstances.add(regulatoryInfoEtl);
+        etlInstances.add(pdoRegulatoryInfoEtl);
         etlInstances.add(productOrderSampleEtl);
         etlInstances.add(projectPersonEtl);
         etlInstances.add(researchProjectCohortEtl);

@@ -181,6 +181,23 @@ IS
       WHERE is_delete = 'T'
     );
 
+    -- Flush PDO regulatory info for all changed/deleted product orders
+    DELETE FROM pdo_regulatory_infos
+    WHERE product_order_id IN (
+      SELECT
+        product_order_id
+      FROM im_product_order
+    );
+
+    -- Doubtful regulatory info will ever be deleted, but handle it
+    DELETE FROM pdo_regulatory_infos
+    WHERE regulatory_info_id IN (
+      SELECT
+        regulatory_info_id
+      FROM im_regulatory_info
+      WHERE is_delete = 'T'
+    );
+
     DELETE FROM product_order
     WHERE product_order_id IN (
       SELECT
@@ -668,9 +685,11 @@ IS
         jira_ticket_key = new.jira_ticket_key,
         owner = new.owner,
         placed_date = new.placed_date,
+        skip_regulatory_reason = new.skip_regulatory_reason,
         etl_date = new.etl_date
       WHERE product_order_id = new.product_order_id;
 
+      IF SQL%ROWCOUNT = 0 THEN
       INSERT INTO product_order (
         product_order_id,
         research_project_id,
@@ -683,9 +702,9 @@ IS
         jira_ticket_key,
         owner,
         placed_date,
+        skip_regulatory_reason,
         etl_date
-      )
-        SELECT
+      ) VALUES (
           new.product_order_id,
           new.research_project_id,
           new.product_id,
@@ -697,14 +716,9 @@ IS
           new.jira_ticket_key,
           new.owner,
           new.placed_date,
-          new.etl_date
-        FROM DUAL
-        WHERE NOT EXISTS(
-            SELECT
-              1
-            FROM product_order
-            WHERE product_order_id = new.product_order_id
-        );
+          new.skip_regulatory_reason,
+          new.etl_date );
+      END IF ;
       EXCEPTION WHEN OTHERS THEN
       errmsg := SQLERRM;
       DBMS_OUTPUT.PUT_LINE(
@@ -713,6 +727,27 @@ IS
     END;
 
     END LOOP;
+
+    -- Refresh all related regulatory info for modified PDOs
+    INSERT INTO pdo_regulatory_infos (
+           product_order_id, regulatory_info_id,
+           identifier, name, type,
+           etl_date )
+    ( SELECT product_order_id, regulatory_info_id,
+             identifier, name, type,
+             etl_date
+        FROM im_pdo_regulatory_infos
+       WHERE is_delete = 'F' );
+
+    -- Update denormalized date if any regulatory info changed
+    UPDATE pdo_regulatory_infos r
+       SET ( r.identifier, r.name, r.type, r.etl_date )
+         = ( SELECT i.identifier, i.name, i.type, i.etl_date
+               FROM im_regulatory_info i
+              WHERE i.regulatory_info_id = r.regulatory_info_id )
+     WHERE EXISTS (select 1
+                     from im_regulatory_info i2
+                    WHERE i2.regulatory_info_id = r.regulatory_info_id);
 
 
     FOR new IN im_po_add_on_cur LOOP
