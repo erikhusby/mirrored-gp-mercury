@@ -706,6 +706,7 @@ public interface TransferTraverserCriteria {
             }
 
             if( context.getLabVessel() != null ) {
+                labEvents.addAll(context.getLabVessel().getInPlaceLabEvents());
                 for (VesselContainer containerVessel : context.getLabVessel().getContainers()) {
                     labEvents.addAll(containerVessel.getEmbedder().getInPlaceLabEvents());
                 }
