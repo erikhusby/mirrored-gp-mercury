@@ -198,7 +198,6 @@ public class ProductOrderSampleTest {
         ProductOrderSample sample = new ProductOrderSample("ABC");
         sample.setMetadataSource(null);
         sample.getMetadataSource();
-//        assertThat(sample.getMetadataSource(), nullValue());
     }
 
     public void test_setMetadataSource_to_nonnull_value() {
