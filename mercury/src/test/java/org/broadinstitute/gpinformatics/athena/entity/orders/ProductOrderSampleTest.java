@@ -358,19 +358,26 @@ public class ProductOrderSampleTest {
         ProductOrderSample productOrderSample = new ProductOrderSample(sampleId);
 
         SampleData receivedSampleData = new BspSampleData();
-        if(source != null) {
-            if (source == MercurySample.MetadataSource.BSP && isSampleDataSet) {
-                Map<BSPSampleSearchColumn, String> sampleDataMap = new HashMap<>();
-                sampleDataMap.put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "C"+sampleId);
-                if (isSampleAvailable) {
-                    sampleDataMap.put(BSPSampleSearchColumn.RECEIPT_DATE,
-                            new SimpleDateFormat(BspSampleData.BSP_DATE_FORMAT_STRING).format(new Date()));
+        if (source != null) {
+            switch (source) {
+            case BSP:
+                if (isSampleDataSet) {
+                    Map<BSPSampleSearchColumn, String> sampleDataMap = new HashMap<>();
+                    sampleDataMap.put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "C" + sampleId);
+                    if (isSampleAvailable) {
+                        sampleDataMap.put(BSPSampleSearchColumn.RECEIPT_DATE,
+                                new SimpleDateFormat(BspSampleData.BSP_DATE_FORMAT_STRING).format(new Date()));
+                    }
+                    receivedSampleData = new BspSampleData(sampleDataMap);
                 }
-                receivedSampleData = new BspSampleData(sampleDataMap);
-            } else {
-                receivedSampleData =
-                        new MercurySampleData(sampleId,
-                                Collections.singleton(new Metadata(Metadata.Key.BROAD_SAMPLE_ID,sampleId)));
+                break;
+            case MERCURY:
+                if (isSampleDataSet) {
+                    receivedSampleData =
+                            new MercurySampleData(sampleId,
+                                    Collections.singleton(new Metadata(Metadata.Key.BROAD_SAMPLE_ID, sampleId)));
+                }
+                break;
             }
         }
 
