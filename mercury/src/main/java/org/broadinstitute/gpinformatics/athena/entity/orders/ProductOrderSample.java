@@ -713,10 +713,8 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      */
     private boolean isSampleAccessioned() {
         boolean sampleAccessioned = false;
-        if(isMetadataSourceInitialized()) {
-            if (mercurySample != null) {
-                sampleAccessioned = mercurySample.hasSampleBeenAccessioned();
-            }
+        if (mercurySample != null) {
+            sampleAccessioned = mercurySample.hasSampleBeenAccessioned();
         }
         return sampleAccessioned;
     }

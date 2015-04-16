@@ -1003,7 +1003,7 @@ public class ManifestSessionContainerTest extends Arquillian {
             assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE));
             LabVessel transferedVessel = labVesselDao.findByIdentifier(sourceSampleToTargetVessel.get(manifestRecord.getValueByKey(
                     Metadata.Key.SAMPLE_ID)).getLabel());
-            assertThat(!transferedVessel.canBeUsedForAccessioning(), is(true));
+            assertThat(transferedVessel.canBeUsedForAccessioning(), is(false));
         }
 
         /*

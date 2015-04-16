@@ -193,10 +193,12 @@ public class ProductOrderSampleTest {
      * This may be revisited at a later time provided that the effect on callers that depend on metadataSource being set
      * is considered.
      */
+    @Test(expectedExceptions = IllegalStateException.class)
     public void test_setMetadataSource_to_null_value() {
         ProductOrderSample sample = new ProductOrderSample("ABC");
         sample.setMetadataSource(null);
-        assertThat(sample.getMetadataSource(), nullValue());
+        sample.getMetadataSource();
+//        assertThat(sample.getMetadataSource(), nullValue());
     }
 
     public void test_setMetadataSource_to_nonnull_value() {
