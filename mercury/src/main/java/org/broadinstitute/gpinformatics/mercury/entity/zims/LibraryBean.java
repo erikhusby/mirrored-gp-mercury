@@ -379,7 +379,17 @@ public class LibraryBean {
             // so there is no way to tell missing data from empty data.
             species = StringUtils.trimToNull(sampleData.getOrganism());
             primaryDisease = StringUtils.trimToNull(sampleData.getPrimaryDisease());
-            sampleType = StringUtils.trimToNull(sampleData.getSampleType());
+            String sampleType = StringUtils.trimToNull(sampleData.getSampleType());
+            // The pipeline API understands only Tumor and Normal
+            if (sampleType != null) {
+                if (sampleType.equals("Primary") || sampleType.equals("Secondary")) {
+                    sampleType = "Tumor";
+                }
+                if (!sampleType.equals("Normal") && !sampleType.equals("Tumor")) {
+                    throw new RuntimeException("Unexpected sample type " + sampleType);
+                }
+            }
+            this.sampleType = sampleType;
             rootSample = StringUtils.trimToNull(sampleData.getRootSample());
             stockSample = StringUtils.trimToNull(sampleData.getStockSample());
             sampleLSID = StringUtils.trimToNull(sampleData.getSampleLsid());
