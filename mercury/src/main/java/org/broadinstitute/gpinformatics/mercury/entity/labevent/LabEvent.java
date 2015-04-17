@@ -21,6 +21,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowProcessDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowProcessDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
@@ -136,6 +137,7 @@ public class LabEvent {
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     @JoinTable(schema = "mercury")
+    @BatchSize(size = 100)
     private Set<Reagent> reagents = new HashSet<>();
 
     /**

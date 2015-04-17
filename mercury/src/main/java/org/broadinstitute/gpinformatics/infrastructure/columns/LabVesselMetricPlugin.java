@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
-import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -31,10 +30,10 @@ public class LabVesselMetricPlugin implements ListPlugin {
                 // Include measurement default units in header
                 headerText = metricType.getDisplayName() + " ng/uL";
                 QUANT_VALUE_HEADERS
-                        .put(metricType, new ConfigurableList.Header(headerText, headerText, "", ""));
+                        .put(metricType, new ConfigurableList.Header(headerText, headerText, ""));
                 headerText = metricType.getDisplayName() + " Decision";
                 QUANT_DECISION_HEADERS.put(metricType,
-                        new ConfigurableList.Header(headerText, headerText, "", ""));
+                        new ConfigurableList.Header(headerText, headerText, ""));
             }
         }
     }
@@ -109,7 +108,7 @@ public class LabVesselMetricPlugin implements ListPlugin {
                 metric = latestMetric;
             }
         }
-        value = MathUtils.scaleTwoDecimalPlaces(metric.getValue()).toPlainString();
+        value = ColumnValueType.TWO_PLACE_DECIMAL.format( metric.getValue(), "" );
         // Display measurement units if not default
         if( metric.getUnits() != LabMetric.LabUnit.UG_PER_ML && metric.getUnits() != LabMetric.LabUnit.NG_PER_UL ) {
             value += " " + metric.getUnits().getDisplayName();

@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.samples;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
@@ -23,6 +24,7 @@ public class MercurySampleData implements SampleData {
     private String collectionDate;
     private String visit;
     private final boolean hasData;
+    private boolean received;
 
     public MercurySampleData(@Nonnull String sampleId, @Nonnull Set<Metadata> metadata) {
         this.sampleId = sampleId;
@@ -188,7 +190,7 @@ public class MercurySampleData implements SampleData {
 
     @Override
     public boolean isSampleReceived() {
-        return false;
+        return received;
     }
 
     @Override

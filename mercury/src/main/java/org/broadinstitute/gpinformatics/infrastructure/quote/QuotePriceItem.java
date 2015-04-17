@@ -51,12 +51,12 @@ public class QuotePriceItem {
     /**
      * This constructor is only used by test code.
      *
-     * @param categoryName
-     * @param id
-     * @param name
-     * @param price
-     * @param unit
-     * @param platformName
+     * @param categoryName The category
+     * @param id The price item id
+     * @param name The name of the price item
+     * @param price The cost of this item
+     * @param unit The units
+     * @param platformName The platform for this item
      */
     public QuotePriceItem(String categoryName,
                           String id,

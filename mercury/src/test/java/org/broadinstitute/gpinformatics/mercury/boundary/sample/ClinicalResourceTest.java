@@ -18,16 +18,19 @@ import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.ClinicalResourceBean;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -50,6 +53,8 @@ public class ClinicalResourceTest extends RestServiceContainerTest {
     private ManifestSessionDao manifestSessionDao;
     @Inject
     private ManifestSessionEjb manifestSessionEjb;
+    @Inject
+    private MercurySampleDao mercurySampleDao;
     private static final long MANIFEST_ID = 5102l;
     private static final String MANIFEST_NAME = "fooManifest";
 
@@ -62,21 +67,28 @@ public class ClinicalResourceTest extends RestServiceContainerTest {
 
     @RunAsClient
     @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
-    public void testWebService(@ArquillianResource URL baseUrl) throws Exception {
+    public void testCreateManifestFails(@ArquillianResource URL baseUrl) throws Exception {
         ClinicalResourceBean clinicalResourceBean = ClinicalSampleTestFactory
-                .createClinicalResourceBean(QA_DUDE_PM, MANIFEST_NAME, EXISTING_RESEARCH_PROJECT_KEY, true, 2);
+                .createClinicalResourceBean(QA_DUDE_PM, MANIFEST_NAME, EXISTING_RESEARCH_PROJECT_KEY, true, 0);
 
         WebResource resource = makeWebResource(baseUrl, ClinicalResource.CREATE_MANIFEST);
-
         ClientResponse response = resource.type(MediaType.APPLICATION_JSON_TYPE)
                 .accept(MediaType.APPLICATION_JSON_TYPE).entity(clinicalResourceBean)
                 .post(ClientResponse.class);
-        assertThat(response.getStatus(), is(Response.Status.OK.getStatusCode()));
+        assertThat(response.getStatus(), is(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()));
     }
-
 
     public void testCreateManifestWithSamples() throws Exception {
         String sampleId = "SM-1";
+
+        MercurySample sampleForTest = mercurySampleDao.findBySampleKey(sampleId);
+        if (sampleForTest == null) {
+            sampleForTest = new MercurySample(sampleId, MercurySample.MetadataSource.MERCURY);
+            mercurySampleDao.persist(sampleForTest);
+        } else {
+            assertThat(sampleForTest.getMetadataSource(), equalTo(MercurySample.MetadataSource.MERCURY));
+        }
+
         ClinicalResourceBean clinicalResourceBean = ClinicalSampleTestFactory
                 .createClinicalResourceBean(QA_DUDE_PM, MANIFEST_NAME, EXISTING_RESEARCH_PROJECT_KEY, Boolean.TRUE,
                         ImmutableMap.of(Metadata.Key.BROAD_SAMPLE_ID, sampleId));
@@ -90,6 +102,20 @@ public class ClinicalResourceTest extends RestServiceContainerTest {
         assertThat(manifestSession.getRecords().size(), equalTo(1));
         ManifestRecord manifestRecord = manifestSession.getRecords().iterator().next();
         assertThat(manifestRecord.getValueByKey(Metadata.Key.BROAD_SAMPLE_ID), equalTo(sampleId));
+    }
+
+    public void testCreateManifestWithSamplesHavingEmptyMetadataValues() throws Exception {
+        String sampleId = "";
+        ClinicalResourceBean clinicalResourceBean =
+                ClinicalSampleTestFactory
+                        .createClinicalResourceBean(QA_DUDE_PM, MANIFEST_NAME, EXISTING_RESEARCH_PROJECT_KEY,
+                                Boolean.TRUE, ImmutableMap.of(Metadata.Key.BROAD_SAMPLE_ID, sampleId));
+        try {
+            clinicalResource.createManifestWithSamples(clinicalResourceBean);
+            Assert.fail();
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getLocalizedMessage(), is(ClinicalResource.SAMPLE_CONTAINS_NO_METADATA));
+        }
     }
 
     @Override

@@ -9,6 +9,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -37,24 +39,32 @@ public class ManifestTestFactory {
         ManifestSession manifestSession = new ManifestSession(researchProject, sessionPrefix,
                 createdBy, fromSampleKit);
 
+        EnumSet<Metadata.Key> excludeKeys = EnumSet.of(Metadata.Key.BROAD_2D_BARCODE);
+        if(fromSampleKit){
+            excludeKeys.add(Metadata.Key.SAMPLE_ID);
+        }
+
         for (int i = 1; i <= numberOfRecords; i++) {
-            ManifestRecord manifestRecord = buildManifestRecord(i);
+            ManifestRecord manifestRecord = buildManifestRecord(i, excludeKeys);
             manifestRecord.setStatus(defaultStatus);
             manifestSession.addRecord(manifestRecord);
         }
         return manifestSession;
     }
 
-    public static ManifestRecord buildManifestRecord(int recordNumber) {
-        return buildManifestRecord(recordNumber, null);
+    public static ManifestRecord buildManifestRecord(int recordNumber, EnumSet<Metadata.Key> excludeKeys) {
+        return buildManifestRecord(recordNumber, null, excludeKeys);
     }
 
-    public static ManifestRecord buildManifestRecord(int recordNumber, Map<Metadata.Key, String> initialData) {
+    public static ManifestRecord buildManifestRecord(int recordNumber, Map<Metadata.Key, String> initialData,
+                                                     EnumSet<Metadata.Key> excludeKeys) {
         ManifestRecord manifestRecord = new ManifestRecord();
 
         for (Metadata.Key key : Metadata.Key.values()) {
-            if (key.getCategory() == Metadata.Category.SAMPLE &&
-                key != Metadata.Key.BROAD_2D_BARCODE) {
+            if ((key.getCategory() == Metadata.Category.SAMPLE &&
+                key != Metadata.Key.BROAD_2D_BARCODE)
+                && (!excludeKeys.contains(key))
+                    ) {
                 String value;
                 if (initialData != null && initialData.containsKey(key)) {
                     value = initialData.get(key);
@@ -69,8 +79,9 @@ public class ManifestTestFactory {
     }
 
     public static void addRecord(ManifestSession session, ManifestRecord.ErrorStatus errorStatus,
-                                 ManifestRecord.Status status, Map<Metadata.Key, String> initialData) {
-        ManifestRecord record = buildManifestRecord(20, initialData);
+                                 ManifestRecord.Status status, Map<Metadata.Key, String> initialData,
+                                 EnumSet<Metadata.Key> excludeKeys) {
+        ManifestRecord record = buildManifestRecord(20, initialData, excludeKeys);
         record.setStatus(status);
         session.addRecord(record);
 

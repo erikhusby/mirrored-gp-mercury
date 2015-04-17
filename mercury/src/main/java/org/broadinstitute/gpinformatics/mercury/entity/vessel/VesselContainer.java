@@ -673,10 +673,10 @@ public class VesselContainer<T extends LabVessel> {
      *
      * @param metricType The type of metrics to return.
      *
-     * @return A collection of the nearest metrics of the given type.
+     * @return A collection of the nearest metrics of the given type, ordered by ascending run date
      */
     @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
-    public Collection<LabMetric> getNearestMetricOfType(LabMetric.MetricType metricType) {
+    public List<LabMetric> getNearestMetricOfType(LabMetric.MetricType metricType) {
         TransferTraverserCriteria.NearestLabMetricOfTypeCriteria metricTypeCriteria =
                 new TransferTraverserCriteria.NearestLabMetricOfTypeCriteria(metricType);
         applyCriteriaToAllPositions(metricTypeCriteria);

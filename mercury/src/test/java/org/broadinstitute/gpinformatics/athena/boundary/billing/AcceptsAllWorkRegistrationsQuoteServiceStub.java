@@ -46,4 +46,9 @@ class AcceptsAllWorkRegistrationsQuoteServiceStub implements QuoteService {
     public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
         return new Quote();
     }
+
+    @Override
+    public Quote getQuoteWithPriceItems(String alphaId) throws QuoteServerException, QuoteNotFoundException {
+        return new Quote();
+    }
 }

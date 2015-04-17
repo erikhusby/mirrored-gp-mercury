@@ -28,7 +28,7 @@
         </c:if>
         <%-- Checkbox to determine whether term appears in search results--%>
         <c:choose>
-            <c:when test="${not actionBean.minimal and not empty searchValue.searchTerm.displayExpression}">
+            <c:when test="${not actionBean.minimal and not empty searchValue.searchTerm.displayValueExpression}">
                 <input type="checkbox" class="displayTerm"
                        name="tbd"  ${searchValue.includeInResults ? 'checked="true"' : ''}/>
             </c:when>
@@ -47,7 +47,7 @@
             <c:when test="${not empty searchValue.searchTerm.sqlRestriction}">
                 <%-- Don't display operator for SQL search terms--%>
             </c:when>
-            <c:when test="${searchValue.dataType == 'Boolean'}">
+            <c:when test="${searchValue.dataType == ColumnValueType.BOOLEAN}">
                 <%-- Only equals is meaningful for booleans --%>
                 <span class="termoperatortext">=</span>
                 <input type="hidden" name="tbd" value="EQUALS" class="termoperator"/>
@@ -70,7 +70,7 @@
                         =
                     </option>
                     <%-- IN (because of implied midnight) and LIKE are not meaningful for dates --%>
-                    <c:if test="${searchValue.dataType != 'Date'}">
+                    <c:if test="${ searchValue.dataType ne ColumnValueType.DATE and searchValue.dataType ne ColumnValueType.DATE_TIME}">
                         <option value="IN" ${not empty searchValue.operator && searchValue.operator.name == 'IN' ? 'selected' : ''}>
                             from list
                         </option>
@@ -123,7 +123,7 @@
                     </c:forEach>
                 </select>
             </c:when>
-            <c:when test="${not empty searchValue.searchTerm.valuesExpression && fn:length(searchValue.constrainedValues) == 0}">
+            <c:when test="${not empty searchValue.searchTerm.constrainedValuesExpression && fn:length(searchValue.constrainedValues) == 0}">
                 <%-- If the values are constrained, but the list is empty, display "none", rather than a text box; nothing the user types can be meaningful --%>
                 none
             </c:when>
@@ -143,7 +143,7 @@
                         and
                         <input type="text" name="tbd" value="${searchValue.values[1]}"
                                class="termvalue" id="${uniqueId}_value2" between2 dataType="${searchValue.dataType}"/>
-                        <c:if test="${searchValue.dataType == 'Date'}">
+                        <c:if test="${searchValue.dataType eq 'DATE' or searchValue.dataType eq 'DATE_TIME'}">
                             <script type="text/javascript">
                                 $j("#${uniqueId}_value1").datepicker();
                                 $j("#${uniqueId}_value2").datepicker();
@@ -154,7 +154,7 @@
                         <!-- Single text value -->
                         <input type="text" name="tbd" value="${searchValue.values[0]}"
                                id="${uniqueId}_value" class="termvalue" dataType="${searchValue.dataType}"/>
-                        <c:if test="${searchValue.dataType == 'Date'}">
+                        <c:if test="${searchValue.dataType eq 'DATE' or searchValue.dataType eq 'DATE_TIME'}">
                             <script type="text/javascript">
                                 $j("#${uniqueId}_value").datepicker();
                             </script>
@@ -164,7 +164,7 @@
             </c:otherwise>
         </c:choose>
         <%-- If there are sub-terms, render a link to add them, don't bother if value is "none" --%>
-        <c:if test="${not empty searchValue.searchTerm.dependentSearchTerms && empty searchValue.children && (empty searchValue.searchTerm.valuesExpression || fn:length(searchValue.constrainedValues) > 0)}">
+        <c:if test="${not empty searchValue.searchTerm.dependentSearchTerms && empty searchValue.children && (empty searchValue.searchTerm.constrainedValuesExpression || fn:length(searchValue.constrainedValues) > 0)}">
             <input type="button" id="addSubTermBtn" class="btn btn-primary" value="Add Sub-Term" onclick="nextTerm(this)" />
         </c:if>
         <%-- Recurse over sub-terms --%>

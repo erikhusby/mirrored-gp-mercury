@@ -3,6 +3,8 @@ package org.broadinstitute.gpinformatics.infrastructure.quote;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.ArrayList;
+import java.util.Collection;
 
 @XmlRootElement(name="Quote")
 public class Quote {
@@ -15,11 +17,11 @@ public class Quote {
     private String name;
     private QuoteFunding quoteFunding;
     private QuoteType quoteType;
-
+    private Collection<QuoteItem> quoteItems = new ArrayList<> ();
 
     public Quote() {}
 
-    public Quote(String alphanumericId,QuoteFunding quoteFunding, ApprovalStatus approvalStatus) {
+    public Quote(String alphanumericId, QuoteFunding quoteFunding, ApprovalStatus approvalStatus) {
         if (alphanumericId == null) {
             throw new NullPointerException("alphanumeric Id cannot be null.");
         }
@@ -35,6 +37,15 @@ public class Quote {
 
     public void setQuoteFunding(QuoteFunding quoteFunding) {
         this.quoteFunding = quoteFunding;
+    }
+
+    @XmlElement(name = "Item")
+    public Collection<QuoteItem> getQuoteItems() {
+        return quoteItems;
+    }
+
+    public void setQuoteItems(Collection<QuoteItem> quoteItems) {
+        this.quoteItems = quoteItems;
     }
 
     @XmlAttribute(name = "name")

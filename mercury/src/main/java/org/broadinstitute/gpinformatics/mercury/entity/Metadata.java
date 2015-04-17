@@ -4,6 +4,8 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
+import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
+import org.broadinstitute.gpinformatics.mercury.crsp.generated.SampleData;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
@@ -284,5 +286,13 @@ public class Metadata {
             return visibility;
         }
 
+        public String getValueFor(Sample sample) {
+            for (SampleData sampleData : sample.getSampleData()) {
+                if (sampleData.getName().equals(name())) {
+                    return sampleData.getValue();
+                }
+            }
+            return null;
+        }
     }
 }
