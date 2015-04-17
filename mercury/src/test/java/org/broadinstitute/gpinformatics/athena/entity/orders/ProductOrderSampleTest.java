@@ -182,17 +182,6 @@ public class ProductOrderSampleTest {
         sample.getMetadataSource();
     }
 
-    /**
-     * The two options for handling explicit setting to null are to treat it as having not been set or to treat it as a
-     * valid value. Treating it as a valid value is currently done for 2 reasons:
-     * <ol>
-     * <li>There is not a {@link MercurySample.MetadataSource} value for "none" or "unknown"</li>
-     * <li>Treating null as unset would expose an implementation detail of {@link ProductOrderSample}
-     * unnecessarily</li>
-     * </ol>
-     * This may be revisited at a later time provided that the effect on callers that depend on metadataSource being set
-     * is considered.
-     */
     @Test(expectedExceptions = IllegalStateException.class)
     public void test_setMetadataSource_to_null_value() {
         ProductOrderSample sample = new ProductOrderSample("ABC");
