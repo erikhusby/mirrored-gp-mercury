@@ -44,6 +44,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBeanConte
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.easymock.EasyMock;
+import org.jetbrains.annotations.NotNull;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.mockito.Mockito;
@@ -67,11 +68,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.emptyCollectionOf;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.isEmptyOrNullString;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductOrderActionBeanTest {
@@ -688,18 +690,13 @@ public class ProductOrderActionBeanTest {
      * cleared.
      */
     public void testUpdateRegulatoryInformationNotSkipping() {
-
-        // Set both regulatory info and a skip reason.
-        RegulatoryInfo regulatoryInfo = new RegulatoryInfo("test", RegulatoryInfo.Type.IRB, "test");
-        pdo.getRegulatoryInfos().add(regulatoryInfo);
-        pdo.setSkipRegulatoryReason("test");
-        actionBean.setEditOrder(pdo);
-
+        setupForChangingRegInfoSkip();
         actionBean.setSkipRegulatoryInfo(false);
+
         actionBean.updateRegulatoryInformation();
 
-        assertThat(pdo.getRegulatoryInfos(), hasItem(regulatoryInfo));
-        assertThat(pdo.getSkipRegulatoryReason(), nullValue());
+        assertThat(pdo.getRegulatoryInfos(), not(empty()));
+        assertThat(pdo.getSkipRegulatoryReason(), isEmptyOrNullString());
     }
 
     /**
@@ -708,18 +705,26 @@ public class ProductOrderActionBeanTest {
      * skipping) is cleared.
      */
     public void testUpdateRegulatoryInformationSkipping() {
-        // Set both regulatory info and a skip reason.
-        RegulatoryInfo regulatoryInfo = new RegulatoryInfo("test", RegulatoryInfo.Type.IRB, "test");
-        pdo.getRegulatoryInfos().add(regulatoryInfo);
-        String reason = "test";
-        pdo.setSkipRegulatoryReason(reason);
-        actionBean.setEditOrder(pdo);
-
+        setupForChangingRegInfoSkip();
         actionBean.setSkipRegulatoryInfo(true);
+
         actionBean.updateRegulatoryInformation();
 
-        assertThat(pdo.getRegulatoryInfos(), emptyCollectionOf(RegulatoryInfo.class));
-        assertThat(pdo.getSkipRegulatoryReason(), equalTo(reason));
+        assertThat(pdo.getRegulatoryInfos(), empty());
+        assertThat(pdo.getSkipRegulatoryReason(), not(isEmptyOrNullString()));
+    }
+
+    /**
+     * Set up the edit PDO such that it has both regulatory information and a reason for skipping regulatory
+     * information. This is how the web form will submit the data in the case where one was already saved and the user
+     * is editing the PDO to change to the other (and didn't manually clear the form inputs).
+     */
+    @NotNull
+    private void setupForChangingRegInfoSkip() {
+        // Set both regulatory info and a skip reason.
+        pdo.getRegulatoryInfos().add(new RegulatoryInfo("test", RegulatoryInfo.Type.IRB, "test"));
+        pdo.setSkipRegulatoryReason("testing");
+        actionBean.setEditOrder(pdo);
     }
 
     public static class RegulatoryInfoStub extends RegulatoryInfo {
