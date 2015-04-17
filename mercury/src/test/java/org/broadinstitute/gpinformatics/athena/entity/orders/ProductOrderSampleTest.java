@@ -283,66 +283,70 @@ public class ProductOrderSampleTest {
 
         List<Object[]> dataList = new ArrayList<>();
         /*
-         * Param 1
-         * Metadata source,       setMercurySample, set POS metadata Source, sample available, sampledata set, expected Result
-         *
-         */
+           Parameter 1 -- Metadata source
+
+           Parameter 2 -- Whether or not Mercury sample is found on product
+
+           Parameter 3 -- is the Sample available (Received for BSP source, Accessioned for Mercury source)
+
+           Parameter 4 -- Is the sampledata set on the product order sample
+
+           Parameter 5 --  expected Result
+        */
+
         /*
-          Source of the sample is determined to be Mercury
+           Source of the sample is determined to be Mercury
+           A MercurySample entity is present in both the database and the ProductOrderSample in question
          */
-        /*
-            A MercurySample is defined and set on the product order sample, the Metadata source is not set,
-            the sample has been accessioned, and the sample data
-         */
+        // Sample has been accessioned, sampleData is set on ProductOrderSample   --- Expect sample to be available
         dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.PRODUCT_ORDER_SAMPLE_AND_DATABASE, true, true, true});
+        // Sample has been accessioned, sampleData is not set on ProductOrderSample   --- Expect sample to be available
         dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.PRODUCT_ORDER_SAMPLE_AND_DATABASE, true, false, true});
+        // Sample has not been accessioned, sampleData is set on ProductOrderSample   --- Expect sample to not be available
         dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.PRODUCT_ORDER_SAMPLE_AND_DATABASE, false, true, false});
+        // Sample has not been accessioned, sampleData is not set on ProductOrderSample   --- Expect sample to not be available
         dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.PRODUCT_ORDER_SAMPLE_AND_DATABASE, false, false, false});
 
+        /*
+           A MercurySample entity is not present in either the database or the ProductOrderSample in question
+         */
+        //
+        // Sample has been accessioned, sampleData is set on ProductOrderSample   --- Expect sample to not be available
         dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.NEITHER, true, true, false});
+        // Sample has been accessioned, sampleData is not set on ProductOrderSample   --- Expect sample not to be available
         dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.NEITHER, true, false, false});
+        // Sample has not been accessioned, sampleData is set on ProductOrderSample   --- Expect sample to not be available
         dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.NEITHER, false, true, false});
+        // Sample has not been accessioned, sampleData is not set on ProductOrderSample   --- Expect sample to not be available
         dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.NEITHER, false, false, false});
 
         /*
-            A Mercury sample existing in the Database without a relationship to a corresponding product order sample
-             defined in the database should be an invalid case.  We make a proactive effort to bind the two entities
-             when either is first entered into mercury.
-          */
-//        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.DATABASE, true, true, true});
-//        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.DATABASE, true, false, true});
-//        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.DATABASE, false, true, false});
-//        dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.DATABASE, false, false, false});
-
-        /*
-          Source of the sample is determined to be BSP
+           Source of the sample is determined to be BSP
+           A MercurySample entity is present in both the database and the ProductOrderSample in question
          */
+        // Sample has been received in BSP, sampleData is set on ProductOrderSample   --- Expect sample to be available
         dataList.add(new Object[]{MercurySample.MetadataSource.BSP, TargetMercurySample.PRODUCT_ORDER_SAMPLE_AND_DATABASE, true, true, true});
+        // Sample has not been received in BSP, sampleData is set on ProductOrderSample   --- Expect sample to not be available
         dataList.add(new Object[]{MercurySample.MetadataSource.BSP, TargetMercurySample.PRODUCT_ORDER_SAMPLE_AND_DATABASE, false, true, false});
-        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, TargetMercurySample.PRODUCT_ORDER_SAMPLE_AND_DATABASE, true, false, false});
+        // Sample has not been received in BSP, sampleData is not set on ProductOrderSample   --- Expect sample to not be available
         dataList.add(new Object[]{MercurySample.MetadataSource.BSP, TargetMercurySample.PRODUCT_ORDER_SAMPLE_AND_DATABASE, false, false, false});
 
+        /*
+           A MercurySample entity is not present in either the database or the ProductOrderSample in question
+         */
+        // Sample has been received in BSP, sampleData is set on ProductOrderSample   --- Expect sample to be available
         dataList.add(new Object[]{MercurySample.MetadataSource.BSP, TargetMercurySample.NEITHER, true, true, true});
-        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, TargetMercurySample.NEITHER, true, false, false});
+        // Sample has not been received in BSP, sampleData is set on ProductOrderSample   --- Expect sample to not be available
         dataList.add(new Object[]{MercurySample.MetadataSource.BSP, TargetMercurySample.NEITHER, false, true, false});
+        // Sample has not been received in BSP, sampleData is not set on ProductOrderSample   --- Expect sample to not be available
         dataList.add(new Object[]{MercurySample.MetadataSource.BSP, TargetMercurySample.NEITHER, false, false, false});
 
-        /*
-            A Mercury sample existing in the Database without a relationship to a corresponding product order sample
-             defined in the database should be an invalid case.  We make a proactive effort to bind the two entities
-             when either is first entered into mercury.
-         */
-//        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, TargetMercurySample.DATABASE, true, true, true});
-//        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, TargetMercurySample.DATABASE, true, false, false});
-//        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, TargetMercurySample.DATABASE, false, true, false});
-//        dataList.add(new Object[]{MercurySample.MetadataSource.BSP, TargetMercurySample.DATABASE, false, false, false});
 
         /*
-           Source of the sample is ambiguous.
+            Source of the sample is ambiguous.
+            A MercurySample entity is not present in either the database or the ProductOrderSample in question
          */
-        dataList.add(new Object[]{null, TargetMercurySample.NEITHER, true,  true,  false});
-        dataList.add(new Object[]{null, TargetMercurySample.NEITHER, true,  false, false});
-        dataList.add(new Object[]{null, TargetMercurySample.NEITHER, false, true,  false});
+        // Sample has not been received in BSP, sampleData is not set on ProductOrderSample   --- Expect sample to not be available
         dataList.add(new Object[]{null, TargetMercurySample.NEITHER, false, false, false});
 
         return dataList.toArray(new Object[dataList.size()][]);
