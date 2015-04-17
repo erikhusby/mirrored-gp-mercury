@@ -118,9 +118,6 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     @Transient
     private MercurySample.MetadataSource metadataSource;
 
-    @Transient
-    private boolean isMetadataSourceInitialized;
-
     /**
      * Convert a list of ProductOrderSamples into a list of sample names.
      *
@@ -275,7 +272,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         if (mercurySample != null) {
             return mercurySample.getMetadataSource();
         }
-        if (!isMetadataSourceInitialized) {
+        if (!isMetadataSourceInitialized()) {
            throw new IllegalStateException(String.format("ProductOrderSample %s transient metadataSource has not been initialized", sampleName));
         }
         return metadataSource;
@@ -295,7 +292,6 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
     public void setMetadataSource(MercurySample.MetadataSource metadataSource) {
         this.metadataSource = metadataSource;
-        isMetadataSourceInitialized = true;
     }
 
     public enum DeliveryStatus implements StatusType {
@@ -686,30 +682,38 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
     /**
      * Rolls up visibility of the samples availability from just the sample data
+     *
+     * If the metadata is essentially BSP,
      */
     public boolean isSampleAvailable() {
         boolean available;
-
-        switch (getMetadataSource()) {
-        case BSP:
-            available = getSampleData().isSampleReceived();
-            break;
-        case MERCURY:
-            available = isSampleAccessioned();
-            break;
-        default:
-            throw new IllegalStateException("The metadata Source is undetermined");
+        if(!isMetadataSourceInitialized()) {
+            available = false;
+        } else {
+            switch (getMetadataSource()) {
+            case BSP:
+                available = getSampleData().isSampleReceived();
+                break;
+            case MERCURY:
+                available = isSampleAccessioned();
+                break;
+            default:
+                throw new IllegalStateException("The metadata Source is undetermined");
+            }
         }
         return available;
+    }
+
+    private boolean isMetadataSourceInitialized() {
+        return mercurySample != null || metadataSource != null ;
     }
 
     /**
      * Exposes if a sample has been Accessioned.
      */
     private boolean isSampleAccessioned() {
-        boolean sampleAccessioned = true;
-        if(mercurySample != null &&
-           mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
+        boolean sampleAccessioned = false;
+        if (mercurySample != null) {
             sampleAccessioned = mercurySample.hasSampleBeenAccessioned();
         }
         return sampleAccessioned;
