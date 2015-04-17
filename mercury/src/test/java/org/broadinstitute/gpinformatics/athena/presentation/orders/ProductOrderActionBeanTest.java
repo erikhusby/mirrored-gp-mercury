@@ -44,7 +44,6 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBeanConte
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.easymock.EasyMock;
-import org.jetbrains.annotations.NotNull;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.mockito.Mockito;
@@ -719,7 +718,6 @@ public class ProductOrderActionBeanTest {
      * information. This is how the web form will submit the data in the case where one was already saved and the user
      * is editing the PDO to change to the other (and didn't manually clear the form inputs).
      */
-    @NotNull
     private void setupForChangingRegInfoSkip() {
         // Set both regulatory info and a skip reason.
         pdo.getRegulatoryInfos().add(new RegulatoryInfo("test", RegulatoryInfo.Type.IRB, "test"));
