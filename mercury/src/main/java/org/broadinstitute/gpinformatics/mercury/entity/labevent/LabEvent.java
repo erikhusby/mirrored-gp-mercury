@@ -642,7 +642,7 @@ todo jmt adder methods
                 if (sampleInstanceV2.getSingleBatch() == null &&
                     CollectionUtils.isNotEmpty(labVessel.getAllLabBatches(LabBatch.LabBatchType.WORKFLOW))) {
                     String batchNames = "";
-                    for (BucketEntry bucketEntry : sampleInstanceV2.getNearestBucketEntries()) {
+                    for (BucketEntry bucketEntry : sampleInstanceV2.getAllBucketEntries()) {
                         batchNames += bucketEntry.getLabBatch().getBatchName() + " ";
                     }
                     log.info("Cannot determine LCSET after " + getLabEventType().getName() +

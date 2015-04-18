@@ -166,7 +166,7 @@ public class FingerprintingPlateFactory {
      */
     private boolean isNegativeControl(SampleInstanceV2 sampleInstance) {
         MercurySample mercurySample = sampleInstance.getRootOrEarliestMercurySample();
-        if (mercurySample != null && CollectionUtils.isEmpty(sampleInstance.getNearestBucketEntries())) {
+        if (mercurySample != null && CollectionUtils.isEmpty(sampleInstance.getAllBucketEntries())) {
 
             SampleData sampleData = new MercurySampleDataFetcher().fetchSampleData(mercurySample);
             if (sampleData != null) {

@@ -285,12 +285,12 @@ public class SystemRouter implements Serializable {
                         if (sampleInstance.isReagentOnly()) {
                             continue;
                         }
-                        if (sampleInstance.getNearestWorkflowBatches().isEmpty()) { // todo jmt what about bucket entry with no batch?
+                        if (sampleInstance.getAllWorkflowBatches().isEmpty()) { // todo jmt what about bucket entry with no batch?
                             badCrspRouting();
                             routingOptions.add(System.SQUID);
                         } else {
                             String workflowName = sampleInstance.getWorkflowName();
-                            for (LabBatch batch : sampleInstance.getNearestWorkflowBatches()) {
+                            for (LabBatch batch : sampleInstance.getAllWorkflowBatches()) {
                                 if (workflowName != null && batch != null) {
                                     ProductWorkflowDefVersion productWorkflowDef = getWorkflowVersion(workflowName,
                                             batch.getCreatedOn());

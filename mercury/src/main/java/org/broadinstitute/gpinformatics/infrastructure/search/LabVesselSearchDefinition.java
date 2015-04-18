@@ -187,7 +187,7 @@ public class LabVesselSearchDefinition {
                 if( results.isEmpty() ) {
                     // Try navigating back to sample bucket entries
                     for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-                        for (BucketEntry bucketEntry : sampleInstanceV2.getNearestBucketEntries()) {
+                        for (BucketEntry bucketEntry : sampleInstanceV2.getAllBucketEntries()) {
                             LabBatch batch = bucketEntry.getLabBatch();
                             if( batch != null ) {
                                 results.add( bucketEntry.getLabBatch().getBatchName());

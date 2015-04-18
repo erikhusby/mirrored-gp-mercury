@@ -720,7 +720,7 @@ public class VesselContainer<T extends LabVessel> {
             for (SampleInstanceV2 sampleInstance : sampleInstancesAtPosition) {
                 LabBatch labBatch = sampleInstance.getSingleBatch();
                 if (labBatch == null) {
-                    List<LabBatch> nearestWorkflowBatches = sampleInstance.getNearestWorkflowBatches();
+                    List<LabBatch> nearestWorkflowBatches = sampleInstance.getAllWorkflowBatches();
                     if (!nearestWorkflowBatches.isEmpty()) {
                         labBatch = nearestWorkflowBatches.iterator().next();
                     }

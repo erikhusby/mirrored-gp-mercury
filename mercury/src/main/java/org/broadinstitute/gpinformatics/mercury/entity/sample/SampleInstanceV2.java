@@ -74,13 +74,9 @@ public class SampleInstanceV2 {
     private List<MercurySample> mercurySamples = new ArrayList<>();
     private List<Reagent> reagents = new ArrayList<>();
 
-    // todo jmt does "nearest" add any value vs "all"
-    private List<LabBatch> nearestWorkflowBatches = new ArrayList<>();
     private List<LabBatch> allWorkflowBatches = new ArrayList<>();
     private List<LabBatchDepth> allWorkflowBatchDepths = new ArrayList<>();
     private LabBatch singleWorkflowBatch;
-    /** This is overwritten by each bucketed lab vessel. */
-    private List<BucketEntry> nearestBucketEntries = new ArrayList<>();
     private List<BucketEntry> allBucketEntries = new ArrayList<>();
     private BucketEntry singleBucketEntry;
     // todo jmt this doesn't include reworks
@@ -128,14 +124,12 @@ public class SampleInstanceV2 {
         mercurySamples.addAll(other.mercurySamples);
         reagents.addAll(other.reagents);
 
-        nearestWorkflowBatches.addAll(other.nearestWorkflowBatches);
         allWorkflowBatches.addAll(other.allWorkflowBatches);
         allWorkflowBatchDepths.addAll(other.allWorkflowBatchDepths);
         // Single workflow batch cannot be "inherited" if the ancestor has information that could change it.
         if (other.currentLabVessel == null || other.currentLabVessel.getWorkflowLabBatches().isEmpty()) {
             singleWorkflowBatch = other.singleWorkflowBatch;
         }
-        nearestBucketEntries.addAll(other.nearestBucketEntries);
         allBucketEntries.addAll(other.allBucketEntries);
         singleBucketEntry = other.singleBucketEntry;
 
@@ -243,10 +237,6 @@ public class SampleInstanceV2 {
         return null;
     }
 
-    public List<LabBatch> getNearestWorkflowBatches() {
-        return nearestWorkflowBatches;
-    }
-
     public List<LabBatch> getAllWorkflowBatches() {
         return allWorkflowBatches;
     }
@@ -256,10 +246,10 @@ public class SampleInstanceV2 {
     }
 
     /**
-     * Returns all bucket entries associated with nearest ancestor vessel that has bucket entries.
+     * Returns all bucket entries associated with ancestor vessels.
      */
-    public List<BucketEntry> getNearestBucketEntries() {
-        return nearestBucketEntries;
+    public List<BucketEntry> getAllBucketEntries() {
+        return allBucketEntries;
     }
 
     /**
@@ -314,7 +304,7 @@ public class SampleInstanceV2 {
             return singleWorkflowBatch.getWorkflowName();
         }
         Set<String> workflowNames = new HashSet<>();
-        for (LabBatch batch : nearestWorkflowBatches) {
+        for (LabBatch batch : allWorkflowBatches) {
             if (batch.getWorkflowName() != null) {
                 workflowNames.add(batch.getWorkflowName());
             }
@@ -357,10 +347,6 @@ public class SampleInstanceV2 {
         allLabBatchStartingVessels.addAll(labBatchStartingVesselsByDate);
         // todo jmt sort by date?
         List<LabBatch> workflowLabBatches = labVessel.getWorkflowLabBatches();
-        if (!workflowLabBatches.isEmpty()) {
-            nearestWorkflowBatches.clear();
-        }
-        nearestWorkflowBatches.addAll(workflowLabBatches);
         allWorkflowBatches.addAll(workflowLabBatches);
         for (LabBatch workflowLabBatch : workflowLabBatches) {
             allWorkflowBatchDepths.add(new LabBatchDepth(depth, workflowLabBatch));
@@ -377,10 +363,6 @@ public class SampleInstanceV2 {
             }
         }
 
-        if (!bucketEntries.isEmpty()) {
-            nearestBucketEntries.clear();
-        }
-        nearestBucketEntries.addAll(bucketEntries);
         allBucketEntries.addAll(bucketEntries);
         if (bucketEntries.size() == 1) {
             singleBucketEntry = bucketEntries.iterator().next();

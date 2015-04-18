@@ -366,7 +366,7 @@ public class GetSampleInstancesTest {
         Assert.assertEquals(allBatchVessels.get(index).getLabBatch().getBatchName(), SAMPLE_KIT_1);
         Assert.assertEquals(sampleInstance.getWorkflowName(), "Exome Express");
 
-        Assert.assertEquals(sampleInstance.getNearestBucketEntries().size(), lcsetNum);
+        Assert.assertEquals(sampleInstance.getAllBucketEntries().size(), lcsetNum);
         final int sampleIndex = lcsetNum - 1;
         HashSet<ProductOrderSample> expected = new HashSet<ProductOrderSample>() {{
             add(sampleInitProductOrder.getSamples().get(sampleIndex));
@@ -476,11 +476,11 @@ public class GetSampleInstancesTest {
     public void testGetMetadataSourceForPipeline() {
         Assert.assertEquals(createSampleInstanceForPipelineAPIMetadataTesting(MercurySample.MetadataSource.BSP,"sample").getMetadataSourceForPipelineAPI(),
                                                                               MercurySample.BSP_METADATA_SOURCE);
-        Assert.assertEquals(createSampleInstanceForPipelineAPIMetadataTesting(MercurySample.MetadataSource.MERCURY,"sample").getMetadataSourceForPipelineAPI(),
+        Assert.assertEquals(createSampleInstanceForPipelineAPIMetadataTesting(MercurySample.MetadataSource.MERCURY, "sample").getMetadataSourceForPipelineAPI(),
                             MercurySample.MERCURY_METADATA_SOURCE);
-        Assert.assertEquals(createSampleInstanceForPipelineAPIMetadataTesting(null,"123.5").getMetadataSourceForPipelineAPI(),
+        Assert.assertEquals(createSampleInstanceForPipelineAPIMetadataTesting(null, "123.5").getMetadataSourceForPipelineAPI(),
                             MercurySample.GSSR_METADATA_SOURCE);
-        Assert.assertEquals(createSampleInstanceForPipelineAPIMetadataTesting(null,"samples from outer space").getMetadataSourceForPipelineAPI(),
+        Assert.assertEquals(createSampleInstanceForPipelineAPIMetadataTesting(null, "samples from outer space").getMetadataSourceForPipelineAPI(),
                             MercurySample.OTHER_METADATA_SOURCE);
     }
 
