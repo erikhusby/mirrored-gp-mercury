@@ -255,4 +255,9 @@
         <dropColumn tableName="LAB_EVENT_AUD" columnName="PRODUCT_ORDER_ID" schemaName="mercury" />
     </changeSet>
 
+    <changeSet author="thompson" id="QUAL-676-1">
+        <addUniqueConstraint tableName="REAGENT" constraintName="UK_REAGENT_" schemaName="mercury"
+                columnNames="REAGENT_NAME, LOT, EXPIRATION"/>
+    </changeSet>
+
 </databaseChangeLog>
