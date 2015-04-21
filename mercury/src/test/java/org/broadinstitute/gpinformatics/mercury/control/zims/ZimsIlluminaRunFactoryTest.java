@@ -190,7 +190,7 @@ public class ZimsIlluminaRunFactoryTest {
                 put(BSPSampleSearchColumn.PRIMARY_DISEASE, "Test failure");
                 put(BSPSampleSearchColumn.GENDER, "M");
                 put(BSPSampleSearchColumn.STOCK_TYPE, "Stock Type");
-                put(BSPSampleSearchColumn.SAMPLE_TYPE, "ZimsIlluminaRunFactoryTest");
+                put(BSPSampleSearchColumn.SAMPLE_TYPE, "Primary");
                 put(BSPSampleSearchColumn.RACE, "N/A");
                 put(BSPSampleSearchColumn.ETHNICITY, "unknown");
                 put(BSPSampleSearchColumn.RACKSCAN_MISMATCH, "false");
@@ -377,6 +377,7 @@ public class ZimsIlluminaRunFactoryTest {
                 assertThat(libraryBean.getProductOrderSample(), equalTo(sampleId));
                 assertThat("The pipeline API expects enum names for regulatory designations",libraryBean.getRegulatoryDesignation(),equalTo(REGULATORY_DESIGNATION.name()));
                 assertThat(libraryBean.getMetadataSource(),equalTo(MercurySample.BSP_METADATA_SOURCE));
+                assertThat(libraryBean.getSampleType(), equalTo("Tumor"));
             }
             else {
                 numPositiveControls++;
