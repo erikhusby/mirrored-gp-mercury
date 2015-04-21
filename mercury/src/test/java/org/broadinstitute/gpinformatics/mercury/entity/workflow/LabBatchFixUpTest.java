@@ -260,7 +260,7 @@ public class LabBatchFixUpTest extends Arquillian {
     }
 
     /**
-     * Back populate controls into LCSETs.
+     * Generate a file to back populate controls into LCSETs.
      */
     @Test(enabled = true)
     public void fixupGplim3442GenFile() {
@@ -355,55 +355,6 @@ public class LabBatchFixUpTest extends Arquillian {
     }
 
     private Set<LabVessel> getEventLabVessels(List<LabEventType> labEventTypes, LabVessel bucketEntryLabVessel) {
-
-/*
-        class EventSourceCriteria implements TransferTraverserCriteria {
-            private final List<LabEventType> labEventTypes;
-            private Set<LabVessel> labVessels = new HashSet<>();
-
-            EventSourceCriteria(List<LabEventType> labEventTypes) {
-                this.labEventTypes = labEventTypes;
-            }
-
-            @Override
-            public TraversalControl evaluateVesselPreOrder(Context context) {
-                LabEvent contextEvent = context.getEvent();
-                // todo jmt getting destination vessel, need source
-                if (contextEvent != null && labEventTypes.contains(contextEvent.getLabEventType())) {
-                    for (CherryPickTransfer cherryPickTransfer : contextEvent.getCherryPickTransfers()) {
-                        if (cherryPickTransfer.getSourceVesselContainer().getContainedVessels().contains(context.getLabVessel())) {
-                            labVessels.add(cherryPickTransfer.getSourceVesselContainer().getEmbedder());
-                        }
-                    }
-                    for (SectionTransfer sectionTransfer : contextEvent.getSectionTransfers()) {
-                        if (sectionTransfer.getSourceVesselContainer().getContainedVessels().contains(context.getLabVessel())) {
-                            labVessels.add(sectionTransfer.getSourceVesselContainer().getEmbedder());
-                        }
-                    }
-                }
-                return TraversalControl.ContinueTraversing;
-            }
-
-            @Override
-            public void evaluateVesselInOrder(Context context) {
-
-            }
-
-            @Override
-            public void evaluateVesselPostOrder(Context context) {
-
-            }
-
-            public Set<LabVessel> getLabVessels() {
-                return labVessels;
-            }
-        }
-
-        EventSourceCriteria eventSourceCriteria = new EventSourceCriteria(labEventTypes);
-        bucketEntryLabVessel.evaluateCriteria(eventSourceCriteria,
-                TransferTraverserCriteria.TraversalDirection.Descendants);
-        return eventSourceCriteria.getLabVessels();
-*/
         Set<LabVessel> labVessels = new HashSet<>();
         for (LabEvent labEvent : bucketEntryLabVessel.getTransfersFrom()) {
             if (labEventTypes.contains(labEvent.getLabEventType())) {
@@ -432,12 +383,14 @@ public class LabBatchFixUpTest extends Arquillian {
                 System.out.println("Add " + labVessel.getLabel() + " to " +
                         workflowLabBatch.getBatchName() + " " +
                         sampleInstance.getEarliestMercurySampleName());
-//                            workflowLabBatch.addLabVessel(barcodedTube);
             }
         }
         return found;
     }
 
+    /**
+     * Read a file to back populate controls into LCSETs.
+     */
     @Test
     public void fixupGplim3442() {
         userBean.loginOSUser();
