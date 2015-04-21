@@ -1753,12 +1753,12 @@ public abstract class LabVessel implements Serializable {
      *
      * @return Returns a map of lab metrics keyed by the metric display name.
      */
-    public Map<String, Set<LabMetric>> getMetricsForVesselAndDescendants() {
+    public Map<String, Set<LabMetric>> getMetricsForVesselAndRelatives() {
         Set<LabMetric> allMetrics = new HashSet<>();
         if (metricMap == null) {
             metricMap = new HashMap<>();
             allMetrics.addAll(getMetrics());
-            for (LabVessel curVessel : getDescendantVessels()) {
+            for (LabVessel curVessel : getAncestorAndDescendantVessels()) {
                 allMetrics.addAll(curVessel.getMetrics());
             }
             Set<LabMetric> metricSet;
