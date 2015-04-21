@@ -385,9 +385,6 @@ public class LibraryBean {
                 if (sampleType.equals("Primary") || sampleType.equals("Secondary")) {
                     sampleType = "Tumor";
                 }
-                if (!sampleType.equals("Normal") && !sampleType.equals("Tumor")) {
-                    throw new RuntimeException("Unexpected sample type " + sampleType);
-                }
             }
             this.sampleType = sampleType;
             rootSample = StringUtils.trimToNull(sampleData.getRootSample());
