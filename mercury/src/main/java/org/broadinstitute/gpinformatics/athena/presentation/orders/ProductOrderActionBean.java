@@ -1169,11 +1169,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         return createViewResolution(editOrder.getBusinessKey());
     }
 
-    private void updateRegulatoryInformation() {
+    void updateRegulatoryInformation() {
         if (!editOrder.getRegulatoryInfos().isEmpty() && !isSkipRegulatoryInfo()) {
             editOrder.setSkipRegulatoryReason(null);
         }
-        if (isSkipRegulatoryInfo() && StringUtils.isBlank(editOrder.getSkipRegulatoryReason())) {
+        if (isSkipRegulatoryInfo() && !StringUtils.isBlank(editOrder.getSkipRegulatoryReason())) {
             editOrder.getRegulatoryInfos().clear();
         }
     }
