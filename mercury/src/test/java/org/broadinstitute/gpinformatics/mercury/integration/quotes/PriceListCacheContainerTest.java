@@ -1,8 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.integration.quotes;
 
-import org.broadinstitute.gpinformatics.infrastructure.quote.PMBQuoteServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -11,7 +11,7 @@ import java.util.Collection;
 
 @Test(groups = TestGroups.STANDARD)
 public class PriceListCacheContainerTest {
-    private PriceListCache priceListCache=new PriceListCache(PMBQuoteServiceProducer.testInstance());
+    private PriceListCache priceListCache=new PriceListCache(QuoteServiceProducer.testInstance());
 
     @Test(groups = TestGroups.STANDARD)
     public void testSanity() {

@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.quote;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.GenericType;
 import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
@@ -13,6 +14,7 @@ import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.w3c.dom.Document;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -22,6 +24,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.Format;
 import java.util.Date;
+import java.util.Set;
 
 @Impl
 public class QuoteServiceImpl extends AbstractJerseyClientService implements QuoteService {
@@ -49,8 +52,12 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         SINGLE_QUOTE("/quotes/ws/portals/private/getquotes?with_funding=true&quote_alpha_ids="),
         SINGLE_QUOTE_WITH_PRICE_ITEMS("/quotes/ws/portals/private/getquotes?with_funding=true&with_quote_items=true&quote_alpha_ids="),
         ALL_SEQUENCING_QUOTES("/quotes/ws/portals/private/getquotes?platform_name=DNA+Sequencing&with_funding=true"),
-        ALL_PRICE_ITEMS("/quotes/ws/portals/private/get_price_list"),
+        ALL_SSF_PRICE_ITEMS("/quotes/ws/portals/private/get_price_list"),
+        ALL_CRSP_PRICE_ITEMS("/quotes/rest/price_list/50/true"),
+        ALL_GP_EXTERNAL_PRICE_ITEMS("/quotes/rest/price_list/60/true"),
+        ALL_FUNDINGS("/quotes/rest/sql_report/41"),
         REGISTER_WORK("/quotes/ws/portals/private/createworkitem"),
+        ALL_QUOTES("/quotes/ws/portals/private/getquotes?with_funding=true"),
         //TODO this next enum value will be removed soon.
         SINGLE_NUMERIC_QUOTE("/quotes/ws/portals/private/getquotes?with_funding=true&quote_ids=");
 
@@ -169,20 +176,28 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
 
     @Override
     public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
-        String url = url(Endpoint.ALL_PRICE_ITEMS);
+        PriceList allPriceItems = getPriceItemsByList(Endpoint.ALL_SSF_PRICE_ITEMS);
+        allPriceItems.getQuotePriceItems().addAll(getPriceItemsByList(Endpoint.ALL_CRSP_PRICE_ITEMS).getQuotePriceItems());
+        allPriceItems.getQuotePriceItems().addAll(getPriceItemsByList(Endpoint.ALL_GP_EXTERNAL_PRICE_ITEMS).getQuotePriceItems());
+        return allPriceItems;
+    }
+
+    private PriceList getPriceItemsByList(Endpoint targetPriceList) throws QuoteNotFoundException, QuoteServerException {
+        String url = url(targetPriceList);
         WebResource resource = getJerseyClient().resource(url);
         PriceList prices;
-
         try {
             prices = resource.accept(MediaType.APPLICATION_XML).get(PriceList.class);
         } catch (UniformInterfaceException e) {
             throw new QuoteNotFoundException("Could not find price list at " + url);
         } catch (ClientHandlerException e) {
-            throw new QuoteServerException(String.format(COMMUNICATION_ERROR, url, e.getLocalizedMessage()));
-        }
+            throw new QuoteServerException(String.format("Could not communicate with quote server at %s: %s", url,
+                    e.getLocalizedMessage()));
 
+        }
         return prices;
     }
+
 
     /**
      * Gets all quotes for the sequencing platform.
@@ -257,5 +272,63 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         }
 
         return quote;
+    }
+
+    /*
+     * protected method to get all quote.
+     * Can be overridden by mocks.
+     * @return
+     * @throws QuoteServerException
+     * @throws QuoteNotFoundException
+     */
+    @Override
+    public Quotes getAllQuotes() throws QuoteServerException, QuoteNotFoundException {
+        String url = url( Endpoint.ALL_QUOTES );
+        WebResource resource = getJerseyClient().resource(url);
+
+        Quotes quotes;
+        try {
+            quotes = resource.accept(MediaType.APPLICATION_XML).get(Quotes.class);
+        } catch (UniformInterfaceException e) {
+            throw new QuoteNotFoundException("Could not find any quotes at " + url);
+        } catch (ClientHandlerException e) {
+            throw new QuoteServerException(String.format("Could not communicate with quote server at %s: %s", url,
+                    e.getLocalizedMessage()));
+
+        }
+
+        return quotes;
+    }
+
+    @Override
+    public PriceList getPlatformPriceItems(QuotePlatformType quotePlatformType) throws QuoteServerException, QuoteNotFoundException {
+        PriceList platformPrices = new PriceList();
+
+        // get all the priceItems and then filter by platform name.
+        PriceList allPrices = getAllPriceItems();
+        for ( QuotePriceItem quotePriceItem : allPrices.getQuotePriceItems() ) {
+            if (quotePriceItem.getPlatformName().equalsIgnoreCase( quotePlatformType.getPlatformName() )) {
+                platformPrices.add(quotePriceItem);
+            }
+        }
+        return platformPrices;
+    }
+
+    @Override
+    public Set<Funding> getAllFundingSources() throws QuoteServerException, QuoteNotFoundException {
+        String url = url( Endpoint.ALL_FUNDINGS);
+        WebResource resource = getJerseyClient().resource(url);
+
+        try {
+            GenericType<Document> document  = new GenericType<Document>() {};
+            Document doc = resource.accept(MediaType.APPLICATION_XML).get(document);
+            return Funding.getFundingSet(doc);
+        } catch (UniformInterfaceException e) {
+            throw new QuoteNotFoundException("Could not find any quotes at " + url);
+        } catch (ClientHandlerException e) {
+            throw new QuoteServerException(String.format("Could not communicate with quote server at %s: %s", url,
+                    e.getLocalizedMessage()));
+        }
+
     }
 }

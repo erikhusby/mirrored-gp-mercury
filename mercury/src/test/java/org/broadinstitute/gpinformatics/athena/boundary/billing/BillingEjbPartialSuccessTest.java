@@ -12,11 +12,13 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestLogHandler;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFundingList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePlatformType;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
@@ -162,11 +164,27 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         public Quote getQuoteWithPriceItems(String alphaId) throws QuoteServerException, QuoteNotFoundException {
             return getQuoteByAlphaId(alphaId);
         }
+
+        @Override
+        public Set<Funding> getAllFundingSources() throws QuoteServerException, QuoteNotFoundException{
+            return null;
+        }
+
+        @Override
+        public Quotes getAllQuotes() throws QuoteServerException, QuoteNotFoundException {
+            return null;
+        }
+
+        @Override
+        public PriceList getPlatformPriceItems(QuotePlatformType quotePlatformType)
+                throws QuoteServerException, QuoteNotFoundException {
+            return getAllPriceItems();
+        }
     }
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWarWithAlternatives(DummyPMBQuoteService.class, PartiallySuccessfulQuoteServiceStub.class);
+        return DeploymentBuilder.buildMercuryWarWithAlternatives(PartiallySuccessfulQuoteServiceStub.class);
     }
 
     /**

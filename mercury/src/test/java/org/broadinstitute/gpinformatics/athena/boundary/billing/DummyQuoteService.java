@@ -12,23 +12,32 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
-import org.broadinstitute.gpinformatics.infrastructure.quote.PMBQuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePlatformType;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quotes;
 
 import javax.enterprise.inject.Alternative;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
 @Alternative
-class DummyPMBQuoteService implements PMBQuoteService {
+class DummyQuoteService implements QuoteService {
+    private static final long serialVersionUID = 878609981653175756L;
+
     @Override
     public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
         return new Quote();
+    }
+
+    @Override
+    public Quote getQuoteWithPriceItems(String alphaId) throws QuoteServerException, QuoteNotFoundException {
+        return null;
     }
 
     @Override
@@ -45,6 +54,18 @@ class DummyPMBQuoteService implements PMBQuoteService {
     @Override
     public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
         return new PriceList();
+    }
+
+    @Override
+    public Quotes getAllSequencingPlatformQuotes() throws QuoteServerException, QuoteNotFoundException {
+        return new Quotes();
+    }
+
+    @Override
+    public String registerNewWork(Quote quote, QuotePriceItem quotePriceItem, QuotePriceItem itemIsReplacing,
+                                  Date reportedCompletionDate, double numWorkUnits, String callbackUrl,
+                                  String callbackParameterName, String callbackParameterValue) {
+        return "";
     }
 
     @Override

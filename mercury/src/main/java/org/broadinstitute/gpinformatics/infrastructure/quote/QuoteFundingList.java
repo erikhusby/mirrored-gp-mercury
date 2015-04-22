@@ -23,7 +23,7 @@ public class QuoteFundingList extends AbstractCache {
 
     private Set<Funding> fundingList;
 
-    private PMBQuoteService quoteService;
+    private QuoteService quoteService;
 
     private static final Log log = LogFactory.getLog(QuoteFundingList.class);
 
@@ -35,7 +35,7 @@ public class QuoteFundingList extends AbstractCache {
     }
 
     @Inject
-    public QuoteFundingList(PMBQuoteService quoteService) {
+    public QuoteFundingList(QuoteService quoteService) {
         this.quoteService = quoteService;
     }
 
