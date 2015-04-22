@@ -18,5 +18,6 @@ TRAILING NULLCOLS
  jira_ticket_key,
  owner,
  placed_date DATE "YYYYMMDDHH24MISS",
- skip_regulatory_reason
+ skip_regulatory_reason,
+ reg_info_ids
 )

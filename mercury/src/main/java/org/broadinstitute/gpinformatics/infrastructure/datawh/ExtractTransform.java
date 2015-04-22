@@ -162,7 +162,6 @@ public class ExtractTransform implements Serializable {
             ProductOrderAddOnEtl productOrderAddOnEtl,
             ProductOrderEtl productOrderEtl,
             RegulatoryInfoEtl regulatoryInfoEtl,
-            PDORegulatoryInfoEtl pdoRegulatoryInfoEtl,
             ProductOrderSampleEtl productOrderSampleEtl,
             ProjectPersonEtl projectPersonEtl,
             ResearchProjectCohortEtl researchProjectCohortEtl,
@@ -185,7 +184,6 @@ public class ExtractTransform implements Serializable {
         etlInstances.add(productOrderAddOnEtl);
         etlInstances.add(productOrderEtl);
         etlInstances.add(regulatoryInfoEtl);
-        etlInstances.add(pdoRegulatoryInfoEtl);
         etlInstances.add(productOrderSampleEtl);
         etlInstances.add(projectPersonEtl);
         etlInstances.add(researchProjectCohortEtl);
@@ -354,6 +352,8 @@ public class ExtractTransform implements Serializable {
                     }
                     count.add(0, recordCount);
                     date.add(0, actualEtlDateStr);
+                    // Reset state of all Hibernate entities (the ETL process is read-only)
+                    auditReaderDao.clear();
                 }
             });
 

@@ -142,14 +142,19 @@ CREATE TABLE product_order_add_on (
   etl_date                DATE        NOT NULL
 );
 
+CREATE TABLE regulatory_info (
+  regulatory_info_id NUMERIC(19) NOT NULL PRIMARY KEY,
+  identifier         VARCHAR2(255),
+  type               VARCHAR2(255),
+  name               VARCHAR2(255),
+  etl_date           DATE          NOT NULL
+);
+
 CREATE TABLE pdo_regulatory_infos (
-  product_order_id   NUMERIC(19)   NOT NULL,
-  regulatory_info_id NUMERIC(19)   NOT NULL,
-  identifier         VARCHAR2(255) NOT NULL,
-  type               VARCHAR2(255) NOT NULL,
-  name               VARCHAR2(255) NOT NULL,
-  etl_date           DATE          NOT NULL,
-  constraint pk_pdo_regulatory_infos PRIMARY KEY ( product_order_id, regulatory_info_id )
+  product_order    NUMERIC(19)   NOT NULL,
+  regulatory_infos NUMERIC(19)   NOT NULL,
+  etl_date         DATE          NOT NULL,
+  constraint pk_pdo_regulatory_infos PRIMARY KEY ( product_order, regulatory_infos )
 );
 
 CREATE TABLE lab_vessel (
@@ -409,14 +414,11 @@ CREATE TABLE im_product_order_add_on (
 );
 
 CREATE TABLE im_pdo_regulatory_infos (
-  line_number        NUMERIC(9)    NOT NULL,
-  etl_date           DATE          NOT NULL,
-  is_delete          CHAR(1)       NOT NULL,
-  product_order_id   NUMERIC(19),
-  regulatory_info_id NUMERIC(19),
-  identifier         VARCHAR2(255),
-  type               VARCHAR2(255),
-  name               VARCHAR2(255)
+  line_number      NUMERIC(9)  NOT NULL,
+  etl_date         DATE        NOT NULL,
+  is_delete        CHAR(1)     NOT NULL,
+  product_order    NUMERIC(19),
+  regulatory_infos NUMERIC(19)
 );
 
 CREATE TABLE im_regulatory_info (
@@ -641,8 +643,13 @@ REFERENCES product_order (product_order_id) ON DELETE CASCADE;
 
 alter table pdo_regulatory_infos
 add constraint FK_PDO_REGINFO
-foreign key(product_order_id)
+foreign key(product_order)
 references product_order(product_order_id) ON DELETE CASCADE;
+
+alter table pdo_regulatory_infos
+add constraint FK_REGINFO_PDO
+foreign key(regulatory_infos)
+references regulatory_info(regulatory_info_id) ON DELETE CASCADE;
 
 --  Creates indexes
 
