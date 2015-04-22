@@ -27,7 +27,9 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
         ALL_SEQUENCING_QUOTES("/quotes/ws/portals/private/getquotes?platform_name=DNA+Sequencing&with_funding=true"),
         ALL_QUOTES("/quotes/ws/portals/private/getquotes?with_funding=true"),
         ALL_FUNDINGS("/quotes/rest/sql_report/41"),
-        ALL_PRICE_ITEMS("/quotes/rest/price_list/10/true"),
+        ALL_SSF_PRICE_ITEMS("/quotes/rest/price_list/10/true"),
+        ALL_CRSP_PRICE_ITEMS("/quotes/rest/price_list/50/true"),
+        ALL_GP_EXTERNAL_PRICE_ITEMS("/quotes/rest/price_list/60/true"),
         REGISTER_WORK("/quotes/ws/portals/private/createworkitem");
 
         String suffixUrl;
@@ -166,7 +168,14 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
     @Override
     public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
 
-        String url = url(Endpoint.ALL_PRICE_ITEMS);
+        PriceList allPriceItems = getPriceItemsByList(Endpoint.ALL_SSF_PRICE_ITEMS);
+        allPriceItems.getQuotePriceItems().addAll(getPriceItemsByList(Endpoint.ALL_CRSP_PRICE_ITEMS).getQuotePriceItems());
+        allPriceItems.getQuotePriceItems().addAll(getPriceItemsByList(Endpoint.ALL_GP_EXTERNAL_PRICE_ITEMS).getQuotePriceItems());
+        return allPriceItems;
+    }
+
+    private PriceList getPriceItemsByList(Endpoint targetPriceList) throws QuoteNotFoundException, QuoteServerException {
+        String url = url(targetPriceList);
         WebResource resource = getJerseyClient().resource(url);
         PriceList prices;
         try {
