@@ -359,7 +359,7 @@ public class LabVesselFixupTest extends Arquillian {
         for (Pair<String, String> pair : listOfPairsOldNew) {
             LabVessel labVesselOld = labVesselDao.findByIdentifier(pair.getLeft());
             LabVessel labVesselNew = labVesselDao.findByIdentifier(pair.getRight());
-            Set<BucketEntry> bucketEntries = labVesselOld.getModifiableBucketEntries();
+            Set<BucketEntry> bucketEntries = labVesselOld.getBucketEntries();
             BucketEntry bucketEntry = null;
             for (BucketEntry currentBucketEntry : bucketEntries) {
                 if (currentBucketEntry.getLabBatch().getBatchName().equals(lcset)) {
@@ -984,6 +984,31 @@ public class LabVesselFixupTest extends Arquillian {
         labVesselDao.flush();
     }
 
+    @Test(enabled = false)
+    public void qual623FixupVolumes() {
+        userBean.loginOSUser();
+        Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(Arrays.asList(
+                "0175568063",
+                "0175568040",
+                "0175568039",
+                "0175568016",
+                "0175568015",
+                "0175567992",
+                "0175567991",
+                "0175567968"));
+        for (Map.Entry<String, BarcodedTube> stringBarcodedTubeEntry : mapBarcodeToTube.entrySet()) {
+            BarcodedTube barcodedTube = stringBarcodedTubeEntry.getValue();
+            if (barcodedTube == null) {
+                throw new RuntimeException("Failed to find tube " + stringBarcodedTubeEntry.getKey());
+            }
+            System.out.println(barcodedTube.getLabel() + " has volume " + barcodedTube.getVolume());
+            barcodedTube.setVolume(new BigDecimal("65.00"));
+            System.out.println("Updated to " + barcodedTube.getVolume());
+        }
+        barcodedTubeDao.persist(new FixupCommentary("QUAL-623 update volumes"));
+        barcodedTubeDao.flush();
+    }
+    
     @Test(enabled = false)
     public void gplim3525UpdateVolume() {
         userBean.loginOSUser();

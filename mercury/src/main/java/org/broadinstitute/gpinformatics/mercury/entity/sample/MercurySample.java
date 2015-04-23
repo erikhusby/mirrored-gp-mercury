@@ -7,8 +7,10 @@ import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
+import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.RapSheet;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
@@ -48,6 +50,73 @@ public class MercurySample extends AbstractSample {
     public static final String BSP_METADATA_SOURCE = "BSP";
     public static final String MERCURY_METADATA_SOURCE = "MERCURY";
     public static final String GSSR_METADATA_SOURCE = "GSSR";
+
+    /**
+     * Checks if the sample has successfully gone through the accessioning process.  If any vessel (for everything but
+     * slides there should only be one vessel associated) has been accessioned, this will return true.
+     *
+     * Except for Slides, samples should have one and only one lab vessel associated with it.  Instead of
+     * implementing
+     * <code>
+     *     iterator().next()
+     * </code>
+     * for getting the one item, I will leave the loop since it is a bit cleaner and safer.  When there is a concrete
+     * solution for dealing with Slides for Accessioning, and there is a slide entity type, we can alter this logic to
+     * check for number of vessels and compare it to vessel type.
+     *
+     */
+    public boolean hasSampleBeenAccessioned() {
+
+        boolean result = false;
+        for (LabVessel labVessel : getLabVessel()) {
+            if(!labVessel.canBeUsedForAccessioning()) {
+                result = true;
+                break;
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Helper method to determine target vessel and Sample viability.  Extracts the logic of finding the lab vessel
+     * to make this method available for re-use.
+     * <p/>
+
+     *
+     * @param targetLabVessel   The label of the lab vessel that  should be associated with the given mercury sample
+     * @return the referenced lab vessel if it is both found and eligible
+     */
+    public AccessioningCheckResult canSampleBeAccessionedWithTargetVessel(LabVessel targetLabVessel) {
+
+        AccessioningCheckResult canAccession = AccessioningCheckResult.TUBE_NOT_ASSOCIATED;
+
+        if(!targetLabVessel.canBeUsedForAccessioning()) {
+            canAccession = AccessioningCheckResult.TUBE_ACCESSIONED_PREVIOUSLY;
+        }   else {
+            // Since upload happens just after Initial Tare, there should not be any other transfers.  For that reason,
+            // searching through the MercurySamples on the vessels instead of getSampleInstancesV2 should be sufficient.
+            for (MercurySample mercurySample : targetLabVessel.getMercurySamples()) {
+                if (mercurySample.equals(this)) {
+                    canAccession = AccessioningCheckResult.CAN_BE_ACCESSIONED;
+                }
+            }
+        }
+        return canAccession;
+
+    }
+
+    public enum AccessioningCheckResult {
+        CAN_BE_ACCESSIONED, TUBE_NOT_ASSOCIATED, TUBE_ACCESSIONED_PREVIOUSLY
+    }
+
+    /**
+     * Checks if the sample is eligible to be used for Clinical work.  The only criteria here would be that the
+     * sample originated in Mercury.
+     */
+    public boolean canSampleBeUsedForClinical() {
+        return getMetadataSource() == MetadataSource.MERCURY;
+    }
 
     /** Determines from which system Mercury gets metadata, e.g. collaborator sample ID */
     public enum MetadataSource implements Displayable {
@@ -161,6 +230,13 @@ public class MercurySample extends AbstractSample {
         return metadataSource;
     }
 
+    /**
+     * For fix-ups only.
+     */
+    void setMetadataSource(MetadataSource metadataSource) {
+        this.metadataSource = metadataSource;
+    }
+
     public void addMetadata(Set<Metadata> metadata) {
         if (metadataSource == MetadataSource.MERCURY) {
             this.metadata.addAll(metadata);
@@ -249,5 +325,10 @@ public class MercurySample extends AbstractSample {
             labVesselForRemoval.getMercurySamples().remove(this);
             labVessel.remove(labVesselForRemoval);
         }
+    }
+
+    public void addLabVessel(LabVessel vesselToAdd) {
+        getLabVessel().add(vesselToAdd);
+        vesselToAdd.addSample(this);
     }
 }

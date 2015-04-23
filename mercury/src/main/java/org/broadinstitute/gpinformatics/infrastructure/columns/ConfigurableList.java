@@ -1,25 +1,19 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
 import org.apache.commons.lang3.StringEscapeUtils;
-import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.athena.entity.preference.ColumnSetsPreference;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
-import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.SpreadsheetCreator;
 
 import javax.annotation.Nonnull;
-import java.io.PrintWriter;
-import java.text.Format;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * <p>
@@ -100,8 +94,6 @@ public class ConfigurableList {
      * A means to access the ID field in the entity we're listing.
      */
     private final ColumnEntity columnEntity;
-
-    private static final Format mdyFormat = FastDateFormat.getInstance("MM/dd/yyyy");
 
     public static final String DEFAULT_MULTI_VALUE_DELIMITER = " ";
 
@@ -254,6 +246,13 @@ public class ConfigurableList {
             this.sortPath = sortPath;
         }
 
+        Header(String viewHeader, String downloadHeader1, String downloadHeader2) {
+            this.viewHeader = viewHeader;
+            this.downloadHeader1 = downloadHeader1;
+            this.downloadHeader2 = downloadHeader2;
+            this.sortPath = "";
+        }
+
         public int getOrder() {
             return order;
         }
@@ -347,38 +346,16 @@ public class ConfigurableList {
      */
     static class Cell {
         private final Header header;
-
-        private String sortableValue;
-
+        private Comparable sortableValue;
         private String formattedValue;
 
-        Cell(Header header, String sortableValue, String formattedValue) {
+        Cell(Header header, Comparable sortableValue, String formattedValue) {
             this.header = header;
+            this.sortableValue = sortableValue;
 
-            // If CRSP, protect against JS Injection.
-            if (ApplicationInstance.CRSP.isCurrent()) {
-                // Escapes the sortable string to avoid JS Injection.
-                if (sortableValue != null) {
-                    this.sortableValue = StringEscapeUtils.escapeXml(sortableValue);
-                }
-                // Utilizes the escaped sortable value to also escape the same thing within the formatted value.
-                if (formattedValue != null && sortableValue != null) {
-
-                    // Make sure to replace all instances of sortable values within the formatted values if the strings
-                    // aren't the same.  If they are the same we don't need to re-run the escape code.
-                    if (!formattedValue.equals(sortableValue)) {
-                        this.formattedValue =
-                                escapeSortableValueWithinFormatted(sortableValue, formattedValue, this.sortableValue);
-                    } else {
-                        this.formattedValue = this.sortableValue;
-                    }
-
-                } else if (formattedValue != null) {
-                    this.formattedValue = StringEscapeUtils.escapeXml(formattedValue);
-                }
-            } else {
-                this.sortableValue = sortableValue;
-                this.formattedValue = formattedValue;
+            // Protect against JS Injection by escaping the formatted value.
+            if ( formattedValue != null && !formattedValue.isEmpty() ) {
+                this.formattedValue = StringEscapeUtils.escapeXml(formattedValue);
             }
         }
 
@@ -386,7 +363,7 @@ public class ConfigurableList {
             return header;
         }
 
-        public String getSortableValue() {
+        public Comparable getSortableValue() {
             return sortableValue;
         }
 
@@ -394,16 +371,6 @@ public class ConfigurableList {
             return formattedValue;
         }
 
-        /**
-         * ADds additional values to the current cell.
-         *
-         * @param sortableValueToAdd  Sortable value to add...
-         * @param formattedValueToAdd Formatted value to add.
-         */
-        public void addToValues(String sortableValueToAdd, String formattedValueToAdd) {
-            sortableValue += " " + sortableValueToAdd;
-            formattedValue += " " + formattedValueToAdd;
-        }
     }
 
     /**
@@ -466,6 +433,8 @@ public class ConfigurableList {
      */
     public void addRows(List<?> entityList, @Nonnull Map<String, Object> context ) {
 
+        context.put(SearchInstance.CONTEXT_KEY_MULTI_VALUE_DELIMITER, multiValueDelimiter);
+
         for (Map.Entry<String,AddRowsListener> entry : addRowsListeners.entrySet()) {
             entry.getValue().addRows(entityList, context, nonPluginTabulations);
             context.put(entry.getKey(),entry.getValue());
@@ -526,40 +495,27 @@ public class ConfigurableList {
             String headerGroupName) {
         HeaderGroup headerGroup = headerGroupMap.get(headerGroupName);
 
-        // Evaluate value expression (value and header count and order must be same, unless header count == 1).
-        Object formattedValue;
-        Object plainTextValue = columnTabulation.evalPlainTextExpression(entity, context);
-        if (columnTabulation.isOnlyPlainText()) {
-            formattedValue = plainTextValue;
-        } else {
-            formattedValue = columnTabulation.evalFormattedExpression(entity, context);
+        // For child terms, header may be value extracted from parent
+        //   (e.g metadata value = "Male" for metadata name = "Gender" header name )
+        if( columnTabulation instanceof SearchInstance.SearchValue ) {
+            context.put(SearchInstance.CONTEXT_KEY_SEARCH_VALUE, columnTabulation);
         }
 
+        // Evaluate value expression (value and header count and order must be same, unless header count == 1).
+        Object sortableValue = columnTabulation.evalValueExpression(entity, context);
         Object viewHeaderResult = columnTabulation.evalViewHeaderExpression(entity, context);
 
-        // The result could be a list, e.g. there could be multiple trait values for multiple intervals.
-        List<Object> plainTextValues;
-        if (plainTextValue instanceof List) {
-            plainTextValues = (List<Object>) plainTextValue;
-        } else {
-            plainTextValues = new ArrayList<>();
-            plainTextValues.add(plainTextValue);
-        }
-        List<Object> formattedValues;
-        if (formattedValue instanceof List) {
-            formattedValues = (List<Object>) formattedValue;
-        } else {
-            formattedValues = new ArrayList<>();
-            formattedValues.add(formattedValue);
-        }
+        // The headers could be a list, e.g. there could be multiple trait values for multiple intervals.
         List<String> viewHeaders;
-        if (viewHeaderResult instanceof List) {
+        List<Object> sortableValues;
+        if (viewHeaderResult instanceof List ) {
             viewHeaders = (List<String>) viewHeaderResult;
+            sortableValues = (List<Object>) sortableValue;
             // If the headers are all the same (e.g. multiple values for a trait), prefix a
-            // sequence number, so the columns sort correctly.
+            //    sequence number, so the columns sort correctly.
             // TODO jmt Need a flag to indicate whether to comma-separate multiple values,
             // or put them in sequence number columns.
-            if (viewHeaders.size() > 1) {
+            if(viewHeaders.size() > 1 ) {
                 String previous = viewHeaders.get(0);
                 boolean same = true;
                 for (String viewHeader : viewHeaders) {
@@ -583,36 +539,27 @@ public class ConfigurableList {
         } else {
             viewHeaders = new ArrayList<>();
             viewHeaders.add((String) viewHeaderResult);
-        }
-
-        // If we received multiple values for a single header (e.g. Participant aliases for
-        // a pooled sample) convert the multiple values to a single value.
-        if (viewHeaders.size() == 1) {
-            StringBuilder stringBuilder = new StringBuilder();
-            convertResultToString(plainTextValues, stringBuilder, multiValueDelimiter);
-            plainTextValues.clear();
-            plainTextValues.add(stringBuilder.toString());
-            stringBuilder = new StringBuilder();
-            convertResultToString(formattedValues, stringBuilder, multiValueDelimiter);
-            formattedValues.clear();
-            formattedValues.add(stringBuilder.toString());
+            sortableValues = new ArrayList<>();
+            sortableValues.add(sortableValue);
         }
 
         // Determine which column to put each value in
         int valueIndex = 0;
-        for (Object currentValue : plainTextValues) {
+        for (Object currentValue : sortableValues) {
             String currentViewHeader = viewHeaders.get(valueIndex);
             Header header = headerGroup.getHeaderMap().get(currentViewHeader);
             // TODO jmt two columns with same name currently overwrite (e.g. search term
             // TODO value and pre-defined column value) If this is the first time we've seen this header.
             if (header == null) {
-                header = new Header(currentViewHeader, currentViewHeader, null, columnTabulation.getDbSortPath());
+                header = new Header(currentViewHeader, currentViewHeader, null, columnTabulation.getDbSortPath() );
                 headerGroup.getHeaderMap().put(currentViewHeader, header);
             }
-            String plainString = currentValue == null ? null : currentValue.toString();
-            String formattedString = formattedValues.get(valueIndex) == null ? null : formattedValues.get(valueIndex)
-                    .toString();
-            Cell cell = new Cell(header, plainString, formattedString);
+            String formattedString = columnTabulation.evalFormattedExpression(currentValue, context );
+
+            Comparable comparableValue =
+                    columnTabulation.evalValueTypeExpression(entity,context)
+                        .getComparableValue(currentValue,multiValueDelimiter);
+            Cell cell = new Cell(header, comparableValue, formattedString);
             row.addCell(cell);
             valueIndex++;
         }
@@ -636,13 +583,14 @@ public class ConfigurableList {
 
         for( ColumnTabulation nestedColumnTabulation : columnTabulation.getNestedEntityColumns() ) {
             String nestedName = nestedColumnTabulation.getName();
-            headers.add(new Header(nestedName, nestedName, null, null));
+            headers.add(new Header(nestedName, nestedName, null));
         }
 
         for( Object entity : nestedEntityList ) {
             List<String> cells = new ArrayList<>();
             for( ColumnTabulation nestedColumnTabulation : columnTabulation.getNestedEntityColumns() ) {
-                cells.add(nestedColumnTabulation.evalPlainTextExpression( entity, context ).toString());
+                Object value = nestedColumnTabulation.evalValueExpression(entity, context);
+                cells.add(nestedColumnTabulation.evalFormattedExpression(value, context));
             }
             ResultRow row = new ResultRow( emptySortableCells, cells, null );
             rows.add(row);
@@ -738,70 +686,6 @@ public class ConfigurableList {
     // }
     // return result;
     // }
-
-    /**
-     * For testing, writes a result list to an HTML table.
-     *
-     * @param printWriter Where to write the HTML.
-     * @param resultList  The list to write.
-     */
-    public void writeHtmlTable(PrintWriter printWriter, ResultList resultList) {
-        printWriter.println("<html><body><table border='1'>");
-        int rowNum = 0;
-        for (ResultRow row : resultList.getResultRows()) {
-            if (rowNum % 500 == 0) {
-                for (Header header : resultList.getHeaders()) {
-                    printWriter.println("<th>" + header.getViewHeader() + "</th>");
-                }
-            }
-            printWriter.println("<tr>");
-            for (String cell : row.getRenderableCells()) {
-                printWriter.println("<td>" + (cell == null ? "&nbsp;" : cell) + "</td>");
-            }
-            printWriter.println("</tr>");
-            if ((rowNum + 1) % 500 == 0) {
-                printWriter.println("</table><table border='1'>");
-            }
-            rowNum++;
-        }
-        printWriter.println("</table></body></html>");
-        printWriter.flush();
-
-    }
-
-    /**
-     * Converts to String the results of an expression evaluation.
-     *
-     * @param expressionResult results of expression
-     * @param stringBuilder    accumulated string
-     * @param separator        string to use to separate list entries
-     */
-    private static void convertResultToString(Object expressionResult, StringBuilder stringBuilder, String separator) {
-        // Do nothing if the expression is null.
-        if (expressionResult != null) {
-            if (expressionResult instanceof List || expressionResult instanceof Set) {
-                Collection<?> resultList = (Collection<?>) expressionResult;
-                int size = 0;
-                for (Object result : resultList) {
-                    if (result != null) {
-                        if( size > 0 || ( size == 0 && stringBuilder.length() > 0 ) ) {
-                            stringBuilder.append(separator);
-                        }
-                        size++;
-                        convertResultToString(result, stringBuilder, separator);
-                    }
-                }
-            } else if (expressionResult instanceof String) {
-                stringBuilder.append(expressionResult);
-            } else if (expressionResult instanceof Number || expressionResult instanceof Boolean) {
-                stringBuilder.append(expressionResult.toString());
-            } else if (expressionResult instanceof Date) {
-                stringBuilder.append(mdyFormat.format(expressionResult));
-            } else {
-                throw new RuntimeException("Unexpected return from expression " + expressionResult);
-            }
-        }
-    }
 
     /**
      * A list of results, including column names and rows of data.

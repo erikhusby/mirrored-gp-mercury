@@ -18,7 +18,6 @@ import org.hibernate.Criteria;
 import org.hibernate.FetchMode;
 import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
-import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.ejb.HibernateEntityManager;
@@ -110,10 +109,6 @@ public class PaginationDao extends GenericDao {
      * @param pagination holds pagination state
      */
     public void startPagination(Criteria criteria, Pagination pagination, boolean doInitialFetchFullEntity) {
-        // Always append entity ID to order, because other less-specific orders may not
-        // yield reproducible results.
-
-        criteria.addOrder(Order.asc(pagination.getResultEntityId()));
         if( !doInitialFetchFullEntity ) {
             criteria.setProjection(Projections.property(pagination.getResultEntityId()));
         }
@@ -226,7 +221,7 @@ public class PaginationDao extends GenericDao {
 
         String type = pagination.getIdList().get(0).getClass().getName();
         if( type.equals("java.lang.String") ) {
-            // Return string list as supplied
+            // Return string list as supplied (as of 03/12/2015, the only one is LabVessel.label)
             return idList;
         } else if ( type.equals("java.lang.Long")) {
             for( String val : idList ) {
@@ -234,12 +229,10 @@ public class PaginationDao extends GenericDao {
             }
             return typeSafeIds;
         } else {
-            // No other ID types supported as of 08/04/2014
+            // Implement for any future ID types supported
             return idList;
         }
 
     }
-
-
 
 }

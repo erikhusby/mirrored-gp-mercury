@@ -3,7 +3,11 @@ package org.broadinstitute.gpinformatics.infrastructure.search;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -11,15 +15,21 @@ import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+
 /**
  * Validate that the traverser finds events correctly
  */
 @Test(groups = TestGroups.STANDARD)
-public class LabEventTraversalTest extends ContainerTest {
+public class LabEventTraversalTest extends Arquillian {
 
     @Inject
     private ConfigurableListFactory configurableListFactory;
 
+    @Deployment
+    public static WebArchive buildMercuryWar() {
+        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
+    }
 
     public void testLcsetDescendantSearch() {
         ConfigurableSearchDefinition configurableSearchDefinition =
@@ -41,6 +51,9 @@ public class LabEventTraversalTest extends ContainerTest {
         searchInstance.getPredefinedViewColumns().add("LabEventId");
 
         searchInstance.establishRelationships(configurableSearchDefinition);
+
+        // Side effect of traversal evaluator
+        Assert.assertFalse(searchInstance.getIsDbSortable(), "Traversal evaluator results are not sortable in DB");
 
         ConfigurableListFactory.FirstPageResults firstPageResults =
                 configurableListFactory.getFirstResultsPage(

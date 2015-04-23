@@ -198,7 +198,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
                     addGlobalValidationError("Source tube barcode is required for accessioning sample kits");
                     return getContext().getSourcePageResolution();
                 }
-                manifestSessionEjb.validateTargetSampleAndVessel(accessionSource, accessionTube);
+                manifestSessionEjb.findAndValidateTargetSampleAndVessel(accessionSource, accessionTube);
             }
             manifestSessionEjb.accessionScan(selectedSessionId, accessionSource, accessionTube);
             scanMessages = String.format("Sample %s scanned successfully", accessionSource);

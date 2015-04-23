@@ -106,6 +106,13 @@ public class SampleInstanceV2 {
     }
 
     /**
+     * Returns the nearest Mercury sample in the transfer history.  Tolerates unknown root sample.
+     */
+    public String getNearestMercurySampleName() {
+        return mercurySamples.isEmpty() ? null : mercurySamples.get(mercurySamples.size() - 1).getSampleKey();
+    }
+
+    /**
      * Returns the root sample or if none, the earliest Mercury sample.
      */
     public MercurySample getRootOrEarliestMercurySample() {

@@ -78,8 +78,14 @@ public abstract class LabEventTraversalEvaluator extends TraversalEvaluator {
             if( vessel == null ) {
                 for( LabVessel xferVessel : eventVessels ) {
                     if( xferVessel.getContainerRole() != null ) {
-                        for( LabVessel targetVessel : xferVessel.getContainerRole().getContainedVessels() ) {
-                            targetVessel.evaluateCriteria(eventTraversalCriteria, traversalDirection);
+                        // VesselContainer.getAncestors fails with hasAnonymousVessels()
+                        if( xferVessel.getContainerRole().hasAnonymousVessels() &&
+                                traversalDirection == TransferTraverserCriteria.TraversalDirection.Ancestors ) {
+                            xferVessel.getContainerRole().applyCriteriaToAllPositions(eventTraversalCriteria);
+                        } else {
+                            for (LabVessel targetVessel : xferVessel.getContainerRole().getContainedVessels()) {
+                                targetVessel.evaluateCriteria(eventTraversalCriteria, traversalDirection);
+                            }
                         }
                     } else {
                         xferVessel.evaluateCriteria(eventTraversalCriteria, traversalDirection);

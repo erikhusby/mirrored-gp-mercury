@@ -281,9 +281,6 @@ public class ProductOrderTest {
         Assert.assertEquals(
                 TestUtils.getFirst(pdo.getProductOrderKit().getKitOrderDetails()).getNumberOfSamples().longValue(),
                 numberOfSamples);
-
-
-
     }
 
     public void testSetResearchProject() {
