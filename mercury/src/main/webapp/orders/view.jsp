@@ -668,8 +668,14 @@ function formatInput(item) {
         </c:when>
     </c:choose>
 
-    <div>
-        Regulatory Info: ${actionBean.regulatoryInfoForPendingOrder.displayText}
+    <div class="form-horizontal span7">
+        <div class="view-control-group control-group">
+            <label class="control-label label-form">Regulatory Info</label>
+
+            <div class="controls">
+                <jsp:include page="regulatory_info_view.jsp"/>
+            </div>
+        </div>
     </div>
 
     <span class="control-group">
@@ -896,22 +902,7 @@ function formatInput(item) {
 
     <div class="controls">
         <div class="form-value">
-            <c:choose>
-                <c:when test="${fn:length(actionBean.editOrder.regulatoryInfos) ne 0}">
-                    <c:forEach var="regulatoryInfo" items="${actionBean.editOrder.regulatoryInfos}">
-                        ${regulatoryInfo.displayText}<br/>
-                    </c:forEach>
-                </c:when>
-
-                <c:otherwise>
-                    <c:choose><c:when test="${actionBean.editOrder.canSkipRegulatoryRequirements()}">
-                        Regulatory information not entered because: ${actionBean.editOrder.skipRegulatoryReason}
-                    </c:when>
-                        <c:otherwise>
-                            No regulatory information entered.
-                        </c:otherwise></c:choose>
-                </c:otherwise>
-            </c:choose>
+            <jsp:include page="regulatory_info_view.jsp"/>
         </div>
     </div>
 </div>
