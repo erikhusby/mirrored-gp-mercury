@@ -66,7 +66,7 @@ public class LabEventTraversalTest extends Arquillian {
                 configurableListFactory.getFirstResultsPage(
                         searchInstance, configurableSearchDefinition, null, 1, null, "ASC", "LabEvent" );
 
-        Assert.assertEquals(firstPageResults.getPagination().getIdList().size(), 117);
+        Assert.assertEquals(firstPageResults.getPagination().getIdList().size(), 223);
 
     }
 
