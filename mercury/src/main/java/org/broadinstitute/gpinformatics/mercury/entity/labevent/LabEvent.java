@@ -559,7 +559,7 @@ todo jmt adder methods
         if (poolMode) {
             // This handles the case where two LCSETS are reworked in the ICE bucket, and appear in the same
             // IcePoolingTransfer.  There are two LCSETS for the event as a whole, so this doesn't help disambiguate
-            // multiple bucket entries, but there is one ambiguous LCSET for each destination position.
+            // multiple bucket entries, but there is one unambiguous LCSET for each destination position.
             Set<LabBatch> totalLabBatches = new HashSet<>();
             for (int i = 0; i < cherryPickTransferList.size(); i++) {
                 CherryPickTransfer cherryPickTransfer = cherryPickTransferList.get(i);
@@ -583,11 +583,7 @@ todo jmt adder methods
                     numVesselsWithBucketEntries = 0;
                 }
             }
-            if (totalLabBatches.size() == 1) {
-                return totalLabBatches;
-            } else {
-                return Collections.emptySet();
-            }
+            return totalLabBatches;
         } else {
             for (CherryPickTransfer cherryPickTransfer : cherryPickTransfers) {
                 Set<SampleInstanceV2> sampleInstancesAtPositionV2 = cherryPickTransfer.getSourceVesselContainer()

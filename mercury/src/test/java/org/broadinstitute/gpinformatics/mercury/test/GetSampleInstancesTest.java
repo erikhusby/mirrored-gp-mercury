@@ -712,8 +712,10 @@ public class GetSampleInstancesTest {
         labEvent.getCherryPickTransfers().add(new CherryPickTransfer(
                 sourceTf2.getContainerRole(), VesselPosition.A02, null,
                 targetTf.getContainerRole(), VesselPosition.A02, null, labEvent));
-        Assert.assertEquals(labEvent.getComputedLcSets().size(), 0);
+        Assert.assertEquals(labEvent.getComputedLcSets().size(), 2);
         Assert.assertEquals(labEvent.getMapPositionToLcSets().size(), 2);
+        Assert.assertEquals(labEvent.getMapPositionToLcSets().get(VesselPosition.A01).iterator().next(), lcset1);
+        Assert.assertEquals(labEvent.getMapPositionToLcSets().get(VesselPosition.A02).iterator().next(), lcset2);
         Assert.assertEquals(l1T3.getSampleInstancesV2().iterator().next().getSingleBatch(), lcset1);
         Assert.assertEquals(l2T3.getSampleInstancesV2().iterator().next().getSingleBatch(), lcset2);
 
