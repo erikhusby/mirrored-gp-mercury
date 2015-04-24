@@ -704,7 +704,8 @@ public class VesselContainer<T extends LabVessel> {
 
     /**
      * Calculates the number of workflow associations for each LCSET.
-     * @param mapLabBatchToCount map from LCSET to count of workflow associations
+     * @param mapLabBatchToCount map from LCSET to count of workflow associations, this is the primary output from
+     *                           this method
      * @param numVesselsWithWorkflow number of vessels that have at least one workflow association
      * @param sampleInstancesAtPosition Sample instances to evaluate
      * @return changed numVesselsWithWorkflow
@@ -714,17 +715,19 @@ public class VesselContainer<T extends LabVessel> {
             Set<SampleInstanceV2> sampleInstancesAtPosition ) {
         Set<SampleInstanceV2.LabBatchDepth> labBatches = new HashSet<>();
         if (sampleInstancesAtPosition.size() > 1) {
+            // We are dealing with a pool
             // todo jmt hardcoded depth, and -1 as an indicator, are not ideal
             for (SampleInstanceV2 sampleInstance : sampleInstancesAtPosition) {
                 LabBatch labBatch = sampleInstance.getSingleBatch();
                 if (labBatch == null) {
-                    List<LabBatch> nearestWorkflowBatches = sampleInstance.getAllWorkflowBatches();
-                    if (!nearestWorkflowBatches.isEmpty()) {
-                        labBatch = nearestWorkflowBatches.iterator().next();
+                    // Didn't find a single batch, so pick the nearest
+                    List<LabBatch> allWorkflowBatches = sampleInstance.getAllWorkflowBatches();
+                    if (!allWorkflowBatches.isEmpty()) {
+                        labBatch = allWorkflowBatches.iterator().next();
                     }
                 }
                 if (labBatch != null) {
-                    labBatches.add(new SampleInstanceV2.LabBatchDepth(10, labBatch));
+                    labBatches.add(new SampleInstanceV2.LabBatchDepth(100, labBatch));
                 }
             }
             numVesselsWithWorkflow = -1;
@@ -757,6 +760,7 @@ public class VesselContainer<T extends LabVessel> {
     public static Set<LabBatch> computeLcSets(Map<SampleInstanceV2.LabBatchDepth, Integer> mapLabBatchToCount,
             int numVesselsWithWorkflow) {
         if (numVesselsWithWorkflow == -1) {
+            // The vessels are pooled
             Set<LabBatch> lcsets = new HashSet<>();
             for (SampleInstanceV2.LabBatchDepth labBatchDepth : mapLabBatchToCount.keySet()) {
                 lcsets.add(labBatchDepth.getLabBatch());
@@ -776,6 +780,8 @@ public class VesselContainer<T extends LabVessel> {
                                    labBatchIntegerEntry.getValue());
             }
         }
+        // If exactly the same set of tubes appears in different LCSETs at different levels, e.g. an initial set of
+        // tubes at Shearing are all reworked at Hybridization, we want the deepest LCSET, Hybridization.
         Collections.sort(labBatchDepths, new Comparator<SampleInstanceV2.LabBatchDepth>() {
             @Override
             public int compare(SampleInstanceV2.LabBatchDepth o1, SampleInstanceV2.LabBatchDepth o2) {
@@ -784,7 +790,7 @@ public class VesselContainer<T extends LabVessel> {
         });
 
         Set<LabBatch> computedLcsets = new HashSet<>();
-        if (labBatchDepths.size() > 0) {
+        if (!labBatchDepths.isEmpty()) {
             int previousDepth = labBatchDepths.get(0).getDepth();
             for (SampleInstanceV2.LabBatchDepth labBatchDepth : labBatchDepths) {
                 if (labBatchDepth.getDepth() == previousDepth) {

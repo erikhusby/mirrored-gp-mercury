@@ -180,7 +180,6 @@ public class CrspPipelineUtilsTest {
             LabVessel tube = new BarcodedTube("000000");
             LabBatch labBatch = new LabBatch("Test", Collections.singleton(tube), LabBatch.LabBatchType.WORKFLOW);
             BucketEntry bucketEntry = new BucketEntry(tube,pdoSample.getProductOrder(), BucketEntry.BucketEntryType.PDO_ENTRY);
-            labBatch.addLabVessel(tube);
             labBatch.addBucketEntry(bucketEntry);
             tube.addSample(pdoSample.getMercurySample());
             tube.addBucketEntry(bucketEntry);

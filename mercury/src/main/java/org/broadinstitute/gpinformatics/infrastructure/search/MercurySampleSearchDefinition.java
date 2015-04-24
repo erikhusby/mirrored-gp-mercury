@@ -39,7 +39,7 @@ public class MercurySampleSearchDefinition {
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("PDOSamples",
                 "mercurySampleId", "productOrderSamples", MercurySample.class));
 
-        criteriaProjections.add( new ConfigurableSearchDefinition.CriteriaProjection("SampleBucketEntries",
+        criteriaProjections.add( new ConfigurableSearchDefinition.CriteriaProjection("BatchVessels",
                 "mercurySampleId", "labVessel", MercurySample.class));
 
         criteriaProjections.add( new ConfigurableSearchDefinition.CriteriaProjection("SampleID",
@@ -83,12 +83,12 @@ public class MercurySampleSearchDefinition {
         criteriaPaths = new ArrayList<>();
         // Non-reworks
         criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setCriteria(Arrays.asList("SampleBucketEntries", "labVessel", "labBatches", "labBatch"));
+        criteriaPath.setCriteria(Arrays.asList("BatchVessels", "labVessel", "labBatches", "labBatch"));
         criteriaPath.setPropertyName("batchName");
         criteriaPaths.add(criteriaPath);
         // Reworks
         criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setCriteria(Arrays.asList("SampleBucketEntries", "labVessel", "reworkLabBatches"));
+        criteriaPath.setCriteria(Arrays.asList("BatchVessels", "labVessel", "reworkLabBatches"));
         criteriaPath.setPropertyName("batchName");
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
