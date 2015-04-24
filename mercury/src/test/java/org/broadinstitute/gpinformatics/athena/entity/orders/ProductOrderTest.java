@@ -300,4 +300,20 @@ public class ProductOrderTest {
     public void testNullRegulatoryDesignationThrowsException() {
         new ProductOrder("Foo","Bar","Baz").getRegulatoryDesignationCodeForPipeline();
     }
+
+    public void testRegulatoryInfoEditAllowedForDraftPDO() {
+        productOrder.setOrderStatus(ProductOrder.OrderStatus.Draft);
+        Assert.assertTrue(productOrder.isRegulatoryInfoEditAllowed());
+    }
+
+    public void testRegulatoryInfoEditAllowedForPendingPDO() {
+        productOrder.setOrderStatus(ProductOrder.OrderStatus.Pending);
+        Assert.assertTrue(productOrder.isRegulatoryInfoEditAllowed());
+    }
+
+    public void testRegulatoryInfoEditNotAllowedForSubmittedPDO() {
+        productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+        Assert.assertFalse(productOrder.isRegulatoryInfoEditAllowed());
+    }
+
 }

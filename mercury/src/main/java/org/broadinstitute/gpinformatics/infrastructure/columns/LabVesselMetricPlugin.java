@@ -61,7 +61,7 @@ public class LabVesselMetricPlugin implements ListPlugin {
         for( LabVessel labVessel : labVesselList ) {
             ConfigurableList.Row row = new ConfigurableList.Row( labVessel.getLabel() );
 
-            Map<String, Set<LabMetric>> metricGroups = labVessel.getMetricsForVesselAndDescendants();
+            Map<String, Set<LabMetric>> metricGroups = labVessel.getMetricsForVesselAndRelatives();
             for(Set<LabMetric> metrics : metricGroups.values()) {
                 if( metrics != null && !metrics.isEmpty() ) {
                     addMetricsToRow(metrics, row);
@@ -82,7 +82,7 @@ public class LabVesselMetricPlugin implements ListPlugin {
      *   with a decision.  If all metrics have a null decision, use the last metric after sorting.
      * @param metrics Metrics data of a single type as supplied from LabVessel
      * @param row Reference to the current plugin row
-     *        @see org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel#getMetricsForVesselAndDescendants()
+     *        @see org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel#getMetricsForVesselAndRelatives()
      */
     private void addMetricsToRow( Set<LabMetric> metrics, ConfigurableList.Row row ) {
         LabMetric metric = null;

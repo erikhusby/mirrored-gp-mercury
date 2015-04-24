@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
@@ -28,6 +29,7 @@ import javax.enterprise.context.SessionScoped;
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
+import java.util.Collections;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -201,7 +203,14 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
 
         @Override
         public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
-            return null;
+
+            Quote stubQuote = new Quote();
+            stubQuote.setAlphanumericId("testMMA");
+
+            QuoteItem stubItem = new QuoteItem("TestMMA", "testPI", "testingConcurrent", "1", "1", "1","Mercury","Exome Sequencing");
+            stubQuote.setQuoteItems(Collections.singletonList(stubItem));
+
+            return stubQuote;
         }
 
         @Override

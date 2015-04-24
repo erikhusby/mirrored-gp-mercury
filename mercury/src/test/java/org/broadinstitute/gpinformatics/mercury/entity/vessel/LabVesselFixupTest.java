@@ -1008,4 +1008,21 @@ public class LabVesselFixupTest extends Arquillian {
         barcodedTubeDao.persist(new FixupCommentary("QUAL-623 update volumes"));
         barcodedTubeDao.flush();
     }
+    
+    @Test(enabled = false)
+    public void gplim3525UpdateVolume() {
+        userBean.loginOSUser();
+        String barcode = "0129040052";
+        BarcodedTube barcodedTube = barcodedTubeDao.findByBarcode(barcode);
+        if (barcodedTube == null) {
+            throw new RuntimeException("Failed to find tube " + barcode);
+        }
+        BigDecimal newVolume = new BigDecimal("157");
+        System.out.println(
+                "Updating volume of " + barcodedTube.getLabel() + " from " + barcodedTube.getVolume() + " to "
+                + newVolume);
+        barcodedTube.setVolume(newVolume);
+        barcodedTubeDao.persist(new FixupCommentary("GPLIM-3525 manually set volume for tube missing initial tare"));
+        barcodedTubeDao.flush();
+    }
 }

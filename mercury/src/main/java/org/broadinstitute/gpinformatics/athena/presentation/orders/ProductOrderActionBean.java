@@ -365,13 +365,6 @@ public class ProductOrderActionBean extends CoreActionBean {
                + "quarantining of data.";
     }
 
-    public RegulatoryInfo getRegulatoryInfoForPendingOrder() {
-        if (editOrder.getRegulatoryInfos().size() == 1) {
-            return editOrder.getRegulatoryInfos().iterator().next();
-        }
-        return null;
-    }
-
     /**
      * @return the list of role names that can modify the order being edited.
      */
@@ -453,7 +446,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.EventHandling, on = SAVE_ACTION)
     public void initRegulatoryParameter() {
 
-        if (editOrder.isDraft()) {
+        if (editOrder.isRegulatoryInfoEditAllowed()) {
             if (selectedRegulatoryIds != null) {
                 List<RegulatoryInfo> selectedRegulatoryInfos = regulatoryInfoDao
                         .findListByList(RegulatoryInfo.class, RegulatoryInfo_.regulatoryInfoId, selectedRegulatoryIds);
@@ -1159,7 +1152,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             saveType = ProductOrder.SaveType.CREATING;
         }
 
-        if (editOrder.isDraft()) {
+        if (editOrder.isRegulatoryInfoEditAllowed()) {
             updateRegulatoryInformation();
         }
         Set<String> deletedIdsConverted = new HashSet<>(Arrays.asList(deletedKits));
@@ -1169,11 +1162,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         return createViewResolution(editOrder.getBusinessKey());
     }
 
-    private void updateRegulatoryInformation() {
+    void updateRegulatoryInformation() {
         if (!editOrder.getRegulatoryInfos().isEmpty() && !isSkipRegulatoryInfo()) {
             editOrder.setSkipRegulatoryReason(null);
         }
-        if (isSkipRegulatoryInfo() && StringUtils.isBlank(editOrder.getSkipRegulatoryReason())) {
+        if (isSkipRegulatoryInfo() && !StringUtils.isBlank(editOrder.getSkipRegulatoryReason())) {
             editOrder.getRegulatoryInfos().clear();
         }
     }
@@ -2198,7 +2191,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 requireField(editOrder.canSkipRegulatoryRequirements(),
                         "a reason for bypassing the regulatory requirements", action);
             }
-            if (editOrder.isDraft()) {
+            if (editOrder.isRegulatoryInfoEditAllowed()) {
                 if (CollectionUtils.isNotEmpty(selectedRegulatoryIds)) {
                     List<RegulatoryInfo> selectedRegulatoryInfos = regulatoryInfoDao
                             .findListByList(RegulatoryInfo.class, RegulatoryInfo_.regulatoryInfoId,
