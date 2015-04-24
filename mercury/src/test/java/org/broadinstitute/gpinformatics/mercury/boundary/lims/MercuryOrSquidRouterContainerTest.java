@@ -25,16 +25,16 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StripTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.easymock.EasyMock;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -51,7 +51,6 @@ import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -273,9 +272,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
                         postShearingPlateBarCode);
 
         BettaLIMSMessage msg = new BettaLIMSMessage();
-        msg.getPlateTransferEvent().
-
-                add(shearingEventJaxb);
+        msg.getPlateTransferEvent().add(shearingEventJaxb);
 
         bettaLimsMessageTestFactory.advanceTime();
         String xmlMessage = BettaLimsMessageTestFactory.marshal(msg);
@@ -335,9 +332,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
                         postShearingPlateBarCode);
 
         BettaLIMSMessage msg = new BettaLIMSMessage();
-        msg.getPlateTransferEvent().
-
-                add(shearingEventJaxb);
+        msg.getPlateTransferEvent().add(shearingEventJaxb);
 
         bettaLimsMessageTestFactory.advanceTime();
 
@@ -769,9 +764,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
                         postShearingPlateBarCode);
 
         BettaLIMSMessage msg = new BettaLIMSMessage();
-        msg.getPlateTransferEvent().
-
-                add(shearingEventJaxb);
+        msg.getPlateTransferEvent().add(shearingEventJaxb);
 
         bettaLimsMessageTestFactory.advanceTime();
 
@@ -932,15 +925,17 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         }
 
 
-        //THis will automatically add the batch to the tubes via the internal set methods
-        LabBatch labBatch = new LabBatch("testBatch" + testSuffix.getTime(), tubes, LabBatch.LabBatchType.WORKFLOW);
-        labBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
+        if (bucketName != null) {
+            //This will automatically add the batch to the tubes via the internal set methods
+            LabBatch labBatch = new LabBatch("testBatch" + testSuffix.getTime(), tubes, LabBatch.LabBatchType.WORKFLOW);
+            labBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
 
 //        labBatchEjb.createLabBatchAndRemoveFromBucket(labBatch,"scottmat",bucketName,"HOME", CreateFields.IssueType.AGILENT_EXOME_EXPRESS);
-        for (LabVessel currTube : tubes) {
-            for (BucketEntry currentEntry : currTube.getBucketEntries()) {
-                currentEntry.setStatus(BucketEntry.Status.Archived);
-                currentEntry.setLabBatch(labBatch);
+            for (LabVessel currTube : tubes) {
+                for (BucketEntry currentEntry : currTube.getBucketEntries()) {
+                    currentEntry.setStatus(BucketEntry.Status.Archived);
+                    currentEntry.setLabBatch(labBatch);
+                }
             }
         }
 

@@ -135,9 +135,15 @@ public class ReagentSearchDefinition {
         searchTerm.setName("LCSET Events");
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
         SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setCriteria(
-                Arrays.asList(/* LabEvent*/ "inPlaceLabEvents", /* LabVessel */ "bucketEntries", /* BucketEntry */
-                        "labBatch" /* LabBatch */));
+        criteriaPath.setCriteria(Arrays.asList(/* LabEvent*/ "inPlaceLabEvents", /* LabVessel */
+                "labBatches", /* LabBatchStartingVessel */ "labBatch" /* LabBatch */));
+        criteriaPath.setPropertyName("batchName");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList(/* LabEvent*/ "inPlaceLabEvents", /* LabVessel */
+                "reworkLabBatches" /* LabBatch */));
         criteriaPath.setPropertyName("batchName");
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);

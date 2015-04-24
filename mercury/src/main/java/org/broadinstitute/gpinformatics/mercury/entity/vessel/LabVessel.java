@@ -1128,6 +1128,17 @@ public abstract class LabVessel implements Serializable {
         return allLabBatches;
     }
 
+    public List<LabBatch> getWorkflowLabBatches() {
+        List<LabBatch> allLabBatches = new ArrayList<>();
+        for (LabBatchStartingVessel batchStartingVessel : labBatches) {
+            if (batchStartingVessel.getLabBatch().getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
+                allLabBatches.add(batchStartingVessel.getLabBatch());
+            }
+        }
+        allLabBatches.addAll(reworkLabBatches);
+        return allLabBatches;
+    }
+
     public Set<LabBatch> getReworkLabBatches() {
         return reworkLabBatches;
     }
@@ -1468,12 +1479,26 @@ public abstract class LabVessel implements Serializable {
         return vesselForEventTypeCriteria.getVesselsForLabEventType();
     }
 
-    /**
-     * This method walks the vessel transfers in both directions and returns all of the ancestor and descendant
-     * vessels.
-     *
-     * @return A collection containing all ancestor and descendant vessels.
-     */
+    public Map<LabEvent, Set<LabVessel>> findVesselsForLabEventTypes(List<LabEventType> types,
+            List<TransferTraverserCriteria.TraversalDirection> traversalDirections, boolean useTargetVessels) {
+        if (getContainerRole() != null) {
+            // todo jmt this is ancestors only
+            return getContainerRole().getVesselsForLabEventTypes(types);
+        }
+        TransferTraverserCriteria.VesselForEventTypeCriteria vesselForEventTypeCriteria =
+                new TransferTraverserCriteria.VesselForEventTypeCriteria(types, useTargetVessels);
+        for (TransferTraverserCriteria.TraversalDirection traversalDirection : traversalDirections) {
+            evaluateCriteria(vesselForEventTypeCriteria, traversalDirection);
+        }
+        return vesselForEventTypeCriteria.getVesselsForLabEventType();
+    }
+
+        /**
+         * This method walks the vessel transfers in both directions and returns all of the ancestor and descendant
+         * vessels.
+         *
+         * @return A collection containing all ancestor and descendant vessels.
+         */
     public Collection<LabVessel> getAncestorAndDescendantVessels() {
         Collection<LabVessel> allVessels;
         allVessels = getAncestorVessels();
@@ -1841,6 +1866,10 @@ public abstract class LabVessel implements Serializable {
         VesselContainer<?> containerRole = getContainerRole();
         if (containerRole != null) {
             containerRole.clearCaches();
+        }
+        for (LabVessel container : containers) {
+            container.clearCaches();
+            container.getContainerRole().clearCaches();
         }
     }
 

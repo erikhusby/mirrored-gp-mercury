@@ -5,7 +5,10 @@ import org.apache.commons.collections4.map.LazyMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
@@ -18,6 +21,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.AbstractBatchJiraFieldFactory;
@@ -25,8 +29,11 @@ import org.broadinstitute.gpinformatics.mercury.control.vessel.LCSetJiraFieldFac
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -69,6 +76,10 @@ public class LabBatchEjb {
     private BucketEjb bucketEjb;
 
     private ProductOrderDao productOrderDao;
+
+    private SampleDataFetcher sampleDataFetcher;
+
+    private ControlDao controlDao;
 
     /**
      * Alternate create lab batch method to allow a user to define the vessels for use by their barcode.
@@ -369,8 +380,7 @@ public class LabBatchEjb {
         try {
             if (childBatch.getJiraTicket() != null) {
                 jiraService.addLink(AddIssueLinkRequest.LinkType.Parentage, parentBatch.getJiraTicket().getTicketName(),
-                                    childBatch.getJiraTicket()
-                                              .getTicketName());
+                        childBatch.getJiraTicket().getTicketName());
             }
         } catch (Exception ioe) {
             logger.error("Error attempting to link batch " + childBatch.getJiraTicket().getTicketName()
@@ -493,6 +503,86 @@ public class LabBatchEjb {
 
     }
 
+    /**
+     * Finds in the controls in a scan of a new LCSET rack.
+     * @param lcsetName LCSET-1234
+     * @param rackScan map from rack position to barcode
+     * @param messageCollection errors returned to ActionBean
+     * @return list of control barcodes
+     */
+    public List<String> findControlsInRackScan(String lcsetName, Map<String, String> rackScan,
+            MessageCollection messageCollection) {
+        List<String> controlBarcodes = new ArrayList<>();
+
+        Map<String, LabVessel> mapBarcodeToTube = tubeDao.findByBarcodes(new ArrayList<>(rackScan.values()));
+        List<Control> controls = controlDao.findAllActive();
+        List<String> controlAliases = new ArrayList<>();
+        for (Control control : controls) {
+            controlAliases.add(control.getCollaboratorParticipantId());
+        }
+
+        List<String> sampleNames = new ArrayList<>();
+        for (Map.Entry<String, String> positionBarcodeEntry : rackScan.entrySet()) {
+            LabVessel barcodedTube = mapBarcodeToTube.get(positionBarcodeEntry.getValue());
+            if (barcodedTube == null) {
+                messageCollection.addError("Failed to find tube " + positionBarcodeEntry.getValue());
+            } else {
+                Set<SampleInstanceV2> sampleInstances = barcodedTube.getSampleInstancesV2();
+                if (sampleInstances.size() == 1) {
+                    SampleInstanceV2 sampleInstance = sampleInstances.iterator().next();
+                    sampleNames.add(sampleInstance.getEarliestMercurySampleName());
+                } else {
+                    messageCollection.addError("Multiple samples in " + barcodedTube.getLabel());
+                }
+            }
+        }
+        Map<String, SampleData> mapSampleNameToData = sampleDataFetcher.fetchSampleData(sampleNames);
+
+        for (Map.Entry<String, String> positionBarcodeEntry : rackScan.entrySet()) {
+            LabVessel barcodedTube = mapBarcodeToTube.get(positionBarcodeEntry.getValue());
+            if (barcodedTube != null) {
+                Set<SampleInstanceV2> sampleInstances = barcodedTube.getSampleInstancesV2();
+                if (sampleInstances.size() == 1) {
+                    SampleInstanceV2 sampleInstance = sampleInstances.iterator().next();
+                    SampleData sampleData = mapSampleNameToData.get(sampleInstance.getEarliestMercurySampleName());
+                    boolean found = false;
+                    for (LabBatchStartingVessel labBatchStartingVessel : sampleInstance.getAllBatchVessels(
+                            LabBatch.LabBatchType.WORKFLOW)) {
+                        if (labBatchStartingVessel.getLabBatch().getBatchName().equals(lcsetName)) {
+                            found = true;
+                        }
+                    }
+                    if (controlAliases.contains(sampleData.getCollaboratorParticipantId())) {
+                        if (found) {
+                            messageCollection.addWarning(barcodedTube.getLabel() +  " is already in this LCSET");
+                        } else {
+                            controlBarcodes.add(barcodedTube.getLabel());
+                        }
+                    } else {
+                        if (!found) {
+                            messageCollection.addError(barcodedTube.getLabel() + " is not in this LCSET");
+                        }
+                    }
+                }
+            }
+        }
+        return controlBarcodes;
+    }
+
+    /**
+     * Adds controls to an LCSET, without bucket entries.
+     * @param lcsetName LCSET-1234
+     * @param controlBarcodes list of barcodes that was confirmed by the user
+     */
+    public void addControlsToLcset(String lcsetName, List<String> controlBarcodes) {
+        LabBatch lcset = labBatchDao.findByName(lcsetName);
+        Map<String, LabVessel> mapBarcodeToTube = tubeDao.findByBarcodes(controlBarcodes);
+        for (Map.Entry<String, LabVessel> stringBarcodedTubeEntry : mapBarcodeToTube.entrySet()) {
+            LabVessel barcodedTube = stringBarcodedTubeEntry.getValue();
+            lcset.addLabVessel(barcodedTube);
+        }
+    }
+
     /*
        To Support DBFree Tests
     */
@@ -534,5 +624,15 @@ public class LabBatchEjb {
     @Inject
     public void setProductOrderDao(ProductOrderDao productOrderDao) {
         this.productOrderDao = productOrderDao;
+    }
+
+    @Inject
+    public void setSampleDataFetcher(SampleDataFetcher sampleDataFetcher) {
+        this.sampleDataFetcher = sampleDataFetcher;
+    }
+
+    @Inject
+    public void setControlDao(ControlDao controlDao) {
+        this.controlDao = controlDao;
     }
 }

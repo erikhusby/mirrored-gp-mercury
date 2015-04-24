@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 import org.testng.Assert;
@@ -177,7 +178,9 @@ public class CrspPipelineUtilsTest {
 
         public SampleInstanceV2 getSampleInstance() {
             LabVessel tube = new BarcodedTube("000000");
+            LabBatch labBatch = new LabBatch("Test", Collections.singleton(tube), LabBatch.LabBatchType.WORKFLOW);
             BucketEntry bucketEntry = new BucketEntry(tube,pdoSample.getProductOrder(), BucketEntry.BucketEntryType.PDO_ENTRY);
+            labBatch.addBucketEntry(bucketEntry);
             tube.addSample(pdoSample.getMercurySample());
             tube.addBucketEntry(bucketEntry);
             return new SampleInstanceV2(tube);

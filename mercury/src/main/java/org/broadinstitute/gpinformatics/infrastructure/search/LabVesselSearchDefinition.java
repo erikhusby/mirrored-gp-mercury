@@ -21,6 +21,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -112,6 +113,14 @@ public class LabVesselSearchDefinition {
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("bucketEntries", "labVesselId",
                 "labVessel", BucketEntry.class));
 
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("labBatches", "labVesselId",
+                "labVessel", LabBatchStartingVessel.class));
+
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("vesselById", "labVesselId",
+                "labVesselId", LabVessel.class));
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("reworkLabBatches", "rework.labVesselId",
+                "reworks", "rework", LabBatch.class));
+
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("mercurySample", "labVesselId",
                 "mercurySamples", LabVessel.class));
 
@@ -141,8 +150,18 @@ public class LabVesselSearchDefinition {
         SearchTerm searchTerm = new SearchTerm();
         searchTerm.setName("LCSET");
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
+        // Non-reworks
         SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setCriteria(Arrays.asList("bucketEntries", "labBatch"));
+        criteriaPath.setCriteria(Arrays.asList("labBatches", "labBatch"));
+        criteriaPath.setPropertyName("batchName");
+        criteriaPath.setJoinFetch(Boolean.TRUE);
+        criteriaPaths.add(criteriaPath);
+        // Reworks
+        SearchTerm.CriteriaPath nestedCriteriaPath = new SearchTerm.CriteriaPath();
+        nestedCriteriaPath.setCriteria(Arrays.asList("reworkLabBatches"));
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("vesselById", "labVesselId"));
+        criteriaPath.setNestedCriteriaPath(nestedCriteriaPath);
         criteriaPath.setPropertyName("batchName");
         criteriaPath.setJoinFetch(Boolean.TRUE);
         criteriaPaths.add(criteriaPath);
