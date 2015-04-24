@@ -346,8 +346,7 @@ public class LabBatchFixUpTest extends Arquillian {
                     System.out.println("Failed to find any controls for " + workflowLabBatch.getBatchName());
                 }
             }
-            System.out.println("Flush and clear");
-            labBatchDao.flush();
+            System.out.println("Clear session");
             labBatchDao.clear();
         }
 //        Controller.stopProbeRecording(Controller.PROBE_NAME_JDBC);
