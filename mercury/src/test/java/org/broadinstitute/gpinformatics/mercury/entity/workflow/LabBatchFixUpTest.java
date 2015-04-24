@@ -262,7 +262,7 @@ public class LabBatchFixUpTest extends Arquillian {
     /**
      * Generate a file to back populate controls into LCSETs.
      */
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void fixupGplim3442GenFile() {
 //        Controller.startCPURecording(true);
 //        Controller.startProbeRecording(Controller.PROBE_NAME_JDBC, true);
@@ -391,7 +391,7 @@ public class LabBatchFixUpTest extends Arquillian {
     /**
      * Read a file to back populate controls into LCSETs.
      */
-    @Test
+    @Test(enabled = false)
     public void fixupGplim3442() {
         userBean.loginOSUser();
         InputStream testSpreadSheetInputStream = VarioskanParserTest.getTestResource("BackfillInput.txt");
