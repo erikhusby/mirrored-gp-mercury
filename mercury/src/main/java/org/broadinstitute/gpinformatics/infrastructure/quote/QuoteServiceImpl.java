@@ -52,7 +52,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         SINGLE_QUOTE("/quotes/ws/portals/private/getquotes?with_funding=true&quote_alpha_ids="),
         SINGLE_QUOTE_WITH_PRICE_ITEMS("/quotes/ws/portals/private/getquotes?with_funding=true&with_quote_items=true&quote_alpha_ids="),
         ALL_SEQUENCING_QUOTES("/quotes/ws/portals/private/getquotes?platform_name=DNA+Sequencing&with_funding=true"),
-        ALL_SSF_PRICE_ITEMS("/quotes/ws/portals/private/get_price_list"),
+        ALL_SSF_PRICE_ITEMS("/quotes/rest/price_list/10/true"),
         ALL_CRSP_PRICE_ITEMS("/quotes/rest/price_list/50/true"),
         ALL_GP_EXTERNAL_PRICE_ITEMS("/quotes/rest/price_list/60/true"),
         ALL_FUNDINGS("/quotes/rest/sql_report/41"),
