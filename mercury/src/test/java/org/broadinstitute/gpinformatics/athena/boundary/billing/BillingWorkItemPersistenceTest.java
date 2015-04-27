@@ -53,7 +53,7 @@ public class BillingWorkItemPersistenceTest extends AbstractContainerTest {
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWarWithAlternatives(DummyPMBQuoteService.class, AcceptsAllWorkRegistrationsQuoteServiceStub.class);
+        return DeploymentBuilder.buildMercuryWarWithAlternatives(AcceptsAllWorkRegistrationsQuoteServiceStub.class);
     }
 
     /**

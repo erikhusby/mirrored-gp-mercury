@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.*;
 
 import javax.enterprise.inject.Alternative;
 import java.util.Date;
+import java.util.Set;
 
 /**
  * Mock that returns you a new quote with some
@@ -44,5 +45,21 @@ public class HappyQuoteServiceMock implements QuoteService {
     @Override
     public Quote getQuoteWithPriceItems(String alphaId) throws QuoteServerException, QuoteNotFoundException {
         return getQuoteByAlphaId(alphaId);
+    }
+
+    @Override
+    public Set<Funding> getAllFundingSources() throws QuoteServerException, QuoteNotFoundException{
+        return null;
+    }
+
+    @Override
+    public Quotes getAllQuotes() throws QuoteServerException, QuoteNotFoundException {
+        return null;
+    }
+
+    @Override
+    public PriceList getPlatformPriceItems(QuotePlatformType quotePlatformType)
+            throws QuoteServerException, QuoteNotFoundException {
+        return getAllPriceItems();
     }
 }
