@@ -371,7 +371,8 @@ CREATE TABLE im_product_order (
   jira_ticket_key        VARCHAR2(255),
   owner                  VARCHAR2(40),
   placed_date            DATE,
-  skip_regulatory_reason VARCHAR2(255)
+  skip_regulatory_reason VARCHAR2(255),
+  reg_info_ids           VARCHAR2(255)
 );
 
 CREATE TABLE im_product_order_status (

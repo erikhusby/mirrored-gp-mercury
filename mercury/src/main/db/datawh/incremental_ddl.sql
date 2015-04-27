@@ -9,7 +9,9 @@
 -- Create Real time Compliance Report
 -------------------------------------------------------
 ALTER TABLE PRODUCT_ORDER    ADD SKIP_REGULATORY_REASON VARCHAR2(255);
-ALTER TABLE IM_PRODUCT_ORDER ADD SKIP_REGULATORY_REASON VARCHAR2(255);
+ALTER TABLE IM_PRODUCT_ORDER ADD (
+  SKIP_REGULATORY_REASON VARCHAR2(255),
+  REG_INFO_IDS VARCHAR2(255) );
 
 --DROP TABLE pdo_regulatory_infos;
 
@@ -41,16 +43,6 @@ foreign key(regulatory_infos)
 references regulatory_info(regulatory_info_id) ON DELETE CASCADE;
 
 CREATE INDEX pdo_regulatory_infos_idx1 ON pdo_regulatory_infos (regulatory_infos);
-
---DROP TABLE im_pdo_regulatory_infos;
-
-CREATE TABLE im_pdo_regulatory_infos (
-  line_number      NUMERIC(9)  NOT NULL,
-  etl_date         DATE        NOT NULL,
-  is_delete        CHAR(1)     NOT NULL,
-  product_order    NUMERIC(19),
-  regulatory_infos NUMERIC(19)
-);
 
 --DROP TABLE im_regulatory_info;
 
