@@ -11,6 +11,8 @@ import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean;
 
 import javax.inject.Inject;
@@ -36,6 +38,8 @@ public class LcsetActionBean extends RackScanActionBean {
 
     /** Ask the user to confirm that these should be added to the LCSET. */
     private List<String> controlBarcodes = new ArrayList<>();
+
+    private VesselGeometry vesselGeometry = RackOfTubes.RackType.Matrix96.getVesselGeometry();
 
     @Inject
     private BarcodedTubeDao barcodedTubeDao;
@@ -95,5 +99,9 @@ public class LcsetActionBean extends RackScanActionBean {
 
     public void setControlBarcodes(List<String> controlBarcodes) {
         this.controlBarcodes = controlBarcodes;
+    }
+
+    public VesselGeometry getVesselGeometry() {
+        return vesselGeometry;
     }
 }
