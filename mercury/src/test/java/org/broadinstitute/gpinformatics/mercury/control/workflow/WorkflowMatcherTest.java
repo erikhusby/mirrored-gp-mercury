@@ -30,30 +30,39 @@ public class WorkflowMatcherTest {
         LabBatch labBatch = new LabBatch("ESET-1", starterVessels, LabBatch.LabBatchType.WORKFLOW);
 
         // Add batch event
-        LabEvent reagentsPrepared = new LabEvent(LabEventType.COVARIS_LOADED, new Date(), "ZAN", 1L, 101L, "UI");
+        LabEvent reagentsPrepared = new LabEvent(LabEventType.PREP, new Date(), LabEvent.UI_EVENT_LOCATION, 1L, 101L,
+                LabEvent.UI_PROGRAM_NAME);
         reagentsPrepared.setLabBatch(labBatch);
 
         // Add transfer with reagents
-        LabEvent bloodToMicro = new LabEvent(LabEventType.EXTRACT_BLOOD_TO_MICRO, new Date(), "ZAN", 1L, 101L, "UI");
+        LabEvent bloodToMicro = new LabEvent(LabEventType.EXTRACT_BLOOD_TO_MICRO, new Date(),
+                LabEvent.UI_EVENT_LOCATION, 1L, 101L, LabEvent.UI_PROGRAM_NAME);
         BarcodedTube m1 = new BarcodedTube("M1", BarcodedTube.BarcodedTubeType.EppendoffFliptop15);
         bloodToMicro.getVesselToVesselTransfers().add(new VesselToVesselTransfer(t1, m1, bloodToMicro));
         bloodToMicro.addReagent(new GenericReagent("R1", "1234", null));
 
         // Add vessel event
-        LabEvent addEthanol = new LabEvent(LabEventType.A_BASE, new Date(), "ZAN", 1L, 101L, "UI");
+        LabEvent addEthanol = new LabEvent(LabEventType.ADD_REAGENT, new Date(), LabEvent.UI_EVENT_LOCATION, 1L, 101L,
+                LabEvent.UI_PROGRAM_NAME);
         addEthanol.setInPlaceLabVessel(m1);
 
         // Add transfer that doesn't match
         // Verify list of planned steps, with actual events
 
-        // How to get uniqueness across multiple LOADED events?
-        // There are 3 of Spin at 6,000 x g for 1 minute.
+        // How to get uniqueness across multiple CENTRIFUGE events?
+        // Initial
+        // AW1
+        // AW2
+        // AW2 discard
+        // AE
+        // Add a field to LabEvent, need this differentiation to be specifiable through messaging
+
+        // Possible LabEventTypes: CENTRIFUGE, INCUBATE, MIX, WASH, ADD_REAGENT (need list of reagents), PREP?
+        // What about disinfect and reagent prep?
+        // Move suggested reagents from LabEventType to workflow?
 
         // Need to render per-sample transfer links for steps that haven't happened yet?  Not per-sample, because
         // they must be scanned.  Could just render link unconditionally.
-
-        // Need event types for each reagent addition, or use a generic event and encode expected reagents in workflow?
-        // Spin event type, with speed and duration, or generic loaded event, with name / value pairs
 
         // workflow additions: descriptive text
         // LabEventType additions: batch event vs vessel event vs transfer

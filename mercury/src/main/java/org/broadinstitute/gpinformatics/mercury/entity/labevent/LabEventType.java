@@ -954,6 +954,12 @@ public enum LabEventType {
             MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.SpinColumn,
             BarcodedTube.BarcodedTubeType.MatrixTube075, new String[]{}),
 
+    CENTRIFUGE(),
+    INCUBATE(),
+    MIX(),
+    WASH(),
+    ADD_REAGENT(),
+    PREP()
     ;
 
     private final String name;
