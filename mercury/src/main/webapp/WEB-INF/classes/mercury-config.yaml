@@ -246,7 +246,7 @@ mercury:
       app:      DEV
       bsp:      DEV
       jira:     TEST
-      quote:    QA
+      quote:    DEV # temp change, due to QA down
       squid:    TEST
       tableau:  PROD
       thrift:   TEST
@@ -264,7 +264,7 @@ mercury:
       app:      AUTO_BUILD
       bsp:      DEV
       jira:     TEST
-      quote:    QA
+      quote:    DEV # temp change, due to QA down
       squid:    DEV
       tableau:  PROD
       thrift:   TEST
@@ -281,7 +281,7 @@ mercury:
       app:      TEST
       bsp:      DEV
       jira:     TEST
-      quote:    QA
+      quote:    DEV # temp change, due to QA down
       squid:    TEST
       tableau:  PROD
       thrift:   TEST
@@ -297,7 +297,7 @@ mercury:
       app:      QA
       bsp:      RC
       jira:     TEST
-      quote:    QA
+      quote:    DEV # temp change, due to QA down
       squid:    QA
       tableau:  PROD
       thrift:   QA
@@ -314,7 +314,7 @@ mercury:
       app:      RC
       bsp:      RC
       jira:     TEST
-      quote:    QA
+      quote:    DEV # temp change, due to QA down
       squid:    QA
       tableau:  PROD
       thrift:   QA
