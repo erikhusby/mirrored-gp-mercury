@@ -13,6 +13,9 @@ package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
+/**
+ * A BucketEntryEvaluator which allows bucketing if the labVessel has DNA in it.
+ */
 public class DnaBucketEntryEvaluator implements BucketEntryEvaluator {
     @Override
     public boolean invoke(LabVessel labVessel) {

@@ -13,6 +13,12 @@ package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
+/**
+ * Interface for defining a BucketEntryEvaluator. BucketEntryEvaluators are called in
+ * WorkflowBucketDef#meetsBucketCriteria(LabVessel) to determin if a Labvessel is eligable for bucketing
+ *
+ * @see WorkflowBucketDef#meetsBucketCriteria(LabVessel)
+ */
 public interface BucketEntryEvaluator {
     String INVOKE = "invoke";
 
