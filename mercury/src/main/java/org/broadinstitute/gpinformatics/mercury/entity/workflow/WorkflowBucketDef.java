@@ -8,8 +8,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -67,21 +65,18 @@ public class WorkflowBucketDef extends WorkflowStepDef {
             for (String bucketEntryEvaluator : bucketEntryEvaluators) {
                 try {
                     Class<?> bucketEntryEvaluatorClass = Class.forName(bucketEntryEvaluator);
-                    Object bucketEntryInstance = bucketEntryEvaluatorClass.newInstance();
-                    Method invokeMethod =
-                            bucketEntryEvaluatorClass.getMethod(BucketEntryEvaluator.INVOKE, LabVessel.class);
-                    boolean meetsCriteria = (boolean) invokeMethod.invoke(bucketEntryInstance, labVessel);
+                    BucketEntryEvaluator bucketEntryInstance =
+                            (BucketEntryEvaluator) bucketEntryEvaluatorClass.newInstance();
+                    boolean meetsCriteria = bucketEntryInstance.invoke(labVessel);
                     if (!meetsCriteria) {
                         return false;
                     }
                 } catch (ClassNotFoundException e) {
                     throw new RuntimeException(
                             String.format("error invoking BucketEntryEvaluator %s", bucketEntryEvaluator), e);
-                } catch (NoSuchMethodException e) {
-                    throw new RuntimeException(
-                            String.format("Class does not implement %s", BucketEntryEvaluator.class.getName()), e);
-                } catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
+                } catch (InstantiationException | IllegalAccessException e) {
                     log.error(e);
+                    return false;
                 }
             }
         }
