@@ -1,24 +1,26 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
-
-//import org.mvel2.MVEL;
-//import org.mvel2.optimizers.OptimizerFactory;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Where samples are placed for batching, typically the first step in a process
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 public class WorkflowBucketDef extends WorkflowStepDef {
+    private static final Log log = LogFactory.getLog(WorkflowBucketDef.class);
 
-    /** Expression to determine whether a vessel can enter the bucket */
-    private String entryExpression;
+    private List<String> bucketEntryEvaluators=new ArrayList<>();
 
     /** auto-drain rules - time / date based */
     private Double autoDrainDays;
@@ -39,30 +41,50 @@ public class WorkflowBucketDef extends WorkflowStepDef {
         this.autoDrainDays = autoDrainDays;
     }
 
+    /**
+     * Set bucketEntryEvaluators; package-local access because it is used for testing.
+     */
+    void setBucketEntryEvaluators(List<String> bucketEntryEvaluators) {
+        this.bucketEntryEvaluators = bucketEntryEvaluators;
+    }
+
+    /**
+     * get bucketEntryEvaluators; package local-access because it is used for testing.
+     */
+    List<String> getBucketEntryEvaluators() {
+        return bucketEntryEvaluators;
+    }
+
+    /**
+     * Test if the vessel is eligible for bucketing. When bucket is being evaluated BucketEntryEvaluators defined in
+     * the configuration are and-ed together. If no BucketEntryEvaluators are defined it will by default allow the
+     * labVessel to be bucketed.
+     *
+     * @return true if the vessel can go into the bucket, false otherwise
+     */
     public boolean meetsBucketCriteria(LabVessel labVessel) {
-        // Samples with a Mercury metadata source always meet the criteria, because they don't have material types.
-        for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-            for (MercurySample mercurySample : sampleInstanceV2.getRootMercurySamples()) {
-                if (mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
-                    return true;
+        if (CollectionUtils.isNotEmpty(bucketEntryEvaluators)) {
+            for (String bucketEntryEvaluator : bucketEntryEvaluators) {
+                try {
+                    Class<?> bucketEntryEvaluatorClass = Class.forName(bucketEntryEvaluator);
+                    Object bucketEntryInstance = bucketEntryEvaluatorClass.newInstance();
+                    Method invokeMethod =
+                            bucketEntryEvaluatorClass.getMethod(BucketEntryEvaluator.INVOKE, LabVessel.class);
+                    boolean meetsCriteria = (boolean) invokeMethod.invoke(bucketEntryInstance, labVessel);
+                    if (!meetsCriteria) {
+                        return false;
+                    }
+                } catch (ClassNotFoundException e) {
+                    throw new RuntimeException(
+                            String.format("error invoking BucketEntryEvaluator %s", bucketEntryEvaluator), e);
+                } catch (NoSuchMethodException e) {
+                    throw new RuntimeException(
+                            String.format("Class does not implement %s", BucketEntryEvaluator.class.getName()), e);
+                } catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
+                    log.error(e);
                 }
             }
         }
-
-        // todo remove this code block when Bamboo works with MVEL
-        if (entryExpression != null && entryExpression.contains("getMaterialType() contains \"DNA:\"")) {
-            return labVessel.isDNA();
-        }
-
-        // Compile, even though we're using it only once, because MVEL sometimes has
-        // problems with Hibernate proxies in eval method
-        // todo uncomment this code block when Bamboo works with MVEL
-//        OptimizerFactory.setDefaultOptimizer("reflective");
-//        Serializable compiled = MVEL.compileExpression(entryExpression);
-//        Map<String, Object> context = new HashMap<String, Object>();
-//        context.put("labVessel", labVessel);
-//        return (Boolean) MVEL.executeExpression(compiled, context);
-
         return true;
     }
 
