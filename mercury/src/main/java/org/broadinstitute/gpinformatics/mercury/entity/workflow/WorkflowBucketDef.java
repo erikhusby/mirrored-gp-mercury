@@ -8,6 +8,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -65,8 +67,9 @@ public class WorkflowBucketDef extends WorkflowStepDef {
             for (String bucketEntryEvaluator : bucketEntryEvaluators) {
                 try {
                     Class<?> bucketEntryEvaluatorClass = Class.forName(bucketEntryEvaluator);
+                    Constructor<?> bucketEntryEvaluatorConstructor = bucketEntryEvaluatorClass.getDeclaredConstructor();
                     BucketEntryEvaluator bucketEntryInstance =
-                            (BucketEntryEvaluator) bucketEntryEvaluatorClass.newInstance();
+                            (BucketEntryEvaluator) bucketEntryEvaluatorConstructor.newInstance();
                     boolean meetsCriteria = bucketEntryInstance.invoke(labVessel);
                     if (!meetsCriteria) {
                         return false;
@@ -74,7 +77,7 @@ public class WorkflowBucketDef extends WorkflowStepDef {
                 } catch (ClassNotFoundException e) {
                     throw new RuntimeException(
                             String.format("error invoking BucketEntryEvaluator %s", bucketEntryEvaluator), e);
-                } catch (InstantiationException | IllegalAccessException e) {
+                } catch (NoSuchMethodException | InvocationTargetException |InstantiationException | IllegalAccessException e) {
                     log.error(e);
                     return false;
                 }
