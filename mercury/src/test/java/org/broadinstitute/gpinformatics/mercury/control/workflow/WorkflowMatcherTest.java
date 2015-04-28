@@ -7,10 +7,13 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -45,6 +48,15 @@ public class WorkflowMatcherTest {
         LabEvent addEthanol = new LabEvent(LabEventType.ADD_REAGENT, new Date(), LabEvent.UI_EVENT_LOCATION, 1L, 101L,
                 LabEvent.UI_PROGRAM_NAME);
         addEthanol.setInPlaceLabVessel(m1);
+
+        WorkflowMatcher workflowMatcher = new WorkflowMatcher();
+        WorkflowLoader workflowLoader = new WorkflowLoader();
+        WorkflowConfig workflowConfig = workflowLoader.load();
+
+        List<WorkflowMatcher.WorkflowEvent> workflowEvents = workflowMatcher.match(
+                workflowConfig.getWorkflowVersionByName("Clinical Whole Blood Extraction", new Date()),
+                labBatch);
+        Assert.assertEquals(workflowEvents.size(), 24);
 
         // Add transfer that doesn't match
         // Verify list of planned steps, with actual events
