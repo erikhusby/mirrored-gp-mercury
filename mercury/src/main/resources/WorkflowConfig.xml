@@ -978,7 +978,7 @@
             <effectiveDate></effectiveDate>
             <workflowStepDefs>
                 <name></name>
-                <labEventTypes>REAGENT_PREP?</labEventTypes>
+                <labEventTypes>PREP</labEventTypes>
                 <instructions>Before starting, confirm all reagents have been prepared:
                     Buffer AL incubated at 56C to dissolve precipitate, if needed
                     100% Ethanol added to Buffer AW1
@@ -987,13 +987,13 @@
             </workflowStepDefs>
             <workflowStepDefs>
                 <name></name>
-                <labEventTypes>DISINFECT?</labEventTypes>
+                <labEventTypes>PREP</labEventTypes>
                 <instructions>Disinfect lab space and sample rack.
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name></name>
-                <labEventTypes>INCUBATE or LOADED</labEventTypes>
+                <labEventTypes>INCUBATE</labEventTypes>
                 <instructions>Collect samples for extraction from +4°C fridge or freezer.
                     If samples are frozen, incubate at 37°C for 10 minutes. Remove from incubator and place on ice.
                 </instructions>
@@ -1008,31 +1008,31 @@
             </workflowStepDefs>
             <workflowStepDefs>
                 <name></name>
-                <labEventTypes>LOADED</labEventTypes>
+                <labEventTypes>MIX</labEventTypes>
                 <instructions>Mix by pulse vortexing for 15 seconds.
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name></name>
-                <labEventTypes>LOADED</labEventTypes>
+                <labEventTypes>INCUBATE</labEventTypes>
                 <instructions>Incubate at 56°C for 10 minutes.
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name></name>
-                <labEventTypes>LOADED</labEventTypes>
+                <labEventTypes>CENTRIFUGE</labEventTypes>
                 <instructions>Briefly centrifuge the tube to remove drops from the lid.
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name></name>
-                <labEventTypes>REAGENT_ADD</labEventTypes>
+                <labEventTypes>ADD_REAGENT</labEventTypes>
                 <instructions>Add 200ul of 100% ethanol to the sample.
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name></name>
-                <labEventTypes>LOADED</labEventTypes>
+                <labEventTypes>MIX</labEventTypes>
                 <instructions>Mix by pulse vortexing for 15 seconds.
                 </instructions>
             </workflowStepDefs>
@@ -1044,7 +1044,7 @@
             </workflowStepDefs>
             <workflowStepDefs>
                 <name></name>
-                <labEventTypes>LOADED</labEventTypes>
+                <labEventTypes>CENTRIFUGE</labEventTypes>
                 <instructions>Spin at 6000 x g for 1 minute.
                 </instructions>
             </workflowStepDefs>
@@ -1056,13 +1056,13 @@
             </workflowStepDefs>
             <workflowStepDefs>
                 <name></name>
-                <labEventTypes>REAGENT_ADD</labEventTypes>
+                <labEventTypes>ADD_REAGENT</labEventTypes>
                 <instructions>Add 500ul Buffer AW1 to the column.
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name></name>
-                <labEventTypes>LOADED</labEventTypes>
+                <labEventTypes>CENTRIFUGE</labEventTypes>
                 <instructions>Spin at 6,000 x g for 1 minute.
                 </instructions>
             </workflowStepDefs>
@@ -1074,13 +1074,13 @@
             </workflowStepDefs>
             <workflowStepDefs>
                 <name></name>
-                <labEventTypes>REAGENT_ADD</labEventTypes>
+                <labEventTypes>ADD_REAGENT</labEventTypes>
                 <instructions>Add 500ul Buffer AW2 to the column.
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name></name>
-                <labEventTypes>LOADED</labEventTypes>
+                <labEventTypes>CENTRIFUGE</labEventTypes>
                 <instructions>Spin at full speed (20,000 x g) for 3 minutes.
                 </instructions>
             </workflowStepDefs>
@@ -1092,7 +1092,7 @@
             </workflowStepDefs>
             <workflowStepDefs>
                 <name></name>
-                <labEventTypes>LOADED</labEventTypes>
+                <labEventTypes>CENTRIFUGE</labEventTypes>
                 <instructions>Spin at full speed for 1 minute.
                 </instructions>
             </workflowStepDefs>
@@ -1104,13 +1104,13 @@
             </workflowStepDefs>
             <workflowStepDefs>
                 <name></name>
-                <labEventTypes>REAGENT_ADD</labEventTypes>
+                <labEventTypes>ADD_REAGENT</labEventTypes>
                 <instructions>Add 200ul Buffer AE to the column and incubate at room temperature for 1 minute.
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name></name>
-                <labEventTypes>LOADED</labEventTypes>
+                <labEventTypes>CENTRIFUGE</labEventTypes>
                 <instructions>Spin at 6,000 x g for 1 minute.
                 </instructions>
             </workflowStepDefs>
@@ -1122,7 +1122,7 @@
             </workflowStepDefs>
             <workflowStepDefs>
                 <name></name>
-                <labEventTypes>LOADED</labEventTypes>
+                <labEventTypes>STORE</labEventTypes>
                 <instructions>If necessary, store at +4°C until ready to proceed to Plating.
                 </instructions>
             </workflowStepDefs>

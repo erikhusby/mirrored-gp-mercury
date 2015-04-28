@@ -57,18 +57,18 @@ public class WorkflowMatcherTest {
         // AE
         // Add a field to LabEvent, need this differentiation to be specifiable through messaging
 
-        // Possible LabEventTypes: CENTRIFUGE, INCUBATE, MIX, WASH, ADD_REAGENT (need list of reagents), PREP?
+        // Possible LabEventTypes: CENTRIFUGE, INCUBATE, MIX, WASH, ADD_REAGENT (need list of reagents), PREP?, STORE?
         // What about disinfect and reagent prep?
         // Move suggested reagents from LabEventType to workflow?
 
         // Need to render per-sample transfer links for steps that haven't happened yet?  Not per-sample, because
         // they must be scanned.  Could just render link unconditionally.
 
-        // workflow additions: descriptive text
-        // LabEventType additions: batch event vs vessel event vs transfer
-        // More parameters to manual transfer page: event type; source vessel(s)? - no, they must be scanned
+        // todo workflow additions: descriptive text
+        // todo LabEventType additions: batch event vs vessel event vs transfer
+        // todo manual transfer page: support reagent addition; event type parameter
 
-        // Matcher takes a batch or (single sample) vessel, returns a list of [workflow step, event]
+        // Matcher takes a batch or (single sample) vessel, returns a list of [nullable workflow step, nullable event]
 
         // If there are multiple events for a step, should the step be repeated, or should the events be normalized?
         // It's possible (likely?) that the dates overlap, unless the focus is on a single sample, this argues for
