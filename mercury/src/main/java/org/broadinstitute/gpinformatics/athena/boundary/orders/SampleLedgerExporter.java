@@ -22,6 +22,7 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.tableau.TableauConfig;
+import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
 import org.broadinstitute.gpinformatics.mercury.presentation.TableauRedirectActionBean;
 
 import java.awt.Color;
@@ -303,7 +304,12 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
         SampleLedgerSpreadSheetWriter writer = getWriter();
         ProductOrder productOrder = sample.getProductOrder();
         Product product = productOrder.getProduct();
-        SampleData sampleData = sample.getSampleData();
+        SampleData sampleData = null;
+        try {
+            sampleData = sample.getSampleData();
+        } catch (BSPLookupException ignored) {
+            // Don't prevent tracker download due to not being able to fetch BSP data.
+        }
 
         writer.nextRow();
 
@@ -311,10 +317,10 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
         writer.writeCell(sample.getSampleKey());
 
         // collaborator sample ID, looks like this is properly initialized.
-        writer.writeCell(sampleData.getCollaboratorsSampleName());
+        writer.writeCell(sampleData != null ? sampleData.getCollaboratorsSampleName() : "");
 
         // Material type.
-        writer.writeCell(sampleData.getMaterialType());
+        writer.writeCell(sampleData != null ? sampleData.getMaterialType() : "");
 
         // Risk Information.
         String riskString = sample.getRiskString();
@@ -385,7 +391,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
             writer.writeCell(percentCoverageAt100x, getPercentageStyle());
         }
 
-        writer.writeCell(sample.getSampleData().getSampleType());
+        writer.writeCell(sampleData != null ? sampleData.getSampleType() : "");
 
         // Tableau link
         String pdoKey = productOrder.getJiraTicketKey();
