@@ -20,7 +20,5 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
  * @see WorkflowBucketDef#meetsBucketCriteria(LabVessel)
  */
 public interface BucketEntryEvaluator {
-    String INVOKE = "invoke";
-
     boolean invoke(LabVessel labVessel);
 }

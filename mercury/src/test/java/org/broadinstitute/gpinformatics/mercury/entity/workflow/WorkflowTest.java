@@ -223,7 +223,7 @@ public class WorkflowTest {
     }
 
     @Test
-    public void testNoEntryExpressionMeetsCriteria() {
+    public void testNoEntryExpressionsThenVesselMeetsCriteria() {
         Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>() {{
             put(BSPSampleSearchColumn.PRIMARY_DISEASE, "Cancer");
             put(BSPSampleSearchColumn.LSID, "org.broad:SM-1234");
@@ -236,13 +236,9 @@ public class WorkflowTest {
         BarcodedTube barcodedTube = new BarcodedTube("00001234");
         barcodedTube.addSample(new MercurySample("SM-1234", new BspSampleData(dataMap)));
 
-        ProductWorkflowDef exomeExpressWorkflow = workflowConfig.getWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
-        boolean meetsCriteria = false;
-        for (WorkflowBucketDef workflowBucketDef : exomeExpressWorkflow.getEffectiveVersion().getBuckets()) {
-            workflowBucketDef.setBucketEntryEvaluators(Collections.<String>emptyList());
-            meetsCriteria = workflowBucketDef.meetsBucketCriteria(barcodedTube);
-            assertThat(meetsCriteria, is(true));
-        }
+        WorkflowBucketDef workflowBucketDef = new WorkflowBucketDef();
+        boolean meetsCriteria = workflowBucketDef.meetsBucketCriteria(barcodedTube);
+        assertThat(meetsCriteria, is(true));
         Assert.assertTrue(meetsCriteria, "Meets criteria is not true");
     }
 
@@ -290,10 +286,8 @@ public class WorkflowTest {
          barcodedTube.addSample(
                  new MercurySample("SM-2345", Collections.singleton(new Metadata(Metadata.Key.MATERIAL_TYPE, ""))));
 
-         ProductWorkflowDef exomeExpressWorkflow = workflowConfig.getWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
-         for (WorkflowBucketDef workflowBucketDef : exomeExpressWorkflow.getEffectiveVersion().getBuckets()) {
-             workflowBucketDef.setBucketEntryEvaluators(classNames);
-             assertThat(workflowBucketDef.meetsBucketCriteria(barcodedTube), is(expectedResult));
-         }
+         WorkflowBucketDef workflowBucketDef = new WorkflowBucketDef();
+         workflowBucketDef.setBucketEntryEvaluators(classNames);
+         assertThat(workflowBucketDef.meetsBucketCriteria(barcodedTube), is(expectedResult));
      }
 }
