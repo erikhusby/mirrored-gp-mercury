@@ -24,6 +24,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -596,5 +597,15 @@ public class ProductOrderFixupTest extends Arquillian {
             }
         }
         fileWriter.close();
+    }
+
+    @Test(enabled = false)
+    public void ipi61545ChangeResearchProjectForPDO6074() {
+        userBean.loginOSUser();
+        ProductOrder productOrder = productOrderDao.findByBusinessKey("PDO-6074");
+        ResearchProject researchProject = projectDao.findByBusinessKey("RP-627");
+        productOrder.setResearchProject(researchProject);
+        productOrderDao.persist(new FixupCommentary("IPI-61545 Change PDO-6074 from RP-623 to RP-627"));
+        productOrderDao.flush();
     }
 }
