@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.workflow;
 
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
@@ -17,8 +18,9 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Created by thompson on 4/23/2015.
+ * Test that events can be matched to a workflow.
  */
+@Test(groups = TestGroups.DATABASE_FREE)
 public class WorkflowMatcherTest {
     @Test
     public void testExtraction() {
@@ -33,9 +35,15 @@ public class WorkflowMatcherTest {
         LabBatch labBatch = new LabBatch("ESET-1", starterVessels, LabBatch.LabBatchType.WORKFLOW);
 
         // Add batch event
-        LabEvent reagentsPrepared = new LabEvent(LabEventType.PREP, new Date(), LabEvent.UI_EVENT_LOCATION, 1L, 101L,
+        LabEvent prepReagents = new LabEvent(LabEventType.PREP, new Date(), LabEvent.UI_EVENT_LOCATION, 1L, 101L,
                 LabEvent.UI_PROGRAM_NAME);
-        reagentsPrepared.setLabBatch(labBatch);
+        prepReagents.setWorkflowQualifier("Reagents");
+        prepReagents.setLabBatch(labBatch);
+
+        LabEvent disinfect = new LabEvent(LabEventType.PREP, new Date(), LabEvent.UI_EVENT_LOCATION, 1L, 101L,
+                LabEvent.UI_PROGRAM_NAME);
+        disinfect.setWorkflowQualifier("Disinfect");
+        disinfect.setLabBatch(labBatch);
 
         // Add transfer with reagents
         LabEvent bloodToMicro = new LabEvent(LabEventType.EXTRACT_BLOOD_TO_MICRO, new Date(),
@@ -47,7 +55,7 @@ public class WorkflowMatcherTest {
         // Add vessel event
         LabEvent addEthanol = new LabEvent(LabEventType.ADD_REAGENT, new Date(), LabEvent.UI_EVENT_LOCATION, 1L, 101L,
                 LabEvent.UI_PROGRAM_NAME);
-        addEthanol.setInPlaceLabVessel(m1);
+        m1.addInPlaceEvent(addEthanol);
 
         WorkflowMatcher workflowMatcher = new WorkflowMatcher();
         WorkflowLoader workflowLoader = new WorkflowLoader();
@@ -57,6 +65,24 @@ public class WorkflowMatcherTest {
                 workflowConfig.getWorkflowVersionByName("Clinical Whole Blood Extraction", new Date()),
                 labBatch);
         Assert.assertEquals(workflowEvents.size(), 24);
+
+        Assert.assertEquals(workflowEvents.get(0).getLabEvents().size(), 1);
+        LabEvent labEvent = workflowEvents.get(0).getLabEvents().get(0);
+        Assert.assertEquals(labEvent.getLabEventType(), LabEventType.PREP);
+        Assert.assertEquals(labEvent.getWorkflowQualifier(), "Reagents");
+
+        Assert.assertEquals(workflowEvents.get(1).getLabEvents().size(), 1);
+        LabEvent labEvent1 = workflowEvents.get(1).getLabEvents().get(0);
+        Assert.assertEquals(labEvent1.getLabEventType(), LabEventType.PREP);
+        Assert.assertEquals(labEvent1.getWorkflowQualifier(), "Disinfect");
+
+        Assert.assertEquals(workflowEvents.get(3).getLabEvents().size(), 1);
+        Assert.assertEquals(workflowEvents.get(3).getLabEvents().get(0).getLabEventType(),
+                LabEventType.EXTRACT_BLOOD_TO_MICRO);
+
+        Assert.assertEquals(workflowEvents.get(7).getLabEvents().size(), 1);
+        Assert.assertEquals(workflowEvents.get(7).getLabEvents().get(0).getLabEventType(),
+                LabEventType.ADD_REAGENT);
 
         // Add transfer that doesn't match
         // Verify list of planned steps, with actual events

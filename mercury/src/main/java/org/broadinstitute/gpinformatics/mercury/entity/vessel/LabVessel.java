@@ -185,7 +185,6 @@ public abstract class LabVessel implements Serializable {
     @BatchSize(size = 100)
     private Set<MercurySample> mercurySamples = new HashSet<>();
 
-    // todo jmt set these fields db-free
     @OneToMany(mappedBy = "sourceVessel", cascade = CascadeType.PERSIST)
     @BatchSize(size = 100)
     private Set<VesselToVesselTransfer> vesselToVesselTransfersThisAsSource = new HashSet<>();
@@ -261,6 +260,14 @@ public abstract class LabVessel implements Serializable {
      */
     void setLabel(String label) {
         this.label = label;
+    }
+
+    public Set<VesselToVesselTransfer> getVesselToVesselTransfersThisAsSource() {
+        return vesselToVesselTransfersThisAsSource;
+    }
+
+    public Set<VesselToVesselTransfer> getVesselToVesselTransfersThisAsTarget() {
+        return vesselToVesselTransfersThisAsTarget;
     }
 
     public Set<VesselToSectionTransfer> getVesselToSectionTransfersThisAsSource() {

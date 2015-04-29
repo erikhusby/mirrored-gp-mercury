@@ -979,6 +979,7 @@
             <workflowStepDefs>
                 <name></name>
                 <labEventTypes>PREP</labEventTypes>
+                <workflowQualifier>Reagents</workflowQualifier>
                 <instructions>Before starting, confirm all reagents have been prepared:
                     Buffer AL incubated at 56C to dissolve precipitate, if needed
                     100% Ethanol added to Buffer AW1
@@ -988,12 +989,14 @@
             <workflowStepDefs>
                 <name></name>
                 <labEventTypes>PREP</labEventTypes>
+                <workflowQualifier>Disinfect</workflowQualifier>
                 <instructions>Disinfect lab space and sample rack.
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name></name>
                 <labEventTypes>INCUBATE</labEventTypes>
+                <workflowQualifier>Samples</workflowQualifier>
                 <instructions>Collect samples for extraction from +4°C fridge or freezer.
                     If samples are frozen, incubate at 37°C for 10 minutes. Remove from incubator and place on ice.
                 </instructions>
@@ -1009,18 +1012,21 @@
             <workflowStepDefs>
                 <name></name>
                 <labEventTypes>MIX</labEventTypes>
+                <workflowQualifier>AL</workflowQualifier>
                 <instructions>Mix by pulse vortexing for 15 seconds.
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name></name>
                 <labEventTypes>INCUBATE</labEventTypes>
+                <workflowQualifier>AL</workflowQualifier>
                 <instructions>Incubate at 56°C for 10 minutes.
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name></name>
                 <labEventTypes>CENTRIFUGE</labEventTypes>
+                <workflowQualifier>AL</workflowQualifier>
                 <instructions>Briefly centrifuge the tube to remove drops from the lid.
                 </instructions>
             </workflowStepDefs>
@@ -1033,6 +1039,7 @@
             <workflowStepDefs>
                 <name></name>
                 <labEventTypes>MIX</labEventTypes>
+                <workflowQualifier>Ethanol</workflowQualifier>
                 <instructions>Mix by pulse vortexing for 15 seconds.
                 </instructions>
             </workflowStepDefs>
@@ -1045,6 +1052,7 @@
             <workflowStepDefs>
                 <name></name>
                 <labEventTypes>CENTRIFUGE</labEventTypes>
+                <workflowQualifier>Ethanol</workflowQualifier>
                 <instructions>Spin at 6000 x g for 1 minute.
                 </instructions>
             </workflowStepDefs>
@@ -1063,6 +1071,7 @@
             <workflowStepDefs>
                 <name></name>
                 <labEventTypes>CENTRIFUGE</labEventTypes>
+                <workflowQualifier>AW1</workflowQualifier>
                 <instructions>Spin at 6,000 x g for 1 minute.
                 </instructions>
             </workflowStepDefs>
@@ -1081,6 +1090,7 @@
             <workflowStepDefs>
                 <name></name>
                 <labEventTypes>CENTRIFUGE</labEventTypes>
+                <workflowQualifier>AW2</workflowQualifier>
                 <instructions>Spin at full speed (20,000 x g) for 3 minutes.
                 </instructions>
             </workflowStepDefs>
@@ -1093,6 +1103,7 @@
             <workflowStepDefs>
                 <name></name>
                 <labEventTypes>CENTRIFUGE</labEventTypes>
+                <workflowQualifier>AW2Discard</workflowQualifier>
                 <instructions>Spin at full speed for 1 minute.
                 </instructions>
             </workflowStepDefs>
@@ -1111,6 +1122,7 @@
             <workflowStepDefs>
                 <name></name>
                 <labEventTypes>CENTRIFUGE</labEventTypes>
+                <workflowQualifier>AE</workflowQualifier>
                 <instructions>Spin at 6,000 x g for 1 minute.
                 </instructions>
             </workflowStepDefs>

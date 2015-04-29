@@ -111,6 +111,8 @@ public class WorkflowStepDef implements Serializable {
     /** Determines whether the current workflow step is on a path that does not lead towards the ned of the current
      * process */
     private boolean deadEndBranch = false;
+    /** Qualifies generic events like CENTRIFUGE, which might occur multiple times in one process. */
+    private String workflowQualifier;
 
     private transient WorkflowProcessDef processDef;
 
@@ -187,5 +189,9 @@ public class WorkflowStepDef implements Serializable {
 
     public boolean isDeadEndBranch() {
         return deadEndBranch;
+    }
+
+    public String getWorkflowQualifier() {
+        return workflowQualifier;
     }
 }

@@ -1297,7 +1297,7 @@ public class LabEventFactory implements Serializable {
         if (labVessel == null) {
             throw new RuntimeException("Source tube not found for " + receptacleEventType.getReceptacle().getBarcode());
         }
-        labEvent.setInPlaceLabVessel(labVessel);
+        labVessel.addInPlaceEvent(labEvent);
         return labEvent;
     }
 
