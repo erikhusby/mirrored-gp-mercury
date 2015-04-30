@@ -33,7 +33,6 @@ public class QuoteServiceProducer {
 
     @Produces
     @Default
-    @SessionScoped
     public QuoteService produce(@New QuoteServiceStub stub, @New QuoteServiceImpl impl) {
 
         if (deployment == Deployment.STUBBY) {
