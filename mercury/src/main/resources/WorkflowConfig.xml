@@ -1033,6 +1033,7 @@
             <workflowStepDefs>
                 <name></name>
                 <labEventTypes>ADD_REAGENT</labEventTypes>
+                <reagentTypes>100% Ethanol</reagentTypes>
                 <instructions>Add 200ul of 100% ethanol to the sample.
                 </instructions>
             </workflowStepDefs>
@@ -1065,6 +1066,7 @@
             <workflowStepDefs>
                 <name></name>
                 <labEventTypes>ADD_REAGENT</labEventTypes>
+                <reagentTypes>Buffer AW1</reagentTypes>
                 <instructions>Add 500ul Buffer AW1 to the column.
                 </instructions>
             </workflowStepDefs>
@@ -1084,6 +1086,7 @@
             <workflowStepDefs>
                 <name></name>
                 <labEventTypes>ADD_REAGENT</labEventTypes>
+                <reagentTypes>Buffer AW2</reagentTypes>
                 <instructions>Add 500ul Buffer AW2 to the column.
                 </instructions>
             </workflowStepDefs>
@@ -1116,6 +1119,7 @@
             <workflowStepDefs>
                 <name></name>
                 <labEventTypes>ADD_REAGENT</labEventTypes>
+                <reagentTypes>Buffer AE</reagentTypes>
                 <instructions>Add 200ul Buffer AE to the column and incubate at room temperature for 1 minute.
                 </instructions>
             </workflowStepDefs>

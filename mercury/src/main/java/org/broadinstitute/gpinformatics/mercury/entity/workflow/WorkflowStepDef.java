@@ -88,6 +88,8 @@ public class WorkflowStepDef implements Serializable {
 
     private String name;
     private List<LabEventType> labEventTypes = new ArrayList<>();
+    /** Specific reagent types for the generic ADD_REAGENT event. */
+    private List<String> reagentTypes = new ArrayList<>();
     /** Whether this step is optional, e.g. normalization is otional if the concentration is fine as is */
     private boolean optional;
     /** decision, perhaps expressed in MVEL */
@@ -145,6 +147,10 @@ public class WorkflowStepDef implements Serializable {
 
     public List<LabEventType> getLabEventTypes() {
         return labEventTypes;
+    }
+
+    public List<String> getReagentTypes() {
+        return reagentTypes;
     }
 
     public boolean isOptional() {

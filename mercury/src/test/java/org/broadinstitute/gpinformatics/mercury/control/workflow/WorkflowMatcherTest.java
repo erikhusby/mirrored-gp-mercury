@@ -55,6 +55,7 @@ public class WorkflowMatcherTest {
         // Add vessel event
         LabEvent addEthanol = new LabEvent(LabEventType.ADD_REAGENT, new Date(), LabEvent.UI_EVENT_LOCATION, 1L, 101L,
                 LabEvent.UI_PROGRAM_NAME);
+        addEthanol.addReagent(new GenericReagent("100% Ethanol", "00001234", new Date()));
         m1.addInPlaceEvent(addEthanol);
 
         WorkflowMatcher workflowMatcher = new WorkflowMatcher();
@@ -87,16 +88,6 @@ public class WorkflowMatcherTest {
         // Add transfer that doesn't match
         // Verify list of planned steps, with actual events
 
-        // How to get uniqueness across multiple CENTRIFUGE events?
-        // Initial
-        // AW1
-        // AW2
-        // AW2 discard
-        // AE
-        // Add a field to LabEvent, need this differentiation to be specifiable through messaging
-
-        // Possible LabEventTypes: CENTRIFUGE, INCUBATE, MIX, WASH, ADD_REAGENT (need list of reagents), PREP?, STORE?
-        // What about disinfect and reagent prep?
         // Move suggested reagents from LabEventType to workflow?
 
         // Need to render per-sample transfer links for steps that haven't happened yet?  Not per-sample, because
@@ -106,20 +97,8 @@ public class WorkflowMatcherTest {
         // todo LabEventType additions: batch event vs vessel event vs transfer
         // todo manual transfer page: support reagent addition; event type parameter
 
-        // Matcher takes a batch or (single sample) vessel, returns a list of [nullable workflow step, nullable event]
-
         // If there are multiple events for a step, should the step be repeated, or should the events be normalized?
         // It's possible (likely?) that the dates overlap, unless the focus is on a single sample, this argues for
         // repeating step information.
-
-        // Still not sure how to represent batch events.
-        // There are already two LabBatch references on LabEvent: BSP batches, manual overrides.
-
-        // Which is prime, planned steps or actual events?
-        // At start, there are no events
-        // Later, there may be events with no workflow
-        // Chronological list of pairs, where either side may be null?
-        // Some steps will have multiple events, one for each vessel in the batch
-        // Some steps will be associated with the batch, not with vessels
     }
 }
