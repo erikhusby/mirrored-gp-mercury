@@ -51,6 +51,7 @@ public class ManifestImporterTest {
     private static final String MISSING_REQUIRED_COLLECTION_DATE = relativePathToTestFile("test-manifest-missing-collection_date.xlsx");
     private static final String MISSING_REQUIRED_SEX = relativePathToTestFile("test-manifest-missing-sex.xlsx");
     private static final String MISSING_REQUIRED_TUMOR_NORMAL = relativePathToTestFile("test-manifest-missing-tn.xlsx");
+    private static final String MISSING_REQUIRED_MATERIAL_TYPE = relativePathToTestFile("test-manifest-missing-material-type.xlsx");
     private static final String MISSING_REQUIRED_PATIENT = relativePathToTestFile("test-manifest-missing-patient.xlsx");
     private static final String MISSING_HEADER_PATIENT = relativePathToTestFile("missing-patient-header.xlsx");
     private static final String UNKNOWN_HEADERS = relativePathToTestFile("test-manifest-unknown-headers.xlsx");
@@ -102,6 +103,7 @@ public class ManifestImporterTest {
                 {MISSING_REQUIRED_SEX, ManifestHeader.SEX},
                 {MISSING_REQUIRED_SPECIMEN, ManifestHeader.SPECIMEN_NUMBER},
                 {MISSING_REQUIRED_TUMOR_NORMAL, ManifestHeader.TUMOR_OR_NORMAL},
+                {MISSING_REQUIRED_MATERIAL_TYPE, ManifestHeader.MATERIAL_TYPE},
                 {MISSING_REQUIRED_VISIT, ManifestHeader.VISIT}
         };
 
