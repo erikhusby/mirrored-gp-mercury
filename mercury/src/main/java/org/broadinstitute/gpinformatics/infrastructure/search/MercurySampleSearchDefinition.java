@@ -67,6 +67,7 @@ public class MercurySampleSearchDefinition {
             @Override
             public String evaluate(Object entity, Map<String, Object> context) {
                 MercurySample sample = (MercurySample) entity;
+                // todo jmt getProductOrderSamples could be empty
                 return sample.getProductOrderSamples().iterator().next().getProductOrder().getJiraTicketKey();
             }
         });

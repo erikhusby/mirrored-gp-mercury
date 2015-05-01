@@ -46,7 +46,7 @@ public class WorkflowMatcher {
     }
 
     /**
-     * Key in a map that allows random access to LabEvents from workfow steps.
+     * Key in a map that allows random access to LabEvents from workflow steps.
      */
     public static class LabEventKey {
         private final LabEventType labEventType;
@@ -116,20 +116,20 @@ public class WorkflowMatcher {
         }
 
         // add vessel descendant events
+        TransferTraverserCriteria.LabEventDescendantCriteria labEventDescendantCriteria =
+                new TransferTraverserCriteria.LabEventDescendantCriteria();
         for (LabVessel labVessel : labBatch.getStartingBatchLabVessels()) {
-            TransferTraverserCriteria.LabEventDescendantCriteria labEventDescendantCriteria =
-                    new TransferTraverserCriteria.LabEventDescendantCriteria();
             labVessel.evaluateCriteria(labEventDescendantCriteria,
                     TransferTraverserCriteria.TraversalDirection.Descendants);
-            for (LabEvent labEvent : labEventDescendantCriteria.getAllEvents()) {
-                LabEventKey labEventKey = new LabEventKey(labEvent);
-                List<LabEvent> labEvents = mapTypeToEvent.get(labEventKey);
-                if (labEvents == null) {
-                    labEvents = new ArrayList<>();
-                    mapTypeToEvent.put(labEventKey, labEvents);
-                }
-                labEvents.add(labEvent);
+        }
+        for (LabEvent labEvent : labEventDescendantCriteria.getAllEvents()) {
+            LabEventKey labEventKey = new LabEventKey(labEvent);
+            List<LabEvent> labEvents = mapTypeToEvent.get(labEventKey);
+            if (labEvents == null) {
+                labEvents = new ArrayList<>();
+                mapTypeToEvent.put(labEventKey, labEvents);
             }
+            labEvents.add(labEvent);
         }
 
         // match events to steps
