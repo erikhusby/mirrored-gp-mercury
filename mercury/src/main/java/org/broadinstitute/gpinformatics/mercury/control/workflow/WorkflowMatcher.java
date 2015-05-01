@@ -13,7 +13,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowProcessD
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -22,6 +24,9 @@ import java.util.Map;
  */
 public class WorkflowMatcher {
 
+    /**
+     * Associates workflow steps with events.
+     */
     public static class WorkflowEvent {
         private WorkflowStepDef workflowStepDef;
         private List<LabEvent> labEvents;
@@ -40,6 +45,9 @@ public class WorkflowMatcher {
         }
     }
 
+    /**
+     * Key in a map that allows random access to LabEvents from workfow steps.
+     */
     public static class LabEventKey {
         private final LabEventType labEventType;
         private final String workflowQualifier;
@@ -89,6 +97,9 @@ public class WorkflowMatcher {
         }
     }
 
+    /**
+     * For a given workflow and batch, returns a list of workflow steps, with associated events from the batch.
+     */
     public List<WorkflowEvent> match(ProductWorkflowDefVersion productWorkflowDefVersion, LabBatch labBatch) {
         List<WorkflowEvent> workflowEvents = new ArrayList<>();
 
@@ -126,13 +137,34 @@ public class WorkflowMatcher {
             WorkflowProcessDefVersion effectiveVersion = workflowProcessDef.getEffectiveVersion();
             for (WorkflowStepDef workflowStepDef : effectiveVersion.getWorkflowStepDefs()) {
                 for (LabEventType labEventType : workflowStepDef.getLabEventTypes()) {
-                    workflowEvents.add(new WorkflowEvent(workflowStepDef, mapTypeToEvent.get(
-                            new LabEventKey(labEventType, workflowStepDef.getWorkflowQualifier()))));
+                    workflowEvents.add(new WorkflowEvent(
+                            workflowStepDef,
+                            mapTypeToEvent.remove(new LabEventKey(labEventType, workflowStepDef.getWorkflowQualifier()))));
                 }
             }
         }
 
         // Add non-matched events in chronological order
+        Iterator<Map.Entry<LabEventKey, List<LabEvent>>> iterator = mapTypeToEvent.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<LabEventKey, List<LabEvent>> labEventKeyListEntry =  iterator.next();
+            Date unMatchedEventDate = labEventKeyListEntry.getValue().get(0).getEventDate();
+            for (int i = 0; i < workflowEvents.size(); i++) {
+                if (workflowEvents.get(i).getLabEvents() == null) {
+                    continue;
+                }
+                if (workflowEvents.get(i).getLabEvents().get(0).getEventDate().after(unMatchedEventDate)) {
+                    workflowEvents.add(i, new WorkflowEvent(null, labEventKeyListEntry.getValue()));
+                    iterator.remove();
+                    break;
+                }
+            }
+        }
+
+        // Add any remainders to the end
+        for (Map.Entry<LabEventKey, List<LabEvent>> labEventKeyListEntry : mapTypeToEvent.entrySet()) {
+            workflowEvents.add(new WorkflowEvent(null, labEventKeyListEntry.getValue()));
+        }
 
         return workflowEvents;
     }

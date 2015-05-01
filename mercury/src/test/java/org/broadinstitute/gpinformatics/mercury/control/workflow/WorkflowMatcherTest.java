@@ -12,7 +12,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -34,29 +36,42 @@ public class WorkflowMatcherTest {
         starterVessels.add(t2);
         LabBatch labBatch = new LabBatch("ESET-1", starterVessels, LabBatch.LabBatchType.WORKFLOW);
 
+        GregorianCalendar gregorianCalendar = new GregorianCalendar();
+
         // Add batch event
-        LabEvent prepReagents = new LabEvent(LabEventType.PREP, new Date(), LabEvent.UI_EVENT_LOCATION, 1L, 101L,
-                LabEvent.UI_PROGRAM_NAME);
+        LabEvent prepReagents = new LabEvent(LabEventType.PREP, gregorianCalendar.getTime(), LabEvent.UI_EVENT_LOCATION,
+                1L, 101L, LabEvent.UI_PROGRAM_NAME);
         prepReagents.setWorkflowQualifier("Reagents");
         prepReagents.setLabBatch(labBatch);
+        gregorianCalendar.add(Calendar.SECOND, 1);
 
-        LabEvent disinfect = new LabEvent(LabEventType.PREP, new Date(), LabEvent.UI_EVENT_LOCATION, 1L, 101L,
-                LabEvent.UI_PROGRAM_NAME);
+        LabEvent disinfect = new LabEvent(LabEventType.PREP, gregorianCalendar.getTime(), LabEvent.UI_EVENT_LOCATION,
+                1L, 101L, LabEvent.UI_PROGRAM_NAME);
         disinfect.setWorkflowQualifier("Disinfect");
         disinfect.setLabBatch(labBatch);
+        gregorianCalendar.add(Calendar.SECOND, 1);
 
         // Add transfer with reagents
-        LabEvent bloodToMicro = new LabEvent(LabEventType.EXTRACT_BLOOD_TO_MICRO, new Date(),
+        LabEvent bloodToMicro = new LabEvent(LabEventType.EXTRACT_BLOOD_TO_MICRO, gregorianCalendar.getTime(),
                 LabEvent.UI_EVENT_LOCATION, 1L, 101L, LabEvent.UI_PROGRAM_NAME);
         BarcodedTube m1 = new BarcodedTube("M1", BarcodedTube.BarcodedTubeType.EppendoffFliptop15);
         bloodToMicro.getVesselToVesselTransfers().add(new VesselToVesselTransfer(t1, m1, bloodToMicro));
         bloodToMicro.addReagent(new GenericReagent("R1", "1234", null));
+        gregorianCalendar.add(Calendar.SECOND, 1);
 
         // Add vessel event
-        LabEvent addEthanol = new LabEvent(LabEventType.ADD_REAGENT, new Date(), LabEvent.UI_EVENT_LOCATION, 1L, 101L,
-                LabEvent.UI_PROGRAM_NAME);
+        LabEvent addEthanol = new LabEvent(LabEventType.ADD_REAGENT, gregorianCalendar.getTime(),
+                LabEvent.UI_EVENT_LOCATION, 1L, 101L, LabEvent.UI_PROGRAM_NAME);
+        addEthanol.setWorkflowQualifier("Ethanol");
         addEthanol.addReagent(new GenericReagent("100% Ethanol", "00001234", new Date()));
         m1.addInPlaceEvent(addEthanol);
+        gregorianCalendar.add(Calendar.SECOND, 1);
+
+        // Add an event that isn't in the workflow
+        LabEvent addUnmatchedReagent = new LabEvent(LabEventType.ADD_REAGENT, gregorianCalendar.getTime(),
+                LabEvent.UI_EVENT_LOCATION, 1L, 101L, LabEvent.UI_PROGRAM_NAME);
+        addUnmatchedReagent.addReagent(new GenericReagent("Unmatched", "00001234", new Date()));
+        m1.addInPlaceEvent(addUnmatchedReagent);
 
         WorkflowMatcher workflowMatcher = new WorkflowMatcher();
         WorkflowLoader workflowLoader = new WorkflowLoader();
@@ -65,7 +80,7 @@ public class WorkflowMatcherTest {
         List<WorkflowMatcher.WorkflowEvent> workflowEvents = workflowMatcher.match(
                 workflowConfig.getWorkflowVersionByName("Clinical Whole Blood Extraction", new Date()),
                 labBatch);
-        Assert.assertEquals(workflowEvents.size(), 24);
+        Assert.assertEquals(workflowEvents.size(), 25);
 
         Assert.assertEquals(workflowEvents.get(0).getLabEvents().size(), 1);
         LabEvent labEvent = workflowEvents.get(0).getLabEvents().get(0);
@@ -85,8 +100,9 @@ public class WorkflowMatcherTest {
         Assert.assertEquals(workflowEvents.get(7).getLabEvents().get(0).getLabEventType(),
                 LabEventType.ADD_REAGENT);
 
-        // Add transfer that doesn't match
-        // Verify list of planned steps, with actual events
+        Assert.assertEquals(workflowEvents.get(24).getLabEvents().size(), 1);
+        Assert.assertEquals(workflowEvents.get(24).getLabEvents().get(0).getLabEventType(),
+                LabEventType.ADD_REAGENT);
 
         // Move suggested reagents from LabEventType to workflow?
 
@@ -100,5 +116,10 @@ public class WorkflowMatcherTest {
         // If there are multiple events for a step, should the step be repeated, or should the events be normalized?
         // It's possible (likely?) that the dates overlap, unless the focus is on a single sample, this argues for
         // repeating step information.
+
+        // Create LCSET
+        // Visit workflow page
+        // Link to manual transfer page
+        // Return to workflow page
     }
 }
