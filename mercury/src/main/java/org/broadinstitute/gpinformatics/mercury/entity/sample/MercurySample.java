@@ -153,7 +153,7 @@ public class MercurySample extends AbstractSample {
     @Enumerated(EnumType.STRING)
     private MetadataSource metadataSource;
 
-    @ManyToMany
+    @ManyToMany(cascade = CascadeType.PERSIST)
     private Set<Metadata> metadata = new HashSet<>();
 
     // TODO: jms Shouldn't this be plural?
