@@ -79,6 +79,9 @@ public class ResearchProjectFixupTest extends Arquillian {
         rpDao.persistAll(rpListToPersist);
     }
 
+    /**
+     * Hacohen_cancer_exome_sequencing (RP-944) was created by accident. Can this please be deleted? Thanks!
+     */
     @Test(enabled = false)
     public void fixupGPLIM3526_Delete_RP944() {
         userBean.loginOSUser();
@@ -98,6 +101,7 @@ public class ResearchProjectFixupTest extends Arquillian {
         rpDao.remove(researchProject);
         rpDao.persist(new FixupCommentary("see https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-3526"));
     }
+
     /**
      * For each Project missing a JIRA ticket poke the service to create & associate one
      */
