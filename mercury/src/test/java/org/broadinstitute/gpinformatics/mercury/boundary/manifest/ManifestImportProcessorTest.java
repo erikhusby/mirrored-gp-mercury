@@ -137,7 +137,7 @@ public class ManifestImportProcessorTest {
         dataRow.put(ManifestHeader.VISIT.getColumnName(), "Screening");
         dataRow.put(ManifestHeader.COLLECTION_DATE.getColumnName(), "10-Oct-1841");
         dataRow.put(ManifestHeader.TUMOR_OR_NORMAL.getColumnName(), "Tumor");
-        dataRow.put(ManifestHeader.MATERIAL_TYPE.getColumnName(), "DNA:Genomic");
+        dataRow.put(ManifestHeader.MATERIAL_TYPE.getColumnName(), "DNA");
 
         return dataRow;
     }
