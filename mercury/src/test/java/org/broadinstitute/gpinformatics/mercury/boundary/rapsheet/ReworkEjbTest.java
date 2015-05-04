@@ -12,7 +12,6 @@ import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcherStub;
@@ -172,6 +171,7 @@ public class ReworkEjbTest extends Arquillian {
     private List<ProductOrderSample> bucketReadySamples2;
     private List<ProductOrderSample> bucketSamples1;
     private List<ProductOrderSample> bucketSamplesDraft;
+    private ProductOrderSample extraProductOrderSample;
     private Bucket pBucket;
     private String bucketName;
 
@@ -442,9 +442,10 @@ public class ReworkEjbTest extends Arquillian {
         nonExExProductOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         productOrderDao.persist(nonExExProductOrder);
 
+        extraProductOrderSample = new ProductOrderSample(genomicSample3);
         extraProductOrder = new ProductOrder(bspUserList.getByUsername("scottmat").getUserId(),
                                              "Rework Integration TestOrder 4" + currDate.getTime(),
-                                             Collections.singletonList(new ProductOrderSample(genomicSample3)),
+                                             Collections.singletonList(extraProductOrderSample),
                                              "GSP-123", exExProduct,
                                              researchProject);
         extraProductOrder.prepareToSave(bspUserList.getByUsername("scottmat"));
@@ -896,7 +897,7 @@ public class ReworkEjbTest extends Arquillian {
 
         Collection<LabVessel> entries = reworkEjb.getVesselsForRework("Pico/Plating Bucket");
 
-        Assert.assertEquals(validationMessages.size(), 2);
+        Assert.assertEquals(validationMessages.size(), 0);
 
         Assert.assertEquals(entries.size(), existingReworks + mapBarcodeToTube.size());
 
@@ -921,7 +922,7 @@ public class ReworkEjbTest extends Arquillian {
         Collection<String> validationMessages = reworkEjb.addAndValidateCandidates(bucketCandidates, unknownReason,
                                                                                    "test Rework", "jowalsh",
                                                                                    "Pico/Plating Bucket");
-        Assert.assertEquals(validationMessages.size(), 2);
+        Assert.assertEquals(validationMessages.size(), 0);
 
         bucketDao.clear();
         Collection<LabVessel> entries = reworkEjb.getVesselsForRework("Pico/Plating Bucket");
@@ -1036,7 +1037,7 @@ public class ReworkEjbTest extends Arquillian {
 
         Collection<LabVessel> entries = reworkEjb.getVesselsForRework("Pico/Plating Bucket");
 
-        Assert.assertEquals(validationMessages.size(), 1);
+        Assert.assertEquals(validationMessages.size(), 0);
 
         Assert.assertEquals(entries.size(), existingReworks + hybridSelectionJaxbBuilder.getNormCatchBarcodes().size());
 
@@ -1076,7 +1077,7 @@ public class ReworkEjbTest extends Arquillian {
 
         Collection<LabVessel> entries = reworkEjb.getVesselsForRework("Pico/Plating Bucket");
 
-        Assert.assertEquals(validationMessages.size(), 2);
+        Assert.assertEquals(validationMessages.size(), 0);
 
         Assert.assertEquals(entries.size(), existingReworks + mapBarcodeToTube.size());
 
@@ -1115,7 +1116,7 @@ public class ReworkEjbTest extends Arquillian {
 
         Collection<LabVessel> entries = reworkEjb.getVesselsForRework("Pico/Plating Bucket");
 
-        Assert.assertEquals(validationMessages.size(), 1);
+        Assert.assertEquals(validationMessages.size(), 0);
 
         Assert.assertEquals(entries.size(), existingReworks + hybridSelectionJaxbBuilder.getNormCatchBarcodes().size());
 
@@ -1260,9 +1261,11 @@ public class ReworkEjbTest extends Arquillian {
         List<ReworkEjb.BucketCandidate> candidates = new ArrayList<>();
 
         List<ProductOrderSample> bucketReadySamplesDupe = new ArrayList<>(2);
-        bucketReadySamplesDupe.add(new ProductOrderSample(genomicSample1));
-        bucketReadySamplesDupe.add(new ProductOrderSample(genomicSample2));
+        ProductOrderSample productOrderSample1 = new ProductOrderSample(genomicSample1);
+        bucketReadySamplesDupe.add(productOrderSample1);
 
+        ProductOrderSample productOrderSample2 = new ProductOrderSample(genomicSample2);
+        bucketReadySamplesDupe.add(productOrderSample2);
 
         ProductOrder duplicatePO =
                 new ProductOrder(bspUserList.getByUsername("scottmat").getUserId(),
@@ -1274,6 +1277,8 @@ public class ReworkEjbTest extends Arquillian {
         duplicatePO.setJiraTicketKey(dupePdo1JiraKey);
         duplicatePO.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         productOrderDao.persist(duplicatePO);
+        bucketReadySamples1.get(0).getMercurySample().addProductOrderSample(productOrderSample1);
+        bucketReadySamples1.get(1).getMercurySample().addProductOrderSample(productOrderSample2);
 
         for (Map.Entry<String, BarcodedTube> tubes : mapBarcodeToTube.entrySet()) {
 
@@ -1297,8 +1302,11 @@ public class ReworkEjbTest extends Arquillian {
         List<ReworkEjb.BucketCandidate> candidates = new ArrayList<>();
 
         List<ProductOrderSample> bucketReadySamplesDupe = new ArrayList<>(2);
-        bucketReadySamplesDupe.add(new ProductOrderSample(genomicSample3));
-        bucketReadySamplesDupe.add(new ProductOrderSample(somaticSample3));
+        ProductOrderSample productOrderSample1 = new ProductOrderSample(genomicSample3);
+        bucketReadySamplesDupe.add(productOrderSample1);
+
+        ProductOrderSample productOrderSample2 = new ProductOrderSample(somaticSample3);
+        bucketReadySamplesDupe.add(productOrderSample2);
 
         ProductOrder duplicatePO =
                 new ProductOrder(bspUserList.getByUsername("scottmat").getUserId(),
@@ -1310,6 +1318,9 @@ public class ReworkEjbTest extends Arquillian {
         duplicatePO.setJiraTicketKey(dupePdo1JiraKey);
         duplicatePO.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         productOrderDao.persist(duplicatePO);
+        bucketReadySamples2.get(0).getMercurySample().addProductOrderSample(productOrderSample1);
+        bucketReadySamples2.get(0).getMercurySample().addProductOrderSample(extraProductOrderSample);
+        bucketReadySamples2.get(1).getMercurySample().addProductOrderSample(productOrderSample2);
 
         for (Map.Entry<String, BarcodedTube> tubes : mapBarcodeToTube.entrySet()) {
 
@@ -1341,7 +1352,9 @@ public class ReworkEjbTest extends Arquillian {
             String barcode = sampleData.getContainerId();
 
             BarcodedTube aliquot = new BarcodedTube(barcode);
-            aliquot.addSample(new MercurySample(currSamp.getSampleKey(), sampleData));
+            MercurySample mercurySample = new MercurySample(currSamp.getSampleKey(), sampleData);
+            mercurySample.addProductOrderSample(currSamp);
+            aliquot.addSample(mercurySample);
             mapBarcodeToTube.put(barcode, aliquot);
             labVesselDao.persist(aliquot);
         }
@@ -1385,7 +1398,7 @@ public class ReworkEjbTest extends Arquillian {
             }
 
         }
-
+        bucketReadySamples2.get(0).getMercurySample().addProductOrderSample(extraProductOrderSample);
 
         Set<String> bucketCandidatePdos =
                 reworkEjb.findBucketCandidatePdos(bucketEntryIds);

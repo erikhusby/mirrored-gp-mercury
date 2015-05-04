@@ -105,7 +105,7 @@ public class ExtractTransform implements Serializable {
     /**
      * Name of subdirectory under configured ETL root dir where new sqlLoader files are put.
      */
-    public static final String DATAFILE_SUBDIR = "/new";
+    public static final String DATAFILE_SUBDIR = File.separator + "new";
 
     /**
      * Name of directory where sqlLoader files are put.
@@ -161,6 +161,7 @@ public class ExtractTransform implements Serializable {
             ProductEtl productEtl,
             ProductOrderAddOnEtl productOrderAddOnEtl,
             ProductOrderEtl productOrderEtl,
+            RegulatoryInfoEtl regulatoryInfoEtl,
             ProductOrderSampleEtl productOrderSampleEtl,
             ProjectPersonEtl projectPersonEtl,
             ResearchProjectCohortEtl researchProjectCohortEtl,
@@ -182,6 +183,7 @@ public class ExtractTransform implements Serializable {
         etlInstances.add(productEtl);
         etlInstances.add(productOrderAddOnEtl);
         etlInstances.add(productOrderEtl);
+        etlInstances.add(regulatoryInfoEtl);
         etlInstances.add(productOrderSampleEtl);
         etlInstances.add(projectPersonEtl);
         etlInstances.add(researchProjectCohortEtl);
@@ -350,6 +352,8 @@ public class ExtractTransform implements Serializable {
                     }
                     count.add(0, recordCount);
                     date.add(0, actualEtlDateStr);
+                    // Reset state of all Hibernate entities (the ETL process is read-only)
+                    auditReaderDao.clear();
                 }
             });
 

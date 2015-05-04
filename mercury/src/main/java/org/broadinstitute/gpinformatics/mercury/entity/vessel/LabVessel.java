@@ -9,6 +9,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
+import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -22,9 +23,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.TubeTransferException;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.hibernate.annotations.BatchSize;
@@ -561,9 +565,9 @@ public abstract class LabVessel implements Serializable {
      *
      * @param metricType The type of metric to search for during the traversal.
      *
-     * @return A collection of the closest metrics of the type specified.
+     * @return A list of the closest metrics of the type specified, ordered by ascending date
      */
-    public Collection<LabMetric> getNearestMetricsOfType(LabMetric.MetricType metricType) {
+    public List<LabMetric> getNearestMetricsOfType(LabMetric.MetricType metricType) {
         if (getContainerRole() != null) {
             return getContainerRole().getNearestMetricOfType(metricType);
         } else {
@@ -587,6 +591,17 @@ public abstract class LabVessel implements Serializable {
             eventName = eventList.get(eventList.size() - 1).getLabEventType().getName();
         }
         return eventName;
+    }
+
+    /**
+     * Check if the vessel has been accessioned
+     * Does nothing typically, but will throw an exception if it has been accessioned
+     *
+     * @throws TubeTransferException if it has been accessioned
+     *
+     */
+    public boolean canBeUsedForAccessioning() {
+        return !doesChainOfCustodyInclude(LabEventType.COLLABORATOR_TRANSFER);
     }
 
     public enum ContainerType {
@@ -1073,16 +1088,11 @@ public abstract class LabVessel implements Serializable {
     }
 
     public Set<BucketEntry> getBucketEntries() {
-        return Collections.unmodifiableSet(bucketEntries);
+        return bucketEntries;
     }
 
     public Integer getBucketEntriesCount(){
         return bucketEntriesCount;
-    }
-
-    /** For fixups only. */
-    Set<BucketEntry> getModifiableBucketEntries() {
-        return bucketEntries;
     }
 
     public void addBucketEntry(BucketEntry bucketEntry) {
@@ -1113,6 +1123,17 @@ public abstract class LabVessel implements Serializable {
         Set<LabBatch> allLabBatches = new HashSet<>();
         for (LabBatchStartingVessel batchStartingVessel : labBatches) {
             allLabBatches.add(batchStartingVessel.getLabBatch());
+        }
+        allLabBatches.addAll(reworkLabBatches);
+        return allLabBatches;
+    }
+
+    public List<LabBatch> getWorkflowLabBatches() {
+        List<LabBatch> allLabBatches = new ArrayList<>();
+        for (LabBatchStartingVessel batchStartingVessel : labBatches) {
+            if (batchStartingVessel.getLabBatch().getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
+                allLabBatches.add(batchStartingVessel.getLabBatch());
+            }
         }
         allLabBatches.addAll(reworkLabBatches);
         return allLabBatches;
@@ -1458,12 +1479,26 @@ public abstract class LabVessel implements Serializable {
         return vesselForEventTypeCriteria.getVesselsForLabEventType();
     }
 
-    /**
-     * This method walks the vessel transfers in both directions and returns all of the ancestor and descendant
-     * vessels.
-     *
-     * @return A collection containing all ancestor and descendant vessels.
-     */
+    public Map<LabEvent, Set<LabVessel>> findVesselsForLabEventTypes(List<LabEventType> types,
+            List<TransferTraverserCriteria.TraversalDirection> traversalDirections, boolean useTargetVessels) {
+        if (getContainerRole() != null) {
+            // todo jmt this is ancestors only
+            return getContainerRole().getVesselsForLabEventTypes(types);
+        }
+        TransferTraverserCriteria.VesselForEventTypeCriteria vesselForEventTypeCriteria =
+                new TransferTraverserCriteria.VesselForEventTypeCriteria(types, useTargetVessels);
+        for (TransferTraverserCriteria.TraversalDirection traversalDirection : traversalDirections) {
+            evaluateCriteria(vesselForEventTypeCriteria, traversalDirection);
+        }
+        return vesselForEventTypeCriteria.getVesselsForLabEventType();
+    }
+
+        /**
+         * This method walks the vessel transfers in both directions and returns all of the ancestor and descendant
+         * vessels.
+         *
+         * @return A collection containing all ancestor and descendant vessels.
+         */
     public Collection<LabVessel> getAncestorAndDescendantVessels() {
         Collection<LabVessel> allVessels;
         allVessels = getAncestorVessels();
@@ -1743,12 +1778,12 @@ public abstract class LabVessel implements Serializable {
      *
      * @return Returns a map of lab metrics keyed by the metric display name.
      */
-    public Map<String, Set<LabMetric>> getMetricsForVesselAndDescendants() {
+    public Map<String, Set<LabMetric>> getMetricsForVesselAndRelatives() {
         Set<LabMetric> allMetrics = new HashSet<>();
         if (metricMap == null) {
             metricMap = new HashMap<>();
             allMetrics.addAll(getMetrics());
-            for (LabVessel curVessel : getDescendantVessels()) {
+            for (LabVessel curVessel : getAncestorAndDescendantVessels()) {
                 allMetrics.addAll(curVessel.getMetrics());
             }
             Set<LabMetric> metricSet;
@@ -1831,6 +1866,10 @@ public abstract class LabVessel implements Serializable {
         VesselContainer<?> containerRole = getContainerRole();
         if (containerRole != null) {
             containerRole.clearCaches();
+        }
+        for (LabVessel container : containers) {
+            container.clearCaches();
+            container.getContainerRole().clearCaches();
         }
     }
 

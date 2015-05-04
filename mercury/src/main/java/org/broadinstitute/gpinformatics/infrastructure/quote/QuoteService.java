@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.quote;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.Set;
 
 /**
  *
@@ -41,4 +42,38 @@ public interface QuoteService extends Serializable {
      * @throws QuoteNotFoundException When the specified quote does not exist in the quote server.
      */
     public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException;
+
+    /**
+     * Get the quote and all its associated price items for a particular quote identifier.
+     *
+     * @param alphaId The quote identifier.
+     *
+     * @return The quote representation.
+     * @throws QuoteServerException Quote server problems.
+     * @throws QuoteNotFoundException When the specified quote does not exist in the quote server.
+     */
+    public Quote getQuoteWithPriceItems(String alphaId) throws QuoteServerException, QuoteNotFoundException;
+
+    /**
+     * Method to return all sources of funding from the quote server
+     * @return The set of funding objects
+     *
+     * @throws QuoteServerException
+     * @throws QuoteNotFoundException
+     */
+    public Set<Funding> getAllFundingSources() throws QuoteServerException, QuoteNotFoundException;
+
+    /**
+     * Method to return a list of PriceItems per Platform.
+     * @return The full price list
+     *
+     * @throws QuoteServerException
+     * @throws QuoteNotFoundException
+     */
+    public PriceList getPlatformPriceItems(QuotePlatformType quotePlatformType) throws QuoteServerException, QuoteNotFoundException;
+
+    /**
+     *  Method to return a list of all quotes
+     */
+    public Quotes getAllQuotes() throws QuoteServerException, QuoteNotFoundException;
 }

@@ -88,15 +88,49 @@ public class ConfigurableListContainerTest extends Arquillian {
         ConfigurableList.ResultRow resultRow = resultList.getResultRows().get(1);
         Assert.assertEquals(resultRow.getResultId(), "0162998809");
 
-        // Find Imported Sample ID
+        // Test column values
         List<ConfigurableList.Header> headers = resultList.getHeaders();
-        int columnIndex = 0;
+        int columnIndex;
+
+        // Find Imported Sample ID
+        columnIndex = 0;
         for( ConfigurableList.Header header : headers ) {
             if( header.getViewHeader().equals("Imported Sample ID")) break;
             columnIndex++;
         }
         Assert.assertTrue( columnIndex < headers.size(), "Column header 'Imported Sample ID' not found in results" );
         Assert.assertEquals(resultRow.getRenderableCells().get(columnIndex), "SM-5KWVC");
+
+        // Test LabVesselMetricPlugin
+        columnIndex = 0;
+        for( ConfigurableList.Header header : headers ) {
+            if( header.getViewHeader().equals("Pond Pico ng/uL")) break;
+            columnIndex++;
+        }
+        Assert.assertTrue( columnIndex < headers.size(), "Column header 'Pond Pico ng/uL' not found in results" );
+        Assert.assertEquals(resultRow.getRenderableCells().get(columnIndex), "54.68");
+        Assert.assertEquals(resultRow.getRenderableCells().get(columnIndex + 1), "(None)"
+                , "Incorrect value for 'Pond Pico Decision' column" );
+
+        columnIndex = 0;
+        for( ConfigurableList.Header header : headers ) {
+            if( header.getViewHeader().equals("ECO QPCR ng/uL")) break;
+            columnIndex++;
+        }
+        Assert.assertTrue( columnIndex < headers.size(), "Column header 'ECO QPCR ng/uL' not found in results" );
+        Assert.assertEquals(resultRow.getRenderableCells().get(columnIndex), "26.13");
+        Assert.assertEquals(resultRow.getRenderableCells().get(columnIndex + 1), "(None)" );
+
+        // Test LabVesselLatestEventPlugin
+        columnIndex = 0;
+        for( ConfigurableList.Header header : headers ) {
+            if( header.getViewHeader().equals("Latest Event")) break;
+            columnIndex++;
+        }
+        Assert.assertTrue( columnIndex < headers.size(), "Column header 'Latest Event' not found in results" );
+        Assert.assertEquals(resultRow.getRenderableCells().get(columnIndex), "DilutionToFlowcellTransfer");
+        Assert.assertEquals(resultRow.getRenderableCells().get(columnIndex + 3), "03/06/2014 12:44:45" );
+
 
     }
 

@@ -8,9 +8,12 @@ import org.apache.deltaspike.core.api.provider.BeanProvider;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePlatformType;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
@@ -28,7 +31,9 @@ import javax.enterprise.context.SessionScoped;
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
+import java.util.Collections;
 import java.util.Date;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -58,8 +63,7 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWarWithAlternatives(DummyPMBQuoteService.class,
-                RegisterWorkAlwaysWorks.class);
+        return DeploymentBuilder.buildMercuryWarWithAlternatives(RegisterWorkAlwaysWorks.class);
     }
 
     /**
@@ -193,13 +197,43 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
                 // sleep here for a while to increase the likelihood that the vm really does try to call bill() at the same time
                 Thread.sleep(1000);
             }
-            catch(InterruptedException e) {}
+            catch (InterruptedException e) {
+                // Do nothing with this exception
+            }
             return Integer.toString(++workItemNumber);
         }
 
         @Override
         public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
+
+            Quote stubQuote = new Quote();
+            stubQuote.setAlphanumericId("testMMA");
+
+            QuoteItem stubItem = new QuoteItem("TestMMA", "testPI", "testingConcurrent", "1", "1", "1","Mercury","Exome Sequencing");
+            stubQuote.setQuoteItems(Collections.singletonList(stubItem));
+
+            return stubQuote;
+        }
+
+        @Override
+        public Quote getQuoteWithPriceItems(String alphaId) throws QuoteServerException, QuoteNotFoundException {
+            return getQuoteByAlphaId(alphaId);
+        }
+
+        @Override
+        public Set<Funding> getAllFundingSources() throws QuoteServerException, QuoteNotFoundException{
             return null;
+        }
+
+        @Override
+        public Quotes getAllQuotes() throws QuoteServerException, QuoteNotFoundException {
+            return null;
+        }
+
+        @Override
+        public PriceList getPlatformPriceItems(QuotePlatformType quotePlatformType)
+                throws QuoteServerException, QuoteNotFoundException {
+            return getAllPriceItems();
         }
     }
 

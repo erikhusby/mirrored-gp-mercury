@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
-import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -27,12 +26,14 @@ public class LabVesselMetricPlugin implements ListPlugin {
     static {
         for( LabMetric.MetricType metricType : LabMetric.MetricType.values() ) {
             if(metricType.getCategory() == LabMetric.MetricType.Category.CONCENTRATION ) {
-                String headerText = metricType.getDisplayName();
+                String headerText;
+                // Include measurement default units in header
+                headerText = metricType.getDisplayName() + " ng/uL";
                 QUANT_VALUE_HEADERS
-                        .put(metricType, new ConfigurableList.Header(headerText, headerText, "", ""));
-                headerText += " Decision";
+                        .put(metricType, new ConfigurableList.Header(headerText, headerText, ""));
+                headerText = metricType.getDisplayName() + " Decision";
                 QUANT_DECISION_HEADERS.put(metricType,
-                        new ConfigurableList.Header(headerText, headerText, "", ""));
+                        new ConfigurableList.Header(headerText, headerText, ""));
             }
         }
     }
@@ -60,7 +61,7 @@ public class LabVesselMetricPlugin implements ListPlugin {
         for( LabVessel labVessel : labVesselList ) {
             ConfigurableList.Row row = new ConfigurableList.Row( labVessel.getLabel() );
 
-            Map<String, Set<LabMetric>> metricGroups = labVessel.getMetricsForVesselAndDescendants();
+            Map<String, Set<LabMetric>> metricGroups = labVessel.getMetricsForVesselAndRelatives();
             for(Set<LabMetric> metrics : metricGroups.values()) {
                 if( metrics != null && !metrics.isEmpty() ) {
                     addMetricsToRow(metrics, row);
@@ -81,7 +82,7 @@ public class LabVesselMetricPlugin implements ListPlugin {
      *   with a decision.  If all metrics have a null decision, use the last metric after sorting.
      * @param metrics Metrics data of a single type as supplied from LabVessel
      * @param row Reference to the current plugin row
-     *        @see org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel#getMetricsForVesselAndDescendants()
+     *        @see org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel#getMetricsForVesselAndRelatives()
      */
     private void addMetricsToRow( Set<LabMetric> metrics, ConfigurableList.Row row ) {
         LabMetric metric = null;
@@ -107,7 +108,11 @@ public class LabVesselMetricPlugin implements ListPlugin {
                 metric = latestMetric;
             }
         }
-        value = MathUtils.scaleTwoDecimalPlaces(metric.getValue()).toPlainString() + " " + metric.getUnits().getDisplayName();
+        value = ColumnValueType.TWO_PLACE_DECIMAL.format( metric.getValue(), "" );
+        // Display measurement units if not default
+        if( metric.getUnits() != LabMetric.LabUnit.UG_PER_ML && metric.getUnits() != LabMetric.LabUnit.NG_PER_UL ) {
+            value += " " + metric.getUnits().getDisplayName();
+        }
         valueCell = new ConfigurableList.Cell(QUANT_VALUE_HEADERS.get(metric.getName()), value, value);
         decision = metric.getLabMetricDecision();
         if (decision != null) {

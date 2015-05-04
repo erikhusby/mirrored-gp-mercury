@@ -29,6 +29,7 @@ import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.expectLastCall;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.reset;
 import static org.easymock.EasyMock.verify;
@@ -243,6 +244,8 @@ public class ExtractTransformDbFreeTest {
         long startEtl = 1364411920L;
 
         expect(auditReaderDao.fetchAuditIds(eq(startEtl), anyLong())).andReturn(new TreeMap<Long, Date>());
+        auditReaderDao.clear();
+        expectLastCall();
         replay(mocks);
 
         ExtractTransform.writeLastEtlRun(startEtl);
@@ -260,6 +263,8 @@ public class ExtractTransformDbFreeTest {
         String endEtlStr = ExtractTransform.formatTimestamp(new Date(endEtl * 1000L));
 
         expect(auditReaderDao.fetchAuditIds(startEtl, endEtl)).andReturn(new TreeMap<Long, Date>());
+        auditReaderDao.clear();
+        expectLastCall();
         replay(mocks);
 
         ExtractTransform.writeLastEtlRun(startEtl);
@@ -344,6 +349,8 @@ public class ExtractTransformDbFreeTest {
         final long startEtlSec = 1360000000L;
         SortedMap<Long, Date> revs = new TreeMap<>();
         expect(auditReaderDao.fetchAuditIds(eq(startEtlSec), anyLong())).andReturn(revs);
+        auditReaderDao.clear();
+        expectLastCall();
 
         replay(mocks);
         ExtractTransform.writeLastEtlRun(startEtlSec);
@@ -378,6 +385,8 @@ public class ExtractTransformDbFreeTest {
         expect(sequencingSampleFactEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
         expect(billingSessionEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
         expect(labMetricEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
+        auditReaderDao.clear();
+        expectLastCall();
 
         replay(mocks);
         ExtractTransform.writeLastEtlRun(startEtlSec);

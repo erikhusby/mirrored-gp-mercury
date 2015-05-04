@@ -2,7 +2,7 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
 <%@ page import="org.broadinstitute.gpinformatics.infrastructure.search.PaginationDao" %>
 <%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.search.ConfigurableSearchActionBean" %>
-
+<% pageContext.setAttribute("CRLF", "\n"); %>
 <%-- This page displays a configurable list for a given entity --%>
 
 <stripes:layout-definition>
@@ -25,10 +25,8 @@
 <%--@elvariable id="downloadViewedColumns" type="java.lang.Boolean"--%>
 
 <%-- The name of the entity being listed --%>
-<%--@elvariable id="entityName" type="java.lang.Boolean"--%>
+<%--@elvariable id="entityName" type="java.lang.String"--%>
 
-<%-- If pagination is AJAX based, the div to be updated --%>
-<%--@elvariable id="ajaxDiv" type="java.lang.Boolean"--%>
 <script type="text/javascript">
     atLeastOneChecked = function (name, form) {
         var checkboxes = form.getInputs("checkbox", name);
@@ -79,24 +77,15 @@
     Count: ${resultList.resultRows[0].sortableCells[0]}
 </c:when>
 <c:otherwise>
-<c:if test="${fn:length(resultList.resultRows) > 0 && empty ajaxDiv}">
+<c:if test="${fn:length(resultList.resultRows) > 0}">
     <div class="control-group"><a href="#search${entityName}ListEnd">Jump to end</a></div>
-</c:if>
-<c:if test="${not empty ajaxDiv}">
-    <%-- For Quick Find, update the summary section --%>
-    <script type="text/javascript">
-        $('${entityName}SummaryDiv').innerHTML = "${fn:length(pagination.idList)}";
-    </script>
 </c:if>
 <stripes:form action="/util/ConfigurableList.action" id="searchResultsForm${entityName}">
 <input type="hidden" name="sessionKey" value="${sessionKey}"/>
 <input type="hidden" name="entityName" value="${entityName}"/>
 
-<div id="${entityName}ResultsDiv" class="form-inline"
-<c:if test="${not empty ajaxDiv}">
-    style="height:200px;overflow:auto;"
-</c:if>
->
+<div id="${entityName}ResultsDiv" class="form-inline">
+    <c:set var="isDbSortAllowed" value="${actionBean.searchInstance.isDbSortable}"/>
 <table width="100%" class="table simple dataTable" id="${entityName}ResultsTable">
     <c:forEach items="${resultList.resultRows}" var="resultRow" varStatus="status">
         <%--@elvariable id="resultRow" type="edu.mit.broad.bsp.core.util.columns.ConfigurableListUtils.ResultRow"--%>
@@ -121,13 +110,13 @@
                         </c:when>
                         <c:otherwise>
                             <c:choose>
-                                <c:when test="${not empty resultListHeader.sortPath}">
+                                <c:when test="${ ( not empty resultListHeader.sortPath ) and isDbSortAllowed}">
                                     <%-- Multi-page results are sortable in the database, if the column has a sort path --%>
-                                    <th class="sorting ${resultListHeader.sortPath == param.dbSortPath ?
+                                    <th class="sorting ${resultListHeader.sortPath == actionBean.dbSortPath ?
                                     (resultList.resultSortDirection == 'ASC' ? 'sorting_asc' : 'sorting_desc' ) : ''}"
                                             >
                                         <stripes:link
-                                                href="${action}?search=&entityName=${entityName}&sessionKey=${sessionKey}&columnSetName=${columnSetName}&dbSortPath=${resultListHeader.sortPath}&sortDirection=${resultListHeader.sortPath == param.dbSortPath && resultList.resultSortDirection == 'ASC' ? 'DSC' : 'ASC'}">
+                                                href="${action}?search=&entityName=${entityName}&sessionKey=${sessionKey}&columnSetName=${columnSetName}&dbSortPath=${resultListHeader.sortPath}&sortDirection=${resultListHeader.sortPath == actionBean.dbSortPath && resultList.resultSortDirection == 'ASC' ? 'DSC' : 'ASC'}">
                                             ${resultListHeader.viewHeader}</stripes:link>
                                     </th>
                                 </c:when>
@@ -151,7 +140,7 @@
                 <input name="selectedIds" value="${resultRow.resultId}" class="shiftCheckbox" type="checkbox">
             </td>
             <c:forEach items="${resultRow.renderableCells}" var="cell">
-                <td>${cell}</td>
+                <td>${fn:replace( cell, CRLF, "<br>" )}</td>
             </c:forEach>
         </tr>
 
@@ -217,15 +206,7 @@
                             </c:when>
                             <%-- Links to other pages --%>
                             <c:otherwise>
-                                <c:choose>
-                                    <c:when test="${empty ajaxDiv}">
-                                        <a href="${action}?searchPage=&entityName=${entityName}&pageNumber=${pageNumber}&sessionKey=${sessionKey}&columnSetName=${columnSetName}&dbSortPath=${param.dbSortPath}">${pageNumber + 1}</a>
-                                    </c:when>
-                                    <c:otherwise>
-                                        <a href="#"
-                                           onclick="new Ajax.Updater('${ajaxDiv}', '${action}?searchPage=&entityName=${entityName}&pageNumber=${pageNumber}&sessionKey=${sessionKey}&columnSetName=${columnSetName}&dbSortPath=${param.dbSortPath}&entityName=${entityName}');return false;">${pageNumber + 1}</a>
-                                    </c:otherwise>
-                                </c:choose>
+                                <a href="${action}?searchPage=&entityName=${entityName}&pageNumber=${pageNumber}&sessionKey=${sessionKey}&columnSetName=${columnSetName}">${pageNumber + 1}</a>
                             </c:otherwise>
                         </c:choose>
                     </c:forEach>
@@ -268,28 +249,6 @@
                            value="Download All Pages" class="btn btn-primary"/>
                 </c:if>
 
-                <c:if test="${entityName == 'Sample'}">
-                    <%-- Add checked to basket--%>
-                    <script type="text/javascript">
-                        addCheckedToBasket = function (form) {
-                            if (atLeastOneChecked('selectedIds', form)) {
-                                $("downloadFromIdList").name = "addCheckedToBasket";
-                                var pars = $("searchResultsForm${entityName}").serialize(true);
-                                var url = '${ctxpath}/util/ConfigurableList.action';
-
-                                new Ajax.Updater(
-                                        'sampleBasketCount',
-                                        url,
-                                        {
-                                            method: 'post',
-                                            parameters: pars
-                                        });
-                            }
-                        };
-                    </script>
-                    <a href="#" onclick="addCheckedToBasket($('searchResultsForm${entityName}'));">(Add checked to
-                        Basket)</a>
-                </c:if>
                 <%-- Tooltip help --%>
                 <img id="${entityName}checkboxesTooltip" src="${ctxpath}/images/help.png" alt="help" title="
                     You can check individual boxes next to each row, or check the box at the top or

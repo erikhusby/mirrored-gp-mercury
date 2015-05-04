@@ -131,6 +131,9 @@ public class ExtractTransformTest extends Arquillian {
         labVesselDao.flush();
         utx.commit();
 
+        // Pick up the ID
+        final long entityId = labVessel.getLabVesselId();
+
         // Wait since incremental etl won't pick up entities in the current second.
         Thread.sleep(MSEC_IN_SEC);
 
@@ -139,11 +142,6 @@ public class ExtractTransformTest extends Arquillian {
         int recordCount = extractTransform.incrementalEtl("0", "0");
         final long endEtlMSec = ExtractTransform.readLastEtlRun() * MSEC_IN_SEC;
         Assert.assertTrue(recordCount > 0);
-
-        // Gets the entity.
-        LabVessel entity = labVesselDao.findByIdentifier(barcode);
-        Assert.assertNotNull(entity);
-        final long entityId = entity.getLabVesselId();
 
         // Finds the entity in a data file (may be more than one data file if another commit
         // hit in the small time window between startMsec and the incrementalEtl start).
@@ -168,6 +166,9 @@ public class ExtractTransformTest extends Arquillian {
 
         // Deletes the entity.
         utx.begin();
+        // Gets the entity.
+        LabVessel entity = labVesselDao.findByIdentifier(barcode);
+        Assert.assertNotNull(entity);
         labVesselDao.remove(entity);
         labVesselDao.flush();
         utx.commit();
