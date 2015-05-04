@@ -22,6 +22,8 @@ import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
 
@@ -146,7 +148,13 @@ public class BillingEjb {
 
         // Now that we have successfully billed, update the Ledger Entries associated with this QuoteImportItem
         // with the quote for the QuoteImportItem, add the priceItemType, and the success message.
-        item.updateLedgerEntries(quoteIsReplacing, BillingSession.SUCCESS, quoteServerWorkItem);
+        Collection<String> replacementPriceItemNames = new ArrayList<>();
+        Collection<QuotePriceItem> replacementPriceItems = priceListCache.getReplacementPriceItems(item.getPriceItem());
+        for (QuotePriceItem replacementPriceItem : replacementPriceItems) {
+            replacementPriceItemNames.add(replacementPriceItem.getName());
+        }
+        item.updateLedgerEntries(quoteIsReplacing, BillingSession.SUCCESS, quoteServerWorkItem,
+                replacementPriceItemNames);
         billingSessionDao.flush();
     }
 
