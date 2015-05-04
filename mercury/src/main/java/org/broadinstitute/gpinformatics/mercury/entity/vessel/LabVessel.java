@@ -231,7 +231,7 @@ public abstract class LabVessel implements Serializable {
 
     public boolean isDNA() {
         for (SampleInstance si : getSampleInstances()) {
-            if (!si.getStartingSample().getSampleData().getMaterialType().startsWith("DNA:")) {
+            if (!si.getStartingSample().getSampleData().getMaterialType().startsWith("DNA")) {
                 return false;
             }
         }
