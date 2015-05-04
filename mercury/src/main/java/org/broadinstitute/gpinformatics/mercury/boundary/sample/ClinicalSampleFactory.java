@@ -52,4 +52,28 @@ public class ClinicalSampleFactory {
         }
         return manifestRecords;
     }
+
+    /**
+     * Test if provided sampleData includes all required fields.
+     *
+     * @return True if provided sampleData includes all required fields.<br/>
+     *         False if any required fields are missing.
+     */
+    public static boolean hasRequiredMetadata(List<SampleData> sampleData) {
+        List<String> includedDataFields=new ArrayList<>();
+        for (SampleData data : sampleData) {
+                if (Metadata.Key.isRequired(data.getName())) {
+                    if (StringUtils.isNotBlank(data.getValue())) {
+                        includedDataFields.add(data.getName());
+                    }
+                }
+        }
+        for (Metadata.Key key : Metadata.Key.getRequiredFields()) {
+            if (!includedDataFields.contains(key.name())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
 }

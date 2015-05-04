@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessio
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.ClinicalResourceBean;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.SampleData;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
@@ -36,6 +37,7 @@ public class ClinicalResource {
     public static final String SAMPLE_CONTAINS_NO_METADATA = "Sample contains no metadata.";
     public static final String SAMPLE_IS_NULL = "Sample is null.";
     public static final String EMPTY_LIST_OF_SAMPLES_NOT_ALLOWED = "Empty list of samples not allowed.";
+    public static final String REQUIRED_FIELD_MISSING = "Required Sample Metadata are missing";
 
     @Inject
     private UserBean userBean;
@@ -111,6 +113,9 @@ public class ClinicalResource {
             }
             if (metadataCount==0) {
                 throw new IllegalArgumentException(SAMPLE_CONTAINS_NO_METADATA);
+            }
+            if (!ClinicalSampleFactory.hasRequiredMetadata(sample.getSampleData())){
+                throw new IllegalArgumentException(REQUIRED_FIELD_MISSING + ": " + Metadata.Key.getRequiredFields());
             }
         }
     }

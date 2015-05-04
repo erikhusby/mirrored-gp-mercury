@@ -21,6 +21,8 @@ import javax.persistence.Table;
 import java.math.BigDecimal;
 import java.text.Format;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Generic metadata storage class with String keys and values.
@@ -200,7 +202,7 @@ public class Metadata {
         /**
          * The sample's material type, e.g. DNA, Blood, FFPE, etc.
          */
-        MATERIAL_TYPE(Category.SAMPLE, DataType.STRING, "Material Type", Visibility.USER),
+        MATERIAL_TYPE(Category.SAMPLE, DataType.STRING, "Material Type", Visibility.USER, true),
 
         /**
          * The type of material from which the sample was derived.
@@ -261,12 +263,29 @@ public class Metadata {
         private final DataType dataType;
         private final String displayName;
         private final Visibility visibility;
+        private final boolean isRequired;
 
-        Key(Category category, DataType dataType, String displayName, Visibility visibility) {
+        Key(Category category, DataType dataType, String displayName,
+            Visibility visibility, boolean isRequired) {
             this.category = category;
             this.dataType = dataType;
             this.displayName = displayName;
             this.visibility = visibility;
+            this.isRequired = isRequired;
+        }
+
+        Key(Category category, DataType dataType, String displayName, Visibility visibility) {
+            this(category, dataType, displayName, visibility, false);
+        }
+
+        public static Set<Key> getRequiredFields() {
+            Set<Key> required = new HashSet<>();
+            for (Key key : values()) {
+                if (key.isRequired) {
+                    required.add(key);
+                }
+            }
+            return required;
         }
 
         public Category getCategory() {
@@ -293,6 +312,11 @@ public class Metadata {
                 }
             }
             return null;
+        }
+
+        public static boolean isRequired(String name) {
+            Key key = Key.valueOf(name);
+            return key.isRequired;
         }
     }
 }
