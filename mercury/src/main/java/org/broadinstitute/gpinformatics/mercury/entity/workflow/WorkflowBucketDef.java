@@ -74,12 +74,10 @@ public class WorkflowBucketDef extends WorkflowStepDef {
                     if (!meetsCriteria) {
                         return false;
                     }
-                } catch (ClassNotFoundException e) {
+                } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException |
+                        InstantiationException | IllegalAccessException e) {
                     throw new RuntimeException(
                             String.format("error invoking BucketEntryEvaluator %s", bucketEntryEvaluator), e);
-                } catch (NoSuchMethodException | InvocationTargetException |InstantiationException | IllegalAccessException e) {
-                    log.error(e);
-                    return false;
                 }
             }
         }
