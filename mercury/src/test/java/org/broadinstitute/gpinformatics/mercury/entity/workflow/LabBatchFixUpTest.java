@@ -15,22 +15,36 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkDetail;
+import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
+import javax.transaction.UserTransaction;
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
@@ -49,6 +63,15 @@ public class LabBatchFixUpTest extends Arquillian {
 
     @Inject
     private ProductOrderDao productOrderDao;
+
+    @Inject
+    private MercurySampleDao mercurySampleDao;
+
+    @Inject
+    private UserBean userBean;
+
+    @Inject
+    private UserTransaction userTransaction;
 
     // Use (RC, "rc"), (PROD, "prod") to push the backfill to RC and production respectively.
     @Deployment
@@ -203,5 +226,59 @@ public class LabBatchFixUpTest extends Arquillian {
         bucketEntry.setStatus(BucketEntry.Status.Archived);
         labBatch.addBucketEntry(bucketEntry);
         labBatchDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim3547() {
+        userBean.loginOSUser();
+        try {
+            userTransaction.begin();
+            String batchName = "LCSET-7158";
+            LabBatch labBatch = labBatchDao.findByName(batchName);
+
+            Map<String, String> mapOldSampleIdToNew = new HashMap<>();
+            mapOldSampleIdToNew.put("SM-9LIRY", "SM-9MKCY");
+            mapOldSampleIdToNew.put("SM-9LIRZ", "SM-9MKCZ");
+            mapOldSampleIdToNew.put("SM-9LIS1", "SM-9MKD1");
+            mapOldSampleIdToNew.put("SM-9LIS2", "SM-9MKD2");
+            mapOldSampleIdToNew.put("SM-9LIS3", "SM-9MKD3");
+            Map<String, MercurySample> mapIdToMercurySample = mercurySampleDao.findMapIdToMercurySample(
+                    mapOldSampleIdToNew.values());
+
+            int foundCount = 0;
+            Set<LabVessel> oldLabVessels = new HashSet<>();
+            Set<LabVessel> newLabVessels = new HashSet<>();
+
+            // Change bucket entries
+            for (BucketEntry bucketEntry : labBatch.getBucketEntries()) {
+                Set<SampleInstanceV2> sampleInstancesV2 = bucketEntry.getLabVessel().getSampleInstancesV2();
+                Assert.assertEquals(sampleInstancesV2.size(), 1);
+                SampleInstanceV2 sampleInstanceV2 = sampleInstancesV2.iterator().next();
+                String newMercurySampleId = mapOldSampleIdToNew.get(sampleInstanceV2.getNearestMercurySampleName());
+                if (newMercurySampleId != null) {
+                    MercurySample newMercurySample = mapIdToMercurySample.get(newMercurySampleId);
+                    oldLabVessels.add(bucketEntry.getLabVessel());
+                    Assert.assertEquals(newMercurySample.getLabVessel().size(), 1);
+                    LabVessel newLabVessel = newMercurySample.getLabVessel().iterator().next();
+                    bucketEntry.setLabVessel(newLabVessel);
+                    newLabVessels.add(newLabVessel);
+                    foundCount++;
+                }
+            }
+            Assert.assertEquals(foundCount, 5);
+
+            // Change reworks
+            for (LabVessel oldLabVessel : oldLabVessels) {
+                Assert.assertTrue(labBatch.getReworks().remove(oldLabVessel));
+            }
+            labBatch.getReworks().addAll(newLabVessels);
+
+            labBatchDao.persist(new FixupCommentary("GPLIM-3547 change bucket entries for " + batchName));
+            labBatchDao.flush();
+            userTransaction.commit();
+        } catch (NotSupportedException | SystemException | RollbackException | HeuristicMixedException |
+                HeuristicRollbackException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
