@@ -259,6 +259,22 @@ public class WorkflowTest {
     }
 
     @Test
+    public void testBucketEntrySucceed() {
+        BarcodedTube barcodedTube = new BarcodedTube("00002345");
+        barcodedTube.addSample(
+                new MercurySample("SM-2345", Collections.singleton(new Metadata(Metadata.Key.MATERIAL_TYPE, "DNA"))));
+
+        ProductWorkflowDef exomeExpressWorkflow = workflowConfig.getWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
+
+        for (WorkflowBucketDef workflowBucketDef : exomeExpressWorkflow.getEffectiveVersion().getBuckets()) {
+            if (workflowBucketDef.getName().equals("Pico/Plating Bucket")) {
+                assertThat(workflowBucketDef.getBucketEntryEvaluators(), contains(DnaBucketEntryEvaluator.class.getName()));
+                assertThat(workflowBucketDef.meetsBucketCriteria(barcodedTube), is(true));
+            }
+        }
+    }
+
+    @Test
     public void testSupportedWorkflows() {
         Assert.assertTrue(Workflow.isWorkflowSupportedByMercury(Workflow.AGILENT_EXOME_EXPRESS),
                 "Uh oh, mercury doesn't support exome express!");
