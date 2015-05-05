@@ -12,7 +12,16 @@
             <c:forEach items="${actionBean.workflowEvents}" var="workflowEvent">
                 <tr>
                     <td>
-                        ${workflowEvent.workflowStepDef.name}
+                        <div>
+                            ${workflowEvent.workflowStepDef.name}
+                        </div>
+                        <c:forEach items="${workflowEvent.workflowStepDef.labEventTypes}" var="labEvenType">
+                            <c:if test="${not empty labEvenType.messageType}">
+                                <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.labevent.ManualTransferActionBean">
+                                    Manual Transfer
+                                </stripes:link>
+                            </c:if>
+                        </c:forEach>
                     </td>
                     <td>
                         <c:forEach items="${workflowEvent.labEvents}" var="labEvent">
