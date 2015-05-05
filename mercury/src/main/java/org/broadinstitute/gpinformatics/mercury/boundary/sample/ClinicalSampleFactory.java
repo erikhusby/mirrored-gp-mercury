@@ -19,7 +19,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Static methods to simplify the creation of ClinicalResourceBean and related objects.
@@ -60,20 +62,15 @@ public class ClinicalSampleFactory {
      *         False if any required fields are missing.
      */
     public static boolean hasRequiredMetadata(List<SampleData> sampleData) {
-        List<String> includedDataFields=new ArrayList<>();
+        Set<String> includedRequiredFields=new HashSet<>();
         for (SampleData data : sampleData) {
                 if (Metadata.Key.isRequired(data.getName())) {
                     if (StringUtils.isNotBlank(data.getValue())) {
-                        includedDataFields.add(data.getName());
+                        includedRequiredFields.add(data.getName());
                     }
                 }
         }
-        for (Metadata.Key key : Metadata.Key.getRequiredFields()) {
-            if (!includedDataFields.contains(key.name())) {
-                return false;
-            }
-        }
-        return true;
+        return includedRequiredFields.size()==Metadata.Key.getRequiredFields().size();
     }
 
 }
