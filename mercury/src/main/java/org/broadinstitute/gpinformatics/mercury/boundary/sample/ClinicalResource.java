@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
@@ -10,7 +9,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessio
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.ClinicalResourceBean;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.SampleData;
-import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
@@ -24,7 +22,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.SecurityContext;
 import java.util.Collection;
-import java.util.Set;
 
 /**
  * ClinicalResource provides web services related to accessioning samples into Mercury along with sample data used for
@@ -116,9 +113,8 @@ public class ClinicalResource {
             if (metadataCount==0) {
                 throw new IllegalArgumentException(SAMPLE_CONTAINS_NO_METADATA);
             }
-            if (!ClinicalSampleFactory.hasRequiredMetadata(sample.getSampleData())){
-                Set<Metadata.Key> requiredFields = Metadata.Key.getRequiredFields();
-                Collection<Object> missingFields = CollectionUtils.subtract(requiredFields, sample.getSampleData());
+            if (!ClinicalSampleFactory.hasRequiredMetadata(sample.getSampleData())) {
+                Collection<String> missingFields=ClinicalSampleFactory.getMissingFields(sample.getSampleData());
                 throw new IllegalArgumentException(REQUIRED_FIELD_MISSING + ": " + missingFields);
             }
         }

@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.SampleData;
@@ -62,6 +63,13 @@ public class ClinicalSampleFactory {
      *         False if any required fields are missing.
      */
     public static boolean hasRequiredMetadata(List<SampleData> sampleData) {
+        return getMissingFields(sampleData).isEmpty();
+    }
+
+    /**
+     * Find all required fields that are missing from sampleData
+     */
+    public static Collection<String> getMissingFields(List<SampleData> sampleData) {
         Set<String> includedRequiredFields=new HashSet<>();
         for (SampleData data : sampleData) {
                 if (Metadata.Key.isRequired(data.getName())) {
@@ -70,7 +78,6 @@ public class ClinicalSampleFactory {
                     }
                 }
         }
-        return includedRequiredFields.size()==Metadata.Key.getRequiredFields().size();
+        return CollectionUtils.subtract(Metadata.Key.getRequiredFieldNames(), includedRequiredFields);
     }
-
 }

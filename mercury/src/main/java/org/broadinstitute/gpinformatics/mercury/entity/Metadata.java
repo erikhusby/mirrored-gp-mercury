@@ -20,8 +20,11 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.math.BigDecimal;
 import java.text.Format;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -317,6 +320,14 @@ public class Metadata {
         public static boolean isRequired(String name) {
             Key key = Key.valueOf(name);
             return key.isRequired;
+        }
+
+        public static Collection<String> getRequiredFieldNames() {
+            List<String> fieldNames=new ArrayList<>();
+            for (Key key : getRequiredFields()) {
+                fieldNames.add(key.name());
+            }
+            return fieldNames;
         }
     }
 }
