@@ -149,7 +149,8 @@ public class BillingEjb {
         // Now that we have successfully billed, update the Ledger Entries associated with this QuoteImportItem
         // with the quote for the QuoteImportItem, add the priceItemType, and the success message.
         Collection<String> replacementPriceItemNames = new ArrayList<>();
-        Collection<QuotePriceItem> replacementPriceItems = priceListCache.getReplacementPriceItems(item.getPriceItem());
+        Collection<QuotePriceItem> replacementPriceItems =
+                priceListCache.getReplacementPriceItems(item.getProduct().getPrimaryPriceItem());
         for (QuotePriceItem replacementPriceItem : replacementPriceItems) {
             replacementPriceItemNames.add(replacementPriceItem.getName());
         }
