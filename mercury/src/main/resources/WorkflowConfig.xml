@@ -58,7 +58,6 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
-                <!-- todo jmt what if there's a mix of material types? -->
                 <bucketEntryEvaluators>org.broadinstitute.gpinformatics.mercury.entity.workflow.DnaBucketEntryEvaluator</bucketEntryEvaluators>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
             </workflowStepDefs>
@@ -116,7 +115,6 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
-                <!-- todo jmt what if there's a mix of material types? -->
                 <bucketEntryEvaluators>org.broadinstitute.gpinformatics.mercury.entity.workflow.DnaBucketEntryEvaluator</bucketEntryEvaluators>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
             </workflowStepDefs>
