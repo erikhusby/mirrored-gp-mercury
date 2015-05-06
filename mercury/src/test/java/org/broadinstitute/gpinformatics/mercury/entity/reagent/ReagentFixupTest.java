@@ -498,4 +498,15 @@ public class ReagentFixupTest extends Arquillian {
             throw new RuntimeException(e);
         }
     }
+    @Test(enabled = false)
+    public void fixupSupport660() {
+        // Used SQL to verify that RG-8552 is used only by the 9 events in question, so it's safe to change it.
+        userBean.loginOSUser();
+        GenericReagent genericReagentRg150 = genericReagentDao.findByReagentNameAndLot("HS buffer", "RG-150");
+        Assert.assertNull(genericReagentRg150);
+        GenericReagent genericReagentRg8552 = genericReagentDao.findByReagentNameAndLot("HS buffer", "RG-8552");
+        genericReagentRg8552.setLot("RG-150");
+        genericReagentDao.persist(new FixupCommentary("SUPPORT-660 change lot"));
+        genericReagentDao.flush();
+    }
 }
