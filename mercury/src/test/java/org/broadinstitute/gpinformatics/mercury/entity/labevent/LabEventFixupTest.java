@@ -27,6 +27,11 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.persistence.Query;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 import java.util.Collection;
 import java.util.GregorianCalendar;
@@ -580,5 +585,73 @@ public class LabEventFixupTest extends Arquillian {
         labEventDao.persist(new FixupCommentary(
                 jiraTicket + " manual override to " + lcsetName + " for " + labEventType));
         labEventDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim3513() {
+        try {
+            userBean.loginOSUser();
+            utx.begin();
+            LabEvent dilutionToFlowcell = labEventDao.findById(LabEvent.class, 850779L);
+            Assert.assertEquals(dilutionToFlowcell.getLabEventType(), LabEventType.DILUTION_TO_FLOWCELL_TRANSFER);
+            System.out.println("Deleting " + dilutionToFlowcell.getLabEventType() + " " +
+                    dilutionToFlowcell.getLabEventId());
+            labEventDao.remove(dilutionToFlowcell);
+            labEventDao.persist(new FixupCommentary("GPLIM-3513 delete duplicate event"));
+            labEventDao.flush();
+            utx.commit();
+        } catch (NotSupportedException | SystemException | HeuristicMixedException | HeuristicRollbackException |
+                RollbackException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim3508() {
+        userBean.loginOSUser();
+        LabEvent catchCleanup = labEventDao.findById(LabEvent.class, 849904L);
+        Assert.assertEquals(catchCleanup.getLabEventType(), LabEventType.ICE_CATCH_ENRICHMENT_CLEANUP);
+        LabEvent catchPico1 = labEventDao.findById(LabEvent.class, 849943L);
+        Assert.assertEquals(catchPico1.getLabEventType(), LabEventType.CATCH_PICO);
+        LabEvent catchPico2 = labEventDao.findById(LabEvent.class, 849942L);
+        Assert.assertEquals(catchPico2.getLabEventType(), LabEventType.CATCH_PICO);
+
+        System.out.print("Changing " + catchCleanup.getLabEventType());
+        catchCleanup.setLabEventType(LabEventType.POND_REGISTRATION);
+        System.out.println(" to " + catchCleanup.getLabEventType());
+
+        System.out.print("Changing " + catchPico1.getLabEventType());
+        catchPico1.setLabEventType(LabEventType.POND_PICO);
+        System.out.println(" to " + catchPico1.getLabEventType());
+
+        System.out.print("Changing " + catchPico2.getLabEventType());
+        catchPico2.setLabEventType(LabEventType.POND_PICO);
+        System.out.println(" to " + catchPico2.getLabEventType());
+
+        labEventDao.persist(new FixupCommentary("GPLIM-3508 change event types"));
+        labEventDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupQual676() {
+        try {
+            userBean.loginOSUser();
+            utx.begin();
+            long[] ids = {856424L, 856423L};
+            for (long id: ids) {
+                LabEvent dilutionToFlowcell = labEventDao.findById(LabEvent.class, id);
+                Assert.assertEquals(dilutionToFlowcell.getLabEventType(), LabEventType.DILUTION_TO_FLOWCELL_TRANSFER);
+                System.out.println("Deleting " + dilutionToFlowcell.getLabEventType() + " " +
+                        dilutionToFlowcell.getLabEventId());
+                dilutionToFlowcell.getReagents().clear();
+                labEventDao.remove(dilutionToFlowcell);
+            }
+            labEventDao.persist(new FixupCommentary("QUAL-676 delete duplicate events"));
+            labEventDao.flush();
+            utx.commit();
+        } catch (NotSupportedException | SystemException | HeuristicMixedException | HeuristicRollbackException |
+                RollbackException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

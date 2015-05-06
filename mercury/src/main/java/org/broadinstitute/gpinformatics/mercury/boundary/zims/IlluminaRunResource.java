@@ -1,11 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.zims;
 
 
-import clover.org.apache.commons.lang.StringUtils;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniLane;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniLibrary;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRead;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;

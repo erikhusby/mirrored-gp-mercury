@@ -337,6 +337,7 @@ function showSamples(sampleData) {
                 {"bSortable": true, "sType": "numeric"},        // Yield Amount
                 {"bSortable": true},                            // sample kit upload/rackscan mismatch
                 {"bSortable": true},                            // On Risk
+                {"bSortable": false},                           // On Risk Details
                 {"bSortable": true},                            // Status
                 {"bSortable": true, "sType": "title-string"},   // is billed
                 {"bSortable": true}                             // Comment
@@ -667,8 +668,14 @@ function formatInput(item) {
         </c:when>
     </c:choose>
 
-    <div>
-        Regulatory Info: ${actionBean.regulatoryInfoForPendingOrder.displayText}
+    <div class="form-horizontal span7">
+        <div class="view-control-group control-group">
+            <label class="control-label label-form">Regulatory Info</label>
+
+            <div class="controls">
+                <jsp:include page="regulatory_info_view.jsp"/>
+            </div>
+        </div>
     </div>
 
     <span class="control-group">
@@ -895,22 +902,7 @@ function formatInput(item) {
 
     <div class="controls">
         <div class="form-value">
-            <c:choose>
-                <c:when test="${fn:length(actionBean.editOrder.regulatoryInfos) ne 0}">
-                    <c:forEach var="regulatoryInfo" items="${actionBean.editOrder.regulatoryInfos}">
-                        ${regulatoryInfo.displayText}<br/>
-                    </c:forEach>
-                </c:when>
-
-                <c:otherwise>
-                    <c:choose><c:when test="${actionBean.editOrder.canSkipRegulatoryRequirements()}">
-                        Regulatory information not entered because: ${actionBean.editOrder.skipRegulatoryReason}
-                    </c:when>
-                        <c:otherwise>
-                            No regulatory information entered.
-                        </c:otherwise></c:choose>
-                </c:otherwise>
-            </c:choose>
+            <jsp:include page="regulatory_info_view.jsp"/>
         </div>
     </div>
 </div>
@@ -1230,6 +1222,7 @@ function formatInput(item) {
                 <th width="40">Yield Amount</th>
                 <th width="60"><abbr title="Sample Kit Upload/Rackscan Mismatch">Rackscan Mismatch</abbr></th>
                 <th>On Risk</th>
+                <th style="display:none;">On Risk Details</th>
                 <th width="40">Status</th>
                 <th width="40">Billed</th>
                 <th width="200">Comment</th>
@@ -1300,6 +1293,7 @@ function formatInput(item) {
                             </div>
                         </c:if>
                     </td>
+                    <td id="onRiskDetails-${sample.productOrderSampleId}" style="display:none;">${sample.riskString}"</td>
                     <td>${sample.deliveryStatus.displayName}</td>
                     <td id="completelyBilled-${sample.productOrderSampleId}" style="text-align: center"></td>
                     <td>${sample.sampleComment}</td>

@@ -1,9 +1,11 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import org.apache.commons.lang.NotImplementedException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePlatformType;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
@@ -11,6 +13,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.Quotes;
 
 import javax.enterprise.inject.Alternative;
 import java.util.Date;
+import java.util.Set;
 
 /**
  * This is intended to be a "happy" quote service that accepts all billed work and returns work item ids that are
@@ -45,5 +48,26 @@ class AcceptsAllWorkRegistrationsQuoteServiceStub implements QuoteService {
     @Override
     public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
         return new Quote();
+    }
+
+    @Override
+    public Quote getQuoteWithPriceItems(String alphaId) throws QuoteServerException, QuoteNotFoundException {
+        return new Quote();
+    }
+
+    @Override
+    public Set<Funding> getAllFundingSources() throws QuoteServerException, QuoteNotFoundException{
+        return null;
+    }
+
+    @Override
+    public Quotes getAllQuotes() throws QuoteServerException, QuoteNotFoundException {
+        return null;
+    }
+
+    @Override
+    public PriceList getPlatformPriceItems(QuotePlatformType quotePlatformType)
+            throws QuoteServerException, QuoteNotFoundException {
+        return getAllPriceItems();
     }
 }

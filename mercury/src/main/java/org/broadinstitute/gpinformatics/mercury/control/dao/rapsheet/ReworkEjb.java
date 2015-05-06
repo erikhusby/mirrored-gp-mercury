@@ -21,8 +21,8 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationWithRollbackException;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
@@ -37,7 +37,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkLevel;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkReason;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
@@ -57,8 +57,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.SampleType.PREFER_PDO;
 
 /**
  * Encapsulates the business logic related to rework. This includes the creation of a new batch
@@ -158,21 +156,11 @@ public class ReworkEjb {
         labVessels.addAll(labVesselDao.findBySampleKeyList(query));
 
         for (LabVessel vessel : labVessels) {
-
-            /*
-             * By using PREFER_PDO, we are able to get all samples for a vessel.  If there are samples associated with
-             * PDOs, we will get just the PDO associated Samples.  If there are samples that are NOT associated with
-             * PDOs, we will get those samples.
-             */
-            Set<SampleInstance> sampleInstances = vessel.getSampleInstances(PREFER_PDO, null);
-
-            List<String> sampleIds = new ArrayList<>(sampleInstances.size());
-            for (SampleInstance currentInstance : sampleInstances) {
-                sampleIds.add(currentInstance.getStartingSample().getSampleKey());
+            List<ProductOrderSample> productOrderSamples = new ArrayList<>();
+            for (SampleInstanceV2 sampleInstanceV2 : vessel.getSampleInstancesV2()) {
+                productOrderSamples.addAll(sampleInstanceV2.getAllProductOrderSamples());
             }
-
-            Collection<ProductOrderSample> mapBySamples = productOrderSampleDao.findBySamples(sampleIds);
-            bucketCandidates.addAll(collectBucketCandidatesForAMercuryVessel(vessel, mapBySamples));
+            bucketCandidates.addAll(collectBucketCandidatesForAMercuryVessel(vessel, productOrderSamples));
         }
 
         /*
@@ -459,12 +447,6 @@ public class ReworkEjb {
             throw new ValidationException(error);
         }
 
-        if (reworkItem && !candidateVessel.hasAncestorBeenInBucket(bucketDef.getName())) {
-            validationMessages.add("You have submitted a vessel to the bucket that may not be considered a rework.  " +
-                                   "No ancestor of " + candidateVessel.getLabel() + " has ever been in been in the " +
-                                   bucketDef.getName() + " before.");
-        }
-
         if (!bucketDef.meetsBucketCriteria(candidateVessel)) {
             validationMessages.add("You have submitted a vessel to the bucket that contains at least one sample that " +
                                    "is not DNA");
@@ -561,8 +543,8 @@ public class ReworkEjb {
             this.lastEventStep = lastEventStep;
             Set<String> sampleNames = new HashSet<>();
             if (labVessel != null) {
-                for (SampleInstance instance : this.labVessel.getSampleInstances(LabVessel.SampleType.ANY, null)) {
-                    sampleNames.add(instance.getStartingSample().getSampleKey());
+                for (SampleInstanceV2 instance : this.labVessel.getSampleInstancesV2()) {
+                    sampleNames.add(instance.getMercuryRootSampleName());
                 }
             }
             this.currentSampleKey = StringUtils.join(sampleNames, ", ");

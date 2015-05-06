@@ -13,10 +13,12 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePlatformType;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
@@ -138,6 +140,7 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
                 }
                 log.info("Woke up from quote call");
             } catch (InterruptedException e) {
+                // do nothing with this error.
             }
 
             return workId;
@@ -146,6 +149,27 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
         @Override
         public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
             throw new NotImplementedException();
+        }
+
+        @Override
+        public Quote getQuoteWithPriceItems(String alphaId) throws QuoteServerException, QuoteNotFoundException {
+            return getQuoteByAlphaId(alphaId);
+        }
+
+        @Override
+        public Set<Funding> getAllFundingSources() throws QuoteServerException, QuoteNotFoundException{
+            return null;
+        }
+
+        @Override
+        public Quotes getAllQuotes() throws QuoteServerException, QuoteNotFoundException {
+            return null;
+        }
+
+        @Override
+        public PriceList getPlatformPriceItems(QuotePlatformType quotePlatformType)
+                throws QuoteServerException, QuoteNotFoundException {
+            return getAllPriceItems();
         }
     }
 
@@ -160,8 +184,8 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
      * <li>Persist all of this data, outside of a transaction, flush and clear the entity manager.</li>
      * </ul>
      *
-     * @param billingSessionDao1
-     * @param orderSamples
+     * @param billingSessionDao1 A dao for the session
+     * @param orderSamples The samples
      */
     public static BillingSession writeFixtureDataOneSamplePerProductOrder(BillingSessionDao billingSessionDao1,
                                                                    String... orderSamples) {

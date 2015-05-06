@@ -143,7 +143,7 @@ public class ProductOrderEjb {
         List<ProductOrderSample> samplesToRemove =
                 new ArrayList<>(editOrder.getSampleCount() - editOrder.getReceivedSampleCount());
         for (ProductOrderSample sample : editOrder.getSamples()) {
-            if (!sample.getSampleData().isSampleReceived()) {
+            if (!sample.isSampleAvailable()) {
                 samplesToRemove.add(sample);
             }
         }
@@ -168,8 +168,8 @@ public class ProductOrderEjb {
      * @throws QuoteNotFoundException
      */
     public void persistProductOrder(ProductOrder.SaveType saveType, ProductOrder editedProductOrder,
-                                    Collection<String> deletedIds,
-                                    Collection<ProductOrderKitDetail> kitDetailCollection)
+                                    @Nonnull Collection<String> deletedIds,
+                                    @Nonnull Collection<ProductOrderKitDetail> kitDetailCollection)
             throws IOException, QuoteNotFoundException {
 
         kitDetailCollection.removeAll(Collections.singleton(null));

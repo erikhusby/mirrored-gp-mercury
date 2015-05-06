@@ -258,13 +258,9 @@ public class LimsQueries {
     public Double fetchQuantForTube(String tubeBarcode, String quantType) {
         LabVessel vessel = labVesselDao.findByIdentifier(tubeBarcode);
         if (vessel != null) {
-            Collection<LabMetric> metrics =
-                    vessel.getNearestMetricsOfType(LabMetric.MetricType.getByDisplayName(quantType));
-            if (metrics != null && metrics.size() == 1) {
-                return metrics.iterator().next().getValue().doubleValue();
-            } else {
-                throw new RuntimeException(
-                        "Got more than one quant for barcode:" + tubeBarcode + ", quant type: " + quantType);
+            List<LabMetric> metrics = vessel.getNearestMetricsOfType(LabMetric.MetricType.getByDisplayName(quantType));
+            if (metrics != null && !metrics.isEmpty()) {
+                return metrics.get(metrics.size() - 1).getValue().doubleValue();
             }
         }
         throw new RuntimeException(

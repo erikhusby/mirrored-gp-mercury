@@ -61,6 +61,7 @@ public class SearchDefinitionFactory {
         fact.buildLabEventSearchDef();
         fact.buildLabVesselSearchDef();
         fact.buildMercurySampleSearchDef();
+        fact.buildReagentSearchDef();
     }
 
     public static ConfigurableSearchDefinition getForEntity(String entity) {
@@ -91,6 +92,12 @@ public class SearchDefinitionFactory {
         ConfigurableSearchDefinition configurableSearchDefinition
                 = new MercurySampleSearchDefinition().buildSearchDefinition();
         MAP_NAME_TO_DEF.put(ColumnEntity.MERCURY_SAMPLE.getEntityName(), configurableSearchDefinition);
+    }
+
+    private void buildReagentSearchDef() {
+        ConfigurableSearchDefinition configurableSearchDefinition
+                = new ReagentSearchDefinition().buildSearchDefinition();
+        MAP_NAME_TO_DEF.put(ColumnEntity.REAGENT.getEntityName(), configurableSearchDefinition);
     }
 
     static SearchTerm.Evaluator<Object> getLcsetInputConverter(){
@@ -149,7 +156,7 @@ public class SearchDefinitionFactory {
      */
     static class EventTypeValueConversionExpression extends SearchTerm.Evaluator<Object> {
         @Override
-        public Object evaluate(Object entity, Map<String, Object> context) {
+        public LabEventType evaluate(Object entity, Map<String, Object> context) {
             return Enum.valueOf(LabEventType.class, (String) context.get(SearchInstance.CONTEXT_KEY_SEARCH_STRING));
         }
     }
@@ -183,7 +190,9 @@ public class SearchDefinitionFactory {
                 // A vessel can end up with more than 1 sample in it
                 for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
                     MercurySample sample = sampleInstanceV2.getRootOrEarliestMercurySample();
-                    value += getSampleMetadataForDisplay(sample, metaName) + " ";
+                    if (sample != null) {
+                        value += getSampleMetadataForDisplay(sample, metaName) + " ";
+                    }
                 }
                 value = value.trim();
             } else {

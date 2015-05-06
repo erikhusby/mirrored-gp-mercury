@@ -104,6 +104,48 @@ IS
   INVALID_LAB_BATCH EXCEPTION;
   v_tmp  NUMBER;
 
+  TYPE PK_ARR_TY IS TABLE OF NUMBER(19) INDEX BY BINARY_INTEGER;
+  V_PK_ARR PK_ARR_TY;
+
+  /**
+   * Splits String output of java.util.Arrays.toString output into array of NUMBER(19)
+   * Elements enclosed in square brackets ("[]")delimited by the characters ", " (a comma followed by a space).
+   * e.g. [1]  [1, 2, 3, 4]
+   */
+  FUNCTION PKS_FROM_JAVA_ARRAYSTOSTRING( V_ARRAYSTR IN VARCHAR2 )
+    RETURN PK_ARR_TY
+  IS
+    V_CUR_POS  NUMBER(4);
+    V_NEXT_POS NUMBER(4);
+    V_VAL      VARCHAR2(19);
+    V_PK_ARR   PK_ARR_TY;
+    V_INPUT    VARCHAR2(1024);
+    BEGIN
+      V_INPUT := TRIM( V_ARRAYSTR );
+
+      -- Nothing to do, return empty array
+      IF V_INPUT IS NULL OR LENGTH(V_INPUT) < 3 THEN
+        RETURN V_PK_ARR;
+      END IF;
+
+      -- Wish there was a split() function...
+      V_CUR_POS := 2;
+      LOOP
+        V_NEXT_POS := INSTR( V_INPUT, ',', V_CUR_POS );
+        IF V_NEXT_POS = 0 THEN
+          V_VAL := SUBSTR( V_INPUT, V_CUR_POS, LENGTH(V_INPUT) - V_CUR_POS);
+        ELSE
+          V_VAL := SUBSTR( V_INPUT, V_CUR_POS, V_NEXT_POS - V_CUR_POS );
+          V_CUR_POS := V_NEXT_POS + 1;
+        END IF;
+        V_PK_ARR( V_PK_ARR.COUNT + 1 ) := TO_NUMBER( TRIM( V_VAL ) );
+        EXIT WHEN V_NEXT_POS = 0;
+      END LOOP;
+
+      RETURN V_PK_ARR;
+
+    END;
+
   BEGIN
 
 ---------------------------------------------------------------------------
@@ -178,6 +220,23 @@ IS
       SELECT
         price_item_id
       FROM im_price_item
+      WHERE is_delete = 'T'
+    );
+
+    -- Flush PDO regulatory info for all changed/deleted product orders
+    DELETE FROM pdo_regulatory_infos
+    WHERE product_order IN (
+      SELECT
+        product_order_id
+      FROM im_product_order
+    );
+
+    -- Doubtful regulatory info will ever be deleted, but handle it
+    DELETE FROM regulatory_info
+    WHERE regulatory_info_id IN (
+      SELECT
+        regulatory_info_id
+      FROM im_regulatory_info
       WHERE is_delete = 'T'
     );
 
@@ -668,9 +727,11 @@ IS
         jira_ticket_key = new.jira_ticket_key,
         owner = new.owner,
         placed_date = new.placed_date,
+        skip_regulatory_reason = new.skip_regulatory_reason,
         etl_date = new.etl_date
       WHERE product_order_id = new.product_order_id;
 
+      IF SQL%ROWCOUNT = 0 THEN
       INSERT INTO product_order (
         product_order_id,
         research_project_id,
@@ -683,9 +744,9 @@ IS
         jira_ticket_key,
         owner,
         placed_date,
+        skip_regulatory_reason,
         etl_date
-      )
-        SELECT
+      ) VALUES (
           new.product_order_id,
           new.research_project_id,
           new.product_id,
@@ -697,20 +758,83 @@ IS
           new.jira_ticket_key,
           new.owner,
           new.placed_date,
-          new.etl_date
-        FROM DUAL
-        WHERE NOT EXISTS(
-            SELECT
-              1
-            FROM product_order
-            WHERE product_order_id = new.product_order_id
-        );
+          new.skip_regulatory_reason,
+          new.etl_date );
+      END IF ;
       EXCEPTION WHEN OTHERS THEN
       errmsg := SQLERRM;
       DBMS_OUTPUT.PUT_LINE(
           TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_product_order.dat line ' || new.line_number || '  ' || errmsg);
       CONTINUE;
     END;
+
+    END LOOP;
+
+    -- Regulatory info data
+    FOR new IN ( SELECT *
+                   FROM im_regulatory_info
+                  WHERE is_delete = 'F' ) LOOP
+    BEGIN
+      UPDATE regulatory_info
+         SET regulatory_info_id = new.regulatory_info_id,
+             identifier = new.identifier,
+             type       = new.type,
+             name       = new.name,
+             etl_date   = new.etl_date
+       WHERE regulatory_info_id = new.regulatory_info_id;
+
+      IF SQL%ROWCOUNT = 0 THEN
+         INSERT INTO regulatory_info (
+               regulatory_info_id,
+               identifier,
+               type,
+               name,
+               etl_date
+             ) VALUES (
+           new.regulatory_info_id,
+           new.identifier,
+           new.type,
+           new.name,
+           new.etl_date );
+      END IF;
+      EXCEPTION WHEN OTHERS THEN
+      errmsg := SQLERRM;
+      DBMS_OUTPUT.PUT_LINE(
+          TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_regulatory_info.dat line ' || new.line_number || '  ' || errmsg);
+      CONTINUE;
+    END;
+    END LOOP;
+
+    -- Many to many mapping table pdo_regulatory_infos
+    -- List of regulatory_info_id's associated with each product_order_id in a list
+    -- See function PKS_FROM_JAVA_ARRAYSTOSTRING
+    FOR new IN ( SELECT line_number, product_order_id, reg_info_ids, etl_date
+                   FROM im_product_order
+                  WHERE is_delete = 'F' )
+    LOOP
+
+      BEGIN
+        V_PK_ARR := PKS_FROM_JAVA_ARRAYSTOSTRING( new.reg_info_ids );
+        IF V_PK_ARR.COUNT > 0 THEN
+          FOR V_INDEX IN V_PK_ARR.FIRST .. V_PK_ARR.LAST
+          LOOP
+            INSERT INTO pdo_regulatory_infos (
+              product_order,
+              regulatory_infos,
+              etl_date
+            ) VALUES (
+              new.product_order_id,
+              V_PK_ARR(V_INDEX),
+              new.etl_date );
+          END LOOP;
+        END IF;
+      EXCEPTION WHEN OTHERS THEN
+        errmsg := SQLERRM;
+        DBMS_OUTPUT.PUT_LINE(
+        TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_product_order.dat line, pdo_regulatory_infos data '
+            || new.line_number || '  ' || errmsg);
+        CONTINUE;
+      END;
 
     END LOOP;
 

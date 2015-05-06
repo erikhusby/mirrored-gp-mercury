@@ -4,6 +4,7 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -12,6 +13,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 
 import static org.easymock.EasyMock.*;
@@ -38,6 +40,7 @@ public class ProductOrderEtlDbFreeTest {
     private long createdBy = 678L;
     private String ownerName = "testname";
     private ProductOrderEtl tst;
+    private Collection<RegulatoryInfo> regulatoryInfos = Collections.EMPTY_LIST;
 
     private AuditReaderDao auditReader = createMock(AuditReaderDao.class);
     private ProductOrderDao dao = createMock(ProductOrderDao.class);
@@ -46,8 +49,9 @@ public class ProductOrderEtlDbFreeTest {
     private Product product = createMock(Product.class);
     private BSPUserList userList = createMock(BSPUserList.class);
     private BspUser owner = createMock(BspUser.class);
+    private RegulatoryInfo regulatoryInfo = createMock(RegulatoryInfo.class);
 
-    private Object[] mocks = new Object[]{auditReader, dao, pdo, researchProject, product, userList, owner};
+    private Object[] mocks = new Object[]{auditReader, dao, pdo, researchProject, product, userList, owner, regulatoryInfo};
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
@@ -94,6 +98,8 @@ public class ProductOrderEtlDbFreeTest {
         expect(userList.getById(createdBy)).andReturn(owner);
         expect(owner.getUsername()).andReturn(ownerName);
         expect(pdo.getPlacedDate()).andReturn(modifiedDate);
+        expect(pdo.getSkipRegulatoryReason()).andReturn(null);
+        expect(pdo.getRegulatoryInfos()).andReturn(regulatoryInfos);
 
         expect(researchProject.getResearchProjectId()).andReturn(researchProjectId);
         expect(product.getProductId()).andReturn(productId);
@@ -123,6 +129,7 @@ public class ProductOrderEtlDbFreeTest {
         assertEquals(parts[i++], jiraTicketKey);
         assertEquals(parts[i++], ownerName);
         assertEquals(parts[i++], ExtractTransform.formatTimestamp(modifiedDate));
+        assertEquals(parts[i++], "\"\"");
         assertEquals(parts.length, i);
     }
 }
