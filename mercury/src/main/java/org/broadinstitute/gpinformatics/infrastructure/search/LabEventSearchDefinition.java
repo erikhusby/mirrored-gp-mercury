@@ -531,9 +531,9 @@ public class LabEventSearchDefinition {
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public List<String> evaluate(Object entity, Map<String, Object> context) {
+            public Set<String> evaluate(Object entity, Map<String, Object> context) {
                 LabEvent labEvent = (LabEvent) entity;
-                List<String> results = new ArrayList<>();
+                Set<String> results = new HashSet<>();
 
                 // todo jmt this needs to do more than in place, and it needs to get sample instances
                 LabVessel labVessel = labEvent.getInPlaceLabVessel();
@@ -541,6 +541,19 @@ public class LabEventSearchDefinition {
                     for (MercurySample sample : labVessel.getMercurySamples()) {
                         results.add(sample.getSampleKey());
                     }
+//                  TODO jms Results can be confusing for containers/pools, push into src/dest layout nested table
+//                    for( SampleInstanceV2 sample : labVessel.getSampleInstancesV2()) {
+//                        results.add(sample.getRootOrEarliestMercurySampleName());
+//                    }
+//                } else {
+//                    for( LabVessel srcVessel : labEvent.getSourceLabVessels() ) {
+//                        for (MercurySample sample : srcVessel.getMercurySamples()) {
+//                            results.add(sample.getSampleKey());
+//                        }
+//                        for( SampleInstanceV2 sample : srcVessel.getSampleInstancesV2()) {
+//                            results.add(sample.getRootOrEarliestMercurySampleName());
+//                        }
+//                    }
                 }
                 return results;
             }

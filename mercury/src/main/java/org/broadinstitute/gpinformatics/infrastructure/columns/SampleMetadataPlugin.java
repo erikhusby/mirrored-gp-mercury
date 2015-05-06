@@ -2,6 +2,8 @@ package org.broadinstitute.gpinformatics.infrastructure.columns;
 
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -40,6 +42,18 @@ public class SampleMetadataPlugin implements ListPlugin {
             Set<Metadata> metadata = sample.getMetadata();
             if( metadata != null && !metadata.isEmpty() ) {
                 MetadataPluginHelper.addMetadataToRowData( metadata, rowData );
+            } else {
+                for(LabVessel sampleVessel : sample.getLabVessel() ) {
+                    for( SampleInstanceV2 sampleInstance : sampleVessel.getSampleInstancesV2()){
+                        MercurySample rootSample = sampleInstance.getRootOrEarliestMercurySample();
+                        if( rootSample != null ) {
+                            metadata = rootSample.getMetadata();
+                            if( metadata != null && !metadata.isEmpty() ) {
+                                MetadataPluginHelper.addMetadataToRowData( metadata, rowData );
+                            }
+                        }
+                    }
+                }
             }
 
             ConfigurableList.Row row = MetadataPluginHelper.buildRow(sample.getMercurySampleId().toString(), rowData );
