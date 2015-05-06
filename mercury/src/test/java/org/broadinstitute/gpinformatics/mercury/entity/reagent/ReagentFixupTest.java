@@ -6,6 +6,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -42,6 +43,9 @@ public class ReagentFixupTest extends Arquillian {
 
     @Inject
     private UserBean userBean;
+
+    @Inject
+    private GenericReagentDao genericReagentDao;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -285,4 +289,15 @@ public class ReagentFixupTest extends Arquillian {
         reagentDesignDao.flush();
     }
 
+    @Test(enabled = false)
+    public void fixupSupport660() {
+        // Used SQL to verify that RG-8552 is used only by the 9 events in question, so it's safe to change it.
+        userBean.loginOSUser();
+        GenericReagent genericReagentRg150 = genericReagentDao.findByReagentNameAndLot("HS buffer", "RG-150");
+        Assert.assertNull(genericReagentRg150);
+        GenericReagent genericReagentRg8552 = genericReagentDao.findByReagentNameAndLot("HS buffer", "RG-8552");
+        genericReagentRg8552.setLot("RG-150");
+        genericReagentDao.persist(new FixupCommentary("SUPPORT-660 change lot"));
+        genericReagentDao.flush();
+    }
 }
