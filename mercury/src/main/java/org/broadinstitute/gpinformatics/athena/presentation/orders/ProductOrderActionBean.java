@@ -600,7 +600,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         requireField(researchProject, "a Research Project", action);
 
-        validateRegulatoryInformation(action);
+        if (editOrder.isRegulatoryInfoEditAllowed()) {
+            validateRegulatoryInformation(action);
+        }
 
         if (!ApplicationInstance.CRSP.isCurrent()) {
             validateQuoteOptions(action);
