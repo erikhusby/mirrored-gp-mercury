@@ -62,9 +62,6 @@ public class ReagentFixupTest extends Arquillian {
     @Inject
     private UserTransaction utx;
 
-    @Inject
-    private GenericReagentDao genericReagentDao;
-
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
