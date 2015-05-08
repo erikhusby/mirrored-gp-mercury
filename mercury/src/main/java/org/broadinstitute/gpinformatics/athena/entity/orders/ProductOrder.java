@@ -331,7 +331,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                 sampleNames.add(productOrderSample.getName());
             }
         }
-         if (sampleNames.isEmpty()) {
+        if (sampleNames.isEmpty()) {
             // This early return is needed to avoid making a unnecessary injection, which could cause
             // DB Free automated tests to fail.
             return;
@@ -339,7 +339,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
         // This gets all the sample names. We could get unique sample names from BSP as a future optimization.
         SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
-        Map<String, SampleData> sampleDataMap=Collections.emptyMap();;
+        Map<String, SampleData> sampleDataMap = Collections.emptyMap();
 
         try {
             sampleDataMap = sampleDataFetcher.fetchSampleDataForProductOrderSample(samples);
