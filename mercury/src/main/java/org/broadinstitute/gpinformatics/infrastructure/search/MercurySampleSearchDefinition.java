@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -94,10 +95,10 @@ public class MercurySampleSearchDefinition {
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public List<String> evaluate(Object entity, Map<String, Object> context) {
+            public Set<String> evaluate(Object entity, Map<String, Object> context) {
                 MercurySample sample = (MercurySample) entity;
                 // Assumption that sample can't be added to the same batch more than once
-                List<String> results = new ArrayList<>();
+                Set<String> results = new HashSet<>();
                 for( LabVessel sampleVessel : sample.getLabVessel() ) {
                     for( LabBatch batch : sampleVessel.getLabBatches() ) {
                         results.add(batch.getBatchName());

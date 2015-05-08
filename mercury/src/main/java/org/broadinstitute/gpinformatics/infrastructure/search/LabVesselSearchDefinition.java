@@ -171,9 +171,14 @@ public class LabVesselSearchDefinition {
             public Set<String> evaluate(Object entity, Map<String, Object> context) {
                 Set<String> results = new HashSet<>();
                 LabVessel labVessel = (LabVessel) entity;
-                for (BucketEntry bucketEntry : labVessel.getBucketEntries()) {
-                    if (bucketEntry.getLabBatch() != null) {
-                        results.add(bucketEntry.getLabBatch().getBatchName());
+                for( LabBatch batch : labVessel.getLabBatches() ) {
+                        results.add(batch.getBatchName());
+                }
+                if( results.isEmpty() ) {
+                    for (BucketEntry bucketEntry : labVessel.getBucketEntries()) {
+                        if (bucketEntry.getLabBatch() != null) {
+                            results.add(bucketEntry.getLabBatch().getBatchName());
+                        }
                     }
                 }
                 if( results.isEmpty() ) {
@@ -292,7 +297,7 @@ public class LabVesselSearchDefinition {
             public String evaluate(Object entity, Map<String, Object> context) {
                 LabVessel labVessel = (LabVessel) entity;
                 Collection<MercurySample> mercurySamples = labVessel.getMercurySamples();
-                if( !mercurySamples.isEmpty() ) {
+                if (!mercurySamples.isEmpty()) {
                     MercurySample mercurySample = mercurySamples.iterator().next();
                     BspSampleSearchAddRowsListener bspColumns = (BspSampleSearchAddRowsListener) context.get(
                             SearchInstance.CONTEXT_KEY_BSP_SAMPLE_SEARCH);
