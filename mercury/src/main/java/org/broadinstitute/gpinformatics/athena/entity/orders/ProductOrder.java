@@ -21,6 +21,7 @@ import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtili
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraProject;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
+import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.annotations.BatchSize;
@@ -326,7 +327,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         // Create a subset of the samples so we only call BSP for BSP samples that aren't already cached.
         Set<String> sampleNames = new HashSet<>(samples.size());
         for (ProductOrderSample productOrderSample : samples) {
-            if (productOrderSample.needsBspMetaData()) {
+            if (!productOrderSample.isHasBspSampleDataBeenInitialized()) {
                 sampleNames.add(productOrderSample.getName());
             }
         }
@@ -338,7 +339,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
         // This gets all the sample names. We could get unique sample names from BSP as a future optimization.
         SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
-        Map<String, SampleData> sampleDataMap = sampleDataFetcher.fetchSampleData(sampleNames);
+        Map<String, SampleData> sampleDataMap=Collections.emptyMap();;
+
+        try {
+            sampleDataMap = sampleDataFetcher.fetchSampleDataForProductOrderSample(samples);
+        } catch (BSPLookupException ignored) {
+            // not a bsp sample?
+        }
 
         // Collect SampleData which we will then use to look up FFPE status.
         List<SampleData> nonNullSampleData = new ArrayList<>();
@@ -349,6 +356,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             if (sampleData != null) {
                 sample.setSampleData(sampleData);
                 nonNullSampleData.add(sampleData);
+            } else {
+                sample.setSampleData(sample.makeSampleData());
             }
         }
 

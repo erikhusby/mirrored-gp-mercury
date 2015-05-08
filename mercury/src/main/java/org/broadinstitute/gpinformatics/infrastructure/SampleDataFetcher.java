@@ -19,7 +19,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -193,7 +192,7 @@ public class SampleDataFetcher implements Serializable {
 
         Set<String> sampleNames = new HashSet<>(samples.size());
         for (ProductOrderSample productOrderSample : samples) {
-            if (productOrderSample.needsBspMetaData()) {
+            if (productOrderSample.bspMetaDataMissing()) {
                 MercurySample mercurySample = productOrderSample.getMercurySample();
                 if(mercurySample != null &&
                    mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
