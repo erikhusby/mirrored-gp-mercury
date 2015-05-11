@@ -11,7 +11,6 @@
 
 package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.SampleData;
@@ -20,9 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Static methods to simplify the creation of ClinicalResourceBean and related objects.
@@ -54,30 +51,5 @@ public class ClinicalSampleFactory {
             manifestRecords.add(new ManifestRecord(metadata.toArray(new Metadata[metadata.size()])));
         }
         return manifestRecords;
-    }
-
-    /**
-     * Test if provided sampleData includes all required fields.
-     *
-     * @return True if provided sampleData includes all required fields.<br/>
-     *         False if any required fields are missing.
-     */
-    public static boolean hasRequiredMetadata(List<SampleData> sampleData) {
-        return getMissingFields(sampleData).isEmpty();
-    }
-
-    /**
-     * Find all required fields that are missing from sampleData
-     */
-    public static Collection<String> getMissingFields(List<SampleData> sampleData) {
-        Set<String> includedRequiredFields=new HashSet<>();
-        for (SampleData data : sampleData) {
-                if (Metadata.Key.isRequired(data.getName())) {
-                    if (StringUtils.isNotBlank(data.getValue())) {
-                        includedRequiredFields.add(data.getName());
-                    }
-                }
-        }
-        return CollectionUtils.subtract(Metadata.Key.getRequiredFieldNames(), includedRequiredFields);
     }
 }

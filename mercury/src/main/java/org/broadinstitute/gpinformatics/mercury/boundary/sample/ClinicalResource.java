@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessio
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.ClinicalResourceBean;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.SampleData;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
@@ -22,6 +23,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.SecurityContext;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * ClinicalResource provides web services related to accessioning samples into Mercury along with sample data used for
@@ -37,6 +39,7 @@ public class ClinicalResource {
     public static final String SAMPLE_IS_NULL = "Sample is null.";
     public static final String EMPTY_LIST_OF_SAMPLES_NOT_ALLOWED = "Empty list of samples not allowed.";
     public static final String REQUIRED_FIELD_MISSING = "Missing required sample metadata";
+    public static final Metadata.Key REQUIRED_METADATA_KEY = Metadata.Key.MATERIAL_TYPE;
 
     @Inject
     private UserBean userBean;
@@ -113,12 +116,29 @@ public class ClinicalResource {
             if (metadataCount==0) {
                 throw new IllegalArgumentException(SAMPLE_CONTAINS_NO_METADATA);
             }
-            if (!ClinicalSampleFactory.hasRequiredMetadata(sample.getSampleData())) {
-                Collection<String> missingFields=ClinicalSampleFactory.getMissingFields(sample.getSampleData());
-                throw new IllegalArgumentException(REQUIRED_FIELD_MISSING + ": " + missingFields);
+            if (!hasRequiredMetadata(sample.getSampleData())) {
+                throw new IllegalArgumentException(REQUIRED_FIELD_MISSING + ": " + REQUIRED_METADATA_KEY.name());
             }
         }
     }
+
+    /**
+      * Test if provided sampleData includes all required fields.
+      *
+      * @return True if provided sampleData includes all required fields.<br/>
+      *         False if any required fields are missing.
+      */
+    public static boolean hasRequiredMetadata(List<SampleData> sampleData) {
+        for (SampleData data : sampleData) {
+            if (REQUIRED_METADATA_KEY.name().equals(data.getName())) {
+                if (StringUtils.isNotBlank(data.getValue())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
 
     private void validateManifestName(String manifestName) {
         if (StringUtils.isBlank(manifestName)) {

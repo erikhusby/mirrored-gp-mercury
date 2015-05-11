@@ -205,7 +205,7 @@ public class Metadata {
         /**
          * The sample's material type, e.g. DNA, Blood, FFPE, etc.
          */
-        MATERIAL_TYPE(Category.SAMPLE, DataType.STRING, "Material Type", Visibility.USER, true),
+        MATERIAL_TYPE(Category.SAMPLE, DataType.STRING, "Material Type", Visibility.USER),
 
         /**
          * The type of material from which the sample was derived.
@@ -266,29 +266,12 @@ public class Metadata {
         private final DataType dataType;
         private final String displayName;
         private final Visibility visibility;
-        private final boolean isRequired;
 
-        Key(Category category, DataType dataType, String displayName,
-            Visibility visibility, boolean isRequired) {
+        Key(Category category, DataType dataType, String displayName, Visibility visibility) {
             this.category = category;
             this.dataType = dataType;
             this.displayName = displayName;
             this.visibility = visibility;
-            this.isRequired = isRequired;
-        }
-
-        Key(Category category, DataType dataType, String displayName, Visibility visibility) {
-            this(category, dataType, displayName, visibility, false);
-        }
-
-        public static Set<Key> getRequiredFields() {
-            Set<Key> required = new HashSet<>();
-            for (Key key : values()) {
-                if (key.isRequired) {
-                    required.add(key);
-                }
-            }
-            return required;
         }
 
         public Category getCategory() {
@@ -315,19 +298,6 @@ public class Metadata {
                 }
             }
             return null;
-        }
-
-        public static boolean isRequired(String name) {
-            Key key = Key.valueOf(name);
-            return key.isRequired;
-        }
-
-        public static Collection<String> getRequiredFieldNames() {
-            List<String> fieldNames=new ArrayList<>();
-            for (Key key : getRequiredFields()) {
-                fieldNames.add(key.name());
-            }
-            return fieldNames;
         }
     }
 }
