@@ -87,7 +87,8 @@ public class CreateFields extends UpdateFields {
         LCSET_PROJECT("Illumina Library Construction Tracking", "LCSET", "CLCSET"),
         FCT_PROJECT("Flowcell Tracking", "FCT", "CFCT"),
         PRODUCT_ORDERING("Product Ordering", "PDO", "CPDO"),
-        RESEARCH_PROJECTS("Research Projects", "RP", "CRP");
+        RESEARCH_PROJECTS("Research Projects", "RP", "CRP"),
+        RECEIPT_PROJECT("Sample Receipt", "RCT");
 
         private final String projectName;
         private final String keyPrefix;
@@ -127,7 +128,8 @@ public class CreateFields extends UpdateFields {
         RESEARCH_PROJECT("Research Project", "CLIA "),
         FLOWCELL("Flowcell"),
         MISEQ("MiSeq"),
-        SAMPLE_INITIATION("Sample Initiation");
+        SAMPLE_INITIATION("Sample Initiation"),
+        RECEIPT("Receipt Tracking");
 
         private final String jiraName;
 

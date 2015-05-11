@@ -111,6 +111,9 @@ public class ManifestSession implements Updatable {
     @Column(name = "FROM_SAMPLE_KIT")
     private boolean fromSampleKit;
 
+    @Column(name = "RECEIPT_TICKET")
+    private String receiptTicket;
+
     /**
      * For JPA.
      */
@@ -193,6 +196,14 @@ public class ManifestSession implements Updatable {
 
     public boolean isFromSampleKit() {
         return fromSampleKit;
+    }
+
+    public String getReceiptTicket() {
+        return receiptTicket;
+    }
+
+    public void setReceiptTicket(String receiptTicket) {
+        this.receiptTicket = receiptTicket;
     }
 
     /**

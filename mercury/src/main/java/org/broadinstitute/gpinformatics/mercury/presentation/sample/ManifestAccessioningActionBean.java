@@ -16,6 +16,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
@@ -36,12 +38,13 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     public static final String ACTIONBEAN_URL_BINDING = "/sample/accessioning.action";
     public static final String SELECTED_SESSION_ID = "selectedSessionId";
     private static Log logger = LogFactory.getLog(ManifestAccessioningActionBean.class);
-
     public static final String START_SESSION_PAGE = "/sample/start_session.jsp";
+
     public static final String REVIEW_UPLOAD_PAGE = "/sample/review_manifest_upload.jsp";
     public static final String ACCESSION_SAMPLE_PAGE = "/sample/accession_sample.jsp";
     public static final String SCAN_SAMPLE_RESULTS_PAGE = "/sample/manifest_status_insert.jsp";
     public static final String PREVIEW_CLOSE_SESSION_PAGE = "/sample/preview_close_session.jsp";
+    private static final String ASSOCIATE_RECEIPT_PAGE = "/sample/associate_receipt.jsp";
 
     public static final String START_A_SESSION_ACTION = "startASession";
     public static final String UPLOAD_MANIFEST_ACTION = "uploadManifest";
@@ -54,6 +57,8 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     public static final String PREVIEW_SESSION_CLOSE_ACTION = "previewSessionClose";
     public static final String CLOSE_SESSION_ACTION = "closeSession";
     public static final String BEGIN_ACCESSION_ACTION = "beginAccession";
+    public static final String FIND_RECEIPT_ACTION = "findReceipt";
+    public static final String ASSOCIATE_RECEIPT_ACTION = "associateReceipt";
 
     @Inject
     private ManifestSessionDao manifestSessionDao;
@@ -63,6 +68,9 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
 
     @Inject
     private UserBean userBean;
+
+    @Inject
+    private JiraService jiraService;
 
     @Inject
     private ProjectTokenInput projectTokenInput;
@@ -79,7 +87,6 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     @Validate(required = true, on = SCAN_ACCESSION_SOURCE_ACTION, label = "Source sample is required for accessioning")
     private String accessionSource;
 
-//    @Validate(required = true, on = SCAN_ACCESSION_SOURCE_ACTION, label = "Source tube barcode is required for accessioning")
     private String accessionTube;
 
     private List<ManifestSession> openSessions;
@@ -88,6 +95,8 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     private ManifestStatus statusValues;
     private String scanErrors;
     private String scanMessages;
+
+    private String receiptKey;
 
     public ManifestAccessioningActionBean() {
         super();
@@ -227,6 +236,25 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
         return new ForwardResolution(getClass(), LOAD_SESSION_ACTION);
     }
 
+    @HandlesEvent(FIND_RECEIPT_ACTION)
+    public Resolution findReceipt() {
+
+        try {
+            JiraIssue receiptInfo = jiraService.getIssueInfo(receiptKey);
+        } catch (IOException e) {
+            addGlobalValidationError(e.getMessage());
+            return getContext().getSourcePageResolution();
+        }
+
+        return new ForwardResolution(ASSOCIATE_RECEIPT_PAGE).
+                addParameter(SELECTED_SESSION_ID, selectedSession.getManifestSessionId());
+    }
+
+    @HandlesEvent(ASSOCIATE_RECEIPT_ACTION)
+    public Resolution associateReceipt() {
+
+    }
+
     public Long getSelectedSessionId() {
         return selectedSessionId;
     }
@@ -297,5 +325,13 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
 
     public void setAccessionTube(String accessionTube) {
         this.accessionTube = accessionTube;
+    }
+
+    public String getReceiptKey() {
+        return receiptKey;
+    }
+
+    public void setReceiptKey(String receiptKey) {
+        this.receiptKey = receiptKey;
     }
 }
