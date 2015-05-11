@@ -84,6 +84,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;
@@ -817,42 +818,14 @@ public class BettaLimsMessageResourceTest extends Arquillian {
     @Test
     public void testSonic() {
         String exExTestPrefix = testPrefixDateFormat.format(new Date());
-        BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory(false);
-        Map<String, BarcodedTube> mapBarcodeToExExTube = buildSamplesInPdo(exExTestPrefix,
-                BaseEventTest.NUM_POSITIONS_IN_RACK, Workflow.ICE_EXOME_EXPRESS);
-
-        ShearingJaxbBuilder shearingExExJaxbBuilder = new ShearingJaxbBuilder(bettaLimsMessageFactory,
-                new ArrayList<>(mapBarcodeToExExTube.keySet()), exExTestPrefix, "ShearExEx" + exExTestPrefix).invoke();
-        for (BettaLIMSMessage bettaLIMSMessage : shearingExExJaxbBuilder.getMessageList()) {
-            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
-        }
-
-        LibraryConstructionJaxbBuilder libraryConstructionExExJaxbBuilder = new LibraryConstructionJaxbBuilder(
-                bettaLimsMessageFactory, exExTestPrefix, shearingExExJaxbBuilder.getShearCleanPlateBarcode(),
-                LibraryConstructionJaxbBuilder.P_7_INDEX_PLATE_BARCODE,
-                LibraryConstructionJaxbBuilder.P_5_INDEX_PLATE_BARCODE, BaseEventTest.NUM_POSITIONS_IN_RACK,
-                LibraryConstructionJaxbBuilder.TargetSystem.SQUID_VIA_MERCURY).invoke();
-        for (BettaLIMSMessage bettaLIMSMessage : libraryConstructionExExJaxbBuilder.getMessageList()) {
-            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
-        }
-
         String crspTestPrefix = exExTestPrefix + "C";
-        Map<String, BarcodedTube> mapBarcodeToCrspTube = buildSamplesInPdo(crspTestPrefix,
-                BaseEventTest.NUM_POSITIONS_IN_RACK, Workflow.ICE_CRSP);
-        ShearingJaxbBuilder shearingCrspJaxbBuilder = new ShearingJaxbBuilder(bettaLimsMessageFactory,
-                new ArrayList<>(mapBarcodeToCrspTube.keySet()), crspTestPrefix, "ShearCrsp" + crspTestPrefix).invoke();
-        for (BettaLIMSMessage bettaLIMSMessage : shearingCrspJaxbBuilder.getMessageList()) {
-            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
-        }
+        BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory(false);
 
-        LibraryConstructionJaxbBuilder libraryConstructionCrspJaxbBuilder = new LibraryConstructionJaxbBuilder(
-                bettaLimsMessageFactory, crspTestPrefix, shearingCrspJaxbBuilder.getShearCleanPlateBarcode(),
-                LibraryConstructionJaxbBuilder.P_7_INDEX_PLATE_BARCODE,
-                LibraryConstructionJaxbBuilder.P_5_INDEX_PLATE_BARCODE, BaseEventTest.NUM_POSITIONS_IN_RACK,
-                LibraryConstructionJaxbBuilder.TargetSystem.SQUID_VIA_MERCURY).invoke();
-        for (BettaLIMSMessage bettaLIMSMessage : libraryConstructionCrspJaxbBuilder.getMessageList()) {
-            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
-        }
+        LibraryConstructionJaxbBuilder libraryConstructionExExJaxbBuilder = libraryConstruction(exExTestPrefix,
+                bettaLimsMessageFactory, Workflow.ICE_EXOME_EXPRESS);
+
+        LibraryConstructionJaxbBuilder libraryConstructionCrspJaxbBuilder = libraryConstruction(crspTestPrefix,
+                bettaLimsMessageFactory, Workflow.ICE_CRSP);
 
         ArrayList<String> pondRegRackBarcodes = new ArrayList<>();
         pondRegRackBarcodes.add(libraryConstructionExExJaxbBuilder.getPondRegRackBarcode());
@@ -922,7 +895,34 @@ public class BettaLimsMessageResourceTest extends Arquillian {
             }
 */
         }
+        // Rework at ICE process?
+        // Where is this likely to break?
+        // First transfer after bucket event is used to "lock in" LCSET.
+        // Rework has to be a slightly different set of tubes?
+        // How did this work in Buick, with a 100% rework rate? LCSET-6493 has 94 samples, 6610 has 93
+        // 6492 and 6609 seem to be identical, but the latter LCSET is declared on descendant tubes?
+    }
 
+    @Nonnull
+    private LibraryConstructionJaxbBuilder libraryConstruction(String testPrefix,
+            BettaLimsMessageTestFactory bettaLimsMessageFactory, Workflow workflow) {
+        Map<String, BarcodedTube> mapBarcodeToExExTube = buildSamplesInPdo(testPrefix,
+                BaseEventTest.NUM_POSITIONS_IN_RACK, workflow);
+        ShearingJaxbBuilder shearingExExJaxbBuilder = new ShearingJaxbBuilder(bettaLimsMessageFactory,
+                new ArrayList<>(mapBarcodeToExExTube.keySet()), testPrefix, "Shear" + testPrefix).invoke();
+        for (BettaLIMSMessage bettaLIMSMessage : shearingExExJaxbBuilder.getMessageList()) {
+            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
+        }
+
+        LibraryConstructionJaxbBuilder libraryConstructionExExJaxbBuilder = new LibraryConstructionJaxbBuilder(
+                bettaLimsMessageFactory, testPrefix, shearingExExJaxbBuilder.getShearCleanPlateBarcode(),
+                LibraryConstructionJaxbBuilder.P_7_INDEX_PLATE_BARCODE,
+                LibraryConstructionJaxbBuilder.P_5_INDEX_PLATE_BARCODE, BaseEventTest.NUM_POSITIONS_IN_RACK,
+                LibraryConstructionJaxbBuilder.TargetSystem.SQUID_VIA_MERCURY).invoke();
+        for (BettaLIMSMessage bettaLIMSMessage : libraryConstructionExExJaxbBuilder.getMessageList()) {
+            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
+        }
+        return libraryConstructionExExJaxbBuilder;
     }
 
     public static String sendMessage(BettaLIMSMessage bettaLIMSMessage,
