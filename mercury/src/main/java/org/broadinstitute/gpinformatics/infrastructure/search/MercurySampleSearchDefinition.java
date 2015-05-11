@@ -97,7 +97,6 @@ public class MercurySampleSearchDefinition {
             @Override
             public Set<String> evaluate(Object entity, Map<String, Object> context) {
                 MercurySample sample = (MercurySample) entity;
-                // Assumption that sample can't be added to the same batch more than once
                 Set<String> results = new HashSet<>();
                 for( LabVessel sampleVessel : sample.getLabVessel() ) {
                     for( LabBatch batch : sampleVessel.getLabBatches() ) {
