@@ -66,7 +66,7 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
      */
     protected ConfigurableList.ResultList getTargetNestedTableData(LabEvent labEvent
             , @Nonnull Map<String, Object> context) {
-        VesselContainer containerVessel = findEventTargetContainer( labEvent );
+        VesselContainer containerVessel = findEventTargetContainer(labEvent);
         if( containerVessel == null || containerVessel.getMapPositionToVessel().isEmpty() ) {
             return null;
         }
@@ -84,9 +84,13 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
     protected ConfigurableList.ResultList getSourceNestedTableData(LabEvent labEvent
             , @Nonnull Map<String, Object> context) {
 
-        // Ignore source vessels for in-place events
+        // If destination layout is selected, ignore source vessels for in-place events
         if( labEvent.getInPlaceLabVessel() != null ) {
-            return null;
+            SearchInstance searchInstance = (SearchInstance) context.get( SearchInstance.CONTEXT_KEY_SEARCH_INSTANCE );
+            List<String> displayColumnNames = searchInstance.getPredefinedViewColumns();
+            if( displayColumnNames.contains("Destination Layout")) {
+                return null;
+            }
         }
 
         VesselContainer containerVessel = findEventSourceContainer( labEvent );
