@@ -24,6 +24,7 @@ public class JiraIssue implements Serializable {
 
     private final Map<String, Object> extraFields = new HashMap<>();
 
+    private Date created;
     private Date dueDate;
 
     private final JiraService jiraService;
@@ -44,6 +45,7 @@ public class JiraIssue implements Serializable {
             summary = tempIssue.getSummary();
             description = tempIssue.getDescription();
             dueDate = tempIssue.getDueDate();
+            created = tempIssue.getCreated();
         }
         return summary;
     }
@@ -59,6 +61,7 @@ public class JiraIssue implements Serializable {
             summary = tempIssue.getSummary();
             description = tempIssue.getDescription();
             dueDate = tempIssue.getDueDate();
+            created = tempIssue.getCreated();
         }
 
         return description;
@@ -75,6 +78,7 @@ public class JiraIssue implements Serializable {
             summary = tempIssue.getSummary();
             description = tempIssue.getDescription();
             dueDate = tempIssue.getDueDate();
+            created = tempIssue.getCreated();
         }
 
         return dueDate;
@@ -82,6 +86,22 @@ public class JiraIssue implements Serializable {
 
     public void setDueDate(@Nonnull Date dueDate) {
         this.dueDate = dueDate;
+    }
+
+    public void setCreated(Date created) {
+        this.created = created;
+    }
+
+    public Date getCreated() throws IOException {
+
+        if(created == null && summary == null) {
+            JiraIssue tempIssue = jiraService.getIssueInfo(key, (String []) null);
+            summary = tempIssue.getSummary();
+            description = tempIssue.getDescription();
+            dueDate = tempIssue.getDueDate();
+            created = tempIssue.getCreated();
+        }
+        return created;
     }
 
     public Object getFieldValue(@Nonnull String fieldName) throws IOException{

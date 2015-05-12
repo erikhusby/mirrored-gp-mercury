@@ -376,4 +376,11 @@ public class ManifestSessionEjb {
             }
         }
     }
+
+    public void updateReceiptInfo(Long manifestSessionId, String receiptKey) {
+        ManifestSession session = manifestSessionDao.find(manifestSessionId);
+
+        session.setReceiptTicket(receiptKey);
+
+    }
 }

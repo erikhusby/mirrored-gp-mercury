@@ -60,6 +60,9 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     public static final String FIND_RECEIPT_ACTION = "findReceipt";
     public static final String ASSOCIATE_RECEIPT_ACTION = "associateReceipt";
 
+    public static final String UNABLE_TO_ASSOCIATE_RECEIPT_ERROR = "Unable to associate receipt with manifest Session";
+
+
     @Inject
     private ManifestSessionDao manifestSessionDao;
 
@@ -97,6 +100,9 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     private String scanMessages;
 
     private String receiptKey;
+
+    private String receiptSummary;
+    private String receiptDescription;
 
     public ManifestAccessioningActionBean() {
         super();
@@ -239,20 +245,35 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     @HandlesEvent(FIND_RECEIPT_ACTION)
     public Resolution findReceipt() {
 
+        JiraIssue receiptInfo = null;
+        ForwardResolution forwardResolution;
         try {
-            JiraIssue receiptInfo = jiraService.getIssueInfo(receiptKey);
+            receiptInfo = jiraService.getIssueInfo(receiptKey);
+            forwardResolution = new ForwardResolution(ASSOCIATE_RECEIPT_PAGE)
+                    .addParameter(SELECTED_SESSION_ID, selectedSession.getManifestSessionId())
+                    .addParameter("receiptSummary", receiptInfo.getSummary())
+                    .addParameter("receiptDescription", receiptInfo.getDescription())
+                    .addParameter("selectedSession.receiptTicket", receiptKey);
         } catch (IOException e) {
             addGlobalValidationError(e.getMessage());
             return getContext().getSourcePageResolution();
         }
 
-        return new ForwardResolution(ASSOCIATE_RECEIPT_PAGE).
-                addParameter(SELECTED_SESSION_ID, selectedSession.getManifestSessionId());
+        return forwardResolution;
     }
 
     @HandlesEvent(ASSOCIATE_RECEIPT_ACTION)
     public Resolution associateReceipt() {
+        try {
+            manifestSessionEjb.updateReceiptInfo(selectedSession.getManifestSessionId(), receiptKey);
+        } catch (Exception e) {
+            logger.error(UNABLE_TO_ASSOCIATE_RECEIPT_ERROR, e);
+            addGlobalValidationError(UNABLE_TO_ASSOCIATE_RECEIPT_ERROR);
+            return getContext().getSourcePageResolution();
+        }
 
+        return new ForwardResolution(LOAD_SESSION_ACTION)
+                .addParameter(SELECTED_SESSION_ID, selectedSession.getManifestSessionId());
     }
 
     public Long getSelectedSessionId() {
@@ -333,5 +354,13 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
 
     public void setReceiptKey(String receiptKey) {
         this.receiptKey = receiptKey;
+    }
+
+    public String getReceiptDescription() {
+        return receiptDescription;
+    }
+
+    public String getReceiptSummary() {
+        return receiptSummary;
     }
 }
