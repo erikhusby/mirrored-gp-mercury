@@ -53,37 +53,42 @@ public class JiraCommentUtil {
      * @param labEvent event to add to JIRA ticket
      */
     public void postUpdate(LabEvent labEvent) {
-        LabVessel messageLabVessel;
+        LabVessel messageLabVessel = null;
+        Set<LabVessel> sourceLabVessels = labEvent.getSourceLabVessels();
         if (labEvent.getInPlaceLabVessel() == null) {
-            messageLabVessel = labEvent.getSourceLabVessels().iterator().next();
+            if (!sourceLabVessels.isEmpty()) {
+                messageLabVessel = sourceLabVessels.iterator().next();
+            }
         } else {
             messageLabVessel = labEvent.getInPlaceLabVessel();
         }
-        // The label for a tube formation is a digest, so use the label for one of the tubes.
-        if (OrmUtil.proxySafeIsInstance(messageLabVessel, TubeFormation.class)) {
-            TubeFormation tubeFormation = OrmUtil.proxySafeCast(messageLabVessel, TubeFormation.class);
-            messageLabVessel = tubeFormation.getContainerRole().getContainedVessels().iterator().next();
-        }
-        String message = "";
-        if (bspUserList != null) {
-            BspUser bspUser = bspUserList.getById(labEvent.getEventOperator());
-            if (bspUser != null) {
-                message += bspUser.getUsername() + " ran ";
+        if (messageLabVessel != null) {
+            // The label for a tube formation is a digest, so use the label for one of the tubes.
+            if (OrmUtil.proxySafeIsInstance(messageLabVessel, TubeFormation.class)) {
+                TubeFormation tubeFormation = OrmUtil.proxySafeCast(messageLabVessel, TubeFormation.class);
+                messageLabVessel = tubeFormation.getContainerRole().getContainedVessels().iterator().next();
             }
-        }
-        message += labEvent.getLabEventType().getName() + " for <a href=\"" + appConfig.getUrl() +
-                   VesselSearchActionBean.ACTIONBEAN_URL_BINDING + "?" + VesselSearchActionBean.VESSEL_SEARCH
-                   + "=&searchKey=" +
-                   messageLabVessel.getLabel() + "\">" + messageLabVessel.getLabel() + "</a>" +
-                   " on " + labEvent.getEventLocation() + " at " + labEvent.getEventDate();
+            String message = "";
+            if (bspUserList != null) {
+                BspUser bspUser = bspUserList.getById(labEvent.getEventOperator());
+                if (bspUser != null) {
+                    message += bspUser.getUsername() + " ran ";
+                }
+            }
+            message += labEvent.getLabEventType().getName() + " for <a href=\"" + appConfig.getUrl() +
+                       VesselSearchActionBean.ACTIONBEAN_URL_BINDING + "?" + VesselSearchActionBean.VESSEL_SEARCH
+                       + "=&searchKey=" +
+                       messageLabVessel.getLabel() + "\">" + messageLabVessel.getLabel() + "</a>" +
+                       " on " + labEvent.getEventLocation() + " at " + labEvent.getEventDate();
 
-        Set<LabVessel> labVessels;
-        if (labEvent.getInPlaceLabVessel() == null) {
-            labVessels = labEvent.getSourceLabVessels();
-        } else {
-            labVessels = Collections.singleton(labEvent.getInPlaceLabVessel());
+            Set<LabVessel> labVessels;
+            if (labEvent.getInPlaceLabVessel() == null) {
+                labVessels = sourceLabVessels;
+            } else {
+                labVessels = Collections.singleton(labEvent.getInPlaceLabVessel());
+            }
+            postUpdate(message, labVessels, labEvent);
         }
-        postUpdate(message, labVessels, labEvent);
     }
 
     /**

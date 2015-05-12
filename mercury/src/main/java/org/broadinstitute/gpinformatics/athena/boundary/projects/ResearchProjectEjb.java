@@ -11,8 +11,8 @@
 
 package org.broadinstitute.gpinformatics.athena.boundary.projects;
 
-import clover.com.google.common.base.Function;
-import clover.com.google.common.collect.Maps;
+import com.google.common.base.Function;
+import com.google.common.collect.Maps;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -297,12 +297,13 @@ public class ResearchProjectEjb {
 
         Collection<SubmissionStatusDetailBean> submissionResults = submissionsService.postSubmissions(requestBean);
 
-        Map<String, SubmissionTracker> submissionIdentifierToTracker = Maps.uniqueIndex(submissionProject.getSubmissionTrackers(), new Function<SubmissionTracker, String>() {
-            @Override
-            public String apply(@Nullable SubmissionTracker submissionTracker) {
-                return submissionTracker.createSubmissionIdentifier();
-            }
-        });
+        Map<String, SubmissionTracker> submissionIdentifierToTracker = Maps
+                .uniqueIndex(submissionProject.getSubmissionTrackers(), new Function<SubmissionTracker, String>() {
+                    @Override
+                    public String apply(@Nullable SubmissionTracker submissionTracker) {
+                        return submissionTracker.createSubmissionIdentifier();
+                    }
+                });
         List<String> errorMessages = new ArrayList<>();
 
         for (SubmissionStatusDetailBean status : submissionResults) {

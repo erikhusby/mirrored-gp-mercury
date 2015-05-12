@@ -34,6 +34,12 @@
             color:#ffffff;
             background-color:#0076da;
         }
+
+        /* Override Bootstrap's block display of labels for add-ons to constrain the hit box. */
+        #addOnCheckboxes label {
+            display: inline;
+            vertical-align: bottom;
+        }
     </style>
         <script type="text/javascript">
 
@@ -217,6 +223,7 @@
 
                         updateUIForMaterialInfoChoice(index, getSelectedPostReceiveOptions(index));
                     });
+                    $j("#skipQuoteDiv").hide();
                     updateUIForProductChoice();
                     updateUIForProjectChoice();
                     updateFundsRemaining();
@@ -364,6 +371,9 @@
                 $j("#addOnCheckboxes").text('If you select a product, its Add-ons will show up here');
                 $j("#sampleInitiationKitRequestEdit").hide();
                 $j("#numberOfLanesDiv").fadeOut(duration);
+                $j("#skipQuoteDiv").hide();
+                $j("#quote").show();
+
             } else {
                 if (productKey == '<%= Product.SAMPLE_INITIATION_PART_NUMBER %>') {
                     // Product is Sample Initiation "P-ESH-0001".
@@ -575,6 +585,7 @@
                 var addOnId = "addOnCheckbox-" + index;
                 checkboxText += '  <input id="' + addOnId + '" type="checkbox"' + checked + ' name="addOnKeys" value="' + val.key + '"/>';
                 checkboxText += '  <label style="font-size: x-small;" for="' + addOnId + '">' + val.value + ' [' + val.key + ']</label>';
+                checkboxText += '  <br>';
             });
 
             var checkboxes = $j("#addOnCheckboxes");
@@ -924,7 +935,34 @@
                                         title="Enter the research project for this order"/>
                             </div>
                         </div>
+                    </c:when>
+                    <c:otherwise>
+                        <div class="view-control-group control-group" style="margin-bottom: 20px;">
+                            <label class="control-label">Research Project</label>
 
+                            <div class="controls">
+                                <div class="form-value">
+                                    <stripes:hidden id="researchProject" name="projectTokenInput.listOfKeys"
+                                                    value="${actionBean.editOrder.researchProject.jiraTicketKey}"/>
+                                    <stripes:link title="Research Project"
+                                                  beanclass="<%=ResearchProjectActionBean.class.getName()%>"
+                                                  event="view">
+                                        <stripes:param name="<%=ResearchProjectActionBean.RESEARCH_PROJECT_PARAMETER%>"
+                                                       value="${actionBean.editOrder.researchProject.businessKey}"/>
+                                        ${actionBean.editOrder.researchProject.title}
+                                    </stripes:link>
+                                    (<a target="JIRA"
+                                        href="${actionBean.jiraUrl(actionBean.editOrder.researchProject.jiraTicketKey)}"
+                                        class="external" target="JIRA">
+                                        ${actionBean.editOrder.researchProject.jiraTicketKey}
+                                </a>)
+                                </div>
+                            </div>
+                        </div>
+                    </c:otherwise>
+                </c:choose>
+                <c:choose>
+                    <c:when test="${actionBean.editOrder.regulatoryInfoEditAllowed}">
                         <div class="control-group">
                             <stripes:label for="regulatoryInfo" class="control-label">
                                 Regulatory Information
@@ -950,28 +988,6 @@
                         </div>
                     </c:when>
                     <c:otherwise>
-                        <div class="view-control-group control-group" style="margin-bottom: 20px;">
-                            <label class="control-label">Research Project</label>
-
-                            <div class="controls">
-                                <div class="form-value">
-                                    <stripes:hidden name="projectTokenInput.listOfKeys"
-                                                    value="${actionBean.editOrder.researchProject.jiraTicketKey}"/>
-                                    <stripes:link title="Research Project"
-                                                  beanclass="<%=ResearchProjectActionBean.class.getName()%>"
-                                                  event="view">
-                                        <stripes:param name="<%=ResearchProjectActionBean.RESEARCH_PROJECT_PARAMETER%>"
-                                                       value="${actionBean.editOrder.researchProject.businessKey}"/>
-                                        ${actionBean.editOrder.researchProject.title}
-                                    </stripes:link>
-                                    (<a target="JIRA"
-                                        href="${actionBean.jiraUrl(actionBean.editOrder.researchProject.jiraTicketKey)}"
-                                        class="external" target="JIRA">
-                                        ${actionBean.editOrder.researchProject.jiraTicketKey}
-                                </a>)
-                                </div>
-                            </div>
-                        </div>
                         <div class="view-control-group control-group">
                             <label class="control-label">Regulatory Information</label>
 

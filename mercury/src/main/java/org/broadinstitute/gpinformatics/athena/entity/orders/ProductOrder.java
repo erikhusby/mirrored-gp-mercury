@@ -982,6 +982,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return false;
     }
 
+    public boolean isRegulatoryInfoEditAllowed() {
+        return isDraft() || isPending();
+    }
+
     public boolean canSkipRegulatoryRequirements() {
         return !StringUtils.isBlank(skipRegulatoryReason);
     }
@@ -1364,7 +1368,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         private void updateSampleCounts(Set<String> participantSet, ProductOrderSample sample) {
             incrementSampleCountByMetadata(sample);
             SampleData sampleData = sample.getSampleData();
-            if (sampleData.isSampleReceived()) {
+
+            //Exposing that we look at received to be either received or accessioned.
+            if (sample.isSampleAvailable()) {
                 receivedSampleCount++;
             } else if (!sample.getDeliveryStatus().isAbandoned()) {
                 notReceivedAndNotAbandonedCount++;
@@ -1598,7 +1604,12 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      */
     @Transient
     public boolean canSkipQuote() {
-        return !StringUtils.isBlank(getSkipQuoteReason()) && getProduct().getSupportsSkippingQuote();
+        return StringUtils.isNotBlank(getSkipQuoteReason()) && allowedToSkipQuote();
+    }
+
+    public boolean allowedToSkipQuote() {
+        return null != getProduct() &&
+               getProduct().getSupportsSkippingQuote();
     }
 
     public int getSampleCount() {

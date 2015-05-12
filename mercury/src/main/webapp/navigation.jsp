@@ -179,6 +179,11 @@
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.labevent.ManualTransferActionBean"
                                           event="view">Manual Transfers</stripes:link>
                         </li>
+                        <li>
+                            <stripes:link id="lcsetControls"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.LcsetActionBean"
+                                          event="view">LCSET Controls</stripes:link>
+                        </li>
                     </ul>
                 </li>
             </security:authorizeBlock>
@@ -237,9 +242,7 @@
                                       event="view">Samples</stripes:link>
                     </li>
                     <li>
-                        <stripes:link id="lcsetSearch"
-                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.LCSetSearchActionBean"
-                                      event="view">LCSets</stripes:link>
+                        <a href="${ctxpath}/search/ConfigurableSearch.action?fetchSearch=&selectedSearchName=GLOBAL%7CGLOBAL_LAB_VESSEL_SEARCH_INSTANCES%7CLCSET+Data&entityName=LabVessel">LCSets</a>
                     </li>
                     <li>
                         <stripes:link id="userDefSearch"

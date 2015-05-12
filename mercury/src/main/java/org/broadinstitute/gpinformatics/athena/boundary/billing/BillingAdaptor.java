@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
+import com.google.common.collect.HashMultimap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
@@ -10,6 +11,7 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 
@@ -35,6 +37,8 @@ import java.util.Set;
 @RequestScoped
 @TransactionAttribute(TransactionAttributeType.NEVER)
 public class BillingAdaptor implements Serializable {
+
+    private static final long serialVersionUID = 8829737083883106155L;
 
     private static final Log log = LogFactory.getLog(BillingAdaptor.class);
 
@@ -122,6 +126,7 @@ public class BillingAdaptor implements Serializable {
                 throw new BillingException(BillingEjb.NO_ITEMS_TO_BILL_ERROR_TEXT);
             }
 
+            HashMultimap<String, String> quoteItemsByQuote = HashMultimap.create();
             for (QuoteImportItem item : unBilledQuoteImportItems) {
 
                 BillingEjb.BillingResult result = new BillingEjb.BillingResult(item);
@@ -130,20 +135,33 @@ public class BillingAdaptor implements Serializable {
                 Quote quote = new Quote();
                 quote.setAlphanumericId(item.getQuoteId());
 
-                QuotePriceItem quotePriceItem = QuotePriceItem.convertMercuryPriceItem(item.getPriceItem());
+                // The price item that we are billing.
+                QuotePriceItem priceItemBeingBilled = QuotePriceItem.convertMercuryPriceItem(item.getPriceItem());
 
                 // Get the quote PriceItem that this is replacing, if it is a replacement.
-                QuotePriceItem quoteIsReplacing = item.getPrimaryForReplacement(priceListCache);
+                QuotePriceItem primaryPriceItemIfReplacement = item.getPrimaryForReplacement(priceListCache);
 
                 try {
-                    String workId = quoteService.registerNewWork(quote, quotePriceItem, quoteIsReplacing,
+                    // Get the quote items on the quote, adding to the quote item cache, if not there.
+                    Collection<String> quoteItemNames = getQuoteItems(quoteItemsByQuote, item.getQuoteId());
+
+                    // If this is a replacement, the primary is not on the quote and the replacement IS on the quote,
+                    // set the primary to null so it will be billed as if it is a primary.
+                    if (primaryPriceItemIfReplacement != null) {
+                        if (!quoteItemNames.contains(primaryPriceItemIfReplacement.getName()) &&
+                                quoteItemNames.contains(priceItemBeingBilled.getName())) {
+                            primaryPriceItemIfReplacement = null;
+                        }
+                    }
+
+                    String workId = quoteService.registerNewWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
                                                                  item.getWorkCompleteDate(), item.getQuantity(),
                                                                  pageUrl, "billingSession", sessionKey);
 
                     result.setWorkId(workId);
                     Set<String> billedPdoKeys = getBilledPdoKeys(result);
-                    logBilling(workId, item, quotePriceItem, billedPdoKeys);
-                    billingEjb.updateLedgerEntries(item, quoteIsReplacing, workId);
+                    logBilling(workId, item, priceItemBeingBilled, billedPdoKeys);
+                    billingEjb.updateLedgerEntries(item, primaryPriceItemIfReplacement, workId);
                 } catch (Exception ex) {
 
                     String errorMessage;
@@ -176,6 +194,26 @@ public class BillingAdaptor implements Serializable {
         }
 
         return results;
+    }
+
+    /**
+     * This grabs the quote items for a quoteId from the quote server. It maintains a cache that keeps it from going
+     * to the quote server multiple times for the same quote id.
+     *
+     * @param quoteItemsByQuote The cache of quote Ids to the quote items.
+     * @param quoteId The quote to look up
+     *
+     * @return The list of quote items (price item names that belong to the quote).
+     */
+    private Collection<String> getQuoteItems(HashMultimap<String, String> quoteItemsByQuote, String quoteId) throws Exception {
+        if (!quoteItemsByQuote.containsKey(quoteId)) {
+            Quote quote = quoteService.getQuoteWithPriceItems(quoteId);
+            for (QuoteItem quoteItem : quote.getQuoteItems()) {
+                quoteItemsByQuote.put(quoteId, quoteItem.getName());
+            }
+        }
+
+        return quoteItemsByQuote.get(quoteId);
     }
 
     void logBilling(String workId, QuoteImportItem quoteImportItem, QuotePriceItem quotePriceItem, Set<String> billedPdoKeys) {

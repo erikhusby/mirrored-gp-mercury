@@ -67,7 +67,7 @@ public class ConfigurableListDbFreeTest {
         nextMonth.add(Calendar.MONTH, 1);
 
         Reagent reagent1 = new GenericReagent("KAPAAMPKT","14D02A0013", nextMonth.getTime());
-        //injectFakeID(reagent1.getClass().getSuperclass(), reagent1, "reagentId", new Long(997));
+        injectFakeID(reagent1.getClass().getSuperclass(), reagent1, "reagentId", new Long(999));
         event1.addReagent(reagent1);
 
         event1.setInPlaceLabVessel(new StaticPlate("000005899473", StaticPlate.PlateType.Eppendorf96 ));
@@ -88,6 +88,12 @@ public class ConfigurableListDbFreeTest {
         Assert.assertEquals(cellValues.size(), 1);
         Assert.assertEquals(cellValues.get(0), event1.getLabEventId().toString());
 
+        // Lab event parent row should have sortable eventID value
+        List<Comparable<?>> cellSortValues = resultList.getResultRows().get(0).getSortableCells();
+        Assert.assertEquals(cellSortValues.size(), 1);
+        Long value = (Long) cellSortValues.get(0);
+        Assert.assertEquals( value.compareTo(new Long(666)), 0);
+
         // Verify nested table
         ConfigurableList.ResultRow row = resultList.getResultRows().get(0);
         Map<String, ConfigurableList.ResultList> nestedTables = row.getNestedTables();
@@ -106,7 +112,8 @@ public class ConfigurableListDbFreeTest {
 
         Assert.assertEquals(nestedTable.getResultRows().get(0).getRenderableCells().get(0), "KAPAAMPKT" );
         Assert.assertEquals(nestedTable.getResultRows().get(0).getRenderableCells().get(1), "14D02A0013" );
-        Assert.assertEquals(nestedTable.getResultRows().get(0).getRenderableCells().get(2), nextMonth.getTime().toString() );
+        Assert.assertEquals(nestedTable.getResultRows().get(0)
+                .getRenderableCells().get(2), ColumnValueType.DATE.format(nextMonth.getTime(), null ) );
 
         // **** Test multiple rows ****
         Reagent reagent2 = new GenericReagent("PEG20NC","14D16A0009", nextMonth.getTime());

@@ -385,6 +385,8 @@ public class BucketEjb {
             }
         }
 
+        // This case will only apply to Samples with a BSP data source, at least for now.  There should not be a
+        // scenario in which we fall into this conditional for Vessels that originate in Mercury
         if (!CollectionUtils.isEmpty(samplesWithoutVessel)) {
             vessels.addAll(createInitialVessels(samplesWithoutVessel, username));
         }

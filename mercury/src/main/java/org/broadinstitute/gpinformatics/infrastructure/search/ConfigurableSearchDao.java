@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
+import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.infrastructure.common.BaseSplitter;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.hibernate.Criteria;
@@ -63,11 +64,18 @@ public class ConfigurableSearchDao extends GenericDao {
             ConfigurableSearchDefinition configurableSearchDefinition, SearchInstance searchInstance, String orderPath,
             String orderDirection) {
 
+        // Note: IllegalArgumentException will cleanly percolate up to UI error message
+        // Test if inputs are blank (otherwise, a table scan is performed)
+        // The case where a user supplies no terms is handled in ConfigurableSearchActionBean
         if( !searchInstance.checkValues() ) {
-            // This will percolate up to UI error screen, if we allow blanks, a table scan is performed
-            // TODO JMS Validate this in client side JavaScript first...
-            throw new RuntimeException("*** A value is required for each selected search term. ***");
+            throw new IllegalArgumentException("A value is required for each selected search term.");
         }
+
+        // Fail cleanly with error message if any other terms are include with an exclusive term
+        if( searchInstance.hasExclusiveViolation() ) {
+            throw new IllegalArgumentException("No other search terms are allowed with an exclusive search term.");
+        }
+
         HibernateEntityManager hibernateEntityManager = getEntityManager().unwrap(HibernateEntityManager.class);
         Session hibernateSession = hibernateEntityManager.getSession();
         Criteria criteria = hibernateSession.createCriteria(configurableSearchDefinition.getResultEntity().getEntityClass());
@@ -95,9 +103,8 @@ public class ConfigurableSearchDao extends GenericDao {
         recurseSearchValues(1, criteria, null, mapPathToCriteria, searchInstance.getSearchValues(),
                 configurableSearchDefinition);
 
-        if (orderPath != null) {
-            addOrderByToCriteria(criteria, orderPath, orderDirection);
-        }
+        addOrderByToCriteria(criteria, orderPath, orderDirection, configurableSearchDefinition);
+
         return criteria;
     }
 
@@ -117,15 +124,15 @@ public class ConfigurableSearchDao extends GenericDao {
      * @param criteria
      * @param orderPath
      * @param orderDirection
+     * @param configurableSearchDefinition
      */
-    private void addOrderByToCriteria(Criteria criteria, String orderPath, String orderDirection) {
+    private void addOrderByToCriteria(Criteria criteria, String orderPath, String orderDirection
+            , ConfigurableSearchDefinition configurableSearchDefinition ) {
 
         if (orderPath != null && orderDirection != null) {
 
             if (!orderPath.contains(".")) {
-
-                // The orderBy property is on the result entity, so we can apply it
-                // directly
+                // The orderBy property is on the result entity, so we can apply it directly
                 if (orderDirection.equals("ASC")) {
                     criteria.addOrder(Order.asc(orderPath));
                 } else {
@@ -153,6 +160,13 @@ public class ConfigurableSearchDao extends GenericDao {
                 }
             }
         }
+
+        // Always append entity ID to order (unless explicit sort on the same property requested),
+        //    because a non-unique sort column will not yield reproducible results.
+        if( orderPath == null || !orderPath.equals( configurableSearchDefinition.getResultEntity().getEntityIdProperty() ) ) {
+            criteria.addOrder(Order.asc(configurableSearchDefinition.getResultEntity().getEntityIdProperty()));
+        }
+
     }
 
     /**
@@ -217,29 +231,16 @@ public class ConfigurableSearchDao extends GenericDao {
                             disjunction.add(Subqueries.propertyIn(criteriaProjection.getSuperProperty(),
                                     detachedCriteria));
                         }
-                        DetachedCriteria nestedCriteria = createCriteria(mapPathToCriteria, criteriaPath,
-                                detachedCriteria);
 
-                       // Add operator and value
+                        // Create the base search criterion using operator and value(s)
+                        // Note:  Regardless of depth of any nested criteria paths,
+                        //    the criterion property name is attached to the root criteria path
                         Criterion criterion = buildCriterion(searchValue);
 
-                        // Check for a nested subquery and append criterion to it
-                        DetachedCriteria nestedSubCriteria = tryCreateSubQueryCriteria( criteriaPath
-                                , configurableSearchDefinition, mapPathToCriteria );
-                        if( nestedSubCriteria != null ) {
-                            // The criterion gets attached to the subquery, not the parent
-                            if (criterion != null) {
-                                nestedSubCriteria.add(criterion);
-                            }
-                            // Append the subquery to the parent criteria
-                            String parentProp = criteriaPath.getCriteria().get(criteriaPath.getCriteria().size() - 1);
-                            nestedCriteria.add( Subqueries.propertyIn( parentProp, nestedSubCriteria ) );
-                        } else {
-                            // Append the criterion to the parent criteria
-                            if (criterion != null) {
-                                nestedCriteria.add(criterion);
-                            }
-                        }
+                        createCriteria( configurableSearchDefinition,
+                                mapPathToCriteria, criteriaPath,
+                                detachedCriteria, criterion );
+
                     } else {
                         Criterion criterion = buildCriterion(searchValue);
                         if (criterion != null) {
@@ -258,6 +259,7 @@ public class ConfigurableSearchDao extends GenericDao {
 
     /**
      * Fetches list of IDs that satisfy search criteria
+     * Allow a single exclusive search term to use an alternate search definition to return a list of ids
      *
      * @param pagination to hold results IDs
      * @param criteria   from buildCriteria
@@ -267,18 +269,31 @@ public class ConfigurableSearchDao extends GenericDao {
     public void startPagination(PaginationDao.Pagination pagination, Criteria criteria, SearchInstance searchInstance,
                                 ConfigurableSearchDefinition configurableSearchDef ) {
 
-        pagination.setResultEntity(configurableSearchDef.getResultEntity());
+        // Existence of an exclusive term being the only one present will have been validated
+        boolean isAlternateSearchDefinition = searchInstance.hasAlternateSearchDefinition();
+
+        if( isAlternateSearchDefinition ) {
+            pagination.setResultEntity(searchInstance.getAlternateSearchDefinition().getResultEntity());
+        } else {
+            pagination.setResultEntity(configurableSearchDef.getResultEntity());
+        }
+
         // TODO set join fetch paths? would require access to column defs
+        // todo jmt shouldn't be newing DAO
         PaginationDao paginationDao = new PaginationDao();
 
-        // Determine if we need to expand the core entity list
+        // Determine if we need to expand the core entity list via a user selectable traversal option
         Map<String,Boolean> traversalEvaluatorValues = searchInstance.getTraversalEvaluatorValues();
-        boolean traversalRequired = ( configurableSearchDef.getTraversalEvaluators() != null
+        boolean traversalRequired = false;
+        // User selectable traversal check box option(s)
+        if( configurableSearchDef.getTraversalEvaluators() != null
             && traversalEvaluatorValues != null
-            && traversalEvaluatorValues.containsValue(Boolean.TRUE) );
+            && traversalEvaluatorValues.containsValue(Boolean.TRUE) ) {
+            traversalRequired = true;
+        }
 
-        if( !traversalRequired ) {
-            // Fetch only ID values for pagination if no traversal required
+        if( !traversalRequired && !isAlternateSearchDefinition ) {
+            // Overwhelming majority of searches fetch only ID values for pagination
             paginationDao.startPagination( criteria, pagination, false );
         } else {
             // Fetch the core entities before the traversal
@@ -287,17 +302,33 @@ public class ConfigurableSearchDao extends GenericDao {
             TraversalEvaluator evaluator = null;
             Set<Object> idList = null;
 
-            for( Map.Entry<String,TraversalEvaluator> configuredEvaluatorEntry : configurableSearchDef.getTraversalEvaluators().entrySet() ) {
-                // Traverse the options which are checked
-                Boolean doTraverse = traversalEvaluatorValues.get(configuredEvaluatorEntry.getKey());
-                if( doTraverse ) {
-                    evaluator = configuredEvaluatorEntry.getValue();
-                    if( idList == null ) {
-                        idList = evaluator.evaluate(pagination.getIdList());
-                    } else {
-                        idList.addAll(evaluator.evaluate(pagination.getIdList()));
+            Map<String,TraversalEvaluator> traversalEvaluators;
+            if( isAlternateSearchDefinition ) {
+                traversalEvaluators = searchInstance.getAlternateSearchDefinition().getTraversalEvaluators();
+            } else {
+                traversalEvaluators = configurableSearchDef.getTraversalEvaluators();
+            }
+
+            // Handle user configurable traversal options
+            if( traversalRequired ) {
+                for (Map.Entry<String, TraversalEvaluator> configuredEvaluatorEntry : traversalEvaluators.entrySet()) {
+                    // Traverse the options which are checked
+                    Boolean doTraverse = traversalEvaluatorValues.get(configuredEvaluatorEntry.getKey());
+                    if ( doTraverse ) {
+                        evaluator = configuredEvaluatorEntry.getValue();
+                        if (idList == null) {
+                            idList = evaluator.evaluate(pagination.getIdList());
+                        } else {
+                            idList.addAll(evaluator.evaluate(pagination.getIdList()));
+                        }
                     }
                 }
+            } else {
+                // Alternate traversal evaluator configured
+                evaluator = traversalEvaluators.get(ConfigurableSearchDefinition.ALTERNATE_DEFINITION_ID);
+                idList = evaluator.evaluate(pagination.getIdList());
+                // Reconfigure pagination with correct base entity type
+                pagination.setResultEntity(configurableSearchDef.getResultEntity());
             }
 
             // Replace the full entities in the pagination with ids using last evaluator
@@ -329,13 +360,15 @@ public class ConfigurableSearchDao extends GenericDao {
             //noinspection unchecked
             criterion = createInCriterion(searchValue, (List<Object>) propertyValues.get(0));
         } else if (searchValue.getOperator() == SearchInstance.Operator.EQUALS) {
-            if (searchValue.getDataType().equals("Date")) {
+            if (searchValue.getDataType() == ColumnValueType.DATE || searchValue.getDataType() == ColumnValueType.DATE_TIME ) {
                 // Date has implied midnight, so we need between this date and next day
                 Calendar nextDay = Calendar.getInstance();
                 nextDay.setTime((Date) propertyValues.get(0));
                 nextDay.add(Calendar.DATE, 1);
+                // Prevent getting next day if time is 12:00 AM
+                nextDay.add(Calendar.SECOND, -1);
                 criterion = Restrictions.between(searchValue.getPropertyName(), propertyValues.get(0),
-                        new Date(nextDay.getTimeInMillis()));
+                        nextDay.getTime());
             } else if (searchValue.getCaseInsensitive() != null && searchValue.getCaseInsensitive()) {
                 criterion = Restrictions.ilike(searchValue.getPropertyName(), propertyValues.get(0));
             } else {
@@ -344,8 +377,19 @@ public class ConfigurableSearchDao extends GenericDao {
         } else if (searchValue.getOperator() == SearchInstance.Operator.LIKE) {
             criterion = Restrictions.ilike(searchValue.getPropertyName(), "%" + propertyValues.get(0) + "%");
         } else if (searchValue.getOperator() == SearchInstance.Operator.BETWEEN) {
-            criterion = Restrictions.between(searchValue.getPropertyName(), propertyValues.get(0),
-                    propertyValues.get(1));
+            if (searchValue.getDataType() == ColumnValueType.DATE) {
+                // Date has implied midnight, so we need to adjust upper value to end of day
+                Calendar nextDay = Calendar.getInstance();
+                nextDay.setTime((Date) propertyValues.get(1));
+                nextDay.add(Calendar.DATE, 1);
+                // Prevent getting next day if time is 12:00 AM
+                nextDay.add(Calendar.SECOND, -1);
+                criterion = Restrictions.between(searchValue.getPropertyName(), propertyValues.get(0),
+                        nextDay.getTime());
+            } else {
+                criterion = Restrictions.between(searchValue.getPropertyName(), propertyValues.get(0),
+                        propertyValues.get(1));
+            }
         } else if (SearchInstance.Operator.IN == searchValue.getOperator()) {
             criterion = createInCriterion(searchValue, propertyValues);
         } else if (SearchInstance.Operator.NOT_IN == searchValue.getOperator()) {
@@ -398,69 +442,75 @@ public class ConfigurableSearchDao extends GenericDao {
     }
 
     /**
-     * Creates the criteria specified in the search term
-     *
+     * Builds the criteria specified in the search term and attaches the criterion
+     * This function is recursive on nested criteria paths which build subqueries against unrelated entities
+     *    or to project a collection of properties.
+     * Note:  As of 04/2015, child search terms and nested criteria paths are mutually exclusive.
+     * @param configurableSearchDefinition Stores criteria projections for any nested criteria paths
      * @param mapPathToCriteria keeps track of criteria we've already created
      * @param criteriaPath      holds list of steps in criteria path
-     * @param nestedCriteria    the criteria that will be attached to the result entity
+     * @param parentCriteria    the criteria that will be attached to the result entity
+     * @param searchValueCriterion    The criterion to be added to the lowest depth of the criteria
      * @return the end of the criteria path
      */
-    private DetachedCriteria createCriteria(Map<String, DetachedCriteria> mapPathToCriteria,
-                                                   SearchTerm.CriteriaPath criteriaPath,
-                                                   DetachedCriteria nestedCriteria) {
+    private DetachedCriteria createCriteria(
+                ConfigurableSearchDefinition configurableSearchDefinition,
+                Map<String, DetachedCriteria> mapPathToCriteria,
+                SearchTerm.CriteriaPath criteriaPath,
+                DetachedCriteria parentCriteria,
+                Criterion searchValueCriterion) {
 
-        // Step over the first criteria, because we already created the detached criteria for it
-        // Ignore last criteria if nested criteria exist (use as property for nested subquery)
-        int buildCriteriaIndex;
-        if( criteriaPath.getNestedCriteriaPath() != null ) {
-            buildCriteriaIndex = criteriaPath.getCriteria().size() - 1;
-        } else {
-            buildCriteriaIndex = criteriaPath.getCriteria().size();
+        // Logic allows for nesting subqueries recursively
+        boolean isNestedSubquery = criteriaPath.getNestedCriteriaPath() != null;
+
+        int buildCriteriaToIndex = criteriaPath.getCriteria().size();
+        if( isNestedSubquery ) {
+            // Ignore last criteria if nested criteria exist (used for projected property for nested subquery)
+            buildCriteriaToIndex--;
         }
-        for (int i = 1; i < buildCriteriaIndex; i++) {
+
+        // Step over the first criteria, because we already created the disjunction and detached criteria for it
+        for (int i = 1; i < buildCriteriaToIndex; i++) {
 
             String criteriaKey = getCriteriaKey(criteriaPath.getCriteria().get(i));
 
             // Have we created this criteria already?
             DetachedCriteria existingCriteria = mapPathToCriteria.get(criteriaKey);
             if (existingCriteria == null) {
-                // Simply uses the criteria name as a property, ignores all else! (super, sub, class name)
-                nestedCriteria = nestedCriteria.createCriteria(criteriaPath.getCriteria().get(i));
-                mapPathToCriteria.put(criteriaKey, nestedCriteria);
+                // Create a new criteria and store it
+                parentCriteria = parentCriteria.createCriteria(criteriaPath.getCriteria().get(i));
+                mapPathToCriteria.put(criteriaKey, parentCriteria);
             } else {
-                nestedCriteria = existingCriteria;
+                // Re-use existing
+                parentCriteria = existingCriteria;
             }
         }
-        return nestedCriteria;
-    }
 
-    /**
-     * Criteria path may rely on a subquery against unrelated entities.
-     * Criteria path will include a nested criteria path if so.
-     * Note:  Child search terms and nested criteria paths are mutually exclusive.
-     * @param criteriaPath
-     * @param configurableSearchDefinition
-     * @param mapPathToCriteria
-     * @return A detached criteria representing the subquery or null if not configured
-     */
-    private DetachedCriteria tryCreateSubQueryCriteria( SearchTerm.CriteriaPath criteriaPath
-            , ConfigurableSearchDefinition configurableSearchDefinition, Map<String, DetachedCriteria> mapPathToCriteria ) {
+        // Done parsing parent criteria path, now recurse into any nested subqueries
+        if( isNestedSubquery ) {
 
-        // Check for a nested subquery
-        DetachedCriteria nestedSubCriteria = null;
-        if (criteriaPath.getNestedCriteriaPath() != null){
-            SearchTerm.CriteriaPath nestedCriteriaPath = criteriaPath.getNestedCriteriaPath();
-            String rootCriteriaName = nestedCriteriaPath.getCriteria().get(0);
-            ConfigurableSearchDefinition.CriteriaProjection rootCriteriaProj =
-                    configurableSearchDefinition.getCriteriaProjection(rootCriteriaName);
-            nestedSubCriteria = DetachedCriteria
-                    .forClass(rootCriteriaProj.getSubEntityClass())
-                    .createAlias(rootCriteriaProj.getSubProperty(), rootCriteriaProj.getSubPropertyAlias())
-                    .setProjection(Projections.property(rootCriteriaProj.getSuperProperty()));
+            SearchTerm.CriteriaPath nestedSubCriteriaPath = criteriaPath.getNestedCriteriaPath();
+            String nestedCriteriaName = nestedSubCriteriaPath.getCriteria().get(0);
+            ConfigurableSearchDefinition.CriteriaProjection nestedCriteriaProj =
+                    configurableSearchDefinition.getCriteriaProjection(nestedCriteriaName);
+            DetachedCriteria nestedSubCriteria = DetachedCriteria
+                    .forClass(nestedCriteriaProj.getSubEntityClass())
+                    .createAlias(nestedCriteriaProj.getSubProperty(), nestedCriteriaProj.getSubPropertyAlias())
+                    .setProjection(Projections.property(nestedCriteriaProj.getSuperProperty()));
 
-            nestedSubCriteria = createCriteria(mapPathToCriteria, nestedCriteriaPath, nestedSubCriteria);
+            nestedSubCriteria = createCriteria(configurableSearchDefinition, mapPathToCriteria,
+                    nestedSubCriteriaPath, nestedSubCriteria, searchValueCriterion);
+
+            // Append the subquery to the parent criteria
+            String parentProp = criteriaPath.getCriteria().get(criteriaPath.getCriteria().size() - 1);
+            parentCriteria.add(Subqueries.propertyIn(parentProp, nestedSubCriteria));
+
+        } else {
+            // Add criterion to last criteria in chain
+            parentCriteria.add(searchValueCriterion);
         }
-        return nestedSubCriteria;
+
+        return parentCriteria;
     }
 
     private String getCriteriaKey(String path) {

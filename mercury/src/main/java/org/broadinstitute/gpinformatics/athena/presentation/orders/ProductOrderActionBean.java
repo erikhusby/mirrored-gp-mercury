@@ -365,13 +365,6 @@ public class ProductOrderActionBean extends CoreActionBean {
                + "quarantining of data.";
     }
 
-    public RegulatoryInfo getRegulatoryInfoForPendingOrder() {
-        if (editOrder.getRegulatoryInfos().size() == 1) {
-            return editOrder.getRegulatoryInfos().iterator().next();
-        }
-        return null;
-    }
-
     /**
      * @return the list of role names that can modify the order being edited.
      */
@@ -453,7 +446,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.EventHandling, on = SAVE_ACTION)
     public void initRegulatoryParameter() {
 
-        if (editOrder.isDraft()) {
+        if (editOrder.isRegulatoryInfoEditAllowed()) {
             if (selectedRegulatoryIds != null) {
                 List<RegulatoryInfo> selectedRegulatoryInfos = regulatoryInfoDao
                         .findListByList(RegulatoryInfo.class, RegulatoryInfo_.regulatoryInfoId, selectedRegulatoryIds);
@@ -517,8 +510,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (StringUtils.isBlank(editOrder.getName()) || editOrder.getName().length() > 255) {
             addValidationError("title", "Name is required and cannot exceed 255 characters");
         }
-        if (StringUtils.isNotBlank(editOrder.getSkipQuoteReason()) &&
-            editOrder.canSkipQuote() && editOrder.getSkipQuoteReason().length() > 255) {
+        if (editOrder.canSkipQuote() && editOrder.getSkipQuoteReason().length() > 255) {
             addValidationError("skipQuoteReason", "Reason for Quote cannot exceed 255 characters");
         }
         if (editOrder.getProductOrderKit() != null &&
@@ -607,6 +599,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         requireField(researchProject, "a Research Project", action);
+
+        if (editOrder.isRegulatoryInfoEditAllowed()) {
+            validateRegulatoryInformation(action);
+        }
+
         if (!ApplicationInstance.CRSP.isCurrent()) {
             validateQuoteOptions(action);
         }
@@ -694,10 +691,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         doValidation(action);
         if (!hasErrors()) {
             doOnRiskUpdate();
-        }
-        validateRegulatoryInformation(action);
 
-        updateFromInitiationTokenInputs();
+            // doOnRiskUpdate() can add errors, so check again.
+            if (!hasErrors()) {
+                updateFromInitiationTokenInputs();
+            }
+        }
     }
 
     @ValidationMethod(on = {"startBilling", "downloadBillingTracker"})
@@ -1135,9 +1134,10 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent(VALIDATE_ORDER)
     public Resolution validate() {
         validatePlacedOrder("validate");
-        if (!hasErrors()) {
-            addMessage("Draft Order is valid and ready to be placed");
+        if (hasErrors()) {
+            return new ForwardResolution(this.getClass(), EDIT_ACTION);
         }
+        addMessage("Draft Order is valid and ready to be placed");
 
         // entryInit() must be called explicitly here since it does not run automatically with source page resolution
         // and the ProductOrderListEntry that provides billing data would otherwise be null.
@@ -1155,7 +1155,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             saveType = ProductOrder.SaveType.CREATING;
         }
 
-        if (editOrder.isDraft()) {
+        if (editOrder.isRegulatoryInfoEditAllowed()) {
             updateRegulatoryInformation();
         }
         Set<String> deletedIdsConverted = new HashSet<>(Arrays.asList(deletedKits));
@@ -1165,11 +1165,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         return createViewResolution(editOrder.getBusinessKey());
     }
 
-    private void updateRegulatoryInformation() {
+    void updateRegulatoryInformation() {
         if (!editOrder.getRegulatoryInfos().isEmpty() && !isSkipRegulatoryInfo()) {
             editOrder.setSkipRegulatoryReason(null);
         }
-        if (isSkipRegulatoryInfo() && StringUtils.isBlank(editOrder.getSkipRegulatoryReason())) {
+        if (isSkipRegulatoryInfo() && !StringUtils.isBlank(editOrder.getSkipRegulatoryReason())) {
             editOrder.getRegulatoryInfos().clear();
         }
     }
@@ -2166,11 +2166,12 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     public void validateQuoteOptions(String action) {
-        if (action.equals(PLACE_ORDER_ACTION) || action.equals(VALIDATE_ORDER)) {
+        if (action.equals(PLACE_ORDER_ACTION) || action.equals(VALIDATE_ORDER) ||
+            (action.equals(SAVE_ACTION) && editOrder.isSubmitted())) {
             boolean hasQuote = !StringUtils.isBlank(editOrder.getQuoteId());
             requireField(hasQuote || editOrder.canSkipQuote(), "a quote specified", action);
-            if (!hasQuote) {
-                requireField(editOrder.canSkipQuote(), "an explanation for why a quote cannot be entered", action);
+            if (!hasQuote && editOrder.allowedToSkipQuote()) {
+                requireField(editOrder.getSkipQuoteReason() , "an explanation for why a quote cannot be entered", action);
             }
         }
     }
@@ -2193,7 +2194,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 requireField(editOrder.canSkipRegulatoryRequirements(),
                         "a reason for bypassing the regulatory requirements", action);
             }
-            if (editOrder.isDraft()) {
+            if (editOrder.isRegulatoryInfoEditAllowed()) {
                 if (CollectionUtils.isNotEmpty(selectedRegulatoryIds)) {
                     List<RegulatoryInfo> selectedRegulatoryInfos = regulatoryInfoDao
                             .findListByList(RegulatoryInfo.class, RegulatoryInfo_.regulatoryInfoId,

@@ -4,6 +4,7 @@ import org.hibernate.envers.Audited;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
+import java.util.Comparator;
 import java.util.Date;
 
 /**
@@ -17,6 +18,40 @@ import java.util.Date;
 @Audited
 @Table(schema = "mercury")
 public abstract class Reagent {
+
+    /**
+     * Used for Reagent list sorting
+     */
+    public static final Comparator<Reagent> BY_NAME_LOT_EXP = new Comparator<Reagent>() {
+        @Override
+        public int compare(Reagent o1, Reagent o2) {
+            int result = compareField( o1.getName(), o2.getName() );
+            if( result == 0 ) {
+                result = compareField( o1.getLot(), o2.getLot() );
+            }
+            if( result == 0 ) {
+                result = compareField(o1.getExpiration(), o2.getExpiration());
+            }
+            return result;
+        }
+
+        /**
+         * Everything nullable and either String or Date
+         */
+        private int compareField(Comparable me, Comparable you) {
+            if( me == null && you == null ) {
+                return 0;
+            } else if( me == null && you != null ) {
+                return -1;
+            } else if( me != null && you == null ) {
+                return 1;
+            } else {
+                return me.compareTo(you);
+            }
+        }
+    };
+
+
     @Id
     @SequenceGenerator(name = "SEQ_REAGENT", schema = "mercury", sequenceName = "SEQ_REAGENT")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_REAGENT")
@@ -38,6 +73,10 @@ public abstract class Reagent {
     }
 
     protected Reagent() {
+    }
+
+    public Long getReagentId(){
+        return reagentId;
     }
 
     public String getName() {

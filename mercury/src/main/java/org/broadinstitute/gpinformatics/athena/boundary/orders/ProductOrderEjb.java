@@ -41,6 +41,7 @@ import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInsta
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
@@ -143,7 +144,7 @@ public class ProductOrderEjb {
         List<ProductOrderSample> samplesToRemove =
                 new ArrayList<>(editOrder.getSampleCount() - editOrder.getReceivedSampleCount());
         for (ProductOrderSample sample : editOrder.getSamples()) {
-            if (!sample.getSampleData().isSampleReceived()) {
+            if (!sample.isSampleAvailable()) {
                 samplesToRemove.add(sample);
             }
         }
@@ -168,8 +169,8 @@ public class ProductOrderEjb {
      * @throws QuoteNotFoundException
      */
     public void persistProductOrder(ProductOrder.SaveType saveType, ProductOrder editedProductOrder,
-                                    Collection<String> deletedIds,
-                                    Collection<ProductOrderKitDetail> kitDetailCollection)
+                                    @Nonnull Collection<String> deletedIds,
+                                    @Nonnull Collection<ProductOrderKitDetail> kitDetailCollection)
             throws IOException, QuoteNotFoundException {
 
         kitDetailCollection.removeAll(Collections.singleton(null));
@@ -257,10 +258,10 @@ public class ProductOrderEjb {
             } else {
                 editOrder.calculateRisk(samples);
             }
-        } catch (Exception ex) {
+        } catch (BSPLookupException ex) {
             String message = "Could not calculate risk.";
             log.error(message, ex);
-            throw new InformaticsServiceException(message, ex);
+            throw new Exception(message, ex);
         }
 
         // Set the create and modified information.
