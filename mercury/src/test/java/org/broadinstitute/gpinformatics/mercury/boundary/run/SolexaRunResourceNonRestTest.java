@@ -227,7 +227,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         pdo1JiraKey = exexOrder.getJiraTicketKey();
 
         Map<String, BarcodedTube> mapBarcodeToTube = BettaLimsMessageResourceTest.buildSampleTubes(testPrefix,
-                BaseEventTest.NUM_POSITIONS_IN_RACK, barcodedTubeDao, MercurySample.MetadataSource.BSP);
+                BaseEventTest.NUM_POSITIONS_IN_RACK, barcodedTubeDao, MercurySample.MetadataSource.BSP, exexOrder);
 
         bucketAndBatch(testPrefix, exexOrder, mapBarcodeToTube);
         // message
