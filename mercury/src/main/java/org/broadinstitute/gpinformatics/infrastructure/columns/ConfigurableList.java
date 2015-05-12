@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.columns;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.broadinstitute.gpinformatics.athena.entity.preference.ColumnSetsPreference;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
 import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.SpreadsheetCreator;
 
 import javax.annotation.Nonnull;
@@ -109,8 +110,9 @@ public class ConfigurableList {
             /*BspDomainUser bspDomainUser, Group group,*/
             ColumnSetsPreference columnSets) {
 
-        Map<String, Object> context = new HashMap<>();
-        context.put(SearchInstance.CONTEXT_KEY_COLUMN_SET_TYPE, columnSetType);
+        // If re-enabled, do not allow this context to stomp any existing evaluation context!
+//        Map<String, Object> context = new HashMap<>();
+//        context.put(SearchInstance.CONTEXT_KEY_COLUMN_SET_TYPE, columnSetType);
 /*
         context.put("bspDomainUser", bspDomainUser);
         context.put("group", group);
@@ -460,6 +462,8 @@ public class ConfigurableList {
                 if( columnTabulation.isNestedParent() ) {
                     ListPlugin listPlugin = null;
                     listPlugin = getPlugin(columnTabulation.getPluginClass());
+                    // Nested table will never be a SearchValue ... cast to SearchTerm
+                    context.put(SearchInstance.CONTEXT_KEY_SEARCH_TERM, (SearchTerm)columnTabulation);
                     ResultList nestedResultList = listPlugin.getNestedTableData(entity, columnTabulation, context);
                     if( nestedResultList != null ) {
                         row.getNestedTableEntities().put(columnTabulation, nestedResultList);

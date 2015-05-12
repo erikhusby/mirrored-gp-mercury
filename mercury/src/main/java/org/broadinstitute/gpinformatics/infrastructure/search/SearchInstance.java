@@ -43,6 +43,8 @@ public class SearchInstance implements Serializable {
     public static final String CONTEXT_KEY_COLUMN_SET_TYPE = "columnSetType";
     public static final String CONTEXT_KEY_SEARCH_VALUE = "searchValue";
     public static final String CONTEXT_KEY_SEARCH_TERM = "searchTerm";
+    public static final String CONTEXT_KEY_SEARCH_INSTANCE = "searchInstance";
+    public static final String CONTEXT_KEY_ENTITY_TYPE = "columnEntityType";
     public static final String CONTEXT_KEY_SEARCH_STRING = "searchString";
     public static final String CONTEXT_KEY_BSP_SAMPLE_SEARCH = "BSPSampleSearchService";
     public static final String CONTEXT_KEY_OPTION_VALUE_DAO = "OptionValueDao";
@@ -833,6 +835,9 @@ public class SearchInstance implements Serializable {
     public void establishRelationships(ConfigurableSearchDefinition configurableSearchDefinition) {
         recurseRelationships(configurableSearchDefinition, searchValues, null);
         buildTraversalOptions(configurableSearchDefinition);
+        // Context as passed through processing needs a reference to the SearchInstance
+        getEvalContext().put(CONTEXT_KEY_SEARCH_INSTANCE, this);
+        getEvalContext().put(CONTEXT_KEY_ENTITY_TYPE, configurableSearchDefinition.getResultEntity());
     }
 
     /**

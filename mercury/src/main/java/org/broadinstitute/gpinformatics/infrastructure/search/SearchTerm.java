@@ -17,8 +17,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Represents the definition of a term in a user-defined search. Intended to be XStreamed.
@@ -249,6 +251,13 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     private Boolean isNestedParent = Boolean.FALSE;
 
     /**
+     * Handles cases where a display result column can be selected by user
+     *   , but can only be displayed in a nested child table plugin.
+     * This list holds columns that, if selected by user, will be handled by the child plugin display
+     */
+    private Set<String> parentTermsHandledByChild;
+
+    /**
      * Flag this for search criteria only, do not display as column option.
      * (Don't want parent term to show up in columns list)
      */
@@ -388,6 +397,20 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     @Override
     public void setIsNestedParent(Boolean isNestedParent) {
         this.isNestedParent = isNestedParent;
+    }
+
+    public void addParentTermHandledByChild( SearchTerm parentTermHandledByChild){
+        if( parentTermsHandledByChild == null ) {
+            parentTermsHandledByChild = new HashSet<>();
+        }
+        parentTermsHandledByChild.add(parentTermHandledByChild.getName());
+    }
+
+    public boolean isParentTermHandledByChild( SearchTerm searchTerm){
+        if( parentTermsHandledByChild == null ) {
+            return false;
+        }
+        return parentTermsHandledByChild.contains( searchTerm.getName() );
     }
 
     /**
@@ -591,6 +614,7 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     /**
      * Get the collection of entities associated with parent row
      * Convenience method to eliminate ambiguity of calling evalPlainTextExpression
+     * TODO:  jms Implement display of parent term values in nested table cells (as in EventVesselPositionPlugin)
      * @param entity  root of object graph that expression navigates.
      * @param context name / value pairs of other variables used in the expression.
      * @return Nested table entity collection

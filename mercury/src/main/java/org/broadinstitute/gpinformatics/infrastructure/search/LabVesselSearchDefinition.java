@@ -864,7 +864,7 @@ public class LabVesselSearchDefinition {
             if (meta.getCategory() == Metadata.Category.SAMPLE) {
                 searchTerm = new SearchTerm();
                 searchTerm.setName(meta.getDisplayName());
-                searchTerm.setDisplayValueExpression(new SearchDefinitionFactory.SampleMetadataDisplayExpression());
+                searchTerm.setDisplayValueExpression(sampleMetadataDisplayExpression);
                 searchTerms.add(searchTerm);
             }
         }
