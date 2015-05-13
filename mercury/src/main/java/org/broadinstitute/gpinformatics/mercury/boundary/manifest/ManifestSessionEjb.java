@@ -6,6 +6,8 @@ import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.ClinicalSampleFactory;
@@ -51,6 +53,7 @@ public class ManifestSessionEjb {
     public static final String MERCURY_SAMPLE_KEY = "Mercury sample key";
     static final String RESEARCH_PROJECT_NOT_FOUND_FORMAT = "Research Project '%s' not found: ";
     static final String SAMPLE_IDS_ARE_NOT_FOUND_MESSAGE = "Sample ids are not found: ";
+    static final String RECEIPT_NOT_FOUND = "Unable to find receipt information: ";
 
     private ManifestSessionDao manifestSessionDao;
 
@@ -62,6 +65,8 @@ public class ManifestSessionEjb {
 
     private UserBean userBean;
 
+    private JiraService jiraService;
+
     /**
      * For CDI.
      */
@@ -71,12 +76,14 @@ public class ManifestSessionEjb {
 
     @Inject
     public ManifestSessionEjb(ManifestSessionDao manifestSessionDao, ResearchProjectDao researchProjectDao,
-                              MercurySampleDao mercurySampleDao, LabVesselDao labVesselDao, UserBean userBean) {
+                              MercurySampleDao mercurySampleDao, LabVesselDao labVesselDao, UserBean userBean,
+                              JiraService jiraService) {
         this.manifestSessionDao = manifestSessionDao;
         this.researchProjectDao = researchProjectDao;
         this.mercurySampleDao = mercurySampleDao;
         this.labVesselDao = labVesselDao;
         this.userBean = userBean;
+        this.jiraService = jiraService;
     }
 
     /**
@@ -307,7 +314,16 @@ public class ManifestSessionEjb {
         MercurySample targetSample = findAndValidateTargetSample(sampleKey);
 
         LabVessel targetVessel = findAndValidateTargetSampleAndVessel(sampleKey, vesselLabel);
-        session.performTransfer(sourceCollaboratorSample, targetSample, targetVessel, userBean.getBspUser());
+
+        JiraIssue receiptInfo = null;
+        try {
+            receiptInfo = jiraService.getIssueInfo(session.getReceiptTicket());
+            session.performTransfer(sourceCollaboratorSample, targetSample, targetVessel, userBean.getBspUser(),
+                    receiptInfo.getCreated());
+        } catch (IOException e) {
+            throw new TubeTransferException(RECEIPT_NOT_FOUND + session.getReceiptTicket());
+        }
+
     }
 
     /**

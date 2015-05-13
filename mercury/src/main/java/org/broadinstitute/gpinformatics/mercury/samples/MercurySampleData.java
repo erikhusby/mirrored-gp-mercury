@@ -24,7 +24,7 @@ public class MercurySampleData implements SampleData {
     private String collectionDate;
     private String visit;
     private final boolean hasData;
-    private boolean received;
+    private Date received;
 
     public MercurySampleData(@Nonnull String sampleId, @Nonnull Set<Metadata> metadata) {
         this.sampleId = sampleId;
@@ -53,6 +53,9 @@ public class MercurySampleData implements SampleData {
                 break;
             case BUICK_VISIT:
                 this.visit = value;
+                break;
+            case RECEIVED_DATE:
+                this.received = data.getDateValue();
                 break;
             }
         }
@@ -190,12 +193,12 @@ public class MercurySampleData implements SampleData {
 
     @Override
     public boolean isSampleReceived() {
-        return received;
+        return received != null;
     }
 
     @Override
     public Date getReceiptDate() throws ParseException {
-        return null;
+        return received;
     }
 
     @Override

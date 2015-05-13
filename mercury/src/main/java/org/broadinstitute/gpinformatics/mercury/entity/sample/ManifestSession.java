@@ -564,15 +564,15 @@ public class ManifestSession implements Updatable {
     /**
      * Encapsulates the logic required to informatically execute a transfer from the collaborator provided tube to
      * a broad tube.  This is primarily done by marking a record within this session as having been transferred.
-     *
-     * @param sourceCollaboratorSample Sample ID for the source sample.  This should correspond to a record within
+     *  @param sourceCollaboratorSample Sample ID for the source sample.  This should correspond to a record within
      *                                 the session
      * @param targetSample             Mercury Sample to which the transfer will be associated
      * @param targetVessel             Lab Vessel to which the transfer will be associated
      * @param user                     Represents the user attempting to make the transfer
+     * @param created
      */
     public void performTransfer(String sourceCollaboratorSample, MercurySample targetSample, LabVessel targetVessel,
-                                BspUser user) {
+                                BspUser user, Date created) {
 
         ManifestRecord sourceRecord ;
 
@@ -582,7 +582,9 @@ public class ManifestSession implements Updatable {
             sourceRecord = findRecordForTransferByKey(Metadata.Key.BROAD_SAMPLE_ID, targetSample.getSampleKey());
         }
 
-        targetSample.addMetadata(sourceRecord.getMetadata());
+        Set<Metadata> metadataToTransfer = new HashSet<>(sourceRecord.getMetadata());
+        metadataToTransfer.add(new Metadata(Metadata.Key.RECEIVED_DATE, created));
+        targetSample.addMetadata(metadataToTransfer);
         sourceRecord.setStatus(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
 
         LabEvent collaboratorTransferEvent =

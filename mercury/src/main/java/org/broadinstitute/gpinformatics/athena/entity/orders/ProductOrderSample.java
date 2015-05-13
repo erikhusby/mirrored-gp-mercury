@@ -691,15 +691,13 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
             available = false;
         } else {
             switch (getMetadataSource()) {
-            case BSP:
-                available = getSampleData().isSampleReceived();
-                break;
             case MERCURY:
                 available = isSampleAccessioned();
                 break;
             default:
                 throw new IllegalStateException("The metadata Source is undetermined");
             }
+            available = available && getSampleData().isSampleReceived();
         }
         return available;
     }
