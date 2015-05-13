@@ -11,7 +11,7 @@ import java.util.Set;
 public class QuoteServiceStub implements QuoteService {
 
     private static int workItemId = 1;
-    private static int invocationCount = 0;
+    private static volatile int invocationCount = 0;
 
     public QuoteServiceStub() {
 
