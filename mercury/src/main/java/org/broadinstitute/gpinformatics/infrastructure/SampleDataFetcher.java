@@ -192,7 +192,7 @@ public class SampleDataFetcher implements Serializable {
 
         Set<String> sampleNames = new HashSet<>(samples.size());
         for (ProductOrderSample productOrderSample : samples) {
-            if (productOrderSample.bspMetaDataMissing()) {
+            if (productOrderSample.needsBspMetaData()) {
                 MercurySample mercurySample = productOrderSample.getMercurySample();
                 if(mercurySample != null &&
                    mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
