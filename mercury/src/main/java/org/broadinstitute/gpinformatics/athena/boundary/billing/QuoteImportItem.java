@@ -144,10 +144,12 @@ public class QuoteImportItem {
      * @param itemIsReplacing The item that is replacing the primary price item.
      * @param billingMessage The message to be assigned to all entries.
      * @param quoteServerWorkItem the id of the transaction in the quote server
+     * @param replacementPriceItemNames names of price items that are valid replacements for {@link #priceItem}
      */
-    public void updateLedgerEntries(QuotePriceItem itemIsReplacing, String billingMessage,String quoteServerWorkItem) {
+    public void updateLedgerEntries(QuotePriceItem itemIsReplacing, String billingMessage, String quoteServerWorkItem,
+                                    Collection<String> replacementPriceItemNames) {
 
-        LedgerEntry.PriceItemType priceItemType = getPriceItemType(itemIsReplacing);
+        LedgerEntry.PriceItemType priceItemType = getPriceItemType(itemIsReplacing, replacementPriceItemNames);
 
         for (LedgerEntry ledgerEntry : ledgerItems) {
             ledgerEntry.setQuoteId(quoteId);
@@ -191,11 +193,14 @@ public class QuoteImportItem {
         return null;
     }
 
-    public LedgerEntry.PriceItemType getPriceItemType(QuotePriceItem itemIsReplacing) {
+    public LedgerEntry.PriceItemType getPriceItemType(QuotePriceItem itemIsReplacing,
+                                                      Collection<String> replacementPriceItemNames) {
         LedgerEntry.PriceItemType type;
+
         if (itemIsReplacing != null) {
             type = LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM;
-        } else if (getProduct().getPrimaryPriceItem().getName().equals(getPriceItem().getName())) {
+        } else if (getProduct().getPrimaryPriceItem().getName().equals(getPriceItem().getName())
+                   || replacementPriceItemNames.contains(getPriceItem().getName())) {
             type = LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM;
         } else {
             // If it is not the primary or replacement right now, it has to be considered add on.
