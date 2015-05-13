@@ -827,44 +827,66 @@ public class BettaLimsMessageResourceTest extends Arquillian {
      */
     @Test
     public void testSonic() {
-        String exExTestPrefix = testPrefixDateFormat.format(new Date());
-        String crspTestPrefix = exExTestPrefix + "C";
+        String date = testPrefixDateFormat.format(new Date());
+        int numExExLcsets = 2;
+        List<String> exExTestPrefixes = new ArrayList<>();
+        List<Pair<LibraryConstructionJaxbBuilder, Map<String, BarcodedTube>>> exExBuilderMapPairs = new ArrayList<>();
         BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory(false);
 
-        Pair<LibraryConstructionJaxbBuilder, Map<String, BarcodedTube>> exExBuilderMapPair = libraryConstruction(
-                exExTestPrefix, bettaLimsMessageFactory, Workflow.ICE_EXOME_EXPRESS);
-        BarcodedTube exExTube = exExBuilderMapPair.getRight().values().iterator().next();
-        LibraryConstructionJaxbBuilder libraryConstructionExExJaxbBuilder = exExBuilderMapPair.getLeft();
+        for (int i = 0; i < numExExLcsets; i++) {
+            exExTestPrefixes.add(date + "X" + i);
+            exExBuilderMapPairs.add(libraryConstruction(exExTestPrefixes.get(i), bettaLimsMessageFactory,
+                    Workflow.ICE_EXOME_EXPRESS));
+        }
+        String crspTestPrefix = date + "C";
 
         Pair<LibraryConstructionJaxbBuilder, Map<String, BarcodedTube>> crspBuilderMapPair = libraryConstruction(
                 crspTestPrefix, bettaLimsMessageFactory, Workflow.ICE_CRSP);
         BarcodedTube crspTube = crspBuilderMapPair.getRight().values().iterator().next();
         LibraryConstructionJaxbBuilder libraryConstructionCrspJaxbBuilder = crspBuilderMapPair.getLeft();
 
-        ArrayList<String> pondRegRackBarcodes = new ArrayList<>();
-        pondRegRackBarcodes.add(libraryConstructionExExJaxbBuilder.getPondRegRackBarcode());
+        List<String> pondRegRackBarcodes = new ArrayList<>();
+        List<List<String>> listPondRegTubeBarcodes = new ArrayList<>();
+        List<String> batchNames = new ArrayList<>();
+        for (int i = 0; i < numExExLcsets; i++) {
+            pondRegRackBarcodes.add(exExBuilderMapPairs.get(i).getLeft().getPondRegRackBarcode());
+            listPondRegTubeBarcodes.add(exExBuilderMapPairs.get(i).getLeft().getPondRegTubeBarcodes());
+            batchNames.add(exExBuilderMapPairs.get(i).getRight().values().iterator().next().getLabBatches().
+                    iterator().next().getBatchName());
+        }
         pondRegRackBarcodes.add(libraryConstructionCrspJaxbBuilder.getPondRegRackBarcode());
-
-        ArrayList<List<String>> listPondRegTubeBarcodes = new ArrayList<>();
-        listPondRegTubeBarcodes.add(libraryConstructionExExJaxbBuilder.getPondRegTubeBarcodes());
         listPondRegTubeBarcodes.add(libraryConstructionCrspJaxbBuilder.getPondRegTubeBarcodes());
+        batchNames.add(crspTube.getLabBatches().iterator().next().getBatchName());
 
-        LabBatch exExBatch = exExTube.getLabBatches().iterator().next();
-        LabBatch crspBatch = crspTube.getLabBatches().iterator().next();
-        iceAndQtp(Arrays.asList(exExTestPrefix, crspTestPrefix),
-                Arrays.asList(exExBatch.getBatchName(), crspBatch.getBatchName()),
-                bettaLimsMessageFactory, pondRegRackBarcodes, listPondRegTubeBarcodes);
+        List<String> testPrefixes = new ArrayList<>();
+        testPrefixes.addAll(exExTestPrefixes);
+        testPrefixes.add(crspTestPrefix);
 
-        LabBatch exExReworkLabBatch = reworkBatch(exExTestPrefix, exExTube, libraryConstructionExExJaxbBuilder);
+        iceAndQtp(testPrefixes, batchNames, bettaLimsMessageFactory, pondRegRackBarcodes, listPondRegTubeBarcodes);
+
+        List<LabBatch> exExReworkLabBatches = new ArrayList<>();
+        for (int i = 0; i < numExExLcsets; i++) {
+            exExReworkLabBatches.add(reworkBatch(exExTestPrefixes.get(i),
+                    exExBuilderMapPairs.get(i).getRight().values().iterator().next(),
+                    exExBuilderMapPairs.get(i).getLeft()));
+        }
         LabBatch crspReworkLabBatch = reworkBatch(crspTestPrefix, crspTube, libraryConstructionCrspJaxbBuilder);
 
-        iceAndQtp(Arrays.asList(exExTestPrefix + "R", crspTestPrefix + "R"),
-                Arrays.asList(exExReworkLabBatch.getBatchName(), crspReworkLabBatch.getBatchName()),
-                bettaLimsMessageFactory, pondRegRackBarcodes, listPondRegTubeBarcodes);
+        List<String> reworkTestPrefixes = new ArrayList<>();
+        List<String> reworkLabBatchNames = new ArrayList<>();
+        for (int i = 0; i < numExExLcsets; i++) {
+            reworkTestPrefixes.add(exExTestPrefixes.get(i) + "R");
+            reworkLabBatchNames.add(exExReworkLabBatches.get(i).getBatchName());
+        }
+        reworkTestPrefixes.add(crspTestPrefix + "R");
+        reworkLabBatchNames.add(crspReworkLabBatch.getBatchName());
+        iceAndQtp(reworkTestPrefixes, reworkLabBatchNames, bettaLimsMessageFactory, pondRegRackBarcodes,
+                listPondRegTubeBarcodes);
     }
 
     @Nonnull
-    private LabBatch reworkBatch(String crspTestPrefix, BarcodedTube crspTube, LibraryConstructionJaxbBuilder libraryConstructionCrspJaxbBuilder) {
+    private LabBatch reworkBatch(String crspTestPrefix, BarcodedTube crspTube,
+            LibraryConstructionJaxbBuilder libraryConstructionCrspJaxbBuilder) {
         ProductOrder crspProductOrder = crspTube.getMercurySamples().iterator().next().getProductOrderSamples().
                 iterator().next().getProductOrder();
         Map<String, BarcodedTube> mapBarcodeToCrspPond = barcodedTubeDao.findByBarcodes(
@@ -884,8 +906,8 @@ public class BettaLimsMessageResourceTest extends Arquillian {
     }
 
     private List<ZimsIlluminaRun> iceAndQtp(List<String> testPrefixes, List<String> lcsets,
-            BettaLimsMessageTestFactory bettaLimsMessageFactory, ArrayList<String> pondRegRackBarcodes,
-            ArrayList<List<String>> listPondRegTubeBarcodes) {
+            BettaLimsMessageTestFactory bettaLimsMessageFactory, List<String> pondRegRackBarcodes,
+            List<List<String>> listPondRegTubeBarcodes) {
         IceJaxbBuilder iceJaxbBuilder = new IceJaxbBuilder(bettaLimsMessageFactory, testPrefixes.get(0),
                 pondRegRackBarcodes, listPondRegTubeBarcodes, "0177198254", "0177198254",
                 LibraryConstructionJaxbBuilder.TargetSystem.MERCURY_ONLY, IceJaxbBuilder.PlexType.PLEX96).invoke();
@@ -895,17 +917,12 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         }
 
         ArrayList<List<String>> listLcsetListNormCatchBarcodes = new ArrayList<>();
-        List<String> exExCatchBarcodes = new ArrayList<>();
-        listLcsetListNormCatchBarcodes.add(exExCatchBarcodes);
-        List<String> crspCatchBarcodes = new ArrayList<>();
-        listLcsetListNormCatchBarcodes.add(crspCatchBarcodes);
+        for (int i = 0; i < lcsets.size(); i++) {
+            listLcsetListNormCatchBarcodes.add(new ArrayList<String>());
+        }
         for (int i = 0; i < iceJaxbBuilder.getCatchEnrichTubeBarcodes().size(); i++) {
             String tubeBarcode = iceJaxbBuilder.getCatchEnrichTubeBarcodes().get(i);
-            if (i % 2 == 0) {
-                exExCatchBarcodes.add(tubeBarcode);
-            } else {
-                crspCatchBarcodes.add(tubeBarcode);
-            }
+            listLcsetListNormCatchBarcodes.get(i % lcsets.size()).add(tubeBarcode);
         }
 
         ArrayList<String> normCatchRackBarcodes = new ArrayList<>();
