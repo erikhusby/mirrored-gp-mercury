@@ -11,6 +11,7 @@ import java.util.Set;
 public class QuoteServiceStub implements QuoteService {
 
     private static int workItemId = 1;
+    private static int invocationCount = 0;
 
     public QuoteServiceStub() {
 
@@ -18,6 +19,7 @@ public class QuoteServiceStub implements QuoteService {
 
     @Override
     public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
+        invocationCount++;
         PriceList priceList;
 
         try {
@@ -80,5 +82,13 @@ public class QuoteServiceStub implements QuoteService {
     public PriceList getPlatformPriceItems(QuotePlatformType quotePlatformType)
             throws QuoteServerException, QuoteNotFoundException {
         return getAllPriceItems();
+    }
+
+    public static void resetInvocationCount() {
+        invocationCount = 0;
+    }
+
+    public static int getInvocationCount() {
+        return invocationCount;
     }
 }
