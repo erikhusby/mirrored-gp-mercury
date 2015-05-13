@@ -156,7 +156,7 @@
                         <stripes:text name="selectedSession.receiptTicket" id="receiptKeyField"/>
                         <stripes:submit id="findReceipt"
                                         name="<%= ManifestAccessioningActionBean.FIND_RECEIPT_ACTION %>"
-                                        value="Find receipt" class="btn"/>
+                                        value="Update receipt" class="btn"/>
                     </div>
                 </div>
                 <div class="control-group">

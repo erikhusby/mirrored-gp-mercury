@@ -253,7 +253,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
                     .addParameter(SELECTED_SESSION_ID, selectedSession.getManifestSessionId())
                     .addParameter("receiptSummary", receiptInfo.getSummary())
                     .addParameter("receiptDescription", receiptInfo.getDescription())
-                    .addParameter("selectedSession.receiptTicket", receiptKey);
+                    .addParameter("receiptKey", receiptKey);
         } catch (IOException e) {
             addGlobalValidationError(e.getMessage());
             return getContext().getSourcePageResolution();
