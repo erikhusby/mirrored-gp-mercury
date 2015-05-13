@@ -93,7 +93,7 @@ public class SampleMetadataFixupTest extends Arquillian {
         updateMetadataAndValidate(fixupItems, fixupComment);
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void fixupGPLIM_3542_BackFill_Buick_Samples() {
         Map<String, MetaDataFixupItem> fixupItems = new HashMap<>();
         List<MercurySample> mercurySamples = mercurySampleDao
