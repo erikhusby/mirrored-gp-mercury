@@ -103,6 +103,7 @@ import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumMap;
@@ -823,7 +824,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
     }
 
     /**
-     * Test that an Exome Express LCSET can be combined with a CRSP LCSET during the ICE process.
+     * Test that Exome Express LCSETs can be combined with a CRSP LCSET during the ICE process.
      */
     @Test
     public void testSonic() {
@@ -832,12 +833,15 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         List<String> exExTestPrefixes = new ArrayList<>();
         List<Pair<LibraryConstructionJaxbBuilder, Map<String, BarcodedTube>>> exExBuilderMapPairs = new ArrayList<>();
         BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory(false);
+        List<String> regulatoryDesignations = new ArrayList<>();
 
         for (int i = 0; i < numExExLcsets; i++) {
             exExTestPrefixes.add(date + "X" + i);
             exExBuilderMapPairs.add(libraryConstruction(exExTestPrefixes.get(i), bettaLimsMessageFactory,
                     Workflow.ICE_EXOME_EXPRESS));
+            regulatoryDesignations.add("RESEARCH_ONLY");
         }
+        regulatoryDesignations.add("CLINICAL_DIAGNOSTICS");
         String crspTestPrefix = date + "C";
 
         Pair<LibraryConstructionJaxbBuilder, Map<String, BarcodedTube>> crspBuilderMapPair = libraryConstruction(
@@ -848,29 +852,43 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         List<String> pondRegRackBarcodes = new ArrayList<>();
         List<List<String>> listPondRegTubeBarcodes = new ArrayList<>();
         List<String> batchNames = new ArrayList<>();
+        List<Set<String>> listSampleNamesSet = new ArrayList<>();
         for (int i = 0; i < numExExLcsets; i++) {
             pondRegRackBarcodes.add(exExBuilderMapPairs.get(i).getLeft().getPondRegRackBarcode());
             listPondRegTubeBarcodes.add(exExBuilderMapPairs.get(i).getLeft().getPondRegTubeBarcodes());
-            batchNames.add(exExBuilderMapPairs.get(i).getRight().values().iterator().next().getLabBatches().
-                    iterator().next().getBatchName());
+            Collection<BarcodedTube> barcodedTubes = exExBuilderMapPairs.get(i).getRight().values();
+            batchNames.add(barcodedTubes.iterator().next().getLabBatches().iterator().next().getBatchName());
+            Set<String> sampleNames = new HashSet<>();
+            listSampleNamesSet.add(sampleNames);
+            for (BarcodedTube barcodedTube : barcodedTubes) {
+                sampleNames.add(barcodedTube.getMercurySamples().iterator().next().getSampleKey());
+            }
         }
         pondRegRackBarcodes.add(libraryConstructionCrspJaxbBuilder.getPondRegRackBarcode());
         listPondRegTubeBarcodes.add(libraryConstructionCrspJaxbBuilder.getPondRegTubeBarcodes());
         batchNames.add(crspTube.getLabBatches().iterator().next().getBatchName());
+        Set<String> sampleNames = new HashSet<>();
+        listSampleNamesSet.add(sampleNames);
+        Collection<BarcodedTube> barcodedTubes = crspBuilderMapPair.getRight().values();
+        for (BarcodedTube barcodedTube : barcodedTubes) {
+            sampleNames.add(barcodedTube.getMercurySamples().iterator().next().getSampleKey());
+        }
 
         List<String> testPrefixes = new ArrayList<>();
         testPrefixes.addAll(exExTestPrefixes);
         testPrefixes.add(crspTestPrefix);
 
-        iceAndQtp(testPrefixes, batchNames, bettaLimsMessageFactory, pondRegRackBarcodes, listPondRegTubeBarcodes);
+        List<ZimsIlluminaRun> zimsIlluminaRuns = iceAndQtp(testPrefixes, batchNames, bettaLimsMessageFactory,
+                pondRegRackBarcodes, listPondRegTubeBarcodes);
 
         List<LabBatch> exExReworkLabBatches = new ArrayList<>();
         for (int i = 0; i < numExExLcsets; i++) {
             exExReworkLabBatches.add(reworkBatch(exExTestPrefixes.get(i),
                     exExBuilderMapPairs.get(i).getRight().values().iterator().next(),
-                    exExBuilderMapPairs.get(i).getLeft()));
+                    exExBuilderMapPairs.get(i).getLeft().getPondRegTubeBarcodes()));
         }
-        LabBatch crspReworkLabBatch = reworkBatch(crspTestPrefix, crspTube, libraryConstructionCrspJaxbBuilder);
+        LabBatch crspReworkLabBatch = reworkBatch(crspTestPrefix, crspTube,
+                libraryConstructionCrspJaxbBuilder.getPondRegTubeBarcodes());
 
         List<String> reworkTestPrefixes = new ArrayList<>();
         List<String> reworkLabBatchNames = new ArrayList<>();
@@ -880,17 +898,37 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         }
         reworkTestPrefixes.add(crspTestPrefix + "R");
         reworkLabBatchNames.add(crspReworkLabBatch.getBatchName());
-        iceAndQtp(reworkTestPrefixes, reworkLabBatchNames, bettaLimsMessageFactory, pondRegRackBarcodes,
-                listPondRegTubeBarcodes);
+        List<ZimsIlluminaRun> zimsIlluminaReworkRuns = iceAndQtp(reworkTestPrefixes, reworkLabBatchNames,
+                bettaLimsMessageFactory, pondRegRackBarcodes, listPondRegTubeBarcodes);
+
+        assertRuns(batchNames, zimsIlluminaRuns, regulatoryDesignations, listSampleNamesSet);
+
+        assertRuns(reworkLabBatchNames, zimsIlluminaReworkRuns, regulatoryDesignations, listSampleNamesSet);
+    }
+
+    private void assertRuns(List<String> batchNames, List<ZimsIlluminaRun> zimsIlluminaRuns,
+            List<String> regulatoryDesignations, List<Set<String>> listSampleNamesSet) {
+        for(int i = 0; i < zimsIlluminaRuns.size(); i++) {
+            ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRuns.get(i);
+            Assert.assertEquals(zimsIlluminaRun.getLanes().size(), 2, "Wrong number of lanes");
+            ZimsIlluminaChamber zimsIlluminaChamber = zimsIlluminaRun.getLanes().iterator().next();
+            Assert.assertEquals(zimsIlluminaChamber.getLibraries().size(), BaseEventTest.NUM_POSITIONS_IN_RACK);
+
+            Set<String> sampleIds = new HashSet<>();
+            for (LibraryBean libraryBean : zimsIlluminaChamber.getLibraries()) {
+                Assert.assertEquals(libraryBean.getLcSet(), batchNames.get(i));
+                sampleIds.add(libraryBean.getSampleId());
+                Assert.assertEquals(libraryBean.getRegulatoryDesignation(), regulatoryDesignations.get(i));
+            }
+            Assert.assertEquals(sampleIds, listSampleNamesSet.get(i));
+        }
     }
 
     @Nonnull
-    private LabBatch reworkBatch(String crspTestPrefix, BarcodedTube crspTube,
-            LibraryConstructionJaxbBuilder libraryConstructionCrspJaxbBuilder) {
+    private LabBatch reworkBatch(String crspTestPrefix, BarcodedTube crspTube, List<String> tubeBarcodes) {
         ProductOrder crspProductOrder = crspTube.getMercurySamples().iterator().next().getProductOrderSamples().
                 iterator().next().getProductOrder();
-        Map<String, BarcodedTube> mapBarcodeToCrspPond = barcodedTubeDao.findByBarcodes(
-                libraryConstructionCrspJaxbBuilder.getPondRegTubeBarcodes());
+        Map<String, BarcodedTube> mapBarcodeToCrspPond = barcodedTubeDao.findByBarcodes(tubeBarcodes);
         HashSet<LabVessel> crspPonds = new HashSet<LabVessel>(mapBarcodeToCrspPond.values());
         bucketEjb.add(crspPonds, bucketDao.findByName("ICE Bucket"),
                 BucketEntry.BucketEntryType.REWORK_ENTRY, "thompson", LabEvent.UI_EVENT_LOCATION,
@@ -953,15 +991,6 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                     hiSeq2500JaxbBuilder.getFlowcellBarcode());
 
             ZimsIlluminaRun zimsIlluminaRun = illuminaRunResource.getRun(illuminaSequencingRun.getRunName());
-            Assert.assertEquals(zimsIlluminaRun.getLanes().size(), 2, "Wrong number of lanes");
-            ZimsIlluminaChamber zimsIlluminaChamber = zimsIlluminaRun.getLanes().iterator().next();
-            Assert.assertEquals(zimsIlluminaChamber.getLibraries().size(), BaseEventTest.NUM_POSITIONS_IN_RACK);
-            System.out.println(illuminaSequencingRun.getRunName());
-
-            for (LibraryBean libraryBean : zimsIlluminaChamber.getLibraries()) {
-                Assert.assertEquals(libraryBean.getLcSet(), lcsets.get(i));
-                libraryBean.getRegulatoryDesignation();
-            }
             zimsIlluminaRuns.add(zimsIlluminaRun);
         }
         return zimsIlluminaRuns;
