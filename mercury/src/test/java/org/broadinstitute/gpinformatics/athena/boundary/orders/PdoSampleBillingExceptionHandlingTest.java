@@ -7,6 +7,7 @@ import org.easymock.EasyMock;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -32,7 +33,7 @@ public class PdoSampleBillingExceptionHandlingTest {
         ProductOrderSampleDao mockDao = createPDOSampleDaoThatThrowsAnException();
         EasyMock.replay(mockDao);
         List<PDOSample> pdoSamplesList = new ArrayList<>();
-        PDOSample pdoSample1 = new PDOSample("PDO-872", "SM-47KKU",null);
+        PDOSample pdoSample1 = new PDOSample("PDO-872", "SM-47KKU",null, new Date());
         pdoSamplesList.add(pdoSample1);
 
         PDOSamples pdoSamples = new PDOSamples();

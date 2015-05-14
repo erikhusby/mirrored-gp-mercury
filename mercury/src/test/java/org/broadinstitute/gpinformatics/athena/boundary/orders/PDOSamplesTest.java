@@ -14,6 +14,7 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,8 +37,9 @@ public class PDOSamplesTest {
     public void setUp() {
         pdoSamplesList = new ArrayList<>();
         pdoSamples = new PDOSamples();
-        pdoSamples.addPdoSample(pdoKey, sample1, null, null);
-        pdoSamples.addPdoSample(pdoKey, sample2, null, null);
+        Date receiptDate = new Date();
+        pdoSamples.addPdoSample(pdoKey, sample1, null, null, receiptDate);
+        pdoSamples.addPdoSample(pdoKey, sample2, null, null, receiptDate);
 
         ProductOrderSample pdoSample1 = new ProductOrderSample(sample1);
         Product dummyProduct = ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "partNumber");
@@ -95,7 +97,7 @@ public class PDOSamplesTest {
     }
 
     public void testSomeSamplesAreNotFound() {
-        pdoSamples.addPdoSample("PDO-NOTFOUND", "SM-NOTTHERE", null, null);
+        pdoSamples.addPdoSample("PDO-NOTFOUND", "SM-NOTTHERE", null, null, new Date());
 
         PDOSamples pdoSamplesResult = pdoSamples.buildOutputPDOSamplePairsFromInputAndQueryResults(pdoSamplesList);
         Assert.assertEquals(pdoSamplesResult.getPdoSamples().size(),3);
@@ -127,7 +129,7 @@ public class PDOSamplesTest {
     }
 
     public void testListToMapConversion() {
-        pdoSamples.addPdoSample(pdoKey2, sample1, null, null);
+        pdoSamples.addPdoSample(pdoKey2, sample1, null, null, new Date());
         Map<String,Set<String>> pdoToSamples = pdoSamples.convertPdoSamplePairsListToMap();
         Assert.assertEquals(pdoToSamples.keySet().size(),2);
         Assert.assertTrue(pdoToSamples.containsKey(pdoKey));

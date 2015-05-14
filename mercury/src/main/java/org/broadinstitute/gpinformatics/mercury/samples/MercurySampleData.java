@@ -1,13 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.samples;
 
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 
 import javax.annotation.Nonnull;
-import java.text.ParseException;
 import java.util.Date;
 import java.util.Set;
 
@@ -24,7 +22,7 @@ public class MercurySampleData implements SampleData {
     private String collectionDate;
     private String visit;
     private final boolean hasData;
-    private Date received;
+    private Date receiptDate;
 
     public MercurySampleData(@Nonnull String sampleId, @Nonnull Set<Metadata> metadata) {
         this.sampleId = sampleId;
@@ -55,7 +53,7 @@ public class MercurySampleData implements SampleData {
                 this.visit = value;
                 break;
             case RECEIVED_DATE:
-                this.received = data.getDateValue();
+                this.receiptDate = data.getDateValue();
                 break;
             }
         }
@@ -193,12 +191,12 @@ public class MercurySampleData implements SampleData {
 
     @Override
     public boolean isSampleReceived() {
-        return received != null;
+        return receiptDate != null;
     }
 
     @Override
-    public Date getReceiptDate() throws ParseException {
-        return received;
+    public Date getReceiptDate() {
+        return receiptDate;
     }
 
     @Override

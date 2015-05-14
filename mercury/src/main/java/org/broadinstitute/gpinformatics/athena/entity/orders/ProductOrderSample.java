@@ -294,6 +294,14 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         this.metadataSource = metadataSource;
     }
 
+    public Date getReceiptDate() {
+        return getSampleData().getReceiptDate();
+    }
+
+    public boolean isSampleReceived() {
+        return getSampleData().isSampleReceived();
+    }
+
     public enum DeliveryStatus implements StatusType {
         NOT_STARTED(""),
         DELIVERED("Delivered"),
@@ -697,7 +705,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
             default:
                 throw new IllegalStateException("The metadata Source is undetermined");
             }
-            available = available && getSampleData().isSampleReceived();
+            available = available && isSampleReceived();
         }
         return available;
     }

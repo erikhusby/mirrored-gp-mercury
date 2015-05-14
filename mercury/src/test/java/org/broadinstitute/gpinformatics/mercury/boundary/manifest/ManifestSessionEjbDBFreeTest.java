@@ -12,6 +12,8 @@ import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProj
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
@@ -142,6 +144,7 @@ public class ManifestSessionEjbDBFreeTest {
      */
     private static final Map<String, Integer> SAMPLE_ID_TO_NUMBER_OF_COPIES_FOR_DUPLICATE_TESTS =
             ImmutableMap.of("03101231193", 2, "03101254356", 3, "03101411324", 2);
+    public JiraService jiraService;
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -150,8 +153,22 @@ public class ManifestSessionEjbDBFreeTest {
         mercurySampleDao = Mockito.mock(MercurySampleDao.class);
         labVesselDao = Mockito.mock(LabVesselDao.class);
         mockUserBean = Mockito.mock(UserBean.class);
+        jiraService = Mockito.mock(JiraService.class);
 
         Mockito.when(mockUserBean.getBspUser()).thenReturn(testLabUser);
+        Mockito.when(jiraService.getIssueInfo(Mockito.anyString())).thenAnswer(new Answer<JiraIssue>() {
+            @Override
+            public JiraIssue answer(InvocationOnMock invocationOnMock) throws Throwable {
+                String jiraKey = (String) invocationOnMock.getArguments()[0];
+
+                JiraIssue mockedIssue = new JiraIssue(jiraKey, jiraService);
+                if(jiraKey == null) {
+                    return null;
+                }
+                mockedIssue.setCreated(new Date());
+                return mockedIssue;
+            }
+        });
 
         testSampleForAccessioning =
                 new MercurySample(TEST_SAMPLE_KEY, MercurySample.MetadataSource.MERCURY);
@@ -1211,6 +1228,8 @@ public class ManifestSessionEjbDBFreeTest {
 
         assertThat(testSample.getMetadata(), is(empty()));
 
+        holder.ejb.updateReceiptInfo(ARBITRARY_MANIFEST_SESSION_ID, "RCT-1");
+
         holder.ejb.transferSample(ARBITRARY_MANIFEST_SESSION_ID, GOOD_TUBE_BARCODE, TEST_SAMPLE_KEY, TEST_VESSEL_LABEL
         );
 
@@ -1225,6 +1244,8 @@ public class ManifestSessionEjbDBFreeTest {
         MercurySample testSample = mercurySampleDao.findBySampleKey(TEST_SAMPLE_KEY);
 
         assertThat(testSample.getMetadata(), is(empty()));
+
+        holder.ejb.updateReceiptInfo(ARBITRARY_MANIFEST_SESSION_ID, "RCT-1");
 
         try {
             holder.ejb.transferSample(ARBITRARY_MANIFEST_SESSION_ID, GOOD_TUBE_BARCODE, TEST_SAMPLE_KEY,
@@ -1323,6 +1344,8 @@ public class ManifestSessionEjbDBFreeTest {
 
         assertThat(testSample.getMetadata(), is(empty()));
 
+        holder.ejb.updateReceiptInfo(ARBITRARY_MANIFEST_SESSION_ID, "RCT-1");
+
         try {
             holder.ejb.transferSample(ARBITRARY_MANIFEST_SESSION_ID, GOOD_TUBE_BARCODE, TEST_SAMPLE_KEY,
                     TEST_VESSEL_LABEL);
@@ -1347,6 +1370,8 @@ public class ManifestSessionEjbDBFreeTest {
         MercurySample testSample = mercurySampleDao.findBySampleKey(TEST_SAMPLE_KEY);
 
         assertThat(testSample.getMetadata(), is(empty()));
+
+        holder.ejb.updateReceiptInfo(ARBITRARY_MANIFEST_SESSION_ID, "RCT-1");
 
         holder.ejb.transferSample(ARBITRARY_MANIFEST_SESSION_ID, GOOD_TUBE_BARCODE, TEST_SAMPLE_KEY, TEST_VESSEL_LABEL
         );
@@ -1386,6 +1411,9 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.UPLOAD_ACCEPTED, 5, true);
 
         assertThat(holder.manifestSession.getStatus(), is(ManifestSession.SessionStatus.ACCESSIONING));
+
+        holder.ejb.updateReceiptInfo(ARBITRARY_MANIFEST_SESSION_ID, "RCT-1");
+
         Map<Metadata.Key, String> initialData = new HashMap<>();
         initialData .put(Metadata.Key.BROAD_SAMPLE_ID, TEST_SAMPLE_KEY);
         addRecord(holder, NO_ERROR, ManifestRecord.Status.UPLOAD_ACCEPTED,
