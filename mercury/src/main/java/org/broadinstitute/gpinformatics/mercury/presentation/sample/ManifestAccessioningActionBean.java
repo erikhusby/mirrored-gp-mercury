@@ -256,6 +256,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
                 .addParameter(SELECTED_SESSION_ID, selectedSession.getManifestSessionId());
         try {
             receiptInfo = jiraService.getIssueInfo(receiptKey);
+            receiptSummary = receiptInfo.getSummary();
             forwardResolution
                     .addParameter("receiptSummary", receiptInfo.getSummary())
                     .addParameter("receiptDescription", receiptInfo.getDescription())
@@ -263,7 +264,6 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
         } catch (IOException e) {
             addGlobalValidationError("Unable to access the specified record of receipt: " + receiptKey);
             logger.error(e.getMessage());
-//            return getContext().getSourcePageResolution();
         }
 
         return forwardResolution;
@@ -273,10 +273,11 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     public Resolution associateReceipt() {
         try {
             manifestSessionEjb.updateReceiptInfo(selectedSession.getManifestSessionId(), receiptKey);
+
+            addMessage("The accessioning session was successfully updated with the receipt record: " + receiptKey);
         } catch (Exception e) {
             logger.error(UNABLE_TO_ASSOCIATE_RECEIPT_ERROR, e);
             addGlobalValidationError(UNABLE_TO_ASSOCIATE_RECEIPT_ERROR);
-            return getContext().getSourcePageResolution();
         }
 
         return new ForwardResolution(getClass(), LOAD_SESSION_ACTION)

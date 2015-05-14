@@ -18,25 +18,34 @@
         <c:if test="${actionBean.receiptKey != null}">
             Is this the correct Receipt Ticket?
 
-                <div class="control-group">
-                    <stripes:label name="receiptLabel" id="receiptKeyLabel" class="control-label">Receipt Key</stripes:label>
-
-                    <div class="controls-text">
-                            ${actionBean.receiptKey}
+            <div class="view-control-group control-group">
+                <stripes:label name="receiptLabel" id="receiptKeyLabel" for="receiptJiraKey"
+                               class="control-label">Receipt Key </stripes:label>
+                <div class="controls">
+                    <div class="form-value">
+                        <a target="JIRA" href="${actionBean.jiraUrl(actionBean.receiptKey)}"
+                           class="external" target="JIRA" id="receiptJiraKey">${actionBean.receiptKey}</a>
                     </div>
                 </div>
+            </div>
+            <div class="view-control-group control-group">
+                <stripes:label name="shipmentIdentifier" id="receiptKeyLabel" class="control-label">Shipment Identifier </stripes:label>
+                <div class="controls">
+                    <div class="form-value"> ${actionBean.receiptSummary} </div>
+                </div>
+            </div>
         </c:if>
-    </div>
 
-    <div class="actionButtons">
-        <c:if test="${actionBean.receiptKey != null}">
-            <stripes:submit name="<%= ManifestAccessioningActionBean.ASSOCIATE_RECEIPT_ACTION%>"
-                            value="Yes" class="btn" />
-            <stripes:hidden name="receiptKey" id="receiptKeyId" />
-        </c:if>
-        <stripes:link beanclass="${actionBean.class.name}">
-            Cancel...
-        </stripes:link>
+        <div class="actionButtons">
+            <c:if test="${actionBean.receiptKey != null}">
+                <stripes:submit name="<%= ManifestAccessioningActionBean.ASSOCIATE_RECEIPT_ACTION%>"
+                                value="Yes" class="btn" />
+                <stripes:hidden name="receiptKey" id="receiptKeyId" />
+            </c:if>
+            <stripes:link beanclass="${actionBean.class.name}">
+                Cancel...
+            </stripes:link>
+        </div>
     </div>
 </stripes:form>
 
