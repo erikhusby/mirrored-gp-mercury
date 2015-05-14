@@ -599,6 +599,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         requireField(researchProject, "a Research Project", action);
+
+        if (editOrder.isRegulatoryInfoEditAllowed()) {
+            validateRegulatoryInformation(action);
+        }
+
         if (!ApplicationInstance.CRSP.isCurrent()) {
             validateQuoteOptions(action);
         }
@@ -686,13 +691,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         doValidation(action);
         if (!hasErrors()) {
             doOnRiskUpdate();
-        }
-        if (!hasErrors()) {
-            validateRegulatoryInformation(action);
-        }
 
-        if (!hasErrors()) {
-            updateFromInitiationTokenInputs();
+            // doOnRiskUpdate() can add errors, so check again.
+            if (!hasErrors()) {
+                updateFromInitiationTokenInputs();
+            }
         }
     }
 

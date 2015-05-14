@@ -9,14 +9,15 @@ import org.testng.annotations.Test;
 
 import java.util.Collection;
 
-import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
-
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+/**
+ * Database-free tests for PriceListCache.
+ */
+@Test(groups = TestGroups.DATABASE_FREE)
 public class PriceListCacheTest {
 
     private static final Log log = LogFactory.getLog(PriceListCacheTest.class);
     
-    @Test(groups = EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.DATABASE_FREE)
     public void test_gsp_platform() {
         PriceList priceList = new PriceList();
         QuotePriceItem item1 = new QuotePriceItem("Illumina Sequencing","123","101bp MiSeq","5","Sample",QuotePlatformType.SEQ.getPlatformName());
@@ -34,8 +35,8 @@ public class PriceListCacheTest {
         Assert.assertTrue(quotePriceItems.contains(item1));
         Assert.assertTrue(quotePriceItems.contains(item2));
     }
-    
-    @Test(groups = EXTERNAL_INTEGRATION)
+
+    @Test(groups = TestGroups.DATABASE_FREE)
     public void test_gsp_prices() throws Exception {
         PriceListCache cache = new PriceListCache(new QuoteServiceStub().getAllPriceItems().getQuotePriceItems());
         Assert.assertFalse(cache.getGSPPriceItems().isEmpty());

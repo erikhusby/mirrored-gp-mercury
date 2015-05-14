@@ -171,28 +171,10 @@ public class LabVesselSearchDefinition {
             public Set<String> evaluate(Object entity, Map<String, Object> context) {
                 Set<String> results = new HashSet<>();
                 LabVessel labVessel = (LabVessel) entity;
-                for (BucketEntry bucketEntry : labVessel.getBucketEntries()) {
-                    if (bucketEntry.getLabBatch() != null) {
-                        results.add(bucketEntry.getLabBatch().getBatchName());
-                    }
-                }
-                if( results.isEmpty() ) {
-                    // Try navigating back to sample instance batch
-                    for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-                        if( sampleInstanceV2.getSingleBatch() != null ) {
-                            results.add( sampleInstanceV2.getSingleBatch().getBatchName());
-                        }
-                    }
-                }
-                if( results.isEmpty() ) {
-                    // Try navigating back to sample bucket entries
-                    for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-                        for (BucketEntry bucketEntry : sampleInstanceV2.getAllBucketEntries()) {
-                            LabBatch batch = bucketEntry.getLabBatch();
-                            if( batch != null ) {
-                                results.add( bucketEntry.getLabBatch().getBatchName());
-                            }
-                        }
+                // Navigate back to sample(s)
+                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                    for( LabBatchStartingVessel labBatchStartingVessel : sampleInstanceV2.getAllBatchVessels() ) {
+                        results.add(labBatchStartingVessel.getLabBatch().getBatchName());
                     }
                 }
                 return results;
@@ -292,7 +274,7 @@ public class LabVesselSearchDefinition {
             public String evaluate(Object entity, Map<String, Object> context) {
                 LabVessel labVessel = (LabVessel) entity;
                 Collection<MercurySample> mercurySamples = labVessel.getMercurySamples();
-                if( !mercurySamples.isEmpty() ) {
+                if (!mercurySamples.isEmpty()) {
                     MercurySample mercurySample = mercurySamples.iterator().next();
                     BspSampleSearchAddRowsListener bspColumns = (BspSampleSearchAddRowsListener) context.get(
                             SearchInstance.CONTEXT_KEY_BSP_SAMPLE_SEARCH);
