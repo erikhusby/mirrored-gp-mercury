@@ -51,7 +51,7 @@ public class ClinicalSampleTestFactory {
                 put(Metadata.Key.BROAD_SAMPLE_ID, "SM-" + smNum);
                 put(Metadata.Key.PATIENT_ID, RandomStringUtils.randomAlphanumeric(8));
                 put(Metadata.Key.PERCENT_TUMOR, "");
-                put(Metadata.Key.MATERIAL_TYPE, null);
+                put(Metadata.Key.MATERIAL_TYPE, "DNA");
             }};
     }
 

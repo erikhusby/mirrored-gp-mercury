@@ -257,7 +257,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     }
 
     @Override
-    protected SampleData makeSampleData() {
+    public SampleData makeSampleData() {
         SampleData sampleData;
         if(mercurySample != null) {
             sampleData = mercurySample.makeSampleData();
