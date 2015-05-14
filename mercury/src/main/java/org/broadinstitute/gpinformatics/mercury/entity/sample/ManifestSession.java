@@ -570,10 +570,10 @@ public class ManifestSession implements Updatable {
      * @param targetSample             Mercury Sample to which the transfer will be associated
      * @param targetVessel             Lab Vessel to which the transfer will be associated
      * @param user                     Represents the user attempting to make the transfer
-     * @param created
+     * @param received
      */
     public void performTransfer(String sourceCollaboratorSample, MercurySample targetSample, LabVessel targetVessel,
-                                BspUser user, Date created) {
+                                BspUser user, Date received) {
 
         ManifestRecord sourceRecord ;
 
@@ -584,8 +584,13 @@ public class ManifestSession implements Updatable {
         }
 
         Set<Metadata> metadataToTransfer = new HashSet<>(sourceRecord.getMetadata());
-        metadataToTransfer.add(new Metadata(Metadata.Key.RECEIVED_DATE, created));
+        metadataToTransfer.add(new Metadata(Metadata.Key.RECEIVED_DATE, received));
         targetSample.addMetadata(metadataToTransfer);
+        LabEvent receiptEvent =
+                new LabEvent(LabEventType.SAMPLE_RECEIPT, received, LabEvent.UI_EVENT_LOCATION,
+                        1L, user.getUserId(), LabEvent.UI_PROGRAM_NAME);
+        targetVessel.addInPlaceEvent(receiptEvent);
+
         sourceRecord.setStatus(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
 
         LabEvent collaboratorTransferEvent =
