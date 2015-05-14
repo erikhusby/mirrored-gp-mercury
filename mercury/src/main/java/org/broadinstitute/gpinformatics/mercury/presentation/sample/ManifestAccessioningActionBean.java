@@ -279,7 +279,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
             return getContext().getSourcePageResolution();
         }
 
-        return new ForwardResolution(LOAD_SESSION_ACTION)
+        return new ForwardResolution(getClass(), LOAD_SESSION_ACTION)
                 .addParameter(SELECTED_SESSION_ID, selectedSession.getManifestSessionId());
     }
 

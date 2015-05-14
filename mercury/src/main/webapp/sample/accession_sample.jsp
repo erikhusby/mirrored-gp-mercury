@@ -127,7 +127,7 @@
                     },
                     datatype: 'html',
                     success: function (html) {
-                        var dialog = $j('associateReceiptDialog');
+                        var dialog = $j('#associateReceiptDialog');
                         dialog.html(html);
                     }
                 });
