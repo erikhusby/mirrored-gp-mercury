@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.Updatable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.UpdatedEntityInterceptor;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
+import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -609,6 +610,18 @@ public class ManifestSession implements Updatable {
         }
         manifestRecord.accessionScan(recordSampleKey, recordReferenceValue);
     }
+
+    public boolean canSessionExcludeReceiptTicket() {
+
+        boolean result = true;
+
+        if(StringUtils.isBlank(getReceiptTicket()) &&
+           !researchProject.getBusinessKey().equals(CrspPipelineUtils.getResearchProjectForCrspPositiveControls())) {
+            result = false;
+        }
+        return result;
+    }
+
 
     /**
      * Indicator to denote the availability (complete or otherwise) of a manifest session for the sample registration

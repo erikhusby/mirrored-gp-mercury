@@ -16,6 +16,7 @@
     <stripes:hidden name="selectedSessionId" id="selectedSessionId"/>
 
 
+    <c:when test="${actionBean.receiptKey != null}">
     Is this the correct Receipt Ticket?
 
     <div class="form-horizontal span6">
@@ -28,14 +29,16 @@
             </div>
         </div>
     </div>
-
+    </c:when>
 
     <div class="actionButtons">
-        <stripes:submit name="<%= ManifestAccessioningActionBean.ASSOCIATE_RECEIPT_ACTION%>" value="Yes" class="btn" >
-            <stripes:hidden name="receiptKey" />
-        </stripes:submit>
+        <c:if test="${actionBean.receiptKey != null}">
+            <stripes:submit name="<%= ManifestAccessioningActionBean.ASSOCIATE_RECEIPT_ACTION%>" value="Yes" class="btn" >
+                <stripes:hidden name="receiptKey" />
+            </stripes:submit>
+        </c:if>
         <stripes:link beanclass="${actionBean.class.name}">
-            No...
+            Cancel...
         </stripes:link>
     </div>
 

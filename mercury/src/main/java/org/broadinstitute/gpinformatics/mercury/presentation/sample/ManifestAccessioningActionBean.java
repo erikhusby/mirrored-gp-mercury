@@ -232,6 +232,11 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     @HandlesEvent(CLOSE_SESSION_ACTION)
     public Resolution closeSession() {
 
+        if(!selectedSession.canSessionExcludeReceiptTicket()) {
+            addGlobalValidationError("Unable to submit this session without a record of receipt");
+            return new ForwardResolution(ACCESSION_SAMPLE_PAGE);
+        }
+
         try {
             manifestSessionEjb.closeSession(selectedSessionId);
             addMessage("The session {0} has successfully been marked as completed", selectedSession.getSessionName());
@@ -246,17 +251,19 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     public Resolution findReceipt() {
 
         JiraIssue receiptInfo = null;
-        ForwardResolution forwardResolution;
+        ForwardResolution forwardResolution = null;
+        forwardResolution = new ForwardResolution(ASSOCIATE_RECEIPT_PAGE)
+                .addParameter(SELECTED_SESSION_ID, selectedSession.getManifestSessionId());
         try {
             receiptInfo = jiraService.getIssueInfo(receiptKey);
-            forwardResolution = new ForwardResolution(ASSOCIATE_RECEIPT_PAGE)
-                    .addParameter(SELECTED_SESSION_ID, selectedSession.getManifestSessionId())
+            forwardResolution
                     .addParameter("receiptSummary", receiptInfo.getSummary())
                     .addParameter("receiptDescription", receiptInfo.getDescription())
                     .addParameter("receiptKey", receiptKey);
         } catch (IOException e) {
-            addGlobalValidationError(e.getMessage());
-            return getContext().getSourcePageResolution();
+            addGlobalValidationError("Unable to access the specified record of receipt: " + receiptKey);
+            logger.error(e.getMessage());
+//            return getContext().getSourcePageResolution();
         }
 
         return forwardResolution;
