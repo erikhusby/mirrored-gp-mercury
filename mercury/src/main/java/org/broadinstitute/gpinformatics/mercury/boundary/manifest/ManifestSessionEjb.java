@@ -337,17 +337,14 @@ public class ManifestSessionEjb {
 
     private void transitionReceiptTicket(ManifestSession session) {
 
-        Transition transition = jiraService.findAvailableTransitionByName(session.getReceiptTicket(),
-                JiraTransition.ACCESSIONED.getStateName());
-
-        List<CustomField> customFields = new ArrayList<>();
-
         Set<String> accessionedSamples = new HashSet<>();
-        for(ManifestRecord record : session.getRecords()) {
-            if(session.isFromSampleKit()) {
-                accessionedSamples.add(record.getValueByKey(Metadata.Key.BROAD_SAMPLE_ID));
-            } else {
-                accessionedSamples.add(record.getValueByKey(Metadata.Key.SAMPLE_ID));
+        for (ManifestRecord record : session.getRecords()) {
+            if (record.getStatus() == ManifestRecord.Status.ACCESSIONED) {
+                if (session.isFromSampleKit()) {
+                    accessionedSamples.add(record.getValueByKey(Metadata.Key.BROAD_SAMPLE_ID));
+                } else {
+                    accessionedSamples.add(record.getValueByKey(Metadata.Key.SAMPLE_ID));
+                }
             }
         }
 
@@ -355,7 +352,11 @@ public class ManifestSessionEjb {
                                        + "Source samples include: %s", session.getSessionName(),
                 session.getResearchProject().getBusinessKey(), StringUtils.join(accessionedSamples, ", "));
         try {
-            jiraService.postNewTransition(session.getReceiptTicket(), transition, customFields, comment);
+            JiraIssue receiptIssue = new JiraIssue(session.getReceiptTicket(), jiraService);
+            receiptIssue.postTransition(JiraTransition.ACCESSIONED.getStateName(), comment);
+
+            // Transition is not adding comment.  Debug or specifically add comment.
+
         } catch (IOException e) {
             logger.error("Unable to transition receipt ticket "+session.getReceiptTicket() + " to Accessioned",e);
         }
