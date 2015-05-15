@@ -354,7 +354,7 @@ public class ManifestSessionEjb {
         try {
             JiraIssue receiptIssue = new JiraIssue(session.getReceiptTicket(), jiraService);
             receiptIssue.postTransition(JiraTransition.ACCESSIONED.getStateName(), comment);
-
+            receiptIssue.addComment(comment);
             // Transition is not adding comment.  Debug or specifically add comment.
 
         } catch (IOException e) {
