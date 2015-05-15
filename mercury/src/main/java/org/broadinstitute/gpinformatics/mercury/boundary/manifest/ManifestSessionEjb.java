@@ -2,12 +2,16 @@ package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.ClinicalSampleFactory;
@@ -31,8 +35,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @RequestScoped
 @Stateful
@@ -66,6 +72,8 @@ public class ManifestSessionEjb {
     private UserBean userBean;
 
     private JiraService jiraService;
+
+    private static Log logger = LogFactory.getLog(ManifestSessionEjb.class);
 
     /**
      * For CDI.
@@ -232,6 +240,8 @@ public class ManifestSessionEjb {
                 }
             }
         }
+
+        transitionReceiptTicket(manifestSession);
     }
 
     /**
@@ -323,7 +333,32 @@ public class ManifestSessionEjb {
         } catch (IOException e) {
             throw new TubeTransferException(RECEIPT_NOT_FOUND + session.getReceiptTicket());
         }
+    }
 
+    private void transitionReceiptTicket(ManifestSession session) {
+
+        Transition transition = jiraService.findAvailableTransitionByName(session.getReceiptTicket(),
+                JiraTransition.ACCESSIONED.getStateName());
+
+        List<CustomField> customFields = new ArrayList<>();
+
+        Set<String> accessionedSamples = new HashSet<>();
+        for(ManifestRecord record : session.getRecords()) {
+            if(session.isFromSampleKit()) {
+                accessionedSamples.add(record.getValueByKey(Metadata.Key.BROAD_SAMPLE_ID));
+            } else {
+                accessionedSamples.add(record.getValueByKey(Metadata.Key.SAMPLE_ID));
+            }
+        }
+
+        String comment = String.format("Session %s associated with Research Project %s has been Accessioned.  "
+                                       + "Source samples include: %s", session.getSessionName(),
+                session.getResearchProject().getBusinessKey(), StringUtils.join(accessionedSamples, ", "));
+        try {
+            jiraService.postNewTransition(session.getReceiptTicket(), transition, customFields, comment);
+        } catch (IOException e) {
+            logger.error("Unable to transition receipt ticket "+session.getReceiptTicket() + " to Accessioned",e);
+        }
     }
 
     /**
@@ -393,10 +428,49 @@ public class ManifestSessionEjb {
         }
     }
 
-    public void updateReceiptInfo(Long manifestSessionId, String receiptKey) {
+    public void updateReceiptInfo(Long manifestSessionId, String receiptKey) throws IOException {
         ManifestSession session = manifestSessionDao.find(manifestSessionId);
+
+        String oldReceiptKey = session.getReceiptTicket();
 
         session.setReceiptTicket(receiptKey);
 
+        JiraIssue receipt = new JiraIssue(session.getResearchProject().getBusinessKey(), jiraService);
+
+        List<Map> issuelinks = (List)receipt.getFieldValue("issuelinks");
+        if(issuelinks != null) {
+            for(Map<String, Object> links : issuelinks) {
+                if(links.get("outwardIssue") != null) {
+                    Map<String, Object> otherIssue = (Map<String, Object>) links.get("outwardIssue");
+                    if (otherIssue.get("key").equals(oldReceiptKey)) {
+                        //remove link
+                        receipt.deleteLink((String)links.get("id"));
+                    }
+                }
+            }
+        }
+        // add new link
+        receipt.addLink(session.getReceiptTicket());
+    }
+
+
+    /**
+     * JIRA Transition states used by Receipt.
+     */
+    public enum JiraTransition {
+        RECEIVED("Create"),
+        ACCESSIONED("Accessioned");
+        /**
+         * The text that represents this transition state in JIRA.
+         */
+        private final String stateName;
+
+        JiraTransition(String stateName) {
+            this.stateName = stateName;
+        }
+
+        public String getStateName() {
+            return stateName;
+        }
     }
 }

@@ -106,4 +106,17 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
             throw new RuntimeException(e.getResponse().getEntity(String.class), e);
         }
     }
+
+    /**
+     * Return a JSON representation of the response to a GET issued to the specified {@link WebResource}
+     */
+    protected void delete(WebResource webResource) {
+        try {
+            setJsonMimeTypes(webResource).delete();
+        } catch (UniformInterfaceException e) {
+            //TODO SGM:  Change to a more defined exception to give the option to set in throws or even catch
+            log.error("DELETE request" + webResource.getURI(), e);
+            throw new RuntimeException(e.getResponse().getEntity(String.class), e);
+        }
+    }
 }

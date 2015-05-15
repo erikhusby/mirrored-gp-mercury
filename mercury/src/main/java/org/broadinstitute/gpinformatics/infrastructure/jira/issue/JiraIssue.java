@@ -162,6 +162,10 @@ public class JiraIssue implements Serializable {
         addLink(AddIssueLinkRequest.LinkType.Related, targetIssueIn);
     }
 
+    public void deleteLink(String linkId) throws IOException {
+        jiraService.deleteLink(linkId);
+    }
+
     // Workaround for BSP users whose username includes their email address. This is an interim fix until
     // we can fixup existing usernames.
     private static final String BROADINSTITUTE_ORG = "@broadinstitute.org";

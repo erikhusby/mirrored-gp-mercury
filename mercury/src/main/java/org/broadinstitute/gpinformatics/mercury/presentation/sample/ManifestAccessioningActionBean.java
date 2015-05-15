@@ -280,8 +280,7 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
             addGlobalValidationError(UNABLE_TO_ASSOCIATE_RECEIPT_ERROR);
         }
 
-        return new ForwardResolution(getClass(), LOAD_SESSION_ACTION)
-                .addParameter(SELECTED_SESSION_ID, selectedSession.getManifestSessionId());
+        return new ForwardResolution(ACCESSION_SAMPLE_PAGE);
     }
 
     public Long getSelectedSessionId() {

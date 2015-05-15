@@ -167,19 +167,13 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
         StringBuilder fieldList = new StringBuilder("summary,description,duedate,created");
 
-//        StringBuilder expandList = new StringBuilder("");
-
         if (null != fields) {
             for (String currField : fields) {
                 fieldList.append(",").append(currField);
-//                expandList.append(",").append(currField);
             }
         }
 
         WebResource webResource = getJerseyClient().resource(urlString).queryParam("fields", fieldList.toString());
-//        if(expandList.length() > 0) {
-//            webResource.queryParam("expand", expandList.toString());
-//        }
 
         String queryResponse = webResource.get(String.class);
 
@@ -447,6 +441,17 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
         return get(webResource, new GenericType<IssueFieldsResponse>() {
         });
+    }
+
+    @Override
+    public void deleteLink(String jiraIssueLinkId) throws
+            IOException {
+
+        String url = getBaseUrl() + "/issueLink/" + jiraIssueLinkId;
+        log.debug(url);
+        WebResource webResource = getJerseyClient().resource(url);
+
+        delete(webResource);
     }
 
     @Override
