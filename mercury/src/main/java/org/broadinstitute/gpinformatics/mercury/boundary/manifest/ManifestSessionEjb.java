@@ -434,23 +434,10 @@ public class ManifestSessionEjb {
         String oldReceiptKey = session.getReceiptTicket();
 
         session.setReceiptTicket(receiptKey);
+        String sourceBusinessKey = session.getResearchProject().getBusinessKey();
 
-        JiraIssue receipt = new JiraIssue(session.getResearchProject().getBusinessKey(), jiraService);
-
-        List<Map> issuelinks = (List)receipt.getFieldValue("issuelinks");
-        if(issuelinks != null) {
-            for(Map<String, Object> links : issuelinks) {
-                if(links.get("outwardIssue") != null) {
-                    Map<String, Object> otherIssue = (Map<String, Object>) links.get("outwardIssue");
-                    if (otherIssue.get("key").equals(oldReceiptKey)) {
-                        //remove link
-                        receipt.deleteLink((String)links.get("id"));
-                    }
-                }
-            }
-        }
-        // add new link
-        receipt.addLink(session.getReceiptTicket());
+        JiraIssue researchProjectIssue = new JiraIssue(sourceBusinessKey, jiraService);
+        researchProjectIssue.updateIssueLink(receiptKey, oldReceiptKey);
     }
 
 

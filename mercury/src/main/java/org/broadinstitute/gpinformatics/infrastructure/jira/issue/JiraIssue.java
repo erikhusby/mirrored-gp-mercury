@@ -241,4 +241,21 @@ public class JiraIssue implements Serializable {
     public String getResolution() throws IOException {
         return jiraService.getResolution(key);
     }
+
+    public void updateIssueLink(String receiptKey, String oldReceiptKey) throws IOException {
+        JiraIssue jiraIssue = this;
+
+        List<Map> issuelinks = (List<Map>) jiraIssue.getFieldValue("issuelinks");
+        if(issuelinks != null) {
+            for(Map<String, Object> links : issuelinks) {
+                if(links.get("outwardIssue") != null) {
+                    Map<String, Object> otherIssue = (Map<String, Object>) links.get("outwardIssue");
+                    if (otherIssue.get("key").equals(oldReceiptKey)) {
+                        jiraIssue.deleteLink((String) links.get("id"));
+                    }
+                }
+            }
+        }
+        jiraIssue.addLink(receiptKey);
+    }
 }
