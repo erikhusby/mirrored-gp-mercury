@@ -64,11 +64,10 @@ $j(document).ready(function () {
 var bspDataCount = 0;
 
 function setupDialogs() {
-    $j.ui.dialog.prototype._originalClose = $j.ui.dialog.prototype.close;
-    $j.ui.dialog.prototype.close = function () {
+    function handleCancelEvent () {
+        $j(this).dialog("close");
         $j("#dialogAction").attr("name", "");
-        $j.ui.dialog.prototype._originalClose.apply(this, arguments);
-    };
+    }
 
     $j("#confirmDialog").dialog({
         modal: true,
@@ -85,9 +84,7 @@ function setupDialogs() {
             },
             {
                 text: "Cancel",
-                click: function () {
-                    $j(this).dialog("close");
-                }
+                click: handleCancelEvent
             }
         ]
     });
@@ -108,9 +105,7 @@ function setupDialogs() {
             },
             {
                 text: "Cancel",
-                click: function () {
-                    $j(this).dialog("close");
-                }
+                click: handleCancelEvent
             }
         ]
     });
@@ -133,9 +128,7 @@ function setupDialogs() {
             },
             {
                 text: "Cancel",
-                click: function () {
-                    $j(this).dialog("close");
-                }
+                click: handleCancelEvent
             }
         ]
     });
@@ -158,9 +151,7 @@ function setupDialogs() {
             },
             {
                 text: "Cancel",
-                click: function () {
-                    $j(this).dialog("close");
-                }
+                click: handleCancelEvent
             }
         ]
     });
@@ -183,9 +174,7 @@ function setupDialogs() {
             },
             {
                 text: "Cancel",
-                click: function () {
-                    $j(this).dialog("close");
-                }
+                click: handleCancelEvent
             }
         ]
     });
@@ -206,9 +195,7 @@ function setupDialogs() {
             },
             {
                 text: "Cancel",
-                click: function () {
-                    $j(this).dialog("close");
-                }
+                click: handleCancelEvent
             }
         ]
     });
@@ -231,9 +218,7 @@ function setupDialogs() {
             },
             {
                 text: "Cancel",
-                click: function () {
-                    $j(this).dialog("close");
-                }
+                click: handleCancelEvent
             }
         ]
     });
@@ -253,9 +238,7 @@ function setupDialogs() {
             },
             {
                 text: "Cancel",
-                click: function () {
-                    $j(this).dialog("close");
-                }
+                click: handleCancelEvent
             }
         ]
     });
