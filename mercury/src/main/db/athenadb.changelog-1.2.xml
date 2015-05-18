@@ -173,4 +173,20 @@
         </sql>
     </changeSet>
 
+    <changeSet author="breilly" id="GPLIM-3580-1">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT count(*)
+                FROM all_constraints c
+                WHERE c.constraint_name = 'UK_BILLING_LEDGER'
+                AND c.constraint_type = 'U'
+                AND EXISTS (SELECT 1 FROM all_cons_columns cc WHERE cc.constraint_name = c.constraint_name AND cc.column_name = 'PRODUCT_ORDER_SAMPLE_ID')
+                AND EXISTS (SELECT 1 FROM all_cons_columns cc WHERE cc.constraint_name = c.constraint_name AND cc.column_name = 'PRICE_ITEM_ID')
+                AND EXISTS (SELECT 1 FROM all_cons_columns cc WHERE cc.constraint_name = c.constraint_name AND cc.column_name = 'BILLING_SESSION')
+            </sqlCheck>
+        </preConditions>
+        <addUniqueConstraint tableName="BILLING_LEDGER" constraintName="UK_BILLING_LEDGER" schemaName="athena"
+                             columnNames="PRODUCT_ORDER_SAMPLE_ID, PRICE_ITEM_ID, BILLING_SESSION"/>
+    </changeSet>
+
 </databaseChangeLog>
