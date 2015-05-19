@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
@@ -34,6 +35,7 @@ import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Map;
@@ -654,6 +656,27 @@ public class LabEventFixupTest extends Arquillian {
             throw new RuntimeException(e);
         }
     }
+
+    /** Delete Activity Begin and End event sent by a Bravo simulator. */
+    @Test(enabled = false)
+    public void fixupGplim3568() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        Collection<LabEvent> labEvents = labEventDao.findListByList(LabEvent.class, LabEvent_.eventLocation,
+                Collections.singletonList("EPOLK-VM"));
+        Assert.assertTrue(CollectionUtils.isNotEmpty(labEvents));
+        for (LabEvent labEvent : labEvents) {
+            Assert.assertTrue(labEvent.getLabEventType() == LabEventType.ACTIVITY_BEGIN ||
+                              labEvent.getLabEventType() == LabEventType.ACTIVITY_END);
+            System.out.println("Deleting " + labEvent.getLabEventId());
+            labEventDao.remove(labEvent);
+        }
+        labEventDao.persist(new FixupCommentary("GPLIM-3568 delete activity events sent by a simulator."));
+        labEventDao.flush();
+        utx.commit();
+    }
+
+
 
     @Test(enabled = false)
     public void fixupSwap150() {
