@@ -115,6 +115,8 @@ public class WorkflowStepDef implements Serializable {
     private boolean deadEndBranch = false;
     /** Qualifies generic events like CENTRIFUGE, which might occur multiple times in one process. */
     private String workflowQualifier;
+    /** Instructions to the users. */
+    private String instructions;
 
     private transient WorkflowProcessDef processDef;
 
@@ -199,5 +201,9 @@ public class WorkflowStepDef implements Serializable {
 
     public String getWorkflowQualifier() {
         return workflowQualifier;
+    }
+
+    public String getInstructions() {
+        return instructions;
     }
 }

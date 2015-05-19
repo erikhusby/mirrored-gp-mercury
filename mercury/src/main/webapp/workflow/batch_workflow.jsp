@@ -15,12 +15,20 @@
                         <div>
                             ${workflowEvent.workflowStepDef.name}
                         </div>
+                        <div>
+                            ${workflowEvent.workflowStepDef.instructions}
+                        </div>
                         <c:forEach items="${workflowEvent.workflowStepDef.labEventTypes}" var="labEvenType">
-                            <c:if test="${not empty labEvenType.messageType}">
-                                <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.labevent.ManualTransferActionBean">
-                                    Manual Transfer
-                                </stripes:link>
-                            </c:if>
+                            <c:choose>
+                                <c:when test="${not empty labEvenType.messageType}">
+                                    <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.labevent.ManualTransferActionBean">
+                                        Manual Transfer
+                                    </stripes:link>
+                                </c:when>
+                                <c:otherwise>
+                                    <input type="checkbox">
+                                </c:otherwise>
+                            </c:choose>
                         </c:forEach>
                     </td>
                     <td>
