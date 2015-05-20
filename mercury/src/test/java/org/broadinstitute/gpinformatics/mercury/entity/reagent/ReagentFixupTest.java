@@ -509,4 +509,19 @@ public class ReagentFixupTest extends Arquillian {
         genericReagentDao.persist(new FixupCommentary("SUPPORT-660 change lot"));
         genericReagentDao.flush();
     }
+
+    @Test(enabled = false)
+    public void fixupGplim3538ReagentBarcode() {
+        userBean.loginOSUser();
+        // change lot to BATCH-001 on the reagent that has lot 10D06A0004 and reagent name EWS (Mercury reagent id 813365)
+        GenericReagent reagentEws = genericReagentDao.findById(GenericReagent.class, 813365L);
+        Assert.assertNotNull(reagentEws);
+        reagentEws.setLot("BATCH-001");
+        // change lot from 'rgt4828222' to '10029298' (Mercury reagent id 933959)
+        GenericReagent reagentRgt = genericReagentDao.findById(GenericReagent.class, 933959L);
+        Assert.assertNotNull(reagentRgt);
+        reagentRgt.setLot("10029298");
+        genericReagentDao.persist(new FixupCommentary("GPLIM-3538 change lot due to reagent script failure"));
+        genericReagentDao.flush();
+    }
 }
