@@ -158,7 +158,11 @@ public class ReworkEjb {
         for (LabVessel vessel : labVessels) {
             List<ProductOrderSample> productOrderSamples = new ArrayList<>();
             for (SampleInstanceV2 sampleInstanceV2 : vessel.getSampleInstancesV2()) {
-                productOrderSamples.addAll(sampleInstanceV2.getAllProductOrderSamples());
+                for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
+                    if (productOrderSample.getProductOrder().getOrderStatus().readyForLab()) {
+                        productOrderSamples.add(productOrderSample);
+                    }
+                }
             }
             bucketCandidates.addAll(collectBucketCandidatesForAMercuryVessel(vessel, productOrderSamples));
         }
@@ -178,7 +182,12 @@ public class ReworkEjb {
          * sample data is in Mercury, especially those that are BSP tubes that have been exported to CRSP!
          */
         if (bucketCandidates.isEmpty()) {
-            Collection<ProductOrderSample> sampleCollection = productOrderSampleDao.findBySamples(query);
+            Collection<ProductOrderSample> sampleCollection = new ArrayList<>();
+            for (ProductOrderSample productOrderSample : productOrderSampleDao.findBySamples(query)) {
+                if (productOrderSample.getProductOrder().getOrderStatus().readyForLab()) {
+                    sampleCollection.add(productOrderSample);
+                }
+            }
             bucketCandidates.addAll(collectBucketCandidatesThatHaveBSPVessels(sampleCollection));
         }
 
@@ -204,17 +213,19 @@ public class ReworkEjb {
         Map<String, BspSampleData> bspResult = bspSampleDataFetcher.fetchSampleData(sampleIDs);
         bspSampleDataFetcher.fetchSamplePlastic(bspResult.values());
         for (ProductOrderSample sample : samplesById) {
-            Workflow workflow = sample.getProductOrder().getProduct().getWorkflow();
-
-            if (!sample.getProductOrder().isDraft() && Workflow.isWorkflowSupportedByMercury(workflow)) {
+            if (productOrderSampleCanEnterBucket(sample)) {
                 String sampleKey = sample.getName();
                 String tubeBarcode = bspResult.get(sampleKey).getBarcodeForLabVessel();
-
                 bucketCandidates.add(getBucketCandidateConsideringProductFamily(sample, sampleKey,
                         tubeBarcode, ProductFamily.ProductFamilyName.EXOME, null, ""));
             }
         }
         return bucketCandidates;
+    }
+
+    private boolean productOrderSampleCanEnterBucket(ProductOrderSample sample) {
+        Workflow workflow = sample.getProductOrder().getProduct().getWorkflow();
+        return sample.getProductOrder().getOrderStatus().readyForLab() && workflow.isWorkflowSupportedByMercury();
     }
 
     /**
@@ -233,12 +244,8 @@ public class ReworkEjb {
         Collection<BucketCandidate> bucketCandidates = new ArrayList<>();
         // make sure we have a matching product order sample
         for (ProductOrderSample sample : productOrderSamples) {
-            Workflow workflow = sample.getProductOrder().getProduct().getWorkflow();
-
-            if (!sample.getProductOrder().isDraft() && Workflow.isWorkflowSupportedByMercury(workflow)) {
-
+            if (productOrderSampleCanEnterBucket(sample)) {
                 String eventName = vessel.getLastEventName();
-
                 bucketCandidates.add(getBucketCandidateConsideringProductFamily(sample, sample.getName(),
                         vessel.getLabel(),
                         ProductFamily.ProductFamilyName.EXOME, vessel, eventName));

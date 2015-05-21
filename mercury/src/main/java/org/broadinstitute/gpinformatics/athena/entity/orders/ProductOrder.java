@@ -1199,17 +1199,22 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
         /** @return true if an order can be abandoned from this state. */
         public boolean canAbandon() {
-            return this == Pending || this == Submitted;
+            return EnumSet.of(Pending, Submitted).contains(this);
         }
 
         /** @return true if an order can be placed from this state. */
         public boolean canPlace() {
-            return this == Draft || this == Pending;
+            return EnumSet.of(Draft, Pending).contains(this);
+        }
+
+        /** @return true if an order is ready for the lab to begin work on it. */
+        public boolean readyForLab() {
+            return !EnumSet.of(Draft, Pending, Abandoned).contains(this);
         }
 
         /** @return true if an order can be billed from this state. */
         public boolean canBill() {
-            return this == Submitted || this == Abandoned || this == Completed;
+            return EnumSet.of(Submitted, Abandoned, Completed).contains(this);
         }
     }
 
@@ -1623,18 +1628,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public int getSampleCount() {
         return sampleCount;
-    }
-
-    /**
-     * Is the current PDO ready for lab work? A PDO is ready if all of its samples are received (or abandoned) and
-     * the PM has placed the order.
-     *
-     * @return true if this PDO contains samples that are ready for lab work
-     */
-    public boolean readyForLab() {
-        // Abandoned and Completed PDOs are considered "ready" because they can transition back to the
-        // Submitted state.
-        return orderStatus != OrderStatus.Draft && orderStatus != OrderStatus.Pending;
     }
 
     public Collection<String> getPrintFriendlyRegulatoryInfo() {
