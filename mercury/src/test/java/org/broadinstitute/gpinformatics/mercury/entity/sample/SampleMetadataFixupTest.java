@@ -28,6 +28,7 @@ import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -104,6 +105,21 @@ public class SampleMetadataFixupTest extends Arquillian {
         }
         String fixupComment = "see https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-3542";
         addMetadataAndValidate(fixupItems, fixupComment);
+    }
+
+    @Test(enabled = false)
+    public void fixupGPLIM_3585SwapTumorNormal() {
+
+        MercurySample mercurySample74P3A = mercurySampleDao.findBySampleKey("SM-74P3A");
+        String fixupComment743A = "Changing Tumor to Normal.  See https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-3585";
+        updateMetadataAndValidate(MetaDataFixupItem
+                .mapOf(mercurySample74P3A.getSampleKey(), Metadata.Key.TUMOR_NORMAL, "Tumor", "Normal"),fixupComment743A);
+
+
+        MercurySample mercurySample74P3U = mercurySampleDao.findBySampleKey("SM-74P3U");
+        String fixupComment743U = "Changing Normal to Tumor.  See https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-3585";
+        updateMetadataAndValidate(MetaDataFixupItem
+                .mapOf(mercurySample74P3U.getSampleKey(), Metadata.Key.TUMOR_NORMAL, "Normal", "Tumor"), fixupComment743U);
     }
 
     /**
