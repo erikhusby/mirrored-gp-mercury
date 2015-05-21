@@ -261,7 +261,6 @@ public class Metadata {
         INSTRUMENT_SERIAL_NUMBER(Category.LAB_METRIC_RUN, DataType.STRING, "Serial Number", Visibility.USER),
 
         TOTAL_NG(Category.LAB_METRIC, DataType.NUMBER, "Total ng", Visibility.USER),
-        RECEIVED_DATE(Category.SAMPLE, DataType.DATE, "Received Date", Visibility.USER),
         RECEIPT_RECORD(Category.SAMPLE, DataType.STRING, "Receipt Record", Visibility.NONE);
 
         private final Category category;

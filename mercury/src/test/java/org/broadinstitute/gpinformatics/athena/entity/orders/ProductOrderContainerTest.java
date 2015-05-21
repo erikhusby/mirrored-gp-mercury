@@ -96,9 +96,7 @@ public class ProductOrderContainerTest extends Arquillian {
 
         BspUser bspUser = new BspUser();
         bspUser.setUserId(10950L);
-//        testOrder.setCreatedBy(10950l);
         testOrder.prepareToSave(bspUser, ProductOrder.SaveType.CREATING);
-//        ProductOrderJiraUtil.createIssueForOrder(testOrder, jiraService);
         productOrderDao.persist(testOrder.getProduct());
         Assert.assertTrue(StringUtils.isNotEmpty(testOrder.getJiraTicketKey()));
 }

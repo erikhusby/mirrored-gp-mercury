@@ -7,9 +7,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
-import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -23,8 +23,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -52,6 +50,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
+import java.io.IOException;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -602,6 +601,16 @@ public abstract class LabVessel implements Serializable {
      */
     public boolean canBeUsedForAccessioning() {
         return !doesChainOfCustodyInclude(LabEventType.COLLABORATOR_TRANSFER);
+    }
+
+    public void setReceiptEvent(BspUser user, Date receivedDate) {
+        setReceiptEvent(user, receivedDate, 1L);
+    }
+    public void setReceiptEvent(BspUser user, Date receivedDate, long disambiguator) {
+        LabEvent receiptEvent =
+                new LabEvent(LabEventType.SAMPLE_RECEIPT, receivedDate, LabEvent.UI_EVENT_LOCATION,
+                        disambiguator, user.getUserId(), LabEvent.UI_PROGRAM_NAME);
+        addInPlaceEvent(receiptEvent);
     }
 
     public enum ContainerType {

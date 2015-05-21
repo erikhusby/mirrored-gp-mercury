@@ -11,6 +11,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.Updatable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.UpdatedEntityInterceptor;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
@@ -42,6 +43,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.OrderColumn;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -570,10 +572,11 @@ public class ManifestSession implements Updatable {
      * @param targetSample             Mercury Sample to which the transfer will be associated
      * @param targetVessel             Lab Vessel to which the transfer will be associated
      * @param user                     Represents the user attempting to make the transfer
-     * @param received
+     * @param receivedTicket
+     * @param disambiguator
      */
     public void performTransfer(String sourceCollaboratorSample, MercurySample targetSample, LabVessel targetVessel,
-                                BspUser user, Date received) {
+                                BspUser user, JiraIssue receivedTicket, long disambiguator) throws IOException {
 
         ManifestRecord sourceRecord ;
 
@@ -584,18 +587,17 @@ public class ManifestSession implements Updatable {
         }
 
         Set<Metadata> metadataToTransfer = new HashSet<>(sourceRecord.getMetadata());
-        metadataToTransfer.add(new Metadata(Metadata.Key.RECEIVED_DATE, received));
-        targetSample.addMetadata(metadataToTransfer);
-        LabEvent receiptEvent =
-                new LabEvent(LabEventType.SAMPLE_RECEIPT, received, LabEvent.UI_EVENT_LOCATION,
-                        1L, user.getUserId(), LabEvent.UI_PROGRAM_NAME);
-        targetVessel.addInPlaceEvent(receiptEvent);
+        if (receivedTicket != null) {
+            metadataToTransfer.add(new Metadata(Metadata.Key.RECEIPT_RECORD, receivedTicket.getKey()));
+            targetSample.addMetadata(metadataToTransfer);
+            targetVessel.setReceiptEvent(user, receivedTicket.getCreated(), disambiguator);
+        }
 
         sourceRecord.setStatus(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
 
         LabEvent collaboratorTransferEvent =
                 new LabEvent(LabEventType.COLLABORATOR_TRANSFER, new Date(), LabEvent.UI_EVENT_LOCATION,
-                        1L, user.getUserId(), LabEvent.UI_PROGRAM_NAME);
+                        disambiguator, user.getUserId(), LabEvent.UI_PROGRAM_NAME);
         targetVessel.addInPlaceEvent(collaboratorTransferEvent);
     }
 

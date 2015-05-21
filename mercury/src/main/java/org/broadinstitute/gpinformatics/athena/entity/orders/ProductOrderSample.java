@@ -295,11 +295,11 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     }
 
     public Date getReceiptDate() {
-        return getSampleData().getReceiptDate();
+        return (mercurySample!= null)?mercurySample.getReceivedDate():getSampleData().getReceiptDate();
     }
 
     public boolean isSampleReceived() {
-        return getSampleData().isSampleReceived();
+        return (mercurySample!= null)?mercurySample.getReceivedDate() != null:getSampleData().isSampleReceived();
     }
 
     public enum DeliveryStatus implements StatusType {
@@ -700,7 +700,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         } else {
             switch (getMetadataSource()) {
             case BSP:
-                available = getSampleData().isSampleReceived();
+                available = isSampleReceived();
                 break;
             case MERCURY:
                 available = isSampleAccessioned() && isSampleReceived();

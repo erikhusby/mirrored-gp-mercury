@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.Date;
 import java.util.Set;
 
@@ -25,8 +26,12 @@ public class MercurySampleData implements SampleData {
     private Date receiptDate;
 
     public MercurySampleData(@Nonnull String sampleId, @Nonnull Set<Metadata> metadata) {
+        this(sampleId, metadata, null);
+    }
+    public MercurySampleData(@Nonnull String sampleId, @Nonnull Set<Metadata> metadata, @Nullable Date receiptDate) {
         this.sampleId = sampleId;
         hasData = !metadata.isEmpty();
+        this.receiptDate = receiptDate;
         extractSampleDataFromMetadata(metadata);
     }
 
@@ -51,9 +56,6 @@ public class MercurySampleData implements SampleData {
                 break;
             case BUICK_VISIT:
                 this.visit = value;
-                break;
-            case RECEIVED_DATE:
-                this.receiptDate = data.getDateValue();
                 break;
             }
         }

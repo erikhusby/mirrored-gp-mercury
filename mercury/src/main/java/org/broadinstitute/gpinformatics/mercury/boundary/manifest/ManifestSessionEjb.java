@@ -9,9 +9,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProj
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
-import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.ClinicalSampleFactory;
@@ -236,7 +234,7 @@ public class ManifestSessionEjb {
 
                     transferSample(manifestSessionId, record.getValueByKey(Metadata.Key.SAMPLE_ID),
                             record.getValueByKey(Metadata.Key.BROAD_SAMPLE_ID),
-                            record.getValueByKey(Metadata.Key.BROAD_2D_BARCODE));
+                            record.getValueByKey(Metadata.Key.BROAD_2D_BARCODE), record.getSpreadsheetRowNumber());
                 }
             }
         }
@@ -320,6 +318,20 @@ public class ManifestSessionEjb {
      */
     public void transferSample(long manifestSessionId, String sourceCollaboratorSample, String sampleKey,
                                String vesselLabel) {
+        transferSample(manifestSessionId, sourceCollaboratorSample, sampleKey, vesselLabel, 1L);
+    }
+    /**
+     * Encapsulates the logic necessary to informatically mark all relevant entities as having completed the tube
+     * transfer process.
+     *
+     * @param manifestSessionId        Database ID of the session which is affiliated with this transfer
+     * @param sourceCollaboratorSample sample identifier for a source clinical sample
+     * @param sampleKey                The sample Key for the target mercury sample for the tube transfer
+     * @param vesselLabel              The label of the lab vessel that should be associated with the given mercury sample
+     * @param disambiguator
+     */
+    public void transferSample(long manifestSessionId, String sourceCollaboratorSample, String sampleKey,
+                               String vesselLabel, long disambiguator) {
         ManifestSession session = findManifestSession(manifestSessionId);
         MercurySample targetSample = findAndValidateTargetSample(sampleKey);
 
@@ -329,7 +341,7 @@ public class ManifestSessionEjb {
         try {
             receiptInfo = jiraService.getIssueInfo(session.getReceiptTicket());
             session.performTransfer(sourceCollaboratorSample, targetSample, targetVessel, userBean.getBspUser(),
-                    receiptInfo.getCreated());
+                    receiptInfo, disambiguator);
         } catch (IOException e) {
             throw new TubeTransferException(RECEIPT_NOT_FOUND + session.getReceiptTicket());
         }
@@ -377,16 +389,16 @@ public class ManifestSessionEjb {
         if (researchProject == null) {
             throw new IllegalArgumentException(String.format(RESEARCH_PROJECT_NOT_FOUND_FORMAT, researchProjectKey));
         }
+        ManifestSession manifestSession;
         try {
             validateSamplesAreAvailableForAccessioning(samples);
             Collection<ManifestRecord> manifestRecords = ClinicalSampleFactory.toManifestRecords(samples);
-            ManifestSession manifestSession =
-                    new ManifestSession(researchProject, sessionName, userBean.getBspUser(), fromSampleKit,
-                            manifestRecords);
-            return manifestSession;
+            manifestSession = new ManifestSession(researchProject, sessionName, userBean.getBspUser(), fromSampleKit,
+                    manifestRecords);
         } catch (RuntimeException e) {
             throw new InformaticsServiceException(e);
         }
+        return manifestSession;
     }
 
     /**

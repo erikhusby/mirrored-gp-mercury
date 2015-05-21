@@ -88,7 +88,7 @@ public class CreateFields extends UpdateFields {
         FCT_PROJECT("Flowcell Tracking", "FCT", "CFCT"),
         PRODUCT_ORDERING("Product Ordering", "PDO", "CPDO"),
         RESEARCH_PROJECTS("Research Projects", "RP", "CRP"),
-        RECEIPT_PROJECT("Sample Receipt", "RCT");
+        RECEIPT_PROJECT("Sample Receipt Tracking", "RCT");
 
         private final String projectName;
         private final String keyPrefix;
@@ -129,7 +129,7 @@ public class CreateFields extends UpdateFields {
         FLOWCELL("Flowcell"),
         MISEQ("MiSeq"),
         SAMPLE_INITIATION("Sample Initiation"),
-        RECEIPT("Receipt Tracking");
+        RECEIPT("Receipt");
 
         private final String jiraName;
 
