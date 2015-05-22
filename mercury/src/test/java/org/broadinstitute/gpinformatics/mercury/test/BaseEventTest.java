@@ -453,17 +453,14 @@ public class BaseEventTest {
     /**
      * Creates an entity graph for Illumina Content Exome.
      *
-     * @param pondRegRack         The pond registration rack coming out of the library construction process.
-     * @param pondRegRackBarcode  The pond registration rack barcode.
-     * @param pondRegTubeBarcodes A list of pond registration tube barcodes.
+     * @param pondRegRacks         The pond registration racks coming out of the library construction process.
      * @param barcodeSuffix       Makes unique the generated vessel barcodes. Don't use date if test quickly invoked twice.
      *
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
-    public IceEntityBuilder runIceProcess(TubeFormation pondRegRack, String pondRegRackBarcode,
-                                          List<String> pondRegTubeBarcodes, String barcodeSuffix) {
-        return new IceEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(), pondRegRack,
-                pondRegRackBarcode, pondRegTubeBarcodes, barcodeSuffix, IceJaxbBuilder.PlexType.PLEX96).invoke();
+    public IceEntityBuilder runIceProcess(List<TubeFormation> pondRegRacks, String barcodeSuffix) {
+        return new IceEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(), pondRegRacks,
+                barcodeSuffix, IceJaxbBuilder.PlexType.PLEX96).invoke();
     }
 
     /**

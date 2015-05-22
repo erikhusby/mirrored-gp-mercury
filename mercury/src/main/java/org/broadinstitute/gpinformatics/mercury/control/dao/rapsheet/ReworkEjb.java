@@ -37,7 +37,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkLevel;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkReason;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -544,8 +543,8 @@ public class ReworkEjb {
             this.lastEventStep = lastEventStep;
             Set<String> sampleNames = new HashSet<>();
             if (labVessel != null) {
-                for (SampleInstance instance : this.labVessel.getSampleInstances(LabVessel.SampleType.ANY, null)) {
-                    sampleNames.add(instance.getStartingSample().getSampleKey());
+                for (SampleInstanceV2 instance : this.labVessel.getSampleInstancesV2()) {
+                    sampleNames.add(instance.getMercuryRootSampleName());
                 }
             }
             this.currentSampleKey = StringUtils.join(sampleNames, ", ");

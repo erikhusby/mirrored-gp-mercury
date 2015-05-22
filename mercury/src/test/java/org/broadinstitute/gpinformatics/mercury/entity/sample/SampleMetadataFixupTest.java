@@ -12,6 +12,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import com.google.common.collect.ImmutableMap;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -27,6 +28,7 @@ import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -92,6 +94,34 @@ public class SampleMetadataFixupTest extends Arquillian {
         updateMetadataAndValidate(fixupItems, fixupComment);
     }
 
+    @Test(enabled = false)
+    public void fixupGPLIM_3542_BackFill_Buick_Samples() {
+        Map<String, MetaDataFixupItem> fixupItems = new HashMap<>();
+        List<MercurySample> mercurySamples = mercurySampleDao
+                .findSamplesWithoutMetadata(MercurySample.MetadataSource.MERCURY, Metadata.Key.MATERIAL_TYPE);
+        for (MercurySample mercurySample : mercurySamples) {
+            fixupItems.putAll(MetaDataFixupItem
+                    .mapOf(mercurySample.getSampleKey(), Metadata.Key.MATERIAL_TYPE, "", "DNA"));
+        }
+        String fixupComment = "see https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-3542";
+        addMetadataAndValidate(fixupItems, fixupComment);
+    }
+
+    @Test(enabled = false)
+    public void fixupGPLIM_3585SwapTumorNormal() {
+
+        MercurySample mercurySample74P3A = mercurySampleDao.findBySampleKey("SM-74P3A");
+        String fixupComment743A = "Changing Tumor to Normal.  See https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-3585";
+        updateMetadataAndValidate(MetaDataFixupItem
+                .mapOf(mercurySample74P3A.getSampleKey(), Metadata.Key.TUMOR_NORMAL, "Tumor", "Normal"),fixupComment743A);
+
+
+        MercurySample mercurySample74P3U = mercurySampleDao.findBySampleKey("SM-74P3U");
+        String fixupComment743U = "Changing Normal to Tumor.  See https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-3585";
+        updateMetadataAndValidate(MetaDataFixupItem
+                .mapOf(mercurySample74P3U.getSampleKey(), Metadata.Key.TUMOR_NORMAL, "Normal", "Tumor"), fixupComment743U);
+    }
+
     /**
      * Perform actual fixup and validate.
      */
@@ -127,6 +157,41 @@ public class SampleMetadataFixupTest extends Arquillian {
         assertThat(assertFailureReason, fixUpErrors, equalTo(Collections.EMPTY_MAP));
 
     }
+
+    /**
+     * Perform actual fixup and validate.
+     */
+    private void addMetadataAndValidate(@Nonnull Map<String, MetaDataFixupItem> fixupItems,
+                                        @Nonnull String fixupComment) {
+        userBean.loginOSUser();
+        Map<String, Metadata.Key> fixUpErrors = new HashMap<>();
+        Map<String, MercurySample> samplesById = mercurySampleDao.findMapIdToMercurySample(fixupItems.keySet());
+        for (MetaDataFixupItem fixupItem : fixupItems.values()) {
+            MercurySample mercurySample = samplesById.get(fixupItem.getSampleKey());
+            if (StringUtils.isBlank(fixupItem.getOldValue())) {
+                mercurySample.addMetadata(
+                        Collections.singleton(new Metadata(fixupItem.getMetadataKey(), fixupItem.getNewValue())));
+            }
+        }
+        String assertFailureReason =
+                String.format("Error updating some or all samples: %s. Please consult server log for more information.",
+                        fixUpErrors);
+        assertThat(assertFailureReason, fixUpErrors, equalTo(Collections.EMPTY_MAP));
+        mercurySampleDao.persist(new FixupCommentary(fixupComment));
+        mercurySampleDao.flush();
+
+        samplesById = mercurySampleDao.findMapIdToMercurySample(fixupItems.keySet());
+        for (MetaDataFixupItem fixupItem : fixupItems.values()) {
+            MercurySample mercurySample = samplesById.get(fixupItem.getSampleKey());
+            fixUpErrors.putAll(fixupItem.validateUpdatedValue(mercurySample));
+        }
+        assertFailureReason =
+                String.format(
+                        "Updated values do not match expected values for some or all samples: %s. Please consult server log for more information.",
+                        fixUpErrors);
+        assertThat(assertFailureReason, fixUpErrors, equalTo(Collections.EMPTY_MAP));
+
+    }
 }
 
 class MetaDataFixupItem {
@@ -142,6 +207,18 @@ class MetaDataFixupItem {
         this.metadataKey = metadataKey;
         this.oldValue = oldValue;
         this.newValue = newValue;
+    }
+
+    public String getNewValue() {
+        return newValue;
+    }
+
+    public Metadata.Key getMetadataKey() {
+        return metadataKey;
+    }
+
+    public String getOldValue() {
+        return oldValue;
     }
 
     public static Map<String, MetaDataFixupItem> mapOf(String sampleId, Metadata.Key metadataKey,

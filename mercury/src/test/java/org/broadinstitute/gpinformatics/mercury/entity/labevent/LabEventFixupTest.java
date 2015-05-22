@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
@@ -653,6 +654,43 @@ public class LabEventFixupTest extends Arquillian {
                 RollbackException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /** Delete Activity Begin and End event sent by a Bravo simulator. */
+    @Test(enabled = false)
+    public void fixupGplim3568() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        Collection<LabEvent> labEvents = labEventDao.findListByList(LabEvent.class, LabEvent_.eventLocation,
+                Collections.singletonList("EPOLK-VM"));
+        Assert.assertTrue(CollectionUtils.isNotEmpty(labEvents));
+        for (LabEvent labEvent : labEvents) {
+            Assert.assertTrue(labEvent.getLabEventType() == LabEventType.ACTIVITY_BEGIN ||
+                              labEvent.getLabEventType() == LabEventType.ACTIVITY_END);
+            System.out.println("Deleting " + labEvent.getLabEventId());
+            labEventDao.remove(labEvent);
+        }
+        labEventDao.persist(new FixupCommentary("GPLIM-3568 delete activity events sent by a simulator."));
+        labEventDao.flush();
+        utx.commit();
+    }
+
+
+
+    @Test(enabled = false)
+    public void fixupSwap150() {
+        userBean.loginOSUser();
+        LabEvent dilutionToFlowcell = labEventDao.findById(LabEvent.class, 887920L);
+        Assert.assertEquals(dilutionToFlowcell.getLabEventType(), LabEventType.DILUTION_TO_FLOWCELL_TRANSFER);
+        VesselToSectionTransfer vesselToSectionTransfer =
+                dilutionToFlowcell.getVesselToSectionTransfers().iterator().next();
+        Assert.assertEquals(vesselToSectionTransfer.getSourceVessel().getLabel(), "0177366427");
+        System.out.print("Changing " + dilutionToFlowcell.getLabEventId() + " from " +
+                vesselToSectionTransfer.getSourceVessel().getLabel() + " to ");
+        vesselToSectionTransfer.setSourceVessel(barcodedTubeDao.findByBarcode("0177366410"));
+        System.out.println(vesselToSectionTransfer.getSourceVessel().getLabel());
+        labEventDao.persist(new FixupCommentary("SWAP-150 change source of dilution to flowcell transfer"));
+        labEventDao.flush();
     }
 
     @Test(enabled = false)
