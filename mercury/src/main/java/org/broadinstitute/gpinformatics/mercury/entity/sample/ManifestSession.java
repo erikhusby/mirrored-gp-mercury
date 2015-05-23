@@ -567,16 +567,15 @@ public class ManifestSession implements Updatable {
     /**
      * Encapsulates the logic required to informatically execute a transfer from the collaborator provided tube to
      * a broad tube.  This is primarily done by marking a record within this session as having been transferred.
-     *  @param sourceCollaboratorSample Sample ID for the source sample.  This should correspond to a record within
-     *                                 the session
+     * @param sourceCollaboratorSample Sample ID for the source sample.  This should correspond to a record within
+ *                                 the session
      * @param targetSample             Mercury Sample to which the transfer will be associated
      * @param targetVessel             Lab Vessel to which the transfer will be associated
      * @param user                     Represents the user attempting to make the transfer
      * @param receivedTicket
-     * @param disambiguator
      */
     public void performTransfer(String sourceCollaboratorSample, MercurySample targetSample, LabVessel targetVessel,
-                                BspUser user, JiraIssue receivedTicket, long disambiguator) throws IOException {
+                                BspUser user, JiraIssue receivedTicket) throws IOException {
 
         ManifestRecord sourceRecord ;
 
@@ -590,14 +589,14 @@ public class ManifestSession implements Updatable {
         if (receivedTicket != null) {
             metadataToTransfer.add(new Metadata(Metadata.Key.RECEIPT_RECORD, receivedTicket.getKey()));
             targetSample.addMetadata(metadataToTransfer);
-            targetVessel.setReceiptEvent(user, receivedTicket.getCreated(), disambiguator);
+            targetVessel.setReceiptEvent(user, receivedTicket.getCreated(), sourceRecord.getSpreadsheetRowNumber());
         }
 
         sourceRecord.setStatus(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
 
         LabEvent collaboratorTransferEvent =
                 new LabEvent(LabEventType.COLLABORATOR_TRANSFER, new Date(), LabEvent.UI_EVENT_LOCATION,
-                        disambiguator, user.getUserId(), LabEvent.UI_PROGRAM_NAME);
+                        Long.valueOf(sourceRecord.getSpreadsheetRowNumber()), user.getUserId(), LabEvent.UI_PROGRAM_NAME);
         targetVessel.addInPlaceEvent(collaboratorTransferEvent);
     }
 

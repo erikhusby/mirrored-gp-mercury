@@ -46,9 +46,12 @@ public class ClinicalSampleFactory {
      */
     public static Collection<ManifestRecord> toManifestRecords(Collection<Sample> samples) {
         List<ManifestRecord> manifestRecords = new ArrayList<>(samples.size());
+        int count = 1;
         for (Sample sample : samples) {
             List<Metadata> metadata = toMercuryMetadata(sample);
-            manifestRecords.add(new ManifestRecord(metadata.toArray(new Metadata[metadata.size()])));
+            ManifestRecord record = new ManifestRecord(metadata.toArray(new Metadata[metadata.size()]));
+            record.setManifestRecordIndex(count++);
+            manifestRecords.add(record);
         }
         return manifestRecords;
     }

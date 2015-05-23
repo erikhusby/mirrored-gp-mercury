@@ -554,7 +554,7 @@ public class ManifestSessionContainerTest extends Arquillian {
 
             MercurySample mercurySample = sourceSampleToMercurySample.get(sourceSampleToTest);
             manifestSessionEjb.transferSample(closedSession.getManifestSessionId(), sourceSampleToTest,
-                    mercurySample.getSampleKey(), sourceSampleLabel, manifestRecord.getSpreadsheetRowNumber());
+                    mercurySample.getSampleKey(), sourceSampleLabel);
 
             // Make sure the metadata was persisted with the sample.
             manifestSessionDao.flush();
@@ -591,7 +591,7 @@ public class ManifestSessionContainerTest extends Arquillian {
 
         try {
             manifestSessionEjb.transferSample(closedSession.getManifestSessionId(), firstUploadedOmittedScan,
-                    omittedScanSampleKey, omittedScanSampleLabel, 1L);
+                    omittedScanSampleKey, omittedScanSampleLabel);
         } catch (Exception e) {
             assertThat(e,
                     containsMessage(ManifestRecord.ErrorStatus.PREVIOUS_ERRORS_UNABLE_TO_CONTINUE.getBaseMessage()));
@@ -810,13 +810,13 @@ public class ManifestSessionContainerTest extends Arquillian {
             assertThat(targetVessel, is(notNullValue()));
 
             manifestSessionEjb.transferSample(closedSession2.getManifestSessionId(), sourceSampleToTest,
-                    sourceSampleKey, sourceSampleLabel, manifestRecord.getSpreadsheetRowNumber());
+                    sourceSampleKey, sourceSampleLabel);
 
             assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE));
 
             try {
                 manifestSessionEjb.transferSample(closedSession2.getManifestSessionId(), sourceSampleToTest,
-                        sourceSampleKey, sourceSampleLabel, manifestRecord.getSpreadsheetRowNumber());
+                        sourceSampleKey, sourceSampleLabel);
                 Assert.fail();
             } catch (TubeTransferException e) {
                 assertThat(e, containsMessage(ManifestRecord.ErrorStatus.INVALID_TARGET.getBaseMessage()));
@@ -838,12 +838,12 @@ public class ManifestSessionContainerTest extends Arquillian {
             assertThat(targetVessel, is(notNullValue()));
 
             manifestSessionEjb.transferSample(closedSession2.getManifestSessionId(), sourceSampleToTest,
-                    sourceSampleKey, sourceSampleLabel, manifestRecord.getSpreadsheetRowNumber());
+                    sourceSampleKey, sourceSampleLabel);
 
             assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE));
             try {
                 manifestSessionEjb.transferSample(closedSession2.getManifestSessionId(), sourceSampleToTest,
-                        sourceSampleKey, sourceSampleLabel, manifestRecord.getSpreadsheetRowNumber());
+                        sourceSampleKey, sourceSampleLabel);
                 Assert.fail();
             } catch (TubeTransferException e) {
                 assertThat(e, containsMessage(ManifestRecord.ErrorStatus.INVALID_TARGET.getBaseMessage()));
