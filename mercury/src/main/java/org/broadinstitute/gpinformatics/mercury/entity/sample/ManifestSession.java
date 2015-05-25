@@ -64,6 +64,7 @@ import java.util.Set;
 public class ManifestSession implements Updatable {
 
     public static final String VESSEL_LABEL = "Vessel barcode";
+    public static final String RECEIPT_BSP_USER = "receiptBspUser";
 
     @Id
     @SequenceGenerator(name = "SEQ_MANIFEST_SESSION", schema = "mercury", sequenceName = "SEQ_MANIFEST_SESSION")
@@ -170,6 +171,13 @@ public class ManifestSession implements Updatable {
     public void addRecord(ManifestRecord record) {
         records.add(record);
         record.setManifestSession(this);
+        if(record.getManifestRecordIndex() == null) {
+            /*  ManifestRecords use a zero-based offset.  Normally the spreadsheet parser assigns these but the
+                addition of LabEvents for receipt utilizing this index makes it necessary for us to set this value
+                even without spreadsheet upload
+                */
+            record.setManifestRecordIndex(getRecords().size()-1);
+        }
         if(isFromSampleKit()) {
             if(status == SessionStatus.PENDING_SAMPLE_INFO) {
                 setStatus(SessionStatus.ACCESSIONING);
@@ -589,7 +597,8 @@ public class ManifestSession implements Updatable {
         if (receivedTicket != null) {
             metadataToTransfer.add(new Metadata(Metadata.Key.RECEIPT_RECORD, receivedTicket.getKey()));
             targetSample.addMetadata(metadataToTransfer);
-            targetVessel.setReceiptEvent(user, receivedTicket.getCreated(), sourceRecord.getSpreadsheetRowNumber());
+            targetVessel.setReceiptEvent((BspUser)receivedTicket.getFieldValue(RECEIPT_BSP_USER),
+                    receivedTicket.getCreated(), sourceRecord.getSpreadsheetRowNumber());
         }
 
         sourceRecord.setStatus(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);

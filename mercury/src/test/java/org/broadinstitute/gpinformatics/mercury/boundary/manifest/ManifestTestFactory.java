@@ -95,7 +95,6 @@ public class ManifestTestFactory {
                                  EnumSet<Metadata.Key> excludeKeys) {
         ManifestRecord record = buildManifestRecord(20, initialData, excludeKeys);
         record.setStatus(status);
-        record.setManifestRecordIndex(session.getRecords().size() + 1);
         session.addRecord(record);
 
 

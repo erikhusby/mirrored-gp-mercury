@@ -27,6 +27,8 @@ public class JiraIssue implements Serializable {
     private Date created;
     private Date dueDate;
 
+    private String reporter;
+
     private final JiraService jiraService;
 
     public JiraIssue(String key, JiraService jiraService) {
@@ -46,6 +48,7 @@ public class JiraIssue implements Serializable {
             description = tempIssue.getDescription();
             dueDate = tempIssue.getDueDate();
             created = tempIssue.getCreated();
+            reporter = tempIssue.getReporter();
         }
         return summary;
     }
@@ -62,6 +65,7 @@ public class JiraIssue implements Serializable {
             description = tempIssue.getDescription();
             dueDate = tempIssue.getDueDate();
             created = tempIssue.getCreated();
+            reporter = tempIssue.getReporter();
         }
 
         return description;
@@ -79,6 +83,7 @@ public class JiraIssue implements Serializable {
             description = tempIssue.getDescription();
             dueDate = tempIssue.getDueDate();
             created = tempIssue.getCreated();
+            reporter = tempIssue.getReporter();
         }
 
         return dueDate;
@@ -100,8 +105,25 @@ public class JiraIssue implements Serializable {
             description = tempIssue.getDescription();
             dueDate = tempIssue.getDueDate();
             created = tempIssue.getCreated();
+            reporter = tempIssue.getReporter();
         }
         return created;
+    }
+
+    public String getReporter() throws IOException {
+        if (this.reporter == null && summary == null) {
+            JiraIssue tempIssue = jiraService.getIssueInfo(key, (String []) null);
+            summary = tempIssue.getSummary();
+            description = tempIssue.getDescription();
+            dueDate = tempIssue.getDueDate();
+            reporter = tempIssue.getReporter();
+
+        }
+        return reporter;
+    }
+
+    public void setReporter(String reporter) {
+        this.reporter = reporter;
     }
 
     public Object getFieldValue(@Nonnull String fieldName) throws IOException{
@@ -114,6 +136,7 @@ public class JiraIssue implements Serializable {
             summary = tempIssue.getSummary();
             description = tempIssue.getDescription();
             dueDate = tempIssue.getDueDate();
+            reporter = tempIssue.getReporter();
         }
         foundValue = extraFields.get(fieldName);
         return foundValue;

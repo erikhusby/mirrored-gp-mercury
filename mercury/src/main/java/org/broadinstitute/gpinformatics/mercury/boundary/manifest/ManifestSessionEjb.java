@@ -5,6 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
@@ -326,6 +327,13 @@ public class ManifestSessionEjb {
         JiraIssue receiptInfo = null;
         try {
             receiptInfo = jiraService.getIssueInfo(session.getReceiptTicket());
+            BspUser bspUserByUsername = userBean.getBspUserByUsername(receiptInfo.getReporter());
+            if(bspUserByUsername == null) {
+                logger.error("The user that created the receipt ticket "+receiptInfo.getReporter()+
+                             " is not a Mercury user");
+                bspUserByUsername = userBean.getBspUser();
+            }
+            receiptInfo.addFieldValue(ManifestSession.RECEIPT_BSP_USER, bspUserByUsername);
             session.performTransfer(sourceCollaboratorSample, targetSample, targetVessel, userBean.getBspUser(),
                     receiptInfo);
         } catch (IOException e) {

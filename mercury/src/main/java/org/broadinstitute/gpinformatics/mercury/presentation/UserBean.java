@@ -145,7 +145,7 @@ public class UserBean implements Serializable {
     }
 
     private void updateBspStatus() {
-        BspUser user = bspUserList.getByUsername(loginUserName);
+        BspUser user = getBspUserByUsername(loginUserName);
         bspUser = UNKNOWN;
         if (user != null) {
             bspUser = user;
@@ -156,6 +156,10 @@ public class UserBean implements Serializable {
             // BSP Server is unresponsive, can't log in to verify user.
             bspStatus = ServerStatus.down;
         }
+    }
+
+    public BspUser getBspUserByUsername(String loginUserName1) {
+        return bspUserList.getByUsername(loginUserName1);
     }
 
     private void updateJiraStatus() {

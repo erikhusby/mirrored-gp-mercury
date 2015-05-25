@@ -158,6 +158,7 @@ public class ManifestSessionEjbDBFreeTest {
         jiraService = Mockito.mock(JiraService.class);
 
         Mockito.when(mockUserBean.getBspUser()).thenReturn(testLabUser);
+        Mockito.when(mockUserBean.getBspUserByUsername(Mockito.anyString())).thenReturn(testLabUser);
         Mockito.when(jiraService.getIssueInfo(Mockito.anyString())).thenAnswer(new Answer<JiraIssue>() {
             @Override
             public JiraIssue answer(InvocationOnMock invocationOnMock) throws Throwable {
@@ -170,6 +171,7 @@ public class ManifestSessionEjbDBFreeTest {
                 mockedIssue.setCreated(new Date());
                 mockedIssue.setSummary("");
                 mockedIssue.setDescription("");
+                mockedIssue.setReporter("QADudeLU");
                 return mockedIssue;
             }
         });
@@ -185,6 +187,7 @@ public class ManifestSessionEjbDBFreeTest {
                 mockedIssue.setCreated(new Date());
                 mockedIssue.setSummary("");
                 mockedIssue.setDescription("");
+                mockedIssue.setReporter("QADudeLU");
                 mockedIssue.addFieldValue((String) invocationOnMock.getArguments()[1],
                         Collections.singletonList(new HashMap<>()));
                 return mockedIssue;

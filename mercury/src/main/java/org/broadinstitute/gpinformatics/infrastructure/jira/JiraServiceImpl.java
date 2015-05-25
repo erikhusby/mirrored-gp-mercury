@@ -124,6 +124,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
         private Date dueDate;
         private Date created;
+        private String reporter;
 
         private JiraSearchIssueData() {
         }
@@ -184,6 +185,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         issueResult.setDescription(data.description);
         issueResult.setDueDate(data.dueDate);
         issueResult.setCreated(data.created);
+        issueResult.setReporter(data.reporter);
 
 
         if (null != fields) {
@@ -208,18 +210,20 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
         String dueDateValue = (String) fields.get("duedate");
         String createdDateValue = (String) fields.get("created");
+        Map<?, ?> reporterValues = (Map<?, ?>) fields.get("reporter");
         try {
             if (StringUtils.isNotBlank(dueDateValue)) {
                 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
                 parsedResults.dueDate = dateFormat.parse(dueDateValue);
             }
-        } catch (ParseException pe) {
-            log.error("Unable to parse the Due Date for Jira Issue " + parsedResults.getKey());
-        }
-        try {
+
             if (StringUtils.isNotBlank(createdDateValue)) {
                 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
                 parsedResults.created = dateFormat.parse(createdDateValue);
+            }
+
+            if(reporterValues != null && reporterValues.containsKey("name")) {
+                parsedResults.reporter = (String) reporterValues.get("name");
             }
         } catch (ParseException pe) {
             log.error("Unable to parse the created Date for Jira Issue " + parsedResults.getKey());
