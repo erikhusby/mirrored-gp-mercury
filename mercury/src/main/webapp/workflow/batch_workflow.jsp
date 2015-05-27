@@ -21,15 +21,17 @@
                         <c:forEach items="${workflowEvent.workflowStepDef.labEventTypes}" var="labEventType">
                             <c:choose>
                                 <c:when test="${not empty labEventType.messageType}">
-                                    <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.labevent.ManualTransferActionBean">
+                                    <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.labevent.ManualTransferActionBean"
+                                            event="chooseEventType">
+                                        <stripes:param name="stationEvent.eventType" value="${labEventType.name()}"/>
                                         Manual Transfer
                                     </stripes:link>
                                 </c:when>
                                 <c:otherwise>
                                     <stripes:form beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BatchWorkflowActionBean">
-                                        <stripes:hidden name="batchName" value="${actionBean.batchName}"/>
-                                        <stripes:hidden name="labEventType" value="${labEventType}"/>
-                                        <stripes:hidden name="workflowQualifer" value="${workflowEvent.workflowStepDef.workflowQualifier}"/>
+                                        <input type="hidden" name="batchName" value="${actionBean.batchName}"/>
+                                        <input type="hidden" name="labEventType" value="${labEventType}"/>
+                                        <input type="hidden" name="workflowQualifer" value="${workflowEvent.workflowStepDef.workflowQualifier}"/>
                                         <stripes:submit name="${actionBean.batchEventAction}" value="Done"/>
                                     </stripes:form>
                                 </c:otherwise>
