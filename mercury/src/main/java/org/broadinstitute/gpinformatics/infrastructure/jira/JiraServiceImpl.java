@@ -166,7 +166,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     public JiraIssue getIssueInfo(String key, String... fields) throws IOException {
         String urlString = getBaseUrl() + "/issue/" + key;
 
-        StringBuilder fieldList = new StringBuilder("summary,description,duedate,created");
+        StringBuilder fieldList = new StringBuilder("summary,description,duedate,created,reporter");
 
         if (null != fields) {
             for (String currField : fields) {

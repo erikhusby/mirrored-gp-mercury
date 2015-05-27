@@ -239,8 +239,9 @@ public class ManifestSessionEjb {
                 }
             }
         }
-
-        transitionReceiptTicket(manifestSession);
+        if(StringUtils.isNotBlank(manifestSession.getReceiptTicket())) {
+            transitionReceiptTicket(manifestSession);
+        }
     }
 
     /**
@@ -324,20 +325,34 @@ public class ManifestSessionEjb {
 
         LabVessel targetVessel = findAndValidateTargetSampleAndVessel(sampleKey, vesselLabel);
 
-        JiraIssue receiptInfo = null;
-        try {
-            receiptInfo = jiraService.getIssueInfo(session.getReceiptTicket());
-            BspUser bspUserByUsername = userBean.getBspUserByUsername(receiptInfo.getReporter());
-            if(bspUserByUsername == null) {
-                logger.error("The user that created the receipt ticket "+receiptInfo.getReporter()+
-                             " is not a Mercury user");
-                bspUserByUsername = userBean.getBspUser();
+        session.performTransfer(sourceCollaboratorSample, targetSample, targetVessel, userBean.getBspUser());
+
+        if (StringUtils.isNotBlank(session.getReceiptTicket())) {
+            JiraIssue receiptInfo = null;
+            try {
+                receiptInfo = jiraService.getIssueInfo(session.getReceiptTicket());
+            } catch (IOException e) {
+                throw new TubeTransferException(RECEIPT_NOT_FOUND + session.getReceiptTicket());
             }
-            receiptInfo.addFieldValue(ManifestSession.RECEIPT_BSP_USER, bspUserByUsername);
-            session.performTransfer(sourceCollaboratorSample, targetSample, targetVessel, userBean.getBspUser(),
-                    receiptInfo);
-        } catch (IOException e) {
-            throw new TubeTransferException(RECEIPT_NOT_FOUND + session.getReceiptTicket());
+            BspUser bspUserByUsername = null;
+            try {
+                bspUserByUsername = userBean.getBspUserByUsername(receiptInfo.getReporter());
+            } catch (IOException e) {
+                logger.error("Unable to access JIRA receipt information for " + session.getReceiptTicket());
+
+            } finally {
+                if (bspUserByUsername == null) {
+                    bspUserByUsername = userBean.getBspUser();
+                    logger.error("The user that created the receipt ticket " + session.getReceiptTicket() +
+                                 " is not a Mercury user");
+                }
+            }
+            try {
+                receiptInfo.addFieldValue(ManifestSession.RECEIPT_BSP_USER, bspUserByUsername);
+                session.addReceiptEvent(sourceCollaboratorSample, targetSample, targetVessel, receiptInfo);
+            } catch (IOException e) {
+                logger.error("Unable to access JIRA receipt information for " + session.getReceiptTicket());
+            }
         }
     }
 
