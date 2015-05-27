@@ -955,6 +955,7 @@ public enum LabEventType {
             BarcodedTube.BarcodedTubeType.MatrixTube075, new String[]{}),
 
     // Generic events that are qualified by workflow
+    // todo jmt need different versions for PLATE_EVENT and RECEPTACLE_EVENT?
     CENTRIFUGE("Centrifuge",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY),

@@ -18,15 +18,20 @@
                         <div>
                             ${workflowEvent.workflowStepDef.instructions}
                         </div>
-                        <c:forEach items="${workflowEvent.workflowStepDef.labEventTypes}" var="labEvenType">
+                        <c:forEach items="${workflowEvent.workflowStepDef.labEventTypes}" var="labEventType">
                             <c:choose>
-                                <c:when test="${not empty labEvenType.messageType}">
+                                <c:when test="${not empty labEventType.messageType}">
                                     <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.labevent.ManualTransferActionBean">
                                         Manual Transfer
                                     </stripes:link>
                                 </c:when>
                                 <c:otherwise>
-                                    <input type="checkbox">
+                                    <stripes:form beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BatchWorkflowActionBean">
+                                        <stripes:hidden name="batchName" value="${actionBean.batchName}"/>
+                                        <stripes:hidden name="labEventType" value="${labEventType}"/>
+                                        <stripes:hidden name="workflowQualifer" value="${workflowEvent.workflowStepDef.workflowQualifier}"/>
+                                        <stripes:submit name="${actionBean.batchEventAction}" value="Done"/>
+                                    </stripes:form>
                                 </c:otherwise>
                             </c:choose>
                         </c:forEach>

@@ -109,9 +109,11 @@ public class WorkflowMatcherTest {
         // Need to render per-sample transfer links for steps that haven't happened yet?  Not per-sample, because
         // they must be scanned.  Could just render link unconditionally.
 
-        // todo workflow additions: descriptive text
-        // todo LabEventType additions: batch event vs vessel event vs transfer
-        // todo manual transfer page: support reagent addition; event type parameter
+        // todo for batch events: checkbox or button, or both
+        // todo LabEventType additions: batch event? vs vessel event vs transfer
+        // todo manual transfer page: support vessel event (reagent addition); event type parameter
+        // todo Enter LCSET and / or search.
+        // todo list of samples at top of page?
 
         // If there are multiple events for a step, should the step be repeated, or should the events be normalized?
         // It's possible (likely?) that the dates overlap, unless the focus is on a single sample, this argues for
