@@ -361,7 +361,6 @@ public class ManifestSessionEjb {
             JiraIssue receiptIssue = new JiraIssue(session.getReceiptTicket(), jiraService);
             receiptIssue.postTransition(JiraTransition.ACCESSIONED.getStateName(), comment);
             receiptIssue.addComment(comment);
-            // Transition is not adding comment.  Debug or specifically add comment.
 
         } catch (IOException e) {
             logger.error("Unable to transition receipt ticket "+session.getReceiptTicket() + " to Accessioned",e);

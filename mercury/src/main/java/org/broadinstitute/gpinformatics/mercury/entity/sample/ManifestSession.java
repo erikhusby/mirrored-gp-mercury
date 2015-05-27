@@ -596,10 +596,10 @@ public class ManifestSession implements Updatable {
         Set<Metadata> metadataToTransfer = new HashSet<>(sourceRecord.getMetadata());
         if (receivedTicket != null) {
             metadataToTransfer.add(new Metadata(Metadata.Key.RECEIPT_RECORD, receivedTicket.getKey()));
-            targetSample.addMetadata(metadataToTransfer);
             targetVessel.setReceiptEvent((BspUser)receivedTicket.getFieldValue(RECEIPT_BSP_USER),
                     receivedTicket.getCreated(), sourceRecord.getSpreadsheetRowNumber());
         }
+        targetSample.addMetadata(metadataToTransfer);
 
         sourceRecord.setStatus(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
 

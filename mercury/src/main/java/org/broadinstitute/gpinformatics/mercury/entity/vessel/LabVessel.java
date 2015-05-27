@@ -603,9 +603,6 @@ public abstract class LabVessel implements Serializable {
         return !doesChainOfCustodyInclude(LabEventType.COLLABORATOR_TRANSFER);
     }
 
-    public void setReceiptEvent(BspUser user, Date receivedDate) {
-        setReceiptEvent(user, receivedDate, 1L);
-    }
     public void setReceiptEvent(BspUser user, Date receivedDate, long disambiguator) {
         LabEvent receiptEvent =
                 new LabEvent(LabEventType.SAMPLE_RECEIPT, receivedDate, LabEvent.UI_EVENT_LOCATION,
