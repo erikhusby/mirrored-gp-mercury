@@ -509,4 +509,32 @@ public class ReagentFixupTest extends Arquillian {
         genericReagentDao.persist(new FixupCommentary("SUPPORT-660 change lot"));
         genericReagentDao.flush();
     }
+
+    @Test(enabled = false)
+    public void fixupGplim3538ReagentBarcode() {
+        userBean.loginOSUser();
+        // Change lab_event 872452 reagents from reagentId 813365 (EWS reagent having lot 10D06A0004)
+        // to reagentId 929964 (EWS reagent having lot BATCH-001).
+        Reagent reagentEws10d06a0004 = genericReagentDao.findById(GenericReagent.class, 813365L);
+        Assert.assertEquals(reagentEws10d06a0004.getName(), "EWS");
+        Assert.assertEquals(reagentEws10d06a0004.getLot(), "10D06A0004");
+
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 872452L);
+        Assert.assertTrue(labEvent.getReagents().remove(reagentEws10d06a0004));
+
+        Reagent reagentEwsBatch001 = genericReagentDao.findById(GenericReagent.class, 929964L);
+        Assert.assertEquals(reagentEwsBatch001.getName(), "EWS");
+        Assert.assertEquals(reagentEwsBatch001.getLot(), "BATCH-001");
+
+        labEvent.addReagent(reagentEwsBatch001);
+        Assert.assertEquals(labEvent.getReagents().size(), 3);
+
+        // Change lot from 'rgt4828222' to '10029298' (Mercury reagent id 933959).
+        // This reagent is used in only one lab event, so it's safe to update it.
+        Reagent reagentRgt = genericReagentDao.findById(Reagent.class, 933959L);
+        Assert.assertEquals(reagentRgt.getLot(), "rgt4828222");
+        reagentRgt.setLot("10029298");
+        genericReagentDao.persist(new FixupCommentary("GPLIM-3538 change lot due to reagent script failure"));
+        genericReagentDao.flush();
+    }
 }

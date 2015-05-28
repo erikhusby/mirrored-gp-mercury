@@ -677,4 +677,42 @@ public class LabEventFixupTest extends Arquillian {
     }
 
 
+
+    @Test(enabled = false)
+    public void fixupSwap150() {
+        userBean.loginOSUser();
+        LabEvent dilutionToFlowcell = labEventDao.findById(LabEvent.class, 887920L);
+        Assert.assertEquals(dilutionToFlowcell.getLabEventType(), LabEventType.DILUTION_TO_FLOWCELL_TRANSFER);
+        VesselToSectionTransfer vesselToSectionTransfer =
+                dilutionToFlowcell.getVesselToSectionTransfers().iterator().next();
+        Assert.assertEquals(vesselToSectionTransfer.getSourceVessel().getLabel(), "0177366427");
+        System.out.print("Changing " + dilutionToFlowcell.getLabEventId() + " from " +
+                vesselToSectionTransfer.getSourceVessel().getLabel() + " to ");
+        vesselToSectionTransfer.setSourceVessel(barcodedTubeDao.findByBarcode("0177366410"));
+        System.out.println(vesselToSectionTransfer.getSourceVessel().getLabel());
+        labEventDao.persist(new FixupCommentary("SWAP-150 change source of dilution to flowcell transfer"));
+        labEventDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim3586() {
+        userBean.loginOSUser();
+
+        fixupVesselToVessel(884183L, "SM-74PCZ", "0175568017");
+        fixupVesselToVessel(885072L, "SM-74NF3", "0175567592");
+        fixupVesselToVessel(884176L, "SM-74PDC", "0175568014");
+
+        labEventDao.persist(new FixupCommentary("GPLIM-3586 fixup extraction transfers"));
+        labEventDao.flush();
+    }
+
+    private void fixupVesselToVessel(long labEventId, String oldTargetBarcode, String newTargetBarcode) {
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, labEventId);
+        VesselToVesselTransfer vesselToVesselTransfer = labEvent.getVesselToVesselTransfers().iterator().next();
+        Assert.assertEquals(vesselToVesselTransfer.getTargetVessel().getLabel(), oldTargetBarcode);
+        System.out.print("In " + labEvent.getLabEventId() + " changing " +
+                vesselToVesselTransfer.getTargetVessel().getLabel() + " to ");
+        vesselToVesselTransfer.setTargetVessel(barcodedTubeDao.findByBarcode(newTargetBarcode));
+        System.out.println(vesselToVesselTransfer.getTargetVessel().getLabel());
+    }
 }
