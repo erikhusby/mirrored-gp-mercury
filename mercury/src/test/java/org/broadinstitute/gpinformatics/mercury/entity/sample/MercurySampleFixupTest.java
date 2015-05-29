@@ -2,6 +2,8 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
@@ -15,17 +17,26 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 @Test(groups = TestGroups.FIXUP)
 public class MercurySampleFixupTest extends Arquillian {
@@ -45,6 +56,8 @@ public class MercurySampleFixupTest extends Arquillian {
     @Inject
     private UserTransaction utx;
 
+    private static final String RECEIVED_DATE_UPDATE_FORMAT = "MM/dd/yyyy";
+
     @Deployment
     public static WebArchive buildMercuryWar() {
 
@@ -52,7 +65,7 @@ public class MercurySampleFixupTest extends Arquillian {
          * If the need comes to utilize this fixup in production, change the buildMercuryWar parameters accordingly
          */
         return DeploymentBuilder.buildMercuryWar(
-                org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV, "dev");
+                org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD, "PROD");
     }
 
     @BeforeMethod(groups = TestGroups.FIXUP)
@@ -249,5 +262,94 @@ public class MercurySampleFixupTest extends Arquillian {
         labEventDao.persist(new FixupCommentary("GPLIM-3485 importing initial tare data for samples shipped from BSP"));
         System.out.println("Updated weight for " + tubeTareData.size() + " tubes.");
 
+    }
+
+    @Test(groups = TestGroups.FIXUP, enabled = false)
+    public void backfillReceiptForSamples_GPLIM3487() {
+        Map<String, MercurySample> nonReceivedSamplesByKey = mercurySampleDao.findNonReceivedCrspSamples();
+
+        List<SampleReceiptFixup> sampleReceiptFixupList = getSamplesToFixup(nonReceivedSamplesByKey);
+
+        int counter = 1;
+        List<String> updatedSamples = new ArrayList<>();
+        for(SampleReceiptFixup currentFixup : sampleReceiptFixupList) {
+            if(currentFixup.getReceivedSample().getLabVessel().size() != 1) {
+                Assert.fail("Unable to add Receipt date for sample that is associated to more than one vessel: " +
+                            currentFixup.getReceivedSample().getSampleKey());
+            } else {
+                currentFixup.getReceivedSample().getLabVessel().iterator()
+                        .next().setReceiptEvent(userBean.getBspUserByUsername(currentFixup.receiptUserName),
+                        currentFixup.receiptDate, counter++);
+                updatedSamples.add(currentFixup.getReceivedSample().getSampleKey());
+            }
+        }
+
+        mercurySampleDao.persist(new FixupCommentary(String.format("Added receipt dates for %d samples: %s",
+                updatedSamples.size(), StringUtils.join(updatedSamples, "\n"))));
+    }
+
+    private List<SampleReceiptFixup> getSamplesToFixup(Map<String, MercurySample> samplesByKey) {
+        String property = System.getProperty("samples.received");
+        if (property == null) {
+            Assert.fail("The filename for the sample receipt dates is not found");
+        }
+        File samplesToUpdate = new File(property);
+
+        List<SampleReceiptFixup> foundSamples = new ArrayList<>();
+
+        List<String> errors = null;
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(samplesToUpdate));
+            errors = new ArrayList<>();
+            String line = null;
+
+            SimpleDateFormat receiptDateFormatter = new SimpleDateFormat(RECEIVED_DATE_UPDATE_FORMAT);
+
+            while((line = reader.readLine()) != null) {
+                String[] lineInfo = line.split(",");
+                if (!samplesByKey.containsKey(lineInfo[0])) {
+                    errors.add(lineInfo[0] + " either does not need a receipt date added or is not found");
+                } else {
+                    try {
+                        foundSamples.add(new SampleReceiptFixup(lineInfo[2], receiptDateFormatter.parse(lineInfo[1])
+                                ,samplesByKey.get(lineInfo[0])));
+                    } catch (ParseException e) {
+                        errors.add(String.format("The date format for %s does not match the necessary format to update "
+                                                 + "[%s]:  %s",lineInfo[0], RECEIVED_DATE_UPDATE_FORMAT, lineInfo[1]));
+                    }
+                }
+            }
+        } catch (IOException e) {
+            Assert.fail("Unable to read form the provided file " + property);
+        }
+        if(CollectionUtils.isNotEmpty(errors)) {
+            Assert.fail(StringUtils.join(errors,"\n"));
+        }
+
+        return foundSamples;
+    }
+
+    private static class SampleReceiptFixup {
+        private String receiptUserName;
+        private Date receiptDate;
+        private MercurySample receivedSample;
+
+        public SampleReceiptFixup(String receiptUserName, Date receiptDate, MercurySample receivedSampleKey) {
+            this.receiptUserName = receiptUserName;
+            this.receiptDate = receiptDate;
+            this.receivedSample = receivedSampleKey;
+        }
+
+        public String getReceiptUserName() {
+            return receiptUserName;
+        }
+
+        public Date getReceiptDate() {
+            return receiptDate;
+        }
+
+        public MercurySample getReceivedSample() {
+            return receivedSample;
+        }
     }
 }
