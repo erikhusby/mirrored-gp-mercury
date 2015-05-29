@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStarting
 import javax.inject.Inject;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -83,7 +84,15 @@ public class FlowcellMessageHandler extends AbstractEventHandler {
             return;
         }
 
-        Map<VesselPosition, LabVessel> loadedVesselsAndPosition = flowcell.getNearestTubeAncestorsForLanes();
+        Map<VesselPosition, LabVessel> loadedVesselsAndPosition;
+        LabVessel sourceLabVessel = targetEvent.getSourceLabVessels().iterator().next();
+        if (sourceLabVessel.getType() == LabVessel.ContainerType.STRIP_TUBE) {
+            loadedVesselsAndPosition = new HashMap<>();
+            // position is arbitrary in strip tube case
+            loadedVesselsAndPosition.put(VesselPosition.A01, sourceLabVessel);
+        } else {
+            loadedVesselsAndPosition = flowcell.getNearestTubeAncestorsForLanes();
+        }
 
         if (flowcellBatches.size() > 1) {
             if (flowcell.getFlowcellType() == IlluminaFlowcell.FlowcellType.MiSeqFlowcell) {
@@ -137,6 +146,7 @@ public class FlowcellMessageHandler extends AbstractEventHandler {
                 }
 
             } catch (Exception e) {
+                // todo jmt flowcell transfer takes plate on Cbot, so machine name doesn't match drop-down (sequencers) in JIRA.
                 logger.error("Error connecting to Jira: " + e.getMessage() +
                           " while trying to update an FCT ticket for " + flowcell.getLabel());
             }

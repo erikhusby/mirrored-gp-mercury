@@ -47,6 +47,7 @@ public class EventHandlerSelector {
 
         switch (targetEvent.getLabEventType()) {
         case DENATURE_TO_DILUTION_TRANSFER:
+        case STRIP_TUBE_B_TRANSFER:
             denatureToDilutionTubeHandler.handleEvent(targetEvent, stationEvent);
             break;
         case DILUTION_TO_FLOWCELL_TRANSFER:
