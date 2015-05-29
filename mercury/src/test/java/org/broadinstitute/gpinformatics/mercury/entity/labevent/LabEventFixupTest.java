@@ -654,4 +654,27 @@ public class LabEventFixupTest extends Arquillian {
             throw new RuntimeException(e);
         }
     }
+
+    @Test(enabled = false)
+    public void fixupGplim3591() {
+        userBean.loginOSUser();
+
+        fixupVesselToVessel(891067L, "SM-74P3F", "0175568242");
+        fixupVesselToVessel(891109L, "SM-74NEQ", "0175567599");
+        fixupVesselToVessel(891072L, "SM-74P55", "0175568173");
+        fixupVesselToVessel(899707L, "SM-74NE2", "0175567623");
+
+        labEventDao.persist(new FixupCommentary("GPLIM-3591 fixup extraction transfers"));
+        labEventDao.flush();
+    }
+
+    private void fixupVesselToVessel(long labEventId, String oldTargetBarcode, String newTargetBarcode) {
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, labEventId);
+        VesselToVesselTransfer vesselToVesselTransfer = labEvent.getVesselToVesselTransfers().iterator().next();
+        Assert.assertEquals(vesselToVesselTransfer.getTargetVessel().getLabel(), oldTargetBarcode);
+        System.out.print("In " + labEvent.getLabEventId() + " changing " +
+                vesselToVesselTransfer.getTargetVessel().getLabel() + " to ");
+        vesselToVesselTransfer.setTargetVessel(barcodedTubeDao.findByBarcode(newTargetBarcode));
+        System.out.println(vesselToVesselTransfer.getTargetVessel().getLabel());
+    }
 }
