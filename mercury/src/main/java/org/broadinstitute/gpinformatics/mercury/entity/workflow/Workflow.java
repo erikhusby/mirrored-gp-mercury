@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
 
 /**
@@ -43,15 +43,14 @@ public enum Workflow {
         this.displayable = displayable;
     }
 
-    /** Workflow processes that Mercury supports. */
-    public static final Collection<Workflow> SUPPORTED_WORKFLOWS = new ArrayList<Workflow>(){{
-        add(AGILENT_EXOME_EXPRESS);
-        add(ICE_EXOME_EXPRESS);
-        add(ICE_CRSP);
-    }};
+    /**
+     * Workflow processes that Mercury supports.
+     */
+    public static final EnumSet<Workflow> SUPPORTED_WORKFLOWS =
+            EnumSet.of(AGILENT_EXOME_EXPRESS, ICE_EXOME_EXPRESS, ICE_CRSP);
 
-    public static boolean isWorkflowSupportedByMercury(Workflow workflow) {
-        return SUPPORTED_WORKFLOWS.contains(workflow);
+    public boolean isWorkflowSupportedByMercury() {
+        return SUPPORTED_WORKFLOWS.contains(this);
     }
 
     @Nullable

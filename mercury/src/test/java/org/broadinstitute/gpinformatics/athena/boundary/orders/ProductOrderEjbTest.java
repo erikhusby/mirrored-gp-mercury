@@ -23,7 +23,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderT
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
-import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
@@ -45,10 +44,8 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
@@ -249,31 +246,5 @@ public class ProductOrderEjbTest {
             assertThat(sample.getMercurySample().getSampleKey(), is(equalTo(sample.getBusinessKey())));
         }
         Mockito.verify(mockMercurySampleDao).findMapIdToMercurySample(Mockito.eq(sampleMap.keySet()));
-    }
-
-    public void testCalculateRiskDoesNotKillEntityManager() {
-        productOrder = Mockito.mock(ProductOrder.class);
-        Mockito.when(productOrder.calculateRisk()).thenThrow(new BSPLookupException("failed"));
-        String pdoKey = "PDO-1";
-        Mockito.when(productOrderDaoMock.findByBusinessKey(pdoKey)).thenReturn(productOrder);
-
-        Exception caught = null;
-        try {
-            productOrderEjb.calculateRisk(pdoKey);
-        } catch (Exception e) {
-            /*
-             * A RuntimeException thrown across an EJB transaction boundary will roll-back the transaction and leave the
-             * JPA entity manager in a state where it will not be able to lazy-fetch any more data.
-             *
-             * This assertion will fail if the exception thrown is changed to a RuntimeException subclass that is
-             * annotated as @ApplicationException(rollback = false). If that is done, this assert should be changed to
-             * check for that exception type explicitly. In addition, there should be a container test for that
-             * exception to verify that the JPA entity manager is still functional when it is thrown across an EJB
-             * transaction boundary.
-             */
-            assertThat(e, not(instanceOf(RuntimeException.class)));
-            caught = e;
-        }
-        assertThat(caught, notNullValue());
     }
 }
