@@ -728,4 +728,14 @@ public class LabEventFixupTest extends Arquillian {
         labEventDao.persist(new FixupCommentary("GPLIM-3591 fixup extraction transfers"));
         labEventDao.flush();
     }
+
+    @Test(enabled = false)
+    public void fixupGplim3591Part2() {
+        userBean.loginOSUser();
+
+        fixupVesselToVessel(891071L, "SM-74P42", "0175568216");
+
+        labEventDao.persist(new FixupCommentary("GPLIM-3591 fixup another extraction transfer"));
+        labEventDao.flush();
+    }
 }
