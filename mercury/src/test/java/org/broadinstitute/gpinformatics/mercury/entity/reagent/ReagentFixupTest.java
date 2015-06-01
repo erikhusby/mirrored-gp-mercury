@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
@@ -32,9 +33,11 @@ import java.io.FileReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,6 +61,9 @@ public class ReagentFixupTest extends Arquillian {
 
     @Inject
     private LabEventDao labEventDao;
+
+    @Inject
+    private LabVesselDao labVesselDao;
 
     @Inject
     private UserTransaction utx;
@@ -535,6 +541,27 @@ public class ReagentFixupTest extends Arquillian {
         Assert.assertEquals(reagentRgt.getLot(), "rgt4828222");
         reagentRgt.setLot("10029298");
         genericReagentDao.persist(new FixupCommentary("GPLIM-3538 change lot due to reagent script failure"));
+        genericReagentDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim3588() {
+        // Change reagent on labEventId 897423
+        // from "Rapid Capture Kit Box 2 (HP3, EE1)" lot 15C11A0054 expiration 10/22/2015 (reagentId 934964)
+        // to same type reagent but with lot 15C27A0012 and expiration 11/25/15 (reagentId 937963).
+        Reagent undesired = genericReagentDao.findByReagentNameLotExpiration("Rapid Capture Kit Box 2 (HP3, EE1)",
+                "15C11A0054", new GregorianCalendar(2015, Calendar.OCTOBER, 22).getTime());
+        Assert.assertNotNull(undesired);
+
+        Reagent desired = genericReagentDao.findByReagentNameLotExpiration(undesired.getName(),
+                "15C27A0012", new GregorianCalendar(2015, Calendar.NOVEMBER, 25).getTime());
+        Assert.assertNotNull(desired);
+
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 897423L);
+        Assert.assertTrue(labEvent.getReagents().remove(undesired));
+        labEvent.addReagent(desired);
+
+        genericReagentDao.persist(new FixupCommentary("GPLIM-3588 change reagent used on Ice Capture 2 event."));
         genericReagentDao.flush();
     }
 }
