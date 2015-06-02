@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -328,32 +329,58 @@ public class ManifestSessionEjb {
         session.performTransfer(sourceCollaboratorSample, targetSample, targetVessel, userBean.getBspUser());
 
         if (StringUtils.isNotBlank(session.getReceiptTicket())) {
-            JiraIssue receiptInfo = null;
             try {
-                receiptInfo = jiraService.getIssueInfo(session.getReceiptTicket());
-            } catch (IOException e) {
-                throw new TubeTransferException(RECEIPT_NOT_FOUND + session.getReceiptTicket());
-            }
-            BspUser bspUserByUsername = null;
-            try {
-                bspUserByUsername = userBean.getBspUserByUsername(receiptInfo.getReporter());
-            } catch (IOException e) {
-                logger.error("Unable to access JIRA receipt information for " + session.getReceiptTicket());
-
-            } finally {
-                if (bspUserByUsername == null) {
-                    bspUserByUsername = userBean.getBspUser();
-                    logger.error("The user that created the receipt ticket " + session.getReceiptTicket() +
-                                 " is not a Mercury user");
-                }
-            }
-            try {
-                receiptInfo.addFieldValue(ManifestSession.RECEIPT_BSP_USER, bspUserByUsername);
-                session.addReceiptEvent(sourceCollaboratorSample, targetSample, targetVessel, receiptInfo);
+                addReceiptEvent(sourceCollaboratorSample, targetSample, targetVessel, session);
             } catch (IOException e) {
                 logger.error("Unable to access JIRA receipt information for " + session.getReceiptTicket());
             }
         }
+    }
+
+    private void addReceiptEvent(String sourceCollaboratorSample, MercurySample targetSample, LabVessel targetVessel,
+                                 ManifestSession session) throws IOException {
+
+        ManifestRecord sourceRecord ;
+
+        if(sourceCollaboratorSample != null) {
+            sourceRecord = session.findRecordByKey(sourceCollaboratorSample, Metadata.Key.SAMPLE_ID);
+        } else {
+            sourceRecord = session.findRecordByKey(targetSample.getSampleKey(), Metadata.Key.BROAD_SAMPLE_ID);
+        }
+
+        JiraIssue receiptInfo = null;
+        try {
+            receiptInfo = jiraService.getIssueInfo(session.getReceiptTicket());
+        } catch (IOException e) {
+            throw new TubeTransferException(RECEIPT_NOT_FOUND + session.getReceiptTicket());
+        }
+        BspUser bspUserByUsername = null;
+        try {
+            bspUserByUsername = userBean.getBspUserByUsername(receiptInfo.getReporter());
+        } catch (IOException e) {
+            logger.error("Unable to access JIRA receipt information for " + session.getReceiptTicket());
+
+        } finally {
+            if (bspUserByUsername == null) {
+                bspUserByUsername = userBean.getBspUser();
+                logger.error("The user that created the receipt ticket " + session.getReceiptTicket() +
+                             " is not a Mercury user");
+            }
+        }
+
+        targetSample.addMetadata(
+                Collections.singleton(new Metadata(Metadata.Key.RECEIPT_RECORD, session.getReceiptTicket())));
+
+        List<ManifestSession> otherReceiptSessions =
+                manifestSessionDao.getSessionsForReceiptTicket(session.getReceiptTicket());
+
+        int disambiguator = sourceRecord.getSpreadsheetRowNumber();
+
+        for(ManifestSession sessionToAdd : otherReceiptSessions) {
+            disambiguator += sessionToAdd.getRecords().size();
+        }
+
+        targetVessel.setReceiptEvent(bspUserByUsername, receiptInfo.getCreated(), disambiguator);
     }
 
     private void transitionReceiptTicket(ManifestSession session) {

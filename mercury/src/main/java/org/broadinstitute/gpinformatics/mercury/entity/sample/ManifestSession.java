@@ -599,25 +599,8 @@ public class ManifestSession implements Updatable {
 
         LabEvent collaboratorTransferEvent =
                 new LabEvent(LabEventType.COLLABORATOR_TRANSFER, new Date(), LabEvent.UI_EVENT_LOCATION,
-                        Long.valueOf(sourceRecord.getSpreadsheetRowNumber()), user.getUserId(), LabEvent.UI_PROGRAM_NAME);
+                        1L, user.getUserId(), LabEvent.UI_PROGRAM_NAME);
         targetVessel.addInPlaceEvent(collaboratorTransferEvent);
-    }
-
-    public void addReceiptEvent(String sourceCollaboratorSample, MercurySample targetSample, LabVessel targetVessel,
-                                JiraIssue receivedTicket) throws IOException {
-
-        ManifestRecord sourceRecord ;
-
-        if(sourceCollaboratorSample != null) {
-            sourceRecord = findRecordByKey(sourceCollaboratorSample, Metadata.Key.SAMPLE_ID);
-        } else {
-            sourceRecord = findRecordByKey(targetSample.getSampleKey(), Metadata.Key.BROAD_SAMPLE_ID);
-        }
-
-        targetSample.addMetadata(
-                    Collections.singleton(new Metadata(Metadata.Key.RECEIPT_RECORD, receivedTicket.getKey())));
-            targetVessel.setReceiptEvent((BspUser) receivedTicket.getFieldValue(RECEIPT_BSP_USER),
-                    receivedTicket.getCreated(), sourceRecord.getSpreadsheetRowNumber());
     }
 
     /**
@@ -641,8 +624,7 @@ public class ManifestSession implements Updatable {
 
         boolean result = true;
 
-        if(StringUtils.isBlank(getReceiptTicket()) &&
-           !researchProject.getBusinessKey().equals(CrspPipelineUtils.getResearchProjectForCrspPositiveControls())) {
+        if(StringUtils.isBlank(getReceiptTicket())) {
             result = false;
         }
         return result;

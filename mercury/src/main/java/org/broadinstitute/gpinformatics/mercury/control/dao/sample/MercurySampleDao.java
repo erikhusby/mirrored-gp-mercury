@@ -246,9 +246,7 @@ public class MercurySampleDao extends GenericDao {
         Join<ManifestSession, ResearchProject> researchProjectJoin =
                 includedSessionsRoot.join(ManifestSession_.researchProject);
 
-        validMetadataSubQuery.select(recToMetadataJoin.get(Metadata_.id)).distinct(true)
-                .where(researchProjectJoin.get(ResearchProject_.jiraTicketKey)
-                        .in("RP-876", "RP-917", "RP-805").not());
+        validMetadataSubQuery.select(recToMetadataJoin.get(Metadata_.id)).distinct(true);
 
 
         // Build sub query to for all CRSP samples That HAVE been received.  This will be filtered out of the main

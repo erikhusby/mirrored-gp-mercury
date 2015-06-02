@@ -7,7 +7,6 @@ import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
-import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -37,6 +36,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -262,7 +262,16 @@ public class MercurySample extends AbstractSample {
     }
 
     public Date getReceivedDate() {
-        return LabEvent.getLabVesselEventDateByType(labVessel, LabEventType.SAMPLE_RECEIPT);
+
+        for(LabVessel currentVessel:labVessel) {
+            Map<LabEvent,Set<LabVessel>> vesselsForEvent =
+                    currentVessel.findVesselsForLabEventType(LabEventType.SAMPLE_RECEIPT,true);
+            if (!vesselsForEvent.isEmpty()) {
+                return vesselsForEvent.keySet().iterator().next().getEventDate();
+            }
+        }
+
+        return null;
     }
 
     /**

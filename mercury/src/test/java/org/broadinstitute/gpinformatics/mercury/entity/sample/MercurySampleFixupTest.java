@@ -4,6 +4,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
@@ -34,6 +35,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -270,18 +273,26 @@ public class MercurySampleFixupTest extends Arquillian {
 
         List<SampleReceiptFixup> sampleReceiptFixupList = getSamplesToFixup(nonReceivedSamplesByKey);
 
-        int counter = 1;
+        int counter = 0;
+        Date lastDate = null;
+        Collections.sort(sampleReceiptFixupList, SampleReceiptFixup.BY_DATE);
         List<String> updatedSamples = new ArrayList<>();
         for(SampleReceiptFixup currentFixup : sampleReceiptFixupList) {
+            if (lastDate == null || !lastDate.equals(currentFixup.getReceiptDate())) {
+                counter = 1;
+            } else {
+                counter++;
+            }
             if(currentFixup.getReceivedSample().getLabVessel().size() != 1) {
                 Assert.fail("Unable to add Receipt date for sample that is associated to more than one vessel: " +
                             currentFixup.getReceivedSample().getSampleKey());
             } else {
                 currentFixup.getReceivedSample().getLabVessel().iterator()
-                        .next().setReceiptEvent(userBean.getBspUserByUsername(currentFixup.receiptUserName),
-                        currentFixup.receiptDate, counter++);
+                        .next().setReceiptEvent(userBean.getBspUserByUsername(currentFixup.getReceiptUserName()),
+                        currentFixup.getReceiptDate(), counter++);
                 updatedSamples.add(currentFixup.getReceivedSample().getSampleKey());
             }
+            lastDate = currentFixup.getReceiptDate();
         }
 
         mercurySampleDao.persist(new FixupCommentary(String.format("Added receipt dates for %d samples: %s",
@@ -329,10 +340,17 @@ public class MercurySampleFixupTest extends Arquillian {
         return foundSamples;
     }
 
-    private static class SampleReceiptFixup {
+    private static class SampleReceiptFixup implements Comparable<SampleReceiptFixup>{
         private String receiptUserName;
         private Date receiptDate;
         private MercurySample receivedSample;
+
+        public static Comparator<SampleReceiptFixup> BY_DATE = new Comparator<SampleReceiptFixup>() {
+            @Override
+            public int compare(SampleReceiptFixup fixup, SampleReceiptFixup otherFixup) {
+                return fixup.getReceiptDate().compareTo(otherFixup.getReceiptDate());
+            }
+        };
 
         public SampleReceiptFixup(String receiptUserName, Date receiptDate, MercurySample receivedSampleKey) {
             this.receiptUserName = receiptUserName;
@@ -350,6 +368,13 @@ public class MercurySampleFixupTest extends Arquillian {
 
         public MercurySample getReceivedSample() {
             return receivedSample;
+        }
+
+        @Override
+        public int compareTo(SampleReceiptFixup that) {
+            CompareToBuilder builder = new CompareToBuilder();
+            builder.append(getReceiptDate(), that.getReceiptDate());
+            return builder.build();
         }
     }
 }

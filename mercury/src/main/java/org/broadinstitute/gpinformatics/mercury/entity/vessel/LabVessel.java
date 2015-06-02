@@ -1460,9 +1460,7 @@ public abstract class LabVessel implements Serializable {
      * @return A map of lab vessels keyed off the event they were present at filtered by type.
      */
     public Map<LabEvent, Set<LabVessel>> findVesselsForLabEventType(LabEventType type, boolean useTargetVessels) {
-        List<LabEventType> eventTypeList = new ArrayList<>();
-        eventTypeList.add(type);
-        return findVesselsForLabEventTypes(eventTypeList, useTargetVessels);
+        return findVesselsForLabEventTypes(Collections.singletonList(type), useTargetVessels);
     }
 
     /**
