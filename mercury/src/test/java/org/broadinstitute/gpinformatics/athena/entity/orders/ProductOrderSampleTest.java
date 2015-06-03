@@ -277,45 +277,55 @@ public class ProductOrderSampleTest {
 
            Parameter 2 -- Whether or not Mercury sample is found on product
 
-           Parameter 3 -- is the Sample available (Received for BSP source, Accessioned for Mercury source)
+           Parameter 3 -- is the Sample Accessioned (only used for Mercury source)
 
-           Parameter 4 -- Is the sampledata set on the product order sample
+           Parameter 4 -- is the Sample received
 
-           Parameter 5 --  expected Result
+           Parameter 5 -- Is the sampledata set on the product order sample
+
+           Parameter 6 --  expected Result
         */
 
         /*
            Source of the sample is determined to be Mercury
            A MercurySample entity is present in both the database and the ProductOrderSample in question
          */
-        // Sample has been accessioned, sampleData is set on ProductOrderSample   --- Expect sample to be available
+        // Sample has been accessioned and received, sampleData is set on ProductOrderSample   --- Expect sample to be available
         dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.PRODUCT_ORDER_SAMPLE_AND_DATABASE, true, true, true, true});
+        // Sample has been accessioned and not received, sampleData is set on ProductOrderSample   --- Expect sample to be available
         dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.PRODUCT_ORDER_SAMPLE_AND_DATABASE, true, false, true, false});
-        // Sample has been accessioned, sampleData is not set on ProductOrderSample   --- Expect sample to be available
+        // Sample has been accessioned and received, sampleData is not set on ProductOrderSample   --- Expect sample to be available
         dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.PRODUCT_ORDER_SAMPLE_AND_DATABASE, true, true, false, true});
+        // Sample has been accessioned and not received, sampleData is not set on ProductOrderSample   --- Expect sample to be available
         dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.PRODUCT_ORDER_SAMPLE_AND_DATABASE, true, false, false, false});
-        // Sample has not been accessioned, sampleData is set on ProductOrderSample   --- Expect sample to not be available
+        // Sample has neither been accessioned nor received, sampleData is set on ProductOrderSample   --- Expect sample to not be available
         dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.PRODUCT_ORDER_SAMPLE_AND_DATABASE, false, false, true, false});
+        // Sample has not been accessioned but it has been received, sampleData is set on ProductOrderSample   --- Expect sample to not be available
         dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.PRODUCT_ORDER_SAMPLE_AND_DATABASE, false, true, true, false});
-        // Sample has not been accessioned, sampleData is not set on ProductOrderSample   --- Expect sample to not be available
+        // Sample has neither been accessioned nor received, sampleData is not set on ProductOrderSample   --- Expect sample to not be available
         dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.PRODUCT_ORDER_SAMPLE_AND_DATABASE, false, false, false, false});
+        // Sample has not been accessioned but it has been , sampleData is not set on ProductOrderSample   --- Expect sample to not be available
         dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.PRODUCT_ORDER_SAMPLE_AND_DATABASE, false, true, false, false});
 
         /*
            A MercurySample entity is not present in either the database or the ProductOrderSample in question
          */
         //
-        // Sample has been accessioned, sampleData is set on ProductOrderSample   --- Expect sample to not be available
+        // Sample has been accessioned and received, sampleData is set on ProductOrderSample   --- Expect sample to not be available
         dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.NEITHER, true, true, true, false});
+        // Sample has been accessioned and not received, sampleData is set on ProductOrderSample   --- Expect sample to not be available
         dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.NEITHER, true, false, true, false});
-        // Sample has been accessioned, sampleData is not set on ProductOrderSample   --- Expect sample not to be available
+        // Sample has been accessioned and received, sampleData is not set on ProductOrderSample   --- Expect sample not to be available
         dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.NEITHER, true, true, false, false});
+        // Sample has been accessioned and not received, sampleData is not set on ProductOrderSample   --- Expect sample not to be available
         dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.NEITHER, true, false, false, false});
-        // Sample has not been accessioned, sampleData is set on ProductOrderSample   --- Expect sample to not be available
+        // Sample has neither been accessioned nor received, sampleData is set on ProductOrderSample   --- Expect sample to not be available
         dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.NEITHER, false, false, true, false});
+        // Sample has not been accessioned but it has been received, sampleData is set on ProductOrderSample   --- Expect sample to not be available
         dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.NEITHER, false, true, true, false});
-        // Sample has not been accessioned, sampleData is not set on ProductOrderSample   --- Expect sample to not be available
+        // Sample has neither been accessioned nor received, sampleData is not set on ProductOrderSample   --- Expect sample to not be available
         dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.NEITHER, false, false, false, false});
+        // Sample has not been accessioned but it has been received, sampleData is not set on ProductOrderSample   --- Expect sample to not be available
         dataList.add(new Object[]{MercurySample.MetadataSource.MERCURY, TargetMercurySample.NEITHER, false, true, false, false});
 
         /*
