@@ -9,6 +9,7 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
@@ -71,6 +72,8 @@ public class ManifestSessionEjb {
 
     private UserBean userBean;
 
+    private BSPUserList bspUserList;
+
     private JiraService jiraService;
 
     private static Log logger = LogFactory.getLog(ManifestSessionEjb.class);
@@ -85,12 +88,13 @@ public class ManifestSessionEjb {
     @Inject
     public ManifestSessionEjb(ManifestSessionDao manifestSessionDao, ResearchProjectDao researchProjectDao,
                               MercurySampleDao mercurySampleDao, LabVesselDao labVesselDao, UserBean userBean,
-                              JiraService jiraService) {
+                              BSPUserList bspUserList, JiraService jiraService) {
         this.manifestSessionDao = manifestSessionDao;
         this.researchProjectDao = researchProjectDao;
         this.mercurySampleDao = mercurySampleDao;
         this.labVesselDao = labVesselDao;
         this.userBean = userBean;
+        this.bspUserList = bspUserList;
         this.jiraService = jiraService;
     }
 
@@ -356,7 +360,7 @@ public class ManifestSessionEjb {
         }
         BspUser bspUserByUsername = null;
         try {
-            bspUserByUsername = userBean.getBspUserByUsername(receiptInfo.getReporter());
+            bspUserByUsername = bspUserList.getByUsername(receiptInfo.getReporter());
         } catch (IOException e) {
             logger.error("Unable to access JIRA receipt information for " + session.getReceiptTicket());
 

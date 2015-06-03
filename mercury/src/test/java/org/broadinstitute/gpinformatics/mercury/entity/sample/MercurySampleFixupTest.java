@@ -5,6 +5,7 @@ import com.google.common.collect.Multimap;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
@@ -55,6 +56,9 @@ public class MercurySampleFixupTest extends Arquillian {
 
     @Inject
     private UserBean userBean;
+
+    @Inject
+    private BSPUserList bspUserList;
 
     @Inject
     private UserTransaction utx;
@@ -288,7 +292,7 @@ public class MercurySampleFixupTest extends Arquillian {
                             currentFixup.getReceivedSample().getSampleKey());
             } else {
                 currentFixup.getReceivedSample().getLabVessel().iterator()
-                        .next().setReceiptEvent(userBean.getBspUserByUsername(currentFixup.getReceiptUserName()),
+                        .next().setReceiptEvent(bspUserList.getByUsername(currentFixup.getReceiptUserName()),
                         currentFixup.getReceiptDate(), counter++);
                 updatedSamples.add(currentFixup.getReceivedSample().getSampleKey());
             }

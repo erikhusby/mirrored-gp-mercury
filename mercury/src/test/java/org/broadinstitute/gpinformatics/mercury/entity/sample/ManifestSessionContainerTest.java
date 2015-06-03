@@ -8,9 +8,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProj
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
-import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
-import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NextTransition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
@@ -123,6 +120,9 @@ public class ManifestSessionContainerTest extends Arquillian {
     @Inject
     private UserBean userBean;
 
+    @Inject
+    private BSPUserList bspUserList;
+
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(DEV);
@@ -193,7 +193,7 @@ public class ManifestSessionContainerTest extends Arquillian {
                 });
 
         manifestSessionEjb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao,
-                labVesselDao, userBean, jiraService);
+                labVesselDao, userBean, bspUserList, jiraService);
 
         String SAMPLE_ID_1 = COLLAB_PREFIX + today.getTime() + "1";
         String SAMPLE_ID_2 = COLLAB_PREFIX + today.getTime() + "2";
