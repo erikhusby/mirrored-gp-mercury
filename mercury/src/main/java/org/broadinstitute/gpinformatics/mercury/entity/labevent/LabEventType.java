@@ -6,7 +6,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselTypeGeometry;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Properties common to all events of a particular message type
@@ -1165,7 +1167,7 @@ public enum LabEventType {
         this.resultingMaterialType = resultingMaterialType;
     }
 
-        public String getName() {
+    public String getName() {
         return name;
     }
 
@@ -1188,6 +1190,16 @@ public enum LabEventType {
             }
         }
         return mapNameToType.get(name);
+    }
+
+    public static Set<LabEventType> getLabEventTypesForMaterialType(LabVessel.MaterialType materialType) {
+        Set<LabEventType> resultSet=new HashSet<>();
+        for (LabEventType labEventType : LabEventType.values()) {
+            if (labEventType.resultingMaterialType == materialType) {
+                resultSet.add(labEventType);
+            }
+        }
+        return resultSet;
     }
 
     public boolean isSendToBsp() {

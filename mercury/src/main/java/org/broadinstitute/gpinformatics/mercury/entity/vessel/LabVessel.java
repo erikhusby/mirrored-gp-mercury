@@ -232,11 +232,13 @@ public abstract class LabVessel implements Serializable {
 
     public boolean isDNA() {
         for (SampleInstanceV2 si : getSampleInstancesV2()) {
-            if (!si.getRootOrEarliestMercurySample().getSampleData().getMaterialType().startsWith("DNA")) {
-                return false;
+            if (si.getRootOrEarliestMercurySample().getSampleData().getMaterialType().startsWith("DNA")) {
+                return true;
             }
         }
-        return true;
+        Set<LabEventType> labEventTypes =
+                        LabEventType.getLabEventTypesForMaterialType(LabVessel.MaterialType.DNA);
+        return doesChainOfCustodyInclude(labEventTypes.toArray(new LabEventType[labEventTypes.size()]));
     }
 
     /**
@@ -1893,17 +1895,21 @@ public abstract class LabVessel implements Serializable {
      *
      * @return true if the vessel is affiliated with clinical work
      */
-    public boolean doesChainOfCustodyInclude(LabEventType labEventType) {
+    public boolean doesChainOfCustodyInclude(LabEventType ... labEventTypes) {
+        for (LabEventType labEventType : labEventTypes) {
+            if (LabEvent.isEventPresent(getEvents(), labEventType)) {
+                return true;
+            }
 
-        if (LabEvent.isEventPresent(getEvents(), labEventType)) {
-            return true;
+            TransferTraverserCriteria.LabEventDescendantCriteria eventTraversalCriteria =
+                    new TransferTraverserCriteria.LabEventDescendantCriteria();
+            evaluateCriteria(eventTraversalCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+
+            if (LabEvent.isEventPresent(eventTraversalCriteria.getAllEvents(), labEventType)) {
+                return true;
+            }
         }
-
-        TransferTraverserCriteria.LabEventDescendantCriteria eventTraversalCriteria =
-                new TransferTraverserCriteria.LabEventDescendantCriteria();
-        evaluateCriteria(eventTraversalCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
-
-        return LabEvent.isEventPresent(eventTraversalCriteria.getAllEvents(), LabEventType.COLLABORATOR_TRANSFER);
+        return false;
     }
 
     /**

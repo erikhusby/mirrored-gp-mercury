@@ -1,13 +1,20 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import com.google.common.collect.ImmutableSet;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.testng.Assert;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.DataProvider;
@@ -22,13 +29,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
+
 
 /**
  * Test product workflow, processes and steps
@@ -49,7 +61,7 @@ public class WorkflowTest {
 
     @BeforeTest
     public void setupWorkflow() {
-        workflowConfig=new WorkflowLoader().load();
+        workflowConfig = new WorkflowLoader().load();
     }
 
     @Test
@@ -74,13 +86,13 @@ public class WorkflowTest {
         Assert.assertNotNull(exomeExpressProduct.getByVersion(exomeExpressProductVersion.getVersion()));
 
         Assert.assertEquals(exomeExpressProductVersion, exomeExpressProduct
-                .getByVersion(exomeExpressProductVersion.getVersion())
+                        .getByVersion(exomeExpressProductVersion.getVersion())
         );
 
         Assert.assertNotNull(exomeExpressProductVersion.getProcessDefsByName(
                 libraryConstructionProcess.getName()));
         Assert.assertEquals(libraryConstructionProcess, exomeExpressProductVersion
-                .getProcessDefsByName(libraryConstructionProcess.getName())
+                        .getProcessDefsByName(libraryConstructionProcess.getName())
         );
 
         Assert.assertNotNull(exomeExpressProductVersion.findStepByEventType(
@@ -202,17 +214,10 @@ public class WorkflowTest {
 
     @Test
     public void testEntryExpression() {
-        Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>() {{
-            put(BSPSampleSearchColumn.PRIMARY_DISEASE, "Cancer");
-            put(BSPSampleSearchColumn.LSID, "org.broad:SM-1234");
-            put(BSPSampleSearchColumn.MATERIAL_TYPE, new String("DNA:DNA Genomic"));  //need to avoid interning string
-            put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "4321");
-            put(BSPSampleSearchColumn.SPECIES, "Homo Sapiens");
-            put(BSPSampleSearchColumn.PARTICIPANT_ID, "PT-1234");
-        }};
-
         BarcodedTube barcodedTube = new BarcodedTube("00001234");
-        barcodedTube.addSample(new MercurySample("SM-1234", new BspSampleData(dataMap)));
+        MercurySample mercurySample = createNewMercurySample("SM-1234", "DNA:DNA Genomic",
+                MercurySample.MetadataSource.MERCURY);
+        barcodedTube.addSample(mercurySample);
 
         ProductWorkflowDef exomeExpressWorkflow = workflowConfig.getWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
         for (WorkflowBucketDef workflowBucketDef : exomeExpressWorkflow.getEffectiveVersion().getBuckets()) {
@@ -222,19 +227,39 @@ public class WorkflowTest {
         }
     }
 
+    private MercurySample createNewMercurySample(final String sampleId, final String materialType,
+                                                 MercurySample.MetadataSource metadataSource) {
+        MercurySample mercurySample=null;
+        switch (metadataSource) {
+        case MERCURY:
+            Set<Metadata> data = ImmutableSet.of(
+                    new Metadata(Metadata.Key.SAMPLE_ID, sampleId),
+                    new Metadata(Metadata.Key.PATIENT_ID, "1234"),
+                    new Metadata(Metadata.Key.MATERIAL_TYPE, materialType)
+            );
+            mercurySample = new MercurySample(sampleId, data);
+            break;
+        case BSP:
+            Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>() {{
+                put(BSPSampleSearchColumn.PRIMARY_DISEASE, "Cancer");
+                put(BSPSampleSearchColumn.LSID, String.format("org.broad:%s", sampleId));
+                put(BSPSampleSearchColumn.MATERIAL_TYPE, new String(materialType));  //need to avoid interning string
+                put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "4321");
+                put(BSPSampleSearchColumn.SPECIES, "Homo Sapiens");
+                put(BSPSampleSearchColumn.PARTICIPANT_ID, "PT-1234");
+            }};
+
+            mercurySample = new MercurySample(sampleId, new BspSampleData(dataMap));
+            break;
+        }
+        return mercurySample;
+    }
+
     @Test
     public void testNoEntryExpressionsThenVesselMeetsCriteria() {
-        Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>() {{
-            put(BSPSampleSearchColumn.PRIMARY_DISEASE, "Cancer");
-            put(BSPSampleSearchColumn.LSID, "org.broad:SM-1234");
-            put(BSPSampleSearchColumn.MATERIAL_TYPE, new String("DNA:DNA Genomic"));  //need to avoid interning string
-            put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "4321");
-            put(BSPSampleSearchColumn.SPECIES, "Homo Sapiens");
-            put(BSPSampleSearchColumn.PARTICIPANT_ID, "PT-1234");
-        }};
-
         BarcodedTube barcodedTube = new BarcodedTube("00001234");
-        barcodedTube.addSample(new MercurySample("SM-1234", new BspSampleData(dataMap)));
+        MercurySample mercurySample = createNewMercurySample("SM-1234", "DNA:DNA Genomic", MercurySample.MetadataSource.MERCURY);
+        barcodedTube.addSample(mercurySample);
 
         WorkflowBucketDef workflowBucketDef = new WorkflowBucketDef();
         boolean meetsCriteria = workflowBucketDef.meetsBucketCriteria(barcodedTube);
@@ -252,7 +277,8 @@ public class WorkflowTest {
 
         for (WorkflowBucketDef workflowBucketDef : exomeExpressWorkflow.getEffectiveVersion().getBuckets()) {
             if (workflowBucketDef.getName().equals("Pico/Plating Bucket")) {
-                assertThat(workflowBucketDef.getBucketEntryEvaluators(), contains(DnaBucketEntryEvaluator.class.getName()));
+                assertThat(workflowBucketDef.getBucketEntryEvaluators(),
+                        hasItem(DnaBucketEntryEvaluator.class.getName()));
                 assertThat(workflowBucketDef.meetsBucketCriteria(barcodedTube), is(false));
             }
         }
@@ -268,7 +294,8 @@ public class WorkflowTest {
 
         for (WorkflowBucketDef workflowBucketDef : exomeExpressWorkflow.getEffectiveVersion().getBuckets()) {
             if (workflowBucketDef.getName().equals("Pico/Plating Bucket")) {
-                assertThat(workflowBucketDef.getBucketEntryEvaluators(), contains(DnaBucketEntryEvaluator.class.getName()));
+                assertThat(workflowBucketDef.getBucketEntryEvaluators(),
+                        hasItem(DnaBucketEntryEvaluator.class.getName()));
                 assertThat(workflowBucketDef.meetsBucketCriteria(barcodedTube), is(true));
             }
         }
@@ -276,14 +303,16 @@ public class WorkflowTest {
 
     @Test
     public void testSupportedWorkflows() {
-        Assert.assertTrue(Workflow.AGILENT_EXOME_EXPRESS.isWorkflowSupportedByMercury(),"Uh oh, mercury doesn't support exome express!");
-        Assert.assertFalse(Workflow.WHOLE_GENOME.isWorkflowSupportedByMercury(),"Do we support WGS in mercury? Party time!");
+        Assert.assertTrue(Workflow.AGILENT_EXOME_EXPRESS.isWorkflowSupportedByMercury(),
+                "Uh oh, mercury doesn't support exome express!");
+        Assert.assertFalse(Workflow.WHOLE_GENOME.isWorkflowSupportedByMercury(),
+                "Do we support WGS in mercury? Party time!");
     }
 
     @DataProvider(name = "bucketEntryEvaluators")
-     public static Object[][] bucketEntryEvaluators() {
-         String trueEvaluatorName = AlwaysTrueEvaluator.class.getCanonicalName();
-         String falseEvaluatorName = AlwaysFalseEvaluator.class.getCanonicalName();
+    public static Object[][] bucketEntryEvaluators() {
+        String trueEvaluatorName = AlwaysTrueEvaluator.class.getCanonicalName();
+        String falseEvaluatorName = AlwaysFalseEvaluator.class.getCanonicalName();
 
          return new Object[][]{
                  {true,  Arrays.asList(trueEvaluatorName, trueEvaluatorName)},
@@ -292,7 +321,7 @@ public class WorkflowTest {
                  {false, Arrays.asList(falseEvaluatorName, trueEvaluatorName)},
          };
 
-     }
+    }
 
      @Test(dataProvider = "bucketEntryEvaluators")
      public void testBucketEntryEvaluatorAndingWorks(boolean expectedResult, List<String> classNames) {
@@ -300,8 +329,63 @@ public class WorkflowTest {
          barcodedTube.addSample(
                  new MercurySample("SM-2345", Collections.singleton(new Metadata(Metadata.Key.MATERIAL_TYPE, ""))));
 
-         WorkflowBucketDef workflowBucketDef = new WorkflowBucketDef();
-         workflowBucketDef.setBucketEntryEvaluators(classNames);
-         assertThat(workflowBucketDef.meetsBucketCriteria(barcodedTube), is(expectedResult));
-     }
+        WorkflowBucketDef workflowBucketDef = new WorkflowBucketDef();
+        workflowBucketDef.setBucketEntryEvaluators(classNames);
+        assertThat(workflowBucketDef.meetsBucketCriteria(barcodedTube), is(expectedResult));
+    }
+
+    @DataProvider(name = "bucketScenariosDataProvider")
+    public Iterator<Object[]> bucketScenariosDataProvider() {
+        Set<Object[]> result= new HashSet<>();
+
+        EnumSet<LabEventType> dnaLabEventTypes = EnumSet.copyOf(
+                LabEventType.getLabEventTypesForMaterialType(LabVessel.MaterialType.DNA));
+        EnumSet<LabEventType> nonDnaLabEventTypes = EnumSet.complementOf(dnaLabEventTypes);
+
+        // the value of metadataSource should not affect the test result
+        for (MercurySample.MetadataSource metadataSource : MercurySample.MetadataSource.values()) {
+            for (LabEventType labEventType : dnaLabEventTypes) {
+                // All these lab events should allow the sample into the pico/plating bucket, regardless of MaterialType
+                result.add(new Object[]{labEventType, "DNA", metadataSource, true});
+                // Blood should pass here because there has been an extraction.
+                result.add(new Object[]{labEventType, "BLOOD", metadataSource, true});
+            }
+
+            for (LabEventType labEventType : nonDnaLabEventTypes) {
+                // DNA should always pass because DNA is a valid materialType for the pico/plating bucket
+                result.add(new Object[]{labEventType, "DNA", metadataSource, true});
+                // BLOOD will never pass because DNA is a valid materialType for the pico/plating bucket
+                result.add(new Object[]{labEventType, "BLOOD", metadataSource, false});
+            }
+        }
+        return result.iterator();
+    }
+
+    @Test(dataProvider = "bucketScenariosDataProvider")
+    public void testBucketEntryForManyScenarios(LabEventType labEventType, String sampleMaterialType,
+                                                                  MercurySample.MetadataSource metadataSource,
+                                                                  boolean meetsBucketCriteria) {
+        LabVesselFactory labVesselFactory = new LabVesselFactory();
+        labVesselFactory.setBspUserList(new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
+        String sampleId = "SM-1234";
+        ParentVesselBean parentVesselBean = new ParentVesselBean(sampleId, sampleId, "Blood tube", null);
+        MercurySample mercurySample = createNewMercurySample(sampleId, sampleMaterialType, metadataSource);
+        Map<String, MercurySample> mercurySampleMap = Collections.singletonMap(sampleId, mercurySample);
+        Map<String, Set<ProductOrderSample>> pdoSampleMap =
+                Collections.singletonMap(sampleId,
+                        Collections.singleton(new ProductOrderSample(sampleId, mercurySample.getSampleData())));
+
+        LabVessel labVessel = labVesselFactory.buildLabVesselDaoFree(Collections.<String, LabVessel>emptyMap(),
+                mercurySampleMap, pdoSampleMap, "QADudePM", new Date(), Collections.singletonList(parentVesselBean),
+                labEventType, metadataSource).get(0);
+
+        labVessel.addSample(mercurySample);
+
+        WorkflowBucketDef workflowBucketDef = new WorkflowBucketDef();
+        workflowBucketDef.setBucketEntryEvaluators(
+                Collections.singletonList(DnaBucketEntryEvaluator.class.getCanonicalName()));
+
+        assertThat(workflowBucketDef.meetsBucketCriteria(labVessel), is(meetsBucketCriteria));
+    }
 }
+
