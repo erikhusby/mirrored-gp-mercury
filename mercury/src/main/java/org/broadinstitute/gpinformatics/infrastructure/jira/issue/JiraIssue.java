@@ -43,12 +43,7 @@ public class JiraIssue implements Serializable {
     public String getSummary() throws IOException{
 
         if(summary == null) {
-            JiraIssue tempIssue = jiraService.getIssueInfo(key, (String []) null);
-            summary = tempIssue.getSummary();
-            description = tempIssue.getDescription();
-            dueDate = tempIssue.getDueDate();
-            created = tempIssue.getCreated();
-            reporter = tempIssue.getReporter();
+            copyFromJiraIssue(null);
         }
         return summary;
     }
@@ -60,12 +55,7 @@ public class JiraIssue implements Serializable {
     public String getDescription() throws IOException {
 
         if(description == null && summary == null) {
-            JiraIssue tempIssue = jiraService.getIssueInfo(key, (String []) null);
-            summary = tempIssue.getSummary();
-            description = tempIssue.getDescription();
-            dueDate = tempIssue.getDueDate();
-            created = tempIssue.getCreated();
-            reporter = tempIssue.getReporter();
+            copyFromJiraIssue(null);
         }
 
         return description;
@@ -78,12 +68,7 @@ public class JiraIssue implements Serializable {
     public Date getDueDate() throws IOException {
 
         if(dueDate == null && summary == null) {
-            JiraIssue tempIssue = jiraService.getIssueInfo(key, (String []) null);
-            summary = tempIssue.getSummary();
-            description = tempIssue.getDescription();
-            dueDate = tempIssue.getDueDate();
-            created = tempIssue.getCreated();
-            reporter = tempIssue.getReporter();
+            copyFromJiraIssue(null);
         }
 
         return dueDate;
@@ -100,24 +85,14 @@ public class JiraIssue implements Serializable {
     public Date getCreated() throws IOException {
 
         if(created == null && summary == null) {
-            JiraIssue tempIssue = jiraService.getIssueInfo(key, (String []) null);
-            summary = tempIssue.getSummary();
-            description = tempIssue.getDescription();
-            dueDate = tempIssue.getDueDate();
-            created = tempIssue.getCreated();
-            reporter = tempIssue.getReporter();
+            copyFromJiraIssue(null);
         }
         return created;
     }
 
     public String getReporter() throws IOException {
         if (this.reporter == null && summary == null) {
-            JiraIssue tempIssue = jiraService.getIssueInfo(key, (String []) null);
-            summary = tempIssue.getSummary();
-            description = tempIssue.getDescription();
-            dueDate = tempIssue.getDueDate();
-            reporter = tempIssue.getReporter();
-
+            copyFromJiraIssue(null);
         }
         return reporter;
     }
@@ -131,15 +106,19 @@ public class JiraIssue implements Serializable {
         Object foundValue;
 
         if(!extraFields.containsKey(fieldName)) {
-            JiraIssue tempIssue = jiraService.getIssueInfo(key, fieldName);
-            extraFields.put(fieldName,tempIssue.getFieldValue(fieldName));
-            summary = tempIssue.getSummary();
-            description = tempIssue.getDescription();
-            dueDate = tempIssue.getDueDate();
-            reporter = tempIssue.getReporter();
+            copyFromJiraIssue(fieldName);
         }
         foundValue = extraFields.get(fieldName);
         return foundValue;
+    }
+
+    private void copyFromJiraIssue(String fieldName) throws IOException {
+        JiraIssue tempIssue = jiraService.getIssueInfo(key, fieldName);
+        extraFields.put(fieldName,tempIssue.getFieldValue(fieldName));
+        summary = tempIssue.getSummary();
+        description = tempIssue.getDescription();
+        dueDate = tempIssue.getDueDate();
+        reporter = tempIssue.getReporter();
     }
 
     public <TV> void addFieldValue(String filedName, TV value) {
