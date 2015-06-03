@@ -654,4 +654,23 @@ public class LabEventFixupTest extends Arquillian {
             throw new RuntimeException(e);
         }
     }
+
+    @Test(enabled = false)
+    public void fixupIpi61573() {
+        try {
+            userBean.loginOSUser();
+            utx.begin();
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, 909443L);
+            Assert.assertEquals(labEvent.getLabEventType(), LabEventType.FLOWCELL_TRANSFER);
+            System.out.println("Deleting " + labEvent.getLabEventType() + " " + labEvent.getLabEventId());
+            labEvent.getReagents().clear();
+            labEventDao.remove(labEvent);
+            labEventDao.persist(new FixupCommentary("IPI-61573 delete duplicate event"));
+            labEventDao.flush();
+            utx.commit();
+        } catch (NotSupportedException | SystemException | HeuristicMixedException | HeuristicRollbackException |
+                RollbackException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
