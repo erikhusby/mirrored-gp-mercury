@@ -164,6 +164,9 @@ public class MercurySampleData implements SampleData {
 
     @Override
     public String getMaterialType() {
+        if (StringUtils.isBlank(materialType)) {
+            return "";
+        }
         return materialType;
     }
 
