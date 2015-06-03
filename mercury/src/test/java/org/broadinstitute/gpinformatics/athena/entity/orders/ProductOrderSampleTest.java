@@ -352,7 +352,7 @@ public class ProductOrderSampleTest {
 
     @Test(groups = TestGroups.DATABASE_FREE, dataProvider = "availableSampleConditions")
     public void testIsSampleAvailable(MercurySample.MetadataSource source, TargetMercurySample setMercurySample,
-                                      boolean isSampleAvailable, boolean isSampleReceived, boolean isSampleDataSet,
+                                      boolean isSampleAccessioned, boolean isSampleReceived, boolean isSampleDataSet,
                                       boolean expectedResult)
             throws IOException {
         String sampleId = "SM-2923";
@@ -406,7 +406,7 @@ public class ProductOrderSampleTest {
         if (sourceSample != null) {
             BarcodedTube barcodedTube = new BarcodedTube("VesselFor" + sourceSample.getSampleKey(),
                     BarcodedTube.BarcodedTubeType.MatrixTube);
-            if (source == MercurySample.MetadataSource.MERCURY && isSampleAvailable) {
+            if (source == MercurySample.MetadataSource.MERCURY && isSampleAccessioned) {
                 LabEvent collaboratorTransferEvent =
                         new LabEvent(LabEventType.COLLABORATOR_TRANSFER, new Date(), "thisLocation", 0l, 0l,
                                 "testprogram");

@@ -216,17 +216,22 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
                 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
                 parsedResults.dueDate = dateFormat.parse(dueDateValue);
             }
+        } catch (ParseException pe) {
+            log.error("Unable to parse the due date for Jira Issue " + parsedResults.getKey());
+        }
 
+        try {
             if (StringUtils.isNotBlank(createdDateValue)) {
                 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
                 parsedResults.created = dateFormat.parse(createdDateValue);
             }
 
-            if(reporterValues != null && reporterValues.containsKey("name")) {
-                parsedResults.reporter = (String) reporterValues.get("name");
-            }
         } catch (ParseException pe) {
-            log.error("Unable to parse the created Date for Jira Issue " + parsedResults.getKey());
+            log.error("Unable to parse the created date for Jira Issue " + parsedResults.getKey());
+        }
+
+        if (reporterValues != null && reporterValues.containsKey("name")) {
+            parsedResults.reporter = (String) reporterValues.get("name");
         }
 
         if (searchFields != null) {
