@@ -68,7 +68,7 @@ public class ProductOrderSampleJsonFactory {
 
         if (labEventSampleDTO != null) {
             item.put(BspSampleData.PACKAGE_DATE, labEventSampleDTO.getSamplePackagedDate());
-            item.put(BspSampleData.RECEIPT_DATE, labEventSampleDTO.getSampleReceiptDate());
+            item.put(BspSampleData.RECEIPT_DATE, sample.getFormattedReceiptDate());
         } else {
             item.put(BspSampleData.PACKAGE_DATE, "");
             item.put(BspSampleData.RECEIPT_DATE, "");

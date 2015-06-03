@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.athena.entity.samples.SampleReceiptValidation;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
@@ -39,6 +40,7 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.io.Serializable;
 import java.text.MessageFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -296,6 +298,16 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
     public Date getReceiptDate() {
         return (mercurySample!= null)?mercurySample.getReceivedDate():getSampleData().getReceiptDate();
+    }
+
+    public String getFormattedReceiptDate() {
+        Date receiptDate = getReceiptDate();
+
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(LabEventSampleDTO.BSP_DATE_FORMAT_STRING);
+        if (receiptDate == null) {
+            return "";
+        }
+        return simpleDateFormat.format(receiptDate);
     }
 
     public boolean isSampleReceived() {

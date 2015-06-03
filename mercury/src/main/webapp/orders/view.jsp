@@ -1264,7 +1264,7 @@ function formatInput(item) {
                             ${sample.labEventSampleDTO.samplePackagedDate}
                     </td>
                     <td id="receipt-date-${sample.productOrderSampleId}">
-                            ${sample.labEventSampleDTO.sampleReceiptDate}
+                            ${sample.formattedReceiptDate}
                     </td>
 
                     <td id="sample-type-${sample.productOrderSampleId}"></td>

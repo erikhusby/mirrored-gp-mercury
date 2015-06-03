@@ -40,10 +40,6 @@ public class LabEventSampleDTO {
         this.sampleKey = sampleKey;
     }
 
-    public String getSampleReceiptDate() {
-        return getFormattedDate(LabEventType.SAMPLE_RECEIPT);
-    }
-
     public String getSamplePackagedDate() {
         return getFormattedDate(LabEventType.SAMPLE_PACKAGE);
     }
