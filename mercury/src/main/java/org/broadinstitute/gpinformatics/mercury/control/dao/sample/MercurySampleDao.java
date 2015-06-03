@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.sample;
 
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata_;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample_;
 
@@ -11,6 +13,7 @@ import javax.persistence.NoResultException;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Join;
 import javax.persistence.criteria.ParameterExpression;
 import javax.persistence.criteria.Root;
 import javax.persistence.criteria.Subquery;
@@ -149,4 +152,35 @@ public class MercurySampleDao extends GenericDao {
         return results;
     }
 
+    /**
+     * This method was written for a fixup test. It finds all samples with MetadataSource which do not have
+     * the specified metadataKeys.
+     */
+    public List<MercurySample> findSamplesWithoutMetadata(@Nonnull MercurySample.MetadataSource metadataSource,
+                                                          @Nonnull Metadata.Key... metadataKeys) {
+        CriteriaBuilder sampleBuilder = getEntityManager().getCriteriaBuilder();
+        ParameterExpression<MercurySample.MetadataSource> metadataSourceParameter = sampleBuilder.parameter(
+                MercurySample.MetadataSource.class);
+
+        CriteriaQuery<MercurySample> samplesWithoutMetadataKeysQuery = sampleBuilder.createQuery(MercurySample.class);
+
+        Subquery<String> samplesWithoutMetadataKeysSubQuery = samplesWithoutMetadataKeysQuery.subquery(String.class);
+        Root<MercurySample> samplesWithoutKeysRoot = samplesWithoutMetadataKeysSubQuery.from(MercurySample.class);
+        Join<MercurySample, Metadata> metadataJoin = samplesWithoutKeysRoot.join(MercurySample_.metadata);
+        samplesWithoutMetadataKeysSubQuery.select(samplesWithoutKeysRoot.get(MercurySample_.sampleKey))
+                .distinct(true)
+                .where(metadataJoin.get(Metadata_.key).in(metadataKeys));
+
+        Root<MercurySample> sampleRoot = samplesWithoutMetadataKeysQuery.from(MercurySample.class);
+        samplesWithoutMetadataKeysQuery.select(sampleRoot).distinct(true)
+                .where(sampleBuilder.equal(sampleRoot.get(MercurySample_.metadataSource), metadataSourceParameter),
+                        sampleBuilder.in(sampleRoot.get(MercurySample_.sampleKey))
+                                .value(samplesWithoutMetadataKeysSubQuery).not());
+
+        TypedQuery<MercurySample> query = getEntityManager().createQuery(samplesWithoutMetadataKeysQuery);
+        query.setParameter(metadataSourceParameter, metadataSource);
+        return query.getResultList();
+
+
+    }
 }

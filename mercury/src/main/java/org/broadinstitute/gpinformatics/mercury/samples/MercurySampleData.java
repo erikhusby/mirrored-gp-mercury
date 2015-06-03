@@ -25,6 +25,7 @@ public class MercurySampleData implements SampleData {
     private String visit;
     private final boolean hasData;
     private boolean received;
+    private String materialType;
 
     public MercurySampleData(@Nonnull String sampleId, @Nonnull Set<Metadata> metadata) {
         this.sampleId = sampleId;
@@ -53,6 +54,9 @@ public class MercurySampleData implements SampleData {
                 break;
             case BUICK_VISIT:
                 this.visit = value;
+                break;
+            case MATERIAL_TYPE:
+                this.materialType = value;
                 break;
             }
         }
@@ -160,7 +164,10 @@ public class MercurySampleData implements SampleData {
 
     @Override
     public String getMaterialType() {
-        return "";
+        if (StringUtils.isBlank(materialType)) {
+            return "";
+        }
+        return materialType;
     }
 
     @Override

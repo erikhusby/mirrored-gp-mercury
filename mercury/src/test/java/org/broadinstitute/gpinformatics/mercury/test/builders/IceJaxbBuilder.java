@@ -30,8 +30,8 @@ public class IceJaxbBuilder {
 
     private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
     private final String testPrefix;
-    private final String pondRegRackBarcode;
-    private final List<String> pondRegTubeBarcodes;
+    private final List<String> pondRegRackBarcodes;
+    private final List<List<String>> listPondRegTubeBarcodes;
     private String baitTube1Barcode;
     private String baitTube2Barcode;
     private LibraryConstructionJaxbBuilder.TargetSystem targetSystem;
@@ -74,12 +74,12 @@ public class IceJaxbBuilder {
     private PlateCherryPickEvent icePoolTest;
 
     public IceJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory, String testPrefix,
-            String pondRegRackBarcode, List<String> pondRegTubeBarcodes, String baitTube1Barcode,
+            List<String> pondRegRackBarcodes, List<List<String>> listPondRegTubeBarcodes, String baitTube1Barcode,
             String baitTube2Barcode, LibraryConstructionJaxbBuilder.TargetSystem targetSystem, PlexType plexType) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.testPrefix = testPrefix;
-        this.pondRegRackBarcode = pondRegRackBarcode;
-        this.pondRegTubeBarcodes = pondRegTubeBarcodes;
+        this.pondRegRackBarcodes = pondRegRackBarcodes;
+        this.listPondRegTubeBarcodes = listPondRegTubeBarcodes;
         this.baitTube1Barcode = baitTube1Barcode;
         this.baitTube2Barcode = baitTube2Barcode;
         this.targetSystem = targetSystem;
@@ -94,38 +94,60 @@ public class IceJaxbBuilder {
         List<String> catchEnrichSparseTubeBarcodes = new ArrayList<>();
         switch (plexType) {
         case PLEX12:
-            // pool each row into a single tube
-            for (int i = 1; i <= pondRegTubeBarcodes.size(); i++) {
-                poolTubeBarcodes.add(i % 12 == 1 ? testPrefix + "IcePool" + (i / 12) : null);
-                String sourceWell = bettaLimsMessageTestFactory.buildWellName(i,
-                        BettaLimsMessageTestFactory.WellNameType.LONG);
-                @SuppressWarnings({"NumericCastThatLosesPrecision"})
-                String destinationWell = bettaLimsMessageTestFactory.buildWellName(
-                        (((int) Math.ceil(i / 12.0) - 1) * 12) + 1, BettaLimsMessageTestFactory.WellNameType.LONG);
-                poolCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(pondRegRackBarcode, sourceWell,
-                        poolRackBarcode, destinationWell));
+            // todo jmt this doesn't work for multiple LCSETs
+            for (int j = 0; j < listPondRegTubeBarcodes.size(); j++) {
+                List<String> pondRegTubeBarcodes = listPondRegTubeBarcodes.get(j);
+                // pool each row into a single tube
+                for (int i = 1; i <= pondRegTubeBarcodes.size(); i++) {
+                    poolTubeBarcodes.add(i % 12 == 1 ? testPrefix + "IcePool" + (i / 12) : null);
+                    String sourceWell = bettaLimsMessageTestFactory.buildWellName(i,
+                            BettaLimsMessageTestFactory.WellNameType.LONG);
+                    @SuppressWarnings({"NumericCastThatLosesPrecision"})
+                    String destinationWell = bettaLimsMessageTestFactory.buildWellName(
+                            (((int) Math.ceil(i / 12.0) - 1) * 12) + 1, BettaLimsMessageTestFactory.WellNameType.LONG);
+                    poolCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(pondRegRackBarcodes.get(j), sourceWell,
+                            poolRackBarcode, destinationWell));
+                }
+                for (int i = 1; i <= pondRegTubeBarcodes.size(); i++) {
+                    spriTubeBarcodes.add(i % 12 == 1 ? testPrefix + "IceSpri" + (i / 12) : null);
+                    catchEnrichSparseTubeBarcodes.add(i % 12 == 1 ? testPrefix + ICE_CATCH_ENRICH + (i / 12) : null);
+                    if (i % 12 == 1) {
+                        catchEnrichTubeBarcodes.add(testPrefix + ICE_CATCH_ENRICH + (i / 12));
+                    }
+                }
             }
             break;
         case PLEX96:
-            // pool all samples into a single tube
-            for (int i = 1; i <= pondRegTubeBarcodes.size(); i++) {
-                String sourceWell = bettaLimsMessageTestFactory.buildWellName(i,
-                        BettaLimsMessageTestFactory.WellNameType.LONG);
-                poolCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(pondRegRackBarcode, sourceWell,
-                        poolRackBarcode, "A01"));
+            for (int j = 0; j < listPondRegTubeBarcodes.size(); j++) {
+                List<String> pondRegTubeBarcodes = listPondRegTubeBarcodes.get(j);
+                // pool all samples into a single tube
+                for (int i = 1; i <= pondRegTubeBarcodes.size(); i++) {
+                    String sourceWell = bettaLimsMessageTestFactory.buildWellName(i,
+                            BettaLimsMessageTestFactory.WellNameType.LONG);
+                    poolCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(pondRegRackBarcodes.get(j), sourceWell,
+                            poolRackBarcode, bettaLimsMessageTestFactory.buildWellName(
+                            j + 1, BettaLimsMessageTestFactory.WellNameType.LONG)));
+                }
+                poolTubeBarcodes.add(testPrefix + "IcePool1" + j);
             }
-            poolTubeBarcodes.add(testPrefix + "IcePool1");
+
+            // Need a column of SPRI tubes for each pond rack
+            for (int row = 0; row < 8; row++) {
+                for(int column = 0; column < 12; column++) {
+                    if (column % 2 == 0 && column / 2 < pondRegRackBarcodes.size()) {
+                        spriTubeBarcodes.add(testPrefix + "IceSpri" + ((row * 12) + column));
+                        catchEnrichSparseTubeBarcodes.add(testPrefix + ICE_CATCH_ENRICH + ((row * 12) + column));
+                        catchEnrichTubeBarcodes.add(testPrefix + ICE_CATCH_ENRICH + ((row * 12) + column));
+                    } else {
+                        spriTubeBarcodes.add(null);
+                        catchEnrichSparseTubeBarcodes.add(null);
+                    }
+                }
+            }
             break;
         }
-        for (int i = 1; i <= pondRegTubeBarcodes.size(); i++) {
-            spriTubeBarcodes.add(i % 12 == 1 ? testPrefix + "IceSpri" + (i / 12) : null);
-            catchEnrichSparseTubeBarcodes.add(i % 12 == 1 ? testPrefix + ICE_CATCH_ENRICH + (i / 12) : null);
-            if (i % 12 == 1) {
-                catchEnrichTubeBarcodes.add(testPrefix + ICE_CATCH_ENRICH + (i / 12));
-            }
-        }
         icePoolingTransfer = bettaLimsMessageTestFactory.buildCherryPick("IcePoolingTransfer",
-                Collections.singletonList(pondRegRackBarcode), Collections.singletonList(pondRegTubeBarcodes),
+                pondRegRackBarcodes, listPondRegTubeBarcodes,
                 Collections.singletonList(poolRackBarcode), Collections.singletonList(poolTubeBarcodes), poolCherryPicks);
         bettaLimsMessageTestFactory.addMessage(messageList, icePoolingTransfer);
 
@@ -141,10 +163,13 @@ public class IceJaxbBuilder {
             // Ice96PlexSpriConcentration
             spriRackBarcode = testPrefix + "SpriRack";
             List<BettaLimsMessageTestFactory.CherryPick> cherryPicks = new ArrayList<>();
-            for (int i = 0; i < 8; i++) {
-                //noinspection NumericCastThatLosesPrecision
-                cherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(poolRackBarcode, "A01",
-                        spriRackBarcode, (char)('A' + i) + "01"));
+            for (int j = 0; j < poolTubeBarcodes.size(); j++) {
+                for (int i = 0; i < 8; i++) {
+                    cherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(poolRackBarcode,
+                            bettaLimsMessageTestFactory.buildWellName(j + 1, BettaLimsMessageTestFactory.WellNameType.LONG),
+                            spriRackBarcode,
+                            bettaLimsMessageTestFactory.buildWellName((j * 2 + 1) + i * 12, BettaLimsMessageTestFactory.WellNameType.LONG)));
+                }
             }
             ice96PlexSpriConcentration = bettaLimsMessageTestFactory.buildCherryPick("Ice96PlexSpriConcentration",
                     Collections.singletonList(poolRackBarcode), Collections.singletonList(poolTubeBarcodes),

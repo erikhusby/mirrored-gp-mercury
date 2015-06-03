@@ -21,6 +21,7 @@ import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtili
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraProject;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
+import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.annotations.BatchSize;
@@ -326,11 +327,11 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         // Create a subset of the samples so we only call BSP for BSP samples that aren't already cached.
         Set<String> sampleNames = new HashSet<>(samples.size());
         for (ProductOrderSample productOrderSample : samples) {
-            if (productOrderSample.needsBspMetaData()) {
+            if (!productOrderSample.isHasBspSampleDataBeenInitialized()) {
                 sampleNames.add(productOrderSample.getName());
             }
         }
-         if (sampleNames.isEmpty()) {
+        if (sampleNames.isEmpty()) {
             // This early return is needed to avoid making a unnecessary injection, which could cause
             // DB Free automated tests to fail.
             return;
@@ -338,7 +339,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
         // This gets all the sample names. We could get unique sample names from BSP as a future optimization.
         SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
-        Map<String, SampleData> sampleDataMap = sampleDataFetcher.fetchSampleData(sampleNames);
+        Map<String, SampleData> sampleDataMap = Collections.emptyMap();
+
+        try {
+            sampleDataMap = sampleDataFetcher.fetchSampleDataForProductOrderSample(samples);
+        } catch (BSPLookupException ignored) {
+            // not a bsp sample?
+        }
 
         // Collect SampleData which we will then use to look up FFPE status.
         List<SampleData> nonNullSampleData = new ArrayList<>();
@@ -349,6 +356,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             if (sampleData != null) {
                 sample.setSampleData(sampleData);
                 nonNullSampleData.add(sampleData);
+            } else {
+                sample.setSampleData(sample.makeSampleData());
             }
         }
 
@@ -1190,17 +1199,22 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
         /** @return true if an order can be abandoned from this state. */
         public boolean canAbandon() {
-            return this == Pending || this == Submitted;
+            return EnumSet.of(Pending, Submitted).contains(this);
         }
 
         /** @return true if an order can be placed from this state. */
         public boolean canPlace() {
-            return this == Draft || this == Pending;
+            return EnumSet.of(Draft, Pending).contains(this);
+        }
+
+        /** @return true if an order is ready for the lab to begin work on it. */
+        public boolean readyForLab() {
+            return !EnumSet.of(Draft, Pending, Abandoned).contains(this);
         }
 
         /** @return true if an order can be billed from this state. */
         public boolean canBill() {
-            return this == Submitted || this == Abandoned || this == Completed;
+            return EnumSet.of(Submitted, Abandoned, Completed).contains(this);
         }
     }
 
@@ -1614,18 +1628,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public int getSampleCount() {
         return sampleCount;
-    }
-
-    /**
-     * Is the current PDO ready for lab work? A PDO is ready if all of its samples are received (or abandoned) and
-     * the PM has placed the order.
-     *
-     * @return true if this PDO contains samples that are ready for lab work
-     */
-    public boolean readyForLab() {
-        // Abandoned and Completed PDOs are considered "ready" because they can transition back to the
-        // Submitted state.
-        return orderStatus != OrderStatus.Draft && orderStatus != OrderStatus.Pending;
     }
 
     public Collection<String> getPrintFriendlyRegulatoryInfo() {

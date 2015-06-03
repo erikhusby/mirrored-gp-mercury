@@ -40,6 +40,7 @@ import java.net.URL;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.startsWith;
@@ -91,7 +92,8 @@ public class ClinicalResourceTest extends RestServiceContainerTest {
 
         ClinicalResourceBean clinicalResourceBean = ClinicalSampleTestFactory
                 .createClinicalResourceBean(QA_DUDE_PM, MANIFEST_NAME, EXISTING_RESEARCH_PROJECT_KEY, Boolean.TRUE,
-                        ImmutableMap.of(Metadata.Key.BROAD_SAMPLE_ID, sampleId));
+                        ImmutableMap.of(
+                                Metadata.Key.BROAD_SAMPLE_ID, sampleId, Metadata.Key.MATERIAL_TYPE, "DNA:Genomic"));
         long manifestId = clinicalResource.createManifestWithSamples(clinicalResourceBean);
 
         ManifestSession manifestSession = manifestSessionDao.find(manifestId);
@@ -102,6 +104,31 @@ public class ClinicalResourceTest extends RestServiceContainerTest {
         assertThat(manifestSession.getRecords().size(), equalTo(1));
         ManifestRecord manifestRecord = manifestSession.getRecords().iterator().next();
         assertThat(manifestRecord.getValueByKey(Metadata.Key.BROAD_SAMPLE_ID), equalTo(sampleId));
+    }
+
+    public void testCreateManifestWithSamplesWithoutMaterialType() throws Exception {
+        String sampleId = "SM-1";
+
+        MercurySample sampleForTest = mercurySampleDao.findBySampleKey(sampleId);
+        if (sampleForTest == null) {
+            sampleForTest = new MercurySample(sampleId, MercurySample.MetadataSource.MERCURY);
+            mercurySampleDao.persist(sampleForTest);
+        } else {
+            assertThat(sampleForTest.getMetadataSource(), equalTo(MercurySample.MetadataSource.MERCURY));
+        }
+
+        ClinicalResourceBean clinicalResourceBean = ClinicalSampleTestFactory
+                .createClinicalResourceBean(QA_DUDE_PM, MANIFEST_NAME, EXISTING_RESEARCH_PROJECT_KEY, Boolean.TRUE,
+                        ImmutableMap.of(Metadata.Key.BROAD_SAMPLE_ID, sampleId));
+
+        try {
+            clinicalResource.createManifestWithSamples(clinicalResourceBean);
+            Assert.fail();
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getLocalizedMessage(), startsWith(ClinicalResource.REQUIRED_FIELD_MISSING));
+            assertThat(e.getLocalizedMessage(), endsWith(
+                    String.valueOf(ClinicalResource.REQUIRED_METADATA_KEYS)));
+        }
     }
 
     public void testCreateManifestWithSamplesHavingEmptyMetadataValues() throws Exception {
