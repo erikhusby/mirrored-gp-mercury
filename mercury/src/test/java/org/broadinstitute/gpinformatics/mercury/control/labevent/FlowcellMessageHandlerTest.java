@@ -53,7 +53,6 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
     public static final String TST_REAGENT_KT = "tstReagentKT";
     public static final String MISEQ_TICKET_KEY = "FCT-1";
     public static final String FLOWCELL_2500_TICKET_KEY = "FCT-2";
-    private LabVessel denatureSource;
     private Date runDate;
     private QtpEntityBuilder qtpEntityBuilder;
     private BarcodedTube denatureTube;
@@ -66,7 +65,6 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         expectedRouting = SystemRouter.System.MERCURY;
 
         final ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
-        Long pdoId = 9202938094820L;
         runDate = new Date();
         Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
@@ -672,11 +670,17 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                                                      Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getName())))
                .thenReturn(mockJiraSource.getCustomFields(LabBatch.TicketFields.SUMMARY.getName(),
                                                           LabBatch.TicketFields.SEQUENCING_STATION.getName()));
+        Mockito.when(mockJiraService.getCustomFields(Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getName())))
+               .thenReturn(mockJiraSource.getCustomFields(LabBatch.TicketFields.SEQUENCING_STATION.getName()));
         AppConfig mockAppConfig = Mockito.mock(AppConfig.class);
 
         getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setEmailSender(mockEmailSender);
         getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setJiraService(mockJiraService);
         getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setAppConfig(mockAppConfig);
+
+        getLabEventFactory().getEventHandlerSelector().getFlowcellLoadedHandler().setEmailSender(mockEmailSender);
+        getLabEventFactory().getEventHandlerSelector().getFlowcellLoadedHandler().setJiraService(mockJiraService);
+        getLabEventFactory().getEventHandlerSelector().getFlowcellLoadedHandler().setAppConfig(mockAppConfig);
 
         TubeFormationDao mockTubeFormationDao = Mockito.mock(TubeFormationDao.class);
         Mockito.when(mockTubeFormationDao.findByDigest(Mockito.anyString()))

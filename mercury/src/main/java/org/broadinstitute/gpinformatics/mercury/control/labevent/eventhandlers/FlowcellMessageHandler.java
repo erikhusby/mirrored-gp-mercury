@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -21,6 +22,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -66,7 +68,43 @@ public class FlowcellMessageHandler extends AbstractEventHandler {
         IlluminaFlowcell flowcell = OrmUtil.proxySafeCast(targetEvent.getTargetLabVessels().iterator().next(),
                 IlluminaFlowcell.class);
 
-        Collection<LabBatch> flowcellBatches = null;
+        Set<LabBatch> batchesToUpdate = getLabBatches(flowcell, emailSender, appConfig);
+        if (batchesToUpdate.isEmpty()) {
+            return;
+        }
+
+        try {
+            for (LabBatch currentUpdateBatch : batchesToUpdate) {
+                Map<String, CustomFieldDefinition> mapNameToField = jiraService.getCustomFields(
+                        LabBatch.TicketFields.SUMMARY.getName(), LabBatch.TicketFields.SEQUENCING_STATION.getName());
+
+                CustomField summaryCustomField = new CustomField(mapNameToField, LabBatch.TicketFields.SUMMARY,
+                        flowcell.getLabel());
+                jiraService.updateIssue(currentUpdateBatch.getBusinessKey(), Collections.singleton(summaryCustomField));
+
+                // Do this in FlowcellLoaded if there's a strip tube B ancestor, because the strip tube to flowcell
+                // transfer happens on a CBot, not a sequencer
+                LabVessel sourceLabVessel = targetEvent.getSourceLabVessels().iterator().next();
+                if (sourceLabVessel.getType() != LabVessel.ContainerType.STRIP_TUBE) {
+                    CustomField sequencingStationCustomField =
+                            new CustomField(mapNameToField, LabBatch.TicketFields.SEQUENCING_STATION,
+                                    flowcell.getFlowcellType().getSequencingStationName(), stationEvent.getStation());
+                    jiraService.updateIssue(currentUpdateBatch.getBusinessKey(),
+                            Collections.singleton(sequencingStationCustomField));
+                }
+            }
+
+        } catch (Exception e) {
+            logger.error("Error connecting to Jira: " + e.getMessage() +
+                      " while trying to update an FCT ticket for " + flowcell.getLabel());
+        }
+    }
+
+    /**
+     * Get the FCT batches that pertain to the ancestor (dilution tube or strip tube) of this flowcell.
+     */
+    static Set<LabBatch> getLabBatches(IlluminaFlowcell flowcell, EmailSender emailSender, AppConfig appConfig) {
+        Collection<LabBatch> flowcellBatches;
 
         Set<LabBatch> batchesToUpdate = new HashSet<>();
 
@@ -77,31 +115,32 @@ public class FlowcellMessageHandler extends AbstractEventHandler {
         }
 
         if (flowcellBatches.isEmpty()) {
-            final String emptyBatchListMessage = "Unable to find any Flowcell batch tickets for " + flowcell.getLabel();
+            String emptyBatchListMessage = "Unable to find any Flowcell batch tickets for " + flowcell.getLabel();
             logger.error(emptyBatchListMessage);
-            emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(), "[Mercury] Failed update FCT Ticket",
-                    emptyBatchListMessage);
-            return;
+            emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
+                    "[Mercury] Failed update FCT Ticket", emptyBatchListMessage);
+            return batchesToUpdate;
         }
 
         Map<VesselPosition, LabVessel> loadedVesselsAndPosition;
-        LabVessel sourceLabVessel = targetEvent.getSourceLabVessels().iterator().next();
-        if (sourceLabVessel.getType() == LabVessel.ContainerType.STRIP_TUBE) {
+        List<LabVessel.VesselEvent> ancestors = flowcell.getContainerRole().getAncestors(VesselPosition.LANE1);
+        if (ancestors.get(0).getVesselContainer() != null &&
+                ancestors.get(0).getVesselContainer().getEmbedder().getType() == LabVessel.ContainerType.STRIP_TUBE) {
             loadedVesselsAndPosition = new HashMap<>();
             // position is arbitrary in strip tube case
-            loadedVesselsAndPosition.put(VesselPosition.A01, sourceLabVessel);
+            loadedVesselsAndPosition.put(VesselPosition.A01, ancestors.get(0).getVesselContainer().getEmbedder());
         } else {
             loadedVesselsAndPosition = flowcell.getNearestTubeAncestorsForLanes();
         }
 
         if (flowcellBatches.size() > 1) {
             if (flowcell.getFlowcellType() == IlluminaFlowcell.FlowcellType.MiSeqFlowcell) {
-                final String emptyBatchListMessage = "There are two many MiSeq Flowcell batch tickets for " +
+                String emptyBatchListMessage = "There are two many MiSeq Flowcell batch tickets for " +
                                                      flowcell.getLabel() + " to determine which one to update";
                 logger.error(emptyBatchListMessage);
-                emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(), "[Mercury] Failed update FCT Ticket",
-                        emptyBatchListMessage);
-                return;
+                emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
+                        "[Mercury] Failed update FCT Ticket", emptyBatchListMessage);
+                return batchesToUpdate;
             } else {
                 for (Map.Entry<VesselPosition, LabVessel> loadingVesselByPosition : loadedVesselsAndPosition
                         .entrySet()) {
@@ -120,37 +159,13 @@ public class FlowcellMessageHandler extends AbstractEventHandler {
         } else {
             batchesToUpdate.add(flowcellBatches.iterator().next());
         }
-
         if (batchesToUpdate.isEmpty()) {
-            final String emptyBatchListMessage = "Unable to find any Flowcell batch tickets for " + flowcell.getLabel();
+            String emptyBatchListMessage = "Unable to find any Flowcell batch tickets for " + flowcell.getLabel();
             logger.error(emptyBatchListMessage);
-            emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(), "[Mercury] Failed update FCT Ticket",
-                    emptyBatchListMessage);
-            return;
-        } else {
-            try {
-                for (LabBatch currentUpdateBatch : batchesToUpdate) {
-
-                    Map<String, CustomFieldDefinition> summaryFieldDefinition =
-                            jiraService.getCustomFields(LabBatch.TicketFields.SUMMARY.getName(),
-                                    LabBatch.TicketFields.SEQUENCING_STATION.getName());
-
-                    final CustomField summaryCustomField = new CustomField(summaryFieldDefinition, LabBatch.TicketFields.SUMMARY,
-                            flowcell.getLabel());
-                    jiraService.updateIssue(currentUpdateBatch.getBusinessKey(), Collections.singleton(summaryCustomField));
-
-                    final CustomField sequencingStationCustomField =
-                            new CustomField(summaryFieldDefinition, LabBatch.TicketFields.SEQUENCING_STATION,
-                                    flowcell.getFlowcellType().getSequencingStationName(), stationEvent.getStation());
-                    jiraService.updateIssue(currentUpdateBatch.getBusinessKey(), Collections.singleton(sequencingStationCustomField));
-                }
-
-            } catch (Exception e) {
-                // todo jmt flowcell transfer takes plate on Cbot, so machine name doesn't match drop-down (sequencers) in JIRA.
-                logger.error("Error connecting to Jira: " + e.getMessage() +
-                          " while trying to update an FCT ticket for " + flowcell.getLabel());
-            }
+            emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
+                    "[Mercury] Failed update FCT Ticket", emptyBatchListMessage);
         }
+        return batchesToUpdate;
     }
 
     public void setJiraService(JiraService jiraService) {

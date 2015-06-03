@@ -134,6 +134,12 @@ public class HiSeq2500JaxbBuilder {
                     stripTubeHolderBarcode,
                     Collections.singletonList(stripTubeBarcode),
                     stripTubeCherryPicks);
+            dilutionMetadata = new MetadataType();
+            dilutionMetadata.setName(DenatureToDilutionTubeHandler.FCT_METADATA_NAME);
+            dilutionMetadata.setValue(fctTicket);
+            stripTubeTransferJaxb.getPositionMap().iterator().next().getReceptacle().iterator().next().getMetadata().
+                    add(dilutionMetadata);
+
             bettaLimsMessageTestFactory.addMessage(messageList, stripTubeTransferJaxb);
 
             // FlowcellTransfer
