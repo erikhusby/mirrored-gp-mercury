@@ -1713,14 +1713,6 @@ public class LabEventTest extends BaseEventTest {
         }
     }
 
-    public void testResultMaterialType(){
-        for (LabEventType labEventType : LabEventType.values()) {
-            if (labEventType.getName().toUpperCase().endsWith("TOMATRIX")) {
-                Assert.assertEquals(labEventType.getResultingMaterialType(), LabVessel.MaterialType.DNA,
-                        String.format("Incorrect material type for %s", labEventType.name()));
-            }
-        }
-    }
     /**
      * Builds plates of molecular indexes for the given index positions.  If there are multiple plates, e.g. P5 and P7,
      * a merged P5/P7 scheme is also created, so {@link SampleInstance#addReagent(Reagent)} can find it.
