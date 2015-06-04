@@ -22,7 +22,6 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.tableau.TableauConfig;
-import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
 import org.broadinstitute.gpinformatics.mercury.presentation.TableauRedirectActionBean;
 
 import java.awt.Color;
@@ -297,19 +296,14 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
      * @param workCompleteMessageBySample    any work complete messages for the product order, by sample
      * @param sampleLedgerRow                sample data to be written
      */
-    private void writeRow(List<PriceItem> sortedPriceItems, List<Product> sortedAddOns,
+    void writeRow(List<PriceItem> sortedPriceItems, List<Product> sortedAddOns,
                           Collection<PriceItem> historicalPriceItems, ProductOrderSample sample,
                           int sortOrder, Map<String, WorkCompleteMessage> workCompleteMessageBySample,
                           SampleLedgerRow sampleLedgerRow) {
         SampleLedgerSpreadSheetWriter writer = getWriter();
         ProductOrder productOrder = sample.getProductOrder();
         Product product = productOrder.getProduct();
-        SampleData sampleData = null;
-        try {
-            sampleData = sample.getSampleData();
-        } catch (BSPLookupException ignored) {
-            // Don't prevent tracker download due to not being able to fetch BSP data.
-        }
+        SampleData sampleData = sample.getSampleData();
 
         writer.nextRow();
 

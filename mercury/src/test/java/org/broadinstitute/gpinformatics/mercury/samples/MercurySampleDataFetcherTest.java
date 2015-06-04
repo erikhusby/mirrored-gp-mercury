@@ -46,6 +46,7 @@ public class MercurySampleDataFetcherTest {
     private static final String TUMOR_NORMAL = "TUMOR";
     private static final String COLLECTION_DATE = "1/1/2014";
     private static final String BUICK_VISIT = "1";
+    private static final String DNA = "DNA";
     private MercurySampleDataFetcher mercurySampleDataFetcher;
 
     @BeforeMethod
@@ -75,6 +76,7 @@ public class MercurySampleDataFetcherTest {
         Set<Metadata> metaData = ImmutableSet.of(
                         new Metadata(Metadata.Key.SAMPLE_ID, SM_MERC1),
                         new Metadata(Metadata.Key.GENDER, GENDER),
+                        new Metadata(Metadata.Key.MATERIAL_TYPE, DNA),
                         new Metadata(Metadata.Key.PATIENT_ID, PATIENT_ID),
                         new Metadata(Metadata.Key.TUMOR_NORMAL, TUMOR_NORMAL),
                         new Metadata(Metadata.Key.BUICK_COLLECTION_DATE, COLLECTION_DATE),
@@ -85,6 +87,7 @@ public class MercurySampleDataFetcherTest {
 
         assertThat(mercurySampleData.getSampleId(), equalTo(SM_MERC1));
         assertThat(mercurySampleData.getGender(), equalTo(GENDER));
+        assertThat(mercurySampleData.getMaterialType(), equalTo(DNA));
         assertThat(mercurySampleData.getPatientId(), equalTo(PATIENT_ID));
         assertThat(mercurySampleData.getSampleType(), equalTo(TUMOR_NORMAL));
         assertThat(mercurySampleData.getCollectionDate(), equalTo(COLLECTION_DATE));

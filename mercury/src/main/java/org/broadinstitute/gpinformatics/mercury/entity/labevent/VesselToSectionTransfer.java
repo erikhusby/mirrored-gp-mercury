@@ -51,6 +51,11 @@ public class VesselToSectionTransfer extends VesselTransfer {
         return sourceVessel;
     }
 
+    /** For fixups only */
+    void setSourceVessel(LabVessel sourceVessel) {
+        this.sourceVessel = sourceVessel;
+    }
+
     public SBSSection getTargetSection() {
         return targetSection;
     }
