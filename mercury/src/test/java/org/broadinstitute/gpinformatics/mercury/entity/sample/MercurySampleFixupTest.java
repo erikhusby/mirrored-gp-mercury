@@ -72,7 +72,7 @@ public class MercurySampleFixupTest extends Arquillian {
          * If the need comes to utilize this fixup in production, change the buildMercuryWar parameters accordingly
          */
         return DeploymentBuilder.buildMercuryWar(
-                org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD, "PROD");
+                org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV, "DEV");
     }
 
     @BeforeMethod(groups = TestGroups.FIXUP)
