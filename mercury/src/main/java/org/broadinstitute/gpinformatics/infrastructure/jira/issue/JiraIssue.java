@@ -118,6 +118,7 @@ public class JiraIssue implements Serializable {
         summary = tempIssue.getSummary();
         description = tempIssue.getDescription();
         dueDate = tempIssue.getDueDate();
+        created = tempIssue.getCreated();
         reporter = tempIssue.getReporter();
     }
 
