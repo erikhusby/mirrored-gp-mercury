@@ -346,46 +346,50 @@ public class WorkflowTest {
         for (MercurySample.MetadataSource metadataSource : MercurySample.MetadataSource.values()) {
             for (LabEventType labEventType : dnaLabEventTypes) {
                 // All these lab events should allow the sample into the pico/plating bucket, regardless of MaterialType
-                result.add(new Object[]{labEventType, "DNA", metadataSource, true});
+                result.add(new Object[]{labEventType, LabVessel.MaterialType.DNA, metadataSource, true});
                 // Blood should pass here because there has been an extraction.
-                result.add(new Object[]{labEventType, "BLOOD", metadataSource, true});
+                result.add(new Object[]{labEventType, LabVessel.MaterialType.FFPE, metadataSource, true});
             }
 
             for (LabEventType labEventType : nonDnaLabEventTypes) {
                 // DNA should always pass because DNA is a valid materialType for the pico/plating bucket
-                result.add(new Object[]{labEventType, "DNA", metadataSource, true});
+                result.add(new Object[]{labEventType, LabVessel.MaterialType.DNA, metadataSource, true});
                 // BLOOD will never pass because DNA is a valid materialType for the pico/plating bucket
-                result.add(new Object[]{labEventType, "BLOOD", metadataSource, false});
+                result.add(new Object[]{labEventType, LabVessel.MaterialType.FFPE, metadataSource, false});
             }
         }
         return result.iterator();
     }
 
     @Test(dataProvider = "bucketScenariosDataProvider")
-    public void testBucketEntryForManyScenarios(LabEventType labEventType, String sampleMaterialType,
+    public void testBucketEntryForManyScenarios(LabEventType labEventType, LabVessel.MaterialType sampleMaterialType,
                                                                   MercurySample.MetadataSource metadataSource,
                                                                   boolean meetsBucketCriteria) {
-        LabVesselFactory labVesselFactory = new LabVesselFactory();
-        labVesselFactory.setBspUserList(new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
-        String sampleId = "SM-1234";
-        ParentVesselBean parentVesselBean = new ParentVesselBean(sampleId, sampleId, "Blood tube", null);
-        MercurySample mercurySample = createNewMercurySample(sampleId, sampleMaterialType, metadataSource);
-        Map<String, MercurySample> mercurySampleMap = Collections.singletonMap(sampleId, mercurySample);
-        Map<String, Set<ProductOrderSample>> pdoSampleMap =
-                Collections.singletonMap(sampleId,
-                        Collections.singleton(new ProductOrderSample(sampleId, mercurySample.getSampleData())));
-
-        LabVessel labVessel = labVesselFactory.buildLabVesselDaoFree(Collections.<String, LabVessel>emptyMap(),
-                mercurySampleMap, pdoSampleMap, "QADudePM", new Date(), Collections.singletonList(parentVesselBean),
-                labEventType, metadataSource).get(0);
-
-        labVessel.addSample(mercurySample);
+        LabVessel labVessel =
+                createLabVesselWithSample("SM-1234", labEventType, sampleMaterialType.name(), metadataSource);
 
         WorkflowBucketDef workflowBucketDef = new WorkflowBucketDef();
         workflowBucketDef.setBucketEntryEvaluators(
                 Collections.singletonList(DnaBucketEntryEvaluator.class.getCanonicalName()));
 
         assertThat(workflowBucketDef.meetsBucketCriteria(labVessel), is(meetsBucketCriteria));
+    }
+
+    private LabVessel createLabVesselWithSample(String sampleId, LabEventType labEventType,
+                                                String sampleMaterialType, MercurySample.MetadataSource metadataSource) {
+        LabVesselFactory labVesselFactory = new LabVesselFactory();
+        labVesselFactory.setBspUserList(new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
+        ParentVesselBean parentVesselBean = new ParentVesselBean(sampleId, sampleId, "Blood tube", null);
+        MercurySample mercurySample = createNewMercurySample(sampleId, sampleMaterialType, metadataSource);
+        Map<String, MercurySample> mercurySampleMap = Collections.singletonMap(sampleId, mercurySample);
+
+        Map<String, Set<ProductOrderSample>> pdoSampleMap = Collections.singletonMap(sampleId,
+                        Collections.singleton(new ProductOrderSample(sampleId, mercurySample.getSampleData())));
+
+        return labVesselFactory.buildLabVesselDaoFree(Collections.<String, LabVessel>emptyMap(),
+                mercurySampleMap, pdoSampleMap, "QADudePM", new Date(),
+                Collections.singletonList(parentVesselBean),
+                labEventType, metadataSource).get(0);
     }
 }
 

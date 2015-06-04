@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStarting
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -680,6 +681,107 @@ public interface TransferTraverserCriteria {
 
         public Map<LabEvent, Set<LabVessel>> getVesselsForLabEventType() {
             return vesselsForLabEventType;
+        }
+    }
+
+    /**
+     * Traverse LabVessels and LabEvents for events producing MaterialTypes
+     */
+    class LabEventsWithMaterialTypeTraverserCriteria implements TransferTraverserCriteria {
+        private final Collection<LabVessel.MaterialType> materialTypes;
+        private final boolean useTargetVessels;
+        private Map<LabVessel.MaterialType, Set<LabVessel>> vesselsForMaterialType= new HashMap<>();
+
+        public LabEventsWithMaterialTypeTraverserCriteria(LabVessel.MaterialType... materialTypes) {
+            this(new HashSet<>(Arrays.asList(materialTypes)), true);
+        }
+
+        public LabEventsWithMaterialTypeTraverserCriteria(Collection<LabVessel.MaterialType> materialTypes,
+                                                          boolean useTargetVessels) {
+            this.useTargetVessels = useTargetVessels;
+            this.materialTypes = materialTypes;
+        }
+
+        @Override
+        public TraversalControl evaluateVesselPreOrder(Context context) {
+            LabVessel vessel = context.getLabVessel();
+            LabEvent event = context.getEvent();
+            if (event != null) {
+                evaluateEvent(vessel, event);
+            }
+            if (vessel != null) {
+                //check all in place events and descendant in place events
+                for (LabEvent inPlaceEvent : vessel.getInPlaceLabEvents()) {
+                    evaluateEvent(vessel, inPlaceEvent);
+                }
+                Collection<LabVessel> traversalVessels;
+                if( context.getTraversalDirection() == TraversalDirection.Ancestors ) {
+                    traversalVessels = vessel.getAncestorVessels();
+                } else {
+                    traversalVessels = vessel.getDescendantVessels();
+                }
+                for (LabVessel traversalVessel : traversalVessels) {
+                    Set<LabEvent> inPlaceEvents = traversalVessel.getInPlaceLabEvents();
+                    for (LabEvent inPlaceEvent : inPlaceEvents) {
+                        evaluateEvent(vessel, inPlaceEvent);
+                    }
+                }
+            }
+            return TraversalControl.ContinueTraversing;
+        }
+
+        private void evaluateEvent(LabVessel vessel, LabEvent event) {
+            LabVessel.MaterialType eventMaterialType = event.getLabEventType().getResultingMaterialType();
+            if (materialTypes.contains(eventMaterialType)) {
+                // If this is in place just add the vessel
+                if (event.getInPlaceLabVessel() != null) {
+                    Set<LabVessel> vessels = vesselsForMaterialType.get(eventMaterialType);
+                    if (vessels == null) {
+                        vessels = new HashSet<>();
+                    }
+                    vessels.add(event.getInPlaceLabVessel());
+                    vesselsForMaterialType.put(eventMaterialType, vessels);
+                }
+                // Otherwise check the target or source vessels
+                Set<LabVessel> labXferVessels;
+                if( useTargetVessels ) {
+                    labXferVessels = event.getTargetLabVessels();
+                } else {
+                    labXferVessels = event.getSourceLabVessels();
+                }
+
+                for (LabVessel targetVessel : labXferVessels) {
+                    Set<LabVessel> vessels = vesselsForMaterialType.get(eventMaterialType);
+                    if (vessels == null) {
+                        vessels = new HashSet<>();
+                    }
+                    if (vessel == null) {
+                        vessels.add(targetVessel);
+                        vesselsForMaterialType.put(eventMaterialType, vessels);
+                    } else {
+                        vessels.add(vessel);
+                        //if we are a container and we contain the vessel then add it
+                        if (targetVessel.getContainerRole() != null
+                            && targetVessel.getContainerRole().getContainedVessels().contains(vessel)) {
+                            vesselsForMaterialType.put(eventMaterialType, vessels);
+                        } else if (targetVessel.equals(vessel)) {
+                            vesselsForMaterialType.put(eventMaterialType, vessels);
+                        }
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void evaluateVesselInOrder(Context context) {
+        }
+
+        @Override
+        public void evaluateVesselPostOrder(Context context) {
+        }
+
+        public Map<LabVessel.MaterialType, Set<LabVessel>> getVesselsForMaterialType() {
+            return vesselsForMaterialType;
         }
     }
 

@@ -137,6 +137,11 @@ public class LabVesselTest {
     public void testIsDnaCanHandleNulls() {
         LabVessel labVessel = new LabVessel() {
             @Override
+            public Date getCreatedOn() {
+                return new Date();
+            }
+
+            @Override
             public VesselGeometry getVesselGeometry() {return null;}
 
             @Override
