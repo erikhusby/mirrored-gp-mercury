@@ -151,6 +151,7 @@ public class HiSeq2500JaxbBuilder {
         }
         flowcellLoad = bettaLimsMessageTestFactory.buildReceptacleEvent("FlowcellLoaded",
                 flowcellBarcode, LabEventFactory.PHYS_TYPE_FLOWCELL);
+        flowcellLoad.setStation(BettaLimsMessageTestFactory.HISEQ_SEQUENCING_STATION_MACHINE_NAME);
         bettaLimsMessageTestFactory.addMessage(messageList, flowcellLoad);
 
         return this;
