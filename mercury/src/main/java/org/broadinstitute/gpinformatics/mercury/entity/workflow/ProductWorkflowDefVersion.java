@@ -242,6 +242,7 @@ public class ProductWorkflowDefVersion implements Serializable {
      * when a user has at least one step
      */
     public void buildLabEventGraph() {
+        mapNameToLabEvents = ArrayListMultimap.create();
         LabEventNode previousNode = null;
         for (WorkflowProcessDef workflowProcessDef : workflowProcessDefs) {
             WorkflowProcessDefVersion effectiveProcessDef = workflowProcessDef.getEffectiveVersion();
@@ -274,7 +275,6 @@ public class ProductWorkflowDefVersion implements Serializable {
      */
     public LabEventNode findStepByEventType(String eventTypeName) {
         if (mapNameToLabEvents == null) {
-            mapNameToLabEvents = ArrayListMultimap.create();
             buildLabEventGraph();
         }
         Collection<LabEventNode> labEventNodes = mapNameToLabEvents.get(eventTypeName);
@@ -293,7 +293,6 @@ public class ProductWorkflowDefVersion implements Serializable {
      */
     public Collection<LabEventNode> findStepsByEventType(String eventTypeName) {
         if (mapNameToLabEvents == null) {
-            mapNameToLabEvents = ArrayListMultimap.create();
             buildLabEventGraph();
         }
         return mapNameToLabEvents.get(eventTypeName);

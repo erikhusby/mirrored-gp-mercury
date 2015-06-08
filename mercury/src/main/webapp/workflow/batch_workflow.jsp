@@ -4,6 +4,7 @@
 
 <stripes:layout-render name="/layout.jsp" pageTitle="Batch Workflow" sectionTitle="Batch Workflow">
     <stripes:layout-component name="content">
+        <h3>${actionBean.labBatch.batchName}</h3>
         <table class="table simple">
             <tr>
                 <th>Workflow Step</th>
@@ -24,6 +25,10 @@
                                     <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.labevent.ManualTransferActionBean"
                                             event="chooseEventType">
                                         <stripes:param name="stationEvent.eventType" value="${labEventType.name()}"/>
+                                        <stripes:param name="workflowProcessName" value="${workflowEvent.workflowStepDef.processDef.name}"/>
+                                        <stripes:param name="workflowStepName" value="${workflowEvent.workflowStepDef.name}"/>
+                                        <stripes:param name="workflowEffectiveDate" value="${actionBean.labBatch.createdOn}"/>
+                                        <stripes:param name="batchName" value="${actionBean.labBatch.batchName}"/>
                                         Manual Transfer
                                     </stripes:link>
                                 </c:when>
@@ -41,7 +46,7 @@
                     <td>
                         <c:forEach items="${workflowEvent.labEvents}" var="labEvent">
                             <div>
-                                ${labEvent.labEventType.name} ${labEvent.eventDate}
+                                ${labEvent.labEventType.name} ${labEvent.workflowQualifier} ${actionBean.getUserFullName(labEvent.eventOperator)} ${labEvent.eventDate}
                             </div>
                         </c:forEach>
                     </td>

@@ -31,6 +31,10 @@
         <stripes:form beanclass="${actionBean.class.name}" id="transferForm">
             <c:if test="${not empty actionBean.stationEvent}">
                 <stripes:hidden name="stationEvent.eventType" value="${actionBean.stationEvent.eventType}"/>
+                <stripes:hidden name="workflowProcessName" value="${actionBean.workflowProcessName}"/>
+                <stripes:hidden name="workflowStepName" value="${actionBean.workflowStepName}"/>
+                <stripes:hidden name="workflowEffectiveDate" value="${actionBean.workflowEffectiveDate}"/>
+                <stripes:hidden name="batchName" value="${actionBean.batchName}"/>
                 <h5>Reagents</h5>
                 Expiration date format is mm/dd/yyyy.
                 <c:forEach items="${actionBean.stationEvent.reagent}" var="reagent" varStatus="loop">
@@ -139,7 +143,9 @@
                         ${receptacleTransfer.receptacle.receptacleType}
                         <stripes:hidden name="stationEvent.receptacle.receptacleType"
                                 value="${receptacleTransfer.receptacle.receptacleType}"/>
-                        <stripes:label for="destRcpBcd">Barcode</stripes:label>
+                        <stripes:label for="destRcpBcd">
+                            ${fn:containsIgnoreCase(receptacleTransfer.receptacle.receptacleType, "matrix") ? '2D ' : ''}Barcode
+                        </stripes:label>
                         <stripes:text id="destRcpBcd" name="stationEvent.receptacle.barcode"
                                 value="${receptacleTransfer.receptacle.barcode}"/>
                         <label for="destRcpVol">Volume</label>
@@ -147,11 +153,36 @@
                                 value="${receptacleTransfer.receptacle.volume}"/> ul
                         </div>
                     </c:when>
+                    <c:when test="${actionBean.stationEvent.class.simpleName == 'ReceptacleEventType'}">
+                        <c:set var="receptacleEvent" value="${actionBean.stationEvent}"/>
+                        <%--@elvariable id="receptacleEvent" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType"--%>
+                        <h4>Tube Event</h4>
+                        <div class="control-group">
+                        <label>Type</label>
+                        ${receptacleEvent.receptacle.receptacleType}
+                        <stripes:hidden name="stationEvent.receptacle.receptacleType"
+                                value="${receptacleEvent.receptacle.receptacleType}"/>
+                        <stripes:label for="destRcpBcd">
+                            ${fn:containsIgnoreCase(receptacleEvent.receptacle.receptacleType, "matrix") ? '2D ' : ''}Barcode
+                        </stripes:label>
+                        <stripes:text id="destRcpBcd" name="stationEvent.receptacle.barcode"
+                                value="${receptacleEvent.receptacle.barcode}"/>
+                        <label for="destRcpVol">Volume</label>
+                        <input type="text" id="destRcpVol" name="stationEvent.receptacle.volume"
+                                value="${receptacleEvent.receptacle.volume}"/> ul
+                        </div>
+                    </c:when>
                 </c:choose>
                 <stripes:submit name="fetchExisting" value="Fetch Existing" class="btn"/>
                 <stripes:submit name="transfer" value="Transfer" class="btn btn-primary"/>
             </c:if>
         </stripes:form>
+        <c:if test="${not empty actionBean.batchName}">
+            <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BatchWorkflowActionBean">
+                <stripes:param name="batchName" value="${actionBean.batchName}"/>
+                Return to Batch Workflow page
+            </stripes:link>
+        </c:if>
 
     </stripes:layout-component>
 </stripes:layout-render>

@@ -1035,6 +1035,7 @@
                 <labEventTypes>ADD_REAGENT</labEventTypes>
                 <workflowQualifier>Ethanol</workflowQualifier>
                 <reagentTypes>100% Ethanol</reagentTypes>
+                <targetBarcodedTubeType>EppendoffFliptop15</targetBarcodedTubeType>
                 <instructions>Add 200ul of 100% ethanol to the sample.
                 </instructions>
             </workflowStepDefs>
@@ -1059,8 +1060,9 @@
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name></name>
-                <labEventTypes>LOADED?</labEventTypes>
+                <name>Discard Ethanol</name>
+                <labEventTypes>DISCARD</labEventTypes>
+                <workflowQualifier>Ethanol</workflowQualifier>
                 <instructions>Place the column in a clean 2ml collection tube and discard the tube with the filtrate.
                 </instructions>
             </workflowStepDefs>
@@ -1069,6 +1071,7 @@
                 <labEventTypes>ADD_REAGENT</labEventTypes>
                 <workflowQualifier>AW1</workflowQualifier>
                 <reagentTypes>Buffer AW1</reagentTypes>
+                <targetBarcodedTubeType>SpinColumn</targetBarcodedTubeType>
                 <instructions>Add 500ul Buffer AW1 to the column.
                 </instructions>
             </workflowStepDefs>
@@ -1080,8 +1083,9 @@
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name></name>
-                <labEventTypes>LOADED?</labEventTypes>
+                <name>Discard AW1</name>
+                <labEventTypes>DISCARD</labEventTypes>
+                <workflowQualifier>AW1</workflowQualifier>
                 <instructions>Place the column in a clean 2ml collection tube and discard the tube with the filtrate.
                 </instructions>
             </workflowStepDefs>
@@ -1090,6 +1094,7 @@
                 <labEventTypes>ADD_REAGENT</labEventTypes>
                 <workflowQualifier>AW2</workflowQualifier>
                 <reagentTypes>Buffer AW2</reagentTypes>
+                <targetBarcodedTubeType>SpinColumn</targetBarcodedTubeType>
                 <instructions>Add 500ul Buffer AW2 to the column.
                 </instructions>
             </workflowStepDefs>
@@ -1101,8 +1106,9 @@
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name></name>
-                <labEventTypes>LOADED?</labEventTypes>
+                <name>Discard AW2</name>
+                <labEventTypes>DISCARD</labEventTypes>
+                <workflowQualifier>AW2</workflowQualifier>
                 <instructions>Place the column in a clean 2ml collection tube and discard the tube with the filtrate.
                 </instructions>
             </workflowStepDefs>
@@ -1114,8 +1120,9 @@
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name></name>
-                <labEventTypes>LOADED?</labEventTypes>
+                <name>Discard AW2 centrifuged</name>
+                <labEventTypes>DISCARD</labEventTypes>
+                <workflowQualifier>AW2Discard</workflowQualifier>
                 <instructions>Place the column in a clean 1.5ml microcentrifuge tube and discard the tube with the filtrate.
                 </instructions>
             </workflowStepDefs>
@@ -1124,6 +1131,7 @@
                 <labEventTypes>ADD_REAGENT</labEventTypes>
                 <workflowQualifier>AE</workflowQualifier>
                 <reagentTypes>Buffer AE</reagentTypes>
+                <targetBarcodedTubeType>SpinColumn</targetBarcodedTubeType>
                 <instructions>Add 200ul Buffer AE to the column and incubate at room temperature for 1 minute.
                 </instructions>
             </workflowStepDefs>

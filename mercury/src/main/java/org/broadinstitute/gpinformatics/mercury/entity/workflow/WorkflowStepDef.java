@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -90,7 +91,9 @@ public class WorkflowStepDef implements Serializable {
     private List<LabEventType> labEventTypes = new ArrayList<>();
     /** Specific reagent types for the generic ADD_REAGENT event. */
     private List<String> reagentTypes = new ArrayList<>();
-    /** Whether this step is optional, e.g. normalization is otional if the concentration is fine as is */
+    /** Specific vessel type for the generic ADD_REAGENT event.  JAXB doesn't allow use of VesselTypeGeometry here. */
+    private BarcodedTube.BarcodedTubeType targetBarcodedTubeType;
+    /** Whether this step is optional, e.g. normalization is optional if the concentration is fine as is */
     private boolean optional;
     /** decision, perhaps expressed in MVEL */
     private String checkpointExpression;
@@ -153,6 +156,10 @@ public class WorkflowStepDef implements Serializable {
 
     public List<String> getReagentTypes() {
         return reagentTypes;
+    }
+
+    public BarcodedTube.BarcodedTubeType getTargetBarcodedTubeType() {
+        return targetBarcodedTubeType;
     }
 
     public boolean isOptional() {

@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
@@ -58,7 +59,10 @@ public class BatchWorkflowActionBean extends CoreActionBean {
         if (batchName != null) {
             labBatch = labBatchDao.findByName(batchName);
             workflowDef = workflowLoader.load().getWorkflowByName(labBatch.getWorkflowName());
-            workflowEvents = workflowMatcher.match(workflowDef.getEffectiveVersion(labBatch.getCreatedOn()), labBatch);
+            ProductWorkflowDefVersion effectiveVersion = workflowDef.getEffectiveVersion(labBatch.getCreatedOn());
+            // Set relationship between steps and process
+            effectiveVersion.buildLabEventGraph();
+            workflowEvents = workflowMatcher.match(effectiveVersion, labBatch);
         }
         return new ForwardResolution(VIEW_PAGE);
     }

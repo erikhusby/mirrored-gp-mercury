@@ -27,6 +27,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationSetup
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -34,10 +35,14 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselTypeGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -53,8 +58,20 @@ public class ManualTransferActionBean extends CoreActionBean {
     public static final String TRANSFER_ACTION = "transfer";
     public static final String FETCH_EXISTING_ACTION = "fetchExisting";
 
+    /** Parameter from batch workflow page. */
+    private String workflowProcessName;
+    /** Parameter from batch workflow page. */
+    private String workflowStepName;
+    /** Parameter from batch workflow page. */
+    private Date workflowEffectiveDate;
+    /** Parameter from batch workflow page. */
+    private String batchName;
+
+    /** Constructed in the init method. */
     private BettaLIMSMessage bettaLIMSMessage;
+    /** POSTed from the form. */
     private StationEventType stationEvent;
+    /** Set in the init method, from a POSTed parameter. */
     private LabEventType labEventType;
 
     @Inject
@@ -62,6 +79,9 @@ public class ManualTransferActionBean extends CoreActionBean {
 
     @Inject
     private LabVesselDao labVesselDao;
+
+    @Inject
+    private WorkflowLoader workflowLoader;
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -120,7 +140,10 @@ public class ManualTransferActionBean extends CoreActionBean {
 
     @HandlesEvent(CHOOSE_EVENT_TYPE_ACTION)
     public Resolution chooseLabEventType() {
-        for (String reagentName : labEventType.getReagentNames()) {
+        WorkflowStepDef workflowStepDef = getWorkflowStepDef();
+        List<String> reagentNames =  labEventType.getReagentNames() == null ? workflowStepDef.getReagentTypes() :
+                Arrays.asList(labEventType.getReagentNames());
+        for (String reagentName : reagentNames) {
             ReagentType reagentType = new ReagentType();
             reagentType.setKitType(reagentName);
             stationEvent.getReagent().add(reagentType);
@@ -159,6 +182,11 @@ public class ManualTransferActionBean extends CoreActionBean {
                 break;
             case RECEPTACLE_EVENT:
                 ReceptacleEventType receptacleEventType = (ReceptacleEventType) stationEvent;
+                ReceptacleType receptacleType = new ReceptacleType();
+                receptacleType.setReceptacleType(workflowStepDef ==  null ?
+                        labEventType.getTargetVesselTypeGeometry().getDisplayName() :
+                        workflowStepDef.getTargetBarcodedTubeType().getDisplayName());
+                receptacleEventType.setReceptacle(receptacleType);
                 break;
             case RECEPTACLE_TRANSFER_EVENT:
                 ReceptacleTransferEventType receptacleTransferEventType = (ReceptacleTransferEventType) stationEvent;
@@ -174,6 +202,18 @@ public class ManualTransferActionBean extends CoreActionBean {
                 throw new RuntimeException("Unknown labEventType " + labEventType.getMessageType());
         }
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
+    }
+
+    @Nullable
+    private WorkflowStepDef getWorkflowStepDef() {
+        WorkflowStepDef workflowStepDef = null;
+        if (workflowProcessName != null) {
+            WorkflowConfig workflowConfig = workflowLoader.load();
+            workflowStepDef = workflowConfig.getStep(workflowProcessName, workflowStepName,
+                    workflowEffectiveDate);
+            workflowStepDef.getReagentTypes();
+        }
+        return workflowStepDef;
     }
 
     /**
@@ -198,6 +238,8 @@ public class ManualTransferActionBean extends CoreActionBean {
             case RECEPTACLE_PLATE_TRANSFER_EVENT:
                 break;
             case RECEPTACLE_EVENT:
+                ReceptacleEventType receptacleEventType = (ReceptacleEventType) stationEvent;
+                loadReceptacleFromDb(receptacleEventType.getReceptacle(), true);
                 break;
             case RECEPTACLE_TRANSFER_EVENT:
                 ReceptacleTransferEventType receptacleTransferEventType = (ReceptacleTransferEventType) stationEvent;
@@ -208,13 +250,13 @@ public class ManualTransferActionBean extends CoreActionBean {
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
     }
 
-    private void loadReceptacleFromDb(ReceptacleType receptacleType, boolean source) {
+    private void loadReceptacleFromDb(ReceptacleType receptacleType, boolean required) {
         if (receptacleType != null) {
             String barcode = receptacleType.getBarcode();
             if (!StringUtils.isBlank(barcode)) {
                 LabVessel labVessel = labVesselDao.findByIdentifier(barcode);
                 if (labVessel == null) {
-                    if (source) {
+                    if (required) {
                         addGlobalValidationError("{2} is not in the database", barcode);
                     } else {
                         addMessage("{0} is not in the database", barcode);
@@ -240,8 +282,13 @@ public class ManualTransferActionBean extends CoreActionBean {
     @HandlesEvent(TRANSFER_ACTION)
     public Resolution transfer() {
         // todo jmt handle unique constraint violation, increment disambiguator?
+        WorkflowStepDef workflowStepDef = getWorkflowStepDef();
+
         bettaLIMSMessage.setMode(LabEventFactory.MODE_MERCURY);
         stationEvent.setEventType(labEventType.getName());
+        if (workflowStepDef != null) {
+            stationEvent.setWorkflowQualifier(workflowStepDef.getWorkflowQualifier());
+        }
         stationEvent.setOperator(getUserBean().getLoginUserName());
         stationEvent.setProgram(LabEvent.UI_PROGRAM_NAME);
         stationEvent.setStation(LabEvent.UI_EVENT_LOCATION);
@@ -291,5 +338,37 @@ public class ManualTransferActionBean extends CoreActionBean {
             }
         }
         return manualLabEventTypes;
+    }
+
+    public String getWorkflowProcessName() {
+        return workflowProcessName;
+    }
+
+    public void setWorkflowProcessName(String workflowProcessName) {
+        this.workflowProcessName = workflowProcessName;
+    }
+
+    public String getWorkflowStepName() {
+        return workflowStepName;
+    }
+
+    public void setWorkflowStepName(String workflowStepName) {
+        this.workflowStepName = workflowStepName;
+    }
+
+    public Date getWorkflowEffectiveDate() {
+        return workflowEffectiveDate;
+    }
+
+    public void setWorkflowEffectiveDate(Date workflowEffectiveDate) {
+        this.workflowEffectiveDate = workflowEffectiveDate;
+    }
+
+    public String getBatchName() {
+        return batchName;
+    }
+
+    public void setBatchName(String batchName) {
+        this.batchName = batchName;
     }
 }

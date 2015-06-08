@@ -1360,6 +1360,7 @@ public class LabEventFactory implements Serializable {
         }
         LabEvent genericLabEvent = new LabEvent(labEventType, stationEventType.getStart(),
                 stationEventType.getStation(), disambiguator, operator, stationEventType.getProgram());
+        genericLabEvent.setWorkflowQualifier(stationEventType.getWorkflowQualifier());
         if (stationEventType.getBatchId() != null) {
             LabBatch labBatch = labEventRefDataFetcher.getLabBatch(stationEventType.getBatchId());
             if (labBatch == null) {
