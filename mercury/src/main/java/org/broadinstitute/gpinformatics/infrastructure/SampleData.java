@@ -59,7 +59,7 @@ public interface SampleData {
 
     boolean isSampleReceived();
 
-    Date getReceiptDate() throws ParseException;
+    Date getReceiptDate();
 
     boolean isActiveStock();
 

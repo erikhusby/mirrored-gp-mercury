@@ -472,6 +472,10 @@ public class ManifestRecord implements Updatable {
         return manifestRecordIndex + INDEX_TO_SPREADSHEET_ROW_NUMBER_CONVERSION;
     }
 
+    public Integer getManifestRecordIndex() {
+        return manifestRecordIndex;
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this)

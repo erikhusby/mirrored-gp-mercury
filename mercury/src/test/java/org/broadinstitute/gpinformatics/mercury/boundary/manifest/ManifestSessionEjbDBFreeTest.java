@@ -12,6 +12,10 @@ import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProj
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NextTransition;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
@@ -142,6 +146,8 @@ public class ManifestSessionEjbDBFreeTest {
      */
     private static final Map<String, Integer> SAMPLE_ID_TO_NUMBER_OF_COPIES_FOR_DUPLICATE_TESTS =
             ImmutableMap.of("03101231193", 2, "03101254356", 3, "03101411324", 2);
+    public JiraService jiraService;
+    private BSPUserList bspUserList;
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -150,8 +156,58 @@ public class ManifestSessionEjbDBFreeTest {
         mercurySampleDao = Mockito.mock(MercurySampleDao.class);
         labVesselDao = Mockito.mock(LabVesselDao.class);
         mockUserBean = Mockito.mock(UserBean.class);
+        jiraService = Mockito.mock(JiraService.class);
+        bspUserList = Mockito.mock(BSPUserList.class);
 
         Mockito.when(mockUserBean.getBspUser()).thenReturn(testLabUser);
+        Mockito.when(bspUserList.getByUsername(Mockito.anyString())).thenReturn(testLabUser);
+        Mockito.when(jiraService.getIssueInfo(Mockito.anyString())).thenAnswer(new Answer<JiraIssue>() {
+            @Override
+            public JiraIssue answer(InvocationOnMock invocationOnMock) throws Throwable {
+                String jiraKey = (String) invocationOnMock.getArguments()[0];
+
+                JiraIssue mockedIssue = new JiraIssue(jiraKey, jiraService);
+                if (jiraKey == null) {
+                    return null;
+                }
+                mockedIssue.setCreated(new Date());
+                mockedIssue.setSummary("");
+                mockedIssue.setDescription("");
+                mockedIssue.setReporter("QADudeLU");
+                return mockedIssue;
+            }
+        });
+        Mockito.when(jiraService.getIssueInfo(Mockito.anyString(),Mockito.anyString())).thenAnswer(new Answer<JiraIssue>() {
+            @Override
+            public JiraIssue answer(InvocationOnMock invocationOnMock) throws Throwable {
+                String jiraKey = (String) invocationOnMock.getArguments()[0];
+
+                JiraIssue mockedIssue = new JiraIssue(jiraKey, jiraService);
+                if(jiraKey == null) {
+                    return null;
+                }
+                mockedIssue.setCreated(new Date());
+                mockedIssue.setSummary("");
+                mockedIssue.setDescription("");
+                mockedIssue.setReporter("QADudeLU");
+                mockedIssue.addFieldValue((String) invocationOnMock.getArguments()[1],
+                        Collections.singletonList(new HashMap<>()));
+                return mockedIssue;
+            }
+        });
+        Mockito.when(jiraService.findAvailableTransitionByName(Mockito.anyString(), Mockito.anyString())).thenAnswer(
+                new Answer<Transition>() {
+                    @Override
+                    public Transition answer(InvocationOnMock invocationOnMock) throws Throwable {
+
+                        String transitionName = (String) invocationOnMock.getArguments()[1];
+
+
+                        return new Transition(transitionName, transitionName,
+                                new NextTransition("", transitionName+"next", "Next Transition", "",
+                                        transitionName + "next"));
+                    }
+                });
 
         testSampleForAccessioning =
                 new MercurySample(TEST_SAMPLE_KEY, MercurySample.MetadataSource.MERCURY);
@@ -167,7 +223,7 @@ public class ManifestSessionEjbDBFreeTest {
                 BarcodedTube.BarcodedTubeType.MatrixTube2mL);
         manifestSessionEjb =
                 new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao,
-                        mockUserBean);
+                        mockUserBean, bspUserList, jiraService);
     }
 
     /**
@@ -200,7 +256,7 @@ public class ManifestSessionEjbDBFreeTest {
                 .thenReturn(researchProject);
 
         return new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao,
-                mockUserBean);
+                mockUserBean, bspUserList, jiraService);
     }
 
     /**
@@ -298,7 +354,7 @@ public class ManifestSessionEjbDBFreeTest {
                 .thenReturn(testVesselAlreadyTransferred);
 
         holder.ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao,
-                mockUserBean);
+                mockUserBean, bspUserList, jiraService);
 
         return holder;
     }
@@ -309,7 +365,7 @@ public class ManifestSessionEjbDBFreeTest {
 
     public void researchProjectNotFound() {
         ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao,
-                labVesselDao, mockUserBean);
+                labVesselDao, mockUserBean, bspUserList, jiraService);
         try {
             ejb.uploadManifest(null, null, null, false);
             Assert.fail();
@@ -560,7 +616,7 @@ public class ManifestSessionEjbDBFreeTest {
 
     public void acceptUploadSessionNotFound() {
         ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao,
-                labVesselDao, mockUserBean);
+                labVesselDao, mockUserBean, bspUserList, jiraService);
         try {
             ejb.acceptManifestUpload(ARBITRARY_MANIFEST_SESSION_ID);
             Assert.fail();
@@ -1211,8 +1267,9 @@ public class ManifestSessionEjbDBFreeTest {
 
         assertThat(testSample.getMetadata(), is(empty()));
 
-        holder.ejb.transferSample(ARBITRARY_MANIFEST_SESSION_ID, GOOD_TUBE_BARCODE, TEST_SAMPLE_KEY, TEST_VESSEL_LABEL
-        );
+        holder.ejb.updateReceiptInfo(ARBITRARY_MANIFEST_SESSION_ID, "RCT-1");
+
+        holder.ejb.transferSample(ARBITRARY_MANIFEST_SESSION_ID, GOOD_TUBE_BARCODE, TEST_SAMPLE_KEY, TEST_VESSEL_LABEL);
 
         assertThat(usedRecord.getStatus(), is(equalTo(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE)));
 
@@ -1225,6 +1282,8 @@ public class ManifestSessionEjbDBFreeTest {
         MercurySample testSample = mercurySampleDao.findBySampleKey(TEST_SAMPLE_KEY);
 
         assertThat(testSample.getMetadata(), is(empty()));
+
+        holder.ejb.updateReceiptInfo(ARBITRARY_MANIFEST_SESSION_ID, "RCT-1");
 
         try {
             holder.ejb.transferSample(ARBITRARY_MANIFEST_SESSION_ID, GOOD_TUBE_BARCODE, TEST_SAMPLE_KEY,
@@ -1323,6 +1382,8 @@ public class ManifestSessionEjbDBFreeTest {
 
         assertThat(testSample.getMetadata(), is(empty()));
 
+        holder.ejb.updateReceiptInfo(ARBITRARY_MANIFEST_SESSION_ID, "RCT-1");
+
         try {
             holder.ejb.transferSample(ARBITRARY_MANIFEST_SESSION_ID, GOOD_TUBE_BARCODE, TEST_SAMPLE_KEY,
                     TEST_VESSEL_LABEL);
@@ -1348,8 +1409,9 @@ public class ManifestSessionEjbDBFreeTest {
 
         assertThat(testSample.getMetadata(), is(empty()));
 
-        holder.ejb.transferSample(ARBITRARY_MANIFEST_SESSION_ID, GOOD_TUBE_BARCODE, TEST_SAMPLE_KEY, TEST_VESSEL_LABEL
-        );
+        holder.ejb.updateReceiptInfo(ARBITRARY_MANIFEST_SESSION_ID, "RCT-1");
+
+        holder.ejb.transferSample(ARBITRARY_MANIFEST_SESSION_ID, GOOD_TUBE_BARCODE, TEST_SAMPLE_KEY, TEST_VESSEL_LABEL);
 
         assertThat(usedRecord.getStatus(), is(equalTo(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE)));
 
@@ -1386,6 +1448,9 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.UPLOAD_ACCEPTED, 5, true);
 
         assertThat(holder.manifestSession.getStatus(), is(ManifestSession.SessionStatus.ACCESSIONING));
+
+        holder.ejb.updateReceiptInfo(ARBITRARY_MANIFEST_SESSION_ID, "RCT-1");
+
         Map<Metadata.Key, String> initialData = new HashMap<>();
         initialData .put(Metadata.Key.BROAD_SAMPLE_ID, TEST_SAMPLE_KEY);
         addRecord(holder, NO_ERROR, ManifestRecord.Status.UPLOAD_ACCEPTED,

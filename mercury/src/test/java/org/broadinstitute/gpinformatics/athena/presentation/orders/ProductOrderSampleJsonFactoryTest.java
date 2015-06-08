@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.json.JSONException;
@@ -72,8 +73,12 @@ public class ProductOrderSampleJsonFactoryTest {
         LabVessel tube = new BarcodedTube("0123");
         setPackageDate(tube, PACKAGE_DATE);
         setReceiptDate(tube, RECEIPT_DATE);
-        ProductOrderSample productOrderSample = new ProductOrderSample("SM-1234", bspSampleData, 2L);
-        productOrderSample.setLabEventSampleDTO(new LabEventSampleDTO(Collections.singleton(tube), "SM-1234"));
+        String sampleName = "SM-1234";
+        ProductOrderSample productOrderSample = new ProductOrderSample(sampleName, bspSampleData, 2L);
+        MercurySample testSample = new MercurySample(sampleName, MercurySample.MetadataSource.BSP);
+        testSample.addLabVessel(tube);
+        productOrderSample.setMercurySample(testSample);
+        productOrderSample.setLabEventSampleDTO(new LabEventSampleDTO(Collections.singleton(tube), sampleName));
 
         JSONObject jsonObject = factory.toJson(productOrderSample);
 
