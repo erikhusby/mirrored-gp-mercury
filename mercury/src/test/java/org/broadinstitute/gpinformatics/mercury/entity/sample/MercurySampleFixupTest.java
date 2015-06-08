@@ -299,7 +299,7 @@ public class MercurySampleFixupTest extends Arquillian {
             lastDate = currentFixup.getReceiptDate();
         }
 
-        mercurySampleDao.persist(new FixupCommentary(String.format("Added receipt dates for %d samples: %s",
+        mercurySampleDao.persist(new FixupCommentary(String.format("GPLIM-3487: Added receipt dates for %d samples: %s",
                 updatedSamples.size(), StringUtils.join(updatedSamples, "\n"))));
     }
 
